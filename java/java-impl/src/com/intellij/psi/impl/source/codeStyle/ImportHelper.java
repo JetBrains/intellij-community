@@ -42,6 +42,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.*;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,31 +157,27 @@ public final class ImportHelper{
   public static void collectOnDemandImports(@NotNull List<? extends Pair<String, Boolean>> resultList,
                                             @NotNull JavaCodeStyleSettings settings,
                                             @NotNull Map<String, Boolean> outClassesOrPackagesToImportOnDemand) {
-    ObjectIntMap<String> packageToCountMap = new ObjectIntHashMap<>();
-    ObjectIntMap<String> classToCountMap = new ObjectIntHashMap<>();
+    Object2IntMap<String> packageToCountMap = new Object2IntOpenHashMap<>();
+    Object2IntMap <String> classToCountMap = new Object2IntOpenHashMap<>();
     for (Pair<String, Boolean> pair : resultList) {
       String name = pair.getFirst();
       Boolean isStatic = pair.getSecond();
       String packageOrClassName = getPackageOrClassName(name);
       if (packageOrClassName.isEmpty()) continue;
-      ObjectIntMap<String> map = isStatic ? classToCountMap : packageToCountMap;
+      Object2IntMap<String> map = isStatic ? classToCountMap : packageToCountMap;
       map.put(packageOrClassName, map.getOrDefault(packageOrClassName, 0) + 1);
     }
 
-    for (ObjectIntMap.Entry<String> entry : classToCountMap.entries()) {
-      String packageOrClassName = entry.getKey();
-      int count = entry.getValue();
-      if (isToUseImportOnDemand(packageOrClassName, count, true, settings)){
-        outClassesOrPackagesToImportOnDemand.put(packageOrClassName, true);
+    classToCountMap.forEach((className, count) -> {
+      if (isToUseImportOnDemand(className, count, true, settings)) {
+        outClassesOrPackagesToImportOnDemand.put(className, true);
       }
-    }
-    for (ObjectIntMap.Entry<String> entry : packageToCountMap.entries()) {
-      String packageOrClassName = entry.getKey();
-      int count = entry.getValue();
-      if (isToUseImportOnDemand(packageOrClassName, count, false, settings)){
-        outClassesOrPackagesToImportOnDemand.put(packageOrClassName, false);
+    });
+    packageToCountMap.forEach((packageName, count) -> {
+      if (isToUseImportOnDemand(packageName, count, false, settings)){
+        outClassesOrPackagesToImportOnDemand.put(packageName, false);
       }
-    }
+    });
   }
 
   public static @NotNull List<Pair<String, Boolean>> sortItemsAccordingToSettings(@NotNull List<? extends Pair<String, Boolean>> names, @NotNull JavaCodeStyleSettings settings) {
@@ -214,8 +212,7 @@ public final class ImportHelper{
     GlobalSearchScope resolveScope = file.getResolveScope();
     String thisPackageName = file.getPackageName();
     Set<String> implicitlyImportedPackages = Set.of(file.getImplicitlyImportedPackages());
-    PsiManager manager = file.getManager();
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
 
     List<String> onDemandImportsList = new ArrayList<>(onDemandImports);
     List<PsiClass> onDemandElements = ContainerUtil.map(onDemandImportsList, onDemandName -> facade.findClass(onDemandName, resolveScope));
@@ -230,7 +227,7 @@ public final class ImportHelper{
       String shortName = PsiNameHelper.getShortClassName(name);
 
       String thisPackageClass = !thisPackageName.isEmpty() ? thisPackageName + "." + shortName : shortName;
-      if (JavaPsiFacade.getInstance(manager.getProject()).findClass(thisPackageClass, resolveScope) != null) {
+      if (facade.findClass(thisPackageClass, resolveScope) != null) {
         namesToUseSingle.add(name);
         continue;
       }
@@ -260,7 +257,7 @@ public final class ImportHelper{
               }
               else {
                 PsiMethod[] methods = aClass.findMethodsByName(shortName, true);
-                if (Arrays.stream(methods).anyMatch(psiMethod -> checkMemberAccessibility(psiMethod, resolveHelper, file, aClass, prefix))) {
+                if (ContainerUtil.exists(methods, psiMethod -> checkMemberAccessibility(psiMethod, resolveHelper, file, aClass, prefix))) {
                   namesToUseSingle.add(name);
                 }
               }
@@ -896,8 +893,7 @@ public final class ImportHelper{
           }
           IElementType elementType = node.getElementType();
           if (!ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(elementType) &&
-              !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(elementType))
-          {
+              !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(elementType)) {
             comments.add(element);
           }
         }
@@ -907,9 +903,6 @@ public final class ImportHelper{
       ContainerUtil.addAll(queue, child.getChildren());
 
       for (PsiReference reference : child.getReferences()) {
-        JavaResolveResult resolveResult = HighlightVisitorImpl.resolveJavaReference(reference);
-        if (resolveResult == null) continue;
-
         PsiJavaCodeReferenceElement referenceElement = null;
         if (reference instanceof PsiJavaReference javaReference) {
           if (javaReference instanceof JavaClassReference classReference && classReference.getContextReference() != null) continue;
@@ -925,6 +918,8 @@ public final class ImportHelper{
           }
         }
 
+        JavaResolveResult resolveResult = HighlightVisitorImpl.resolveJavaReference(reference);
+        if (resolveResult == null) continue;
         PsiElement refElement = resolveResult.getElement();
 
         PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
