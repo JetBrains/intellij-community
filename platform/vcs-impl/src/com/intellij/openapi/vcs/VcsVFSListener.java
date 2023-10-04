@@ -161,6 +161,7 @@ public abstract class VcsVFSListener implements Disposable {
     private void clearAllPendingTasks() {
       withLock(PROCESSING_LOCK.writeLock(), () -> {
         myAddedFiles.clear();
+        myCopyFromMap.clear();
         myDeletedFiles.clear();
         myDeletedWithoutConfirmFiles.clear();
         myMovedFiles.clear();
