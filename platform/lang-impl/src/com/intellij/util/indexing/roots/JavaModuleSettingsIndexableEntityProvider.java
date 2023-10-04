@@ -39,6 +39,12 @@ final class JavaModuleSettingsIndexableEntityProvider implements IndexableEntity
   }
 
   @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull JavaModuleSettingsEntity entity,
+                                                                                                  @NotNull Project project) {
+    return getAddedEntityIteratorBuilders(entity, project);
+  }
+
+  @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull JavaModuleSettingsEntity oldEntity,
                                                                                                    @NotNull JavaModuleSettingsEntity newEntity,
                                                                                                    @NotNull Project project) {

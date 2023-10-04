@@ -33,6 +33,12 @@ final class CustomSourceRootPropertyIndexableEntityProvider implements Indexable
   }
 
   @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull CustomSourceRootPropertiesEntity entity,
+                                                                                                  @NotNull Project project) {
+    return getAddedEntityIteratorBuilders(entity, project);
+  }
+
+  @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull CustomSourceRootPropertiesEntity oldEntity,
                                                                                                    @NotNull CustomSourceRootPropertiesEntity newEntity,
                                                                                                    @NotNull Project project) {

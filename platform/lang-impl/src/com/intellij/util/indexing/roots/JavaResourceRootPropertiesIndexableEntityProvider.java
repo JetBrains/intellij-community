@@ -44,6 +44,12 @@ final class JavaResourceRootPropertiesIndexableEntityProvider implements Indexab
                                                             JavaResourceRootPropertiesIndexableEntityProvider::getDataForBuilders);
   }
 
+  @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull JavaResourceRootPropertiesEntity entity,
+                                                                                                  @NotNull Project project) {
+    return getAddedEntityIteratorBuilders(entity, project);
+  }
+
   @NotNull
   private static Pair<VirtualFileUrl, ModuleEntity> getDataForBuilders(@NotNull JavaResourceRootPropertiesEntity entity) {
     SourceRootEntity sourceRootEntity = entity.getSourceRoot();

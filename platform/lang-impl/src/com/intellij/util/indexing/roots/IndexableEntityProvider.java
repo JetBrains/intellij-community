@@ -19,6 +19,8 @@ import java.util.function.BiFunction;
  * indexing of Workspace Model entities and might be needed for custom entities in exotic corner cases.
  * {@link Enforced} interface allows enforcing reindexing of additional paths on entity change. Those paths are not directly associated
  * with the entity by its {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor}.
+ * <p/>
+ * {@link IndexableEntityProvider} which is not {@link Enforced} is effectively ignored.
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental

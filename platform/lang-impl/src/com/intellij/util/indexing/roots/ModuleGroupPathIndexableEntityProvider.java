@@ -33,6 +33,12 @@ public final class ModuleGroupPathIndexableEntityProvider implements IndexableEn
   }
 
   @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull ModuleGroupPathEntity entity,
+                                                                                                  @NotNull Project project) {
+    return getAddedEntityIteratorBuilders(entity, project);
+  }
+
+  @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ModuleGroupPathEntity oldEntity,
                                                                                                    @NotNull ModuleGroupPathEntity newEntity,
                                                                                                    @NotNull Project project) {

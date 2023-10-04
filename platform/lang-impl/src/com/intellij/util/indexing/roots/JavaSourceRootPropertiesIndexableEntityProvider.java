@@ -36,6 +36,12 @@ final class JavaSourceRootPropertiesIndexableEntityProvider implements Indexable
   }
 
   @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull JavaSourceRootPropertiesEntity entity,
+                                                                                                  @NotNull Project project) {
+    return getAddedEntityIteratorBuilders(entity, project);
+  }
+
+  @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull JavaSourceRootPropertiesEntity oldEntity,
                                                                                                    @NotNull JavaSourceRootPropertiesEntity newEntity,
                                                                                                    @NotNull Project project) {

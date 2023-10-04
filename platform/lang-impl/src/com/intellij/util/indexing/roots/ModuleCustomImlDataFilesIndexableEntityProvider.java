@@ -31,6 +31,12 @@ public final class ModuleCustomImlDataFilesIndexableEntityProvider implements In
   }
 
   @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull ModuleCustomImlDataEntity entity,
+                                                                                                  @NotNull Project project) {
+    return getAddedEntityIteratorBuilders(entity, project);
+  }
+
+  @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ModuleCustomImlDataEntity oldEntity,
                                                                                                    @NotNull ModuleCustomImlDataEntity newEntity,
                                                                                                    @NotNull Project project) {
