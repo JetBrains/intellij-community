@@ -5,14 +5,26 @@ import com.intellij.model.Pointer
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 
 @Experimental
+@Internal
 interface DocumentationComponent {
+
+  /**
+   * Ready-to-use component, which should be added into UI hierarchy.
+   * The actual component might change at any time.
+   */
   fun getComponent(): JComponent
 
+  /**
+   * Requests the browser to display an empty content.
+   */
   fun resetBrowser()
 
-  fun resetBrowser(targetPointer: Pointer<out DocumentationTarget>,
-                   targetPresentation: TargetPresentation)
+  /**
+   * Requests the browser to display the documentation of [DocumentationTarget] referenced by [targetPointer].
+   */
+  fun resetBrowser(targetPointer: Pointer<out DocumentationTarget>, targetPresentation: TargetPresentation)
 }
