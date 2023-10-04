@@ -112,7 +112,7 @@ public final class HgVFSListener extends VcsVFSListener {
         // select files to add if there is something to select
         if (!addedFiles.isEmpty() || !copyFromMap.isEmpty()) {
 
-          AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> originalExecuteAdd(addedFiles, copyFromMap));
+          AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> performAddingWithConfirmation(addedFiles, copyFromMap));
         }
       }
     }.queue();
@@ -121,16 +121,6 @@ public final class HgVFSListener extends VcsVFSListener {
   @NotNull
   VcsRepositoryIgnoredFilesHolder getIgnoreRepoHolder(@NotNull VirtualFile repoRoot) {
     return Objects.requireNonNull(HgUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(repoRoot)).getIgnoredFilesHolder();
-  }
-
-  /**
-   * The version of execute add before overriding
-   *
-   * @param addedFiles  the added files
-   * @param copiedFiles the copied files
-   */
-  private void originalExecuteAdd(List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copiedFiles) {
-    super.executeAdd(addedFiles, copiedFiles);
   }
 
   @Override

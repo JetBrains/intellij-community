@@ -88,19 +88,9 @@ public final class GitVFSListener extends VcsVFSListener {
         }
         addedFiles.retainAll(retainedFiles);
 
-        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> originalExecuteAdd(addedFiles, copyFromMap));
+        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> performAddingWithConfirmation(addedFiles, copyFromMap));
       }
     });
-  }
-
-  /**
-   * The version of execute add before overriding
-   *
-   * @param addedFiles  the added files
-   * @param copiedFiles the copied files
-   */
-  private void originalExecuteAdd(List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copiedFiles) {
-    super.executeAdd(addedFiles, copiedFiles);
   }
 
   @Override

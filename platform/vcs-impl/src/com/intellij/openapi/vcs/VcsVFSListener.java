@@ -503,13 +503,17 @@ public abstract class VcsVFSListener implements Disposable {
     executeAdd(addedFiles, copyFromMap);
   }
 
+  protected void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
+    performAddingWithConfirmation(addedFiles, copyFromMap);
+  }
+
   /**
    * Execute add that performs adding from specific collections
    *
    * @param addedFiles  the added files
    * @param copyFromMap the copied files
    */
-  protected void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
+  protected void performAddingWithConfirmation(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
     VcsShowConfirmationOption.Value addOption = myAddOption.getValue();
     LOG.debug("executeAdd. add-option: ", addOption, ", files to add: ", addedFiles);
     if (addOption == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
