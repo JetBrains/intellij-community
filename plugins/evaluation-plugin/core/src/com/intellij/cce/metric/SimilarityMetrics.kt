@@ -90,8 +90,7 @@ class EditSimilarity(showByDefault: Boolean = false) : SimilarityMetric(showByDe
 
   override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
     return lookup.suggestions.maxOfOrNull {
-      val res = expectedText.length - LevenshteinDistance.getDefaultInstance().apply(it.text.drop(lookup.prefix.length), expectedText)
-      if (res < 0) 0 else res
-    }?.toDouble()
+      expectedText.length - LevenshteinDistance.getDefaultInstance().apply(it.text.drop(lookup.prefix.length), expectedText)
+    }?.toDouble()?.coerceAtLeast(0.0)
   }
 }
