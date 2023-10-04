@@ -13,7 +13,6 @@ import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Predicates
@@ -209,14 +208,7 @@ class SafeDeleteFix(declaration: KtNamedDeclaration) : LocalQuickFixAndIntention
         endElement: PsiElement
     ) {
         val element = startElement as? KtDeclaration ?: return
-        if (element is KtParameter && element.parent is KtParameterList && element.parent?.parent is KtFunction) {
-            // TODO: Implement K2 version of `RemoveUnusedFunctionParameterFix` and use it here.
-            val parameterList = element.parent as KtParameterList
-            WriteCommandAction.runWriteCommandAction(project, name, null, {
-                parameterList.removeParameter(element)
-            }, element.containingFile)
-        } else {
-            SafeDeleteHandler.invoke(project, arrayOf(element), false)
-        }
+
+        SafeDeleteHandler.invoke(project, arrayOf(element), false)
     }
 }
