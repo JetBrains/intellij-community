@@ -234,8 +234,8 @@ public final class HgVFSListener extends VcsVFSListener {
     skipNotUnderHg(filesToDelete);
     skipNotUnderHg(filesToConfirmDeletion);
 
-    filesToDelete.removeAll(processAndGetVcsIgnored(filesToDelete));
-    filesToConfirmDeletion.removeAll(processAndGetVcsIgnored(filesToConfirmDeletion));
+    skipVcsIgnored(filesToDelete);
+    skipVcsIgnored(filesToConfirmDeletion);
 
     // newly added files (which were added to the repo but never committed) should be removed from the VCS,
     // but without user confirmation.
@@ -274,12 +274,12 @@ public final class HgVFSListener extends VcsVFSListener {
     }.queue();
   }
 
-  @NotNull
-  private List<FilePath> processAndGetVcsIgnored(@NotNull List<FilePath> filePaths) {
+  private void skipVcsIgnored(@NotNull List<FilePath> filePaths) {
     Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots = HgUtil.groupFilePathsByHgRoots(myProject, filePaths);
-    return groupFilePathsByHgRoots.entrySet().stream()
+    List<FilePath> ignored = groupFilePathsByHgRoots.entrySet().stream()
       .map(entry -> getIgnoreRepoHolder(entry.getKey()).removeIgnoredFiles(entry.getValue()))
       .flatMap(Collection::stream).collect(Collectors.toList());
+    filePaths.removeAll(ignored);
   }
 
   /**
