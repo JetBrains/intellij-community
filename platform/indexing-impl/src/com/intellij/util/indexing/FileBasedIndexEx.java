@@ -17,7 +17,6 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -516,26 +515,19 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
    * Returns providers of files to be indexed.
    */
   public @NotNull List<IndexableFilesIterator> getIndexableFilesProviders(@NotNull Project project) {
-    List<String> allowedIteratorPatterns = StringUtil.split(System.getProperty("idea.test.files.allowed.iterators", ""), ";");
     if (project instanceof LightEditCompatible) {
       return Collections.emptyList();
     }
-    if (IndexableFilesIndex.isEnabled() && allowedIteratorPatterns.isEmpty()) {
+    if (IndexableFilesIndex.isEnabled()) {
       return IndexableFilesIndex.getInstance(project).getIndexingIterators();
     }
-    List<IndexableFilesIterator> providers = IndexableFilesContributor.EP_NAME
+    return IndexableFilesContributor.EP_NAME
       .getExtensionList()
       .stream()
       .flatMap(c -> {
         return ReadAction.nonBlocking(() -> c.getIndexableFiles(project)).expireWith(project).executeSynchronously().stream();
       })
       .collect(Collectors.toList());
-    if (!allowedIteratorPatterns.isEmpty()) {
-      providers = ContainerUtil.filter(providers, p -> {
-        return ContainerUtil.exists(allowedIteratorPatterns, pattern -> p.getDebugName().contains(pattern));
-      });
-    }
-    return providers;
   }
 
   private @Nullable <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull ID<K, V> indexId,
