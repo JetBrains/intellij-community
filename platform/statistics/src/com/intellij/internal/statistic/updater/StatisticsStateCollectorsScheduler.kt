@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogge
 import com.intellij.internal.statistic.service.fus.collectors.ProjectFUStateUsagesLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -32,6 +33,13 @@ internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListen
   }
 
   internal class MyStartupActivity : ProjectActivity {
+    init {
+      val app = ApplicationManager.getApplication()
+      if (app.isUnitTestMode) {
+        throw ExtensionNotApplicableException.create()
+      }
+    }
+
     override suspend fun execute(project: Project) {
       // smart mode is not available when LightEdit is active
       if (LightEdit.owns(project)) {
