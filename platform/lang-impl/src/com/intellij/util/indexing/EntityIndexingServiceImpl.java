@@ -14,10 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.platform.workspace.jps.entities.LibraryEntity;
-import com.intellij.platform.workspace.jps.entities.LibraryId;
-import com.intellij.platform.workspace.jps.entities.LibraryTableId;
-import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.platform.workspace.storage.EntityChange;
 import com.intellij.platform.workspace.storage.EntityReference;
 import com.intellij.platform.workspace.storage.EntityStorage;
@@ -29,7 +26,6 @@ import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusSer
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.roots.LibraryIndexableEntityProvider;
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
@@ -276,14 +272,30 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     collectIEPIteratorsOnChange(change, oldEntity, newEntity, project, builders, entityClass);
 
     if (change != Change.Removed && isLibraryIgnoredByLibraryRootFileIndexContributor(newEntity)) {
-      LibraryIndexableEntityProvider provider = IndexableEntityProvider.EP_NAME.findExtensionOrFail(LibraryIndexableEntityProvider.class);
       if (change == Change.Added) {
-        builders.addAll(provider.getAddedEntityIteratorBuilders((LibraryEntity)newEntity, project));
+        // Sure, we are interested only in libraries used in the project, but in case a registered library is downloaded,
+        // no change in dependencies happens, only Added event on LibraryEntity.
+        // For debug see com.intellij.roots.libraries.LibraryTest
+        builders.addAll(IndexableIteratorBuilders.INSTANCE.forLibraryEntity(((LibraryEntity)newEntity).getSymbolicId(), false));
       }
-      else {
-        builders.addAll(provider.getReplacedEntityIteratorBuilders((LibraryEntity)oldEntity, (LibraryEntity)newEntity, project));
+      else if (change == Change.Replaced && hasSomethingToIndex((LibraryEntity)oldEntity, (LibraryEntity)newEntity)) {
+        builders.addAll(IndexableIteratorBuilders.INSTANCE.forLibraryEntity(((LibraryEntity)newEntity).getSymbolicId(), false));
       }
     }
+  }
+
+  private static boolean hasSomethingToIndex(@NotNull LibraryEntity oldEntity, @NotNull LibraryEntity newEntity) {
+    if (newEntity.getRoots().size() > oldEntity.getRoots().size()) return true;
+    if (oldEntity.getExcludedRoots().size() > newEntity.getExcludedRoots().size()) return true;
+    List<LibraryRoot> oldEntityRoots = oldEntity.getRoots();
+    for (LibraryRoot root : newEntity.getRoots()) {
+      if (!oldEntityRoots.contains(root)) return true;
+    }
+    List<ExcludeUrlEntity> newEntityExcludedRoots = newEntity.getExcludedRoots();
+    for (ExcludeUrlEntity excludedRoot : oldEntity.getExcludedRoots()) {
+      if (!newEntityExcludedRoots.contains(excludedRoot.getUrl())) return true;
+    }
+    return false;
   }
 
   private static <E extends WorkspaceEntity> boolean isLibraryIgnoredByLibraryRootFileIndexContributor(@NotNull E newEntity) {

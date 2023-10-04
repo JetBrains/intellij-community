@@ -3,9 +3,11 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,8 +50,13 @@ final class JavaModuleSettingsIndexableEntityProvider implements IndexableEntity
 
   private static @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
                                                                                                                 @NotNull ModuleEntity newEntity) {
-    List<VirtualFileUrl> newRootUrls = ContentRootIndexableEntityProvider.collectRootUrls(newEntity.getContentRoots());
-    List<VirtualFileUrl> oldRootUrls = ContentRootIndexableEntityProvider.collectRootUrls(oldEntity.getContentRoots());
+    List<VirtualFileUrl> newRootUrls = collectRootUrls(newEntity.getContentRoots());
+    List<VirtualFileUrl> oldRootUrls = collectRootUrls(oldEntity.getContentRoots());
     return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getSymbolicId(), newRootUrls, oldRootUrls);
+  }
+
+  @NotNull
+  private static List<VirtualFileUrl> collectRootUrls(List<? extends ContentRootEntity> newContentRoots) {
+    return ContainerUtil.map(newContentRoots, o -> o.getUrl());
   }
 }
