@@ -37,7 +37,6 @@ import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription;
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
-import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import kotlin.Pair;
 import kotlin.sequences.SequencesKt;
@@ -204,18 +203,10 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     //noinspection unchecked
     Class<? super E> entityClass = (Class<? super E>)Objects.requireNonNull(newEntity == null ? oldEntity : newEntity).getEntityInterface();
 
-    if (IndexableFilesIndex.isEnabled()) {
-      List<IndexableIteratorBuilder> newBuilders = new ArrayList<>();
-      collectWFICIteratorsOnChange(change, oldEntity, newEntity, project, newBuilders, descriptionsBuilder, entityClass, false,
-                                   entityStorage);
-      builders.addAll(newBuilders);
-    }
-    else {
-      List<IndexableIteratorBuilder> oldBuilders = new ArrayList<>();
-      collectIEPIteratorsOnChange(change, oldEntity, newEntity, project, oldBuilders, descriptionsBuilder, entityClass, false,
-                                  entityStorage);
-      builders.addAll(oldBuilders);
-    }
+    List<IndexableIteratorBuilder> newBuilders = new ArrayList<>();
+    collectWFICIteratorsOnChange(change, oldEntity, newEntity, project, newBuilders, descriptionsBuilder, entityClass,
+                                 entityStorage);
+    builders.addAll(newBuilders);
   }
 
   private static <E extends WorkspaceEntity> void collectIEPIteratorsOnChange(@NotNull Change change,
@@ -223,16 +214,12 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
                                                                               @Nullable E newEntity,
                                                                               @NotNull Project project,
                                                                               @NotNull Collection<? super IndexableIteratorBuilder> builders,
-                                                                              @NotNull WorkspaceIndexingRootsBuilder descriptionsBuilder,
-                                                                              @NotNull Class<? super E> entityClass,
-                                                                              boolean enforcedOnly,
-                                                                              @NotNull EntityStorage entityStorage) {
+                                                                              @NotNull Class<? super E> entityClass) {
     LOG.assertTrue(newEntity != null || change == Change.Removed, "New entity " + newEntity + ", change " + change);
     LOG.assertTrue(oldEntity != null || change == Change.Added, "Old entity " + oldEntity + ", change " + change);
 
     for (IndexableEntityProvider<?> uncheckedProvider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
-      if (entityClass == uncheckedProvider.getEntityClass() &&
-          (!enforcedOnly || uncheckedProvider instanceof IndexableEntityProvider.Enforced<?>)) {
+      if (entityClass == uncheckedProvider.getEntityClass() && uncheckedProvider instanceof IndexableEntityProvider.Enforced<?>) {
         //noinspection unchecked
         IndexableEntityProvider<E> provider = (IndexableEntityProvider<E>)uncheckedProvider;
         Collection<? extends IndexableIteratorBuilder> generated = switch (change) {
@@ -243,7 +230,7 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
         builders.addAll(generated);
       }
 
-      if (change == Change.Replaced && (!enforcedOnly || uncheckedProvider instanceof IndexableEntityProvider.Enforced<?>)) {
+      if (change == Change.Replaced && uncheckedProvider instanceof IndexableEntityProvider.Enforced<?>) {
         for (IndexableEntityProvider.DependencyOnParent<? extends WorkspaceEntity> dependency : uncheckedProvider.getDependencies()) {
           if (entityClass == dependency.getParentClass()) {
             //noinspection unchecked
@@ -252,12 +239,6 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
           }
         }
       }
-    }
-
-    if (!enforcedOnly) {
-      collectWFICIteratorsOnChange(change, oldEntity, newEntity, project, builders, descriptionsBuilder, entityClass, true,
-                                   entityStorage
-      );
     }
   }
 
@@ -268,7 +249,6 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
                                                                                @NotNull Collection<? super IndexableIteratorBuilder> builders,
                                                                                @NotNull WorkspaceIndexingRootsBuilder descriptionsBuilder,
                                                                                @NotNull Class<? super E> entityClass,
-                                                                               boolean customOnly,
                                                                                @NotNull EntityStorage entityStorage) {
     LOG.assertTrue(newEntity != null || change == Change.Removed, "New entity " + newEntity + ", change " + change);
     LOG.assertTrue(oldEntity != null || change == Change.Added, "Old entity " + oldEntity + ", change " + change);
@@ -276,9 +256,6 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     List<WorkspaceFileIndexContributor<?>> contributors = WorkspaceFileIndexImpl.Companion.getEP_NAME().getExtensionList();
     for (WorkspaceFileIndexContributor<?> uncheckedContributor : contributors) {
       if (uncheckedContributor.getStorageKind() != EntityStorageKind.MAIN) {
-        continue;
-      }
-      if (customOnly && uncheckedContributor instanceof PlatformInternalWorkspaceFileIndexContributor) {
         continue;
       }
       if (entityClass == uncheckedContributor.getEntityClass()) {
@@ -296,12 +273,9 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
       }
     }
 
-    if (!customOnly) {
-      collectIEPIteratorsOnChange(change, oldEntity, newEntity, project, builders, descriptionsBuilder, entityClass, true,
-                                  entityStorage);
-    }
+    collectIEPIteratorsOnChange(change, oldEntity, newEntity, project, builders, entityClass);
 
-    if (!customOnly && change != Change.Removed && isLibraryIgnoredByLibraryRootFileIndexContributor(newEntity)) {
+    if (change != Change.Removed && isLibraryIgnoredByLibraryRootFileIndexContributor(newEntity)) {
       LibraryIndexableEntityProvider provider = IndexableEntityProvider.EP_NAME.findExtensionOrFail(LibraryIndexableEntityProvider.class);
       if (change == Change.Added) {
         builders.addAll(provider.getAddedEntityIteratorBuilders((LibraryEntity)newEntity, project));
