@@ -5,9 +5,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtilRt
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Mutex
@@ -17,6 +19,7 @@ import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.net.URI
@@ -26,6 +29,7 @@ import java.nio.file.Path
 @Service
 class MavenSystemIndicesManager(val cs: CoroutineScope) {
   private val openedIndices = HashMap<String, MavenIndex>()
+  private val updatingIndices = HashMap<String, Deferred<MavenIndex>>();
   private val mutex = Mutex()
 
   private var ourTestIndicesDir: Path? = null
@@ -50,6 +54,46 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
     return runBlockingMaybeCancellable {
       getIndexForRepo(repo)
     }
+  }
+
+  fun updateIndexContentSync(repo: MavenRepositoryInfo,
+                             fullUpdate: Boolean,
+                             multithreaded: Boolean,
+                             indicator: MavenProgressIndicator) {
+    return runBlockingMaybeCancellable {
+      updateIndexContent(repo, fullUpdate, multithreaded, indicator)
+    }
+  }
+
+  suspend fun updateIndexContent(repo: MavenRepositoryInfo,
+                                 fullUpdate: Boolean,
+                                 multithreaded: Boolean,
+                                 indicator: MavenProgressIndicator) {
+    val index = getIndexForRepo(repo)
+    var calculate = false
+    val deferredResult = mutex.withLock {
+      val deferred = updatingIndices[repo.url]
+      if (deferred == null) {
+        calculate = true;
+        val newDeferred = cs.async {
+          index.updateOrRepair(fullUpdate, indicator, multithreaded)
+          index
+        }
+        updatingIndices.putIfAbsent(repo.url, newDeferred)
+        return@withLock newDeferred
+      }
+      else return@withLock deferred
+    }
+    deferredResult.invokeOnCompletion {
+      cs.async {
+        mutex.withLock {
+          updatingIndices.remove(repo.url)
+        }
+      }
+
+    }
+
+    deferredResult.await()
 
   }
 
@@ -107,6 +151,16 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
 
   fun getOrCreateIndices(project: Project): MavenIndices {
     return getIndexWrapper().getOrCreateIndices(project)
+  }
+
+  fun getUpdatingStateSync(project: Project, repository: MavenRepositoryInfo): MavenIndexUpdateManager.IndexUpdatingState {
+    return runWithModalProgressBlocking(project, repository.name) {
+      return@runWithModalProgressBlocking mutex.withLock {
+        val deferred = updatingIndices[repository.url]
+        if (deferred == null) return@withLock MavenIndexUpdateManager.IndexUpdatingState.IDLE
+        return@withLock MavenIndexUpdateManager.IndexUpdatingState.UPDATING
+      }
+    }
   }
 
   companion object {

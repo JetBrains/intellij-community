@@ -34,7 +34,7 @@ public interface MavenServerIndexer extends Remote {
 
   int getIndexCount(MavenToken token) throws RemoteException;
 
-  void updateIndex(MavenIndexId mavenIndexId, MavenServerProgressIndicator indicator, MavenToken token)
+  void updateIndex(MavenIndexId mavenIndexId, MavenServerProgressIndicator indicator, boolean multithreaded, MavenToken token)
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException;
 
   @Nullable

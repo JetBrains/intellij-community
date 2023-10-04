@@ -221,14 +221,17 @@ public final class MavenIndicesManager implements Disposable {
    */
   public void scheduleUpdateContentAll() {
     myIndexUpdateManager.scheduleUpdateContent(myProject,
-                                               ContainerUtil.map(myMavenIndices.getIndices(), MavenIndex::getRepositoryPathOrUrl));
+                                               IndicesContentUpdateRequest.explicit(
+                                                 ContainerUtil.map(myMavenIndices.getIndices(), MavenIndex::getRepository)));
   }
 
   /**
    * Schedule update indices content async.
    */
-  public CompletableFuture<?> scheduleUpdateContent(@NotNull List<MavenIndex> indices) {
-    return myIndexUpdateManager.scheduleUpdateContent(myProject, ContainerUtil.map(indices, MavenIndex::getRepositoryPathOrUrl));
+  public CompletableFuture<?> scheduleUpdateContent(@NotNull List<MavenIndex> indices, boolean explicit) {
+    IndicesContentUpdateRequest request =
+      new IndicesContentUpdateRequest(ContainerUtil.map(indices, MavenIndex::getRepository), explicit, true, explicit);
+    return myIndexUpdateManager.scheduleUpdateContent(myProject, request);
   }
 
   /**
@@ -238,10 +241,6 @@ public final class MavenIndicesManager implements Disposable {
    */
   public void scheduleUpdateIndicesList(@Nullable Consumer<? super List<MavenIndex>> consumer) {
     myIndexUpdateManager.scheduleUpdateIndicesList(myProject, consumer);
-  }
-
-  public MavenIndexUpdateManager.IndexUpdatingState getUpdatingState(@NotNull MavenSearchIndex index) {
-    return myIndexUpdateManager.getUpdatingState(index);
   }
 
   @NotNull
@@ -362,8 +361,9 @@ public final class MavenIndicesManager implements Disposable {
 
     @Override
     public void indexIsBroken(@NotNull MavenSearchIndex index) {
-      if (index instanceof MavenIndex) {
-        myManager.myIndexUpdateManager.scheduleUpdateContent(myManager.myProject, List.of(index.getRepositoryPathOrUrl()), false);
+      if (index instanceof MavenUpdatableIndex) {
+        myManager.myIndexUpdateManager.scheduleUpdateContent(myManager.myProject,
+                                                             IndicesContentUpdateRequest.explicit(List.of(index.getRepository())));
       }
     }
   }

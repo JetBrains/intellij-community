@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.IndexKind;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -36,6 +37,8 @@ public interface MavenSearchIndex {
 
   File getRepositoryFile();
 
+  @Nullable MavenRepositoryInfo getRepository();
+
   @NlsSafe
   String getRepositoryUrl();
 
@@ -48,9 +51,6 @@ public interface MavenSearchIndex {
 
   @NlsSafe
   String getFailureMessage();
-
-  void updateOrRepair(boolean fullUpdate, @Nullable MavenGeneralSettings settings, MavenProgressIndicator progress)
-    throws MavenProcessCanceledException;
 
   Set<MavenArtifactInfo> search(String pattern, int maxResult);
 

@@ -107,7 +107,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
   }
 
   @Override
-  public void updateIndex(MavenIndexId mavenIndexId, final MavenServerProgressIndicator indicator, MavenToken token)
+  public void updateIndex(MavenIndexId mavenIndexId, final MavenServerProgressIndicator indicator, boolean multithreaded, MavenToken token)
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException {
     MavenServerUtil.checkToken(token);
     try {

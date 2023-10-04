@@ -127,6 +127,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
   @Override
   public void updateIndex(MavenIndexId mavenIndexId,
                           final MavenServerProgressIndicator remoteIndicator,
+                          boolean multithreaded,
                           MavenToken token)
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException {
     MavenServerUtil.checkToken(token);
@@ -136,7 +137,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
       synchronized (context) {
         File repository = context.getRepository();
         if (repository != null) { // is local repository
-          scanAndUpdateLocalRepositoryIndex(indicator, context);
+          scanAndUpdateLocalRepositoryIndex(indicator, context, multithreaded);
         }
         else {
           downloadRemoteIndex(indicator, context);
@@ -165,7 +166,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     updateIndicatorStatus(indicator, context, updateResult, currentTimestamp);
   }
 
-  private void scanAndUpdateLocalRepositoryIndex(MavenServerProgressIndicator indicator, IndexingContext context) throws
+  private void scanAndUpdateLocalRepositoryIndex(MavenServerProgressIndicator indicator, IndexingContext context, boolean multithreaded) throws
                                                                                                                   IOException {
 
     File repositoryDirectory = context.getRepository();

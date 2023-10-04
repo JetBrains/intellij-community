@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -61,7 +60,7 @@ public final class MavenIndexImpl implements MavenIndex {
   private String myDataDirName;
 
   public MavenIndexImpl(MavenIndexerWrapper indexer,
-                    MavenIndexUtils.IndexPropertyHolder propertyHolder) throws MavenIndexException {
+                        MavenIndexUtils.IndexPropertyHolder propertyHolder) throws MavenIndexException {
     myNexusIndexer = indexer;
 
     myDir = propertyHolder.dir;
@@ -212,7 +211,7 @@ public final class MavenIndexImpl implements MavenIndex {
   }
 
   @Override
-  public void updateOrRepair(boolean fullUpdate, @Nullable MavenGeneralSettings settings, MavenProgressIndicator progress)
+  public void updateOrRepair(boolean fullUpdate, MavenProgressIndicator progress, boolean multithreaded)
     throws MavenProcessCanceledException {
     try {
       indexUpdateLock.lock();
@@ -240,7 +239,7 @@ public final class MavenIndexImpl implements MavenIndex {
       if (fullUpdate) {
         MavenIndexId mavenIndexId = getMavenIndexId(newDataContextDir, "update");
         try {
-          updateNexusContext(mavenIndexId, settings, progress);
+          updateNexusContext(mavenIndexId, progress, multithreaded);
         }
         finally {
           myNexusIndexer.releaseIndex(mavenIndexId);
@@ -295,10 +294,10 @@ public final class MavenIndexImpl implements MavenIndex {
   }
 
   private void updateNexusContext(@NotNull MavenIndexId indexId,
-                                  @Nullable MavenGeneralSettings settings,
-                                  @NotNull MavenProgressIndicator progress)
+                                  @NotNull MavenProgressIndicator progress,
+                                  boolean multithreaded)
     throws MavenServerIndexerException, MavenProcessCanceledException {
-    myNexusIndexer.updateIndex(indexId, settings, progress);
+    myNexusIndexer.updateIndex(indexId, progress, multithreaded);
   }
 
   private void updateIndexData(MavenProgressIndicator progress, File newDataDir, boolean fullUpdate) throws MavenIndexException {

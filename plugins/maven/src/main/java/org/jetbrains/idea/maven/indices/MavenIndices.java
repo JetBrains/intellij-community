@@ -27,11 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.model.IndexKind;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
@@ -198,12 +195,6 @@ public class MavenIndices implements Disposable {
         MavenLog.LOG.error("indices dispose error", e);
       }
     }
-  }
-
-  public static void updateOrRepair(@NotNull MavenSearchIndex index, boolean fullUpdate,
-                                    @Nullable MavenGeneralSettings settings, MavenProgressIndicator progress)
-    throws MavenProcessCanceledException {
-    index.updateOrRepair(fullUpdate, settings, progress);
   }
 
   @VisibleForTesting
