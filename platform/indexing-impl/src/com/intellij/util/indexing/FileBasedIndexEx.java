@@ -5,7 +5,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -33,7 +32,6 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
-import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import it.unimi.dsi.fastutil.ints.*;
@@ -46,7 +44,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.*;
 import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
@@ -518,16 +515,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (project instanceof LightEditCompatible) {
       return Collections.emptyList();
     }
-    if (IndexableFilesIndex.isEnabled()) {
-      return IndexableFilesIndex.getInstance(project).getIndexingIterators();
-    }
-    return IndexableFilesContributor.EP_NAME
-      .getExtensionList()
-      .stream()
-      .flatMap(c -> {
-        return ReadAction.nonBlocking(() -> c.getIndexableFiles(project)).expireWith(project).executeSynchronously().stream();
-      })
-      .collect(Collectors.toList());
+    return IndexableFilesIndex.getInstance(project).getIndexingIterators();
   }
 
   private @Nullable <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull ID<K, V> indexId,
