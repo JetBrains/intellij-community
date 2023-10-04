@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NonNls
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
-import java.awt.Graphics2D
 import javax.swing.Icon
 
 open class HighlightDisplayLevel(val severity: HighlightSeverity) {
@@ -187,11 +186,13 @@ private class HighlightDisplayLevelColorIcon(size: Int, color: Color) : ColorIco
 }
 
 private class HighlightDisplayLevelColorizedIcon(private val key: TextAttributesKey,
-                                                 private val baseIcon: Icon) : Icon, HighlightDisplayLevelColoredIcon {
+                                                 baseIcon: Icon) : Icon, HighlightDisplayLevelColoredIcon {
+  private val baseIcon = IconManager.getInstance().colorizedIcon(baseIcon, 1696350573008, ::getColor)
+
   override fun getColor(): Color = getColorFromAttributes(key) ?: JBColor.GRAY
 
   override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
-    IconManager.getInstance().colorize(g as Graphics2D, baseIcon, getColor()).paintIcon(c, g, x, y);
+    baseIcon.paintIcon(c, g, x, y)
   }
 
   override fun getIconWidth(): Int = baseIcon.iconWidth

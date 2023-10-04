@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("LiftReturnOrAssignment")
+@file:Suppress("LiftReturnOrAssignment", "ReplacePutWithAssignment")
 
 package com.intellij.ui.icons
 
@@ -17,8 +17,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.RowIcon
 import com.intellij.ui.mac.foundation.MacUtil
+import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.util.BitUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.SVGLoader
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -176,6 +178,50 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
   override fun wakeUpNeo(reason: Any): Runnable = MacUtil.wakeUpNeo(reason)
 
   override fun withIconBadge(icon: Icon, color: Paint): Icon = BadgeIcon(icon, color)
+
+  override fun colorizedIcon(baseIcon: Icon, patcherDigest: Long, colorProvider: () -> Color): Icon {
+    if (baseIcon !is CachedImageIcon) {
+      return baseIcon
+    }
+
+    val patcherDigestAsArray = longArrayOf(patcherDigest)
+
+    val attributePatcher = object : SvgAttributePatcher {
+      private var lastColor = Long.MIN_VALUE
+      private var lastDigest: LongArray? = null
+
+      override fun digest(): LongArray {
+        val color = colorProvider().rgb.toLong()
+        if (color == lastColor) {
+          lastDigest?.let {
+            return it
+          }
+        }
+
+        val digest = longArrayOf(patcherDigest, color, /* version of the implementation */ 0)
+        lastColor = color
+        lastDigest = digest
+        return digest
+      }
+
+      override fun patchColors(attributes: MutableMap<String, String>) {
+        val color = colorProvider()
+        if (!attributes.replace("fill", "white", "rgb(${color.red},${color.green},${color.blue})")) {
+          return
+        }
+
+        val alpha = color.alpha
+        if (alpha != 255) {
+          attributes.put("fill-opacity", "${alpha / 255f}")
+        }
+      }
+    }
+    return baseIcon.createWithPatcher(object : SVGLoader.SvgElementColorPatcherProvider {
+      override fun attributeForPath(path: String) = attributePatcher
+
+      override fun digest() = patcherDigestAsArray
+    })
+  }
 }
 
 private class IconLayer(@JvmField val flagMask: Int, @JvmField val icon: Icon) {

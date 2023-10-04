@@ -336,12 +336,12 @@ private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): Ico
           true
         }
 
-        if (useReflective) {
-          val builder = StringBuilder(reflectivePathPrefix.length + patchedPath.length)
-          builder.append(reflectivePathPrefix)
-          builder.append(patchedPath, iconPathPrefix.length, patchedPath.length - 4)
-          return toReflectivePath(builder).toString()
-        }
+        //if (useReflective) {
+        //  val builder = StringBuilder(reflectivePathPrefix.length + patchedPath.length)
+        //  builder.append(reflectivePathPrefix)
+        //  builder.append(patchedPath, iconPathPrefix.length, patchedPath.length - 4)
+        //  return toReflectivePath(builder).toString()
+        //}
       }
 
       return patchedPath

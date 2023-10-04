@@ -115,13 +115,9 @@ object SVGLoader {
     @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
     @Deprecated("Implement attributeForPath")
     @ScheduledForRemoval
-    fun forPath(path: String?): SvgElementColorPatcher? {
-      return null
-    }
+    fun forPath(path: String?): SvgElementColorPatcher? = null
 
-    fun attributeForPath(path: String): SvgAttributePatcher? {
-      return null
-    }
+    fun attributeForPath(path: String): SvgAttributePatcher? = null
 
     fun digest(): LongArray? = null
 

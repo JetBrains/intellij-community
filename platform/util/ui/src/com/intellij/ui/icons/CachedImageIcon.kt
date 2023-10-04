@@ -271,7 +271,7 @@ open class CachedImageIcon internal constructor(
                            scaleContext = scaleContext?.copy())
   }
 
-  internal fun createWithPatcher(colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon {
+  fun createWithPatcher(colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon {
     val resolver = resolver ?: return EMPTY_ICON
     return CachedImageIcon(originalPath = originalPath,
                            resolver = resolver,

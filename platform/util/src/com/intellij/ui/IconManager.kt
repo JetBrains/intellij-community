@@ -92,6 +92,9 @@ interface IconManager {
    * @return an icon that paints the given icon with the colored badge
    */
   fun withIconBadge(icon: Icon, color: Paint): Icon = icon
+
+  @ApiStatus.Experimental
+  fun colorizedIcon(baseIcon: Icon, patcherDigest: Long, colorProvider: () -> Color): Icon = baseIcon
 }
 
 private object DummyIconManager : IconManager {
