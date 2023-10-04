@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
@@ -44,21 +45,34 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
   private static final Logger LOG = Logger.getInstance(MMappedFileStorage.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1000);
 
-  //RC: do we need method like 'unmap', which forcibly unmaps pages, or it is enough to rely on JVM which will
-  //    unmap pages eventually, as they are collected by GC?
-  //    Forcible unmap allows to 'clean after yourself', but carries a risk of JVM crash if somebody still tries
-  //    to access unmapped pages.
-  //    So far, my take is: in regular use, it is better to let JVM unmap pages, and not carry the risk of JVM
-  //    crash after too eager unmapping. There is no clear benefits for explicit (eager) unmap, that outweigh
-  //    risk of JVM crash.
-  //MAYBE: but we _could_ provide 'unmap' as a dedicated method, not as a part of .close() -- so it
-  //    could be used in e.g. tests, and in other cases there we could 100% guarantee no usages anymore,
-  //    and we're ready to take risk of JVM crash if we're wrong.
 
+
+  //Explicit 'unmap' vs rely on JVM which will unmap pages eventually, as they are collected by GC?
+  //  Explicit unmap allows to 'clean after yourself', but carries a risk of JVM crash if somebody still tries
+  //  to access unmapped pages.
+  //  Current take:
+  //  1) by default rely on GC
+  //  2) .close(unmap=true) method closes AND unmap explicitly if needed
+  //  3) .closeAndClean() method unmaps buffers explicitly, since on Windows it is impossible to delete (=clean)
+  //     the files that are currently mapped, and GC is proved unreliable for that task.
+
+  /**
+   * What if memory mapped buffer is impossible to unmap (by any reason: can't access Unsafe, bad luck, etc)?
+   * True: throw an exception
+   * False: log warning, and continue (i.e. rely on GC to unmap the buffer eventually)
+   */
+  private static final boolean FAIL_ON_FAILED_UNMAP = getBooleanProperty("idea.fs.fail-if-unmap-failed", true);
+
+
+  //============== statistics/monitoring: ===================================================================
 
   //Keep track of mapped buffers allocated & their total size, numbers are reported to OTel.Metrics.
   //Why: mapped buffers are limited resources (~16k on linux by default?), so it is worth to monitor
   //     how we use them, and issue the alarm early on as we start to use too many
+
+  /** Log warn if > PAGES_TO_WARN_THRESHOLD pages were mapped */
+  private static final int PAGES_TO_WARN_THRESHOLD = getIntProperty("vfs.memory-mapped-storage.pages-to-warn-threshold", 256);
+
   private static volatile int openedStoragesCount = 0;
   private static final AtomicInteger totalPagesMapped = new AtomicInteger();
   private static final AtomicLong totalBytesMapped = new AtomicLong();
@@ -69,8 +83,7 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
   //@GuardedBy(openedStorages)
   private static final Map<Path, MMappedFileStorage> openedStorages = new HashMap<>();
 
-  /** Log warn if > PAGES_TO_WARN_THRESHOLD pages were mapped */
-  private static final int PAGES_TO_WARN_THRESHOLD = getIntProperty("vfs.memory-mapped-storage.pages-to-warn-threshold", 256);
+  //=========================================================================================================
 
 
   private final Path storagePath;
@@ -399,8 +412,13 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
       try {
         unmapBuffer(pageBuffer);
       }
-      catch (Exception e) {
-        throw new IOException("Can't unmap pageBuffer", e);
+      catch (Throwable t) {
+        if (FAIL_ON_FAILED_UNMAP) {
+          throw new IOException("Can't unmap pageBuffer", t);
+        }
+        else {
+          THROTTLED_LOG.warn("Can't unmap pageBuffer explicitly -- rely on GC to do it eventually", t);
+        }
       }
     }
 
@@ -426,19 +444,25 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
       if (!buffer.isDirect()) {
         return;
       }
+      if(INVOKE_CLEANER_METHOD == null){
+        throw new IllegalStateException("No access to Unsafe.invokeCleaner() -- explicit mapped buffers unmapping is unavailable");
+      }
 
       INVOKE_CLEANER_METHOD.invoke(ReflectionUtil.getUnsafe(), buffer);
     }
 
-    private static final @NotNull Method INVOKE_CLEANER_METHOD;
+    private static final Method INVOKE_CLEANER_METHOD;
 
     static {
-      Object unsafe = ReflectionUtil.getUnsafe();
-      Class<?> unsafeClass = unsafe.getClass();
-      Method cleanerMethod = ReflectionUtil.getDeclaredMethod(unsafeClass, "invokeCleaner", ByteBuffer.class);
-      if (cleanerMethod == null) {
-        //MAYBE RC: instead of failing -- just log WARN/ERROR 'No cleaner access...' in .unmap() ?
-        throw new ExceptionInInitializerError("Unsafe.invokeCleaner(ByteBuffer) is not available");
+      Method cleanerMethod;
+      try {
+        Object unsafe = ReflectionUtil.getUnsafe();
+        Class<?> unsafeClass = unsafe.getClass();
+        cleanerMethod = ReflectionUtil.getDeclaredMethod(unsafeClass, "invokeCleaner", ByteBuffer.class);
+      }
+      catch (Throwable t) {
+        LOG.error("Can't get access to Unsafe.invokeCleaner() -- explicit mapped buffers unmapping will be unavailable", t);
+        cleanerMethod = null;
       }
       INVOKE_CLEANER_METHOD = cleanerMethod;
     }
