@@ -182,10 +182,8 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.groovy.dev")
       spec.withModule("intellij.kotlin.dev")
       spec.withModule("intellij.platform.statistics.devkit")
-
-      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },
-    pluginAuto(listOf("intellij.devkit")) { spec ->
+    plugin("intellij.devkit") { spec ->
       spec.withModule("intellij.devkit.core")
       spec.withModule("intellij.devkit.git")
       spec.withModule("intellij.devkit.themes")
@@ -198,6 +196,10 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.kotlin.devkit")
       spec.withModule("intellij.devkit.jps")
       spec.withModule("intellij.devkit.runtimeModuleRepository.jps")
+
+      spec.withProjectLibrary("workspace-model-codegen")
+
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },
     plugin("intellij.eclipse") { spec ->
       spec.withModule("intellij.eclipse.jps", "eclipse-jps.jar")
