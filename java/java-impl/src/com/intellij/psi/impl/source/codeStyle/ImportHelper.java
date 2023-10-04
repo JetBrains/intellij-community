@@ -227,13 +227,13 @@ public final class ImportHelper{
       String shortName = PsiNameHelper.getShortClassName(name);
 
       String thisPackageClass = !thisPackageName.isEmpty() ? thisPackageName + "." + shortName : shortName;
-      if (facade.findClass(thisPackageClass, resolveScope) != null) {
+      if (facade.findClass(thisPackageClass, resolveScope) != null && facade.findClass(name, resolveScope) != null) {
         namesToUseSingle.add(name);
         continue;
       }
       if (!isImplicitlyImported) {
         String langPackageClass = JAVA_LANG_PACKAGE + "." + shortName; //TODO : JSP!
-        if (facade.findClass(langPackageClass, resolveScope) != null) {
+        if (facade.findClass(langPackageClass, resolveScope) != null && facade.findClass(name, resolveScope) != null) {
           namesToUseSingle.add(name);
           continue;
         }
@@ -316,9 +316,7 @@ public final class ImportHelper{
       }
       else if ((aClass = facade.findClass(onDemand, resolveScope)) != null) {  // import static foo.package1.Class1.*;
         if (isStatic) {
-          PsiMember[][] memberArray = {aClass.getInnerClasses(), aClass.getMethods(), aClass.getFields()};
-          Set<String> set = Arrays.stream(memberArray)
-            .flatMap(Arrays::stream)
+          Set<String> set = Arrays.stream(aClass.getInnerClasses())
             .filter(member -> member.hasModifierProperty(PsiModifier.STATIC))
             .map(PsiMember::getName).collect(toSet());
           classNames.put(onDemand, set);

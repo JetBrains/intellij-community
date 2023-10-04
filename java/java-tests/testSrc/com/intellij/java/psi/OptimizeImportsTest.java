@@ -94,6 +94,15 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() { doTest(); }
 
   public void testDontCollapseToOnDemandImport() { doTest(); }
+  public void testDontInsertRedundantJavaLangImports() {
+    myFixture.addClass("""
+      package imports;
+      
+      public enum Values {
+        String, Object, Double
+      }""");
+    doTest();
+  }
   public void testIgnoreInaccessible() { doTest();}
 
   public void testEnsureConflictingImportsNotCollapsed() {
