@@ -18,7 +18,7 @@ import javax.swing.SwingUtilities
 
 class TableTooltipsController(lifetime: Lifetime, private val schedulerKey: Any = TableTooltipsController::class.java) : HoverListener() {
   private var tooltip: Balloon? = null
-  private val tooltipScheduler = Debouncer(500, lifetime)
+  private val tooltipScheduler = Debouncer(Registry.intValue("ide.tooltip.initialReshowDelay").toLong(), lifetime)
   private val tooltipProvidersTracker = TooltipProvidersTracker()
 
   fun install(table: JTable) {
