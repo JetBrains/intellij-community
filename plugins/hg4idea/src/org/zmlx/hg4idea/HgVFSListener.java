@@ -333,7 +333,7 @@ public final class HgVFSListener extends VcsVFSListener {
       private void handleRenameError() {
         NotificationAction viewFilesAction =
           NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files"), () -> {
-            List<FilePath> filePaths = ContainerUtil.map(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath));
+            List<FilePath> filePaths = ContainerUtil.map(failedToMove, movedInfo -> movedInfo.getOldPath());
             DialogWrapper dialog = new ProcessedFilePathsDialog(myProject, filePaths);
             dialog.setTitle(HgBundle.message("hg4idea.rename.error.title"));
             dialog.show();
@@ -349,8 +349,8 @@ public final class HgVFSListener extends VcsVFSListener {
 
       @Override
       protected void process(final MovedFileInfo file) {
-        final FilePath source = VcsUtil.getFilePath(file.myOldPath);
-        final FilePath target = VcsUtil.getFilePath(file.myNewPath);
+        final FilePath source = file.getOldPath();
+        final FilePath target = file.getNewPath();
         VirtualFile sourceRoot = VcsUtil.getVcsRootFor(myProject, source);
         VirtualFile targetRoot = VcsUtil.getVcsRootFor(myProject, target);
         if (sourceRoot != null && sourceRoot.equals(targetRoot)) {
