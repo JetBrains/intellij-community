@@ -77,7 +77,7 @@ public final class IndexingStamp {
   private static final ReadWriteLock flushLock = new ReentrantReadWriteLock();
 
   private static IndexingStampStorage createStorage() {
-    if (Registry.is("scanning.stamps.over.fast.attributes", false) || Registry.is("scanning.trust.indexing.flag", false)) {
+    if (Registry.is("scanning.stamps.over.fast.attributes", true) || Registry.is("scanning.trust.indexing.flag", false)) {
       return new IndexingStampStorageOverFastAttributes();
     }
     else {
