@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumeratorFactory;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.DurableDataEnumerator;
+import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
@@ -18,9 +19,9 @@ import java.util.Arrays;
 /**
  * Implementation on top of DurableEnumerator
  */
-public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEnumerator {
+public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEnumerator, CleanableStorage {
 
-  private final DurableDataEnumerator<byte[]> enumerator;
+  private final DurableEnumerator<byte[]> enumerator;
 
   public static ContentHashEnumeratorOverDurableEnumerator open(@NotNull Path storagePath) throws IOException {
     return new ContentHashEnumeratorOverDurableEnumerator(
@@ -30,7 +31,7 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
     );
   }
 
-  public ContentHashEnumeratorOverDurableEnumerator(@NotNull DurableDataEnumerator<byte[]> enumerator) {
+  public ContentHashEnumeratorOverDurableEnumerator(@NotNull DurableEnumerator<byte[]> enumerator) {
     this.enumerator = enumerator;
   }
 
@@ -108,6 +109,11 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
   @Override
   public void close() throws IOException {
     enumerator.close();
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    enumerator.closeAndClean();
   }
 
   /** Content hash (cryptographic hash of file content, byte[]) descriptor. */
