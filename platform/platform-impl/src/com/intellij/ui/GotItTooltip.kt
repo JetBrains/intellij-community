@@ -240,6 +240,14 @@ class GotItTooltip internal constructor(@NonNls val id: String,
   }
 
   /**
+   * Make the tooltip focused when it's shown.
+   */
+  fun withFocus(): GotItTooltip {
+    gotItBuilder.requestFocus(true)
+    return this
+  }
+
+  /**
    * Show close shortcut next to the "Got It" button.
    */
   @Deprecated("Not supported in the updated design")
@@ -327,7 +335,7 @@ class GotItTooltip internal constructor(@NonNls val id: String,
     if (canShow()) {
       val balloonProperty = ClientProperty.get(component, BALLOON_PROPERTY)
       if (balloonProperty == null) {
-        balloon = createAndShow(component, pointProvider).also { ClientProperty.put(component, BALLOON_PROPERTY, it) }
+        balloon = createAndShow(component, pointProvider)
       }
       else if (balloonProperty is BalloonImpl && balloonProperty.isVisible) {
         balloonProperty.revalidate()
@@ -404,6 +412,7 @@ class GotItTooltip internal constructor(@NonNls val id: String,
       onBalloonCreated(it)
     }
     this.balloon = balloon
+    ClientProperty.put(component, BALLOON_PROPERTY, balloon)
 
     when {
       currentlyShown == null -> {
@@ -522,5 +531,8 @@ class GotItTooltip internal constructor(@NonNls val id: String,
 
     // Global tooltip queue start element
     private var currentlyShown: GotItTooltip? = null
+
+    @JvmStatic
+    fun isCurrentlyShownFor(component: Component): Boolean = ClientProperty.isSet(component, BALLOON_PROPERTY)
   }
 }

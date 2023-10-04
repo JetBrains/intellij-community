@@ -44,6 +44,7 @@ internal class SpeedSearchActionHandler(val targetComponent: JComponent, private
     if (showGotItTooltip) {
       GotItTooltip("speed.search.shown", gotItMessage)
         .withPosition(Balloon.Position.atRight)
+        .withFocus()
         .show(component) { c, _ -> Point(c.width, c.height / 2) }
     }
   }
