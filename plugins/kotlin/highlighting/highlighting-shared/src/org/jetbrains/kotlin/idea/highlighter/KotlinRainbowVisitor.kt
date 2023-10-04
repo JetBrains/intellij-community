@@ -72,8 +72,8 @@ class KotlinRainbowVisitor : RainbowVisitor() {
 
     private fun addRainbowHighlight(target: PsiElement, rainbowElement: PsiElement, attributesKey: TextAttributesKey? = null) {
         val lambdaSequenceIterator = target.parents
-            .takeWhile { it !is KtDeclaration || it.isAnonymousFunction || it is KtFunctionLiteral }
-            .filter { it is KtLambdaExpression || it.isAnonymousFunction }
+            .takeWhile { it !is KtDeclaration || it is KtNamedFunction && it.nameIdentifier == null || it is KtFunctionLiteral }
+            .filter { it is KtLambdaExpression || it is KtNamedFunction && it.nameIdentifier == null }
             .iterator()
 
         val attributesKeyToUse = attributesKey ?: (if (target is KtParameter) PARAMETER else LOCAL_VARIABLE)
@@ -99,5 +99,6 @@ class KotlinRainbowVisitor : RainbowVisitor() {
     private fun PsiElement.isRainbowDeclaration(): Boolean =
         (this is KtProperty && isLocal) ||
                 (this is KtParameter && getStrictParentOfType<KtPrimaryConstructor>() == null) ||
-                this is KtDestructuringDeclarationEntry
+                this is KtDestructuringDeclarationEntry ||
+                this is KtFunctionLiteral
 }
