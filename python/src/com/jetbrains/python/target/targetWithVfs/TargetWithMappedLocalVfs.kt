@@ -2,8 +2,11 @@
 package com.jetbrains.python.target.targetWithVfs
 
 import com.intellij.openapi.vfs.VirtualFile
+import java.nio.file.Path
 
 interface TargetWithMappedLocalVfs {
   fun getVfsFromTargetPath(targetPath: String): VirtualFile?
   fun getTargetPathFromVfs(file: VirtualFile): String?
+  fun getLocalPath(targetPath: String): Path?
+  fun getTargetPath(localPath: Path): String?
 }
