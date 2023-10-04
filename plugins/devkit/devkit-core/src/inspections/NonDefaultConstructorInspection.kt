@@ -222,8 +222,6 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
 @NonNls
 private val allowedClientSessionsQualifiedNames = setOf(
   "com.intellij.openapi.client.ClientSession",
-  "com.jetbrains.rdserver.core.GuestSession",
-  "com.jetbrains.rdserver.core.RemoteSession",
 )
 
 @NonNls
