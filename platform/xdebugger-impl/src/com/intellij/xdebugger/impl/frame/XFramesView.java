@@ -214,13 +214,6 @@ public final class XFramesView extends XDebugView {
         }
       }
     });
-    ComboboxSpeedSearch search = new ComboboxSpeedSearch(myThreadComboBox, null) {
-      @Override
-      protected String getElementText(Object element) {
-        return ((XExecutionStack)element).getDisplayName();
-      }
-    };
-    search.setupListeners();
 
     ActionToolbarImpl toolbar = createToolbar();
     myThreadsPanel = new Wrapper();
