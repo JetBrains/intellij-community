@@ -306,7 +306,6 @@ final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
     }
   };
 
-  private boolean myTakeIntoAccount = false;
   private boolean myIsModule = false;
   private final String myFileName;
   private final boolean myIsGenerated;
@@ -314,7 +313,7 @@ final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
   private String myName;
   private String myVersion; // for class contains a class bytecode version, for module contains a module version
   private String mySuperClass;
-  private String[] myInterfaces;
+  private Iterable<String> myInterfaces;
   private String mySignature;
 
   private final Ref<String> myClassNameHolder = Ref.create();
@@ -341,7 +340,7 @@ final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
     myIsGenerated = isGenerated;
   }
 
-  public static NodeBuilder create(String filePath, ClassReader cr, boolean isGenerated) {
+  public static JvmClassNodeBuilder create(String filePath, ClassReader cr, boolean isGenerated) {
     JvmClassNodeBuilder builder = new JvmClassNodeBuilder(filePath, isGenerated);
     try {
       cr.accept(builder, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
@@ -362,6 +361,8 @@ final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
     myUsages.add(usage);
   }
 
+
+  // todo: ignore private nodes on the client side
   @Override
   public JVMClassNode<? extends JVMClassNode<?, ?>, ? extends Proto.Diff<? extends JVMClassNode<?, ?>>> getResult() {
     JVMFlags flags = new JVMFlags(myAccess);
@@ -377,7 +378,7 @@ final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
     if (myIsModule) {
       return new JvmModule(flags, myVersion, myFileName, myName, myModuleRequires, myModuleExports, myUsages);
     }
-    return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), Arrays.asList(myInterfaces), myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myUsages);
+    return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myUsages);
   }
 
   @Override
@@ -387,18 +388,16 @@ final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
     myVersion = String.valueOf(version);
     mySignature = sig;
     mySuperClass = superName;
-    myInterfaces = interfaces;
+    myInterfaces = Iterators.asIterable(interfaces);
 
     myClassNameHolder.set(name);
 
-    if (mySuperClass != null) {
+    if (mySuperClass != null && !Utils.OBJECT_CLASS_NAME.equals(mySuperClass)) {
       addUsage(new ClassUsage(mySuperClass));
     }
 
-    if (myInterfaces != null) {
-      for (String ifaceName : myInterfaces) {
-        addUsage(new ClassUsage(ifaceName));
-      }
+    for (String ifaceName : myInterfaces) {
+      addUsage(new ClassUsage(ifaceName));
     }
 
     processSignature(sig);

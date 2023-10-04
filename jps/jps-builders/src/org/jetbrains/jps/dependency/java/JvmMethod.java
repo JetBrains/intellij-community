@@ -7,7 +7,6 @@ import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.Type;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -24,7 +23,7 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
 
     super(flags, signature, name, TypeRepr.getType(Type.getReturnType(descriptor)), annotations, defaultValue);
     myParamAnnotations = parameterAnnotations;
-    myExceptions = Iterators.collect(Iterators.map(Arrays.asList(exceptions), s -> new TypeRepr.ClassType(s)), new HashSet<>());
+    myExceptions = Iterators.collect(Iterators.map(Iterators.asIterable(exceptions), s -> new TypeRepr.ClassType(s)), new HashSet<>());
     myArgTypes = TypeRepr.getTypes(Type.getArgumentTypes(descriptor));
   }
 

@@ -50,6 +50,10 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return index >= 0? jvmClassName.substring(0, index) : "";
   }
 
+  public boolean isInterface() {
+    return getFlags().isInterface();
+  }
+
   public boolean isAnonymous() {
     return getFlags().isAnonymous();
   }

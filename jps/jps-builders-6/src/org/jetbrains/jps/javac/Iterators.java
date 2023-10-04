@@ -178,6 +178,10 @@ public final class Iterators {
     };
   }
 
+  public static <T> Iterable<T> asIterable(final T[] elem) {
+    return elem == null? Collections.<T>emptyList() : Arrays.asList(elem);
+  }
+
   public static <T> Iterator<T> asIterator(final T elem) {
     return new BaseIterator<T>() {
       private boolean available = true;
