@@ -51,6 +51,7 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.ClosedFileSystemException
 import java.nio.file.Path
+import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicReference
 
 internal val projectMethodType: MethodType = MethodType.methodType(Void.TYPE, Project::class.java)
@@ -389,7 +390,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
   private fun storeCreationTrace() {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      putUserData(CREATION_TRACE, ExceptionUtil.currentStackTrace())
+      putUserData(CREATION_TRACE, "${LocalDateTime.now()}@${ExceptionUtil.currentStackTrace()}")
     }
   }
 
