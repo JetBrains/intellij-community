@@ -544,18 +544,18 @@ public abstract class VcsVFSListener implements Disposable {
   protected void executeDelete() {
     AllDeletedFiles allFiles = myProcessor.acquireAllDeletedFiles();
     List<FilePath> filesToDelete = allFiles.deletedWithoutConfirmFiles;
-    List<FilePath> deletedFiles = allFiles.deletedFiles;
+    List<FilePath> filesToConfirmDeletion = allFiles.deletedFiles;
 
     filesToDelete.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
-    deletedFiles.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
+    filesToConfirmDeletion.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
 
     VcsShowConfirmationOption.Value removeOption = myRemoveOption.getValue();
     if (removeOption == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-      filesToDelete.addAll(deletedFiles);
+      filesToDelete.addAll(filesToConfirmDeletion);
     }
     else if (removeOption == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
-      if (!deletedFiles.isEmpty()) {
-        Collection<FilePath> filePaths = selectFilePathsToDelete(deletedFiles);
+      if (!filesToConfirmDeletion.isEmpty()) {
+        Collection<FilePath> filePaths = selectFilePathsToDelete(filesToConfirmDeletion);
         filesToDelete.addAll(filePaths);
       }
     }
@@ -811,12 +811,12 @@ public abstract class VcsVFSListener implements Disposable {
        * Create file events cannot be filtered in afterVfsChange since VcsFileListenerContextHelper populated after actual file creation in PathsVerifier.CheckAdded.check
        * So this commandFinished is the only way to get in sync with VcsFileListenerContextHelper to check if additions need to be filtered.
        */
-      List<VFileEvent> events = ContainerUtil.filter(myEventsToProcess, e -> !(e instanceof VFileCreateEvent) || allowedAddition(e));
+      List<VFileEvent> afterEvents = ContainerUtil.filter(myEventsToProcess, e -> !(e instanceof VFileCreateEvent) || allowedAddition(e));
       myEventsToProcess.clear();
 
-      if (events.isEmpty() && !myProcessor.isAnythingToProcess()) return;
+      if (afterEvents.isEmpty() && !myProcessor.isAnythingToProcess()) return;
 
-      processEventsInBackground(events);
+      processEventsInBackground(afterEvents);
     }
 
     /**
