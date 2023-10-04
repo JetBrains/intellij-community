@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn.lesson.general.run
 
 import com.intellij.execution.RunManager
@@ -20,6 +20,7 @@ import com.intellij.util.DocumentUtil
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
@@ -371,8 +372,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       TaskContext.RestoreNotification(incorrectBreakPointsMessage) {
         runWriteAction {
           LessonManager.instance.clearRestoreMessage()
-          val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-          breakpointManager.allBreakpoints.forEach { breakpointManager.removeBreakpoint(it) }
+          XDebuggerUtilImpl.removeAllBreakpoints(project)
           FileDocumentManager.getInstance().getFile(editor.document)
           val line = logicalPosition.line
           val createPosition = XDebuggerUtil.getInstance().createPosition(virtualFile, line)
@@ -440,10 +440,7 @@ private val incorrectBreakPointsMessage = LessonsBundle.message("debug.workflow.
 
 fun LessonContext.clearBreakpoints() {
   prepareRuntimeTask {
-    runWriteAction {
-      val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-      breakpointManager.allBreakpoints.forEach { breakpointManager.removeBreakpoint(it) }
-    }
+    XDebuggerUtilImpl.removeAllBreakpoints(project)
   }
 }
 

@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -410,7 +409,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                          int line,
                                                                          XLineBreakpointType<P> type,
                                                                          Boolean temporary) {
-    return WriteAction.compute(() -> breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
+    return breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary);
   }
 
   public static boolean removeBreakpointWithConfirmation(final XBreakpointBase<?, ?, ?> breakpoint) {
@@ -486,8 +485,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Override
-  public void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
-    WriteAction.run(() -> XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint));
+  public void removeBreakpoint(Project project, XBreakpoint<?> breakpoint) {
+    XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint);
+  }
+
+  public static void removeAllBreakpoints(@NotNull Project project) {
+    ((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager()).removeAllBreakpoints();
   }
 
   @Override

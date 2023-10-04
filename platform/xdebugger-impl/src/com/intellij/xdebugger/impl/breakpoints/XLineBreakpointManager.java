@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -43,7 +42,6 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -167,8 +165,7 @@ public final class XLineBreakpointManager {
       return;
     }
 
-    XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
-    WriteAction.run(() -> toRemove.forEach(manager::removeBreakpoint));
+    ((XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager()).removeBreakpoints(toRemove);
   }
 
   public void breakpointChanged(XLineBreakpointImpl breakpoint) {
