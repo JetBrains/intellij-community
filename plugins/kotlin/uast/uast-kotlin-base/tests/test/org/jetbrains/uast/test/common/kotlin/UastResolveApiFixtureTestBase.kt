@@ -513,6 +513,46 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("it", resolved.name)
     }
 
+    fun checkResolveImplicitLambdaParameter_binary(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                package test.pkg;
+                
+                public class Foo {
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                package test.pkg
+
+                inline fun <T, R> T.use(block: (T) -> R): R {
+                  return block(this)
+                }
+                
+                class Test {
+                  lateinit var x: Foo
+                    private set
+                    
+                  init {
+                    Foo().use {
+                      x = it
+                    }
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val assign = myFixture.file.findUElementByTextFromPsi<UBinaryExpression>("x = it", strict = false)
+            .orFail("cant convert to UBinaryExpression")
+        val ref = assign.rightOperand as USimpleNameReferenceExpression
+        TestCase.assertEquals("it", ref.identifier)
+        // No source for implicit lambda parameter. Expect to be resolved to fake PsiParameter used inside ULambdaExpression
+        val resolved = (ref.resolve() as? PsiParameter)
+            .orFail("cant resolve implicit lambda parameter")
+        TestCase.assertEquals("it", resolved.name)
+    }
+
     fun checkResolveSyntheticMethod(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """
