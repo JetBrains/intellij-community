@@ -559,11 +559,6 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
-  @FunctionalInterface
-  protected interface ExecuteAddCallback {
-    void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap);
-  }
-
   protected void saveUnsavedVcsIgnoreFiles() {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     Set<String> ignoreFileNames = VcsUtil.getVcsIgnoreFileNames(myProject);

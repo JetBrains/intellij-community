@@ -73,14 +73,8 @@ public final class HgVFSListener extends VcsVFSListener {
 
   @Override
   protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
-    executeAddWithoutIgnores(addedFiles, copyFromMap,
-                             (notIgnoredAddedFiles, copiedFilesMap) -> originalExecuteAdd(notIgnoredAddedFiles, copiedFilesMap));
-  }
-
-  private void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
-                                        @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
-                                        @NotNull ExecuteAddCallback executeAddCallback) {
     saveUnsavedVcsIgnoreFiles();
+
     // if a file is copied from another repository, then 'hg add' should be used instead of 'hg copy'.
     // Thus here we remove such files from the copyFromMap.
     for (Iterator<Map.Entry<VirtualFile, VirtualFile>> it = copyFromMap.entrySet().iterator(); it.hasNext(); ) {
@@ -99,6 +93,7 @@ public final class HgVFSListener extends VcsVFSListener {
         it.remove();
       }
     }
+
     // exclude files which are ignored in .hgignore in background and execute adding after that
     final Map<VirtualFile, Collection<VirtualFile>> sortedFiles = HgUtil.sortByHgRoots(myProject, addedFiles);
     final HashSet<VirtualFile> untrackedFiles = new HashSet<>();
@@ -117,7 +112,7 @@ public final class HgVFSListener extends VcsVFSListener {
         // select files to add if there is something to select
         if (!addedFiles.isEmpty() || !copyFromMap.isEmpty()) {
 
-          AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> executeAddCallback.executeAdd(addedFiles, copyFromMap));
+          AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> originalExecuteAdd(addedFiles, copyFromMap));
         }
       }
     }.queue();
