@@ -191,7 +191,7 @@ final class HighlightingMarkupStore {
           return false;
         }
         if (markupInfo != null) {
-          LOG.debug(this + " " + markupInfo.highlighters().size() + " highlighters for " + file.getName());
+          LOG.debug(this + " " + markupInfo.size() + " highlighters for " + file.getName());
         }
       }
       return true;

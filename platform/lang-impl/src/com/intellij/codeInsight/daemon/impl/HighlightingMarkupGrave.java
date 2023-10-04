@@ -52,7 +52,7 @@ final class HighlightingMarkupGrave implements Disposable {
   private static final Key<Boolean> IS_ZOMBIE = Key.create("IS_ZOMBIE");
 
   private final @NotNull Project myProject;
-  private final @NotNull ConcurrentIntObjectMap<Boolean> myResurrectedZombies; // fileId -> zombieDisposed
+  private final @NotNull ConcurrentIntObjectMap<Boolean> myResurrectedZombies; // fileId -> isMarkupModelPreferable
   private final @NotNull HighlightingMarkupStore myMarkupStore;
 
   HighlightingMarkupGrave(@NotNull Project project) {
@@ -73,7 +73,7 @@ final class HighlightingMarkupGrave implements Disposable {
     myProject.getMessageBus().connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
       @Override
       public void daemonFinished(@NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
-        if (!DumbService.getInstance(myProject).isDumb() && !myResurrectedZombies.isEmpty()) {
+        if (!DumbService.getInstance(myProject).isDumb()) {
           for (FileEditor fileEditor : fileEditors) {
             if (fileEditor instanceof TextEditor textEditor &&
                 textEditor.getEditor().getEditorKind() == EditorKind.MAIN_EDITOR &&
@@ -147,7 +147,7 @@ final class HighlightingMarkupGrave implements Disposable {
     if (document.getText().hashCode() != markupInfo.contentHash()) {
       // text changed since the cached markup was saved on-disk
       if (LOG.isDebugEnabled()) {
-        LOG.debug("restore canceled hash mismatch " + markupInfo.highlighters().size() + " for " + file);
+        LOG.debug("restore canceled hash mismatch " + markupInfo.size() + " for " + file);
       }
       myMarkupStore.removeMarkup(fileWithId);
       myResurrectedZombies.put(fileWithId.getId(), true);
@@ -156,8 +156,10 @@ final class HighlightingMarkupGrave implements Disposable {
 
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
     for (HighlighterState state : markupInfo.highlighters()) {
-      if (state.end() > document.getTextLength()) {
+      int textLength = document.getTextLength();
+      if (state.end() > textLength) {
         // something's wrong, the document has changed in the other thread?
+        LOG.warn("skipped " + state + " as it is out of document with length " + textLength);
         continue;
       }
       RangeHighlighter highlighter;
@@ -190,13 +192,9 @@ final class HighlightingMarkupGrave implements Disposable {
         highlighter.setGutterIconRenderer(fakeIcon);
       }
       markZombieMarkup(highlighter);
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("create " + highlighter + "; key=" + highlighter.getTextAttributesKey() +
-                 "; attr=" + highlighter.getTextAttributes(null) + "; icon=" + state.gutterIcon());
-      }
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("restored " + markupInfo.highlighters().size() + " for " + file);
+      LOG.debug("restored " + markupInfo.size() + " for " + file);
     }
     myResurrectedZombies.put(fileWithId.getId(), false);
   }
@@ -221,25 +219,25 @@ final class HighlightingMarkupGrave implements Disposable {
       ReadAction.run(() -> {
         FileMarkupInfo markupFromModel = getMarkupFromModel(document, colorsScheme);
         FileMarkupInfo storedMarkup = myMarkupStore.getMarkup(fileWithId);
-        if (isMoreRelevant(storedMarkup, markupFromModel)) {
-          myMarkupStore.putMarkup(fileWithId, markupFromModel);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("stored markup " + markupFromModel.highlighters().size() + " for " + file);
+        Boolean zombieDisposed = myResurrectedZombies.get(fileWithId.getId());
+        GraveDecision graveDecision = GraveDecision.getDecision(markupFromModel, storedMarkup, zombieDisposed);
+        switch (graveDecision) {
+          case STORE_NEW -> {
+            myMarkupStore.putMarkup(fileWithId, markupFromModel);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("stored markup " + markupFromModel.size() + " for " + file);
+            }
           }
-        }
-        else {
-          /*
-            Do not store markup if it consists of fewer highlighters than already stored on disk.
-            It prevents the following scenario: given a huge file like EditorImpl.java
-            1. the file is opened
-            2. full markup is restored from disk
-            3. daemon starts highlighting process
-            4. file markup model becomes empty
-            5. the user cancels the daemon (closes file or project or application)
-            6. putInGrave stores empty markup got from model on disk
-           */
-          if (LOG.isDebugEnabled() && storedMarkup != null) {
-            LOG.debug("preserved markup " + storedMarkup.highlighters().size() + " for " + file);
+          case REMOVE_OLD -> {
+            myMarkupStore.removeMarkup(fileWithId);
+            if (LOG.isDebugEnabled() && storedMarkup != null) {
+              LOG.debug("removed outdated markup " + storedMarkup.size() + " for " + file);
+            }
+          }
+          case KEEP_OLD -> {
+            if (LOG.isDebugEnabled() && storedMarkup != null) {
+              LOG.debug("preserved markup " + storedMarkup.size() + " for " + file);
+            }
           }
         }
       });
@@ -257,15 +255,6 @@ final class HighlightingMarkupGrave implements Disposable {
   public void dispose() {
     // TODO: it is not allowed to close on EDT
     myMarkupStore.close(false);
-  }
-
-  private static boolean isMoreRelevant(@Nullable FileMarkupInfo oldMarkup, @NotNull FileMarkupInfo newMarkup) {
-    if (newMarkup.highlighters().isEmpty()) {
-      return false;
-    }
-    return oldMarkup == null ||
-           oldMarkup.contentHash() != newMarkup.contentHash() ||
-           oldMarkup.highlighters().size() <= newMarkup.highlighters().size();
   }
 
   record FileMarkupInfo(int contentHash, @NotNull List<@NotNull HighlighterState> highlighters) {
@@ -286,6 +275,14 @@ final class HighlightingMarkupGrave implements Disposable {
       for (HighlighterState highlighterState : highlighters) {
         highlighterState.bury(out);
       }
+    }
+
+    boolean isEmpty() {
+      return highlighters.isEmpty();
+    }
+
+    int size() {
+      return highlighters.size();
     }
   }
 
@@ -340,7 +337,7 @@ final class HighlightingMarkupGrave implements Disposable {
     }
 
     private void writeTextAttributes(@NotNull DataOutput out) throws IOException {
-      boolean attributesExists = textAttributes != null;
+      boolean attributesExists = textAttributes != null && textAttributesKey == null;
       out.writeBoolean(attributesExists);
       if (attributesExists) {
         textAttributes.writeExternal(out);
@@ -401,6 +398,48 @@ final class HighlightingMarkupGrave implements Disposable {
         .map(h -> new HighlighterState(h, colorsScheme))
         .sorted(comparator)
         .toList();
+    }
+  }
+
+  private enum GraveDecision {
+    STORE_NEW,
+    KEEP_OLD,
+    REMOVE_OLD;
+
+    static GraveDecision getDecision(
+      @NotNull FileMarkupInfo newMarkup,
+      @Nullable FileMarkupInfo oldMarkup,
+      @Nullable Boolean isNewMoreRelevant
+    ) {
+      if (oldMarkup == null && !newMarkup.isEmpty()) {
+        // put zombie's limbs
+        return STORE_NEW;
+      }
+      if (oldMarkup == null) {
+        // no a limb to put in grave
+        return KEEP_OLD;
+      }
+      if (oldMarkup.contentHash() != newMarkup.contentHash() && !newMarkup.isEmpty()) {
+        // fresh limbs
+        return STORE_NEW;
+      }
+      if (oldMarkup.contentHash() != newMarkup.contentHash()) {
+        // graved zombie is rotten and there is no a limb to bury
+        return REMOVE_OLD;
+      }
+      if (newMarkup.isEmpty()) {
+        // graved zombie is still fresh
+        return KEEP_OLD;
+      }
+      if (isNewMoreRelevant == null) {
+        // should never happen. file is closed without being opened before
+        return STORE_NEW;
+      }
+      if (isNewMoreRelevant) {
+        // limbs form complete zombie
+        return STORE_NEW;
+      }
+      return KEEP_OLD;
     }
   }
 
