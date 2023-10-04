@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-final class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Existing<SourceRootEntity> {
+final class SourceRootIndexableEntityProvider implements IndexableEntityProvider<SourceRootEntity> {
 
   @Override
   public @NotNull Class<SourceRootEntity> getEntityClass() {
@@ -28,14 +28,6 @@ final class SourceRootIndexableEntityProvider implements IndexableEntityProvider
   public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
     return Collections.singletonList(
       DependencyOnParent.create(ContentRootEntity.class, SourceRootIndexableEntityProvider::getReplacedParentEntityIteratorBuilder));
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
-                                                                                                      @NotNull EntityStorage entityStorage,
-                                                                                                      @NotNull Project project) {
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getSymbolicId(),
-                                                             collectRootUrls(ExtensionsKt.getSourceRoots(entity)));
   }
 
   @Override

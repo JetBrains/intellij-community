@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
-import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,7 +21,7 @@ import java.util.List;
 
 import static com.intellij.util.indexing.roots.IndexableEntityProvider.DependencyOnParent.create;
 
-final class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Existing<ContentRootEntity> {
+final class ContentRootIndexableEntityProvider implements IndexableEntityProvider<ContentRootEntity> {
 
   @Override
   public @NotNull Class<ContentRootEntity> getEntityClass() {
@@ -32,13 +31,6 @@ final class ContentRootIndexableEntityProvider implements IndexableEntityProvide
   @Override
   public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
     return Collections.singletonList(create(ModuleEntity.class, ContentRootIndexableEntityProvider::getReplacedParentEntityIteratorBuilder));
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
-                                                                                                      @NotNull EntityStorage entityStorage,
-                                                                                                      @NotNull Project project) {
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getSymbolicId(), collectRootUrls(entity.getContentRoots()));
   }
 
   @Override
