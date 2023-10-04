@@ -83,6 +83,21 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   }
 
   @Test
+  @TargetVersions("5.6+")
+  fun `test download sources with configure on demand`() {
+    createProjectSubFile("gradle.properties", "org.gradle.configureondemand=true")
+    importProject {
+      withJavaPlugin()
+      withIdeaPlugin()
+      addPrefix("idea.module.downloadSources = false")
+      withMavenCentral()
+      addTestImplementationDependency(DEPENDENCY)
+    }
+    assertModules("project", "project.main", "project.test")
+    assertSourcesDownloadedAndAttached(targetModule = "project.test")
+  }
+
+  @Test
   @TargetVersions("!4.0")
   fun `test download sources from gradle sub module repository`() {
     createSettingsFile("include 'projectA', 'projectB' ")
