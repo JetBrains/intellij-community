@@ -37,15 +37,15 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.*
-import com.intellij.ui.components.*
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import kotlinx.coroutines.*
 import java.awt.*
 import java.awt.GridBagConstraints.*
@@ -188,17 +188,19 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
 
   override fun createNorthPanel(): JComponent? {
     myCountLabel = JBLabel()
-    myInfoLabel = htmlComponent("", null, null, null, false) { e: HyperlinkEvent ->
-      if (e.eventType == HyperlinkEvent.EventType.ACTIVATED && DISABLE_PLUGIN_URL == e.description) {
-        disablePlugin()
-      }
-      else {
-        BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e)
+    myInfoLabel = SwingHelper.createHtmlViewer(false, null, null, null).apply {
+      addHyperlinkListener {
+        if (it.eventType == HyperlinkEvent.EventType.ACTIVATED && DISABLE_PLUGIN_URL == it.description) {
+          disablePlugin()
+        }
+        else {
+          BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(it)
+        }
       }
     }
     myDetailsLabel = JBLabel()
     myDetailsLabel.foreground = UIUtil.getContextHelpForeground()
-    myForeignPluginWarningLabel = htmlComponent()
+    myForeignPluginWarningLabel = SwingHelper.createHtmlViewer(false, null, null, null)
     val toolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR, DefaultActionGroup(BackAction(), ForwardAction()), true)
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
@@ -283,12 +285,14 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
       myAssigneePanel.add(myAssigneeCombo)
     }
     @NlsSafe val heightSample = " "
-    myCredentialLabel = htmlComponent(heightSample, null, null, null, false) { e: HyperlinkEvent ->
-      if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-        val submitter = selectedCluster().submitter
-        if (submitter != null) {
-          submitter.changeReporterAccount(rootPane)
-          updateControls()
+    myCredentialLabel = SwingHelper.createHtmlViewer(false, null, null, null).apply {
+      text = heightSample
+      addHyperlinkListener {
+        if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+          selectedCluster().submitter?.let { submitter ->
+            submitter.changeReporterAccount(rootPane)
+            updateControls()
+          }
         }
       }
     }
