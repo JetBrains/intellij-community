@@ -213,12 +213,7 @@ public final class FileWatcher implements AppLifecycleListener {
 
     @Override
     public void notifyManualWatchRoots(@NotNull PluggableFileWatcher watcher, @NotNull Collection<String> roots) {
-      registerManualWatchRoots(watcher, roots);
-    }
-
-    private void registerManualWatchRoots(Object key, Collection<String> roots) {
-      Set<String> rootSet = myManualWatchRoots.computeIfAbsent(key, k -> new HashSet<>());
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      Set<String> rootSet = myManualWatchRoots.computeIfAbsent(watcher, k -> new HashSet<>());
       synchronized (rootSet) { rootSet.addAll(roots); }
       notifyOnEvent(OTHER);
     }
