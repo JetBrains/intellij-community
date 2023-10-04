@@ -109,7 +109,7 @@
 
     "CheckBox": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
-      "borderInsets": "2,3,3,0",
+      "borderInsets": "2,3,3,3",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI"
     },
 
@@ -424,7 +424,7 @@
 
     "RadioButton": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
-      "borderInsets": "2,2,2,0",
+      "borderInsets": "2,2,2,2",
       "darcula.selectionDisabledColor": "#606060",
       "darcula.selectionDisabledShadowColor": "#3c3c3c",
       "darcula.selectionEnabledColor": "#aaaaaa",
