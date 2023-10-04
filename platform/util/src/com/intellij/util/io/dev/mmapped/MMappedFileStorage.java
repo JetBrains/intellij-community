@@ -3,8 +3,8 @@ package com.intellij.util.io.dev.mmapped;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
@@ -223,6 +224,21 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
 
   @Override
   public void close() throws IOException {
+    //do not unmap by default, don't risk JVM crash
+    close( /*unmap: */ false);
+  }
+
+  /**
+   * Close the storage, and unmap all the pages mapped.
+   * BEWARE: explicit buffer unmapping is unsafe, since any use of mapped buffer after unmapping leads to a JVM crash.
+   * Because of that, this method is inherently risky.
+   * 'Safe' use of this method requires all the uses of this storage to be stopped beforehand -- ideally, it
+   * should be no Page references alive in use by any thread, i.e., no chance any thread accesses any Page
+   * of this storage after _starting_ the invocation of this method.
+   * Generally, it is much safer to call {@link #close()} without unmap -- in which case JVM/GC is responsible to
+   * keep buffers mapped until at least someone uses them.
+   */
+  public void close(boolean unmap) throws IOException {
     try {
       synchronized (pagesLock) {
         if (channel.isOpen()) {
@@ -230,9 +246,13 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
           for (Page page : pages) {
             if (page != null) {
               unregisterMappedPage(pageSize);
+
+              if (unmap) {
+                page.unmap();
+              }
             }
           }
-          //actual buffer unmap()-ing is done later, by GC
+          //if not unmapped explicitly (above), actual buffer unmap()-ing is done later, by GC
           // let's not delay it by keeping references:
           Arrays.fill(pages, null);
         }
@@ -256,15 +276,8 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
 
   @Override
   public void closeAndClean() throws IOException {
-    close();
-    if (SystemInfoRt.isWindows) {
-      //On Win there are a lot of issues with removing file that was mmapped.
-      // Let's give mapped buffers at least a chance to be collected & unmapped -- not a guarantee from that kind of
-      // issues, but a small step in the right direction
-
-      //noinspection CallToSystemGC
-      System.gc();
-    }
+    //on Windows it is impossible to delete the file without unmapping it first, so take the risk:
+    close( /* unmap: */ true);
     FileUtil.delete(storagePath);
   }
 
@@ -382,6 +395,15 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
       }
     }
 
+    private void unmap() throws IOException {
+      try {
+        unmapBuffer(pageBuffer);
+      }
+      catch (Exception e) {
+        throw new IOException("Can't unmap pageBuffer", e);
+      }
+    }
+
     public ByteBuffer rawPageBuffer() {
       return pageBuffer;
     }
@@ -397,6 +419,28 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
     @Override
     public String toString() {
       return "Page[#" + pageIndex + "][offset: " + offsetInFile + ", length: " + pageBuffer.capacity() + " b)";
+    }
+
+
+    public static void unmapBuffer(@NotNull ByteBuffer buffer) throws Exception {
+      if (!buffer.isDirect()) {
+        return;
+      }
+
+      INVOKE_CLEANER_METHOD.invoke(ReflectionUtil.getUnsafe(), buffer);
+    }
+
+    private static final @NotNull Method INVOKE_CLEANER_METHOD;
+
+    static {
+      Object unsafe = ReflectionUtil.getUnsafe();
+      Class<?> unsafeClass = unsafe.getClass();
+      Method cleanerMethod = ReflectionUtil.getDeclaredMethod(unsafeClass, "invokeCleaner", ByteBuffer.class);
+      if (cleanerMethod == null) {
+        //MAYBE RC: instead of failing -- just log WARN/ERROR 'No cleaner access...' in .unmap() ?
+        throw new ExceptionInInitializerError("Unsafe.invokeCleaner(ByteBuffer) is not available");
+      }
+      INVOKE_CLEANER_METHOD = cleanerMethod;
     }
   }
 
