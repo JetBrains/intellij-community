@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.resolve.multiplatform.K1ExpectActualCompatibility
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -40,7 +41,7 @@ fun MemberDescriptor.expectedDescriptors(): List<DeclarationDescriptor> {
     }
 
     return expectedForActual.orEmpty().run {
-        get(ExpectActualCompatibility.Compatible) ?: values.flatten()
+        get(K1ExpectActualCompatibility.Compatible) ?: values.flatten()
     }
 }
 
