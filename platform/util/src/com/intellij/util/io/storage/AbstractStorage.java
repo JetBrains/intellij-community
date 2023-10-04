@@ -2,6 +2,7 @@
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -35,6 +36,8 @@ public abstract class AbstractStorage implements IStorage {
 
   public static final @NonNls String INDEX_EXTENSION = ".storageRecordIndex";
   public static final @NonNls String DATA_EXTENSION = ".storageData";
+
+  private final Path storagePath;
 
   protected AbstractRecordsTable myRecordsTable;
   protected DataTable myDataTable;
@@ -87,6 +90,7 @@ public abstract class AbstractStorage implements IStorage {
   protected AbstractStorage(@NotNull Path storageFilePath,
                             @NotNull StorageLockContext context,
                             @Nullable CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+    this.storagePath = storageFilePath;
     myCapacityAllocationPolicy = capacityAllocationPolicy != null ? capacityAllocationPolicy
                                                                   : CapacityAllocationPolicy.DEFAULT;
     tryInit(storageFilePath, context, 0);
@@ -351,6 +355,13 @@ public abstract class AbstractStorage implements IStorage {
       IOUtil.closeSafe(LOG, myDataTable);
     });
   }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    Disposer.dispose(this);
+    deleteFiles(storagePath);
+  }
+
 
   @Override
   public void checkSanity(final int record) throws IOException {

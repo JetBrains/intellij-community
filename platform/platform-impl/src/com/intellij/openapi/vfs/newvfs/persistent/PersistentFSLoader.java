@@ -383,7 +383,6 @@ public final class PersistentFSLoader {
 
     makeBestEffortToCleanStorage(attributesEnumerator, attributesFile);
 
-    //TODO contentStorage doesn not implement CleanableStorage!
     makeBestEffortToCleanStorage(contentsStorage, contentsFile);
 
     makeBestEffortToCleanStorage(contentHashesEnumerator, contentsHashesFile);
