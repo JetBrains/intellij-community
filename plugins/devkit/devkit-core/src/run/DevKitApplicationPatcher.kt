@@ -44,9 +44,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       }
     }
 
-    if (!vmParametersAsList.contains("--add-opens")) {
-      JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
-    }
+    JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
 
     if (!isDev) {
       return
@@ -145,4 +143,3 @@ private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
     "compose.swing.render.on.graphics" to "true",
   )
 }
-
