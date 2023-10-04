@@ -15,6 +15,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.svg.SvgKt;
 import com.intellij.util.SVGLoader;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,12 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
           // todo one one should be used in the future
           theme.isDark() ? "com.intellij.ide.ui.laf.darcula.DarculaLaf" : "com.intellij.ide.ui.laf.IntelliJLaf");
     this.theme = theme;
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getName() {
+    return super.getName();
   }
 
   @Override

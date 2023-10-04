@@ -854,7 +854,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         text = TextWithMnemonic.fromPlainText(text, (char)myAction.getTemplatePresentation().getMnemonic()).toString();
       }
       myText = ActionPresentationDecorator.decorateTextIfNeeded(myAction, text);
-      LOG.assertTrue(text != null, "Action in `" + actionPlace + "` has no presentation: " + myAction.getClass().getName());
+      LOG.assertTrue(text != null, "null text is returned by " + Utils.operationName(myAction, null, actionPlace));
 
       myDescription =  presentation.getDescription();
       myTooltip = (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY);
