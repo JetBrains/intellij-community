@@ -48,7 +48,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private final ThreadLocal<Pair<VirtualFile, Map<String, FileAttributes>>> myFileAttributesCache = new ThreadLocal<>();
   private final DiskQueryRelay<VirtualFile, Map<String, FileAttributes>> myChildrenAttrGetter = new DiskQueryRelay<>(dir -> listWithAttributes(dir));
 
-  public LocalFileSystemImpl() {
+  protected LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
     myWatcher = new FileWatcher(myManagingFS, () -> {
       AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
