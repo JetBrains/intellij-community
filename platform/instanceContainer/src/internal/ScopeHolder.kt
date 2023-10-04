@@ -17,7 +17,7 @@ class ScopeHolder(
   private val containerName: String,
 ) {
 
-  val containerScope: CoroutineScope = parentScope.childScope(CoroutineName(containerName))
+  val containerScope: CoroutineScope = parentScope.namedChildScope("$containerName container")
 
   /**
    * Key: plugin coroutine scope.
