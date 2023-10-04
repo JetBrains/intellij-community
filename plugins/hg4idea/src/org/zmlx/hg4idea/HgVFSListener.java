@@ -216,12 +216,9 @@ public final class HgVFSListener extends VcsVFSListener {
     return HgBundle.message("hg4idea.remove.single.body");
   }
 
-  @NotNull
   @Override
-  protected VcsDeleteType needConfirmDeletion(@NotNull final VirtualFile file) {
-    return ChangeListManager.getInstance(myProject).isUnversioned(file)
-           ? VcsDeleteType.IGNORE
-           : VcsDeleteType.CONFIRM;
+  protected boolean shouldIgnoreDeletion(@NotNull final VirtualFile file) {
+    return ChangeListManager.getInstance(myProject).isUnversioned(file);
   }
 
   @Override

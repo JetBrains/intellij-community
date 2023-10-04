@@ -102,8 +102,6 @@ public abstract class VcsVFSListener implements Disposable {
   protected final ExternallyAddedFilesProcessorImpl myExternalFilesProcessor;
   private final List<VFileEvent> myEventsToProcess = new SmartList<>();
 
-  protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
-
   protected final class StateProcessor {
     private final Set<VirtualFile> myAddedFiles = new SmartHashSet<>();
     private final Map<VirtualFile, VirtualFile> myCopyFromMap = new HashMap<>(); // copy -> original
@@ -297,20 +295,14 @@ public abstract class VcsVFSListener implements Disposable {
         }
       }
       else {
-        VcsDeleteType type = needConfirmDeletion(file);
-        if (type == VcsDeleteType.IGNORE) return;
+        if (shouldIgnoreDeletion(file)) return;
 
         FilePath filePath = VcsUtil.getFilePath(file);
         FileStatus status = myChangeListManager.getStatus(filePath);
         if (filterOutByStatus(status)) return;
 
         withLock(PROCESSING_LOCK.writeLock(), () -> {
-          if (type == VcsDeleteType.CONFIRM) {
-            myDeletedFiles.add(filePath);
-          }
-          else if (type == VcsDeleteType.SILENT) {
-            myDeletedWithoutConfirmFiles.add(filePath);
-          }
+          myDeletedFiles.add(filePath);
         });
       }
     }
@@ -675,9 +667,8 @@ public abstract class VcsVFSListener implements Disposable {
     return status == FileStatus.IGNORED || status == FileStatus.UNKNOWN;
   }
 
-  @NotNull
-  protected VcsDeleteType needConfirmDeletion(@NotNull VirtualFile file) {
-    return VcsDeleteType.CONFIRM;
+  protected boolean shouldIgnoreDeletion(@NotNull VirtualFile file) {
+    return false;
   }
 
   @NotNull
