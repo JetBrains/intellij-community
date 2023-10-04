@@ -82,14 +82,6 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
-  protected static class AllDeletedFiles {
-    public final List<FilePath> deletedFiles;
-
-    public AllDeletedFiles(@NotNull List<FilePath> deletedFiles) {
-      this.deletedFiles = deletedFiles;
-    }
-  }
-
   protected final Project myProject;
   protected final AbstractVcs myVcs;
   protected final ChangeListManager myChangeListManager;
@@ -119,11 +111,11 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     @NotNull
-    public AllDeletedFiles acquireAllDeletedFiles() {
+    public List<FilePath> acquireDeletedFiles() {
       return withLock(PROCESSING_LOCK.writeLock(), () -> {
         List<FilePath> deletedFiles = new ArrayList<>(myDeletedFiles);
         myDeletedFiles.clear();
-        return new AllDeletedFiles(deletedFiles);
+        return deletedFiles;
       });
     }
 
@@ -546,8 +538,7 @@ public abstract class VcsVFSListener implements Disposable {
 
   @RequiresBackgroundThread
   protected void executeDelete() {
-    AllDeletedFiles allFiles = myProcessor.acquireAllDeletedFiles();
-    List<FilePath> filesToConfirmDeletion = allFiles.deletedFiles;
+    List<FilePath> filesToConfirmDeletion = myProcessor.acquireDeletedFiles();
 
     filesToConfirmDeletion.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
 

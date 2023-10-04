@@ -223,8 +223,7 @@ public final class HgVFSListener extends VcsVFSListener {
 
   @Override
   protected void executeDelete() {
-    AllDeletedFiles allFiles = myProcessor.acquireAllDeletedFiles();
-    List<FilePath> filesToConfirmDeletion = allFiles.deletedFiles;
+    List<FilePath> filesToConfirmDeletion = myProcessor.acquireDeletedFiles();
 
     // skip files which are not under Mercurial
     skipNotUnderHg(filesToConfirmDeletion);
