@@ -17,6 +17,9 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
 
   val psiElementsRenderer: SearchEverywherePsiRenderer
 
+  override val useReadAction: Boolean
+    get() = true
+
   override fun getDesiredResultsCount() = DESIRED_RESULTS_COUNT
 
   override fun getPriorityThresholds() = PRIORITY_THRESHOLDS
