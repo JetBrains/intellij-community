@@ -280,7 +280,7 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected @NotNull Collection<FilePath> selectFilePathsToDelete(final @NotNull List<FilePath> deletedFiles) {
+  protected @NotNull List<FilePath> selectFilePathsToDelete(final @NotNull List<FilePath> deletedFiles) {
     if (isStageEnabled()) {
       return super.selectFilePathsToDelete(deletedFiles);
     }

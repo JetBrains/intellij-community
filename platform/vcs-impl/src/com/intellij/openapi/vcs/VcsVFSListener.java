@@ -491,12 +491,16 @@ public abstract class VcsVFSListener implements Disposable {
   @RequiresBackgroundThread
   protected void executeAdd() {
     List<VirtualFile> addedFiles = myProcessor.acquireAddedFiles();
+    Map<VirtualFile, VirtualFile> copyFromMap = myProcessor.acquireCopiedFiles();
     LOG.debug("executeAdd. addedFiles: ", addedFiles);
+
+    VcsShowConfirmationOption.Value addOption = myAddOption.getValue();
+    if (addOption == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
+
     addedFiles.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
-    Map<VirtualFile, VirtualFile> copyFromMap = isFileCopyingFromTrackingSupported() ? myProcessor.acquireCopiedFiles() : emptyMap();
-    if (!addedFiles.isEmpty()) {
-      executeAdd(addedFiles, copyFromMap);
-    }
+    if (addedFiles.isEmpty()) return;
+
+    executeAdd(addedFiles, copyFromMap);
   }
 
   /**
@@ -512,51 +516,35 @@ public abstract class VcsVFSListener implements Disposable {
 
     addedFiles = myProjectConfigurationFilesProcessor.filterNotProjectConfigurationFiles(addedFiles);
 
-    if (addOption == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-      performAdding(addedFiles, copyFromMap);
-    }
-    else {
-      final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
-      // TODO[yole]: nice and clean description label
-      Collection<VirtualFile> filesToProcess = helper.selectFilesToProcess(addedFiles, getAddTitle(), null,
-                                                                           getSingleFileAddTitle(), getSingleFileAddPromptTemplate(),
-                                                                           myAddOption);
-      if (filesToProcess != null) {
-        performAdding(new ArrayList<>(filesToProcess), copyFromMap);
-      }
-    }
+    List<VirtualFile> filesToProcess = selectFilesToAdd(addedFiles);
+    if (filesToProcess.isEmpty()) return;
+
+    performAdding(filesToProcess, copyFromMap);
   }
 
   @RequiresBackgroundThread
   private void executeMoveRename() {
     List<MovedFileInfo> movedFiles = myProcessor.acquireMovedFiles();
     LOG.debug("executeMoveRename ", movedFiles);
-    if (!movedFiles.isEmpty()) {
-      performMoveRename(movedFiles);
-    }
+    if (movedFiles.isEmpty()) return;
+
+    performMoveRename(movedFiles);
   }
 
   @RequiresBackgroundThread
   protected void executeDelete() {
-    List<FilePath> filesToConfirmDeletion = myProcessor.acquireDeletedFiles();
-
-    filesToConfirmDeletion.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
-
-    List<FilePath> filesToDelete = new ArrayList<>();
+    List<FilePath> deletedFiles = myProcessor.acquireDeletedFiles();
+    LOG.debug("executeDelete ", deletedFiles);
 
     VcsShowConfirmationOption.Value removeOption = myRemoveOption.getValue();
-    if (removeOption == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-      filesToDelete.addAll(filesToConfirmDeletion);
-    }
-    else if (removeOption == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
-      if (!filesToConfirmDeletion.isEmpty()) {
-        Collection<FilePath> filePaths = selectFilePathsToDelete(filesToConfirmDeletion);
-        filesToDelete.addAll(filePaths);
-      }
-    }
-    if (!filesToDelete.isEmpty()) {
-      performDeletion(filesToDelete);
-    }
+    if (removeOption == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
+
+    deletedFiles.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
+
+    List<FilePath> filesToProcess = selectFilePathsToDelete(deletedFiles);
+    if (filesToProcess.isEmpty()) return;
+
+    performDeletion(filesToProcess);
   }
 
   protected void saveUnsavedVcsIgnoreFiles() {
@@ -577,10 +565,10 @@ public abstract class VcsVFSListener implements Disposable {
    * @param deletedFiles deleted files set
    * @return selected files or empty if {@link VcsShowConfirmationOption.Value#DO_NOTHING_SILENTLY}
    */
-  protected @NotNull Collection<FilePath> selectFilePathsToDelete(@NotNull List<FilePath> deletedFiles) {
-    return selectFilesForOption(myRemoveOption, deletedFiles, getDeleteTitle(), getSingleFileDeleteTitle(),
-                                getSingleFileDeletePromptTemplate(),
-                                CommonBundle.message("button.delete"), CommonBundle.getCancelButtonText());
+  protected @NotNull List<FilePath> selectFilePathsToDelete(@NotNull List<FilePath> deletedFiles) {
+    return selectFilePathsForOption(myRemoveOption, deletedFiles, getDeleteTitle(), getSingleFileDeleteTitle(),
+                                    getSingleFileDeletePromptTemplate(),
+                                    CommonBundle.message("button.delete"), CommonBundle.getCancelButtonText());
   }
 
   /**
@@ -589,24 +577,31 @@ public abstract class VcsVFSListener implements Disposable {
    * @param addFiles added files set
    * @return selected files or empty if {@link VcsShowConfirmationOption.Value#DO_NOTHING_SILENTLY}
    */
-  protected @NotNull Collection<FilePath> selectFilePathsToAdd(@NotNull List<FilePath> addFiles) {
-    return selectFilesForOption(myAddOption, addFiles, getAddTitle(), getSingleFileAddTitle(), getSingleFileAddPromptTemplate(),
-                                CommonBundle.getAddButtonText(), CommonBundle.getCancelButtonText());
+  protected @NotNull List<FilePath> selectFilePathsToAdd(@NotNull List<FilePath> addFiles) {
+    return selectFilePathsForOption(myAddOption, addFiles, getAddTitle(), getSingleFileAddTitle(), getSingleFileAddPromptTemplate(),
+                                    CommonBundle.getAddButtonText(), CommonBundle.getCancelButtonText());
   }
 
-  private @NotNull Collection<FilePath> selectFilesForOption(@NotNull VcsShowConfirmationOption option,
-                                                             @NotNull List<FilePath> files,
-                                                             @NlsContexts.DialogTitle String title,
-                                                             @NlsContexts.DialogTitle String singleFileTitle,
-                                                             @NlsContexts.DialogMessage String singleFilePromptTemplate,
-                                                             @NlsActions.ActionText @Nullable String okActionName,
-                                                             @NlsActions.ActionText @Nullable String cancelActionName) {
+  protected @NotNull List<VirtualFile> selectFilesToAdd(@NotNull List<VirtualFile> addFiles) {
+    return selectFilesForOption(myAddOption, addFiles, getAddTitle(), getSingleFileAddTitle(), getSingleFileAddPromptTemplate());
+  }
+
+  private @NotNull List<FilePath> selectFilePathsForOption(@NotNull VcsShowConfirmationOption option,
+                                                           @NotNull List<FilePath> files,
+                                                           @NlsContexts.DialogTitle String title,
+                                                           @NlsContexts.DialogTitle String singleFileTitle,
+                                                           @NlsContexts.DialogMessage String singleFilePromptTemplate,
+                                                           @NlsActions.ActionText @Nullable String okActionName,
+                                                           @NlsActions.ActionText @Nullable String cancelActionName) {
     VcsShowConfirmationOption.Value optionValue = option.getValue();
     if (optionValue == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
       return emptyList();
     }
     if (optionValue == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       return files;
+    }
+    if (files.isEmpty()) {
+      return emptyList();
     }
 
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
@@ -615,7 +610,32 @@ public abstract class VcsVFSListener implements Disposable {
       .invokeAndWait(() -> ref.set(helper.selectFilePathsToProcess(files, title, null, singleFileTitle,
                                                                    singleFilePromptTemplate, option, okActionName, cancelActionName)));
     Collection<FilePath> selectedFilePaths = ref.get();
-    return selectedFilePaths != null ? selectedFilePaths : emptyList();
+    return selectedFilePaths != null ? new ArrayList<>(selectedFilePaths) : emptyList();
+  }
+
+  private @NotNull List<VirtualFile> selectFilesForOption(@NotNull VcsShowConfirmationOption option,
+                                                          @NotNull List<VirtualFile> files,
+                                                          @NlsContexts.DialogTitle String title,
+                                                          @NlsContexts.DialogTitle String singleFileTitle,
+                                                          @NlsContexts.DialogMessage String singleFilePromptTemplate) {
+    VcsShowConfirmationOption.Value optionValue = option.getValue();
+    if (optionValue == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
+      return emptyList();
+    }
+    if (optionValue == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+      return files;
+    }
+    if (files.isEmpty()) {
+      return emptyList();
+    }
+
+    AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
+    Ref<Collection<VirtualFile>> ref = Ref.create();
+    ApplicationManager.getApplication()
+      .invokeAndWait(() -> ref.set(helper.selectFilesToProcess(files, title, null, singleFileTitle,
+                                                               singleFilePromptTemplate, option)));
+    Collection<VirtualFile> selectedFiles = ref.get();
+    return selectedFiles != null ? new ArrayList<>(selectedFiles) : emptyList();
   }
 
   /**
