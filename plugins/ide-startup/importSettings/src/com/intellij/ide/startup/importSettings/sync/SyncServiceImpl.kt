@@ -1,14 +1,18 @@
-package com.intellij.ide.startup.importSettings.data
+package com.intellij.ide.startup.importSettings.sync
 
+import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.settingsSync.SettingsSyncMain
 import com.intellij.ui.JBAccountInfoService
 import com.jetbrains.rd.util.reactive.Property
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import javax.swing.Icon
 
 private val logger = logger<SyncServiceImpl>()
 
-class SyncServiceImpl : SyncService {
+class SyncServiceImpl(private val coroutineScope: CoroutineScope) : SyncService {
 
   private val syncStateProperty = Property(SyncService.SYNC_STATE.UNLOGGED)
   override val syncState = syncStateProperty
@@ -20,13 +24,23 @@ class SyncServiceImpl : SyncService {
   private val accountInfoService: JBAccountInfoService?
     get() = JBAccountInfoService.getInstance()
 
+  private val settingSyncControls: SettingsSyncMain.SettingsSyncControls
+    get() = SettingsSyncMain.getInstance().controls
+
   override fun tryToLogin(): String? {
     accountInfoService?.invokeJBALogin({ loadAmbientSyncState() }, ::loadAmbientSyncState)
     return null
   }
 
   override fun syncSettings(): DialogImportData {
-    TODO("Not yet implemented")
+    val progress = SettingsSyncProgress()
+    coroutineScope.launch {
+      performSync(settingSyncControls, progress)
+    }
+
+    return object : DialogImportData {
+      override val progress = progress
+    }
   }
 
   override fun importSyncSettings(): DialogImportData {
