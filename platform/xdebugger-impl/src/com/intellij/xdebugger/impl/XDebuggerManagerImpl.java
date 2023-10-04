@@ -189,7 +189,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     if (session == null) {
       return;
     }
-    myNewRunToCursorListener.scheduleInlayRunToCursor(editor, session);
+    myNewRunToCursorListener.reshowInlayRunToCursor(editor);
   }
 
   @Override

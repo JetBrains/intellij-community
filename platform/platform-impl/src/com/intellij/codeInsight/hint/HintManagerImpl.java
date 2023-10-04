@@ -585,6 +585,16 @@ public class HintManagerImpl extends HintManager {
     showQuestionHint(editor, p, offset1, offset2, hint, action, constraint);
   }
 
+  public void showQuestionHint(final @NotNull Editor editor,
+                               final @NotNull Point p,
+                               final int offset1,
+                               final int offset2,
+                               final @NotNull LightweightHint hint,
+                               int flags,
+                               final @NotNull QuestionAction action,
+                               @PositionFlags short constraint) {
+    getClientManager(editor).showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
+  }
 
   public void showQuestionHint(final @NotNull Editor editor,
                                final @NotNull Point p,
@@ -595,7 +605,7 @@ public class HintManagerImpl extends HintManager {
                                @PositionFlags short constraint) {
     int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.UPDATE_BY_SCROLLING |
                 HintManager.HIDE_IF_OUT_OF_EDITOR | HintManager.DONT_CONSUME_ESCAPE;
-    getClientManager(editor).showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
+    showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
   }
 
   public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @PositionFlags short constraint) {
