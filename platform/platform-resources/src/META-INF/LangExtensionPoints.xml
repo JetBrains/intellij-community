@@ -625,6 +625,8 @@
       <with attribute="implementationClass" implements="com.intellij.slicer.SliceLanguageSupportProvider"/>
     </extensionPoint>
 
+    <extensionPoint name="projectExtraDataReceiver" interface="com.intellij.lang.ProjectExtraDataReceiver" dynamic="true"/>
+
     <extensionPoint name="intentionsOrderProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.impl.IntentionsOrderProvider"/>
     </extensionPoint>
