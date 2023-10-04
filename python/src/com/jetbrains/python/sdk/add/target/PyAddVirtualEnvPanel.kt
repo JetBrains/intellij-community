@@ -1,14 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add.target
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -23,8 +19,7 @@ import com.intellij.ui.layout.not
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.PyPackageManagers
+import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
 import com.jetbrains.python.sdk.*
@@ -32,7 +27,8 @@ import com.jetbrains.python.sdk.add.ExistingPySdkComboBoxItem
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.add.addInterpretersAsync
-import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
+import com.jetbrains.python.sdk.configuration.createSdkForTarget
+import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -197,12 +193,10 @@ class PyAddVirtualEnvPanel(project: Project?,
   private fun createNewVirtualenvSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
     // TODO [targets] Do *not* silently `return null`
     val baseSelectedSdk = baseInterpreterCombobox.selectedSdk ?: return null
-    val root = locationField.text
-    // TODO [targets] Use `targetEnvironmentConfiguration` to create `baseSdk`
-    val baseSdk: Sdk = if (targetEnvironmentConfiguration == null) {
-      installSdkIfNeeded(baseSelectedSdk, module, existingSdks, context) ?: return null
-    }
-    else {
+    val virtualenvRoot = locationField.text
+    val baseSdk = if (targetEnvironmentConfiguration != null) {
+      // TODO [targets] why don't we use `baseSelectedSdk`
+      // tune `baseSelectedSdk`
       val sdkAdditionalData = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, virtualEnvSdkFlavor))
       sdkAdditionalData.targetEnvironmentConfiguration = targetEnvironmentConfiguration
       val homePath = baseSelectedSdk.homePath ?: return null
@@ -211,45 +205,11 @@ class PyAddVirtualEnvPanel(project: Project?,
       sdkAdditionalData.interpreterPath = homePath
       SdkConfigurationUtil.createSdk(existingSdks, homePath, PythonSdkType.getInstance(), sdkAdditionalData, customSdkSuggestedName)
     }
-
-    val task = object : Task.WithResult<String, ExecutionException>(project, PySdkBundle.message("python.creating.venv.title"), false) {
-      override fun compute(indicator: ProgressIndicator): String {
-        indicator.isIndeterminate = true
-        try {
-          val packageManager = PyPackageManager.getInstance(baseSdk)
-          return packageManager.createVirtualEnv(root, isInheritSitePackages)
-        }
-        finally {
-          // this fixes the issue with unsuccessful attempts to create the new SDK after removing the underlying Web Deployment
-          PyPackageManagers.getInstance().clearCache(baseSdk)
-        }
-      }
+    else {
+      baseSelectedSdk
     }
-    // TODO [targets] Restore `makeSharedField` flag
-    val shared = false
-    val associatedPath = if (!shared) projectBasePath else null
-    val sdk = targetEnvironmentConfiguration.let {
-      if (it == null) {
-        // `targetEnvironmentConfiguration.isLocal() == true`
-        createSdkByGenerateTask(task, existingSdks, baseSdk, associatedPath, null) ?: return null
-      }
-      else {
-        // TODO [targets] Utilize smth like `createSdkFromExistingServerConfiguration` method in `SshSdkCreationUtil.kt`
-        val homePath = ProgressManager.getInstance().run(task)
-        createSdkForTarget(project, it, homePath, existingSdks, targetPanelExtension)
-      }
-    }
-    if (!shared) {
-      sdk.associateWithModule(module, newProjectPath)
-    }
-    project.excludeInnerVirtualEnv(sdk)
-    if (isUnderLocalTarget) {
-      // The method `onVirtualEnvCreated(..)` stores preferred base path to virtual envs. Storing here the base path from the non-local
-      // target (e.g. a path from SSH machine or a Docker image) ends up with a meaningless default for the local machine.
-      // If we would like to store preferred paths for non-local targets we need to use some key to identify the exact target.
-      PySdkSettings.instance.onVirtualEnvCreated(baseSdk, FileUtil.toSystemIndependentName(root), projectBasePath)
-    }
-    return sdk
+    return createVirtualEnvSynchronously(baseSdk, existingSdks, virtualenvRoot, projectBasePath, project, module, context,
+                                         isInheritSitePackages, false, targetPanelExtension)
   }
 
   private fun configureExistingVirtualenvSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?, selectedSdk: Sdk): Sdk? {

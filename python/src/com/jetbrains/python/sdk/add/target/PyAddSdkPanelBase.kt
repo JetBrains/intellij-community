@@ -5,19 +5,10 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.modules
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
-import com.jetbrains.python.sdk.associateWithModule
 import com.jetbrains.python.sdk.basePath
-import com.jetbrains.python.sdk.flavors.PyFlavorAndData
-import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import com.jetbrains.python.target.getInterpreterVersion
 import org.jetbrains.annotations.SystemIndependent
 import java.util.function.Supplier
 
@@ -51,44 +42,5 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
       get() = VirtualEnvSdkFlavor.getInstance()
 
     internal fun TargetEnvironmentConfiguration?.isLocal(): Boolean = this == null
-
-    internal fun createSdkForTarget(project: Project?,
-                                    environmentConfiguration: TargetEnvironmentConfiguration,
-                                    interpreterPath: String,
-                                    existingSdks: Collection<Sdk>,
-                                    targetPanelExtension: TargetPanelExtension?,
-                                    sdkName: String? = null): Sdk {
-      // TODO [targets] Should flavor be more flexible?
-      val data = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, virtualEnvSdkFlavor)).also {
-        it.interpreterPath = interpreterPath
-        it.targetEnvironmentConfiguration = environmentConfiguration
-        targetPanelExtension?.applyToAdditionalData(it)
-      }
-
-      val sdkVersion: String? = data.getInterpreterVersion(project, interpreterPath)
-
-      val name: String
-      if (!sdkName.isNullOrEmpty()) {
-        name = sdkName
-      }
-      else {
-        name = PythonInterpreterTargetEnvironmentFactory.findDefaultSdkName(project, data, sdkVersion)
-      }
-
-      val sdk = SdkConfigurationUtil.createSdk(existingSdks, generateSdkHomePath(data), PythonSdkType.getInstance(), data, name)
-
-      if (project != null && project.modules.isNotEmpty() &&
-          PythonInterpreterTargetEnvironmentFactory.by(environmentConfiguration)?.needAssociateWithModule() ?: false) {
-        sdk.associateWithModule(project.modules[0], null)
-      }
-
-      sdk.versionString = sdkVersion
-
-      data.isValid = true
-
-      return sdk
-    }
-    // TODO [targets] Add identifier PyTargetAwareAdditionalData
-    private fun generateSdkHomePath(data: PyTargetAwareAdditionalData): String = data.interpreterPath
   }
 }
