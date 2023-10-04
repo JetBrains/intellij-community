@@ -19,8 +19,9 @@ import com.intellij.util.ui.JBPoint
 
 class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, MainMenuPresentationAware {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    val projectPath = e?.project?.let { ProjectWindowCustomizerService.projectPath(it) } ?: return emptyArray()
-    val projectName = e.project?.name
+    val project = e?.project ?: return emptyArray()
+    val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return emptyArray()
+    val projectName = if (RecentProjectsManagerBase.getInstanceEx().hasCustomIcon(project)) "" else project.name
 
     return arrayOf(ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Amber.title"), 0, projectName),
                    ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Rust.title"), 1, projectName),
@@ -43,15 +44,18 @@ class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, MainMenuPr
     e.presentation.isEnabled = project != null
     e.presentation.icon = project?.let {
       val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return@let null
-      RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = projectPath, isProjectValid = true, iconSize = 14, name = "")
+      RecentProjectIconHelper.generateProjectIcon(projectPath, true, size = 14, projectName = "", colorIndex = null)
     }
   }
 
   override fun alwaysShowIconInMainMenu(): Boolean = true
 }
 
-class ChangeProjectColorAction(val projectPath: String, val name: @NlsSafe String, val index: Int, val projectName: String?):
-  AnAction(name, "", RecentProjectIconHelper.generateProjectIcon(projectPath, true, size = 16, colorIndex = index)), DumbAware
+class ChangeProjectColorAction(val projectPath: String, val name: @NlsSafe String, val index: Int, val projectName: String?) : AnAction(
+  name,
+  "",
+  RecentProjectIconHelper.generateProjectIcon(projectPath, true, size = 16, colorIndex = index, projectName = projectName)
+), DumbAware
 {
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
