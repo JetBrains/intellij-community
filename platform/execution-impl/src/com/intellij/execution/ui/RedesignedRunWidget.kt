@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
@@ -264,7 +263,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
   }
 
   override fun getDisabledIcon(icon: Icon): Icon {
-    return IconLoader.getDisabledIcon(icon = icon, disableFilter = lightThemeDarkHeaderDisableFilter)
+    return com.intellij.ui.icons.getDisabledIcon(icon = icon, disableFilter = lightThemeDarkHeaderDisableFilter)
   }
 
   override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {

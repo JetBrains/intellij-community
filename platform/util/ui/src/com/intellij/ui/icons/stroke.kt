@@ -3,7 +3,6 @@ package com.intellij.ui.icons
 
 import com.dynatrace.hash4j.hashing.HashFunnel
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.hasher
@@ -61,10 +60,13 @@ internal class IconAndColorCacheKey(@JvmField val icon: Icon, @JvmField val colo
   }
 }
 
-internal val strokeIconCache: LoadingCache<IconAndColorCacheKey, Icon> = Caffeine.newBuilder()
+private val strokeIconCache = Caffeine.newBuilder()
   .maximumSize(64)
   .expireAfterWrite(1.hours.toJavaDuration())
-  .build { computeStrokeIcon(original = it.icon, resultColor = it.color) }
+  .build<IconAndColorCacheKey, Icon> { computeStrokeIcon(original = it.icon, resultColor = it.color) }
+  .also {
+    registerIconCacheCleaner(it::invalidateAll)
+  }
 
 fun toStrokeIcon(icon: Icon, resultColor: Color): Icon {
   return strokeIconCache.get(IconAndColorCacheKey(icon = icon, color = resultColor))

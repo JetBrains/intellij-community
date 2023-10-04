@@ -31,13 +31,13 @@ import java.util.concurrent.TimeUnit
 private val LOG: Logger
   get() = logger<ImageCache>()
 
-internal fun clearImageCache() {
-  ImageCache.clearCache()
-}
-
 private object ImageCache {
   @JvmField
   val ioMissCache: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+  init {
+    registerIconCacheCleaner(::clearCache)
+  }
 
   @JvmField
   val imageCache: Cache<CacheKey, BufferedImage> = Caffeine.newBuilder()

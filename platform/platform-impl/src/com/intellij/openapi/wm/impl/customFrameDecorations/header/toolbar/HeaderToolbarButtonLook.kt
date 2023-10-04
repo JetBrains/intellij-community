@@ -4,10 +4,10 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.ui.JBColor
+import com.intellij.ui.icons.getDisabledIcon
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.GrayFilter
 import com.intellij.util.ui.JBUI
@@ -53,7 +53,7 @@ internal class HeaderToolbarButtonLook(
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
 
   override fun getDisabledIcon(icon: Icon): Icon {
-    return IconLoader.getDisabledIcon(icon, lightThemeDarkHeaderDisableFilter)
+    return getDisabledIcon(icon = icon, disableFilter = lightThemeDarkHeaderDisableFilter)
   }
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {

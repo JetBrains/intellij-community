@@ -8,15 +8,18 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.ui.*
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
+import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.icons.*
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
-import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.ui.*
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -25,7 +28,6 @@ import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
 import java.awt.image.RGBImageFilter
 import java.net.URL
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -40,17 +42,6 @@ private val iconCache = Caffeine.newBuilder()
   .expireAfterAccess(1, TimeUnit.HOURS)
   .maximumSize(256)
   .build<Pair<String, ClassLoader?>, CachedImageIcon>()
-
-// contains mapping between icons and disabled icons
-private val iconToDisabledIcon = ConcurrentHashMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
-private val standardDisablingFilter: () -> RGBImageFilter = { UIUtil.getGrayFilter() }
-
-private val colorPatchCache = run {
-  val map = Array<MutableMap<LongArray, MutableMap<Icon, Icon>>>(3) {
-    CollectionFactory.createConcurrentWeakValueMap()
-  }
-  map
-}
 
 internal val fakeComponent: JComponent by lazy { object : JComponent() {} }
 
@@ -96,8 +87,7 @@ object IconLoader {
   @TestOnly
   fun clearCacheInTests() {
     iconCache.invalidateAll()
-    iconToDisabledIcon.clear()
-    clearImageCache()
+    clearCacheOnUpdateTransform()
     pathTransformGlobalModCount.incrementAndGet()
   }
 
@@ -250,26 +240,9 @@ object IconLoader {
   @JvmStatic
   fun getDisabledIcon(icon: Icon): Icon = getDisabledIcon(icon = icon, disableFilter = null)
 
-  @Internal
-  fun getDisabledIcon(icon: Icon, disableFilter: (() -> RGBImageFilter)?): Icon {
-    if (!isIconActivated || icon is EmptyIcon) {
-      return icon
-    }
-
-    val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
-    val filter = disableFilter ?: standardDisablingFilter /* returns laf-aware instance */
-    return iconToDisabledIcon
-      .computeIfAbsent(filter) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
-      .computeIfAbsent(effectiveIcon) { filterIcon(icon = it, filterSupplier = filter) }
-  }
-
-  /**
-   * Creates a new icon with the color patching applied.
-   */
+  @Deprecated("Use com.intellij.ui.svg.colorPatchedIcon")
   fun colorPatchedIcon(icon: Icon, colorPatcher: SvgElementColorPatcherProvider): Icon {
-    return replaceCachedImageIcons(icon) {
-      patchColorsInCacheImageIcon(imageIcon = it, colorPatcher = colorPatcher)
-    }!!
+    return com.intellij.ui.svg.colorPatchedIcon(icon = icon, colorPatcher = colorPatcher)
   }
 
   /**
@@ -290,7 +263,7 @@ object IconLoader {
 
   @JvmStatic
   fun getTransparentIcon(icon: Icon): Icon {
-    return getTransparentIcon(icon, 0.5f)
+    return getTransparentIcon(icon = icon, alpha = 0.5f)
   }
 
   @JvmStatic
@@ -360,55 +333,6 @@ object IconLoader {
     colorPatcher = colorPatcher,
     useStroke = useStroke,
   )
-}
-
-private fun patchColorsInCacheImageIcon(imageIcon: CachedImageIcon, colorPatcher: SvgElementColorPatcherProvider): Icon {
-  var digest = colorPatcher.digest()
-  if (digest == null) {
-    @Suppress("DEPRECATION")
-    val bytes = colorPatcher.wholeDigest()
-    if (bytes == null) {
-      return imageIcon.createWithPatcher(colorPatcher)
-    }
-    else {
-      digest = longArrayOf(hasher.hashBytesToLong(bytes), seededHasher.hashBytesToLong(bytes))
-    }
-  }
-
-  val cacheIndex = 2
-
-  return colorPatchCache[cacheIndex]
-    .computeIfAbsent(digest) { CollectionFactory.createConcurrentWeakMap() }
-    .computeIfAbsent(imageIcon) { imageIcon.createWithPatcher(colorPatcher) }
-}
-
-private fun updateTransform(updater: (IconTransform) -> IconTransform) {
-  var prev: IconTransform
-  var next: IconTransform
-  do {
-    prev = pathTransform.get()
-    next = updater(prev)
-  }
-  while (!pathTransform.compareAndSet(prev, next))
-
-  pathTransformGlobalModCount.incrementAndGet()
-  if (prev == next) {
-    return
-  }
-
-  clearCacheOnUpdateTransform()
-}
-
-private fun clearCacheOnUpdateTransform() {
-  iconToDisabledIcon.clear()
-  for (map in colorPatchCache) {
-    map.clear()
-  }
-  strokeIconCache.invalidateAll()
-
-  // clear svg cache
-  clearImageCache()
-  // iconCache is not cleared because it contains an original icon (instance that will delegate to)
 }
 
 @Internal

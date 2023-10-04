@@ -6,6 +6,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.DummyIcon
+import com.intellij.openapi.util.IconLoader.filterIcon
 import com.intellij.openapi.util.LazyIcon
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.scale.*
@@ -15,9 +16,11 @@ import com.intellij.ui.svg.renderSvg
 import com.intellij.util.ImageLoader
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
+import com.intellij.util.ui.UIUtil
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
@@ -26,6 +29,7 @@ import java.awt.Toolkit
 import java.awt.image.BufferedImage
 import java.awt.image.FilteredImageSource
 import java.awt.image.ImageFilter
+import java.awt.image.RGBImageFilter
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -34,6 +38,8 @@ import java.net.URL
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.imageio.ImageIO
 import javax.imageio.stream.MemoryCacheImageInputStream
 import javax.swing.Icon
@@ -41,6 +47,38 @@ import kotlin.math.roundToInt
 
 private val LOG: Logger
   get() = logger<ImageUtil>()
+
+private val cleaners = CopyOnWriteArrayList<() -> Unit>()
+
+internal fun registerIconCacheCleaner(cleaner: () -> Unit) {
+  cleaners.add(cleaner)
+}
+
+internal fun clearCacheOnUpdateTransform() {
+  for (cleaner in cleaners) {
+    cleaner()
+  }
+  iconToDisabledIcon.clear()
+  // iconCache is not cleared because it contains an original icon (instance that will delegate to)
+}
+
+internal fun updateTransform(updater: (IconTransform) -> IconTransform) {
+  var prev: IconTransform
+  var next: IconTransform
+  do {
+    prev = pathTransform.get()
+    next = updater(prev)
+  }
+  while (!pathTransform.compareAndSet(prev, next))
+
+  pathTransformGlobalModCount.incrementAndGet()
+  if (prev == next) {
+    return
+  }
+
+  clearCacheOnUpdateTransform()
+}
+
 
 @Internal
 fun copyIcon(icon: Icon, ancestor: Component?, deepCopy: Boolean): Icon {
@@ -318,4 +356,21 @@ internal fun checkIconSize(icon: Icon): Boolean {
     return false
   }
   return true
+}
+
+// contains mapping between icons and disabled icons
+private val iconToDisabledIcon = ConcurrentHashMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
+private val standardDisablingFilter: () -> RGBImageFilter = { UIUtil.getGrayFilter() }
+
+@Internal
+fun getDisabledIcon(icon: Icon, disableFilter: (() -> RGBImageFilter)?): Icon {
+  if (!isIconActivated || icon is EmptyIcon) {
+    return icon
+  }
+
+  val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
+  val filter = disableFilter ?: standardDisablingFilter /* returns laf-aware instance */
+  return iconToDisabledIcon
+    .computeIfAbsent(filter) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
+    .computeIfAbsent(effectiveIcon) { filterIcon(icon = it, filterSupplier = filter) }
 }
