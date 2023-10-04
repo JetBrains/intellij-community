@@ -2,8 +2,9 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
-import com.intellij.diff.util.DiffDrawUtil
+import com.intellij.diff.util.LineRange
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -13,7 +14,6 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ex.LineStatusTracker
@@ -118,19 +118,12 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
   }
 
   private fun CoroutineScope.showGutterControls(model: GitLabMergeRequestEditorReviewUIModel, editor: Editor) {
+    val cs = this
     editor as EditorEx
 
-    val renderer = GitLabMergeRequestReviewControlsGutterRenderer(cs, model, editor)
-
-    val highlighter = editor.markupModel.addRangeHighlighter(null, 0, editor.document.textLength,
-                                                             DiffDrawUtil.LST_LINE_MARKER_LAYER,
-                                                             HighlighterTargetArea.LINES_IN_RANGE).apply {
-      setGreedyToLeft(true)
-      setGreedyToRight(true)
-      setLineMarkerRenderer(renderer)
-    }
-    awaitCancellationAndInvoke {
-      highlighter.dispose()
+    val commentableLineRanges = model.commentableRanges.mapState(cs) { it.map { LineRange(it.start2, it.end2) } }
+    GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, commentableLineRanges, editor) {
+      model.requestNewDiscussion(it, true)
     }
   }
 
