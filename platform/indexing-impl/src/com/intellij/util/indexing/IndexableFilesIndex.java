@@ -15,13 +15,6 @@ import java.util.List;
 
 public interface IndexableFilesIndex {
 
-  /**
-   * See {@link com.intellij.util.indexing.roots.StandardContributorsKt#shouldIndexProjectBasedOnIndexableEntityProviders()}
-   */
-  static boolean isEnabled() {
-   return true;
-  }
-
   static @NotNull IndexableFilesIndex getInstance(@NotNull Project project) {
     return project.getService(IndexableFilesIndex.class);
   }
@@ -36,7 +29,7 @@ public interface IndexableFilesIndex {
    * Most of {@link IndexableSetOrigin} contain roots. In this case they contain registered roots of corresponding workspace entity or
    * other indexable unit, like {@link com.intellij.openapi.roots.SyntheticLibrary} or {@link IndexableSetContributor}.
    * Consider structure `contentRoot/dir/file`. {@code getOrigins(file).singleOrError().getRoots()} is `contentRoot`.
-   * Why this is important: some alike APIs are written for incremental reindexing, and work with minimal necessary roots. For example,
+   * Why this is important: some similar APIs are written for incremental reindexing, and work with minimal necessary roots. For example,
    * {@link ReincludedRootsUtil}.
    * <br/>
    * Batch handling is introduced for the sake of performance.
