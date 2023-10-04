@@ -43,10 +43,6 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : BulkAwa
   fun isEnabled(event: DocumentEvent): Boolean {
     return event.newFragment != CompletionUtil.DUMMY_IDENTIFIER && event.newLength >= 1
   }
-
-  private fun InlineCompletionHandler.hide() {
-    InlineCompletionContext.getOrNull(editor)?.let { hide(editor, false, it) }
-  }
 }
 
 @ApiStatus.Experimental
@@ -103,9 +99,12 @@ class InlineEditorMouseListener : EditorMouseListener {
 
 class InlineCompletionFocusListener : FocusChangeListener {
   override fun focusLost(editor: Editor, event: FocusEvent) {
-    if (event.cause == FocusEvent.Cause.ACTIVATION) {
-      hideInlineCompletion(editor)
-    }
+    LOG.trace("Losing focus with ${event}, ${event.cause}")
+    hideInlineCompletion(editor)
+  }
+
+  companion object {
+    private val LOG = thisLogger()
   }
 }
 
