@@ -628,7 +628,7 @@ public abstract class VcsVFSListener implements Disposable {
    *
    * @see #processBeforeContentsChange()
    */
-  protected void beforeContentsChange(@NotNull VFileContentChangeEvent event) {
+  protected void beforeContentsChange(@NotNull List<VFileContentChangeEvent> events) {
   }
 
   private void addFileToMove(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
@@ -767,12 +767,13 @@ public abstract class VcsVFSListener implements Disposable {
           }
         }
       }
-      return contentChangedEvents.isEmpty() && beforeEvents.isEmpty() && afterEvents.isEmpty() ? null : new ChangeApplier() {
+      if (contentChangedEvents.isEmpty() && beforeEvents.isEmpty() && afterEvents.isEmpty()) {
+        return null;
+      }
+      return new ChangeApplier() {
         @Override
         public void beforeVfsChange() {
-          for (VFileContentChangeEvent event : contentChangedEvents) {
-            beforeContentsChange(event);
-          }
+          beforeContentsChange(contentChangedEvents);
 
           myProcessor.processBeforeEvents(beforeEvents);
         }
