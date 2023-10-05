@@ -87,7 +87,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     @NotNull ModelBuilderContext context
   ) {
     List<File> taskArtifacts = new ArrayList<File>()
-    project.getTasks().withType(Jar.class, { Jar jar ->
+    project.getTasks().withType(Jar.class).all { Jar jar ->
       try {
         def archiveFile = getTaskArchiveFile(jar)
         if (archiveFile != null) {
@@ -103,8 +103,8 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
           .withException(e)
           .reportMessage(project)
       }
-    })
-    return taskArtifacts
+    }
+    return new ArrayList<>(taskArtifacts)
   }
 
   @NotNull
@@ -113,7 +113,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     @NotNull ModelBuilderContext context
   ) {
     List<File> additionalArtifacts = new ArrayList<File>()
-    project.getTasks().withType(Jar.class, { Jar jar ->
+    project.getTasks().withType(Jar.class).all { Jar jar ->
       try {
         def archiveFile = getTaskArchiveFile(jar)
         if (archiveFile != null) {
@@ -131,8 +131,8 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
           .withException(e)
           .reportMessage(project)
       }
-    })
-    return additionalArtifacts
+    }
+    return new ArrayList<>(additionalArtifacts)
   }
 
   @NotNull
@@ -140,16 +140,13 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     @NotNull Project project,
     @NotNull ModelBuilderContext context
   ) {
-    Map<String, Configuration> configurationsByName = project.getConfigurations().getAsMap()
     Map<String, Set<File>> configurationArtifacts = new HashMap<String, Set<File>>()
-    for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
-      def configurationName = configurationEntry.getKey()
-      def configuration = configurationEntry.getValue()
+    project.getConfigurations().all { Configuration configuration ->
       try {
         def artifactSet = configuration.getArtifacts()
         def fileCollection = artifactSet.getFiles()
         Set<File> files = fileCollection.getFiles()
-        configurationArtifacts.put(configurationName, new LinkedHashSet<>(files))
+        configurationArtifacts.put(configuration.name, new LinkedHashSet<>(files))
       }
       catch (Exception e) {
         context.getMessageReporter().createMessage()
@@ -161,7 +158,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
           .reportMessage(project)
       }
     }
-    return configurationArtifacts
+    return new HashMap<>(configurationArtifacts)
   }
 
   @NotNull
