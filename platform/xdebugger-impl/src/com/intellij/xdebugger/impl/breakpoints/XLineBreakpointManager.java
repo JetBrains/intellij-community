@@ -158,6 +158,12 @@ public final class XLineBreakpointManager {
     }
 
     removeBreakpoints(toRemove);
+
+    // FIXME[inline-bp]: it's a temporary solution, only changed lines should be redrawn
+    var file = FileDocumentManager.getInstance().getFile(document);
+    if (file != null) {
+      InlineBreakpointInlayManager.redrawInlineBreakpoints(this, myProject, file, document);
+    }
   }
 
   private void removeBreakpoints(@Nullable final Collection<? extends XLineBreakpoint> toRemove) {

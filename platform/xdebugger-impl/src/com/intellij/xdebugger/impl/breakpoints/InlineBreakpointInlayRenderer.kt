@@ -191,7 +191,6 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
   }
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
-    event.consume()
     hovered = true
   }
 
