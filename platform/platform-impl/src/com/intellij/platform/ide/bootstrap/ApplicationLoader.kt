@@ -128,7 +128,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
       initConfigurationStore(app)
     }
 
-    val deferredStarter = span("app starter creation") {
+    val applicationStarter = span("app starter creation") {
       createAppStarter(args)
     }
 
@@ -187,7 +187,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
 
     appInitializedListenerJob.join()
 
-    deferredStarter.await()
+    applicationStarter
   }
 }
 
@@ -320,14 +320,14 @@ private fun CoroutineScope.runPostAppInitTasks() {
 }
 
 // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
-private fun CoroutineScope.createAppStarter(args: List<String>): Deferred<ApplicationStarter> {
+private fun createAppStarter(args: List<String>): ApplicationStarter {
   val commandName = args.firstOrNull()
   // first argument maybe a project path
   if (commandName == null) {
-    return async { IdeStarter() }
+    return IdeStarter()
   }
   else if (args.size == 1 && OSAgnosticPathUtil.isAbsolute(commandName)) {
-    return async { createDefaultAppStarter() }
+    return createDefaultAppStarter()
   }
 
   val starter = findStarter(commandName) ?: createDefaultAppStarter()
@@ -348,7 +348,7 @@ private fun CoroutineScope.createAppStarter(args: List<String>): Deferred<Applic
 
   // must be executed before container creation
   starter.premain(args)
-  return CompletableDeferred(value = starter)
+  return starter
 }
 
 private fun createDefaultAppStarter(): ApplicationStarter {
