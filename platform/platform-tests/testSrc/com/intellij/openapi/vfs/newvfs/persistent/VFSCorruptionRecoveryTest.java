@@ -114,7 +114,7 @@ public class VFSCorruptionRecoveryTest {
           System.out.println(fileToCorrupt.getFileName() + " corrupted, but VFS init-ed as-if not");
           filesCorruptionsVFSCantDetect.add(fileToCorrupt.getFileName().toString());
         }
-        vfs.dispose();
+        vfs.close();
       }
       catch (Throwable t) {
         System.out.println(fileToCorrupt.getFileName() + " corrupted -> " + t);
@@ -291,7 +291,7 @@ public class VFSCorruptionRecoveryTest {
       stream.writeInt(42);
     }
 
-    fsRecords.dispose();
+    fsRecords.close();
   }
 
   @After

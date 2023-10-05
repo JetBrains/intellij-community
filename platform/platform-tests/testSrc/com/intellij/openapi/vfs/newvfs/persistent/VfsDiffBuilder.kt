@@ -209,8 +209,8 @@ object VfsDiffBuilder {
     val diff: DiffResult
 
     AutoCloseable {
-      baseVfs.dispose()
-      targetVfs.dispose()
+      baseVfs.close()
+      targetVfs.close()
       AppExecutorUtil.shutdownApplicationScheduledExecutorService()
     }.use {
       diff = buildDiff(baseVfs, targetVfs)

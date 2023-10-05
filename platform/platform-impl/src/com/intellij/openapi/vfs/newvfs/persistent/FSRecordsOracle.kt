@@ -43,7 +43,7 @@ class FSRecordsOracle(
     return fsRecords.getNameByNameId(nameId)?.toString()?.let(State::Ready) ?: State.NotAvailable()
   }
 
-  fun disposeConnection(): Unit = fsRecords.dispose()
+  fun disposeConnection(): Unit = fsRecords.close()
 
   override fun getSnapshot(point: OperationLogStorage.Iterator): VfsSnapshot? {
     if (!distanceEvaluator.isWorthLookingUpFrom(point)) return null

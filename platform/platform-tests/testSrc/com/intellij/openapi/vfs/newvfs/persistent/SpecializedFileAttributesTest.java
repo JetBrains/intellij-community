@@ -69,7 +69,7 @@ public class SpecializedFileAttributesTest {
 
   @AfterEach
   public void tearDown() throws Exception {
-    vfs.dispose();
+    vfs.close();
 
     //RC: Can't just check for .isEmpty(): if running in the same process with other tests -- could be storages
     //    registered by them

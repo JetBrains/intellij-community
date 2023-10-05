@@ -111,7 +111,7 @@ public final class FSRecords {
   public static synchronized FSRecordsImpl connect(boolean enableVfsLog,
                                                    @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
     FSRecordsImpl oldImpl = impl;
-    if (oldImpl != null && !oldImpl.isDisposed()) {
+    if (oldImpl != null && !oldImpl.isClosed()) {
       //MAYBE RC: provide reconnect()
       throw new IllegalStateException(
         "Can't connect default VFS instance -- default VFS instance is already set up" +
@@ -129,9 +129,9 @@ public final class FSRecords {
     if (_impl == null) {
       throw new ServiceNotReadyException("VFS instance is not initialized yet");
     }
-    else if (_impl.isDisposed()) {
+    else if (_impl.isClosed()) {
       //guaranteed to fail, and provides diagnostic:
-      _impl.checkNotDisposed();
+      _impl.checkNotClosed();
     }
 
     return _impl;
@@ -144,7 +144,7 @@ public final class FSRecords {
 
   static @Nullable FSRecordsImpl getInstanceIfCreatedAndNotDisposed() {
     FSRecordsImpl _impl = impl;
-    return _impl == null || _impl.isDisposed() ? null : _impl;
+    return _impl == null || _impl.isClosed() ? null : _impl;
   }
 
   //========== FS records-as-a-whole properties: ==============================
@@ -357,7 +357,7 @@ public final class FSRecords {
   @TestOnly
   public static void checkFilenameIndexConsistency() {
     FSRecordsImpl _impl = impl;
-    if (_impl != null && !_impl.isDisposed()) {
+    if (_impl != null && !_impl.isClosed()) {
       _impl.checkFilenameIndexConsistency();
     }
   }

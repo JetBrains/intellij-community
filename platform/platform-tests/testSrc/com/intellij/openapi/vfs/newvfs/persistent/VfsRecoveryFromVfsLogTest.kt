@@ -32,8 +32,8 @@ object VfsRecoveryFromVfsLogTest {
     val recoveredVfs = FSRecordsImpl.connect(dirForRecoveredCaches, emptyList(), false, FSRecordsImpl.ON_ERROR_RETHROW)
 
     AutoCloseable {
-      baseVfs.dispose()
-      recoveredVfs.dispose()
+      baseVfs.close()
+      recoveredVfs.close()
     }.use {
       val diff = VfsDiffBuilder.buildDiff(baseVfs, recoveredVfs)
       println(diff)

@@ -228,7 +228,7 @@ object VfsRecoveryUtils {
       // TODO safe close
       newVfsLog.awaitPendingWrites()
       newVfsLog.dispose()
-      newFsRecords.dispose()
+      newFsRecords.close()
       namesEnumerator.close()
     }
   }

@@ -47,7 +47,7 @@ public class MappedFileStorageHelperLongTest {
     // next test see it as empty file:
     storageHelper.clear();
     storageHelper.close();
-    vfs.dispose();
+    vfs.close();
 
 
     //RC: Can't just check for .isEmpty(): if running in the same process with other tests -- could be storages

@@ -78,7 +78,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * with a usual .getInstance() method.
  */
 @ApiStatus.Internal
-public final class FSRecordsImpl {
+public final class FSRecordsImpl implements Closeable {
   private static final Logger LOG = Logger.getInstance(FSRecordsImpl.class);
 
   //@formatter:off
@@ -120,11 +120,11 @@ public final class FSRecordsImpl {
    * the error passed in
    */
   public static final ErrorHandler ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD = (records, error) -> {
-    if (!records.isDisposed()) {
+    if (!records.isClosed()) {
       records.connection.markAsCorruptedAndScheduleRebuild(error);
     }
     else {
-      error.addSuppressed(records.alreadyDisposedException());
+      error.addSuppressed(records.alreadyClosedException());
     }
     if (error instanceof IOException) {
       throw new UncheckedIOException((IOException)error);
@@ -134,12 +134,12 @@ public final class FSRecordsImpl {
 
   public static final ErrorHandler ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD_AND_SUGGEST_CACHE_RECOVERY_IF_ALLOWED =
     (records, error) -> {
-      if (!records.isDisposed()) {
+      if (!records.isClosed()) {
         records.connection.markAsCorruptedAndScheduleRebuild(error);
         ApplicationManager.getApplication().getService(RecoverVfsFromLogService.class).suggestAutomaticRecoveryIfAllowed();
       }
       else {
-        error.addSuppressed(records.alreadyDisposedException());
+        error.addSuppressed(records.alreadyClosedException());
       }
       if (error instanceof IOException) {
         throw new UncheckedIOException((IOException)error);
@@ -196,10 +196,10 @@ public final class FSRecordsImpl {
 
   private final FineGrainedIdLock updateLock = new FineGrainedIdLock();
 
-  private volatile boolean disposed = false;
+  private volatile boolean closed = false;
 
-  /** Keep stacktrace of {@link #dispose()} call -- for better diagnostics of unexpected dispose */
-  private volatile Exception disposedStackTrace = null;
+  /** Keep stacktrace of {@link #close()} call -- for better diagnostics of unexpected close */
+  private volatile Exception closedStackTrace = null;
 
   //@GuardedBy("this")
   private final ObjectOpenHashSet<AutoCloseable> closeables = new ObjectOpenHashSet<>();
@@ -364,10 +364,11 @@ public final class FSRecordsImpl {
 
   //========== lifecycle: ========================================
 
-  public synchronized void dispose() {
-    if (!disposed) {
-      disposed = true;
-      Exception stackTraceEx = new Exception("FSRecordsImpl dispose stacktrace");
+  @Override
+  public synchronized void close() {
+    if (!closed) {
+      closed = true;
+      Exception stackTraceEx = new Exception("FSRecordsImpl close stacktrace");
 
       try {
         //ensure async scanning is finished -- until that records file is still in use,
@@ -399,27 +400,27 @@ public final class FSRecordsImpl {
         stackTraceEx.addSuppressed(e);
       }
 
-      disposedStackTrace = stackTraceEx;
+      closedStackTrace = stackTraceEx;
     }
   }
 
-  boolean isDisposed() {
-    return disposed;
+  boolean isClosed() {
+    return closed;
   }
 
   @Contract("->fail")
-  void checkNotDisposed() {
-    if (disposed) {
-      throw alreadyDisposedException();
+  void checkNotClosed() {
+    if (closed) {
+      throw alreadyClosedException();
     }
   }
 
-  private @NotNull AlreadyDisposedException alreadyDisposedException() {
-    AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already disposed");
-    if (disposedStackTrace != null) {
-      alreadyDisposed.addSuppressed(disposedStackTrace);
+  private @NotNull AlreadyDisposedException alreadyClosedException() {
+    AlreadyDisposedException alreadyClosed = new AlreadyDisposedException("VFS is already closed (disposed)");
+    if (closedStackTrace != null) {
+      alreadyClosed.addSuppressed(closedStackTrace);
     }
-    return alreadyDisposed;
+    return alreadyClosed;
   }
 
 
@@ -430,7 +431,7 @@ public final class FSRecordsImpl {
   }
 
   public long getCreationTimestamp() {
-    checkNotDisposed();
+    checkNotClosed();
     try {
       return connection.getTimestamp();
     }
@@ -451,7 +452,7 @@ public final class FSRecordsImpl {
 
   @TestOnly
   int getPersistentModCount() {
-    checkNotDisposed();
+    checkNotClosed();
     return connection.getPersistentModCount();
   }
 
@@ -459,7 +460,7 @@ public final class FSRecordsImpl {
 
   @TestOnly
   void force() {
-    checkNotDisposed();
+    checkNotClosed();
     try {
       connection.doForce();
     }
@@ -470,7 +471,7 @@ public final class FSRecordsImpl {
 
   @TestOnly
   boolean isDirty() {
-    checkNotDisposed();
+    checkNotClosed();
     return connection.isDirty();
   }
 
@@ -482,7 +483,7 @@ public final class FSRecordsImpl {
   //========== record allocations: ========================================
 
   int createRecord() {
-    checkNotDisposed();
+    checkNotClosed();
     try {
       return recordAccessor.createRecord(fileIdIndexedStorages);
     }
@@ -496,7 +497,7 @@ public final class FSRecordsImpl {
    */
   @NotNull
   IntList getRemainFreeRecords() {
-    checkNotDisposed();
+    checkNotClosed();
     return connection.getFreeRecords();
   }
 
@@ -511,7 +512,7 @@ public final class FSRecordsImpl {
   }
 
   void deleteRecordRecursively(int fileId) {
-    checkNotDisposed();
+    checkNotClosed();
     try {
       markAsDeletedRecursively(fileId);
       connection.markDirty();
@@ -550,7 +551,7 @@ public final class FSRecordsImpl {
   //========== FS roots manipulation: ========================================
 
   int @NotNull [] listRoots() {
-    checkNotDisposed();
+    checkNotClosed();
     try {
       return treeAccessor.listRoots();
     }
@@ -560,7 +561,7 @@ public final class FSRecordsImpl {
   }
 
   int findOrCreateRootRecord(@NotNull String rootUrl) {
-    checkNotDisposed();
+    checkNotClosed();
     try {
       return treeAccessor.findOrCreateRootRecord(rootUrl);
     }
@@ -570,7 +571,7 @@ public final class FSRecordsImpl {
   }
 
   void forEachRoot(@NotNull ObjIntConsumer<? super String> rootConsumer) {
-    checkNotDisposed();
+    checkNotClosed();
     try {
       treeAccessor.forEachRoot((rootId, rootUrlId) -> {
         String rootUrl = getNameByNameId(rootUrlId);
@@ -697,7 +698,7 @@ public final class FSRecordsImpl {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + toSave);
         }
-        checkNotDisposed();
+        checkNotClosed();
         updateSymlinksForNewChildren(parent, children, toSave);
         treeAccessor.doSaveChildren(parentId, toSave);
         connection.markRecordAsModified(parentId);
@@ -726,7 +727,7 @@ public final class FSRecordsImpl {
     int minId = Math.min(fromParentId, toParentId);
     int maxId = Math.max(fromParentId, toParentId);
 
-    checkNotDisposed();
+    checkNotClosed();
     updateLock.lock(minId);
     try {
       updateLock.lock(maxId);
@@ -827,7 +828,7 @@ public final class FSRecordsImpl {
   void storeSymlinkTarget(int fileId,
                           @Nullable String symlinkTarget) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       connection.markDirty();
       try (DataOutputStream stream = writeAttribute(fileId, SYMLINK_TARGET_ATTRIBUTE)) {
         IOUtil.writeUTF(stream, StringUtil.notNullize(symlinkTarget));
@@ -842,7 +843,7 @@ public final class FSRecordsImpl {
 
   boolean processAllNames(@NotNull Processor<? super CharSequence> processor) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       return connection.getNames().forEach((nameId, name) -> processor.process(name));
     }
     catch (IOException e) {
@@ -853,7 +854,7 @@ public final class FSRecordsImpl {
   boolean processFilesWithNames(@NotNull Set<String> names,
                                 @NotNull IntPredicate processor) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
 
       if (names.isEmpty()) {
         return true;
@@ -879,7 +880,7 @@ public final class FSRecordsImpl {
   @PersistentFS.Attributes
   int getFlags(int fileId) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       return connection.getRecords().getFlags(fileId);
     }
     catch (IOException e) {
@@ -898,7 +899,7 @@ public final class FSRecordsImpl {
 
   int getModCount(int fileId) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       return connection.getRecords().getModCount(fileId);
     }
     catch (IOException e) {
@@ -909,7 +910,7 @@ public final class FSRecordsImpl {
 
   public int getParent(int fileId) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       int parentId = connection.getRecords().getParent(fileId);
       if (parentId == fileId) {
         throw new IllegalStateException("Cyclic parent child relations in the database: fileId = " + fileId + " == parentId");
@@ -930,7 +931,7 @@ public final class FSRecordsImpl {
     }
 
     try {
-      checkNotDisposed();
+      checkNotClosed();
       connection.getRecords().setParent(fileId, parentId);
       connection.markDirty();
     }
@@ -947,7 +948,7 @@ public final class FSRecordsImpl {
    */
   public int getNameId(@NotNull String name) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       return fileNamesEnumerator.enumerate(name);
     }
     catch (Throwable e) {
@@ -958,7 +959,7 @@ public final class FSRecordsImpl {
   /** @return name by fileId, using FileNameCache */
   public @NotNull String getName(int fileId) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       int nameId = connection.getRecords().getNameId(fileId);
       return nameId == NULL_NAME_ID ? "" : fileNamesEnumerator.valueOf(nameId);
     }
@@ -969,7 +970,7 @@ public final class FSRecordsImpl {
 
   int getNameIdByFileId(int fileId) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       return connection.getRecords().getNameId(fileId);
     }
     catch (IOException e) {
@@ -980,7 +981,7 @@ public final class FSRecordsImpl {
   /** @return name from file-names enumerator (using cache) */
   public String getNameByNameId(int nameId) {
     assert nameId >= NULL_NAME_ID : "nameId(=" + nameId + ") must be positive";
-    checkNotDisposed();
+    checkNotClosed();
     try {
       return nameId == NULL_NAME_ID ? "" : fileNamesEnumerator.valueOf(nameId);
     }
@@ -991,7 +992,7 @@ public final class FSRecordsImpl {
 
   void setName(int fileId, @NotNull String name, int oldNameId) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       int nameId = getNameId(name);
 
       connection.getRecords().setNameId(fileId, nameId);
@@ -1008,7 +1009,7 @@ public final class FSRecordsImpl {
   void setFlags(int fileId,
                 @PersistentFS.Attributes int flags) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       if (connection.getRecords().setFlags(fileId, flags)) {
         connection.markDirty();
       }
@@ -1020,7 +1021,7 @@ public final class FSRecordsImpl {
 
   long getLength(int fileId) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       return connection.getRecords().getLength(fileId);
     }
     catch (IOException e) {
@@ -1031,7 +1032,7 @@ public final class FSRecordsImpl {
   void setLength(int fileId,
                  long len) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       if (connection.getRecords().setLength(fileId, len)) {
         connection.markDirty();
       }
@@ -1043,7 +1044,7 @@ public final class FSRecordsImpl {
 
   long getTimestamp(int fileId) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       return connection.getRecords().getTimestamp(fileId);
     }
     catch (IOException e) {
@@ -1054,7 +1055,7 @@ public final class FSRecordsImpl {
   void setTimestamp(int fileId,
                     long value) {
     try {
-      checkNotDisposed();
+      checkNotClosed();
       if (connection.getRecords().setTimestamp(fileId, value)) {
         connection.markDirty();
       }
@@ -1119,7 +1120,7 @@ public final class FSRecordsImpl {
                   int nameId,
                   int parentId,
                   boolean overwriteMissed) throws IOException {
-    checkNotDisposed();
+    checkNotClosed();
     connection.getRecords().fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
     connection.markDirty();
   }
@@ -1253,7 +1254,7 @@ public final class FSRecordsImpl {
         try {
           super.close();
           if (((PersistentFSContentAccessor.ContentOutputStream)out).isModified()) {
-            checkNotDisposed();
+            checkNotClosed();
             connection.markRecordAsModified(fileId);
           }
         }
@@ -1310,7 +1311,7 @@ public final class FSRecordsImpl {
    */
   public void scheduleRebuild(final @Nullable String diagnosticMessage,
                               final @Nullable Throwable cause) {
-    checkNotDisposed();
+    checkNotClosed();
     connection.scheduleVFSRebuild(diagnosticMessage, cause);
   }
 
@@ -1330,13 +1331,10 @@ public final class FSRecordsImpl {
    */
   @Contract("_->fail")
   RuntimeException handleError(Throwable e) throws RuntimeException, Error {
-    if (e instanceof ClosedStorageException || disposed) {
+    if (e instanceof ClosedStorageException || closed) {
       // no connection means IDE is closing...
-      AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS already disposed");
+      AlreadyDisposedException alreadyDisposed = alreadyClosedException();
       alreadyDisposed.addSuppressed(e);
-      if (disposed && disposedStackTrace != null) {
-        alreadyDisposed.addSuppressed(disposedStackTrace);
-      }
       throw alreadyDisposed;
     }
     if (e instanceof ProcessCanceledException) {
@@ -1352,7 +1350,7 @@ public final class FSRecordsImpl {
 
   /** Adds an object which must be closed during VFS close process */
   public synchronized void addCloseable(@NotNull Closeable closeable) {
-    checkNotDisposed();
+    checkNotClosed();
     closeables.add(closeable);
   }
 

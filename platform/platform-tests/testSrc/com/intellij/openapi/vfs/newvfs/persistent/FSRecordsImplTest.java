@@ -113,7 +113,7 @@ public class FSRecordsImplTest {
   @AfterEach
   void tearDown() {
     if (vfs != null) {
-      vfs.dispose();
+      vfs.close();
     }
   }
 }

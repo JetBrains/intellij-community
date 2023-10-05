@@ -78,7 +78,7 @@ private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
         delay(HEALTH_CHECKING_START_DELAY_MS.toDuration(MILLISECONDS))
 
         val checkingPeriod = HEALTH_CHECKING_PERIOD_MS.toDuration(MILLISECONDS)
-        while (isActive && !FSRecords.getInstance().isDisposed) {
+        while (isActive && !FSRecords.getInstance().isClosed) {
 
           //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
           //          since the last check.
@@ -110,7 +110,7 @@ private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
 
   private fun doCheckupAndReportResults() {
     val fsRecordsImpl = FSRecords.getInstance()
-    if (fsRecordsImpl.isDisposed) {
+    if (fsRecordsImpl.isClosed) {
       return
     }
     val checker = VFSHealthChecker(fsRecordsImpl, LOG)

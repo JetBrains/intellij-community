@@ -58,6 +58,7 @@ final class PersistentFSConnector {
     return init(cachesDir, version, enableVfsLog, interceptors);
   }
 
+  //TODO RC: why do we need the method? -- better call connection.close() directly
   public static void disconnect(@NotNull PersistentFSConnection connection) throws IOException {
     connection.close();
   }

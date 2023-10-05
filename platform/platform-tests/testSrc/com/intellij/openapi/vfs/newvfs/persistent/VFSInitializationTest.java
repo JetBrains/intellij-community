@@ -231,7 +231,7 @@ public class VFSInitializationTest {
           stream.writeInt(42);
         }
 
-        fsRecords.dispose();
+        fsRecords.close();
 
         Path[] vfsFilesToTryDeleting = Files.list(cachesDir)
           .filter(path -> Files.isRegularFile(path))
@@ -292,7 +292,7 @@ public class VFSInitializationTest {
 
         long firstVfsCreationTimestamp = vfs.getCreationTimestamp();
 
-        vfs.dispose();
+        vfs.close();
         Thread.sleep(500);//ensure system clock is moving
 
         //reopen:
