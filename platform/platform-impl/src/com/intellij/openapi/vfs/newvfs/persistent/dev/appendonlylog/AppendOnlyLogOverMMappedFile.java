@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 
+import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
 import com.intellij.util.io.IOUtil;
@@ -25,7 +26,7 @@ import static java.nio.ByteOrder.nativeOrder;
  * There are other caveats, pitfalls, and dragons, so beware
  */
 @ApiStatus.Internal
-public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
+public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmappable {
   //@formatter:off
   private static final boolean MORE_DIAGNOSTIC_INFORMATION = getBooleanProperty("AppendOnlyLogOverMMappedFile.MORE_DIAGNOSTIC_INFORMATION", true);
   private static final boolean ADD_LOG_CONTENT = getBooleanProperty("AppendOnlyLogOverMMappedFile.ADD_LOG_CONTENT", true);
@@ -561,7 +562,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
 
   @Override
   public void close() throws IOException {
-    if(storage.isOpen()) {
+    if (storage.isOpen()) {
       //MAYBE RC: is it better to state that flush(true) should be called
       //          explicitly, if needed, otherwise leave it to OS to decide
       //          when to sync the pages?
@@ -569,6 +570,12 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
       storage.close();
       headerPage = null;//help GC unmap pages sooner
     }
+  }
+
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    close();
+    storage.closeAndUnsafelyUnmap();;
   }
 
   /**

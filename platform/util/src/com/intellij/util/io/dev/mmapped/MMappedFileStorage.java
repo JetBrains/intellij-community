@@ -8,6 +8,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.Unmappable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +42,9 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * {@link com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper} or {@link com.intellij.openapi.vfs.newvfs.persistent.dev.FastFileAttributes}
  */
 @ApiStatus.Internal
-public final class MMappedFileStorage implements Closeable, CleanableStorage {
+public final class MMappedFileStorage implements Closeable, Unmappable, CleanableStorage {
   private static final Logger LOG = Logger.getInstance(MMappedFileStorage.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1000);
-
 
 
   //Explicit 'unmap' vs rely on JVM which will unmap pages eventually, as they are collected by GC?
@@ -243,42 +243,17 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
 
   /**
    * Close the storage, and unmap all the pages mapped.
-   * BEWARE: explicit buffer unmapping is unsafe, since any use of mapped buffer after unmapping leads to a JVM crash.
-   * Because of that, this method is inherently risky.
+   * BEWARE: explicit buffer unmapping is unsafe, since any use of mapped buffer after unmapping leads to a
+   * JVM crash. Because of that, this method is inherently risky.
    * 'Safe' use of this method requires all the uses of this storage to be stopped beforehand -- ideally, it
-   * should be no Page references alive in use by any thread, i.e., no chance any thread accesses any Page
+   * should be no reference to any Page alive/in use by any thread, i.e., no chance any thread accesses any Page
    * of this storage after _starting_ the invocation of this method.
    * Generally, it is much safer to call {@link #close()} without unmap -- in which case JVM/GC is responsible to
    * keep buffers mapped until at least someone uses them.
    */
-  public void close(boolean unmap) throws IOException {
-    try {
-      synchronized (pagesLock) {
-        if (channel.isOpen()) {
-          channel.close();
-          for (Page page : pages) {
-            if (page != null) {
-              unregisterMappedPage(pageSize);
-
-              if (unmap) {
-                page.unmap();
-              }
-            }
-          }
-          //if not unmapped explicitly (above), actual buffer unmap()-ing is done later, by GC
-          // let's not delay it by keeping references:
-          Arrays.fill(pages, null);
-        }
-      }
-    }
-    finally {
-      synchronized (openedStorages) {
-        //noinspection resource
-        openedStorages.remove(storagePath);
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        openedStoragesCount--;
-      }
-    }
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    close( /*unmap: */ true);
   }
 
   public void fsync() throws IOException {
@@ -290,7 +265,7 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
   @Override
   public void closeAndClean() throws IOException {
     //on Windows it is impossible to delete the file without unmapping it first, so take the risk:
-    close( /* unmap: */ true);
+    closeAndUnsafelyUnmap();
     FileUtil.delete(storagePath);
   }
 
@@ -344,6 +319,55 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
   public String toString() {
     return "MMappedFileStorage[" + storagePath + "]" +
            "[" + pages.length + " pages of " + pageSize + "b]";
+  }
+
+  private void close(boolean unmap) throws IOException {
+    try {
+      synchronized (pagesLock) {
+        if (channel.isOpen()) {
+          channel.close();
+          for (Page page : pages) {
+            if (page != null) {
+              unregisterMappedPage(pageSize);
+            }
+          }
+        }
+
+        if (unmap) {
+          try {
+            for (Page page : pages) {
+              if (page != null) {
+                page.unmap();
+              }
+            }
+          }
+          finally {
+            //Tradeoff: we can _always_ clean the .pages, regardless of unmap or not -- then .close(unmap:false)
+            // benefits from faster page unmapping by GC (it is quite often storage itself is still strongly-reachable
+            // after the .close() => without nulling the .pages pageBuffers also remain strongly-reachable => not
+            // unmapped)
+            // But this way we lose the ability to ask storage explicitly unmap pages _after_ the .close() -- because
+            // .pages is already cleared, nothing to unmap.
+            // This close-then-unmap is really frequent scenario: it is quite often storage is .close()-ed during
+            // some regular resource-deallocation-procedure, but in the very end we want to _delete_ the storage
+            // file, hence we need to explicitly unmap it beforehand -- which we can't do if page refs were already
+            // cleared during regular .close()
+            // So I chose to lean the other side, and do NOT clear page refs on close(unmap:false), so later
+            // .close(unmap:true) if called -- could still unmap them. But this means that without explicit
+            // .close(unmap:true) mapped buffers will remain mapped for longer, even after storage was already
+            // .close()-ed.
+            Arrays.fill(pages, null);
+          }
+        }
+      }
+    }
+    finally {
+      synchronized (openedStorages) {
+        openedStorages.remove(storagePath);
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        openedStoragesCount--;
+      }
+    }
   }
 
   private Page pageByIndexLocked(int pageIndex) throws IOException {
@@ -444,7 +468,7 @@ public final class MMappedFileStorage implements Closeable, CleanableStorage {
       if (!buffer.isDirect()) {
         return;
       }
-      if(INVOKE_CLEANER_METHOD == null){
+      if (INVOKE_CLEANER_METHOD == null) {
         throw new IllegalStateException("No access to Unsafe.invokeCleaner() -- explicit mapped buffers unmapping is unavailable");
       }
 

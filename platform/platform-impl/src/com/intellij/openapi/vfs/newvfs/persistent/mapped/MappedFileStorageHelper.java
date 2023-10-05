@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection;
 import com.intellij.util.io.CleanableStorage;
+import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
@@ -48,7 +49,7 @@ import static java.nio.ByteOrder.nativeOrder;
  * one still needs to understand the underlying code.
  */
 @ApiStatus.Internal
-public final class MappedFileStorageHelper implements Closeable, CleanableStorage {
+public final class MappedFileStorageHelper implements Closeable, CleanableStorage, Unmappable {
   /**
    * Keeps a registry of all {@link MappedFileStorageHelper} -- prevents creating duplicates, i.e. >1 storage
    * for the same path.
@@ -326,9 +327,15 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
 
   @Override
   public void close() throws IOException {
-    //MAYBE RC: is it better to always fsync here? -- or better state that fsync should be called explicitly, if
-    //          needed, otherwise leave it to OS to decide when to flush the pages?
+    //We don't fsync() by default on close -- leave it to OS to decide when to flush the pages
     storage.close();
+
+    storagesRegistry.remove(storage.storagePath());
+  }
+
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    storage.closeAndUnsafelyUnmap();
 
     storagesRegistry.remove(storage.storagePath());
   }
@@ -336,7 +343,7 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
   /** Closes the file, releases the mapped buffers, and 'make the best effort' to delete the file. */
   @Override
   public void closeAndClean() throws IOException {
-    close();
+    closeAndUnsafelyUnmap();
     storage.closeAndClean();
   }
 

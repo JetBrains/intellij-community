@@ -40,7 +40,7 @@ public class MMappedFileStorageTest {
 
   @AfterEach
   public void tearDown() throws Exception {
-    storage.close( /* unmap: */ true);
+    storage.closeAndUnsafelyUnmap();
   }
 
 
