@@ -8,9 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
 class TextDetailsProgressReporter(parentScope: CoroutineScope) : BaseProgressReporter(parentScope) {
 
   private val childrenHandler: ChildrenHandler<TextDetails> = ChildrenHandler(cs, TextDetails.NULL, ::reduceTextDetails)

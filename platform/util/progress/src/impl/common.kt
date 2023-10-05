@@ -2,7 +2,6 @@
 package com.intellij.platform.util.progress.impl
 
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.annotations.ApiStatus.Internal
 
 internal val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress.impl")
 
@@ -41,7 +40,6 @@ internal fun reduceTextDetails(states: List<TextDetails>): TextDetails? {
          ?: states.firstOrNull()
 }
 
-@Internal
 const val ACCEPTABLE_FRACTION_OVERFLOW: Double = 1.0 / Int.MAX_VALUE
 
 internal fun checkFraction(fraction: Double?): Boolean {

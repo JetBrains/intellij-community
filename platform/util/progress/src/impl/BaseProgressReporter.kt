@@ -8,9 +8,7 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
-import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
 abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressReporter {
 
   protected val cs: CoroutineScope = parentScope.childScope(supervisor = false)
