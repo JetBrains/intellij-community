@@ -274,6 +274,7 @@ const val EXIT_APP_CMD_PREFIX = "${CMD_PREFIX}exitApp"
 
 fun <T : CommandChain> T.exitApp(forceExit: Boolean = true): T {
   takeScreenshot("exitApp")
+  takeThreadDump()
   addCommand(EXIT_APP_CMD_PREFIX, forceExit.toString())
   return this
 }
@@ -579,6 +580,12 @@ fun <T : CommandChain> T.expandEditorMenu(): T {
 const val TAKE_SCREENSHOT = "${CMD_PREFIX}takeScreenshot"
 fun <T : CommandChain> T.takeScreenshot(path: String): T {
   addCommand(TAKE_SCREENSHOT, path)
+  return this
+}
+
+const val TAKE_THREAD_DUMP = "${CMD_PREFIX}takeThreadDump"
+fun <T : CommandChain> T.takeThreadDump(): T {
+  addCommand(TAKE_THREAD_DUMP)
   return this
 }
 
