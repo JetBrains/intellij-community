@@ -40,7 +40,7 @@ public class MMappedFileStorageTest {
 
   @AfterEach
   public void tearDown() throws Exception {
-    storage.closeAndUnsafelyUnmap();
+    storage.closeAndClean();
   }
 
 
@@ -108,42 +108,44 @@ public class MMappedFileStorageTest {
     try {
       //create dedicated storage with small pages so page-allocation is faster and fewer shadows concurrent issues:
       try (MMappedFileStorage storage = new MMappedFileStorage(storagePath, smallPageSize)) {
-        Future<Page[]>[] futures = new Future[CPUs];
+        try {
+          Future<Page[]>[] futures = new Future[CPUs];
 
-        CountDownLatch startRace = new CountDownLatch(1);
-        for (int threadNo = 0; threadNo < CPUs; threadNo++) {
-          futures[threadNo] = pool.submit(() -> {
-            startRace.await();
-            Page[] pages = new Page[pagesCount];
-            for (int pageNo = 0; pageNo < pages.length; pageNo++) {
-              pages[pageNo] = storage.pageByIndex(pageNo);
-            }
-            return pages;
-          });
-        }
+          CountDownLatch startRace = new CountDownLatch(1);
+          for (int threadNo = 0; threadNo < CPUs; threadNo++) {
+            futures[threadNo] = pool.submit(() -> {
+              startRace.await();
+              Page[] pages = new Page[pagesCount];
+              for (int pageNo = 0; pageNo < pages.length; pageNo++) {
+                pages[pageNo] = storage.pageByIndex(pageNo);
+              }
+              return pages;
+            });
+          }
 
-        startRace.countDown();
+          startRace.countDown();
 
-        Page[][] pagesGotByThread = new Page[CPUs][];
-        for (int threadNo = 0; threadNo < futures.length; threadNo++) {
-          pagesGotByThread[threadNo] = futures[threadNo].get();
-        }
+          Page[][] pagesGotByThread = new Page[CPUs][];
+          for (int threadNo = 0; threadNo < futures.length; threadNo++) {
+            pagesGotByThread[threadNo] = futures[threadNo].get();
+          }
 
-        //check: ForAll[pageNo] { pagesGotByThread[*][pageNo] } are the same
-        // (i.e. for any pageIndex all threads always got the same Page(pageIndex) instance)
-        for (int pageNo = 0; pageNo < pagesCount; pageNo++) {
-          for (int threadNo = 0; threadNo < CPUs - 1; threadNo++) {
-            Page page1 = pagesGotByThread[threadNo][pageNo];
-            Page page2 = pagesGotByThread[threadNo + 1][pageNo];
-            if (page1 != page2) {
-              fail("[pageNo: " + pageNo + "]: " +
-                   "thread[" + threadNo + "] got " + page1 + " != " + page2 + " got by thread[" + (threadNo + 1) + "]");
+          //check: ForAll[pageNo] { pagesGotByThread[*][pageNo] } are the same
+          // (i.e. for any pageIndex all threads always got the same Page(pageIndex) instance)
+          for (int pageNo = 0; pageNo < pagesCount; pageNo++) {
+            for (int threadNo = 0; threadNo < CPUs - 1; threadNo++) {
+              Page page1 = pagesGotByThread[threadNo][pageNo];
+              Page page2 = pagesGotByThread[threadNo + 1][pageNo];
+              if (page1 != page2) {
+                fail("[pageNo: " + pageNo + "]: " +
+                     "thread[" + threadNo + "] got " + page1 + " != " + page2 + " got by thread[" + (threadNo + 1) + "]");
+              }
             }
           }
         }
-      }
-      finally {
-        storage.closeAndClean();
+        finally {
+          storage.closeAndClean();
+        }
       }
     }
     finally {
