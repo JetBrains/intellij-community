@@ -1,18 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
+import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.pagecache.PagedStorage;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 
-/**
- *
- */
-public class StorageTestingUtils {
+public final class StorageTestingUtils {
   /**
    * Emulates scenario there underlying storage(s) was closed without invoking storage.close() method -- as-if
    * app was kill-9-ed. This is just an emulation -- it doesn't replicate all the details of actual kill-9 --
@@ -53,6 +54,60 @@ public class StorageTestingUtils {
       // storage somewhere deeper:
       else if (AutoCloseable.class.isAssignableFrom(field.getType())) {
         emulateImproperClose((AutoCloseable)fieldValue);
+      }
+    }
+  }
+
+  public static void bestEffortToCloseAndClean(@NotNull Object storage) throws Exception {
+    Field[] fields = storage.getClass().getDeclaredFields();
+    for (Field field : fields) {
+      field.setAccessible(true);
+      Object fieldValue = field.get(storage);
+
+      if (fieldValue instanceof CleanableStorage) {
+        ((CleanableStorage)fieldValue).closeAndClean();
+      }
+      else if (fieldValue instanceof Unmappable) {
+        ((Unmappable)fieldValue).closeAndUnsafelyUnmap();
+        //we don't clean it, but still do our best so files _could_ be removed upper the stack
+      }
+      else if (fieldValue instanceof AutoCloseable) {
+        ((AutoCloseable)fieldValue).close();
+        //Assume every other AutoCloseable is 'compound' storage that _may_ hold
+        // 'raw' underlying storage(s) somewhere deeper:
+        bestEffortToCloseAndClean(fieldValue);
+      }
+      else if (fieldValue instanceof Disposable) {
+        Disposer.dispose((Disposable)fieldValue);
+        //Assume every other Disposable is 'compound' storage that _may_ hold
+        // 'raw' underlying storage(s) somewhere deeper:
+        bestEffortToCloseAndClean(fieldValue);
+      }
+    }
+  }
+
+  public static void bestEffortToCloseAndUnmap(@NotNull Object storage) throws Exception {
+    Field[] fields = storage.getClass().getDeclaredFields();
+    for (Field field : fields) {
+      field.setAccessible(true);
+      Object fieldValue = field.get(storage);
+
+      if (fieldValue instanceof Unmappable) {
+        ((Unmappable)fieldValue).closeAndUnsafelyUnmap();
+      }
+      else if (fieldValue instanceof AutoCloseable) {
+        //Assume every other AutoCloseable is 'compound' storage that _may_ hold
+        // 'raw' underlying storage(s) somewhere deeper:
+        bestEffortToCloseAndClean(fieldValue);
+
+        ((AutoCloseable)fieldValue).close();
+      }
+      else if (fieldValue instanceof Disposable) {
+        //Assume every other Disposable is 'compound' storage that _may_ hold
+        // 'raw' underlying storage(s) somewhere deeper:
+        bestEffortToCloseAndClean(fieldValue);
+
+        Disposer.dispose((Disposable)fieldValue);
       }
     }
   }

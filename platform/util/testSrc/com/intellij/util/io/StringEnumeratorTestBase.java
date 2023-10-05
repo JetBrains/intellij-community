@@ -51,7 +51,12 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
   @After
   public void tearDown() throws Exception {
-    closeEnumerator(enumerator);
+    if (enumerator instanceof CleanableStorage) {
+      ((CleanableStorage)enumerator).closeAndClean();
+    }
+    else {
+      closeEnumerator(enumerator);
+    }
   }
 
   @Test
@@ -445,10 +450,7 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
 
   protected void closeEnumerator(DataEnumerator<String> enumerator) throws Exception {
-    if (enumerator instanceof CleanableStorage) {
-      ((CleanableStorage)enumerator).closeAndClean();
-    }
-    else if (enumerator instanceof AutoCloseable) {
+    if (enumerator instanceof AutoCloseable) {
       ((AutoCloseable)enumerator).close();
     }
   }

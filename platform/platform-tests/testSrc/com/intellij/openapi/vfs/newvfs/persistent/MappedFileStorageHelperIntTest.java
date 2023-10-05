@@ -46,7 +46,7 @@ public class MappedFileStorageHelperIntTest {
     // can't be removed (a thing for Win) -- at least clear it's content so
     // next test see it as empty file:
     storageHelper.closeAndClean();
-    vfs.close();
+    StorageTestingUtils.bestEffortToCloseAndClean(vfs);
 
 
     //RC: Can't just check for .isEmpty(): if running in the same process with other tests -- could be storages

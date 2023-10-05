@@ -41,7 +41,7 @@ public class FastFileAttributesTest {
 
   @AfterEach
   public void tearDown() throws Exception {
-    vfs.close();
+    StorageTestingUtils.bestEffortToCloseAndClean(vfs);
   }
 
   @Test
