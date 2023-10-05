@@ -6,6 +6,7 @@ import com.intellij.ide.startup.importSettings.data.ImportError
 import com.intellij.ide.startup.importSettings.data.ImportProgress
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.rd.util.withBackgroundContext
 import com.intellij.openapi.rd.util.withSyncIOBackgroundContext
@@ -27,20 +28,21 @@ internal class SettingsSyncProgress : ImportProgress {
 
 private val logger = Logger.getInstance("com.intellij.ide.startup.importSettings.sync.SettingsSyncFlowKt")
 
-internal suspend fun getRemoteProductInfo(communicator: SettingsSyncRemoteCommunicator): SettingsSnapshot? {
-  val result = withSyncIOBackgroundContext {
-    communicator.receiveUpdates()
-  }
-  return when (result) {
-    is UpdateResult.Success -> result.settingsSnapshot
-    UpdateResult.NoFileOnServer -> null
-    UpdateResult.FileDeletedFromServer -> null
-    is UpdateResult.Error -> {
-      logger.warn("Error from server update: ${result.message}.")
-      null
+internal suspend fun getRemoteSettingsSnapshot(communicator: SettingsSyncRemoteCommunicator): SettingsSnapshot? =
+  logger.runAndLogException {
+    val result = withSyncIOBackgroundContext {
+      communicator.receiveUpdates()
+    }
+    when (result) {
+      is UpdateResult.Success -> result.settingsSnapshot
+      UpdateResult.NoFileOnServer -> null
+      UpdateResult.FileDeletedFromServer -> null
+      is UpdateResult.Error -> {
+        logger.warn("Error from server update: ${result.message}.")
+        null
+      }
     }
   }
-}
 
 private val durationForReceiving = 5.seconds
 private const val percentForReceiving = 90

@@ -1,9 +1,13 @@
 package com.intellij.ide.startup.importSettings.sync
 
 import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.settingsSync.SettingsSnapshot
 import com.intellij.settingsSync.SettingsSyncMain
 import com.intellij.ui.JBAccountInfoService
 import com.jetbrains.rd.util.reactive.Property
@@ -14,7 +18,27 @@ import javax.swing.Icon
 
 private val logger = logger<SyncServiceImpl>()
 
-class SyncServiceImpl(private val coroutineScope: CoroutineScope) : SyncService {
+private data class ProductInfo(
+  override val version: String,
+  override val lastUsage: Date,
+  override val id: String,
+  override val name: String
+) : Product {
+
+  constructor(metaInfo: SettingsSnapshot.MetaInfo) : this(
+    version = metaInfo.appInfo?.buildNumber?.asStringWithoutProductCodeAndSnapshot() ?: "",
+    lastUsage = Date.from(metaInfo.dateCreated),
+    id = metaInfo.appInfo?.applicationId.toString(),
+    name = metaInfo.appInfo?.buildNumber?.productCode ?: ""
+  )
+}
+
+@Service
+internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : SyncService {
+
+  companion object {
+    fun getInstance(): SyncServiceImpl = service()
+  }
 
   private val syncStateProperty = Property(SyncService.SYNC_STATE.UNLOGGED)
   override val syncState = syncStateProperty
@@ -49,23 +73,20 @@ class SyncServiceImpl(private val coroutineScope: CoroutineScope) : SyncService 
     TODO("Not yet implemented")
   }
 
+  private suspend fun getSettingsSnapshot(): SettingsSnapshot? {
+    return getRemoteSettingsSnapshot(settingSyncControls.remoteCommunicator)
+  }
+
   override fun getMainProduct(): Product? {
     return logger.runAndLogException {
       // TODO: Async
-      runBlockingCancellable {
-        val result = getRemoteProductInfo(settingSyncControls.remoteCommunicator)
-        result?.let {
-          object : Product {
-            override val version: String
-              get() = result.metaInfo.appInfo?.buildNumber?.asStringWithoutProductCodeAndSnapshot() ?: ""
-            override val lastUsage: Date
-              get() = Date.from(result.metaInfo.dateCreated)
-            override val id: String
-              get() = result.metaInfo.appInfo?.applicationId.toString()
-            override val name: String
-              get() = result.metaInfo.appInfo?.buildNumber?.productCode ?: ""
-          }
+      runBlockingCancellable block@{
+        val snapshot = getSettingsSnapshot() ?: return@block null
+        if (snapshot.metaInfo.appInfo?.buildNumber?.productCode == ApplicationInfo.getInstance().build.productCode) {
+          return@block ProductInfo(snapshot.metaInfo)
         }
+
+        null
       }
     }
   }
@@ -75,11 +96,26 @@ class SyncServiceImpl(private val coroutineScope: CoroutineScope) : SyncService 
   }
 
   override fun getOldProducts(): List<Product> {
-    TODO("Not yet implemented")
+    // TODO: Figure out what are these
+    return emptyList()
   }
 
   override fun products(): List<Product> {
-    TODO("Not yet implemented")
+    val oneProduct = logger.runAndLogException {
+      // TODO: Async
+      runBlockingCancellable block@{
+        val snapshot = getSettingsSnapshot() ?: return@block null
+        val productCodeInCloud = snapshot.metaInfo.appInfo?.buildNumber?.productCode ?: return@block null
+        if (productCodeInCloud != ApplicationInfo.getInstance().build.productCode) {
+          return@block ProductInfo(snapshot.metaInfo)
+        }
+
+        null
+      }
+    } ?: return emptyList()
+
+    // TODO: Figure out the server API
+    return listOf(oneProduct)
   }
 
   override fun getSettings(itemId: String): List<BaseSetting> {

@@ -1,8 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
+import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
 import com.intellij.openapi.components.service
-import com.jetbrains.rd.util.reactive.*
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.util.SystemProperties
+import com.jetbrains.rd.util.reactive.IOptPropertyView
+import com.jetbrains.rd.util.reactive.IPropertyView
 import java.util.*
 import javax.swing.Icon
 
@@ -15,6 +19,21 @@ interface SettingsService {
   fun getExternalService(): ExternalService
 
   fun skipImport()
+}
+
+class SettingsServiceImpl : SettingsService {
+
+  private val shouldUseMockData = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", true)
+
+  override fun getSyncService() =
+    if (shouldUseMockData) TestSyncService()
+    else SyncServiceImpl.getInstance()
+
+  override fun getJbService() = TestJbService()
+
+  override fun getExternalService() = TestExternalService()
+
+  override fun skipImport() = thisLogger().info("$IMPORT_SERVICE skipImport")
 }
 
 

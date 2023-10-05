@@ -2,40 +2,19 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.reactive.IProperty
+import com.jetbrains.rd.util.reactive.OptProperty
+import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.threading.coroutines.launch
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.swing.Icon
 
-
-class TestBaseService : SettingsService {
-  companion object {
-    private val LOG = logger<TestBaseService>()
-
-    val IMPORT_SERVICE = "ImportService"
-    fun getInstance() = service<TestBaseService>()
-  }
-
-  override fun getSyncService(): SyncService {
-    return TestSyncService()
-  }
-
-  override fun getJbService(): JbService {
-    return TestJbService()
-  }
-
-  override fun getExternalService(): ExternalService {
-    return TestExternalService()
-  }
-
-  override fun skipImport() {
-    LOG.info("$IMPORT_SERVICE skipImport")
-  }
-}
+internal const val IMPORT_SERVICE = "ImportService"
 
 class TestJbService : JbService {
   companion object {
@@ -120,7 +99,7 @@ class TestJbService : JbService {
   }
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
-    LOG.info("${TestBaseService.IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
+    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
     return if(productId == getConfig().id) simpleImport else importFromProduct
   }
 
@@ -173,7 +152,7 @@ class TestExternalService : ExternalService {
   }
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
-    LOG.info("${TestBaseService.IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
+    LOG.info("$IMPORT_SERVICE importSettings product: $productId data: ${data.size}")
     return TestJbService.importFromProduct
   }
 }
@@ -190,27 +169,27 @@ class TestSyncService : SyncService {
   override val syncState: IProperty<SyncService.SYNC_STATE> = Property(SyncService.SYNC_STATE.LOGGED)
 
   override fun tryToLogin(): String? {
-    LOG.info("${TestBaseService.IMPORT_SERVICE} tryToLogin")
+    LOG.info("$IMPORT_SERVICE tryToLogin")
     return null
   }
 
   override fun syncSettings(): DialogImportData {
-    LOG.info("${TestBaseService.IMPORT_SERVICE} syncSettings")
+    LOG.info("$IMPORT_SERVICE syncSettings")
     return TestJbService.importFromProduct
   }
 
   override fun importSyncSettings(): DialogImportData {
-    LOG.info("${TestBaseService.IMPORT_SERVICE} importSettings")
+    LOG.info("$IMPORT_SERVICE importSettings")
     return TestJbService.importFromProduct
   }
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
-    LOG.info("${TestBaseService.IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
+    LOG.info("$IMPORT_SERVICE importSettings product: $productId data: ${data.size}")
     return TestJbService.importFromProduct
   }
 
   override fun generalSync() {
-    LOG.info("${TestBaseService.IMPORT_SERVICE} generalSync")
+    LOG.info("$IMPORT_SERVICE generalSync")
   }
 
   override fun getMainProduct(): Product? {
