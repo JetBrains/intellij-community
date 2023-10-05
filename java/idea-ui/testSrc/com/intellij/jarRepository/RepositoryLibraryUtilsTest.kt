@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
-import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.Project
@@ -22,14 +21,20 @@ import com.intellij.util.io.directoryContentOf
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import java.nio.file.Path
 
 class RepositoryLibraryUtilsTest {
   companion object {
+    /**
+     * See .idea/libraries/ in testData
+     */
+    private const val TEST_MAVEN_LOCAL_REPOSITORY_MACRO = "REPOSITORY_LIBRARY_UTILS_TEST_LOCAL_MAVEN_REPOSITORY"
+    /**
+     * See .idea/jarRepositories.xml in testData
+     */
+    private const val TEST_REMOTE_REPOSITORIES_ROOT_MACRO = "REPOSITORY_LIBRARY_UTILS_TEST_REMOTE_REPOSITORIES_ROOT"
+
     @JvmField
     @ClassRule
     val applicationRule = ApplicationRule()
@@ -39,6 +44,23 @@ class RepositoryLibraryUtilsTest {
     val m2Directory = TemporaryDirectory()
 
     private val m2DirectoryPath by lazy { m2Directory.createDir() }
+
+    @BeforeClass
+    @JvmStatic
+    fun beforeAll() {
+      val pathMacros: PathMacros = PathMacros.getInstance()
+      pathMacros.setMacro(TEST_MAVEN_LOCAL_REPOSITORY_MACRO, m2DirectoryPath.toString())
+      JarRepositoryManager.setLocalRepositoryPath(m2DirectoryPath.toFile())
+    }
+
+    @AfterClass
+    @JvmStatic
+    fun afterAll() {
+      val pathMacros: PathMacros = PathMacros.getInstance()
+      pathMacros.setMacro(TEST_MAVEN_LOCAL_REPOSITORY_MACRO, null)
+      pathMacros.setMacro(TEST_REMOTE_REPOSITORIES_ROOT_MACRO, null)
+      JarRepositoryManager.setLocalRepositoryPath(null)
+    }
   }
 
   @JvmField
@@ -61,12 +83,7 @@ class RepositoryLibraryUtilsTest {
     m2DirectoryPath.createDirectory()
 
     val pathMacros: PathMacros = PathMacros.getInstance()
-
-    /* tip: MAVEN_REPOSITORY macro is cached in JarRepositoryManager isn't updated each time */
-    pathMacros.setMacro(PathMacrosImpl.MAVEN_REPOSITORY, m2DirectoryPath.toString())
-
-    /* See .idea/jarRepositories.xml in testData */
-    pathMacros.setMacro("TEST_REMOTE_REPOSITORIES_ROOT", "file://$testRemoteRepositoriesRoot")
+    pathMacros.setMacro(TEST_REMOTE_REPOSITORIES_ROOT_MACRO, "file://$testRemoteRepositoriesRoot")
   }
 
   @Test
