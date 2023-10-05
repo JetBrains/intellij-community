@@ -12,6 +12,7 @@ import com.intellij.util.io.pagecache.PagedStorage;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 public final class StorageTestingUtils {
   /**
@@ -34,6 +35,10 @@ public final class StorageTestingUtils {
     // Now one _can_ re-open the same file, and got storage in 'improperly closed' state
     Field[] fields = storage.getClass().getDeclaredFields();
     for (Field field : fields) {
+      if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
+        continue;
+      }
+
       field.setAccessible(true);
       Object fieldValue = field.get(storage);
 
@@ -52,7 +57,7 @@ public final class StorageTestingUtils {
       }
       //Assume every other AutoCloseable is 'compound' storage that _may_ hold 'raw' underlying
       // storage somewhere deeper:
-      else if (AutoCloseable.class.isAssignableFrom(field.getType())) {
+      else if (fieldValue instanceof AutoCloseable ) {
         emulateImproperClose((AutoCloseable)fieldValue);
       }
     }
@@ -61,9 +66,13 @@ public final class StorageTestingUtils {
   public static void bestEffortToCloseAndClean(@NotNull Object storage) throws Exception {
     Field[] fields = storage.getClass().getDeclaredFields();
     for (Field field : fields) {
+      if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
+        continue;
+      }
       field.setAccessible(true);
       Object fieldValue = field.get(storage);
 
+      //System.out.println("." + field.getName());
       if (fieldValue instanceof CleanableStorage) {
         ((CleanableStorage)fieldValue).closeAndClean();
       }
@@ -71,21 +80,26 @@ public final class StorageTestingUtils {
         ((Unmappable)fieldValue).closeAndUnsafelyUnmap();
         //we don't clean it, but still do our best so files _could_ be removed upper the stack
       }
-      else if (fieldValue instanceof AutoCloseable) {
-        ((AutoCloseable)fieldValue).close();
-        //Assume every other AutoCloseable is 'compound' storage that _may_ hold
-        // 'raw' underlying storage(s) somewhere deeper:
-        bestEffortToCloseAndClean(fieldValue);
-      }
-      else if (fieldValue instanceof Disposable) {
-        Disposer.dispose((Disposable)fieldValue);
-        //Assume every other Disposable is 'compound' storage that _may_ hold
-        // 'raw' underlying storage(s) somewhere deeper:
-        bestEffortToCloseAndClean(fieldValue);
-      }
-      else if (fieldValue instanceof Iterable<?>) {
-        for (Object nested : (Iterable<?>)fieldValue) {
-          bestEffortToCloseAndClean(nested);
+      else {
+        if (fieldValue instanceof AutoCloseable) {
+          ((AutoCloseable)fieldValue).close();
+          //Assume every other AutoCloseable is 'compound' storage that _may_ hold
+          // 'raw' underlying storage(s) somewhere deeper:
+          bestEffortToCloseAndClean(fieldValue);
+        }
+        else if (fieldValue instanceof Disposable) {
+          Disposer.dispose((Disposable)fieldValue);
+          //Assume every other Disposable is 'compound' storage that _may_ hold
+          // 'raw' underlying storage(s) somewhere deeper:
+          bestEffortToCloseAndClean(fieldValue);
+        }
+        else if (fieldValue instanceof Iterable<?>) {
+          for (Object nested : (Iterable<?>)fieldValue) {
+            bestEffortToCloseAndClean(nested);
+          }
+        }
+        else if (fieldValue instanceof PersistentFSConnection) {
+          bestEffortToCloseAndClean(fieldValue);
         }
       }
     }
@@ -94,6 +108,10 @@ public final class StorageTestingUtils {
   public static void bestEffortToCloseAndUnmap(@NotNull Object storage) throws Exception {
     Field[] fields = storage.getClass().getDeclaredFields();
     for (Field field : fields) {
+      if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
+        continue;
+      }
+
       field.setAccessible(true);
       Object fieldValue = field.get(storage);
 
@@ -118,6 +136,9 @@ public final class StorageTestingUtils {
         for (Object nested : (Iterable<?>)fieldValue) {
           bestEffortToCloseAndUnmap(nested);
         }
+      }
+      else if (fieldValue instanceof PersistentFSConnection) {
+        bestEffortToCloseAndClean(fieldValue);
       }
     }
   }
