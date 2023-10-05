@@ -274,7 +274,6 @@ const val EXIT_APP_CMD_PREFIX = "${CMD_PREFIX}exitApp"
 
 fun <T : CommandChain> T.exitApp(forceExit: Boolean = true): T {
   takeScreenshot("exitApp")
-  takeThreadDump()
   addCommand(EXIT_APP_CMD_PREFIX, forceExit.toString())
   return this
 }
