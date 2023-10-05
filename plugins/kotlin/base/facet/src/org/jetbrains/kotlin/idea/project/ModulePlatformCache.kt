@@ -32,8 +32,7 @@ class ModulePlatformCache(project: Project): SynchronizedFineGrainedEntityCache<
     internal class ModelChangeListener(project: Project) : ModuleEntityChangeListener(project) {
         override fun entitiesChanged(outdated: List<Module>) {
             val platformCache = getInstance(project)
-
-            platformCache.invalidateKeys(outdated)
+            platformCache.invalidate()
         }
     }
 
