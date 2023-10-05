@@ -68,7 +68,10 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
               span.setAttribute("number", combined.size());
               Optional<IntentionActionWithTextCaching>
                 singleIntention = combined.stream().filter(s -> s.getAction().getText().startsWith(actionName)).findFirst();
-              if (singleIntention.isEmpty()) actionCallback.reject(actionName + " is not found among " + combined);
+              if (singleIntention.isEmpty()) {
+                actionCallback.reject(actionName + " is not found among " + combined);
+                return;
+              }
               if (invoke) {
                 singleIntention.ifPresent(
                   c -> ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, c.getAction(), c.getAction().getText()));
@@ -78,7 +81,9 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
               IntentionHintComponent.showIntentionHint(project, psiFile, editor, true, intentions);
             }
           });
-          actionCallback.setDone();
+          if(!actionCallback.isRejected()){
+            actionCallback.setDone();
+          }
         }
         else {
           actionCallback.reject("PSI File is null");

@@ -94,6 +94,9 @@ public class ActionCallback implements Disposable {
     }
   }
 
+  /**
+   * You need to avoid calling #setDone() later on otherwise the rejection will be ignored
+   */
   public @NotNull ActionCallback reject(@NonNls String error) {
     myError = error;
     setRejected();
