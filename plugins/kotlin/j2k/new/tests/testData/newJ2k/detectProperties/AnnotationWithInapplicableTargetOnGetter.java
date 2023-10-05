@@ -1,10 +1,19 @@
 public class J {
-    private String something;
-    @Ann
-    public String getSomething() {
-        return something;
+    private String x;
+    @Inapplicable
+    public String getX() {
+        return x;
     }
-    public void setSomething(String s) {
-        something = s;
+    public void setX(String s) {
+        x = s;
+    }
+
+    private String y;
+    @Applicable
+    public String getY() {
+        return y;
+    }
+    public void setY(String s) {
+        y = s;
     }
 }

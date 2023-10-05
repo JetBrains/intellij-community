@@ -1,12 +1,15 @@
 class J {
-    private var something: String? = null
+    private var x: String? = null
 
-    @Ann
-    fun getSomething(): String? {
-        return something
+    @Inapplicable
+    fun getX(): String? {
+        return x
     }
 
-    fun setSomething(s: String?) {
-        something = s
+    fun setX(s: String?) {
+        x = s
     }
+
+    @get:Applicable
+    var y: String? = null
 }
