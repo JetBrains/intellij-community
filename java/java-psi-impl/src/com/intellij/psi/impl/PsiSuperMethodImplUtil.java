@@ -228,7 +228,7 @@ public final class PsiSuperMethodImplUtil {
                                @NotNull Map<MethodSignature, HierarchicalMethodSignatureImpl> map,
                                @NotNull HierarchicalMethodSignature hierarchicalMethodSignature,
                                @NotNull MethodSignature signature) {
-    if (!canBeStoreInMap(hierarchicalMethodSignature, aClass)) {
+    if (!isInterfaceStaticMethod(hierarchicalMethodSignature, aClass)) {
       return;
     }
     HierarchicalMethodSignatureImpl existing = map.get(signature);
@@ -239,7 +239,7 @@ public final class PsiSuperMethodImplUtil {
       return;
     }
 
-    MergeSuperType mergeSuperType = isSuperMethod(aClass, hierarchicalMethodSignature, existing);
+    MergeSuperType mergeSuperType = solveMergeSuperType(aClass, hierarchicalMethodSignature, existing);
     if ((isReturnTypeIsMoreSpecificThan(hierarchicalMethodSignature, existing) &&
          mergeSuperType == MergeSuperType.MERGE_SUPER) || mergeSuperType == MergeSuperType.FORCE_MERGE) {
       HierarchicalMethodSignatureImpl newCurrent = copy(hierarchicalMethodSignature);
@@ -249,7 +249,7 @@ public final class PsiSuperMethodImplUtil {
       return;
     }
 
-    mergeSuperType = isSuperMethod(aClass, existing, hierarchicalMethodSignature);
+    mergeSuperType = solveMergeSuperType(aClass, existing, hierarchicalMethodSignature);
     if (mergeSuperType == MergeSuperType.MERGE_SUPER || mergeSuperType == MergeSuperType.FORCE_MERGE) {
       mergeSupers(existing, hierarchicalMethodSignature);
       return;
@@ -261,7 +261,7 @@ public final class PsiSuperMethodImplUtil {
     }
   }
 
-  private static boolean canBeStoreInMap(@NotNull HierarchicalMethodSignature signature, @NotNull PsiClass aClass) {
+  private static boolean isInterfaceStaticMethod(@NotNull HierarchicalMethodSignature signature, @NotNull PsiClass aClass) {
     //static methods from interfaces are not inheritable
     //jls 8, 8.4.8. and 9.4.1., so we need to skip them
     PsiMethod method = signature.getMethod();
@@ -318,9 +318,24 @@ public final class PsiSuperMethodImplUtil {
     }
   }
 
-  private static MergeSuperType isSuperMethod(@NotNull PsiClass aClass,
-                                       @NotNull MethodSignatureBackedByPsiMethod hierarchicalMethodSignature,
-                                       @NotNull MethodSignatureBackedByPsiMethod superSignatureHierarchical) {
+  private enum MergeSuperType{
+
+    MERGE_SUPER,
+    NOT_MERGE_SUPER,
+    FORCE_MERGE
+  }
+
+  /**
+   *
+   * @return
+   * - MERGE_SUPER if {@code superSignatureHierarchical} can be used as super method of {@code hierarchicalMethodSignature} regarding its return types
+   * - NOT_MERGE_SUPER if it can be used as a super method mostly to pass this method next to highlight it
+   * - FORCE_MERGE if this method must be applied as a super method not taking into account its return types
+   */
+  @NotNull
+  private static MergeSuperType solveMergeSuperType(@NotNull PsiClass aClass,
+                                                    @NotNull MethodSignatureBackedByPsiMethod hierarchicalMethodSignature,
+                                                    @NotNull MethodSignatureBackedByPsiMethod superSignatureHierarchical) {
     PsiMethod superMethod = superSignatureHierarchical.getMethod();
     PsiClass superClass = superMethod.getContainingClass();
     PsiMethod method = hierarchicalMethodSignature.getMethod();
@@ -425,10 +440,5 @@ public final class PsiSuperMethodImplUtil {
       }
     }
     return true;
-  }
-
-
-  public enum MergeSuperType{
-    MERGE_SUPER, NOT_MERGE_SUPER, FORCE_MERGE
   }
 }
