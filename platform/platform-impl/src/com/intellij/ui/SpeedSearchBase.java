@@ -25,6 +25,7 @@ import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.ui.speedSearch.SpeedSearchActivator;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -52,7 +53,7 @@ import java.util.NoSuchElementException;
 /**
  * Use {@link com.intellij.ui.speedSearch.SpeedSearchUtil} in renderer to highlight matching results
  */
-public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
+public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply implements SpeedSearchActivator {
   private static final Logger LOG = Logger.getInstance(SpeedSearchBase.class);
 
   private static JBInsets borderInsets() {
@@ -448,9 +449,26 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return true;
   }
 
+  @Override
   @ApiStatus.Internal
   public boolean isAvailable() {
     return isSpeedSearchEnabled();
+  }
+
+  @Override
+  public boolean isActive() {
+    return isPopupActive();
+  }
+
+  @Nullable
+  @Override
+  public JComponent getTextField() {
+    return getSearchField();
+  }
+
+  @Override
+  public void activate() {
+    showPopup();
   }
 
   @Override

@@ -6,13 +6,13 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.GotItTooltip
-import com.intellij.ui.SpeedSearchBase
+import com.intellij.ui.speedSearch.SpeedSearchActivator
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import java.awt.Component
 import java.awt.Point
 import javax.swing.JComponent
 
-internal class SpeedSearchActionHandler(val targetComponent: JComponent, private val speedSearch: SpeedSearchBase<*>) {
+internal class SpeedSearchActionHandler(val targetComponent: JComponent, private val speedSearch: SpeedSearchActivator) {
 
   var requestFocus = false
 
@@ -20,7 +20,7 @@ internal class SpeedSearchActionHandler(val targetComponent: JComponent, private
 
   fun isSpeedSearchAvailable(): Boolean = speedSearch.isAvailable
 
-  fun isSpeedSearchActive(): Boolean = speedSearch.isPopupActive
+  fun isSpeedSearchActive(): Boolean = speedSearch.isActive
 
   fun activateSpeedSearch() {
     if (isSpeedSearchAvailable() && !isSpeedSearchActive()) {
@@ -32,8 +32,8 @@ internal class SpeedSearchActionHandler(val targetComponent: JComponent, private
   }
 
   private fun doActivateSpeedSearch() {
-    speedSearch.showPopup()
-    val component = speedSearch.searchField ?: return
+    speedSearch.activate()
+    val component = speedSearch.textField ?: return
     val shortcut = getActionShortcut()
     val gotItMessage = if (shortcut == null) {
       ActionsBundle.message("action.SpeedSearch.GotItTooltip.textWithoutShortcuts")
@@ -60,6 +60,6 @@ internal class SpeedSearchActionHandler(val targetComponent: JComponent, private
 
 internal fun Component.getSpeedSearchActionHandler(): SpeedSearchActionHandler? {
   val contextComponent = (this as? JComponent?) ?: return null
-  val speedSearch = (SpeedSearchSupply.getSupply(contextComponent, true) as? SpeedSearchBase<*>?) ?: return null
+  val speedSearch = (SpeedSearchSupply.getSupply(contextComponent, true) as? SpeedSearchActivator?) ?: return null
   return SpeedSearchActionHandler(contextComponent, speedSearch)
 }
