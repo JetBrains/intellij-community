@@ -83,6 +83,11 @@ public final class StorageTestingUtils {
         // 'raw' underlying storage(s) somewhere deeper:
         bestEffortToCloseAndClean(fieldValue);
       }
+      else if (fieldValue instanceof Iterable<?>) {
+        for (Object nested : (Iterable<?>)fieldValue) {
+          bestEffortToCloseAndClean(nested);
+        }
+      }
     }
   }
 
@@ -98,16 +103,21 @@ public final class StorageTestingUtils {
       else if (fieldValue instanceof AutoCloseable) {
         //Assume every other AutoCloseable is 'compound' storage that _may_ hold
         // 'raw' underlying storage(s) somewhere deeper:
-        bestEffortToCloseAndClean(fieldValue);
+        bestEffortToCloseAndUnmap(fieldValue);
 
         ((AutoCloseable)fieldValue).close();
       }
       else if (fieldValue instanceof Disposable) {
         //Assume every other Disposable is 'compound' storage that _may_ hold
         // 'raw' underlying storage(s) somewhere deeper:
-        bestEffortToCloseAndClean(fieldValue);
+        bestEffortToCloseAndUnmap(fieldValue);
 
         Disposer.dispose((Disposable)fieldValue);
+      }
+      else if (fieldValue instanceof Iterable<?>) {
+        for (Object nested : (Iterable<?>)fieldValue) {
+          bestEffortToCloseAndUnmap(nested);
+        }
       }
     }
   }
