@@ -15315,6 +15315,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitType/anonymousFunctionInitializerInferredType.kt");
         }
 
+        @TestMetadata("arrayAccessExpressionInitializer.kt")
+        public void testArrayAccessExpressionInitializer() throws Exception {
+            runTest("testData/intentions/removeExplicitType/arrayAccessExpressionInitializer.kt");
+        }
+
+        @TestMetadata("arrayAccessExpressionInitializer2.kt")
+        public void testArrayAccessExpressionInitializer2() throws Exception {
+            runTest("testData/intentions/removeExplicitType/arrayAccessExpressionInitializer2.kt");
+        }
+
         @TestMetadata("callableInitializerExplicitTypeArguments.kt")
         public void testCallableInitializerExplicitTypeArguments() throws Exception {
             runTest("testData/intentions/removeExplicitType/callableInitializerExplicitTypeArguments.kt");

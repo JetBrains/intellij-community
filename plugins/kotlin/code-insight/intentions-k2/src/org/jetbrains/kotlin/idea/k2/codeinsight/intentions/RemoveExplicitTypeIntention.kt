@@ -118,6 +118,7 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
         // `val n: Long = 1` - type of `1` is context-dependent
         is KtConstantExpression -> initializer.getClassId()?.let { buildClassType(it) }?.isSubTypeOf(typeReference.getKtType()) == true
         is KtCallExpression -> initializer.typeArgumentList != null || !returnTypeOfCallDependsOnTypeParameters(initializer)
+        is KtArrayAccessExpression -> !returnTypeOfCallDependsOnTypeParameters(initializer)
         is KtCallableReferenceExpression -> isCallableReferenceExpressionTypeContextIndependent(initializer)
         is KtQualifiedExpression -> initializer.callExpression?.let { isInitializerTypeContextIndependent(it, typeReference) } == true
         is KtLambdaExpression -> isLambdaExpressionTypeContextIndependent(initializer, typeReference)
@@ -145,8 +146,8 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
     }
 
     context(KtAnalysisSession)
-    private fun returnTypeOfCallDependsOnTypeParameters(callExpression: KtCallExpression): Boolean {
-        val call = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return true
+    private fun returnTypeOfCallDependsOnTypeParameters(callElement: KtElement): Boolean {
+        val call = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return true
         val callSymbol = call.partiallyAppliedSymbol.symbol
         val typeParameters = callSymbol.typeParameters
         val returnType = callSymbol.returnType

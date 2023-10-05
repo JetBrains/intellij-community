@@ -2180,6 +2180,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/anonymousFunctionInitializerInferredType.kt");
         }
 
+        @TestMetadata("arrayAccessExpressionInitializer.kt")
+        public void testArrayAccessExpressionInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/arrayAccessExpressionInitializer.kt");
+        }
+
+        @TestMetadata("arrayAccessExpressionInitializer2.kt")
+        public void testArrayAccessExpressionInitializer2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/arrayAccessExpressionInitializer2.kt");
+        }
+
         @TestMetadata("callableInitializerExplicitTypeArguments.kt")
         public void testCallableInitializerExplicitTypeArguments() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/callableInitializerExplicitTypeArguments.kt");
