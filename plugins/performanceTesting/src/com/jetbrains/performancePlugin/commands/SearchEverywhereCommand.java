@@ -1,8 +1,5 @@
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.ui.TypingTarget;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.*;
@@ -12,12 +9,15 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
@@ -153,15 +153,15 @@ public class SearchEverywhereCommand extends AbstractCommand {
     ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap((Callable<Object>)() -> {
       insertSpan.setAttribute("text", insertText);
       List<Object> result = elements.get();
-      insertSpan.end();
       insertSpan.setAttribute("number", result.size());
+      insertSpan.end();
       typingSemaphore.release();
       return result;
     }));
   }
 
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
-  private static void typeText(Project project, String typingText, Semaphore typingSemaphore) throws InterruptedException {
+  private static void typeText(Project project, String typingText, Semaphore typingSemaphore) {
     SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
     Document document = ui.getSearchField().getDocument();
     Semaphore oneLetterLock = new Semaphore(1);
