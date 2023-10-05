@@ -79,7 +79,7 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
   }
 
   @RequiresEdt
-  private fun invokeEvent(event: InlineCompletionEvent) {
+  fun invokeEvent(event: InlineCompletionEvent) {
     ThreadingAssertions.assertEventDispatchThread()
     LOG.trace("Start processing inline event $event")
 
