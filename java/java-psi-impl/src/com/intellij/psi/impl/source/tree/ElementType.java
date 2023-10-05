@@ -10,7 +10,7 @@ import com.intellij.psi.tree.TokenSet;
 public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElementType, JavaDocElementType {
   TokenSet JAVA_PLAIN_COMMENT_BIT_SET = BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET;
   TokenSet JAVA_COMMENT_BIT_SET = TokenSet.orSet(JAVA_PLAIN_COMMENT_BIT_SET, TokenSet.create(DOC_COMMENT));
-  ;
+
   TokenSet JAVA_COMMENT_OR_WHITESPACE_BIT_SET = TokenSet.orSet(TokenSet.WHITE_SPACE, JAVA_COMMENT_BIT_SET);
 
   TokenSet KEYWORD_BIT_SET = BasicElementTypes.BASIC_KEYWORD_BIT_SET;
@@ -45,7 +45,6 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElemen
     ASSIGNMENT_EXPRESSION, NEW_EXPRESSION, ARRAY_ACCESS_EXPRESSION, INSTANCE_OF_EXPRESSION,
     CLASS_OBJECT_ACCESS_EXPRESSION,
     EMPTY_EXPRESSION);
-  ;
 
   TokenSet JAVA_STATEMENT_BIT_SET = TokenSet.create(
     EMPTY_STATEMENT, BLOCK_STATEMENT, EXPRESSION_STATEMENT, EXPRESSION_LIST_STATEMENT,
