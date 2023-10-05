@@ -133,9 +133,7 @@ class KotlinNameSuggester(
     context(KtAnalysisSession)
     fun suggestExpressionNames(expression: KtExpression, validator: (String) -> Boolean = { true }): Sequence<String> {
         return (suggestNamesByValueArgument(expression, validator) +
-                suggestNamesByExpressionPSI(expression, validator).filter { name ->
-                    name.length >= MIN_LENGTH_OF_NAME_BASED_ON_EXPRESSION_PSI
-                } +
+                suggestNamesByExpressionPSI(expression, validator, minLength = MIN_LENGTH_OF_NAME_BASED_ON_EXPRESSION_PSI) +
                 suggestNamesByType(expression, validator)).distinct()
     }
 
@@ -389,7 +387,12 @@ class KotlinNameSuggester(
     }
 
     companion object {
-        fun getCamelNames(name: String, validator: (String) -> Boolean, startLowerCase: Boolean = true): Sequence<String> {
+        fun getCamelNames(
+            name: String,
+            validator: (String) -> Boolean,
+            startLowerCase: Boolean = true,
+            minLength: Int = 1
+        ): Sequence<String> {
             if (name === "" || !name.unquoteKotlinIdentifier().isIdentifier()) return emptySequence()
             var s = extractIdentifiers(name)
 
@@ -418,7 +421,7 @@ class KotlinNameSuggester(
                             val substring = s.substring(i)
                             suggestNameByValidIdentifierName(
                                 if (startLowerCase) substring.decapitalizeSmart() else substring, validator
-                            )?.let { yield(it) }
+                            )?.takeIf { it.length >= minLength }?.let { yield(it) }
                         }
                     }
 
@@ -440,21 +443,34 @@ class KotlinNameSuggester(
             }
         }
 
-        /**
-         * Returns names based on an [expression] PSI, validates them using [validator], and improves them by
-         * adding a numeric suffix in case of conflicts.
-         * Examples:
-         *  - `listOf(42)` -> {list, of}
-         *  - `point.x` -> {x}
-         *  - `collection.isEmpty()` -> {empty}
-         */
-        fun suggestNamesByExpressionPSI(expression: KtExpression?, validator: (String) -> Boolean): Sequence<String> {
+            /**
+             * Returns names of length at least [minLength] (except for the name based on the name of the whole [expression],
+             * which has no length limit) based on an [expression] PSI, validates them using [validator], and improves them
+             * by adding a numeric suffix in case of conflicts.
+             * Examples:
+             *  - `listOf(42)` -> {list, of}
+             *  - `point.x` -> {x}
+             *  - `collection.isEmpty()` -> {empty}
+             *  — `E()` -> {e}
+             */
+        fun suggestNamesByExpressionPSI(expression: KtExpression?, validator: (String) -> Boolean, minLength: Int = 1): Sequence<String> {
             if (expression == null) return emptySequence()
             return when (val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)) {
-                is KtSimpleNameExpression -> getCamelNames(deparenthesized.getReferencedName(), validator)
-                is KtQualifiedExpression -> suggestNamesByExpressionPSI(deparenthesized.selectorExpression, validator)
-                is KtCallExpression -> suggestNamesByExpressionPSI(deparenthesized.calleeExpression, validator)
-                is KtPostfixExpression -> suggestNamesByExpressionPSI(deparenthesized.baseExpression, validator)
+                is KtSimpleNameExpression -> getCamelNames(
+                    deparenthesized.getReferencedName(),
+                    validator,
+                    startLowerCase = true,
+                    minLength = minLength
+                )
+
+                is KtQualifiedExpression -> suggestNamesByExpressionPSI(
+                    deparenthesized.selectorExpression,
+                    validator,
+                    minLength = minLength
+                )
+
+                is KtCallExpression -> suggestNamesByExpressionPSI(deparenthesized.calleeExpression, validator, minLength = minLength)
+                is KtPostfixExpression -> suggestNamesByExpressionPSI(deparenthesized.baseExpression, validator, minLength = minLength)
                 else -> emptySequence()
             }
         }
