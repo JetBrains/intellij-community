@@ -30,6 +30,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   //@formatter:off
   private static final boolean MORE_DIAGNOSTIC_INFORMATION = getBooleanProperty("AppendOnlyLogOverMMappedFile.MORE_DIAGNOSTIC_INFORMATION", true);
   private static final boolean ADD_LOG_CONTENT = getBooleanProperty("AppendOnlyLogOverMMappedFile.ADD_LOG_CONTENT", true);
+  /** How wide region around questionable record to dump for debug diagnostics (see {@link #dumpContentAroundId(long, int)}) */
+  private static final int DEBUG_DUMP_REGION_WIDTH = 256;
   //@formatter:on
 
   private static final VarHandle INT32_OVER_BYTE_BUFFER = byteBufferViewVarHandle(int[].class, nativeOrder()).withInvokeExactBehavior();
@@ -446,7 +448,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
       throw new IOException("record[" + recordId + "][@" + recordOffsetInFile + "] is not commited: " +
                             "(header=" + Integer.toHexString(recordHeader) + ") either not yet written or corrupted. " +
                             moreDiagnosticInfo(recordOffsetInFile) +
-                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, 1024) : "")
+                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, DEBUG_DUMP_REGION_WIDTH) : "")
       );
     }
     int payloadLength = RecordLayout.extractPayloadLength(recordHeader);
@@ -455,7 +457,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
                             "is incorrect: page[0.." + pageBuffer.limit() + "], " +
                             "committedUpTo: " + firstUnCommittedOffset() + ", allocatedUpTo: " + firstUnAllocatedOffset() + ". " +
                             moreDiagnosticInfo(recordOffsetInFile) +
-                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, 1024) : "")
+                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, DEBUG_DUMP_REGION_WIDTH) : "")
       );
     }
     ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
@@ -575,7 +577,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   @Override
   public void closeAndUnsafelyUnmap() throws IOException {
     close();
-    storage.closeAndUnsafelyUnmap();;
+    storage.closeAndUnsafelyUnmap();
+    ;
   }
 
   /**
@@ -836,9 +839,18 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
                                          " (first uncommitted offset: " + firstUnCommittedOffset() +
                                          ", first unallocated: " + firstUnAllocatedOffset() + ")\n");
     forEachRecord((recordId, buffer) -> {
-      if (aroundRecordId - regionWidth <= recordId && recordId <= aroundRecordId + regionWidth) {
+      long nextRecordId = recordOffsetToId(
+        nextRecordOffset(recordIdToOffset(recordId), buffer.remaining())
+      );
+      //MAYBE RC: only use insideQuestionableRecord? Seems like records around are of little use
+      boolean insideQuestionableRecord = (recordId <= aroundRecordId && aroundRecordId <= nextRecordId);
+      boolean insideNeighbourRegion = (aroundRecordId - regionWidth <= recordId
+                                       && recordId <= aroundRecordId + regionWidth);
+
+      if (insideQuestionableRecord || insideNeighbourRegion) {
         String bufferAsHex = IOUtil.toHexString(buffer);
-        sb.append("[id: ").append(recordId).append("][offset: ").append(recordIdToOffset(recordId)).append("][hex: ")
+        sb.append(insideQuestionableRecord ? "*" : "")
+          .append("[id: ").append(recordId).append("][offset: ").append(recordIdToOffset(recordId)).append("][hex: ")
           .append(bufferAsHex).append("]\n");
       }
       return recordId <= aroundRecordId + regionWidth;
