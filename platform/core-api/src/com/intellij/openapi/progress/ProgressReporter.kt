@@ -215,35 +215,6 @@ interface ProgressReporter : AutoCloseable {
    * @return a handle to feed the progress updates
    */
   fun rawReporter(): RawProgressReporter
-
-  companion object {
-
-    @JvmStatic
-    fun <T> ProgressReporter.indeterminateStep(
-      text: @ProgressText String?,
-      action: ProgressReporter.() -> T,
-    ): T = durationStep(duration = 0.0, text).use(action)
-
-    @JvmStatic
-    fun <T> ProgressReporter.progressStep(
-      endFraction: Double,
-      text: @ProgressText String?,
-      action: ProgressReporter.() -> T,
-    ): T = step(endFraction, text).use(action)
-
-    @JvmStatic
-    fun <T, R> ProgressReporter.mapWithProgress(
-      items: List<T>,
-      mapper: ProgressReporter.(T) -> R,
-    ): List<R> {
-      val itemDuration = 1.0 / items.size
-      return items.map { item ->
-        durationStep(itemDuration, text = null).use { itemStep ->
-          itemStep.mapper(item)
-        }
-      }
-    }
-  }
 }
 
 suspend fun <T> indeterminateStep(
