@@ -339,6 +339,8 @@ object IgnoreTests {
 
     private fun deriveFirTestFile(originalTestFile: File): File {
         val name = originalTestFile.name
-        return originalTestFile.parentFile.resolve(name.substringBeforeLast('.') + ".fir." + name.substringAfterLast('.'))
+        return originalTestFile.parentFile.resolve(deriveFirFileName(name))
     }
+
+    fun deriveFirFileName(fileName: String): String = fileName.substringBeforeLast('.') + ".fir." + fileName.substringAfterLast('.')
 }
