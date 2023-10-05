@@ -56,6 +56,7 @@ import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
@@ -838,12 +839,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       return Boolean.TRUE;
     }).setFocusable(true).setRequestFocus(true).setModalContext(false).setCancelOnClickOutside(false);
 
-    Point point = new Point(x, y);
-    SwingUtilities.convertPointToScreen(point, layeredPane);
-    Rectangle bounds = new Rectangle(point, new Dimension(preferredTextFieldPanelSize.width + 20, preferredTextFieldPanelSize.height));
+    Dimension size = new Dimension(preferredTextFieldPanelSize.width + 20, preferredTextFieldPanelSize.height);
     myTextPopup = builder.createPopup();
-    myTextPopup.setSize(bounds.getSize());
-    myTextPopup.setLocation(bounds.getLocation());
+    myTextPopup.setSize(size);
 
     if (myProject != null && !myProject.isDefault()) {
       DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(myTextPopup);
@@ -851,7 +849,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     Disposer.register(myTextPopup, () -> cancelListUpdater());
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-    myTextPopup.show(layeredPane);
+
+    RelativePoint location = new RelativePoint(layeredPane, new Point(x, y));
+    myTextPopup.show(location);
   }
 
   private JLayeredPane getLayeredPane() {
