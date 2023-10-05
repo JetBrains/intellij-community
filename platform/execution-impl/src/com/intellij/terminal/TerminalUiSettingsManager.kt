@@ -85,6 +85,12 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
     }
   }
 
+  var maxVisibleCompletionItemsCount: Int
+    get() = state.maxVisibleCompletionItemsCount
+    set(value) {
+      state.maxVisibleCompletionItemsCount = value
+    }
+
   private fun fireFontChanged() {
     for (panel in terminalPanels) {
       panel.fontChanged()
@@ -140,6 +146,7 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
 
   class State {
     var cursorShape: CursorShape = CursorShape.BLOCK
+    var maxVisibleCompletionItemsCount: Int = 6
   }
 
   override fun getState(): State = state
