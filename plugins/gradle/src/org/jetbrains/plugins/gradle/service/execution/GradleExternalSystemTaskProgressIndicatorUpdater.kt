@@ -16,19 +16,27 @@ import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtil.formatFileSize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gradle.service.coroutine.GradleCoroutineScopeProvider
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.function.Function
 import kotlin.coroutines.cancellation.CancellationException
 
+private typealias UpdaterState<T> = ConcurrentMap<ExternalSystemTaskId, ConcurrentMap<String /*file uri*/, T>>
+
 class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgressIndicatorUpdater() {
 
-  private val inFlightDownloadIndicators: MutableMap<ExternalSystemTaskId, MutableMap<String /*URI*/, DownloadProgressIndicator>> = ConcurrentHashMap()
+  private companion object {
+    private const val INDICATOR_THRESHOLD_MILLIS = 400
+  }
+
+  private val taskIndicators: UpdaterState<DownloadProgressIndicator> = ConcurrentHashMap()
+  private val taskCandidates: UpdaterState<FileDownloadEventImpl> = ConcurrentHashMap()
 
   override fun canUpdate(externalSystemId: ProjectSystemId): Boolean = GradleConstants.SYSTEM_ID == externalSystemId
 
@@ -42,44 +50,75 @@ class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgr
   override fun updateIndicator(event: ExternalSystemTaskNotificationEvent,
                                indicator: ProgressIndicator,
                                textWrapper: Function<String, @NlsContexts.ProgressText String>) {
-    if (event !is ExternalSystemBuildEvent || event.buildEvent.message.contains("Downloading ")) {
+    if (event !is ExternalSystemBuildEvent || event.buildEvent.message.contains("ownloading ")) {
       return
     }
-    if (event.buildEvent is FileDownloadEventImpl || event.buildEvent is FileDownloadedEventImpl) {
-      onDownloadEvent(event, textWrapper)
-      return
+    when (event.buildEvent) {
+      is FileDownloadEventImpl -> onDownloadEvent(event.id, event.buildEvent as FileDownloadEventImpl, textWrapper)
+      is FileDownloadedEventImpl -> onDownloadEndEvent(event.id, event.buildEvent as FileDownloadedEventImpl)
+      else -> super.updateIndicator(event, indicator, textWrapper)
     }
-    super.updateIndicator(event, indicator, textWrapper)
   }
 
-  override fun onTaskEnd(taskId: ExternalSystemTaskId): Unit = inFlightDownloadIndicators.remove(taskId)?.values?.forEach { it.stop() } ?: Unit
+  override fun onTaskEnd(taskId: ExternalSystemTaskId) {
+    taskIndicators.remove(taskId)?.values?.forEach { it.stop() }
+    taskCandidates.remove(taskId)
+  }
 
-  private fun onDownloadEvent(event: ExternalSystemBuildEvent, textWrapper: Function<String, @NlsContexts.ProgressText String>) {
-    val buildEvent = event.buildEvent
-    val taskIndicators = inFlightDownloadIndicators.computeIfAbsent(event.id) { ConcurrentHashMap() }
-    val indicator: DownloadProgressIndicator? = taskIndicators.compute(buildEvent.message) { _, oldIndicator ->
-      if (oldIndicator == null && buildEvent is FileDownloadedEventImpl) {
-        return@compute null
-      }
-      if (oldIndicator != null) {
-        return@compute oldIndicator
-      }
-      val project = event.id.findProject()
-      if (project == null || project.isDisposed) {
-        return@compute null
-      }
-      val csp = GradleCoroutineScopeProvider.getInstance(project)
-      DownloadProgressIndicator(buildEvent.message, csp.cs, project, textWrapper) { taskIndicators.remove(buildEvent.message) }
-        .also { it.start() }
+  private fun onDownloadEvent(taskId: ExternalSystemTaskId,
+                              event: FileDownloadEventImpl,
+                              textWrapper: Function<String, @NlsContexts.ProgressText String>) {
+    if (event.isFirstInGroup) {
+      val candidates = taskCandidates.computeIfAbsent(taskId) { ConcurrentHashMap() }
+      candidates[event.message] = event
+      return
     }
-    indicator?.handle(buildEvent)
+    val mayBeIndicator = taskIndicators[taskId]?.get(event.message)
+    if (mayBeIndicator != null) {
+      mayBeIndicator.handle(event)
+    }
+    else {
+      mayBePromoteCandidate(taskId, event, textWrapper)
+    }
+  }
+
+  private fun mayBePromoteCandidate(taskId: ExternalSystemTaskId,
+                                    event: FileDownloadEventImpl,
+                                    textWrapper: Function<String, @NlsContexts.ProgressText String>) {
+    val candidates = taskCandidates[taskId] ?: return
+    val mayBeCandidate = candidates[event.message] ?: return
+    if (!mayBeCandidate.shouldBeVisible(event)) {
+      return
+    }
+    candidates.remove(event.message)
+    val project = taskId.findProject()
+    if (project == null || project.isDisposed) {
+      return
+    }
+    val indicators = taskIndicators.computeIfAbsent(taskId) { ConcurrentHashMap() }
+    val csp = GradleCoroutineScopeProvider.getInstance(project)
+    val indicator = DownloadProgressIndicator(event.message, csp.cs, project, textWrapper)
+      .also { it.start() }
+    indicators[event.message] = indicator
+  }
+
+  private fun onDownloadEndEvent(taskId: ExternalSystemTaskId, event: FileDownloadedEventImpl) {
+    taskIndicators[taskId]?.remove(event.message)?.handle(event)
+    taskCandidates[taskId]?.remove(event.message)
+  }
+
+  private fun FileDownloadEventImpl.shouldBeVisible(currentEvent: FileDownloadEventImpl): Boolean {
+    if (System.currentTimeMillis() - eventTime <= INDICATOR_THRESHOLD_MILLIS) {
+      return false
+    }
+    val delta = currentEvent.progress - progress
+    return currentEvent.progress + delta < total
   }
 
   private class DownloadProgressIndicator(@NlsSafe private val title: String,
                                           private val cs: CoroutineScope,
                                           private val project: Project,
-                                          private val textWrapper: Function<String, @NlsContexts.ProgressText String>,
-                                          private val cleaner: Runnable) {
+                                          private val textWrapper: Function<String, @NlsContexts.ProgressText String>) {
 
     private val channel: Channel<FileDownloadEventImpl> = Channel()
 
@@ -92,10 +131,8 @@ class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgr
             while (statusEvent != null && statusEvent.total - statusEvent.progress > 0) {
               val fraction = statusEvent.progress.toDouble() / statusEvent.total.toDouble()
               if (fraction > previousFraction) {
-                val text = "${statusEvent.message} (${StringUtil.formatFileSize(statusEvent.progress)} / ${
-                  StringUtil.formatFileSize(statusEvent.total)
-                })"
-                rawProgressReporter?.text(textWrapper.apply(text))
+                val text = "${formatFileSize(statusEvent.progress)} / ${formatFileSize(statusEvent.total)}"
+                rawProgressReporter?.text(text)
                 rawProgressReporter?.fraction(fraction)
                 previousFraction = fraction
               }
@@ -114,7 +151,6 @@ class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgr
           }
           if (event is FileDownloadedEventImpl) {
             channel.close()
-            cleaner.run()
           }
         }
         catch (_: CancellationException) {
