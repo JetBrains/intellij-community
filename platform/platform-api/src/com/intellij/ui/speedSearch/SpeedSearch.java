@@ -181,7 +181,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
 
   @Override
   public boolean isAvailable() {
-    return false;
+    return true; // Convenient default for implementations, is ignored anyway when isSupported() == false.
   }
 
   @Override

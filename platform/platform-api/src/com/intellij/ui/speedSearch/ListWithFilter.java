@@ -171,11 +171,11 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
       onSpeedSearchPatternChanged();
       mySearchField.setText(getFilter());
       if (!mySearchAlwaysVisible) {
-        if (isHoldingFilter() && !searchFieldShown) {
+        if (shouldBeActive() && !searchFieldShown) {
           mySearchField.setVisible(true);
           searchFieldShown = true;
         }
-        else if (!isHoldingFilter() && searchFieldShown) {
+        else if (!shouldBeActive() && searchFieldShown) {
           mySearchField.setVisible(false);
           searchFieldShown = false;
         }
@@ -196,6 +196,21 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
         popup.pack(false, myAutoPackHeight);
       }
       ListWithFilter.this.revalidate();
+    }
+
+    @Override
+    public boolean isSupported() {
+      return true;
+    }
+
+    @Override
+    public @NotNull JComponent getTextField() {
+      return mySearchField;
+    }
+
+    @Override
+    protected void doActivate() {
+      update();
     }
   }
 
