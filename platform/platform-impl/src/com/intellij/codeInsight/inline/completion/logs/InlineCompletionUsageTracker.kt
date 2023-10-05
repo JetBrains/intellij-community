@@ -215,9 +215,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     private var lines = 0
     private var typingDuringShow = 0
 
-    private val suggestionLength
-      get() = suggestionAppendedLength + suggestionSkippedLength
-
     fun firstShown(element: InlineCompletionBlock) {
       if (firstShown) {
         error("Already first shown")
@@ -238,6 +235,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
         "Call firstShown firstly"
       }
       lines += (element.text.lines().size - 1).coerceAtLeast(0)
+      val suggestionLength = suggestionAppendedLength + suggestionSkippedLength
       if (suggestionLength == 0 && element.text.isNotEmpty()) {
         lines++ // first line
       }
@@ -268,7 +266,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       }
       shownLogSent = true
       data.add(ShownEvents.LINES.with(lines))
-      data.add(ShownEvents.LENGTH.with(suggestionLength))
       data.add(ShownEvents.APPENDED_LENGTH.with(suggestionAppendedLength))
       data.add(ShownEvents.SKIPPED_LENGTH.with(suggestionSkippedLength))
       data.add(ShownEvents.TYPING_DURING_SHOW.with(typingDuringShow))
@@ -282,7 +279,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val REQUEST_ID = Long("request_id")
 
     val LINES = Int("lines")
-    val LENGTH = Int("length")
     val APPENDED_LENGTH = Int("appended_length")
     val SKIPPED_LENGTH = Int("skipped_length")
     val TYPING_DURING_SHOW = Int("typing_during_show")
@@ -300,7 +296,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     EventFields.Language,
     EventFields.CurrentFile,
     ShownEvents.LINES,
-    ShownEvents.LENGTH,
     ShownEvents.APPENDED_LENGTH,
     ShownEvents.SKIPPED_LENGTH,
     ShownEvents.TYPING_DURING_SHOW,
