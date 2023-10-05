@@ -113,14 +113,17 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
   @Serializable
   data class State(@JvmField val categories: List<LogCategory> = listOf())
 
-  init {
-    loadState(State())
-  }
+  //init {
+  //  loadState(State())
+  //}
 
   override fun loadState(state: State) {
     super.loadState(state)
     applyCategories(state.categories.toList())
+    applyCategoriesFromProperties()
+  }
 
+  private fun applyCategoriesFromProperties() {
     val categories = mutableListOf<LogCategory>()
     categories.addAll(getSavedCategories())
 
@@ -129,6 +132,10 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
     categories.addAll(fromString(System.getProperty(LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.TRACE))
     categories.addAll(fromString(System.getProperty(LOG_ALL_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.ALL))
     applyCategories(categories)
+  }
+
+  override fun noStateLoaded() {
+    applyCategoriesFromProperties()
   }
 
   private fun getSavedCategories(): List<LogCategory> {
