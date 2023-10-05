@@ -16,6 +16,20 @@ public enum GradleModelFetchPhase {
   PROJECT_LOADED_PHASE("Project loaded phase"),
 
   /**
+   * Model provider, in this phase, fetches and caches a Gradle task model into
+   * {@link com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache}.
+   * This cache is available by {@link org.jetbrains.plugins.gradle.tooling.ModelBuilderContext}.
+   * <p>
+   * These model providers will be executed after "sync" tasks are run
+   * <p>
+   * [TASK_WARM_UP_PHASE] should be first, because this phase evaluates all lazy Task configurations.
+   * These configurations may modify a Gradle project model which is necessary for the following phases.
+   *
+   * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished(BuildAction, IntermediateResultHandler)
+   */
+  TASK_WARM_UP_PHASE("Task warm-up phase"),
+
+  /**
    * Model providers, in this phase, fetch a Gradle project source set models and resolve dependencies.
    * <p>
    * These model providers will be executed after "sync" tasks are run
@@ -23,17 +37,6 @@ public enum GradleModelFetchPhase {
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished(BuildAction, IntermediateResultHandler)
    */
   PROJECT_SOURCE_SET_PHASE("Project source-set phase"),
-
-  /**
-   * Model provider, in this phase, fetches and caches a Gradle task model into
-   * {@link com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache}.
-   * This cache is available by {@link org.jetbrains.plugins.gradle.tooling.ModelBuilderContext}.
-   * <p>
-   * These model providers will be executed after "sync" tasks are run
-   *
-   * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished(BuildAction, IntermediateResultHandler)
-   */
-  TASK_WARM_UP_PHASE("Task warm-up phase"),
 
   /**
    * Model providers, in this phase, fetch an initial set of Gradle models for IDEA project structure.
