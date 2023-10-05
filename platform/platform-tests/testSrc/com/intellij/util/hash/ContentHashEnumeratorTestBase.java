@@ -29,7 +29,7 @@ public abstract class ContentHashEnumeratorTestBase {
   @AfterEach
   void tearDown() throws IOException {
     if (enumerator != null) {
-      enumerator.close();
+      enumerator.closeAndClean();
     }
   }
 

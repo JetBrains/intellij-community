@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.hash;
 
+import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.DurableDataEnumerator;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.StorageLockContext;
@@ -18,7 +19,8 @@ import java.nio.file.Path;
  *
  */
 public interface ContentHashEnumerator extends DurableDataEnumerator<byte[]>,
-                                               ScannableDataEnumeratorEx<byte[]> {
+                                               ScannableDataEnumeratorEx<byte[]>,
+                                               CleanableStorage {
 
   /** Length of hash byte-array. ContentHashEnumerator fails to accept hashes.length != SIGNATURE_LENGTH */
   int SIGNATURE_LENGTH = 20;
