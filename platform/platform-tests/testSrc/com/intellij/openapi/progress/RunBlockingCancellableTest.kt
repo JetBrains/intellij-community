@@ -146,6 +146,32 @@ class RunBlockingCancellableTest : CancellationTest() {
   }
 
   @Test
+  fun `with indicator under job non-cancellable`(): Unit = timeoutRunBlocking {
+    launch {
+      blockingContext {
+        indicatorTest {
+          Cancellation.computeInNonCancelableSection<_, Nothing> {
+            assertDoesNotThrow {
+              runBlockingCancellable {
+                @OptIn(ExperimentalCoroutinesApi::class)
+                assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
+                assertDoesNotThrow {
+                  ensureActive()
+                }
+                this@launch.cancel()
+                delay(100.milliseconds) // let indicator polling job kick in
+                assertDoesNotThrow {
+                  ensureActive()
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Test
   fun `with current job rethrows exceptions`() {
     blockingContextTest {
       testRunBlockingCancellableRethrow()
