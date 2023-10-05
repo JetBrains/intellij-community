@@ -1602,6 +1602,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/AccessorsImplementInterface.java");
         }
 
+        @TestMetadata("AnnotationWithInapplicableTargetOnGetter.java")
+        public void testAnnotationWithInapplicableTargetOnGetter() throws Exception {
+            runTest("testData/newJ2k/detectProperties/AnnotationWithInapplicableTargetOnGetter.java");
+        }
+
+        @TestMetadata("AnnotationWithInapplicableTargetOnSetter.java")
+        public void testAnnotationWithInapplicableTargetOnSetter() throws Exception {
+            runTest("testData/newJ2k/detectProperties/AnnotationWithInapplicableTargetOnSetter.java");
+        }
+
         @TestMetadata("AnonymousClass.java")
         public void testAnonymousClass() throws Exception {
             runTest("testData/newJ2k/detectProperties/AnonymousClass.java");
