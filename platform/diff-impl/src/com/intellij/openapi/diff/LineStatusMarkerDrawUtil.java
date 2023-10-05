@@ -87,11 +87,11 @@ public final class LineStatusMarkerDrawUtil {
     paintDefault(editor, g, ranges, flagsProvider, LineStatusMarkerColorScheme.DEFAULT, framingBorder);
   }
 
-  private static void paintDefault(@NotNull Editor editor,
-                                   @NotNull Graphics g,
-                                   @NotNull List<? extends Range> ranges,
-                                   @NotNull FlagsProvider<DefaultLineFlags> flagsProvider,
-                                   @NotNull LineStatusMarkerColorScheme colorScheme,
+  public static void paintDefault(@NotNull Editor editor,
+                                  @NotNull Graphics g,
+                                  @NotNull List<? extends Range> ranges,
+                                  @NotNull FlagsProvider<DefaultLineFlags> flagsProvider,
+                                  @NotNull LineStatusMarkerColorScheme colorScheme,
                                   int framingBorder) {
     List<ChangesBlock<DefaultLineFlags>> blocks = VisibleRangeMerger.merge(editor, ranges, flagsProvider, g.getClipBounds());
     for (ChangesBlock<DefaultLineFlags> block : blocks) {
@@ -106,11 +106,11 @@ public final class LineStatusMarkerDrawUtil {
     paintChangedLines(g, editor, block, LineStatusMarkerColorScheme.DEFAULT, framingBorder);
   }
 
-  private static void paintChangedLines(@NotNull Graphics2D g,
-                                        @NotNull Editor editor,
-                                        @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
-                                        @NotNull LineStatusMarkerColorScheme colorScheme,
-                                        int framingBorder) {
+  public static void paintChangedLines(@NotNull Graphics2D g,
+                                       @NotNull Editor editor,
+                                       @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
+                                       @NotNull LineStatusMarkerColorScheme colorScheme,
+                                       int framingBorder) {
     Color borderColor = LineStatusMarkerColorScheme.DEFAULT.getBorderColor(editor);
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     Color gutterBackgroundColor = gutter.getBackground();

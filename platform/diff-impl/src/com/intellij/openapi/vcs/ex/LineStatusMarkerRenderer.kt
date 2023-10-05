@@ -15,10 +15,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.LineMarkerRenderer
-import com.intellij.openapi.editor.markup.MarkupEditorFilter
-import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -33,7 +30,8 @@ abstract class LineStatusMarkerRenderer internal constructor(
   protected val project: Project?,
   protected val document: Document,
   disposable: Disposable,
-  private val editorFilter: MarkupEditorFilter? = null
+  private val editorFilter: MarkupEditorFilter? = null,
+  private val isMain: Boolean = true // tell clients that it's a "proper" vcs status renderer
 ) {
   private val updateQueue = MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, MergingUpdateQueue.ANY_COMPONENT, disposable)
   private var disposed = false
@@ -84,7 +82,7 @@ abstract class LineStatusMarkerRenderer internal constructor(
       if (filter != null) it.setEditorFilter(filter)
 
       // ensure key is there in MarkupModelListener.afterAdded event
-      it.putUserData(MAIN_KEY, true)
+      it.putUserData(MAIN_KEY, isMain)
     }
   }
 
@@ -158,13 +156,15 @@ abstract class LineStatusMarkerRenderer internal constructor(
       it.setThinErrorStripeMark(true)
       it.setGreedyToLeft(true)
       it.setGreedyToRight(true)
-      it.setTextAttributes(DiffStripeTextAttributes(diffType))
+      it.setTextAttributes(createErrorStripeTextAttributes(diffType))
       val filter = editorFilter
       if (filter != null) it.setEditorFilter(filter)
 
       // ensure key is there in MarkupModelListener.afterAdded event
       it.putUserData(TOOLTIP_KEY, MarkerData(diffType))
     }
+
+  protected open fun createErrorStripeTextAttributes(diffType: Byte): TextAttributes = DiffStripeTextAttributes(diffType)
 
   private fun destroyHighlighters() {
     val gutterHighlighter = gutterHighlighter

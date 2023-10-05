@@ -5,11 +5,13 @@ import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
+import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
@@ -32,6 +34,7 @@ private typealias NewDiscussionsFlow = Flow<Map<DiffLineLocation, NewGitLabNoteV
 
 interface GitLabMergeRequestChangeViewModel {
   val isCumulativeChange: Boolean
+  val changedRanges: List<Range>
 
   val discussions: DiscussionsFlow
   val draftDiscussions: DiscussionsFlow
@@ -42,6 +45,8 @@ interface GitLabMergeRequestChangeViewModel {
 
   fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean)
   fun cancelNewDiscussion(location: DiffLineLocation)
+
+  fun getOriginalContent(range: LineRange): String?
 }
 
 private val LOG = logger<GitLabMergeRequestChangeViewModel>()
@@ -60,6 +65,8 @@ internal class GitLabMergeRequestChangeViewModelImpl(
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineName("GitLab Merge Request Review Diff Change"))
 
   override val isCumulativeChange: Boolean = diffData.isCumulative
+
+  override val changedRanges: List<Range> = diffData.patch.hunks.withoutContext().toList()
 
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .throwFailure()
@@ -148,6 +155,32 @@ internal class GitLabMergeRequestChangeViewModelImpl(
         oldVm?.destroy()
       }
       newMap
+    }
+  }
+
+  override fun getOriginalContent(range: LineRange): String? {
+    if (range.start == range.end) return ""
+    return diffData.patch.hunks.find {
+      it.startLineBefore <= range.start && it.endLineBefore >= range.end
+    }?.let { hunk ->
+      val builder = StringBuilder()
+      var lineCounter = hunk.startLineBefore
+      for (line in hunk.lines) {
+        if (line.type == PatchLine.Type.CONTEXT) {
+          lineCounter++
+        }
+        if (line.type == PatchLine.Type.REMOVE) {
+          if (lineCounter >= range.start) {
+            builder.append(line.text)
+            if (!line.isSuppressNewLine) {
+              builder.append("\n")
+            }
+          }
+          lineCounter++
+        }
+        if (lineCounter >= range.end) break
+      }
+      return builder.toString()
     }
   }
 

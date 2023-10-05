@@ -213,8 +213,8 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   }
 
   @NotNull
-  public static JComponent createEditorComponent(@NotNull Editor editor, @NotNull EditorTextField textField) {
-    JPanel editorComponent = JBUI.Panels.simplePanel(textField);
+  public static JComponent createEditorComponent(@NotNull Editor editor, @NotNull JComponent popupEditor) {
+    JPanel editorComponent = JBUI.Panels.simplePanel(popupEditor);
     editorComponent.setBorder(createEditorFragmentBorder());
     editorComponent.setBackground(getEditorBackgroundColor(editor));
     return editorComponent;
@@ -269,14 +269,19 @@ public class LineStatusMarkerPopupPanel extends JPanel {
                                                         @Nullable List<? extends DiffFragment> wordDiff) {
     if (wordDiff == null) return;
     textField.addSettingsProvider(uEditor -> {
-      for (DiffFragment fragment : wordDiff) {
-        int vcsStart = fragment.getStartOffset1();
-        int vcsEnd = fragment.getEndOffset1();
-        TextDiffType type = getDiffType(fragment);
-
-        DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
-      }
+      installEditorDiffHighlighters(uEditor, wordDiff);
     });
+  }
+
+  public static void installEditorDiffHighlighters(@NotNull Editor editor, @Nullable List<? extends DiffFragment> wordDiff) {
+    if (wordDiff == null) return;
+    for (DiffFragment fragment : wordDiff) {
+      int vcsStart = fragment.getStartOffset1();
+      int vcsEnd = fragment.getEndOffset1();
+      TextDiffType type = getDiffType(fragment);
+
+      DiffDrawUtil.createInlineHighlighter(editor, vcsStart, vcsEnd, type);
+    }
   }
 
   public static void installMasterEditorWordHighlighters(@NotNull Editor editor,

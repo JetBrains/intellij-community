@@ -29,8 +29,9 @@ abstract class LineStatusMarkerRendererWithPopup(
   document: Document,
   protected val rangesSource: LineStatusMarkerRangesSource<*>,
   disposable: Disposable,
-  editorFilter: MarkupEditorFilter? = null
-) : LineStatusMarkerRenderer(project, document, disposable, editorFilter),
+  editorFilter: MarkupEditorFilter? = null,
+  isMain: Boolean = true
+) : LineStatusMarkerRenderer(project, document, disposable, editorFilter, isMain),
     LineStatusMarkerRendererWithPopupController {
 
   final override fun getRanges(): List<Range>? = rangesSource.getRanges()
