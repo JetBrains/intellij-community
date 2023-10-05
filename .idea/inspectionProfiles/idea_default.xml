@@ -5,6 +5,7 @@
       <scope name="Production" level="WARNING" enabled="true" />
     </inspection_tool>
     <inspection_tool class="2b82dee6-0e1c-36ce-846f-749c578bd315" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="807b1a20-1c6f-3175-b372-e193a137c304" enabled="true" level="TYPO" enabled_by_default="true" editorAttributes="TYPO" />
     <inspection_tool class="81c39993-de39-3a30-9c64-ab89d04bb566" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="false" editorAttributes="INFO_ATTRIBUTES">
       <scope name="Production" level="TEXT ATTRIBUTES" enabled="true" editorAttributes="INFO_ATTRIBUTES" />
     </inspection_tool>
@@ -226,6 +227,29 @@
     <inspection_tool class="Convert2MethodRef" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="CovariantCompareTo" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="CovariantEquals" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="CustomRegExpInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myConfigurations">
+        <list>
+          <RegExpInspectionConfiguration>
+            <option name="description" value="Reports properties ending with &lt;code&gt;[space]…&lt;/code&gt; instead of &lt;code&gt;…&lt;/code&gt;.&lt;br/&gt;&#10;See &lt;a href=&quot;https://jetbrains.design/intellij/text/punctuation/&quot;&gt;punctuation guidelines&lt;/a&gt;." />
+            <option name="name" value="Extra space before ellipsis" />
+            <option name="problemDescriptor" value="Property has an extra space before the ellipsis" />
+            <option name="suppressId" value="SpaceBeforeEllipsis" />
+            <option name="uuid" value="807b1a20-1c6f-3175-b372-e193a137c304" />
+            <option name="patterns">
+              <list>
+                <InspectionPattern>
+                  <option name="regExp" value=" …$" />
+                  <option name="_fileType" value="Properties" />
+                  <option name="searchContext" value="ANY" />
+                  <option name="replacement" value="…" />
+                </InspectionPattern>
+              </list>
+            </option>
+          </RegExpInspectionConfiguration>
+        </list>
+      </option>
+    </inspection_tool>
     <inspection_tool class="DeclareParentsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="DeprecatedGemInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DialogTitleCapitalization" enabled="true" level="WARNING" enabled_by_default="true">
