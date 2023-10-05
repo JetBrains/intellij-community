@@ -13,11 +13,9 @@ import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefBrowser;
 import com.intellij.ui.jcef.JBCefBrowserBase;
 import com.intellij.ui.jcef.JBCefCookie;
-import org.cef.browser.CefBrowser;
-import org.cef.browser.CefFrame;
+import org.cef.CefApp;
+import org.cef.handler.CefAppStateHandler;
 import org.cef.handler.CefLoadHandler;
-import org.cef.handler.CefLoadHandlerAdapter;
-import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +87,6 @@ final class JBCefBrowserDemo extends AnAction implements DumbAware {
     });
     myJBCefBrowser.setProperty(JBCefBrowser.Properties.FOCUS_ON_SHOW, Boolean.TRUE);
 
-    final CookieManagerDialog myCookieManagerDialog = new CookieManagerDialog(frame, myJBCefBrowser);
 
     frame.addWindowListener(new WindowAdapter() {
       @Override
@@ -97,12 +94,6 @@ final class JBCefBrowserDemo extends AnAction implements DumbAware {
         Disposer.dispose(myJBCefBrowser);
       }
     });
-    myJBCefBrowser.getJBCefClient().addLoadHandler(new CefLoadHandlerAdapter() {
-      @Override
-      public void onLoadStart(CefBrowser browser, CefFrame frame, CefRequest.TransitionType transitionType) {
-        myCookieManagerDialog.setVisible(false);
-      }
-    }, myJBCefBrowser.getCefBrowser());
 
     frame.add(myJBCefBrowser.getComponent(), BorderLayout.CENTER);
 
@@ -113,16 +104,27 @@ final class JBCefBrowserDemo extends AnAction implements DumbAware {
     JPanel controlPanel = new JPanel();
     controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
 
-    final JButton myShowCookieManagerButton = new JButton(myCookieManagerText);
-    myShowCookieManagerButton.addActionListener(new ActionListener() {
+    CefApp.getInstance().onInitialization(new CefAppStateHandler() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        myCookieManagerDialog.setVisible(true);
-        List<JBCefCookie> cookies = myJBCefBrowser.getJBCefCookieManager().getCookies();
-        myCookieManagerDialog.update(cookies);
+      public void stateHasChanged(CefApp.CefAppState state) {
+        if (state == CefApp.CefAppState.INITIALIZED) {
+          SwingUtilities.invokeLater(() -> {
+            final CookieManagerDialog myCookieManagerDialog = new CookieManagerDialog(frame, myJBCefBrowser);
+            myCookieManagerDialog.setVisible(false);
+            final JButton myShowCookieManagerButton = new JButton(myCookieManagerText);
+            myShowCookieManagerButton.addActionListener(new ActionListener() {
+              @Override
+              public void actionPerformed(ActionEvent e) {
+                myCookieManagerDialog.setVisible(true);
+                List<JBCefCookie> cookies = myJBCefBrowser.getJBCefCookieManager().getCookies();
+                myCookieManagerDialog.update(cookies);
+              }
+            });
+            controlPanel.add(myShowCookieManagerButton);
+          });
+        }
       }
     });
-    controlPanel.add(myShowCookieManagerButton);
 
     frame.add(controlPanel, BorderLayout.SOUTH);
 
