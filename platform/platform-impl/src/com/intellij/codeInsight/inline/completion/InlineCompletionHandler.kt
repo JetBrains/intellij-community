@@ -6,7 +6,11 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Compan
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContext
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlineCompletionState
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventListener
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventType
 import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
@@ -14,8 +18,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
+import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectIndexed
@@ -27,6 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 @ApiStatus.Experimental
 class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightActionHandler {
   private var runningJob: Job? = null
+  private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     return InlineCompletionProvider.extensions().firstOrNull {
@@ -37,6 +45,29 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
       }
     }
   }
+
+  // Android Studio (b/304299822): These functions have been added to mimic parts of upstream commit 71548e7d; a cherry-pick is not possible
+  // due to code churn in the area. This code can be removed in advance of the 2023.3 merge, at which time a similar implementation will
+  // come from upstream.
+  fun addEventListener(listener: InlineCompletionEventListener) {
+    eventListeners.addListener(listener)
+  }
+
+  fun addEventListener(listener: InlineCompletionEventListener, parentDisposable: Disposable) {
+    addEventListener(listener)
+    Disposer.register(parentDisposable) { removeEventListener(listener) }
+  }
+
+  fun removeEventListener(listener: InlineCompletionEventListener) {
+    eventListeners.removeListener(listener)
+  }
+
+  @RequiresEdt
+  internal fun trace(event: InlineCompletionEventType) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    eventListeners.getMulticaster().on(event)
+  }
+  // Android Studio (b/304299822): End of added function block.
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val inlineState = editor.getInlineCompletionState() ?: return
@@ -115,6 +146,11 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     }
 
     editor.initOrGetInlineCompletionContext().update(suggestions, suggestionIndex, startOffset)
+
+    // Android Studio (b/304299822): This call to `trace` has been added to mimic parts of upstream commit 71548e7d; a cherry-pick is not
+    // possible due to code churn in the area. This code can be removed in advance of the 2023.3 merge, at which time a similar
+    // implementation will come from upstream.
+    trace(InlineCompletionEventType.Show(suggestions[suggestionIndex], suggestionIndex))
 
     inlineContext.suggestionIndex = suggestionIndex
     inlineContext.lastStartOffset = startOffset

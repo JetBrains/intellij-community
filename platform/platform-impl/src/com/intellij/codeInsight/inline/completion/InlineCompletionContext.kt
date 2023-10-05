@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.resetInlineCompletionState
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionKeyListener
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.render.InlineCompletion
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
@@ -73,6 +74,11 @@ class InlineCompletionContext private constructor(val editor: Editor) : Disposab
     editor.removeInlineCompletionContext()
     LookupManager.getActiveLookup(editor)?.hideLookup(false)
     Disposer.dispose(this)
+
+    // Android Studio (b/304299822): This call to `trace` has been added to mimic parts of upstream commit 71548e7d; a cherry-pick is not
+    // possible due to code churn in the area. This code can be removed in advance of the 2023.3 merge, at which time a similar
+    // implementation will come from upstream.
+    editor.getUserData(InlineCompletionHandler.KEY)?.trace(InlineCompletionEventType.Insert)
   }
 
   companion object {
