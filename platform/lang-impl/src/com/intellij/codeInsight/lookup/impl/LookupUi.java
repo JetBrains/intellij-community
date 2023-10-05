@@ -439,7 +439,7 @@ final class LookupUi {
             if (listHeight != myList.getModel().getSize() &&
                 listHeight != myList.getVisibleRowCount() &&
                 preferredSize.height != size.height) {
-              UISettings.getInstance().setMaxLookupListHeight(Math.max(5, listHeight));
+              myLookup.getPresentation().setMaxVisibleItemsCount(listHeight);
             }
           }
 
