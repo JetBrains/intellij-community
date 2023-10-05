@@ -404,9 +404,7 @@ public class GradleExecutionHelper {
       progressListener,
       OperationType.TASK,
       OperationType.FILE_DOWNLOAD,
-      OperationType.BUILD_PHASE,
-      OperationType.PROJECT_CONFIGURATION,
-      OperationType.TRANSFORM
+      OperationType.BUILD_PHASE
     );
     if (settings.isRunAsTest() && settings.isBuiltInTestEventsUsed()) {
       operation.addProgressListener(
@@ -414,9 +412,7 @@ public class GradleExecutionHelper {
         OperationType.TEST,
         OperationType.TEST_OUTPUT,
         OperationType.BUILD_PHASE,
-        OperationType.PROJECT_CONFIGURATION,
-        OperationType.TASK,
-        OperationType.TRANSFORM
+        OperationType.TASK
       );
     }
   }
