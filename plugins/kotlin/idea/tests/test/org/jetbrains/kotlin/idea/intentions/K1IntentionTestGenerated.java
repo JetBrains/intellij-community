@@ -15360,6 +15360,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitType/constantExpressionInitializerVar.kt");
         }
 
+        @TestMetadata("dotQualifiedInitializer.kt")
+        public void testDotQualifiedInitializer() throws Exception {
+            runTest("testData/intentions/removeExplicitType/dotQualifiedInitializer.kt");
+        }
+
+        @TestMetadata("dotQualifiedInitializer2.kt")
+        public void testDotQualifiedInitializer2() throws Exception {
+            runTest("testData/intentions/removeExplicitType/dotQualifiedInitializer2.kt");
+        }
+
         @TestMetadata("explicitTypeIsAlias.kt")
         public void testExplicitTypeIsAlias() throws Exception {
             runTest("testData/intentions/removeExplicitType/explicitTypeIsAlias.kt");
@@ -15553,6 +15563,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("removeUnresolvedType.kt")
         public void testRemoveUnresolvedType() throws Exception {
             runTest("testData/intentions/removeExplicitType/removeUnresolvedType.kt");
+        }
+
+        @TestMetadata("safeAccessInitializer.kt")
+        public void testSafeAccessInitializer() throws Exception {
+            runTest("testData/intentions/removeExplicitType/safeAccessInitializer.kt");
         }
 
         @TestMetadata("stringInitializer.kt")

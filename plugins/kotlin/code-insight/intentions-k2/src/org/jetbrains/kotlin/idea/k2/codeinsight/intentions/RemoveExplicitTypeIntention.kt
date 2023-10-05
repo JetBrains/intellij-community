@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
 import org.jetbrains.kotlin.idea.codeinsight.utils.isAnnotatedDeep
 import org.jetbrains.kotlin.idea.codeinsight.utils.isSetterParameter
@@ -109,6 +110,7 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
         is KtConstantExpression -> initializer.getClassId()?.let { buildClassType(it) }?.isSubTypeOf(typeReference.getKtType()) == true
         is KtCallExpression -> initializer.typeArgumentList != null || !returnTypeOfCallDependsOnTypeParameters(initializer)
         is KtCallableReferenceExpression -> isCallableReferenceExpressionTypeContextIndependent(initializer)
+        is KtQualifiedExpression -> initializer.callExpression?.let { isInitializerTypeContextIndependent(it, typeReference) } == true
 
         // consider types of expressions that the compiler views as constants, e.g. `1 + 2`, as independent
         else -> initializer.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null
