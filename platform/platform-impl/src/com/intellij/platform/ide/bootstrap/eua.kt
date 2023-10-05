@@ -15,12 +15,22 @@ import kotlinx.coroutines.*
 // - eu(l)a
 internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx>): EndUserAgreement.Document? {
   val vendorAsProperty = System.getProperty("idea.vendor.name", "")
-  if (if (vendorAsProperty.isEmpty()) !(appInfoDeferred.await()).isVendorJetBrains else vendorAsProperty != "JetBrains") {
-    return null
+  val isVendorJetBrains = if (vendorAsProperty.isNotEmpty()) {
+    vendorAsProperty == "JetBrains"
   }
   else {
-    val document = span("eua getting") { EndUserAgreement.getLatestDocument() }
-    return if (span("eua is accepted checking") { document.isAccepted }) null else document
+    appInfoDeferred.await().isVendorJetBrains
+  }
+  if (!isVendorJetBrains) {
+    return null
+  }
+  val document = span("eua getting") {
+    EndUserAgreement.getLatestDocument()
+  }
+  return document.takeUnless {
+    span("eua is accepted checking") {
+      it.isAccepted
+    }
   }
 }
 
