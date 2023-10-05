@@ -4,6 +4,7 @@ package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel
 import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil
+import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionVisitor
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
@@ -87,23 +88,29 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     @NotNull ModelBuilderContext context
   ) {
     List<File> taskArtifacts = new ArrayList<File>()
-    project.getTasks().withType(Jar.class).all { Jar jar ->
-      try {
-        def archiveFile = getTaskArchiveFile(jar)
-        if (archiveFile != null) {
-          taskArtifacts.add(archiveFile)
-        }
+    GradleCollectionVisitor.create(project.getTasks().withType(Jar.class)) { Jar jar ->
+      def archiveFile = getTaskArchiveFile(jar)
+      if (archiveFile != null) {
+        taskArtifacts.add(archiveFile)
       }
-      catch (e) {
-        context.getMessageReporter().createMessage()
-          .withGroup(Messages.SOURCE_SET_MODEL_PROJECT_TASK_ARTIFACT_GROUP)
-          .withTitle("Jar task configuration error")
-          .withText("Cannot resolve artifact file for the project Jar task: " + jar.path)
-          .withKind(Message.Kind.WARNING)
-          .withException(e)
-          .reportMessage(project)
-      }
-    }
+    }.onFailure { jar, exception ->
+      context.getMessageReporter().createMessage()
+        .withGroup(Messages.SOURCE_SET_MODEL_PROJECT_TASK_ARTIFACT_GROUP)
+        .withTitle("Jar task configuration error")
+        .withText("Cannot resolve artifact file for the project Jar task: " + jar.path)
+        .withKind(Message.Kind.WARNING)
+        .withException(exception)
+        .reportMessage(project)
+    }.onElementSkip { jar, stackTrace ->
+      context.getMessageReporter().createMessage()
+        .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_PROJECT_TASK_ARTIFACT_GROUP)
+        .withTitle("Jar task configuration error")
+        .withText("Artifact files collecting for project Jar task was finished. " +
+                  "Resolution for Jar task " + jar.path + " will be skipped.")
+        .withKind(Message.Kind.WARNING)
+        .withException(stackTrace)
+        .reportMessage(project)
+    }.accept()
     return new ArrayList<>(taskArtifacts)
   }
 
@@ -113,26 +120,32 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     @NotNull ModelBuilderContext context
   ) {
     List<File> additionalArtifacts = new ArrayList<File>()
-    project.getTasks().withType(Jar.class).all { Jar jar ->
-      try {
-        def archiveFile = getTaskArchiveFile(jar)
-        if (archiveFile != null) {
-          if (isJarDescendant(jar) || containsPotentialClasspathElements(jar, project)) {
-            additionalArtifacts.add(archiveFile)
-          }
+    GradleCollectionVisitor.create(project.getTasks().withType(Jar.class)) { Jar jar ->
+      def archiveFile = getTaskArchiveFile(jar)
+      if (archiveFile != null) {
+        if (isJarDescendant(jar) || containsPotentialClasspathElements(jar, project)) {
+          additionalArtifacts.add(archiveFile)
         }
       }
-      catch (e) {
-        context.getMessageReporter().createMessage()
-          .withGroup(Messages.SOURCE_SET_MODEL_NON_SOURCE_SET_ARTIFACT_GROUP)
-          .withTitle("Jar task configuration error")
-          .withText("Cannot resolve artifact file for the project Jar task: " + jar.path)
-          .withKind(Message.Kind.WARNING)
-          .withException(e)
-          .reportMessage(project)
-      }
-    }
-    return new ArrayList<>(additionalArtifacts)
+    }.onFailure { jar, exception ->
+      context.getMessageReporter().createMessage()
+        .withGroup(Messages.SOURCE_SET_MODEL_NON_SOURCE_SET_ARTIFACT_GROUP)
+        .withTitle("Jar task configuration error")
+        .withText("Cannot resolve artifact file for the project Jar task: " + jar.path)
+        .withKind(Message.Kind.WARNING)
+        .withException(exception)
+        .reportMessage(project)
+    }.onElementSkip { jar, stackTrace ->
+      context.getMessageReporter().createMessage()
+        .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_NON_SOURCE_SET_ARTIFACT_GROUP)
+        .withTitle("Jar task configuration error")
+        .withText("Artifact files collecting for project Jar task was finished. " +
+                  "Resolution for Jar task " + jar.path + " will be skipped.")
+        .withKind(Message.Kind.WARNING)
+        .withException(stackTrace)
+        .reportMessage(project)
+    }.accept()
+    return additionalArtifacts
   }
 
   @NotNull
@@ -141,24 +154,30 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     @NotNull ModelBuilderContext context
   ) {
     Map<String, Set<File>> configurationArtifacts = new HashMap<String, Set<File>>()
-    project.getConfigurations().all { Configuration configuration ->
-      try {
-        def artifactSet = configuration.getArtifacts()
-        def fileCollection = artifactSet.getFiles()
-        Set<File> files = fileCollection.getFiles()
-        configurationArtifacts.put(configuration.name, new LinkedHashSet<>(files))
-      }
-      catch (Exception e) {
-        context.getMessageReporter().createMessage()
-          .withGroup(Messages.SOURCE_SET_MODEL_PROJECT_CONFIGURATION_ARTIFACT_GROUP)
-          .withTitle("Jar task configuration error")
-          .withText("Cannot resolve artifact files for project configuration" + configuration)
-          .withKind(Message.Kind.WARNING)
-          .withException(e)
-          .reportMessage(project)
-      }
-    }
-    return new HashMap<>(configurationArtifacts)
+    GradleCollectionVisitor.create(project.getConfigurations()) { Configuration configuration ->
+      def artifactSet = configuration.getArtifacts()
+      def fileCollection = artifactSet.getFiles()
+      Set<File> files = fileCollection.getFiles()
+      configurationArtifacts.put(configuration.name, new LinkedHashSet<>(files))
+    }.onFailure { configuration, exception ->
+      context.getMessageReporter().createMessage()
+        .withGroup(Messages.SOURCE_SET_MODEL_PROJECT_CONFIGURATION_ARTIFACT_GROUP)
+        .withTitle("Project configuration error")
+        .withText("Cannot resolve artifact files for project configuration" + configuration)
+        .withKind(Message.Kind.WARNING)
+        .withException(exception)
+        .reportMessage(project)
+    }.onElementSkip { configuration, stackTrace ->
+      context.getMessageReporter().createMessage()
+        .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_PROJECT_CONFIGURATION_ARTIFACT_GROUP)
+        .withTitle("Project configuration error")
+        .withText("Artifact files collecting for project configuration was finished. " +
+                  "Resolution for configuration " + configuration + " will be skipped.")
+        .withKind(Message.Kind.WARNING)
+        .withException(stackTrace)
+        .reportMessage(project)
+    }.accept()
+    return configurationArtifacts
   }
 
   @NotNull
