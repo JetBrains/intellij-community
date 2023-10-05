@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.PotemkinOverlayProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
@@ -259,14 +258,13 @@ object Utils {
     CoroutineName("expandActionGroupSuspend ($place)") + ModalityState.any().asContextElement()) {
     val wrapped = createAsyncDataContext(dataContext)
     checkAsyncDataContext(wrapped, place)
-    val hideDisabled = group is CompactActionGroup
     val isContextMenu = ActionPlaces.isPopupPlace(place)
     val fastTrackTime = getFastTrackMaxTime(fastTrack, group, place, wrapped, isToolbarAction, true)
     val deferred = async(if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() } else EmptyCoroutineContext) {
       service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, wrapped, place, group, isToolbarAction) {
         val updater = ActionUpdater(presentationFactory, wrapped, place, isContextMenu, isToolbarAction, this)
         withContext(updaterContext(place, fastTrackTime, isContextMenu, isToolbarAction)) {
-          updater.expandActionGroup(group, hideDisabled)
+          updater.expandActionGroup(group, group is CompactActionGroup)
         }
       }
     }
@@ -317,7 +315,7 @@ object Utils {
     CoroutineName("expandActionGroupImpl ($place)")) {
     val wrapped = createAsyncDataContext(dataContext)
     checkAsyncDataContext(wrapped, place)
-    val hideDisabled = group is CompactActionGroup
+    val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
     val maxLoops = max(2, Registry.intValue("actionSystem.update.actions.async.max.nested.loops", 20))
     if (ourExpandActionGroupImplEDTLoopLevel >= maxLoops) {
       LOG.warn("Maximum number of recursive EDT loops reached ($maxLoops) at '$place'")
@@ -329,29 +327,27 @@ object Utils {
     }
     val fastTrackTime = getFastTrackMaxTime(true, group, place, wrapped, false, false)
     val mainJob = coroutineContext.job
-    val loopJob = launch {
+    val loopJob = if (isUnitTestMode) null else launch {
       val start = System.nanoTime()
       while (TimeoutUtil.getDurationMillis(start) < fastTrackTime) {
         delay(1)
       }
       runEdtLoop(mainJob, expire, PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrapped), menuItem)
     }
-    val progressJob = if (loadingIconPoint == null) null
-    else launch {
+    val progressJob = if (loadingIconPoint == null) null else launch {
       addLoadingIcon(loadingIconPoint, place)
     }
     try {
       service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, wrapped, place, group, false) {
         val updater = ActionUpdater(presentationFactory, wrapped, place, isContextMenu, false, this)
         withContext(updaterContext(place, fastTrackTime, isContextMenu, false)) {
-          updater.expandActionGroup(group, hideDisabled)
+          updater.expandActionGroup(group, group is CompactActionGroup)
         }
       }
     }
     finally {
       progressJob?.cancel()
-      loopJob.cancel()
-      SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
+      loopJob?.cancel()
     }
   }
 
@@ -972,14 +968,19 @@ private fun updaterContext(place: String, fastTrackTime: Int, isContextMenu: Boo
 }
 
 // EDT Loop 1: Secondary event loop for context menus and popups
+// There is an outer `runBlocking` that runs "computeOnEDT" blocks.
+// This loop only handles external UI events - input, focus, and rendering.
 suspend fun runEdtLoop(mainJob: Job, expire: (() -> Boolean)?, contextComponent: Component?, menuItem: Component?) {
   val queue = IdeEventQueue.getInstance()
   val window: Window? = if (contextComponent == null) null else SwingUtilities.getWindowAncestor(contextComponent)
   ourExpandActionGroupImplEDTLoopLevel++
   try {
     resetThreadContext().use {
+      ThreadingAssertions.assertEventDispatchThread()
       while (true) {
-        ThreadingAssertions.assertEventDispatchThread()
+        // we need `suspend getNextEvent()` API, or at least `getNextEventOrNull(timeout)`
+        // because blocking `getNextEvent` prevents "computeOnEDT" blocks from executing.
+        // `peekEvent()` + `delay(10)` would do but editor scrolling became noticeably less smooth.
         val event = queue.getNextEvent()
         queue.dispatchEvent(event)
         if (isCancellingExpandEvent(event, window, menuItem) || // TODO can we push back and unwind here?
@@ -1005,6 +1006,8 @@ private fun isCancellingExpandEvent(event: AWTEvent?, window: Window?, menuItem:
 }
 
 // EDT Loop 2: Own queue loop for toolbars with fast-track
+// There is no outer `runBlocking` to run "computeOnEdt" blocks.
+// They are processed manually until own queue mode is switched off.
 private object AltEdtDispatcher : CoroutineDispatcher() {
   private val queue = LinkedBlockingQueue<Runnable>()
   @Volatile
@@ -1034,7 +1037,6 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
     }
   }
 
-  @Suppress("ForbiddenInSuspectContextMethod")
   fun runOwnQueueBlockingAndSwitchBackToEDT(job: Job, timeInMillis: Int) {
     try {
       resetThreadContext().use {
@@ -1058,6 +1060,7 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
         semaphore.acquireUninterruptibly(Integer.MAX_VALUE)
         queue.drainTo(this)
         forEach {
+          @Suppress("ForbiddenInSuspectContextMethod")
           ApplicationManager.getApplication().invokeLater(it, ModalityState.any())
         }
       }
