@@ -5,6 +5,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.util.attachAsChildTo
 import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
@@ -14,7 +15,6 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Given that there is some IJent process launched, this extension gets handles to stdin+stdout of the process and returns
@@ -27,10 +27,12 @@ interface IjentSessionProvider {
   /**
    * When calling the method, there's no need to wire [communicationCoroutineScope] to [epCoroutineScope],
    * since it is already performed by factory methods.
+   *
+   * Automatically registers the result in [IjentSessionRegistry].
    */
   @OverrideOnly
   suspend fun connect(
-    id: Long,
+    id: IjentId,
     communicationCoroutineScope: CoroutineScope,
     inputStream: InputStream,
     outputStream: OutputStream,
@@ -39,27 +41,31 @@ interface IjentSessionProvider {
   companion object {
     private val LOG = logger<IjentSessionProvider>()
 
-    private val counter = AtomicLong()
-
     /**
      * The session exits when one of the following happens:
      * * The job corresponding to [communicationCoroutineScope] is finished.
      * * [epCoroutineScope] is finished.
      * * [inputStream] is closed.
      */
+    @OptIn(DelicateCoroutinesApi::class)
     suspend fun connect(communicationCoroutineScope: CoroutineScope, process: Process): IjentApi {
       val provider = serviceAsync<IjentSessionProvider>()
-      val id = counter.getAndIncrement()
-      val label = "IJent #$id"
+      val ijentsRegistry = IjentSessionRegistry.instanceAsync()
+      val ijentId = ijentsRegistry.makeNewId()
       val epCoroutineScope = provider.epCoroutineScope
       val childScope = communicationCoroutineScope
-        .namedChildScope(label, supervisor = false)
+        .namedChildScope(ijentId.toString(), supervisor = false)
         .apply { attachAsChildTo(epCoroutineScope) }
-      childScope.launch(Dispatchers.IO + childScope.coroutineNameAppended("$label > watchdog")) {
+
+      childScope.coroutineContext.job.invokeOnCompletion {
+        ijentsRegistry.ijentsInternal.remove(ijentId)
+      }
+
+      childScope.launch(Dispatchers.IO + childScope.coroutineNameAppended("$ijentId > watchdog")) {
         while (true) {
           if (process.waitFor(10, TimeUnit.MILLISECONDS)) {
             val exitValue = process.exitValue()
-            LOG.debug { "$label exit code $exitValue" }
+            LOG.debug { "$ijentId exit code $exitValue" }
             check(exitValue == 0) { "Process has exited with code $exitValue" }
             cancel()
             break
@@ -67,12 +73,12 @@ interface IjentSessionProvider {
           delay(100)
         }
       }
-      childScope.launch(Dispatchers.IO + childScope.coroutineNameAppended("$label > finalizer")) {
+      childScope.launch(Dispatchers.IO + childScope.coroutineNameAppended("$ijentId > finalizer")) {
         try {
           awaitCancellation()
         }
         catch (err: Exception) {
-          LOG.debug(err) { "$label is going to be terminated due to receiving an error" }
+          LOG.debug(err) { "$ijentId is going to be terminated due to receiving an error" }
           throw err
         }
         finally {
@@ -80,18 +86,18 @@ interface IjentSessionProvider {
             GlobalScope.launch(Dispatchers.IO + coroutineNameAppended("actual destruction")) {
               try {
                 if (process.waitFor(5, TimeUnit.SECONDS)) {
-                  LOG.debug { "$label exit code ${process.exitValue()}" }
+                  LOG.debug { "$ijentId exit code ${process.exitValue()}" }
                 }
               }
               finally {
                 if (process.isAlive) {
-                  LOG.debug { "The process $label is still alive, it will be killed" }
+                  LOG.debug { "The process $ijentId is still alive, it will be killed" }
                   process.destroy()
                 }
               }
             }
             GlobalScope.launch(Dispatchers.IO) {
-              LOG.debug { "Closing stdin of $label" }
+              LOG.debug { "Closing stdin of $ijentId" }
               process.outputStream.close()
             }
           }
@@ -101,29 +107,54 @@ interface IjentSessionProvider {
       val processScopeNamePrefix = childScope.coroutineContext[CoroutineName]?.let { "$it >" } ?: ""
 
       epCoroutineScope.launch(Dispatchers.IO) {
-        withContext(coroutineNameAppended("$processScopeNamePrefix $label > logger")) {
+        withContext(coroutineNameAppended("$processScopeNamePrefix $ijentId > logger")) {
           process.errorReader().use { errorReader ->
             for (line in errorReader.lineSequence()) {
               // TODO It works incorrectly with multiline log messages.
               when (line.splitToSequence(Regex(" +")).drop(1).take(1).firstOrNull()) {
-                "TRACE" -> LOG.trace { "$label log: $line" }
-                "DEBUG" -> LOG.debug { "$label log: $line" }
-                "INFO" -> LOG.info("$label log: $line")
-                "WARN" -> LOG.warn("$label log: $line")
-                "ERROR" -> LOG.error("$label log: $line")
-                else -> LOG.trace { "$label log: $line" }
+                "TRACE" -> LOG.trace { "$ijentId log: $line" }
+                "DEBUG" -> LOG.debug { "$ijentId log: $line" }
+                "INFO" -> LOG.info("$ijentId log: $line")
+                "WARN" -> LOG.warn("$ijentId log: $line")
+                "ERROR" -> LOG.error("$ijentId log: $line")
+                else -> LOG.trace { "$ijentId log: $line" }
               }
               yield()
             }
           }
         }
       }
-      return provider.connect(id, childScope, process.inputStream, process.outputStream)
+
+      val result = provider.connect(ijentId, childScope, process.inputStream, process.outputStream)
+      ijentsRegistry.ijentsInternal[ijentId] = result
+      return result
     }
   }
 }
 
-interface IjentApi {
+interface IjentApi : AutoCloseable {
+  val id: IjentId
+
+  /**
+   * Every [IjentId] must have its own child scope. Cancellation of this scope doesn't directly lead to cancellation of any coroutine
+   * from the parent job.
+   *
+   * Cancellation of this scope must lead to termination of the IJent process on the other side.
+   */
+  val coroutineScope: CoroutineScope
+
+  /**
+   * Contains some generic info which doesn't change during the lifetime of an IJent process.
+   */
+  val systemInfo: IjentSystemInfo
+
+  override fun close() {
+    coroutineScope.cancel(CancellationException("Closed via Closeable interface"))
+    // The javadoc of the method doesn't clarify if the method supposed to wait for the resource destruction.
+  }
+
+  val fs: IjentFileSystemApi
+
   suspend fun executeProcess(
     exe: String,
     vararg args: String,
@@ -186,4 +217,13 @@ interface IjentChildProcess {
   val exitCode: Deferred<Int>
 
   suspend fun sendSignal(signal: Int)  // TODO Use a separate class for signals.
+}
+
+data class IjentSystemInfo(
+  val osKind: OsKind,
+  val ijentVersion: String,
+) {
+  enum class OsKind {
+    WINDOWS, UNIX,
+  }
 }
