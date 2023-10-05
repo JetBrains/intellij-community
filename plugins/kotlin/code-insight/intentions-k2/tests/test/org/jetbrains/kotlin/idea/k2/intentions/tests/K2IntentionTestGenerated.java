@@ -2440,6 +2440,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/propertyTypeFromGetter.kt");
         }
 
+        @TestMetadata("referenceExpressionInitializer.kt")
+        public void testReferenceExpressionInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/referenceExpressionInitializer.kt");
+        }
+
+        @TestMetadata("referenceExpressionInitializer2.kt")
+        public void testReferenceExpressionInitializer2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/referenceExpressionInitializer2.kt");
+        }
+
         @TestMetadata("removeUnresolvedType.kt")
         public void testRemoveUnresolvedType() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/removeUnresolvedType.kt");

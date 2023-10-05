@@ -122,6 +122,7 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
         is KtQualifiedExpression -> initializer.callExpression?.let { isInitializerTypeContextIndependent(it, typeReference) } == true
         is KtLambdaExpression -> isLambdaExpressionTypeContextIndependent(initializer, typeReference)
         is KtNamedFunction -> isAnonymousFunctionTypeContextIndependent(initializer, typeReference)
+        is KtSimpleNameExpression -> true
 
         // consider types of expressions that the compiler views as constants, e.g. `1 + 2`, as independent
         else -> initializer.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null

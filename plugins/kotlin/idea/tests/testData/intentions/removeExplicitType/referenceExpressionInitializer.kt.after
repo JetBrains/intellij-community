@@ -1,0 +1,3 @@
+val x: String = ""
+
+fun foo() = x
