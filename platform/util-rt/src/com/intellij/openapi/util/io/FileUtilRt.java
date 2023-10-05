@@ -32,7 +32,7 @@ public class FileUtilRt {
   public static final int LARGE_FILE_PREVIEW_SIZE = Math.min(getLargeFilePreviewSize(), LARGE_FOR_CONTENT_LOADING);
 
   private static final int MAX_FILE_IO_ATTEMPTS = 10;
-  private static final boolean TRY_GC_IF_FILE_DELETE_FAILS = "true".equals(getProperty("idea.fs.try-gc-if-file-delete-fails", "false"));
+  private static final boolean TRY_GC_IF_FILE_DELETE_FAILS = "true".equals(getProperty("idea.fs.try-gc-if-file-delete-fails", "true"));
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(getProperty("idea.fs.useChannels"));
 
 
