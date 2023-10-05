@@ -23,7 +23,7 @@ project.commonMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
-    targetPlatform = JS/JVM (1.8)/Native (general)
+    targetPlatform = JS/JVM (17)/Native (general)
 
 project.commonTest
     externalProjectId = project
@@ -31,7 +31,7 @@ project.commonTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     additionalVisibleModuleNames = project:commonMain
-    targetPlatform = JS/JVM (1.8)/Native (general)
+    targetPlatform = JS/JVM (17)/Native (general)
 
 project.iosArm64Main
     externalProjectId = project
@@ -92,7 +92,7 @@ project.jvmAndNativeMain
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonMain
-    targetPlatform = JVM (1.8)/Native (general)
+    targetPlatform = JVM (17)/Native (general)
 
 project.jvmAndNativeTest
     externalProjectId = project
@@ -101,7 +101,7 @@ project.jvmAndNativeTest
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
     additionalVisibleModuleNames = project:commonMain, project:jvmAndNativeMain
-    targetPlatform = JVM (1.8)/Native (general)
+    targetPlatform = JVM (17)/Native (general)
 
 project.jvmMain
     externalProjectId = project
