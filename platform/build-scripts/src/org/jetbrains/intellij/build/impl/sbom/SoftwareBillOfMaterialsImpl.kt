@@ -160,8 +160,16 @@ internal class SoftwareBillOfMaterialsImpl(
   }
 
   override suspend fun generate() {
-    if (!context.shouldBuildDistributions()) {
-      Span.current().addEvent("No distribution was built, skipping")
+    val skipReason = when {
+      !context.shouldBuildDistributions() -> "No distribution was built"
+      documentNamespace == null -> "Document namespace isn't specified"
+      context.productProperties.sbomOptions.creator == null -> "Document creator isn't specified"
+      context.productProperties.sbomOptions.copyrightText == null -> "Copyright text isn't specified"
+      context.productProperties.sbomOptions.license == null -> "Distribution license isn't specified"
+      else -> null
+    }
+    if (skipReason != null) {
+      Span.current().addEvent("$skipReason, skipping")
       return
     }
     check(distributionFiles.any()) {
