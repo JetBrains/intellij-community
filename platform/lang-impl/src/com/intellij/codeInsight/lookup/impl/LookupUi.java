@@ -7,6 +7,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupPositionStrategy;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
@@ -312,9 +313,13 @@ final class LookupUi {
     if (!isPositionedAboveCaret()) {
       int yScreenBottom = screenRectangle.y + screenRectangle.height;
       int yPopupBottom = location.y + dim.height;
-      if (yPopupBottom > yScreenBottom && yLocationAboveCaret >= screenRectangle.y) {
+      if (yPopupBottom > yScreenBottom && yLocationAboveCaret >= screenRectangle.y
+          || myLookup.getPresentation().getPositionStrategy() == LookupPositionStrategy.ONLY_ABOVE) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Positioning above the line because the popup won't fit below, but will fit above");
+          String reason = myLookup.getPresentation().getPositionStrategy() == LookupPositionStrategy.ONLY_ABOVE
+                          ? "LookupPositionStrategy.ONLY_ABOVE is specified"
+                          : "the popup won't fit below, but will fit above";
+          LOG.debug("Positioning above the line because " + reason);
         }
         myPositionedAbove = true;
       }
