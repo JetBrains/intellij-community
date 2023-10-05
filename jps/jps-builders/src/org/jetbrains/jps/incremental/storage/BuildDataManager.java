@@ -10,12 +10,16 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.storage.BuildTargetStorages;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.builders.storage.StorageProvider;
 import org.jetbrains.jps.cmdline.BuildRunner;
+import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.dependency.impl.Containers;
+import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
@@ -41,6 +45,7 @@ public final class BuildDataManager {
   private final ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>(16, 0.75f, getConcurrencyLevel());
   private final OneToManyPathsMapping mySrcToFormMap;
   private final Mappings myMappings;
+  private DependencyGraphImpl myDepGraph;
   private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
   private final OutputToTargetRegistry myOutputToTargetRegistry;
@@ -64,7 +69,15 @@ public final class BuildDataManager {
     myTargetsState = targetsState;
     mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"), relativizer);
     myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"), relativizer);
-    myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), relativizer);
+    File mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageRoot());
+    if (JavaBuilderUtil.isDepGraphEnabled()) {
+      myMappings = null;
+      myDepGraph = new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath()));
+    }
+    else {
+      myMappings = new Mappings(mappingsRoot, relativizer);
+      myDepGraph = null;
+    }
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
     myRelativizer = relativizer;
   }
@@ -97,6 +110,10 @@ public final class BuildDataManager {
 
   public Mappings getMappings() {
     return myMappings;
+  }
+
+  public DependencyGraph getDependencyGraph() {
+    return myDepGraph;
   }
 
   public void cleanTargetStorages(BuildTarget<?> target) throws IOException {
@@ -134,6 +151,7 @@ public final class BuildDataManager {
           wipeStorage(getOutputToSourceRegistryRoot(), myOutputToTargetRegistry);
         }
         finally {
+          File mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageRoot());
           final Mappings mappings = myMappings;
           if (mappings != null) {
             synchronized (mappings) {
@@ -141,7 +159,23 @@ public final class BuildDataManager {
             }
           }
           else {
-            FileUtil.delete(getMappingsRoot(myDataPaths.getDataStorageRoot()));
+            FileUtil.delete(mappingsRoot);
+          }
+
+          synchronized (this) {
+            DependencyGraphImpl depGraph = myDepGraph;
+            if (depGraph != null) {
+              try {
+                depGraph.close();
+              }
+              finally {
+                FileUtil.delete(mappingsRoot);
+                myDepGraph = new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath()));
+              }
+            }
+            else {
+              FileUtil.delete(mappingsRoot);
+            }
           }
         }
       }
@@ -185,6 +219,16 @@ public final class BuildDataManager {
           if (mappings != null) {
             try {
               mappings.close();
+            }
+            catch (BuildDataCorruptedException e) {
+              throw e.getCause();
+            }
+          }
+
+          DependencyGraphImpl depGraph = myDepGraph;
+          if (depGraph != null) {
+            try {
+              depGraph.close();
             }
             catch (BuildDataCorruptedException e) {
               throw e.getCause();
@@ -243,7 +287,7 @@ public final class BuildDataManager {
   }
 
   public static File getMappingsRoot(final File dataStorageRoot) {
-    return new File(dataStorageRoot, MAPPINGS_STORAGE);
+    return new File(dataStorageRoot, JavaBuilderUtil.isDepGraphEnabled()? MAPPINGS_STORAGE + "-graph" : MAPPINGS_STORAGE);
   }
 
   private static void wipeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {

@@ -2,6 +2,7 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.javac.Iterators;
@@ -17,7 +18,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   private final Iterable<JvmField> myFields;
   private final Iterable<JvmMethod> myMethods;
   private final Iterable<ElemType> myAnnotationTargets;
-  private final RetentionPolicy myRetentionPolicy;
+  private final @Nullable RetentionPolicy myRetentionPolicy;
 
   public JvmClass(
     JVMFlags flags, String signature, String fqName, String outFilePath,
@@ -27,12 +28,12 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     Iterable<JvmField> fields,
     Iterable<JvmMethod> methods,
     Iterable<TypeRepr.ClassType> annotations,
-    Iterable<ElemType> annotationTargets, RetentionPolicy retentionPolicy, Iterable<Usage> usages
+    Iterable<ElemType> annotationTargets, @Nullable RetentionPolicy retentionPolicy, Iterable<Usage> usages
     ) {
     
     super(flags, signature, fqName, outFilePath, annotations, usages);
-    mySuperFqName = superFqName;
-    myOuterFqName = outerFqName;
+    mySuperFqName = superFqName == null? "" : superFqName;
+    myOuterFqName = outerFqName == null? "" : outerFqName;
     myInterfaces = interfaces;
     myFields = fields;
     myMethods = methods;
@@ -90,6 +91,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return myAnnotationTargets;
   }
 
+  @Nullable
   public RetentionPolicy getRetentionPolicy() {
     return myRetentionPolicy;
   }

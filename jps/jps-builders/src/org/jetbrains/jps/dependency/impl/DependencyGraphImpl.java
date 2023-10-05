@@ -3,26 +3,24 @@ package org.jetbrains.jps.dependency.impl;
 
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.javac.Iterators;
-import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 public final class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
-  private List<DifferentiateStrategy> myDifferentiateStrategies = List.of(
+  private final List<DifferentiateStrategy> myDifferentiateStrategies = List.of(
     new JavaDifferentiateStrategy()
   );
 
-  public DependencyGraphImpl() {
-    super(Containers.PERSISTENT_CONTAINER_FACTORY);
-    addIndex(new SubclassesIndex(Containers.PERSISTENT_CONTAINER_FACTORY));
+  public DependencyGraphImpl(MapletFactory containerFactory) {
+    super(containerFactory);
+    addIndex(new SubclassesIndex(containerFactory));
   }
 
   @Override
@@ -221,7 +219,8 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
    * @return complete set of node sources, containing all sources associated with nodes affected by the sources from the input set.
    */
   private Set<NodeSource> completeSourceSet(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources) {
-    Set<NodeSource> result = Iterators.collect(sources, new HashSet<>()); // ensure initial sources are in teh result
+    // ensure initial sources are in the result
+    Set<NodeSource> result = Iterators.collect(sources, new HashSet<>());          // todo: check if a special hashing-policy set is required here
     Set<NodeSource> deleted = Iterators.collect(deletedSources, new HashSet<>());
 
     Set<Node<?, ?>> affectedNodes = Iterators.collect(Iterators.flat(Iterators.map(Iterators.flat(result, deleted), s -> getNodes(s))), new HashSet<>());
@@ -231,61 +230,4 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     return result;
   }
 
-  public Callbacks.Backend getCallback() {
-    return new Callbacks.Backend() {
-      Delta myDelta;
-
-      @Override
-      public void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated) {
-        throw new RuntimeException("This function is not intended for use in the implementation of a graph-based build");
-      }
-
-      @Override
-      public void registerImports(String className, Collection<String> classImports, Collection<String> staticImports) {
-        throw new RuntimeException("This function is not intended for use in the implementation of a graph-based build");
-      }
-
-      @Override
-      public void registerConstantReferences(String className, Collection<Callbacks.ConstantRef> cRefs) {
-        throw new RuntimeException("This function is not intended for use in the implementation of a graph-based build");
-      }
-
-      //@Override
-      //public Collection<JVMClassNode> associateWithNode(String classFileName,
-      //                                                  Collection<String> sources,
-      //                                                  ClassReader cr,
-      //                                                  boolean isGenerated) {
-      //  //TODO
-      //  return null;
-      //}
-
-      @Override
-      public Delta getOrCreateGraphDelta(Iterable<NodeSource> changedSources, Iterable<NodeSource> deletedSources) {
-        if (myDelta == null) {
-          myDelta = createDelta(changedSources, deletedSources);
-        }
-        return myDelta;
-      }
-
-      @Override
-      public void clearDelta() {
-        myDelta = null;
-      }
-
-      @Override
-      public void associate(@NotNull Node<?, ?> node, @NotNull Iterable<NodeSource> sources) {
-        myDelta.associate(node, sources);
-      }
-
-      @Override
-      public DifferentiateResult differentiate(DependencyGraph graph) {
-        return graph.differentiate(myDelta);
-      }
-
-      @Override
-      public void integrate(DependencyGraph graph, DifferentiateResult differentiateResult) {
-        graph.integrate(differentiateResult);
-      }
-    };
-  }
 }

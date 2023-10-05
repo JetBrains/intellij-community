@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
@@ -11,37 +10,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.dependency.MultiMaplet;
-import org.jetbrains.jps.dependency.NodeSerializerRegistry;
 import org.jetbrains.jps.dependency.SerializableGraphElement;
 import org.jetbrains.jps.javac.Iterators;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.function.Supplier;
 
 public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, V extends SerializableGraphElement> implements MultiMaplet<K, V> {
-  private final NodeSerializerRegistry mySerializerRegistry;
 
   private static final Collection<?> NULL_COLLECTION = Collections.emptyList();
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<K, Collection<V>> myMap;
   private final SLRUCache<K, Collection<V>> myCache;
 
-  public PersistentSetMultiMaplet(@NotNull NodeSerializerRegistry serializerRegistry) {
-    mySerializerRegistry = serializerRegistry;
-
+  public PersistentSetMultiMaplet(Path mapFile) {
     try {
-      File directory = FileUtil.createTempDirectory("persistent", "map");
-      File mapFile = new File(directory, "map");
-      if (!mapFile.createNewFile()) throw new IOException("Map file was not created");
       final Supplier<Collection<V>> fileCollectionFactory = NodeKeyDescriptor::createNodeSet;
-
       KeyDescriptor<K> keyDescriptor = NodeKeyDescriptorImpl.getInstance();
       DataExternalizer<Collection<V>> valueExternalizer =
         new CollectionDataExternalizer<>(NodeKeyDescriptorImpl.getInstance(), fileCollectionFactory);
-      myMap = new PersistentHashMap<>(mapFile.toPath(), keyDescriptor, valueExternalizer);
+      myMap = new PersistentHashMap<>(mapFile, keyDescriptor, valueExternalizer);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -172,4 +167,15 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
       return result;
     }
   }
+
+  public void close() {
+    try {
+      myCache.clear();
+      myMap.close();
+    }
+    catch (IOException e) {
+      throw new BuildDataCorruptedException(e);
+    }
+  }
+
 }

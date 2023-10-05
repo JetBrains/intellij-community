@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,11 +17,13 @@ abstract class GraphImpl implements Graph {
   private final List<BackDependencyIndex> myIndices = new ArrayList<>();
   protected final MultiMaplet<ReferenceID, NodeSource> myNodeToSourcesMap;
   protected final MultiMaplet<NodeSource, Node<?, ?>> mySourceToNodesMap;
+  private final MapletFactory myContainerFactory;
 
   protected GraphImpl(@NotNull MapletFactory cFactory) {
+    myContainerFactory = cFactory;
     addIndex(myDependencyIndex = new NodeDependenciesIndex(cFactory));
-    myNodeToSourcesMap = cFactory.createSetMultiMaplet();
-    mySourceToNodesMap = cFactory.createSetMultiMaplet();
+    myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map");
+    mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map");
   }
 
   // todo: ensure both dependency-graph and delta always have the same set of back-deps indices
@@ -71,6 +75,12 @@ abstract class GraphImpl implements Graph {
   public Iterable<Node<?, ?>> getNodes(@NotNull NodeSource source) {
     var nodes = mySourceToNodesMap.get(source);
     return nodes != null? nodes : Collections.emptyList();
+  }
+
+  public void close() throws IOException {
+    if (myContainerFactory instanceof Closeable)  {
+      ((Closeable)myContainerFactory).close();
+    }
   }
 
 }

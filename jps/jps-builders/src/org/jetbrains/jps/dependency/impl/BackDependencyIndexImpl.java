@@ -14,7 +14,7 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
 
   protected BackDependencyIndexImpl(@NotNull String name, @NotNull MapletFactory cFactory) {
     myName = name;
-    myMap = cFactory.createSetMultiMaplet();
+    myMap = cFactory.createSetMultiMaplet(name);
   }
 
   /**

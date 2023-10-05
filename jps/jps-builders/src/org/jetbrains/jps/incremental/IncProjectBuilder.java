@@ -32,8 +32,6 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.dependency.NodeSource;
-import org.jetbrains.jps.dependency.impl.FileSource;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.fs.FilesDelta;
@@ -1516,7 +1514,12 @@ public final class IncProjectBuilder {
       }
     }
 
-    completeRecompiledSourcesSet(context, chunk.getTargets());
+    if (JavaBuilderUtil.isDepGraphEnabled()) {
+      JavaBuilderUtil.setupGraphDelta(context, chunk.getTargets());
+    }
+    else {
+      completeRecompiledSourcesSet(context, chunk.getTargets());
+    }
 
     boolean doneSomething = false;
     boolean rebuildFromScratchRequested = false;
@@ -1551,30 +1554,6 @@ public final class IncProjectBuilder {
 
         try {
           int buildersPassed = 0;
-          if (JavaBuilderUtil.isGraphImplementationEnabled) {
-            Set<File> dirtyFiles = FileCollectionFactory.createCanonicalFileLinkedSet();
-            if (dirtyFilesHolder.hasDirtyFiles()) {
-              dirtyFilesHolder.processDirtyFiles((target, file, descriptor) -> {
-                dirtyFiles.add(file);
-                return true;
-              });
-            }
-            Set<NodeSource> dirtyFilesNodes = dirtyFiles.stream().map(file -> new FileSource(file)).collect(Collectors.toSet());
-
-
-            Set<File> removedFiles = FileCollectionFactory.createCanonicalFileLinkedSet();
-            if(dirtyFilesHolder.hasRemovedFiles()) {
-              for (ModuleBuildTarget target : chunk.getTargets()) {
-                removedFiles.addAll(
-                  ContainerUtil.map(dirtyFilesHolder.getRemovedFiles(target), File::new));
-              }
-            }
-            Set<NodeSource> removedFilesNodes = removedFiles.stream().map(file -> new FileSource(file)).collect(Collectors.toSet());
-
-
-            JavaBuilderUtil.getDependenciesRegistrar(context).getOrCreateGraphDelta(dirtyFilesNodes, removedFilesNodes);
-          }
-
           BUILDER_CATEGORY_LOOP:
           for (BuilderCategory category : BuilderCategory.values()) {
             final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);

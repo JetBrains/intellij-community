@@ -17,7 +17,6 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.PathStringDescriptor;
 import org.jetbrains.jps.javac.Iterators;
@@ -2943,42 +2942,6 @@ public final class Mappings {
         else {
           myConstantRefs.remove(key);
         }
-      }
-
-      //@Override
-      //public Collection<JVMClassNode> associateWithNode(String classFileName,
-      //                                                  Collection<String> sources,
-      //                                                  ClassReader cr,
-      //                                                  boolean isGenerated) {
-      //  // Do nothing here
-      //  return null;
-      //}
-
-      @Override
-      public Delta getOrCreateGraphDelta(Iterable<NodeSource> changedSources, Iterable<NodeSource> deletedSources) {
-        // Do nothing here
-        return null;
-      }
-
-      @Override
-      public void clearDelta() {
-        // Do nothing
-      }
-
-      @Override
-      public void associate(@NotNull Node<?, ?> node, @NotNull Iterable<NodeSource> sources) {
-        // Do nothing here
-      }
-
-      @Override
-      public DifferentiateResult differentiate(DependencyGraph graph) {
-        // Do nothing
-        return null;
-      }
-
-      @Override
-      public void integrate(DependencyGraph graph, DifferentiateResult differentiateResult) {
-        // Do nothing
       }
 
       private void addImportUsages(ClassRepr repr, Collection<String> classImports, Collection<String> staticImports) {

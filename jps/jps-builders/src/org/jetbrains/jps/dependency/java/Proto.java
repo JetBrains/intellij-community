@@ -13,10 +13,10 @@ public class Proto {
   private final String name;
   private final @NotNull Iterable<ClassType> annotations;
 
-  public Proto(JVMFlags flags, String signature, String name, @NotNull Iterable<ClassType> annotations) {
+  public Proto(@NotNull JVMFlags flags, String signature, String name, @NotNull Iterable<ClassType> annotations) {
     this.access = flags;
-    this.signature = signature;
-    this.name = name;
+    this.signature = signature == null? "" : signature;
+    this.name = name == null? "" : name;
     this.annotations = annotations;
   }
 

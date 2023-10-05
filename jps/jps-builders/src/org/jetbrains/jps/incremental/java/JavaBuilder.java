@@ -30,6 +30,7 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.impl.TargetOutputIndexImpl;
 import org.jetbrains.jps.builders.java.*;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
@@ -54,7 +55,9 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticListener;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -165,7 +168,11 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     SHOWN_NOTIFICATIONS.set(context, Collections.synchronizedSet(new HashSet<>()));
     COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<>());
     if (!isJavac(compilingTool)) {
-      context.getProjectDescriptor().dataManager.getMappings().setProcessConstantsIncrementally(false);
+      Mappings mappings = context.getProjectDescriptor().dataManager.getMappings();
+      if (mappings != null) {
+        mappings.setProcessConstantsIncrementally(false);
+      }
+      // todo: need to support this mode for the new dep graph?
     }
     JavaBackwardReferenceIndexWriter.initialize(context);
     for (JavacFileReferencesRegistrar registrar : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {

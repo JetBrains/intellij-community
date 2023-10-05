@@ -8,7 +8,6 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.NodeBuilder;
-import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.*;
@@ -352,7 +351,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   }
 
   @Override
-  public @NotNull ReferenceID getReferenceID() {
+  public @NotNull JvmNodeReferenceID getReferenceID() {
     return new JvmNodeReferenceID(myName);
   }
 
