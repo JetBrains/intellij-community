@@ -37,7 +37,7 @@ public final class Utils {
   }
 
   /**
-   * @param id
+   * @param id a node reference ID
    * @return all nodes with the given ReferenceID. Nodes in the returned collection will have the same ReferenceID, but may be associated with different sources
    */
   public <T extends JVMClassNode<T, ?>> Iterable<T> getNodes(@NotNull ReferenceID id, Class<T> selector) {
