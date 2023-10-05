@@ -45,8 +45,7 @@ public class MappedFileStorageHelperLongTest {
     //Ideally, storage file is removed after each test. But if mapped file
     // can't be removed (a thing for Win) -- at least clear it's content so
     // next test see it as empty file:
-    storageHelper.clear();
-    storageHelper.close();
+    storageHelper.closeAndClean();
     vfs.close();
 
 

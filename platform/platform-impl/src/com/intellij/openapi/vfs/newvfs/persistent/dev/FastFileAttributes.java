@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl.FileIdIndexedStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
+import com.intellij.util.io.CleanableStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +67,7 @@ public final class FastFileAttributes {
     return accessor;
   }
 
-  public static final class Int3FileAttribute implements FileIdIndexedStorage, Closeable {
+  public static final class Int3FileAttribute implements FileIdIndexedStorage, Closeable, CleanableStorage {
     public static final int FIELDS = 3;
     public static final int ROW_SIZE = FIELDS * Integer.BYTES;
 
@@ -114,8 +115,9 @@ public final class FastFileAttributes {
       storageHelper.close();
     }
 
-    public void closeAndRemove() throws IOException {
-      storageHelper.closeAndRemove();
+    @Override
+    public void closeAndClean() throws IOException {
+      storageHelper.closeAndClean();
     }
   }
 

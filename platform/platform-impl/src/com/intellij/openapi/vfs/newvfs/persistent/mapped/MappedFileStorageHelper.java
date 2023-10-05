@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection;
+import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
@@ -48,7 +48,7 @@ import static java.nio.ByteOrder.nativeOrder;
  * one still needs to understand the underlying code.
  */
 @ApiStatus.Internal
-public final class MappedFileStorageHelper implements Closeable {
+public final class MappedFileStorageHelper implements Closeable, CleanableStorage {
   /**
    * Keeps a registry of all {@link MappedFileStorageHelper} -- prevents creating duplicates, i.e. >1 storage
    * for the same path.
@@ -333,18 +333,11 @@ public final class MappedFileStorageHelper implements Closeable {
     storagesRegistry.remove(storage.storagePath());
   }
 
-  /**
-   * Closes the file, releases the mapped buffers, and tries to delete the file.
-   * <p/>
-   * Implementation note: the exact moment file memory-mapping is actually released and the file could be
-   * deleted -- is very OS/platform-dependent. E.g., Win is known to keep file 'in use' for some time even
-   * after unmap() call is already finished. JVM release mapped buffers with GC, which adds another level
-   * of uncertainty. Hence, if one needs to re-create the storage, it may be more reliable to just .clear()
-   * the current storage, than to close->remove->create-fresh-new.
-   */
-  public void closeAndRemove() throws IOException {
+  /** Closes the file, releases the mapped buffers, and 'make the best effort' to delete the file. */
+  @Override
+  public void closeAndClean() throws IOException {
     close();
-    FileUtil.delete(storage.storagePath());
+    storage.closeAndClean();
   }
 
   @Override
