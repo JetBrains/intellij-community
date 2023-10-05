@@ -12,7 +12,7 @@ import org.jetbrains.annotations.TestOnly
 /**
  * Proposals provider for inline completion.
  *
- * The [getProposals] method should return a [Flow] of [InlineCompletionElement] objects representing the proposals for completion.
+ * The [getProposals] method should return a [Flow] of [InlineCompletionBlock] objects representing the proposals for completion.
  * The [isEnabled] method should be implemented to control whether the provider should be called for a particular [InlineCompletionEvent].
  *
  * #### Things to note:
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.TestOnly
  *   - If some event requires hiding of shown elements, implement [requiresInvalidation].
  *
  *
- * @see InlineCompletionElement
+ * @see InlineCompletionBlock
  * @see InlineCompletionRequest
  * @see InlineCompletionEvent
  * @see InlineCompletionPlaceholder

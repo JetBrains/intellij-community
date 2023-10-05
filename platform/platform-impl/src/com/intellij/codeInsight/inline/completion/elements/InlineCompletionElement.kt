@@ -3,8 +3,13 @@
 
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
 import org.jetbrains.annotations.ApiStatus
 
-@Suppress("FunctionName")
 @ApiStatus.Experimental
-fun InlineCompletionElement(text: String) = InlineCompletionGrayTextElement(text)
+@Deprecated(
+  message = "Use [InlineCompletionGrayTextElement] instead",
+  replaceWith = ReplaceWith("InlineCompletionGrayTextElement(text)"),
+  level = DeprecationLevel.WARNING
+)
+class InlineCompletionElement(text: String) : InlineCompletionBlock by InlineCompletionGrayTextElement(text)

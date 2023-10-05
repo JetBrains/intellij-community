@@ -10,7 +10,7 @@ sealed interface InlineCompletionPlaceholder {
   val element: InlineCompletionBlock
 
   object Empty : InlineCompletionPlaceholder {
-    override val element: InlineCompletionBlock = InlineCompletionElement("")
+    override val element: InlineCompletionBlock = InlineCompletionGrayTextElement("")
   }
 
   class Custom(override val element: InlineCompletionBlock) : InlineCompletionPlaceholder
