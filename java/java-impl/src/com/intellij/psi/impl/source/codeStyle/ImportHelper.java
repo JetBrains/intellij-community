@@ -979,6 +979,10 @@ public final class ImportHelper{
       }
     }
 
+    if (unresolvedNames.isEmpty() && unresolvedOnDemand.isEmpty()) {
+      return;
+    }
+
     // do not optimize unresolved imports for things like JSP (IDEA-41814)
     if (file.getViewProvider().getLanguages().size() > 1 && file.getViewProvider().getBaseLanguage() != JavaLanguage.INSTANCE) {
       namesToImport.addAll(unresolvedOnDemand);
@@ -993,13 +997,16 @@ public final class ImportHelper{
         aClass.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
-            String name = reference.getReferenceName();
-            Pair<String, Boolean> pair = unresolvedNames.get(name);
-            if (reference.multiResolve(false).length == 0) {
-              hasResolveProblem[0] = true;
-              if (pair != null) {
-                namesToImport.add(pair);
-                unresolvedNames.remove(name);
+            if (reference.getQualifier() == null) {
+              String name = reference.getReferenceName();
+              Pair<String, Boolean> pair = unresolvedNames.get(name);
+              if (reference.multiResolve(false).length == 0) {
+                hasResolveProblem[0] = true;
+                if (pair != null) {
+                  namesToImport.add(pair);
+                  unresolvedNames.remove(name);
+                  if (unresolvedNames.isEmpty()) return;
+                }
               }
             }
             super.visitReferenceElement(reference);
