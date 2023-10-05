@@ -2,8 +2,6 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
-import com.intellij.execution.EnvFilesOptions;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
 import com.intellij.openapi.module.Module;
@@ -28,17 +26,6 @@ public final class ProgramParametersUtil {
       configurator.checkWorkingDirectoryExist(configuration, project, module);
     }
     catch (IncorrectOperationException ignore) {
-    }
-  }
-
-  public static void checkEnvFiles(CommonProgramRunConfigurationParameters configuration) throws RuntimeConfigurationException {
-    if (configuration instanceof EnvFilesOptions) {
-      try {
-        ProgramParametersConfigurator.configureEnvsFromFiles((EnvFilesOptions)configuration);
-      }
-      catch (ProgramParametersConfigurator.ParametersConfiguratorException e) {
-        throw new RuntimeConfigurationException(e.getMessage());
-      }
     }
   }
 

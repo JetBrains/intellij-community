@@ -47,6 +47,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
+import static com.intellij.execution.util.EnvFilesUtilKt.checkEnvFiles;
+
 public class ApplicationConfiguration extends JavaRunConfigurationBase
   implements SingleClassConfiguration, RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile,
              FusAwareRunConfiguration, EnvFilesOptions {
@@ -182,7 +184,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     }
     final JavaRunConfigurationModule configurationModule = checkClass();
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), configurationModule.getModule());
-    ProgramParametersUtil.checkEnvFiles(this);
+    checkEnvFiles(this);
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 

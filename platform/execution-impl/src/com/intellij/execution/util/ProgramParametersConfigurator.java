@@ -7,7 +7,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.execution.envFile.EnvFileParserKt;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
@@ -22,7 +21,6 @@ import com.intellij.openapi.module.WorkingDirectoryProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,9 +33,6 @@ import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
@@ -45,6 +40,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles;
 
 public class ProgramParametersConfigurator {
   private static final ExtensionPointName<WorkingDirectoryProvider> WORKING_DIRECTORY_PROVIDER_EP_NAME =
@@ -63,7 +60,7 @@ public class ProgramParametersConfigurator {
 
     Map<String, String> envs = new HashMap<>();
     if (configuration instanceof EnvFilesOptions) {
-      envs.putAll(configureEnvsFromFiles((EnvFilesOptions)configuration));
+      envs.putAll(configureEnvsFromFiles((EnvFilesOptions)configuration, true));
     }
     envs.putAll(configuration.getEnvs());
     EnvironmentUtil.inlineParentOccurrences(envs);
@@ -79,23 +76,6 @@ public class ProgramParametersConfigurator {
 
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
-  }
-
-  static Map<String, String> configureEnvsFromFiles(EnvFilesOptions configuration) throws ParametersConfiguratorException {
-    Map<String, String> result = new HashMap<>();
-    for (String path : configuration.getEnvFilePaths()) {
-      try {
-        String text = FileUtil.loadFile(new File(path));
-        result.putAll(EnvFileParserKt.parseEnvFile(text));
-      }
-      catch (FileNotFoundException e) {
-        throw new ParametersConfiguratorException(ExecutionBundle.message("file.not.found.0", path), e);
-      }
-      catch (IOException e) {
-        throw new ParametersConfiguratorException(ExecutionBundle.message("cannot.read.file.0", path), e);
-      }
-    }
-    return result;
   }
 
   /**
