@@ -1,13 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.jarRepository.JarRepositoryManager;
+import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,11 +26,13 @@ import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.junit.Assert;
 import org.junit.Assume;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
@@ -67,13 +73,38 @@ public final class IdeaTestUtil {
   }
 
   public static @NotNull Sdk getMockJdk(@NotNull JavaVersion version) {
-    int mockJdk = version.feature >= 11 ? 11 :
+    int mockJdk = version.feature >= 21 ? 21 : 
+                  version.feature >= 11 ? 11 :
                   version.feature >= 9 ? 9 :
                   version.feature >= 7 ? version.feature :
                   version.feature >= 5 ? 7 :
                   4;
+    if (mockJdk > 11) {
+      return createMockJdkFromRepository("java " + version, mockJdk);
+    }
     String path = getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + (mockJdk < 11 ? "1." : "") + mockJdk).getPath();
     return createMockJdk("java " + version, path);
+  }
+
+  private static Sdk createMockJdkFromRepository(String name, int version) {
+    List<RemoteRepositoryDescription> repos = MavenDependencyUtil.getRemoteRepositoryDescriptions();
+    String coordinates = "org.jetbrains.mockjdk:mockjdk-base-java:" + version + ".0";
+    RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(coordinates, false);
+    Collection<OrderRoot> roots =
+      JarRepositoryManager.loadDependenciesModal(ProjectManager.getInstance().getDefaultProject(), libraryProperties, false, false, null,
+                                                 repos);
+    if (roots.isEmpty()) {
+      throw new IllegalStateException("MockJDK artifact not found: " + coordinates);
+    }
+    if (roots.size() != 1) {
+      throw new IllegalStateException("Unexpected number of roots: " + coordinates + ": " + roots);
+    }
+    VirtualFile file = roots.iterator().next().getFile();
+    String canonicalPath = file.getCanonicalPath();
+    if (canonicalPath == null) {
+      throw new IllegalStateException("No canonical path found for " + file);
+    }
+    return createMockJdk(name, canonicalPath);
   }
 
   public static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path) {
@@ -108,10 +139,17 @@ public final class IdeaTestUtil {
       }
     };
 
-    File[] jars = new File(path, "jre/lib").listFiles(f -> f.getName().endsWith(".jar"));
-    if (jars != null) {
-      for (File jar : jars) {
-        sdkModificator.addRoot("jar://"+PathUtil.toSystemIndependentName(jar.getPath())+"!/", OrderRootType.CLASSES);
+    String sdkPath;
+    if (path.endsWith(".jar!/")) {
+      sdkPath = PathUtil.getParentPath(path);
+      sdkModificator.addRoot("jar://"+path, OrderRootType.CLASSES);
+    } else {
+      sdkPath = PathUtil.toSystemIndependentName(path);
+      File[] jars = new File(path, "jre/lib").listFiles(f -> f.getName().endsWith(".jar"));
+      if (jars != null) {
+        for (File jar : jars) {
+          sdkModificator.addRoot("jar://"+PathUtil.toSystemIndependentName(jar.getPath())+"!/", OrderRootType.CLASSES);
+        }
       }
     }
     // only Mock JDKs 1.4/1.7 have src.zip
@@ -123,7 +161,7 @@ public final class IdeaTestUtil {
 
     JavaSdkImpl.attachJdkAnnotations(sdkModificator);
 
-    return new MockSdk(name, PathUtil.toSystemIndependentName(path), name, roots, () -> JavaSdk.getInstance());
+    return new MockSdk(name, sdkPath, name, roots, () -> JavaSdk.getInstance());
   }
 
   // it's JDK 1.4, not 14
@@ -157,6 +195,10 @@ public final class IdeaTestUtil {
   
   public static @NotNull Sdk getMockJdk11() {
     return getMockJdk(JavaVersion.compose(11));
+  }
+
+  public static @NotNull Sdk getMockJdk21() {
+    return getMockJdk(JavaVersion.compose(21));
   }
 
   public static @NotNull File getMockJdk14Path() {

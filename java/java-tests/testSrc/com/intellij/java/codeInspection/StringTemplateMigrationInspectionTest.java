@@ -295,20 +295,4 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.addClass("""
-                         package java.lang;
-                         public interface StringTemplate {
-                           Processor<String, RuntimeException> STR = null;
-                           
-                           @PreviewFeature(feature=PreviewFeature.Feature.STRING_TEMPLATES)
-                           @FunctionalInterface
-                           interface Processor<R, E extends Throwable> {
-                             R process(StringTemplate stringTemplate) throws E;
-                           }
-                         }""");
-  }
 }

@@ -19,32 +19,6 @@ public class RedundantExplicitChronoFieldInspectionTest extends LightJavaCodeIns
   public void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new RedundantExplicitChronoFieldInspection());
-    myFixture.addClass("""
-                         package java.time.temporal;
-                         public interface TemporalUnit{}""");
-    myFixture.addClass("""
-                         package java.time.temporal;
-                         public public enum ChronoUnit implements TemporalUnit{NANOS, YEARS, DECADES, FOREVER}""");
-    myFixture.addClass("""
-                         package java.time.temporal;
-                         public interface TemporalField{}""");
-    myFixture.addClass("""
-                         package java.time.temporal;
-                         public enum ChronoField implements TemporalField{NANO_OF_SECOND, NANO_OF_DAY, YEAR, INSTANT_SECONDS}""");
-    myFixture.addClass("""
-                         package java.time;
-                         import java.time.temporal.TemporalField;
-                         public final class OffsetDateTime {
-                           public int get(TemporalField field) { return 0; }
-                           public int getNano() { return 0; }
-                           public int getYear() { return 0; }
-                         }""");
-    myFixture.addClass("""
-                         package java.time;
-                         import java.time.temporal.TemporalUnit;
-                         public final class OffsetTime {
-                           public OffsetTime plus(long amountToAdd, TemporalUnit unit) { return new OffsetTime(); }
-                         }""");
   }
 
   public void testPreview() {
@@ -58,7 +32,7 @@ public class RedundantExplicitChronoFieldInspectionTest extends LightJavaCodeIns
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_21;
   }
 
   private void doTest(@Nullable String quickFixName) {

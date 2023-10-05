@@ -29,10 +29,11 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -43,6 +44,11 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   @Override
   protected String getTestDataPath() {
     return BASE_PATH;
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 
   @Override
@@ -82,18 +88,6 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
   public void testStringTemplates() {
-    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_21_PREVIEW);
-    myFixture.addClass("""
-      package java.lang;
-      public interface StringTemplate {
-        Processor<String, RuntimeException> STR = null;
-        
-        @PreviewFeature(feature=PreviewFeature.Feature.STRING_TEMPLATES)
-        @FunctionalInterface
-        public interface Processor<R, E extends Throwable> {
-          R process(StringTemplate stringTemplate) throws E;
-        }
-      }""");
     doTest();
   }
   public void testNewImportListIsEmptyAndCommentPreserved() { doTest(); }

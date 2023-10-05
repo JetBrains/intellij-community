@@ -95,7 +95,7 @@ public final class MavenDependencyUtil {
   }
 
   @NotNull
-  private static List<RemoteRepositoryDescription> getRemoteRepositoryDescriptions() {
+  public static List<RemoteRepositoryDescription> getRemoteRepositoryDescriptions() {
     return ContainerUtil.map(IntelliJProjectConfiguration.getRemoteRepositoryDescriptions(), repository ->
       new RemoteRepositoryDescription(repository.getId(), repository.getName(), repository.getUrl()));
   }

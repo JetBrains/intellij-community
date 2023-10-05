@@ -15,11 +15,10 @@ public class SuspiciousDateFormatInspectionTest extends LightJavaCodeInsightFixt
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_21;
   }
 
   private void doTest() {
-    myFixture.addClass("package java.text;public class SimpleDateFormat{public SimpleDateFormat(String pattern) {}}");
     myFixture.enableInspections(new SuspiciousDateFormatInspection());
     myFixture.testHighlighting(getTestName(false) + ".java");
   }

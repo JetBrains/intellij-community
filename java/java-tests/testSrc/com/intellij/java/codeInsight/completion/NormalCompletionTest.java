@@ -314,7 +314,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testInsideSwitchCaseWithEnumConstant() {
     configure();
-    myFixture.assertPreferredCompletionItems(0, "compareTo", "equals");
+    myFixture.assertPreferredCompletionItems(0, "compareTo", "describeConstable", "equals");
   }
 
   public void testMethodInAnnotation() {
@@ -512,13 +512,15 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testLocalClassTwice() {
     configure();
-    assertOrderedEquals(myFixture.getLookupElementStrings(), "Zoooz", "Zooooo", "ZipOutputStream");
+    assertOrderedEquals(myFixture.getLookupElementStrings(), 
+                        "Zoooz", "Zooooo", "ZoneId", "ZoneRulesException", "ZoneRulesProvider", "ZipOutputStream");
   }
 
   @NeedsIndex.ForStandardLibrary
   public void testLocalTopLevelConflict() {
     configure();
-    assertOrderedEquals(myFixture.getLookupElementStrings(), "Zoooz", "Zooooo", "ZipOutputStream");
+    assertOrderedEquals(myFixture.getLookupElementStrings(), 
+                        "Zoooz", "Zooooo", "ZoneId", "ZoneRulesException", "ZoneRulesProvider", "ZipOutputStream");
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -1944,8 +1946,10 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.Full
   public void testShowNonImportedVarInitializers() {
     configure();
-    myFixture.assertPreferredCompletionItems(1, "Field", "FIELD1", "FIELD2", "FIELD3", "FIELD4");
-    var fieldItems = myFixture.getLookup().getItems().subList(1, 5);
+    // Format.Field, DateFormat.Field, NumberFormat.Field, etc. classes are suggested first
+    myFixture.assertPreferredCompletionItems(5, 
+                                             "Field", "Field", "Field", "Field", "Field", "FIELD1", "FIELD2", "FIELD3", "FIELD4");
+    var fieldItems = myFixture.getLookup().getItems().subList(5, 9);
     assertEquals(Arrays.asList("( \"x\") in E", "(\"y\") {...} in E", null, " ( = 42) in E"),
                  ContainerUtil.map(fieldItems, item -> renderElement(item).getTailText()));
     assertTrue(renderElement(fieldItems.get(3)).getTailFragments().get(0).isItalic());
@@ -2455,12 +2459,14 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testNoFinalLibraryClassesInExtends() {
     myFixture.configureByText("X.java", "class StriFoo{}final class StriBar{}class X extends Stri<caret>");
     myFixture.completeBasic();
-    assertEquals(myFixture.getLookupElementStrings(), List.of(
+    List<String> expected = List.of(
       "StriFoo", // non-final project class
       "StringIndexOutOfBoundsException", "StringTokenizer", "StringConcatException", "StringReader", "StringWriter",
       // non-final library classes
       "StringBufferInputStream", // deprecated library class
-      "StriBar")); // final project class (red)
+      "StriBar", // final project class (red)
+      "StringTemplate"); // interface (red)
+    assertEquals(expected, myFixture.getLookupElementStrings());
   }
 
   @NeedsIndex.ForStandardLibrary

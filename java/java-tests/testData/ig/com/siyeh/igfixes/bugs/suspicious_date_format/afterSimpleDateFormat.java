@@ -1,7 +1,5 @@
 // "Replace 'YYYY' with 'yyyy'" "true"
-package java.text;
-
-class SimpleDateFormat{public SimpleDateFormat(String pattern) {}}
+import java.text.*;
 
 class X {
   SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd");

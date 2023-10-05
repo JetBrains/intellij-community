@@ -2,30 +2,14 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
 public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionTest extends LightJavaInspectionTestCase {
-
-  @Override
-  protected String[] getEnvironmentClasses() {
-    return new String[]{
-      "package java.text;" +
-      "import java.util.Date;" +
-      "public abstract class DateFormat {" +
-      "  public String format(Date d) {}" +
-      "  public static DateFormat getDateInstance() {" +
-      "    return null;" +
-      "  }" +
-      "}",
-      "package java.text;" +
-      "public class SimpleDateFormat extends DateFormat {" +
-      "  public SimpleDateFormat(String s) {}" +
-      "}"
-    };
-  }
 
   public void testSimple() {
     doTest("import java.util.Date;" +
@@ -61,6 +45,11 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionTest extends 
            "    return /*Access to non-thread-safe static field 'F' of type 'java.text.DateFormat'*/F/**/.format(new Date());" +
            "  }" +
            "}");
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 
   @Override

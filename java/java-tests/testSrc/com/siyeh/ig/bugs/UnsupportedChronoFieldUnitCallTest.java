@@ -2,7 +2,9 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UnsupportedChronoFieldUnitCallTest extends LightJavaInspectionTestCase {
@@ -59,37 +61,8 @@ public class UnsupportedChronoFieldUnitCallTest extends LightJavaInspectionTestC
   }
 
   @Override
-  protected String[] getEnvironmentClasses() {
-    return new String[]{
-    """
-    package java.time.temporal;
-    public interface TemporalUnit{}""",
-    """
-    package java.time.temporal;
-    public public enum ChronoUnit implements TemporalUnit{HOURS, DAYS}""",
-    """
-    package java.time.temporal;
-    public interface TemporalField{}""",
-    """
-    package java.time.temporal;
-    public enum ChronoField implements TemporalField{SECOND_OF_DAY, MONTH_OF_YEAR}""",
-    """
-     package java.time;
-     import java.time.temporal.TemporalField;
-     import java.time.temporal.TemporalUnit;
-     public final class LocalTime {
-       public int get(TemporalField field) { return 0; }
-       public LocalTime minus(long amountToAdd, TemporalUnit unit) { return null; }
-     }""",
-    """
-     package java.time;
-     import java.time.temporal.TemporalField;
-     import java.time.temporal.TemporalUnit;
-     public final class LocalDate {
-       public int get(TemporalField field) { return 0; }
-       public LocalDate minus(long amountToAdd, TemporalUnit unit) { return null; }
-     }"""
-    };
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 
   @Nullable
