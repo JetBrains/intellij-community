@@ -15305,6 +15305,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitType/anonymousFunctionInitializer3.kt");
         }
 
+        @TestMetadata("anonymousFunctionInitializerExtension.kt")
+        public void testAnonymousFunctionInitializerExtension() throws Exception {
+            runTest("testData/intentions/removeExplicitType/anonymousFunctionInitializerExtension.kt");
+        }
+
+        @TestMetadata("anonymousFunctionInitializerInferredType.kt")
+        public void testAnonymousFunctionInitializerInferredType() throws Exception {
+            runTest("testData/intentions/removeExplicitType/anonymousFunctionInitializerInferredType.kt");
+        }
+
         @TestMetadata("callableInitializerExplicitTypeArguments.kt")
         public void testCallableInitializerExplicitTypeArguments() throws Exception {
             runTest("testData/intentions/removeExplicitType/callableInitializerExplicitTypeArguments.kt");
@@ -15378,6 +15388,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("extensionFunction.kt")
         public void testExtensionFunction() throws Exception {
             runTest("testData/intentions/removeExplicitType/extensionFunction.kt");
+        }
+
+        @TestMetadata("extensionFunction2.kt")
+        public void testExtensionFunction2() throws Exception {
+            runTest("testData/intentions/removeExplicitType/extensionFunction2.kt");
         }
 
         @TestMetadata("funNoBody.kt")

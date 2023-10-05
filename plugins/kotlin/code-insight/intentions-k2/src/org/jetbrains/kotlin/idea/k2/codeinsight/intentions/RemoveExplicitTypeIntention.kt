@@ -120,9 +120,27 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
         is KtCallExpression -> initializer.typeArgumentList != null || !returnTypeOfCallDependsOnTypeParameters(initializer)
         is KtCallableReferenceExpression -> isCallableReferenceExpressionTypeContextIndependent(initializer)
         is KtQualifiedExpression -> initializer.callExpression?.let { isInitializerTypeContextIndependent(it, typeReference) } == true
+        is KtLambdaExpression -> isLambdaExpressionTypeContextIndependent(initializer, typeReference)
+        is KtNamedFunction -> isAnonymousFunctionTypeContextIndependent(initializer, typeReference)
 
         // consider types of expressions that the compiler views as constants, e.g. `1 + 2`, as independent
         else -> initializer.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null
+    }
+
+    context(KtAnalysisSession)
+    private fun isLambdaExpressionTypeContextIndependent(lambdaExpression: KtLambdaExpression, typeReference: KtTypeReference): Boolean {
+        val lastStatement = lambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return false
+
+        val returnTypeReference = (typeReference.typeElement as? KtFunctionType)?.returnTypeReference ?: return false
+        return isInitializerTypeContextIndependent(lastStatement, returnTypeReference)
+    }
+
+    context(KtAnalysisSession)
+    private fun isAnonymousFunctionTypeContextIndependent(anonymousFunction: KtNamedFunction, typeReference: KtTypeReference): Boolean {
+        if (anonymousFunction.hasDeclaredReturnType() || anonymousFunction.hasBlockBody()) return true
+
+        val returnTypeReference = (typeReference.typeElement as? KtFunctionType)?.returnTypeReference ?: return false
+        return anonymousFunction.initializer?.let { isInitializerTypeContextIndependent(it, returnTypeReference) } == true
     }
 
     context(KtAnalysisSession)
@@ -179,5 +197,4 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
             deleteChildRange(first, last)
         }
     }
-
 }
