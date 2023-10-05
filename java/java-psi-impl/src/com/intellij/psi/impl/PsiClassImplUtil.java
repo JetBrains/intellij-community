@@ -313,8 +313,11 @@ public final class PsiClassImplUtil {
   }
 
   public static boolean isMainOrPremainMethod(@NotNull PsiMethod method) {
+    if ("main".equals(method.getName()) && PsiMethodUtil.isMainMethod(method)) {
+      return true;
+    }
     String name = method.getName();
-    if (!("main".equals(name) || "premain".equals(name) || "agentmain".equals(name))) return false;
+    if ("premain".equals(name) || "agentmain".equals(name)) return false;
     if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());

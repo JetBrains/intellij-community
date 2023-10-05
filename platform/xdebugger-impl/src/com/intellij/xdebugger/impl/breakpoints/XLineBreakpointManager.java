@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -43,7 +42,6 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -93,7 +91,7 @@ public final class XLineBreakpointManager {
       EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
         @Override
         public void editorCreated(@NotNull EditorFactoryEvent event) {
-          if (!shouldShowBreakpointsInline()) return;
+          if (!Registry.is("debugger.show.breakpoints.inline")) return;
 
           var file = event.getEditor().getVirtualFile();
           if (file == null) return;
@@ -112,10 +110,6 @@ public final class XLineBreakpointManager {
           .forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
       }
     });
-  }
-
-  public static boolean shouldShowBreakpointsInline() {
-    return Registry.is("debugger.show.breakpoints.inline");
   }
 
   void updateBreakpointsUI() {
@@ -158,7 +152,7 @@ public final class XLineBreakpointManager {
     List<XLineBreakpoint> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
-      if (!breakpoint.isValid() || !positions.add(shouldShowBreakpointsInline() ? breakpoint.getOffset() : breakpoint.getLine())) {
+      if (!breakpoint.isValid() || !positions.add(Registry.is("debugger.show.breakpoints.inline") ? breakpoint.getOffset() : breakpoint.getLine())) {
         toRemove.add(breakpoint);
       }
     }
@@ -171,8 +165,7 @@ public final class XLineBreakpointManager {
       return;
     }
 
-    XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
-    WriteAction.run(() -> toRemove.forEach(manager::removeBreakpoint));
+    ((XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager()).removeBreakpoints(toRemove);
   }
 
   public void breakpointChanged(XLineBreakpointImpl breakpoint) {

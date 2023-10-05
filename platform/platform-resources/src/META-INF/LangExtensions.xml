@@ -121,9 +121,9 @@
                  description="Scanning will wait until the end of current dumb mode (if any)"/>
     <registryKey defaultValue="false" key="scanning.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while scanning is in progress."/>
-    <registryKey defaultValue="false" key="scanning.trust.indexing.flag" restartRequired="true"
+    <registryKey defaultValue="true" key="scanning.trust.indexing.flag" restartRequired="true"
                  description="Use previously stored 'indexed flag' while scanning. To store 'indexing flag' please set registry option 'indexing.disable.virtual.file.system.entry.is.file.indexed=false'."/>
-    <registryKey defaultValue="false" key="scanning.stamps.over.fast.attributes" restartRequired="true"
+    <registryKey defaultValue="true" key="scanning.stamps.over.fast.attributes" restartRequired="true"
                  description="Store IndexingStamps is regular (false) or fast enumerated (true) attributes storage"/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>
@@ -133,8 +133,6 @@
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>
-    <registryKey defaultValue="true" key="indexing.use.indexable.files.index" restartRequired="true"
-                 description="Create separate index to determine fileset to index."/>
 
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
@@ -1642,14 +1640,6 @@
 
     <registerToolWindowTaskProvider implementation="com.intellij.facet.impl.ui.FacetDependentToolWindowManager"/>
     <postStartupActivity implementation="com.intellij.ide.script.IdeStartupScripts" order="last"/>
-
-    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.DefaultProjectIndexableFilesContributor" order="first"/>
-    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalFilesContributor" order="last"
-                               id="additionalFiles"/>
-    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor" id="indexableSets"
-                               order="last, after additionalFiles"/>
-    <indexableFilesContributor implementation="com.intellij.util.indexing.roots.WorkspaceFileIndexContributorBasedContributor"
-                               order="last, after indexableSets"/>
 
     <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
 

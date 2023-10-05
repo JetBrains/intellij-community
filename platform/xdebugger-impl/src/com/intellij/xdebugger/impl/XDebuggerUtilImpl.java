@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -28,6 +27,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -244,7 +244,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
 
     Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>> variantsAsync = getLineBreakpointVariants(project, types, position);
-    if (XLineBreakpointManager.shouldShowBreakpointsInline()) {
+    if (Registry.is("debugger.show.breakpoints.inline")) {
       return variantsAsync.then(variants -> {
 
         var breakpointOrVariant = getBestMatchingBreakpoint(caretOffset,
@@ -409,7 +409,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                          int line,
                                                                          XLineBreakpointType<P> type,
                                                                          Boolean temporary) {
-    return WriteAction.compute(() -> breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
+    return breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary);
   }
 
   public static boolean removeBreakpointWithConfirmation(final XBreakpointBase<?, ?, ?> breakpoint) {
@@ -485,8 +485,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Override
-  public void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
-    WriteAction.run(() -> XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint));
+  public void removeBreakpoint(Project project, XBreakpoint<?> breakpoint) {
+    XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint);
+  }
+
+  public static void removeAllBreakpoints(@NotNull Project project) {
+    ((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager()).removeAllBreakpoints();
   }
 
   @Override

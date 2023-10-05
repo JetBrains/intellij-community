@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -274,7 +273,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     removeHighlighter();
 
     // FIXME[inline-bp]: this part seems very dirty, we should modify only one inlay here or remove all of them in a line
-    if (XLineBreakpointManager.shouldShowBreakpointsInline()) {
+    if (Registry.is("debugger.show.breakpoints.inline")) {
       var file = getFile();
       if (file != null) {
         var document = FileDocumentManager.getInstance().getDocument(file);
@@ -309,7 +308,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(getProject());
           XBreakpointManagerImpl breakpointManager = debuggerManager.getBreakpointManager();
           if (isCopyAction(actionId)) {
-            WriteAction.run(() -> breakpointManager.copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
+            breakpointManager.copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line);
           }
           else {
             setFileUrl(file.getUrl());
@@ -419,7 +418,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   // FIXME[inline-bp]: it's super inefficient
   static void redrawInlineBreakpoints(XLineBreakpointManager lineBreakpointManager, @NotNull Project project, @NotNull VirtualFile file, @NotNull Document document) {
-    if (!XLineBreakpointManager.shouldShowBreakpointsInline()) return;
+    if (!Registry.is("debugger.show.breakpoints.inline")) return;
 
     Collection<XLineBreakpointImpl> allBreakpoints = lineBreakpointManager.getDocumentBreakpoints(document);
     Map<Integer, List<XLineBreakpointImpl>> breakpointsByLine = allBreakpoints.stream().collect(Collectors.groupingBy(b -> b.getLine()));
@@ -687,14 +686,12 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
       switch (action) {
         case SET -> {
-          WriteAction.run(() -> {
-            // FIXME[inline-bp]: is it ok to keep variant so long or should we obtain fresh variants and find similar one?
-            var breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-            var line = editor.getDocument().getLineNumber(offset);
-            //noinspection unchecked
-            breakpointManager.addLineBreakpoint((XLineBreakpointType)variant.getType(), file.getUrl(), line, variant.createProperties(),
-                                                false);
-          });
+          // FIXME[inline-bp]: is it ok to keep variant so long or should we obtain fresh variants and find similar one?
+          var breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+          var line = editor.getDocument().getLineNumber(offset);
+          //noinspection unchecked
+          breakpointManager.addLineBreakpoint((XLineBreakpointType)variant.getType(), file.getUrl(), line, variant.createProperties(),
+                                              false);
         }
         case ENABLE_DISABLE -> {
           breakpoint.setEnabled(!breakpoint.isEnabled());

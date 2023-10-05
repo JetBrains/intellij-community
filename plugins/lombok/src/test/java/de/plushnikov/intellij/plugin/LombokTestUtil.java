@@ -19,6 +19,7 @@ public final class LombokTestUtil {
   public static final DefaultLightProjectDescriptor LOMBOK_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
       MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES);
       MavenDependencyUtil.addFromMaven(model, JACKSON_MAVEN_COORDINATES);
       MavenDependencyUtil.addFromMaven(model, "com.google.guava:guava:27.0.1-jre");

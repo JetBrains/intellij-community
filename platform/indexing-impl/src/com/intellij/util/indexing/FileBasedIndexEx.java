@@ -5,7 +5,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -17,7 +16,6 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -34,7 +32,6 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
-import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import it.unimi.dsi.fastutil.ints.*;
@@ -47,7 +44,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.*;
 import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
@@ -516,26 +512,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
    * Returns providers of files to be indexed.
    */
   public @NotNull List<IndexableFilesIterator> getIndexableFilesProviders(@NotNull Project project) {
-    List<String> allowedIteratorPatterns = StringUtil.split(System.getProperty("idea.test.files.allowed.iterators", ""), ";");
     if (project instanceof LightEditCompatible) {
       return Collections.emptyList();
     }
-    if (IndexableFilesIndex.isEnabled() && allowedIteratorPatterns.isEmpty()) {
-      return IndexableFilesIndex.getInstance(project).getIndexingIterators();
-    }
-    List<IndexableFilesIterator> providers = IndexableFilesContributor.EP_NAME
-      .getExtensionList()
-      .stream()
-      .flatMap(c -> {
-        return ReadAction.nonBlocking(() -> c.getIndexableFiles(project)).expireWith(project).executeSynchronously().stream();
-      })
-      .collect(Collectors.toList());
-    if (!allowedIteratorPatterns.isEmpty()) {
-      providers = ContainerUtil.filter(providers, p -> {
-        return ContainerUtil.exists(allowedIteratorPatterns, pattern -> p.getDebugName().contains(pattern));
-      });
-    }
-    return providers;
+    return IndexableFilesIndex.getInstance(project).getIndexingIterators();
   }
 
   private @Nullable <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull ID<K, V> indexId,

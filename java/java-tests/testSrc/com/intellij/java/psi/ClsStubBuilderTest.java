@@ -2,6 +2,7 @@
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -11,11 +12,11 @@ import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 import java.io.File;
 
-public class ClsStubBuilderTest extends LightIdeaTestCase {
+public class ClsStubBuilderTest extends LightJavaCodeInsightTestCase {
   public void testUtilList() { doClassTest("java.util.List"); }
   public void testNullable() { doClassTest("org.jetbrains.annotations.Nullable"); }
   public void testUtilCollections() { doClassTest("java.util.Collections"); }
@@ -67,6 +68,11 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
     VirtualFile clsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(clsFilePath);
     assertNotNull("Can't find: " + clsFilePath, clsFile);
     doTest(clsFile, getTestName(false) + ".txt");
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk17();
   }
 
   private static void doTest(VirtualFile clsFile, String resultFileName) {

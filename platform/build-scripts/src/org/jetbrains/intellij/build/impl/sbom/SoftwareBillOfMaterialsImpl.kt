@@ -28,6 +28,7 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jsoup.Jsoup
 import org.spdx.jacksonstore.MultiFormatStore
 import org.spdx.library.ModelCopyManager
 import org.spdx.library.SpdxConstants
@@ -95,7 +96,7 @@ internal class SoftwareBillOfMaterialsImpl(
     }
     Options.DistributionLicense(
       name = "JetBrains User Agreement",
-      text = eula.readText(),
+      text = Jsoup.parse(eula.readText()).text(),
       url = "https://www.jetbrains.com/legal/docs/toolbox/user/"
     )
   }
@@ -228,7 +229,7 @@ internal class SoftwareBillOfMaterialsImpl(
    */
   private suspend fun SpdxDocument.runtimePackage(os: OsFamily, arch: JvmArchitecture): SpdxPackage {
     val checksums = Checksums(context.bundledRuntime.findArchive(os = os, arch = arch))
-    val version = context.bundledRuntime.prefix + context.bundledRuntime.build
+    val version = context.bundledRuntime.build
     val supplier = "Organization: ${Suppliers.JETBRAINS}"
     val runtimeArchivePackage = spdxPackage(
       name = context.bundledRuntime.archiveName(os = os, arch = arch),
@@ -248,7 +249,7 @@ internal class SoftwareBillOfMaterialsImpl(
       setSupplier(supplier)
       setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
     }
-    extractedRuntimePackage.relatesTo(runtimeArchivePackage, RelationshipType.DEPENDS_ON, "repacked into")
+    extractedRuntimePackage.relatesTo(runtimeArchivePackage, RelationshipType.EXPANDED_FROM_ARCHIVE)
     addRuntimeUpstreams(runtimeArchivePackage, os, arch)
     runtimeArchivePackage.validate()
     return extractedRuntimePackage
@@ -290,7 +291,7 @@ internal class SoftwareBillOfMaterialsImpl(
       setSupplier("Organization: Oracle Corporation and/or its affiliates")
       setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
     }
-    runtimeArchivePackage.relatesTo(cefPackage, RelationshipType.DEPENDS_ON, "repacked into")
+    runtimeArchivePackage.relatesTo(cefPackage, RelationshipType.DEPENDS_ON, "repacked from")
     runtimeArchivePackage.relatesTo(openJdkUpstream, RelationshipType.VARIANT_OF)
     runtimeArchivePackage.relatesTo(jcefUpstream, RelationshipType.VARIANT_OF)
   }
@@ -365,7 +366,7 @@ internal class SoftwareBillOfMaterialsImpl(
     val libraryPackages = mavenLibraries.mapNotNull { lib ->
       val libraryPackage = document.spdxPackage(lib)
       val filePackage = filePackages[lib.entry.path] ?: return@mapNotNull null
-      filePackage.relatesTo(libraryPackage, RelationshipType.DEPENDS_ON, "repacked into")
+      filePackage.relatesTo(libraryPackage, RelationshipType.DEPENDS_ON, "repacked from")
       libraryPackage
     }
     val duplicates = libraryPackages.asSequence().filter {
@@ -477,16 +478,14 @@ internal class SoftwareBillOfMaterialsImpl(
     libraryLicense: LibraryLicense
   ): MavenLibrary {
     val coordinates = MavenCoordinates(mavenDescriptor.groupId, mavenDescriptor.artifactId, mavenDescriptor.version)
-    checkNotNull(mavenDescriptor.jarRepositoryId) {
-      "Missing jar repository ID for $coordinates"
+    val repositoryUrl = if (mavenDescriptor.jarRepositoryId != null) {
+      repositories
+        .firstOrNull { it.id == mavenDescriptor.jarRepositoryId }
+        ?.let { translateRepositoryUrl(it.url) }
+        ?.removeSuffix("/")
+      ?: error("Unknown jar repository ID: ${mavenDescriptor.jarRepositoryId}")
     }
-    val repositoryUrl = repositories
-      .firstOrNull { it.id == mavenDescriptor.jarRepositoryId }
-      ?.let { translateRepositoryUrl(it.url) }
-      ?.removeSuffix("/")
-    checkNotNull(repositoryUrl) {
-      "Unknown jar repository ID: ${mavenDescriptor.jarRepositoryId}"
-    }
+    else null
     val libraryName = coordinates.getFileName(packaging = mavenDescriptor.packaging, classifier = "")
     val checksums = mavenDescriptor.artifactsVerification.filter {
       Path.of(JpsPathUtil.urlToOsPath(it.url)).name == libraryName
@@ -504,8 +503,8 @@ internal class SoftwareBillOfMaterialsImpl(
     return MavenLibrary(
       coordinates = coordinates,
       repositoryUrl = repositoryUrl,
-      downloadUrl = "$repositoryUrl/${coordinates.directoryPath}/$libraryName",
-      pomXmlUrl = "$repositoryUrl/${coordinates.directoryPath}/$pomXmlName",
+      downloadUrl = repositoryUrl?.let { "$it/${coordinates.directoryPath}/$libraryName" },
+      pomXmlUrl = repositoryUrl?.let { "$it/${coordinates.directoryPath}/$pomXmlName" },
       sha256Checksum = checksums.single().sha256sum,
       license = libraryLicense,
       entry = libraryEntry,

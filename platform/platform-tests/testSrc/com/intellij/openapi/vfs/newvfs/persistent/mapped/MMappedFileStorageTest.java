@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,7 @@ import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 public class MMappedFileStorageTest {
 
@@ -38,7 +40,7 @@ public class MMappedFileStorageTest {
 
   @AfterEach
   public void tearDown() throws Exception {
-    storage.close();
+    storage.close( /* unmap: */ true);
   }
 
 
@@ -140,6 +142,9 @@ public class MMappedFileStorageTest {
           }
         }
       }
+      finally {
+        storage.closeAndClean();
+      }
     }
     finally {
       pool.shutdown();
@@ -157,6 +162,10 @@ public class MMappedFileStorageTest {
 
   @Test
   public void afterTruncate_fileBecomesEmptyAndZeroed_andNoTracesOfPreviousContentIsLeft() throws IOException {
+    assumeFalse(
+      SystemInfoRt.isWindows,
+      "On Windows mmapped file region can't be truncated"
+    );
     int pagesToAllocate = 16;
 
     byte[] ones = new byte[1024];

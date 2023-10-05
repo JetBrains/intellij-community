@@ -95,24 +95,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
               : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
                                                                 HashingStrategy.caseInsensitive());
 
-    if (SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN && !app.isUnitTestMode()) {
-      //PersistentFSImpl is an application service, and generally disposed as such, via .dispose(), but to
-      // be on the safe side -- we added a shutdown task also.
-      //
-      //...Such a safety net makes sense for a real application, but in tests it makes more harm than good:
-      // if a test is killed (e.g. by timeout), VFS is closed _eagerly_ by ShutDownTracker, which leads to
-      // 'Already disposed' exception afterward, because other services are still disposing, and some of
-      // them use VFS on dispose.
-      // Such 'Already disposed' exception shadows the real reason of test failure, and it is painfully
-      // confusing and frustrating for people, and confused people blame VFS for nothing, which is painfully
-      // unfair for VFS team.
-      // Sigh.
-      // To reduce pain, suffering and frustration, I decided to abandon the safety net for tests:
-      ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
-    }
-
-    LowMemoryWatcher.register(this::clearIdCache, this);
-
     AsyncEventSupport.startListening();
 
     app.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
@@ -133,6 +115,34 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     });
 
     connect();
+
+    LowMemoryWatcher.register(this::clearIdCache, this);
+
+    //PersistentFSImpl is an application service, and generally disposed as such, via .dispose(), but to
+    // be on the safe side -- we added a shutdown task also.
+    //
+    //'Eager' vs 'regular' shutdown task priority: there are 2 priorities of shutdown tasks: regular and eager
+    // (_Cache_ShutdownTask) -- and eager is executed before others. If an application is shutting down by
+    // external signal (i.e. OS demands termination because of reboot), it is worth disposing VFS early, and
+    // not waiting for all other services disposed first -- because OS could be impatient, and just kill the
+    // app if the termination request not satisfied in 100-200-500ms, and we don't want to leave VFS in inconsistent
+    // state because of that.
+    //
+    //Such an eager closing makes sense for a real application, but in tests it makes more harm than good:
+    // if a test is killed (e.g. by timeout), and VFS is closed _eagerly_ by ShutDownTracker -- there will be
+    // lots of 'Already disposed' exception afterward, because other services are still disposing, and some of
+    // them use VFS on dispose. Such 'Already disposed' exception shadows the real reason of test failure,
+    // and it is painfully confusing and frustrating for people, and confused people blame VFS for nothing,
+    // which is painfully unfair for the VFS team.
+    // To reduce overall pain, suffering and frustration in the world, in tests we shut down VFS with regular
+    // priority, not with eager ('cache') priority.
+
+    if (SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN && !app.isUnitTestMode()) {
+      ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
+    }
+    else {
+      ShutDownTracker.getInstance().registerShutdownTask(this::disconnect);
+    }
   }
 
   @ApiStatus.Internal
@@ -1908,8 +1918,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       eventTracker = getVfsLogEx().getApplicationVFileEventsTracker().trackEvent(event);
     }
     try {
-      if (event instanceof VFileCreateEvent) {
-        VFileCreateEvent ce = (VFileCreateEvent)event;
+      if (event instanceof VFileCreateEvent ce) {
         executeCreateChild(ce.getParent(), ce.getChildName(), ce.getAttributes(), ce.getSymlinkTarget(), ce.isEmptyDirectory());
       }
       else if (event instanceof VFileDeleteEvent deleteEvent) {
@@ -2145,7 +2154,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   /** Use instance {@link #offlineByDefault(VirtualFile, boolean)} method instead of static */
   @ApiStatus.Experimental
-  @ApiStatus.Obsolete()
+  @ApiStatus.Obsolete
   public static void setOfflineByDefault(@NotNull VirtualFile file, boolean offlineByDefaultFlag) {
     ((PersistentFSImpl)PersistentFS.getInstance()).offlineByDefault(file, offlineByDefaultFlag);
   }

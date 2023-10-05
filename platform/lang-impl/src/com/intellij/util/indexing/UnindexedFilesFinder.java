@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 
 final class UnindexedFilesFinder {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
-  private static final boolean TRUST_INDEXING_FLAG = Registry.is("scanning.trust.indexing.flag", false);
+  private static final boolean TRUST_INDEXING_FLAG = Registry.is("scanning.trust.indexing.flag", true);
 
   private final Project myProject;
   private final FileBasedIndexImpl myFileBasedIndex;

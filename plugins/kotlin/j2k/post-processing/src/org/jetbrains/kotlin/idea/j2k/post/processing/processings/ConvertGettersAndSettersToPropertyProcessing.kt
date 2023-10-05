@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.idea.j2k.post.processing.JKInMemoryFilesSearcher
 import org.jetbrains.kotlin.idea.j2k.post.processing.PostProcessingOptions
 import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
+import org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix.Companion.getExistingAnnotationTargets
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -49,6 +50,7 @@ import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKPhysicalMethodData
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 import org.jetbrains.kotlin.resolve.sam.getSingleAbstractMethodOrNull
@@ -58,6 +60,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.isUnit
+import org.jetbrains.kotlin.types.typeUtil.makeNullable
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -147,9 +150,11 @@ private class PropertiesDataCollector(private val resolutionFacade: ResolutionFa
         val getter = propertyInfoGroup.firstIsInstanceOrNull<RealGetter>()
         val setter = propertyInfoGroup.firstIsInstanceOrNull<RealSetter>()?.takeIf { setterCandidate ->
             if (getter == null) return@takeIf true
-            val getterType = getter.function.type()
-            val setterType = setterCandidate.function.valueParameters.first().type()
-            getterType != null && setterType != null && getterType.isSubtypeOf(setterType)
+            val getterType = getter.function.type() ?: return@takeIf false
+            val setterType = setterCandidate.function.valueParameters.first().type() ?: return@takeIf false
+            // The inferred nullability of accessors may be different due to semi-random reasons,
+            // so we check types compatibility ignoring nullability. Anyway, the final property type will be nullable if necessary.
+            getterType.isSubtypeOf(setterType.makeNullable())
         }
 
         val accessor = getter ?: setter ?: return null
@@ -330,6 +335,25 @@ private class PropertiesDataFilter(
             return false
         }
 
+        fun accessorsAreAnnotatedWithFunctionOnlyAnnotations(): Boolean {
+            val descriptorToTargetPairs = listOf(
+                realGetter?.function?.resolveToDescriptorIfAny(resolutionFacade) to "PROPERTY_GETTER",
+                realSetter?.function?.resolveToDescriptorIfAny(resolutionFacade) to "PROPERTY_SETTER",
+            )
+
+            for ((functionDescriptor, requiredTarget) in descriptorToTargetPairs) {
+                val hasInapplicableAnnotation = functionDescriptor?.annotations?.any { annotationDescriptor ->
+                    val annotationClassDescriptor = annotationDescriptor.annotationClass ?: return@any false
+                    val existingTargets = getExistingAnnotationTargets(annotationClassDescriptor)
+                    existingTargets.contains("FUNCTION") && !existingTargets.contains(requiredTarget)
+                } == true
+
+                if (hasInapplicableAnnotation) return true
+            }
+
+            return false
+        }
+
         fun createFakeGetter(name: String): FakeGetter? = when {
             // TODO write a test for this branch, may be related to KTIJ-8621, KTIJ-8673
             realProperty?.property?.resolveToDescriptorIfAny(resolutionFacade)?.overriddenDescriptors?.any {
@@ -382,7 +406,8 @@ private class PropertiesDataFilter(
             getterUsesDifferentProperty() ||
             accessorsOverrideFunctions() ||
             propertyIsAccessedBypassingNonPureAccessors() ||
-            propertyIsAccessedOnAnotherInstance()
+            propertyIsAccessedOnAnotherInstance() ||
+            accessorsAreAnnotatedWithFunctionOnlyAnnotations()
         ) return null
 
         val name = realGetter?.name ?: realSetter?.name ?: return null

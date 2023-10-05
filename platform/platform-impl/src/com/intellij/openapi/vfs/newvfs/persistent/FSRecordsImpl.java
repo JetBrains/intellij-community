@@ -39,6 +39,7 @@ import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -200,7 +201,8 @@ public final class FSRecordsImpl {
   /** Keep stacktrace of {@link #dispose()} call -- for better diagnostics of unexpected dispose */
   private volatile Exception disposedStackTrace = null;
 
-  private final CopyOnWriteArraySet<AutoCloseable> closeables = new CopyOnWriteArraySet<>();
+  //@GuardedBy("this")
+  private final ObjectOpenHashSet<AutoCloseable> closeables = new ObjectOpenHashSet<>();
   private final CopyOnWriteArraySet<FileIdIndexedStorage> fileIdIndexedStorages = new CopyOnWriteArraySet<>();
 
   private static int nextMask(int value,
@@ -351,6 +353,7 @@ public final class FSRecordsImpl {
       FileNameCache cacheOverEnumerator = USE_MRU_FILE_NAME_CACHE ?
                                           new MRUFileNameCache(connection.getNames()) :
                                           new SLRUFileNameCache(connection.getNames());
+      //cache.close() mostly just stops regular telemetry
       closeables.add(cacheOverEnumerator);
       this.fileNamesEnumerator = cacheOverEnumerator;
     }
@@ -1348,8 +1351,9 @@ public final class FSRecordsImpl {
 
 
   /** Adds an object which must be closed during VFS close process */
-  public void addCloseable(@NotNull Closeable closeable) {
-    this.closeables.add(closeable);
+  public synchronized void addCloseable(@NotNull Closeable closeable) {
+    checkNotDisposed();
+    closeables.add(closeable);
   }
 
   /**

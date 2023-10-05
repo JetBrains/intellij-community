@@ -1,9 +1,10 @@
 class Foo {
-    var state: Int? = null
-        private set
+    private var someInt: Int? = null
 
-    fun setState(state: Int) {
-        this.state = state
-        if (state == 1) println("1")
-    }
+    var state: Int?
+        get() = someInt
+        set(state) {
+            someInt = state
+            if (state == 1) println("1")
+        }
 }

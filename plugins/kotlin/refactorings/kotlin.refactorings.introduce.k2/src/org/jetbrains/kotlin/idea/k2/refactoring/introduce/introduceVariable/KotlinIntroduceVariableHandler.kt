@@ -32,10 +32,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
-import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
-import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
-import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
+import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
@@ -288,7 +285,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             }
         }
 
-        fun runRefactoring(isVar: Boolean) {
+        fun runRefactoring(project: Project, editor: Editor?, isVar: Boolean) {
             if (container !is KtDeclarationWithBody) return runRefactoring(
                 isVar,
                 expression,
@@ -307,7 +304,12 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 }
             }
 
-            val newContainer = container.bodyBlockExpression.sure { "New body is not found: $container" }
+            val newContainer = container.bodyBlockExpression ?: return showErrorHint(
+                project,
+                editor,
+                KotlinBundle.message("cannot.refactor.not.expression")
+            )
+
             val newExpression = newContainer.findExpressionByCopyableDataAndClearIt(EXPRESSION_KEY)
 
             runRefactoring(
@@ -491,7 +493,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 )
 
                 project.executeCommand(INTRODUCE_VARIABLE, null) {
-                    introduceVariableContext.runRefactoring(isVar)
+                    introduceVariableContext.runRefactoring(project, editor, isVar)
 
                     val property = introduceVariableContext.propertyRef ?: return@executeCommand
 

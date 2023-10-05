@@ -29,6 +29,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.namedChildScope
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -48,7 +49,14 @@ private val EDITOR_NOTIFICATION_PROVIDER =
 private val PENDING_UPDATE = Key.create<Boolean>("pending.notification.update")
 
 class EditorNotificationsImpl(private val project: Project,
-                              private val coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
+                              coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
+
+  /**
+   * The scope passed in constructor can be a project scope,
+   * for example in [com.intellij.httpClient.http.request.utils.prepareEditorNotifications].
+   * Since it's cancelled in [dispose], we have to create a child.
+   */
+  private val coroutineScope: CoroutineScope = coroutineScope.namedChildScope("EditorNotificationsImpl")
   private val updateAllRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val fileToUpdateNotificationJob = CollectionFactory.createConcurrentWeakMap<VirtualFile, Job>()

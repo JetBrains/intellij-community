@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -67,16 +68,9 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
     eventListeners.removeListener(listener)
   }
 
-  @RequiresEdt
   fun invoke(event: InlineCompletionEvent.DocumentChange) = invokeEvent(event)
-
-  @RequiresEdt
-  fun invoke(event: InlineCompletionEvent.CaretMove) = invokeEvent(event)
-
-  @RequiresEdt
   fun invoke(event: InlineCompletionEvent.LookupChange) = invokeEvent(event)
-
-  @RequiresEdt
+  fun invoke(event: InlineCompletionEvent.LookupCancelled) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
 
   @RequiresEdt
@@ -86,11 +80,7 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
 
   @RequiresEdt
   private fun invokeEvent(event: InlineCompletionEvent) {
-    if (!application.isDispatchThread) {
-      LOG.error("Cannot run inline completion handler outside of EDT.")
-      return
-    }
-
+    ThreadingAssertions.assertEventDispatchThread()
     LOG.trace("Start processing inline event $event")
 
     val provider = getProvider(event)
@@ -117,7 +107,7 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
     val offset = request.endOffset
 
     val resultFlow = try {
-      request(session.provider, request).flowOn(Dispatchers.IO)
+      request(session.provider, request).flowOn(Dispatchers.Default)
     }
     catch (e: Throwable) {
       LOG.errorIfNotCancellation(e)
@@ -261,15 +251,6 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
   )
   fun invoke(event: DocumentEvent, editor: Editor) {
     return invoke(InlineCompletionEvent.DocumentChange(event, editor))
-  }
-
-  @Deprecated(
-    "replaced with direct event call type",
-    ReplaceWith("invoke(InlineCompletionEvent.CaretMove(event))"),
-    DeprecationLevel.ERROR
-  )
-  fun invoke(event: EditorMouseEvent) {
-    return invoke(InlineCompletionEvent.CaretMove(event))
   }
 
   @Deprecated(

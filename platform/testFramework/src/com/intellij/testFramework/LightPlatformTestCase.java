@@ -36,10 +36,7 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
@@ -626,7 +623,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ourProject = project;
   }
 
-  private static class SimpleLightProjectDescriptor extends LightProjectDescriptor {
+  protected static class SimpleLightProjectDescriptor extends LightProjectDescriptor {
     private final @NotNull String myModuleTypeId;
     private final @Nullable Sdk mySdk;
 

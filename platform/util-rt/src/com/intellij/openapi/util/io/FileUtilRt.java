@@ -17,6 +17,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import static java.lang.System.getProperty;
+
 /**
  * A stripped-down version of {@link com.intellij.openapi.util.io.FileUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers, so it should not contain any library dependencies.
@@ -30,7 +32,9 @@ public class FileUtilRt {
   public static final int LARGE_FILE_PREVIEW_SIZE = Math.min(getLargeFilePreviewSize(), LARGE_FOR_CONTENT_LOADING);
 
   private static final int MAX_FILE_IO_ATTEMPTS = 10;
-  private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
+  private static final boolean TRY_GC_IF_FILE_DELETE_FAILS = "true".equals(getProperty("idea.fs.try-gc-if-file-delete-fails", "false"));
+  private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(getProperty("idea.fs.useChannels"));
+
 
   private static String ourCanonicalTempPathCache;
 
@@ -562,7 +566,7 @@ public class FileUtilRt {
 
   @NotNull
   private static String calcCanonicalTempPath() {
-    File file = new File(System.getProperty("java.io.tmpdir"));
+    File file = new File(getProperty("java.io.tmpdir"));
     try {
       String canonical = file.getCanonicalPath();
       if (!SystemInfoRt.isWindows || !canonical.contains(" ")) {
@@ -836,13 +840,13 @@ public class FileUtilRt {
   }
 
   private static void doDelete(Path path) throws IOException {
-    for (int attempt = MAX_FILE_IO_ATTEMPTS; attempt > 0; attempt--) {
+    for (int attemptsLeft = MAX_FILE_IO_ATTEMPTS; attemptsLeft > 0; attemptsLeft--) {
       try {
         Files.deleteIfExists(path);
         return;
       }
       catch (IOException e) {
-        if (!SystemInfoRt.isWindows || attempt == 1) {
+        if (!SystemInfoRt.isWindows || attemptsLeft == 1) {
           throw e;
         }
 
@@ -856,11 +860,23 @@ public class FileUtilRt {
             }
           }
           catch (Throwable ignored) { }
+          if (attemptsLeft == MAX_FILE_IO_ATTEMPTS / 2 && TRY_GC_IF_FILE_DELETE_FAILS) {
+            //Non-closed stream/channel, or not-yet-unmapped memory-mapped buffer could be a reason for
+            // AccessDeniedException on an attempt to delete file on Windows.
+            // => kick in GC/finalizers to collect that is not yet collected.
+            //
+            // Those are quite heavy, system-wide operations, which is why we fall back to them only after
+            // several attempts to delete the file already failed. But we don't do it at the last attempt
+            // either, because GC/finalizers tasks could run async/background and may need some time to
+            // finish.
+
+            //noinspection CallToSystemGC
+            System.gc();
+            System.runFinalization();
+          }
         }
       }
 
-      //MAYBE RC: if(attempt > 2 && SystemInfoRt.isWindows ) System.gc()
-      //         (probably helps with memory-mapped file removing)
       try { Thread.sleep(10); }
       catch (InterruptedException ignored) { }
     }
@@ -978,7 +994,7 @@ public class FileUtilRt {
 
   private static int parseKilobyteProperty(String key, int defaultValue) {
     try {
-      long i = Integer.parseInt(System.getProperty(key, String.valueOf(defaultValue / KILOBYTE)));
+      long i = Integer.parseInt(getProperty(key, String.valueOf(defaultValue / KILOBYTE)));
       if (i < 0) return Integer.MAX_VALUE;
       return (int) Math.min(i * KILOBYTE, Integer.MAX_VALUE);
     }

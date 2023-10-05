@@ -12,7 +12,7 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 2)
+  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 3)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
   private val MESSAGE_KIND = EventFields.Enum<Message.Kind>("message_kind")
@@ -51,10 +51,10 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
     Messages.VERSION_CATALOG_MODEL_GROUP,
   ))
 
-  private val MODEL_BUILDER_MESSAGE_EVENT = GROUP.registerEvent("modelBuilderMessage", ACTIVITY_ID, MESSAGE_KIND, MESSAGE_GROUP)
+  private val MODEL_BUILDER_MESSAGE_RECEIVED_EVENT = GROUP.registerEvent("model.builder.message.received", ACTIVITY_ID, MESSAGE_KIND, MESSAGE_GROUP)
 
   @JvmStatic
   fun logModelBuilderMessage(project: Project?, activityId: Long, message: Message) {
-    MODEL_BUILDER_MESSAGE_EVENT.log(project, activityId, message.kind, message.group)
+    MODEL_BUILDER_MESSAGE_RECEIVED_EVENT.log(project, activityId, message.kind, message.group)
   }
 }

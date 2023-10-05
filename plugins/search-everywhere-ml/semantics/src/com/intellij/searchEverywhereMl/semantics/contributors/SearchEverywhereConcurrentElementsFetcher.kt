@@ -14,11 +14,12 @@ import kotlin.concurrent.withLock
 interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : Any> {
   val itemsProvider: StreamSemanticItemsProvider<I>
 
+  val useReadAction: Boolean
+    get() = false
+
   fun getDesiredResultsCount(): Int
 
   fun getPriorityThresholds(): Map<DescriptorPriority, Double>
-
-  fun useReadAction(): Boolean
 
   fun defaultFetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in FoundItemDescriptor<E>>)
 
@@ -55,11 +56,6 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
         val iterate = {
           val semanticMatches = itemsProvider.streamSearch(pattern, getPriorityThresholds()[DescriptorPriority.LOW])
           for (priority in ORDERED_PRIORITIES) {
-            if (priority == DescriptorPriority.HIGH) {
-              standardContributorStartedMutex.withLock {
-                while (!standardContributorStarted) standardContributorStartedCondition.await()
-              }
-            }
             val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
             else cachedDescriptors.filter { it.findPriority() == priority }.iterator()
 
@@ -82,7 +78,10 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
         }
 
         try {
-          if (useReadAction()) runReadAction(iterate) else iterate()
+          standardContributorStartedMutex.withLock {
+            while (!standardContributorStarted) standardContributorStartedCondition.await()
+          }
+          if (useReadAction) runReadAction(iterate) else iterate()
         }
         finally {
           mutex.withLock {

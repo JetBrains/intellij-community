@@ -2,12 +2,19 @@
 package org.jetbrains.idea.devkit.kotlin.navigation
 
 import com.intellij.codeInsight.assertFolded
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
 
 class KtPropertyKeyFoldingTest : JavaCodeInsightFixtureTestCase() {
+
+  override fun setUp() {
+    super.setUp()
+    ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotations)
+  }
 
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     super.tuneFixture(moduleBuilder)

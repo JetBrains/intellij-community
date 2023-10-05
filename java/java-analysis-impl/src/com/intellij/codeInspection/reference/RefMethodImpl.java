@@ -97,9 +97,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       setAbstract(javaPsi.hasModifierProperty(PsiModifier.ABSTRACT));
 
       setLibraryOverride(javaPsi.hasModifierProperty(PsiModifier.NATIVE));
-      if (PsiModifier.PUBLIC.equals(getAccessModifier())) {
-        setAppMain(isAppMain(javaPsi, this));
-      }
+      setAppMain(isAppMain(javaPsi, this));
       if (!PsiModifier.PRIVATE.equals(getAccessModifier()) && !isStatic()) {
         initializeSuperMethods(javaPsi);
       }
@@ -125,11 +123,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   private static boolean isAppMain(PsiMethod psiMethod, RefMethod refMethod) {
+    if ("main".equals(psiMethod.getName()) && PsiMethodUtil.isMainMethod(psiMethod)) return true;
+
     if (!refMethod.isStatic()) return false;
     if (!PsiTypes.voidType().equals(psiMethod.getReturnType())) return false;
-
-    PsiMethod appMainPattern = ((RefMethodImpl)refMethod).getRefJavaManager().getAppMainPattern();
-    if (MethodSignatureUtil.areSignaturesEqual(psiMethod, appMainPattern)) return true;
 
     if ("main".equals(psiMethod.getName()) && psiMethod.getParameterList().isEmpty() &&
         psiMethod.getLanguage().isKindOf("kotlin")) return true;

@@ -37,25 +37,31 @@ internal fun documentationComponent(
   return createDocumentationComponent(project, request, parentDisposable).getComponent()
 }
 
-private fun createDocumentationComponent(project: Project,
-                                         request: DocumentationRequest,
-                                         parentDisposable: Disposable): DocumentationComponent {
+private fun createDocumentationComponent(
+  project: Project,
+  request: DocumentationRequest,
+  parentDisposable: Disposable,
+): DocumentationComponent {
   val browser = DocumentationBrowser.createBrowser(project, request)
   val ui = DocumentationUI(project, browser)
   Disposer.register(parentDisposable, ui)
   return DocumentationComponentImpl(browser, ui)
 }
 
-private class DocumentationComponentImpl(private val browser: DocumentationBrowser,
-                                         private val ui: DocumentationUI) : DocumentationComponent {
-  override fun getComponent(): JComponent = ui.scrollPane
+private class DocumentationComponentImpl(
+  private val browser: DocumentationBrowser,
+  private val ui: DocumentationUI,
+) : DocumentationComponent {
+
+  override fun getComponent(): JComponent {
+    return ui.scrollPane
+  }
 
   override fun resetBrowser() {
     browser.resetBrowser(EmptyDocumentationTarget.request)
   }
 
-  override fun resetBrowser(targetPointer: Pointer<out DocumentationTarget>,
-                            targetPresentation: TargetPresentation) {
+  override fun resetBrowser(targetPointer: Pointer<out DocumentationTarget>, targetPresentation: TargetPresentation) {
     browser.resetBrowser(DocumentationRequest(targetPointer, targetPresentation))
   }
 }

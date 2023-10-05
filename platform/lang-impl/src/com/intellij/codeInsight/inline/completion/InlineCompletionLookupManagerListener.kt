@@ -14,6 +14,11 @@ class InlineCompletionLookupManagerListener : LookupManagerListener {
         val listener = event.lookup.editor.getUserData(InlineCompletionHandler.KEY) ?: return
         listener.invoke(InlineCompletionEvent.LookupChange(event))
       }
+
+      override fun lookupCanceled(event: LookupEvent) {
+        val listener = event.lookup.editor.getUserData(InlineCompletionHandler.KEY) ?: return
+        listener.invoke(InlineCompletionEvent.LookupCancelled(event))
+      }
     })
   }
 }

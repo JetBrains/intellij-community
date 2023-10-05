@@ -2,8 +2,10 @@
 package com.siyeh.ig.fixes.dataflow;
 
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 
@@ -14,6 +16,7 @@ public class CreateNullBranchFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new DataFlowInspection());
     myRelativePath = "dataflow/create_null_branch";
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
   }
 
   @Override

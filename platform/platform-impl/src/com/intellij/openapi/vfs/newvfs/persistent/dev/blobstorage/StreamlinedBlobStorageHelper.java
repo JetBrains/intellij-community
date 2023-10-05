@@ -156,7 +156,6 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   private final ThreadLocal<ByteBuffer> threadLocalBuffer;
 
 
-  //FIXME RC: always store nextRecordId in a header! this way all implementations headers will be the same
   /** Field could be read as volatile, but writes are protected with this intrinsic lock */
   //@GuardedBy(this)
   protected volatile int nextRecordId;
@@ -382,7 +381,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
                                                int pageSize) throws IOException;
 
 
-  protected void checkRecordIdExists(final int recordId) {
+  protected void checkRecordIdExists(final int recordId) throws IOException {
     checkRecordIdValid(recordId);
     if (!isRecordIdAllocated(recordId)) {
       throw new IllegalArgumentException("recordId(" + recordId + ") is not yet allocated: allocated ids are all < " + nextRecordId);

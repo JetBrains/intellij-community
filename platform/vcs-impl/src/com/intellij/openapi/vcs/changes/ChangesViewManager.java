@@ -34,6 +34,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
@@ -49,6 +50,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.problems.ProblemListener;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -59,16 +61,14 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
-import com.intellij.vcs.commit.ChangesViewCommitPanel;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
-import com.intellij.vcs.commit.CommitModeManager;
-import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator;
+import com.intellij.vcs.commit.*;
 import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
@@ -191,7 +191,9 @@ public class ChangesViewManager implements ChangesViewEx,
 
   public static @NotNull Factory<JComponent> createTextStatusFactory(@NlsContexts.Label String text, final boolean isError) {
     return () -> {
-      JLabel label = new JLabel(text);
+      JLabel label = new JBLabel(StringUtil.replace(text.trim(), "\n", UIUtil.BR)).setCopyable(true);
+      label.setVerticalTextPosition(SwingConstants.TOP);
+      label.setBorder(JBUI.Borders.empty(3));
       label.setForeground(isError ? JBColor.RED : UIUtil.getLabelForeground());
       return label;
     };
@@ -510,7 +512,8 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       };
       myContentPanel.addToCenter(myCommitPanelSplitter);
-      myMainPanel = simplePanel(myContentPanel);
+      myMainPanel = simplePanel(myContentPanel)
+        .addToBottom(myProgressLabel);
 
       setDiffPreview();
 
@@ -522,7 +525,7 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       }, this);
 
-      setContent(myMainPanel.addToBottom(myProgressLabel));
+      setContent(myMainPanel);
 
       busConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
         @Override
@@ -602,7 +605,8 @@ public class ChangesViewManager implements ChangesViewEx,
       configureDiffPreview();
     }
 
-    private @NotNull EditorTabPreview installEditorPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor, boolean hasSplitterPreview) {
+    private @NotNull EditorTabPreview installEditorPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor,
+                                                           boolean hasSplitterPreview) {
       return new SimpleTreeEditorDiffPreview(changeProcessor, myView, myContentPanel,
                                              isOpenEditorDiffPreviewWithSingleClick.asBoolean() && !hasSplitterPreview) {
         @Override
@@ -806,8 +810,12 @@ public class ChangesViewManager implements ChangesViewEx,
       invokeLaterIfNeeded(() -> {
         if (myDisposed) return;
         JComponent component = progress != null ? progress.create() : null;
-        myProgressLabel.setContent(component);
-        myProgressLabel.setMinimumSize(JBUI.emptySize());
+        if (component != null) {
+          myProgressLabel.setContent(new FixedSizeScrollPanel(component, new JBDimension(400, 100)));
+        }
+        else {
+          myProgressLabel.setContent(null);
+        }
       });
     }
 

@@ -22,7 +22,9 @@ internal class JBAcademyInteractiveCourse : InteractiveCourseFactory {
             PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell() ||
             PlatformUtils.isWebStorm() ||
             PlatformUtils.isCidr() ||
-            PlatformUtils.isGoIde()
+            PlatformUtils.isGoIde() ||
+            PlatformUtils.isPhpStorm() ||
+            PlatformUtils.isRustRover()
 
   override val isEnabled: Boolean = true
 

@@ -6,8 +6,6 @@ import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.hints.VcsCodeVisionProvider
 import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector
-import com.intellij.codeInsight.hints.isCodeAuthorInlayHintsEnabled
-import com.intellij.codeInsight.hints.refreshCodeAuthorInlayHints
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
@@ -70,7 +68,6 @@ internal class AnnotationsPreloader(private val project: Project) {
           LOG.debug { "Preloaded VCS annotations for ${file.name} in $durationMs ms" }
 
           runInEdt {
-            refreshCodeAuthorInlayHints(project, file)
             if (project.isDisposed) return@runInEdt
             CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProvider(
               CodeVisionHost.LensInvalidateSignal(null, listOf(VcsCodeVisionProvider.id)))
@@ -108,13 +105,10 @@ internal class AnnotationsPreloader(private val project: Project) {
       val enabledInSettings = if (Registry.`is`("editor.codeVision.new")) {
         CodeVisionSettings.instance().isProviderEnabled(VcsCodeVisionProvider.id)
       } else {
-        isCodeAuthorInlayHintsEnabled()
+        false
       }
       return enabledInSettings || AdvancedSettings.getBoolean("vcs.annotations.preload")
     }
-
-    internal fun canPreload(project: Project, file: VirtualFile): Boolean =
-      getAnnotationProvider(project, file) != null
 
     private fun getAnnotationProvider(project: Project, file: VirtualFile): CacheableAnnotationProvider? {
       val status = ChangeListManager.getInstance(project).getStatus(file)

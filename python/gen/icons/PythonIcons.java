@@ -21,6 +21,7 @@ public final class PythonIcons {
 
   public static final class Python {
     /** 16x16 */ public static final @NotNull Icon Anaconda = load("icons/com/jetbrains/python/anaconda.svg", 1008039527, 0);
+    /** 16x16 */ public static final @NotNull Icon AttachDebugger = load("icons/com/jetbrains/python/attachDebugger.svg", 1845469384, 2);
     /** 16x16 */ public static final @NotNull Icon CommandQueue = load("icons/com/jetbrains/python/commandQueue.svg", -1804971513, 2);
     /** 16x16 */ public static final @NotNull Icon Condaenv = load("icons/com/jetbrains/python/condaenv.svg", -552890691, 0);
     /** 13x13 */ public static final @NotNull Icon DataView = load("icons/com/jetbrains/python/DataView.svg", 1254479546, 2);
@@ -31,6 +32,7 @@ public final class PythonIcons {
     }
 
     /** 16x16 */ public static final @NotNull Icon Dotnet = load("icons/com/jetbrains/python/dotnet.svg", 108064961, 0);
+    /** 16x16 */ public static final @NotNull Icon ExecuteCurrentStatement = load("icons/com/jetbrains/python/executeCurrentStatement.svg", -43244894, 2);
     /** 16x16 */ public static final @NotNull Icon Function = load("icons/com/jetbrains/python/function.svg", 1095555051, 0);
     /** 16x16 */ public static final @NotNull Icon Jython = load("icons/com/jetbrains/python/jython.svg", -1226105339, 0);
     /** 16x16 */ public static final @NotNull Icon NumPy = load("icons/com/jetbrains/python/numPy.svg", -950957593, 2);

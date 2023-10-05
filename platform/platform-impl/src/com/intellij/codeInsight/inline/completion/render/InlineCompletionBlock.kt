@@ -13,5 +13,4 @@ interface InlineCompletionBlock : Disposable {
 
   fun render(editor: Editor, offset: Int)
   fun getBounds(): Rectangle?
-  fun reset()
 }

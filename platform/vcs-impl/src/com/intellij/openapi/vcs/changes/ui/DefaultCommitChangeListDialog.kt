@@ -35,7 +35,6 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
 
     val initialChangeList = workflow.initialChangeList
     if (initialChangeList != null) browser.selectedChangeList = initialChangeList
-    browser.viewer.setIncludedChanges(workflow.initiallyIncluded)
     browser.viewer.rebuildTree()
     browser.viewer.setKeepTreeState(true)
 

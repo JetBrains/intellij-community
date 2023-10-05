@@ -7,23 +7,24 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaUnnamedClassUtil;
+import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Checks and reports errors for unnamed classes {@link com.intellij.psi.PsiUnnamedClass}.
+ * Checks and reports errors for unnamed classes {@link PsiUnnamedClass}.
  */
 public final class HighlightUnnamedClassUtil {
 
-  static HighlightInfo.@Nullable Builder checkUnnamedClssHasMainMethod(@NotNull PsiJavaFile file) {
+  static HighlightInfo.@Nullable Builder checkUnnamedClassHasMainMethod(@NotNull PsiJavaFile file) {
     if (!HighlightingFeature.UNNAMED_CLASSES.isAvailable(file)) return null;
     PsiClass[] classes = file.getClasses();
     if (classes.length != 1) return null;
     PsiClass aClass = classes[0];
     if (aClass instanceof PsiUnnamedClass unnamedClass) {
       PsiMethod[] methods = unnamedClass.getMethods();
-      boolean hasMainMethod = ContainerUtil.exists(methods, method -> "main".equals(method.getName()));
+      boolean hasMainMethod = ContainerUtil.exists(methods, method -> "main".equals(method.getName()) && PsiMethodUtil.isMainMethod(method));
       if (!hasMainMethod) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                        .range(file)

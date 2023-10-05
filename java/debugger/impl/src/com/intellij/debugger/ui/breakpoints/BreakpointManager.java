@@ -450,7 +450,7 @@ public class BreakpointManager {
 
   private <B extends XBreakpoint<?>> XBreakpoint createXBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls) {
     final XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
-    return WriteAction.compute(() -> XDebuggerManager.getInstance(myProject).getBreakpointManager().addBreakpoint((XBreakpointType)type, type.createProperties()));
+    return XDebuggerManager.getInstance(myProject).getBreakpointManager().addBreakpoint((XBreakpointType)type, type.createProperties());
   }
 
   private <B extends XBreakpoint<?>> XLineBreakpoint createXLineBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls,
@@ -485,7 +485,7 @@ public class BreakpointManager {
     if (breakpoint == null) {
       return;
     }
-    WriteAction.run(() -> getXBreakpointManager().removeBreakpoint(breakpoint.myXBreakpoint));
+    getXBreakpointManager().removeBreakpoint(breakpoint.myXBreakpoint);
   }
 
   public void writeExternal(@NotNull final Element parentNode) {

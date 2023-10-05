@@ -2,12 +2,19 @@
 package com.intellij.codeInspection.i18n
 
 import com.intellij.codeInsight.assertFolded
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
 
 class PropertyKeyFoldingTest : JavaCodeInsightFixtureTestCase() {
+
+  override fun setUp() {
+    super.setUp()
+    ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotations)
+  }
 
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     super.tuneFixture(moduleBuilder)

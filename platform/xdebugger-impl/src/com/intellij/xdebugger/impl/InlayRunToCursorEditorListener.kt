@@ -71,31 +71,38 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       override fun editorCreated(event: EditorFactoryEvent) {
         val editor = event.editor
         editor.getScrollingModel().addVisibleAreaListener(VisibleAreaListener {
-          val session: XDebugSessionImpl = debuggerManagerImpl.currentSession ?: return@VisibleAreaListener
-          scheduleInlayRunToCursor(editor, session)
+          showInlayRunToCursorIfNeeded(editor, null)
         })
       }
     }, debuggerManagerImpl)
   }
 
   override fun mouseMoved(e: EditorMouseEvent) {
-    if (e.editor.project != project) return
+    showInlayRunToCursorIfNeeded(e.editor, e)
+  }
 
-    if (!isInlayRunToCursorEnabled) {
-      IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = false
-      return
-    }
-    val shouldHideCurrentHint = scheduleInlayRunToCursor(e)
+  fun reshowInlayRunToCursor(editor: Editor) {
+    currentEditor = WeakReference(null)
+    currentLineNumber = -1
+    showInlayRunToCursorIfNeeded(editor, null)
+  }
+
+  private fun showInlayRunToCursorIfNeeded(editor: Editor, e: EditorMouseEvent?) {
+    val shouldHideCurrentHint = tryToScheduleInlayRunToCursor(editor, e)
     if (shouldHideCurrentHint) {
       val hint = currentHint.get()
       hint?.hide()
-      currentEditor = WeakReference(null)
-      currentLineNumber = -1
     }
   }
 
-  private fun scheduleInlayRunToCursor(e: EditorMouseEvent): Boolean {
-    val editor = e.editor
+  private fun tryToScheduleInlayRunToCursor(editor: Editor, e: EditorMouseEvent?): Boolean {
+    if (editor.project != project) return true
+
+    if (!isInlayRunToCursorEnabled) {
+      IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = false
+      return true
+    }
+
     if (editor.getEditorKind() != EditorKind.MAIN_EDITOR) {
       return true
     }
@@ -105,26 +112,29 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       return true
     }
     IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = true
-    val lineNumber = XDebuggerManagerImpl.getLineNumber(e)
+    val lineNumber = if (e != null) XDebuggerManagerImpl.getLineNumber(e) else lineFromCurrentMouse(editor)
     if (lineNumber < 0) {
       return true
     }
     if (currentEditor.get() === editor && currentLineNumber == lineNumber) {
       return false
     }
+    currentEditor = WeakReference(editor)
+    currentLineNumber = lineNumber
     scheduleInlayRunToCursor(editor, lineNumber, session)
     return true
   }
 
-  fun scheduleInlayRunToCursor(editor: Editor, session: XDebugSessionImpl) {
+  private fun lineFromCurrentMouse(editor: Editor): Int {
     val location = MouseInfo.getPointerInfo().location
     SwingUtilities.convertPointFromScreen(location, editor.getContentComponent())
 
     val logicalPosition: LogicalPosition = editor.xyToLogicalPosition(location)
-    if (logicalPosition.line >= (editor as EditorImpl).document.getLineCount()) {
-      return
+    if (logicalPosition.line >= editor.document.getLineCount()) {
+      return -1
     }
-    scheduleInlayRunToCursor(editor, logicalPosition.line, session)
+
+    return logicalPosition.line
   }
 
   private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
@@ -199,12 +209,8 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   private suspend fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, group: DefaultActionGroup, lineY: Int) {
     val rootPane = editor.getComponent().rootPane
     if (rootPane == null) {
-      currentEditor.clear()
-      currentLineNumber = -1
       return
     }
-    currentEditor = WeakReference(editor)
-    currentLineNumber = lineNumber
     val caretLine = editor.getCaretModel().logicalPosition.line
     val minimalOffsetBeforeText = MINIMAL_TEXT_OFFSET + (ACTION_BUTTON_GAP * 2 + ACTION_BUTTON_SIZE) * group.childrenCount
     if (editor.getSettings().isShowIntentionBulb() && caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(minimalOffsetBeforeText)) {
@@ -260,7 +266,11 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     val offset = editor.getCaretModel().offset
 
     initIsCompleted.lock()
-    HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, questionAction, HintManager.RIGHT)
+
+    val flags = HintManager.HIDE_BY_ANY_KEY or HintManager.HIDE_BY_TEXT_CHANGE or
+      HintManager.HIDE_IF_OUT_OF_EDITOR or HintManager.DONT_CONSUME_ESCAPE
+
+    HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, flags, questionAction, HintManager.RIGHT)
   }
 
   private fun isOutOfVisibleEditor(rootPane: JRootPane, x: Int, y: Int, h: Int, editorContentComponent: JComponent): Boolean {

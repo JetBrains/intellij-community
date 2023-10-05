@@ -113,7 +113,7 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
             // wasn't properly closed...)' -- then this branch rebuilds such a map, hence provides a recovery even for
             // durable maps
             if (!valuesLog.isEmpty() && valueHashToId.isEmpty()) {
-              LOG.warn("[" + name + "]: rebuild .valueToId map since it is out-of-sync with valuesLog data");
+              LOG.warn("[" + name + "]: .valueToId map is out-of-sync with .valuesLog data -> rebuilding it");
               //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
               fillValueHashToIdMap(valuesLog, valueDescriptor, valueHashToId);
             }

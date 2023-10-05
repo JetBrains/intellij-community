@@ -18,7 +18,6 @@ import com.intellij.platform.workspace.storage.EntityReference
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.IndexableSetContributor
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -42,17 +41,7 @@ object IndexableEntityProviderMethods {
   }
 
   fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {
-    if (IndexableFilesIndex.isEnabled()) {
-      return IndexableFilesIndex.getInstance(project).getModuleIndexingIterators(entity, entityStorage)
-    }
-    val builders = mutableListOf<IndexableEntityProvider.IndexableIteratorBuilder>()
-    for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
-      if (provider is IndexableEntityProvider.Existing) {
-        builders.addAll(provider.getIteratorBuildersForExistingModule(entity, entityStorage, project))
-      }
-    }
-    // so far there are no WorkspaceFileIndexContributors giving module roots, so requesting them is time-consuming and useless
-    return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
+    return IndexableFilesIndex.getInstance(project).getModuleIndexingIterators(entity, entityStorage)
   }
 
   fun createIterators(sdk: Sdk): List<IndexableFilesIterator> {

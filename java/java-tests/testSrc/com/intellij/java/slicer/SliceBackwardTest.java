@@ -18,14 +18,12 @@ package com.intellij.java.slicer;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.filters.ExceptionAnalysisProvider;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.slicer.*;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +34,8 @@ import java.util.Map;
 
 public class SliceBackwardTest extends SliceTestCase {
   @Override
-  protected Sdk getTestProjectJdk() {
-    return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk11());
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_17_ANNOTATED;
   }
 
   private void doTest() throws Exception {
@@ -49,18 +47,18 @@ public class SliceBackwardTest extends SliceTestCase {
   }
 
   @Override
-  protected @NotNull LanguageLevel getProjectLanguageLevel() {
-    return LanguageLevel.JDK_16;
+  protected String getBasePath() {
+    return "/java/java-tests/testData/codeInsight/slice/backward/";
   }
 
   private void doTest(@NotNull String filter, @NotNull String @NotNull... stack) throws Exception {
-    configureByFile("/codeInsight/slice/backward/"+getTestName(false)+".java");
+    myFixture.configureByFile(getTestName(false)+".java");
     Map<String, RangeMarker> sliceUsageName2Offset = SliceTestUtil.extractSliceOffsetsFromDocument(getEditor().getDocument());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiElement element = SliceHandler.create(true).getExpressionAtCaret(getEditor(), getFile());
     assertNotNull(element);
     SliceTestUtil.Node tree = SliceTestUtil.buildTree(element, sliceUsageName2Offset);
-    Collection<HighlightInfo> errors = highlightErrors();
+    Collection<HighlightInfo> errors = myFixture.doHighlighting(HighlightSeverity.ERROR);
     assertEmpty(errors);
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = new AnalysisScope(getProject());

@@ -9,12 +9,9 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -52,7 +49,7 @@ interface InlineCompletionEvent {
     val context: DataContext? = null,
   ) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest {
-      val offset = blockingReadAction { caret.offset }
+      val offset = runReadAction { caret.offset }
       return InlineCompletionRequest(this, file, editor, editor.document, offset, offset)
     }
   }
@@ -67,38 +64,9 @@ interface InlineCompletionEvent {
       val project = editor.project ?: return null
       if (editor.caretModel.caretCount != 1) return null
 
-      val file = blockingReadAction { PsiManager.getInstance(project).findFile(virtualFile) } ?: return null
+      val file = runReadAction { PsiManager.getInstance(project).findFile(virtualFile) } ?: return null
 
       return InlineCompletionRequest(this, file, editor, event.document, event.offset, event.offset + event.newLength)
-    }
-  }
-
-
-  /**
-   * Represents a caret move event only in selected editor.
-   *
-   * Be careful with this one because it might duplicate document events. It worth to add check for "non-simple offset change"
-   * ```
-   * if (event.oldPosition.line == event.newPosition.line && event.oldPosition.column + 1 == event.newPosition.column) {
-   *   return
-   * }
-   * ```
-   */
-  @ApiStatus.Experimental
-  @Deprecated("platform caret listener is disabled")
-  data class CaretMove(val event: EditorMouseEvent) : InlineCompletionEvent {
-    override fun toRequest(): InlineCompletionRequest? {
-      val editor = event.editor
-      val virtualFile = editor.virtualFile ?: return null
-      val project = editor.project ?: return null
-      if (editor.caretModel.caretCount != 1) return null
-
-      val (file, offset) = blockingReadAction {
-        PsiManager.getInstance(project).findFile(virtualFile) to editor.caretModel.offset
-      }
-      if (file == null) return null
-
-      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset)
     }
   }
 
@@ -111,26 +79,34 @@ interface InlineCompletionEvent {
    * @param event The lookup event.
    */
   @ApiStatus.Experimental
-  data class LookupChange(val event: LookupEvent) : InlineCompletionEvent {
+  data class LookupChange(override val event: LookupEvent) : InlineLookupEvent {
     override fun toRequest(): InlineCompletionRequest? {
-      val item = event.item ?: return null
+      return super.toRequest()?.takeIf { it.lookupElement != null }
+    }
+  }
+
+  /**
+   * Represents an event when a lookup is cancelled during inline completion.
+   *
+   * @param event The lookup event associated with the cancellation.
+   */
+  data class LookupCancelled(override val event: LookupEvent) : InlineLookupEvent
+
+  sealed interface InlineLookupEvent : InlineCompletionEvent {
+    val event: LookupEvent
+    override fun toRequest(): InlineCompletionRequest? {
       val editor = runReadAction { event.lookup?.editor } ?: return null
       if (editor.caretModel.caretCount != 1) return null
 
       val virtualFile = editor.virtualFile ?: return null
       val project = editor.project ?: return null
 
-      val (file, offset) = blockingReadAction {
+      val (file, offset) = runReadAction {
         PsiManager.getInstance(project).findFile(virtualFile) to editor.caretModel.offset
       }
       if (file == null) return null
 
-      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, item)
+      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, event.item)
     }
   }
-}
-
-@RequiresBlockingContext
-private fun <T> blockingReadAction(block: () -> T): T {
-  return application.runReadAction(Computable { block() })
 }

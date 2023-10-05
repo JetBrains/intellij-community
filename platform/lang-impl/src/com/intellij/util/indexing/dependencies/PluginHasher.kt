@@ -4,6 +4,7 @@ package com.intellij.util.indexing.dependencies
 import com.google.common.hash.HashCode
 import com.google.common.hash.Hashing
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -23,9 +24,13 @@ class PluginHasher {
     val pluginFingerprint = if (plugin.version.contains("SNAPSHOT", ignoreCase = true)) {
       when (val classLoader = plugin.classLoader) {
         is UrlClassLoader -> {
-          fingerprintWithCurrentTimestamp(plugin)
-          // TODO: Temporary, I hope
-          // fingerprintFromFilesContent(plugin, classLoader)
+          if (PluginManagerCore.isRunningFromSources()) {
+            // classpath is too huge to calculate its fingerprint. Use timestamp instead.
+            fingerprintWithCurrentTimestamp(plugin)
+          }
+          else {
+            fingerprintFromFilesContent(plugin, classLoader)
+          }
         }
         else -> {
           fingerprintWithCurrentTimestamp(plugin)

@@ -21,7 +21,9 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.IdeaTestUtil;
 
 import java.util.Collection;
 
@@ -39,6 +41,16 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
   public void testInnerUsesSelf() throws Exception { doTest(); }
   public void testLocalClass() throws Exception { doTest(); }
   public void testPrivateConstructor() throws Exception { doTest(); }
+  public void testUnnamedClassInstanceMainWithoutParams() {
+    IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_21_PREVIEW, () -> {
+      try {
+        doTest();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+  }
 
   //@Bombed(day = 5, month = Calendar.SEPTEMBER, user = "anet")
   //public void testInjectedAnno() throws Exception { doTest(); }

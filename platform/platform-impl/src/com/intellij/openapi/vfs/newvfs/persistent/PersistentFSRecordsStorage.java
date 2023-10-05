@@ -67,11 +67,11 @@ public interface PersistentFSRecordsStorage extends CleanableStorage {
 
   @PersistentFS.Attributes int getFlags(int fileId) throws IOException;
 
-  //TODO RC: what semantics is assumed for the method in concurrent context? If it is 'update atomically' than
-  //         it makes it harder to implement a storage in a lock-free way
-
   /**
-   * Fills all record fields in one shot
+   * Fills all record fields in one shot.
+   * Fields modifications are not atomic: method should be used in absence of concurrent modification, e.g.
+   * on startup, or for filling new, just allocated record, while fileId just allocated is not yet published
+   * for other threads to access.
    */
   void fillRecord(int fileId,
                   long timestamp,
@@ -82,8 +82,7 @@ public interface PersistentFSRecordsStorage extends CleanableStorage {
                   boolean overwriteAttrRef) throws IOException;
 
   /**
-   * @throws IndexOutOfBoundsException if fileId is outside of valid range: <=0 or > max recordId
-   *                                   allocated so far
+   * @throws IndexOutOfBoundsException if fileId is outside of range (0..max] of the fileIds allocated so far
    */
   void cleanRecord(int fileId) throws IOException;
 

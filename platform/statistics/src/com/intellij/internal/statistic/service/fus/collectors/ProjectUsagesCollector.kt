@@ -49,7 +49,7 @@ abstract class ProjectUsagesCollector : FeatureUsagesCollector() {
 
   /**
    * @return `true` if collector should run under read access in smart mode.
-   * It is called only if [.requiresReadAccess] returned `true`.
+   * It is used only if [requiresReadAccess] returned `true`.
    */
   protected open fun requiresSmartMode(): Boolean = false
 

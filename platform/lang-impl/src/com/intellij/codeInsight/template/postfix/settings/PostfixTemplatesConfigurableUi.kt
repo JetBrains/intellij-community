@@ -18,11 +18,11 @@ class PostfixTemplatesConfigurableUi {
 
   val panel: JPanel = panel {
     row {
-      completionEnabledCheckbox = checkBox(CodeInsightBundle.message("postfix.completion.option.enabled"))
+      postfixTemplatesEnabled = checkBox(CodeInsightBundle.message("postfix.completion.option.enabled"))
         .component
     }
     row {
-      postfixTemplatesEnabled = checkBox(CodeInsightBundle.message("postfix.completion.option.autopopup"))
+      completionEnabledCheckbox = checkBox(CodeInsightBundle.message("postfix.completion.option.autopopup"))
         .component
     }
     row(CodeInsightBundle.message("postfix.completion.expand")) {

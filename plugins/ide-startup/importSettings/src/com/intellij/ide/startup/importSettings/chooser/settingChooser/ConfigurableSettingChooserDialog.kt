@@ -1,12 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
+import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsDialogWrapper
+import com.intellij.ide.startup.importSettings.chooser.ui.ProductProvider
 import com.intellij.ide.startup.importSettings.data.*
-import com.intellij.openapi.ui.DialogWrapper
 import java.awt.event.ActionEvent
 import javax.swing.Action
 
-fun createDialog(provider: ActionsDataProvider<*>, product: SettingsContributor): DialogWrapper {
+fun createDialog(provider: ActionsDataProvider<*>, product: SettingsContributor): ProductProvider {
   if(provider is SyncActionsDataProvider && provider.productService.baseProduct(product.id)) {
     return SyncSettingDialog(provider, product)
   }
@@ -16,7 +17,7 @@ fun createDialog(provider: ActionsDataProvider<*>, product: SettingsContributor)
 class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDataProvider<T>, product: SettingsContributor) : SettingChooserDialog(provider,
                                                                                                                                                    product) {
   override fun createActions(): Array<Action> {
-    return arrayOf(okAction, cancelAction)
+    return arrayOf(okAction, getBackAction())
   }
 
   override fun getOKAction(): Action {
@@ -26,7 +27,6 @@ class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDat
   }
 
   override fun applyFields() {
-    super.applyFields()
     val productService = provider.productService
 
     val dataForSaves = settingPanes.map { it.item }.filter { it.configurable && it.selected }.map {
@@ -34,12 +34,7 @@ class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDat
       DataForSave(it.setting.id, chs)
     }.toList()
     productService.importSettings(product.id, dataForSaves)
-  }
-
-  override fun getCancelAction(): Action {
-    return super.getCancelAction().apply {
-      putValue(Action.NAME, "Back")
-    }
+    super.applyFields()
   }
 }
 
@@ -57,8 +52,8 @@ class SyncSettingDialog(val provider: SyncActionsDataProvider, product: Settings
   }
 
   override fun applyFields() {
-    super.applyFields()
     provider.productService.syncSettings()
+    super.applyFields()
   }
 
   private fun getImportAction(): Action {
@@ -67,15 +62,7 @@ class SyncSettingDialog(val provider: SyncActionsDataProvider, product: Settings
       override fun doAction(e: ActionEvent?) {
         provider.productService.importSyncSettings()
         close(OK_EXIT_CODE)
-      }
-    }
-  }
-
-  private fun getBackAction(): Action {
-    return object : DialogWrapperAction("Back") {
-
-      override fun doAction(e: ActionEvent?) {
-        close(CANCEL_EXIT_CODE)
+        ImportSettingsDialogWrapper.doOk()
       }
     }
   }

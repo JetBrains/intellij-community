@@ -45,7 +45,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
-    UndoManager undoManager = getUndoManager(editor, dataContext);
+    UndoManager undoManager = getUndoManager(editor, dataContext, true);
 
     myActionInProgress = true;
     try {
@@ -61,7 +61,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
-    UndoManager undoManager = getUndoManager(editor, dataContext);
+    UndoManager undoManager = getUndoManager(editor, dataContext, false);
     if (undoManager == null) {
       presentation.setEnabled(false);
       return;
@@ -74,7 +74,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
     presentation.setDescription(pair.second);
   }
 
-  private UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
+  private UndoManager getUndoManager(FileEditor editor, DataContext dataContext, boolean isActionPerformed) {
     Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (component instanceof JTextComponent && !ClientProperty.isTrue(component, IGNORE_SWING_UNDO_MANAGER)) {
       return SwingUndoManagerWrapper.fromContext(dataContext);
@@ -90,7 +90,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
         return SwingUndoManagerWrapper.fromContext(dataContext);
       }
     }
-    if (myActionInProgress) {
+    if (myActionInProgress && isActionPerformed) {
       LOG.error("Recursive undo invocation attempt, component: " + component + ", fileEditor: " + editor +
                 ", rootPane: " + rootPane + ", popup: " + popup);
       return null;

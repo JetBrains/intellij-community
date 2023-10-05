@@ -161,7 +161,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
    */
   int incrementalUpdate(int eventOffset, int eventOldLength, int eventNewLength, @NotNull Document document) {
     CharSequence text = document.getImmutableCharSequence();
-    if (mySegments.getSegmentCount() == 0) {
+    if (mySegments.getSegmentCount() == 0 || mySegments.getLastValidOffset() < eventOffset) {
       setText(text);
       return text.length();
     }

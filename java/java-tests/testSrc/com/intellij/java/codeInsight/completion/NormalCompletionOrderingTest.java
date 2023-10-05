@@ -404,8 +404,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testPreferApplicableAnnotations() {
     myFixture.addClass(
-      "\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Target;\n\n@Target(ElementType.ANNOTATION_TYPE)\n@interface TMetaAnno {}\n\n@Target(ElementType.LOCAL_VARIABLE)\n@interface TLocalAnno {}");
-    checkPreferredItems(0, "TMetaAnno", "Target", "TabLayoutPolicy", "TabPlacement");
+      "\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Target;\n\n@Target(ElementType.ANNOTATION_TYPE)\n@interface TtMetaAnno {}\n\n@Target(ElementType.LOCAL_VARIABLE)\n@interface TtLocalAnno {}");
+    checkPreferredItems(0, "TtMetaAnno", "TtLocalAnno");
   }
 
   @NeedsIndex.ForStandardLibrary
