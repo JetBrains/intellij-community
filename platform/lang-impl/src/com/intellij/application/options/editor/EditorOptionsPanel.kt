@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
+import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.OptionDescription
@@ -33,6 +34,7 @@ import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
@@ -45,6 +47,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
+import com.intellij.util.applyIf
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
@@ -365,9 +368,20 @@ private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOp
         row { checkBox(highlightScope) }
         row { checkBox(highlightIdentifierUnderCaret) }
       }
-      if (!GeneralSettings.getInstance().isSupportScreenReaders) {
-        group(message("group.quick.documentation")) {
-          row { checkBox(cdShowQuickDocOnMouseMove) }
+      group(message("group.quick.documentation")) {
+        row {
+          val supportScreenReaders = GeneralSettings.getInstance().isSupportScreenReaders
+          checkBox(cdShowQuickDocOnMouseMove).enabled(!supportScreenReaders).applyIf(supportScreenReaders) {
+            comment(message("editor.options.quick.doc.on.mouse.hover.comment.screen.reader.support")) {
+              DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
+                if (context == null) {
+                  return@onSuccess
+                }
+                val settings = context.getData(Settings.KEY) ?: return@onSuccess
+                settings.select(settings.find("preferences.lookFeel"))
+              }
+            }
+          }
         }
       }
       if (!EditorOptionsPageCustomizer.EP_NAME.extensionList.any { it.shouldHideRefactoringsSection() }) {
