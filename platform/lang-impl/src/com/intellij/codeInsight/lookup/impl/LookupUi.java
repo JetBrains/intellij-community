@@ -68,7 +68,7 @@ final class LookupUi {
   private final AsyncProcessIcon myProcessIcon = new AsyncProcessIcon("Completion progress");
   private final ActionButton myMenuButton;
   private final ActionButton myHintButton;
-  private final JComponent myBottomPanel;
+  private final @Nullable JComponent myBottomPanel;
 
   private int myMaximumHeight = Integer.MAX_VALUE;
   private Boolean myPositionedAbove = null;
@@ -119,15 +119,25 @@ final class LookupUi {
                                     ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
     myHintButton.setVisible(false);
 
-    myBottomPanel = new JPanel(new LookupBottomLayout());
-    myBottomPanel.add(myAdvertiser.getAdComponent());
-    myBottomPanel.add(myProcessIcon);
-    myBottomPanel.add(myHintButton);
-    myBottomPanel.add(myMenuButton);
-
     LookupLayeredPane layeredPane = new LookupLayeredPane();
+
     if (showBottomPanel) {
+      myBottomPanel = new JPanel(new LookupBottomLayout());
+      myBottomPanel.add(myAdvertiser.getAdComponent());
+      myBottomPanel.add(myProcessIcon);
+      myBottomPanel.add(myHintButton);
+      myBottomPanel.add(myMenuButton);
+      if (ExperimentalUI.isNewUI()) {
+        myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
+        myBottomPanel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());
+      }
+      else {
+        myBottomPanel.setOpaque(false);
+      }
       layeredPane.mainPanel.add(myBottomPanel, BorderLayout.SOUTH);
+    }
+    else {
+      myBottomPanel = null;
     }
 
     myScrollPane = ScrollPaneFactory.createScrollPane(lookup.getList(), true);
@@ -137,11 +147,6 @@ final class LookupUi {
       Insets bodyInsets = LookupCellRenderer.bodyInsets();
       //noinspection UseDPIAwareBorders
       myScrollPane.setBorder(new EmptyBorder(bodyInsets.top, 0, showBottomPanel ? 0 : bodyInsets.bottom, 0));
-      myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
-      myBottomPanel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());
-    }
-    else {
-      myBottomPanel.setOpaque(false);
     }
 
     lookup.getComponent().add(layeredPane, BorderLayout.CENTER);
@@ -403,7 +408,7 @@ final class LookupUi {
           int scrollBarWidth = myScrollPane.getVerticalScrollBar().getWidth();
           int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().getMaxLookupWidth());
 
-          Dimension bottomPanelSize = myBottomPanel.getPreferredSize();
+          Dimension bottomPanelSize = myBottomPanel != null ? myBottomPanel.getPreferredSize() : new Dimension();
 
           int panelHeight = myScrollPane.getPreferredSize().height + bottomPanelSize.height;
           int width = Math.max(listWidth, bottomPanelSize.width);
