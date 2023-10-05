@@ -73,6 +73,9 @@ internal class SoftwareBillOfMaterialsImpl(
   private val baseDownloadUrl: String?
     get() = context.productProperties.baseDownloadUrl?.removeSuffix("/")
 
+  private val documentNamespace: String?
+    get() = context.productProperties.sbomOptions.documentNamespace ?: baseDownloadUrl
+
   private val license: Options.DistributionLicense by lazy {
     when (val license = context.productProperties.sbomOptions.license) {
       null -> throw IllegalArgumentException("Distribution license isn't specified")
@@ -126,7 +129,7 @@ internal class SoftwareBillOfMaterialsImpl(
       .filter { it.exists() }.toList()
 
   private fun spdxDocument(name: String): SpdxDocument {
-    val uri = "$baseDownloadUrl/$specVersion/$name.spdx"
+    val uri = "$documentNamespace/$specVersion/$name.spdx"
     val modelStore = MultiFormatStore(InMemSpdxStore(), MultiFormatStore.Format.JSON_PRETTY)
     val document = SpdxModelFactory.createSpdxDocument(modelStore, uri, ModelCopyManager())
     val creationDate = Date(TimeUnit.SECONDS.toMillis(context.options.buildDateInSeconds))
@@ -160,9 +163,6 @@ internal class SoftwareBillOfMaterialsImpl(
     if (!context.shouldBuildDistributions()) {
       Span.current().addEvent("No distribution was built, skipping")
       return
-    }
-    requireNotNull(baseDownloadUrl) {
-      "Base download url isn't specified"
     }
     check(distributionFiles.any()) {
       "No distribution was built"
@@ -199,8 +199,10 @@ internal class SoftwareBillOfMaterialsImpl(
         val document = spdxDocument(it.path.name)
         val rootPackage = document.spdxPackage(it.path.name, sha256sum = it.sha256sum, sha1sum = it.sha1sum) {
           setVersionInfo(version)
-            .setDownloadLocation("$baseDownloadUrl/${it.path.name}")
             .setSupplier(creator)
+            .setDownloadLocation(baseDownloadUrl?.let { url ->
+              "$url/${it.path.name}"
+            } ?: SpdxConstants.NOASSERTION_VALUE)
         }
         document.documentDescribes.add(rootPackage)
         val runtimePackage = if (isRuntimeBundled(it.path, distribution.builder.targetOs)) {
