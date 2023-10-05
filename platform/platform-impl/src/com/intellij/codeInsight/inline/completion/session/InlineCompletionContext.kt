@@ -34,7 +34,7 @@ class InlineCompletionContext internal constructor(val editor: Editor) : Disposa
     @RequiresEdt
     get() = state.firstElement?.startOffset
 
-  val lastOffset: Int?
+  val endOffset: Int?
     @RequiresEdt
     get() = state.lastElement?.endOffset
 

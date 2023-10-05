@@ -159,7 +159,7 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
 
   @RequiresEdt
   private fun InlineCompletionContext.renderElement(element: InlineCompletionBlock, startOffset: Int) {
-    element.render(editor, lastOffset ?: startOffset)
+    element.render(editor, endOffset ?: startOffset)
     state.addElement(element)
   }
 
@@ -227,7 +227,7 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
             context.editor.inlayModel.execute(true) {
               context.clear()
               trace(InlineCompletionEventType.Change(result.truncateTyping))
-              result.newElements.forEach { context.renderElement(it, context.lastOffset ?: result.reason.endOffset) }
+              result.newElements.forEach { context.renderElement(it, context.endOffset ?: result.reason.endOffset) }
             }
           }
           UpdateSessionResult.Same -> Unit
