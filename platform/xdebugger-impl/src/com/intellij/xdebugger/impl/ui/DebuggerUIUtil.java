@@ -135,11 +135,8 @@ public final class DebuggerUIUtil {
                                     @NotNull MouseEvent event,
                                     @NotNull Project project,
                                     @Nullable Editor editor) {
-    if (evaluator instanceof CustomComponentEvaluator) {
-      JPanel panel = new JPanel(new CardLayout());
-      final MultiContentTypeCallback callback = new MultiContentTypeCallback(panel, (CustomComponentEvaluator)evaluator, project);
-      showValuePopup(event, project, editor, panel, callback::setObsolete);
-      evaluator.startEvaluation(callback); /*to make it really cancellable*/
+    if (evaluator instanceof CustomComponentEvaluator customComponentEvaluator) {
+      customComponentEvaluator.show(event, project, editor);
     }
     else {
       EditorTextField textArea = createTextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), project);
@@ -437,66 +434,6 @@ public final class DebuggerUIUtil {
       AppUIUtil.invokeOnEdt(() -> {
         myTextArea.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
         myTextArea.setText(errorMessage);
-      });
-    }
-
-    private void setObsolete() {
-      myObsolete.set(true);
-    }
-
-    @Override
-    public boolean isObsolete() {
-      return myObsolete.get();
-    }
-  }
-
-  private static class MultiContentTypeCallback implements XFullValueEvaluator.XFullValueEvaluationCallback {
-    private final AtomicBoolean myObsolete = new AtomicBoolean(false);
-    private final JPanel myPanel;
-    private CustomComponentEvaluator myEvaluator;
-
-    private Project myProject;
-
-    MultiContentTypeCallback(final JPanel panel, CustomComponentEvaluator evaluator, Project project) {
-      myPanel = panel;
-      myEvaluator = evaluator;
-      myProject = project;
-    }
-
-    @Override
-    public void evaluated(@NotNull final String fullValue) {
-      evaluated(fullValue, null);
-    }
-
-    @Override
-    public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
-      AppUIUtil.invokeOnEdt(() -> {
-        try {
-          myPanel.removeAll();
-          JComponent component = myEvaluator.createComponent(fullValue);
-          if (component == null) {
-            EditorTextField textArea = createTextViewer(fullValue, myProject);
-            if (font != null) {
-              textArea.setFont(font);
-            }
-            component = textArea;
-          }
-          myPanel.add(component);
-          myPanel.revalidate();
-          myPanel.repaint();
-        } catch (Exception e) {
-          errorOccurred(e.toString());
-        }
-      });
-    }
-
-    @Override
-    public void errorOccurred(@NotNull final String errorMessage) {
-      AppUIUtil.invokeOnEdt(() -> {
-        myPanel.removeAll();
-        EditorTextField textArea = createTextViewer(errorMessage, myProject);
-        textArea.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
-        myPanel.add(textArea);
       });
     }
 
