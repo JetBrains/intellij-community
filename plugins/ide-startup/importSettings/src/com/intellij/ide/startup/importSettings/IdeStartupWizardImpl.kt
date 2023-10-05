@@ -1,7 +1,7 @@
 package com.intellij.ide.startup.importSettings
 
 import com.intellij.ide.startup.importSettings.chooser.productChooser.ProductChooserDialog
-import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsDialogWrapper
+import com.intellij.ide.startup.importSettings.chooser.ui.MultiplePageDialog
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.platform.ide.bootstrap.IdeStartupWizard
@@ -17,7 +17,8 @@ private class IdeStartupWizardImpl : IdeStartupWizard {
 
   override suspend fun run() {
     withContext(Dispatchers.EDT) {
-      ImportSettingsDialogWrapper.show(ProductChooserDialog())
+
+      MultiplePageDialog.show(ProductChooserDialog())
     }
   }
 }

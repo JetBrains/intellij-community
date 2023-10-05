@@ -2,8 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
 import com.intellij.ide.startup.importSettings.chooser.productChooser.ProductChooserDialog
-import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsDialogWrapper
-import com.intellij.ide.startup.importSettings.chooser.ui.ProductProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.IconProductSize
 import com.intellij.ide.startup.importSettings.data.SettingsContributor
@@ -25,7 +24,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 
-open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, val product: SettingsContributor) : ProductProvider() {
+open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, val product: SettingsContributor) : PageProvider() {
   open val configurable = true
   protected val settingPanes = mutableListOf<BaseSettingPane>()
 
@@ -93,31 +92,16 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
     )
   }
 
-
-  init {
-    init()
-  }
-
   override fun createContent(): JComponent? {
     return pane
-  }
-
-  override fun doOKAction() {
-    super.doOKAction()
-    ImportSettingsDialogWrapper.doOk()
-  }
-
-  override fun doCancelAction() {
-    super.doCancelAction()
-    ImportSettingsDialogWrapper.doAction(CANCEL_EXIT_CODE)
   }
 
   protected fun getBackAction(): Action {
     return object : DialogWrapperAction("Back") {
 
       override fun doAction(e: ActionEvent?) {
-        ImportSettingsDialogWrapper.show(ProductChooserDialog())
-        close(CANCEL_EXIT_CODE)
+        parentDialog?.showPage(ProductChooserDialog())
+        doAction(CANCEL_EXIT_CODE)
       }
     }
   }

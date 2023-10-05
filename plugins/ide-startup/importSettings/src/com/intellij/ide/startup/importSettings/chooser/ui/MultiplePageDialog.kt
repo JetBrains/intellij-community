@@ -1,48 +1,25 @@
 package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.JBDimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.SwingUtilities
+import javax.swing.JRootPane
 
-class ImportSettingsDialogWrapper private constructor() : DialogWrapper(null) {
+class MultiplePageDialog private constructor(): DialogWrapper(null) {
   companion object{
-    private var sdw: ImportSettingsDialogWrapper? = null
+    fun show(page: PageProvider) {
+      val dialog = MultiplePageDialog()
+      dialog.showPage(page)
+      dialog.isModal = false
+      dialog.isResizable = false
+      dialog.show()
 
-    fun doOk() {
-      sdw?.doOk()
-    }
-
-    fun doAction(exitCode: Int) {
-      sdw?.close(exitCode)
-    }
-
-    fun show(dialog: ProductProvider): DialogWrapper {
-      var dw = sdw ?: ImportSettingsDialogWrapper()
-      if(dw.isDisposed) {
-        dw = ImportSettingsDialogWrapper()
-        Disposer.register(dw.disposable) { sdw = null }
-      }
-
-      if(!dw.isShowing) {
-        dw.isResizable = true
-        dw.isModal = false
-        dw.show()
-      }
-
-      dw.showDialog(dialog)
-      SwingUtilities.invokeLater{
-        dw.pack()
-      }
-      sdw = dw
-      return dw
+      dialog.pack()
     }
   }
-
   init {
     init()
   }
@@ -51,20 +28,17 @@ class ImportSettingsDialogWrapper private constructor() : DialogWrapper(null) {
 
   private lateinit var southPanel: JComponent
 
-  private var current: ProductProvider? = null
+  private var current: PageProvider? = null
 
-  fun doOk() {
-    applyFields()
-    close(OK_EXIT_CODE)
-  }
-
-  fun showDialog(dialog: ProductProvider) {
+  fun showPage(dialog: PageProvider) {
     val gbc = GridBagConstraints()
     gbc.gridx = 0
     gbc.gridy = 0
     gbc.weightx = 1.0
     gbc.weighty = 1.0
     gbc.fill = GridBagConstraints.BOTH
+
+    dialog.parentDialog = this
 
     dialog.content?.let {
       panel.add(it, gbc)
@@ -95,9 +69,39 @@ class ImportSettingsDialogWrapper private constructor() : DialogWrapper(null) {
   }
 }
 
-abstract class ProductProvider : DialogWrapper(null) {
+abstract class PageProvider() : DialogWrapper(null) {
   var content: JComponent? = null
   var southPanel: JComponent = JPanel()
+  var parentDialog: MultiplePageDialog? = null
+    set(value) {
+      field = value
+      init()
+    }
+
+  override fun getRootPane(): JRootPane {
+    return parentDialog?.rootPane ?: super.getRootPane()
+  }
+
+  override fun doOKAction() {
+    super.doOKAction()
+    parentDialog?.performOKAction()
+  }
+
+  fun doAction(exitCode: Int){
+    close(exitCode)
+  }
+
+  override fun doCancelAction() {
+    super.doCancelAction()
+    parentDialog?.doCancelAction()
+  }
+
+  override fun show() {
+    if(parentDialog != null) return
+    init()
+    super.show()
+  }
+
   final override fun createCenterPanel(): JComponent? {
     content = createContent()
     return content

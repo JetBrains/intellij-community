@@ -2,21 +2,22 @@
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import java.awt.Component
 import java.awt.Graphics
 import javax.swing.Icon
 
-class JbChooserAction(callback: (Int) -> Unit) : MainChooserAction<JbService>(JBrActionsDataProvider.getInstance(), callback) {
+class JbChooserAction(callback: (PageProvider) -> Unit) : MainChooserAction<JbService>(JBrActionsDataProvider.getInstance(), callback) {
   override fun getIcon(products: List<Product>): Icon? {
     return ImportJbIcon(products) { provider.getProductIcon(it) }
   }
 }
 
-class ExpChooserAction(callback: (Int) -> Unit) : MainChooserAction<ExternalService>(ExtActionsDataProvider.getInstance(), callback)
+class ExpChooserAction(callback: (PageProvider) -> Unit) : MainChooserAction<ExternalService>(ExtActionsDataProvider.getInstance(), callback)
 
-class SyncChooserAction(callback: (Int) -> Unit) : MainChooserAction<SyncService>(SyncActionsDataProvider.getInstance(), callback) {
+class SyncChooserAction(callback: (PageProvider) -> Unit) : MainChooserAction<SyncService>(SyncActionsDataProvider.getInstance(), callback) {
   private val service = SettingsService.getInstance().getSyncService()
 
   override fun getIcon(products: List<Product>): Icon? {

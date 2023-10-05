@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.JBrActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.Product
@@ -12,7 +13,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Separator
 import javax.swing.JButton
 
-class OtherOptions(val callback: (Int) -> Unit) : ProductChooserAction(), LinkAction {
+class OtherOptions(val callback: (PageProvider) -> Unit) : ProductChooserAction(), LinkAction {
   private val jbDataProvider = JBrActionsDataProvider.getInstance()
   private val syncDataProvider = SyncActionsDataProvider.getInstance()
 

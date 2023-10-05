@@ -2,7 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.startup.importSettings.chooser.ui.ProductProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -13,7 +13,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.*
 import javax.swing.*
 
-class ProductChooserDialog : ProductProvider() {
+class ProductChooserDialog : PageProvider() {
   private val accountLabel = JLabel("user.name").apply {
     icon = AllIcons.General.User
   }
@@ -24,12 +24,16 @@ class ProductChooserDialog : ProductProvider() {
     })
   }
 
+  private val callback: (PageProvider)-> Unit = {
+    parentDialog?.showPage(it) ?: run {
+      close(OK_EXIT_CODE)
+      it.show()
+    }
+  }
+
   init {
     val group = DefaultActionGroup()
     group.isPopup = false
-    val callback: (Int)-> Unit = {
-      close(OK_EXIT_CODE)
-    }
 
     group.add(SyncStateAction())
     group.add(SyncChooserAction(callback))
@@ -49,7 +53,6 @@ class ProductChooserDialog : ProductProvider() {
     act.targetComponent = pane
 
     pane.add(act.component)
-    init()
   }
 
   private fun createActionToolbar(group: ActionGroup, horizontal: Boolean): ActionToolbar {
@@ -86,7 +89,7 @@ class ProductChooserDialog : ProductProvider() {
                                 rightSideButtons: MutableList<out JButton>,
                                 addHelpToLeftSide: Boolean): JPanel {
     val group = DefaultActionGroup()
-    group.add(OtherOptions({}))
+    group.add(OtherOptions(callback))
 
     val at = createActionToolbar(group, true)
     at.targetComponent = pane

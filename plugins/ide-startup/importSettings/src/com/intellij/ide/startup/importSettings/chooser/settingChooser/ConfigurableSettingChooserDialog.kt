@@ -1,13 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
-import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsDialogWrapper
-import com.intellij.ide.startup.importSettings.chooser.ui.ProductProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.*
 import java.awt.event.ActionEvent
 import javax.swing.Action
 
-fun createDialog(provider: ActionsDataProvider<*>, product: SettingsContributor): ProductProvider {
+fun createDialog(provider: ActionsDataProvider<*>, product: SettingsContributor): PageProvider {
   if(provider is SyncActionsDataProvider && provider.productService.baseProduct(product.id)) {
     return SyncSettingDialog(provider, product)
   }
@@ -61,8 +60,7 @@ class SyncSettingDialog(val provider: SyncActionsDataProvider, product: Settings
 
       override fun doAction(e: ActionEvent?) {
         provider.productService.importSyncSettings()
-        close(OK_EXIT_CODE)
-        ImportSettingsDialogWrapper.doOk()
+        doAction(OK_EXIT_CODE)
       }
     }
   }
