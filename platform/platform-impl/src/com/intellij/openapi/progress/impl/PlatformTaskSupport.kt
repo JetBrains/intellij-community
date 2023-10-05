@@ -24,6 +24,9 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.util.progress.asContextElement
+import com.intellij.platform.util.progress.impl.ProgressState
+import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*

@@ -3,7 +3,7 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.openapi.progress.impl.ProgressState
+import com.intellij.platform.util.progress.impl.ProgressState
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*

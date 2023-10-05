@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.progress.impl
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.util.progress.impl
 
-import com.intellij.openapi.progress.ProgressReporter
-import com.intellij.openapi.progress.RawProgressReporter
 import com.intellij.openapi.util.NlsContexts.ProgressDetails
+import com.intellij.platform.util.progress.ProgressReporter
+import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

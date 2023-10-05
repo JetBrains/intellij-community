@@ -15,14 +15,14 @@ import com.intellij.openapi.diagnostic.RollingFileHandler
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManagerListener
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.asContextElement
-import com.intellij.openapi.progress.impl.ProgressState
-import com.intellij.openapi.progress.impl.TextDetailsProgressReporter
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.ide.bootstrap.logEssentialInfoAboutIde
+import com.intellij.platform.util.progress.asContextElement
+import com.intellij.platform.util.progress.impl.ProgressState
+import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
 import com.intellij.util.application
 import com.intellij.util.lazyPub
 import kotlinx.coroutines.*

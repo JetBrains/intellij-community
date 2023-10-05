@@ -6,11 +6,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.impl.CancellableTaskCancellation
 import com.intellij.openapi.progress.impl.NonCancellableTaskCancellation
-import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.ui.DialogWrapperDialog
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.util.progress.impl.ProgressState
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.TitlePanel
 import com.intellij.ui.WindowMoveListener

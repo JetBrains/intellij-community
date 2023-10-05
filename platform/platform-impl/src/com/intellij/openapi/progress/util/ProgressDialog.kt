@@ -6,7 +6,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperPeer
@@ -15,6 +14,7 @@ import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer.GlasspanePeerUnav
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.util.progress.impl.ProgressState
 import com.intellij.ui.PopupBorder
 import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
