@@ -8,6 +8,7 @@ import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlin
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -63,7 +64,9 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
         try {
           provider.getProposals(request)
         } catch (e: Throwable) {
-          e.printStackTrace()
+          // Android Studio (b/304298351): Spammy log has been changed to exclude cancellations, which are part of normal operation. This
+          // change can be removed with the 2023.3 merge, as similar changes have already been made upstream.
+          if (e !is CancellationException) thisLogger().warn(e)
           emptyFlow()
         }
       }
