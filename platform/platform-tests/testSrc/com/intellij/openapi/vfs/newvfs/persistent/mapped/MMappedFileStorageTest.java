@@ -142,6 +142,9 @@ public class MMappedFileStorageTest {
           }
         }
       }
+      finally {
+        storage.closeAndClean();
+      }
     }
     finally {
       pool.shutdown();

@@ -33,7 +33,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
   @AfterEach
   void tearDown() throws IOException {
     if (multimap != null) {
-      multimap.close();
+      multimap.closeAndClean();
     }
   }
 
