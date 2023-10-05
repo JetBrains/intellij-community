@@ -138,6 +138,10 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.roots.ui.OrderRootTypeUIFactory"/>
     </extensionPoint>
 
+    <extensionPoint qualifiedName="com.intellij.java.changeSignature.converter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.changeSignature.JavaChangeInfoConverter"/>
+    </extensionPoint>
+
     <extensionPoint qualifiedName="com.intellij.packaging.elementType" interface="com.intellij.packaging.elements.PackagingElementType" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.packaging.artifactPropertiesProvider" interface="com.intellij.packaging.artifacts.ArtifactPropertiesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.packaging.sourceItemProvider" interface="com.intellij.packaging.ui.PackagingSourceItemsProvider" dynamic="true"/>
@@ -1077,6 +1081,7 @@
     <elementDescriptionProvider implementation="com.intellij.refactoring.util.JavaRefactoringElementDescriptionProvider"/>
     <refactoring.helper implementation="com.intellij.refactoring.OptimizeImportsRefactoringHelper"/>
     <refactoring.changeSignatureUsageProcessor implementation="com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor" id="javaProcessor"/>
+    <changeSignature.usageProvider language="JAVA" implementationClass="com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProvider"/>
     <refactoring.introduceParameterMethodUsagesProcessor implementation="com.intellij.refactoring.introduceParameter.JavaIntroduceParameterMethodUsagesProcessor"/>
     <refactoring.overrideMethodProcessor implementation="com.intellij.refactoring.JavaOverrideMethodsProcessor"/>
     <safeDelete.importSearcher implementation="com.intellij.refactoring.safeDelete.JavaImportSearcher"/>
