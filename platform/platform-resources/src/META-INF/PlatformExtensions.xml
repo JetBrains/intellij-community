@@ -1352,9 +1352,6 @@
     </intentionAction>
     <editorNotificationProvider implementation="com.intellij.ide.lightEdit.LightEditNonExistentFileNotificationProvider"/>
 
-    <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.cds.CDSFUSCollector"/>
-
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.StartupPerformanceCollector"/>
     <postStartupActivity implementation="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.StartupMetricCollector"/>
