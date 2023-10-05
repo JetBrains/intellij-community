@@ -30,8 +30,8 @@ internal class UiThemePaletteScope {
 
   fun updateHash(insecureHashBuilder: InsecureHashBuilder): InsecureHashBuilder {
     insecureHashBuilder
-      .stringMap(newPalette)
-      .stringIntMap(alphas)
+      .putStringMap(newPalette)
+      .putStringIntMap(alphas)
     return insecureHashBuilder
   }
 }

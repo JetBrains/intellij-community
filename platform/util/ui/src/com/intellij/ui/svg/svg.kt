@@ -3,9 +3,12 @@
 
 package com.intellij.ui.svg
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.DummyIcon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorHexUtil
@@ -14,12 +17,12 @@ import com.intellij.ui.hasher
 import com.intellij.ui.icons.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
-import com.intellij.ui.seededHasher
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.createDocumentBuilder
 import com.intellij.util.text.CharSequenceReader
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
@@ -36,6 +39,8 @@ import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 import kotlin.math.ceil
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.toJavaDuration
 
 // https://youtrack.jetbrains.com/issue/IDEA-312509/mvstore.MVStoreException-on-zoom-SVG-with-text
 private const val MAX_SCALE_TO_CACHE = 4
@@ -51,7 +56,7 @@ interface SvgAttributePatcher {
   /**
    * @return hash code of the current SVG color patcher or null to disable rendered SVG images caching
    */
-  fun digest(): LongArray?
+  fun digest(): LongArray
 }
 
 @Internal
@@ -93,9 +98,9 @@ internal fun loadSvg(path: String?,
 }
 
 @Internal
-fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphaProvider: (String) -> Int?): SvgAttributePatcher {
+fun newSvgPatcher(digest: LongArray, newPalette: Map<String, String>, alphaProvider: (String) -> Int?): SvgAttributePatcher {
   return object : SvgAttributePatcher {
-    override fun digest(): LongArray? = digest
+    override fun digest() = digest
 
     override fun patchColors(attributes: MutableMap<String, String>) {
       patchColorAttribute(attributes = attributes, attributeName = "fill")
@@ -110,7 +115,7 @@ fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphaProv
         try {
           alpha = ceil(255f * opacity.toFloat()).toInt()
         }
-        catch (ignore: Exception) {
+        catch (_: Exception) {
         }
       }
 
@@ -374,7 +379,7 @@ fun paintIconWithSelection(icon: Icon, c: Component?, g: Graphics?, x: Int, y: I
   }
 }
 
-private val colorPatchCache = CollectionFactory.createConcurrentWeakValueMap<LongArray, MutableMap<Icon, Icon>>().also {
+private val colorPatchCache = CollectionFactory.createConcurrentWeakValueMap<SVGLoader.SvgElementColorPatcherProvider, LoadingCache<Icon, Icon>>().also {
   registerIconCacheCleaner(it::clear)
 }
 
@@ -383,25 +388,20 @@ private val colorPatchCache = CollectionFactory.createConcurrentWeakValueMap<Lon
  */
 @Internal
 fun colorPatchedIcon(icon: Icon, colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon {
-  return replaceCachedImageIcons(icon) {
-    patchColorsInCacheImageIcon(imageIcon = it, colorPatcher = colorPatcher)
-  }!!
-}
-
-private fun patchColorsInCacheImageIcon(imageIcon: CachedImageIcon, colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon {
-  var digest = colorPatcher.digest()
-  if (digest == null) {
-    @Suppress("DEPRECATION")
-    val bytes = colorPatcher.wholeDigest()
-    if (bytes == null) {
-      return imageIcon.createWithPatcher(colorPatcher)
-    }
-    else {
-      digest = longArrayOf(hasher.hashBytesToLong(bytes), seededHasher.hashBytesToLong(bytes))
-    }
+  if (icon is DummyIcon || icon is EmptyIcon) {
+    return icon
   }
 
   return colorPatchCache
-    .computeIfAbsent(digest) { CollectionFactory.createConcurrentWeakMap() }
-    .computeIfAbsent(imageIcon) { imageIcon.createWithPatcher(colorPatcher) }
+    .computeIfAbsent(colorPatcher) {
+      Caffeine.newBuilder()
+        .maximumSize(64)
+        .expireAfterAccess(1.hours.toJavaDuration())
+        .build {
+          replaceCachedImageIcons(icon) {
+            it.createWithPatcher(colorPatcher)
+          }!!
+        }
+    }
+    .get(icon)
 }

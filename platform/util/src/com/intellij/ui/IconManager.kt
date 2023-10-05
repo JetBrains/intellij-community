@@ -94,7 +94,7 @@ interface IconManager {
   fun withIconBadge(icon: Icon, color: Paint): Icon = icon
 
   @ApiStatus.Experimental
-  fun colorizedIcon(baseIcon: Icon, patcherDigest: Long, colorProvider: () -> Color): Icon = baseIcon
+  fun colorizedIcon(baseIcon: Icon, colorProvider: () -> Color): Icon = baseIcon
 }
 
 private object DummyIconManager : IconManager {

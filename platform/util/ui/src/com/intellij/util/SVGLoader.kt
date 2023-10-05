@@ -119,10 +119,9 @@ object SVGLoader {
 
     fun attributeForPath(path: String): SvgAttributePatcher? = null
 
-    fun digest(): LongArray? = null
-
+    @Suppress("DeprecatedCallableAddReplaceWith")
     @ScheduledForRemoval
-    @Deprecated("Implement digest", ReplaceWith("digest"))
+    @Deprecated("Not used", level = DeprecationLevel.ERROR)
     fun wholeDigest(): ByteArray? = null
   }
 }

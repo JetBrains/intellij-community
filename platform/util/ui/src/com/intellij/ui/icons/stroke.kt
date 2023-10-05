@@ -62,7 +62,7 @@ internal class IconAndColorCacheKey(@JvmField val icon: Icon, @JvmField val colo
 
 private val strokeIconCache = Caffeine.newBuilder()
   .maximumSize(64)
-  .expireAfterWrite(1.hours.toJavaDuration())
+  .expireAfterAccess(1.hours.toJavaDuration())
   .build<IconAndColorCacheKey, Icon> { computeStrokeIcon(original = it.icon, resultColor = it.color) }
   .also {
     registerIconCacheCleaner(it::invalidateAll)
@@ -146,11 +146,9 @@ private fun getStrokePatcher(resultColor: Color,
                              alpha.getInt(color).takeIf { it != Int.MIN_VALUE }
                            })
     }
-
-    override fun digest() = digest
   }
 }
 
-private fun packTwoIntToLong(v1: Int, v2: Int): Long {
+fun packTwoIntToLong(v1: Int, v2: Int): Long {
   return (v1.toLong() shl 32) or (v2.toLong() and 0xffffffffL)
 }

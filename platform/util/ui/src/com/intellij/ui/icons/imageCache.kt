@@ -7,10 +7,8 @@ import com.github.benmanes.caffeine.cache.Weigher
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.ui.hasher
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.seededHasher
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.loadSvgAndCacheIfApplicable
 import com.intellij.util.ArrayUtilRt
@@ -147,13 +145,11 @@ private fun loadByDescriptorWithoutCache(rawPathWithoutExt: String,
                                          classLoader: ClassLoader?,
                                          colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): Image? {
   val path = descriptor.pathTransform(rawPathWithoutExt, ext)
-  @Suppress("DEPRECATION")
   return doLoadByDescriptor(path = path,
                             descriptor = descriptor,
                             resourceClass = resourceClass,
                             classLoader = classLoader,
-                            colorPatcher = colorPatcherProvider?.attributeForPath(path),
-                            deprecatedColorPatcher = colorPatcherProvider?.forPath(path))
+                            colorPatcher = colorPatcherProvider?.attributeForPath(path))
 }
 
 internal fun loadByDescriptor(rawPathWithoutExt: String, ext: String, descriptor: ImageDescriptor): Image? {
@@ -177,31 +173,15 @@ private fun loadByDescriptor(rawPathWithoutExt: String,
                              imageCache: ImageCache,
                              ioMissCacheKey: String?,
                              colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): Image? {
-  var tmpPatcher = false
   var digest: LongArray? = null
 
   val path = descriptor.pathTransform(rawPathWithoutExt, ext)
 
   var colorPatcher: SvgAttributePatcher? = null
-  @Suppress("DEPRECATION")
-  var deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher? = null
   if (colorPatcherProvider != null) {
     colorPatcher = colorPatcherProvider.attributeForPath(path)
-    if (colorPatcher == null) {
-      @Suppress("DEPRECATION")
-      deprecatedColorPatcher = colorPatcherProvider.forPath(path)
-      if (deprecatedColorPatcher != null) {
-        digest = deprecatedColorPatcher.digest()?.let { longArrayOf(hasher.hashBytesToLong(it), seededHasher.hashBytesToLong(it)) }
-        if (digest == null) {
-          tmpPatcher = true
-        }
-      }
-    }
-    else {
+    if (colorPatcher != null) {
       digest = colorPatcher.digest()
-      if (digest == null) {
-        tmpPatcher = true
-      }
     }
   }
 
@@ -209,12 +189,9 @@ private fun loadByDescriptor(rawPathWithoutExt: String,
     digest = ArrayUtilRt.EMPTY_LONG_ARRAY!!
   }
 
-  var cacheKey: CacheKey? = null
-  if (!tmpPatcher) {
-    cacheKey = CacheKey(path = path, scale = (if (descriptor.isSvg) descriptor.scale else 0f), digest = digest)
-    imageCache.imageCache.getIfPresent(cacheKey)?.let {
-      return it
-    }
+  val cacheKey = CacheKey(path = path, scale = (if (descriptor.isSvg) descriptor.scale else 0f), digest = digest)
+  imageCache.imageCache.getIfPresent(cacheKey)?.let {
+    return it
   }
 
   if (ioMissCache != null && ioMissCache.contains(ioMissCacheKey)) {
@@ -225,11 +202,8 @@ private fun loadByDescriptor(rawPathWithoutExt: String,
                                  descriptor = descriptor,
                                  resourceClass = resourceClass,
                                  classLoader = classLoader,
-                                 colorPatcher = colorPatcher,
-                                 deprecatedColorPatcher = deprecatedColorPatcher) ?: return null
-  if (cacheKey != null) {
-    imageCache.imageCache.put(cacheKey, image)
-  }
+                                 colorPatcher = colorPatcher) ?: return null
+  imageCache.imageCache.put(cacheKey, image)
   return image
 }
 
@@ -237,8 +211,7 @@ private fun doLoadByDescriptor(path: String,
                                descriptor: ImageDescriptor,
                                resourceClass: Class<*>?,
                                classLoader: ClassLoader?,
-                               colorPatcher: SvgAttributePatcher?,
-                               @Suppress("DEPRECATION") deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?): BufferedImage? {
+                               colorPatcher: SvgAttributePatcher?): BufferedImage? {
   var image: BufferedImage?
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
   if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(path)) && !path.startsWith("file://")) {
@@ -249,8 +222,7 @@ private fun doLoadByDescriptor(path: String,
         loadSvgAndCacheIfApplicable(path = path,
                                     scale = descriptor.scale,
                                     compoundCacheKey = descriptor.toSvgMapper(),
-                                    colorPatcher = colorPatcher,
-                                    deprecatedColorPatcher = deprecatedColorPatcher) { stream.readAllBytes() }
+                                    colorPatcher = colorPatcher) { stream.readAllBytes() }
       }
       else {
         loadPng(stream = stream)
@@ -265,8 +237,7 @@ private fun doLoadByDescriptor(path: String,
       loadSvgAndCacheIfApplicable(path = path,
                                   scale = descriptor.scale,
                                   compoundCacheKey = descriptor.toSvgMapper(),
-                                  colorPatcher = colorPatcher,
-                                  deprecatedColorPatcher = deprecatedColorPatcher) {
+                                  colorPatcher = colorPatcher) {
         getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader)
       }
     }

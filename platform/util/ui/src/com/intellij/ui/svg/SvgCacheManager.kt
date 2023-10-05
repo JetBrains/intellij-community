@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.ui.hasher
+import com.intellij.ui.icons.packTwoIntToLong
 import com.intellij.ui.seededHasher
 import com.intellij.util.io.*
 import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions
@@ -197,7 +198,7 @@ class SvgCacheManager private constructor(private val map: PersistentMapBase<Lon
 
 internal fun createPrecomputedIconCacheKey(precomputedCacheKey: Int, compoundKey: SvgCacheClassifier, themeKey: Long): LongArray {
   return longArrayOf(
-    packTwoIntsToLong(precomputedCacheKey, compoundKey.key),
+    packTwoIntToLong(precomputedCacheKey, compoundKey.key),
     themeKey,
   )
 }
@@ -206,7 +207,7 @@ internal fun createPrecomputedIconCacheKey(precomputedCacheKey: Int, compoundKey
 fun createIconCacheKey(imageBytes: ByteArray, compoundKey: SvgCacheClassifier, themeKey: Long): LongArray {
   return longArrayOf(
     hasher.hashBytesToLong(imageBytes),
-    packTwoIntsToLong(seededHasher.hashBytesToInt(imageBytes), compoundKey.key),
+    packTwoIntToLong(seededHasher.hashBytesToInt(imageBytes), compoundKey.key),
     themeKey,
   )
 }
@@ -264,8 +265,4 @@ private fun readImage(value: IconValue): BufferedImage {
   )
   @Suppress("UndesirableClassUsage")
   return BufferedImage(/* cm = */ colorModel, /* raster = */ raster, /* isRasterPremultiplied = */ false, /* properties = */ null)
-}
-
-private fun packTwoIntsToLong(int1: Int, int2: Int): Long {
-  return (int1.toLong() shl 32) or (int2.toLong() and 0xffffffffL)
 }

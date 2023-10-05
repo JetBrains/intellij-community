@@ -258,7 +258,6 @@ open class CachedImageIcon internal constructor(
 
   fun createWithPatcher(colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon = copy(colorPatcher = colorPatcher)
 
-
   internal fun createStrokeIcon(): CachedImageIcon {
     return copy(useStroke = true)
   }

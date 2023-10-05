@@ -79,7 +79,6 @@ internal fun updateTransform(updater: (IconTransform) -> IconTransform) {
   clearCacheOnUpdateTransform()
 }
 
-
 @Internal
 fun copyIcon(icon: Icon, ancestor: Component?, deepCopy: Boolean): Icon {
   if (icon is CopyableIcon) {
@@ -336,6 +335,10 @@ fun toRetinaAwareIcon(image: BufferedImage, sysScale: Float = JBUIScale.sysScale
  * Creates a new icon with the low-level CachedImageIcon changing
  */
 internal fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (CachedImageIcon) -> Icon): Icon? {
+  if (icon is CachedImageIcon) {
+    return cachedImageIconReplacer(icon)
+  }
+
   return object : IconReplacer {
     override fun replaceIcon(icon: Icon?): Icon? {
       return when {

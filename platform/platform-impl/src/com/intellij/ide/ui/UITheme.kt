@@ -235,36 +235,6 @@ private fun createTheme(theme: UIThemeBean,
   initializeNamedColors(theme)
 
   val paletteScopeManager = UiThemePaletteScopeManager()
-  val colorsOnSelection = theme.iconColorOnSelectionMap.map
-  var selectionColorPatcher: SvgElementColorPatcherProvider? = null
-  if (!colorsOnSelection.isEmpty()) {
-    val colors = HashMap<String, String>(colorsOnSelection.size)
-    val alphaColors = HashSet<String>(colorsOnSelection.size)
-    for ((key, v) in colorsOnSelection) {
-      val value = "#" + ColorUtil.toHex(/* c = */ v, /* withAlpha = */ false)
-      colors.put(key, value)
-      alphaColors.add(value)
-    }
-
-    selectionColorPatcher = object : SvgElementColorPatcherProvider {
-      private val svgPatcher = ConcurrentHashMap<UiThemePaletteScope, SvgAttributePatcher>()
-      private val paletteSvgPatcher: SvgAttributePatcher
-
-      init {
-        val hashBuilder = InsecureHashBuilder().stringMap(colors).update(0/* without scope */)
-        paletteSvgPatcher = newSvgPatcher(digest = hashBuilder.build(), newPalette = colors) { if (alphaColors.contains(it)) 255 else null }
-      }
-
-      override fun attributeForPath(path: String): SvgAttributePatcher {
-        val scope = paletteScopeManager.getScopeByPath(path) ?: return paletteSvgPatcher
-        return svgPatcher.computeIfAbsent(scope) {
-          val hashBuilder = scope.updateHash(InsecureHashBuilder().stringMap(colors).update(1 /* with scope */))
-          // `255` here is not a mistake - we want to set that corresponding color as non-transparent explicitly
-          newSvgPatcher(digest = hashBuilder.build(), newPalette = colors) { if (alphaColors.contains(it)) 255 else null }
-        }
-      }
-    }
-  }
 
   val iconMap = theme.icons
   var colorPatcher: SvgElementColorPatcherProvider? = null
@@ -296,6 +266,37 @@ private fun createTheme(theme: UIThemeBean,
     }
 
     colorPatcher = configureIcons(theme = theme, paletteScopeManager = paletteScopeManager, iconMap = iconMap)
+  }
+
+  val colorsOnSelection = theme.iconColorOnSelectionMap.map
+  var selectionColorPatcher: SvgElementColorPatcherProvider? = null
+  if (!colorsOnSelection.isEmpty()) {
+    val colors = HashMap<String, String>(colorsOnSelection.size)
+    val alphaColors = HashSet<String>(colorsOnSelection.size)
+    for ((key, v) in colorsOnSelection) {
+      val value = "#" + ColorUtil.toHex(/* c = */ v, /* withAlpha = */ false)
+      colors.put(key, value)
+      alphaColors.add(value)
+    }
+
+    selectionColorPatcher = object : SvgElementColorPatcherProvider {
+      private val svgPatcher = ConcurrentHashMap<UiThemePaletteScope, SvgAttributePatcher>()
+      private val paletteSvgPatcher: SvgAttributePatcher
+
+      init {
+        val hashBuilder = InsecureHashBuilder().putStringMap(colors).putInt(0/* without scope */)
+        paletteSvgPatcher = newSvgPatcher(digest = hashBuilder.build(), newPalette = colors) { if (alphaColors.contains(it)) 255 else null }
+      }
+
+      override fun attributeForPath(path: String): SvgAttributePatcher {
+        val scope = paletteScopeManager.getScopeByPath(path) ?: return paletteSvgPatcher
+        return svgPatcher.computeIfAbsent(scope) {
+          val hashBuilder = scope.updateHash(InsecureHashBuilder().putStringMap(colors).putInt(1 /* with scope */))
+          // `255` here is not a mistake - we want to set that corresponding color as non-transparent explicitly
+          newSvgPatcher(digest = hashBuilder.build(), newPalette = colors) { if (alphaColors.contains(it)) 255 else null }
+        }
+      }
+    }
   }
 
   return UITheme(id = themeId,

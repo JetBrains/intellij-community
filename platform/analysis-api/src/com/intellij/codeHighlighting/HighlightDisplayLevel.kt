@@ -187,7 +187,7 @@ private class HighlightDisplayLevelColorIcon(size: Int, color: Color) : ColorIco
 
 private class HighlightDisplayLevelColorizedIcon(private val key: TextAttributesKey,
                                                  baseIcon: Icon) : Icon, HighlightDisplayLevelColoredIcon {
-  private val baseIcon = IconManager.getInstance().colorizedIcon(baseIcon, 1696350573008, ::getColor)
+  private val baseIcon = IconManager.getInstance().colorizedIcon(baseIcon = baseIcon, colorProvider = ::getColor)
 
   override fun getColor(): Color = getColorFromAttributes(key) ?: JBColor.GRAY
 
