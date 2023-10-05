@@ -78,7 +78,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
 
     cs.launchNow(Dispatchers.Main) {
       editor.getLineStatusTrackerFlow().collectLatest { lst ->
-        if (lst !is LineStatusTrackerBase<*>) return@collectLatest
+        if (lst !is LocalLineStatusTracker<*>) return@collectLatest
 
         project.service<GitLabToolWindowViewModel>().projectVm
           .flatMapLatest {
@@ -100,7 +100,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
 
   private fun CoroutineScope.showGutterMarkers(fileVm: GitLabMergeRequestChangeViewModel,
                                                editor: Editor,
-                                               lst: LineStatusTrackerBase<*>) {
+                                               lst: LocalLineStatusTracker<*>) {
     val disposable = Disposer.newDisposable()
     val rangesSource = object : LineStatusMarkerRangesSource<LstRange> {
       var shiftedRanges: List<LstRange>? = null
@@ -129,7 +129,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
    * Only comments located on the right diff side are shown
    * Comment locations are shifted to approximate position using [lst] ranges
    */
-  private fun CoroutineScope.showInlays(fileVm: GitLabMergeRequestChangeViewModel, editor: Editor, lst: LineStatusTrackerBase<*>) {
+  private fun CoroutineScope.showInlays(fileVm: GitLabMergeRequestChangeViewModel, editor: Editor, lst: LocalLineStatusTracker<*>) {
     val cs = this
     editor as EditorEx
     val disposable = Disposer.newDisposable()
@@ -180,7 +180,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
 
   private fun CoroutineScope.showGutterControls(fileVm: GitLabMergeRequestChangeViewModel,
                                                 editor: Editor,
-                                                lst: LineStatusTrackerBase<*>) {
+                                                lst: LocalLineStatusTracker<*>) {
     editor as EditorEx
 
     val renderer = ReviewControlsGutterRenderer(editor, fileVm, lst)
@@ -320,7 +320,7 @@ private class ReviewChangesGutterRenderer(private val fileVm: GitLabMergeRequest
  */
 private class ReviewControlsGutterRenderer(private val editor: EditorEx,
                                            private val vm: GitLabMergeRequestChangeViewModel,
-                                           lst: LineStatusTrackerBase<*>)
+                                           lst: LocalLineStatusTracker<*>)
   : LineMarkerRenderer, LineMarkerRendererEx, ActiveGutterRenderer, Disposable {
 
   private var targetRanges: List<Range> = emptyList()
@@ -484,7 +484,7 @@ private class LineStatusTrackerRangesHandler private constructor(
   }
 
   companion object {
-    fun install(disposable: Disposable, lineStatusTracker: LineStatusTrackerBase<*>, onRangesChanged: (lstRanges: List<LstRange>) -> Unit) {
+    fun install(disposable: Disposable, lineStatusTracker: LocalLineStatusTracker<*>, onRangesChanged: (lstRanges: List<LstRange>) -> Unit) {
       val listener = LineStatusTrackerRangesHandler(lineStatusTracker, onRangesChanged)
       lineStatusTracker.addListener(listener)
       disposable.whenDisposed {

@@ -5,17 +5,17 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
- * Listener for [LineStatusTrackerBase]'s state
+ * Listener for [LineStatusTrackerI]'s state
  */
 @ApiStatus.Internal
 interface LineStatusTrackerListener : EventListener {
   /**
-   * Fired when [LineStatusTrackerBase.isOperational] is changed
+   * Fired when [LineStatusTrackerI.isOperational] is changed
    */
   fun onOperationalStatusChange() {}
 
   /**
-   * Fired when [LineStatusTrackerBase.getRanges] is changed
+   * Fired when lines at [LineStatusTrackerI.getRanges] are changed
    */
   fun onRangesChanged() {}
 }

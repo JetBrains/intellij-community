@@ -46,6 +46,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
@@ -86,6 +87,8 @@ class GitStageLineStatusTracker(
 
   private val renderer = MyLineStatusMarkerPopupRenderer(this)
 
+  private val listeners = EventDispatcher.create(LineStatusTrackerListener::class.java)
+
   // FIXME
   override var mode: LocalLineStatusTracker.Mode = LocalLineStatusTracker.Mode(true, true, false)
 
@@ -121,6 +124,7 @@ class GitStageLineStatusTracker(
     if (!isInitialized) {
       isInitialized = true
       updateHighlighters()
+      listeners.multicaster.onOperationalStatusChange()
     }
   }
 
@@ -131,12 +135,14 @@ class GitStageLineStatusTracker(
 
     isInitialized = false
     updateHighlighters()
+    listeners.multicaster.onOperationalStatusChange()
   }
 
   override fun release() {
     val runnable = Runnable {
       if (isReleased) return@Runnable
       isReleased = true
+      listeners.multicaster.onOperationalStatusChange()
 
       Disposer.dispose(disposable)
     }
@@ -280,6 +286,14 @@ class GitStageLineStatusTracker(
     }
   }
 
+  override fun addListener(listener: LineStatusTrackerListener) {
+    listeners.addListener(listener)
+  }
+
+  override fun removeListener(listener: LineStatusTrackerListener) {
+    listeners.removeListener(listener)
+  }
+
   private class BlockFilter(private val bitSet1: BitSet,
                             private val bitSet2: BitSet) {
     fun matches(block: DocumentTracker.Block): Boolean {
@@ -322,6 +336,7 @@ class GitStageLineStatusTracker(
       cachedBlocks = null
 
       updateHighlighters()
+      if (!isDirty) listeners.multicaster.onRangesChanged()
 
       if (isOperational()) {
         if (unstaged) {
@@ -339,6 +354,7 @@ class GitStageLineStatusTracker(
 
     override fun onUnfreeze(side: Side) {
       updateHighlighters()
+      listeners.multicaster.onRangesChanged()
     }
   }
 

@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 abstract class LineStatusTrackerBase<R : Range>(
@@ -277,17 +276,11 @@ abstract class LineStatusTrackerBase<R : Range>(
     }
   }
 
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
-  @RequiresEdt
-  fun addListener(listener: LineStatusTrackerListener) {
+  override fun addListener(listener: LineStatusTrackerListener) {
     listeners.addListener(listener)
   }
 
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
-  @RequiresEdt
-  fun removeListener(listener: LineStatusTrackerListener) {
+  override fun removeListener(listener: LineStatusTrackerListener) {
     listeners.removeListener(listener)
   }
 
