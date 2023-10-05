@@ -13,10 +13,8 @@ import org.junit.rules.TemporaryFolder;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static com.intellij.util.io.DataEnumeratorEx.NULL_ID;
@@ -38,6 +36,8 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
   protected Path storageFile;
   protected String[] manyValues;
 
+  private final List<T> enumeratorsOpened = new ArrayList<>();
+
   protected StringEnumeratorTestBase(int valuesToTest) {
     valuesCountToTest = valuesToTest;
   }
@@ -51,11 +51,13 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
   @After
   public void tearDown() throws Exception {
-    if (enumerator instanceof CleanableStorage) {
-      ((CleanableStorage)enumerator).closeAndClean();
-    }
-    else {
-      closeEnumerator(enumerator);
+    for (T enumeratorOpened : enumeratorsOpened) {
+      if (enumeratorOpened instanceof CleanableStorage) {
+        ((CleanableStorage)enumeratorOpened).closeAndClean();
+      }
+      else {
+        closeEnumerator(enumeratorOpened);
+      }
     }
   }
 
@@ -455,12 +457,17 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
     }
   }
 
-  protected abstract T openEnumerator(@NotNull Path storagePath) throws IOException;
+  protected final T openEnumerator(@NotNull Path storagePath) throws IOException {
+    T enumerator = openEnumeratorImpl(storagePath);
+    enumeratorsOpened.add(enumerator);
+    return enumerator;
+  }
+
+  protected abstract T openEnumeratorImpl(@NotNull Path storagePath) throws IOException;
 
   protected static String @NotNull [] generateUniqueValues(int poolSize, int minStringSize, int maxStringSize) {
-    //ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    Random rnd = new Random(1);
-    HashSet<String> unique = new HashSet<>();
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    //Random rnd = new Random(1);//for debugging
     return Stream.generate(() -> {
         int length = rnd.nextInt(minStringSize, maxStringSize);
         char[] chars = new char[length];

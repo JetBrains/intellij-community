@@ -20,7 +20,7 @@ public class SimpleStringPersistentEnumeratorTest extends StringEnumeratorTestBa
   }
   
   @Override
-  protected SimpleStringPersistentEnumerator openEnumerator(@NotNull Path storagePath) throws IOException {
+  protected SimpleStringPersistentEnumerator openEnumeratorImpl(@NotNull Path storagePath) throws IOException {
     return new SimpleStringPersistentEnumerator(storageFile);
   }
 }

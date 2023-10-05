@@ -12,6 +12,8 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
@@ -32,7 +34,11 @@ public class AppendOnlyLogOverMMappedFileTest {
   /** Make page smaller to increase the chance of page-border issues to manifest */
   private static final int PAGE_SIZE = 1 << 18;
 
+  /** we could open >1 log -- just keep all them in the list, to closeAndClean() afterwards */
+  private static final List<AppendOnlyLogOverMMappedFile> openedLogs = new ArrayList<>();
+
   private AppendOnlyLogOverMMappedFile appendOnlyLog;
+
 
   @Before
   public void setUp() throws IOException {
@@ -43,8 +49,8 @@ public class AppendOnlyLogOverMMappedFileTest {
 
   @After
   public void tearDown() throws IOException {
-    if (appendOnlyLog != null) {
-      appendOnlyLog.closeAndClean();
+    for (AppendOnlyLogOverMMappedFile log : openedLogs) {
+      log.closeAndClean();
     }
   }
 
@@ -263,11 +269,15 @@ public class AppendOnlyLogOverMMappedFileTest {
   }
 
   private static @NotNull AppendOnlyLogOverMMappedFile openLog(@NotNull Path storageFile) throws IOException {
-    return AppendOnlyLogFactory
+    AppendOnlyLogOverMMappedFile appendOnlyLog = AppendOnlyLogFactory
       .withDefaults()
       .pageSize(PAGE_SIZE)
       .ignoreDataFormatVersion()
       .open(storageFile);
+
+    openedLogs.add(appendOnlyLog);
+
+    return appendOnlyLog;
   }
 
   private static String[] generateRandomStrings(int stringsCount) {

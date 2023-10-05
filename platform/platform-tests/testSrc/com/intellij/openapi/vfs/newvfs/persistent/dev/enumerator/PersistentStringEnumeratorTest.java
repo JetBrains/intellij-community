@@ -35,7 +35,7 @@ public class PersistentStringEnumeratorTest extends StringEnumeratorTestBase<Per
   }
 
   @Override
-  protected PersistentStringEnumerator openEnumerator(final @NotNull Path storagePath) throws IOException {
+  protected PersistentStringEnumerator openEnumeratorImpl(final @NotNull Path storagePath) throws IOException {
     return new PersistentStringEnumerator(storagePath);
   }
 
