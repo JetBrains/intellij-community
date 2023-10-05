@@ -372,6 +372,7 @@ public final class IOUtil {
 
 
   private static final byte[] ZEROES = new byte[1024];
+
   /**
    * Imitates 'fallocate' linux call: ensures file region [channel.size()..upUntilSize) is allocated on disk,
    * and zeroed. We can't call 'fallocate' directly, hence just write zeros into the channel.
@@ -449,11 +450,13 @@ public final class IOUtil {
         sb.append("0");
       }
       sb.append(Integer.toHexString(unsignedByte));
-      if (pageSize > 0 && i % pageSize == pageSize - 1) {
-        sb.append('\n');
-      }
-      else {
-        sb.append(' ');
+      if (i < bytes.length - 1) {
+        if (pageSize > 0 && i % pageSize == pageSize - 1) {
+          sb.append('\n');
+        }
+        else {
+          sb.append(' ');
+        }
       }
     }
     return sb.toString();
