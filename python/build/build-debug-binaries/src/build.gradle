@@ -13,7 +13,7 @@ boolean isMac = Os.isFamily(Os.FAMILY_MAC)
 
 envs {
   String python27version = "2.7.18"
-  String python36version = "3.6.15"
+  String python36version = "3.6.8"
   String python37version = "3.7.9"
   String python38version = "3.8.10"
   String python39version = "3.9.13"
