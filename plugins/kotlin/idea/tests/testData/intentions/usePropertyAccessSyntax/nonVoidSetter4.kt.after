@@ -3,6 +3,6 @@
 
 fun foo() {
     val myFoo = Foo().apply {
-        <caret>setFirst(10)
+        first = 10
     }
 }

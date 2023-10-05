@@ -6,7 +6,6 @@ abstract class KotlinClass : JavaInterface {
 
 fun foo(k: KotlinClass, p: Any) {
     if (p is String) {
-        k.<caret>setSomething(p)
+        k.something = p
     }
 }
-
