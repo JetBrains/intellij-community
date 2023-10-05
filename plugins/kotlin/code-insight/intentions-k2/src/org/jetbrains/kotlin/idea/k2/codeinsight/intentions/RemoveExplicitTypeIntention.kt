@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -107,6 +108,7 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
         // `val n: Long = 1` - type of `1` is context-dependent
         is KtConstantExpression -> initializer.getClassId()?.let { buildClassType(it) }?.isSubTypeOf(typeReference.getKtType()) == true
         is KtCallExpression -> initializer.typeArgumentList != null || !returnTypeOfCallDependsOnTypeParameters(initializer)
+        is KtCallableReferenceExpression -> isCallableReferenceExpressionTypeContextIndependent(initializer)
 
         // consider types of expressions that the compiler views as constants, e.g. `1 + 2`, as independent
         else -> initializer.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null
@@ -119,6 +121,20 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
         val typeParameters = callSymbol.typeParameters
         val returnType = callSymbol.returnType
         return typeParameters.any { typeReferencesTypeParameter(it, returnType) }
+    }
+
+    context(KtAnalysisSession)
+    private fun isCallableReferenceExpressionTypeContextIndependent(callableReferenceExpression: KtCallableReferenceExpression): Boolean {
+        val resolved = callableReferenceExpression.callableReference.references.firstNotNullOfOrNull { it.resolve() } ?: return false
+        if (resolved !is KtNamedFunction) return true
+
+        val symbol = resolved.getFunctionLikeSymbol()
+
+        val typeParameters = symbol.typeParameters
+        if (typeParameters.isEmpty()) return true
+
+        val receiverType = symbol.receiverType ?: return false
+        return typeParameters.all { typeReferencesTypeParameter(it, receiverType) }
     }
 
     context(KtAnalysisSession)
