@@ -5,6 +5,12 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.feedback.AbstractInIdeGeneralFeedbackProvider"
+                        serviceImplementation="com.intellij.platform.feedback.general.InIdeGeneralFeedbackProvider"
+                        overrides="true"/>
+    <applicationService serviceInterface="com.intellij.feedback.AbstractInIdeEvaluationFeedbackProvider"
+                        serviceImplementation="com.intellij.platform.feedback.evaluation.InIdeEvaluationFeedbackProvider"
+                        overrides="true"/>
 
     <applicationService serviceImplementation="com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService"/>
 
