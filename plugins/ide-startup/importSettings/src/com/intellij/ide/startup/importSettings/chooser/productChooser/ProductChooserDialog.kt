@@ -2,10 +2,10 @@
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.chooser.ui.ProductProvider
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
@@ -13,7 +13,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.*
 import javax.swing.*
 
-class ProductChooserDialog : DialogWrapper(null) {
+class ProductChooserDialog : ProductProvider() {
   private val accountLabel = JLabel("user.name").apply {
     icon = AllIcons.General.User
   }
@@ -48,12 +48,7 @@ class ProductChooserDialog : DialogWrapper(null) {
     }
     act.targetComponent = pane
 
-  //  val skipImport = OnboardingDialogButtons.createHoveredLinkButton("Skip Import", null, {})
-
     pane.add(act.component)
-    /*    pane.add(JPanel(VerticalLayout(JBUI.scale(12), SwingConstants.CENTER)).apply {
-      add(act.component)
-    })*/
     init()
   }
 
@@ -70,18 +65,7 @@ class ProductChooserDialog : DialogWrapper(null) {
     }
   }
 
-
-
-  /*  override fun createDefaultActions() {
-      super.createDefaultActions()
-      init()
-    }*/
-
-  private fun showListPopup() {
-
-  }
-
-  override fun createCenterPanel(): JComponent {
+  override fun createContent(): JComponent {
     return JPanel(GridBagLayout()).apply {
       preferredSize = JBDimension(640, 410)
       val gbc = GridBagConstraints()
@@ -97,15 +81,6 @@ class ProductChooserDialog : DialogWrapper(null) {
   override fun createActions(): Array<Action> {
     return emptyArray()
   }
-
-  /*
-  override fun createSouthAdditionalPanel(): JPanel? {
-    return JPanel(BorderLayout()).apply {
-      add(accountLabel, BorderLayout.CENTER)
-    }
-  }
-  */
-
 
   override fun createSouthPanel(leftSideButtons: MutableList<out JButton>,
                                 rightSideButtons: MutableList<out JButton>,
