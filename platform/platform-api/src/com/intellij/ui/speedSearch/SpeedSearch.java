@@ -10,12 +10,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
+public class SpeedSearch extends SpeedSearchSupply implements KeyListener, SpeedSearchActivator {
   public static final String PUNCTUATION_MARKS = "*_-+\"'/.#$>: ,;?!@%^&";
 
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
@@ -24,6 +25,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   private String myString = "";
   private boolean myEnabled;
   private Matcher myMatcher;
+  private boolean myJustActivated = false;
 
   public SpeedSearch() {
     this(false);
@@ -125,6 +127,8 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   public void updatePattern(final String string) {
     if (myString.equals(string)) return;
 
+    myJustActivated = false;
+
     String prevString = myString;
     myString = string;
     try {
@@ -168,6 +172,40 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   @Override
   public @Nullable String getEnteredPrefix() {
     return myString;
+  }
+
+  @Override
+  public boolean isSupported() {
+    return false; // Disabled by default because has to be implemented differently for every subclass.
+  }
+
+  @Override
+  public boolean isAvailable() {
+    return false;
+  }
+
+  @Override
+  public boolean isActive() {
+    return isPopupActive();
+  }
+
+  protected boolean shouldBeActive() {
+    return myJustActivated || isHoldingFilter();
+  }
+
+  @Nullable
+  @Override
+  public JComponent getTextField() {
+    return null;
+  }
+
+  @Override
+  public void activate() {
+    myJustActivated = true;
+    doActivate();
+  }
+
+  protected void doActivate() {
   }
 
   @Override

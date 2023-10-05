@@ -445,6 +445,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return myComponent;
   }
 
+  @Override
+  public boolean isSupported() {
+    return true;
+  }
+
   protected boolean isSpeedSearchEnabled() {
     return true;
   }

@@ -7,6 +7,7 @@ import javax.swing.JComponent
 @Internal
 interface SpeedSearchActivator {
 
+  val isSupported: Boolean
   val isAvailable: Boolean
   val isActive: Boolean
   val textField: JComponent?

@@ -61,5 +61,6 @@ internal class SpeedSearchActionHandler(val targetComponent: JComponent, private
 internal fun Component.getSpeedSearchActionHandler(): SpeedSearchActionHandler? {
   val contextComponent = (this as? JComponent?) ?: return null
   val speedSearch = (SpeedSearchSupply.getSupply(contextComponent, true) as? SpeedSearchActivator?) ?: return null
+  if (!speedSearch.isSupported) return null
   return SpeedSearchActionHandler(contextComponent, speedSearch)
 }
