@@ -216,7 +216,11 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
    * is opened -- and no reference to it is ever leaked. E.g., one opens the file, reads the header, and
    * finds out file content is corrupted -- so .truncate() the storage, and use as-if it was a new file
    * just created.
+   *
+   * @deprecated to be removed: it doesn't work on Windows, but Windows was the main reason to introduce
+   * the method in the first place, so better get rid of it before it got more usages.
    */
+  @ApiStatus.Obsolete
   public void truncate() throws IOException {
     synchronized (pagesLock) {
       channel.truncate(0L);
