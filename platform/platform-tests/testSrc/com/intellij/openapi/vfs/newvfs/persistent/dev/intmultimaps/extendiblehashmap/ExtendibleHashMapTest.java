@@ -5,17 +5,19 @@ import com.intellij.openapi.vfs.newvfs.persistent.StorageTestingUtils;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.dev.intmultimaps.IntToMultiIntMapTestBase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHashMap> {
-
 
   public ExtendibleHashMapTest() {
     super(/*entriesToTest: */1_000_000);
@@ -32,7 +34,7 @@ public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHa
   @Test
   public void closedAndReopenedMap_isProperlyClosed() throws IOException {
     multimap.close();
-    multimap = ExtendibleMapFactory.defaults().open(storagePath);
+    multimap = openFile(storagePath);
     assertTrue(
       multimap.wasProperlyClosed(),
       "Closed and reopened ExtendibleHashMap is considered 'properly closed'"
@@ -44,8 +46,7 @@ public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHa
     multimap.put(1, 2);//put anything so map is 'modified'
     StorageTestingUtils.emulateImproperClose(multimap);
 
-    multimap = ExtendibleMapFactory.defaults()
-      .open(storagePath);
+    multimap = openFile(storagePath);
     assertFalse(
       multimap.wasProperlyClosed(),
       "Not-closed ExtendibleHashMap is considered NOT 'properly closed'"
@@ -57,9 +58,10 @@ public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHa
     multimap.put(1, 2);//put anything so map is 'modified'
     StorageTestingUtils.emulateImproperClose(multimap);
 
-    multimap = ExtendibleMapFactory.defaults()
-      .ifNotClosedProperly(IGNORE_AND_HOPE_FOR_THE_BEST)
-      .open(storagePath);
+    multimap = open(
+      ExtendibleMapFactory.defaults().ifNotClosedProperly(IGNORE_AND_HOPE_FOR_THE_BEST),
+      storagePath
+    );
     assertFalse(
       multimap.wasProperlyClosed(),
       "Not-closed ExtendibleHashMap is considered NOT 'properly closed'"
@@ -76,9 +78,10 @@ public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHa
     multimap.put(1, 2);//put anything so map is 'modified'
     StorageTestingUtils.emulateImproperClose(multimap);
 
-    multimap = ExtendibleMapFactory.defaults()
-      .ifNotClosedProperly(DROP_AND_CREATE_EMPTY_MAP)
-      .open(storagePath);
+    multimap = open(
+      ExtendibleMapFactory.defaults().ifNotClosedProperly(DROP_AND_CREATE_EMPTY_MAP),
+      storagePath
+    );
     assertTrue(
       multimap.wasProperlyClosed(),
       "Must be 'properly closed' since the map was re-created from 0 (factory's strategy=DROP_AND_CREATE_EMPTY_MAP)"
@@ -98,9 +101,10 @@ public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHa
     assertThrows(
       CorruptedException.class,
       () -> {
-        multimap = ExtendibleMapFactory.defaults()
-          .ifNotClosedProperly(FAIL_SPECTACULARLY)
-          .open(storagePath);
+        multimap = open(
+          ExtendibleMapFactory.defaults().ifNotClosedProperly(FAIL_SPECTACULARLY),
+          storagePath
+        );
       });
   }
 
@@ -112,15 +116,40 @@ public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHa
     multimap.closeAndClean();
     assertFalse(
       Files.exists(storagePath),
-      "File ["+storagePath+"] must NOT exist after .closeAndClean()"
+      "File [" + storagePath + "] must NOT exist after .closeAndClean()"
     );
   }
 
   private Path storagePath;
+  private final List<ExtendibleHashMap> multimapsToCloseAndClean = new ArrayList<>();
 
   @Override
-  protected ExtendibleHashMap create(@NotNull Path tempDir) throws IOException {
-    storagePath = tempDir.resolve("map.map");
-    return ExtendibleMapFactory.defaults().open(storagePath);
+  protected ExtendibleHashMap openInDir(@NotNull Path tempDir) throws IOException {
+    if (!Files.isDirectory(tempDir)) {
+      throw new IllegalArgumentException(tempDir + " is not a directory");
+    }
+    Path storagePath = tempDir.resolve("map.map");
+    return openFile(storagePath);
+  }
+
+  protected ExtendibleHashMap openFile(@NotNull Path storagePath) throws IOException {
+    return open(ExtendibleMapFactory.defaults(), storagePath);
+  }
+
+  private ExtendibleHashMap open(@NotNull ExtendibleMapFactory factory,
+                                 @NotNull Path storagePath) throws IOException {
+    this.storagePath = storagePath;
+    ExtendibleHashMap multimap = factory.open(storagePath);
+
+    multimapsToCloseAndClean.add(multimap);
+
+    return multimap;
+  }
+
+  @AfterEach
+  void tearDown() throws IOException {
+    for (ExtendibleHashMap mapToClean : multimapsToCloseAndClean) {
+      mapToClean.closeAndClean();
+    }
   }
 }

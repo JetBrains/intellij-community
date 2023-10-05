@@ -27,7 +27,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
 
   @BeforeEach
   void setUp(@TempDir Path tempDir) throws IOException {
-    multimap = create(tempDir);
+    multimap = openInDir(tempDir);
   }
 
   @AfterEach
@@ -37,7 +37,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
     }
   }
 
-  protected abstract M create(@NotNull Path tempDir) throws IOException;
+  protected abstract M openInDir(@NotNull Path tempDir) throws IOException;
 
   @Test
   public void ZERO_IS_PROHIBITED_KEY() throws IOException {
