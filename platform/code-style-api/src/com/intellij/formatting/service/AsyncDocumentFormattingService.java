@@ -317,7 +317,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
 
     @Override
-    public void onTextReady(@NotNull final String updatedText) {
+    public void onTextReady(final @Nullable String updatedText) {
       if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
         myResult = updatedText;
         myTaskSemaphore.release();
