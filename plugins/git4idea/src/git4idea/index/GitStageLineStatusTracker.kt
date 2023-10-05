@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -363,7 +364,7 @@ class GitStageLineStatusTracker(
     private fun paintStageLines(g: Graphics2D, editor: Editor, block: List<ChangedLines<StageLineFlags>>) {
       val isNewUi = ExperimentalUI.isNewUI()
 
-      val borderColor = LineStatusMarkerDrawUtil.getGutterBorderColor(editor)
+      val borderColor = LineStatusMarkerColorScheme.DEFAULT.getBorderColor(editor)
 
       val area = LineStatusMarkerDrawUtil.getGutterArea(editor)
       val x = area.first
@@ -380,7 +381,7 @@ class GitStageLineStatusTracker(
             change.flags.isUnstaged) {
           val start = change.y1
           val end = change.y2
-          val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
+          val gutterColor = LineStatusMarkerColorScheme.DEFAULT.getColor(editor, change.type)
 
           if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, start, end)) {
             g.paintUnStagedChange(change, gutterColor, x - 1, endX + 1, midX, start, end)
@@ -397,7 +398,7 @@ class GitStageLineStatusTracker(
               change.flags.isStaged) {
             val start = change.y1
             val end = change.y2
-            val stagedBorderColor = LineStatusMarkerDrawUtil.getIgnoredGutterBorderColor(change.type, editor)
+            val stagedBorderColor = LineStatusMarkerColorScheme.DEFAULT.getIgnoredBorderColor(editor, change.type)
 
             if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, start, end)) {
               LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x - 1, start, endX + 1, end)
@@ -420,8 +421,8 @@ class GitStageLineStatusTracker(
       for (change in block) {
         if (change.y1 == change.y2) {
           val start = change.y1
-          val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
-          val stagedBorderColor = borderColor ?: LineStatusMarkerDrawUtil.getIgnoredGutterBorderColor(change.type, editor)
+          val gutterColor = LineStatusMarkerColorScheme.DEFAULT.getColor(editor, change.type)
+          val stagedBorderColor = borderColor ?: LineStatusMarkerColorScheme.DEFAULT.getIgnoredBorderColor(editor, change.type)
 
           if (change.flags.isUnstaged && change.flags.isStaged) {
             paintStripeTriangle(g, editor, gutterColor, stagedBorderColor, x, endX, start)
