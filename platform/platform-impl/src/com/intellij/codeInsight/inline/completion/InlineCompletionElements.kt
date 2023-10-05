@@ -11,7 +11,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
@@ -114,5 +116,22 @@ interface InlineCompletionEvent {
 
 @RequiresBlockingContext
 private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
-  return runReadAction { PsiUtilBase.getPsiFileInEditor(caret, project) }
+  return runReadAction {
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(caret.editor.document) ?: return@runReadAction null
+    // * [PsiUtilBase] takes into account injected [PsiFile] (like in Jupyter Notebooks)
+    // * However, it loads a file into the memory, which is expensive
+    // * Some tests forbid loading a file when tearing down
+    // * On tearing down, Lookup Cancellation happens, which causes the event
+    // * Existence of [treeElement] guarantees that it's in the memory
+    if (file.isLoadedInMemory()) {
+      PsiUtilBase.getPsiFileInEditor(caret, project)
+    }
+    else {
+      file
+    }
+  }
+}
+
+private fun PsiFile.isLoadedInMemory(): Boolean {
+  return (this as? PsiFileImpl)?.treeElement != null
 }
