@@ -249,7 +249,7 @@ public class NavigationGutterIconBuilder<T> {
     };
   }
 
-  protected @NotNull NavigationGutterIconRenderer createGutterIconRenderer(@NotNull Project project,
+  public @NotNull NavigationGutterIconRenderer createGutterIconRenderer(@NotNull Project project,
                                                                            @Nullable GutterIconNavigationHandler<PsiElement> navigationHandler) {
     checkBuilt();
 
