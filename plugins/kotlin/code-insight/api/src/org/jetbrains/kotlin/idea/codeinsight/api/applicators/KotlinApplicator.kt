@@ -5,13 +5,13 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicators
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.internal.statistic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
 import org.jetbrains.kotlin.miniStdLib.annotations.PrivateForInline
-import kotlin.experimental.ExperimentalTypeInference
 import kotlin.reflect.KClass
 
 /**
@@ -70,7 +70,7 @@ fun <PSI : PsiElement, NEW_PSI : PSI, INPUT : KotlinApplicatorInput> KotlinAppli
     init: KotlinApplicatorBuilder<NEW_PSI, INPUT>.(olApplicator: KotlinApplicator<PSI, INPUT>) -> Unit
 ): KotlinApplicator<NEW_PSI, INPUT> = when (this@with) {
     is KotlinApplicatorImpl -> {
-        val builder = KotlinApplicatorBuilder(applyTo, isApplicableByPsi, getActionName, getFamilyName)
+        val builder = KotlinApplicatorBuilder(init.javaClass, applyTo, isApplicableByPsi, getActionName, getFamilyName)
         @Suppress("UNCHECKED_CAST")
         init(builder as KotlinApplicatorBuilder<NEW_PSI, INPUT>, this)
         builder.build()
@@ -86,7 +86,7 @@ fun <PSI : PsiElement, NEW_PSI : PSI, INPUT : KotlinApplicatorInput> KotlinAppli
     init: KotlinApplicatorBuilder<NEW_PSI, INPUT>.(olApplicator: KotlinApplicator<PSI, INPUT>) -> Unit
 ): KotlinApplicator<NEW_PSI, INPUT> = when (this@with) {
     is KotlinApplicatorImpl -> {
-        val builder = KotlinApplicatorBuilder(applyTo, isApplicableByPsi, getActionName, getFamilyName)
+        val builder = KotlinApplicatorBuilder(init.javaClass, applyTo, isApplicableByPsi, getActionName, getFamilyName)
         @Suppress("UNCHECKED_CAST")
         init(builder as KotlinApplicatorBuilder<NEW_PSI, INPUT>, this)
         builder.build()
@@ -95,11 +95,12 @@ fun <PSI : PsiElement, NEW_PSI : PSI, INPUT : KotlinApplicatorInput> KotlinAppli
 
 
 internal class KotlinApplicatorImpl<PSI : PsiElement, INPUT : KotlinApplicatorInput>(
+    private val reportingClass: Class<*>,
     val applyTo: (PSI, INPUT, Project, Editor?) -> Unit,
     val isApplicableByPsi: (PSI) -> Boolean,
     val getActionName: (PSI, INPUT) -> @IntentionName String,
     val getFamilyName: () -> @IntentionFamilyName String,
-) : KotlinApplicator<PSI, INPUT>() {
+) : KotlinApplicator<PSI, INPUT>(), ReportingClassSubstitutor {
     override fun applyToImpl(psi: PSI, input: INPUT, project: Project, editor: Editor?) {
         applyTo.invoke(psi, input, project, editor)
     }
@@ -112,10 +113,15 @@ internal class KotlinApplicatorImpl<PSI : PsiElement, INPUT : KotlinApplicatorIn
 
     override fun getFamilyNameImpl(): String =
         getFamilyName.invoke()
+
+    override fun getSubstitutedClass(): Class<*> {
+        return reportingClass
+    }
 }
 
 
 class KotlinApplicatorBuilder<PSI : PsiElement, INPUT : KotlinApplicatorInput> internal constructor(
+    private val reportingClass: Class<*>,
     @property:PrivateForInline
     var applyTo: ((PSI, INPUT, Project, Editor?) -> Unit)? = null,
     private var isApplicableByPsi: ((PSI) -> Boolean)? = null,
@@ -174,6 +180,7 @@ class KotlinApplicatorBuilder<PSI : PsiElement, INPUT : KotlinApplicatorInput> i
         val getFamilyName = getFamilyName
             ?: error("Please, specify or familyName via either of: familyName, familyAndActionName")
         return KotlinApplicatorImpl(
+            reportingClass,
             applyTo = applyTo,
             isApplicableByPsi = isApplicableByPsi,
             getActionName = getActionName,
@@ -193,4 +200,4 @@ class KotlinApplicatorBuilder<PSI : PsiElement, INPUT : KotlinApplicatorInput> i
 fun <PSI : PsiElement, INPUT : KotlinApplicatorInput> applicator(
     init: KotlinApplicatorBuilder<PSI, INPUT>.() -> Unit,
 ): KotlinApplicator<PSI, INPUT> =
-    KotlinApplicatorBuilder<PSI, INPUT>().apply(init).build()
+    KotlinApplicatorBuilder<PSI, INPUT>(init.javaClass).apply(init).build()
