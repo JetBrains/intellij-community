@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.externalAnnotations;
+package org.jetbrains.kotlin.idea.fir.externalAnnotations;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,32 +14,32 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("idea/tests")
+@TestRoot("fir")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/externalAnnotations")
-public class ExternalAnnotationTestGenerated extends AbstractExternalAnnotationTest {
+@TestMetadata("../idea/tests/testData/externalAnnotations")
+public class K2ExternalAnnotationTestGenerated extends AbstractK2ExternalAnnotationTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("notNullMethod.kt")
     public void testNotNullMethod() throws Exception {
-        runTest("testData/externalAnnotations/notNullMethod.kt");
+        runTest("../idea/tests/testData/externalAnnotations/notNullMethod.kt");
     }
 
     @TestMetadata("nullableField.kt")
     public void testNullableField() throws Exception {
-        runTest("testData/externalAnnotations/nullableField.kt");
+        runTest("../idea/tests/testData/externalAnnotations/nullableField.kt");
     }
 
     @TestMetadata("nullableMethod.kt")
     public void testNullableMethod() throws Exception {
-        runTest("testData/externalAnnotations/nullableMethod.kt");
+        runTest("../idea/tests/testData/externalAnnotations/nullableMethod.kt");
     }
 
     @TestMetadata("nullableMethodParameter.kt")
     public void testNullableMethodParameter() throws Exception {
-        runTest("testData/externalAnnotations/nullableMethodParameter.kt");
+        runTest("../idea/tests/testData/externalAnnotations/nullableMethodParameter.kt");
     }
 }
