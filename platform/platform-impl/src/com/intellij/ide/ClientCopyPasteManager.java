@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientAppSession;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.ide.CopyPasteManager.ContentChangedListener;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,6 +22,10 @@ import java.util.function.Predicate;
 public interface ClientCopyPasteManager extends ClipboardOwner {
   static ClientCopyPasteManager getCurrentInstance() {
     return ApplicationManager.getApplication().getService(ClientCopyPasteManager.class);
+  }
+
+  static ClientCopyPasteManager getInstance(@NotNull ClientAppSession session) {
+    return session.getService(ClientCopyPasteManager.class);
   }
 
   boolean areDataFlavorsAvailable(DataFlavor @NotNull... flavors);
