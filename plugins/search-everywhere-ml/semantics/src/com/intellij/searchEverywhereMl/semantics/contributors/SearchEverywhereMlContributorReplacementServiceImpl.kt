@@ -13,7 +13,7 @@ class SearchEverywhereMlContributorReplacementServiceImpl : SearchEverywhereMlCo
     val settings = SemanticSearchSettings.getInstance()
     val initEvent = SearchEverywhereMlContributorReplacementService.initEvent ?: return contributor
     val searchProviderId = contributor.searchProviderId
-    return if (isActionsContributor(searchProviderId)) {
+    return if (isActionsContributor(searchProviderId) && settings.enabledInActionsTab) {
       configureContributor(SemanticActionSearchEverywhereContributor(contributor as ActionSearchEverywhereContributor), contributor)
     }
     else if (isFilesContributor(searchProviderId) && settings.enabledInFilesTab) {
