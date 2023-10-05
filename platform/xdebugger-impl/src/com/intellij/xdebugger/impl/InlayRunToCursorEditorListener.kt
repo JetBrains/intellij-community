@@ -8,7 +8,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.PriorityQuestionAction
 import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
@@ -23,7 +22,6 @@ import com.intellij.openapi.editor.impl.view.IterationState
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HintHint
@@ -32,7 +30,7 @@ import com.intellij.ui.LightweightHint
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.PlatformUtils
-import com.intellij.util.childScope
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -81,6 +79,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     showInlayRunToCursorIfNeeded(e.editor, e)
   }
 
+  @RequiresEdt
   fun reshowInlayRunToCursor(editor: Editor) {
     currentEditor = WeakReference(null)
     currentLineNumber = -1
@@ -137,15 +136,14 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     return logicalPosition.line
   }
 
+  @RequiresEdt
   private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
     currentJob?.cancel()
     if (editor !is EditorImpl) return
-    val scope = coroutineScope.childScope()
-    Disposer.register(editor.disposable, Disposable {
-      scope.cancel()
-    })
-    scope.launch(Dispatchers.EDT) {
-      currentJob = coroutineContext.job
+    coroutineScope.launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
+      val job = coroutineContext.job
+      job.cancelOnDispose(editor.disposable)
+      currentJob = job
       scheduleInlayRunToCursorAsync(editor, lineNumber, session)
       currentJob = null
     }
