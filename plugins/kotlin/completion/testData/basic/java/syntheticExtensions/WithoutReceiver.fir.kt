@@ -7,5 +7,5 @@ class A : File("") {
     }
 }
 
-// EXIST: {"lookupString":"absolutePath","tailText":" (from getAbsolutePath())","typeText":"String"}
+// EXIST: {"lookupString":"absolutePath","tailText":" (from getAbsolutePath())","typeText":"String!"}
 // ABSENT: getAbsolutePath
