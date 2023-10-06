@@ -46,10 +46,10 @@ W warnings
 700 statements
 900 syntax error
 """
+from __future__ import with_statement
+
 import bisect
-import configparser
 import inspect
-import io
 import keyword
 import os
 import re
@@ -57,25 +57,41 @@ import sys
 import time
 import tokenize
 import warnings
+
+try:
+    from functools import lru_cache
+except ImportError:
+    def lru_cache(maxsize=128):  # noqa as it's a fake implementation.
+        """Does not really need a real a lru_cache, it's just
+        optimization, so let's just do nothing here. Python 3.2+ will
+        just get better performances, time to upgrade?
+        """
+        return lambda function: function
+
 from fnmatch import fnmatch
-from functools import lru_cache
 from optparse import OptionParser
+
+try:
+    from configparser import RawConfigParser
+    from io import TextIOWrapper
+except ImportError:
+    from ConfigParser import RawConfigParser
 
 # this is a performance hack.  see https://bugs.python.org/issue43014
 if (
         sys.version_info < (3, 10) and
         callable(getattr(tokenize, '_compile', None))
 ):  # pragma: no cover (<py310)
-    tokenize._compile = lru_cache(tokenize._compile)  # type: ignore
+    tokenize._compile = lru_cache()(tokenize._compile)  # type: ignore
 
-__version__ = '2.11.0'  # patched PY-37054
+__version__ = '2.8.0'  # patched PY-37054
 
 DEFAULT_EXCLUDE = '.svn,CVS,.bzr,.hg,.git,__pycache__,.tox'
 DEFAULT_IGNORE = 'E121,E123,E126,E226,E24,E704,W503,W504'
 try:
-    if sys.platform == 'win32':  # pragma: win32 cover
+    if sys.platform == 'win32':
         USER_CONFIG = os.path.expanduser(r'~\.pycodestyle')
-    else:  # pragma: win32 no cover
+    else:
         USER_CONFIG = os.path.join(
             os.getenv('XDG_CONFIG_HOME') or os.path.expanduser('~/.config'),
             'pycodestyle'
@@ -84,6 +100,7 @@ except ImportError:
     USER_CONFIG = None
 
 PROJECT_CONFIG = ('setup.cfg', 'tox.ini')
+TESTSUITE_PATH = os.path.join(os.path.dirname(__file__), 'testsuite')
 MAX_LINE_LENGTH = 79
 # Number of blank lines between various code parts.
 BLANK_LINES_CONFIG = {
@@ -101,15 +118,20 @@ REPORT_FORMAT = {
 
 PyCF_ONLY_AST = 1024
 SINGLETONS = frozenset(['False', 'None', 'True'])
-KEYWORDS = frozenset(keyword.kwlist + ['print']) - SINGLETONS
+KEYWORDS = frozenset(keyword.kwlist + ['print', 'async']) - SINGLETONS
 UNARY_OPERATORS = frozenset(['>>', '**', '*', '+', '-'])
 ARITHMETIC_OP = frozenset(['**', '*', '/', '//', '+', '-', '@'])
 WS_OPTIONAL_OPERATORS = ARITHMETIC_OP.union(['^', '&', '|', '<<', '>>', '%'])
+# Warn for -> function annotation operator in py3.5+ (issue 803)
+FUNCTION_RETURN_ANNOTATION_OP = ['->'] if sys.version_info >= (3, 5) else []
+ASSIGNMENT_EXPRESSION_OP = [':='] if sys.version_info >= (3, 8) else []
 WS_NEEDED_OPERATORS = frozenset([
-    '**=', '*=', '/=', '//=', '+=', '-=', '!=', '<', '>',
+    '**=', '*=', '/=', '//=', '+=', '-=', '!=', '<>', '<', '>',
     '%=', '^=', '&=', '|=', '==', '<=', '>=', '<<=', '>>=', '=',
-    'and', 'in', 'is', 'or', '->', ':='])
-WHITESPACE = frozenset(' \t\xa0')
+    'and', 'in', 'is', 'or'] +
+    FUNCTION_RETURN_ANNOTATION_OP +
+    ASSIGNMENT_EXPRESSION_OP)
+WHITESPACE = frozenset(' \t')
 NEWLINE = frozenset([tokenize.NL, tokenize.NEWLINE])
 SKIP_TOKENS = NEWLINE.union([tokenize.INDENT, tokenize.DEDENT])
 # ERRORTOKEN is triggered by backticks in Python 3
@@ -117,6 +139,8 @@ SKIP_COMMENTS = SKIP_TOKENS.union([tokenize.COMMENT, tokenize.ERRORTOKEN])
 BENCHMARK_KEYS = ['directories', 'files', 'logical lines', 'physical lines']
 
 INDENT_REGEX = re.compile(r'([ \t]*)')
+RAISE_COMMA_REGEX = re.compile(r'raise\s+\w+\s*,')
+RERAISE_COMMA_REGEX = re.compile(r'raise\s+\w+\s*,.*,\s*\w+\s*$')
 ERRORCODE_REGEX = re.compile(r'\b[A-Z]\d{3}\b')
 DOCSTRING_REGEX = re.compile(r'u?r?["\']')
 EXTRANEOUS_WHITESPACE_REGEX = re.compile(r'[\[({][ \t]|[ \t][\]}),;:](?!=)')
@@ -125,18 +149,16 @@ COMPARE_SINGLETON_REGEX = re.compile(r'(\bNone|\bFalse|\bTrue)?\s*([=!]=)'
                                      r'\s*(?(1)|(None|False|True))\b')
 COMPARE_NEGATIVE_REGEX = re.compile(r'\b(?<!is\s)(not)\s+[^][)(}{ ]+\s+'
                                     r'(in|is)\s')
-COMPARE_TYPE_REGEX = re.compile(
-    r'[=!]=\s+type(?:\s*\(\s*([^)]*[^ )])\s*\))'
-    r'|\btype(?:\s*\(\s*([^)]*[^ )])\s*\))\s+[=!]='
-)
+COMPARE_TYPE_REGEX = re.compile(r'(?:[=!]=|is(?:\s+not)?)\s+type(?:s.\w+Type'
+                                r'|\s*\(\s*([^)]*[^ )])\s*\))')
 KEYWORD_REGEX = re.compile(r'(\s*)\b(?:%s)\b(\s*)' % r'|'.join(KEYWORDS))
-OPERATOR_REGEX = re.compile(r'(?:[^,\s])(\s*)(?:[-+*/|!<=>%&^]+|:=)(\s*)')
+OPERATOR_REGEX = re.compile(r'(?:[^,\s])(\s*)(?:[-+*/|!<=>%&^]+)(\s*)')
 LAMBDA_REGEX = re.compile(r'\blambda\b')
 HUNK_REGEX = re.compile(r'^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@.*$')
 STARTSWITH_DEF_REGEX = re.compile(r'^(async\s+def|def)\b')
 STARTSWITH_TOP_LEVEL_REGEX = re.compile(r'^(async\s+def\s+|def\s+|class\s+|@)')
 STARTSWITH_INDENT_STATEMENT_REGEX = re.compile(
-    r'^\s*({})\b'.format('|'.join(s.replace(' ', r'\s+') for s in (
+    r'^\s*({0})\b'.format('|'.join(s.replace(' ', r'\s+') for s in (
         'def', 'async def',
         'for', 'async for',
         'if', 'elif', 'else',
@@ -149,21 +171,17 @@ STARTSWITH_INDENT_STATEMENT_REGEX = re.compile(
 DUNDER_REGEX = re.compile(r"^__([^\s]+)__(?::\s*[a-zA-Z.0-9_\[\]\"]+)? = ")
 BLANK_EXCEPT_REGEX = re.compile(r"except\s*:")
 
-if sys.version_info >= (3, 12):  # pragma: >=3.12 cover
-    FSTRING_START = tokenize.FSTRING_START
-    FSTRING_MIDDLE = tokenize.FSTRING_MIDDLE
-    FSTRING_END = tokenize.FSTRING_END
-else:  # pragma: <3.12 cover
-    FSTRING_START = FSTRING_MIDDLE = FSTRING_END = -1
-
 _checks = {'physical_line': {}, 'logical_line': {}, 'tree': {}}
 
 
 def _get_parameters(function):
-    return [parameter.name
-            for parameter
-            in inspect.signature(function).parameters.values()
-            if parameter.kind == parameter.POSITIONAL_OR_KEYWORD]
+    if sys.version_info >= (3, 3):
+        return [parameter.name
+                for parameter
+                in inspect.signature(function).parameters.values()
+                if parameter.kind == parameter.POSITIONAL_OR_KEYWORD]
+    else:
+        return inspect.getargspec(function)[0]
 
 
 def register_check(check, codes=None):
@@ -202,6 +220,7 @@ def tabs_or_spaces(physical_line, indent_char):
     These options are highly recommended!
 
     Okay: if a == 0:\n    a = 1\n    b = 1
+    E101: if a == 0:\n        a = 1\n\tb = 1
     """
     indent = INDENT_REGEX.match(physical_line).group(1)
     for offset, char in enumerate(indent):
@@ -288,6 +307,12 @@ def maximum_line_length(physical_line, max_line_length, multiline,
             (len(chunks) == 2 and chunks[0] == '#')) and \
                 len(line) - len(chunks[-1]) < max_line_length - 7:
             return
+        if hasattr(line, 'decode'):   # Python 2
+            # The line could contain multi-byte characters
+            try:
+                length = len(line.decode('utf-8'))
+            except UnicodeError:
+                pass
         if length > max_line_length:
             return (max_line_length, "E501 line too long "
                     "(%d > %d characters)" % (length, max_line_length))
@@ -404,8 +429,8 @@ def blank_lines(logical_line, blank_lines, indent_level, line_number,
                     yield 0, "E306 expected %s blank line before a " \
                         "nested definition, found 0" % (method_lines,)
                 else:
-                    yield 0, "E301 expected {} blank line, found 0".format(
-                        method_lines)
+                    yield 0, "E301 expected %s blank line, found 0" % (
+                        method_lines,)
         elif blank_before != top_level_lines:
             yield 0, "E302 expected %s blank lines, found %d" % (
                 top_level_lines, blank_before)
@@ -449,7 +474,7 @@ def extraneous_whitespace(logical_line):
             yield found + 1, "E201 whitespace after '%s'" % char
         elif line[found - 1] != ',':
             code = ('E202' if char in '}])' else 'E203')  # if char in ',;:'
-            yield found, f"{code} whitespace before '{char}'"
+            yield found, "%s whitespace before '%s'" % (code, char)
 
 
 @register_check
@@ -477,25 +502,51 @@ def whitespace_around_keywords(logical_line):
 
 
 @register_check
-def missing_whitespace_after_keyword(logical_line, tokens):
-    r"""Keywords should be followed by whitespace.
+def missing_whitespace_after_import_keyword(logical_line):
+    r"""Multiple imports in form from x import (a, b, c) should have
+    space between import statement and parenthesised name list.
 
     Okay: from foo import (bar, baz)
     E275: from foo import(bar, baz)
     E275: from importable.module import(bar, baz)
-    E275: if(foo): bar
     """
-    for tok0, tok1 in zip(tokens, tokens[1:]):
-        # This must exclude the True/False/None singletons, which can
-        # appear e.g. as "if x is None:", and async/await, which were
-        # valid identifier names in old Python versions.
-        if (tok0.end == tok1.start and
-                keyword.iskeyword(tok0.string) and
-                tok0.string not in SINGLETONS and
-                not (tok0.string == 'except' and tok1.string == '*') and
-                not (tok0.string == 'yield' and tok1.string == ')') and
-                tok1.string not in ':\n'):
-            yield tok0.end, "E275 missing whitespace after keyword"
+    line = logical_line
+    indicator = ' import('
+    if line.startswith('from '):
+        found = line.find(indicator)
+        if -1 < found:
+            pos = found + len(indicator) - 1
+            yield pos, "E275 missing whitespace after keyword"
+
+
+@register_check
+def missing_whitespace(logical_line):
+    r"""Each comma, semicolon or colon should be followed by whitespace.
+
+    Okay: [a, b]
+    Okay: (3,)
+    Okay: a[1:4]
+    Okay: a[:4]
+    Okay: a[1:]
+    Okay: a[1:4:2]
+    E231: ['a','b']
+    E231: foo(bar,baz)
+    E231: [{'a':'b'}]
+    """
+    line = logical_line
+    for index in range(len(line) - 1):
+        char = line[index]
+        next_char = line[index + 1]
+        if char in ',;:' and next_char not in WHITESPACE:
+            before = line[:index]
+            if char == ':' and before.count('[') > before.count(']') and \
+                    before.rfind('{') < before.rfind('['):
+                continue  # Slice syntax, no space required
+            if char == ',' and next_char == ')':
+                continue  # Allow tuple with only one element: (3,)
+            if char == ':' and next_char == '=' and sys.version_info >= (3, 8):
+                continue  # Allow assignment expression
+            yield index, "E231 missing whitespace after '%s'" % char
 
 
 @register_check
@@ -684,9 +735,10 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
             indent[depth] = start[1]
             indent_chances[start[1]] = True
             if verbose >= 4:
-                print(f"bracket depth {depth} indent to {start[1]}")
+                print("bracket depth %s indent to %s" % (depth, start[1]))
         # deal with implicit string concatenation
-        elif token_type in (tokenize.STRING, tokenize.COMMENT, FSTRING_START):
+        elif (token_type in (tokenize.STRING, tokenize.COMMENT) or
+              text in ('u', 'ur', 'b', 'br')):
             indent_chances[start[1]] = str
         # visual indent after assert/raise/with
         elif not row and not depth and text in ["assert", "raise", "with"]:
@@ -774,10 +826,9 @@ def whitespace_before_parameters(logical_line, tokens):
             (index < 2 or tokens[index - 2][1] != 'class') and
             # Allow "return (a.foo for a in range(5))"
             not keyword.iskeyword(prev_text) and
+            # 'match' and 'case' are only soft keywords
             (
                 sys.version_info < (3, 9) or
-                # 3.12+: type is a soft keyword but no braces after
-                prev_text == 'type' or
                 not keyword.issoftkeyword(prev_text)
             )
         ):
@@ -812,15 +863,13 @@ def whitespace_around_operator(logical_line):
 
 
 @register_check
-def missing_whitespace(logical_line, tokens):
-    r"""Surround operators with the correct amount of whitespace.
+def missing_whitespace_around_operator(logical_line, tokens):
+    r"""Surround operators with a single space on either side.
 
     - Always surround these binary operators with a single space on
       either side: assignment (=), augmented assignment (+=, -= etc.),
       comparisons (==, <, >, !=, <=, >=, in, not in, is, is not),
       Booleans (and, or, not).
-
-    - Each comma, semicolon or colon should be followed by whitespace.
 
     - If operators with different priorities are used, consider adding
       whitespace around the operators with the lowest priorities.
@@ -832,13 +881,6 @@ def missing_whitespace(logical_line, tokens):
     Okay: c = (a + b) * (a - b)
     Okay: foo(bar, key='word', *args, **kwargs)
     Okay: alpha[:-i]
-    Okay: [a, b]
-    Okay: (3,)
-    Okay: a[3,] = 1
-    Okay: a[1:4]
-    Okay: a[:4]
-    Okay: a[1:]
-    Okay: a[1:4:2]
 
     E225: i=i+1
     E225: submitted +=1
@@ -849,52 +891,19 @@ def missing_whitespace(logical_line, tokens):
     E226: hypot2 = x*x + y*y
     E227: c = a|b
     E228: msg = fmt%(errno, errmsg)
-    E231: ['a','b']
-    E231: foo(bar,baz)
-    E231: [{'a':'b'}]
     """
+    parens = 0
     need_space = False
     prev_type = tokenize.OP
     prev_text = prev_end = None
     operator_types = (tokenize.OP, tokenize.NAME)
-    brace_stack = []
     for token_type, text, start, end, line in tokens:
-        if token_type == tokenize.OP and text in {'[', '(', '{'}:
-            brace_stack.append(text)
-        elif token_type == FSTRING_START:  # pragma: >=3.12 cover
-            brace_stack.append('f')
-        elif token_type == tokenize.NAME and text == 'lambda':
-            brace_stack.append('l')
-        elif brace_stack:
-            if token_type == tokenize.OP and text in {']', ')', '}'}:
-                brace_stack.pop()
-            elif token_type == FSTRING_END:  # pragma: >=3.12 cover
-                brace_stack.pop()
-            elif (
-                    brace_stack[-1] == 'l' and
-                    token_type == tokenize.OP and
-                    text == ':'
-            ):
-                brace_stack.pop()
-
         if token_type in SKIP_COMMENTS:
             continue
-
-        if token_type == tokenize.OP and text in {',', ';', ':'}:
-            next_char = line[end[1]:end[1] + 1]
-            if next_char not in WHITESPACE and next_char not in '\r\n':
-                # slice
-                if text == ':' and brace_stack[-1:] == ['[']:
-                    pass
-                # 3.12+ fstring format specifier
-                elif text == ':' and brace_stack[-2:] == ['f', '{']:  # pragma: >=3.12 cover  # noqa: E501
-                    pass
-                # tuple (and list for some reason?)
-                elif text == ',' and next_char in ')]':
-                    pass
-                else:
-                    yield start, f'E231 missing whitespace after {text!r}'
-
+        if text in ('(', 'lambda'):
+            parens += 1
+        elif text == ')':
+            parens -= 1
         if need_space:
             if start != prev_end:
                 # Found a (probably) needed space
@@ -902,6 +911,10 @@ def missing_whitespace(logical_line, tokens):
                     yield (need_space[0],
                            "E225 missing whitespace around operator")
                 need_space = False
+            elif text == '>' and prev_text in ('<', '-'):
+                # Tolerate the "<>" operator, even if running Python 3
+                # Deal with Python 3's annotated return value "->"
+                pass
             elif (
                     # def f(a, /, b):
                     #           ^
@@ -931,16 +944,8 @@ def missing_whitespace(logical_line, tokens):
                            "around %s operator" % (code, optype))
                 need_space = False
         elif token_type in operator_types and prev_end is not None:
-            if (
-                    text == '=' and (
-                        # allow lambda default args: lambda x=None: None
-                        brace_stack[-1:] == ['l'] or
-                        # allow keyword args or defaults: foo(bar=None).
-                        brace_stack[-1:] == ['('] or
-                        # allow python 3.8 fstring repr specifier
-                        brace_stack[-2:] == ['f', '{']
-                    )
-            ):
+            if text == '=' and parens:
+                # Allow keyword args or defaults: foo(bar=None).
                 pass
             elif text in WS_NEEDED_OPERATORS:
                 need_space = True
@@ -1059,24 +1064,21 @@ def whitespace_around_named_parameter_equals(logical_line, tokens):
 
 @register_check
 def whitespace_before_comment(logical_line, tokens):
-    """Separate inline comments by at least two spaces.
+    r"""Separate inline comments by at least two spaces.
 
     An inline comment is a comment on the same line as a statement.
     Inline comments should be separated by at least two spaces from the
     statement. They should start with a # and a single space.
 
-    Each line of a block comment starts with a # and one or multiple
-    spaces as there can be indented text inside the comment.
+    Each line of a block comment starts with a # and a single space
+    (unless it is indented text inside the comment).
 
     Okay: x = x + 1  # Increment x
     Okay: x = x + 1    # Increment x
-    Okay: # Block comments:
-    Okay: #  - Block comment list
-    Okay: # \xa0- Block comment list
+    Okay: # Block comment
     E261: x = x + 1 # Increment x
     E262: x = x + 1  #Increment x
     E262: x = x + 1  #  Increment x
-    E262: x = x + 1  # \xa0Increment x
     E265: #Block comment
     E266: ### Block comment
     """
@@ -1134,6 +1136,10 @@ def module_imports_on_top_of_file(
     Okay: # this is a comment\nimport os
     Okay: '''this is a module docstring'''\nimport os
     Okay: r'''this is a module docstring'''\nimport os
+    Okay:
+    try:\n\timport x\nexcept ImportError:\n\tpass\nelse:\n\tpass\nimport y
+    Okay:
+    try:\n\timport x\nexcept ImportError:\n\tpass\nfinally:\n\tpass\nimport y
     E402: a=1\nimport os
     E402: 'One string'\n"Two string"\nimport os
     E402: a=1\nfrom sys import x
@@ -1214,16 +1220,15 @@ def compound_statements(logical_line):
     counts = {char: 0 for char in '{}[]()'}
     while -1 < found < last_char:
         update_counts(line[prev_found:found], counts)
-        if (
-                counts['{'] <= counts['}'] and  # {'a': 1} (dict)
-                counts['['] <= counts[']'] and  # [1:2] (slice)
-                counts['('] <= counts[')'] and  # (annotation)
-                line[found + 1] != '='  # assignment expression
-        ):
+        if ((counts['{'] <= counts['}'] and   # {'a': 1} (dict)
+             counts['['] <= counts[']'] and   # [1:2] (slice)
+             counts['('] <= counts[')']) and  # (annotation)
+            not (sys.version_info >= (3, 8) and
+                 line[found + 1] == '=')):  # assignment expression
             lambda_kw = LAMBDA_REGEX.search(line, 0, found)
             if lambda_kw:
                 before = line[:lambda_kw.start()].rstrip()
-                if before[-1:] == '=' and before[:-1].strip().isidentifier():
+                if before[-1:] == '=' and isidentifier(before[:-1].strip()):
                     yield 0, ("E731 do not assign a lambda expression, use a "
                               "def")
                 break
@@ -1283,19 +1288,20 @@ def explicit_line_join(logical_line, tokens):
                 parens -= 1
 
 
-# The % character is strictly speaking a binary operator, but the
-# common usage seems to be to put it next to the format parameters,
-# after a line break.
 _SYMBOLIC_OPS = frozenset("()[]{},:.;@=%~") | frozenset(("...",))
 
 
 def _is_binary_operator(token_type, text):
-    return (
-        token_type == tokenize.OP or
-        text in {'and', 'or'}
-    ) and (
-        text not in _SYMBOLIC_OPS
-    )
+    is_op_token = token_type == tokenize.OP
+    is_conjunction = text in ['and', 'or']
+    # NOTE(sigmavirus24): Previously the not_a_symbol check was executed
+    # conditionally. Since it is now *always* executed, text may be
+    # None. In that case we get a TypeError for `text not in str`.
+    not_a_symbol = text and text not in _SYMBOLIC_OPS
+    # The % character is strictly speaking a binary operator, but the
+    # common usage seems to be to put it next to the format parameters,
+    # after a line break.
+    return ((is_op_token or is_conjunction) and not_a_symbol)
 
 
 def _break_around_binary_operators(tokens):
@@ -1450,24 +1456,26 @@ def comparison_negative(logical_line):
 
 @register_check
 def comparison_type(logical_line, noqa):
-    r"""Object type comparisons should `is` / `is not` / `isinstance()`.
+    r"""Object type comparisons should always use isinstance().
 
     Do not compare types directly.
 
     Okay: if isinstance(obj, int):
-    Okay: if type(obj) is int:
-    E721: if type(obj) == type(1):
+    E721: if type(obj) is type(1):
+
+    When checking if an object is a string, keep in mind that it might
+    be a unicode string too! In Python 2.3, str and unicode have a
+    common base class, basestring, so you can do:
+
+    Okay: if isinstance(obj, basestring):
+    Okay: if type(a1) is type(b1):
     """
     match = COMPARE_TYPE_REGEX.search(logical_line)
     if match and not noqa:
         inst = match.group(1)
-        if inst and inst.isidentifier() and inst not in SINGLETONS:
+        if inst and isidentifier(inst) and inst not in SINGLETONS:
             return  # Allow comparison for types which are not obvious
-        yield (
-            match.start(),
-            "E721 do not compare types, for exact checks use `is` / `is not`, "
-            "for instance checks use `isinstance()`",
-        )
+        yield match.start(), "E721 do not compare types, use 'isinstance()'"
 
 
 @register_check
@@ -1502,19 +1510,14 @@ def ambiguous_identifier(logical_line, tokens):
     E741: I = 42
 
     Variables can be bound in several other contexts, including class
-    and function definitions, lambda functions, 'global' and 'nonlocal'
-    statements, exception handlers, and 'with' and 'for' statements.
+    and function definitions, 'global' and 'nonlocal' statements,
+    exception handlers, and 'with' and 'for' statements.
     In addition, we have a special handling for function parameters.
 
     Okay: except AttributeError as o:
     Okay: with lock as L:
     Okay: foo(l=12)
-    Okay: foo(l=I)
     Okay: for a in foo(l=12):
-    Okay: lambda arg: arg * l
-    Okay: lambda a=l[I:5]: None
-    Okay: lambda x=a.I: None
-    Okay: if l >= 12:
     E741: except AttributeError as O:
     E741: with lock as l:
     E741: global I
@@ -1523,39 +1526,32 @@ def ambiguous_identifier(logical_line, tokens):
     E741: def foo(l=12):
     E741: l = foo(l=12)
     E741: for l in range(10):
-    E741: [l for l in lines if l]
-    E741: lambda l: None
-    E741: lambda a=x[1:5], l: None
-    E741: lambda **l:
-    E741: def f(**l):
     E742: class I(object):
     E743: def l(x):
     """
-    func_depth = None  # set to brace depth if 'def' or 'lambda' is found
-    seen_colon = False  # set to true if we're done with function parameters
-    brace_depth = 0
+    is_func_def = False  # Set to true if 'def' is found
+    parameter_parentheses_level = 0
     idents_to_avoid = ('l', 'O', 'I')
     prev_type, prev_text, prev_start, prev_end, __ = tokens[0]
-    for index in range(1, len(tokens)):
-        token_type, text, start, end, line = tokens[index]
+    for token_type, text, start, end, line in tokens[1:]:
         ident = pos = None
         # find function definitions
-        if prev_text in {'def', 'lambda'}:
-            func_depth = brace_depth
-            seen_colon = False
-        elif (
-                func_depth is not None and
-                text == ':' and
-                brace_depth == func_depth
-        ):
-            seen_colon = True
+        if prev_text == 'def':
+            is_func_def = True
         # update parameter parentheses level
-        if text in '([{':
-            brace_depth += 1
-        elif text in ')]}':
-            brace_depth -= 1
+        if parameter_parentheses_level == 0 and \
+                prev_type == tokenize.NAME and \
+                token_type == tokenize.OP and text == '(':
+            parameter_parentheses_level = 1
+        elif parameter_parentheses_level > 0 and \
+                token_type == tokenize.OP:
+            if text == '(':
+                parameter_parentheses_level += 1
+            elif text == ')':
+                parameter_parentheses_level -= 1
         # identifiers on the lhs of an assignment operator
-        if text == ':=' or (text == '=' and brace_depth == 0):
+        if token_type == tokenize.OP and '=' in text and \
+                parameter_parentheses_level == 0:
             if prev_text in idents_to_avoid:
                 ident = prev_text
                 pos = prev_start
@@ -1565,16 +1561,11 @@ def ambiguous_identifier(logical_line, tokens):
             if text in idents_to_avoid:
                 ident = text
                 pos = start
-        # function / lambda parameter definitions
-        if (
-                func_depth is not None and
-                not seen_colon and
-                index < len(tokens) - 1 and tokens[index + 1][1] in ':,=)' and
-                prev_text in {'lambda', ',', '*', '**', '('} and
-                text in idents_to_avoid
-        ):
-            ident = text
-            pos = start
+        # function parameter definitions
+        if is_func_def:
+            if text in idents_to_avoid:
+                ident = text
+                pos = start
         if prev_text == 'class':
             if text in idents_to_avoid:
                 yield start, "E742 ambiguous class definition '%s'" % text
@@ -1583,8 +1574,62 @@ def ambiguous_identifier(logical_line, tokens):
                 yield start, "E743 ambiguous function definition '%s'" % text
         if ident:
             yield pos, "E741 ambiguous variable name '%s'" % ident
+        prev_type = token_type
         prev_text = text
         prev_start = start
+
+
+@register_check
+def python_3000_has_key(logical_line, noqa):
+    r"""The {}.has_key() method is removed in Python 3: use the 'in'
+    operator.
+
+    Okay: if "alph" in d:\n    print d["alph"]
+    W601: assert d.has_key('alph')
+    """
+    pos = logical_line.find('.has_key(')
+    if pos > -1 and not noqa:
+        yield pos, "W601 .has_key() is deprecated, use 'in'"
+
+
+@register_check
+def python_3000_raise_comma(logical_line):
+    r"""When raising an exception, use "raise ValueError('message')".
+
+    The older form is removed in Python 3.
+
+    Okay: raise DummyError("Message")
+    W602: raise DummyError, "Message"
+    """
+    match = RAISE_COMMA_REGEX.match(logical_line)
+    if match and not RERAISE_COMMA_REGEX.match(logical_line):
+        yield match.end() - 1, "W602 deprecated form of raising exception"
+
+
+@register_check
+def python_3000_not_equal(logical_line):
+    r"""New code should always use != instead of <>.
+
+    The older syntax is removed in Python 3.
+
+    Okay: if a != 'no':
+    W603: if a <> 'no':
+    """
+    pos = logical_line.find('<>')
+    if pos > -1:
+        yield pos, "W603 '<>' is deprecated, use '!='"
+
+
+@register_check
+def python_3000_backticks(logical_line):
+    r"""Use repr() instead of backticks in Python 3.
+
+    Okay: val = repr(1 + 2)
+    W604: val = `1 + 2`
+    """
+    pos = logical_line.find('`')
+    if pos > -1:
+        yield pos, "W604 backticks are deprecated, use 'repr()'"
 
 
 @register_check
@@ -1619,32 +1664,102 @@ def python_3000_invalid_escape_sequence(logical_line, tokens, noqa):
         'U',
     ]
 
-    prefixes = []
-    for token_type, text, start, _, _ in tokens:
-        if token_type in {tokenize.STRING, FSTRING_START}:
+    for token_type, text, start, end, line in tokens:
+        if token_type == tokenize.STRING:
+            start_line, start_col = start
+            quote = text[-3:] if text[-3:] in ('"""', "'''") else text[-1]
             # Extract string modifiers (e.g. u or r)
-            prefixes.append(text[:text.index(text[-1])].lower())
+            quote_pos = text.index(quote)
+            prefix = text[:quote_pos].lower()
+            start = quote_pos + len(quote)
+            string = text[start:-len(quote)]
 
-        if token_type in {tokenize.STRING, FSTRING_MIDDLE}:
-            if 'r' not in prefixes[-1]:
-                start_line, start_col = start
-                pos = text.find('\\')
+            if 'r' not in prefix:
+                pos = string.find('\\')
                 while pos >= 0:
                     pos += 1
-                    if text[pos] not in valid:
-                        line = start_line + text.count('\n', 0, pos)
+                    if string[pos] not in valid:
+                        line = start_line + string.count('\n', 0, pos)
                         if line == start_line:
-                            col = start_col + pos
+                            col = start_col + len(prefix) + len(quote) + pos
                         else:
-                            col = pos - text.rfind('\n', 0, pos) - 1
+                            col = pos - string.rfind('\n', 0, pos) - 1
                         yield (
                             (line, col - 1),
-                            f"W605 invalid escape sequence '\\{text[pos]}'"
+                            "W605 invalid escape sequence '\\%s'" %
+                            string[pos],
                         )
-                    pos = text.find('\\', pos + 1)
+                    pos = string.find('\\', pos + 1)
 
-        if token_type in {tokenize.STRING, FSTRING_END}:
-            prefixes.pop()
+
+@register_check
+def python_3000_async_await_keywords(logical_line, tokens):
+    """'async' and 'await' are reserved keywords starting at Python 3.7.
+
+    W606: async = 42
+    W606: await = 42
+    Okay: async def read(db):\n    data = await db.fetch('SELECT ...')
+    """
+    # The Python tokenize library before Python 3.5 recognizes
+    # async/await as a NAME token. Therefore, use a state machine to
+    # look for the possible async/await constructs as defined by the
+    # Python grammar:
+    # https://docs.python.org/3/reference/grammar.html
+
+    state = None
+    for token_type, text, start, end, line in tokens:
+        error = False
+
+        if token_type == tokenize.NL:
+            continue
+
+        if state is None:
+            if token_type == tokenize.NAME:
+                if text == 'async':
+                    state = ('async_stmt', start)
+                elif text == 'await':
+                    state = ('await', start)
+                elif (token_type == tokenize.NAME and
+                      text in ('def', 'for')):
+                    state = ('define', start)
+
+        elif state[0] == 'async_stmt':
+            if token_type == tokenize.NAME and text in ('def', 'with', 'for'):
+                # One of funcdef, with_stmt, or for_stmt. Return to
+                # looking for async/await names.
+                state = None
+            else:
+                error = True
+        elif state[0] == 'await':
+            if token_type == tokenize.NAME:
+                # An await expression. Return to looking for async/await
+                # names.
+                state = None
+            elif token_type == tokenize.OP and text == '(':
+                state = None
+            else:
+                error = True
+        elif state[0] == 'define':
+            if token_type == tokenize.NAME and text in ('async', 'await'):
+                error = True
+            else:
+                state = None
+
+        if error:
+            yield (
+                state[1],
+                "W606 'async' and 'await' are reserved keywords starting with "
+                "Python 3.7",
+            )
+            state = None
+
+    # Last token
+    if state is not None:
+        yield (
+            state[1],
+            "W606 'async' and 'await' are reserved keywords starting with "
+            "Python 3.7",
+        )
 
 
 ########################################################################
@@ -1676,6 +1791,12 @@ def maximum_doc_length(logical_line, max_doc_length, noqa, tokens):
             if prev_token is None or prev_token in SKIP_TOKENS:
                 lines = line.splitlines()
                 for line_num, physical_line in enumerate(lines):
+                    if hasattr(physical_line, 'decode'):  # Python 2
+                        # The line could contain multi-byte characters
+                        try:
+                            physical_line = physical_line.decode('utf-8')
+                        except UnicodeError:
+                            pass
                     if start[0] + line_num == 1 and line.startswith('#!'):
                         return
                     length = len(physical_line)
@@ -1701,21 +1822,30 @@ def maximum_doc_length(logical_line, max_doc_length, noqa, tokens):
 ########################################################################
 
 
-def readlines(filename):
-    """Read the source code."""
-    try:
-        with tokenize.open(filename) as f:
+if sys.version_info < (3,):
+    # Python 2: implicit encoding.
+    def readlines(filename):
+        """Read the source code."""
+        with open(filename, 'rU') as f:
             return f.readlines()
-    except (LookupError, SyntaxError, UnicodeError):
-        # Fall back if file encoding is improperly declared
-        with open(filename, encoding='latin-1') as f:
-            return f.readlines()
+    isidentifier = re.compile(r'[a-zA-Z_]\w*$').match
+    stdin_get_value = sys.stdin.read
+else:
+    # Python 3
+    def readlines(filename):
+        """Read the source code."""
+        try:
+            with tokenize.open(filename) as f:
+                return f.readlines()
+        except (LookupError, SyntaxError, UnicodeError):
+            # Fall back if file encoding is improperly declared
+            with open(filename, encoding='latin-1') as f:
+                return f.readlines()
+    isidentifier = str.isidentifier
 
-
-def stdin_get_value():
-    """Read the value from stdin."""
-    return io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8', errors='ignore').read()
-
+    def stdin_get_value():
+        """Read the value from stdin."""
+        return TextIOWrapper(sys.stdin.buffer, encoding='utf-8', errors='ignore').read()
 
 noqa = lru_cache(512)(re.compile(r'# no(?:qa|pep8)\b', re.I).search)
 
@@ -1724,6 +1854,15 @@ def expand_indent(line):
     r"""Return the amount of indentation.
 
     Tabs are expanded to the next multiple of 8.
+
+    >>> expand_indent('    ')
+    4
+    >>> expand_indent('\t')
+    8
+    >>> expand_indent('       \t')
+    8
+    >>> expand_indent('        \t')
+    16
     """
     line = line.rstrip('\n\r')
     if '\t' not in line:
@@ -1740,7 +1879,15 @@ def expand_indent(line):
 
 
 def mute_string(text):
-    """Replace contents with 'xxx' to prevent syntax matching."""
+    """Replace contents with 'xxx' to prevent syntax matching.
+
+    >>> mute_string('"abc"')
+    '"xxx"'
+    >>> mute_string("'''abc'''")
+    "'''xxx'''"
+    >>> mute_string("r'abc'")
+    "r'xxx'"
+    """
     # String modifiers (e.g. u or r)
     start = text.index(text[-1]) + 1
     end = len(text) - 1
@@ -1764,7 +1911,7 @@ def parse_udiff(diff, patterns=None, parent='.'):
             continue
         if line[:3] == '@@ ':
             hunk_match = HUNK_REGEX.match(line)
-            (row, nrows) = (int(g or '1') for g in hunk_match.groups())
+            (row, nrows) = [int(g or '1') for g in hunk_match.groups()]
             rv[path].update(range(row, row + nrows))
         elif line[:3] == '+++':
             path = line[4:].split('\t', 1)[0]
@@ -1825,7 +1972,7 @@ def _is_eol_token(token):
 ########################################################################
 
 
-class Checker:
+class Checker(object):
     """Load a Python source file, tokenize it, check coding style."""
 
     def __init__(self, filename=None, lines=None,
@@ -1841,7 +1988,6 @@ class Checker:
         self.max_line_length = options.max_line_length
         self.max_doc_length = options.max_doc_length
         self.indent_size = options.indent_size
-        self.fstring_start = 0
         self.multiline = False  # in a multiline string?
         self.hang_closing = options.hang_closing
         self.indent_size = options.indent_size
@@ -1858,9 +2004,9 @@ class Checker:
         elif lines is None:
             try:
                 self.lines = readlines(filename)
-            except OSError:
+            except IOError:
                 (exc_type, exc) = sys.exc_info()[:2]
-                self._io_error = f'{exc_type.__name__}: {exc}'
+                self._io_error = '%s: %s' % (exc_type.__name__, exc)
                 self.lines = []
         else:
             self.lines = lines
@@ -1885,7 +2031,7 @@ class Checker:
         else:
             offset = (1, 0)
         self.report_error(offset[0], offset[1] or 0,
-                          f'E901 {exc_type.__name__}: {exc.args[0]}',
+                          'E901 %s: %s' % (exc_type.__name__, exc.args[0]),
                           self.report_invalid_syntax)
 
     def readline(self):
@@ -1938,8 +2084,6 @@ class Checker:
                 continue
             if token_type == tokenize.STRING:
                 text = mute_string(text)
-            elif token_type == FSTRING_MIDDLE:  # pragma: >=3.12 cover
-                text = 'x' * len(text)
             if prev_row:
                 (start_row, start_col) = start
                 if prev_row != start_row:    # different row
@@ -2025,21 +2169,16 @@ class Checker:
         """If appropriate for token, check current physical line(s)."""
         # Called after every token, but act only on end of line.
 
-        if token.type == FSTRING_START:  # pragma: >=3.12 cover
-            self.fstring_start = token.start[0]
         # a newline token ends a single physical line.
-        elif _is_eol_token(token):
+        if _is_eol_token(token):
             # if the file does not end with a newline, the NEWLINE
             # token is inserted by the parser, but it does not contain
             # the previous physical line in `token[4]`
-            if token.line == '':
+            if token[4] == '':
                 self.check_physical(prev_physical)
             else:
-                self.check_physical(token.line)
-        elif (
-                token.type == tokenize.STRING and '\n' in token.string or
-                token.type == FSTRING_END
-        ):
+                self.check_physical(token[4])
+        elif token[0] == tokenize.STRING and '\n' in token[1]:
             # Less obviously, a string that contains newlines is a
             # multiline string, either triple-quoted or with internal
             # newlines backslash-escaped. Check every physical line in
@@ -2055,18 +2194,14 @@ class Checker:
             # - have to wind self.line_number back because initially it
             #   points to the last line of the string, and we want
             #   check_physical() to give accurate feedback
-            if noqa(token.line):
+            if noqa(token[4]):
                 return
-            if token.type == FSTRING_END:  # pragma: >=3.12 cover
-                start = self.fstring_start
-            else:
-                start = token.start[0]
-            end = token.end[0]
-
             self.multiline = True
-            self.line_number = start
-            for line_number in range(start, end):
-                self.check_physical(self.lines[line_number - 1] + '\n')
+            self.line_number = token[2][0]
+            _, src, (_, offset), _, _ = token
+            src = self.lines[self.line_number - 1][:offset] + src
+            for line in src.split('\n')[:-1]:
+                self.check_physical(line + '\n')
                 self.line_number += 1
             self.multiline = False
 
@@ -2089,7 +2224,7 @@ class Checker:
             token_type, text = token[0:2]
             if self.verbose >= 3:
                 if token[2][0] == token[3][0]:
-                    pos = '[{}:{}]'.format(token[2][1] or '', token[3][1])
+                    pos = '[%s:%s]' % (token[2][1] or '', token[3][1])
                 else:
                     pos = 'l.%s' % token[3][0]
                 print('l.%s\t%s\t%s\t%r' %
@@ -2116,7 +2251,7 @@ class Checker:
         return self.report.get_file_results()
 
 
-class BaseReport:
+class BaseReport(object):
     """Collect the results of the checks."""
 
     print_filename = False
@@ -2198,7 +2333,7 @@ class BaseReport:
 
     def print_benchmark(self):
         """Print benchmark numbers."""
-        print('{:<7.2f} {}'.format(self.elapsed, 'seconds elapsed'))
+        print('%-7.2f %s' % (self.elapsed, 'seconds elapsed'))
         if self.elapsed:
             for key in self._benchmark_keys:
                 print('%-7d %s per second (%d total)' %
@@ -2216,7 +2351,7 @@ class StandardReport(BaseReport):
     """Collect and print the results of the checks."""
 
     def __init__(self, options):
-        super().__init__(options)
+        super(StandardReport, self).__init__(options)
         self._fmt = REPORT_FORMAT.get(options.format.lower(),
                                       options.format)
         self._repeat = options.repeat
@@ -2226,12 +2361,13 @@ class StandardReport(BaseReport):
     def init_file(self, filename, lines, expected, line_offset):
         """Signal a new file."""
         self._deferred_print = []
-        return super().init_file(
+        return super(StandardReport, self).init_file(
             filename, lines, expected, line_offset)
 
     def error(self, line_number, offset, text, check):
         """Report an error, according to options."""
-        code = super().error(line_number, offset, text, check)
+        code = super(StandardReport, self).error(line_number, offset,
+                                                 text, check)
         if code and (self.counters[code] == 1 or self._repeat):
             self._deferred_print.append(
                 (line_number, offset, code, text[5:], check.__doc__))
@@ -2270,16 +2406,16 @@ class DiffReport(StandardReport):
     """Collect and print the results for the changed lines only."""
 
     def __init__(self, options):
-        super().__init__(options)
+        super(DiffReport, self).__init__(options)
         self._selected = options.selected_lines
 
     def error(self, line_number, offset, text, check):
         if line_number not in self._selected[self.filename]:
             return
-        return super().error(line_number, offset, text, check)
+        return super(DiffReport, self).error(line_number, offset, text, check)
 
 
-class StyleGuide:
+class StyleGuide(object):
     """Initialize a PEP-8 instance with few options."""
 
     def __init__(self, *args, **kwargs):
@@ -2306,7 +2442,8 @@ class StyleGuide:
             options.reporter = BaseReport if options.quiet else StandardReport
 
         options.select = tuple(options.select or ())
-        if not (options.select or options.ignore) and DEFAULT_IGNORE:
+        if not (options.select or options.ignore or
+                options.testsuite or options.doctest) and DEFAULT_IGNORE:
             # The default choice: ignore controversial checks
             options.ignore = tuple(DEFAULT_IGNORE.split(','))
         else:
@@ -2368,10 +2505,8 @@ class StyleGuide:
                     dirs.remove(subdir)
             for filename in sorted(files):
                 # contain a pattern that matches?
-                if (
-                    filename_match(filename, filepatterns) and
-                    not self.excluded(filename, root)
-                ):
+                if ((filename_match(filename, filepatterns) and
+                     not self.excluded(filename, root))):
                     runner(os.path.join(root, filename))
 
     def excluded(self, filename, parent=None):
@@ -2476,6 +2611,11 @@ def get_parser(prog='pycodestyle', version=__version__):
                       help="report changes only within line number ranges in "
                            "the unified diff received on STDIN")
     group = parser.add_option_group("Testing Options")
+    if os.path.exists(TESTSUITE_PATH):
+        group.add_option('--testsuite', metavar='dir',
+                         help="run regression tests from dir")
+        group.add_option('--doctest', action='store_true',
+                         help="run doctest on myself")
     group.add_option('--benchmark', action='store_true',
                      help="measure processing speed")
     return parser
@@ -2492,7 +2632,7 @@ def read_config(options, args, arglist, parser):
     merged together (in that order) using the read method of
     ConfigParser.
     """
-    config = configparser.RawConfigParser()
+    config = RawConfigParser()
 
     cli_conf = options.config
 
@@ -2536,8 +2676,8 @@ def read_config(options, args, arglist, parser):
                 print("  unknown option '%s' ignored" % opt)
                 continue
             if options.verbose > 1:
-                print("  {} = {}".format(opt,
-                                         config.get(pycodestyle_section, opt)))
+                print("  %s = %s" % (opt,
+                                     config.get(pycodestyle_section, opt)))
             normalized_opt = opt.replace('-', '_')
             opt_type = option_list[normalized_opt]
             if opt_type in ('int', 'count'):
@@ -2552,6 +2692,7 @@ def read_config(options, args, arglist, parser):
 
         # Third, overwrite with the command-line options
         (options, __) = parser.parse_args(arglist, values=new_options)
+    options.doctest = options.testsuite = False
     return options
 
 
@@ -2584,14 +2725,17 @@ def process_options(arglist=None, parse_argv=False, config_file=None,
     if verbose is not None:
         options.verbose = verbose
 
-    if parse_argv and not args:
-        if options.diff or any(os.path.exists(name)
-                               for name in PROJECT_CONFIG):
-            args = ['.']
-        else:
-            parser.error('input not specified')
-    options = read_config(options, args, arglist, parser)
-    options.reporter = parse_argv and options.quiet == 1 and FileReport
+    if options.ensure_value('testsuite', False):
+        args.append(options.testsuite)
+    elif not options.ensure_value('doctest', False):
+        if parse_argv and not args:
+            if options.diff or any(os.path.exists(name)
+                                   for name in PROJECT_CONFIG):
+                args = ['.']
+            else:
+                parser.error('input not specified')
+        options = read_config(options, args, arglist, parser)
+        options.reporter = parse_argv and options.quiet == 1 and FileReport
 
     options.filename = _parse_multi_options(options.filename)
     options.exclude = normalize_paths(options.exclude)
@@ -2636,13 +2780,20 @@ def _main():
     style_guide = StyleGuide(parse_argv=True)
     options = style_guide.options
 
-    report = style_guide.check_files()
+    if options.doctest or options.testsuite:
+        from testsuite.support import run_tests
+        report = run_tests(style_guide)
+    else:
+        report = style_guide.check_files()
 
     if options.statistics:
         report.print_statistics()
 
     if options.benchmark:
         report.print_benchmark()
+
+    if options.testsuite and not options.quiet:
+        report.print_results()
 
     if report.total_errors:
         if options.count:
