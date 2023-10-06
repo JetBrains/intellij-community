@@ -20,7 +20,7 @@ internal class RemoveBracesFromAllBranchesIntention : SelfTargetingIntention<KtE
         val targetIfOrWhenExpression = targetIfOrWhenExpression(element) ?: return false
 
         val targetBranchExpressions = targetIfOrWhenExpression.targetBranchExpressions()
-        if (targetBranchExpressions.isEmpty() || targetBranchExpressions.any { !RemoveBracesIntention.isApplicableTo(it) }) return false
+        if (targetBranchExpressions.isEmpty() || targetBranchExpressions.any { !RemoveBracesIntention.Holder.isApplicableTo(it) }) return false
         if (caretIsOnSingleTargetBranch(targetIfOrWhenExpression, targetBranchExpressions, caretOffset)) return false
 
         when (targetIfOrWhenExpression) {
@@ -33,7 +33,7 @@ internal class RemoveBracesFromAllBranchesIntention : SelfTargetingIntention<KtE
     override fun applyTo(element: KtExpression, editor: Editor?) {
         val targetIfOrWhenExpression = targetIfOrWhenExpression(element) ?: return
         targetIfOrWhenExpression.targetBranchExpressions().forEach {
-            RemoveBracesIntention.removeBraces(targetIfOrWhenExpression, it)
+            RemoveBracesIntention.Holder.removeBraces(targetIfOrWhenExpression, it)
         }
     }
 
