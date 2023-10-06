@@ -21,7 +21,7 @@ object IgnoreTests {
         enableTestDirective: String,
         vararg additionalFilesExtensions: String,
         directivePosition: DirectivePosition = DirectivePosition.FIRST_LINE_IN_FILE,
-        test: () -> Unit,
+        test: (isTestEnabled: Boolean) -> Unit,
     ) {
         runTestIfEnabledByDirective(
             testFile,
@@ -35,7 +35,7 @@ object IgnoreTests {
     fun runTestWithFixMeSupport(
         testFile: Path,
         directivePosition: DirectivePosition = DirectivePosition.FIRST_LINE_IN_FILE,
-        test: () -> Unit
+        test: (isTestEnabled: Boolean) -> Unit
     ) {
         runTestIfEnabledByDirective(
             testFile,
@@ -51,7 +51,7 @@ object IgnoreTests {
         disableTestDirective: String,
         vararg additionalFilesExtensions: String,
         directivePosition: DirectivePosition = DirectivePosition.FIRST_LINE_IN_FILE,
-        test: () -> Unit
+        test: (isTestEnabled: Boolean) -> Unit
     ) {
         runTestIfNotDisabledByFileDirective(
             testFile,
@@ -67,7 +67,7 @@ object IgnoreTests {
         disableTestDirective: String,
         computeAdditionalFiles: (mainTestFile: Path) -> List<Path>,
         directivePosition: DirectivePosition = DirectivePosition.FIRST_LINE_IN_FILE,
-        test: () -> Unit
+        test: (isTestEnabled: Boolean) -> Unit
     ) {
         runTestIfEnabledByDirective(
             testFile,
@@ -83,7 +83,7 @@ object IgnoreTests {
         directive: EnableOrDisableTestDirective,
         directivePosition: DirectivePosition,
         additionalFiles: List<Path>,
-        test: () -> Unit
+        test: (isTestEnabled: Boolean) -> Unit
     ) {
         check(!
               (directive is EnableOrDisableTestDirective.Enable && (
@@ -91,13 +91,13 @@ object IgnoreTests {
             "It's not allowed to run runTestIfEnabledByDirective with FIR_IDENTICAL or FIR_COMPARISON"
         }
         if (ALWAYS_CONSIDER_TEST_AS_PASSING) {
-            test()
+            test(true)
             return
         }
         val testIsEnabled = directive.isEnabledInFile(testFile)
 
         try {
-            test()
+            test(testIsEnabled)
         } catch (e: Throwable) {
             if (testIsEnabled) {
                 if (directive is EnableOrDisableTestDirective.Disable) {
