@@ -216,31 +216,19 @@ interface ProgressReporter : AutoCloseable {
   fun rawReporter(): RawProgressReporter
 }
 
-suspend fun <T> indeterminateStep(
-  action: suspend CoroutineScope.() -> T,
-): T {
+suspend fun <T> indeterminateStep(action: suspend CoroutineScope.() -> T): T {
   return indeterminateStep(text = null, action)
 }
 
-suspend fun <T> indeterminateStep(
-  text: ProgressText?,
-  action: suspend CoroutineScope.() -> T,
-): T {
+suspend fun <T> indeterminateStep(text: ProgressText?, action: suspend CoroutineScope.() -> T): T {
   return durationStep(duration = 0.0, text, action)
 }
 
-suspend fun <T> progressStep(
-  endFraction: Double,
-  action: suspend CoroutineScope.() -> T,
-): T {
+suspend fun <T> progressStep(endFraction: Double, action: suspend CoroutineScope.() -> T): T {
   return progressStep(endFraction, text = null, action)
 }
 
-suspend fun <T> progressStep(
-  endFraction: Double,
-  text: ProgressText?,
-  action: suspend CoroutineScope.() -> T,
-): T {
+suspend fun <T> progressStep(endFraction: Double, text: ProgressText?, action: suspend CoroutineScope.() -> T): T {
   val reporter = coroutineContext.progressReporter
                  ?: return coroutineScope(action)
   return progressStep(reporter, endFraction, text, action)
