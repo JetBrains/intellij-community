@@ -1562,7 +1562,12 @@ open class FileEditorManagerImpl(
     return null
   }
 
-  override fun getSelectedEditor(): FileEditor? {
+  override fun getSelectedEditor(): FileEditor? = getSelectedEditor { splitters }
+
+  @Internal
+  fun getLastFocusedEditor(): FileEditor? = getSelectedEditor { getLastFocusedSplitters() ?: splitters }
+
+  private inline fun getSelectedEditor(splitters: () -> EditorsSplitters): FileEditor? {
     if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.getSelectedEditor()
     }
@@ -1570,7 +1575,7 @@ open class FileEditorManagerImpl(
       return null
     }
 
-    val selected = splitters.currentWindow?.selectedComposite
+    val selected = splitters().currentWindow?.selectedComposite
     return selected?.selectedEditor ?: super.getSelectedEditor()
   }
 

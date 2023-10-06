@@ -62,8 +62,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -96,7 +94,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.FocusEvent;
-import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -533,8 +530,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private record MySelectInTarget(SelectInTarget target, int weight) {}
   private static final Comparator<MySelectInTarget> TARGET_WEIGHT_COMPARATOR = Comparator.comparingInt(MySelectInTarget::weight);
   private ContentManager myContentManager;
-  private WeakReference<Editor> focusedEditor = new WeakReference<>(null);
-  private WeakReference<Editor> previousFocusedEditor = new WeakReference<>(null);
 
   public ProjectViewImpl(@NotNull Project project) {
     myProject = project;
@@ -976,8 +971,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
         @Override
         public void focusGained(@NotNull Editor editor, @NotNull FocusEvent event) {
-          previousFocusedEditor = new WeakReference<>(focusedEditor.get());
-          focusedEditor = new WeakReference<>(editor);
           if (!Registry.is("ide.autoscroll.from.source.on.focus.gained")) return;
           if (!myAutoScrollOnFocusEditor.getAndSet(true)) return;
           if (isAutoscrollFromSource(getCurrentViewId())) {
@@ -1886,61 +1879,19 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private @Nullable FileEditor getLastFocusedEditor() {
-    // A dirty hack to handle the situation when the IDE frame just focused because of the button clicked.
-    // The editor in the newly activated window may or may not have already become focused,
-    // so we check two situations here: either the window has just become active
-    // (exactly one mouse click after activation) and the active editor belongs to this window,
-    // in which case we try the previously active editor, or, alternatively, we check that the currently
-    // active editor does NOT belong to an IDE frame (and therefore belongs to a secondary window),
-    // in which case we use this editor and bypass the usual editor selection mechanism.
-    var activeEditor = focusedEditor.get();
-    if (activeEditor == null || activeEditor.isDisposed()) {
-      focusedEditor.clear(); // This and a similar call below to avoid dereferencing disposed objects again and again.
-      return null;
+    FileEditor result = null;
+    var fileEditorManager = FileEditorManager.getInstance(myProject);
+    if (fileEditorManager instanceof FileEditorManagerImpl fileEditorManagerImpl) {
+      result = fileEditorManagerImpl.getLastFocusedEditor();
     }
-    var editorWindow = ComponentUtil.getWindow(activeEditor.getComponent());
-    if (editorWindow instanceof IdeFrameImpl ideFrame) {
-      if (ideFrame.getMouseReleaseCountSinceLastActivated() != 1) {
-        return null; // We're only interested in the situation when the button click caused the focus to change.
+    if (result != null) {
+      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+        SelectInProjectViewImplKt.getLOG().debug(
+          "Forcing use of the last focused editor to select opened file: " + result
+        );
       }
-      var previousEditor = previousFocusedEditor.get();
-      if (previousEditor == null || previousEditor.isDisposed()) {
-        previousFocusedEditor.clear();
-        return null;
-      }
-      // We're obviously not interested in disposed editors,
-      // but also in the editors from the same window, as the whole point of this is to find the active editor from another window.
-      if (ComponentUtil.getWindow(previousEditor.getComponent()) == ideFrame) {
-        return null;
-      }
-      FileEditor result = findFileEditor(previousEditor);
-      if (result != null) {
-        if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-          SelectInProjectViewImplKt.getLOG().debug(
-            "Using the previous editor to select opened file: " + result +
-            " because the IDE frame has just been activated"
-          );
-        }
-      }
-      return result;
     }
-    else { // Now handle the case when the active editor doesn't belong to an IDE frame.
-      var ideFrame = WindowManagerEx.getInstanceEx().getFrame(myProject);
-      // Just in case, check that the frame has just activated, to avoid this ugly hack unless absolutely necessary.
-      if (ideFrame == null || ideFrame.getMouseReleaseCountSinceLastActivated() != 1) {
-        return null;
-      }
-      FileEditor result = findFileEditor(activeEditor);
-      if (result != null) {
-        if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-          SelectInProjectViewImplKt.getLOG().debug(
-            "Forcing use of the currently active editor to select opened file: " + result +
-            " because the IDE frame has just been activated"
-          );
-        }
-      }
-      return result;
-    }
+    return result;
   }
 
   private @Nullable FileEditor findFileEditor(Editor editor) {
