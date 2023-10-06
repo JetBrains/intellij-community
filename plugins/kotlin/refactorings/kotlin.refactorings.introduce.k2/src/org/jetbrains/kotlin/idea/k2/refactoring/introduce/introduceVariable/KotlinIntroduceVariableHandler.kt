@@ -255,7 +255,9 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
             val addedTypeReference = (property as? KtProperty)?.typeReference
             if (addedTypeReference != null) {
-                shortenReferences(addedTypeReference)
+                application.runWriteAction {
+                    shortenReferences(addedTypeReference)
+                }
             }
         }
 
