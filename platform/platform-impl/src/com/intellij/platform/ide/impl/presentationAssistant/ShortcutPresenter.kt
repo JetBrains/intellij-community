@@ -120,9 +120,8 @@ class ShortcutPresenter : Disposable {
     val realProject = actionData.project ?: ProjectManager.getInstance().openProjects.firstOrNull()
     if (realProject != null && !realProject.isDisposed && realProject.isOpen) {
       if (infoPopupGroup == null || !infoPopupGroup!!.canBeReused(fragments.size)) {
-        val prevIsVisible = infoPopupGroup?.isShown == true
         infoPopupGroup?.close()
-        infoPopupGroup = ActionInfoPopupGroup(realProject, fragments, !prevIsVisible)
+        infoPopupGroup = ActionInfoPopupGroup(realProject, fragments, false)
       }
       else {
         infoPopupGroup!!.updateText(realProject, fragments)
