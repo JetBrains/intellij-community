@@ -184,7 +184,7 @@ class LightGitTracker : Disposable {
       if (!hasGit) return StateUpdater.Clear
 
       val locationFile = requests.lastInstance(Request.Location::class.java)?.file
-      val files = requests.filterIsInstance(Request.Status::class.java).flatMapTo(mutableSetOf()) { it.files }
+      val files = requests.filterIsInstance<Request.Status>().flatMapTo(mutableSetOf()) { it.files }
 
       val location: String? = if (locationFile != null) {
         try {

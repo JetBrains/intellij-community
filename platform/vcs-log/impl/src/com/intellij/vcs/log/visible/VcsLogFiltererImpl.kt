@@ -209,7 +209,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   private fun filterWithIndex(dataGetter: IndexDataGetter,
                               detailsFilters: List<VcsLogDetailsFilter>,
                               commitCandidates: IntSet?): Pair<IntSet?, FileHistoryData?> {
-    val structureFilter = detailsFilters.filterIsInstance(VcsLogStructureFilter::class.java).singleOrNull()
+    val structureFilter = detailsFilters.filterIsInstance<VcsLogStructureFilter>().singleOrNull()
                           ?: return Pair(dataGetter.filter(detailsFilters, commitCandidates), null)
 
     val historyData = dataGetter.createFileHistoryData(structureFilter.files).build()
