@@ -4,38 +4,39 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler.getCandidateContainers
+import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService
 import org.jetbrains.kotlin.idea.util.ElementKind
+import org.jetbrains.kotlin.idea.util.findElement
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler.getCandidateContainers
 
 internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project) : KotlinIntroduceVariableService {
-    override fun findElementAtRange(
+    override fun findElement(
         file: KtFile,
-        selectionStart: Int,
-        selectionEnd: Int,
-        elementKinds: Collection<ElementKind>
-    ): PsiElement? = findElementAtRange(
-        file = file,
-        selectionStart = selectionStart,
-        selectionEnd = selectionEnd,
-        elementKinds = elementKinds,
-        failOnEmptySuggestion = false,
-    )
+        startOffset: Int,
+        endOffset: Int,
+        failOnNoExpression: Boolean,
+        elementKind: ElementKind
+    ): PsiElement? {
+        val element = findElement(file, startOffset, endOffset, elementKind)
+
+        if (element == null) {
+            if (failOnNoExpression) {
+                throw IntroduceRefactoringException(KotlinBundle.message("cannot.refactor.not.expression"))
+            }
+            return null
+        }
+
+        return element
+    }
 
     override fun getContainersForExpression(expression: KtExpression): List<Pair<KtElement, KtElement>> {
         return expression.getCandidateContainers().map { expression to it }
-    }
-
-    override fun getSmartSelectSuggestions(
-        file: PsiFile,
-        offset: Int,
-        elementKind: ElementKind
-    ): List<KtElement> {
-        return org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.getSmartSelectSuggestions(file, offset, elementKind)
     }
 
     override fun findOccurrences(
@@ -55,5 +56,12 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
             container,
             isVar = false,
         )
+    }
+
+    override fun hasUnitType(element: KtExpression): Boolean {
+        return analyzeInModalWindow(element, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            val expressionType = element.getKtType()
+            expressionType == null || expressionType.isUnit
+        }
     }
 }

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.psi.KtElement
@@ -12,15 +11,15 @@ import org.jetbrains.kotlin.psi.KtFile
 
 @Internal
 interface KotlinIntroduceVariableService {
-    fun findElementAtRange(
+    fun findElement(
         file: KtFile,
-        selectionStart: Int,
-        selectionEnd: Int,
-        elementKinds: Collection<ElementKind>,
+        startOffset: Int,
+        endOffset: Int,
+        failOnNoExpression: Boolean,
+        elementKind: ElementKind
     ): PsiElement?
 
     fun getContainersForExpression(expression: KtExpression): List<Pair<KtElement, KtElement>>
-    fun getSmartSelectSuggestions(file: PsiFile, offset: Int, elementKind: ElementKind): List<KtElement>
     fun findOccurrences(expression: KtExpression, occurrenceContainer: PsiElement): List<KtExpression>
 
     fun doRefactoringWithContainer(
@@ -29,4 +28,6 @@ interface KotlinIntroduceVariableService {
         container: KtElement,
         occurrencesToReplace: List<KtExpression>?,
     )
+
+    fun hasUnitType(element: KtExpression): Boolean
 }

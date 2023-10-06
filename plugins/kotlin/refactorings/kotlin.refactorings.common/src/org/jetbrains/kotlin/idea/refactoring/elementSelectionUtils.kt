@@ -1,22 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable
+
+package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
 import com.intellij.codeInsight.unwrap.ScopeHighlighter
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
 import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
-import org.jetbrains.kotlin.idea.refactoring.renderTrimmed
+import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.findElement
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -24,16 +24,15 @@ import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import kotlin.math.min
 
-internal fun selectElement(
+fun selectElement(
     editor: Editor,
     file: KtFile,
     elementKind: ElementKind,
     callback: (PsiElement?) -> Unit
 ) = selectElement(editor, file, true, listOf(elementKind), callback)
 
-private fun selectElement(
+fun selectElement(
     editor: Editor,
     file: KtFile,
     failOnEmptySuggestion: Boolean,
@@ -51,7 +50,7 @@ private fun selectElement(
     }
 }
 
-internal fun findElementAtRange(
+fun findElementAtRange(
     file: KtFile,
     selectionStart: Int,
     selectionEnd: Int,
@@ -80,12 +79,14 @@ internal fun findElementAtRange(
         adjustedEnd = lastElement.textRange.endOffset
     }
 
+    val service = file.project.service<KotlinIntroduceVariableService>()
+
     return elementKinds.asSequence()
-        .mapNotNull { findElement(file, adjustedStart, adjustedEnd, failOnEmptySuggestion, it) }
+        .mapNotNull { service.findElement(file, adjustedStart, adjustedEnd, failOnEmptySuggestion, it) }
         .firstOrNull()
 }
 
-internal fun getSmartSelectSuggestions(
+fun getSmartSelectSuggestions(
     file: PsiFile,
     offset: Int,
     elementKind: ElementKind,
@@ -141,7 +142,8 @@ internal fun getSmartSelectSuggestions(
                     }
                 }
                 if (addElement) {
-                    if (isUnitTypeOrNull(element)) {
+                    val service = element.project.service<KotlinIntroduceVariableService>()
+                    if (service.hasUnitType(element)) {
                         addElement = false
                     }
                 }
@@ -159,13 +161,6 @@ internal fun getSmartSelectSuggestions(
         element = element.parent
     }
     return elements
-}
-
-private fun isUnitTypeOrNull(element: KtExpression): Boolean {
-    return analyzeInModalWindow(element, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-        val expressionType = element.getKtType()
-        expressionType == null || expressionType.isUnit
-    }
 }
 
 private fun smartSelectElement(
@@ -221,34 +216,4 @@ private fun smartSelectElement(
         }
         .createPopup(file.project, title)
         .showInBestPositionFor(editor)
-}
-
-@NlsSafe
-private fun getExpressionShortText(element: KtElement): String {
-    val text = element.renderTrimmed().trimStart()
-    val firstNewLinePos = text.indexOf('\n')
-    var trimmedText = text.substring(0, if (firstNewLinePos != -1) firstNewLinePos else min(100, text.length))
-    if (trimmedText.length != text.length) trimmedText += " ..."
-    return trimmedText
-}
-
-private fun findElement(
-    file: KtFile,
-    startOffset: Int,
-    endOffset: Int,
-    failOnNoExpression: Boolean,
-    elementKind: ElementKind
-): PsiElement? {
-    val element = findElement(file, startOffset, endOffset, elementKind)
-
-    if (element == null) {
-        //todo: if it's infix expression => add (), then commit document then return new created expression
-
-        if (failOnNoExpression) {
-            throw IntroduceRefactoringException(KotlinBundle.message("cannot.refactor.not.expression"))
-        }
-        return null
-    }
-
-    return element
 }
