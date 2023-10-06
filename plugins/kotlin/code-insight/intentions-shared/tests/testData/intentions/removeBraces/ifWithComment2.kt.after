@@ -3,7 +3,10 @@ fun <T> doSomething(a: T) {}
 
 fun foo() {
     if (true)
-        //        val a = 1
-//        var b = 1
+        /*
+        comment
+        comment
+        */
         doSomething("test")
+        // comment
 }

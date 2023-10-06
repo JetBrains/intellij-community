@@ -2,8 +2,12 @@
 fun <T> doSomething(a: T) {}
 
 fun foo() {
-    if (true)
-        //        val a = 1
-//        var b = 1
+    if (true) <caret>{
+        /*
+        comment
+        comment
+        */
         doSomething("test")
+        // comment
+    }
 }
