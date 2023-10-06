@@ -510,19 +510,30 @@ public class BreakpointManager {
     if (xBreakpoint == null) {
       return null;
     }
-    Breakpoint<?> breakpoint = xBreakpoint.getUserData(Breakpoint.DATA_KEY);
-    if (breakpoint == null && xBreakpoint.getType() instanceof JavaBreakpointType) {
-      Project project = ((XBreakpointBase<?, ?, ?>)xBreakpoint).getProject();
-      try {
-        breakpoint = ((JavaBreakpointType)xBreakpoint.getType()).createJavaBreakpoint(project, xBreakpoint);
-      }
-      catch (Throwable e) {
-        DebuggerUtilsImpl.logError(e);
-        return null;
-      }
-      xBreakpoint.putUserData(Breakpoint.DATA_KEY, breakpoint);
+
+    Breakpoint<?> existingBreakpoint = xBreakpoint.getUserData(Breakpoint.DATA_KEY);
+    if (existingBreakpoint != null) {
+      return existingBreakpoint;
     }
-    return breakpoint;
+
+    if (!(xBreakpoint.getType() instanceof JavaBreakpointType)) {
+      return null;
+    }
+
+    XBreakpointBase<?, ?, ?> xBreakpointBase = (XBreakpointBase<?, ?, ?>)xBreakpoint;
+    Project project = xBreakpointBase.getProject();
+    Breakpoint<?> breakpoint;
+    try {
+      //noinspection unchecked,rawtypes
+      breakpoint = ((JavaBreakpointType)xBreakpoint.getType()).createJavaBreakpoint(project, xBreakpoint);
+    }
+    catch (Throwable e) {
+      DebuggerUtilsImpl.logError(e);
+      return null;
+    }
+
+    // Note that a newly created breakpoint might be thrown out if another thread set its own Java breakpoint concurrently.
+    return xBreakpointBase.putUserDataIfAbsent(Breakpoint.DATA_KEY, breakpoint);
   }
 
   //interaction with RequestManagerImpl
