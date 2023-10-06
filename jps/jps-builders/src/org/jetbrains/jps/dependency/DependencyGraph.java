@@ -10,7 +10,7 @@ public interface DependencyGraph extends Graph {
 
   Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources);
 
-  DifferentiateResult differentiate(Delta delta);
+  DifferentiateResult differentiate(Delta delta, boolean calculateAffected);
 
   /**
    * Merge data from the Delta into this dependency storage

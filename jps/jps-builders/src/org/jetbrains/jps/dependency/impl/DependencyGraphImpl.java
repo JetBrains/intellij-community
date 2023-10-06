@@ -29,12 +29,35 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   }
 
   @Override
-  public DifferentiateResult differentiate(Delta delta) {
+  public DifferentiateResult differentiate(Delta delta, boolean calculateAffected) {
 
     Iterable<NodeSource> deltaSources = delta.getSources();
     Set<NodeSource> allProcessedSources = Iterators.collect(Iterators.flat(Arrays.asList(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
     Set<Node<?, ?>> nodesBefore = Iterators.collect(Iterators.flat(Iterators.map(allProcessedSources, s -> getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
     Set<Node<?, ?>> nodesAfter = Iterators.collect(Iterators.flat(Iterators.map(deltaSources, s -> delta.getNodes(s))), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+
+    // do not process 'removed' per-source file. This works when a class comes from exactly one source, but might not work, if a class can be associated with several sources
+    // better make a node-diff over all compiled sources => the sets of removed, added, deleted _nodes_ will be more accurate and reflecting reality
+    List<Node<?, ?>> deletedNodes = Iterators.collect(Iterators.filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
+
+    if (!calculateAffected) {
+      return new DifferentiateResult() {
+        @Override
+        public Delta getDelta() {
+          return delta;
+        }
+
+        @Override
+        public Iterable<Node<?, ?>> getDeletedNodes() {
+          return deletedNodes;
+        }
+
+        @Override
+        public Iterable<NodeSource> getAffectedSources() {
+          return Collections.emptyList();
+        }
+      };
+    }
 
     var diffContext = new DifferentiateContext() {
       private final Predicate<Node<?, ?>> ANY_CONSTRAINT = node -> true;
@@ -105,10 +128,6 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
         break;
       }
     }
-
-    // do not process 'removed' per-source file. This works when a class comes from exactly one source, but might not work, if a class can be associated with several sources
-    // better make a node-diff over all compiled sources => the sets of removed, added, deleted _nodes_ will be more accurate and reflecting reality
-    List<Node<?, ?>> deletedNodes = Iterators.collect(Iterators.filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
 
     if (!incremental) {
       return DifferentiateResult.createNonIncremental(delta, deletedNodes);

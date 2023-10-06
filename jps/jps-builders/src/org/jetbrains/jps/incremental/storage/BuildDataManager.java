@@ -112,7 +112,7 @@ public final class BuildDataManager {
     return myMappings;
   }
 
-  public DependencyGraph getDependencyGraph() {
+  public synchronized DependencyGraph getDependencyGraph() {
     return myDepGraph;
   }
 

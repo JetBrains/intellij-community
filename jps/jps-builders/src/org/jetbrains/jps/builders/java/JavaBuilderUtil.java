@@ -170,7 +170,9 @@ public final class JavaBuilderUtil {
       if (delta == null) {
         return false;
       }
-      return updateDependencyGraph(context, delta, chunk, CompilationRound.NEXT);
+      FILES_TO_COMPILE_KEY.set(context, null);
+      SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
+      return updateDependencyGraph(context, delta, chunk, CompilationRound.NEXT, createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context)));
     }
 
     Mappings delta = null;
@@ -415,34 +417,31 @@ public final class JavaBuilderUtil {
   /**
    * @param context        compilation context
    * @param delta          registered delta files in this round
-   * @param chunk
    * @param markDirtyRound compilation round at which dirty files should be visible to builders
    * @return true if additional compilation pass is required, false otherwise
    */
-  private static boolean updateDependencyGraph(CompileContext context, Delta delta, ModuleChunk chunk, final CompilationRound markDirtyRound) throws IOException {
-    // cleanup
-    FILES_TO_COMPILE_KEY.set(context, null);
-    SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
-
+  private static boolean updateDependencyGraph(CompileContext context, Delta delta, ModuleChunk chunk, final CompilationRound markDirtyRound, @Nullable FileFilter skipMarkDirtyFilter) throws IOException {
+    boolean performIntegrate = true;
     boolean additionalPassRequired = false;
     final boolean errorsDetected = Utils.errorsDetected(context);
-    DependencyGraph dependencyGraph = context.getProjectDescriptor().dataManager.getDependencyGraph();
-    DifferentiateResult differentiateResult = dependencyGraph.differentiate(delta);
+    DependencyGraph graph = context.getProjectDescriptor().dataManager.getDependencyGraph();
+    DifferentiateResult diffResult = graph.differentiate(delta, context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context));
 
     final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
     final boolean compilingIncrementally = isCompileJavaIncrementally(context);
 
-    if (differentiateResult.isIncremental()) {
-      final Set<File> newlyAffectedFiles = Iterators.collect(Iterators.map(differentiateResult.getAffectedSources(), src -> src.getPath().toFile()), new HashSet<>());
+    if (diffResult.isIncremental()) {
+      final Set<File> newlyAffectedFiles = Iterators.collect(
+        Iterators.filter(Iterators.map(diffResult.getAffectedSources(), src -> src.getPath().toFile()), f -> skipMarkDirtyFilter == null || !skipMarkDirtyFilter.accept(f)),
+        new HashSet<>()
+      );
 
       final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", newlyAffectedFiles.size());
       LOG.info(infoMessage);
       context.processMessage(new ProgressMessage(infoMessage));
 
-      //removeFilesAcceptedByFilter(newlyAffectedFiles, skipMarkingDirtyFilter);
-
       if (!newlyAffectedFiles.isEmpty()) {
-
+        
         if (LOG.isDebugEnabled()) {
           for (File file : newlyAffectedFiles) {
             LOG.debug("affected file: " + file.getPath());
@@ -511,15 +510,11 @@ public final class JavaBuilderUtil {
       final boolean alreadyMarkedDirty = FSOperations.isMarkedDirty(context, chunk);
       additionalPassRequired = compilingIncrementally && !alreadyMarkedDirty;
 
-      //if (alreadyMarkedDirty) {
-      //  // need this to make sure changes data stored in Delta is complete
-      //  globalMappings.differentiateOnNonIncrementalMake(delta, removedPaths, filesToCompile);
-      //}
-      //else {
-      //  performIntegrate = false;
-      //}
+      if (!alreadyMarkedDirty) {
+        performIntegrate = false;
+      }
 
-      FileFilter toBeMarkedFilter = null/*skipMarkingDirtyFilter == null ? null : new NegationFileFilter(skipMarkingDirtyFilter)*/;
+      FileFilter toBeMarkedFilter = skipMarkDirtyFilter == null? null : new NegationFileFilter(skipMarkDirtyFilter);
       FSOperations.markDirtyRecursively(context, markDirtyRound, chunk, toBeMarkedFilter);
     }
 
@@ -527,8 +522,10 @@ public final class JavaBuilderUtil {
       return false;
     }
 
-    dependencyGraph.integrate(differentiateResult);
-    
+    if (performIntegrate) {
+      graph.integrate(diffResult);
+    }
+
     return additionalPassRequired;
   }
 
