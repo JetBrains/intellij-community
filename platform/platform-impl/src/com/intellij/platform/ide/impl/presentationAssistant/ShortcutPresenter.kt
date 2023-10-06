@@ -34,7 +34,7 @@ class ShortcutPresenter : Disposable {
   private val typingActions = setOf(IdeActions.ACTION_EDITOR_BACKSPACE, IdeActions.ACTION_EDITOR_ENTER,
                                     IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE)
   private val parentGroupIds = setOf("CodeCompletionGroup", "FoldingGroup", "GoToMenu", "IntroduceActionsGroup")
-  private var infoPanel: ActionInfoPanel? = null
+  private var infoPopupGroup: ActionInfoPopupGroup? = null
   private val parentNames by lazy(::loadParentNames)
 
   init {
@@ -119,11 +119,13 @@ class ShortcutPresenter : Disposable {
 
     val realProject = actionData.project ?: ProjectManager.getInstance().openProjects.firstOrNull()
     if (realProject != null && !realProject.isDisposed && realProject.isOpen) {
-      if (infoPanel == null || !infoPanel!!.canBeReused()) {
-        infoPanel = ActionInfoPanel(realProject, fragments)
+      if (infoPopupGroup == null || !infoPopupGroup!!.canBeReused(fragments.size)) {
+        val prevIsVisible = infoPopupGroup?.isShown == true
+        infoPopupGroup?.close()
+        infoPopupGroup = ActionInfoPopupGroup(realProject, fragments, !prevIsVisible)
       }
       else {
-        infoPanel!!.updateText(realProject, fragments)
+        infoPopupGroup!!.updateText(realProject, fragments)
       }
     }
     PresentationAssistant.INSTANCE.checkIfMacKeymapIsAvailable()
@@ -220,9 +222,9 @@ class ShortcutPresenter : Disposable {
     }
 
   fun disable() {
-    if (infoPanel != null) {
-      infoPanel!!.close()
-      infoPanel = null
+    if (infoPopupGroup != null) {
+      infoPopupGroup!!.close()
+      infoPopupGroup = null
     }
     Disposer.dispose(this)
   }

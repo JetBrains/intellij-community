@@ -10,14 +10,15 @@ import com.intellij.openapi.options.colors.ColorSettingsPage
 import com.intellij.psi.codeStyle.DisplayPriority
 import com.intellij.psi.codeStyle.DisplayPrioritySortable
 import com.intellij.ui.JBColor
-import java.awt.Color
+import com.intellij.util.ui.JBUI
 
 /**
  * @author nik
  */
-val FOREGROUND_COLOR_KEY = ColorKey.createColorKey("PRESENTATION_ASSISTANT_HINT_FOREGROUND", JBColor.black)
+val FOREGROUND_COLOR_KEY = ColorKey.createColorKey("PRESENTATION_ASSISTANT_HINT_FOREGROUND",
+                                                   JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground()))
 val BACKGROUND_COLOR_KEY = ColorKey.createColorKey("PRESENTATION_ASSISTANT_HINT_BACKGROUND",
-                                                   JBColor(Color(186, 238, 186, 120), Color(73, 117, 73)))
+                                                   JBColor.namedColor("MainToolbar.background", JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground()))
 
 class ActionInfoColorSettings : ColorSettingsPage, DisplayPrioritySortable {
   override fun getDisplayName() = IdeBundle.message("presentation.assistant.color.settings.page")

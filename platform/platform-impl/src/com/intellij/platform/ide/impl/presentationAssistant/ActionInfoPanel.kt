@@ -16,35 +16,45 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.Gray
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
-import com.intellij.util.ui.*
-import java.awt.*
+import com.intellij.util.ui.Animator
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBFont
+import java.awt.Font
+import java.awt.Rectangle
+import java.awt.Window
 import javax.swing.*
 
-internal class ActionInfoPanel(project: Project, textFragments: List<TextData>) : NonOpaquePanel(BorderLayout()), Disposable {
-  private val hint: JBPopup
-  private val labelsPanel: JPanel = NonOpaquePanel(GridLayout()).apply { background = null }
+internal class ActionInfoPanel(val index: Int,
+                               project: Project,
+                               textFragments: List<TextData>,
+                               showAnimated: Boolean,
+                               val computeLocation: (Project, Int) -> RelativePoint) : JPanel(GridLayout()), Disposable {
+  private val labelsPanel = JPanel(GridLayout()).apply { background = Gray.TRANSPARENT }
   private val hideAlarm = Alarm(this)
   private var animator: Animator
-  private var phase = Phase.FADING_IN
-  private val hintAlpha = if (StartupUiUtil.isDarkTheme) 0.05.toFloat() else 0.1.toFloat()
+  var phase = Phase.FADING_IN
+    private set
   private val configuration = PresentationAssistant.INSTANCE.configuration
+  private val hint: JBPopup
 
   enum class Phase { FADING_IN, SHOWN, FADING_OUT, HIDDEN }
 
   init {
     updateLabelText(project, textFragments)
     isOpaque = true
-    background = null
-    add(labelsPanel, BorderLayout.CENTER)
+    background = Gray.TRANSPARENT
+
+    RowsGridBuilder(this).row().cell(labelsPanel, horizontalAlign = HorizontalAlign.CENTER, verticalAlign = VerticalAlign.CENTER)
 
     hint = with(JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)) {
       setAlpha(1.0.toFloat())
@@ -54,15 +64,22 @@ internal class ActionInfoPanel(project: Project, textFragments: List<TextData>) 
       setCancelCallback { phase = Phase.HIDDEN; true }
       createPopup()
     }
+
+    hint.content.background = ActionInfoBlockPanel.BACKGROUND
+
     hint.addListener(object : JBPopupListener {
       override fun beforeShown(lightweightWindowEvent: LightweightWindowEvent) {}
       override fun onClosed(lightweightWindowEvent: LightweightWindowEvent) {
         phase = Phase.HIDDEN
       }
     })
+    animator = FadeInOutAnimator(true, showAnimated)
+  }
 
-    animator = FadeInOutAnimator(true)
-    hint.show(computeLocation(project))
+  fun presentPopup(project: Project) {
+    hint.show(computeLocation(project, index))
+    hint.content.rootPane.background = ActionInfoBlockPanel.BACKGROUND
+    hint.content.rootPane.contentPane.background = ActionInfoBlockPanel.BACKGROUND
     animator.resume()
   }
 
@@ -75,15 +92,15 @@ internal class ActionInfoPanel(project: Project, textFragments: List<TextData>) 
     if (phase != Phase.SHOWN) return
     phase = Phase.FADING_OUT
     Disposer.dispose(animator)
-    animator = FadeInOutAnimator(false)
+    animator = FadeInOutAnimator(false, true)
     animator.resume()
   }
 
-  inner class FadeInOutAnimator(private val forward: Boolean) : Animator("Action Hint Fade In/Out", 5, 100, false, forward) {
+  inner class FadeInOutAnimator(private val forward: Boolean, animated: Boolean) : Animator("Action Hint Fade In/Out", 8, if (animated) 100 else 0, false, forward) {
     override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
       if (forward && phase != Phase.FADING_IN
           || !forward && phase != Phase.FADING_OUT) return
-      setAlpha(hintAlpha + (1 - hintAlpha) * (totalFrames - frame) / totalFrames)
+      setAlpha((totalFrames - frame).toFloat() / totalFrames)
     }
 
     override fun paintCycleEnd() {
@@ -112,43 +129,29 @@ internal class ActionInfoPanel(project: Project, textFragments: List<TextData>) 
 
   private fun showFinal() {
     phase = Phase.SHOWN
-    setAlpha(hintAlpha)
+    setAlpha(0f)
     hideAlarm.cancelAllRequests()
     hideAlarm.addRequest({ fadeOut() }, configuration.popupDuration, ModalityState.any())
   }
 
   fun updateText(project: Project, textFragments: List<TextData>) {
     if (getHintWindow() == null) return
-    labelsPanel.removeAll()
     updateLabelText(project, textFragments)
-    hint.setLocation(computeLocation(project).screenPoint)
-    hint.size = preferredSize
-    hint.content.validate()
-    hint.content.repaint()
-    showFinal()
   }
 
-  private fun computeLocation(project: Project): RelativePoint {
-    val ideFrame = WindowManager.getInstance().getIdeFrame(project)!!
-    val statusBarHeight = ideFrame.statusBar?.component?.height ?: 0
-    val visibleRect = ideFrame.component.visibleRect
-    val popupSize = preferredSize
-    val x = when (configuration.horizontalAlignment) {
-      0 -> visibleRect.x + configuration.margin
-      1 -> visibleRect.x + (visibleRect.width - popupSize.width) / 2
-      else -> visibleRect.x + visibleRect.width - popupSize.width - configuration.margin
-    }
-    val y = when (configuration.verticalAlignment) {
-      0 -> visibleRect.y + configuration.margin
-      else -> visibleRect.y + visibleRect.height - popupSize.height - statusBarHeight - configuration.margin
-    }
-    return RelativePoint(ideFrame.component, Point(x, y))
+  fun updateHintBounds(project: Project) {
+    hint.content.validate()
+    hint.content.repaint()
+
+    val newBounds = Rectangle(computeLocation(project, index).screenPoint, preferredSize)
+    hint.setBounds(newBounds)
+
+    showFinal()
   }
 
   private fun updateLabelText(project: Project, textFragments: List<TextData>) {
     val ideFrame = WindowManager.getInstance().getIdeFrame(project)!!
-    val blocks = createBlocks(textFragments, ideFrame)
-    labelsPanel.addComponentsWithGap(blocks, 12)
+    createBlocks(textFragments, ideFrame)
   }
 
   private fun List<Pair<String, Font?>>.mergeFragments(): List<Pair<String, Font?>> {
@@ -166,8 +169,19 @@ internal class ActionInfoPanel(project: Project, textFragments: List<TextData>) 
     return result
   }
 
-  private fun createBlocks(textFragments: List<TextData>, ideFrame: IdeFrame): List<ActionInfoBlockPanel> {
-    return textFragments.map { ActionInfoBlockPanel(it) }
+  private fun createBlocks(textFragments: List<TextData>, ideFrame: IdeFrame) {
+    val existingBlocks = labelsPanel.components.filterIsInstance<ActionInfoBlockPanel>()
+
+    if (existingBlocks.size == textFragments.size) {
+      textFragments.mapIndexed { index, data ->
+        existingBlocks[index].apply { textData = data }
+      }
+    }
+    else {
+      labelsPanel.removeAll()
+      val newBlocks = textFragments.map { ActionInfoBlockPanel(it) }
+      labelsPanel.addComponentsWithGap(newBlocks, 12)
+    }
   }
 
   private fun createLabels(textFragments: List<Pair<String, Font?>>, ideFrame: IdeFrame): List<JLabel> {
@@ -221,32 +235,31 @@ internal class ActionInfoPanel(project: Project, textFragments: List<TextData>) 
   fun canBeReused(): Boolean = phase == Phase.FADING_IN || phase == Phase.SHOWN
 }
 
-internal class ActionInfoBlockPanel(val textData: TextData) : JPanel() {
+internal class ActionInfoBlockPanel(textData: TextData) : JPanel() {
   private val titleLabel = JBLabel()
   private val subtitleLabel = JBLabel()
+  var textData: TextData = textData
+    set(value) {
+      field = value
+      updateLabels()
+    }
 
   init {
+    background = BACKGROUND
+
     layout = GridLayout()
     RowsGridBuilder(this)
       .row(resizable = true).cell(component = titleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
       .row(resizable = true).cell(component = subtitleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
 
     titleLabel.border = JBEmptyBorder(6, 16, 0, 16)
+    titleLabel.foreground = TITLE_COLOR
+
     subtitleLabel.border = JBEmptyBorder(0, 18, 8, 16)
+    subtitleLabel.foreground = TITLE_COLOR
     subtitleLabel.font = JBFont.label().deriveFont(JBUIScale.scale(SUBTITLE_FONT_SIZE))
 
     updateLabels()
-  }
-
-  override fun paintComponent(g: Graphics?) {
-    if (g !is Graphics2D) return
-    super.paintComponent(g)
-
-    g.color = BACKGROUND
-    val config = GraphicsUtil.setupAAPainting(g)
-    val scale = (g.transform.scaleX * JBUIScale.scale(1)).toInt()
-    g.fillRoundRect(0, 0, width, height, CORNER_RADIUS * scale, CORNER_RADIUS * scale)
-    config.restore()
   }
 
   private fun updateLabels() {
@@ -261,7 +274,8 @@ internal class ActionInfoBlockPanel(val textData: TextData) : JPanel() {
     private const val TITLE_FONT_SIZE = 40f
     private const val SUBTITLE_FONT_SIZE = 14f
     private const val CORNER_RADIUS = 8
-    private val BACKGROUND = EditorColorsManager.getInstance().globalScheme.getColor(BACKGROUND_COLOR_KEY)
+    val BACKGROUND = EditorColorsManager.getInstance().globalScheme.getColor(BACKGROUND_COLOR_KEY)
+    private val TITLE_COLOR = EditorColorsManager.getInstance().globalScheme.getColor(FOREGROUND_COLOR_KEY)
   }
 }
 
