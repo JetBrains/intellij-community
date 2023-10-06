@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.DummyIcon
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.IconLoader.colorPatchedIcon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
@@ -175,10 +174,9 @@ internal inline fun loadAndCacheIfApplicable(path: String?,
 
   val data = if (precomputedCacheKey == 0) (dataProvider() ?: return null) else null
   val key = if (data == null) {
-    longArrayOf(
-      packTwoIntToLong(v1 = precomputedCacheKey, v2 = compoundCacheKey.key),
-      colorPatcherDigest?.let { colorPatcherDigestToCacheKey(colorPatcherDigest) } ?: 0,
-    )
+    createPrecomputedIconCacheKey(precomputedCacheKey = precomputedCacheKey,
+                                  compoundKey = compoundCacheKey,
+                                  colorPatcherDigest = colorPatcherDigest)
   }
   else {
     createIconCacheKey(imageBytes = data, compoundKey = compoundCacheKey, colorPatcherDigest = colorPatcherDigest)

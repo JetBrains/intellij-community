@@ -3,13 +3,13 @@
 
 package com.intellij.ui.svg
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.ui.hasher
-import com.intellij.ui.icons.packTwoIntToLong
-import com.intellij.ui.seededHasher
+import com.intellij.util.ArrayUtilRt
 import com.intellij.util.io.*
 import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions
 import kotlinx.coroutines.Dispatchers
@@ -76,22 +76,16 @@ private fun openSvgCache(dbDir: Path): PersistentMapBase<LongArray, IconValue> {
 private fun createMap(dbFile: Path): PersistentMapBase<LongArray, IconValue> {
   val builder = PersistentMapBuilder.newBuilder(dbFile, object : KeyDescriptor<LongArray> {
     override fun getHashCode(value: LongArray): Int {
-      return when (value.size) {
-        3 -> hasher.hashLongLongLongToLong(value[0], value[1], value[2]).toInt()
-        2 -> hasher.hashLongLongToLong(value[0], value[1]).toInt()
-        else -> value.contentHashCode()
-      }
+      return hasher.hashLongLongToLong(value[0], value[1]).toInt()
     }
 
     override fun save(out: DataOutput, value: LongArray) {
-      out.write(value.size)
-      for (l in value) {
-        out.writeLong(l)
-      }
+      out.writeLong(value[0])
+      out.writeLong(value[1])
     }
 
     override fun read(input: DataInput): LongArray {
-      return LongArray(input.readByte().toInt()) { input.readLong() }
+      return longArrayOf(input.readLong(), input.readLong())
     }
 
     override fun isEqual(val1: LongArray, val2: LongArray) = val1.contentEquals(val2)
@@ -195,24 +189,42 @@ class SvgCacheManager private constructor(private val map: PersistentMapBase<Lon
   }
 }
 
-@Internal
-fun createIconCacheKey(imageBytes: ByteArray, compoundKey: SvgCacheClassifier, colorPatcherDigest: LongArray?): LongArray {
-  val colorPatcherKey = colorPatcherDigest ?.let { colorPatcherDigestToCacheKey(colorPatcherDigest) } ?: 0
-  return longArrayOf(
-    hasher.hashBytesToLong(imageBytes),
-    packTwoIntToLong(seededHasher.hashBytesToInt(imageBytes), compoundKey.key),
-    colorPatcherKey,
-  )
+internal fun createPrecomputedIconCacheKey(precomputedCacheKey: Int,
+                                           compoundKey: SvgCacheClassifier,
+                                           colorPatcherDigest: LongArray?): LongArray {
+  val hashStream = Hashing.komihash5_0().hashStream()
+  val hashStream2 = Hashing.wyhashFinal4().hashStream()
+
+  hashStream.putLongArray(colorPatcherDigest ?: ArrayUtilRt.EMPTY_LONG_ARRAY)
+  hashStream2.putLongArray(colorPatcherDigest ?: ArrayUtilRt.EMPTY_LONG_ARRAY)
+
+  hashStream.putInt(precomputedCacheKey)
+  hashStream2.putInt(precomputedCacheKey)
+
+  hashStream.putInt(compoundKey.key)
+  hashStream2.putInt(compoundKey.key)
+
+  return longArrayOf(hashStream.asLong, hashStream2.asLong)
 }
 
-internal fun colorPatcherDigestToCacheKey(themeDigest: LongArray): Long {
-  return when (themeDigest.size) {
-    0 -> 0
-    1 -> themeDigest.first()
-    2 -> hasher.hashLongLongToLong(themeDigest[0], themeDigest[1])
-    3 -> hasher.hashLongLongLongToLong(themeDigest[0], themeDigest[1], themeDigest[2])
-    else -> hasher.hashStream().putLongArray(themeDigest).asLong
-  }
+@Internal
+fun createIconCacheKey(imageBytes: ByteArray, compoundKey: SvgCacheClassifier, colorPatcherDigest: LongArray?): LongArray {
+  val hashStream = Hashing.komihash5_0().hashStream()
+  val hashStream2 = Hashing.wyhashFinal4().hashStream()
+
+  hashStream.putLongArray(colorPatcherDigest ?: ArrayUtilRt.EMPTY_LONG_ARRAY)
+  hashStream2.putLongArray(colorPatcherDigest ?: ArrayUtilRt.EMPTY_LONG_ARRAY)
+
+  hashStream.putBytes(imageBytes)
+  hashStream.putInt(imageBytes.size)
+
+  hashStream2.putBytes(imageBytes)
+  hashStream2.putInt(imageBytes.size)
+
+  hashStream.putInt(compoundKey.key)
+  hashStream2.putInt(compoundKey.key)
+
+  return longArrayOf(hashStream.asLong, hashStream2.asLong)
 }
 
 // BGRA order
