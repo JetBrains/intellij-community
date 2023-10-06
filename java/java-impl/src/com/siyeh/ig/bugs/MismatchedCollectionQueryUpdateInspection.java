@@ -557,7 +557,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
       return false;
     }
 
-    private boolean queriedViaInitializer(PsiVariable variable) {
+    private static boolean queriedViaInitializer(PsiVariable variable) {
       final PsiExpression initializer = variable.getInitializer();
       return initializer != null &&
              ExpressionUtils.nonStructuralChildren(initializer)
