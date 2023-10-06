@@ -6,6 +6,7 @@ import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.getResolvedPath
@@ -26,11 +27,12 @@ abstract class GradleUntrustedProjectTestCase : GradleTestCase() {
 
     val trustedLocations = ArrayList<Path>()
     this.trustedLocations = trustedLocations
-    TrustedProjectsListener.TOPIC.subscribe(testDisposable, object : TrustedProjectsListener {
-      override fun onProjectTrusted(locatedProject: LocatedProject) {
-        trustedLocations.addAll(locatedProject.projectRoots)
-      }
-    })
+    ApplicationManager.getApplication().messageBus.connect(testDisposable)
+      .subscribe(TrustedProjectsListener.TOPIC, object : TrustedProjectsListener {
+        override fun onProjectTrusted(locatedProject: LocatedProject) {
+          trustedLocations.addAll(locatedProject.projectRoots)
+        }
+      })
   }
 
   @AfterEach
