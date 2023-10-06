@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
+import com.intellij.jvm.analysis.shared.testFramework.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.junit.experimental.runners.Enclosed
 import org.junit.runner.RunWith
 

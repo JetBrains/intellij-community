@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.AssertEqualsBetweenInconvertibleTypesInspectionTestBase
+import com.intellij.jvm.analysis.shared.testFramework.test.AssertEqualsBetweenInconvertibleTypesInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetweenInconvertibleTypesInspectionTestBase() {
   fun `test JUnit 4 assertEquals`() {

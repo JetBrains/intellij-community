@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.JvmInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinMarkedForRemovalInspectionTest : JvmInspectionTestBase() {
   fun `test highlighted as deprecated for removal`() {

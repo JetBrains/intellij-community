@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.performance
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.performance.UrlHashCodeInspectionTestBase
+import com.intellij.jvm.analysis.shared.testFramework.performance.UrlHashCodeInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
   fun `test url hashcode call`() {

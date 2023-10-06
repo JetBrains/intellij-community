@@ -779,7 +779,8 @@
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-impl/intellij.jvm.analysis.impl.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-impl/intellij.jvm.analysis.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-java-tests/intellij.jvm.analysis.java.tests.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-java-tests/intellij.jvm.analysis.java.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-kotlin-tests/intellij.jvm.analysis.kotlin.tests.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-kotlin-tests/intellij.jvm.analysis.kotlin.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-tests/intellij.jvm.analysis.testFramework.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-tests/intellij.jvm.analysis.testFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-shared-testFramework/intellij.jvm.analysis.shared.testFramework.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-shared-testFramework/intellij.jvm.analysis.shared.testFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-testFramework/intellij.jvm.analysis.testFramework.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-testFramework/intellij.jvm.analysis.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/eclipse-keymap/intellij.keymap.eclipse.iml" filepath="$PROJECT_DIR$/plugins/keymaps/eclipse-keymap/intellij.keymap.eclipse.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/netbeans5.6-keymap/intellij.keymap.netbeans.iml" filepath="$PROJECT_DIR$/plugins/keymaps/netbeans5.6-keymap/intellij.keymap.netbeans.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/qtcreator-keymap/intellij.keymap.qtcreator.iml" filepath="$PROJECT_DIR$/plugins/keymaps/qtcreator-keymap/intellij.keymap.qtcreator.iml" />

@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase
-import com.intellij.codeInspection.tests.JvmLanguage
+import com.intellij.jvm.analysis.shared.testFramework.JavaApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 
 class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {

@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.MustAlreadyBeRemovedApiInspectionTestBase
+import com.intellij.jvm.analysis.shared.testFramework.MustAlreadyBeRemovedApiInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaMustAlreadyBeRemovedApiInspectionTest : MustAlreadyBeRemovedApiInspectionTestBase() {
   fun `test APIs must have been removed`() {

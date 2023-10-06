@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitMixedFrameworkInspectionTestBase
+import com.intellij.jvm.analysis.shared.testFramework.test.junit.JUnitMixedFrameworkInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestBase() {
   fun `test no highlighting`() {
