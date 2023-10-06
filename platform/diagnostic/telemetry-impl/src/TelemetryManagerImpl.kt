@@ -37,6 +37,11 @@ import kotlin.coroutines.CoroutineContext
 @ApiStatus.Experimental
 @ApiStatus.Internal
 class TelemetryManagerImpl(app: Application) : TelemetryManager {
+
+  // for the unit (performance) tests
+  @Suppress("unused")
+  constructor() : this(ApplicationManager.getApplication())
+
   private val sdk: OpenTelemetrySdk
 
   private val otlpService by lazy {
@@ -56,7 +61,7 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
 
     aggregatedMetricExporter = configurator.aggregatedMetricExporter
 
-    val spanExporters = createSpanExporters(configurator.resource)
+    val spanExporters = createSpanExporters(configurator.resource, isUnitTestMode = app.isUnitTestMode)
     hasSpanExporters = !spanExporters.isEmpty()
     configurator.registerSpanExporters(spanExporters = spanExporters)
 
@@ -137,7 +142,7 @@ private class IntelliJTracerImpl(private val scope: Scope, private val otlpServi
   }
 }
 
-private fun createSpanExporters(resource: Resource): List<AsyncSpanExporter> {
+private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = false): List<AsyncSpanExporter> {
   val spanExporters = mutableListOf<AsyncSpanExporter>()
   System.getProperty("idea.diagnostic.opentelemetry.file")?.let { traceFile ->
     spanExporters.add(JaegerJsonSpanExporter(
@@ -151,6 +156,9 @@ private fun createSpanExporters(resource: Resource): List<AsyncSpanExporter> {
   getOtlpEndPoint()?.let {
     spanExporters.add(OtlpSpanExporter(it))
   }
+
+  // Extension points for "com.intellij.openTelemetryExporterProvider" isn't available in unit tests
+  if (isUnitTestMode) return spanExporters
 
   for (item in ExtensionPointName<OpenTelemetryExporterProvider>("com.intellij.openTelemetryExporterProvider")
     .filterableLazySequence()) {

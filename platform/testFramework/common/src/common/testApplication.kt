@@ -16,6 +16,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
@@ -43,7 +44,6 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.bootstrap.callAppInitialized
 import com.intellij.platform.ide.bootstrap.getAppInitializedListeners
 import com.intellij.platform.ide.bootstrap.initConfigurationStore
@@ -109,6 +109,10 @@ fun loadApp() {
 @OptIn(DelicateCoroutinesApi::class)
 @Internal
 fun loadApp(setupEventQueue: Runnable) {
+  // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside with open-telemetry-metrics.*.csv)
+  System.setProperty("idea.diagnostic.opentelemetry.file",
+                     PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString())
+
   enableCoroutineDump()
   JBR.getJstack()?.includeInfoFrom {
     """
@@ -187,7 +191,6 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 
 private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl) {
   coroutineScope {
-    TelemetryManager.setNoopTelemetryManager()
     withTimeout(Duration.ofSeconds(40).toMillis()) {
       preloadCriticalServices(app = app,
                               asyncScope = app.coroutineScope,
