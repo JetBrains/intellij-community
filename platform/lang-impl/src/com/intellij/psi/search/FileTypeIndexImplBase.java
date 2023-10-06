@@ -63,9 +63,17 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   protected @Nullable FileType getFileTypeById(int id) {
     Ref<FileType> fileType = myId2FileTypeCache.get(id);
     if (fileType == null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Filetype is not cached for FileTypeId=" + id);
+      }
+
       String fileTypeName = myFileTypeEnumerator.valueOf(id);
       FileType fileTypeByName = fileTypeName == null ? null : FileTypeManager.getInstance().findFileTypeByName(fileTypeName);
       myId2FileTypeCache.put(id, fileType = Ref.create(fileTypeByName));
+    }
+
+    if (fileType.get() == null && LOG.isDebugEnabled()) {
+      LOG.debug("No filetype for FileTypeId=" + id);
     }
     return fileType.get();
   }
@@ -113,6 +121,9 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   public @NotNull Map<FileType, Void> getIndexedFileData(int fileId) throws StorageException {
     int foundData = getIndexedFileTypeId(fileId);
     if (foundData == 0) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("FileTypeId is 0 for fileId=" + fileId);
+      }
       return Collections.emptyMap();
     }
     return Collections.singletonMap(getFileTypeById(foundData), null);
