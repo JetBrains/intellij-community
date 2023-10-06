@@ -127,6 +127,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
   private static @ActionText String getActionName(boolean skipDetection) {
     return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") :
+           SystemInfo.isWindows ? ActionsBundle.message("action.RevealIn.name.win") :
            skipDetection ? ActionsBundle.message("action.RevealIn.name.other", IdeBundle.message("action.file.manager.text")) :
            ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
   }
