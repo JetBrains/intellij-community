@@ -17,6 +17,9 @@ import org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager
 import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.terminal.completion.BaseSuggestion
+import org.jetbrains.terminal.completion.ShellArgument
+import org.jetbrains.terminal.completion.ShellCommand
+import org.jetbrains.terminal.completion.ShellOption
 
 class TerminalCommandSpecCompletionContributor : CompletionContributor() {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -46,12 +49,14 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor() {
     return names.map { name ->
       val cursorOffset = insertValue?.indexOf("{cursor}")
       val realInsertValue = insertValue?.replace("{cursor}", "")
+      val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
       // todo: command descriptions now exist only in english version
       //  need to find a way how to support translations
       @Suppress("HardCodedStringLiteral")
       val documentationTarget = description?.let { TerminalDocumentationTarget(name, it).createPointer() }
       val element = LookupElementBuilder.create(documentationTarget ?: this, realInsertValue ?: name)
         .withPresentableText(displayName ?: name)
+        .withTailText(nextSuggestions, true)
         .withInsertHandler { context, _ ->
           if (cursorOffset != null && cursorOffset != -1) {
             context.editor.caretModel.moveToOffset(context.startOffset + cursorOffset)
@@ -59,6 +64,43 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor() {
         }
       PrioritizedLookupElement.withPriority(element, priority / 100.0)
     }
+  }
+
+  private fun getNextSuggestionsString(suggestion: BaseSuggestion): String {
+    val result = when (suggestion) {
+      is ShellCommand -> getNextOptionsAndArgumentsString(suggestion)
+      is ShellOption -> getNextArgumentsString(suggestion)
+      else -> ""
+    }
+    return if (result.isNotEmpty()) " $result" else ""
+  }
+
+  /** Returns required options and all arguments */
+  private fun getNextOptionsAndArgumentsString(command: ShellCommand): String {
+    val nextOptions = command.options.filter { it.isRequired }
+    return buildString {
+      for (option in nextOptions) {
+        append(option.names.first())
+        val arguments = getNextArgumentsString(option)
+        if (arguments.isNotEmpty()) {
+          append(' ')
+          append(arguments)
+        }
+        append(' ')
+      }
+      for (arg in command.args) {
+        append(arg.asSuggestionString())
+        append(' ')
+      }
+    }.trim()
+  }
+
+  private fun getNextArgumentsString(option: ShellOption): String {
+    return option.args.joinToString(" ") { it.asSuggestionString() }
+  }
+
+  private fun ShellArgument.asSuggestionString(): String {
+    return if (isOptional) "[$displayName]" else "<$displayName>"
   }
 
   private class TerminalDocumentationTarget(
