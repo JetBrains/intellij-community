@@ -9,8 +9,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.NonExtendable
+import org.jetbrains.annotations.ApiStatus.*
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -387,10 +386,12 @@ suspend fun <X> withRawProgressReporter(action: suspend CoroutineScope.() -> X):
   return withContext(progressReporter.rawReporter().asContextElement(), action)
 }
 
+@Internal // clients are not supposed to put reporter into context
 fun ProgressReporter.asContextElement(): CoroutineContext.Element = ProgressReporterElement.Step(this)
 val CoroutineContext.progressReporter: ProgressReporter? get() = (this[ProgressReporterElement] as? ProgressReporterElement.Step)?.reporter
 val CoroutineScope.progressReporter: ProgressReporter? get() = coroutineContext.progressReporter
 
+@Internal // clients are not supposed to put reporter into context
 fun RawProgressReporter.asContextElement(): CoroutineContext.Element = ProgressReporterElement.Raw(this)
 val CoroutineContext.rawProgressReporter: RawProgressReporter? get() = (this[ProgressReporterElement] as? ProgressReporterElement.Raw)?.reporter
 val CoroutineScope.rawProgressReporter: RawProgressReporter? get() = coroutineContext.rawProgressReporter
