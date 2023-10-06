@@ -90,8 +90,8 @@ class CommandHistoryPresenter(private val project: Project,
 
   private class CommandHistoryLookupArranger : LookupArranger() {
     override fun arrangeItems(lookup: Lookup, onExplicitAction: Boolean): Pair<List<LookupElement>, Int> {
-      val result = ArrayList(matchingItems)
-      val selectedIndex = if (!lookup.isSelectionTouched && onExplicitAction) result.lastIndex else result.indexOf(lookup.currentItem)
+      val result = matchingItems.reversed()
+      val selectedIndex = if (!lookup.isSelectionTouched && onExplicitAction) 0 else result.indexOf(lookup.currentItem)
       return Pair.create(result, max(selectedIndex, 0))
     }
 
