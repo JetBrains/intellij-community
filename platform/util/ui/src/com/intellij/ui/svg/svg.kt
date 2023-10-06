@@ -20,8 +20,6 @@ import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.createDocumentBuilder
-import com.intellij.util.text.CharSequenceReader
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -32,12 +30,7 @@ import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.InputStream
-import java.io.StringWriter
 import javax.swing.Icon
-import javax.xml.XMLConstants
-import javax.xml.transform.TransformerFactory
-import javax.xml.transform.dom.DOMSource
-import javax.xml.transform.stream.StreamResult
 import kotlin.math.ceil
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.toJavaDuration
@@ -54,7 +47,7 @@ interface SvgAttributePatcher {
   }
 
   /**
-   * @return hash code of the current SVG color patcher or null to disable rendered SVG images caching
+   * @return hash code of the current SVG color patcher.
    */
   fun digest(): LongArray
 }
@@ -176,14 +169,12 @@ internal fun loadSvgAndCacheIfApplicable(path: String?,
                                          scale: Float,
                                          compoundCacheKey: SvgCacheClassifier,
                                          colorPatcher: SvgAttributePatcher?,
-                                         @Suppress("DEPRECATION") deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
                                          dataProvider: () -> ByteArray?): BufferedImage? {
   return loadAndCacheIfApplicable(path = path,
                                   precomputedCacheKey = 0,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey,
                                   colorPatcher = colorPatcher,
-                                  deprecatedColorPatcher = deprecatedColorPatcher,
                                   dataProvider = dataProvider)
 }
 
@@ -193,13 +184,11 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                                             compoundCacheKey: SvgCacheClassifier = SvgCacheClassifier(scale = scale),
                                             colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?,
                                             dataProvider: () -> ByteArray?): BufferedImage? {
-  @Suppress("DEPRECATION")
   return loadAndCacheIfApplicable(path = path,
                                   precomputedCacheKey = precomputedCacheKey,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey,
                                   colorPatcher = path?.let { colorPatcherProvider?.attributeForPath(it) },
-                                  deprecatedColorPatcher = path?.let { colorPatcherProvider?.forPath(path) },
                                   dataProvider = dataProvider)
 }
 
@@ -208,15 +197,11 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                                             scale: Float,
                                             compoundCacheKey: SvgCacheClassifier = SvgCacheClassifier(scale = scale),
                                             colorPatcher: SvgAttributePatcher?,
-                                            @Suppress("DEPRECATION") deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
                                             dataProvider: () -> ByteArray?): BufferedImage? {
-  val colorPatcherDigest = colorPatcher?.digest() ?: deprecatedColorPatcher?.digest()?.let { longArrayOf(hasher.hashBytesToLong(it)) }
+  val colorPatcherDigest = colorPatcher?.digest()
   val svgCache = activeSvgCache
-  if (svgCache == null ||
-      (colorPatcherDigest == null && (colorPatcher != null || deprecatedColorPatcher != null)) ||
-      scale > MAX_SCALE_TO_CACHE) {
+  if (svgCache == null || (colorPatcherDigest == null && (colorPatcher != null)) || scale > MAX_SCALE_TO_CACHE) {
     return renderImage(colorPatcher = colorPatcher,
-                       deprecatedColorPatcher = deprecatedColorPatcher,
                        data = dataProvider() ?: return null,
                        scale = scale,
                        path = path)
@@ -251,8 +236,7 @@ private inline fun loadAndCacheIfApplicable(path: String?,
     logger<SVGLoader>().warn("Cannot load from icon cache (path=$path, precomputedCacheKey=$precomputedCacheKey)", e)
   }
 
-  return renderAndCache(deprecatedColorPatcher = deprecatedColorPatcher,
-                        colorPatcher = colorPatcher,
+  return renderAndCache(colorPatcher = colorPatcher,
                         data = data ?: dataProvider() ?: return null,
                         scale = scale,
                         path = path,
@@ -270,18 +254,13 @@ private fun themeDigestToCacheKey(themeDigest: LongArray): Long {
   }
 }
 
-private fun renderAndCache(@Suppress("DEPRECATION") deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
-                           colorPatcher: SvgAttributePatcher?,
+private fun renderAndCache(colorPatcher: SvgAttributePatcher?,
                            data: ByteArray,
                            scale: Float,
                            path: String?,
                            key: LongArray,
                            cache: SvgCacheManager): BufferedImage {
-  val image = renderImage(colorPatcher = colorPatcher,
-                          deprecatedColorPatcher = deprecatedColorPatcher,
-                          data = data,
-                          scale = scale,
-                          path = path)
+  val image = renderImage(colorPatcher = colorPatcher, data = data, scale = scale, path = path)
   // maybe closed during rendering
   if (!cache.isActive()) {
     return image
@@ -305,30 +284,13 @@ private fun renderAndCache(@Suppress("DEPRECATION") deprecatedColorPatcher: SVGL
   return image
 }
 
-private fun renderImage(colorPatcher: SvgAttributePatcher?,
-                        @Suppress("DEPRECATION") deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
-                        data: ByteArray,
-                        scale: Float,
-                        path: String?): BufferedImage {
+private fun renderImage(colorPatcher: SvgAttributePatcher?, data: ByteArray, scale: Float, path: String?): BufferedImage {
   val decodingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-  val jsvgDocument = if (deprecatedColorPatcher == null) {
-    if (colorPatcher == null) {
-      createJSvgDocument(data)
-    }
-    else {
-      createJSvgDocument(createXmlStreamReader(data), colorPatcher::patchColors)
-    }
+  val jsvgDocument = if (colorPatcher == null) {
+    createJSvgDocument(data)
   }
   else {
-    val documentElement = createDocumentBuilder(namespaceAware = true).parse(data.inputStream()).documentElement
-    deprecatedColorPatcher.patchColors(documentElement)
-
-    val writer = StringWriter()
-    val transformerFactory = TransformerFactory.newDefaultInstance()
-    transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "")
-    transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "")
-    transformerFactory.newTransformer().transform(DOMSource(documentElement), StreamResult(writer))
-    createJSvgDocument(createXmlStreamReader(CharSequenceReader(writer.buffer)))
+    createJSvgDocument(createXmlStreamReader(data), colorPatcher::patchColors)
   }
 
   val bufferedImage = renderSvg(scale = scale, path = path, document = jsvgDocument)

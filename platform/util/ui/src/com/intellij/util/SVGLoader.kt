@@ -101,6 +101,7 @@ object SVGLoader {
 
   @ScheduledForRemoval
   @Deprecated("Please use SvgAttributePatcher")
+  @Suppress("unused")
   interface SvgElementColorPatcher {
     fun patchColors(svg: Element) {
     }
@@ -112,11 +113,6 @@ object SVGLoader {
   }
 
   interface SvgElementColorPatcherProvider {
-    @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
-    @Deprecated("Implement attributeForPath")
-    @ScheduledForRemoval
-    fun forPath(path: String?): SvgElementColorPatcher? = null
-
     fun attributeForPath(path: String): SvgAttributePatcher? = null
 
     @Suppress("DeprecatedCallableAddReplaceWith")
