@@ -72,7 +72,12 @@ public enum PythonHelper implements HelperPackage {
   EXTRA_SYSPATH("extra_syspath.py"),
   SYSPATH("syspath.py"),
 
+  // Compatible with 3.8+
   PYCODESTYLE("pycodestyle.py"),
+  // Compatible with 3.6+
+  PYCODESTYLE_2_10_0("pycodestyle-2.10.0.py"),
+  // Compatible with 2.7 and 3.5+
+  PYCODESTYLE_2_8_0("pycodestyle-2.8.0.py"),
 
   REST_RUNNER("rest_runners/rst2smth.py"),
 

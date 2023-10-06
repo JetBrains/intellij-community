@@ -107,15 +107,22 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
   public static class State {
     private final String interpreterPath;
+    private final LanguageLevel interpreterVersion;
     private final String fileText;
     private final HighlightDisplayLevel level;
     private final List<String> ignoredErrors;
     private final int margin;
     private final boolean hangClosingBrackets;
 
-    public State(String interpreterPath, String fileText, HighlightDisplayLevel level,
-                 List<String> ignoredErrors, int margin, boolean hangClosingBrackets) {
+    public State(String interpreterPath,
+                 LanguageLevel interpreterVersion,
+                 String fileText,
+                 HighlightDisplayLevel level,
+                 List<String> ignoredErrors,
+                 int margin,
+                 boolean hangClosingBrackets) {
       this.interpreterPath = interpreterPath;
+      this.interpreterVersion = interpreterVersion;
       this.fileText = fileText;
       this.level = level;
       this.ignoredErrors = ignoredErrors;
@@ -185,8 +192,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       ignoredErrors.add("E261"); // At least two spaces before inline comment
     }
 
-    return new State(homePath, file.getText(), profile.getErrorLevel(key, file),
-                     ignoredErrors, commonSettings.getRightMargin(PythonLanguage.getInstance()), customSettings.HANG_CLOSING_BRACKETS);
+    return new State(homePath,
+                     LanguageLevel.forElement(file),
+                     file.getText(),
+                     profile.getErrorLevel(key, file),
+                     ignoredErrors,
+                     commonSettings.getRightMargin(PythonLanguage.getInstance()),
+                     customSettings.HANG_CLOSING_BRACKETS);
   }
 
   private static void reportMissingInterpreter() {
@@ -213,7 +225,17 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
 
-    GeneralCommandLine cmd = PythonHelper.PYCODESTYLE.newCommandLine(collectedInfo.interpreterPath, options);
+    PythonHelper pycodestyleScript;
+    if (collectedInfo.interpreterVersion.isOlderThan(LanguageLevel.PYTHON36)) {
+      pycodestyleScript = PythonHelper.PYCODESTYLE_2_8_0;
+    }
+    else if (collectedInfo.interpreterVersion.isOlderThan(LanguageLevel.PYTHON38)) {
+      pycodestyleScript = PythonHelper.PYCODESTYLE_2_10_0;
+    }
+    else {
+      pycodestyleScript = PythonHelper.PYCODESTYLE;
+    }
+    GeneralCommandLine cmd = pycodestyleScript.newCommandLine(collectedInfo.interpreterPath, options);
 
     ProcessOutput output = PySdkUtil.getProcessOutput(cmd, new File(collectedInfo.interpreterPath).getParent(),
                                                       ImmutableMap.of("PYTHONBUFFERED", "1"),
