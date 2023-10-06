@@ -163,7 +163,8 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     }
     point.x -= panel.getEditorTextOffset(); // align main editor with the one in popup
 
-    int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+    int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING |
+                HintManager.HIDE_BY_ESCAPE;
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
 
     ApplicationManager.getApplication().getMessageBus().connect(childDisposable)
