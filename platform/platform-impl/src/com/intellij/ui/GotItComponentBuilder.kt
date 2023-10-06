@@ -799,6 +799,7 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
       get() = getFloatAttribute(CSS.Attribute.MARGIN_LEFT, DEFAULT_HORIZONTAL_INDENT)
     private val verticalIndent: Float
       get() = getFloatAttribute(CSS.Attribute.MARGIN_TOP, DEFAULT_VERTICAL_INDENT)
+    private val borderColor: Color? get() = borderColorAttr
     private val arcSize: Float
       get() = JBUIScale.scale(DEFAULT_ARC)
 
@@ -809,14 +810,18 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
         rectangles = calculateRectangles(a)
       }
 
-      foreground
+      val borderColor = borderColor
       val backgroundColor = background
       val g2d = g.create() as Graphics2D
       try {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        g2d.color = backgroundColor
         for (rect in rectangles ?: emptyList()) {
+          g2d.color = backgroundColor
           g2d.fill(rect)
+          if (borderColor != null) {
+            g2d.color = borderColor
+            g2d.draw(rect)
+          }
         }
       }
       finally {
@@ -935,8 +940,7 @@ private class InlineCodeExtension : ExtendableHTMLViewFactory.Extension {
       get() = getFloatAttribute(CSS.Attribute.MARGIN_LEFT, DEFAULT_HORIZONTAL_INDENT)
     private val verticalIndent: Float
       get() = getFloatAttribute(CSS.Attribute.MARGIN_TOP, DEFAULT_VERTICAL_INDENT)
-    private val borderColor: Color?
-      get() = attributes.getAttribute(CSS.Attribute.BORDER_TOP_COLOR)?.toString()?.let { ColorUtil.fromHex(it) }
+    private val borderColor: Color? get() = borderColorAttr
     private val arcSize: Float
       get() = JBUIScale.scale(DEFAULT_ARC)
 
@@ -1010,3 +1014,6 @@ private fun View.getFloatAttribute(key: Any, defaultValue: Float): Float {
   val value = attributes.getAttribute(key)?.toString()?.toFloatOrNull() ?: defaultValue
   return JBUIScale.scale(value)
 }
+
+private val InlineView.borderColorAttr: Color? get() =
+  attributes.getAttribute(CSS.Attribute.BORDER_TOP_COLOR)?.toString()?.let { ColorUtil.fromHex(it) }
