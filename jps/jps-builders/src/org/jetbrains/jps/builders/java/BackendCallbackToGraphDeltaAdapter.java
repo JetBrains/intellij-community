@@ -2,18 +2,17 @@
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.SmartList;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.dependency.Delta;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.impl.FileSource;
 import org.jetbrains.jps.dependency.java.*;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
 
@@ -21,12 +20,7 @@ class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
   // className -> {imports; static_imports}
   private final Map<String, Pair<Collection<String>, Collection<String>>> myImportRefs = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Collection<Callbacks.ConstantRef>> myConstantRefs = Collections.synchronizedMap(new HashMap<>());
-  private final Delta myDelta;
-
-  BackendCallbackToGraphDeltaAdapter(Delta delta) {
-    myDelta = delta;
-  }
-
+  private final List<Pair<Node<?, ?>, Iterable<NodeSource>>> myNodes = new ArrayList<>();
   @Override
   public void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated) {
     JvmClassNodeBuilder builder = JvmClassNodeBuilder.create(classFileName, cr, isGenerated);
@@ -40,8 +34,12 @@ class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
 
     var node = builder.getResult();
     if (!node.isPrivate()) {
-      myDelta.associate(node, Iterators.map(sources, s -> new FileSource(Path.of(s))));
+      myNodes.add(new Pair<>(node, Iterators.collect(Iterators.map(sources, s -> new FileSource(Path.of(s))), new SmartList<>())));
     }
+  }
+
+  public List<Pair<Node<?, ?>, Iterable<NodeSource>>> getNodes() {
+    return myNodes;
   }
 
   @Override

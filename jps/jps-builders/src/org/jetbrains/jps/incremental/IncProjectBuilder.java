@@ -1514,12 +1514,7 @@ public final class IncProjectBuilder {
       }
     }
 
-    if (JavaBuilderUtil.isDepGraphEnabled()) {
-      JavaBuilderUtil.setupGraphDelta(context, chunk.getTargets());
-    }
-    else {
-      completeRecompiledSourcesSet(context, chunk.getTargets());
-    }
+    completeRecompiledSourcesSet(context, chunk.getTargets());
 
     boolean doneSomething = false;
     boolean rebuildFromScratchRequested = false;

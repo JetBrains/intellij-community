@@ -18,13 +18,9 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.dependency.Delta;
-import org.jetbrains.jps.dependency.DependencyGraph;
-import org.jetbrains.jps.dependency.DifferentiateResult;
-import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.FileSource;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -64,7 +60,7 @@ public final class JavaBuilderUtil {
   private static final Key<Set<File>> SUCCESSFULLY_COMPILED_FILES_KEY = Key.create("_successfully_compiled_files_");
   private static final Key<List<FileFilter>> SKIP_MARKING_DIRTY_FILTERS_KEY = Key.create("_skip_marking_dirty_filters_");
   private static final Key<Pair<Mappings, Callbacks.Backend>> MAPPINGS_DELTA_KEY = Key.create("_mappings_delta_");
-  private static final Key<Pair<Delta, Callbacks.Backend>> GRAPH_DELTA_KEY = Key.create("_graph_delta_");
+  private static final Key<BackendCallbackToGraphDeltaAdapter> GRAPH_DELTA_CALLBACK_KEY = Key.create("_graph_delta_");
 
   private static final String MODULE_INFO_FILE = "module-info.java";
 
@@ -105,47 +101,13 @@ public final class JavaBuilderUtil {
     filters.add(filter);
   }
 
-  public static Delta setupGraphDelta(CompileContext context, Iterable<ModuleBuildTarget> targets) throws IOException {
-    Pair<Delta, Callbacks.Backend> pair = GRAPH_DELTA_KEY.get(context);
-    if (pair == null) {
-      BuildFSState fsState = context.getProjectDescriptor().fsState;
-      Set<Path> dirtyFiles = FileCollectionFactory.createCanonicalPathSet();
-      Set<Path> deletedFiles = FileCollectionFactory.createCanonicalPathSet();
-      Map<BuildTarget<?>, Collection<String>> removedMap = Utils.REMOVED_SOURCES_KEY.get(context);
-      for (ModuleBuildTarget target : targets) {
-        fsState.processFilesToRecompile(context, target, (t, f, root) -> {
-          dirtyFiles.add(f.toPath());
-          return true;
-        });
-        if (removedMap != null) {
-          Iterators.collect(Iterators.map(removedMap.get(target), p -> Path.of(p)), deletedFiles);
-        }
-      }
-      Delta delta = context.getProjectDescriptor().dataManager.getDependencyGraph().createDelta(Iterators.map(dirtyFiles, f -> new FileSource(f)), Iterators.map(deletedFiles, f -> new FileSource(f)));
-      for (NodeSource src : delta.getBaseSources()) {
-        if (!dirtyFiles.contains(src.getPath())) {
-          FSOperations.markDirtyIfNotDeleted(context, CompilationRound.CURRENT, src.getPath().toFile());
-        }
-      }
-      GRAPH_DELTA_KEY.set(context, pair = Pair.create(delta, new BackendCallbackToGraphDeltaAdapter(delta)));
-    }
-    return pair.getFirst();
-  }
-
   public static @NotNull Callbacks.Backend getDependenciesRegistrar(CompileContext context) {
     if (isDepGraphEnabled()) {
-      // todo: temp code
-      Pair<Delta, Callbacks.Backend> pair = GRAPH_DELTA_KEY.get(context);
-      if (pair == null) {
-        try {
-          setupGraphDelta(context, Collections.emptyList());
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        pair = GRAPH_DELTA_KEY.get(context);
+      BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
+      if (callback == null) {
+        GRAPH_DELTA_CALLBACK_KEY.set(context, callback = new BackendCallbackToGraphDeltaAdapter());
       }
-      return pair.second;
+      return callback;
     }
 
     Pair<Mappings, Callbacks.Backend> pair = MAPPINGS_DELTA_KEY.get(context);
@@ -162,16 +124,36 @@ public final class JavaBuilderUtil {
 
     if(isDepGraphEnabled()) {
       Delta delta = null;
-      Pair<Delta, Callbacks.Backend> pair = GRAPH_DELTA_KEY.get(context);
-      if (pair != null) {
-        GRAPH_DELTA_KEY.set(context, null);
-        delta = pair.first;
+      BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
+      if (callback != null) {
+        GRAPH_DELTA_CALLBACK_KEY.set(context, null);
+
+        Set<File> compiledWithErrors = getFilesContainer(context, COMPILED_WITH_ERRORS_KEY);
+        COMPILED_WITH_ERRORS_KEY.set(context, null);
+        Set<File> filesToCompile = getFilesContainer(context, FILES_TO_COMPILE_KEY);
+        FILES_TO_COMPILE_KEY.set(context, null);
+        //Set<File> successfullyCompiled = getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY);
+        SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
+
+        DependencyGraph graph = context.getProjectDescriptor().dataManager.getDependencyGraph();
+        delta = graph.createDelta(
+          Iterators.map(Iterators.filter(filesToCompile, f -> !compiledWithErrors.contains(f)), f -> new FileSource(f)),
+          Iterators.map(getRemovedPaths(chunk, dirtyFilesHolder), p -> new FileSource(Path.of(p)))
+        );
+        for (Pair<Node<?, ?>, Iterable<NodeSource>> pair : callback.getNodes()) {
+          delta.associate(pair.getFirst(), pair.getSecond());
+        }
+        // todo: consider using delta for marking additional sources for compilation
+        //for (NodeSource src : delta.getBaseSources()) {
+        //  if (!inputFiles.contains(src.getPath())) {
+        //    FSOperations.markDirtyIfNotDeleted(context, CompilationRound.CURRENT, src.getPath().toFile());
+        //  }
+        //}
       }
+
       if (delta == null) {
         return false;
       }
-      FILES_TO_COMPILE_KEY.set(context, null);
-      SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
       return updateDependencyGraph(context, delta, chunk, CompilationRound.NEXT, createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context)));
     }
 
@@ -218,7 +200,11 @@ public final class JavaBuilderUtil {
   public static void markDirtyDependenciesForInitialRound(CompileContext context, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dfh, ModuleChunk chunk) throws IOException {
     if (hasRemovedPaths(chunk, dfh)) {
       if (isDepGraphEnabled()) {
-        // todo
+        Delta delta = context.getProjectDescriptor().dataManager.getDependencyGraph().createDelta(
+          Collections.emptyList(),
+          Iterators.map(getRemovedPaths(chunk, dfh), p -> new FileSource(Path.of(p)))
+        );
+        updateDependencyGraph(context, delta, chunk, CompilationRound.CURRENT, null);
         return;
       }
       final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
@@ -431,23 +417,23 @@ public final class JavaBuilderUtil {
     final boolean compilingIncrementally = isCompileJavaIncrementally(context);
 
     if (diffResult.isIncremental()) {
-      final Set<File> newlyAffectedFiles = Iterators.collect(
+      final Set<File> affectedFiles = Iterators.collect(
         Iterators.filter(Iterators.map(diffResult.getAffectedSources(), src -> src.getPath().toFile()), f -> skipMarkDirtyFilter == null || !skipMarkDirtyFilter.accept(f)),
         new HashSet<>()
       );
 
-      final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", newlyAffectedFiles.size());
+      final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", affectedFiles.size());
       LOG.info(infoMessage);
       context.processMessage(new ProgressMessage(infoMessage));
 
-      if (!newlyAffectedFiles.isEmpty()) {
+      if (!affectedFiles.isEmpty()) {
         
         if (LOG.isDebugEnabled()) {
-          for (File file : newlyAffectedFiles) {
+          for (File file : affectedFiles) {
             LOG.debug("affected file: " + file.getPath());
           }
           final List<Pair<File, JpsModule>> wrongFiles =
-            checkAffectedFilesInCorrectModules(context, newlyAffectedFiles, moduleBasedFilter);
+            checkAffectedFilesInCorrectModules(context, affectedFiles, moduleBasedFilter);
           if (!wrongFiles.isEmpty()) {
             LOG.debug("Wrong affected files for module chunk " + chunk.getName() + ": ");
             for (Pair<File, JpsModule> pair : wrongFiles) {
@@ -459,7 +445,7 @@ public final class JavaBuilderUtil {
 
         Set<ModuleBuildTarget> targetsToMark = null;
         final JavaModuleIndex moduleIndex = getJavaModuleIndex(context);
-        for (File file : newlyAffectedFiles) {
+        for (File file : affectedFiles) {
           if (MODULE_INFO_FILE.equals(file.getName())) {
             final JavaSourceRootDescriptor rootDescr = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
             if (rootDescr != null) {
@@ -498,7 +484,7 @@ public final class JavaBuilderUtil {
             FSOperations.markDirty(context, markDirtyRound, chunk, null);
           }
         }
-        additionalPassRequired = compilingIncrementally && (currentChunkAfected || moduleBasedFilter.containsFilesFromCurrentTargetChunk(newlyAffectedFiles));
+        additionalPassRequired = compilingIncrementally && (currentChunkAfected || moduleBasedFilter.containsFilesFromCurrentTargetChunk(affectedFiles));
       }
     }
     else {
