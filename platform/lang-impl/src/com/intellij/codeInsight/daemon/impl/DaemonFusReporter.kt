@@ -41,7 +41,9 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
                                  val documentStartedHash: Int = 0,
                                  val isDumbMode: Boolean = false)
 
+  @Volatile
   private var initialEntireFileHighlightingActivity: Activity? = null
+  @Volatile
   private var initialEntireFileHighlightingReported: Boolean = false
 
   private val currentSessionSegments = ConcurrentHashMap<FileEditor, SessionData>()
@@ -72,14 +74,14 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
   }
 
   override fun daemonCanceled(reason: String, fileEditors: Collection<FileEditor>) {
-    daemonStopped(fileEditors, true)
+    daemonStopped(fileEditors)
   }
 
   override fun daemonFinished(fileEditors: Collection<FileEditor>) {
-    daemonStopped(fileEditors, false)
+    daemonStopped(fileEditors)
   }
 
-  private fun daemonStopped(fileEditors: Collection<FileEditor>, canceled: Boolean) {
+  private fun daemonStopped(fileEditors: Collection<FileEditor>) {
     val fileEditor = fileEditors.filterIsInstance<TextEditor>().firstOrNull() ?: return
     val editor = fileEditor.editor
     if (editor.editorKind != EditorKind.MAIN_EDITOR && !ApplicationManager.getApplication().isUnitTestMode) {
@@ -113,7 +115,7 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
     val fileType = document.let { FileDocumentManager.getInstance().getFile(it)?.fileType }
     val highlightingCompleted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(fileEditor, project)
 
-    if (highlightingCompleted && !canceled && !initialEntireFileHighlightingReported) {
+    if (highlightingCompleted && !initialEntireFileHighlightingReported) {
       initialEntireFileHighlightingReported = true
       initialEntireFileHighlightingActivity!!.end()
       initialEntireFileHighlightingActivity = null
