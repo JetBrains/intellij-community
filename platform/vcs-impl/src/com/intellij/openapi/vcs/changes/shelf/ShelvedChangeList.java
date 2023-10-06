@@ -11,6 +11,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
@@ -24,10 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public final class ShelvedChangeList implements JDOMExternalizable, ExternalizableScheme {
   private static final Logger LOG = Logger.getInstance(ShelvedChangeList.class);
@@ -43,6 +41,7 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   public @NlsSafe String DESCRIPTION;
   public Date DATE;
   private volatile List<ShelvedChange> myChanges;
+  private volatile @Nls String myChangesLoadingError = null;
   private List<ShelvedBinaryFile> myBinaryFiles;
   private boolean myRecycled;
   private boolean myToDelete;
@@ -146,7 +145,9 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
       loadChangesIfNeededOrThrow(project);
     }
     catch (Exception e) {
-      LOG.error("Failed to parse the file patch: [" + path + "]", e);
+      LOG.warn("Failed to parse the file patch: [" + path + "]", e);
+      myChanges = Collections.emptyList();
+      myChangesLoadingError = VcsBundle.message("shelve.loading.patch.error", e.getMessage());
     }
   }
 
@@ -175,6 +176,10 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   public List<ShelvedChange> getChanges(Project project) {
     loadChangesIfNeeded(project);
     return getChanges();
+  }
+
+  public @Nullable @Nls String getChangesLoadingError() {
+    return myChangesLoadingError;
   }
 
   void setChanges(List<ShelvedChange> shelvedChanges) {
