@@ -284,10 +284,10 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             val propertyRenderedType = analyzeInModalWindow(property, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
                 property.getReturnKtType().render(position = Variance.INVARIANT)
             }
-            if (propertyRenderedType == expressionRenderedType && !areTypeArgumentsNeededForCorrectTypeInference(initializer)) {
+            if (propertyRenderedType == expressionRenderedType) {
                 renderedTypeArgumentsIfMightBeNeeded = null
-            } else {
-                mustSpecifyTypeExplicitly = false
+            } else if (!areTypeArgumentsNeededForCorrectTypeInference(initializer)) {
+                mustSpecifyTypeExplicitly = true
             }
         }
 
