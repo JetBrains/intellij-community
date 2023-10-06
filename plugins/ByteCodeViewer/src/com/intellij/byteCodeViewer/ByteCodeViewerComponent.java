@@ -121,7 +121,8 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
       fragmentDoc.setReadOnly(false);
       try {
         fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), bytecode);
-      } finally {
+      }
+      finally {
         fragmentDoc.setReadOnly(true);
       }
 

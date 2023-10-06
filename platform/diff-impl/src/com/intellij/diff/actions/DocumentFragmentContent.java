@@ -125,8 +125,10 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
       if (!myRangeMarker.isValid()) {
         myDocument2.setReadOnly(false);
         try {
-          replaceString(myDocument2, 0, myDocument2.getTextLength(), DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
-        } finally {
+          replaceString(myDocument2, 0, myDocument2.getTextLength(),
+                        DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
+        }
+        finally {
           myDocument2.setReadOnly(true);
         }
         return;

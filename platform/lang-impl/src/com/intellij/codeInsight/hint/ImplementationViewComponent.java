@@ -462,7 +462,8 @@ public final class ImplementationViewComponent extends JPanel {
       fragmentDoc.setReadOnly(false);
       try {
         fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
-      } finally {
+      }
+      finally {
         fragmentDoc.setReadOnly(true);
       }
 

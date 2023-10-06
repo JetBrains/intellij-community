@@ -185,7 +185,8 @@ class PsiViewerDebugPanel(
                   runWriteAction {
                     editor.document.setText(fileText)
                   }
-                } finally {
+                }
+                finally {
                   editor.document.setReadOnly(true)
                 }
                 editor.selectAndScroll(psiRangeInFile)
