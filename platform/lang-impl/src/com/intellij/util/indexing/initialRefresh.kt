@@ -2,9 +2,12 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectInitialActivitiesNotifier
+import com.intellij.openapi.project.ProjectInitialActivitiesNotifierImpl
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
@@ -24,12 +27,14 @@ internal fun scheduleInitialVfsRefresh(project: Project, log: Logger) {
     project.coroutineScope.launch {
       refreshVFSAsync()
       timeInitialVfsRefresh(t, project, log)
+      (project.service<ProjectInitialActivitiesNotifier>() as ProjectInitialActivitiesNotifierImpl).notifyInitialVfsRefreshFinished()
     }
   }
   else {
     ApplicationManager.getApplication().invokeAndWait {
       VirtualFileManager.getInstance().syncRefresh()
       timeInitialVfsRefresh(t, project, log)
+      (project.service<ProjectInitialActivitiesNotifier>() as ProjectInitialActivitiesNotifierImpl).notifyInitialVfsRefreshFinished()
     }
   }
 }
