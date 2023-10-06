@@ -7,7 +7,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.styling.TooltipColors
@@ -49,6 +48,7 @@ data class IntUiTooltipColors(
     override val content: Color,
     override val background: Color,
     override val border: Color,
+    override val shadow: Color,
 ) : TooltipColors {
 
     companion object {
@@ -57,22 +57,25 @@ data class IntUiTooltipColors(
         fun light(
             contentColor: Color = IntUiLightTheme.colors.grey(12),
             backgroundColor: Color = IntUiLightTheme.colors.grey(2),
-            borderColor: Color = IntelliJTheme.globalColors.borders.normal,
-        ) = IntUiTooltipColors(contentColor, backgroundColor, borderColor)
+            borderColor: Color = backgroundColor,
+            shadow: Color = Color(0x78919191), // Not a palette color
+        ) = IntUiTooltipColors(contentColor, backgroundColor, borderColor, shadow)
 
         @Composable
         fun dark(
             contentColor: Color = IntUiDarkTheme.colors.grey(12),
             backgroundColor: Color = IntUiDarkTheme.colors.grey(2),
-            borderColor: Color = IntelliJTheme.globalColors.borders.normal,
-        ) = IntUiTooltipColors(contentColor, backgroundColor, borderColor)
+            shadow: Color = Color(0x66000000), // Not a palette color
+            borderColor: Color = IntUiDarkTheme.colors.grey(3),
+        ) = IntUiTooltipColors(contentColor, backgroundColor, borderColor, shadow)
     }
 }
 
 @Stable
 data class IntUiTooltipMetrics(
-    override val contentPadding: PaddingValues = PaddingValues(vertical = 8.dp, horizontal = 8.dp),
+    override val contentPadding: PaddingValues = PaddingValues(vertical = 9.dp, horizontal = 12.dp),
     override val showDelay: Duration = 0.milliseconds,
-    override val cornerSize: CornerSize = CornerSize(8.dp),
+    override val cornerSize: CornerSize = CornerSize(5.dp),
     override val borderWidth: Dp = 1.dp,
+    override val shadowSize: Dp = 12.dp,
 ) : TooltipMetrics

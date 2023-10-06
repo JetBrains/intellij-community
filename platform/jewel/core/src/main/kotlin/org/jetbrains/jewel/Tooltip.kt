@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.styling.TooltipStyle
@@ -32,14 +34,23 @@ import org.jetbrains.jewel.styling.TooltipStyle
                 LocalContentColor provides style.colors.content,
             ) {
                 Box(
-                    modifier = Modifier.background(
-                        color = style.colors.background,
-                        shape = RoundedCornerShape(style.metrics.cornerSize),
-                    ).border(
-                        width = style.metrics.borderWidth,
-                        color = style.colors.border,
-                        shape = RoundedCornerShape(style.metrics.cornerSize),
-                    ).padding(style.metrics.contentPadding),
+                    modifier = Modifier
+                        .shadow(
+                            elevation = style.metrics.shadowSize,
+                            shape = RoundedCornerShape(style.metrics.cornerSize),
+                            ambientColor = style.colors.shadow,
+                            spotColor = Color.Transparent,
+                        )
+                        .background(
+                            color = style.colors.background,
+                            shape = RoundedCornerShape(style.metrics.cornerSize),
+                        )
+                        .border(
+                            width = style.metrics.borderWidth,
+                            color = style.colors.border,
+                            shape = RoundedCornerShape(style.metrics.cornerSize),
+                        )
+                        .padding(style.metrics.contentPadding),
                 ) {
                     tooltip()
                 }

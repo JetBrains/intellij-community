@@ -21,6 +21,7 @@ interface TooltipColors {
     val background: Color
     val content: Color
     val border: Color
+    val shadow: Color
 }
 
 @Stable
@@ -30,6 +31,7 @@ interface TooltipMetrics {
     val showDelay: Duration
     val cornerSize: CornerSize
     val borderWidth: Dp
+    val shadowSize: Dp
 }
 
 val LocalTooltipStyle = staticCompositionLocalOf<TooltipStyle> {

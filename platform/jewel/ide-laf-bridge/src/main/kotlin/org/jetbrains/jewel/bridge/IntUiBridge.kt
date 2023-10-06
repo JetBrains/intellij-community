@@ -167,7 +167,7 @@ internal fun createSwingIntUiComponentStyling(
         scrollbarStyle = readScrollbarStyle(theme.isDark),
         textAreaStyle = readTextAreaStyle(textAreaTextStyle, textFieldStyle.metrics),
         circularProgressStyle = readCircularProgressStyle(theme.isDark),
-        tooltipStyle = readTooltipStyle(theme.isDark),
+        tooltipStyle = readTooltipStyle(),
         textFieldStyle = textFieldStyle,
     )
 }
@@ -899,19 +899,14 @@ private fun readCircularProgressStyle(
             ?: if (isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD),
     )
 
-private fun readTooltipStyle(
-    isDark: Boolean,
-): IntUiTooltipStyle {
-    val background =
-        if (isDark) "Tooltip.background" else "ToolTip.background"
-    val content =
-        if (isDark) "Tooltip.foreground" else "ToolTip.foreground"
+private fun readTooltipStyle(): IntUiTooltipStyle {
     return IntUiTooltipStyle(
         metrics = IntUiTooltipMetrics(),
         colors = IntUiTooltipColors(
-            content = retrieveColorOrUnspecified(content),
-            background = retrieveColorOrUnspecified(background),
-            border = retrieveColorOrUnspecified("Tooltip.borderColor"),
+            content = retrieveColorOrUnspecified("ToolTip.foreground"),
+            background = retrieveColorOrUnspecified("ToolTip.background"),
+            border = retrieveColorOrUnspecified("ToolTip.borderColor"),
+            shadow = Color.Black.copy(alpha = .6f),
         ),
     )
 }
