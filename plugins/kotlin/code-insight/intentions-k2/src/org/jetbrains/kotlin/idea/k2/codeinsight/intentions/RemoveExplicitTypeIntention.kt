@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
+import org.jetbrains.kotlin.idea.codeinsight.utils.getInitializerOrGetterInitializer
 import org.jetbrains.kotlin.idea.codeinsight.utils.isAnnotatedDeep
 import org.jetbrains.kotlin.idea.codeinsight.utils.isSetterParameter
 import org.jetbrains.kotlin.psi.*
@@ -153,11 +154,6 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
             val property = (this as? KtProperty) ?: (this as? KtPropertyAccessor)?.property
             return property?.isVar == true
         }
-
-    private fun KtDeclaration.getInitializerOrGetterInitializer(): KtExpression? {
-        if (this is KtDeclarationWithInitializer && initializer != null) return initializer
-        return (this as? KtProperty)?.getter?.initializer
-    }
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.explicit.type.specification")
     override fun getActionName(element: KtDeclaration): String = familyName
