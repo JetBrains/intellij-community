@@ -614,7 +614,11 @@ public final class JBUI {
       }
 
       public static int underlineHeight() {
-        return getInt("EditorTabs.underlineHeight", DefaultTabs.underlineHeight());
+        return getInt(underlineHeightKey(), DefaultTabs.underlineHeight());
+      }
+
+      public static String underlineHeightKey() {
+        return "EditorTabs.underlineHeight";
       }
 
       public static int underlineArc() {
