@@ -8,6 +8,7 @@ import com.intellij.searchEverywhereMl.semantics.providers.StreamSemanticItemsPr
 import com.intellij.util.Processor
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -60,7 +61,7 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
             else cachedDescriptors.filter { it.findPriority() == priority }.iterator()
 
             for (descriptor in iterator) {
-              if (progressIndicator.isCanceled) break
+              progressIndicator.checkCanceled()
               if (descriptor.findPriority() != priority) {
                 cachedDescriptors.add(descriptor)
                 continue
@@ -79,7 +80,10 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
 
         try {
           standardContributorStartedMutex.withLock {
-            while (!standardContributorStarted) standardContributorStartedCondition.await()
+            while (!standardContributorStarted) {
+              standardContributorStartedCondition.await(100, TimeUnit.MILLISECONDS)
+              progressIndicator.checkCanceled()
+            }
           }
           if (useReadAction) runReadAction(iterate) else iterate()
         }
@@ -108,7 +112,12 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
       consumer.process(prepareStandardDescriptor(it, knownItems, mutex))
     }
     allowSemanticSearch()
-    mutex.withLock { while (!ready) readyCondition.await() } // account for possible spurious wakeup
+    mutex.withLock {
+      while (!ready) { // account for possible spurious wakeup
+        readyCondition.await(100, TimeUnit.MILLISECONDS)
+        progressIndicator.checkCanceled()
+      }
+    }
   }
 
   fun syncSearchSettings() {}
