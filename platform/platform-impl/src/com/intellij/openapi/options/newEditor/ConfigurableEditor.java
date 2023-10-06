@@ -26,7 +26,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
@@ -44,7 +43,9 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 
+import static com.intellij.openapi.options.newEditor.ConfigurablesListPanelKt.createConfigurablesListPanel;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static java.awt.Toolkit.getDefaultToolkit;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
@@ -298,20 +299,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     else {
       ConfigurableGroup configurableGroup = ConfigurableWrapper.cast(ConfigurableGroup.class, configurable);
       String description = configurableGroup != null ? configurableGroup.getDescription() : null;
-
-      content.add(BorderLayout.NORTH, new JLabel(description));
-
-      JPanel panel = new JPanel();
-      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-      content.add(BorderLayout.CENTER, panel);
-      panel.add(Box.createVerticalStrut(10));
-      for (Configurable current : compositeGroup.getConfigurables()) {
-        //noinspection DialogTitleCapitalization (title case is OK here)
-        ActionLink label = new ActionLink(current.getDisplayName(), e -> { openLink(current); });
-        label.setBorder(JBUI.Borders.empty(1, 17, 3, 1));
-        panel.add(label);
-      }
+      content.add(BorderLayout.CENTER, createConfigurablesListPanel(description, Arrays.asList(compositeGroup.getConfigurables()), this));
     }
+
     JScrollPane pane = createScrollPane(content, true);
     pane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_NEVER);
     return pane;
