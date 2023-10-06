@@ -28,7 +28,7 @@ abstract class GradleBaseTestCase {
   private lateinit var listenerLeakTracker: ESListenerLeakTracker
   private lateinit var reloadLeakTracker: OperationLeakTracker
 
-  lateinit var testDisposable: Disposable
+  private lateinit var testDisposable: Disposable
 
   private lateinit var sdkFixture: SdkTestFixture
   private lateinit var fileFixture: TempDirTestFixture

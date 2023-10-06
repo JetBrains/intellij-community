@@ -5,19 +5,25 @@ import com.intellij.application.subscribe
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.getResolvedPath
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Path
 
 abstract class GradleUntrustedProjectTestCase : GradleTestCase() {
 
+  private lateinit var testDisposable: Disposable
   private lateinit var trustedLocations: List<Path>
 
   @BeforeEach
-  fun setUpTrustedLocationsWatcher() {
+  fun setUpUntrustedProjectTestCase() {
+    testDisposable = Disposer.newDisposable()
+
     val trustedLocations = ArrayList<Path>()
     this.trustedLocations = trustedLocations
     TrustedProjectsListener.TOPIC.subscribe(testDisposable, object : TrustedProjectsListener {
@@ -25,6 +31,11 @@ abstract class GradleUntrustedProjectTestCase : GradleTestCase() {
         trustedLocations.addAll(locatedProject.projectRoots)
       }
     })
+  }
+
+  @AfterEach
+  fun tearDownUntrustedProjectTestCase() {
+    Disposer.dispose(testDisposable)
   }
 
   fun assertTrustedLocations(vararg relativePaths: String) {
