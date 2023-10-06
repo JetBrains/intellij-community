@@ -100,7 +100,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     }
 
     private val propertyInitialization = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerApplicators(InitializePropertyQuickFixFactories.initializePropertyFactory)
+        registerModCommandApplicators(InitializePropertyQuickFixFactories.initializePropertyFactory)
         registerApplicator(AddLateInitFactory.addLateInitFactory)
         registerApplicators(AddAccessorsFactories.addAccessorsToUninitializedProperty)
 
