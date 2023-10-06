@@ -55,6 +55,19 @@ public abstract class ModuleExtension implements Disposable {
 
   public abstract void commit();
 
+  /**
+   * @deprecated necessity to dispose all instances of {@link ModuleExtension} leads to performance problems in big projects, so this method
+   * will be removed in the future.
+   * If the implementation just clears the fields by assigning {@code null}, it can be safely removed, because obsolete instances will be 
+   * collected by GC anyway.
+   * If the implementation really needs to register something in {@link com.intellij.openapi.util.Disposer}, it should create a separate
+   * project-level service, implement {@link Disposable} in it and use it as a parent disposable for such resources. 
+   */
+  @Deprecated(forRemoval = true)
+  @Override
+  public void dispose() {
+  }
+
   public abstract boolean isChanged();
 
   /**

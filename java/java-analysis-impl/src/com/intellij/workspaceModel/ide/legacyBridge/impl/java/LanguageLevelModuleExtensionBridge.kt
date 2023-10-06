@@ -51,7 +51,6 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
   }
 
   override fun commit() {}
-  override fun dispose() {}
 
   class Factory : ModuleExtensionBridgeFactory<LanguageLevelModuleExtensionBridge> {
     override fun createExtension(module: ModuleBridge,

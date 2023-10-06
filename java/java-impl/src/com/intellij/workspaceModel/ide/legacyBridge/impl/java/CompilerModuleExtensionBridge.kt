@@ -66,7 +66,6 @@ class CompilerModuleExtensionBridge(
 
   override fun commit(): Unit = Unit
   override fun isChanged(): Boolean = changed
-  override fun dispose(): Unit = Unit
 
   private fun updateJavaSettings(updater: JavaModuleSettingsEntity.Builder.() -> Unit) {
     if (diff == null) {
