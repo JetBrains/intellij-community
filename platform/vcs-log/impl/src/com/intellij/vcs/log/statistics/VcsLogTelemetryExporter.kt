@@ -24,7 +24,7 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
         spans.asSequence()
           .filter { span -> span.instrumentationScopeInfo.name == VcsScope.name }
           .forEach { span ->
-            LogHistory.values()
+            LogHistory.entries
               .find { historySpan -> historySpan.name == span.name }
               ?.let { historySpan ->
                 when (historySpan) {

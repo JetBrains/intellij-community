@@ -19,7 +19,7 @@ enum class CommitCountStage(val count: Int) {
   INITIAL(5), FIRST_STEP(2000), ALL(Int.MAX_VALUE);
 
   fun next(): CommitCountStage {
-    val values = values()
+    val values = entries
     return if (ordinal == values.size - 1) this else values[ordinal + 1]
   }
 }

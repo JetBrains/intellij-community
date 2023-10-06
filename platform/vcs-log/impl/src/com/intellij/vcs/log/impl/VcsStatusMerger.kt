@@ -109,7 +109,7 @@ data class VcsFileStatusInfo(val typeByte: Byte, val first: CharSequence, val se
 
   val firstPath: String get() = first.toString()
   val secondPath: String? get() = second?.toString()
-  val type: Change.Type get() = Change.Type.values()[typeByte.toInt()]
+  val type: Change.Type get() = Change.Type.entries[typeByte.toInt()]
 }
 
 class VcsFileStatusInfoMerger : VcsStatusMerger<VcsFileStatusInfo, CharSequence>() {
