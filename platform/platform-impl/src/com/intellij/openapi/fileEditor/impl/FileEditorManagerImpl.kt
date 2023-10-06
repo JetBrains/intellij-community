@@ -2277,7 +2277,12 @@ open class FileEditorManagerImpl(
 
     val timeToShow = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
     val fileEditor = composite.allEditors.firstOrNull()
-    val editor = if (fileEditor is TextEditor) fileEditor.getEditor() else null
+    val editor = if (fileEditor is TextEditor && fileEditor !is BaseRemoteFileEditor) {
+      runCatching { fileEditor.getEditor() }.getOrNull()
+    }
+    else {
+      null
+    }
     if (editor == null) {
       coroutineScope.launch {
         FileTypeUsageCounterCollector.logOpened(project, file, fileEditor, timeToShow, -1, composite)
