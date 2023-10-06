@@ -7,7 +7,6 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
@@ -82,8 +81,12 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
 
     context(KtAnalysisSession)
     private fun explicitTypeMightBeNeededForCorrectTypeInference(declaration: KtDeclaration): Boolean {
+        val typeReference = declaration.typeReference ?: return false
         val initializer = declaration.getInitializerOrGetterInitializer() ?: return true
-        val initializerType = getInitializerTypeIfContextIndependent(initializer) ?: return true
+
+        if (!isInitializerTypeContextIndependent(initializer, typeReference)) return true
+
+        val initializerType = initializer.getKtType() ?: return true
         val explicitType = declaration.getReturnKtType()
 
         val typeCanBeRemoved = if (declaration.isVar) {
@@ -95,21 +98,18 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
     }
 
     context(KtAnalysisSession)
-    private fun getInitializerTypeIfContextIndependent(initializer: KtExpression): KtType? {
-        return when (initializer) {
-            is KtStringTemplateExpression -> buildClassType(DefaultTypeClassIds.STRING)
-            is KtConstantExpression -> initializer.getClassId()?.let { buildClassType(it) }
-            is KtCallExpression -> {
-                val isNotContextFree = initializer.typeArgumentList == null && returnTypeOfCallDependsOnTypeParameters(initializer)
-                if (isNotContextFree) null else initializer.getKtType()
-            }
+    private fun isInitializerTypeContextIndependent(
+        initializer: KtExpression,
+        typeReference: KtTypeReference,
+    ): Boolean = when (initializer) {
+        is KtStringTemplateExpression -> true
+        // `val n: Int = 1` - type of `1` is context-independent
+        // `val n: Long = 1` - type of `1` is context-dependent
+        is KtConstantExpression -> initializer.getClassId()?.let { buildClassType(it) }?.isSubTypeOf(typeReference.getKtType()) == true
+        is KtCallExpression -> initializer.typeArgumentList != null || !returnTypeOfCallDependsOnTypeParameters(initializer)
 
-            else -> {
-                // get type for expressions that a compiler views as constants, e.g. `1 + 2`
-                val evaluatedConstant = initializer.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
-                if (evaluatedConstant != null) initializer.getKtType() else null
-            }
-        }
+        // consider types of expressions that the compiler views as constants, e.g. `1 + 2`, as independent
+        else -> initializer.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null
     }
 
     context(KtAnalysisSession)
