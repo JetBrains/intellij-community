@@ -99,7 +99,10 @@ class InlineCompletionHandler internal constructor(
       guardCaretModifications(request)
     }
 
-    proposalsManager.getCachedProposal()?.let { return newSession.context.renderElement(it, request.endOffset) }
+    proposalsManager.getCachedProposal()?.run {
+      map { newSession.context.renderElement(it, request.endOffset) }
+      return
+    }
 
     executor.switchJobSafely(newSession::assignJob) {
       invokeRequest(request, newSession)
@@ -159,8 +162,10 @@ class InlineCompletionHandler internal constructor(
   @RequiresBlockingContext
   fun complete(isActive: Boolean, cause: Throwable?, context: InlineCompletionContext) {
     trace(InlineCompletionEventType.Completion(cause, isActive))
-    proposalsManager.cacheProposal(context.lineToInsert)
-    if (cause != null && !context.isDisposed) {
+    if (cause == null) {
+      proposalsManager.cacheProposal(context.state.elements)
+    }
+    else if (!context.isDisposed) {
       hide(false, context)
     }
   }
