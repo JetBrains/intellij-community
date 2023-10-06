@@ -3,10 +3,10 @@
 package com.intellij.ide.observation
 
 import com.intellij.configurationStore.saveProjectsAndApp
-import com.intellij.openapi.progress.indeterminateStep
-import com.intellij.openapi.progress.rawProgressReporter
-import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.progress.indeterminateStep
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import kotlinx.coroutines.delay
 import org.jetbrains.annotations.ApiStatus.Experimental
 import kotlin.coroutines.coroutineContext

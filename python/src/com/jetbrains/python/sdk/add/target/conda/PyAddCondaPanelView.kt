@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.target.conda
 
 import com.intellij.execution.target.TargetBrowserHints
@@ -11,11 +11,11 @@ import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.progress.runWithModalProgressBlocking
-import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.emptyText
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields

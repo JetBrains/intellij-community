@@ -4,6 +4,9 @@ package com.intellij.openapi.progress
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.impl.ModalityStateEx
 import com.intellij.platform.util.progress.impl.ProgressState
+import com.intellij.platform.util.progress.progressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*

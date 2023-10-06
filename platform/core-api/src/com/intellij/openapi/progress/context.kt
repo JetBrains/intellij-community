@@ -7,6 +7,7 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.asContextElement
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.BlockingJob

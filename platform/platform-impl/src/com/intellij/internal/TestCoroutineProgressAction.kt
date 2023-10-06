@@ -7,6 +7,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.platform.util.progress.filterWithProgress
+import com.intellij.platform.util.progress.forEachWithProgress
+import com.intellij.platform.util.progress.indeterminateStep
+import com.intellij.platform.util.progress.mapWithProgress
+import com.intellij.platform.util.progress.progressStep
+import com.intellij.platform.util.progress.transformWithProgress
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.*
 import javax.swing.JComponent

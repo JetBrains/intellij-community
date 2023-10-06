@@ -11,6 +11,11 @@ import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.platform.util.progress.ProgressReporter
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.progressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext

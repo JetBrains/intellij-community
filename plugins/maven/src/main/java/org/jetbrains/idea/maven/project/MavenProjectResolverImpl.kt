@@ -2,12 +2,12 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.build.events.MessageEvent
-import com.intellij.openapi.progress.RawProgressReporter
 import com.intellij.openapi.progress.checkCancelled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.ExceptionUtil
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue.getIssue

@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.RawProgressReporter
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.DataInputOutputUtilRt
@@ -30,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Ready
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Companion.isDeleted
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.get
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.getOrNull
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus

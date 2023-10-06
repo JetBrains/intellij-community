@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.rd.util
 
 import com.intellij.openapi.application.ModalityState
@@ -8,6 +9,9 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jetbrains.rd.framework.util.launch
 import com.jetbrains.rd.framework.util.startAsync
@@ -19,7 +23,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.trySendBlocking
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 

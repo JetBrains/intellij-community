@@ -12,7 +12,10 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.TaskCancellation
+import com.intellij.openapi.progress.runWithModalProgressBlocking
+import com.intellij.openapi.progress.withModalProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
@@ -27,10 +30,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContextEx
 import com.intellij.platform.ide.bootstrap.hideSplash
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.progressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.util.io.delete
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.div
 import kotlin.io.path.exists

@@ -3,6 +3,8 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.contextModality
+import com.intellij.platform.util.progress.progressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.util.parent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
