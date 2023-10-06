@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.progress
 
-import com.intellij.openapi.util.NlsContexts.ProgressText
+import com.intellij.platform.util.progress.impl.ProgressText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.coroutineScope
@@ -166,7 +166,7 @@ interface ProgressReporter : AutoCloseable {
    *
    * @see close
    */
-  fun step(endFraction: Double, text: @ProgressText String?): ProgressReporter
+  fun step(endFraction: Double, text: ProgressText?): ProgressReporter
 
   /**
    * Starts a child step.
@@ -182,7 +182,7 @@ interface ProgressReporter : AutoCloseable {
    * If the text is not `null`, then the text will be used as text of this reporter,
    * while the text of the returned child step will be used as details of this reporter.
    */
-  fun durationStep(duration: Double, text: @ProgressText String?): ProgressReporter
+  fun durationStep(duration: Double, text: ProgressText?): ProgressReporter
 
   /**
    * Marks current step as completed.
@@ -217,7 +217,7 @@ interface ProgressReporter : AutoCloseable {
 }
 
 suspend fun <T> indeterminateStep(
-  text: @ProgressText String? = null,
+  text: ProgressText? = null,
   action: suspend CoroutineScope.() -> T,
 ): T {
   return durationStep(duration = 0.0, text, action)
@@ -225,7 +225,7 @@ suspend fun <T> indeterminateStep(
 
 suspend fun <T> progressStep(
   endFraction: Double,
-  text: @ProgressText String? = null,
+  text: ProgressText? = null,
   action: suspend CoroutineScope.() -> T,
 ): T {
   val reporter = coroutineContext.progressReporter
@@ -236,7 +236,7 @@ suspend fun <T> progressStep(
 private suspend fun <T> progressStep(
   parent: ProgressReporter,
   endFraction: Double,
-  text: @ProgressText String?,
+  text: ProgressText?,
   action: suspend CoroutineScope.() -> T,
 ): T {
   return parent.step(endFraction, text).use { step: ProgressReporter ->
@@ -244,7 +244,7 @@ private suspend fun <T> progressStep(
   }
 }
 
-suspend fun <T> durationStep(duration: Double, text: @ProgressText String? = null, action: suspend CoroutineScope.() -> T): T {
+suspend fun <T> durationStep(duration: Double, text: ProgressText? = null, action: suspend CoroutineScope.() -> T): T {
   val reporter = coroutineContext.progressReporter
                  ?: return coroutineScope(action)
   return reporter.durationStep(duration, text).use { step ->
