@@ -342,20 +342,26 @@ public final class ImportHelper{
 
     Set<String> result = new HashSet<>();
     String packageName = file.getPackageName();
-    file.accept(new JavaRecursiveElementVisitor() {
-      @Override
-      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
-        super.visitReferenceElement(reference);
-        if (reference.getQualifier() != null) return;
-        PsiElement element = reference.resolve();
-        if (element instanceof PsiClass psiClass && conflicts.contains(psiClass.getName())) {
-          String fqn = psiClass.getQualifiedName();
-          if (fqn != null && !PsiTreeUtil.isAncestor(file, element, true) && !packageName.equals(StringUtil.getPackageName(fqn))) {
-            result.add(fqn);
+    for (PsiClass aClass : file.getClasses()) {
+      // do not visit imports
+      aClass.accept(new JavaRecursiveElementVisitor() {
+        @Override
+        public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
+          super.visitReferenceElement(reference);
+          if (reference.getQualifier() != null) return;
+          JavaResolveResult resolveResult = reference.advancedResolve(false);
+          if (resolveResult.getElement() instanceof PsiClass psiClass && conflicts.contains(psiClass.getName())) {
+            if (resolveResult.getCurrentFileResolveScope() instanceof PsiImportStatementBase ||
+                isImplicitlyImported(psiClass.getQualifiedName(), file)) {
+              String fqn = psiClass.getQualifiedName();
+              if (fqn != null && !PsiTreeUtil.isAncestor(file, psiClass, true) && !packageName.equals(StringUtil.getPackageName(fqn))) {
+                result.add(fqn);
+              }
+            }
           }
         }
-      }
-    });
+      });
+    }
     return result;
   }
 
@@ -370,8 +376,7 @@ public final class ImportHelper{
       String name = pair.getFirst();
       Boolean isStatic = pair.getSecond();
       String packageOrClassName = getPackageOrClassName(name);
-      boolean implicitlyImported = JAVA_LANG_PACKAGE.equals(packageOrClassName) ||
-                                         stringTemplates && STRING_TEMPLATE_STR.equals(name);
+      boolean implicitlyImported = JAVA_LANG_PACKAGE.equals(packageOrClassName) || stringTemplates && STRING_TEMPLATE_STR.equals(name);
       boolean useOnDemand = implicitlyImported || packagesOrClassesToImportOnDemand.contains(packageOrClassName);
       Pair<String, Boolean> current = Pair.create(packageOrClassName, isStatic);
       if (namesToUseSingle.remove(name)) {
@@ -1017,7 +1022,8 @@ public final class ImportHelper{
     // otherwise, optimize out all red on demand imports for green file
   }
 
-  static boolean isImplicitlyImported(@NotNull String className, @NotNull PsiJavaFile file) {
+  static boolean isImplicitlyImported(@Nullable String className, @NotNull PsiJavaFile file) {
+    if (className == null) return false;
     for (String packageName : file.getImplicitlyImportedPackages()) {
       if (hasPackage(className, packageName)) return true;
     }

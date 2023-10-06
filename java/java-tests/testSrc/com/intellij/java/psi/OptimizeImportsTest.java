@@ -117,6 +117,36 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
 
+  public void testDoNotInsertImportForClassVisibleByInheritance() {
+    myFixture.addClass("""
+                         package one;
+                         public interface Super {
+                           class Result {}
+                           
+                           Result x();
+                         }
+                         """);
+    myFixture.addClass("""
+                         package two;
+                         public class Result {}
+                         public class One {}
+                         public class Two {}
+                         public class Three {}
+                         public class Four {}
+                         public class Five {}
+                         """);
+    myFixture.addClass("""
+                         package three;
+                         public class Result {}
+                         public class Six {}
+                         public class Seven {}
+                         public class Eight {}
+                         public class Nine {}
+                         public class Ten {}
+                         """);
+    doTest();
+  }
+
   public void testConflictingOnDemandImports() {
     doTest();
   }
