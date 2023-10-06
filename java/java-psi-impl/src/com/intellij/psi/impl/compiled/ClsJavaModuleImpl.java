@@ -83,7 +83,7 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.MODULE);
 
     PsiJavaModule mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);

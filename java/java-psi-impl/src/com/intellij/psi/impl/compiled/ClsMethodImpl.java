@@ -194,7 +194,7 @@ public final class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
     PsiMethod mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);

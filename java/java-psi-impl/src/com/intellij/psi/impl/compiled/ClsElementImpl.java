@@ -125,7 +125,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     return JavaFileCodeStyleFacade.forContext(getContainingFile()).getIndentSize();
   }
 
-  public abstract void setMirror(@NotNull TreeElement element) throws InvalidMirrorException;
+  protected abstract void setMirror(@NotNull TreeElement element) throws InvalidMirrorException;
 
   @Override
   public PsiElement getMirror() {
@@ -265,7 +265,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     }
   }
 
-  protected static class InvalidMirrorException extends RuntimeException {
+  protected static final class InvalidMirrorException extends RuntimeException {
     public InvalidMirrorException(@NotNull String message) {
       super(message);
     }

@@ -55,7 +55,7 @@ public class ClsProvidesStatementImpl extends ClsRepositoryPsiElement<PsiProvide
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.PROVIDES_STATEMENT);
     setMirror(getInterfaceReference(), SourceTreeToPsiMap.<PsiProvidesStatement>treeToPsiNotNull(element).getInterfaceReference());
     setMirrorIfPresent(getImplementationList(), SourceTreeToPsiMap.<PsiProvidesStatement>treeToPsiNotNull(element).getImplementationList());

@@ -100,7 +100,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.TYPE);
     PsiTypeElement mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
     setMirrorIfPresent(getInnermostComponentReferenceElement(), mirror.getInnermostComponentReferenceElement());

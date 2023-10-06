@@ -34,7 +34,7 @@ class ClsJavaModuleReferenceElementImpl extends ClsElementImpl implements PsiJav
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.MODULE_REFERENCE);
   }
 

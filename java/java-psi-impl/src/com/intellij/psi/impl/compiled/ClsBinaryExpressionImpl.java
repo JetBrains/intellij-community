@@ -26,7 +26,7 @@ class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBinaryExpress
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
   }
 

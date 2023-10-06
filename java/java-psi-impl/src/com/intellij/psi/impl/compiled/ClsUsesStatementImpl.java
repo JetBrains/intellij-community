@@ -45,7 +45,7 @@ public class ClsUsesStatementImpl extends ClsRepositoryPsiElement<PsiUsesStateme
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.USES_STATEMENT);
     setMirror(getClassReference(), SourceTreeToPsiMap.<PsiUsesStatement>treeToPsiNotNull(element).getClassReference());
   }

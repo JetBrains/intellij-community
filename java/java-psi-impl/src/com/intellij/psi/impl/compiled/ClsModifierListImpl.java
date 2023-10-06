@@ -146,7 +146,7 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.MODIFIER_LIST);
     PsiAnnotation[] annotations = getAnnotations();
     PsiAnnotation[] mirrorAnnotations = SourceTreeToPsiMap.<PsiModifierList>treeToPsiNotNull(element).getAnnotations();

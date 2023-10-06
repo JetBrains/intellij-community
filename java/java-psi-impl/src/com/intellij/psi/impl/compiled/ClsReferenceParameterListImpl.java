@@ -80,7 +80,7 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) { }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException { }
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException { }
 
   @Override
   public PsiTypeElement @NotNull [] getTypeParameterElements() {

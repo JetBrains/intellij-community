@@ -69,7 +69,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.PACKAGE_STATEMENT);
   }
 

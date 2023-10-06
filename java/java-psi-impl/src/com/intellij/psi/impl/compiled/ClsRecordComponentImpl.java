@@ -96,7 +96,7 @@ public final class ClsRecordComponentImpl extends ClsRepositoryPsiElement<PsiRec
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
     PsiParameter mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);

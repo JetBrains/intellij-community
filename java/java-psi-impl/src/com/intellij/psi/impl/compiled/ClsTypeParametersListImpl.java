@@ -29,7 +29,7 @@ public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypePa
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
     setMirrors(getTypeParameters(), SourceTreeToPsiMap.<PsiTypeParameterList>treeToPsiNotNull(element).getTypeParameters());
   }

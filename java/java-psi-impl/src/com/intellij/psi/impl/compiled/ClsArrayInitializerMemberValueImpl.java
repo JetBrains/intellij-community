@@ -47,7 +47,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
     setMirrors(getInitializers(), SourceTreeToPsiMap.<PsiArrayInitializerMemberValue>treeToPsiNotNull(element).getInitializers());
   }
