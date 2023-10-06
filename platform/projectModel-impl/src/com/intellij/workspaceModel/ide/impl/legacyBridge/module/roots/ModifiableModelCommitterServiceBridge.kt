@@ -6,9 +6,9 @@ import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.impl.ModifiableModelCommitterService
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

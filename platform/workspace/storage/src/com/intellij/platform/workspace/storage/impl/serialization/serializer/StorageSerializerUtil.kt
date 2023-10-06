@@ -6,33 +6,21 @@ import com.esotericsoftware.kryo.kryo5.KryoException
 import com.esotericsoftware.kryo.kryo5.Serializer
 import com.esotericsoftware.kryo.kryo5.io.Input
 import com.esotericsoftware.kryo.kryo5.io.Output
-import com.google.common.collect.HashMultimap
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.impl.createEntityId
 import com.intellij.platform.workspace.storage.impl.indices.*
-import com.intellij.platform.workspace.storage.impl.indices.EntityIdWithProperty
-import com.intellij.platform.workspace.storage.impl.indices.getHashingStrategy
 import com.intellij.platform.workspace.storage.impl.serialization.*
-import com.intellij.platform.workspace.storage.impl.serialization.SerializableEntityId
-import com.intellij.platform.workspace.storage.impl.serialization.StorageInterner
-import com.intellij.platform.workspace.storage.impl.serialization.TypeInfo
-import com.intellij.platform.workspace.storage.impl.serialization.getTypeInfo
-import com.intellij.platform.workspace.storage.impl.toClassId
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import java.util.ArrayList
 import java.util.function.BiConsumer
 import java.util.function.ToIntFunction
-import kotlin.collections.HashMap
 
 
 internal class StorageSerializerUtil(

@@ -23,7 +23,8 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
-import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.toExternalSource
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.util.JpsPathUtil
 

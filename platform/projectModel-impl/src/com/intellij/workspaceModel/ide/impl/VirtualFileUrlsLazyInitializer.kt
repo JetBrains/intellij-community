@@ -4,8 +4,8 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.getInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

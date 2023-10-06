@@ -9,10 +9,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.ArrayUtilRt.EMPTY_STRING_ARRAY
 import com.intellij.util.containers.toArray
 import com.intellij.util.io.URLUtil
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.util.*
 
 class FileContainerDescription(val urls: List<VirtualFileUrl>, private val jarDirectories: List<JarDirectoryDescription>) {

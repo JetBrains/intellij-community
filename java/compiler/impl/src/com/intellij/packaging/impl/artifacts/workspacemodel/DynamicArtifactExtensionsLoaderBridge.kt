@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.PackagingElementEntity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -10,8 +12,6 @@ import com.intellij.packaging.artifacts.ArtifactType
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.elements.PackagingElementType
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
-import com.intellij.java.workspace.entities.CompositePackagingElementEntity
-import com.intellij.java.workspace.entities.PackagingElementEntity
 
 internal class DynamicArtifactExtensionsLoaderBridge(private val artifactManager: ArtifactManagerBridge) {
   fun installListeners(disposable: Disposable) {

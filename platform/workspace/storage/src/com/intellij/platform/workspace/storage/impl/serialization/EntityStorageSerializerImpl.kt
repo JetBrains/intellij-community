@@ -14,33 +14,28 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
-import com.intellij.platform.workspace.storage.impl.ImmutableEntitiesBarrel
-import com.intellij.platform.workspace.storage.impl.KryoInput
-import com.intellij.platform.workspace.storage.impl.KryoOutput
-import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
-import com.intellij.platform.workspace.storage.impl.RefsTable
-import com.intellij.platform.workspace.storage.impl.StorageIndexes
-import com.intellij.platform.workspace.storage.impl.containers.*
+import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.platform.workspace.storage.impl.indices.*
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageClassesRegistrar
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageRegistrar
-import com.intellij.platform.workspace.storage.impl.serialization.serializer.*
-import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.impl.serialization.registration.registerEntitiesClasses
+import com.intellij.platform.workspace.storage.impl.serialization.serializer.StorageSerializerUtil
 import com.intellij.platform.workspace.storage.metadata.diff.CacheMetadataComparator
 import com.intellij.platform.workspace.storage.metadata.diff.ComparisonResult
+import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.*
+import it.unimi.dsi.fastutil.objects.Object2IntMap
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2LongMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
-import kotlin.system.measureNanoTime
 
 private val LOG = logger<EntityStorageSerializerImpl>()
 

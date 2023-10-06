@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.metadata
 
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.metadata.exceptions.MissingTypeMetadataException
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 

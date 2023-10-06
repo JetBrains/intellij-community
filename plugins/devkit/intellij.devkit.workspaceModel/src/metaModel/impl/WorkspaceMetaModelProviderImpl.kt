@@ -4,12 +4,7 @@ package com.intellij.devkit.workspaceModel.metaModel.impl
 import com.intellij.devkit.workspaceModel.metaModel.IncorrectObjInterfaceException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.devkit.workspaceModel.metaModel.impl.extensions.*
-import com.intellij.devkit.workspaceModel.metaModel.impl.extensions.computeKind
-import com.intellij.devkit.workspaceModel.metaModel.impl.extensions.createObjTypeStub
-import com.intellij.devkit.workspaceModel.metaModel.impl.extensions.inheritors
-import com.intellij.devkit.workspaceModel.metaModel.impl.extensions.moduleAbstractTypes
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.impl.scopes.ModulesScope
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Abstract
@@ -18,9 +13,9 @@ import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.annotations.Open
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.psi.CommonClassNames
-import com.intellij.workspaceModel.codegen.deft.meta.*
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.workspaceModel.codegen.deft.meta.*
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated

@@ -16,11 +16,11 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.testFramework.JavaModuleTestCase
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.testFramework.JavaModuleTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import java.io.File
 import java.nio.file.Paths
 

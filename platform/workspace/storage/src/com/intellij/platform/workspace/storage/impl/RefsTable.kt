@@ -4,14 +4,11 @@ package com.intellij.platform.workspace.storage.impl
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.containers.HashSetInterner
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId.ConnectionType
 import com.intellij.platform.workspace.storage.impl.containers.*
 import com.intellij.platform.workspace.storage.impl.references.*
-import com.intellij.platform.workspace.storage.impl.references.ImmutableOneToManyContainer
-import com.intellij.platform.workspace.storage.impl.references.ImmutableOneToOneContainer
-import com.intellij.platform.workspace.storage.impl.references.MutableOneToManyContainer
+import com.intellij.util.containers.HashSetInterner
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntFunction

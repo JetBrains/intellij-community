@@ -4,10 +4,10 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorageSnapshot
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 
 /**
  * Orphanage - storage that contains content roots/source roots/excludes that currently don't have an associated parent in the storage.

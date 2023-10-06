@@ -2,8 +2,8 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.PlatformUtils
 import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 

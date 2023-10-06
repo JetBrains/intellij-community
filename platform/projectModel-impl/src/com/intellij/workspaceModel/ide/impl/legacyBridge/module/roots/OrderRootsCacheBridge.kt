@@ -7,10 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference

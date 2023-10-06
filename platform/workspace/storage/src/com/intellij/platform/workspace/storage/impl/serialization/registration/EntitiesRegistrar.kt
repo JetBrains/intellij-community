@@ -2,16 +2,11 @@
 package com.intellij.platform.workspace.storage.impl.serialization.registration
 
 import com.esotericsoftware.kryo.kryo5.Kryo
-import com.esotericsoftware.kryo.kryo5.io.Output
-import com.google.common.collect.HashMultimap
-import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityTypesResolver
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.impl.EntityFamily
 import com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata
 import com.intellij.platform.workspace.storage.impl.serialization.PluginId
 import com.intellij.platform.workspace.storage.impl.serialization.TypeInfo
+import com.intellij.platform.workspace.storage.impl.toClassId
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata

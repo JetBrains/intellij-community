@@ -15,13 +15,13 @@ import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.impl.artifacts.ArtifactUtil
 import com.intellij.packaging.impl.elements.ArchivePackagingElement
-import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import org.jetbrains.jps.util.JpsPathUtil
 import kotlin.collections.set
 
