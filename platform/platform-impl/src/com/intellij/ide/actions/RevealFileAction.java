@@ -126,15 +126,17 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static @ActionText String getActionName(boolean skipDetection) {
-    return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") :
-           SystemInfo.isWindows ? ActionsBundle.message("action.RevealIn.name.win") :
-           skipDetection ? ActionsBundle.message("action.RevealIn.name.other", IdeBundle.message("action.file.manager.text")) :
-           ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
+    return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName(skipDetection));
   }
 
   public static @NotNull @ActionText String getFileManagerName() {
+    return getFileManagerName(false);
+  }
+
+  public static @NotNull @ActionText String getFileManagerName(boolean skipDetection) {
     return SystemInfo.isMac ? IdeBundle.message("action.finder.text") :
            SystemInfo.isWindows ? IdeBundle.message("action.explorer.text") :
+           skipDetection ? IdeBundle.message("action.file.manager.text") :
            Objects.requireNonNullElseGet(Holder.fileManagerName, () -> IdeBundle.message("action.file.manager.text"));
   }
 
