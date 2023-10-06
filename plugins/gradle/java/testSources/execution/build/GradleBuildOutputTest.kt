@@ -68,7 +68,7 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
       waitForAnyGradleTaskExecution {
         compileModules(project, true, "project.impl.main")
       }
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":api:compileJava")
           assertNode(":api:processResources")
@@ -90,7 +90,7 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
       waitForAnyGradleTaskExecution {
         compileModules(project, true, "project.brokenProject.main")
       }
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("failed") {
           assertNode(":brokenProject:compileJava") {
             assertNode("App2.java", skipIf = !isPerTaskOutputSupported()) {

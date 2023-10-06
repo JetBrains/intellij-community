@@ -15,7 +15,7 @@ class SpockGradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/groovy/org/example/SpockTestCase.groovy", GROOVY_CLASS_WITH_SPOCK_TESTS)
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("SpockTestCase") {
           assertPsiLocation("SpockTestCase")
           assertNode("success test") {
@@ -42,7 +42,7 @@ class SpockGradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/groovy/org/example/SpockTestCase.groovy", GROOVY_INNER_CLASS_WITH_SPOCK_TESTS)
 
       executeTasks(":test --tests 'org.example.SpockTestCase${'$'}InnerTestCase.inner test'", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("InnerTestCase") {
           assertPsiLocation("InnerTestCase")
           assertNode("inner test") {

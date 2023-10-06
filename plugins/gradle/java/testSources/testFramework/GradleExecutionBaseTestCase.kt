@@ -66,8 +66,24 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     return executionFixture.waitForAnyGradleTaskExecution(action)
   }
 
-  fun assertBuildExecutionTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+  fun assertBuildViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
     executionFixture.assertBuildViewTree(assert)
+  }
+
+  fun assertRunViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+    executionFixture.assertRunViewTree(assert)
+  }
+
+  fun assertRunViewTreeIsEmpty() {
+    executionFixture.assertRunViewTreeIsEmpty()
+  }
+
+  fun assertTestViewTree(assert: SimpleTreeAssertion<AbstractTestProxy>.() -> Unit) {
+    executionFixture.assertTestViewTree(assert)
+  }
+
+  fun assertTestViewTreeIsEmpty() {
+    executionFixture.assertTestViewTreeIsEmpty()
   }
 
   fun assertTestConsoleContains(expected: String) {
@@ -84,22 +100,6 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
   fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertTestConsoleDoesNotContain(unexpectedTextSample: String) {
     executionFixture.assertTestConsoleDoesNotContain(this, unexpectedTextSample)
-  }
-
-  fun assertRunTreeView(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
-    executionFixture.assertRunViewTree(assert)
-  }
-
-  fun assertTestTreeView(assert: SimpleTreeAssertion<AbstractTestProxy>.() -> Unit) {
-    executionFixture.assertTestViewTree(assert)
-  }
-
-  fun assertRunTreeViewIsEmpty() {
-    executionFixture.assertRunViewTreeIsEmpty()
-  }
-
-  fun assertTestTreeViewIsEmpty() {
-    executionFixture.assertTestViewTreeIsEmpty()
   }
 
   fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertPsiLocation(

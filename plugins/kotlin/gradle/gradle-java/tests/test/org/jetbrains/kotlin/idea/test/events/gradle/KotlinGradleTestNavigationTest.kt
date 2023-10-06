@@ -19,7 +19,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
             writeText("src/test/kotlin/org/example/DisplayNameTestCase.kt", KOTLIN_DISPLAY_NAME_JUNIT5_TEST)
 
             executeTasks(":test", isRunAsTest = true)
-            assertTestTreeView {
+            assertTestViewTree {
                 assertNode("TestCase") {
                     assertPsiLocation("TestCase")
                     assertNode("test") {
@@ -78,7 +78,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
             writeText("src/test/kotlin/org/example/DisplayNameTestCase.kt", KOTLIN_DISPLAY_NAME_JUNIT5_TEST)
 
             executeTasks(":test", isRunAsTest = true)
-            assertTestTreeView {
+            assertTestViewTree {
                 assertNode("TestCase") {
                     assertPsiLocation("TestCase")
                     assertNode("test") {
@@ -154,7 +154,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
             writeText("src/test/kotlin/org/example/ParametrizedTestCase.kt", KOTLIN_PARAMETRIZED_JUNIT4_TEST)
 
             executeTasks(":test", isRunAsTest = true)
-            assertTestTreeView {
+            assertTestViewTree {
                 assertNode("TestCase") {
                     assertPsiLocation("TestCase")
                     assertNode("test") {
@@ -188,7 +188,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
             writeText("src/test/kotlin/org/example/ParametrizedTestCase.kt", KOTLIN_PARAMETRIZED_TESTNG_TEST)
 
             executeTasks(":test", isRunAsTest = true)
-            assertTestTreeView {
+            assertTestViewTree {
                 assertNode("Gradle suite") {
                     assertNode("Gradle test") {
                         assertNode("TestCase") {
