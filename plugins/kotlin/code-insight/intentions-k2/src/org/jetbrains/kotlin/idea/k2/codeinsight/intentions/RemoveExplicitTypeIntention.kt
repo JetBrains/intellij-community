@@ -108,6 +108,10 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
         return !typeCanBeRemoved
     }
 
+    /**
+     * Currently we don't use on-air resolve in the implementation, therefore the function might return false negative results
+     * for expressions that are not covered.
+     */
     context(KtAnalysisSession)
     private fun isInitializerTypeContextIndependent(
         initializer: KtExpression,
