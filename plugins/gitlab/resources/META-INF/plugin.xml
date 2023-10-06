@@ -83,6 +83,10 @@
 
     <editorFactoryListener implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewController$InstallerListener"/>
     <iw.actionProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewModeActionProvider"/>
+
+    <registryKey key="vcs.gitlab.connect.silently"
+                 description="Connect to GitLab repository without an explicit user action"
+                 defaultValue="true"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

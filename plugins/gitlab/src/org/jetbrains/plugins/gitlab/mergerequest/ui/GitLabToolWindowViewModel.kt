@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowViewModel
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,7 +59,6 @@ internal class GitLabToolWindowViewModel(
       preferences.selectedRepoAndAccount?.let { (repo, account) ->
         repoSelectionState.value = repo
         accountSelectionState.value = account
-        submitSelection()
       }
     }
   }.stateIn(cs, SharingStarted.Eagerly, null)
@@ -80,6 +80,15 @@ internal class GitLabToolWindowViewModel(
       project.service<GitLabMergeRequestsPreferences>().selectedRepoAndAccount = null
       connectionManager.closeConnection()
     }
+  }
+
+  /**
+   * Awaits the initialization and tries to log in if there's a fitting repo and account
+   * Will do nothing if auto-login is disabled via registry
+   */
+  internal suspend fun loginIfPossible() {
+    if (!Registry.`is`("vcs.gitlab.connect.silently", true)) return
+    selectorVm.first()?.submitSelection()
   }
 
   fun activate() {

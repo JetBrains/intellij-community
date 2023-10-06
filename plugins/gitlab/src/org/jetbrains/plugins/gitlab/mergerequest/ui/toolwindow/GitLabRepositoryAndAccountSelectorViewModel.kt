@@ -44,7 +44,6 @@ internal class GitLabRepositoryAndAccountSelectorViewModel(
         if (it != null) {
           repoSelectionState.value = it.first
           accountSelectionState.value = it.second
-          submitSelection()
         }
       }
     }

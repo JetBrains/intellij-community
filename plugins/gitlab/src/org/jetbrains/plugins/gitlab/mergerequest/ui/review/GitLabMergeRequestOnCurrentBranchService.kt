@@ -26,10 +26,14 @@ import org.jetbrains.plugins.gitlab.util.GitLabBundle
 class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineScope) {
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val mergeRequestReviewVmState: StateFlow<GitLabMergeRequestEditorReviewViewModel?> =
-    project.service<GitLabToolWindowViewModel>().projectVm.flatMapLatest {
+  private val mergeRequestReviewVmState: StateFlow<GitLabMergeRequestEditorReviewViewModel?> by lazy {
+    val toolWindowVm = project.service<GitLabToolWindowViewModel>()
+    toolWindowVm.projectVm.flatMapLatest {
       it?.currentMergeRequestReviewVm ?: flowOf(null)
+    }.onStart {
+      toolWindowVm.loginIfPossible()
     }.stateIn(cs, SharingStarted.Eagerly, null)
+  }
 
   class BranchPresenter : GitCurrentBranchPresenter {
     override fun getPresentation(repository: GitRepository): GitCurrentBranchPresenter.Presentation? {
