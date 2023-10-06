@@ -13,13 +13,10 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
  *
  * This class is meant for use in UI and should be used with caution.
  */
-class PyDetectedSdkAdditionalData(val temporaryConfiguration: TargetEnvironmentConfiguration?,
+class PyDetectedSdkAdditionalData(override val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?,
                                   flavor: PythonSdkFlavor<*>?) : PythonSdkAdditionalData(flavor),
                                                                  TargetBasedSdkAdditionalData,
-                                                                 PyRemoteSdkAdditionalDataMarker {
-  override val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
-    get() = temporaryConfiguration
-}
+                                                                 PyRemoteSdkAdditionalDataMarker
 
 /**
  * Returns new [PyDetectedSdk] with the additional data that corresponds to the local or non-local interpreter based on the provided flag.
@@ -28,7 +25,7 @@ class PyDetectedSdkAdditionalData(val temporaryConfiguration: TargetEnvironmentC
  */
 internal fun createDetectedSdk(name: String, isLocal: Boolean): PyDetectedSdk {
   val sdk = PyDetectedSdk(name)
-  if (!isLocal) sdk.sdkAdditionalData = PyDetectedSdkAdditionalData(temporaryConfiguration = null, flavor = null)
+  if (!isLocal) sdk.sdkAdditionalData = PyDetectedSdkAdditionalData(targetEnvironmentConfiguration = null, flavor = null)
   return sdk
 }
 
