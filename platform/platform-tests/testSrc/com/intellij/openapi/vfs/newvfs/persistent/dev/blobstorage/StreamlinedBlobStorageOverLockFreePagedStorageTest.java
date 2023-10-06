@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PageCacheUtils;
+import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
@@ -42,22 +44,13 @@ public class StreamlinedBlobStorageOverLockFreePagedStorageTest
 
   @Override
   protected StreamlinedBlobStorageOverLockFreePagedStorage openStorage(final Path pathToStorage) throws IOException {
-    PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(
-      pathToStorage,
-      LOCK_CONTEXT,
-      pageSize,
-      PageContentLockingStrategy.LOCK_PER_PAGE
-    );
-    try {
-      return new StreamlinedBlobStorageOverLockFreePagedStorage(
+    return IOUtil.wrapSafely(
+      new PagedFileStorageWithRWLockedPageContent(pathToStorage, LOCK_CONTEXT, pageSize, PageContentLockingStrategy.LOCK_PER_PAGE),
+      pagedStorage -> new StreamlinedBlobStorageOverLockFreePagedStorage(
         pagedStorage,
         allocationStrategy
-      );
-    }
-    catch (Throwable t) {
-      storage.close();
-      throw t;
-    }
+      )
+    );
   }
 
   @Override
