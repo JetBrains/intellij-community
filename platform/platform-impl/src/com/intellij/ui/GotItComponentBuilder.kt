@@ -728,7 +728,7 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
  *
  * To install this extension you need to add styles returned from [getStyles] to your [StyleSheet].
  */
-private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
+class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
   override fun invoke(elem: Element, defaultView: View): View? {
     val tagAttributes = elem.attributes.getAttribute(HTML.Tag.SPAN) as? AttributeSet
     return if (tagAttributes?.getAttribute(HTML.Attribute.CLASS) == "shortcut") {
