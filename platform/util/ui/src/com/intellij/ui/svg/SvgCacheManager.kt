@@ -104,6 +104,7 @@ private fun createMap(dbFile: Path): PersistentMapBase<LongArray, IconValue> {
       return IconValue(w, h, data)
     }
   })
+    .withStorageLockContext(StorageLockContext(true, true, true))
     .withVersion(1)
 
   return PersistentMapImpl(builder, CreationTimeOptions(/* readOnly = */ false,
