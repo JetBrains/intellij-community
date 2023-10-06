@@ -10,13 +10,16 @@ internal data class SimpleTypingEvent(val typed: String, val caretMoves: Boolean
 internal class InlineCompletionRequestManager(@RequiresEdt private val invalidate: () -> Unit) {
 
   private var lastSimpleEvent: SimpleTypingEvent? = null
+  private var lastRequest: InlineCompletionRequest? = null
 
   @RequiresEdt
   fun getRequest(event: InlineCompletionEvent): InlineCompletionRequest? {
-    return when (event) {
+    lastRequest = when (event) {
       is InlineCompletionEvent.DocumentChange -> onDocumentChange(event)
+      is InlineCompletionEvent.InlineNavigationEvent -> lastRequest
       else -> event.toRequest()
     }
+    return lastRequest
   }
 
   @RequiresEdt

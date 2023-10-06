@@ -160,7 +160,7 @@ class InlineCompletionAnActionListener : AnActionListener {
 
 private fun hideInlineCompletion(editor: Editor) {
   val context = InlineCompletionContext.getOrNull(editor) ?: return
-  InlineCompletion.getHandlerOrNull(editor)?.hide(false, context)
+  InlineCompletion.getHandlerOrNull(editor)?.hide(false, context, true)
 }
 
 private fun hideInlineCompletion(editor: Editor, handler: InlineCompletionHandler?) {

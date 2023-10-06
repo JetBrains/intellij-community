@@ -106,6 +106,17 @@ interface InlineCompletionEvent {
       return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, event.item)
     }
   }
+
+  @ApiStatus.Experimental
+  sealed interface InlineNavigationEvent : InlineCompletionEvent {
+    override fun toRequest(): InlineCompletionRequest? = null
+  }
+
+  @ApiStatus.Experimental
+  data object ShowNext : InlineNavigationEvent
+
+  @ApiStatus.Experimental
+  data object ShowPrevious : InlineNavigationEvent
 }
 
 @RequiresBlockingContext

@@ -16,6 +16,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Disposer
@@ -45,9 +46,20 @@ class InlineCompletionHandler internal constructor(
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
   private val sessionManager = createSessionManager()
   private val requestManager = InlineCompletionRequestManager(sessionManager::invalidate)
+  private val proposalsManager = InlineProposalsManager()
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
+  }
+
+  private fun getProvider(): InlineCompletionProvider? {
+    if (application.isUnitTestMode && testProvider != null) {
+      return testProvider
+    }
+
+    return proposalsManager.getProvider()?.also {
+      LOG.trace("Selected inline provider: $it")
+    }
   }
 
   fun addEventListener(listener: InlineCompletionEventListener) {
@@ -67,20 +79,17 @@ class InlineCompletionHandler internal constructor(
   fun invoke(event: InlineCompletionEvent.LookupChange) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.LookupCancelled) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
+  fun invoke(event: InlineCompletionEvent.InlineNavigationEvent) = invokeEvent(event)
 
   @RequiresEdt
   fun invokeEvent(event: InlineCompletionEvent) {
     ThreadingAssertions.assertEventDispatchThread()
     LOG.trace("Start processing inline event $event")
 
-    val request = requestManager.getRequest(event) ?: return
-    if (editor != request.editor) {
-      LOG.warn("Request has an inappropriate editor. Another editor was expected. Will not be invoked.")
-      return
-    }
-
-    val provider = getProvider(event)
-    if (sessionManager.updateSession(request, provider) || provider == null) {
+    proposalsManager.processEvent(event)
+    val provider = getProvider()
+    val request = requestManager.getRequest(event)
+    if (request == null || sessionManager.updateSession(request, provider) || provider == null) {
       return
     }
 
@@ -89,6 +98,9 @@ class InlineCompletionHandler internal constructor(
       sessionManager.sessionCreated(this)
       guardCaretModifications(request)
     }
+
+    proposalsManager.getCachedProposal()?.let { return newSession.context.renderElement(it, request.endOffset) }
+
     executor.switchJobSafely(newSession::assignJob) {
       invokeRequest(request, newSession)
     }
@@ -121,8 +133,11 @@ class InlineCompletionHandler internal constructor(
 
   @RequiresEdt
   @RequiresBlockingContext
-  fun hide(explicit: Boolean, context: InlineCompletionContext) {
+  fun hide(explicit: Boolean, context: InlineCompletionContext, shouldClearCache: Boolean = false) {
     LOG.assertTrue(!context.isDisposed)
+    if (shouldClearCache) {
+      proposalsManager.clear()
+    }
     if (context.isCurrentlyDisplaying()) {
       trace(InlineCompletionEventType.Hide(explicit))
     }
@@ -135,7 +150,7 @@ class InlineCompletionHandler internal constructor(
     executor.cancel()
     application.invokeAndWait {
       InlineCompletionContext.getOrNull(editor)?.let {
-        hide(false, it)
+        hide(false, it, true)
       }
     }
   }
@@ -144,6 +159,7 @@ class InlineCompletionHandler internal constructor(
   @RequiresBlockingContext
   fun complete(isActive: Boolean, cause: Throwable?, context: InlineCompletionContext) {
     trace(InlineCompletionEventType.Completion(cause, isActive))
+    proposalsManager.cacheProposal(context.lineToInsert)
     if (cause != null && !context.isDisposed) {
       hide(false, context)
     }
@@ -263,7 +279,7 @@ class InlineCompletionHandler internal constructor(
       if (!context.isDisposed) context.startOffset() ?: request.endOffset else -1
     }
     val cancel = {
-      if (!context.isDisposed) hide(false, context)
+      if (!context.isDisposed) hide(false, context, true)
     }
     val listener = InlineSessionWiseCaretListener(expectedOffset, cancel)
     editor.caretModel.addCaretListener(listener)

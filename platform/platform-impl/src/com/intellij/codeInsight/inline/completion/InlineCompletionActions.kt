@@ -30,7 +30,7 @@ class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : 
       }
       return
     }
-    InlineCompletion.getHandlerOrNull(editor)?.hide(true, context)
+    InlineCompletion.getHandlerOrNull(editor)?.hide(true, context, true)
 
     if (originalHandler.isEnabled(editor, caret, dataContext)) {
       originalHandler.execute(editor, caret, dataContext)
@@ -56,3 +56,18 @@ class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), 
     }
   }
 }
+
+private class InlineNavigationHandler(val event: InlineCompletionEvent.InlineNavigationEvent) : EditorWriteActionHandler() {
+  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+    editor.getUserData(InlineCompletionHandler.KEY)?.invoke(event)
+  }
+}
+
+@ApiStatus.Experimental
+class ShowNextInlineCompletionAction : EditorAction(InlineNavigationHandler(InlineCompletionEvent.ShowNext)),
+                                       HintManagerImpl.ActionToIgnore
+
+@ApiStatus.Experimental
+class ShowPreviousInlineCompletionAction : EditorAction(InlineNavigationHandler(InlineCompletionEvent.ShowPrevious)),
+                                           HintManagerImpl.ActionToIgnore
+
