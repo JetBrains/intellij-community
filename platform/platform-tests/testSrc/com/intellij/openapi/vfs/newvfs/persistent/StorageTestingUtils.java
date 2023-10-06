@@ -13,6 +13,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
+
+import static com.intellij.openapi.util.text.StringUtil.repeat;
 
 public final class StorageTestingUtils {
   /**
@@ -22,6 +27,12 @@ public final class StorageTestingUtils {
    * tested
    */
   public static void emulateImproperClose(@NotNull AutoCloseable storage) throws Exception {
+    emulateImproperClose(storage, new HashSet<>(), 0);
+  }
+
+  private static void emulateImproperClose(@NotNull Object storage,
+                                           @NotNull Set<Object> alreadyProcessed,
+                                           int depth) throws Exception {
     //It is hard to test 'improperly closed' behaviour of storages because storages APIs are intentionally
     // designed to prohibit 'improperly closed' scenarios. E.g., in most cases, one can't re-open storage
     // that wasn't closed -- all raw storages (MMappedFileStorage, PagedFileStorage, etc) keep track of
@@ -33,113 +44,158 @@ public final class StorageTestingUtils {
     // Here is a more light-weight approach to create 'improperly closed' state: we use reflection to
     // find the ~deepest underlying (wrapped) storages, and close them -- without closing top-level storage.
     // Now one _can_ re-open the same file, and got storage in 'improperly closed' state
+
+    if (alreadyProcessed.contains(storage)) {
+      return;
+    }
+    alreadyProcessed.add(storage);
+
     Field[] fields = storage.getClass().getDeclaredFields();
     for (Field field : fields) {
-      if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
+      if (Modifier.isStatic(field.getModifiers())
+          || field.isSynthetic()
+          || field.getType().isPrimitive()) {
+        //log(depth, field, "skipped");
         continue;
       }
 
       field.setAccessible(true);
       Object fieldValue = field.get(storage);
+      if (fieldValue == null) {
+        //log(depth, field, "ignore null");
+        continue;
+      }
 
       //'raw' storages:
       if (fieldValue instanceof MMappedFileStorage) {
-        ((MMappedFileStorage)fieldValue).close();
+        log(depth, field, "closing");
+        //... and unmap because otherwise there would be issues with removing underlying file on Windows
+        ((MMappedFileStorage)fieldValue).closeAndUnsafelyUnmap();
       }
       else if (fieldValue instanceof MappedFileStorageHelper) {
-        ((MappedFileStorageHelper)fieldValue).close();
+        //MappedFileStorageHelper keeps its own registry of opened helpers, so we should close helper explicitly,
+        // and can't just dive deeper and close underlying MMappedFileStorage -- otherwise MappedFileStorageHelper
+        // denies re-opening the same file later
+        log(depth, field, "closing");
+        //... and unmap because otherwise there would be issues with removing underlying file on Windows
+        ((MappedFileStorageHelper)fieldValue).closeAndUnsafelyUnmap();
       }
       else if (fieldValue instanceof PagedStorage) {
+        log(depth, field, "closing");
         ((PagedStorage)fieldValue).close();
       }
       else if (fieldValue instanceof PagedFileStorage) {
+        log(depth, field, "closing");
         ((PagedFileStorage)fieldValue).close();
       }
-      //Assume every other AutoCloseable is 'compound' storage that _may_ hold 'raw' underlying
-      // storage somewhere deeper:
-      else if (fieldValue instanceof AutoCloseable ) {
-        emulateImproperClose((AutoCloseable)fieldValue);
+      else if (fieldValue instanceof ByteBuffer) {
+        //every BBuffer we meet could be a mapped buffer, which was unmapped by one of the .closeXXX() methods
+        // above -- so don't touch it even with a stick
+        // Even alreadyProcessed.contains(value) could crash JVM: it calls value.hashCode() which for
+        // ByteBuffer scans through its content
+        log(depth, field, "skipping");
+      }
+      else {
+        log(depth, field, "diving deeper...");
+        emulateImproperClose(fieldValue, alreadyProcessed, depth + 1);
       }
     }
   }
 
   public static void bestEffortToCloseAndClean(@NotNull Object storage) throws Exception {
-    Field[] fields = storage.getClass().getDeclaredFields();
+    bestEffortToCloseAndClean("", storage, new HashSet<>(), 0);
+  }
+
+  private static void bestEffortToCloseAndClean(@NotNull String fieldName,
+                                                @NotNull Object value,
+                                                @NotNull Set<Object> alreadyProcessed,
+                                                int depth) throws Exception {
+    if (value instanceof ByteBuffer) {
+      //every BBuffer we meet could be a mapped buffer, which was already unmapped by one of the .closeXXX()
+      // methods below -- so don't touch it even with a stick.
+      // Even alreadyProcessed.contains(value) could crash JVM: it calls value.hashCode() which for
+      // ByteBuffer scans through its content
+      return;
+    }
+    if (alreadyProcessed.contains(value)) {
+      return;
+    }
+    alreadyProcessed.add(value);
+
+    if (value instanceof CleanableStorage) {
+      log(depth, fieldName, "closeAndClean()");
+      ((CleanableStorage)value).closeAndClean();
+      return;
+    }
+
+    if (value instanceof Unmappable) {
+      log(depth, fieldName, "closeAndUnmap()");
+      ((Unmappable)value).closeAndUnsafelyUnmap();
+      //we don't clean it, but still do our best so files _could_ be removed later/upper the stack
+      return;
+    }
+
+    if (value instanceof Iterable<?>) {
+      log(depth, fieldName, "iterate and dive deeper...");
+      int i = 0;
+      for (Object nested : (Iterable<?>)value) {
+        bestEffortToCloseAndClean("[" + i + "]", nested, alreadyProcessed, depth + 1);
+        i++;
+      }
+      return;
+    }
+
+    //Assume everything else is 'compound' storage that _may_ hold 'raw' underlying storage(s)
+    // somewhere deeper:
+    if (value instanceof AutoCloseable) {
+      log(depth, fieldName, "close() and dive deeper...");
+      ((AutoCloseable)value).close();
+    }
+    else if (value instanceof Disposable) {
+      log(depth, fieldName, "dispose() and dive deeper...");
+      Disposer.dispose((Disposable)value);
+    }
+    else {
+      log(depth, fieldName, "just dive deeper...");
+    }
+
+    Field[] fields = value.getClass().getDeclaredFields();
     for (Field field : fields) {
-      if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
+
+      if (Modifier.isStatic(field.getModifiers())
+          || field.isSynthetic()
+          || field.getType().isPrimitive()) {
+        //log(depth + 1, field, "ignore");
         continue;
       }
-      field.setAccessible(true);
-      Object fieldValue = field.get(storage);
 
-      //System.out.println("." + field.getName());
-      if (fieldValue instanceof CleanableStorage) {
-        ((CleanableStorage)fieldValue).closeAndClean();
+      field.setAccessible(true);
+      Object fieldValue = field.get(value);
+      if (fieldValue == null) {
+        //log(depth + 1, field, "ignore null");
+        continue;
       }
-      else if (fieldValue instanceof Unmappable) {
-        ((Unmappable)fieldValue).closeAndUnsafelyUnmap();
-        //we don't clean it, but still do our best so files _could_ be removed upper the stack
-      }
-      else {
-        if (fieldValue instanceof AutoCloseable) {
-          ((AutoCloseable)fieldValue).close();
-          //Assume every other AutoCloseable is 'compound' storage that _may_ hold
-          // 'raw' underlying storage(s) somewhere deeper:
-          bestEffortToCloseAndClean(fieldValue);
-        }
-        else if (fieldValue instanceof Disposable) {
-          Disposer.dispose((Disposable)fieldValue);
-          //Assume every other Disposable is 'compound' storage that _may_ hold
-          // 'raw' underlying storage(s) somewhere deeper:
-          bestEffortToCloseAndClean(fieldValue);
-        }
-        else if (fieldValue instanceof Iterable<?>) {
-          for (Object nested : (Iterable<?>)fieldValue) {
-            bestEffortToCloseAndClean(nested);
-          }
-        }
-        else if (fieldValue instanceof PersistentFSConnection) {
-          bestEffortToCloseAndClean(fieldValue);
-        }
-      }
+
+      bestEffortToCloseAndClean(field.getName(), fieldValue, alreadyProcessed, depth + 1);
     }
   }
 
-  public static void bestEffortToCloseAndUnmap(@NotNull Object storage) throws Exception {
-    Field[] fields = storage.getClass().getDeclaredFields();
-    for (Field field : fields) {
-      if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
-        continue;
-      }
 
-      field.setAccessible(true);
-      Object fieldValue = field.get(storage);
+  //TODO bestEffortToCloseAndUnmap(@NotNull Object storage)
 
-      if (fieldValue instanceof Unmappable) {
-        ((Unmappable)fieldValue).closeAndUnsafelyUnmap();
-      }
-      else if (fieldValue instanceof AutoCloseable) {
-        //Assume every other AutoCloseable is 'compound' storage that _may_ hold
-        // 'raw' underlying storage(s) somewhere deeper:
-        bestEffortToCloseAndUnmap(fieldValue);
+  private static void log(int depth,
+                          Field field,
+                          String message) {
+    log(repeat(" ", depth) + "." + field.getName() + "(" + field.getType().getSimpleName() + ")" + ": " + message);
+  }
 
-        ((AutoCloseable)fieldValue).close();
-      }
-      else if (fieldValue instanceof Disposable) {
-        //Assume every other Disposable is 'compound' storage that _may_ hold
-        // 'raw' underlying storage(s) somewhere deeper:
-        bestEffortToCloseAndUnmap(fieldValue);
+  private static void log(int depth,
+                          String fieldName,
+                          String message) {
+    log(repeat(" ", depth) + "." + fieldName + ": " + message);
+  }
 
-        Disposer.dispose((Disposable)fieldValue);
-      }
-      else if (fieldValue instanceof Iterable<?>) {
-        for (Object nested : (Iterable<?>)fieldValue) {
-          bestEffortToCloseAndUnmap(nested);
-        }
-      }
-      else if (fieldValue instanceof PersistentFSConnection) {
-        bestEffortToCloseAndClean(fieldValue);
-      }
-    }
+  private static void log(String message) {
+    //System.out.println(message);
   }
 }
