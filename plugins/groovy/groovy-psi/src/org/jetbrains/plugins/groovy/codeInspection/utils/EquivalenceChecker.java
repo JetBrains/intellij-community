@@ -525,7 +525,7 @@ public final class EquivalenceChecker {
   }
 
   private static boolean newExpressionsAreEquivalent(@NotNull GrNewExpression newExp1, @NotNull GrNewExpression newExp2) {
-    if (newExp1.getArrayCount() == newExp2.getArrayCount()) {
+    if (newExp1.getArrayCount() == newExp2.getArrayCount() && newExp1.getArrayCount() != 0) {
       GrCodeReferenceElement referenceElement1 = newExp1.getReferenceElement();
       GrCodeReferenceElement referenceElement2 = newExp2.getReferenceElement();
       if (referenceElement1 == null || referenceElement2 == null) {
