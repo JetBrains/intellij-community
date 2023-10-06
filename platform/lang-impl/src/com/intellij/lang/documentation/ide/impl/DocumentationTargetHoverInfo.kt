@@ -5,6 +5,7 @@ package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.injected.editor.EditorWindow
+import com.intellij.lang.documentation.ide.DocumentationCustomization
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser.Companion.waitForContent
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
@@ -101,7 +102,8 @@ private class DocumentationTargetHoverInfo(
   override fun createQuickDocComponent(editor: Editor, jointPopup: Boolean, bridge: PopupBridge): JComponent {
     val project = editor.project!!
     val documentationUI = DocumentationUI(project, browser)
-    val popupUI = DocumentationPopupUI(project, documentationUI)
+    val customization = DocumentationCustomization.getForEditor(editor)
+    val popupUI = DocumentationPopupUI(project, documentationUI, customization)
     if (jointPopup) {
       popupUI.jointHover()
     }

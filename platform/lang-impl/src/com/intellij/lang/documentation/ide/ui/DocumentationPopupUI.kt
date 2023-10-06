@@ -7,6 +7,7 @@ import com.intellij.codeInsight.documentation.PopupDragListener
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.ide.DataManager
+import com.intellij.lang.documentation.ide.DocumentationCustomization
 import com.intellij.lang.documentation.ide.actions.*
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
@@ -38,6 +39,7 @@ import javax.swing.JComponent
 internal class DocumentationPopupUI(
   private val project: Project,
   ui: DocumentationUI,
+  customization: DocumentationCustomization
 ) : Disposable {
 
   private var _ui: DocumentationUI? = ui
@@ -84,8 +86,10 @@ internal class DocumentationPopupUI(
     gearActions.addSeparator()
     gearActions.addAll(primaryActions)
 
-    toolbarComponent = toolbarComponent(toolbarActionGroup, editorPane)
-    corner = actionButton(gearActions, editorPane)
+    val adjustedToolbarGroup = customization.editToolbarActions(toolbarActionGroup)
+    val adjustedGearGroup = customization.editGearActions(gearActions)
+    toolbarComponent = toolbarComponent(adjustedToolbarGroup, editorPane)
+    corner = actionButton(adjustedGearGroup, editorPane)
     component = DocumentationPopupPane(ui.scrollPane).also {
       it.add(toolbarComponent, BorderLayout.NORTH)
       it.add(scrollPaneWithCorner(this, ui.scrollPane, corner), BorderLayout.CENTER)
@@ -93,7 +97,7 @@ internal class DocumentationPopupUI(
 
     openInToolwindowAction.registerCustomShortcutSet(component, this)
 
-    showToolbar(Registry.get("documentation.show.toolbar").asBoolean())
+    showToolbar(customization.isShowToolbar)
 
     coroutineScope.launch {
       popupUpdateFlow.emitAll(ui.contentUpdates)

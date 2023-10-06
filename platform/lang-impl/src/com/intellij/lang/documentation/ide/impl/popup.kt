@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.lang.documentation.ide.DocumentationCustomization
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser.Companion.waitForContent
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
@@ -22,6 +23,7 @@ internal suspend fun showDocumentationPopup(
   project: Project,
   request: DocumentationRequest,
   popupContext: PopupContext,
+  customization: DocumentationCustomization
 ): AbstractPopup {
   val browser = DocumentationBrowser.createBrowser(project, request)
   try {
@@ -35,7 +37,7 @@ internal suspend fun showDocumentationPopup(
     Disposer.dispose(browser)
     throw ce
   }
-  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
+  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser), customization)
   val popup = createDocumentationPopup(project, popupUI, popupContext)
   try {
     popupContext.setUpPopup(popup, popupUI)
