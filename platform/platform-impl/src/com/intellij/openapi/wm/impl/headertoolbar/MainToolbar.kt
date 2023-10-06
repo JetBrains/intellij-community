@@ -258,6 +258,12 @@ class MainToolbar(
     return accessibleContext
   }
 
+  fun updateActionsImmediately() {
+    for (component in components) {
+      (component as? ActionToolbarImpl)?.updateActionsImmediately()
+    }
+  }
+
   private inner class AccessibleMainToolbar : AccessibleJPanel() {
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
