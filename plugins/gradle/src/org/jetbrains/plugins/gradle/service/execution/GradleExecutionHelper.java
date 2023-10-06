@@ -403,15 +403,13 @@ public class GradleExecutionHelper {
     operation.addProgressListener(
       progressListener,
       OperationType.TASK,
-      OperationType.FILE_DOWNLOAD,
-      OperationType.BUILD_PHASE
+      OperationType.FILE_DOWNLOAD
     );
     if (settings.isRunAsTest() && settings.isBuiltInTestEventsUsed()) {
       operation.addProgressListener(
         progressListener,
         OperationType.TEST,
         OperationType.TEST_OUTPUT,
-        OperationType.BUILD_PHASE,
         OperationType.TASK
       );
     }
