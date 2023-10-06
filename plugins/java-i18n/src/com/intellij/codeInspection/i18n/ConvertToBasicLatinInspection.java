@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
@@ -118,40 +117,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     protected @NotNull PsiElement buildReplacement(@NotNull PsiElementFactory factory,
                                                    @NotNull PsiElement element,
                                                    @NotNull String newText) {
-      PsiFragment fragment = (PsiFragment)element;
-      IElementType tokenType = fragment.getTokenType();
-      int index;
-      if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
-        newText += "}\"\"\"";
-        index = 0;
-      }
-      else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID) {
-        newText = "\"\"\"\n\\{" + newText + "}\"\"\"";
-        index = 1;
-      }
-      else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_END) {
-        newText = "\"\"\"\n\\{" + newText;
-        index = 1;
-      }
-      else if (tokenType == JavaTokenType.STRING_TEMPLATE_BEGIN) {
-        newText += "}\"";
-        index = 0;
-      }
-      else if (tokenType == JavaTokenType.STRING_TEMPLATE_MID) {
-        newText = "\"\\{" + newText + "}\"";
-        index = 1;
-      }
-      else if (tokenType == JavaTokenType.STRING_TEMPLATE_END) {
-        newText = "\"\\{" + newText;
-        index = 1;
-      }
-      else {
-        throw new AssertionError();
-      }
-      PsiTemplateExpression expression = (PsiTemplateExpression)factory.createExpressionFromText(newText, element);
-      PsiTemplate template = expression.getTemplate();
-      assert template != null;
-      return template.getFragments().get(index);
+      return factory.createStringTemplateFragment(newText, ((PsiFragment)element).getTokenType(), element);
     }
   }
 
