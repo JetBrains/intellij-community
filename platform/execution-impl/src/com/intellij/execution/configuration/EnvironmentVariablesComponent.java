@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.ChangeListener;
+import java.util.List;
 import java.util.Map;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton>
@@ -58,6 +59,14 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
 
   public void setPassParentEnvs(final boolean passParentEnvs) {
     myEnvVars.setPassParentEnvs(passParentEnvs);
+  }
+
+  public void setEnvFilePaths(List<String> envFilePaths) {
+      myEnvVars.setEnvFilePaths(envFilePaths);
+  }
+
+  public List<String> getEnvFilePaths(){
+    return myEnvVars.getEnvFilePaths();
   }
 
   public @NotNull EnvironmentVariablesData getEnvData() {
