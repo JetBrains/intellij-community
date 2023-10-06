@@ -42,7 +42,7 @@ class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : 
   }
 
   public override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
-    if (InlineCompletionHandler.getOrNull(editor) != null) {
+    if (InlineCompletionContext.getOrNull(editor) != null) {
       return true
     }
 
