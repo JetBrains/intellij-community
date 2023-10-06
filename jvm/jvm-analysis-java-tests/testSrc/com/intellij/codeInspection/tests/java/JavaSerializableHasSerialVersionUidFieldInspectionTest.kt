@@ -14,6 +14,7 @@ class JavaSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSe
   }
 
   fun `test quickfix`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_11) // no @Serial annotation for any JDK lower than 14
     myFixture.testQuickFix(JvmLanguage.JAVA, """
       import java.io.Serializable;
 
@@ -28,16 +29,17 @@ class JavaSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSe
   }
 
   fun `test quickfix @Serial annotation`() {
-    myFixture.setLanguageLevel(LanguageLevel.JDK_14)
+    myFixture.setLanguageLevel(LanguageLevel.JDK_14) // @Serial was introduced in JDK 14
     myFixture.testQuickFix(JvmLanguage.JAVA, """
       import java.io.Serializable;
 
       class Fo<caret>o implements Serializable { }
     """.trimIndent(), """
+      import java.io.Serial;
       import java.io.Serializable;
 
       class Foo implements Serializable {
-          @java.io.Serial
+          @Serial
           private static final long serialVersionUID = -4454552974617678229L;
       }
     """.trimIndent(), "Create constant field 'serialVersionUID' in 'Foo'")

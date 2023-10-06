@@ -9,6 +9,7 @@ class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
       import java.net.URL
       
       class UrlHashCode {
+          @Suppress("DEPRECATION")
           fun foo() {
               val url = URL("")
               url.<warning descr="Call to 'hashCode()' on URL object">hashCode</warning>()
@@ -22,6 +23,7 @@ class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
       import java.net.URL
       
       class UrlHashCodeEquals {
+          @Suppress("DEPRECATION")
           fun foo() {
               val url1 = URL("")
               val url2 = URL("")
@@ -55,6 +57,7 @@ class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
       class CollectionContainsUrl {
           val objMap: MutableMap<Any, Any> = HashMap()
           
+          @Suppress("DEPRECATION")
           fun foo() {
               <warning descr="'objMap' may contain URL objects">objMap</warning>.put(URL(""), "")
           }
@@ -70,6 +73,7 @@ class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
       class CollectionContainsUrl {
           val objSet: MutableSet<Any> = HashSet()
           
+          @Suppress("DEPRECATION")
           fun foo() {
               <warning descr="'objSet' may contain URL objects">objSet</warning>.add(URL(""))
           }

@@ -19,9 +19,9 @@ abstract class JvmInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
 
   abstract val inspection: InspectionProfileEntry
 
-  open val languageLevel = LanguageLevel.JDK_11
+  open val languageLevel = LanguageLevel.JDK_21
 
-  open val sdkLevel = LanguageLevel.JDK_11
+  open val sdkLevel = LanguageLevel.JDK_21
 
   override fun setUp() {
     super.setUp()
