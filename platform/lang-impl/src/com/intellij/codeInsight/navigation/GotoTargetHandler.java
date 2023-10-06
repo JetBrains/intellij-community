@@ -71,7 +71,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     try {
       GotoData gotoData = getSourceAndTargetElements(editor, file);
       Consumer<JBPopup> showPopupProcedure = popup -> {
-        popup.showInBestPositionFor(editor);
+        if (!editor.isDisposed()) {
+          popup.showInBestPositionFor(editor);
+        }
       };
       if (gotoData != null) {
         show(project, editor, file, gotoData, showPopupProcedure);
@@ -114,6 +116,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       HintManager.getInstance().showErrorHint(editor, getNotFoundMessage(project, editor, file));
       return;
     }
+
+    showNotEmpty(project, gotoData, showPopup);
+  }
+
+  void showNotEmpty(@NotNull Project project, @NotNull GotoData gotoData, @NotNull Consumer<? super JBPopup> showPopup) {
+    PsiElement[] targets = gotoData.targets;
+    List<AdditionalAction> additionalActions = gotoData.additionalActions;
 
     boolean finished = gotoData.listUpdaterTask == null || gotoData.listUpdaterTask.isFinished();
     if (targets.length == 1 && additionalActions.isEmpty() && finished) {
@@ -188,11 +197,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     if (gotoData.listUpdaterTask != null) {
       Alarm alarm = new Alarm(popup);
-      alarm.addRequest(() -> {
-        if (!editor.isDisposed()) {
-          showPopup.accept(popup);
-        }
-      }, 300);
+      alarm.addRequest(() -> showPopup.accept(popup), 300);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
