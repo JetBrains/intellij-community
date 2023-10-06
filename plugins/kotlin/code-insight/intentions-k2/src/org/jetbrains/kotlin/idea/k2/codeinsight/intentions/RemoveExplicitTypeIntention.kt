@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
 import org.jetbrains.kotlin.idea.codeinsight.utils.getInitializerOrGetterInitializer
 import org.jetbrains.kotlin.idea.codeinsight.utils.isAnnotatedDeep
+import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInferenceByPsi
 import org.jetbrains.kotlin.idea.codeinsight.utils.isSetterParameter
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -47,12 +48,16 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
             }
         }
 
-    override fun isApplicableByPsi(element: KtDeclaration): Boolean = when {
-        element.typeReference == null || element.typeReference?.isAnnotatedDeep() == true -> false
-        element is KtParameter -> element.isLoopParameter || element.isSetterParameter
-        element is KtNamedFunction -> true
-        element is KtProperty || element is KtPropertyAccessor -> element.getInitializerOrGetterInitializer() != null
-        else -> false
+    override fun isApplicableByPsi(element: KtDeclaration): Boolean {
+        val typeReference = element.typeReference ?: return false
+
+        return when {
+            !isApplicableByTypeReference(element, typeReference) -> false
+            element is KtParameter -> element.isLoopParameter || element.isSetterParameter
+            element is KtNamedFunction -> true
+            element is KtProperty || element is KtPropertyAccessor -> element.getInitializerOrGetterInitializer() != null
+            else -> false
+        }
     }
 
     context(KtAnalysisSession)
@@ -60,7 +65,7 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
         element is KtParameter -> true
         element is KtNamedFunction && element.hasBlockBody() -> element.getReturnKtType().isUnit
         element is KtCallableDeclaration && publicReturnTypeShouldBePresentInApiMode(element) -> false
-        else -> !explicitTypeMightBeNeededForCorrectTypeInference(element)
+        else -> !element.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze()
     }
 
     private val KtDeclaration.typeReference: KtTypeReference?
@@ -69,6 +74,9 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
             is KtPropertyAccessor -> returnTypeReference
             else -> null
         }
+
+    private fun isApplicableByTypeReference(element: KtDeclaration, typeReference: KtTypeReference): Boolean =
+        !typeReference.isAnnotatedDeep() && !element.isExplicitTypeReferenceNeededForTypeInferenceByPsi(typeReference)
 
     context(KtAnalysisSession)
     private fun publicReturnTypeShouldBePresentInApiMode(declaration: KtCallableDeclaration): Boolean {
@@ -83,16 +91,16 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
     }
 
     context(KtAnalysisSession)
-    private fun explicitTypeMightBeNeededForCorrectTypeInference(declaration: KtDeclaration): Boolean {
-        val typeReference = declaration.typeReference ?: return false
-        val initializer = declaration.getInitializerOrGetterInitializer() ?: return true
+    private fun KtDeclaration.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze(): Boolean {
+        val typeReference = typeReference ?: return false
+        val initializer = getInitializerOrGetterInitializer() ?: return true
 
         if (!isInitializerTypeContextIndependent(initializer, typeReference)) return true
 
         val initializerType = initializer.getKtType() ?: return true
-        val explicitType = declaration.getReturnKtType()
+        val explicitType = getReturnKtType()
 
-        val typeCanBeRemoved = if (declaration.isVar) {
+        val typeCanBeRemoved = if (isVar) {
             initializerType.isEqualTo(explicitType)
         } else {
             initializerType.isSubTypeOf(explicitType)

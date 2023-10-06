@@ -15,7 +15,7 @@ fun KtDeclaration.isExplicitTypeReferenceNeededForTypeInferenceByPsi(typeReferen
     if (typeReference.hasModifier(KtTokens.SUSPEND_KEYWORD)) return true
     val typeElement = typeReference.typeElement as? KtFunctionType ?: return false
 
-    if (typeElement.receiver != null) return true
+    if (initializer is KtLambdaExpression && typeElement.receiver != null) return true
     if (typeElement.returnTypeReference?.typeElement?.typeArgumentsAsTypes?.isNotEmpty() == true) return true
     if (typeElement.parameters.isEmpty()) return false
     val valueParameters = when (initializer) {
