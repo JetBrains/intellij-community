@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.ShBundle;
+import com.intellij.sh.highlighting.ShOccurrencesHighlightingSuppressor;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public class ShRenameAllOccurrencesIntention extends BaseIntentionAction impleme
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file instanceof ShFile && editor != null
+    return ShOccurrencesHighlightingSuppressor.isOccurrencesHighlightingEnabled(editor, file)
            && ShRenameAllOccurrencesHandler.INSTANCE.isEnabled(editor, editor.getCaretModel().getPrimaryCaret(), null);
   }
 

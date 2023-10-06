@@ -3,6 +3,10 @@
     <plugin id="com.jetbrains.sh"/>
   </dependencies>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <shellOccurrencesHighlightingSuppressor implementation="org.jetbrains.plugins.terminal.sh.prompt.TerminalPromptHighlightingSuppressor"/>
+  </extensions>
+
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <shellSupport key="zsh" implementationClass="org.jetbrains.plugins.terminal.sh.zsh.ZshSupport"/>
     <shellSupport key="bash" implementationClass="org.jetbrains.plugins.terminal.sh.bash.BashSupport"/>
