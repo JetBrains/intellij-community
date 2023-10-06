@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo() {
     val a = 1
     if (<selection>a > 0</selection>) {

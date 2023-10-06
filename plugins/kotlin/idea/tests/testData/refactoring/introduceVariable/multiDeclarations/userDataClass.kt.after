@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun test() {
     val (width, height) = Dimension(1, 2)
 }

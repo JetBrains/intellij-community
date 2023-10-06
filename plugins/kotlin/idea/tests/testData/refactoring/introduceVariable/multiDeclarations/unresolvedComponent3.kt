@@ -1,3 +1,4 @@
+// IGNORE_K2
 class A
 
 operator fun A.component1() = 1

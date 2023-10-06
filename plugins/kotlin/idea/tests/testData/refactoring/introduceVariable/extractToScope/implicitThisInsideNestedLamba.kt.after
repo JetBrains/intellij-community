@@ -1,3 +1,4 @@
+// IGNORE_K2
 class A(val a: Int)
 class B(val b: Int)
 

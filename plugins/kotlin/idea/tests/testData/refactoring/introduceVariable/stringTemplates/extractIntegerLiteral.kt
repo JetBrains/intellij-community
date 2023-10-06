@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo(param: Int): String {
     val x = "a1234_"
     val y = "-4123a"

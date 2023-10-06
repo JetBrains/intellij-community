@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun b(body: () -> Unit): Unit = body()
 
 class A {

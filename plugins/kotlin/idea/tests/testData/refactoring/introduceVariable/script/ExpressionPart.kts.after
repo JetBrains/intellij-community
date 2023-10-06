@@ -1,3 +1,4 @@
+// IGNORE_K2
 val i = 2
 1 + i
 i + 3

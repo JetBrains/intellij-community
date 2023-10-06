@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo(a: Int): String {
     val x = """_c$a
     :${a + 1}d_"""

@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo(a: Int): Int {
     val i = a + 1
     return if (a > 1) {

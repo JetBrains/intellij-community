@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo(f: (Int) -> Int) = f(0)
 
 fun test() {
