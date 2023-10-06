@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
@@ -62,6 +63,9 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
    * False: log warning, and continue (i.e. rely on GC to unmap the buffer eventually)
    */
   private static final boolean FAIL_ON_FAILED_UNMAP = getBooleanProperty("idea.fs.fail-if-unmap-failed", true);
+
+  /** Log each unmapped buffer */
+  private static final boolean LOG_UNMAP_OPERATIONS = SystemProperties.getBooleanProperty("MMappedFileStorage.LOG_UNMAP_OPERATIONS", false);
 
 
   //============== statistics/monitoring: ===================================================================
@@ -479,6 +483,9 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       }
 
       INVOKE_CLEANER_METHOD.invoke(ReflectionUtil.getUnsafe(), buffer);
+      if (LOG_UNMAP_OPERATIONS) {
+        LOG.info("Buffer unmapped: " + buffer);
+      }
     }
 
     private static final Method INVOKE_CLEANER_METHOD;

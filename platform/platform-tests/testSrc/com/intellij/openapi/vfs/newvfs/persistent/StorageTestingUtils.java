@@ -10,12 +10,18 @@ import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.pagecache.PagedStorage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import static com.intellij.openapi.util.text.StringUtil.repeat;
 
@@ -61,10 +67,11 @@ public final class StorageTestingUtils {
 
       field.setAccessible(true);
       Object fieldValue = field.get(storage);
-      if (fieldValue == null) {
-        //log(depth, field, "ignore null");
+      if (isUntouchable(fieldValue)) {
+        //log(depth, field, "skipped");
         continue;
       }
+
 
       //'raw' storages:
       if (fieldValue instanceof MMappedFileStorage) {
@@ -88,13 +95,6 @@ public final class StorageTestingUtils {
         log(depth, field, "closing");
         ((PagedFileStorage)fieldValue).close();
       }
-      else if (fieldValue instanceof ByteBuffer) {
-        //every BBuffer we meet could be a mapped buffer, which was unmapped by one of the .closeXXX() methods
-        // above -- so don't touch it even with a stick
-        // Even alreadyProcessed.contains(value) could crash JVM: it calls value.hashCode() which for
-        // ByteBuffer scans through its content
-        log(depth, field, "skipping");
-      }
       else {
         log(depth, field, "diving deeper...");
         emulateImproperClose(fieldValue, alreadyProcessed, depth + 1);
@@ -110,11 +110,7 @@ public final class StorageTestingUtils {
                                                 @NotNull Object value,
                                                 @NotNull Set<Object> alreadyProcessed,
                                                 int depth) throws Exception {
-    if (value instanceof ByteBuffer) {
-      //every BBuffer we meet could be a mapped buffer, which was already unmapped by one of the .closeXXX()
-      // methods below -- so don't touch it even with a stick.
-      // Even alreadyProcessed.contains(value) could crash JVM: it calls value.hashCode() which for
-      // ByteBuffer scans through its content
+    if (isUntouchable(value)) {
       return;
     }
     if (alreadyProcessed.contains(value)) {
@@ -144,6 +140,7 @@ public final class StorageTestingUtils {
       }
       return;
     }
+    //MAYBE RC: iterate Object[] also?
 
     //Assume everything else is 'compound' storage that _may_ hold 'raw' underlying storage(s)
     // somewhere deeper:
@@ -180,8 +177,38 @@ public final class StorageTestingUtils {
     }
   }
 
-
   //TODO bestEffortToCloseAndUnmap(@NotNull Object storage)
+
+  private static boolean isUntouchable(@Nullable Object value) {
+    if (value == null) {
+      return true;
+    }
+
+    if (value instanceof ByteBuffer) {
+      //every BBuffer we meet could be a mapped buffer, which was already unmapped by one of the .closeXXX()
+      // methods before -- so don't touch it even with a stick.
+      // Even set.contains(byteBuffer) could crash JVM: it calls value.hashCode() which for
+      // ByteBuffer scans through its content
+      return true;
+    }
+
+    //just a few most frequently met types that 100% not worth to dive into
+    if (value instanceof Number
+        || value instanceof Path
+        || value instanceof File
+        || value instanceof Lock
+        || value instanceof ReadWriteLock
+        || value instanceof Condition) {
+
+      return true;
+    }
+
+    if (value.getClass().equals(Object.class)) {//no harm, but useless
+      return true;
+    }
+    return false;
+  }
+
 
   private static void log(int depth,
                           Field field,
@@ -196,6 +223,6 @@ public final class StorageTestingUtils {
   }
 
   private static void log(String message) {
-    //System.out.println(message);
+  //  System.out.println(message);
   }
 }
