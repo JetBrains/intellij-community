@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogFilter
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
@@ -25,11 +26,13 @@ import com.intellij.vcs.log.history.FileHistoryBuilder
 import com.intellij.vcs.log.history.FileHistoryData
 import com.intellij.vcs.log.history.removeTrivialMerges
 import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.statistics.filtersToStringPresentation
+import com.intellij.vcs.log.statistics.vcsToStringPresentation
 import com.intellij.vcs.log.util.*
 import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import com.intellij.vcs.log.visible.filters.with
-import com.intellij.vcs.log.visible.filters.without
+import com.intellij.vcs.log.visible.filters.*
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.StatusCode
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.BiConsumer
@@ -57,9 +60,8 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         try {
           val hashFilterResult = applyHashFilter(dataPack, hashFilter, sortType, commitCount)
           if (hashFilterResult != null) {
-            span.setAttribute("filters", hashFilterResult.first.filters.toString())
-            span.setAttribute("sortType", sortType.toString())
-            return hashFilterResult
+            span.configure(dataPack, hashFilterResult.visiblePack.filters, sortType, commitCount, hashFilterResult.filterKind)
+            return Pair(hashFilterResult.visiblePack, hashFilterResult.commitCount)
           }
         }
         catch (e: VcsException) {
@@ -116,8 +118,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         val visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits, filterResult.fileHistoryData)
         val visiblePack = VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters)
 
-        span.setAttribute("filters", filters.toString())
-        span.setAttribute("sortType", sortType.toString())
+        span.configure(dataPack, filters, sortType, commitCount, filterResult.filterKind)
         return Pair(visiblePack, filterResult.commitCount)
       }
       catch (e: VcsException) {
@@ -181,7 +182,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                                forceFilterByVcs: Boolean): FilterByDetailsResult {
     val detailsFilters = filters.detailsFilters
     if (!forceFilterByVcs && detailsFilters.isEmpty()) {
-      return FilterByDetailsResult(commitCandidates, false, commitCount)
+      return FilterByDetailsResult(commitCandidates, false, commitCount, FilterKind.Memory)
     }
 
     val dataGetter = index.dataGetter
@@ -196,14 +197,16 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       filterWithIndex(dataGetter!!, detailsFilters, commitCandidates)
     else Pair(null, null)
 
-    if (rootsForVcs.isEmpty()) return FilterByDetailsResult(filteredWithIndex, false, commitCount, historyData)
+    if (rootsForVcs.isEmpty()) return FilterByDetailsResult(filteredWithIndex, false, commitCount, FilterKind.Index, historyData)
+
     val filterAllWithVcs = rootsForVcs.containsAll(visibleRoots)
     val filtersForVcs = if (filterAllWithVcs) filters else filters.with(VcsLogFilterObject.fromRoots(rootsForVcs))
     val headsForVcs = if (filterAllWithVcs) matchingHeads else getMatchingHeads(dataPack.refsModel, rootsForVcs, filtersForVcs)
     val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filtersForVcs, headsForVcs, commitCount, commitCandidates)
 
     val filteredCommits = union(filteredWithIndex, filteredWithVcs.matchingCommits)
-    return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount, historyData)
+    return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount,
+                                 if (filterAllWithVcs) filteredWithVcs.filterKind else FilterKind.Mixed, historyData)
   }
 
   private fun filterWithIndex(dataGetter: IndexDataGetter,
@@ -234,14 +237,14 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       if (filters.get(VcsLogFilterCollection.RANGE_FILTER) == null) { // not filtering in memory by range for simplicity
         val commitsFromMemory = filterDetailsInMemory(graph, filters.detailsFilters, matchingHeads, commitCandidates)
         if (commitsFromMemory.size >= commitCountToTry.count) {
-          return FilterByDetailsResult(commitsFromMemory, true, commitCountToTry)
+          return FilterByDetailsResult(commitsFromMemory, true, commitCountToTry, FilterKind.Memory)
         }
       }
       commitCountToTry = commitCountToTry.next()
     }
 
     val commitsFromVcs = filterWithVcs(filters, commitCountToTry.count)
-    return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size >= commitCountToTry.count, commitCountToTry)
+    return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size >= commitCountToTry.count, commitCountToTry, FilterKind.Vcs)
   }
 
   @Throws(VcsException::class)
@@ -299,7 +302,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   private fun applyHashFilter(dataPack: DataPack,
                               hashFilter: VcsLogHashFilter,
                               sortType: PermanentGraph.SortType,
-                              commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
+                              commitCount: CommitCountStage): FilterByHashResult? {
     val hashFilterResult = IntOpenHashSet()
     for (partOfHash in hashFilter.hashes) {
       if (partOfHash.length == FULL_HASH_LENGTH) {
@@ -321,7 +324,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
       val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, hashFilterResult)
       val visiblePack = VisiblePack(dataPack, visibleGraph, filterMessages, VcsLogFilterObject.collection(hashFilter))
-      return Pair(visiblePack, if (filterMessages) commitCount.next() else CommitCountStage.ALL)
+      return FilterByHashResult(visiblePack, if (filterMessages) commitCount.next() else CommitCountStage.ALL, FilterKind.Memory)
     }
 
     val textFilter = hashFilter.toTextFilter()
@@ -333,7 +336,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, filterResult)
     val visiblePack = VisiblePack(dataPack, visibleGraph, textFilterResult.canRequestMore,
                                   VcsLogFilterObject.collection(hashFilter, textFilter))
-    return Pair(visiblePack, textFilterResult.commitCount)
+    return FilterByHashResult(visiblePack, textFilterResult.commitCount, textFilterResult.filterKind)
   }
 
   private fun VcsLogHashFilter.toTextFilter(): VcsLogTextFilter {
@@ -445,14 +448,36 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     recordException(e)
     setStatus(StatusCode.ERROR)
   }
+
+  private fun Span.configure(dataPack: DataPack,
+                             filters: VcsLogFilterCollection,
+                             sortType: PermanentGraph.SortType,
+                             commitCount: CommitCountStage,
+                             filterKind: FilterKind) {
+    setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_VCS_LIST.key,
+                 logProviders.values.toSet().map { it.supportedVcs }.vcsToStringPresentation())
+    setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_FILTERS_LIST.key, filters.keysToSet.filtersToStringPresentation())
+    setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_SORT_TYPE.key, sortType.getName())
+    setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_FILTERED_COMMIT_COUNT.key,
+                 if (commitCount.isAll()) CommitCountStage.ALL.name else commitCount.count.toString())
+    if (dataPack.isFull) setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_REPOSITORY_COMMIT_COUNT, dataPack.permanentGraph.allCommits.size)
+    setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_FILTER_KIND, filterKind.name)
+  }
 }
 
 private val LOG = Logger.getInstance(VcsLogFiltererImpl::class.java)
 
+internal enum class FilterKind {
+  Vcs, Index, Mixed, Memory
+}
+
 internal data class FilterByDetailsResult(val matchingCommits: IntSet?,
                                           val canRequestMore: Boolean,
                                           val commitCount: CommitCountStage,
+                                          val filterKind: FilterKind,
                                           val fileHistoryData: FileHistoryData? = null)
+
+private data class FilterByHashResult(val visiblePack: VisiblePack, val commitCount: CommitCountStage, val filterKind: FilterKind)
 
 fun areFiltersAffectedByIndexing(filters: VcsLogFilterCollection, roots: List<VirtualFile>): Boolean {
   val detailsFilters = filters.detailsFilters
