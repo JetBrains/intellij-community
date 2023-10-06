@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.presentationAssistant
 
-import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -185,8 +184,6 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
       0 -> visibleRect.y + configuration.margin
       else -> visibleRect.y + visibleRect.height - popupGroupSize.height - statusBarHeight - configuration.margin
     }
-
-    if (index != null) println("ayay calculated for $index: ${Rectangle(Point(x, y), preferredSizes[index])}")
 
     return RelativePoint(ideFrame.component, Point(x, y))
   }
