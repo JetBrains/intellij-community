@@ -33,7 +33,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import java.awt.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
@@ -170,8 +169,10 @@ public class SearchEverywhereCommand extends AbstractCommand {
     Ref<Span> oneLetterSpan = new Ref<>();
     ui.addSearchListener(new SearchAdapter() {
       @Override
-      public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+      public void searchFinished(@NotNull List<Object> items) {
+        super.searchFinished(items);
         oneLetterLock.release();
+        oneLetterSpan.get().setAttribute("number", items.size());
         oneLetterSpan.get().end();
         if (isTypingFinished.get()) {
           typingSemaphore.release();
