@@ -52,6 +52,11 @@ class GradleExecutionOutputFixture(
     return taskExecutionLeakTracker.withAllowedOperation(1, action)
   }
 
+  suspend fun <R> assertExecutionOutputIsReadyAsync(action: suspend () -> R): R {
+    output = Output()
+    return taskExecutionLeakTracker.withAllowedOperationAsync(1, action)
+  }
+
   fun assertTestEventContain(className: String, methodName: String?) {
     Assertions.assertThat(output.testDescriptors)
       .transform { it.className to it.methodName }

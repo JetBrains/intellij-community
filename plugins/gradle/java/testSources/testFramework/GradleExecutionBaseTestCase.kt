@@ -1,68 +1,41 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
-import com.intellij.execution.ExecutorRegistry
-import com.intellij.execution.RunManager
-import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll.Companion.runAll
-import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.utils.vfs.deleteRecursively
-import com.intellij.util.LocalTimeCounter
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
-import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
-import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionEnvironmentFixture
-import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionOutputFixture
-import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionViewFixture
-import org.jetbrains.plugins.gradle.testFramework.fixture.TestExecutionConsoleEventFixture
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
+import org.jetbrains.plugins.gradle.testFramework.fixture.*
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
-import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyExecution
-import org.jetbrains.plugins.gradle.testFramework.util.waitForGradleEventDispatcherClosing
-import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.junit.jupiter.api.Assertions
 
 abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
-  private lateinit var executionOutputFixture: GradleExecutionOutputFixture
-  private lateinit var testExecutionEventFixture: TestExecutionConsoleEventFixture
-  lateinit var executionEnvironmentFixture: GradleExecutionEnvironmentFixture
-  lateinit var executionConsoleFixture: GradleExecutionViewFixture
-  private lateinit var buildViewFixture: BuildViewTestFixture
+  private lateinit var executionFixture: GradleExecutionTestFixture
+
+  fun getExecutionEnvironment(): ExecutionEnvironment {
+    return executionFixture.getExecutionEnvironment()
+  }
+
+  fun getTestExecutionConsole(): GradleTestsExecutionConsole {
+    return executionFixture.getTestExecutionConsole()
+  }
 
   override fun setUp() {
     super.setUp()
 
     cleanupProjectBuildDirectory()
 
-    executionOutputFixture = GradleExecutionOutputFixture(project)
-    executionOutputFixture.setUp()
-
-    testExecutionEventFixture = TestExecutionConsoleEventFixture(project)
-    testExecutionEventFixture.setUp()
-
-    executionEnvironmentFixture = GradleExecutionEnvironmentFixture(project)
-    executionEnvironmentFixture.setUp()
-
-    executionConsoleFixture = GradleExecutionViewFixture(project, executionEnvironmentFixture)
-    executionConsoleFixture.setUp()
-
-    buildViewFixture = BuildViewTestFixture(project)
-    buildViewFixture.setUp()
+    executionFixture = GradleExecutionTestFixtureImpl(project, projectRoot)
+    executionFixture.setUp()
   }
 
   override fun tearDown() {
     runAll(
-      { buildViewFixture.tearDown() },
-      { executionConsoleFixture.tearDown() },
-      { executionEnvironmentFixture.tearDown() },
-      { testExecutionEventFixture.tearDown() },
-      { executionOutputFixture.tearDown() },
+      { executionFixture.tearDown() },
       { cleanupProjectBuildDirectory() },
       { super.tearDown() },
     )
@@ -81,100 +54,77 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     }
   }
 
-  fun executeTasks(commandLine: String, isRunAsTest: Boolean = false) {
-    val runManager = RunManager.getInstance(project)
-    val runConfigurationName = "GradleTestExecutionTestCase (" + LocalTimeCounter.currentTime() + ")"
-    val runnerSettings = runManager.createConfiguration(runConfigurationName, GradleExternalTaskConfigurationType::class.java)
-    val runConfiguration = runnerSettings.configuration as GradleRunConfiguration
-    runConfiguration.rawCommandLine = commandLine
-    runConfiguration.isRunAsTest = isRunAsTest
-    runConfiguration.settings.externalProjectPath = projectPath
-    runConfiguration.settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
-    val executorId = DefaultRunExecutor.EXECUTOR_ID
-    val executor = ExecutorRegistry.getInstance().getExecutorById(executorId)!!
-    val runner = ProgramRunner.getRunner(executorId, runConfiguration)!!
-    Assertions.assertEquals(ExternalSystemConstants.RUNNER_ID, runner.runnerId)
-    val environment = ExecutionEnvironment(executor, runner, runnerSettings, project)
-    waitForAnyGradleTaskExecution {
-      runWriteActionAndWait {
-        runner.execute(environment)
-      }
-    }
+  fun executeTasks(commandLine: String, isRunAsTest: Boolean = false, isDebug: Boolean = false) {
+    executionFixture.executeTasks(commandLine, isRunAsTest, isDebug)
   }
 
-  fun <R> waitForAnyGradleTaskExecution(action: () -> R) {
-    executionOutputFixture.assertExecutionOutputIsReady {
-      executionEnvironmentFixture.assertExecutionEnvironmentIsReady {
-        waitForGradleEventDispatcherClosing {
-          waitForAnyExecution(project) {
-            org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleTaskExecution {
-              action()
-            }
-          }
-        }
-      }
-    }
+  suspend fun executeTasksAsync(commandLine: String, isRunAsTest: Boolean = false, isDebug: Boolean = false) {
+    executionFixture.executeTasksAsync(commandLine, isRunAsTest, isDebug)
+  }
+
+  fun <R> waitForAnyGradleTaskExecution(action: () -> R): R {
+    return executionFixture.waitForAnyGradleTaskExecution(action)
   }
 
   fun assertBuildExecutionTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
-    buildViewFixture.assertBuildViewTree(assert)
+    executionFixture.assertBuildViewTree(assert)
   }
 
   fun assertTestConsoleContains(expected: String) {
-    executionConsoleFixture.assertTestConsoleContains(expected)
+    executionFixture.assertTestConsoleContains(expected)
   }
 
   fun assertTestConsoleDoesNotContain(expected: String) {
-    executionConsoleFixture.assertTestConsoleDoesNotContain(expected)
+    executionFixture.assertTestConsoleDoesNotContain(expected)
   }
 
   fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertTestConsoleContains(expectedTextSample: String) {
-    executionConsoleFixture.assertTestConsoleContains(this, expectedTextSample)
+    executionFixture.assertTestConsoleContains(this, expectedTextSample)
   }
 
   fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertTestConsoleDoesNotContain(unexpectedTextSample: String) {
-    executionConsoleFixture.assertTestConsoleDoesNotContain(this, unexpectedTextSample)
+    executionFixture.assertTestConsoleDoesNotContain(this, unexpectedTextSample)
   }
 
   fun assertRunTreeView(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
-    executionConsoleFixture.assertRunTreeView(assert)
+    executionFixture.assertRunViewTree(assert)
   }
 
   fun assertTestTreeView(assert: SimpleTreeAssertion<AbstractTestProxy>.() -> Unit) {
-    executionConsoleFixture.assertTestTreeView(assert)
+    executionFixture.assertTestViewTree(assert)
   }
 
   fun assertRunTreeViewIsEmpty() {
-    executionConsoleFixture.assertRunTreeViewIsEmpty()
+    executionFixture.assertRunViewTreeIsEmpty()
   }
 
   fun assertTestTreeViewIsEmpty() {
-    executionConsoleFixture.assertTestTreeViewIsEmpty()
+    executionFixture.assertTestViewTreeIsEmpty()
   }
 
   fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertPsiLocation(
-    className: String,
-    methodName: String? = null,
-    parameterName: String? = null
+    className: String, methodName: String? = null, parameterName: String? = null
   ) {
-    executionConsoleFixture.assertPsiLocation(this, className, methodName, parameterName)
+    executionFixture.assertPsiLocation(this, className, methodName, parameterName)
   }
 
   fun assertTestEventsContain(className: String, methodName: String? = null) {
-    executionOutputFixture.assertTestEventContain(className, methodName)
+    executionFixture.assertTestEventsContain(className, methodName)
   }
 
   fun assertTestEventsDoesNotContain(className: String, methodName: String? = null) {
-    executionOutputFixture.assertTestEventDoesNotContain(className, methodName)
+    executionFixture.assertTestEventsDoNotContain(className, methodName)
   }
 
   fun assertTestEventsWasNotReceived() {
-    executionOutputFixture.assertTestEventsWasNotReceived()
+    executionFixture.assertTestEventsWereNotReceived()
   }
 
   fun assertTestEventCount(
-    name: String, suiteStart: Int, suiteFinish: Int, testStart: Int, testFinish: Int, testFailure: Int, testIgnore: Int
+    name: String,
+    suiteStart: Int, suiteFinish: Int,
+    testStart: Int, testFinish: Int, testFailure: Int, testIgnore: Int
   ) {
-    testExecutionEventFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
+    executionFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
   }
 }

@@ -67,4 +67,13 @@ class GradleExecutionEnvironmentFixture(
     }
     return result
   }
+
+  suspend fun <R> assertExecutionEnvironmentIsReadyAsync(action: suspend () -> R): R {
+    executionEnvironment = null
+    val result = executionLeakTracker.withAllowedOperationAsync(1, action)
+    Assertions.assertNotNull(executionEnvironment) {
+      "Gradle execution isn't finished."
+    }
+    return result
+  }
 }

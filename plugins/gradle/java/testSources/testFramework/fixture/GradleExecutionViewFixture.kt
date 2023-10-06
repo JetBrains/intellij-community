@@ -134,9 +134,7 @@ class GradleExecutionViewFixture(
 
   fun assertPsiLocation(
     testAssertion: SimpleTreeAssertion.Node<AbstractTestProxy>,
-    className: String,
-    methodName: String?,
-    parameterName: String?
+    className: String, methodName: String?, parameterName: String?
   ) {
     testAssertion.assertValue { testProxy ->
       val location = testProxy.getLocation()
