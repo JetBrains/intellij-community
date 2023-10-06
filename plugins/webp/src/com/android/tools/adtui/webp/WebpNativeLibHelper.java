@@ -38,13 +38,8 @@ public final class WebpNativeLibHelper {
   }
 
   public static String getDecoderVersion() {
-    // This is the current result of calling
-    //     libwebp.WebPGetEncoderVersion()
-    // but we don't want to have to load the native library just to get this constant
-    // (since it doesn't change until we change the bundled version of the library anyway).
-    //
-    // And more importantly, NOBODY looks at this version anyway.
-    return "1280";
+    // A decoded result of calling `WebPGetDecoderVersion()`; we don't want to load the native library just to get this constant.
+    return "1.3.2";
   }
 
   public static String getEncoderVersion() {
@@ -84,12 +79,7 @@ public final class WebpNativeLibHelper {
   }
 
   public static String getLibName() {
-    String baseName = CpuArch.isIntel64() || SystemInfo.isMac && CpuArch.isArm64() ? "webp_jni64" : "webp_jni";
-    String fileName = System.mapLibraryName(baseName);
-    if (SystemInfo.isMac) {
-      fileName = fileName.replace(".jnilib", ".dylib");
-    }
-    return fileName;
+    return System.mapLibraryName("webp_jni");
   }
 
   public static File getLibLocation() {
