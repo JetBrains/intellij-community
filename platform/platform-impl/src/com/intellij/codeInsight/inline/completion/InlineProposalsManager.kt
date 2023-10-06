@@ -4,38 +4,35 @@ package com.intellij.codeInsight.inline.completion
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-internal class InlineProposalsManager : ArrayList<CacheableInlineProposal>() {
+internal class InlineProposalsManager {
+  private val myProposals = arrayListOf<CacheableInlineProposal>()
   private var current: Int = 0
 
-  override fun clear() {
-    super.clear()
+  internal fun clear() {
+    myProposals.clear()
     current = 0
   }
 
   internal fun processEvent(event: InlineCompletionEvent) {
-    if (event is InlineCompletionEvent.ShowNext) {
-      if (current + 1 < size) {
-        ++current
+    when (event) {
+      is InlineCompletionEvent.ShowNext -> current = minOf(current + 1, myProposals.size)
+      is InlineCompletionEvent.ShowPrevious -> current = maxOf(current - 1, 0)
+      else -> {
+        clear()
+        myProposals.addAll(InlineCompletionProvider.extensions().filter { it.isEnabled(event) }.map(::CacheableInlineProposal))
       }
-      return
     }
-    if (event is InlineCompletionEvent.ShowPrevious) {
-      if (current > 0) {
-        --current
-      }
-      return
-    }
-    clear()
-    addAll(InlineCompletionProvider.extensions().filter { it.isEnabled(event) }.map(::CacheableInlineProposal))
   }
 
-  internal fun getProvider(): InlineCompletionProvider? = getOrNull(current)?.provider
+  internal fun getProvider(): InlineCompletionProvider? = getCurrent()?.provider
 
   internal fun cacheProposal(proposal: String) {
-    getOrNull(current)?.apply { cachedProposal = InlineCompletionElement(proposal) }
+    getCurrent()?.apply { cachedProposal = InlineCompletionElement(proposal) }
   }
 
-  internal fun getCachedProposal(): InlineCompletionElement? = getOrNull(current)?.cachedProposal
+  internal fun getCachedProposal(): InlineCompletionElement? = getCurrent()?.cachedProposal
+
+  private fun getCurrent() = myProposals.getOrNull(current)
 }
 
 @ApiStatus.Experimental
