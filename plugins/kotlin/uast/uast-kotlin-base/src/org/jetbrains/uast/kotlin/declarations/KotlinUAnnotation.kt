@@ -45,9 +45,7 @@ sealed class KotlinUAnnotationBase<T : KtCallElement>(
     }
 
     private fun findAttributeDefaultValue(name: String): UExpression? {
-        return baseResolveProviderService.findDefaultValueForAnnotationAttribute(sourcePsi, name)?.let {
-            languagePlugin?.convertWithParent(it)
-        }
+        return baseResolveProviderService.findDefaultValueForAnnotationAttribute(sourcePsi, name)
     }
 
     override fun convertParent(): UElement? {

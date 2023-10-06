@@ -19,14 +19,18 @@ internal class KtIncorrectServiceRetrievingInspectionTest : IncorrectServiceRetr
   override fun getFileExtension() = "kt"
 
   fun testRetrievingServiceAsProjectLevel() {
-    doTest()
+    doTest(true)
   }
 
   fun testRetrievingServiceAsAppLevel() {
-    doTest()
+    doTest(true)
   }
 
   fun testUnregisteredServices() {
-    doTest()
+    doTest(true)
+  }
+
+  fun testUnspecifiedLevelService() {
+    doTest(false)
   }
 }

@@ -3,11 +3,10 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
+import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.builtins.createFunctionType
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -30,7 +29,9 @@ import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.CommonSupertypes
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
@@ -99,13 +100,21 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         }
     }
 
-    override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): KtExpression? {
-        val parameter = ktCallElement.resolveToClassDescriptor()
-            ?.unsubstitutedPrimaryConstructor
+    override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): UExpression? {
+        val classDescriptor = ktCallElement.resolveToClassDescriptor() ?: return null
+        val psiElement = classDescriptor.psiElement
+        if (psiElement is PsiClass) {
+            // a usage Java annotation
+            return findAttributeValueExpression(psiElement, name)
+        }
+        val parameter = classDescriptor
+            .unsubstitutedPrimaryConstructor
             ?.valueParameters
             ?.find { it.name.asString() == name } ?: return null
 
-        return (parameter.source.getPsi() as? KtParameter)?.defaultValue
+        return (parameter.source.getPsi() as? KtParameter)?.defaultValue?.let {
+            languagePlugin.convertWithParent(it)
+        }
     }
 
     override fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression? {

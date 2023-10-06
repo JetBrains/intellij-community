@@ -12,16 +12,6 @@ abstract class IncorrectServiceRetrievingInspectionTestBase : LightDevKitInspect
       """
       package com.intellij.openapi.components;
 
-      public @interface Service {
-        Level[] value() default Level.APP;
-
-        enum Level { APP, PROJECT }
-      }
-      """)
-    myFixture.addClass(
-      """
-      package com.intellij.openapi.components;
-
       public interface ComponentManager {
         <T> T getService(@NotNull Class<T> serviceClass);
         <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded);
@@ -63,5 +53,30 @@ abstract class IncorrectServiceRetrievingInspectionTestBase : LightDevKitInspect
         public Class<T> java;
       }
       """)
+  }
+
+  protected fun doTest(isAppLevelDefault: Boolean = true) {
+    if (isAppLevelDefault) {
+      myFixture.addClass("""
+      package com.intellij.openapi.components;
+
+      public @interface Service {
+        Level[] value() default Level.APP;
+
+        enum Level { APP, PROJECT }
+      }
+      """)
+    }
+    else {
+      myFixture.addClass("""
+      package com.intellij.openapi.components;
+
+      public @interface Service {
+        Level[] value() default {};
+
+        enum Level { APP, PROJECT }
+      }
+      """)
+    }
   }
 }

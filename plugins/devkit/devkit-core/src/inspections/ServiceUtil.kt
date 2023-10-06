@@ -111,7 +111,7 @@ private fun getLevelType(annotation: UAnnotation): LevelType {
         }
       ?: emptySet()
 
-    else -> listOf(Service.Level.APP)
+    else -> emptySet()
   }
   return toLevelType(levels)
 }

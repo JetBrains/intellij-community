@@ -14,7 +14,9 @@ import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
@@ -84,12 +86,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): KtExpression? {
+    override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): UExpression? {
         analyzeForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
                 ktCallElement.resolveCall()?.singleConstructorCallOrNull()?.symbol ?: return null
+            val psi = resolvedAnnotationConstructorSymbol.psi
+            if (psi is PsiClass) {
+                // a usage Java annotation
+                return findAttributeValueExpression(psi, name)
+            }
             val parameter = resolvedAnnotationConstructorSymbol.valueParameters.find { it.name.asString() == name } ?: return null
-            return (parameter.psi as? KtParameter)?.defaultValue
+            return (parameter.psi as? KtParameter)?.defaultValue?.let(languagePlugin::convertWithParent)
         }
     }
 

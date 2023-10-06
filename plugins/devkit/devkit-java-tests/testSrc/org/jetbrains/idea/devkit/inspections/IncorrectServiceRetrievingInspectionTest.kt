@@ -12,14 +12,14 @@ internal class IncorrectServiceRetrievingInspectionTest : IncorrectServiceRetrie
   override fun getFileExtension() = "java"
 
   fun testAppLevelServiceAsProjectLevel() {
-    doTest()
+    doTest(true)
   }
 
   fun testProjectLevelServiceAsAppLevel() {
-    doTest()
+    doTest(true)
   }
 
   fun testUnregisteredService() {
-    doTest()
+    doTest(true)
   }
 }
