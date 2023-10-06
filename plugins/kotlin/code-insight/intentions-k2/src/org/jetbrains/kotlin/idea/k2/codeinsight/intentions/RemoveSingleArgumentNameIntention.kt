@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -23,13 +25,13 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 internal class RemoveSingleArgumentNameIntention :
     AbstractKotlinApplicableIntentionWithContext<KtValueArgument, RemoveSingleArgumentNameIntention.SingleArgumentContext>(KtValueArgument::class) {
     /**
-     * @property anchorArgument an argument after which the unnamed argument should be placed once the argument name is removed;
-     * when the argument should be placed in the beginning of argument list, [anchorArgument] is null
+     * @property anchorArgumentPointer an argument after which the unnamed argument should be placed once the argument name is removed;
+     * when the argument should be placed in the beginning of argument list, [anchorArgumentPointer] is null
      */
     class SingleArgumentContext(
-        val anchorArgument: KtValueArgument?,
+        val anchorArgumentPointer: SmartPsiElementPointer<KtValueArgument>?,
         val isVararg: Boolean,
-        val isArrayOfCall: Boolean
+        val isArrayOfCall: Boolean,
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.argument.name")
@@ -46,7 +48,7 @@ internal class RemoveSingleArgumentNameIntention :
         val newArguments = createArgumentWithoutName(element, context.isVararg, context.isArrayOfCall)
         argumentList.removeArgument(element)
         newArguments.asReversed().forEach {
-            argumentList.addArgumentAfter(it, context.anchorArgument)
+            argumentList.addArgumentAfter(it, context.anchorArgumentPointer?.element)
         }
     }
 
@@ -73,7 +75,7 @@ internal class RemoveSingleArgumentNameIntention :
         if (nameCannotBeRemoved) return null
 
         return SingleArgumentContext(
-            anchorArgument = sortedArgumentsBeforeCurrent.lastOrNull(),
+            anchorArgumentPointer = sortedArgumentsBeforeCurrent.lastOrNull()?.createSmartPointer(),
             isVararg = element == vararg,
             isArrayOfCall = element == vararg && varargIsArrayOfCall
         )
