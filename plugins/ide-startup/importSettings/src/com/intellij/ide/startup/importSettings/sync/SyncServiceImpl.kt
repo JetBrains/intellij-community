@@ -13,6 +13,9 @@ import com.intellij.ui.JBAccountInfoService
 import com.jetbrains.rd.util.reactive.Property
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.time.withTimeout
+import java.time.Duration
 import java.util.*
 import javax.swing.Icon
 
@@ -33,6 +36,8 @@ private data class ProductInfo(
   )
 }
 
+private val serverRequestTimeout = Duration.ofMinutes(2L)
+
 @Service
 internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : SyncService {
 
@@ -40,8 +45,7 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
     fun getInstance(): SyncServiceImpl = service()
   }
 
-  private val syncStateProperty = Property(SyncService.SYNC_STATE.UNLOGGED)
-  override val syncState = syncStateProperty
+  override val syncState = Property(SyncService.SYNC_STATE.UNLOGGED)
 
   init {
     loadAmbientSyncState()
@@ -79,14 +83,16 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
 
   override fun getMainProduct(): Product? {
     return logger.runAndLogException {
-      // TODO: Async
-      runBlockingCancellable block@{
-        val snapshot = getSettingsSnapshot() ?: return@block null
-        if (snapshot.metaInfo.appInfo?.buildNumber?.productCode == ApplicationInfo.getInstance().build.productCode) {
-          return@block ProductInfo(snapshot.metaInfo)
-        }
+      @Suppress("SSBasedInspection") // TODO: Async
+      runBlocking {
+        withTimeout(serverRequestTimeout) block@{
+          val snapshot = getSettingsSnapshot() ?: return@block null
+          if (snapshot.metaInfo.appInfo?.buildNumber?.productCode == ApplicationInfo.getInstance().build.productCode) {
+            return@block ProductInfo(snapshot.metaInfo)
+          }
 
-        null
+          null
+        }
       }
     }
   }
@@ -131,7 +137,7 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
   }
 
   private fun loadAmbientSyncState() {
-    syncStateProperty.value = logger.runAndLogException block@{
+    syncState.value = logger.runAndLogException block@{
       val service = accountInfoService ?: return@block SyncService.SYNC_STATE.NO_SYNC
       when {
         service.userData != null -> SyncService.SYNC_STATE.LOGGED
