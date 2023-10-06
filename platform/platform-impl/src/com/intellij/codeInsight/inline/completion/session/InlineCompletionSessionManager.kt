@@ -84,7 +84,7 @@ internal abstract class InlineCompletionSessionManager {
         val fragment = request.event.event.newFragment.toString()
         applyPrefixAppend(context, fragment, request) ?: UpdateSessionResult.Invalidated
       }
-      is InlineCompletionEvent.LookupChange -> {
+      is InlineCompletionEvent.InlineLookupEvent -> {
         if (context.isCurrentlyDisplayingInlays) UpdateSessionResult.Same else UpdateSessionResult.Invalidated
       }
       else -> UpdateSessionResult.Invalidated
