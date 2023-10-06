@@ -52,13 +52,20 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val hashFilter = allFilters.get(VcsLogFilterCollection.HASH_FILTER)
     val filters = allFilters.without(VcsLogFilterCollection.HASH_FILTER)
 
-    TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogFilter.getName()).useWithScope {
+    TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogFilter.getName()).useWithScope { span ->
       if (hashFilter != null && !hashFilter.hashes.isEmpty()) { // hashes should be shown, no matter if they match other filters or not
-        val hashFilterResult = applyHashFilter(dataPack, hashFilter, sortType, commitCount)
-        if (hashFilterResult != null) {
-          it.setAttribute("filters", hashFilterResult.first.filters.toString())
-          it.setAttribute("sortType", sortType.toString())
-          return hashFilterResult
+        try {
+          val hashFilterResult = applyHashFilter(dataPack, hashFilter, sortType, commitCount)
+          if (hashFilterResult != null) {
+            span.setAttribute("filters", hashFilterResult.first.filters.toString())
+            span.setAttribute("sortType", sortType.toString())
+            return hashFilterResult
+          }
+        }
+        catch (e: VcsException) {
+          span.recordVcsException(e)
+          val visiblePack = VisiblePack.ErrorVisiblePack(dataPack, VcsLogFilterObject.collection(hashFilter, hashFilter.toTextFilter()), e)
+          return Pair(visiblePack, commitCount)
         }
       }
 
@@ -109,11 +116,12 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         val visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits, filterResult.fileHistoryData)
         val visiblePack = VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters)
 
-        it.setAttribute("filters", filters.toString())
-        it.setAttribute("sortType", sortType.toString())
+        span.setAttribute("filters", filters.toString())
+        span.setAttribute("sortType", sortType.toString())
         return Pair(visiblePack, filterResult.commitCount)
       }
       catch (e: VcsException) {
+        span.recordVcsException(e)
         return Pair(VisiblePack.ErrorVisiblePack(dataPack, filters, e), commitCount)
       }
     }
@@ -287,13 +295,13 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return commits
   }
 
+  @Throws(VcsException::class)
   private fun applyHashFilter(dataPack: DataPack,
                               hashFilter: VcsLogHashFilter,
                               sortType: PermanentGraph.SortType,
                               commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
-    val hashes = hashFilter.hashes
     val hashFilterResult = IntOpenHashSet()
-    for (partOfHash in hashes) {
+    for (partOfHash in hashFilter.hashes) {
       if (partOfHash.length == FULL_HASH_LENGTH) {
         val hash = HashImpl.build(partOfHash)
         for (root in dataPack.logProviders.keys) {
@@ -316,21 +324,20 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       return Pair(visiblePack, if (filterMessages) commitCount.next() else CommitCountStage.ALL)
     }
 
-    val textFilter = VcsLogFilterObject.fromPatternsList(ArrayList(hashes), false)
-    try {
-      val textFilterResult = filterByDetails(dataPack, VcsLogFilterObject.collection(textFilter),
-                                             commitCount, dataPack.logProviders.keys, null, null, false)
-      if (hashFilterResult.isEmpty() && textFilterResult.matchingCommits.matchesNothing()) return null
-      val filterResult = union(textFilterResult.matchingCommits, hashFilterResult)
+    val textFilter = hashFilter.toTextFilter()
+    val textFilterResult = filterByDetails(dataPack, VcsLogFilterObject.collection(textFilter),
+                                           commitCount, dataPack.logProviders.keys, null, null, false)
+    if (hashFilterResult.isEmpty() && textFilterResult.matchingCommits.matchesNothing()) return null
+    val filterResult = union(textFilterResult.matchingCommits, hashFilterResult)
 
-      val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, filterResult)
-      val visiblePack = VisiblePack(dataPack, visibleGraph, textFilterResult.canRequestMore,
-                                    VcsLogFilterObject.collection(hashFilter, textFilter))
-      return Pair(visiblePack, textFilterResult.commitCount)
-    }
-    catch (e: VcsException) {
-      return Pair(VisiblePack.ErrorVisiblePack(dataPack, VcsLogFilterObject.collection(hashFilter, textFilter), e), commitCount)
-    }
+    val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, filterResult)
+    val visiblePack = VisiblePack(dataPack, visibleGraph, textFilterResult.canRequestMore,
+                                  VcsLogFilterObject.collection(hashFilter, textFilter))
+    return Pair(visiblePack, textFilterResult.commitCount)
+  }
+
+  private fun VcsLogHashFilter.toTextFilter(): VcsLogTextFilter {
+    return VcsLogFilterObject.fromPatternsList(ArrayList(hashes), false)
   }
 
   fun getMatchingHeads(refs: RefsModel,
@@ -432,6 +439,11 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return this.mapTo(mutableSetOf()) { ref ->
       storage.getCommitIndex(ref.commitHash, ref.root)
     }
+  }
+
+  private fun Span.recordVcsException(e: VcsException) {
+    recordException(e)
+    setStatus(StatusCode.ERROR)
   }
 }
 
