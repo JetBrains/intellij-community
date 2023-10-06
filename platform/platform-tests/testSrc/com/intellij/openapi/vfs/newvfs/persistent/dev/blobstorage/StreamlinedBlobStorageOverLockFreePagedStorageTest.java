@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PageCacheUtils;
-import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;

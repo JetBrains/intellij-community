@@ -222,4 +222,25 @@ public class MMappedFileStorageTest {
       "Storage file [" + storage.storagePath() + "] must not exist after .closeAndClean()"
     );
   }
+
+  @Test
+  public void openedStoragesCount_isEqualToNumberOfOpenedAndNotClosedStorages() throws IOException {
+    int initialStoragesCount = MMappedFileStorage.openedStoragesCount();
+
+    storage.close();
+    assertEquals(initialStoragesCount - 1, MMappedFileStorage.openedStoragesCount(),
+                 "One storage is closed, so openedStoragesCount must be decremented");
+
+    MMappedFileStorage anotherStorageOtherSameFile = open();
+    assertEquals(initialStoragesCount, MMappedFileStorage.openedStoragesCount(),
+                 "Another storage is opened, so openedStoragesCount must be incremented");
+
+    storage.closeAndUnsafelyUnmap();
+    assertEquals(initialStoragesCount, MMappedFileStorage.openedStoragesCount(),
+                 "'storage' was already closed, unmapping it doesn't decrement openedStoragesCount even more");
+
+    anotherStorageOtherSameFile.closeAndClean();
+    assertEquals(initialStoragesCount - 1, MMappedFileStorage.openedStoragesCount(),
+                 "'another storage' is now closed -> openedStoragesCount must be decremented");
+  }
 }

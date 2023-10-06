@@ -65,7 +65,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   private static final boolean FAIL_ON_FAILED_UNMAP = getBooleanProperty("idea.fs.fail-if-unmap-failed", true);
 
   /** Log each unmapped buffer */
-  private static final boolean LOG_UNMAP_OPERATIONS = SystemProperties.getBooleanProperty("MMappedFileStorage.LOG_UNMAP_OPERATIONS", false);
+  private static final boolean LOG_UNMAP_OPERATIONS = getBooleanProperty("MMappedFileStorage.LOG_UNMAP_OPERATIONS", false);
 
 
   //============== statistics/monitoring: ===================================================================
@@ -371,8 +371,9 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     }
     finally {
       synchronized (openedStorages) {
-        MMappedFileStorage removed = openedStorages.remove(storagePath);
-        if (removed != null) {
+        MMappedFileStorage removed = openedStorages.get(storagePath);
+        if (removed == this) {
+          openedStorages.remove(storagePath);
           //noinspection AssignmentToStaticFieldFromInstanceMethod
           openedStoragesCount--;
         }
