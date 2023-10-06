@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
-import com.intellij.diff.util.LineRange
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -121,8 +119,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     val cs = this
     editor as EditorEx
 
-    val commentableLineRanges = model.commentableRanges.mapState(cs) { it.map { LineRange(it.start2, it.end2) } }
-    GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, commentableLineRanges, editor) {
+    GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, model.commentableRanges, editor) {
       model.requestNewDiscussion(it, true)
     }
   }

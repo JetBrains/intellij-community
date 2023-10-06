@@ -5,11 +5,10 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.EditorMapped
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
-import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
-import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
@@ -36,8 +35,8 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private val _shiftedReviewRanges = MutableStateFlow<List<LstRange>>(emptyList())
   val shiftedReviewRanges: StateFlow<List<LstRange>> get() = _shiftedReviewRanges
 
-  private val _commentableRanges = MutableStateFlow<List<Range>>(emptyList())
-  val commentableRanges: StateFlow<List<Range>> get() = _commentableRanges
+  private val _commentableRanges = MutableStateFlow<List<LineRange>>(emptyList())
+  val commentableRanges: StateFlow<List<LineRange>> get() = _commentableRanges
 
   val newDiscussions: Flow<List<MappedNewDiscussion>> = fileVm.newDiscussions.map {
     it.map { (location, vm) -> MappedNewDiscussion(location, vm) }
@@ -53,10 +52,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     val lstListener = ForwardingLineStatusTrackerListener(lst) { lstRanges ->
       localRanges.value = lstRanges
       _shiftedReviewRanges.value = ExcludingApproximateChangedRangesShifter.shift(reviewRanges, lstRanges)
-      _commentableRanges.value = DiffIterableUtil.create(lstRanges.map {
-        Range(it.vcsLine1, it.vcsLine2, it.line1, it.line2)
-      }, DiffUtil.getLineCount(lst.vcsDocument), DiffUtil.getLineCount(lst.document))
-        .iterateUnchanged().toList()
+      _commentableRanges.value = lstRanges.getUnchangedLineRanges(lst.document)
     }
     lst.addListener(lstListener)
     cs.awaitCancellationAndInvoke {
@@ -141,6 +137,36 @@ private fun transferLineFromAfter(ranges: List<LstRange>, line: Int): Int? {
     val length1 = range.vcsLine2 - range.vcsLine1
     val length2 = range.line2 - range.line1
     result -= length2 - length1
+  }
+  return result
+}
+
+private fun List<LstRange>.getUnchangedLineRanges(document: Document): List<LineRange> {
+  val lineCount = DiffUtil.getLineCount(document)
+  if (isEmpty()) return listOf(LineRange(0, lineCount))
+  val result = mutableListOf<LineRange>()
+  var lastChangeEnd: Int? = null
+
+  forEach {
+    val lastEnd = lastChangeEnd
+    if (lastEnd == null) {
+      if (it.line1 != 0) {
+        result.add(LineRange(0, it.line1))
+      }
+      lastChangeEnd = it.line2
+    }
+    else if (it.line1 == lastEnd) {
+      lastChangeEnd = it.line2
+    }
+    else {
+      result.add(LineRange(lastEnd, it.line1))
+      lastChangeEnd = it.line2
+    }
+  }
+
+  val lastEnd = lastChangeEnd!!
+  if (lastEnd != lineCount) {
+    result.add(LineRange(lastEnd, lineCount))
   }
   return result
 }
