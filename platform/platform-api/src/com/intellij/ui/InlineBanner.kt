@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
-import java.awt.geom.RoundRectangle2D
 import javax.swing.*
 import kotlin.math.max
 
@@ -155,23 +154,7 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
       }
 
       override fun paintHover(g: Graphics) {
-        val g2 = g.create() as Graphics2D
-
-        try {
-          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
-          if (myClick) {
-            g2.color = JBUI.CurrentTheme.ActionButton.pressedBackground()
-          }
-          else {
-            g2.color = JBUI.CurrentTheme.ActionButton.hoverBackground()
-          }
-          val arc = JBUIScale.scale(JBUI.getInt("Button.arc", 6).toFloat())
-          g2.fill(RoundRectangle2D.Float(0f, 0f, width.toFloat(), height.toFloat(), arc, arc))
-        }
-        finally {
-          g2.dispose()
-        }
+        paintHover(g, myClick)
       }
     }
     button.preferredSize = JBDimension(22, 22)

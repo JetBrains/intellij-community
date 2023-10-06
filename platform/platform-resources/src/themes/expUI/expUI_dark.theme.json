@@ -279,6 +279,18 @@
 
       "Toolbar" : {
         "borderColor" : "Grey3"
+      },
+
+      "ToolTip": {
+        "foreground": "Grey12",
+        "background": "Grey3",
+        "border": "Grey4",
+        "errorBackground": "Red1",
+        "errorBorder": "Red2",
+        "successBackground": "Green1",
+        "successBorder": "Green2",
+        "warningBackground": "Yellow1",
+        "warningBorder": "Yellow2"
       }
     },
 

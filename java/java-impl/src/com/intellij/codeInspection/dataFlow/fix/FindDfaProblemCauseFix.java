@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
@@ -122,7 +121,7 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
         .map(child -> new CauseWithDepth(cwd, child))).skip(1).toList();
     }
     if (causes.isEmpty()) {
-      HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
+      HintManager hintManager = HintManager.getInstance();
       hintManager.showErrorHint(editor, JavaAnalysisBundle.message("dfa.find.cause.unable"));
       return;
     }
@@ -167,7 +166,7 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
     assert targetFile == file;
     PsiNavigationSupport.getInstance().createNavigatable(file.getProject(), targetFile.getVirtualFile(), range.getStartOffset())
       .navigate(true);
-    HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
+    HintManager hintManager = HintManager.getInstance();
     hintManager.showInformationHint(editor, StringUtil.escapeXmlEntities(StringUtil.capitalize(item.toString())));
   }
 }

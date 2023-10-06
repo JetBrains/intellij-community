@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 
@@ -543,6 +544,26 @@ public class HintManagerImpl extends HintManager {
     showEditorHint(hint, editor, p, flags, 0, false);
   }
 
+  @Override
+  public void showSuccessHint(@NotNull Editor editor, @NotNull String text, short position) {
+    showSuccessHint(editor, text, position, null);
+  }
+
+  @Override
+  public void showSuccessHint(@NotNull Editor editor, @NotNull String text, @Nullable HyperlinkListener listener) {
+    showSuccessHint(editor, text, ABOVE, listener);
+  }
+
+  private void showSuccessHint(@NotNull Editor editor,
+                               @NotNull @HintText String text,
+                               @PositionFlags short position,
+                               @Nullable HyperlinkListener listener) {
+    LightweightHint hint = new LightweightHint(HintUtil.createSuccessLabel(text, listener));
+    Point p = getClientManager(editor).getHintPosition(hint, editor, position);
+    int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+    showEditorHint(hint, editor, p, flags, 0, false);
+  }
+
   private static @NotNull ClientHintManager getClientManager(@NotNull Editor editor) {
     try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
       return ClientHintManager.getCurrentInstance();
@@ -603,6 +624,18 @@ public class HintManagerImpl extends HintManager {
                                final @NotNull LightweightHint hint,
                                final @NotNull QuestionAction action,
                                @PositionFlags short constraint) {
+    if (ExperimentalUI.isNewUI() && hint.getComponent() instanceof HintUtil.HintLabel label) {
+      JEditorPane pane = label.getPane();
+      if (pane != null) {
+        pane.addHyperlinkListener(e -> {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && "action".equals(e.getDescription()) && hint.isVisible()) {
+            if (action.execute()) {
+              hint.hide();
+            }
+          }
+        });
+      }
+    }
     int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.UPDATE_BY_SCROLLING |
                 HintManager.HIDE_IF_OUT_OF_EDITOR | HintManager.DONT_CONSUME_ESCAPE;
     showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);

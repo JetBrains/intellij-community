@@ -469,6 +469,7 @@ public class IdeTooltipManager implements Disposable {
       .setBorderInsets(tooltip.getBorderInsets())
       .setAnimationCycle(animationEnabled ? RegistryManager.getInstance().intValue("ide.tooltip.animationCycle") : 0)
       .setShowCallout(true)
+      .setPointerSize(tooltip.getPointerSize())
       .setCalloutShift(small && tooltip.getCalloutShift() == 0 ? 2 : tooltip.getCalloutShift())
       .setPositionChangeXShift(tooltip.getPositionChangeX())
       .setPositionChangeYShift(tooltip.getPositionChangeY())
@@ -480,6 +481,9 @@ public class IdeTooltipManager implements Disposable {
     tooltip.getTipComponent().setBorder(tooltip.getComponentBorder());
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));
 
+    if (tooltip.isPointerShiftedToStart()) {
+      builder.setPointerShiftedToStart(true).setCornerRadius(JBUI.scale(8));
+    }
 
     myBalloon = builder.createBalloon();
 

@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -15,7 +16,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.awt.geom.RoundRectangle2D;
 import java.util.function.Consumer;
 
 public class InplaceButton extends JComponent implements ActiveComponent, Accessible {
@@ -193,6 +194,25 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   }
 
   protected void paintHover(Graphics g) {
+  }
+
+  protected void paintHover(Graphics g, boolean click) {
+    Graphics2D g2 = (Graphics2D)g.create();
+
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+      g2.setColor(click ? JBUI.CurrentTheme.ActionButton.pressedBackground() : JBUI.CurrentTheme.ActionButton.hoverBorder());
+
+      Rectangle rect = new Rectangle(getSize());
+      JBInsets.removeFrom(rect, getInsets());
+
+      int arc = JBUIScale.scale(JBUI.getInt("Button.arc", 6));
+      g2.fill(new RoundRectangle2D.Float(rect.x, rect.y, rect.width, rect.height, arc, arc));
+    }
+    finally {
+      g2.dispose();
+    }
   }
 
   public void setTransform(int x, int y) {

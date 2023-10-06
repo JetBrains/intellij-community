@@ -126,7 +126,7 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
     Point relativePoint = new Point((start.x + end.x) / 2, start.y);
     Point point = SwingUtilities.convertPoint(editorComponent, relativePoint, rootPane.getLayeredPane());
     LightweightHint hint = new LightweightHint(component);
-    HintHint hintHint = HintManagerImpl.createHintHint(editor, point, hint, ABOVE).setShowImmediately(true);
+    HintHint hintHint = HintManagerImpl.createHintHint(editor, point, hint, ABOVE).setShowImmediately(true).setStatus(HintHint.Status.Info);
     int flags = HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING;
     if (tenacious) {
       hintHint.setExplicitClose(true);

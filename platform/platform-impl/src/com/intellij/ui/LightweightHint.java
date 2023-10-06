@@ -197,6 +197,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       tooltip.setComponentBorder(border);
     }
 
+    if (ExperimentalUI.isNewUI()) {
+      tooltip.setPointerSize(JBUI.size(16, 8)).setPointerShiftedToStart(true);
+    }
+
     myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, hintHint.isShowImmediately(), hintHint.isAnimationEnabled());
   }
 

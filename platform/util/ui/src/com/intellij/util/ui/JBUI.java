@@ -774,6 +774,13 @@ public final class JBUI {
       interface Tooltip {
         Color BACKGROUND = JBColor.namedColor("Editor.ToolTip.background", UIUtil.getToolTipBackground());
         Color FOREGROUND = JBColor.namedColor("Editor.ToolTip.foreground", UIUtil.getToolTipForeground());
+        Color BORDER = JBColor.namedColor("Editor.ToolTip.border", 0xC9CCD6, 0x43454A);
+        Color ERROR_BACKGROUND = JBColor.namedColor("Editor.ToolTip.errorBackground", 0x0, 0x0);
+        Color ERROR_BORDER = JBColor.namedColor("Editor.ToolTip.errorBorder", 0x0, 0x0);
+        Color SUCCESS_BACKGROUND = JBColor.namedColor("Editor.ToolTip.successBackground", 0xF2FCF3, 0x253627);
+        Color SUCCESS_BORDER = JBColor.namedColor("Editor.ToolTip.successBorder", 0xAFDBB8, 0x375239);
+        Color WARNING_BACKGROUND = JBColor.namedColor("Editor.ToolTip.warningBackground", 0xFFF6DE, 0x3D3223);
+        Color WARNING_BORDER = JBColor.namedColor("Editor.ToolTip.warningBorder", 0xFED277, 0x5E4D33);
       }
 
       interface Notification {

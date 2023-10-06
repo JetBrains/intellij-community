@@ -30,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
@@ -177,9 +178,11 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     hintHint.setExplicitClose(true);
     hintHint.setRequestFocus(requestFocus);
     hintHint.setShowImmediately(true);
-    hintHint.setBorderColor(ParameterInfoComponent.BORDER_COLOR);
-    hintHint.setBorderInsets(JBUI.insets(4, 1, 4, 1));
-    hintHint.setComponentBorder(JBUI.Borders.empty());
+    if (!ExperimentalUI.isNewUI()) {
+      hintHint.setBorderColor(ParameterInfoComponent.BORDER_COLOR);
+      hintHint.setBorderInsets(JBUI.insets(4, 1, 4, 1));
+      hintHint.setComponentBorder(JBUI.Borders.empty());
+    }
 
     int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
@@ -539,6 +542,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     WrapperPanel() {
       super(new BorderLayout());
       setBorder(JBUI.Borders.empty());
+      setOpaque(!ExperimentalUI.isNewUI());
     }
 
     // foreground/background/font are used to style the popup (HintManagerImpl.createHintHint)
@@ -549,7 +553,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
     @Override
     public Color getBackground() {
-      return getComponentCount() == 0 ? super.getBackground() : getComponent(0).getBackground();
+      return getComponentCount() == 0 || ExperimentalUI.isNewUI() ? super.getBackground() : getComponent(0).getBackground();
     }
 
     @Override

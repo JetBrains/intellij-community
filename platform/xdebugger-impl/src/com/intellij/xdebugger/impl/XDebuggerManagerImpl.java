@@ -524,7 +524,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
                                                                         lineNumber,
                                                                         DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER);
 
-      HintHint hint = new HintHint(e.getMouseEvent()).setAwtTooltip(true).setPreferredPosition(Balloon.Position.above);
+      HintHint hint =
+        new HintHint(e.getMouseEvent()).setAwtTooltip(true).setPreferredPosition(Balloon.Position.above).setStatus(HintHint.Status.Info);
       String text = UIUtil.removeMnemonic(ActionsBundle.actionText(XDebuggerActions.RUN_TO_CURSOR));
       TooltipController.getInstance()
         .showTooltipByMouseMove(editor, new RelativePoint(e.getMouseEvent()), new LineTooltipRenderer(text, new Object[]{text}), false,

@@ -268,7 +268,14 @@
       },
       "ToolTip": {
         "foreground": "Grey1",
-        "background": "Grey14"
+        "background": "Grey14",
+        "border": "Grey9",
+        "errorBackground": "Red12",
+        "errorBorder": "Red9",
+        "successBackground": "Green11",
+        "successBorder": "Green8",
+        "warningBackground": "Yellow9",
+        "warningBorder": "Yellow6"
       }
     },
 

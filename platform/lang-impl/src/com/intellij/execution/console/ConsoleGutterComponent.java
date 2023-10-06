@@ -216,7 +216,7 @@ final class ConsoleGutterComponent extends JComponent implements MouseMotionList
                                         ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(toolTip),
                                         false,
                                         TOOLTIP_GROUP,
-                                        new HintHint(this, e.getPoint()).setAwtTooltip(true));
+                                        new HintHint(this, e.getPoint()).setAwtTooltip(true).setStatus(HintHint.Status.Info));
     }
   }
 

@@ -356,8 +356,10 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                            @NotNull List<? super AnAction> actions,
                            @NotNull TooltipReloader expandCallback,
                            boolean highlightActions) {
-    hintHint.setComponentBorder(JBUI.Borders.empty());
-    hintHint.setBorderInsets(JBUI.emptyInsets());
+    if (!ExperimentalUI.isNewUI()) {
+      hintHint.setComponentBorder(JBUI.Borders.empty());
+      hintHint.setBorderInsets(JBUI.emptyInsets());
+    }
   }
 
   private static boolean handle(@NotNull String ref, @NotNull Editor editor) {

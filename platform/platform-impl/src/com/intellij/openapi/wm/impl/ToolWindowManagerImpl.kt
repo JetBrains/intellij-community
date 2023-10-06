@@ -47,6 +47,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.getOpenedProjects
+import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ThreeComponentsSplitter
 import com.intellij.openapi.ui.popup.Balloon
@@ -72,10 +73,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
-import com.intellij.util.ui.EDT
-import com.intellij.util.ui.FocusUtil
-import com.intellij.util.ui.PositionTracker
-import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.*
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
@@ -1531,6 +1529,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val toolWindowPane = getToolWindowPane(entry.readOnlyWindowInfo.safeToolWindowPaneId)
     val buttonManager = toolWindowPane.buttonManager as ToolWindowPaneNewButtonManager
     var button = buttonManager.getSquareStripeFor(entry.readOnlyWindowInfo.anchor).getButtonFor(options.toolWindowId)?.getComponent()
+    if (button == null && entry.readOnlyWindowInfo.anchor == ToolWindowAnchor.BOTTOM) {
+      button = buttonManager.getSquareStripeFor(ToolWindowAnchor.RIGHT).getButtonFor(options.toolWindowId)?.getComponent()
+      if (button != null && button.isShowing) {
+        position = Balloon.Position.atRight
+      }
+    }
     if (button == null || !button.isShowing) {
       button = buttonManager.getMoreButton(getMoreButtonSide())
       position = Balloon.Position.atLeft
@@ -1588,14 +1592,28 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   private fun createBalloon(options: ToolWindowBalloonShowOptions, entry: ToolWindowEntry): Balloon {
     val listenerWrapper = BalloonHyperlinkListener(options.listener)
 
+    var foreground = options.type.titleForeground
+    var background = options.type.popupBackground
+    var borderColor = options.type.borderColor
+    if (isNewUi && options.type === MessageType.INFO) {
+      foreground = HintHint.Status.Info.foreground
+      background = HintHint.Status.Info.background
+      borderColor = HintHint.Status.Info.border
+    }
+
     val content = options.htmlBody.replace("\n", "<br>")
     val balloonBuilder = JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(content, options.icon, options.type.titleForeground, options.type.popupBackground, listenerWrapper)
-      .setBorderColor(options.type.borderColor)
+      .createHtmlTextBalloonBuilder(content, options.icon, foreground, background, listenerWrapper)
+      .setBorderColor(borderColor)
       .setHideOnClickOutside(false)
       .setHideOnFrameResize(false)
 
     options.balloonCustomizer?.accept(balloonBuilder)
+
+    if (isNewUi) {
+      balloonBuilder.setBorderInsets(JBUI.insets(9, 7, 11, 7)).setPointerSize(JBUI.size(16, 8)).setPointerShiftedToStart(
+        true).setCornerRadius(JBUI.scale(8))
+    }
 
     val balloon = balloonBuilder.createBalloon()
     if (balloon is BalloonImpl) {

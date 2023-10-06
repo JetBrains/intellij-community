@@ -9,6 +9,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.GutterMarkPreprocessor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
@@ -346,26 +347,48 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return getType().getAdditionalPopupMenuActions((Self)this, session);
   }
 
+  private static class LineSeparator {
+    private final StringBuilder myBuilder;
+    private final int myEmptyLength;
+    private final String mySeparator;
+    private boolean myGetSeparator;
+
+    private LineSeparator(@NotNull StringBuilder builder) {
+      myBuilder = builder;
+      myEmptyLength = builder.length();
+      mySeparator = ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode() ? "<br>" : BR_NBSP;
+    }
+
+    public @NonNls String get() {
+      if (myGetSeparator) {
+        return mySeparator;
+      }
+      myGetSeparator = true;
+      return myBuilder.length() > myEmptyLength ? mySeparator : "";
+    }
+  }
+
   @NotNull
   @Nls
   public String getDescription() {
     StringBuilder builder = new StringBuilder();
     builder.append(CommonXmlStrings.HTML_START).append(CommonXmlStrings.BODY_START);
-    builder.append(XBreakpointUtil.getDisplayText(this));
+    LineSeparator separator = new LineSeparator(builder);
+    builder.append(StringUtil.escapeXmlEntities(XBreakpointUtil.getDisplayText(this)));
 
     String errorMessage = getErrorMessage();
     if (!StringUtil.isEmpty(errorMessage)) {
-      builder.append(BR_NBSP);
+      builder.append(separator.get());
       builder.append("<font color='#").append(ColorUtil.toHex(JBColor.RED)).append("'>");
       builder.append(errorMessage);
       builder.append("</font>");
     }
 
     if (getSuspendPolicy() == SuspendPolicy.NONE) {
-      builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.none"));
+      builder.append(separator.get()).append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.none"));
     }
     else if (getType().isSuspendThreadSupported()) {
-      builder.append(BR_NBSP);
+      builder.append(separator.get());
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (getSuspendPolicy()) {
         case ALL -> builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.all"));
@@ -375,23 +398,23 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
     String condition = getCondition();
     if (!StringUtil.isEmpty(condition)) {
-      builder.append(BR_NBSP);
+      builder.append(separator.get());
       builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.condition"));
       builder.append(CommonXmlStrings.NBSP);
       builder.append(XmlStringUtil.escapeString(condition));
     }
 
     if (isLogMessage()) {
-      builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.log.message"));
+      builder.append(separator.get()).append(XDebuggerBundle.message("xbreakpoint.tooltip.log.message"));
     }
 
     if (isLogStack()) {
-      builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.log.stack"));
+      builder.append(separator.get()).append(XDebuggerBundle.message("xbreakpoint.tooltip.log.stack"));
     }
 
     String logExpression = getLogExpression();
     if (!StringUtil.isEmpty(logExpression)) {
-      builder.append(BR_NBSP);
+      builder.append(separator.get());
       builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.log.expression"));
       builder.append(CommonXmlStrings.NBSP);
       builder.append(XmlStringUtil.escapeString(logExpression));
@@ -399,7 +422,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
     XBreakpoint<?> masterBreakpoint = getBreakpointManager().getDependentBreakpointManager().getMasterBreakpoint(this);
     if (masterBreakpoint != null) {
-      builder.append(BR_NBSP);
+      builder.append(separator.get());
       String str = XDebuggerBundle.message("xbreakpoint.tooltip.depends.on");
       builder.append(str);
       builder.append(CommonXmlStrings.NBSP);

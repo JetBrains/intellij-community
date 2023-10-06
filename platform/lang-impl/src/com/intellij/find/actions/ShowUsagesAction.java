@@ -67,6 +67,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.scale.JBUIScale;
@@ -745,7 +746,30 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return false;
   }
 
-  private static @NotNull JComponent createHintComponent(@NotNull @NlsContexts.HintText String secondInvocationTitle, boolean isWarning, @NotNull JComponent button) {
+  private static @NotNull JComponent createHintComponent(@NotNull @NlsContexts.HintText String secondInvocationTitle,
+                                                         boolean isWarning,
+                                                         @NotNull JComponent button) {
+    if (ExperimentalUI.isNewUI()) {
+      JPanel panel = new JPanel(new BorderLayout(6, 0));
+      panel.putClientProperty(HintHint.OVERRIDE_BORDER_KEY, JBUI.insets(10, 12, 12, 12));
+
+      JComponent label =
+        isWarning ? HintUtil.createWarningLabel(secondInvocationTitle) : HintUtil.createInformationLabel(secondInvocationTitle);
+      label.setBorder(JBUI.Borders.emptyTop(2));
+      panel.add(label, BorderLayout.CENTER);
+
+      panel.setBackground(label.getBackground());
+      button.setBackground(label.getBackground());
+      button.setPreferredSize(new JBDimension(22, 22));
+      button.setBackground(label.getBackground());
+
+      Wrapper buttonPanel = new Wrapper();
+      buttonPanel.add(button, BorderLayout.NORTH);
+      panel.add(buttonPanel, BorderLayout.EAST);
+
+      return panel;
+    }
+
     JComponent label = HintUtil.createInformationLabel(secondInvocationTitle);
     if (isWarning) {
       label.setBackground(MessageType.WARNING.getPopupBackground());
@@ -772,7 +796,14 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return new InplaceButton(tooltip, AllIcons.General.Settings, __ -> {
       ApplicationManager.getApplication().invokeLater(showDialogAndFindUsagesRunnable, project.getDisposed());
       cancelAction.run();
-    });
+    }) {
+      @Override
+      protected void paintHover(Graphics g) {
+        if (ExperimentalUI.isNewUI()) {
+          paintHover(g, false);
+        }
+      }
+    };
   }
 
   private static @Nullable FindUsagesOptions showDialog(@NotNull FindUsagesHandlerBase handler) {
@@ -1146,7 +1177,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                                               @Nls(capitalization = Sentence) @Nullable String hint) {
     HtmlBuilder builder = new HtmlBuilder().append(text);
     if (hint != null) {
-      builder.br().append(HtmlChunk.text(hint).wrapWith("small"));
+      HtmlChunk chunk = HtmlChunk.text(hint);
+      builder.br().append(ExperimentalUI.isNewUI() ? chunk.wrapWith("p").style("margin-top:5pt;") : chunk.wrapWith("small"));
     }
     return builder.wrapWithHtmlBody().toString();
   }
@@ -1432,6 +1464,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         Runnable clearContinuation = () -> state.continuation = null;
 
         if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
+          label.setBorder(JBUI.Borders.empty(5));
           int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
           HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
         }

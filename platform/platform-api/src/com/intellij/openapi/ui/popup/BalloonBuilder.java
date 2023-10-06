@@ -91,6 +91,8 @@ public interface BalloonBuilder {
 
   default BalloonBuilder setCornerRadius(int radius) { return this; }
 
+  default BalloonBuilder setPointerShiftedToStart(boolean pointerShiftedToStart) { return this; }
+
   BalloonBuilder setHideOnCloseClick(boolean hideOnCloseClick);
 
   /**

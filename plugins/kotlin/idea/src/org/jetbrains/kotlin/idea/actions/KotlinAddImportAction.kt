@@ -9,8 +9,7 @@ import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
+import com.intellij.psi.*
 import com.intellij.psi.statistics.StatisticsManager
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
@@ -171,10 +170,23 @@ class KotlinAddImportAction internal constructor(
             false
         }
 
-        val hintText = ShowAutoImportPass.getMessage(multiple, first.hint)
+        val hintText = ShowAutoImportPass.getMessage(multiple, getKind(first.declarationToImport), first.hint)
         HintManager.getInstance().showQuestionHint(editor, hintText, element.startOffset, element.endOffset, this)
 
         return true
+    }
+
+    private fun getKind(element: PsiElement?): String? {
+        if (element is PsiClass) {
+            return KotlinBundle.message("text.class")
+        }
+        if (element is PsiField) {
+            return KotlinBundle.message("text.property")
+        }
+        if (element is PsiMethod) {
+            return KotlinBundle.message("text.function")
+        }
+        return null
     }
 
     override fun execute(): Boolean {
