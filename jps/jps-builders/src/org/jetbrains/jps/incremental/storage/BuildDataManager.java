@@ -17,7 +17,7 @@ import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.builders.storage.StorageProvider;
 import org.jetbrains.jps.cmdline.BuildRunner;
-import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
@@ -45,7 +45,8 @@ public final class BuildDataManager {
   private final ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>(16, 0.75f, getConcurrencyLevel());
   private final OneToManyPathsMapping mySrcToFormMap;
   private final Mappings myMappings;
-  private DependencyGraphImpl myDepGraph;
+  private final Object myGraphLock = new Object();
+  private DependencyGraph myDepGraph;
   private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
   private final OutputToTargetRegistry myOutputToTargetRegistry;
@@ -72,11 +73,10 @@ public final class BuildDataManager {
     File mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageRoot());
     if (JavaBuilderUtil.isDepGraphEnabled()) {
       myMappings = null;
-      myDepGraph = new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath()));
+      createDependencyGraph(mappingsRoot, false);
     }
     else {
       myMappings = new Mappings(mappingsRoot, relativizer);
-      myDepGraph = null;
     }
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
     myRelativizer = relativizer;
@@ -112,8 +112,10 @@ public final class BuildDataManager {
     return myMappings;
   }
 
-  public synchronized DependencyGraph getDependencyGraph() {
-    return myDepGraph;
+  public DependencyGraph getDependencyGraph() {
+    synchronized (myGraphLock) {
+      return myDepGraph;
+    }
   }
 
   public void cleanTargetStorages(BuildTarget<?> target) throws IOException {
@@ -162,26 +164,35 @@ public final class BuildDataManager {
             FileUtil.delete(mappingsRoot);
           }
 
-          synchronized (this) {
-            DependencyGraphImpl depGraph = myDepGraph;
-            if (depGraph != null) {
-              try {
-                depGraph.close();
-              }
-              finally {
-                FileUtil.delete(mappingsRoot);
-                myDepGraph = new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath()));
-              }
-            }
-            else {
-              FileUtil.delete(mappingsRoot);
-            }
-          }
+          createDependencyGraph(mappingsRoot, true);
         }
       }
       myTargetsState.clean();
     }
     saveVersion();
+  }
+
+  public void createDependencyGraph(File mappingsRoot, boolean deleteExisting) throws IOException {
+    synchronized (myGraphLock) {
+      DependencyGraph depGraph = myDepGraph;
+      if (depGraph == null) {
+        if (deleteExisting) {
+          FileUtil.delete(mappingsRoot);
+        }
+        myDepGraph = asSynchronizableGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())), myGraphLock);
+      }
+      else {
+        try {
+          depGraph.close();
+        }
+        finally {
+          if (deleteExisting) {
+            FileUtil.delete(mappingsRoot);
+          }
+          myDepGraph = asSynchronizableGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())), myGraphLock);
+        }
+      }
+    }
   }
 
   public void flush(boolean memoryCachesOnly) {
@@ -225,13 +236,16 @@ public final class BuildDataManager {
             }
           }
 
-          DependencyGraphImpl depGraph = myDepGraph;
-          if (depGraph != null) {
-            try {
-              depGraph.close();
-            }
-            catch (BuildDataCorruptedException e) {
-              throw e.getCause();
+          synchronized (myGraphLock) {
+            DependencyGraph depGraph = myDepGraph;
+            if (depGraph != null) {
+              myDepGraph = null;
+              try {
+                depGraph.close();
+              }
+              catch (BuildDataCorruptedException e) {
+                throw e.getCause();
+              }
             }
           }
         }
@@ -440,6 +454,73 @@ public final class BuildDataManager {
       @Override
       protected Iterable<BuildTargetStorages> getChildStorages() {
         return () -> myTargetStorages.values().iterator();
+      }
+    };
+  }
+
+  private static DependencyGraph asSynchronizableGraph(DependencyGraph graph, Object lock) {
+    return new DependencyGraph() {
+      @Override
+      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources) {
+        synchronized (lock) {
+          return graph.createDelta(sourcesToProcess, deletedSources);
+        }
+      }
+
+      @Override
+      public DifferentiateResult differentiate(Delta delta, boolean calculateAffected) {
+        synchronized (lock) {
+          return graph.differentiate(delta, calculateAffected);
+        }
+      }
+
+      @Override
+      public void integrate(@NotNull DifferentiateResult diffResult) {
+        synchronized (lock) {
+          graph.integrate(diffResult);
+        }
+      }
+
+      @Override
+      public Iterable<BackDependencyIndex> getIndices() {
+        return graph.getIndices();
+      }
+
+      @Override
+      public @Nullable BackDependencyIndex getIndex(String name) {
+        return graph.getIndex(name);
+      }
+
+      @Override
+      public Iterable<NodeSource> getSources(@NotNull ReferenceID id) {
+        return graph.getSources(id);
+      }
+
+      @Override
+      public Iterable<ReferenceID> getRegisteredNodes() {
+        return graph.getRegisteredNodes();
+      }
+
+      @Override
+      public Iterable<NodeSource> getSources() {
+        return graph.getSources();
+      }
+
+      @Override
+      public Iterable<Node<?, ?>> getNodes(@NotNull NodeSource source) {
+        return graph.getNodes(source);
+      }
+
+      @Override
+      public <T extends Node<T, ?>> Iterable<T> getNodes(NodeSource src, Class<T> nodeSelector) {
+        return graph.getNodes(src, nodeSelector);
+      }
+
+      @Override
+      public void close() throws IOException {
+        synchronized (lock) {
+          graph.close();
+        }
       }
     };
   }
