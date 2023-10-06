@@ -1,12 +1,13 @@
 package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JRootPane
+import javax.swing.SwingUtilities
 
 class MultiplePageDialog private constructor(): DialogWrapper(null) {
   companion object{
@@ -52,18 +53,22 @@ class MultiplePageDialog private constructor(): DialogWrapper(null) {
     }
 
     current = dialog
+
+    SwingUtilities.invokeLater{
+      pack()
+    }
   }
 
   override fun createCenterPanel(): JComponent {
     panel = JPanel(GridBagLayout()).apply {
-      preferredSize = JBDimension(640, 410)
+      border = JBUI.Borders.empty()
     }
     return panel
   }
 
   override fun createSouthPanel(): JComponent {
     southPanel = JPanel(GridBagLayout()).apply {
-      preferredSize = JBDimension(640, 57)
+      border = JBUI.Borders.empty()
     }
     return southPanel
   }

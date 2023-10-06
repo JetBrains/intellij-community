@@ -8,15 +8,16 @@ import com.intellij.ide.startup.importSettings.data.IconProductSize
 import com.intellij.ide.startup.importSettings.data.SettingsContributor
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.util.maximumWidth
+import com.intellij.ui.util.preferredWidth
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import java.awt.BorderLayout
 import java.awt.Color
+import java.awt.Dimension
 import java.awt.event.ActionEvent
 import javax.swing.Action
 import javax.swing.BoxLayout
@@ -28,7 +29,7 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
   open val configurable = true
   protected val settingPanes = mutableListOf<BaseSettingPane>()
 
-  private val pane = JPanel(HorizontalLayout(0)).apply {
+  private val pane = JPanel(BorderLayout()).apply {
     add(panel {
       row {
         text("Import<br>Settings From").apply {
@@ -46,7 +47,8 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
 
               provider.getComment(product)?.let { addTxt ->
                 row {
-                  comment(addTxt).customize(UnscaledGaps(0))
+                  comment(addTxt).customize(
+                    UnscaledGaps(0))
                 }
               }
             }
@@ -54,9 +56,9 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
         }
       }.align(AlignY.TOP)
     }.apply {
-      preferredSize = JBDimension(200, 110)
+      preferredWidth = JBUI.scale(200)
       border = JBUI.Borders.emptyLeft(5)
-    })
+    }, BorderLayout.WEST)
 
     val productService = provider.productService
 
@@ -66,30 +68,23 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
       productService.getSettings(product.id).forEach {
         val st = createSettingPane(it, configurable)
         settingPanes.add(st)
-        add(st.component().apply {
-          maximumWidth = 420
-        })
+        add(st.component())
       }
     }
-
     add(
-      panel {
-        row {
-          cell(JBScrollPane(listPane).apply {
-            isOpaque = false
-            viewport.isOpaque = false
-
-            horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
-            preferredSize = JBDimension(420, 374)
-            border = JBUI.Borders.empty(16, 0, 12,0)
-          })
-        }
-      }.apply {
+      JBScrollPane(listPane).apply {
+        isOpaque = false
+        viewport.isOpaque = false
         isOpaque = true
         background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
-        border = JBUI.Borders.empty()
-      }
+        horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
+        border = JBUI.Borders.empty(16, 0, 12, 0)
+      }, BorderLayout.CENTER
     )
+  }.apply {
+    preferredSize = JBDimension(640, 410)
+    maximumSize = preferredSize
+    minimumSize = Dimension(0, 0)
   }
 
   override fun createContent(): JComponent? {
@@ -100,7 +95,14 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
     return object : DialogWrapperAction("Back") {
 
       override fun doAction(e: ActionEvent?) {
-        parentDialog?.showPage(ProductChooserDialog())
+        val dialog = ProductChooserDialog()
+        parentDialog?.let {
+          it.showPage(dialog)
+        } ?: run {
+          dialog.isModal = false
+          dialog.isResizable = false
+          dialog.show()
+        }
         doAction(CANCEL_EXIT_CODE)
       }
     }

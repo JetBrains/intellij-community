@@ -27,7 +27,14 @@ class ProductChooserDialog : PageProvider() {
   private val callback: (PageProvider)-> Unit = {
     parentDialog?.showPage(it) ?: run {
       close(OK_EXIT_CODE)
+
+      it.isModal = false
+      it.isResizable = false
       it.show()
+
+      SwingUtilities.invokeLater{
+        it.pack()
+      }
     }
   }
 
@@ -62,7 +69,7 @@ class ProductChooserDialog : PageProvider() {
         val dm = super.getPreferredSize()
         if(horizontal) {
           dm.width -= 10
-        } else dm.height -=10
+        } else dm.height -= 10
           return dm
       }
     }
@@ -97,34 +104,7 @@ class ProductChooserDialog : PageProvider() {
     return JPanel(BorderLayout()).apply {
       add(accountLabel, BorderLayout.WEST)
       add(at.component, BorderLayout.EAST)
-
     }
 
-
-/*    val panel = super.createSouthPanel(leftSideButtons, rightSideButtons, addHelpToLeftSide)
-
-    val group = DefaultActionGroup()
-    group.add(OtherOptions())
-
-    val at = createActionToolbar(group, true)
-    at.targetComponent = pane
-
-    panel.add(at.component, BorderLayout.EAST)*/
-
-/*    panel.add(JPanel(GridBagLayout()).apply {
-      val c = GridBagConstraints()
-      c.fill = GridBagConstraints.NONE
-      c.anchor = GridBagConstraints.BASELINE
-
-      val group = DefaultActionGroup()
-      group.add(OtherOptions())
-
-      val at = createActionToolbar(group, true)
-      at.targetComponent = pane
-      add(at.component, c)
-
-    }, BorderLayout.EAST)*/
-
-    //return panel
   }
 }
