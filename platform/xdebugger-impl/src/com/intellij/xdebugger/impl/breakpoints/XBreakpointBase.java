@@ -40,6 +40,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
@@ -625,7 +626,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
 
     private AnAction createToggleAction() {
-      // This action is not collected to any menu, so we use SimpleAction.
+      // This gutter's actions are not collected to any menu, so we use SimpleAction.
       return DumbAwareAction.create(e -> {
         for (var b : breakpoints) {
           b.setEnabled(!b.isEnabled());
@@ -634,6 +635,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
 
     private AnAction createRemoveAction() {
+      // This gutter's actions are not collected to any menu, so we use SimpleAction.
       return DumbAwareAction.create(e -> {
         removeBreakpoints();
       });
@@ -670,18 +672,26 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     @Nullable
     @Override
     public AnAction getRightButtonClickAction() {
-      // FIXME[inline-bp]: implement menu with ability to edit every breakpoint? Do we need it?..
-      return super.getRightButtonClickAction();
+      // This gutter's actions are not collected to any menu, so we use SimpleAction.
+      return DumbAwareAction.create(e -> {
+        var project = e.getProject();
+        if (project == null) return;
+        // Initially we select the newest breakpoint, it's shown above other breakpoints in the dialog.
+        @SuppressWarnings("OptionalGetWithoutIsPresent") // there are always at least two breakpoints
+        var initialOne = breakpoints.stream().sorted().findFirst().get();
+        BreakpointsDialogFactory.getInstance(project).showDialog(initialOne);
+      });
     }
 
     @Nullable
     @Override
     public ActionGroup getPopupMenuActions() {
-      // FIXME[inline-bp]: popups are completely broken for multiple breakpoints
+      // TODO[inline-bp]: show some menu with the list of all breakpoints with some actions for them (remove, edit, ...)
+      // TODO[inline-bp]: alt+enter actions are completely broken for multiple breakpoints:
       //                   all actions are mixed and it's hard to separate them
-      //                   and it's not clear whether we need batch actions "toggle all", "remove all", ...
+      //                   and it's non trivial to add batch actions "toggle all", "remove all", ...
       //                   see GutterIntentionMenuContributor.collectActions.
-      // FIXME[inline-bp]: is this method ever called?
+      //                   Moreover it might be a good idea to show breakpoint actions on alt+enter only if cursor is in breakpoint's range
       return super.getPopupMenuActions();
     }
 
