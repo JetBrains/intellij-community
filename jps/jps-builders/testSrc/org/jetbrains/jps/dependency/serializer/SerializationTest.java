@@ -15,18 +15,14 @@ public class SerializationTest extends BasePlatformTestCase {
   public void testFileSource() throws IOException {
     FileSourceNodeSerializerImpl serializer = new FileSourceNodeSerializerImpl();
     FileSource node = new FileSource(Path.of("./src/main/Foo.java"));
-    FileSource serializedNode;
-    String serializedData = "";
-    try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-         DataOutputStream dataOutput = new DataOutputStream(byteArrayOutputStream)) {
-      serializer.write(node, dataOutput);
-      serializedData = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
-    }
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    DataOutputStream dataOutput = new DataOutputStream(byteArrayOutputStream);
+    serializer.write(node, dataOutput);
+    String serializedData = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
 
-    try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(serializedData.getBytes("UTF-8"));
-         DataInputStream dataInput = new DataInputStream(byteArrayInputStream)) {
-      serializedNode = serializer.read(dataInput);
-    }
+    ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(serializedData.getBytes(StandardCharsets.UTF_8));
+    DataInputStream dataInput = new DataInputStream(byteArrayInputStream);
+    FileSource serializedNode = serializer.read(dataInput);
     assertEquals(node.getPath(), serializedNode.getPath());
   }
 

@@ -122,7 +122,7 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
   }
 
   @Override
-  public final @NotNull CanceledStatus getCancelStatus() {
+  public @NotNull CanceledStatus getCancelStatus() {
     return myCancelStatus;
   }
 

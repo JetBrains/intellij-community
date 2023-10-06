@@ -790,11 +790,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @Deprecated
   protected abstract List<Module> updateAllMavenProjectsSync(MavenImportSpec spec);
 
-  @TestOnly
-  @Deprecated
   /**
    * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}} or {@link #updateAllMavenProjects(MavenImportSpec, Continuation)}
    */
+  @TestOnly
+  @Deprecated
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
     updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);

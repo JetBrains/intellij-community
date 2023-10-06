@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.List;
 
 public interface MavenIndex extends MavenSearchIndex, MavenGAVIndex, MavenArchetypeContainer, MavenUpdatableIndex {
-  public static final Topic<IndexListener> INDEX_IS_BROKEN =
+  Topic<IndexListener> INDEX_IS_BROKEN =
     new Topic<>("Maven Index Broken Listener", IndexListener.class);
 
   @NotNull List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<File> artifactFiles);

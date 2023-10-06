@@ -578,7 +578,6 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   public void closeAndUnsafelyUnmap() throws IOException {
     close();
     storage.closeAndUnsafelyUnmap();
-    ;
   }
 
   /**

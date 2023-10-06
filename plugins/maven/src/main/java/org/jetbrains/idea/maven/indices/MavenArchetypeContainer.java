@@ -6,5 +6,5 @@ import org.jetbrains.idea.maven.model.MavenArchetype;
 import java.util.Set;
 
 public interface MavenArchetypeContainer {
-  public Set<MavenArchetype> getArchetypes();
+  Set<MavenArchetype> getArchetypes();
 }

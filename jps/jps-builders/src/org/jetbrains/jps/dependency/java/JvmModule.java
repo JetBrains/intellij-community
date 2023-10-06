@@ -20,7 +20,7 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
     myExports = exports;
   }
 
-  public final String getVersion() {
+  public String getVersion() {
     return myVersion;
   }
 

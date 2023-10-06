@@ -25,7 +25,7 @@ public final class HtmlTableCellNavigateUpAction extends CodeInsightAction {
     };
   }
   @Override
-  protected final @NotNull CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return myHandler;
   }
 

@@ -31,7 +31,8 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Stack;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * StdXMLReader reads the data to be parsed.
@@ -44,7 +45,7 @@ public class StdXMLReader {
   /**
    * The stack of readers.
    */
-  private final Stack readers;
+  private final Deque<StackedReader> readers;
   /**
    * The current push-back reader.
    */
@@ -78,7 +79,7 @@ public class StdXMLReader {
     }
 
     currentReader = new StackedReader();
-    readers = new Stack();
+    readers = new ArrayDeque<>();
     Reader reader = openStream(publicID, systemIDasURL.toString());
     currentReader.lineReader = new LineNumberReader(reader);
     currentReader.pbReader = new PushbackReader(currentReader.lineReader, 2);
@@ -92,7 +93,7 @@ public class StdXMLReader {
    */
   public StdXMLReader(Reader reader) {
     currentReader = new StackedReader();
-    readers = new Stack();
+    readers = new ArrayDeque<>();
     currentReader.lineReader = new LineNumberReader(reader);
     currentReader.pbReader = new PushbackReader(currentReader.lineReader, 2);
     currentReader.publicId = "";
@@ -117,7 +118,7 @@ public class StdXMLReader {
     StringBuilder charsRead = new StringBuilder();
     Reader reader = stream2reader(stream, charsRead);
     currentReader = new StackedReader();
-    readers = new Stack();
+    readers = new ArrayDeque<>();
     currentReader.lineReader = new LineNumberReader(reader);
     currentReader.pbReader = new PushbackReader(currentReader.lineReader, 2);
     currentReader.publicId = "";
@@ -260,12 +261,12 @@ public class StdXMLReader {
     int ch = currentReader.pbReader.read();
 
     while (ch < 0) {
-      if (readers.empty()) {
+      if (readers.isEmpty()) {
         throw new IOException("Unexpected EOF");
       }
 
       currentReader.pbReader.close();
-      currentReader = (StackedReader)readers.pop();
+      currentReader = readers.pop();
       ch = currentReader.pbReader.read();
     }
 
@@ -281,12 +282,12 @@ public class StdXMLReader {
     int ch = currentReader.pbReader.read();
 
     while (ch < 0) {
-      if (readers.empty()) {
+      if (readers.isEmpty()) {
         return true;
       }
 
       currentReader.pbReader.close();
-      currentReader = (StackedReader)readers.pop();
+      currentReader = readers.pop();
       ch = currentReader.pbReader.read();
     }
 
@@ -397,7 +398,7 @@ public class StdXMLReader {
    */
   public int getLineNr() {
     if (currentReader.lineReader == null) {
-      StackedReader sr = (StackedReader)readers.peek();
+      StackedReader sr = readers.peek();
 
       if (sr.lineReader == null) {
         return 0;
@@ -463,8 +464,7 @@ public class StdXMLReader {
     StdXMLReader r = new StdXMLReader(new FileInputStream(filename));
     r.setSystemID(filename);
 
-    for (int i = 0; i < r.readers.size(); i++) {
-      StackedReader sr = (StackedReader)r.readers.elementAt(i);
+    for (StackedReader sr : r.readers) {
       sr.systemId = r.currentReader.systemId;
     }
 
@@ -477,7 +477,7 @@ public class StdXMLReader {
    * @author Marc De Scheemaecker
    * @version $Name: RELEASE_2_2_1 $, $Revision: 1.4 $
    */
-  private final class StackedReader {
+  private static final class StackedReader {
 
     PushbackReader pbReader;
 

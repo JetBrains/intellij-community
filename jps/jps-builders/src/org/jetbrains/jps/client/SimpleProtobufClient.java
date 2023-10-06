@@ -29,9 +29,9 @@ public final class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   }
 
   private final AtomicReference<State> myState = new AtomicReference<>(State.DISCONNECTED);
-  protected final ChannelInitializer myChannelInitializer;
-  protected final EventLoopGroup myEventLoopGroup;
-  protected volatile ChannelFuture myConnectFuture;
+  private final ChannelInitializer myChannelInitializer;
+  private final EventLoopGroup myEventLoopGroup;
+  private volatile ChannelFuture myConnectFuture;
   private final ProtobufClientMessageHandler<T> myMessageHandler;
 
   public SimpleProtobufClient(final MessageLite msgDefaultInstance, final Executor asyncExec, final UUIDGetter uuidGetter) {
@@ -49,7 +49,7 @@ public final class SimpleProtobufClient<T extends ProtobufResponseHandler> {
     };
   }
 
-  public final void checkConnected() throws Exception {
+  public void checkConnected() throws Exception {
     if (myState.get() != State.CONNECTED) {
       throw new Exception("Client not connected");
     }
@@ -83,11 +83,11 @@ public final class SimpleProtobufClient<T extends ProtobufResponseHandler> {
     return true;
   }
 
-  protected void onConnect() {
+  private void onConnect() {
   }
-  protected void beforeDisconnect() {
+  private void beforeDisconnect() {
   }
-  protected void onDisconnect() {
+  private void onDisconnect() {
   }
 
   public final void disconnect() {

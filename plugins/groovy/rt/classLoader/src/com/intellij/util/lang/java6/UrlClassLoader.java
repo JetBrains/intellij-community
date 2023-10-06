@@ -79,7 +79,7 @@ public final class UrlClassLoader extends ClassLoader {
   // called via reflection
   @SuppressWarnings({"unused", "MethodMayBeStatic"})
   @NotNull
-  public final long[] getLoadingStats() {
+  public long[] getLoadingStats() {
     return new long[]{ClassPath.getTotalTime(), ClassPath.getTotalRequests()};
   }
 
@@ -236,7 +236,7 @@ public final class UrlClassLoader extends ClassLoader {
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
   @Deprecated
-  public final void addURL(@NotNull URL url) {
+  public void addURL(@NotNull URL url) {
     getClassPath().addURL(url);
     myURLs.add(url);
   }
@@ -251,7 +251,7 @@ public final class UrlClassLoader extends ClassLoader {
   }
 
   @Nullable
-  private final Class<?> _findClass(@NotNull String name) {
+  private Class<?> _findClass(@NotNull String name) {
     Resource resource = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
     if (resource == null) {
       return null;

@@ -43,7 +43,7 @@ public class LookupManagerImpl extends LookupManager {
     connection.subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
       public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
-        if (project == myProject) {
+        if (editor.getProject() == myProject) {
           Lookup lookup = getActiveLookup();
           if (lookup != null && BitUtil.isSet(flags, HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE)) {
             lookup.addLookupListener(new LookupListener() {
