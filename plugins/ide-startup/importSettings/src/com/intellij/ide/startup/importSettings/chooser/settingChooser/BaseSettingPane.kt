@@ -125,7 +125,7 @@ class MultipleSettingPane(item: SettingItem): BaseSettingPane(item) {
 
     val scrollPane = JBScrollPane(component)
     panel.add(scrollPane, BorderLayout.CENTER)
-    scrollPane.border = JBUI.Borders.empty(5)
+    scrollPane.border = JBUI.Borders.empty(7)
     val chooserBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component)
     chooserBuilder.createPopup().showUnderneathOf(actionLink)
   }
