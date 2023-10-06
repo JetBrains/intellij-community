@@ -134,14 +134,15 @@ private fun getStrokePatcher(resultColor: Color,
     packTwoIntToLong(resultColor.rgb, resultColor.alpha),
   )
   return object : SVGLoader.SvgElementColorPatcherProvider {
+    override fun digest() = digest
+
     override fun attributeForPath(path: String): SvgAttributePatcher? {
       val newPalette = map + (backgroundColors?.first?.associateWith { "#00000000" } ?: emptyMap())
       if (newPalette.isEmpty()) {
         return null
       }
 
-      return newSvgPatcher(digest = digest,
-                           newPalette = newPalette,
+      return newSvgPatcher(newPalette = newPalette,
                            alphaProvider = { color ->
                              alpha.getInt(color).takeIf { it != Int.MIN_VALUE }
                            })

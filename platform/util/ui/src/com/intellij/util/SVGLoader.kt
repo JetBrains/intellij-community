@@ -115,6 +115,11 @@ object SVGLoader {
   interface SvgElementColorPatcherProvider {
     fun attributeForPath(path: String): SvgAttributePatcher? = null
 
+    /**
+     * @return hash code of the current SVG color patcher.
+     */
+    fun digest(): LongArray
+
     @Suppress("DeprecatedCallableAddReplaceWith")
     @ScheduledForRemoval
     @Deprecated("Not used", level = DeprecationLevel.ERROR)

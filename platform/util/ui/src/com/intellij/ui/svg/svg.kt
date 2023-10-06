@@ -3,6 +3,7 @@
 
 package com.intellij.ui.svg
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.diagnostic.StartUpMeasurer
@@ -16,6 +17,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.icons.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
+import com.intellij.util.ArrayUtilRt
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
@@ -44,16 +46,15 @@ val activeSvgCache: SvgCacheManager?
 interface SvgAttributePatcher {
   fun patchColors(attributes: MutableMap<String, String>) {
   }
-
-  /**
-   * @return hash code of the current SVG color patcher.
-   */
-  fun digest(): LongArray
 }
 
 @Internal
 fun loadSvg(data: ByteArray, scale: Float): BufferedImage {
-  return loadAndCacheIfApplicable(path = null, precomputedCacheKey = 0, scale = scale, colorPatcher = null) {
+  return loadAndCacheIfApplicable(path = null,
+                                  precomputedCacheKey = 0,
+                                  scale = scale,
+                                  colorPatcher = null,
+                                  colorPatcherDigest = ArrayUtilRt.EMPTY_LONG_ARRAY) {
     data
   }!!
 }
@@ -67,16 +68,29 @@ internal fun loadSvg(path: String?,
                                   precomputedCacheKey = 0,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey ?: SvgCacheClassifier(scale),
-                                  colorPatcher = path?.let { colorPatcherProvider?.attributeForPath(it) }) {
+                                  colorPatcherDigest = colorPatcherDigestShim(colorPatcherProvider),
+                                  colorPatcher = path?.let { colorPatcherProvider?.attributeForPath(it) },) {
     stream.readAllBytes()
   }!!
 }
 
-@Internal
-fun newSvgPatcher(digest: LongArray, newPalette: Map<String, String>, alphaProvider: (String) -> Int?): SvgAttributePatcher {
-  return object : SvgAttributePatcher {
-    override fun digest() = digest
+internal fun colorPatcherDigestShim(colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): LongArray {
+  if (colorPatcherProvider == null) {
+    return ArrayUtilRt.EMPTY_LONG_ARRAY
+  }
+  else {
+    try {
+      return colorPatcherProvider.digest()
+    }
+    catch (e: AbstractMethodError) {
+      return longArrayOf(Hashing.komihash5_0().hashCharsToLong(colorPatcherProvider::class.java.name))
+    }
+  }
+}
 
+@Internal
+fun newSvgPatcher(newPalette: Map<String, String>, alphaProvider: (String) -> Int?): SvgAttributePatcher {
+  return object : SvgAttributePatcher {
     override fun patchColors(attributes: MutableMap<String, String>) {
       patchColorAttribute(attributes = attributes, attributeName = "fill")
       patchColorAttribute(attributes = attributes, attributeName = "stroke")
@@ -151,12 +165,14 @@ internal fun loadSvgAndCacheIfApplicable(path: String?,
                                          scale: Float,
                                          compoundCacheKey: SvgCacheClassifier,
                                          colorPatcher: SvgAttributePatcher?,
+                                         colorPatcherDigest: LongArray,
                                          dataProvider: () -> ByteArray?): BufferedImage? {
   return loadAndCacheIfApplicable(path = path,
                                   precomputedCacheKey = 0,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey,
                                   colorPatcher = colorPatcher,
+                                  colorPatcherDigest = colorPatcherDigest,
                                   dataProvider = dataProvider)
 }
 
@@ -165,10 +181,10 @@ internal inline fun loadAndCacheIfApplicable(path: String?,
                                              scale: Float,
                                              compoundCacheKey: SvgCacheClassifier = SvgCacheClassifier(scale = scale),
                                              colorPatcher: SvgAttributePatcher?,
+                                             colorPatcherDigest: LongArray,
                                              dataProvider: () -> ByteArray?): BufferedImage? {
-  val colorPatcherDigest = colorPatcher?.digest()
   val svgCache = activeSvgCache
-  if (svgCache == null || (colorPatcherDigest == null && (colorPatcher != null)) || scale > MAX_SCALE_TO_CACHE) {
+  if (svgCache == null || scale > MAX_SCALE_TO_CACHE) {
     return renderImage(colorPatcher = colorPatcher, data = dataProvider() ?: return null, scale = scale, path = path)
   }
 

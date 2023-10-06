@@ -8,6 +8,7 @@ import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IconLayerProvider
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.findIconUsingDeprecatedImplementation
@@ -18,7 +19,6 @@ import com.intellij.ui.*
 import com.intellij.ui.RowIcon
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.svg.SvgAttributePatcher
-import com.intellij.ui.svg.colorPatchedIcon
 import com.intellij.util.BitUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.SVGLoader
@@ -182,44 +182,41 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
 
   override fun colorizedIcon(baseIcon: Icon, colorProvider: () -> Color): Icon {
     if (baseIcon !is CachedImageIcon) {
+      thisLogger().error("$baseIcon must be instance of CachedImageIcon (actualClass=${baseIcon::class.java})")
       return baseIcon
     }
 
-    return colorPatchedIcon(icon = baseIcon, colorPatcher = object : SVGLoader.SvgElementColorPatcherProvider {
-      private val attributePatcher by lazy {
-        object : SvgAttributePatcher {
-          private var lastColor = Long.MIN_VALUE
-          private var lastDigest: LongArray? = null
+    return baseIcon.createWithPatcher(colorPatcher = object : SVGLoader.SvgElementColorPatcherProvider, SvgAttributePatcher {
+      private var lastColor = Long.MIN_VALUE
+      private var lastDigest: LongArray? = null
 
-          override fun digest(): LongArray {
-            val color = colorProvider().rgb.toLong()
-            if (color == lastColor) {
-              lastDigest?.let {
-                return it
-              }
-            }
-
-            val digest = longArrayOf(packTwoIntToLong(color.toInt(), /* version of the implementation */ 0), /* patcher id*/ 1696494002622)
-            lastColor = color
-            lastDigest = digest
-            return digest
+      override fun digest(): LongArray {
+        val color = colorProvider().rgb.toLong()
+        if (color == lastColor) {
+          lastDigest?.let {
+            return it
           }
+        }
 
-          override fun patchColors(attributes: MutableMap<String, String>) {
-            val color = colorProvider()
-            if (!attributes.replace("fill", "white", "rgb(${color.red},${color.green},${color.blue})")) {
-              return
-            }
+        val digest = longArrayOf(packTwoIntToLong(color.toInt(), /* version of the implementation */ 0), /* patcher id*/ 1696494002622)
+        lastColor = color
+        lastDigest = digest
+        return digest
+      }
 
-            val alpha = color.alpha
-            if (alpha != 255) {
-              attributes.put("fill-opacity", "${alpha / 255f}")
-            }
-          }
+      override fun patchColors(attributes: MutableMap<String, String>) {
+        val color = colorProvider()
+        if (!attributes.replace("fill", "white", "rgb(${color.red},${color.green},${color.blue})")) {
+          return
+        }
+
+        val alpha = color.alpha
+        if (alpha != 255) {
+          attributes.put("fill-opacity", "${alpha / 255f}")
         }
       }
 
-      override fun attributeForPath(path: String) = attributePatcher
+      override fun attributeForPath(path: String) = this
     })
   }
 }

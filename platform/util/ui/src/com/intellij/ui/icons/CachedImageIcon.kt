@@ -258,14 +258,12 @@ open class CachedImageIcon internal constructor(
 
   fun createWithPatcher(colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon = copy(colorPatcher = colorPatcher)
 
-  internal fun createStrokeIcon(): CachedImageIcon {
-    return copy(useStroke = true)
-  }
+  internal fun createStrokeIcon(): CachedImageIcon = copy(useStroke = true)
 
   fun withAnotherIconModifications(useModificationsFrom: CachedImageIcon): Icon {
     if (isDarkOverridden == useModificationsFrom.isDarkOverridden &&
         localFilterSupplier == useModificationsFrom.localFilterSupplier &&
-        colorPatcher == useModificationsFrom.colorPatcher &&
+        colorPatcher === useModificationsFrom.colorPatcher &&
         useStroke == useModificationsFrom.useStroke) {
       return this
     }

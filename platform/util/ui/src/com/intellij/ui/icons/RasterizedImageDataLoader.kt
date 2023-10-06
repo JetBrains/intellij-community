@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.SvgCacheClassifier
+import com.intellij.ui.svg.colorPatcherDigestShim
 import com.intellij.ui.svg.loadAndCacheIfApplicable
 import com.intellij.util.SVGLoader
 import org.intellij.lang.annotations.MagicConstant
@@ -264,6 +265,7 @@ private fun loadSvgFromClassResource(classLoader: ClassLoader?,
                                   precomputedCacheKey = precomputedCacheKey,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey,
+                                  colorPatcherDigest = colorPatcherDigestShim(colorPatcherProvider),
                                   colorPatcher = colorPatcherProvider?.attributeForPath(path)) {
     getResourceData(path = path, resourceClass = null, classLoader = classLoader)
   }

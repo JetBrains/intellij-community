@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.SvgAttributePatcher
+import com.intellij.ui.svg.colorPatcherDigestShim
 import com.intellij.ui.svg.loadSvgAndCacheIfApplicable
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SVGLoader
@@ -149,6 +150,7 @@ private fun loadByDescriptorWithoutCache(rawPathWithoutExt: String,
                             descriptor = descriptor,
                             resourceClass = resourceClass,
                             classLoader = classLoader,
+                            colorPatcherDigest = colorPatcherDigestShim(colorPatcherProvider),
                             colorPatcher = colorPatcherProvider?.attributeForPath(path))
 }
 
@@ -181,7 +183,7 @@ private fun loadByDescriptor(rawPathWithoutExt: String,
   if (colorPatcherProvider != null) {
     colorPatcher = colorPatcherProvider.attributeForPath(path)
     if (colorPatcher != null) {
-      digest = colorPatcher.digest()
+      digest = colorPatcherDigestShim(colorPatcherProvider)
     }
   }
 
@@ -202,6 +204,7 @@ private fun loadByDescriptor(rawPathWithoutExt: String,
                                  descriptor = descriptor,
                                  resourceClass = resourceClass,
                                  classLoader = classLoader,
+                                 colorPatcherDigest = digest,
                                  colorPatcher = colorPatcher) ?: return null
   imageCache.imageCache.put(cacheKey, image)
   return image
@@ -211,6 +214,7 @@ private fun doLoadByDescriptor(path: String,
                                descriptor: ImageDescriptor,
                                resourceClass: Class<*>?,
                                classLoader: ClassLoader?,
+                               colorPatcherDigest: LongArray?,
                                colorPatcher: SvgAttributePatcher?): BufferedImage? {
   var image: BufferedImage?
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
@@ -222,6 +226,7 @@ private fun doLoadByDescriptor(path: String,
         loadSvgAndCacheIfApplicable(path = path,
                                     scale = descriptor.scale,
                                     compoundCacheKey = descriptor.toSvgMapper(),
+                                    colorPatcherDigest = colorPatcherDigest ?: ArrayUtilRt.EMPTY_LONG_ARRAY,
                                     colorPatcher = colorPatcher) { stream.readAllBytes() }
       }
       else {
@@ -237,6 +242,7 @@ private fun doLoadByDescriptor(path: String,
       loadSvgAndCacheIfApplicable(path = path,
                                   scale = descriptor.scale,
                                   compoundCacheKey = descriptor.toSvgMapper(),
+                                  colorPatcherDigest = colorPatcherDigest ?: ArrayUtilRt.EMPTY_LONG_ARRAY,
                                   colorPatcher = colorPatcher) {
         getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader)
       }
