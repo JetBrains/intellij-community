@@ -26,7 +26,8 @@ import com.intellij.util.io.Compressor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.net.NetUtils
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -120,55 +121,62 @@ object LogsPacker {
   @Throws(IOException::class)
   suspend fun uploadLogs(project: Project?): String {
     return indeterminateStep(IdeBundle.message("uploading.logs.message")) {
-      val file = packLogs(project)
-      val fileName = file.name
-      checkCancelled()
-      val responseJson = HttpRequests.post("$UPLOADS_SERVICE_URL/sign", HttpRequests.JSON_CONTENT_TYPE)
-        .accept(HttpRequests.JSON_CONTENT_TYPE)
-        .connect { request ->
-          val out = BufferExposingByteArrayOutputStream()
-          JsonFactory().createGenerator(out).useDefaultPrettyPrinter().use { writer ->
-            writer.obj {
-              writer.writeStringField("filename", fileName)
-              writer.writeStringField("method", "put")
-              writer.writeStringField("contentType", "application/octet-stream")
-            }
+      withRawProgressReporter {
+        withContext(Dispatchers.IO) {
+          val file = packLogs(project)
+          checkCancelled()
+          val responseJson = requestSign(file.name)
+          val uploadUrl = responseJson["url"] as String
+          val folderName = responseJson["folderName"] as String
+          val headers = responseJson["headers"] as Map<*, *>
+          checkCancelled()
+          coroutineToIndicator {
+            upload(file, uploadUrl, headers)
           }
-          request.write(out.toByteArray())
-          gson.fromJson<Map<String, Any>>(request.reader, object : TypeToken<Map<String, Any?>?>() {}.type)
+          val message = IdeBundle.message("collect.logs.notification.sent.success", UPLOADS_SERVICE_URL, folderName)
+          Notification(CollectZippedLogsAction.NOTIFICATION_GROUP, message, NotificationType.INFORMATION).notify(project)
+          folderName
         }
-
-      val uploadUrl = responseJson["url"] as String
-      val folderName = responseJson["folderName"] as String
-      val headers = responseJson["headers"] as Map<*, *>
-      checkCancelled()
-      HttpRequests.put(uploadUrl, "application/octet-stream")
-        .productNameAsUserAgent()
-        .tuner { urlConnection ->
-          headers.forEach {
-            urlConnection.addRequestProperty(it.key as String, it.value as String)
-          }
-        }
-        .connect {
-          val http = it.connection as HttpURLConnection
-          val length = file.fileSize()
-          http.setFixedLengthStreamingMode(length)
-          http.outputStream.use { outputStream ->
-            file.inputStream().buffered(64 * 1024).use { inputStream ->
-              this.launch {
-                coroutineToIndicator {
-                  val indicator = ProgressManager.getGlobalProgressIndicator()
-                  NetUtils.copyStreamContent(indicator, inputStream, outputStream, length)
-                }
-              }
-            }
-          }
-        }
-
-      val message = IdeBundle.message("collect.logs.notification.sent.success", UPLOADS_SERVICE_URL, folderName)
-      Notification(CollectZippedLogsAction.NOTIFICATION_GROUP, message, NotificationType.INFORMATION).notify(project)
-      return@indeterminateStep folderName
+      }
     }
+  }
+  
+  private fun requestSign(fileName: String): Map<String, Any> {
+    return HttpRequests.post("$UPLOADS_SERVICE_URL/sign", HttpRequests.JSON_CONTENT_TYPE)
+      .accept(HttpRequests.JSON_CONTENT_TYPE)
+      .connect { request ->
+        val out = BufferExposingByteArrayOutputStream()
+        JsonFactory().createGenerator(out).useDefaultPrettyPrinter().use { writer ->
+          writer.obj {
+            writer.writeStringField("filename", fileName)
+            writer.writeStringField("method", "put")
+            writer.writeStringField("contentType", "application/octet-stream")
+          }
+        }
+        request.write(out.toByteArray())
+        gson.fromJson(request.reader, object : TypeToken<Map<String, Any?>?>() {}.type)
+      }
+  }
+
+  private fun upload(file: Path, uploadUrl: String, headers: Map<*, *>) {
+    val indicator = ProgressManager.getGlobalProgressIndicator()
+    HttpRequests.put(uploadUrl, "application/octet-stream")
+      .productNameAsUserAgent()
+      .tuner { urlConnection ->
+        headers.forEach {
+          urlConnection.addRequestProperty(it.key as String, it.value as String)
+        }
+      }
+      .connect {
+        val http = it.connection as HttpURLConnection
+        val length = file.fileSize()
+        http.setFixedLengthStreamingMode(length)
+        http.outputStream.use { outputStream ->
+          file.inputStream().buffered(64 * 1024).use { inputStream ->
+            NetUtils.copyStreamContent(indicator, inputStream, outputStream, length)
+          }
+        }
+      }
   }
 
   fun getBrowseUrl(folderName: String): String = "$UPLOADS_SERVICE_URL/browse#$folderName"
