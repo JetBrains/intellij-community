@@ -8,7 +8,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.SvgCacheClassifier
-import com.intellij.ui.svg.loadSvgFromClassResource
+import com.intellij.ui.svg.loadAndCacheIfApplicable
+import com.intellij.util.SVGLoader
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Image
@@ -251,4 +252,19 @@ private fun loadPatched(name: String,
     }
   }
   return null
+}
+
+private fun loadSvgFromClassResource(classLoader: ClassLoader?,
+                                     path: String,
+                                     precomputedCacheKey: Int,
+                                     scale: Float,
+                                     compoundCacheKey: SvgCacheClassifier,
+                                     colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): Image? {
+  return loadAndCacheIfApplicable(path = path,
+                                  precomputedCacheKey = precomputedCacheKey,
+                                  scale = scale,
+                                  compoundCacheKey = compoundCacheKey,
+                                  colorPatcher = colorPatcherProvider?.attributeForPath(path)) {
+    getResourceData(path = path, resourceClass = null, classLoader = classLoader)
+  }
 }

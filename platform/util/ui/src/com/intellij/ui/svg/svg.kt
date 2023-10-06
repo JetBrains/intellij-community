@@ -10,10 +10,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.DummyIcon
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.IconLoader.colorPatchedIcon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.hasher
 import com.intellij.ui.icons.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
@@ -54,26 +54,9 @@ interface SvgAttributePatcher {
 
 @Internal
 fun loadSvg(data: ByteArray, scale: Float): BufferedImage {
-  return loadAndCacheIfApplicable(path = null, precomputedCacheKey = 0, scale = scale, colorPatcherProvider = null) {
+  return loadAndCacheIfApplicable(path = null, precomputedCacheKey = 0, scale = scale, colorPatcher = null) {
     data
   }!!
-}
-
-@Internal
-fun loadSvgFromClassResource(classLoader: ClassLoader?,
-                             path: String,
-                             precomputedCacheKey: Int,
-                             scale: Float,
-                             compoundCacheKey: SvgCacheClassifier,
-                             colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?,
-                             resourceClass: Class<*>? = null): Image? {
-  return loadAndCacheIfApplicable(path = path,
-                                  precomputedCacheKey = precomputedCacheKey,
-                                  scale = scale,
-                                  compoundCacheKey = compoundCacheKey,
-                                  colorPatcherProvider = colorPatcherProvider) {
-    getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader)
-  }
 }
 
 internal fun loadSvg(path: String?,
@@ -85,7 +68,7 @@ internal fun loadSvg(path: String?,
                                   precomputedCacheKey = 0,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey ?: SvgCacheClassifier(scale),
-                                  colorPatcherProvider = colorPatcherProvider) {
+                                  colorPatcher = path?.let { colorPatcherProvider?.attributeForPath(it) }) {
     stream.readAllBytes()
   }!!
 }
@@ -178,42 +161,27 @@ internal fun loadSvgAndCacheIfApplicable(path: String?,
                                   dataProvider = dataProvider)
 }
 
-private inline fun loadAndCacheIfApplicable(path: String?,
-                                            precomputedCacheKey: Int,
-                                            scale: Float,
-                                            compoundCacheKey: SvgCacheClassifier = SvgCacheClassifier(scale = scale),
-                                            colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?,
-                                            dataProvider: () -> ByteArray?): BufferedImage? {
-  return loadAndCacheIfApplicable(path = path,
-                                  precomputedCacheKey = precomputedCacheKey,
-                                  scale = scale,
-                                  compoundCacheKey = compoundCacheKey,
-                                  colorPatcher = path?.let { colorPatcherProvider?.attributeForPath(it) },
-                                  dataProvider = dataProvider)
-}
-
-private inline fun loadAndCacheIfApplicable(path: String?,
-                                            precomputedCacheKey: Int,
-                                            scale: Float,
-                                            compoundCacheKey: SvgCacheClassifier = SvgCacheClassifier(scale = scale),
-                                            colorPatcher: SvgAttributePatcher?,
-                                            dataProvider: () -> ByteArray?): BufferedImage? {
+internal inline fun loadAndCacheIfApplicable(path: String?,
+                                             precomputedCacheKey: Int,
+                                             scale: Float,
+                                             compoundCacheKey: SvgCacheClassifier = SvgCacheClassifier(scale = scale),
+                                             colorPatcher: SvgAttributePatcher?,
+                                             dataProvider: () -> ByteArray?): BufferedImage? {
   val colorPatcherDigest = colorPatcher?.digest()
   val svgCache = activeSvgCache
   if (svgCache == null || (colorPatcherDigest == null && (colorPatcher != null)) || scale > MAX_SCALE_TO_CACHE) {
-    return renderImage(colorPatcher = colorPatcher,
-                       data = dataProvider() ?: return null,
-                       scale = scale,
-                       path = path)
+    return renderImage(colorPatcher = colorPatcher, data = dataProvider() ?: return null, scale = scale, path = path)
   }
 
   val data = if (precomputedCacheKey == 0) (dataProvider() ?: return null) else null
-  val themeKey = colorPatcherDigest?.let(::themeDigestToCacheKey) ?: 0
   val key = if (data == null) {
-    createPrecomputedIconCacheKey(precomputedCacheKey = precomputedCacheKey, compoundKey = compoundCacheKey, themeKey = themeKey)
+    longArrayOf(
+      packTwoIntToLong(v1 = precomputedCacheKey, v2 = compoundCacheKey.key),
+      colorPatcherDigest?.let { colorPatcherDigestToCacheKey(colorPatcherDigest) } ?: 0,
+    )
   }
   else {
-    createIconCacheKey(imageBytes = data, compoundKey = compoundCacheKey, themeKey = themeKey)
+    createIconCacheKey(imageBytes = data, compoundKey = compoundCacheKey, colorPatcherDigest = colorPatcherDigest)
   }
 
   try {
@@ -242,16 +210,6 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                         path = path,
                         key = key,
                         cache = svgCache)
-}
-
-private fun themeDigestToCacheKey(themeDigest: LongArray): Long {
-  return when (themeDigest.size) {
-    0 -> 0
-    1 -> themeDigest.first()
-    2 -> hasher.hashLongLongToLong(themeDigest[0], themeDigest[1])
-    3 -> hasher.hashLongLongLongToLong(themeDigest[0], themeDigest[1], themeDigest[2])
-    else -> hasher.hashStream().putLongArray(themeDigest).asLong
-  }
 }
 
 private fun renderAndCache(colorPatcher: SvgAttributePatcher?,
@@ -307,7 +265,7 @@ fun loadWithSizes(sizes: List<Int>, data: ByteArray, scale: Float = JBUIScale.sy
   val isHiDpiNeeded = isHiDPIEnabledAndApplicable(scale)
   return sizes.map { size ->
     val compoundKey = SvgCacheClassifier(scale = scale, size = size)
-    val key = createIconCacheKey(imageBytes = data, compoundKey = compoundKey, themeKey = 0)
+    val key = createIconCacheKey(imageBytes = data, compoundKey = compoundKey, colorPatcherDigest = null)
     var image = svgCache?.loadFromCache(key)
     if (image == null) {
       image = renderSvgWithSize(document = document, width = (size * scale), height = (size * scale))

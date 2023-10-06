@@ -3,7 +3,6 @@
 
 package com.intellij.ui.svg
 
-import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -78,8 +77,8 @@ private fun createMap(dbFile: Path): PersistentMapBase<LongArray, IconValue> {
   val builder = PersistentMapBuilder.newBuilder(dbFile, object : KeyDescriptor<LongArray> {
     override fun getHashCode(value: LongArray): Int {
       return when (value.size) {
-        3 -> Hashing.komihash5_0().hashLongLongLongToLong(value[0], value[1], value[2]).toInt()
-        2 -> Hashing.komihash5_0().hashLongLongToLong(value[0], value[1]).toInt()
+        3 -> hasher.hashLongLongLongToLong(value[0], value[1], value[2]).toInt()
+        2 -> hasher.hashLongLongToLong(value[0], value[1]).toInt()
         else -> value.contentHashCode()
       }
     }
@@ -91,11 +90,11 @@ private fun createMap(dbFile: Path): PersistentMapBase<LongArray, IconValue> {
       }
     }
 
-    override fun isEqual(val1: LongArray, val2: LongArray) = val1.contentEquals(val2)
-
     override fun read(input: DataInput): LongArray {
       return LongArray(input.readByte().toInt()) { input.readLong() }
     }
+
+    override fun isEqual(val1: LongArray, val2: LongArray) = val1.contentEquals(val2)
   }, object : DataExternalizer<IconValue> {
     override fun save(out: DataOutput, value: IconValue) {
       out.writeByte(value.w)
@@ -196,20 +195,24 @@ class SvgCacheManager private constructor(private val map: PersistentMapBase<Lon
   }
 }
 
-internal fun createPrecomputedIconCacheKey(precomputedCacheKey: Int, compoundKey: SvgCacheClassifier, themeKey: Long): LongArray {
-  return longArrayOf(
-    packTwoIntToLong(precomputedCacheKey, compoundKey.key),
-    themeKey,
-  )
-}
-
 @Internal
-fun createIconCacheKey(imageBytes: ByteArray, compoundKey: SvgCacheClassifier, themeKey: Long): LongArray {
+fun createIconCacheKey(imageBytes: ByteArray, compoundKey: SvgCacheClassifier, colorPatcherDigest: LongArray?): LongArray {
+  val colorPatcherKey = colorPatcherDigest ?.let { colorPatcherDigestToCacheKey(colorPatcherDigest) } ?: 0
   return longArrayOf(
     hasher.hashBytesToLong(imageBytes),
     packTwoIntToLong(seededHasher.hashBytesToInt(imageBytes), compoundKey.key),
-    themeKey,
+    colorPatcherKey,
   )
+}
+
+internal fun colorPatcherDigestToCacheKey(themeDigest: LongArray): Long {
+  return when (themeDigest.size) {
+    0 -> 0
+    1 -> themeDigest.first()
+    2 -> hasher.hashLongLongToLong(themeDigest[0], themeDigest[1])
+    3 -> hasher.hashLongLongLongToLong(themeDigest[0], themeDigest[1], themeDigest[2])
+    else -> hasher.hashStream().putLongArray(themeDigest).asLong
+  }
 }
 
 // BGRA order
