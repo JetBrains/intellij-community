@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,7 +157,10 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
 
   @Override
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    throw notImplemented();
+    int clamped = MathUtil.clamp(offset, 0, myDocument.getTextLength());
+    int line = myDocument.getLineNumber(clamped);
+    int col = clamped - myDocument.getLineStartOffset(line);
+    return new LogicalPosition(line, col);
   }
 
   @Override
