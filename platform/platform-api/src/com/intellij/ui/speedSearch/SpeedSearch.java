@@ -72,6 +72,12 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
           updatePattern("");
           e.consume();
         }
+        else if (myJustActivated) {
+          // Special case: speed search was activated through the API without typing anything, should be cancelled on Esc.
+          myJustActivated = false;
+          update();
+          e.consume();
+        }
       }
     }
     else if (e.getID() == KeyEvent.KEY_TYPED) {
