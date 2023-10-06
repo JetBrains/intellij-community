@@ -6,7 +6,7 @@ import java.nio.file.Path
 import java.util.zip.ZipInputStream
 
 @ApiStatus.Internal
-fun Compressor.addAllFromZip(zipPath: Path, prefix: String = "", ideaLogName: String? = null) {
+fun Compressor.addAllFromZip(zipPath: Path, prefix: String = "", newIdeaLogFileName: String? = null) {
   ZipInputStream(zipPath.toFile().inputStream()).use { zipStream ->
     var entry = zipStream.nextEntry
     while (entry != null) {
@@ -16,11 +16,12 @@ fun Compressor.addAllFromZip(zipPath: Path, prefix: String = "", ideaLogName: St
       }
 
       var newEntryName = Path.of(prefix, path).toString().replace('\\', '/')
-      if (ideaLogName != null) {
+      if (newIdeaLogFileName != null) {
         if (newEntryName.contains("idea")) {
-          newEntryName = newEntryName.replace("idea", ideaLogName)
+          newEntryName = newEntryName.replace("idea", newIdeaLogFileName)
         }
       }
+
       val entryTime = entry.lastModifiedTime.toMillis()
       if (entry.isDirectory)
         addDirectory(newEntryName, entryTime)
