@@ -346,7 +346,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
             }
           }
           finally {
-            //Tradeoff: we can _always_ clean the .pages, regardless of unmap or not -- then .close(unmap:false)
+            //Tradeoff: we can _always_ clean the .pages array, regardless of unmap or not -- then .close(unmap:false)
             // benefits from faster page unmapping by GC (it is quite often storage itself is still strongly-reachable
             // after the .close() => without nulling the .pages pageBuffers also remain strongly-reachable => not
             // unmapped)
@@ -367,9 +367,11 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     }
     finally {
       synchronized (openedStorages) {
-        openedStorages.remove(storagePath);
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        openedStoragesCount--;
+        MMappedFileStorage removed = openedStorages.remove(storagePath);
+        if (removed != null) {
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          openedStoragesCount--;
+        }
       }
     }
   }
