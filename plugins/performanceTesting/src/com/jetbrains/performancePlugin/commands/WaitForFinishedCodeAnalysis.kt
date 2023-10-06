@@ -76,19 +76,19 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   override fun daemonCanceled(reason: String, fileEditors: Collection<FileEditor>) {
-    daemonStopped(fileEditors, true)
+    daemonStopped(fileEditors, true, reason)
   }
 
   override fun daemonFinished(fileEditors: Collection<FileEditor>) {
-    daemonStopped(fileEditors, false)
+    daemonStopped(fileEditors, false, "daemonFinished")
   }
 
-  private fun daemonStopped(fileEditors: Collection<FileEditor>, canceled: Boolean) {
+  private fun daemonStopped(fileEditors: Collection<FileEditor>, canceled: Boolean, reason: String) {
     if (!ApplicationManagerEx.isInIntegrationTest() || skipNonPsiFileEditors(fileEditors)) return
     val state = project.service<ListenerState>()
     val editor = fileEditors.first()
     state.sessions.remove(editor)
-    LOG.info("daemon stopped for $editor")
+    LOG.info("daemon stopped for $editor with reason $reason")
 
     val fileEditor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()!!
     val entireFileHighlighted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(fileEditor, project)
