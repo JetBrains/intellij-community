@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
@@ -803,8 +800,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         element = new TailTypeDecorator<>(element) {
           @Override
           protected TailType computeTailType(InsertionContext context) {
-            if (context.getCompletionChar() == ':' && forcedTail == TailTypes.CASE_ARROW) {
-              return TailType.CASE_COLON;
+            if (context.getCompletionChar() == ':' && forcedTail == JavaTailTypes.CASE_ARROW) {
+              return TailTypes.CASE_COLON;
             }
             return forcedTail;
           }
@@ -816,7 +813,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
       if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
           !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
-        item.setTailType(TailType.NONE);
+        item.setTailType(TailTypes.NONE);
       }
       if (item instanceof JavaMethodCallElement call) {
         PsiMethod method = call.getObject();
@@ -843,10 +840,10 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   @Nullable
   private static TailType getTailType(boolean smart, boolean inSwitchLabel, PsiElement position) {
     if (!smart && inSwitchLabel) {
-      return TailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)));
+      return JavaTailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)));
     }
     if (!smart && shouldInsertSemicolon(position)) {
-      return TailType.SEMICOLON;
+      return TailTypes.SEMICOLON;
     }
     return null;
   }
@@ -933,7 +930,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   }
 
   private static List<LookupElement> processLabelReference(PsiLabelReference reference) {
-    return ContainerUtil.map(reference.getVariants(), s -> TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.SEMICOLON));
+    return ContainerUtil.map(reference.getVariants(), s -> TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailTypes.SEMICOLON));
   }
 
   static boolean isClassNamePossible(CompletionParameters parameters) {
@@ -1325,7 +1322,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         for (String name : index.getAllKeys(project)) {
           if (!index.getModules(name, project, scope).isEmpty() && filter.add(name)) {
             LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule);
-            if (requires) lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
+            if (requires) lookup = TailTypeDecorator.withTail(lookup, TailTypes.SEMICOLON);
             result.addElement(lookup);
           }
         }
@@ -1367,7 +1364,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   private static void addAutoModuleReference(String name, PsiElement parent, Set<? super String> filter, CompletionResultSet result) {
     if (PsiNameHelper.isValidModuleName(name, parent) && filter.add(name)) {
       LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
-      lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
+      lookup = TailTypeDecorator.withTail(lookup, TailTypes.SEMICOLON);
       lookup = PrioritizedLookupElement.withPriority(lookup, -1);
       result.addElement(lookup);
     }

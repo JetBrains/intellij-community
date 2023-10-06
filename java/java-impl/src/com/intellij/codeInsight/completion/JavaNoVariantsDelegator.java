@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.JavaCompletionUtil.JavaLookupElementHighlighter;
 import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -205,7 +205,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
                                                                                      result.getPrefixMatcher())) {
             LookupElement chain = highlighter.highlightIfNeeded(null, new JavaChainLookupElement(base, item, separator), item.getObject());
             if (JavaCompletionContributor.shouldInsertSemicolon(position)) {
-              chain = TailTypeDecorator.withTail(chain, TailType.SEMICOLON);
+              chain = TailTypeDecorator.withTail(chain, TailTypes.SEMICOLON);
             }
             qualifiedCollector.addElement(chain);
             added = true;

@@ -782,10 +782,10 @@ public final class JavaCompletionUtil {
     char completionChar = context.getCompletionChar();
     PsiFile file = context.getFile();
 
-    TailType tailType = completionChar == '(' ? TailType.NONE :
-                              completionChar == ':' ? TailType.COND_EXPR_COLON :
+    TailType tailType = completionChar == '(' ? TailTypes.NONE :
+                        completionChar == ':' ? TailTypes.COND_EXPR_COLON :
                               LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
-    boolean hasTail = tailType != TailType.NONE && tailType != TailType.UNKNOWN;
+    boolean hasTail = tailType != TailTypes.NONE && tailType != TailTypes.UNKNOWN;
     boolean smart = completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR;
 
     if (completionChar == '(' || completionChar == '.' || completionChar == ',' || completionChar == ';' || completionChar == ':' || completionChar == ' ') {
@@ -848,9 +848,9 @@ public final class JavaCompletionUtil {
     TailType toInsert = tailType;
     LookupItem<?> lookupItem = item.as(LookupItem.CLASS_CONDITION_KEY);
     if (toInsert == EqTailType.INSTANCE) {
-      toInsert = TailType.UNKNOWN;
+      toInsert = TailTypes.UNKNOWN;
     }
-    if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
+    if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.UNKNOWN) {
       if (!hasTail && item.getObject() instanceof PsiMethod && PsiTypes.voidType().equals(((PsiMethod)item.getObject()).getReturnType())) {
         PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
         if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(context.getFile().findElementAt(context.getTailOffset() - 1))) {
@@ -874,7 +874,7 @@ public final class JavaCompletionUtil {
           }
         }
         if (insertAdditionalSemicolon) {
-          toInsert = TailType.SEMICOLON;
+          toInsert = TailTypes.SEMICOLON;
         }
 
       }

@@ -13,7 +13,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
 
-public final class TailTypes {
+public final class JavaTailTypes {
   public static final TailType CALL_RPARENTH = new RParenthTailType(){
     @Override
     protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
@@ -144,9 +144,9 @@ public final class TailTypes {
   public static final TailType DO_LBRACE = BRACES;
 
   public static TailType forSwitchLabel(@NotNull PsiSwitchBlock block) {
-    return SwitchUtils.isRuleFormatSwitch(block) ? CASE_ARROW : TailType.CASE_COLON;
+    return SwitchUtils.isRuleFormatSwitch(block) ? CASE_ARROW : TailTypes.CASE_COLON;
   }
 
 
-  private TailTypes() {}
+  private JavaTailTypes() { }
 }

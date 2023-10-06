@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PresentableLookupValue;
@@ -114,7 +115,7 @@ public class CompletionData {
     @Override
     void addReferenceCompletions(PsiReference reference, PsiElement position, Set<? super LookupElement> set, final PsiFile file,
                                  final CompletionData completionData) {
-      completeReference(reference, position, set, TailType.NONE, TrueFilter.INSTANCE, this);
+      completeReference(reference, position, set, TailTypes.NONE, TrueFilter.INSTANCE, this);
     }
   };
 
@@ -158,7 +159,7 @@ public class CompletionData {
     if (object instanceof LookupElement) return (LookupElement)object;
 
     String s = null;
-    TailType tailType = TailType.NONE;
+    TailType tailType = TailTypes.NONE;
     if (object instanceof PsiElement){
       s = PsiUtilCore.getName((PsiElement)object);
     }
@@ -193,9 +194,9 @@ public class CompletionData {
     InsertHandler<?> insertHandler = variant.getInsertHandler();
     if(insertHandler != null && item.getInsertHandler() == null) {
       item.setInsertHandler(insertHandler);
-      item.setTailType(TailType.UNKNOWN);
+      item.setTailType(TailTypes.UNKNOWN);
     }
-    else if (tailType != TailType.NONE) {
+    else if (tailType != TailTypes.NONE) {
       item.setTailType(tailType);
     }
     final Map<Object, Object> itemProperties = variant.getItemProperties();

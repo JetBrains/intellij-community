@@ -4,6 +4,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
@@ -157,7 +158,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
       //noinspection unchecked
       ((InsertHandler)handler).handleInsert(context, this);
     }
-    if (getTailType() != TailType.UNKNOWN && myInsertHandler == null) {
+    if (getTailType() != TailTypes.UNKNOWN && myInsertHandler == null) {
       context.setAddCompletionChar(false);
       final TailType type = handleCompletionChar(context.getEditor(), this, context.getCompletionChar());
       type.processTail(context.getEditor(), context.getTailOffset());
@@ -168,10 +169,10 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
     return switch (completionChar) {
       case '.' -> new CharTailType('.', false);
       case ',' -> CommaTailType.INSTANCE;
-      case ';' -> TailType.SEMICOLON;
+      case ';' -> TailTypes.SEMICOLON;
       case '=' -> EqTailType.INSTANCE;
-      case ' ' -> TailType.SPACE;
-      case ':' -> TailType.CASE_COLON; //?
+      case ' ' -> TailTypes.SPACE;
+      case ':' -> TailTypes.CASE_COLON; //?
       default -> null;
     };
   }
@@ -189,13 +190,13 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
         return attr;
       }
     }
-    return TailType.NONE;
+    return TailTypes.NONE;
   }
 
 
   public @NotNull TailType getTailType(){
     final TailType tailType = getAttribute(TAIL_TYPE_ATTR);
-    return tailType != null ? tailType : TailType.UNKNOWN;
+    return tailType != null ? tailType : TailTypes.UNKNOWN;
   }
 
   public @NotNull LookupItem<T> setTailType(@NotNull TailType type) {
