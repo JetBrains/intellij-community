@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendibleha
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import org.intellij.lang.annotations.MagicConstant;
@@ -30,7 +31,7 @@ import java.util.Objects;
  * not concurrent. It is possible to replace that with some kind of 'segmented RW lock'.
  */
 @ApiStatus.Internal
-public class ExtendibleHashMap implements DurableIntToMultiIntMap {
+public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   /** Version of binary format used by this class */
   public static final int IMPLEMENTATION_VERSION = 1;
 
@@ -260,6 +261,12 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       header = null;
       bufferSource = null;
     }
+  }
+
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    close();
+    storage.closeAndUnsafelyUnmap();
   }
 
   @Override

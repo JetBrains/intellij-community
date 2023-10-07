@@ -149,6 +149,10 @@ public class ExtendibleHashMapTest extends IntToMultiIntMapTestBase<ExtendibleHa
   @AfterEach
   void tearDown() throws IOException {
     for (ExtendibleHashMap mapToClean : multimapsToCloseAndClean) {
+      mapToClean.closeAndUnsafelyUnmap();
+    }
+    for (ExtendibleHashMap mapToClean : multimapsToCloseAndClean) {
+      //TODO RC: maybe we can't remove the first once -- because second one is not yet unmapped???
       mapToClean.closeAndClean();
     }
   }
