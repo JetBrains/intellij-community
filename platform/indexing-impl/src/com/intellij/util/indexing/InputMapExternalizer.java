@@ -40,35 +40,34 @@ public final class InputMapExternalizer<Key, Value> implements DataExternalizer<
     DataInputOutputUtil.writeINT(stream, size);
     if (size == 0) return;
 
-    Collection<Key> keysForNullValue = null;
+    final Collection<Key>[] keysForNullValue = new Collection[]{null};
     Map<Value, Collection<Key>> keysPerValue = null;
 
     //TODO RC: why store Map<Key,Value> in 'inverted' form, as Map<Value, Collection<Key>> here?
     if (myValuesAreNullAlways) {
-      keysForNullValue = data.keySet();
+      keysForNullValue[0] = data.keySet();
     }
     else {
       keysPerValue = new HashMap<>();
-      for (Map.Entry<Key, Value> e : data.entrySet()) {
-        final Value value = e.getValue();
-
-        Collection<Key> keys = value != null ? keysPerValue.get(value) : keysForNullValue;
+      Map<Value, Collection<Key>> finalKeysPerValue = keysPerValue;
+      data.forEach((key, value) -> {
+        Collection<Key> keys = value != null ? finalKeysPerValue.get(value) : keysForNullValue[0];
         if (keys == null) {
           keys = new SmartList<>();
           if (value != null) {
-            keysPerValue.put(value, keys);
+            finalKeysPerValue.put(value, keys);
           }
           else {
-            keysForNullValue = keys;
+            keysForNullValue[0] = keys;
           }
         }
-        keys.add(e.getKey());
-      }
+        keys.add(key);
+      });
     }
 
-    if (keysForNullValue != null) {
+    if (keysForNullValue[0] != null) {
       myValueExternalizer.save(stream, null);
-      myKeysExternalizer.save(stream, keysForNullValue);
+      myKeysExternalizer.save(stream, keysForNullValue[0]);
     }
 
     if (keysPerValue != null) {

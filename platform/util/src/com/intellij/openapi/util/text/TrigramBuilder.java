@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.IntPredicate;
 
 public final class TrigramBuilder {
@@ -56,6 +58,13 @@ public final class TrigramBuilder {
       @Override
       public boolean containsValue(Object v) {
         return v == null && !isEmpty();
+      }
+
+      @Override
+      public void forEach(BiConsumer<? super Integer, ? super Void> consumer) {
+        trigrams.forEach((Consumer<Integer>)integer -> {
+          consumer.accept(integer, null);
+        });
       }
 
       @Override

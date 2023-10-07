@@ -12,6 +12,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.function.IntPredicate;
 
 @ApiStatus.Internal
@@ -239,7 +243,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
       return (InvertedIndexValueIterator<Value>)EmptyValueIterator.INSTANCE;
     }
     Map<Value, Object> mapping = ObjectUtils.notNull(asMapping(),
-                                                     Collections.singletonMap(wrapValue(asValue()), myInputIdMappingValue));
+                                                     Object2ObjectMaps.singleton(wrapValue(asValue()), myInputIdMappingValue));
     return new InvertedIndexValueIterator<Value>() {
       private Value current;
       private Object currentValue;
