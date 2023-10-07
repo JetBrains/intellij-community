@@ -21,6 +21,7 @@ import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
 import java.util.function.Function
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -69,6 +70,8 @@ data class ClientId(val value: String) {
       return absenceBehaviorValueCached
     }
 
+    val fakeLocalIds = ConcurrentHashMap<String, Unit>().keySet(Unit)
+
     private val absenceBehaviorValueCached: AbsenceBehavior by lazy {
       val selectedOption = Registry.get("clientid.absence.behavior").selectedOption ?: return@lazy AbsenceBehavior.RETURN_LOCAL
       return@lazy try {
@@ -111,7 +114,7 @@ data class ClientId(val value: String) {
     val isCurrentlyUnderLocalId: Boolean
       get() {
         val clientIdValue = currentClientIdString
-        return clientIdValue == null || clientIdValue == localId.value
+        return clientIdValue == null || clientIdValue == localId.value || fakeLocalIds.contains(clientIdValue)
       }
 
     /**
@@ -175,12 +178,23 @@ data class ClientId(val value: String) {
       localId = newId
     }
 
+    fun addFakeLocalId(id: ClientId, parentDisposable: Disposable) {
+      fakeLocalIds.add(id.value)
+
+      fun unregister() {
+        fakeLocalIds.remove(id.value)
+      }
+
+      if (!Disposer.tryRegister(parentDisposable, ::unregister))
+        unregister()
+    }
+
     /**
      * Is true if and only if the given ID is considered to be local to this process
      */
     @JvmStatic
     val ClientId?.isLocal: Boolean
-      get() = this == null || this == localId
+      get() = this == null || this == localId || fakeLocalIds.contains(value)
 
     /**
      * Computes a value under given [ClientId]
@@ -190,7 +204,10 @@ data class ClientId(val value: String) {
       val service = getCachedService() ?: return action()
 
       val newClientIdValue = if (clientId == null || service.isValid(clientId)) {
-        clientId?.value
+        if (clientId != null && fakeLocalIds.contains(clientId.value))
+          localId.value
+        else
+          clientId?.value
       }
       else {
         getClientIdLogger().trace { "Invalid ClientId $clientId replaced with null at ${Throwable().fillInStackTrace()}" }
@@ -236,7 +253,10 @@ data class ClientId(val value: String) {
       }
 
       val newClientIdValue = if (service.isValid(ClientId(clientIdValue))) {
-        clientIdValue
+        if (fakeLocalIds.contains(clientIdValue))
+          localId.value
+        else
+          clientIdValue
       }
       else {
         LOG.trace { "Invalid ClientId $clientIdValue replaced with null at ${Throwable().fillInStackTrace()}" }
