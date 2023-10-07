@@ -242,8 +242,13 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
   @RequiresEdt
   private fun InlineCompletionSession.guardCaretModifications(request: InlineCompletionRequest) {
     val editor = request.editor
-    val expectedOffset = { context.startOffset ?: request.endOffset }
-    val cancel = { hide(editor, false, context) }
+    val expectedOffset = {
+      // This caret listener might be disposed after context: ML-1438
+      if (!context.isDisposed) context.startOffset ?: request.endOffset else -1
+    }
+    val cancel = {
+      if (!context.isDisposed) hide(editor, false, context)
+    }
     val listener = InlineSessionWiseCaretListener(expectedOffset, cancel)
     editor.caretModel.addCaretListener(listener)
     whenDisposed { editor.caretModel.removeCaretListener(listener) }
