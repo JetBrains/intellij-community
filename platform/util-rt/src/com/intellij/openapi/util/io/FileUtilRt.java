@@ -847,6 +847,13 @@ public class FileUtilRt {
       }
       catch (IOException e) {
         if (!SystemInfoRt.isWindows || attemptsLeft == 1) {
+          //noinspection InstanceofCatchParameter
+          if (e instanceof DirectoryNotEmptyException) {
+            //add the directory content to the exception:
+            DirectoryNotEmptyException replacingEx = directoryNotEmptyExceptionWithMoreDiagnostic(path);
+            replacingEx.addSuppressed(e);
+            throw replacingEx;
+          }
           throw e;
         }
 
@@ -860,6 +867,7 @@ public class FileUtilRt {
             }
           }
           catch (Throwable ignored) { }
+
           if (attemptsLeft == MAX_FILE_IO_ATTEMPTS / 2 && TRY_GC_IF_FILE_DELETE_FAILS) {
             //Non-closed stream/channel, or not-yet-unmapped memory-mapped buffer could be a reason for
             // AccessDeniedException on an attempt to delete file on Windows.
@@ -881,6 +889,23 @@ public class FileUtilRt {
       catch (InterruptedException ignored) { }
     }
   }
+
+  private static DirectoryNotEmptyException directoryNotEmptyExceptionWithMoreDiagnostic(@NotNull Path path) throws IOException {
+    DirectoryStream.Filter<Path> alwaysTrue = new DirectoryStream.Filter<Path>() {
+      @Override
+      public boolean accept(Path entry) throws IOException {
+        return true;
+      }
+    };
+    try (DirectoryStream<Path> children = Files.newDirectoryStream(path, alwaysTrue)) {
+      StringBuilder sb = new StringBuilder();
+      for (Path child : children) {
+        sb.append(child.getFileName()).append("\n");
+      }
+      return new DirectoryNotEmptyException(path.toAbsolutePath() + "{" + sb + "}");
+    }
+  }
+
 
   public interface RepeatableIOOperation<T, E extends Throwable> {
     @Nullable T execute(boolean lastAttempt) throws E;

@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
