@@ -18,7 +18,9 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.Delta;
+import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.dependency.DifferentiateResult;
 import org.jetbrains.jps.dependency.impl.FileSource;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
@@ -125,23 +127,25 @@ public final class JavaBuilderUtil {
     if(isDepGraphEnabled()) {
       Delta delta = null;
       BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
-      if (callback != null) {
-        GRAPH_DELTA_CALLBACK_KEY.set(context, null);
-
+      
+      // only work if builders registered their input to make use of dependency analysis mechanism
+      if (callback != null && FILES_TO_COMPILE_KEY.get(context) != null) {
+        Set<File> inputFiles = getFilesContainer(context, FILES_TO_COMPILE_KEY);
         Set<File> compiledWithErrors = getFilesContainer(context, COMPILED_WITH_ERRORS_KEY);
-        COMPILED_WITH_ERRORS_KEY.set(context, null);
-        Set<File> filesToCompile = getFilesContainer(context, FILES_TO_COMPILE_KEY);
-        FILES_TO_COMPILE_KEY.set(context, null);
-        //Set<File> successfullyCompiled = getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY);
-        SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
+
+        // todo: this might be an alternative way to determine the set of input files, though explicitly defined set of files that were sent to builders is better
+        //dirtyFilesHolder.processDirtyFiles((target, file, root) -> {
+        //  inputFiles.add(file);
+        //  return true;
+        //});
 
         DependencyGraph graph = context.getProjectDescriptor().dataManager.getDependencyGraph();
         delta = graph.createDelta(
-          Iterators.map(Iterators.filter(filesToCompile, f -> !compiledWithErrors.contains(f)), f -> new FileSource(f)),
+          Iterators.map(Iterators.filter(inputFiles, f -> !compiledWithErrors.contains(f)), f -> new FileSource(f)),
           Iterators.map(getRemovedPaths(chunk, dirtyFilesHolder), p -> new FileSource(Path.of(p)))
         );
-        for (Pair<Node<?, ?>, Iterable<NodeSource>> pair : callback.getNodes()) {
-          delta.associate(pair.getFirst(), pair.getSecond());
+        for (var nodeData : callback.getNodes()) {
+          delta.associate(nodeData.getFirst(), nodeData.getSecond());
         }
         // todo: consider using delta for marking additional sources for compilation
         //for (NodeSource src : delta.getBaseSources()) {
@@ -151,6 +155,9 @@ public final class JavaBuilderUtil {
         //}
       }
 
+      for (Key<?> key : Arrays.asList(GRAPH_DELTA_CALLBACK_KEY, FILES_TO_COMPILE_KEY, COMPILED_WITH_ERRORS_KEY, SUCCESSFULLY_COMPILED_FILES_KEY)) {
+        key.set(context, null);
+      }
       if (delta == null) {
         return false;
       }
