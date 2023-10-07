@@ -73,7 +73,9 @@ abstract class KotlinModCommandApplicator<in PSI : PsiElement, in INPUT : Kotlin
     /**
      * Applies some fix to given [psi], can not use resolve, so all needed data should be precalculated and stored in [input]
      *
-     * @param psi a [PsiElement] to apply fix to
+     * To be invoked on a background thread only.
+     *
+     * @param psi a non-physical [PsiElement] to apply fix to
      * @param input additional data needed to apply the fix
      */
     fun applyTo(psi: PSI, input: INPUT, context: ActionContext, updater: ModPsiUpdater) {

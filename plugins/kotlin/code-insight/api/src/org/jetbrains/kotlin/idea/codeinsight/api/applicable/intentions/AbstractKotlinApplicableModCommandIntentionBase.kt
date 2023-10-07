@@ -34,6 +34,10 @@ abstract class AbstractKotlinApplicableModCommandIntentionBase<ELEMENT : KtEleme
 
     /**
      * Checks the intention's applicability based on [isApplicableByPsi] and [KotlinApplicabilityRange].
+     *
+     * To be invoked on a background thread only.
+     *
+     * @param element is a non-physical [PsiElement]
      */
     open fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean = isApplicableToElement(element, caretOffset)
 

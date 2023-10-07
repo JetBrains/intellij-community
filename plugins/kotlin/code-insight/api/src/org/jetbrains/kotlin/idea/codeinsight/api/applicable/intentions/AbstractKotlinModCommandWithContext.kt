@@ -29,11 +29,22 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
 
     /**
      * Checks the intention's applicability based on [isApplicableByPsi] and [KotlinApplicabilityRange].
-     */
+     *
+     * To be invoked on a background thread only.
+     *
+     * @param element is a non-physical [PsiElement]
+    */
     override fun isElementApplicable(element: ELEMENT, context: ActionContext): Boolean {
         return isApplicableToElement(element, context.offset) && analyze(element) { isApplicableByAnalyze(element) }
     }
 
+    /*
+     * Checks if the element is applicable performing analysis.
+     *
+     * To be invoked on a background thread only.
+     *
+     * @param element is a non-physical [PsiElement]
+     */
     context(KtAnalysisSession)
     protected open fun isApplicableByAnalyze(element: ELEMENT): Boolean = true
 
@@ -52,11 +63,21 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
 
     protected open fun visitTargetTypeOnlyOnce(): Boolean = false
 
+    /**
+     * To be invoked on a background thread only.
+     *
+     * @param element is a non-physical [PsiElement]
+     */
     override fun getPresentation(context: ActionContext, element: ELEMENT): Presentation? {
         val analysisContext = prepareContextWithAnalyze(element) ?: return null
         return Presentation.of(getActionName(element, analysisContext))
     }
 
+    /**
+     * To be invoked on a background thread only.
+     *
+     * @param element is a non-physical [PsiElement]
+     */
     final override fun invoke(context: ActionContext, element: ELEMENT, updater: ModPsiUpdater) {
         val containingFile = element.containingFile
         val physicalKtFile = containingFile.originalFile as KtFile
