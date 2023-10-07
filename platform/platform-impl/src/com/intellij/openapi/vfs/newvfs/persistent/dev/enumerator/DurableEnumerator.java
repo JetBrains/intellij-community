@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.DurableDataEnumerator;
+import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
@@ -26,7 +27,8 @@ import java.io.IOException;
 @ApiStatus.Internal
 public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
                                                    ScannableDataEnumeratorEx<V>,
-                                                   CleanableStorage {
+                                                   CleanableStorage,
+                                                   Unmappable {
 
   public static final int DATA_FORMAT_VERSION = 1;
 
@@ -76,6 +78,25 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
       () -> new IOException("Can't close " + valuesLog + "/" + valueHashToId),
       valuesLog::close,
       valueHashToId::close
+    );
+  }
+
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    close();
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      IOException.class,
+      () -> new IOException("Can't .closeAndUnsafelyUnmap() " + valuesLog + "/" + valueHashToId),
+      () -> {
+        if (valuesLog instanceof Unmappable) {
+          ((Unmappable)valuesLog).closeAndUnsafelyUnmap();
+        }
+      },
+      () -> {
+        if (valueHashToId instanceof Unmappable) {
+          ((Unmappable)valueHashToId).closeAndUnsafelyUnmap();
+        }
+      }
     );
   }
 

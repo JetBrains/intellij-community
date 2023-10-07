@@ -51,12 +51,16 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
   @After
   public void tearDown() throws Exception {
+    //RC: it is important to first unmap _all_, and then try to clean (delete) _all_, because it could be
+    //    >1 enumerators opened over same file, hence >1 mapped buffers, and on Windows one can't delete
+    //    the file until at least 1 mapped region not yet unmapped, so attempt to delete the file after
+    //    unmapping buffers of 1st enumerator will fail because same file is mapped in the 2nd enumerator:
+    for (T enumeratorOpened : enumeratorsOpened) {
+      closeEnumerator(enumeratorOpened);
+    }
     for (T enumeratorOpened : enumeratorsOpened) {
       if (enumeratorOpened instanceof CleanableStorage) {
         ((CleanableStorage)enumeratorOpened).closeAndClean();
-      }
-      else {
-        closeEnumerator(enumeratorOpened);
       }
     }
   }
@@ -452,7 +456,10 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
 
   protected void closeEnumerator(DataEnumerator<String> enumerator) throws Exception {
-    if (enumerator instanceof AutoCloseable) {
+    if (enumerator instanceof Unmappable) {
+      ((Unmappable)enumerator).closeAndUnsafelyUnmap();
+    }
+    else if (enumerator instanceof AutoCloseable) {
       ((AutoCloseable)enumerator).close();
     }
   }
