@@ -23,10 +23,10 @@ internal class IconTransform
  * @param postPatchers     an array of IconPathPatcher objects used to modify the icon path before transforming it.
  * During icon path patching patchers are iterated first, and if neither of them worked out, postPatchers are iterated.
  * @param filter           the ImageFilter to apply to the transformed icon, or null if no filter should be applied
- */ private constructor(val isDark: Boolean,
+ */ private constructor(@JvmField val isDark: Boolean,
                         private val patchers: Array<IconPathPatcher>,
                         private val postPatchers: Array<IconPathPatcher>,
-                        val filter: ImageFilter?) {
+                        @JvmField val filter: ImageFilter?) {
   constructor(dark: Boolean, patchers: Array<IconPathPatcher>, filter: ImageFilter?)
     : this(isDark = dark, patchers = patchers, postPatchers = emptyArray(), filter = filter)
 

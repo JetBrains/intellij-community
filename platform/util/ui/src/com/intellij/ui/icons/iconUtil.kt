@@ -5,7 +5,6 @@ package com.intellij.ui.icons
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.DummyIcon
 import com.intellij.openapi.util.IconLoader.filterIcon
 import com.intellij.openapi.util.LazyIcon
 import com.intellij.ui.RetrievableIcon
@@ -329,28 +328,6 @@ fun loadImageFromStream(stream: InputStream,
 @Internal
 fun toRetinaAwareIcon(image: BufferedImage, sysScale: Float = JBUIScale.sysScale()): Icon {
   return JBImageIcon(if (isHiDPIEnabledAndApplicable(sysScale)) JBHiDPIScaledImage(image, sysScale.toDouble()) else image)
-}
-
-/**
- * Creates a new icon with the low-level CachedImageIcon changing
- */
-internal fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (CachedImageIcon) -> Icon): Icon? {
-  if (icon is CachedImageIcon) {
-    return cachedImageIconReplacer(icon)
-  }
-
-  return object : IconReplacer {
-    override fun replaceIcon(icon: Icon?): Icon? {
-      return when {
-        icon == null || icon is DummyIcon || icon is EmptyIcon -> icon
-        icon is LazyIcon -> replaceIcon(icon.getOrComputeIcon())
-        icon is ReplaceableIcon -> icon.replaceBy(this)
-        !checkIconSize(icon) -> EMPTY_ICON
-        icon is CachedImageIcon -> cachedImageIconReplacer(icon)
-        else -> icon
-      }
-    }
-  }.replaceIcon(icon)
 }
 
 internal fun checkIconSize(icon: Icon): Boolean {

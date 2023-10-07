@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,4 +57,7 @@ public abstract class EditorColorsManager {
    */
   public void reloadKeepingActiveScheme() {
   }
+
+  @ApiStatus.Experimental
+  public abstract long getSchemeModificationCounter();
 }

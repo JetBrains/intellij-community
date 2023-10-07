@@ -321,17 +321,10 @@ object IconLoader {
 
   @Deprecated("Do not use")
   open class CachedImageIcon private constructor(
-    resolver: ImageDataLoader?,
-    isDarkOverridden: Boolean?,
-    localFilterSupplier: (() -> RGBImageFilter)? = null,
-    colorPatcher: SvgElementColorPatcherProvider? = null,
-    useStroke: Boolean = false
+    resolver: ImageDataLoader,
   ) : com.intellij.ui.icons.CachedImageIcon(
     resolver = resolver,
-    isDarkOverridden = isDarkOverridden,
-    localFilterSupplier = localFilterSupplier,
-    colorPatcher = colorPatcher,
-    useStroke = useStroke,
+    toolTip = null,
   )
 }
 

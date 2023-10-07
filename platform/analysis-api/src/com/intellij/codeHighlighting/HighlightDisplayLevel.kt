@@ -189,7 +189,30 @@ private class HighlightDisplayLevelColorizedIcon(private val key: TextAttributes
                                                  baseIcon: Icon) : Icon, HighlightDisplayLevelColoredIcon {
   private val baseIcon = IconManager.getInstance().colorizedIcon(baseIcon = baseIcon, colorProvider = ::getColor)
 
+  private var lastEditorColorManagerModCounter = -1L
+  private var lastColor: Color? = null
+
   override fun getColor(): Color = getColorFromAttributes(key) ?: JBColor.GRAY
+
+  private fun getColorFromAttributes(key: TextAttributesKey): Color? {
+    val editorColorManager = EditorColorsManager.getInstance()
+                             ?: return (key.getDefaultAttributes() ?: TextAttributes.ERASE_MARKER).errorStripeColor
+    lastColor?.takeIf { editorColorManager.schemeModificationCounter == lastEditorColorManagerModCounter}?.let {
+      return it
+    }
+
+    val attributes = editorColorManager.getGlobalScheme().getAttributes(key)
+    val stripe = attributes?.errorStripeColor
+    val result = when {
+      stripe != null -> stripe
+      attributes == null -> null
+      else -> attributes.effectColor ?: attributes.foregroundColor ?: attributes.backgroundColor
+    }
+
+    lastEditorColorManagerModCounter = editorColorManager.schemeModificationCounter
+    lastColor = result
+    return result
+  }
 
   override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
     baseIcon.paintIcon(c, g, x, y)
@@ -198,15 +221,4 @@ private class HighlightDisplayLevelColorizedIcon(private val key: TextAttributes
   override fun getIconWidth(): Int = baseIcon.iconWidth
 
   override fun getIconHeight(): Int = baseIcon.iconHeight
-}
-
-private fun getColorFromAttributes(key: TextAttributesKey): Color? {
-  val manager = EditorColorsManager.getInstance() ?: return (key.getDefaultAttributes() ?: TextAttributes.ERASE_MARKER).errorStripeColor
-  val attributes = manager.getGlobalScheme().getAttributes(key)
-  val stripe = attributes?.errorStripeColor
-  return when {
-    stripe != null -> stripe
-    attributes == null -> null
-    else -> attributes.effectColor ?: attributes.foregroundColor ?: attributes.backgroundColor
-  }
 }

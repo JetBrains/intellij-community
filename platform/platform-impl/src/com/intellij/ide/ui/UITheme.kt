@@ -281,7 +281,7 @@ private fun createTheme(theme: UIThemeBean,
 
     val digest = paletteScopeManager.computeDigest(InsecureHashBuilder())
       .putStringMap(colors)
-      .putInt(0/* version of this class implementation */)
+      .putLong(415157604330986170 /* id and version of this class implementation */)
       .build()
 
     selectionColorPatcher = object : SvgElementColorPatcherProvider {

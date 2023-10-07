@@ -22,7 +22,7 @@ class SVGLoaderCacheTest {
   fun noEntry(@TempDir dir: Path) = runBlocking {
     val cache = createCache(dir)
     try {
-      assertThat(cache.loadFromCache(longArrayOf(42))).isNull()
+      assertThat(cache.loadFromCache(longArrayOf(42, 123))).isNull()
     }
     finally {
       cache.close()

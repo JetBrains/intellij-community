@@ -43,8 +43,8 @@ internal class UiThemePaletteScopeManager {
   private val trees = UiThemePaletteScope()
 
   fun computeDigest(builder: InsecureHashBuilder): InsecureHashBuilder {
-    // version of this class implementation
-    builder.putInt(0)
+    // id and version of this class implementation
+    builder.putLong(415157024440190408)
     ui.updateHash(builder)
     checkBoxes.updateHash(builder)
     radioButtons.updateHash(builder)

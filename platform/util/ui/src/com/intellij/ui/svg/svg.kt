@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.DummyIcon
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.LazyIcon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
@@ -33,7 +34,7 @@ import java.io.IOException
 import java.io.InputStream
 import javax.swing.Icon
 import kotlin.math.ceil
-import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
 // https://youtrack.jetbrains.com/issue/IDEA-312509/mvstore.MVStoreException-on-zoom-SVG-with-text
@@ -330,12 +331,38 @@ fun colorPatchedIcon(icon: Icon, colorPatcher: SVGLoader.SvgElementColorPatcherP
     .computeIfAbsent(colorPatcher) {
       Caffeine.newBuilder()
         .maximumSize(64)
-        .expireAfterAccess(1.hours.toJavaDuration())
+        .expireAfterAccess(10.minutes.toJavaDuration())
         .build {
-          replaceCachedImageIcons(icon) {
-            it.createWithPatcher(colorPatcher)
-          }!!
+          patchIconsWithColorPatcher(icon = it, colorPatcher = colorPatcher)
         }
     }
     .get(icon)
+}
+
+private fun patchIconsWithColorPatcher(icon: Icon, colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon {
+  return replaceCachedImageIcons(icon) { cachedImageIcon ->
+    cachedImageIcon.createWithPatcher(colorPatcher)
+  }!!
+}
+
+/**
+ * Creates a new icon with the low-level CachedImageIcon changing
+ */
+internal fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (CachedImageIcon) -> Icon): Icon? {
+  if (icon is CachedImageIcon) {
+    return cachedImageIconReplacer(icon)
+  }
+
+  return object : IconReplacer {
+    override fun replaceIcon(icon: Icon?): Icon? {
+      return when {
+        icon == null || icon is DummyIcon || icon is EmptyIcon -> icon
+        icon is LazyIcon -> replaceIcon(icon.getOrComputeIcon())
+        icon is ReplaceableIcon -> icon.replaceBy(this)
+        !checkIconSize(icon) -> EMPTY_ICON
+        icon is CachedImageIcon -> cachedImageIconReplacer(icon)
+        else -> icon
+      }
+    }
+  }.replaceIcon(icon)
 }

@@ -62,6 +62,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicLong
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamReader
 
@@ -77,6 +78,8 @@ private const val TEMP_SCHEME_FILE_KEY: @NonNls String = "TEMP_SCHEME_FILE_KEY"
 class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory)
   : EditorColorsManager(), PersistentStateComponent<EditorColorsManagerImpl.State?> {
   private val treeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener::class.java)
+
+  private val schemeModificationCounter = AtomicLong()
 
   val schemeManager: SchemeManager<EditorColorsScheme>
   private var state = State()
@@ -130,6 +133,8 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       return null
     }
   }
+
+  override fun getSchemeModificationCounter() = schemeModificationCounter.get()
 
   override fun reloadKeepingActiveScheme() {
     val activeScheme = schemeManager.currentSchemeName
@@ -223,6 +228,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       PsiManager.getInstance(project).dropPsiCaches()
     }
 
+    schemeModificationCounter.incrementAndGet()
     // we need to push events to components that use editor font, e.g., HTML editor panes
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(newScheme)
     treeDispatcher.multicaster.globalSchemeChange(newScheme)

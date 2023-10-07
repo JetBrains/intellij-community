@@ -12,9 +12,8 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.JBHiDPIScaledImage
-import com.intellij.util.SystemProperties
 import com.intellij.util.ui.drawImage
-import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
@@ -25,17 +24,10 @@ import java.lang.ref.SoftReference
 import java.util.concurrent.CancellationException
 import javax.swing.Icon
 
-private const val SCALED_ICONS_CACHE_LIMIT = 5
-
-private val CACHED_IMAGE_MAX_SIZE: Long = (SystemProperties.getFloatProperty("ide.cached.image.max.size", 1.5f) * 1024 * 1024).toLong()
-
-@ApiStatus.Internal
-fun isIconTooLargeForCache(icon: Icon): Boolean {
-  return (4L * icon.iconWidth * icon.iconHeight) > CACHED_IMAGE_MAX_SIZE
-}
+private const val SCALED_ICON_CACHE_LIMIT = 8
 
 internal class ScaledIconCache {
-  private val cache = Long2ObjectLinkedOpenHashMap<SoftReference<Icon>>(SCALED_ICONS_CACHE_LIMIT)
+  private val cache = Int2ObjectLinkedOpenHashMap<SoftReference<Icon>>(SCALED_ICON_CACHE_LIMIT)
 
   @Synchronized
   fun getCachedIcon(host: CachedImageIcon, gc: GraphicsConfiguration?): Icon? {
@@ -47,7 +39,7 @@ internal class ScaledIconCache {
       JBUIScale.scale(1f)
     }
 
-    val cacheKey = pixScale.toDouble().toBits()
+    val cacheKey = pixScale.toRawBits()
     cache.getAndMoveToFirst(cacheKey)?.get()?.let {
       return it
     }
@@ -58,7 +50,7 @@ internal class ScaledIconCache {
 
   @Synchronized
   fun getOrScaleIcon(host: CachedImageIcon, scaleContext: ScaleContext): Icon? {
-    val cacheKey = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toBits()
+    val cacheKey = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat().toRawBits()
     // don't worry that empty ref in the map, we compute and put a new icon by the same key, so no need to remove invalid entry
     cache.getAndMoveToFirst(cacheKey)?.get()?.let {
       return it
@@ -66,7 +58,7 @@ internal class ScaledIconCache {
     return loadIcon(host = host, scaleContext = scaleContext, cacheKey = cacheKey)
   }
 
-  private fun loadIcon(host: CachedImageIcon, scaleContext: ScaleContext, cacheKey: Long): Icon? {
+  private fun loadIcon(host: CachedImageIcon, scaleContext: ScaleContext, cacheKey: Int): Icon? {
     val image = try {
       host.loadImage(scaleContext = scaleContext, isDark = host.isDark) ?: return null
     }
@@ -87,7 +79,7 @@ internal class ScaledIconCache {
 
     val icon = ScaledResultIcon(image = image, original = host, objectScale = scaleContext.getScale(ScaleType.OBJ_SCALE).toFloat())
     cache.putAndMoveToFirst(cacheKey, SoftReference(icon))
-    if (cache.size > SCALED_ICONS_CACHE_LIMIT) {
+    if (cache.size > SCALED_ICON_CACHE_LIMIT) {
       cache.removeLast()
     }
     return icon

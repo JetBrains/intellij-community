@@ -116,7 +116,10 @@ object SVGLoader {
     fun attributeForPath(path: String): SvgAttributePatcher? = null
 
     /**
-     * @return hash code of the current SVG color patcher.
+     * Returns a digest of the current SVG color patcher.
+     *
+     * Consider using a two-element array, where the first element is a hash of the input data for the patcher,
+     * and the second is an ID of the patcher (see [com.intellij.ui.icons.ColorPatcherIdGenerator]).
      */
     fun digest(): LongArray
 

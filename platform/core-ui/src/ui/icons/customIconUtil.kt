@@ -35,7 +35,7 @@ fun scaleIconOrLoadCustomVersion(icon: Icon, scale: Float): Icon {
   return if (icon is ScalableIcon) icon.scale(scale) else IconUtil.scale(icon = icon, ancestor = null, scale = scale)
 }
 
-private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int): Icon? {
+private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int, isDark: Boolean? = null): Icon? {
   val coords = icon.getCoords() ?: return null
   val path = coords.first
   if (!path.endsWith(".svg")) {
@@ -45,8 +45,14 @@ private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int
   val modifiedPath = "${path.substring(0, path.length - 4)}@${width}x$height.svg"
   val foundIcon = findIconUsingNewImplementation(path = modifiedPath, classLoader = coords.second) ?: return null
   if (foundIcon is CachedImageIcon &&
-      foundIcon.getIconWidth() == JBUIScale.scale(width) && foundIcon.getIconHeight() == JBUIScale.scale(height)) {
-    return foundIcon.withAnotherIconModifications(icon)
+      foundIcon.getIconWidth() == JBUIScale.scale(width) &&
+      foundIcon.getIconHeight() == JBUIScale.scale(height)) {
+    if (isDark == null) {
+      return foundIcon.withAnotherIconModifications(icon)
+    }
+    else {
+      return foundIcon.getDarkIcon(isDark = isDark)
+    }
   }
   return null
 }
@@ -55,7 +61,7 @@ private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int
  * @param size the size before system scaling (without `JBUIScale.scale`)
  */
 @ApiStatus.Internal
-fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int): Icon {
+fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int, isDark: Boolean? = null): Icon {
   if (icon.iconWidth == JBUIScale.scale(size)) {
     return icon
   }
@@ -65,7 +71,7 @@ fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int): Icon {
     cachedIcon = cachedIcon.retrieveIcon()
   }
   if (cachedIcon is CachedImageIcon) {
-    val version = loadIconCustomVersion(icon = cachedIcon, width = size, height = size)
+    val version = loadIconCustomVersion(icon = cachedIcon, width = size, height = size, isDark = isDark)
     if (version != null) {
       return version
     }

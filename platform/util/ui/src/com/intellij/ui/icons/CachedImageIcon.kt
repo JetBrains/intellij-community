@@ -48,23 +48,16 @@ internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
   IconTransform(dark = false, patchers = arrayOf(DeprecatedDuplicatesIconPathPatcher()), filter = null)
 )
 
-@TestOnly
-@Internal
-fun createCachedIcon(file: Path, scaleContext: ScaleContext): CachedImageIcon {
-  val path = file.toUri().toString()
-  return CachedImageIcon(resolver = ImageDataByFilePathLoader(path), scaleContext = scaleContext)
-}
-
 @Internal
 @ApiStatus.NonExtendable
-open class CachedImageIcon internal constructor(
+open class CachedImageIcon private constructor(
   // make not-null as soon as deprecated IconLoader.CachedImageIcon will be removed
   @Volatile
   @JvmField
   internal var resolver: ImageDataLoader?,
   private val isDarkOverridden: Boolean? = null,
   private val localFilterSupplier: (() -> RGBImageFilter)? = null,
-  private val colorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null,
+  private val colorPatcher: ColorPatcherStrategy = GlobalColorPatcherStrategy,
   private val useStroke: Boolean = false,
   private val toolTip: Supplier<String?>? = null,
   private val scaleContext: ScaleContext? = null,
@@ -80,6 +73,10 @@ open class CachedImageIcon internal constructor(
   val originalPath: String?
     get() = originalResolver?.path
 
+  @TestOnly
+  internal constructor(file: Path, scaleContext: ScaleContext)
+    : this(resolver = ImageDataByFilePathLoader(file.toUri().toString()), scaleContext = scaleContext)
+
   constructor(url: URL, useCacheOnLoad: Boolean, scaleContext: ScaleContext? = null) :
     this(resolver = ImageDataByUrlLoader(url = url, useCacheOnLoad = useCacheOnLoad), scaleContext = scaleContext) {
 
@@ -88,7 +85,7 @@ open class CachedImageIcon internal constructor(
   }
 
   internal constructor(resolver: ImageDataLoader, toolTip: Supplier<String?>?) :
-    this(resolver = resolver, isDarkOverridden = null, colorPatcher = null, toolTip = toolTip)
+    this(resolver = resolver, isDarkOverridden = null, toolTip = toolTip)
 
   @ApiStatus.Experimental
   fun getCoords(): Pair<String, ClassLoader>? = resolver?.getCoords()
@@ -109,6 +106,9 @@ open class CachedImageIcon internal constructor(
     val gc = c?.graphicsConfiguration ?: (g as? Graphics2D)?.deviceConfiguration
     synchronized(scaledIconCache) {
       checkPathTransform()
+      if (colorPatcher.updateDigest()) {
+        scaledIconCache.clear()
+      }
       scaledIconCache.getCachedIcon(host = this, gc = gc) ?: EMPTY_ICON
     }.paintIcon(c, g, x, y)
   }
@@ -209,7 +209,7 @@ open class CachedImageIcon internal constructor(
   private fun copy(
     isDarkOverridden: Boolean? = this.isDarkOverridden,
     localFilterSupplier: (() -> RGBImageFilter)? = this.localFilterSupplier,
-    colorPatcher: SVGLoader.SvgElementColorPatcherProvider? = this.colorPatcher,
+    colorPatcher: ColorPatcherStrategy = this.colorPatcher,
     useStroke: Boolean = this.useStroke,
   ): CachedImageIcon {
     val result = CachedImageIcon(resolver = resolver,
@@ -225,6 +225,10 @@ open class CachedImageIcon internal constructor(
   }
 
   override fun getDarkIcon(isDark: Boolean): Icon {
+    if (isDarkOverridden != null && isDarkOverridden == isDark) {
+      return this
+    }
+
     var result = if (isDark) darkVariant else null
     if (result == null) {
       synchronized(scaledIconCache) {
@@ -256,7 +260,11 @@ open class CachedImageIcon internal constructor(
 
   internal fun createWithFilter(filterSupplier: () -> RGBImageFilter): Icon = copy(localFilterSupplier = filterSupplier)
 
-  fun createWithPatcher(colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon = copy(colorPatcher = colorPatcher)
+  fun createWithPatcher(colorPatcher: SVGLoader.SvgElementColorPatcherProvider,
+                        useStroke: Boolean = this.useStroke,
+                        isDark: Boolean? = null): Icon {
+    return copy(colorPatcher = CustomColorPatcherStrategy(colorPatcher), useStroke = useStroke, isDarkOverridden = isDark)
+  }
 
   internal fun createStrokeIcon(): CachedImageIcon = copy(useStroke = true)
 
@@ -277,7 +285,7 @@ open class CachedImageIcon internal constructor(
                            scaleContext = scaleContext?.copy())
   }
 
-  val isDark: Boolean
+  internal val isDark: Boolean
     get() = isDarkOverridden ?: pathTransform.get().isDark
 
   private fun getFilters(): List<ImageFilter> {
@@ -294,7 +302,7 @@ open class CachedImageIcon internal constructor(
     val resolver = resolver ?: return null
     val image = resolver.loadImage(parameters = LoadIconParameters(filters = getFilters(),
                                                                    isDark = isDark,
-                                                                   colorPatcher = colorPatcher ?: SVGLoader.colorPatcherProvider,
+                                                                   colorPatcher = colorPatcher.colorPatcher,
                                                                    isStroke = useStroke),
                                    scaleContext = scaleContext)
     if (start != -1L) {
@@ -317,6 +325,7 @@ open class CachedImageIcon internal constructor(
 
       this.resolver = null
       scaledIconCache.clear()
+
       val darkVariant = darkVariant
       if (darkVariant != null) {
         this.darkVariant = null
@@ -330,4 +339,33 @@ open class CachedImageIcon internal constructor(
     get() {
       return (resolver ?: return 0).flags
     }
+}
+
+@TestOnly
+@Internal
+fun createCachedIcon(file: Path, scaleContext: ScaleContext): CachedImageIcon = CachedImageIcon(file, scaleContext = scaleContext)
+
+private sealed interface ColorPatcherStrategy {
+  /**
+   * Returns true if cache invalidation is required.
+   */
+  fun updateDigest(): Boolean
+
+  val colorPatcher: SVGLoader.SvgElementColorPatcherProvider?
+}
+
+private data object GlobalColorPatcherStrategy : ColorPatcherStrategy {
+  override fun updateDigest() = false
+
+  override val colorPatcher: SVGLoader.SvgElementColorPatcherProvider?
+    get() = SVGLoader.colorPatcherProvider
+}
+
+private class CustomColorPatcherStrategy(override val colorPatcher: SVGLoader.SvgElementColorPatcherProvider) : ColorPatcherStrategy {
+  private val lastDigest = AtomicReference(colorPatcher.digest())
+
+  override fun updateDigest(): Boolean {
+    val digest = colorPatcher.digest()
+    return !lastDigest.getAndSet(digest).contentEquals(digest)
+  }
 }

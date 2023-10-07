@@ -187,18 +187,18 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
     }
 
     return baseIcon.createWithPatcher(colorPatcher = object : SVGLoader.SvgElementColorPatcherProvider, SvgAttributePatcher {
-      private var lastColor = Long.MIN_VALUE
+      private var lastColor = Int.MIN_VALUE
       private var lastDigest: LongArray? = null
 
       override fun digest(): LongArray {
-        val color = colorProvider().rgb.toLong()
+        val color = colorProvider().rgb
         if (color == lastColor) {
           lastDigest?.let {
             return it
           }
         }
 
-        val digest = longArrayOf(packTwoIntToLong(color.toInt(), /* version of the implementation */ 0), /* patcher id*/ 1696494002622)
+        val digest = longArrayOf(color.toLong(), /* version and id of the implementation as unix timestamp */ 415155967890318959)
         lastColor = color
         lastDigest = digest
         return digest
