@@ -7,7 +7,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -80,17 +79,6 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
   }
 
   override fun dispose() = Unit
-}
-
-@Suppress("unused")  // Registered in the plugin's XML file
-class FileSemanticSearchServiceInitializer : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    // Instantiate service for the first time with state loading if available.
-    // Whether the state exists or not, we generate the missing embeddings:
-    if (SemanticSearchSettings.getInstance().enabledInFilesTab) {
-      FileEmbeddingsStorage.getInstance(project).prepareForSearch()
-    }
-  }
 }
 
 class IndexableFile(file: VirtualFile) : IndexableEntity {

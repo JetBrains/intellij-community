@@ -16,16 +16,7 @@
       implementation="com.intellij.searchEverywhereMl.semantics.SearchEverywhereSemanticPropertyProvider"/>
 
     <postStartupActivity
-      implementation="com.intellij.searchEverywhereMl.semantics.services.ActionSemanticSearchServiceInitializer"/>
-
-    <postStartupActivity
-      implementation="com.intellij.searchEverywhereMl.semantics.services.FileSemanticSearchServiceInitializer"/>
-
-    <postStartupActivity
-      implementation="com.intellij.searchEverywhereMl.semantics.services.SymbolSemanticSearchServiceInitializer"/>
-
-    <postStartupActivity
-      implementation="com.intellij.searchEverywhereMl.semantics.services.ClassSemanticSearchServiceInitializer"/>
+      implementation="com.intellij.searchEverywhereMl.semantics.services.SemanticSearchInitializer"/>
 
     <applicationService
       serviceInterface="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"

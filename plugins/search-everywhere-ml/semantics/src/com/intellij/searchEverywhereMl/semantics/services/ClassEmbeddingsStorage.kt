@@ -6,7 +6,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ml.embeddings.utils.splitIdentifierIntoTokens
@@ -58,15 +57,6 @@ class ClassEmbeddingsStorage(project: Project) : FileContentBasedEmbeddingsStora
     private const val INDEX_DIR = "classes"
 
     fun getInstance(project: Project) = project.service<ClassEmbeddingsStorage>()
-  }
-}
-
-@Suppress("unused")  // Registered in the plugin's XML file
-class ClassSemanticSearchServiceInitializer : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    if (SemanticSearchSettings.getInstance().enabledInClassesTab) {
-      ClassEmbeddingsStorage.getInstance(project).prepareForSearch()
-    }
   }
 }
 

@@ -1,6 +1,5 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
-import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -16,11 +15,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
-import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments
-import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments.SemanticSearchFeature
 import com.intellij.searchEverywhereMl.semantics.indices.InMemoryEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.semantics.utils.ScoredText
@@ -103,26 +99,6 @@ class ActionEmbeddingsStorage : AbstractEmbeddingsStorage() {
     internal fun getIndexableActionIds(): Set<String> {
       val actionManager = (ActionManager.getInstance() as ActionManagerImpl)
       return actionManager.actionIds.filter { shouldIndexAction(actionManager.getActionOrStub(it)) }.toSet()
-    }
-  }
-}
-
-@Suppress("unused")  // Registered in the plugin's XML file
-class ActionSemanticSearchServiceInitializer : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    // Instantiate service for the first time with state loading if available.
-    // Whether the state exists or not, we generate the missing embeddings:
-    if (SemanticSearchSettings.getInstance().enabledInActionsTab) {
-      ActionEmbeddingsStorage.getInstance().prepareForSearch(project)
-    }
-    else if ((ApplicationManager.getApplication().isInternal
-              || (ApplicationManager.getApplication().isEAP &&
-                  SearchEverywhereSemanticExperiments.getInstance().getSemanticFeatureForTab(
-                    ActionSearchEverywhereContributor::class.java.simpleName) == SemanticSearchFeature.ENABLED))
-             && !SemanticSearchSettings.getInstance().manuallyDisabledInActionsTab
-    ) {
-      // Manually enable search in the corresponding experiment groups
-      SemanticSearchSettings.getInstance().enabledInActionsTab = true
     }
   }
 }
