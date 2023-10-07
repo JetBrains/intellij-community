@@ -35,8 +35,11 @@ class SymbolEmbeddingStorage(project: Project) : FileContentBasedEmbeddingsStora
   )
   override val indexingTaskManager = EmbeddingIndexingTaskManager(index)
 
-  override val scanningTitle = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.symbols.scanning.label")
-  override val setupTitle = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.symbols.generation.label")
+  override val scanningTitle
+    get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.symbols.scanning.label")
+  override val setupTitle
+    get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.symbols.generation.label")
+
   override val spanIndexName = "semanticSymbols"
 
   override val indexMemoryWeight: Int = 2

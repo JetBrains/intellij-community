@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
 class ActionEmbeddingsStorageSetup(
   private val index: EmbeddingSearchIndex,
   private val setupTaskIndicator: AtomicReference<ProgressIndicator>
-) : Task.Backgroundable(null, SETUP_TITLE) {
+) : Task.Backgroundable(null, setupTitle) {
   private var shouldSaveToDisk = true
 
   override fun run(indicator: ProgressIndicator) {
@@ -30,7 +30,7 @@ class ActionEmbeddingsStorageSetup(
     // Cancel the previous embeddings calculation task if it's not finished
     setupTaskIndicator.getAndSet(indicator)?.cancel()
 
-    indicator.text = SETUP_TITLE
+    indicator.text = setupTitle
     var indexedActionsCount = index.size
     val totalIndexableActionsCount = indexableActionIds.size
     indicator.isIndeterminate = false
@@ -67,7 +67,9 @@ class ActionEmbeddingsStorageSetup(
   }
 
   companion object {
-    private val SETUP_TITLE = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.actions.generation.label")
+    private val setupTitle
+      get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.actions.generation.label")
+
     private const val BATCH_SIZE = 1
   }
 }

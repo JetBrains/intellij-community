@@ -28,12 +28,15 @@ class EmbeddingIndexingTaskManager(private val index: DiskSynchronizedEmbeddingS
 
   private val readyCondition = mutex.newCondition()
 
+  private val processingTaskName
+    get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.indexing.processing.label")
+
   fun scheduleTask(task: EmbeddingIndexingTask) = mutex.withLock {
     queue.add(task)
     if (!active) {
       active = true
       ProgressManager.getInstance().runProcessWithProgressAsynchronously(
-        object : Task.Backgroundable(null, PROCESSING_TASK_NAME) {
+        object : Task.Backgroundable(null, processingTaskName) {
           override fun run(indicator: ProgressIndicator) = processingJob()
         },
         EmptyProgressIndicator()
@@ -79,10 +82,6 @@ class EmbeddingIndexingTaskManager(private val index: DiskSynchronizedEmbeddingS
         }
       }
     }
-  }
-
-  companion object {
-    private val PROCESSING_TASK_NAME = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.indexing.processing.label")
   }
 }
 

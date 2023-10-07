@@ -35,8 +35,11 @@ class ClassEmbeddingsStorage(project: Project) : FileContentBasedEmbeddingsStora
   )
   override val indexingTaskManager = EmbeddingIndexingTaskManager(index)
 
-  override val scanningTitle = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.classes.scanning.label")
-  override val setupTitle = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.classes.generation.label")
+  override val scanningTitle
+    get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.classes.scanning.label")
+  override val setupTitle
+    get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.classes.generation.label")
+
   override val spanIndexName = "semanticClasses"
 
   override val indexMemoryWeight: Int = 1
