@@ -12,13 +12,17 @@ class KotlinCustomUBinaryExpressionWithType(
     override val psi: PsiElement,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UBinaryExpressionWithType {
+
+    private val typePart = UastLazyPart<PsiType>()
+
     override lateinit var operand: UExpression
         internal set
 
     override lateinit var operationKind: UastBinaryExpressionWithTypeKind
         internal set
 
-    override val type: PsiType by lz { typeReference?.type ?: UastErrorType }
+    override val type: PsiType
+        get() = typePart.getOrBuild { typeReference?.type ?: UastErrorType }
 
     override var typeReference: UTypeReferenceExpression? = null
         internal set

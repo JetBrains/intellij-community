@@ -6,20 +6,22 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
-import org.jetbrains.uast.wrapULiteral
 
 @ApiStatus.Internal
 class KotlinULiteralExpression(
     override val sourcePsi: KtConstantExpression,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), ULiteralExpression, KotlinUElementWithType, KotlinEvaluatableUElement, KotlinFakeUElement {
+
+    private val valuePart = UastLazyPart<Any?>()
+
     override val isNull: Boolean
         get() = sourcePsi.unwrapBlockOrParenthesis().node?.elementType == KtNodeTypes.NULL
 
-    override val value by lz { evaluate() }
+    override val value: Any?
+        get() = valuePart.getOrBuild { evaluate() }
 
     override fun unwrapToSourcePsi(): List<PsiElement> = listOfNotNull(wrapULiteral(this).sourcePsi)
 }

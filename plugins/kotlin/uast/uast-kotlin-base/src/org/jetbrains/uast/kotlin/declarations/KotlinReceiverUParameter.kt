@@ -7,6 +7,8 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class KotlinReceiverUParameter(
@@ -15,11 +17,13 @@ class KotlinReceiverUParameter(
     givenParent: UElement?
 ) : KotlinUParameter(psi, receiver, givenParent) {
 
-    override val uAnnotations: List<UAnnotation> by lz {
-        receiver.annotationEntries
-            .filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.RECEIVER }
-            .map { baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this) } +
-                super.uAnnotations
-    }
+    private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
 
+    override val uAnnotations: List<UAnnotation>
+        get() = uAnnotationsPart.getOrBuild {
+            receiver.annotationEntries
+                .filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.RECEIVER }
+                .map { baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this) } +
+                    super.uAnnotations
+        }
 }

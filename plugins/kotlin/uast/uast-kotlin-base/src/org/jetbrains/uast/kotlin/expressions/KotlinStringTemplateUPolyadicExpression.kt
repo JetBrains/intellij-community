@@ -19,15 +19,20 @@ class KotlinStringTemplateUPolyadicExpression(
     KotlinUElementWithType,
     KotlinEvaluatableUElement,
     UInjectionHost {
-    override val operands: List<UExpression> by lz {
-        sourcePsi.entries.map {
-            baseResolveProviderService.baseKotlinConverter.convertStringTemplateEntry(
-                it,
-                this,
-                DEFAULT_EXPRESSION_TYPES_LIST
-            )!!
-        }.takeIf { it.isNotEmpty() } ?: listOf(KotlinStringULiteralExpression(sourcePsi, this, ""))
-    }
+
+    private val operandsPart = UastLazyPart<List<UExpression>>()
+
+    override val operands: List<UExpression>
+        get() = operandsPart.getOrBuild {
+            sourcePsi.entries.map {
+                baseResolveProviderService.baseKotlinConverter.convertStringTemplateEntry(
+                    it,
+                    this,
+                    DEFAULT_EXPRESSION_TYPES_LIST
+                )!!
+            }.takeIf { it.isNotEmpty() } ?: listOf(KotlinStringULiteralExpression(sourcePsi, this, ""))
+        }
+
     override val operator = UastBinaryOperator.PLUS
 
     override val psiLanguageInjectionHost: PsiLanguageInjectionHost get() = sourcePsi

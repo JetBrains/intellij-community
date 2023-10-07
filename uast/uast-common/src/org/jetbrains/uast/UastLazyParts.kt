@@ -3,8 +3,18 @@ package org.jetbrains.uast
 
 import org.jetbrains.annotations.ApiStatus
 
-val UNINITIALIZED_UAST_PART = Any()
+@ApiStatus.Internal
+val UNINITIALIZED_UAST_PART = object : Any() {
+  override fun toString(): String {
+    return "UNINITIALIZED_UAST_PART"
+  }
+}
 
+/**
+ * More lightweight replacement for `lazy { }` inside UAST element implementations.
+ * It is used to decrease memory allocations during `toUElement()` conversions.
+ */
+@ApiStatus.Internal
 @Suppress("unused")
 class UastLazyPart<T> {
   var value: Any? = UNINITIALIZED_UAST_PART
@@ -19,10 +29,10 @@ class UastLazyPart<T> {
 @ApiStatus.Internal
 @Suppress("UNCHECKED_CAST")
 inline fun <T> UastLazyPart<T>.getOrBuild(crossinline initializer: () -> T): T {
-  var current: Any? = value
-  if (current != UNINITIALIZED_UAST_PART) return current as T
-
-  current = initializer.invoke()
-  value = current
-  return current
+  var current = value
+  if (current == UNINITIALIZED_UAST_PART) {
+    current = initializer.invoke()
+    value = current
+  }
+  return current as T
 }

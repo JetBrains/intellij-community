@@ -3,10 +3,13 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.uast.*
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
 
 @ApiStatus.Internal
@@ -16,14 +19,17 @@ class KotlinUMethodWithFakeLightDelegate(
     givenParent: UElement?
 ) : KotlinUMethod(fakePsi, original, givenParent) {
 
+    private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
+
     constructor(original: KtFunction, containingLightClass: PsiClass, givenParent: UElement?)
             : this(original, UastFakeSourceLightMethod(original, containingLightClass), givenParent)
 
-    override val uAnnotations: List<UAnnotation> by lz {
-        original.annotationEntries.map {
-            baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this)
+    override val uAnnotations: List<UAnnotation>
+        get() = uAnnotationsPart.getOrBuild {
+            original.annotationEntries.map {
+                baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this)
+            }
         }
-    }
 
     override fun getTextRange(): TextRange {
         return original.textRange

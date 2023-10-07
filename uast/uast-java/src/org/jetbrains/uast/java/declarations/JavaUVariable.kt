@@ -33,10 +33,10 @@ abstract class AbstractJavaUVariable(
 
   override val uastInitializer: UExpression?
     get() {
-      if (uastInitializerPart != UNINITIALIZED_UAST_PART) return uastInitializerPart as UExpression?
-
-      uastInitializerPart = javaPsi.initializer
-        ?.let { initializer -> UastFacade.findPlugin(initializer)?.convertElement(initializer, this) as? UExpression }
+      if (uastInitializerPart == UNINITIALIZED_UAST_PART) {
+        uastInitializerPart = javaPsi.initializer
+          ?.let { initializer -> UastFacade.findPlugin(initializer)?.convertElement(initializer, this) as? UExpression }
+      }
 
       return uastInitializerPart as UExpression?
     }
@@ -44,18 +44,19 @@ abstract class AbstractJavaUVariable(
   @Suppress("UNCHECKED_CAST")
   override val uAnnotations: List<UAnnotation>
     get() {
-      if (uAnnotationsPart != UNINITIALIZED_UAST_PART) return uAnnotationsPart as List<UAnnotation>
+      if (uAnnotationsPart == UNINITIALIZED_UAST_PART) {
+        uAnnotationsPart = javaPsi.annotations.map { JavaUAnnotation(it, this) }
+      }
 
-      uAnnotationsPart = javaPsi.annotations.map { JavaUAnnotation(it, this) }
       return uAnnotationsPart as List<UAnnotation>
     }
 
   override val typeReference: UTypeReferenceExpression?
     get() {
-      if (typeReferencePart != UNINITIALIZED_UAST_PART) return typeReferencePart as UTypeReferenceExpression?
-
-      typeReferencePart = javaPsi.typeElement?.let {
-        UastFacade.findPlugin(it)?.convertOpt<UTypeReferenceExpression>(javaPsi.typeElement, this)
+      if (typeReferencePart == UNINITIALIZED_UAST_PART) {
+        typeReferencePart = javaPsi.typeElement?.let {
+          UastFacade.findPlugin(it)?.convertOpt<UTypeReferenceExpression>(javaPsi.typeElement, this)
+        }
       }
       return typeReferencePart as UTypeReferenceExpression?
     }

@@ -18,11 +18,20 @@ class KotlinScriptUClass(
     psi: KtLightClassForScript,
     givenParent: UElement?
 ) : AbstractKotlinUClass(givenParent), PsiClass by psi {
+    private val uastAnchorPart = UastLazyPart<UIdentifier>()
+
     override fun getContainingFile(): PsiFile = unwrapFakeFileForLightClass(psi.containingFile)
 
     override fun getNameIdentifier(): PsiIdentifier = UastLightIdentifier(psi, psi.kotlinOrigin)
 
-    override val uastAnchor: UIdentifier by lz { KotlinUIdentifier(nameIdentifier, sourcePsi?.nameIdentifier, this) }
+    override val uastAnchor: UIdentifier
+        get() = uastAnchorPart.getOrBuild {
+            KotlinUIdentifier(
+                nameIdentifier,
+                sourcePsi?.nameIdentifier,
+                this
+            )
+        }
 
     override val javaPsi: PsiClass = psi
 
@@ -44,8 +53,7 @@ class KotlinScriptUClass(
     private fun createUMethod(method: PsiMethod): UMethod {
         return if (method.isConstructor) {
             KotlinScriptConstructorUMethod(psi.script, method as KtLightMethod, this)
-        }
-        else {
+        } else {
             languagePlugin?.convertOpt(method, this) ?: reportConvertFailure(method)
         }
     }
@@ -54,14 +62,18 @@ class KotlinScriptUClass(
 
     @ApiStatus.Internal
     class KotlinScriptConstructorUMethod(
-        script: KtScript,
+        private val script: KtScript,
         override val psi: KtLightMethod,
         givenParent: UElement?
     ) : KotlinUMethod(psi, psi.kotlinOrigin, givenParent) {
-        override val uastBody: UExpression? by lz {
-            val initializers = script.declarations.filterIsInstance<KtScriptInitializer>()
-            KotlinLazyUBlockExpression.create(initializers, this)
-        }
+        private val uastBodyPart = UastLazyPart<UExpression?>()
+
+        override val uastBody: UExpression?
+            get() = uastBodyPart.getOrBuild {
+                val initializers = script.declarations.filterIsInstance<KtScriptInitializer>()
+                KotlinLazyUBlockExpression.create(initializers, this)
+            }
+
         override val javaPsi = psi
     }
 }

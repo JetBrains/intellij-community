@@ -37,14 +37,19 @@ private fun createNullLiteralExpression(containingElement: UElement?) =
 
 private fun createNotEqWithNullExpression(variable: UVariable, containingElement: UElement?) =
     object : UBinaryExpression {
+        private val leftOperandPart = UastLazyPart<UExpression>()
+        private val rightOperandPart = UastLazyPart<UExpression>()
+
         override val psi: PsiElement? = null
         override val uastParent: UElement? = containingElement
-        override val leftOperand: UExpression by lz {
-            createVariableReferenceExpression(variable, this)
-        }
-        override val rightOperand: UExpression by lz {
-            createNullLiteralExpression(this)
-        }
+        override val leftOperand: UExpression
+            get() = leftOperandPart.getOrBuild {
+                createVariableReferenceExpression(variable, this)
+            }
+        override val rightOperand: UExpression
+            get() = rightOperandPart.getOrBuild {
+                createNullLiteralExpression(this)
+            }
         override val operator: UastBinaryOperator = UastBinaryOperator.NOT_EQUALS
         override val operatorIdentifier: UIdentifier = KotlinUIdentifier(null, this)
         override fun resolveOperator(): PsiMethod? = null
@@ -64,20 +69,31 @@ private fun createElvisExpressions(
     declaration.declarations = listOf(tempVariable)
 
     val ifExpression = object : UIfExpression {
+        private val conditionPart = UastLazyPart<UExpression>()
+        private val thenExpressionPart = UastLazyPart<UExpression?>()
+        private val elseExpressionPart = UastLazyPart<UExpression?>()
+
         override val psi: PsiElement? = null
         override val uastParent: UElement? = containingElement
         override val javaPsi: PsiElement? = null
         override val sourcePsi: PsiElement? = null
-        override val condition: UExpression by lz {
-            createNotEqWithNullExpression(tempVariable, this)
-        }
-        override val thenExpression: UExpression? by lz {
-            createVariableReferenceExpression(tempVariable, this)
-        }
-        override val elseExpression: UExpression? by lz {
-            val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
-            service.baseKotlinConverter.convertExpression(right, this, DEFAULT_EXPRESSION_TYPES_LIST)
-        }
+
+        override val condition: UExpression
+            get() = conditionPart.getOrBuild {
+                createNotEqWithNullExpression(tempVariable, this)
+            }
+
+        override val thenExpression: UExpression?
+            get() = thenExpressionPart.getOrBuild {
+                createVariableReferenceExpression(tempVariable, this)
+            }
+
+        override val elseExpression: UExpression?
+            get() = elseExpressionPart.getOrBuild {
+                val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
+                service.baseKotlinConverter.convertExpression(right, this, DEFAULT_EXPRESSION_TYPES_LIST)
+            }
+
         override val isTernary: Boolean = false
         override val uAnnotations: List<UAnnotation> = emptyList()
         override val ifIdentifier: UIdentifier = KotlinUIdentifier(null, this)
@@ -102,6 +118,8 @@ class KotlinUElvisExpression(
     givenParent: UElement?
 ) : KotlinAbstractUElement(givenParent), UExpressionList, KotlinEvaluatableUElement {
 
+    private val expressionsPart = UastLazyPart<List<UExpression>>()
+
     override val javaPsi: PsiElement? = null
     override val sourcePsi: PsiElement = elvisExpression
     override val psi: PsiElement = sourcePsi
@@ -113,18 +131,21 @@ class KotlinUElvisExpression(
             return annotatedExpression.annotationEntries.mapNotNull { languagePlugin?.convertOpt(it, this) }
         }
 
-    override val expressions: List<UExpression> by lz {
-        createElvisExpressions(left, right, this, elvisExpression.parent)
-    }
+    override val expressions: List<UExpression>
+        get() = expressionsPart.getOrBuild {
+            createElvisExpressions(left, right, this, elvisExpression.parent)
+        }
 
-    val lhsDeclaration get() = (expressions[0] as UDeclarationsExpression).declarations.single()
-    val rhsIfExpression get() = expressions[1] as UIfExpression
+    val lhsDeclaration: UDeclaration
+        get() = (expressions[0] as UDeclarationsExpression).declarations.single()
+    val rhsIfExpression: UIfExpression
+        get() = expressions[1] as UIfExpression
 
     override fun asRenderString(): String {
         return kind.name + " " +
-               expressions.joinToString(separator = "\n", prefix = "{\n", postfix = "\n}") {
-                   it.asRenderString().withMargin
-               }
+                expressions.joinToString(separator = "\n", prefix = "{\n", postfix = "\n}") {
+                    it.asRenderString().withMargin
+                }
     }
 
     override fun getExpressionType(): PsiType? {

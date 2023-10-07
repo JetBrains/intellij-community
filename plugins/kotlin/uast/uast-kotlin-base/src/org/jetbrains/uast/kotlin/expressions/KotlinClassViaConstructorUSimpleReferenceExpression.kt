@@ -12,6 +12,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastVisitor
 
@@ -21,12 +23,16 @@ class KotlinClassViaConstructorUSimpleReferenceExpression(
     override val identifier: String,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression, KotlinUElementWithType {
+
+    private val resolvedPart = UastLazyPart<PsiClass?>()
+
     override val resolvedName: String?
         get() = (resolved as? PsiNamedElement)?.name
 
-    private val resolved by lz {
-        baseResolveProviderService.resolveToClassIfConstructorCall(sourcePsi, this)
-    }
+    private val resolved: PsiClass?
+        get() = resolvedPart.getOrBuild {
+            baseResolveProviderService.resolveToClassIfConstructorCall(sourcePsi, this)
+        }
 
     override fun accept(visitor: UastVisitor) {
         super<KotlinAbstractUExpression>.accept(visitor)

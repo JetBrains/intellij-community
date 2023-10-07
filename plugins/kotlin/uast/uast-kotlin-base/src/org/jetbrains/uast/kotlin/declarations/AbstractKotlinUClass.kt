@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
@@ -22,14 +21,19 @@ abstract class AbstractKotlinUClass(
     givenParent: UElement?
 ) : KotlinAbstractUElement(givenParent), UClass, UAnchorOwner {
 
-    override val uastDeclarations by lz {
-        mutableListOf<UDeclaration>().apply {
-            addAll(fields)
-            addAll(initializers)
-            addAll(methods)
-            addAll(innerClasses)
+    private val uastDeclarationsPart = UastLazyPart<List<UDeclaration>>()
+    private val delegateExpressionsPart = UastLazyPart<List<UExpression>>()
+    private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
+
+    override val uastDeclarations: List<UDeclaration>
+        get() = uastDeclarationsPart.getOrBuild {
+            mutableListOf<UDeclaration>().apply {
+                addAll(fields)
+                addAll(initializers)
+                addAll(methods)
+                addAll(innerClasses)
+            }
         }
-    }
 
     protected open val ktClass: KtClassOrObject?
         get() = (psi as? KtLightClass)?.kotlinOrigin
@@ -39,11 +43,12 @@ abstract class AbstractKotlinUClass(
             KotlinUTypeReferenceExpression(it, this)
         }
 
-    private val delegateExpressions: List<UExpression> by lz {
-        ktClass?.superTypeListEntries.orEmpty()
-            .filterIsInstance<KtDelegatedSuperTypeEntry>()
-            .map { KotlinSupertypeDelegationUExpression(it, this) }
-    }
+    private val delegateExpressions: List<UExpression>
+        get() = delegateExpressionsPart.getOrBuild {
+            ktClass?.superTypeListEntries.orEmpty()
+                .filterIsInstance<KtDelegatedSuperTypeEntry>()
+                .map { KotlinSupertypeDelegationUExpression(it, this) }
+        }
 
     protected fun computeMethods(): Array<UMethod> {
         val hasPrimaryConstructor = ktClass?.hasPrimaryConstructor() ?: false
@@ -100,11 +105,12 @@ abstract class AbstractKotlinUClass(
         visitor.afterVisitClass(this)
     }
 
-    override val uAnnotations: List<UAnnotation> by lz {
-        (sourcePsi as? KtModifierListOwner)?.annotationEntries.orEmpty().map {
-            baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this)
+    override val uAnnotations: List<UAnnotation>
+        get() = uAnnotationsPart.getOrBuild {
+            (sourcePsi as? KtModifierListOwner)?.annotationEntries.orEmpty().map {
+                baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this)
+            }
         }
-    }
 
     override fun equals(other: Any?) = other is AbstractKotlinUClass && psi == other.psi
     override fun hashCode() = psi.hashCode()

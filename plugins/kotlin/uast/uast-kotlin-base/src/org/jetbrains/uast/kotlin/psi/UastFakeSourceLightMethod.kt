@@ -15,7 +15,8 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.uast.UastErrorType
-import org.jetbrains.uast.kotlin.lz
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 open class UastFakeSourceLightMethod(
@@ -23,87 +24,92 @@ open class UastFakeSourceLightMethod(
     containingClass: PsiClass,
 ) : UastFakeSourceLightMethodBase<KtFunction>(original, containingClass) {
 
-    private val _typeParameterList by lz {
-        KotlinLightTypeParameterListBuilder(this).also { paramList ->
-            for ((i, p) in original.typeParameters.withIndex()) {
-                paramList.addParameter(
-                    object : KotlinLightTypeParameterBuilder(
-                        p.name ?: "__no_name__",
-                        this,
-                        i,
-                        p
-                    ) {
-                        private val myExtendsList by lz {
-                            super.getExtendsList().apply {
-                                p.extendsBound?.let { extendsBound ->
-                                    val psiType = baseResolveProviderService.resolveToType(
-                                        extendsBound,
-                                        this@UastFakeSourceLightMethod
-                                    )
-                                    (psiType as? PsiClassType)?.let { addReference(it) }
+    private val typeParameterListPart = UastLazyPart<PsiTypeParameterList>()
+    private val parameterListPart = UastLazyPart<PsiParameterList>()
+
+    override fun getTypeParameterList(): PsiTypeParameterList {
+        return typeParameterListPart.getOrBuild {
+            KotlinLightTypeParameterListBuilder(this).also { paramList ->
+                for ((i, p) in original.typeParameters.withIndex()) {
+                    paramList.addParameter(
+                        object : KotlinLightTypeParameterBuilder(
+                            p.name ?: "__no_name__",
+                            this,
+                            i,
+                            p
+                        ) {
+                            private val myExtendsListPart = UastLazyPart<LightReferenceListBuilder>()
+
+                            override fun getExtendsList(): LightReferenceListBuilder {
+                                return myExtendsListPart.getOrBuild {
+                                    super.getExtendsList().apply {
+                                        p.extendsBound?.let { extendsBound ->
+                                            val psiType = baseResolveProviderService.resolveToType(
+                                                extendsBound,
+                                                this@UastFakeSourceLightMethod
+                                            )
+                                            (psiType as? PsiClassType)?.let { addReference(it) }
+                                        }
+                                    }
                                 }
                             }
                         }
+                    )
+                }
+            }
+        }
+    }
 
-                        override fun getExtendsList(): LightReferenceListBuilder = myExtendsList
+    override fun getParameterList(): PsiParameterList {
+        return parameterListPart.getOrBuild {
+            object : LightParameterListBuilder(original.manager, original.language) {
+                override fun getParent(): PsiElement = this@UastFakeSourceLightMethod
+                override fun getContainingFile(): PsiFile = parent.containingFile
+
+                init {
+                    val parameterList = this
+
+                    original.receiverTypeReference?.let { receiver ->
+                        this.addParameter(
+                            UastKotlinPsiParameterBase(
+                                "\$this\$${original.name}",
+                                baseResolveProviderService.resolveToType(receiver, this@UastFakeSourceLightMethod)
+                                    ?: UastErrorType,
+                                parameterList,
+                                receiver
+                            )
+                        )
                     }
-                )
-            }
-        }
-    }
 
-    override fun getTypeParameterList(): PsiTypeParameterList = _typeParameterList
-
-    private val _parameterList: PsiParameterList by lz {
-        object : LightParameterListBuilder(original.manager, original.language) {
-            override fun getParent(): PsiElement = this@UastFakeSourceLightMethod
-            override fun getContainingFile(): PsiFile = parent.containingFile
-
-            init {
-                val parameterList = this
-
-                original.receiverTypeReference?.let { receiver ->
-                    this.addParameter(
-                        UastKotlinPsiParameterBase(
-                            "\$this\$${original.name}",
-                            baseResolveProviderService.resolveToType(receiver, this@UastFakeSourceLightMethod)
-                                ?: UastErrorType,
-                            parameterList,
-                            receiver
+                    for ((i, p) in original.valueParameters.withIndex()) {
+                        val type = baseResolveProviderService.getType(p, this@UastFakeSourceLightMethod, isForFake = true)
+                            ?: UastErrorType
+                        val adjustedType = if (p.isVarArg && type is PsiArrayType)
+                            PsiEllipsisType(type.componentType, type.annotationProvider)
+                        else type
+                        this.addParameter(
+                            UastKotlinPsiParameter(
+                                baseResolveProviderService,
+                                p.name ?: "p$i",
+                                adjustedType,
+                                parameterList,
+                                original.language,
+                                p.isVarArg,
+                                p.defaultValue,
+                                p
+                            )
                         )
-                    )
-                }
+                    }
 
-                for ((i, p) in original.valueParameters.withIndex()) {
-                    val type = baseResolveProviderService.getType(p, this@UastFakeSourceLightMethod, isForFake = true)
-                        ?: UastErrorType
-                    val adjustedType = if (p.isVarArg && type is PsiArrayType)
-                        PsiEllipsisType(type.componentType, type.annotationProvider)
-                    else type
-                    this.addParameter(
-                        UastKotlinPsiParameter(
-                            baseResolveProviderService,
-                            p.name ?: "p$i",
-                            adjustedType,
-                            parameterList,
-                            original.language,
-                            p.isVarArg,
-                            p.defaultValue,
-                            p
+                    if (isSuspendFunction()) {
+                        this.addParameter(
+                            UastKotlinPsiSuspendContinuationParameter.create(this@UastFakeSourceLightMethod, original)
                         )
-                    )
-                }
-
-                if (isSuspendFunction()) {
-                    this.addParameter(
-                        UastKotlinPsiSuspendContinuationParameter.create(this@UastFakeSourceLightMethod, original)
-                    )
+                    }
                 }
             }
         }
     }
-
-    override fun getParameterList(): PsiParameterList = _parameterList
 }
 
 @ApiStatus.Internal
@@ -115,7 +121,7 @@ class UastFakeSourceLightPrimaryConstructor(
 }
 
 @ApiStatus.Internal
-abstract class UastFakeSourceLightMethodBase<T: KtDeclaration>(
+abstract class UastFakeSourceLightMethodBase<T : KtDeclaration>(
     internal val original: T,
     containingClass: PsiClass,
 ) : UastFakeLightMethodBase(
@@ -133,6 +139,8 @@ abstract class UastFakeSourceLightMethodBase<T: KtDeclaration>(
         }
     }
 
+    private val returnTypePart = UastLazyPart<PsiType?>()
+
     override fun hasModifierProperty(name: String): Boolean {
         return when (name) {
             PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE -> {
@@ -147,12 +155,15 @@ abstract class UastFakeSourceLightMethodBase<T: KtDeclaration>(
 
                 name == PsiModifier.PUBLIC
             }
+
             PsiModifier.ABSTRACT -> {
                 original.hasModifier(KtTokens.ABSTRACT_KEYWORD) || containingClass?.isInterface == true
             }
+
             PsiModifier.OPEN -> {
                 original.hasModifier(KtTokens.OPEN_KEYWORD)
             }
+
             PsiModifier.FINAL -> {
                 // TODO: top-level / unspecified declaration / inside final containingClass?
                 original.hasModifier(KtTokens.FINAL_KEYWORD)
@@ -193,13 +204,14 @@ abstract class UastFakeSourceLightMethodBase<T: KtDeclaration>(
         return original is KtConstructor<*>
     }
 
-    private val _returnType: PsiType? by lz {
-        if (isSuspendFunction()) {
-            // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
-            return@lz PsiType.getJavaLangObject(original.manager, original.resolveScope)
+    private val _returnType: PsiType?
+        get() = returnTypePart.getOrBuild {
+            if (isSuspendFunction()) {
+                // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
+                return@getOrBuild PsiType.getJavaLangObject(original.manager, original.resolveScope)
+            }
+            baseResolveProviderService.getType(original, this, isForFake = true)
         }
-        baseResolveProviderService.getType(original, this, isForFake = true)
-    }
 
     override fun getReturnType(): PsiType? {
         return _returnType
