@@ -5,6 +5,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
+import com.intellij.util.io.CleanableStorage;
+import com.intellij.util.io.Unmappable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
@@ -366,7 +368,7 @@ public final class SpecializedFileAttributes {
     void flush() throws IOException;
   }
 
-  private static abstract class FastAttributeAccessorHelper implements FileAttributeAccessorEx, Closeable {
+  private static abstract class FastAttributeAccessorHelper implements FileAttributeAccessorEx, Closeable, Unmappable, CleanableStorage {
     protected final @NotNull MappedFileStorageHelper helper;
 
 
@@ -385,6 +387,16 @@ public final class SpecializedFileAttributes {
     @Override
     public void close() throws IOException {
       helper.close();
+    }
+
+    @Override
+    public void closeAndUnsafelyUnmap() throws IOException {
+      helper.closeAndUnsafelyUnmap();
+    }
+
+    @Override
+    public void closeAndClean() throws IOException {
+      helper.closeAndClean();
     }
   }
 

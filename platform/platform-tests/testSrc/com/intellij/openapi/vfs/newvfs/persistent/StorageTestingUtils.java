@@ -17,8 +17,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -56,7 +55,7 @@ public final class StorageTestingUtils {
     }
     alreadyProcessed.add(storage);
 
-    Field[] fields = storage.getClass().getDeclaredFields();
+    Field[] fields = collectAllFields(storage);
     for (Field field : fields) {
       if (Modifier.isStatic(field.getModifiers())
           || field.isSynthetic()
@@ -156,7 +155,7 @@ public final class StorageTestingUtils {
       log(depth, fieldName, "just dive deeper...");
     }
 
-    Field[] fields = value.getClass().getDeclaredFields();
+    Field[] fields = collectAllFields(value);
     for (Field field : fields) {
 
       if (Modifier.isStatic(field.getModifiers())
@@ -175,6 +174,13 @@ public final class StorageTestingUtils {
 
       bestEffortToCloseAndClean(field.getName(), fieldValue, alreadyProcessed, depth + 1);
     }
+  }
+
+
+  private static Field[] collectAllFields(@NotNull Object value) {
+    //RC: collect through all the hierarchy seems too dangerous
+    //return ReflectionUtil.collectFields(value.getClass()).toArray(Field[]::new);
+    return value.getClass().getDeclaredFields();
   }
 
   //TODO bestEffortToCloseAndUnmap(@NotNull Object storage)
@@ -223,6 +229,6 @@ public final class StorageTestingUtils {
   }
 
   private static void log(String message) {
-  //  System.out.println(message);
+    //System.out.println(message);
   }
 }

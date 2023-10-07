@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl.FileIdIndexedSto
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
 import com.intellij.util.io.CleanableStorage;
+import com.intellij.util.io.Unmappable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +68,7 @@ public final class FastFileAttributes {
     return accessor;
   }
 
-  public static final class Int3FileAttribute implements FileIdIndexedStorage, Closeable, CleanableStorage {
+  public static final class Int3FileAttribute implements FileIdIndexedStorage, Closeable, Unmappable, CleanableStorage {
     public static final int FIELDS = 3;
     public static final int ROW_SIZE = FIELDS * Integer.BYTES;
 
@@ -116,13 +117,19 @@ public final class FastFileAttributes {
     }
 
     @Override
+    public void closeAndUnsafelyUnmap() throws IOException {
+      storageHelper.closeAndUnsafelyUnmap();
+    }
+
+    @Override
     public void closeAndClean() throws IOException {
       storageHelper.closeAndClean();
     }
   }
 
   private static final class TimestampedBooleanAttributeAccessorImpl
-    implements TimestampedBooleanAttributeAccessor, FileIdIndexedStorage, Closeable {
+    implements TimestampedBooleanAttributeAccessor, FileIdIndexedStorage,
+               Unmappable, CleanableStorage, Closeable {
     public static final int ROW_SIZE = Long.BYTES;
 
     private final MappedFileStorageHelper storageHelper;
@@ -162,6 +169,16 @@ public final class FastFileAttributes {
     @Override
     public void close() throws IOException {
       storageHelper.close();
+    }
+
+    @Override
+    public void closeAndUnsafelyUnmap() throws IOException {
+      storageHelper.closeAndUnsafelyUnmap();
+    }
+
+    @Override
+    public void closeAndClean() throws IOException {
+      storageHelper.closeAndClean();
     }
   }
 
