@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -26,7 +27,7 @@ abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAct
     private val elementPointer = element.createSmartPointer()
 
     val element: T?
-        get() = elementPointer.element
+        get() = runReadAction { elementPointer.element }
 
     open val isCrossLanguageFix: Boolean = false
 
