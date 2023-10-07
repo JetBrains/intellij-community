@@ -416,15 +416,17 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     return result
   }
 
-  private fun fromPluginBundle(key: String, @Nls defaultValue: String?): String? = (resourceBundleBaseName?.let { baseName ->
-    try {
-      AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(classLoader, baseName), key,defaultValue ?: "")
-    }
-    catch (_: MissingResourceException) {
-      LOG.info("Cannot find plugin $id resource-bundle: $baseName")
-      null
-    }
-  }) ?: defaultValue
+  private fun fromPluginBundle(key: String, @Nls defaultValue: String?): String? {
+    return (resourceBundleBaseName?.let { baseName ->
+      try {
+        AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(classLoader, baseName), key, defaultValue ?: "")
+      }
+      catch (_: MissingResourceException) {
+        LOG.info("Cannot find plugin $id resource-bundle: $baseName")
+        null
+      }
+    }) ?: defaultValue
+  }
 
   override fun getChangeNotes(): String? = changeNotes
 
@@ -440,14 +442,16 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getOptionalDependentPluginIds(): Array<PluginId> {
     val pluginDependencies = pluginDependencies
-    return if (pluginDependencies.isEmpty())
-      PluginId.EMPTY_ARRAY
-    else
-      pluginDependencies.asSequence()
+    if (pluginDependencies.isEmpty()) {
+      return PluginId.EMPTY_ARRAY
+    }
+    else {
+      return pluginDependencies.asSequence()
         .filter { it.isOptional }
         .map { it.pluginId }
         .toList()
         .toTypedArray()
+    }
   }
 
   override fun getVendor(): String? = vendor
@@ -467,11 +471,9 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   /*
-     This setter was explicitly defined to be able to set a category for a
-     descriptor outside its loading from the xml file.
-     Problem was that most commonly plugin authors do not publish the plugin's
-     category in its .xml file so to be consistent in plugins representation
-     (e.g. in the Plugins form) we have to set this value outside.
+     This setter was explicitly defined to be able to set a category for a descriptor outside its loading from the xml file.
+     The problem was that most commonly plugin authors do not publish the plugin's category in its .xml file,
+     so to be consistent in plugin representation (e.g., in the Plugins form) we have to set this value outside.
   */
   fun setCategory(category: String?) {
     this.category = category
@@ -515,22 +517,24 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun isRequireRestart(): Boolean = isRestartRequired
 
-  override fun equals(other: Any?): Boolean =
-    this === other || other is IdeaPluginDescriptorImpl && id == other.id && descriptorPath == other.descriptorPath
+  override fun equals(other: Any?): Boolean {
+    return this === other || other is IdeaPluginDescriptorImpl && id == other.id && descriptorPath == other.descriptorPath
+  }
 
-  override fun hashCode(): Int =
-    31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
+  override fun hashCode(): Int = 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
 
-  override fun toString(): String =
-    "PluginDescriptor(name=$name, id=$id, " +
-    (if (moduleName == null) "" else "moduleName=$moduleName, ") +
-    "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
-    "path=${pluginPathToUserString(path)}, version=$version, package=$packagePrefix, isBundled=$isBundled)"
+  override fun toString(): String {
+    return "PluginDescriptor(name=$name, id=$id, " +
+           (if (moduleName == null) "" else "moduleName=$moduleName, ") +
+           "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
+           "path=${pluginPathToUserString(path)}, version=$version, package=$packagePrefix, isBundled=$isBundled)"
+  }
 }
 
 // don't expose user home in error messages
-internal fun pluginPathToUserString(file: Path): String =
-  file.toString().replace("${System.getProperty("user.home")}${File.separatorChar}", "~${File.separatorChar}")
+internal fun pluginPathToUserString(file: Path): String {
+  return file.toString().replace("${System.getProperty("user.home")}${File.separatorChar}", "~${File.separatorChar}")
+}
 
 private fun checkCycle(descriptor: IdeaPluginDescriptorImpl, configFile: String, visitedFiles: List<String>) {
   var i = 0
