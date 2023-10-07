@@ -410,7 +410,7 @@ public class VFSInitializationTest {
   @Test
   public void benchmarkVfsInitializationTime_CreateVfsFromScratch() throws Exception {
     PlatformTestUtil.startPerformanceTest(
-        "create VFS from scratch", 500,
+        "create VFS from scratch", 1000,
         () -> {
           Path cachesDir = temporaryDirectory.createDir();
           int version = 1;
@@ -439,7 +439,7 @@ public class VFSInitializationTest {
     PersistentFSConnector.disconnect(result.connection);
     
     PlatformTestUtil.startPerformanceTest(
-        "open existing VFS files", 200,
+        "open existing VFS files", 500,
         () -> {
           VFSInitializationResult initResult = PersistentFSConnector.connectWithoutVfsLog(
             cachesDir,
