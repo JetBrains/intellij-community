@@ -661,6 +661,7 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
           "controller" -> client = ClientKind.CONTROLLER
           "owner" -> client = ClientKind.OWNER
           "remote" -> client = ClientKind.REMOTE
+          "frontend" -> client = ClientKind.FRONTEND
           "all" -> client = ClientKind.ALL
           else -> LOG.error("Unknown client value: ${reader.getAttributeValue(i)} at ${reader.location}")
         }

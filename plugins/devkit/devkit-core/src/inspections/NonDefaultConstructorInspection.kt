@@ -79,6 +79,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
             "guest" -> ClientKind.GUEST
             "owner" -> ClientKind.OWNER
             "remote" -> ClientKind.REMOTE
+            "frontend" -> ClientKind.FRONTEND
             "all" -> ClientKind.ALL
             else -> null
           }

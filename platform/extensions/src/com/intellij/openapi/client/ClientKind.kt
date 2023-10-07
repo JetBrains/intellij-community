@@ -16,6 +16,8 @@ enum class ClientKind {
    */
   LOCAL,
 
+  FRONTEND,
+
   /**
    * A remote owner connected to the IDE. Operates with IDE being connected through the Gateway
    *
