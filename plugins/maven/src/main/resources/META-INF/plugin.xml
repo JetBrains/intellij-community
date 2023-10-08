@@ -819,6 +819,15 @@
       <reference id="EditSource"/>
     </group>
 
+    <group id="Maven.ProfilesMenu" popup="true">
+      <action id="Maven.ResetProfiles"
+              class="org.jetbrains.idea.maven.project.actions.ResetProfilesAction"/>
+    </group>
+
+    <group id="Maven.ProfileMenu" popup="true">
+      <reference ref="Maven.ToggleProfile"/>
+    </group>
+
     <group id="Maven.BuildMenu" popup="true" class="org.jetbrains.idea.maven.navigator.actions.MavenBuildMenu">
       <group id="Maven.CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
       <separator/>

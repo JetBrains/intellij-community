@@ -62,6 +62,13 @@ class ProfileNode extends MavenSimpleNode {
     return "Maven.ToggleProfile";
   }
 
+  @Override
+  @Nullable
+  @NonNls
+  String getMenuId() {
+    return "Maven.ProfileMenu";
+  }
+
   @Nullable
   @Override
   public Navigatable getNavigatable() {
