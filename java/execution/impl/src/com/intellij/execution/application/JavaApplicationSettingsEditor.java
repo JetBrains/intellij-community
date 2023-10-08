@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.ui.*;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseListener;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -95,12 +97,17 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
       GridBag constraints = new GridBag().setDefaultFill(GridBagConstraints.HORIZONTAL).setDefaultWeightX(1.0);
       add(myClassEditorField, constraints.nextLine());
 
-      myUnnamedClassField = new TextFieldWithAutoCompletion<>(getProject(), new StringsCompletionProvider(
-        DumbService.isDumb(getProject()) ? null
-                                         : ContainerUtil.map(StubIndex.getInstance().getAllKeys(JavaStubIndexKeys.UNNAMED_CLASSES, getProject()),
-                                                             JavaUnnamedClassUtil::trimJavaExtension),
-          AllIcons.FileTypes.JavaClass
-      ), true, null);
+      myUnnamedClassField = new TextFieldWithAutoCompletion<>(getProject(), new StringsCompletionProvider(null, AllIcons.FileTypes.JavaClass) {
+        @Override
+        public @NotNull Collection<String> getItems(String prefix, boolean cached, CompletionParameters parameters) {
+            return DumbService.isDumb(getProject())
+                   ? List.of()
+                   : ContainerUtil.map(
+                     StubIndex.getInstance().getAllKeys(JavaStubIndexKeys.UNNAMED_CLASSES, getProject()),
+                     JavaUnnamedClassUtil::trimJavaExtension
+                   );
+        }
+      }, true, null);
       CommonParameterFragments.setMonospaced(myUnnamedClassField);
       String unnamedClassPlaceholder = ExecutionBundle.message("application.configuration.main.unnamed.class.placeholder");
       myUnnamedClassField.setVisible(myIsUnnamedClassConfiguration);
