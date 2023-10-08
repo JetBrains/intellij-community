@@ -61,7 +61,7 @@ public abstract class GitHandler {
   protected static final Logger CALL_TRACE_LOG = Logger.getInstance("#call_trace." + GitHandler.class.getName());
 
   private final Project myProject;
-  @NotNull protected final GitExecutable myExecutable;
+  protected final @NotNull GitExecutable myExecutable;
   private final GitCommand myCommand;
 
   private boolean myPreValidateExecutable = true;
@@ -73,7 +73,7 @@ public abstract class GitHandler {
   private boolean myStdoutSuppressed; // If true, the standard output is not copied to version control console
   private boolean myStderrSuppressed; // If true, the standard error is not copied to version control console
 
-  @Nullable private ThrowableConsumer<? super OutputStream, IOException> myInputProcessor; // The processor for stdin
+  private @Nullable ThrowableConsumer<? super OutputStream, IOException> myInputProcessor; // The processor for stdin
 
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   protected boolean mySilent; // if true, the command execution is not logged in version control view
@@ -83,7 +83,7 @@ public abstract class GitHandler {
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
 
-  @Nullable protected OpenTelemetrySpanHolder mySpanHolder;
+  protected @Nullable OpenTelemetrySpanHolder mySpanHolder;
 
   /**
    * A constructor
@@ -156,9 +156,8 @@ public abstract class GitHandler {
     myExecutableContext = new GitExecutableContext(gitVcs, root, executableType);
   }
 
-  @NotNull
-  private static List<@NonNls String> getConfigParameters(@Nullable Project project,
-                                                          @NotNull List<@NonNls String> requestedConfigParameters) {
+  private static @NotNull List<@NonNls String> getConfigParameters(@Nullable Project project,
+                                                                   @NotNull List<@NonNls String> requestedConfigParameters) {
     if (project == null || !GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(project)) {
       return Collections.emptyList();
     }
@@ -175,13 +174,11 @@ public abstract class GitHandler {
     return toPass;
   }
 
-  @NotNull
-  protected ProcessEventListener listeners() {
+  protected @NotNull ProcessEventListener listeners() {
     return myListeners.getMulticaster();
   }
 
-  @Nullable
-  public Project project() {
+  public @Nullable Project project() {
     return myProject;
   }
 
@@ -194,8 +191,7 @@ public abstract class GitHandler {
     return myExecutableContext;
   }
 
-  @NotNull
-  public GitExecutable getExecutable() {
+  public @NotNull GitExecutable getExecutable() {
     return myExecutable;
   }
 
@@ -232,8 +228,7 @@ public abstract class GitHandler {
     }
   }
 
-  @NotNull
-  private String escapeParameterIfNeeded(@NotNull @NonNls String parameter) {
+  private @NotNull String escapeParameterIfNeeded(@NotNull @NonNls String parameter) {
     if (escapeNeeded(parameter)) {
       return parameter.replaceAll("\\^", "^^^^");
     }
@@ -258,7 +253,7 @@ public abstract class GitHandler {
     }
   }
 
-  public void addRelativeFiles(@NotNull final Collection<? extends VirtualFile> files) {
+  public void addRelativeFiles(final @NotNull Collection<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), file));
     }
@@ -289,8 +284,7 @@ public abstract class GitHandler {
   /**
    * @return a command line with full path to executable replace to "git"
    */
-  @NlsSafe
-  public String printableCommandLine() {
+  public @NlsSafe String printableCommandLine() {
     if (getExecutable().isLocal()) {
       return unescapeCommandLine(myCommandLine.getCommandLineString("git")); //NON-NLS
     }
@@ -299,16 +293,14 @@ public abstract class GitHandler {
     }
   }
 
-  @NotNull
-  private String unescapeCommandLine(@NotNull String commandLine) {
+  private @NotNull String unescapeCommandLine(@NotNull String commandLine) {
     if (escapeNeeded(commandLine)) {
       return commandLine.replaceAll("\\^\\^\\^\\^", "^");
     }
     return commandLine;
   }
 
-  @NotNull
-  public Charset getCharset() {
+  public @NotNull Charset getCharset() {
     return myCommandLine.getCharset();
   }
 

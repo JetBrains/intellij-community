@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,13 +26,13 @@ public class DialogManager {
     dialogManager().showDialog(dialog);
   }
 
-  public static int showMessage(@NotNull @DialogMessage final String message,
-                                @NotNull @DialogTitle final String title,
+  public static int showMessage(final @NotNull @DialogMessage String message,
+                                final @NotNull @DialogTitle String title,
                                 final String @NotNull @Button [] options,
                                 final int defaultButtonIndex,
                                 final int focusedButtonIndex,
-                                @Nullable final Icon icon,
-                                @Nullable final DialogWrapper.DoNotAskOption dontAskOption) {
+                                final @Nullable Icon icon,
+                                final @Nullable DialogWrapper.DoNotAskOption dontAskOption) {
     return dialogManager().showMessageDialog(message, title, options, defaultButtonIndex, focusedButtonIndex, icon, dontAskOption);
   }
 
@@ -89,8 +89,7 @@ public class DialogManager {
     return Messages.showDialog(message, title, options, defaultButtonIndex, focusedButtonIndex, icon, dontAskOption);
   }
 
-  @NotNull
-  private static DialogManager dialogManager() {
+  private static @NotNull DialogManager dialogManager() {
     return ApplicationManager.getApplication().getService(DialogManager.class);
   }
 }

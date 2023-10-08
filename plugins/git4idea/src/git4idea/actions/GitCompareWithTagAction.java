@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.actions.DvcsCompareWithAction;
@@ -13,11 +13,8 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitContentRevision;
-import git4idea.GitNotificationIdsHolder;
-import git4idea.GitRevisionNumber;
 import git4idea.GitTag;
-import git4idea.GitUtil;
+import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
@@ -39,9 +36,8 @@ public class GitCompareWithTagAction extends DvcsCompareWithAction<GitRepository
     return false;
   }
 
-  @NotNull
   @Override
-  protected GitRepositoryManager getRepositoryManager(@NotNull Project project) {
+  protected @NotNull GitRepositoryManager getRepositoryManager(@NotNull Project project) {
     return GitUtil.getRepositoryManager(project);
   }
 
@@ -75,11 +71,10 @@ public class GitCompareWithTagAction extends DvcsCompareWithAction<GitRepository
     showDiffBetweenRevision(project, file, revNumTitle1, revNumTitle2, () -> getDiffChanges(project, repository, file, tagName));
   }
 
-  @NotNull
-  private static Collection<Change> getDiffChanges(@NotNull Project project,
-                                                   @NotNull GitRepository repository,
-                                                   @NotNull VirtualFile file,
-                                                   @NotNull String tagName) throws VcsException {
+  private static @NotNull Collection<Change> getDiffChanges(@NotNull Project project,
+                                                            @NotNull GitRepository repository,
+                                                            @NotNull VirtualFile file,
+                                                            @NotNull String tagName) throws VcsException {
     FilePath filePath = VcsUtil.getFilePath(file);
     String refToCompare = GitTag.REFS_TAGS_PREFIX + tagName;
     GitRevisionNumber revisionNumber = new GitRevisionNumber(refToCompare);

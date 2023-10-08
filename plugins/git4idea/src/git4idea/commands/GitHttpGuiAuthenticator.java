@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -55,14 +55,14 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   private static final Logger LOG = Logger.getInstance(GitHttpGuiAuthenticator.class);
   private static final String HTTP_SCHEME_URL_PREFIX = "http" + URLUtil.SCHEME_SEPARATOR;
 
-  @NotNull private final Project myProject;
-  @Nullable private final String myPresetUrl; //taken from GitHandler, used if git does not provide url
-  @NotNull private final File myWorkingDirectory;
-  @NotNull private final AuthenticationGate myAuthenticationGate;
-  @NotNull private final AuthenticationMode myAuthenticationMode;
+  private final @NotNull Project myProject;
+  private final @Nullable String myPresetUrl; //taken from GitHandler, used if git does not provide url
+  private final @NotNull File myWorkingDirectory;
+  private final @NotNull AuthenticationGate myAuthenticationGate;
+  private final @NotNull AuthenticationMode myAuthenticationMode;
 
   private boolean myWasRequested = false;
-  @Nullable private volatile ProviderAndData myProviderAndData = null;
+  private volatile @Nullable ProviderAndData myProviderAndData = null;
   private volatile boolean myCredentialHelperShouldBeUsed = false;
 
   GitHttpGuiAuthenticator(@NotNull Project project,
@@ -77,8 +77,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     myAuthenticationMode = authenticationMode;
   }
 
-  @Nullable
-  private static String findFirstHttpUrl(@NotNull Collection<String> urls) {
+  private static @Nullable String findFirstHttpUrl(@NotNull Collection<String> urls) {
     return ContainerUtil.find(urls, url -> UriUtil.splitScheme(url).getFirst().startsWith("http"));
   }
 
@@ -86,8 +85,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
    * At this point either {@link #myProviderAndData} is filled in {@link #askUsername(String)} or username is contained in url
    */
   @Override
-  @Nullable
-  public String askPassword(@NotNull String url) {
+  public @Nullable String askPassword(@NotNull String url) {
     myWasRequested = true;
 
     ProviderAndData providerAndData = myProviderAndData;
@@ -125,8 +123,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
   @Override
-  @Nullable
-  public String askUsername(@NotNull String url) {
+  public @Nullable String askUsername(@NotNull String url) {
     myWasRequested = true;
 
     String unifiedUrl = splitToUsernameAndUnifiedUrl(getRequiredUrl(url)).second;
@@ -150,9 +147,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
   }
 
-  @Nullable
-  private ProviderAndData acquireData(@NotNull String unifiedUrl,
-                                      @NotNull Function<? super AuthDataProvider, ? extends AuthData> dataAcquirer) {
+  private @Nullable ProviderAndData acquireData(@NotNull String unifiedUrl,
+                                                @NotNull Function<? super AuthDataProvider, ? extends AuthData> dataAcquirer) {
     return myAuthenticationGate.waitAndCompute(() -> {
       for (AuthDataProvider provider : getProviders(unifiedUrl)) {
         try {
@@ -184,8 +180,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
 
-  @NotNull
-  private List<AuthDataProvider> getProviders(@NotNull String unifiedUrl) {
+  private @NotNull List<AuthDataProvider> getProviders(@NotNull String unifiedUrl) {
     List<AuthDataProvider> delegates = new ArrayList<>();
     PasswordSafeProvider passwordSafeProvider =
       new PasswordSafeProvider(unifiedUrl, GitRememberedInputs.getInstance(), PasswordSafe.getInstance());
@@ -247,8 +242,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
    * Get the URL to be used as the authentication data identifier in the password safe and the settings.
    * git <=1.7.7 does not provide url so we have to pass it via handler
    */
-  @NotNull
-  private String getRequiredUrl(@Nullable String urlFromGit) {
+  private @NotNull String getRequiredUrl(@Nullable String urlFromGit) {
     if (urlFromGit != null && !StringUtil.isEmptyOrSpaces(urlFromGit)) {
       return urlFromGit;
     }
@@ -263,8 +257,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
    *
    * @return nullable username and non-nullable url
    */
-  @NotNull
-  private static Couple<String> splitToUsernameAndUnifiedUrl(@NotNull String url) {
+  private static @NotNull Couple<String> splitToUsernameAndUnifiedUrl(@NotNull String url) {
     if (StringUtil.isEmptyOrSpaces(url)) return Couple.of(null, url);
 
     Couple<String> couple = UriUtil.splitScheme(url);
@@ -280,22 +273,18 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
   }
 
-  private static abstract class AuthDataProvider {
-    @NotNull protected final String myUrl;
+  private abstract static class AuthDataProvider {
+    protected final @NotNull String myUrl;
 
     protected AuthDataProvider(@NotNull String url) {
       myUrl = url;
     }
 
-    @NonNls
-    @NotNull
-    abstract String getName();
+    abstract @NonNls @NotNull String getName();
 
-    @Nullable
-    abstract AuthData getData();
+    abstract @Nullable AuthData getData();
 
-    @Nullable
-    abstract AuthData getDataForKnownLogin(@NotNull String login);
+    abstract @Nullable AuthData getDataForKnownLogin(@NotNull String login);
 
     abstract void onAuthSuccess();
 
@@ -303,8 +292,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
   private static class ExtensionAdapterProvider extends AuthDataProvider {
-    @NotNull private final Project myProject;
-    @NotNull private final GitHttpAuthDataProvider myDelegate;
+    private final @NotNull Project myProject;
+    private final @NotNull GitHttpAuthDataProvider myDelegate;
 
     private AuthData myData = null;
 
@@ -314,9 +303,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myDelegate = provider;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myDelegate.getClass().getName();
     }
 
@@ -345,8 +333,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
   private static class DialogProvider extends AuthDataProvider {
-    @NotNull private final Project myProject;
-    @NotNull private final PasswordSafeProvider myPasswordSafeDelegate;
+    private final @NotNull Project myProject;
+    private final @NotNull PasswordSafeProvider myPasswordSafeDelegate;
     private final boolean showActionForGitHelper;
     private boolean myCancelled;
     private boolean myDataForSession = false;
@@ -361,21 +349,18 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       this.showActionForGitHelper = showActionForGitHelper;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myDataForSession ? "Session Provider" : "Dialog";
     }
 
     @Override
-    @Nullable
-    public AuthData getData() {
+    public @Nullable AuthData getData() {
       return getDataFromDialog(myUrl, myPasswordSafeDelegate.getRememberedLogin(myUrl), true);
     }
 
     @Override
-    @Nullable
-    public AuthData getDataForKnownLogin(@NotNull String login) {
+    public @Nullable AuthData getDataForKnownLogin(@NotNull String login) {
       return getDataFromDialog(myUrl, login, false);
     }
 
@@ -391,8 +376,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myPasswordSafeDelegate.onAuthFailure();
     }
 
-    @NotNull
-    private AuthData getDataFromDialog(@NotNull String url, @Nullable String username, boolean editableUsername) {
+    private @NotNull AuthData getDataFromDialog(@NotNull String url, @Nullable String username, boolean editableUsername) {
       Map<String, InteractiveGitHttpAuthDataProvider> providers = new HashMap<>();
       for (GitRepositoryHostingService service : GitRepositoryHostingService.EP_NAME.getExtensionList()) {
         InteractiveGitHttpAuthDataProvider provider = editableUsername || username == null
@@ -426,11 +410,10 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       return authData;
     }
 
-    @NotNull
-    private GitHttpLoginDialog showAuthDialog(@NotNull String url,
-                                              @Nullable String username,
-                                              boolean editableUsername,
-                                              @NotNull Map<String, ? extends InteractiveGitHttpAuthDataProvider> interactiveProviders) {
+    private @NotNull GitHttpLoginDialog showAuthDialog(@NotNull String url,
+                                                       @Nullable String username,
+                                                       boolean editableUsername,
+                                                       @NotNull Map<String, ? extends InteractiveGitHttpAuthDataProvider> interactiveProviders) {
       Ref<GitHttpLoginDialog> dialogRef = Ref.create();
       ApplicationManager.getApplication().invokeAndWait(() -> {
         GitHttpLoginDialog dialog =
@@ -450,8 +433,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   @VisibleForTesting
   static class PasswordSafeProvider extends AuthDataProvider {
-    @NotNull private final DvcsRememberedInputs myRememberedInputs;
-    @NotNull private final PasswordSafe myPasswordSafe;
+    private final @NotNull DvcsRememberedInputs myRememberedInputs;
+    private final @NotNull PasswordSafe myPasswordSafe;
 
     private AuthData myData;
 
@@ -463,28 +446,24 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myPasswordSafe = passwordSafe;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return "Password Safe";
     }
 
     @Override
-    @Nullable
-    public AuthData getData() {
+    public @Nullable AuthData getData() {
       String rememberedLogin = getRememberedLogin(myUrl);
       if (rememberedLogin == null) return null;
       return getDataForKnownLogin(rememberedLogin);
     }
 
-    @Nullable
-    public String getRememberedLogin(@NotNull String url) {
+    public @Nullable String getRememberedLogin(@NotNull String url) {
       return myRememberedInputs.getUserNameForUrl(url);
     }
 
     @Override
-    @Nullable
-    public AuthData getDataForKnownLogin(@NotNull String login) {
+    public @Nullable AuthData getDataForKnownLogin(@NotNull String login) {
       String key = makeKey(myUrl, login);
       Credentials credentials = PasswordSafe.getInstance().get(credentialAttributes(key));
       String password = StringUtil.nullize(credentials == null ? null : credentials.getPasswordAsString());
@@ -527,8 +506,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     @VisibleForTesting
-    @NotNull
-    static CredentialAttributes credentialAttributes(@NotNull String key) {
+    static @NotNull CredentialAttributes credentialAttributes(@NotNull String key) {
       return new CredentialAttributes(generateServiceName(GitBundle.message("label.credential.store.key.http.password"), key), key);
     }
 
@@ -536,8 +514,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
      * Makes the password database key for the URL: inserts the login after the scheme: http://login@url.
      */
     @VisibleForTesting
-    @NotNull
-    static String makeKey(@NotNull String url, @Nullable String login) {
+    static @NotNull String makeKey(@NotNull String url, @Nullable String login) {
       if (login == null) {
         return url;
       }
@@ -581,9 +558,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
   private static final class ProviderAndData {
-    @NotNull private final AuthDataProvider myProvider;
-    @NotNull private final String myLogin;
-    @NotNull private final String myPassword;
+    private final @NotNull AuthDataProvider myProvider;
+    private final @NotNull String myLogin;
+    private final @NotNull String myPassword;
 
     private ProviderAndData(@NotNull AuthDataProvider provider, @NotNull String login, @NotNull String password) {
       myProvider = provider;
@@ -591,24 +568,20 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myPassword = password;
     }
 
-    @NotNull
-    private AuthDataProvider getProvider() {
+    private @NotNull AuthDataProvider getProvider() {
       return myProvider;
     }
 
-    @NotNull
-    private String getLogin() {
+    private @NotNull String getLogin() {
       return myLogin;
     }
 
-    @NotNull
-    private String getPassword() {
+    private @NotNull String getPassword() {
       return myPassword;
     }
 
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "provider='" + myProvider.getName() + "', login='" + myLogin + '\'';
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +25,7 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
 class GitLogRecord {
   private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
 
-  @NotNull protected final Map<GitLogParser.GitLogOption, String> myOptions;
+  protected final @NotNull Map<GitLogParser.GitLogOption, String> myOptions;
   protected final boolean mySupportsRawBody;
 
   protected GitHandler myHandler;
@@ -36,8 +36,7 @@ class GitLogRecord {
     mySupportsRawBody = supportsRawBody;
   }
 
-  @NotNull
-  private String lookup(@NotNull GitLogParser.GitLogOption key) {
+  private @NotNull String lookup(@NotNull GitLogParser.GitLogOption key) {
     String value = myOptions.get(key);
     if (value == null) {
       LOG.error("Missing value for option " + key + ", while executing " + myHandler);
@@ -134,14 +133,12 @@ class GitLogRecord {
     return parents.split(" ");
   }
 
-  @NotNull
-  public Collection<String> getRefs() {
+  public @NotNull Collection<String> getRefs() {
     final String decorate = myOptions.get(REF_NAMES);
     return parseRefNames(decorate);
   }
 
-  @NotNull
-  public Map<GitLogParser.GitLogOption, String> getOptions() {
+  public @NotNull Map<GitLogParser.GitLogOption, String> getOptions() {
     return myOptions;
   }
 
@@ -149,8 +146,7 @@ class GitLogRecord {
     return mySupportsRawBody;
   }
 
-  @NotNull
-  private static List<String> parseRefNames(@Nullable final String decoration) {
+  private static @NotNull List<String> parseRefNames(final @Nullable String decoration) {
     if (decoration == null) {
       return ContainerUtil.emptyList();
     }
@@ -182,9 +178,8 @@ class GitLogRecord {
     myHandler = handler;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return String.format("GitLogRecord{myOptions=%s, mySupportsRawBody=%s, myHandler=%s}",
                          myOptions, mySupportsRawBody, myHandler);
   }

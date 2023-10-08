@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log;
 
 import com.intellij.diff.DiffContentFactoryEx;
@@ -45,8 +45,8 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class GitLogDiffHandler implements VcsLogDiffHandler {
   private static final Logger LOG = Logger.getInstance(GitLogDiffHandler.class);
-  @NotNull private final Project myProject;
-  @NotNull private final DiffContentFactoryEx myDiffContentFactory;
+  private final @NotNull Project myProject;
+  private final @NotNull DiffContentFactoryEx myDiffContentFactory;
 
   public GitLogDiffHandler(@NotNull Project project) {
     myProject = project;
@@ -131,14 +131,12 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
     });
   }
 
-  @NotNull
-  private static String getTitleForPaths(@NotNull VirtualFile root, @NotNull Collection<? extends FilePath> filePaths) {
+  private static @NotNull String getTitleForPaths(@NotNull VirtualFile root, @NotNull Collection<? extends FilePath> filePaths) {
     String joinedPaths = StringUtil.join(filePaths, path -> VcsFileUtil.relativePath(root, path), ", ");
     return StringUtil.shortenTextWithEllipsis(joinedPaths, 100, 0);
   }
 
-  @NotNull
-  private DiffContent createCurrentDiffContent(@NotNull FilePath localPath) throws VcsException {
+  private @NotNull DiffContent createCurrentDiffContent(@NotNull FilePath localPath) throws VcsException {
     GitSubmodule submodule = GitContentRevision.getRepositoryIfSubmodule(myProject, localPath);
     if (submodule != null) {
       ContentRevision revision = GitSubmoduleContentRevision.createCurrentRevision(submodule.getRepository());
@@ -152,10 +150,9 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
     }
   }
 
-  @NotNull
-  private DiffContent createDiffContent(@NotNull VirtualFile root,
-                                        @Nullable FilePath path,
-                                        @NotNull Hash hash) throws VcsException {
+  private @NotNull DiffContent createDiffContent(@NotNull VirtualFile root,
+                                                 @Nullable FilePath path,
+                                                 @NotNull Hash hash) throws VcsException {
 
     DiffContent diffContent;
     GitRevisionNumber revisionNumber = new GitRevisionNumber(hash.asString());
@@ -185,9 +182,8 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
     return diffContent;
   }
 
-  @NotNull
   @Override
-  public ContentRevision createContentRevision(@NotNull FilePath filePath, @NotNull Hash hash) {
+  public @NotNull ContentRevision createContentRevision(@NotNull FilePath filePath, @NotNull Hash hash) {
     GitRevisionNumber revisionNumber = new GitRevisionNumber(hash.asString());
     return GitContentRevision.createRevision(filePath, revisionNumber, myProject);
   }

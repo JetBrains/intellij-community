@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -22,9 +22,8 @@ import org.jetbrains.annotations.Nullable;
 public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutterActionProvider {
   private static final GitVcsApplicationSettings SETTINGS = GitVcsApplicationSettings.getInstance();
 
-  @NotNull
   @Override
-  public AnAction createAction(@NotNull final FileAnnotation annotation) {
+  public @NotNull AnAction createAction(final @NotNull FileAnnotation annotation) {
     return new MyGroup(annotation);
   }
 
@@ -89,7 +88,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
   }
 
   private static class ToggleIgnoreWhitespaces extends ToggleAction implements DumbAware {
-    @NotNull private final Project myProject;
+    private final @NotNull Project myProject;
 
     ToggleIgnoreWhitespaces(@NotNull Project project) {
       super(GitBundle.message("annotations.options.ignore.whitespaces"));
@@ -114,7 +113,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
   }
 
   private static class ToggleInnerMovementsWhitespaces extends ToggleAction implements DumbAware {
-    @NotNull private final Project myProject;
+    private final @NotNull Project myProject;
 
     ToggleInnerMovementsWhitespaces(@NotNull Project project) {
       super(GitBundle.message("annotations.options.detect.movements.within.file"));
@@ -145,7 +144,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
   }
 
   private static class ToggleOuterMovementsWhitespaces extends ToggleAction implements DumbAware {
-    @NotNull private final Project myProject;
+    private final @NotNull Project myProject;
 
     ToggleOuterMovementsWhitespaces(@NotNull Project project) {
       super(GitBundle.message("annotations.options.detect.movements.across.files"));

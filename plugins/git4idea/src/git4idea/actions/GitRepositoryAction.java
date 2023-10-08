@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -33,7 +33,7 @@ import java.util.List;
 public abstract class GitRepositoryAction extends DumbAwareAction {
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     GitVcs vcs = GitVcs.getInstance(project);
@@ -51,8 +51,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
    *
    * @return the list of the roots, or null
    */
-  @Nullable
-  public static List<VirtualFile> getGitRoots(Project project, GitVcs vcs) {
+  public static @Nullable List<VirtualFile> getGitRoots(Project project, GitVcs vcs) {
     try {
       VirtualFile[] contentRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
       if (ArrayUtil.isEmpty(contentRoots)) {
@@ -77,9 +76,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
    *
    * @return the name of action
    */
-  @NlsActions.ActionText
-  @NotNull
-  protected abstract String getActionName();
+  protected abstract @NlsActions.ActionText @NotNull String getActionName();
 
 
   /**
@@ -94,7 +91,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
                                   @NotNull VirtualFile defaultRoot);
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     boolean enabled = isEnabled(e);
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {

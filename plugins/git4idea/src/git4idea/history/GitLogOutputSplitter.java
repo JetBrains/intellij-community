@@ -24,12 +24,12 @@ import java.util.function.Consumer;
  * Parsed records are passed to the specified {@link Consumer}.
  */
 class GitLogOutputSplitter<R extends GitLogRecord> implements GitLineHandlerListener {
-  @NotNull private final GitLineHandler myHandler;
-  @NotNull private final GitLogParser<R> myParser;
-  @NotNull private final Consumer<? super R> myRecordConsumer;
+  private final @NotNull GitLineHandler myHandler;
+  private final @NotNull GitLogParser<R> myParser;
+  private final @NotNull Consumer<? super R> myRecordConsumer;
 
-  @NotNull @Nls private final StringBuilder myErrors = new StringBuilder();
-  @Nullable private VcsException myException = null;
+  private final @NotNull @Nls StringBuilder myErrors = new StringBuilder();
+  private @Nullable VcsException myException = null;
 
   GitLogOutputSplitter(@NotNull GitLineHandler handler,
                        @NotNull GitLogParser<R> parser,

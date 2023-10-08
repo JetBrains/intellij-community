@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -203,9 +203,8 @@ public final class GitFileUtils {
     Git.getInstance().runCommand(handler).throwOnError();
   }
 
-  @NotNull
-  private static List<String> excludeIgnoredFiles(@NotNull Project project, @NotNull VirtualFile root,
-                                                  @NotNull List<String> paths) throws VcsException {
+  private static @NotNull List<String> excludeIgnoredFiles(@NotNull Project project, @NotNull VirtualFile root,
+                                                           @NotNull List<String> paths) throws VcsException {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LS_FILES);
     handler.setSilent(true);
     handler.addParameters("--ignored", "--others", "--exclude-standard");

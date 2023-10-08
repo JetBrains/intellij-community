@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -62,11 +62,11 @@ abstract class GitMergeAction extends GitRepositoryAction {
 
   protected static class DialogState {
     final VirtualFile selectedRoot;
-    @NlsContexts.ProgressTitle final String progressTitle;
+    final @NlsContexts.ProgressTitle String progressTitle;
     final Supplier<GitLineHandler> handlerProvider;
-    @NotNull final GitBranch selectedBranch;
+    final @NotNull GitBranch selectedBranch;
     final boolean commitAfterMerge;
-    @NotNull final List<String> selectedOptions;
+    final @NotNull List<String> selectedOptions;
 
     DialogState(@NotNull VirtualFile root,
                 @NlsContexts.ProgressTitle @NotNull String title,
@@ -83,9 +83,8 @@ abstract class GitMergeAction extends GitRepositoryAction {
     }
   }
 
-  @Nullable
-  protected abstract DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
-                                               @NotNull VirtualFile defaultRoot);
+  protected abstract @Nullable DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
+                                                         @NotNull VirtualFile defaultRoot);
 
   protected abstract String getNotificationErrorDisplayId();
 

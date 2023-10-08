@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.externalProcessAuthHelper.*;
@@ -36,14 +36,14 @@ import static com.intellij.util.ObjectUtils.notNull;
 public final class GitHandlerAuthenticationManager implements AutoCloseable {
   private static final Logger LOG = Logger.getInstance(GitHandlerAuthenticationManager.class);
 
-  @NotNull private final GitLineHandler myHandler;
-  @NotNull private final Project myProject;
-  @NotNull private final GitVersion myVersion;
+  private final @NotNull GitLineHandler myHandler;
+  private final @NotNull Project myProject;
+  private final @NotNull GitVersion myVersion;
 
-  @Nullable private UUID myHttpHandler;
+  private @Nullable UUID myHttpHandler;
   private volatile boolean myHttpAuthFailed;
 
-  @Nullable private UUID myNativeSshHandler;
+  private @Nullable UUID myNativeSshHandler;
 
   private final Disposable myDisposable = Disposer.newDisposable();
 
@@ -55,10 +55,9 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     myVersion = version;
   }
 
-  @NotNull
-  public static GitHandlerAuthenticationManager prepare(@NotNull Project project,
-                                                        @NotNull GitLineHandler handler,
-                                                        @NotNull GitVersion version) throws IOException {
+  public static @NotNull GitHandlerAuthenticationManager prepare(@NotNull Project project,
+                                                                 @NotNull GitLineHandler handler,
+                                                                 @NotNull GitVersion version) throws IOException {
     GitHandlerAuthenticationManager manager = new GitHandlerAuthenticationManager(project, handler, version);
     GitUtil.tryRunOrClose(manager, () -> {
       manager.prepareHttpAuth();

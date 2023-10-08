@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import git4idea.branch.GitBranchUtil;
@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class GitBranch extends GitReference {
 
-  @NonNls public static final String REFS_HEADS_PREFIX = "refs/heads/"; // Prefix for local branches ({@value})
-  @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/"; // Prefix for remote branches ({@value})
+  public static final @NonNls String REFS_HEADS_PREFIX = "refs/heads/"; // Prefix for local branches ({@value})
+  public static final @NonNls String REFS_REMOTES_PREFIX = "refs/remotes/"; // Prefix for remote branches ({@value})
 
   protected GitBranch(@NotNull String name) {
     super(GitBranchUtil.stripRefsPrefix(name));
@@ -37,8 +37,7 @@ public abstract class GitBranch extends GitReference {
   public abstract boolean isRemote();
 
   @Override
-  @NotNull
-  public String getFullName() {
+  public @NotNull String getFullName() {
     return (isRemote() ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;
   }
 }

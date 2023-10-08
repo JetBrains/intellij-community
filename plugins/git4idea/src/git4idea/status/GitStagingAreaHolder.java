@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.status;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
@@ -43,15 +43,13 @@ public class GitStagingAreaHolder {
     myRepository = repository;
   }
 
-  @NotNull
-  public List<GitFileStatus> getAllRecords() {
+  public @NotNull List<GitFileStatus> getAllRecords() {
     synchronized (LOCK) {
       return new ArrayList<>(myRecords);
     }
   }
 
-  @Nullable
-  public GitFileStatus findRecord(@NotNull FilePath path) {
+  public @Nullable GitFileStatus findRecord(@NotNull FilePath path) {
     synchronized (LOCK) {
       return ContainerUtil.find(myRecords, it -> it.getPath().equals(path));
     }
@@ -63,33 +61,28 @@ public class GitStagingAreaHolder {
     }
   }
 
-  @NotNull
-  public List<GitConflict> getAllConflicts() {
+  public @NotNull List<GitConflict> getAllConflicts() {
     synchronized (LOCK) {
       return ContainerUtil.mapNotNull(myRecords, this::createConflict);
     }
   }
 
-  @Nullable
-  public GitConflict findConflict(@NotNull FilePath path) {
+  public @Nullable GitConflict findConflict(@NotNull FilePath path) {
     return createConflict(findRecord(path));
   }
 
-  @Nullable
-  private GitConflict createConflict(@Nullable GitFileStatus record) {
+  private @Nullable GitConflict createConflict(@Nullable GitFileStatus record) {
     if (record == null) return null;
     return createConflict(myRepository.getRoot(), record);
   }
 
-  @Nullable
-  public static GitConflict createConflict(@NotNull VirtualFile root, @NotNull GitFileStatus record) {
+  public static @Nullable GitConflict createConflict(@NotNull VirtualFile root, @NotNull GitFileStatus record) {
     if (!GitIndexStatusUtilKt.isConflicted(record.getIndex(), record.getWorkTree())) return null;
     return new GitConflict(root, record.getPath(),
                            getConflictStatus(record.getIndex()), getConflictStatus(record.getWorkTree()));
   }
 
-  @NotNull
-  private static GitConflict.Status getConflictStatus(char status) {
+  private static @NotNull GitConflict.Status getConflictStatus(char status) {
     if (status == 'A') return GitConflict.Status.ADDED;
     if (status == 'D') return GitConflict.Status.DELETED;
     return GitConflict.Status.MODIFIED;
@@ -99,9 +92,8 @@ public class GitStagingAreaHolder {
   /**
    * untracked/ignored files are processed separately in {@link git4idea.repo.GitUntrackedFilesHolder} and {@link git4idea.ignore.GitRepositoryIgnoredFilesHolder}
    */
-  @NotNull
   @ApiStatus.Internal
-  public List<GitFileStatus> refresh(@NotNull List<FilePath> dirtyPaths) throws VcsException {
+  public @NotNull List<GitFileStatus> refresh(@NotNull List<FilePath> dirtyPaths) throws VcsException {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     VirtualFile root = myRepository.getRoot();
 
@@ -155,9 +147,8 @@ public class GitStagingAreaHolder {
    * @return the map whose values are lists of dirty paths to check, grouped by root
    * The paths will be automatically collapsed later if the summary length more than limit, see {@link GitHandler#isLargeCommandLine()}.
    */
-  @NotNull
   @ApiStatus.Internal
-  public static Map<VirtualFile, List<FilePath>> collectDirtyPaths(@NotNull VcsDirtyScope dirtyScope) {
+  public static @NotNull Map<VirtualFile, List<FilePath>> collectDirtyPaths(@NotNull VcsDirtyScope dirtyScope) {
     Project project = dirtyScope.getProject();
     AbstractVcs vcs = dirtyScope.getVcs();
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);

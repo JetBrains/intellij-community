@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.project.Project;
@@ -13,7 +13,7 @@ import java.util.*;
 
 class GitLogFullRecord extends GitLogRecord {
 
-  @NotNull private final List<VcsFileStatusInfo> myStatusInfo;
+  private final @NotNull List<VcsFileStatusInfo> myStatusInfo;
 
   GitLogFullRecord(@NotNull Map<GitLogParser.GitLogOption, String> options,
                    @NotNull List<VcsFileStatusInfo> statusInfo,
@@ -22,8 +22,7 @@ class GitLogFullRecord extends GitLogRecord {
     myStatusInfo = statusInfo;
   }
 
-  @NotNull
-  private Collection<String> getPaths() {
+  private @NotNull Collection<String> getPaths() {
     LinkedHashSet<String> result = new LinkedHashSet<>();
     for (VcsFileStatusInfo info : myStatusInfo) {
       result.add(info.getFirstPath());

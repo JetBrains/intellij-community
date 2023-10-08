@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui;
 
 import com.intellij.openapi.Disposable;
@@ -45,27 +45,24 @@ public class ChangesBrowserWithRollback extends AsyncChangesBrowserBase implemen
     shutdown();
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createToolbarActions() {
+  protected @NotNull List<AnAction> createToolbarActions() {
     return ContainerUtil.append(
       super.createToolbarActions(),
       new RollbackDialogAction()
     );
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createPopupMenuActions() {
+  protected @NotNull List<AnAction> createPopupMenuActions() {
     return ContainerUtil.append(
       super.createPopupMenuActions(),
       new RollbackDialogAction()
     );
   }
 
-  @NotNull
   @Override
-  protected AsyncChangesTreeModel getChangesTreeModel() {
+  protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
     return SimpleAsyncChangesTreeModel.create(grouping -> {
       Collection<Change> allChanges = ChangeListManager.getInstance(myProject).getAllChanges();
       List<Change> newChanges = ContainerUtil.filter(allChanges, myOriginalChanges::contains);
@@ -77,7 +74,7 @@ public class ChangesBrowserWithRollback extends AsyncChangesBrowserBase implemen
 
 
   private class MyChangeListListener extends ChangeListAdapter {
-    @NotNull private final MergingUpdateQueue myUpdateQueue =
+    private final @NotNull MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("ChangesBrowserWithRollback", 300, true,
                              ChangesBrowserWithRollback.this, ChangesBrowserWithRollback.this);
 

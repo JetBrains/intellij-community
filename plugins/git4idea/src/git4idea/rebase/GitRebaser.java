@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -34,12 +34,12 @@ public class GitRebaser {
 
   private static final Logger LOG = Logger.getInstance(GitRebaser.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
-  @NotNull private final GitVcs myVcs;
-  @NotNull private final ProgressIndicator myProgressIndicator;
+  private final @NotNull Project myProject;
+  private final @NotNull Git myGit;
+  private final @NotNull GitVcs myVcs;
+  private final @NotNull ProgressIndicator myProgressIndicator;
 
-  @NotNull private final List<GitRebaseUtils.CommitInfo> mySkippedCommits;
+  private final @NotNull List<GitRebaseUtils.CommitInfo> mySkippedCommits;
 
   public GitRebaser(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator progressIndicator) {
     myProject = project;
@@ -252,8 +252,7 @@ public class GitRebaser {
     myGit.runCommand(handler).throwOnError();
   }
 
-  @NotNull
-  private static GitConflictResolver.Params makeParams(@NotNull Project project) {
+  private static @NotNull GitConflictResolver.Params makeParams(@NotNull Project project) {
     return new GitConflictResolver.Params(project)
       .setReverse(true)
       .setErrorNotificationTitle(GitBundle.message("rebase.update.project.conflict.error.notification.title"))
@@ -278,13 +277,12 @@ public class GitRebaser {
     }
   }
 
-  @NotNull
-  public GitUpdateResult handleRebaseFailure(@NotNull GitLineHandler handler,
-                                             @NotNull VirtualFile root,
-                                             @NotNull GitCommandResult result,
-                                             @NotNull GitRebaseProblemDetector rebaseConflictDetector,
-                                             @NotNull GitMessageWithFilesDetector untrackedWouldBeOverwrittenDetector,
-                                             @NotNull GitLocalChangesWouldBeOverwrittenDetector localChangesDetector) {
+  public @NotNull GitUpdateResult handleRebaseFailure(@NotNull GitLineHandler handler,
+                                                      @NotNull VirtualFile root,
+                                                      @NotNull GitCommandResult result,
+                                                      @NotNull GitRebaseProblemDetector rebaseConflictDetector,
+                                                      @NotNull GitMessageWithFilesDetector untrackedWouldBeOverwrittenDetector,
+                                                      @NotNull GitLocalChangesWouldBeOverwrittenDetector localChangesDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
       final boolean allMerged = new GitRebaser.ConflictResolver(myProject, myGit, root, this).merge();
@@ -318,8 +316,8 @@ public class GitRebaser {
   }
 
   public static class ConflictResolver extends GitConflictResolver {
-    @NotNull private final GitRebaser myRebaser;
-    @NotNull private final VirtualFile myRoot;
+    private final @NotNull GitRebaser myRebaser;
+    private final @NotNull VirtualFile myRoot;
 
     public ConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root, @NotNull GitRebaser rebaser) {
       super(project, Collections.singleton(root), makeParams(project));

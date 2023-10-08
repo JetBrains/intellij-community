@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.history.Label;
@@ -29,11 +15,11 @@ import java.util.Map;
  */
 public class GitPushResult {
 
-  @NotNull private final Map<GitRepository, GitPushRepoResult> myResults;
-  @NotNull private final UpdatedFiles myUpdatedFiles;
-  @Nullable private final Label myBeforeUpdateLabel;
-  @Nullable private final Label myAfterUpdateLabel;
-  @NotNull private final Map<GitRepository, HashRange> myUpdatedRanges;
+  private final @NotNull Map<GitRepository, GitPushRepoResult> myResults;
+  private final @NotNull UpdatedFiles myUpdatedFiles;
+  private final @Nullable Label myBeforeUpdateLabel;
+  private final @Nullable Label myAfterUpdateLabel;
+  private final @NotNull Map<GitRepository, HashRange> myUpdatedRanges;
 
   GitPushResult(@NotNull Map<GitRepository, GitPushRepoResult> results,
                 @NotNull UpdatedFiles files,
@@ -47,28 +33,23 @@ public class GitPushResult {
     myUpdatedRanges = ranges;
   }
 
-  @NotNull
-  public Map<GitRepository, GitPushRepoResult> getResults() {
+  public @NotNull Map<GitRepository, GitPushRepoResult> getResults() {
     return myResults;
   }
 
-  @NotNull
-  public UpdatedFiles getUpdatedFiles() {
+  public @NotNull UpdatedFiles getUpdatedFiles() {
     return myUpdatedFiles;
   }
 
-  @Nullable
-  public Label getBeforeUpdateLabel() {
+  public @Nullable Label getBeforeUpdateLabel() {
     return myBeforeUpdateLabel;
   }
 
-  @Nullable
-  public Label getAfterUpdateLabel() {
+  public @Nullable Label getAfterUpdateLabel() {
     return myAfterUpdateLabel;
   }
 
-  @NotNull
-  public Map<GitRepository, HashRange> getUpdatedRanges() {
+  public @NotNull Map<GitRepository, HashRange> getUpdatedRanges() {
     return myUpdatedRanges;
   }
 }

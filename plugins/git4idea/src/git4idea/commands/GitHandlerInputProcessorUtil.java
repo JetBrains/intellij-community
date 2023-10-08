@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -22,8 +22,7 @@ public final class GitHandlerInputProcessorUtil {
   private GitHandlerInputProcessorUtil() {
   }
 
-  @NotNull
-  public static ThrowableConsumer<OutputStream, IOException> writeLines(@NotNull Collection<String> lines, @NotNull Charset charset) {
+  public static @NotNull ThrowableConsumer<OutputStream, IOException> writeLines(@NotNull Collection<String> lines, @NotNull Charset charset) {
     return writeLines(lines, DEFAULT_SEPARATOR, charset, false);
   }
 
@@ -44,8 +43,7 @@ public final class GitHandlerInputProcessorUtil {
    *                               On Windows, the output stream won't be closed when this parameter is set to {@code true}.
    * @return an input processor (a {@link ThrowableConsumer} instance) that writes provided lines to the {@link OutputStream} passed to it.
    */
-  @NotNull
-  public static ThrowableConsumer<OutputStream, IOException> writeLines(@NotNull Collection<String> lines,
+  public static @NotNull ThrowableConsumer<OutputStream, IOException> writeLines(@NotNull Collection<String> lines,
                                                                         @NotNull String separator,
                                                                         @NotNull Charset charset,
                                                                         boolean endWithSecondSeparator) {
@@ -65,8 +63,7 @@ public final class GitHandlerInputProcessorUtil {
     };
   }
 
-  @NotNull
-  public static ThrowableConsumer<OutputStream, IOException> redirectStream(@NotNull InputStream stream) {
+  public static @NotNull ThrowableConsumer<OutputStream, IOException> redirectStream(@NotNull InputStream stream) {
     return outputStream -> {
       try (outputStream) {
         FileUtil.copy(stream, outputStream);

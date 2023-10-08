@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import git4idea.repo.GitRemote;
@@ -8,13 +8,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class GitPushParamsImpl implements GitPushParams {
-  @NotNull private final GitRemote myRemote;
-  @NotNull private final String mySpec;
+  private final @NotNull GitRemote myRemote;
+  private final @NotNull String mySpec;
   private final boolean myForce;
   private final boolean mySetupTracking;
   private final boolean mySkipHooks;
-  @Nullable private final String myTagMode;
-  @NotNull private final List<ForceWithLease> myForceWithLease;
+  private final @Nullable String myTagMode;
+  private final @NotNull List<ForceWithLease> myForceWithLease;
 
   public GitPushParamsImpl(@NotNull GitRemote remote,
                            @NotNull String spec,
@@ -32,15 +32,13 @@ public class GitPushParamsImpl implements GitPushParams {
     myForceWithLease = forceWithLease;
   }
 
-  @NotNull
   @Override
-  public GitRemote getRemote() {
+  public @NotNull GitRemote getRemote() {
     return myRemote;
   }
 
-  @NotNull
   @Override
-  public String getSpec() {
+  public @NotNull String getSpec() {
     return mySpec;
   }
 
@@ -59,39 +57,35 @@ public class GitPushParamsImpl implements GitPushParams {
     return mySkipHooks;
   }
 
-  @Nullable
   @Override
-  public String getTagMode() {
+  public @Nullable String getTagMode() {
     return myTagMode;
   }
 
-  @NotNull
   @Override
-  public List<ForceWithLease> getForceWithLease() {
+  public @NotNull List<ForceWithLease> getForceWithLease() {
     return myForceWithLease;
   }
 
 
   public static class ForceWithLeaseAll implements ForceWithLease {
-    @Nullable
     @Override
-    public String getParameter() {
+    public @Nullable String getParameter() {
       return null;
     }
   }
 
   public static class ForceWithLeaseReference implements ForceWithLease {
-    @NotNull private final String myReference;
-    @Nullable private final String myCommit;
+    private final @NotNull String myReference;
+    private final @Nullable String myCommit;
 
     public ForceWithLeaseReference(@NotNull String reference, @Nullable String commit) {
       myReference = reference;
       myCommit = commit;
     }
 
-    @Nullable
     @Override
-    public String getParameter() {
+    public @Nullable String getParameter() {
       if (myCommit != null) {
         return myReference + ":" + myCommit;
       }

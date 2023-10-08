@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -81,8 +81,7 @@ public final class GitPushNativeResultParser {
                                                          "(?:\\((.+)\\))?.*$");    // reason
   private static final Pattern RANGE = Pattern.compile("[0-9a-f]+[\\.]{2,3}[0-9a-f]+");
 
-  @NotNull
-  public static List<GitPushNativeResult> parse(@NotNull List<String> output) {
+  public static @NotNull List<GitPushNativeResult> parse(@NotNull List<String> output) {
     List<GitPushNativeResult> results = new ArrayList<>();
     for (String line : output) {
       Matcher matcher = PATTERN.matcher(line);
@@ -93,8 +92,7 @@ public final class GitPushNativeResultParser {
     return results;
   }
 
-  @Nullable
-  private static GitPushNativeResult parseRefResult(Matcher matcher, String line) {
+  private static @Nullable GitPushNativeResult parseRefResult(Matcher matcher, String line) {
     String flag = matcher.group(1);
     String from = matcher.group(2);
     String to = matcher.group(3);

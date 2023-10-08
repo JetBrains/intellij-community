@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,13 +22,12 @@ import java.util.List;
 public final class GitChangesParser {
   private static final Logger LOG = Logger.getInstance(GitChangesParser.class);
 
-  @NotNull
-  public static List<Change> parse(@NotNull Project project,
-                                   @NotNull VirtualFile root,
-                                   @NotNull List<VcsFileStatusInfo> statusInfos,
-                                   @NotNull String hash,
-                                   @NotNull Date date,
-                                   @Nullable String parentsHash) {
+  public static @NotNull List<Change> parse(@NotNull Project project,
+                                            @NotNull VirtualFile root,
+                                            @NotNull List<VcsFileStatusInfo> statusInfos,
+                                            @NotNull String hash,
+                                            @NotNull Date date,
+                                            @Nullable String parentsHash) {
     GitRevisionNumber thisRevision = new GitRevisionNumber(hash, date);
     GitRevisionNumber parentRevision = parentsHash == null ? null : new GitRevisionNumber(parentsHash);
 
@@ -39,12 +38,11 @@ public final class GitChangesParser {
     return result;
   }
 
-  @NotNull
-  private static Change parseChange(@NotNull Project project,
-                                    @NotNull VirtualFile vcsRoot,
-                                    @NotNull VcsRevisionNumber thisRevision,
-                                    @Nullable VcsRevisionNumber parentRevision,
-                                    @NotNull VcsFileStatusInfo statusInfo) {
+  private static @NotNull Change parseChange(@NotNull Project project,
+                                             @NotNull VirtualFile vcsRoot,
+                                             @NotNull VcsRevisionNumber thisRevision,
+                                             @Nullable VcsRevisionNumber parentRevision,
+                                             @NotNull VcsFileStatusInfo statusInfo) {
     final ContentRevision before;
     final ContentRevision after;
     final String path = statusInfo.getFirstPath();
@@ -79,8 +77,7 @@ public final class GitChangesParser {
     return new Change(before, after, status);
   }
 
-  @NotNull
-  static Change.Type getChangeType(@NotNull GitChangeType type) {
+  static @NotNull Change.Type getChangeType(@NotNull GitChangeType type) {
     return switch (type) {
       case ADDED -> Change.Type.NEW;
       case TYPE_CHANGED, MODIFIED -> Change.Type.MODIFICATION;

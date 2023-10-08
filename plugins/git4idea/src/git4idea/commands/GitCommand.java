@@ -87,8 +87,8 @@ public final class GitCommand {
     WRITE
   }
 
-  @NotNull @NonNls private final String myName; // command name passed to git
-  @NotNull private final LockingPolicy myLocking; // Locking policy for the command
+  private final @NotNull @NonNls String myName; // command name passed to git
+  private final @NotNull LockingPolicy myLocking; // Locking policy for the command
 
   private GitCommand(@NotNull @NonNls String name, @NotNull LockingPolicy lockingPolicy) {
     myLocking = lockingPolicy;
@@ -110,38 +110,31 @@ public final class GitCommand {
    * <p>Use this constructor with care: specifying read-policy on a write operation may result in a conflict during simultaneous
    *    modification of index.</p>
    */
-  @NotNull
-  public GitCommand readLockingCommand() {
+  public @NotNull GitCommand readLockingCommand() {
     return new GitCommand(this, LockingPolicy.READ);
   }
 
-  @NotNull
-  public GitCommand writeLockingCommand() {
+  public @NotNull GitCommand writeLockingCommand() {
     return new GitCommand(this, LockingPolicy.WRITE);
   }
 
-  @NotNull
-  private static GitCommand read(@NotNull @NonNls String name) {
+  private static @NotNull GitCommand read(@NotNull @NonNls String name) {
     return new GitCommand(name, LockingPolicy.READ);
   }
 
-  @NotNull
-  private static GitCommand readOptional(@NotNull @NonNls String name) {
+  private static @NotNull GitCommand readOptional(@NotNull @NonNls String name) {
     return new GitCommand(name, LockingPolicy.READ_OPTIONAL_LOCKING);
   }
 
-  @NotNull
-  private static GitCommand write(@NotNull @NonNls String name) {
+  private static @NotNull GitCommand write(@NotNull @NonNls String name) {
     return new GitCommand(name, LockingPolicy.WRITE);
   }
 
-  @NotNull
-  public String name() {
+  public @NotNull String name() {
     return myName;
   }
 
-  @NotNull
-  public LockingPolicy lockingPolicy() {
+  public @NotNull LockingPolicy lockingPolicy() {
     return myLocking;
   }
 

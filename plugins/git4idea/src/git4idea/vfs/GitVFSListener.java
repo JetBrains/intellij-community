@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.vfs;
 
 import com.intellij.openapi.Disposable;
@@ -42,35 +42,31 @@ public final class GitVFSListener extends VcsVFSListener {
     super(vcs);
   }
 
-  @NotNull
-  public static GitVFSListener createInstance(@NotNull GitVcs vcs, @NotNull Disposable disposable) {
+  public static @NotNull GitVFSListener createInstance(@NotNull GitVcs vcs, @NotNull Disposable disposable) {
     GitVFSListener listener = new GitVFSListener(vcs);
     Disposer.register(disposable, listener);
     listener.installListeners();
     return listener;
   }
 
-  @NotNull
   @Override
-  protected String getAddTitle() {
+  protected @NotNull String getAddTitle() {
     return message("vfs.listener.add.title");
   }
 
-  @NotNull
   @Override
-  protected String getSingleFileAddTitle() {
+  protected @NotNull String getSingleFileAddTitle() {
     return message("vfs.listener.add.single.title");
   }
 
-  @NotNull
   @Override
   @SuppressWarnings("UnresolvedPropertyKey")
-  protected String getSingleFileAddPromptTemplate() {
+  protected @NotNull String getSingleFileAddPromptTemplate() {
     return message("vfs.listener.add.single.prompt");
   }
 
   @Override
-  protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFiles) {
+  protected void executeAdd(final @NotNull List<VirtualFile> addedFiles, final @NotNull Map<VirtualFile, VirtualFile> copiedFiles) {
     executeAddWithoutIgnores(addedFiles, copiedFiles,
                              (notIgnoredAddedFiles, copiedFilesMap) -> originalExecuteAdd(notIgnoredAddedFiles, copiedFilesMap));
   }
@@ -116,7 +112,7 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
+  protected void performAdding(final @NotNull Collection<VirtualFile> addedFiles, final @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
     // copied files (copyFromMap) are ignored, because they are included into added files.
     performAdding(map(addedFiles, VcsUtil::getFilePath));
   }
@@ -138,9 +134,8 @@ public final class GitVFSListener extends VcsVFSListener {
     });
   }
 
-  @NotNull
   @Override
-  protected String getDeleteTitle() {
+  protected @NotNull String getDeleteTitle() {
     return message("vfs.listener.delete.title");
   }
 
@@ -156,7 +151,7 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performDeletion(@NotNull final List<FilePath> filesToDelete) {
+  protected void performDeletion(final @NotNull List<FilePath> filesToDelete) {
     performBackgroundOperation(filesToDelete, message("remove.removing"), new LongOperationPerRootExecutor() {
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException {
@@ -169,7 +164,7 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performMoveRename(@NotNull final List<MovedFileInfo> movedFiles) {
+  protected void performMoveRename(final @NotNull List<MovedFileInfo> movedFiles) {
     List<FilePath> toAdd = new ArrayList<>();
     List<FilePath> toRemove = new ArrayList<>();
     List<MovedFileInfo> toForceMove = new ArrayList<>();
@@ -294,7 +289,7 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected @NotNull Collection<FilePath> selectFilePathsToDelete(@NotNull final List<FilePath> deletedFiles) {
+  protected @NotNull Collection<FilePath> selectFilePathsToDelete(final @NotNull List<FilePath> deletedFiles) {
     if (isStageEnabled()) {
       return super.selectFilePathsToDelete(deletedFiles);
     }

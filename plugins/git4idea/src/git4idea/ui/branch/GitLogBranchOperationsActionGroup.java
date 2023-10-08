@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
@@ -103,14 +103,13 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     return groups.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static AnAction createBranchGroup(@NotNull Project project,
-                                            @NotNull VcsRef ref,
-                                            @NotNull GitRepository repository,
-                                            @NotNull List<? extends GitRepository> allRepositories,
-                                            @NotNull Set<String> commonBranches,
-                                            @NotNull GitVcsSettings settings,
-                                            boolean showBranchesPopup) {
+  private static @NotNull AnAction createBranchGroup(@NotNull Project project,
+                                                     @NotNull VcsRef ref,
+                                                     @NotNull GitRepository repository,
+                                                     @NotNull List<? extends GitRepository> allRepositories,
+                                                     @NotNull Set<String> commonBranches,
+                                                     @NotNull GitVcsSettings settings,
+                                                     boolean showBranchesPopup) {
     boolean isSyncBranch = settings.getSyncSetting() != DvcsSyncSettings.Value.DONT_SYNC &&
                            allRepositories.size() > 1 && commonBranches.contains(ref.getName());
     boolean isLocal = ref.getType() == GitRefManager.LOCAL_BRANCH;
@@ -136,11 +135,10 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     return group;
   }
 
-  @NotNull
-  private static AnAction createTagGroup(@NotNull Project project,
-                                         @NotNull VcsRef ref,
-                                         @NotNull GitRepository repository,
-                                         boolean showTagsPopup) {
+  private static @NotNull AnAction createTagGroup(@NotNull Project project,
+                                                  @NotNull VcsRef ref,
+                                                  @NotNull GitRepository repository,
+                                                  boolean showTagsPopup) {
     ActionGroup singleRepoActions = createTagActions(project, Collections.singletonList(repository), ref);
     singleRepoActions.setPopup(false);
 
@@ -151,12 +149,11 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     return group;
   }
 
-  @NotNull
-  private static ActionGroup createBranchActions(@NotNull Project project,
-                                                 @NotNull List<? extends GitRepository> repositories,
-                                                 @NotNull VcsRef ref,
-                                                 @NotNull GitRepository selectedRepository,
-                                                 boolean isLocal) {
+  private static @NotNull ActionGroup createBranchActions(@NotNull Project project,
+                                                          @NotNull List<? extends GitRepository> repositories,
+                                                          @NotNull VcsRef ref,
+                                                          @NotNull GitRepository selectedRepository,
+                                                          boolean isLocal) {
     if (isLocal) {
       return new LocalBranchActions(project, repositories, ref.getName(), selectedRepository);
     }
@@ -165,10 +162,9 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     }
   }
 
-  @NotNull
-  private static ActionGroup createTagActions(@NotNull Project project,
-                                              @NotNull List<? extends GitRepository> repositories,
-                                              @NotNull VcsRef ref) {
+  private static @NotNull ActionGroup createTagActions(@NotNull Project project,
+                                                       @NotNull List<? extends GitRepository> repositories,
+                                                       @NotNull VcsRef ref) {
     return new GitBranchPopupActions.TagActions(project, repositories, ref.getName());
   }
 }

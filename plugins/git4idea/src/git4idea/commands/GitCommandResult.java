@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -54,8 +54,7 @@ public class GitCommandResult {
   /**
    * @return result with specified value for authentication failure
    */
-  @NotNull
-  static GitCommandResult withAuthentication(@NotNull GitCommandResult result, boolean authenticationFailed) {
+  static @NotNull GitCommandResult withAuthentication(@NotNull GitCommandResult result, boolean authenticationFailed) {
     return new GitCommandResult(result.myStartFailed,
                                 result.myExitCode,
                                 authenticationFailed,
@@ -80,8 +79,7 @@ public class GitCommandResult {
     return !myStartFailed && (Arrays.stream(ignoredErrorCodes).anyMatch(i -> i == myExitCode) || myExitCode == 0);
   }
 
-  @NotNull
-  public List<String> getOutput() {
+  public @NotNull List<String> getOutput() {
     return Collections.unmodifiableList(myOutput);
   }
 
@@ -93,42 +91,32 @@ public class GitCommandResult {
     return myAuthenticationFailed;
   }
 
-  @NotNull
-  public List<String> getErrorOutput() {
+  public @NotNull List<String> getErrorOutput() {
     return Collections.unmodifiableList(myErrorOutput);
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return String.format("{%d} %nOutput: %n%s %nError output: %n%s", myExitCode, myOutput, myErrorOutput);
   }
 
-  @NotNull
-  @NlsSafe
-  public @NlsContexts.NotificationContent String getErrorOutputAsHtmlString() {
+  public @NotNull @NlsSafe @NlsContexts.NotificationContent String getErrorOutputAsHtmlString() {
     return StringUtil.join(cleanup(getErrorOrStdOutput()), XmlStringUtil::escapeString, UIUtil.BR);
   }
 
-  @NotNull
-  @NlsSafe
-  public String getErrorOutputAsJoinedString() {
+  public @NotNull @NlsSafe String getErrorOutputAsJoinedString() {
     return StringUtil.join(cleanup(getErrorOrStdOutput()), "\n");
   }
 
   // in some cases operation fails but no explicit error messages are given, in this case return the output to display something to user
-  @NotNull
-  @NlsSafe
-  private List<String> getErrorOrStdOutput() {
+  private @NotNull @NlsSafe List<String> getErrorOrStdOutput() {
     if (!myErrorOutput.isEmpty()) return myErrorOutput;
     if (success()) return Collections.emptyList();
     if (!myOutput.isEmpty()) return myOutput;
     return Collections.singletonList(GitBundle.message("git.error.exit", myExitCode));
   }
 
-  @NotNull
-  @NlsSafe
-  public String getOutputAsJoinedString() {
+  public @NotNull @NlsSafe String getOutputAsJoinedString() {
     return StringUtil.join(myOutput, "\n");
   }
 
@@ -139,9 +127,7 @@ public class GitCommandResult {
    * @return result of {@link #getOutputAsJoinedString()}
    * @throws VcsException with message from {@link #getErrorOutputAsJoinedString()}
    */
-  @NotNull
-  @NlsSafe
-  public String getOutputOrThrow(int... ignoredErrorCodes) throws VcsException {
+  public @NotNull @NlsSafe String getOutputOrThrow(int... ignoredErrorCodes) throws VcsException {
     throwOnError(ignoredErrorCodes);
     return getOutputAsJoinedString();
   }
@@ -156,13 +142,11 @@ public class GitCommandResult {
     if (!success(ignoredErrorCodes)) throw new VcsException(getErrorOutputAsJoinedString());
   }
 
-  @NotNull
-  static GitCommandResult startError(@NotNull @Nls String error) {
+  static @NotNull GitCommandResult startError(@NotNull @Nls String error) {
     return new GitCommandResult(true, -1, Collections.singletonList(error), Collections.emptyList());
   }
 
-  @NotNull
-  public static GitCommandResult error(@NotNull @Nls String error) {
+  public static @NotNull GitCommandResult error(@NotNull @Nls String error) {
     return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList());
   }
 
@@ -174,8 +158,7 @@ public class GitCommandResult {
     return false;
   }
 
-  @NotNull
-  private static Collection<String> cleanup(@NotNull Collection<String> errorOutput) {
+  private static @NotNull Collection<String> cleanup(@NotNull Collection<String> errorOutput) {
     return ContainerUtil.map(errorOutput, errorMessage -> GitUtil.cleanupErrorPrefixes(errorMessage));
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.intellij.dvcs.repo.Repository;
@@ -19,7 +19,10 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -31,15 +34,15 @@ import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static git4idea.GitNotificationIdsHolder.*;
 
 public final class GitRebaseUtils {
-  private final static Logger LOG = Logger.getInstance(GitRebaseUtils.class.getName());
+  private static final Logger LOG = Logger.getInstance(GitRebaseUtils.class.getName());
 
   private GitRebaseUtils() {
   }
 
-  public static void rebase(@NotNull final Project project,
-                            @NotNull final List<? extends GitRepository> repositories,
-                            @NotNull final GitRebaseParams params,
-                            @NotNull final ProgressIndicator indicator) {
+  public static void rebase(final @NotNull Project project,
+                            final @NotNull List<? extends GitRepository> repositories,
+                            final @NotNull GitRebaseParams params,
+                            final @NotNull ProgressIndicator indicator) {
     if (!isRebaseAllowed(project, repositories)) return;  // TODO maybe move to the outside
     new GitRebaseProcess(project, GitRebaseSpec.forNewRebase(project, params, repositories, indicator), null).rebase();
   }
@@ -118,7 +121,7 @@ public final class GitRebaseUtils {
   /**
    * Abort the ongoing rebase process in the given repository.
    */
-  public static void abort(@NotNull final Project project, @Nullable final GitRepository repository, @NotNull ProgressIndicator indicator) {
+  public static void abort(final @NotNull Project project, final @Nullable GitRepository repository, @NotNull ProgressIndicator indicator) {
     new GitAbortRebaseProcess(project, repository, Collections.emptyMap(),
                               Collections.emptyMap(), indicator, null, true).abortWithConfirmation();
   }
@@ -176,8 +179,7 @@ public final class GitRebaseUtils {
     return getRebaseDir(project, root) != null;
   }
 
-  @Nullable
-  public static File getRebaseDir(@NotNull Project project, @NotNull VirtualFile root) {
+  public static @Nullable File getRebaseDir(@NotNull Project project, @NotNull VirtualFile root) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root);
     if (repository == null) return null;
 
@@ -204,8 +206,7 @@ public final class GitRebaseUtils {
    * @param root the vcs root
    * @return the commit information or null if no commit information could be detected
    */
-  @Nullable
-  public static CommitInfo getCurrentRebaseCommit(@NotNull Project project, @NotNull VirtualFile root) {
+  public static @Nullable CommitInfo getCurrentRebaseCommit(@NotNull Project project, @NotNull VirtualFile root) {
     File rebaseDir = getRebaseDir(project, root);
     if (rebaseDir == null) {
       LOG.warn("No rebase dir found for " + root.getPath());
@@ -248,8 +249,7 @@ public final class GitRebaseUtils {
     return new CommitInfo(new GitRevisionNumber(hash), subject);
   }
 
-  @NotNull
-  static @Nls String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
+  static @NotNull @Nls String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
     if (saver == null || !saver.wereChangesSaved()) {
       return "";
     }
@@ -259,8 +259,7 @@ public final class GitRebaseUtils {
     )).toString();
   }
 
-  @NotNull
-  public static Collection<GitRepository> getRebasingRepositories(@NotNull Project project) {
+  public static @NotNull Collection<GitRepository> getRebasingRepositories(@NotNull Project project) {
     return GitUtil.getRepositoriesInState(project, Repository.State.REBASING);
   }
 
@@ -284,13 +283,11 @@ public final class GitRebaseUtils {
     ).size();
   }
 
-  @NotNull
-  private static Hash getRebasingBranchHash(@NotNull GitRepository repository) throws VcsException {
+  private static @NotNull Hash getRebasingBranchHash(@NotNull GitRepository repository) throws VcsException {
     return readHashFromFile(repository.getProject(), repository.getRoot(), "orig-head");
   }
 
-  @Nullable
-  public static Hash getOntoHash(@NotNull Project project, @NotNull VirtualFile root) {
+  public static @Nullable Hash getOntoHash(@NotNull Project project, @NotNull VirtualFile root) {
     try {
       return readHashFromFile(project, root, "onto");
     }
@@ -306,8 +303,7 @@ public final class GitRebaseUtils {
     return baseBranch + ".." + rebasingBranch;
   }
 
-  @NotNull
-  private static Hash readHashFromFile(
+  private static @NotNull Hash readHashFromFile(
     @NotNull Project project,
     @NotNull VirtualFile root,
     @NotNull @NonNls String fileName

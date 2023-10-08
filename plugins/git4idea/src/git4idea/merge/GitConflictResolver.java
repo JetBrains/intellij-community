@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge;
 
 import com.intellij.notification.Notification;
@@ -47,12 +47,12 @@ public class GitConflictResolver {
 
   private static final Logger LOG = Logger.getInstance(GitConflictResolver.class);
 
-  @NotNull private final Collection<? extends VirtualFile> myRoots;
-  @NotNull private final Params myParams;
+  private final @NotNull Collection<? extends VirtualFile> myRoots;
+  private final @NotNull Params myParams;
 
-  @NotNull protected final Project myProject;
-  @NotNull private final GitRepositoryManager myRepositoryManager;
-  @NotNull private final AbstractVcsHelper myVcsHelper;
+  protected final @NotNull Project myProject;
+  private final @NotNull GitRepositoryManager myRepositoryManager;
+  private final @NotNull AbstractVcsHelper myVcsHelper;
 
   /**
    * Customizing parameters - mostly String notification texts, etc.
@@ -66,9 +66,8 @@ public class GitConflictResolver {
 
     public Params() {
       myMergeDialogCustomizer = new MergeDialogCustomizer() {
-        @NotNull
         @Override
-        public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+        public @NotNull String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
           return myMergeDescription;
         }
       };
@@ -76,8 +75,8 @@ public class GitConflictResolver {
 
     public Params(Project project) {
       myMergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(project) {
-        @NotNull
-        @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+        @Override
+        public @NotNull String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
           if (!StringUtil.isEmpty(myMergeDescription)) {
             return myMergeDescription;
           }
@@ -264,8 +263,7 @@ public class GitConflictResolver {
    * @return unmerged files in the given Git roots, all in a single collection.
    * @see #getUnmergedFiles(VirtualFile)
    */
-  @NotNull
-  private Collection<VirtualFile> getUnmergedFiles(@NotNull Collection<? extends VirtualFile> roots) throws VcsException {
+  private @NotNull Collection<VirtualFile> getUnmergedFiles(@NotNull Collection<? extends VirtualFile> roots) throws VcsException {
     final Collection<VirtualFile> unmergedFiles = new HashSet<>();
     for (VirtualFile root : roots) {
       unmergedFiles.addAll(getUnmergedFiles(root));
@@ -277,8 +275,7 @@ public class GitConflictResolver {
    * @return unmerged files in the given Git root.
    * @see #getUnmergedFiles(Collection)
    */
-  @NotNull
-  private Collection<VirtualFile> getUnmergedFiles(@NotNull VirtualFile root) throws VcsException {
+  private @NotNull Collection<VirtualFile> getUnmergedFiles(@NotNull VirtualFile root) throws VcsException {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);

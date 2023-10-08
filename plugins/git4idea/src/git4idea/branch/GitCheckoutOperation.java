@@ -50,7 +50,7 @@ import static git4idea.GitNotificationIdsHolder.CHECKOUT_SUCCESS;
 import static git4idea.GitUtil.*;
 import static git4idea.branch.GitSmartOperationDialog.Choice.FORCE;
 import static git4idea.branch.GitSmartOperationDialog.Choice.SMART;
-import static git4idea.telemetry.GitTelemetrySpan.*;
+import static git4idea.telemetry.GitTelemetrySpan.Operation;
 import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
@@ -63,13 +63,13 @@ import static git4idea.util.GitUIUtil.code;
  */
 class GitCheckoutOperation extends GitBranchOperation {
   private static final int REPOSITORIES_LIMIT = 4;
-  @NonNls private static final String ROLLBACK_HREF_ATTRIBUTE = "rollback";
+  private static final @NonNls String ROLLBACK_HREF_ATTRIBUTE = "rollback";
 
-  @NotNull private final String myStartPointReference;
+  private final @NotNull String myStartPointReference;
   private final boolean myDetach;
   private final boolean myReset;
   private final boolean myRefShouldBeValid;
-  @Nullable private final String myNewBranch;
+  private final @Nullable String myNewBranch;
 
   GitCheckoutOperation(@NotNull Project project,
                        @NotNull Git git,
@@ -259,9 +259,8 @@ class GitCheckoutOperation extends GitBranchOperation {
     }
   }
 
-  @NotNull
   @Override
-  protected String getRollbackProposal() {
+  protected @NotNull String getRollbackProposal() {
     Collection<GitRepository> repositories = getSuccessfulRepositories();
     String previousBranch = getIfSingle(repositories.stream().map(myCurrentHeads::get).distinct());
     if (previousBranch == null) previousBranch = GitBundle.message("checkout.operation.previous.branch");
@@ -275,10 +274,8 @@ class GitCheckoutOperation extends GitBranchOperation {
       .toString();
   }
 
-  @NotNull
-  @Nls
   @Override
-  protected String getOperationName() {
+  protected @NotNull @Nls String getOperationName() {
     return GitBundle.message("checkout.operation.name");
   }
 
@@ -317,15 +314,12 @@ class GitCheckoutOperation extends GitBranchOperation {
     }
   }
 
-  @NotNull
-  @NlsContexts.NotificationTitle
-  private String getCommonErrorTitle() {
+  private @NotNull @NlsContexts.NotificationTitle String getCommonErrorTitle() {
     return GitBundle.message("checkout.operation.could.not.checkout.error.title", getRefPresentation(myStartPointReference));
   }
 
-  @NotNull
   @Override
-  protected String getSuccessMessage() {
+  protected @NotNull String getSuccessMessage() {
     if (myNewBranch == null) {
       return GitBundle.message("checkout.operation.checked.out",
                                bold(code(myStartPointReference)));
@@ -335,15 +329,14 @@ class GitCheckoutOperation extends GitBranchOperation {
                              bold(code(getRefPresentation(myStartPointReference))));
   }
 
-  @NotNull
-  private static String getRefPresentation(@NotNull String reference) {
+  private static @NotNull String getRefPresentation(@NotNull String reference) {
     return StringUtil.substringBeforeLast(reference, "^0");
   }
 
   // stash - checkout - unstash
-  private boolean smartCheckout(@NotNull final List<? extends GitRepository> repositories,
-                                @NotNull @NlsSafe final String reference,
-                                @Nullable final String newBranch,
+  private boolean smartCheckout(final @NotNull List<? extends GitRepository> repositories,
+                                final @NotNull @NlsSafe String reference,
+                                final @Nullable String newBranch,
                                 @NotNull ProgressIndicator indicator,
                                 @NotNull StructuredIdeActivity activity) {
     AtomicBoolean result = new AtomicBoolean();

@@ -67,9 +67,8 @@ public abstract class GitTextHandler extends GitHandler {
     myTerminationTimeoutMs = timeoutMs;
   }
 
-  @Nullable
   @Override
-  protected Process startProcess() throws ExecutionException {
+  protected @Nullable Process startProcess() throws ExecutionException {
     synchronized (myProcessStateLock) {
       if (myIsDestroyed) {
         return null;
@@ -83,7 +82,7 @@ public abstract class GitTextHandler extends GitHandler {
   protected void startHandlingStreams() {
     myHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(@NotNull final ProcessEvent event) {
+      public void processTerminated(final @NotNull ProcessEvent event) {
         final int exitCode = event.getExitCode();
         OUTPUT_LOG.debug(String.format("%s %% %s terminated (%s)", getCommand(), GitTextHandler.this.hashCode(), exitCode));
         try {
@@ -154,9 +153,8 @@ public abstract class GitTextHandler extends GitHandler {
       super(commandLine, withMediator);
     }
 
-    @NotNull
     @Override
-    protected BaseOutputReader.Options readerOptions() {
+    protected @NotNull BaseOutputReader.Options readerOptions() {
       return Registry.is("git.blocking.read") ? BaseOutputReader.Options.BLOCKING : BaseOutputReader.Options.NON_BLOCKING;
     }
   }

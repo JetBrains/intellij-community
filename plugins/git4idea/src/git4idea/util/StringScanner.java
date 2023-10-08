@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +21,7 @@ public class StringScanner {
    *
    * @param text the text to scan
    */
-  public StringScanner(@NotNull final String text) {
+  public StringScanner(final @NotNull String text) {
     myText = text;
     myPosition = 0;
   }
@@ -103,8 +89,7 @@ public class StringScanner {
    * @param boundaryChar a boundary character
    * @return a token
    */
-  @NotNull
-  public String boundedToken(final char boundaryChar) {
+  public @NotNull String boundedToken(final char boundaryChar) {
     return boundedToken(boundaryChar, false);
   }
 
@@ -116,8 +101,7 @@ public class StringScanner {
    * @param ignoreEol    if true, the end of line is considered as normal character and consumed
    * @return a token
    */
-  @NotNull
-  public String boundedToken(char boundaryChar, boolean ignoreEol) {
+  public @NotNull String boundedToken(char boundaryChar, boolean ignoreEol) {
     int start = myPosition;
     for (; myPosition < myText.length(); myPosition++) {
       final char ch = myText.charAt(myPosition);

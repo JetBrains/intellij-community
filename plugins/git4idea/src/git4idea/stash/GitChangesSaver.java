@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash;
 
 import com.intellij.notification.Notification;
@@ -31,11 +31,11 @@ import static git4idea.GitNotificationIdsHolder.LOCAL_CHANGES_NOT_RESTORED;
 public abstract class GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitChangesSaver.class);
 
-  @NotNull protected final Project myProject;
-  @NotNull protected final Git myGit;
-  @NotNull protected final ProgressIndicator myProgressIndicator;
-  @NotNull protected final String myStashMessage;
-  @NotNull private final GitSaveChangesPolicy mySaveMethod;
+  protected final @NotNull Project myProject;
+  protected final @NotNull Git myGit;
+  protected final @NotNull ProgressIndicator myProgressIndicator;
+  protected final @NotNull String myStashMessage;
+  private final @NotNull GitSaveChangesPolicy mySaveMethod;
 
   protected GitConflictResolver.Params myParams;
 
@@ -44,8 +44,7 @@ public abstract class GitChangesSaver {
    *
    * @return {@link GitStashChangesSaver} or {@link GitShelveChangesSaver}.
    */
-  @NotNull
-  public static GitChangesSaver getSaver(@NotNull Project project,
+  public static @NotNull GitChangesSaver getSaver(@NotNull Project project,
                                          @NotNull Git git,
                                          @NotNull ProgressIndicator progressIndicator,
                                          @NotNull @Nls String stashMessage,
@@ -115,8 +114,7 @@ public abstract class GitChangesSaver {
    */
   public abstract boolean wereChangesSaved();
 
-  @NotNull
-  public GitSaveChangesPolicy getSaveMethod() {
+  public @NotNull GitSaveChangesPolicy getSaveMethod() {
     return mySaveMethod;
   }
 
@@ -128,16 +126,14 @@ public abstract class GitChangesSaver {
   /**
    * The right panel title of the merge conflict dialog: changes that came from update.
    */
-  @NotNull
-  protected static String getConflictRightPanelTitle() {
+  protected static @NotNull String getConflictRightPanelTitle() {
     return GitBundle.message("save.load.conflict.dialog.diff.right.title");
   }
 
   /**
    * The left panel title of the merge conflict dialog: changes that were preserved in this saver during update.
    */
-  @NotNull
-  protected static String getConflictLeftPanelTitle() {
+  protected static @NotNull String getConflictLeftPanelTitle() {
     return GitBundle.message("save.load.conflict.dialog.diff.left.title");
   }
 

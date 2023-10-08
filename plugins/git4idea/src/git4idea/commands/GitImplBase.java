@@ -58,20 +58,17 @@ public abstract class GitImplBase implements Git {
 
   private static final Logger LOG = Logger.getInstance(GitImplBase.class);
 
-  @NotNull
   @Override
-  public GitCommandResult runCommand(@NotNull GitLineHandler handler) {
+  public @NotNull GitCommandResult runCommand(@NotNull GitLineHandler handler) {
     return run(handler, getCollectingCollector());
   }
 
   @Override
-  @NotNull
-  public GitCommandResult runCommand(@NotNull Computable<? extends GitLineHandler> handlerConstructor) {
+  public @NotNull GitCommandResult runCommand(@NotNull Computable<? extends GitLineHandler> handlerConstructor) {
     return run(handlerConstructor, GitImplBase::getCollectingCollector);
   }
 
-  @NotNull
-  private static OutputCollector getCollectingCollector() {
+  private static @NotNull OutputCollector getCollectingCollector() {
     return new OutputCollector() {
       @Override
       public void outputLineReceived(@NotNull String line) {
@@ -91,8 +88,7 @@ public abstract class GitImplBase implements Git {
   }
 
   @Override
-  @NotNull
-  public GitCommandResult runCommandWithoutCollectingOutput(@NotNull GitLineHandler handler) {
+  public @NotNull GitCommandResult runCommandWithoutCollectingOutput(@NotNull GitLineHandler handler) {
     return run(handler, new OutputCollector() {
       @Override
       protected void outputLineReceived(@NotNull String line) {}
@@ -107,8 +103,7 @@ public abstract class GitImplBase implements Git {
   /**
    * Run handler with retry on authentication failure
    */
-  @NotNull
-  private static GitCommandResult run(@NotNull Computable<? extends GitLineHandler> handlerConstructor,
+  private static @NotNull GitCommandResult run(@NotNull Computable<? extends GitLineHandler> handlerConstructor,
                                       @NotNull Computable<? extends OutputCollector> outputCollectorConstructor) {
     @NotNull GitCommandResult result;
 
@@ -131,8 +126,7 @@ public abstract class GitImplBase implements Git {
   /**
    * Run handler with per-project locking, logging and authentication
    */
-  @NotNull
-  private static GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
+  private static @NotNull GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
     GitVersion version = GitVersion.NULL;
     if (handler.isPreValidateExecutable()) {
       GitExecutable executable = handler.getExecutable();
@@ -174,16 +168,14 @@ public abstract class GitImplBase implements Git {
     }
   }
 
-  @NotNull
-  private static GitHandlerRebaseEditorManager prepareGeneralPurposeEditor(@NotNull Project project, @NotNull GitLineHandler handler) {
+  private static @NotNull GitHandlerRebaseEditorManager prepareGeneralPurposeEditor(@NotNull Project project, @NotNull GitLineHandler handler) {
     return GitHandlerRebaseEditorManager.prepareEditor(handler, new GitSimpleEditorHandler(project));
   }
 
   /**
    * Run handler with per-project locking, logging
    */
-  @NotNull
-  private static GitCommandResult doRun(@NotNull GitLineHandler handler,
+  private static @NotNull GitCommandResult doRun(@NotNull GitLineHandler handler,
                                         @NotNull GitVersion version,
                                         @NotNull OutputCollector outputCollector) {
     getGitTraceEnvironmentVariables(version).forEach(handler::addCustomEnvironmentVariable);
@@ -213,8 +205,7 @@ public abstract class GitImplBase implements Git {
   /**
    * Only public because of {@link GitExecutableValidator#isExecutableValid()}
    */
-  @NotNull
-  public static Map<String, String> getGitTraceEnvironmentVariables(@NotNull GitVersion version) {
+  public static @NotNull Map<String, String> getGitTraceEnvironmentVariables(@NotNull GitVersion version) {
     Map<@NonNls String, @NonNls String> environment = new HashMap<>(5);
     int logLevel = Registry.intValue("git.execution.trace");
     if (logLevel == 0) {
@@ -254,12 +245,11 @@ public abstract class GitImplBase implements Git {
     }
   }
 
-  @Nullable
-  private static String showUnstructuredEditorAndWait(@NotNull Project project,
-                                                      @Nullable VirtualFile root,
-                                                      @NotNull @NlsSafe String initialText,
-                                                      @NotNull @NlsContexts.DialogTitle String dialogTitle,
-                                                      @NotNull @NlsContexts.Button String okButtonText) {
+  private static @Nullable String showUnstructuredEditorAndWait(@NotNull Project project,
+                                                                @Nullable VirtualFile root,
+                                                                @NotNull @NlsSafe String initialText,
+                                                                @NotNull @NlsContexts.DialogTitle String dialogTitle,
+                                                                @NotNull @NlsContexts.Button String okButtonText) {
     Ref<String> newText = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       GitUnstructuredEditor editor = new GitUnstructuredEditor(project, root, initialText, dialogTitle, okButtonText);
@@ -271,8 +261,7 @@ public abstract class GitImplBase implements Git {
     return newText.get();
   }
 
-  @NotNull
-  private static String ignoreComments(@NotNull String text) {
+  private static @NotNull String ignoreComments(@NotNull String text) {
     String[] lines = splitByLinesKeepSeparators(text);
     return StreamEx.of(lines)
       .filter(line -> !line.startsWith(GitUtil.COMMENT_CHAR))
@@ -312,7 +301,7 @@ public abstract class GitImplBase implements Git {
     }
   }
 
-  private static abstract class OutputCollector {
+  private abstract static class OutputCollector {
     final List<String> myOutput = new ArrayList<>();
     final List<String> myErrorOutput = new ArrayList<>();
 
@@ -333,8 +322,7 @@ public abstract class GitImplBase implements Git {
     abstract void errorLineReceived(@NotNull String line);
   }
 
-  @NotNull
-  private static GitCommandResult handlePreValidationException(@Nullable Project project, @NotNull Exception e) {
+  private static @NotNull GitCommandResult handlePreValidationException(@Nullable Project project, @NotNull Exception e) {
     // Show notification if it's a project non-modal task and cancel the task
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (project != null
@@ -395,8 +383,7 @@ public abstract class GitImplBase implements Git {
     }
   }
 
-  @NotNull
-  private static AccessToken lock(@NotNull GitLineHandler handler, boolean canSuppressOptionalLocks) {
+  private static @NotNull AccessToken lock(@NotNull GitLineHandler handler, boolean canSuppressOptionalLocks) {
     Project project = handler.project();
     LockingPolicy lockingPolicy = handler.getCommand().lockingPolicy();
 
@@ -478,8 +465,7 @@ public abstract class GitImplBase implements Git {
     "runnerw:"
   };
 
-  @NotNull
-  static String stringifyWorkingDir(@Nullable String basePath, @NotNull File workingDir) {
+  static @NotNull String stringifyWorkingDir(@Nullable String basePath, @NotNull File workingDir) {
     if (basePath != null) {
       String relPath = FileUtil.getRelativePath(basePath, FileUtil.toSystemIndependentName(workingDir.getPath()), '/');
       if (".".equals(relPath)) {
