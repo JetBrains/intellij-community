@@ -18,4 +18,15 @@ public class DocumentUtilTest {
     assertEquals(" \t ", DocumentUtil.getIndent(doc, doc.getLineStartOffset(1) + 2).toString());
     assertEquals("", DocumentUtil.getIndent(doc, doc.getLineStartOffset(2)).toString());
   }
+
+  @Test
+  public void calculateOffsetIsZeroBased() {
+    final Document doc = new DocumentImpl("""
+                                            line1
+                                            line2
+                                            """);
+
+    int offset = DocumentUtil.calculateOffset(doc, 0, 0, 0);
+    assertEquals(0, offset);
+  }
 }

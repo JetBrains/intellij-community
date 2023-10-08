@@ -26,6 +26,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
 import static com.intellij.rt.execution.junit.ComparisonFailureData.OPENTEST4J_FILE_CONTENT_CHARSET;
@@ -344,20 +345,38 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   private static String getMetaInfo(TestIdentifier root) {
     return root.getSource()
-      .map(testSource -> {
-        if (testSource instanceof MethodSource) {
-          //noinspection SpellCheckingInspection
-          return " metainfo='" + ((MethodSource)testSource).getMethodParameterTypes() + "'";
-        }
-        if (testSource instanceof ClassSource) {
-          //noinspection SpellCheckingInspection
-          return ((ClassSource)testSource).getPosition()
-            .map(position -> " metainfo='" + position.getLine() + ":" + position.getColumn() + "'")
-            .orElse(NO_LOCATION_HINT);
-        }
-        return NO_LOCATION_HINT;
-      })
+      .flatMap(JUnit5TestExecutionListener::doGetMetaInfo)
       .orElse(NO_LOCATION_HINT);
+  }
+
+  private static Optional<String> doGetMetaInfo(TestSource testSource) {
+    if (testSource instanceof CompositeTestSource) {
+      return ((CompositeTestSource)testSource).getSources()
+        .stream()
+        .map(JUnit5TestExecutionListener::doGetMetaInfo)
+        .flatMap(JUnit5TestExecutionListener::streamOptional)
+        .findFirst();
+    }
+    if (testSource instanceof MethodSource) {
+      //noinspection SpellCheckingInspection
+      return Optional.of(" metainfo='" + ((MethodSource)testSource).getMethodParameterTypes() + "'");
+    }
+    if (testSource instanceof ClassSource) {
+      //noinspection SpellCheckingInspection
+      return ((ClassSource)testSource).getPosition()
+        .map(position -> " metainfo='"
+                         + oneBasedToZeroBased(position.getLine()) + ":"
+                         + oneBasedToZeroBased(position.getColumn().orElse(1)) + "'");
+    }
+    return Optional.empty();
+  }
+
+  private static <T> Stream<T> streamOptional(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<T> optional) {
+    return optional.map(Stream::of).orElseGet(Stream::empty);
+  }
+
+  private static Integer oneBasedToZeroBased(Integer integer) {
+    return integer - 1;
   }
 
   static String getLocationHintValue(TestSource testSource, TestSource parentSource) {
