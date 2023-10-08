@@ -17,6 +17,7 @@ import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 
 internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer() {
@@ -41,6 +42,7 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
   // Furthermore, a size-bounded cache is unnecessary for us because our application has frequent cache clearances,
   // such as during PSI modifications.
   private val iconCache = ConcurrentHashMap<Any, Icon>()
+  private val lastClearTimestamp = LongAdder()
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
@@ -66,6 +68,7 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
   }
 
   override fun clearCache() {
+    lastClearTimestamp.increment()
     iconCache.clear()
   }
 
@@ -75,13 +78,17 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
     }
 
     return iconCache.computeIfAbsent(param) {
+      val started = lastClearTimestamp.sum()
       DeferredIconImpl(baseIcon = base,
                        param = param,
                        needReadAction = true,
                        evaluator = evaluator,
                        listener = { source, icon ->
-                         // use `replace` instead of `put` to ensure that our result is not outdated yet
-                         iconCache.replace(source.param, icon)
+                         // check if our result is not outdated yet
+                         if (started == lastClearTimestamp.sum()) {
+                           // use `replace` instead of `put` to ensure that our result is not outdated yet
+                           iconCache.replace(source.param, source, icon)
+                         }
                        })
     }
   }
