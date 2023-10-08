@@ -3,6 +3,7 @@ package com.intellij.util.containers.hash;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -17,11 +18,13 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   private final EqualityPolicy<? super K> hashingStrategy;
   private final boolean accessOrder;
 
+  @TestOnly
   public LinkedHashMap() {
     //noinspection rawtypes,unchecked
     this(0, HashUtil.DEFAULT_LOAD_FACTOR, (EqualityPolicy)EqualityPolicy.CANONICAL, false);
   }
 
+  @TestOnly
   public LinkedHashMap(int capacity, boolean accessOrder) {
     //noinspection rawtypes,unchecked
     this(capacity, HashUtil.DEFAULT_LOAD_FACTOR, (EqualityPolicy)EqualityPolicy.CANONICAL, accessOrder);
@@ -84,7 +87,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
         return e.setValue(value);
       }
     }
-    final Entry<K, V> e = new Entry<K, V>(key, value, hash);
+    final Entry<K, V> e = new Entry<>(key, value, hash);
     e.hashNext = table[index];
     table[index] = e;
     final Entry<K, V> top = this.top;

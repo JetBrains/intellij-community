@@ -12,30 +12,31 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class SLRUMap<K,V> {
-  private final LinkedHashMap<K,V> myProtectedQueue;
-  private final LinkedHashMap<K,V> myProbationalQueue;
+  private static final int FACTOR = Integer.getInteger("idea.slru.factor", 1);
 
-  private final int myProtectedQueueSize;
-  private final int myProbationalQueueSize;
+  private final LinkedHashMap<K,V> protectedQueue;
+  private final LinkedHashMap<K,V> probationalQueue;
+
+  private final int protectedQueueSize;
+  private final int probationalQueueSize;
 
   private int probationalHits;
   private int protectedHits;
   private int misses;
-  private static final int FACTOR = Integer.getInteger("idea.slru.factor", 1);
 
-  public SLRUMap(final int protectedQueueSize, final int probationalQueueSize) {
+  public SLRUMap(int protectedQueueSize, int probationalQueueSize) {
     this(protectedQueueSize, probationalQueueSize, (EqualityPolicy<? super K>)EqualityPolicy.CANONICAL);
   }
 
   public SLRUMap(final int protectedQueueSize, final int probationalQueueSize, @NotNull EqualityPolicy<? super K> hashingStrategy) {
-    myProtectedQueueSize = protectedQueueSize * FACTOR;
-    myProbationalQueueSize = probationalQueueSize * FACTOR;
+    this.protectedQueueSize = protectedQueueSize * FACTOR;
+    this.probationalQueueSize = probationalQueueSize * FACTOR;
 
-    myProtectedQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy, true) {
+    protectedQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy, true) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<K, V> eldest, K key, V value) {
-        if (size() > myProtectedQueueSize) {
-          myProbationalQueue.put(key, value);
+        if (size() > SLRUMap.this.protectedQueueSize) {
+          probationalQueue.put(key, value);
           return true;
         }
 
@@ -43,10 +44,10 @@ public class SLRUMap<K,V> {
       }
     };
 
-    myProbationalQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy, true) {
+    probationalQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy, true) {
       @Override
       protected boolean removeEldestEntry(final Map.Entry<K, V> eldest, K key, V value) {
-        if (size() > myProbationalQueueSize) {
+        if (size() > SLRUMap.this.probationalQueueSize) {
           onDropFromCache(key, value);
           return true;
         }
@@ -56,13 +57,13 @@ public class SLRUMap<K,V> {
   }
 
   public @Nullable V get(K key) {
-    V value = myProtectedQueue.get(key);
+    V value = protectedQueue.get(key);
     if (value != null) {
       protectedHits++;
       return value;
     }
 
-    value = myProbationalQueue.remove(key);
+    value = probationalQueue.remove(key);
     if (value != null) {
       probationalHits++;
       putToProtectedQueue(key, value);
@@ -74,16 +75,16 @@ public class SLRUMap<K,V> {
   }
 
   protected void putToProtectedQueue(K key, @NotNull V value) {
-    myProtectedQueue.put(getStableKey(key), value);
+    protectedQueue.put(getStableKey(key), value);
   }
 
   public void put(K key, @NotNull V value) {
-    V oldValue = myProtectedQueue.remove(key);
+    V oldValue = protectedQueue.remove(key);
     if (oldValue != null) {
       onDropFromCache(key, oldValue);
     }
 
-    oldValue = myProbationalQueue.put(getStableKey(key), value);
+    oldValue = probationalQueue.put(getStableKey(key), value);
     if (oldValue != null) {
       onDropFromCache(key, oldValue);
     }
@@ -92,13 +93,13 @@ public class SLRUMap<K,V> {
   protected void onDropFromCache(K key, @NotNull V value) {}
 
   public boolean remove(K key) {
-    V value = myProtectedQueue.remove(key);
+    V value = protectedQueue.remove(key);
     if (value != null) {
       onDropFromCache(key, value);
       return true;
     }
 
-    value = myProbationalQueue.remove(key);
+    value = probationalQueue.remove(key);
     if (value != null) {
       onDropFromCache(key, value);
       return true;
@@ -109,39 +110,39 @@ public class SLRUMap<K,V> {
 
   public void iterateKeys(@NotNull Consumer<? super K> keyConsumer) {
     //RC: same key could be reported more than once to the consumer -- is it OK?
-    myProtectedQueue.keySet().forEach(keyConsumer);
-    myProbationalQueue.keySet().forEach(keyConsumer);
+    protectedQueue.keySet().forEach(keyConsumer);
+    probationalQueue.keySet().forEach(keyConsumer);
   }
 
   public @NotNull Set<Map.Entry<K, V>> entrySet() {
-    Set<Map.Entry<K, V>> set = new HashSet<>(myProtectedQueue.entrySet());
-    set.addAll(myProbationalQueue.entrySet());
+    Set<Map.Entry<K, V>> set = new HashSet<>(protectedQueue.entrySet());
+    set.addAll(probationalQueue.entrySet());
     return set;
   }
 
   public @NotNull Set<V> values() {
-    Set<V> set = new HashSet<>(myProtectedQueue.values());
-    set.addAll(myProbationalQueue.values());
+    Set<V> set = new HashSet<>(protectedQueue.values());
+    set.addAll(probationalQueue.values());
     return set;
   }
 
   public void clear() {
     try {
-      if (!myProtectedQueue.isEmpty()) {
-        for (Map.Entry<K, V> entry : myProtectedQueue.entrySet()) {
+      if (!protectedQueue.isEmpty()) {
+        for (Map.Entry<K, V> entry : protectedQueue.entrySet()) {
           onDropFromCache(entry.getKey(), entry.getValue());
         }
       }
 
-      if (!myProbationalQueue.isEmpty()) {
-        for (Map.Entry<K, V> entry : myProbationalQueue.entrySet()) {
+      if (!probationalQueue.isEmpty()) {
+        for (Map.Entry<K, V> entry : probationalQueue.entrySet()) {
           onDropFromCache(entry.getKey(), entry.getValue());
         }
       }
     }
     finally {
-      myProtectedQueue.clear();
-      myProbationalQueue.clear();
+      protectedQueue.clear();
+      probationalQueue.clear();
     }
   }
 
