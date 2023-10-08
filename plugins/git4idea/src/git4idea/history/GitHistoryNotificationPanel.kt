@@ -2,7 +2,6 @@
 package git4idea.history
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.IconButton
@@ -22,8 +21,7 @@ import java.awt.BorderLayout
 
 private const val INDEXING_NOTIFICATION_DISMISSED_KEY = "git.history.resume.index.dismissed"
 
-object GitHistoryNotificationPanel {
-
+internal object GitHistoryNotificationPanel {
   @JvmStatic
   fun create(project: Project, session: VcsHistorySession): EditorNotificationPanel? {
     val filePath = (session as? GitHistoryProvider.GitHistorySession)?.filePath ?: return null

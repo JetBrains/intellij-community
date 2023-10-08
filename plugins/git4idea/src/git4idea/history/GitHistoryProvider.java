@@ -159,7 +159,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
            ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
-  class GitHistorySession extends VcsAbstractHistorySession {
+  final class GitHistorySession extends VcsAbstractHistorySession {
     private final @NotNull FilePath myFilePath;
 
     GitHistorySession(@NotNull FilePath filePath, @Nullable VcsRevisionNumber number, @NotNull List<? extends VcsFileRevision> revisions) {
