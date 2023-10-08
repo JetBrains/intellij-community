@@ -17,6 +17,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * A utility to enforce "slow operation on EDT" assertion.
  * <p/>
@@ -46,6 +49,9 @@ public final class SlowOperations {
 
   private static int ourAlwaysAllow = -1;
   private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
+
+  private static String ourTargetClass;
+  private static final Set<String> ourReportedClasses = new HashSet<>();
 
   private SlowOperations() {}
 
@@ -133,6 +139,9 @@ public final class SlowOperations {
   }
 
   private static boolean isAlreadyReported() {
+    if (ourTargetClass != null && !ourReportedClasses.add(ourTargetClass)) {
+      return true;
+    }
     Throwable throwable = new Throwable();
     return ThrowableInterner.intern(throwable) != throwable;
   }
@@ -205,6 +214,22 @@ public final class SlowOperations {
   @ApiStatus.Internal
   public static @NotNull AccessToken knownIssue(@NotNull @NonNls String ytIssueId) {
     return startSection(KNOWN_ISSUE);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull AccessToken reportOnceIfViolatedFor(@NotNull Object target) {
+    if (!EDT.isCurrentThreadEdt()) {
+      return AccessToken.EMPTY_ACCESS_TOKEN;
+    }
+    String prev = ourTargetClass;
+    ourTargetClass = target.getClass().getName();
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourTargetClass = prev;
+      }
+    };
   }
 
   /**
