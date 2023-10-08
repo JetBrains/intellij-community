@@ -4,9 +4,16 @@ package com.intellij.warmup
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 
-const val PREFIX = AbstractCommand.CMD_PREFIX + "checkWarmupBuild"
+const val BUILD_PREFIX = AbstractCommand.CMD_PREFIX + "checkWarmupBuild"
+
+const val GIT_LOG_PREFIX = AbstractCommand.CMD_PREFIX + "checkGitLogIndexing"
 
 fun <T : CommandChain> T.checkWarmupBuild(): T {
-  addCommand(PREFIX)
+  addCommand(BUILD_PREFIX)
+  return this
+}
+
+fun <T : CommandChain> T.checkGitLogIndexing(): T {
+  addCommand(GIT_LOG_PREFIX)
   return this
 }
