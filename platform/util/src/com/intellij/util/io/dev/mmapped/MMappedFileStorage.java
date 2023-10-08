@@ -3,6 +3,7 @@ package com.intellij.util.io.dev.mmapped;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.CleanableStorage;
@@ -51,10 +52,15 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   //  Explicit unmap allows to 'clean after yourself', but carries a risk of JVM crash if somebody still tries
   //  to access unmapped pages.
   //  Current take:
-  //  1) by default rely on GC
-  //  2) .close(unmap=true) method closes AND unmap explicitly if needed
-  //  3) .closeAndClean() method unmaps buffers explicitly, since on Windows it is impossible to delete (=clean)
-  //     the files that are currently mapped, and GC is proved unreliable for that task.
+  //  1) .close() by default rely on GC
+  //  2) .close(unmap=true) method closes AND unmap explicitly if needed (synonym: .closeAndUnsafelyUnmap())
+  //  3) .closeAndClean() method always unmaps buffers explicitly, since on Windows it is impossible to delete
+  //     (=clean) the files that are currently mapped, and GC is proved unreliable for that task.
+
+  /** 'always', 'never', 'on-windows' */
+  private static final String UNMAP_ON_CLOSE_KIND = System.getProperty("MMappedFileStorage.UNMAP_ON_CLOSE", "never");
+  private static final boolean UNMAP_ON_CLOSE = "always".equals(UNMAP_ON_CLOSE_KIND)
+                                                || ("on-windows".equals(UNMAP_ON_CLOSE_KIND) && SystemInfoRt.isWindows);
 
   /**
    * What if memory mapped buffer is impossible to unmap (by any reason: can't access Unsafe, bad luck, etc)?
@@ -244,8 +250,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
 
   @Override
   public void close() throws IOException {
-    //do not unmap by default, don't risk JVM crash
-    close( /*unmap: */ false);
+    close( /*unmap: */ UNMAP_ON_CLOSE);
   }
 
   /**
