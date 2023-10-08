@@ -62,6 +62,15 @@ class SpellCheckerManager(val project: Project) : Disposable {
 
   private val userDictionaryListenerEventDispatcher = EventDispatcher.create(DictionaryStateListener::class.java)
 
+  @Volatile
+  private var dictionaryCheckers: List<DictionaryChecker>? = null
+
+  init {
+    DictionaryCheckerProvider.EP_NAME.addChangeListener(Runnable {
+      dictionaryCheckers = null
+    }, this)
+  }
+
   // used in Rider
   @get:Suppress("unused")
   var spellChecker: SpellCheckerEngine? = null
@@ -229,7 +238,19 @@ class SpellCheckerManager(val project: Project) : Disposable {
     }
   }
 
-  fun hasProblem(word: String): Boolean = !spellChecker!!.isCorrect(word)
+  fun hasProblem(word: String): Boolean {
+    return !spellChecker!!.isCorrect(word) && !isCorrectExtensionWord(word)
+  }
+
+  private fun isCorrectExtensionWord(word: String): Boolean {
+    var currentCheckers = dictionaryCheckers
+    if (currentCheckers == null) {
+      currentCheckers = DictionaryCheckerProvider.EP_NAME.extensionList.map { it.getChecker(project) }
+      dictionaryCheckers = currentCheckers
+    }
+
+    return currentCheckers.any { it.isCorrect(word) }
+  }
 
   fun acceptWordAsCorrect(word: String, project: Project) {
     acceptWordAsCorrect(word = word, file = null, project = project, dictionaryLevel = DictionaryLevel.PROJECT) // TODO: or default

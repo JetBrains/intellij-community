@@ -2452,6 +2452,8 @@
     <postStartupActivity implementation="com.intellij.ide.FileNotInSourceRootChecker"/>
 
     <pluginSuggestionProvider implementation="com.intellij.java.frameworks.FrameworkSuggestionProvider"/>
+
+    <spellchecker.dictionary.checker implementation="com.intellij.java.frameworks.MavenDictionaryCheckerProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
