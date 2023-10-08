@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("RedundantUnitReturnType")
 
-package com.intellij.ide.observation
+package com.intellij.openapi.observable
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  *   or if the configuration is not completed yet.
  *
  * If your subsystem does not already have a way to detect configuration process,
- * you may consider using [com.intellij.ide.observation.AbstractInProgressService]
+ * you may consider using [com.intellij.openapi.observable.AbstractInProgressService]
  */
 @Experimental
 interface ActivityInProgressPredicate {
