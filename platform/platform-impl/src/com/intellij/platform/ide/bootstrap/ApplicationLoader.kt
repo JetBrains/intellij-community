@@ -128,9 +128,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
       initConfigurationStore(app)
     }
 
-    val applicationStarter = span("app starter creation") {
-      createAppStarter(args)
-    }
+    val applicationStarter = createAppStarter(args = args, asyncScope = this@span)
 
     launch(CoroutineName("app pre-initialization")) {
       initConfigurationStoreJob.join()
@@ -187,7 +185,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
 
     appInitializedListenerJob.join()
 
-    applicationStarter
+    applicationStarter.await()
   }
 }
 
@@ -320,35 +318,37 @@ private fun CoroutineScope.runPostAppInitTasks() {
 }
 
 // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
-private fun createAppStarter(args: List<String>): ApplicationStarter {
+private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineScope): Deferred<ApplicationStarter> {
   val commandName = args.firstOrNull()
   // first argument maybe a project path
   if (commandName == null) {
-    return IdeStarter()
+    return asyncScope.async(CoroutineName("app starter creation")) { IdeStarter() }
   }
   else if (args.size == 1 && OSAgnosticPathUtil.isAbsolute(commandName)) {
-    return createDefaultAppStarter()
+    return asyncScope.async(CoroutineName("app starter creation")) { createDefaultAppStarter() }
   }
 
-  val starter = findStarter(commandName) ?: createDefaultAppStarter()
-  if (AppMode.isHeadless() && !starter.isHeadless) {
-    val message = IdeBundle.message(
-      "application.cannot.start.in.a.headless.mode",
-      when {
-        starter is IdeStarter -> 0
-        else -> 1
-      },
-      commandName,
-      if (args.isEmpty()) 0 else 1,
-      args.joinToString(" ")
-    )
-    StartupErrorReporter.showMessage(IdeBundle.message("main.startup.error"), message, true)
-    exitProcess(AppExitCodes.NO_GRAPHICS)
-  }
+  return span("app custom starter creation") {
+    val starter = findStarter(commandName) ?: createDefaultAppStarter()
+    if (AppMode.isHeadless() && !starter.isHeadless) {
+      val message = IdeBundle.message(
+        "application.cannot.start.in.a.headless.mode",
+        when {
+          starter is IdeStarter -> 0
+          else -> 1
+        },
+        commandName,
+        if (args.isEmpty()) 0 else 1,
+        args.joinToString(" ")
+      )
+      StartupErrorReporter.showMessage(IdeBundle.message("main.startup.error"), message, true)
+      exitProcess(AppExitCodes.NO_GRAPHICS)
+    }
 
-  // must be executed before container creation
-  starter.premain(args)
-  return starter
+    // must be executed before container creation
+    starter.premain(args)
+    CompletableDeferred(starter)
+  }
 }
 
 private fun createDefaultAppStarter(): ApplicationStarter {
