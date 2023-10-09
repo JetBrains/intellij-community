@@ -120,6 +120,11 @@ public class DialogBuilder implements Disposable {
     addActionDescriptor(new CustomActionDescriptor(action));
   }
 
+  public DialogBuilder addLeftSideAction(Action action) {
+    myDialogWrapper.addLeftSideAction(action);
+    return this;
+  }
+
   public <T extends ActionDescriptor> T addActionDescriptor(T actionDescriptor) {
     getActionDescriptors().add(actionDescriptor);
     return actionDescriptor;
@@ -337,6 +342,8 @@ public class DialogBuilder implements Disposable {
 
   private final class MyDialogWrapper extends DialogWrapper {
     private @NonNls String myHelpId = null;
+    private @Nullable List<Action> myLeftSideActions = null;
+
     private MyDialogWrapper(@Nullable Project project, boolean canBeParent) {
       super(project, canBeParent);
     }
@@ -347,6 +354,13 @@ public class DialogBuilder implements Disposable {
 
     public void setHelpId(@NonNls String helpId) {
       myHelpId = helpId;
+    }
+
+    public void addLeftSideAction(Action action) {
+      if (myLeftSideActions == null) {
+        myLeftSideActions = new ArrayList<>();
+      }
+      myLeftSideActions.add(action);
     }
 
     @Override
@@ -432,6 +446,15 @@ public class DialogBuilder implements Disposable {
       }
       if (myHelpId != null) actions.add(getHelpAction());
       return actions.toArray(new Action[0]);
+    }
+
+    @Override
+    protected Action @NotNull [] createLeftSideActions() {
+      if (myLeftSideActions == null) {
+        return new Action[0];
+      } else {
+        return myLeftSideActions.toArray(new Action[0]);
+      }
     }
   }
 
