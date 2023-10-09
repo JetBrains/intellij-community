@@ -307,7 +307,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   @Override
   protected void revertStateOnFinish() {
     final Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
-    if (editor == FileEditorManager.getInstance(myProject).getSelectedTextEditor() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (editor == FileEditorManager.getInstance(myProject).getSelectedTextEditor() && editor instanceof EditorImpl) {
       ((EditorImpl)editor).startDumb();
     }
     revertState();
