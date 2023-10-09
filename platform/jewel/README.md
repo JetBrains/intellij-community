@@ -1,4 +1,5 @@
-[![JetBrains incubator](https://camo.githubusercontent.com/be6f8b50b2400e8b0dc74e58dd9a68803fe6698f5f30d843a7504888879f8392/68747470733a2f2f6a622e67672f6261646765732f696e63756261746f722d706c61737469632e737667)](https://github.com/JetBrains#jetbrains-on-github) [![CI checks](https://github.com/JetBrains/jewel/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/JetBrains/jewel/actions/workflows/build.yml)
+[![JetBrains incubator](https://img.shields.io/badge/JetBrains-incubator-yellow)](https://github.com/JetBrains#jetbrains-on-github) [![CI checks](https://img.shields.io/github/actions/workflow/status/JetBrains/jewel/build.yml?logo=github)](https://github.com/JetBrains/jewel/actions/workflows/build.yml) [![Licensed under Apache 2.0](https://img.shields.io/github/license/JetBrains/jewel)](https://github.com/JetBrains/jewel/blob/main/LICENSE) [![Latest release](https://img.shields.io/github/v/release/JetBrains/jewel?include_prereleases&label=Latest%20Release&logo=github)](https://github.com/JetBrains/jewel/releases/latest)
+
 
 # Jewel: a Compose for Desktop theme
 
@@ -91,3 +92,22 @@ you, but if you want to also enable it in other scenarios and in standalone appl
 You can find help on the [`#jewel`](https://app.slack.com/client/T09229ZC6/C05T8U2C31T) channel on the Kotlin Slack.
 If you don't already have access to the Kotlin Slack, you can request it
 [here](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up).
+
+## License
+Jewel is licensed under the [Apache 2.0 license](https://github.com/JetBrains/jewel/blob/main/LICENSE).
+
+```
+   Copyright 2022–3 JetBrains s.r.o.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+```
