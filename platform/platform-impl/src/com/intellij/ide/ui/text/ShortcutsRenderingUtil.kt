@@ -109,13 +109,13 @@ object ShortcutsRenderingUtil {
     return builder.toString() to ranges
   }
 
-  fun getGotoActionData(@NonNls actionId: String): Pair<String, List<IntRange>> {
+  fun getGotoActionData(@NonNls actionId: String, needLogIncorrectInput: Boolean): Pair<String, List<IntRange>> {
     val action = ActionManager.getInstance().getAction(actionId)
     val actionName = if (action != null) {
       action.templatePresentation.text.replaceSpacesWithNonBreakSpaces()
     }
     else {
-      thisLogger().error("Failed to find action with id: $actionId")
+      if (needLogIncorrectInput) thisLogger().error("Failed to find action with id: $actionId")
       actionId
     }
 

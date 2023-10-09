@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -97,7 +98,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   init {
     val builder = GotItTextBuilderImpl()
     val rawText = textSupplier(builder)
-    val withPatchedShortcuts = ShortcutExtension.patchShortcutTags(rawText)
+    val withPatchedShortcuts = ShortcutExtension.patchShortcutTags(rawText, true)
     this.text = InlineCodeExtension.patchCodeTags(withPatchedShortcuts)
     this.linkActionsMap = builder.getLinkActions()
     this.iconsMap = builder.getIcons()
@@ -744,7 +745,7 @@ class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
              " background-color: ${ColorUtil.toHtmlColor(background)} }"
     }
 
-    fun patchShortcutTags(htmlText: @Nls String): @Nls String {
+    fun patchShortcutTags(htmlText: @Nls String, needLogIncorrectInput: Boolean): @Nls String {
       val shortcuts: Sequence<MatchResult> = SHORTCUT_REGEX.findAll(htmlText)
       if (!shortcuts.any()) return htmlText
 
@@ -752,7 +753,7 @@ class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
       var ind = 0
       for (shortcut in shortcuts) {
         builder.append(htmlText.substring(ind, shortcut.range.first))
-        val text = getShortcutText(shortcut.groups["type"]!!.value, shortcut.groups["value"]!!.value)
+        val text = getShortcutText(shortcut.groups["type"]!!.value, shortcut.groups["value"]!!.value, needLogIncorrectInput)
         val span = shortcutSpan(text)
         builder.append("${StringUtil.NON_BREAK_SPACE}$span${StringUtil.NON_BREAK_SPACE}")
         ind = shortcut.range.last + 1
@@ -763,14 +764,20 @@ class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
       return builder.toString()
     }
 
-    private fun getShortcutText(type: String, value: String): String {
+    private fun getShortcutText(type: String, value: String, needLogIncorrectInput: Boolean): String {
       return when (type) {
         "actionId" -> {
           val shortcut = ShortcutsRenderingUtil.getShortcutByActionId(value)
           if (shortcut != null) {
             ShortcutsRenderingUtil.getKeyboardShortcutData(shortcut).first
           }
-          else ShortcutsRenderingUtil.getGotoActionData(value).first
+          else {
+            if (ActionManager.getInstance().getAction(value) == null) {
+              if (needLogIncorrectInput) thisLogger().error("No action with $value id is registered")
+              return value
+            }
+            ShortcutsRenderingUtil.getGotoActionData(value, needLogIncorrectInput).first
+          }
         }
         "raw" -> {
           val keyStroke = KeyStroke.getKeyStroke(value)
@@ -778,12 +785,12 @@ class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
             ShortcutsRenderingUtil.getKeyStrokeData(keyStroke).first
           }
           else {
-            thisLogger().error("Invalid key stroke: $value")
+            if (needLogIncorrectInput) thisLogger().error("Invalid key stroke: $value")
             value
           }
         }
         else -> {
-          thisLogger().error("Unknown shortcut type: $type, use 'actionId' or 'raw'")
+          if (needLogIncorrectInput) thisLogger().error("Unknown shortcut type: $type, use 'actionId' or 'raw'")
           value
         }
       }

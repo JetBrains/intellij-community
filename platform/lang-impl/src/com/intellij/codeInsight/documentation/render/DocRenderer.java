@@ -297,7 +297,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     boolean useTipsKit = false;
     if (text.startsWith(InlineDocumentationImplKt.START_TIP_PREFIX)) {
       text = unwrapTipsText(text);
-      text = ShortcutExtension.Companion.patchShortcutTags(text);
+      text = ShortcutExtension.Companion.patchShortcutTags(text, false);
       useTipsKit = true;
     }
     EditorPane pane = new EditorPane(!reusable);
