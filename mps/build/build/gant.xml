@@ -179,19 +179,6 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
-        <property name="patchJDK1707"
-                  value="${basedir}/patches/MPS-36113.patch"/>
-        <echo message="Applying ${patchJDK1707}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="${patchJDK1707}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${patchJDK1707}"/>
-        </exec>
-
         <property name="patchHideNewUIVideo"
                   value="${basedir}/patches/HideNewUIVideo.patch"/>
         <echo message="Applying ${patchHideNewUIVideo}"/>
