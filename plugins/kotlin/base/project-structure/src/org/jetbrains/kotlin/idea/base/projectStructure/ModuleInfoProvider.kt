@@ -27,6 +27,8 @@ import org.jetbrains.kotlin.asJava.classes.runReadAction
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.util.*
 import org.jetbrains.kotlin.psi.KtCodeFragment
@@ -256,7 +258,7 @@ class ModuleInfoProvider(private val project: Project) {
                     val iterator = orderEntries.iterator()
                     val visited = hashSetOf<IdeaModuleInfo>()
                     return MappingIterator(iterator) { orderEntry ->
-                        collectByOrderEntry(virtualFile, orderEntry, isLibrarySource, visited)?.let(Result.Companion::success)
+                        collectByOrderEntry(virtualFile, orderEntry, isLibrarySource, visited, config)?.let(Result.Companion::success)
                     }
                 }
             })
@@ -297,12 +299,15 @@ class ModuleInfoProvider(private val project: Project) {
         virtualFile: VirtualFile,
         orderEntry: OrderEntry,
         isLibrarySource: Boolean,
-        visited: HashSet<IdeaModuleInfo>
+        visited: HashSet<IdeaModuleInfo>,
+        config: Configuration,
     ): IdeaModuleInfo? {
         if (orderEntry is ModuleOrderEntry) {
             // Module-related entries are covered in 'collectModuleRelatedModuleInfosByFile()'
             return null
         }
+
+        val sourceContext = config.contextualModuleInfo as? ModuleSourceInfo
 
         ProgressManager.checkCanceled()
         if (!orderEntry.isValid) return null
@@ -313,14 +318,18 @@ class ModuleInfoProvider(private val project: Project) {
                 if (!isLibrarySource && RootKindFilter.libraryClasses.matches(project, virtualFile)) {
                     for (libraryInfo in libraryInfoCache[library]) {
                         if (visited.add(libraryInfo)) {
-                            return libraryInfo
+                            if (libraryInfo.isApplicable(sourceContext)) {
+                                return libraryInfo
+                            }
                         }
                     }
                 } else if (isLibrarySource || RootKindFilter.libraryFiles.matches(project, virtualFile)) {
                     for (libraryInfo in libraryInfoCache[library]) {
                         val moduleInfo = libraryInfo.sourcesModuleInfo
                         if (visited.add(moduleInfo)) {
-                            return moduleInfo
+                            if (libraryInfo.isApplicable(sourceContext)) {
+                                return moduleInfo
+                            }
                         }
                     }
                 }
@@ -338,6 +347,13 @@ class ModuleInfoProvider(private val project: Project) {
             }
         }
         return null
+    }
+
+    private fun LibraryInfo.isApplicable(contextualModuleInfo: ModuleSourceInfo?): Boolean {
+        if (contextualModuleInfo == null) return true
+
+        val service = project.service<LibraryUsageIndex>()
+        return service.hasDependentModule(this, contextualModuleInfo.module)
     }
 
     private fun SeqScope<Result<IdeaModuleInfo>>.collectByUserData(container: UserDataModuleContainer) {

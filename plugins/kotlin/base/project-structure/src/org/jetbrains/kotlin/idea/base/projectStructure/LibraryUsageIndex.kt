@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 
 /**
@@ -14,4 +13,5 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
  */
 interface LibraryUsageIndex {
     fun getDependentModules(libraryInfo: LibraryInfo): Sequence<Module>
+    fun hasDependentModule(libraryInfo: LibraryInfo, module: Module): Boolean
 }
