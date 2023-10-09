@@ -1010,6 +1010,41 @@
 						</dict>
 					</array>
 				</dict>
+				<dict>
+					<key>begin</key>
+					<string>\b(maybe)\b</string>
+					<key>beginCaptures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>keyword.control.maybe.erlang</string>
+						</dict>
+					</dict>
+					<key>end</key>
+					<string>\b(end)\b</string>
+					<key>endCaptures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>keyword.control.end.erlang</string>
+						</dict>
+					</dict>
+					<key>name</key>
+					<string>meta.expression.maybe.erlang</string>
+					<key>patterns</key>
+					<array>
+						<dict>
+							<key>include</key>
+							<string>#internal-expression-punctuation</string>
+						</dict>
+						<dict>
+							<key>include</key>
+							<string>#everything-else</string>
+						</dict>
+					</array>
+				</dict>
 			</array>
 		</dict>
 		<key>function</key>
@@ -1599,7 +1634,7 @@
 		<key>keyword</key>
 		<dict>
 			<key>match</key>
-			<string>\b(after|begin|case|catch|cond|end|fun|if|let|of|try|receive|when)\b</string>
+			<string>\b(after|begin|case|catch|cond|end|fun|if|let|of|try|receive|when|maybe|else)\b</string>
 			<key>name</key>
 			<string>keyword.control.erlang</string>
 		</dict>
@@ -2643,7 +2678,7 @@
 		<key>symbolic-operator</key>
 		<dict>
 			<key>match</key>
-			<string>\+\+|\+|--|-|\*|/=|/|=/=|=:=|==|=&lt;|=|&lt;-|&lt;|&gt;=|&gt;|!|::</string>
+			<string>\+\+|\+|--|-|\*|/=|/|=/=|=:=|==|=&lt;|=|&lt;-|&lt;|&gt;=|&gt;|!|::|\?=</string>
 			<key>name</key>
 			<string>keyword.operator.symbolic.erlang</string>
 		</dict>

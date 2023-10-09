@@ -1,5 +1,8 @@
 {
   "name": "vscode-bicep-param",
+  "version": null,
+  "description": null,
+  "license": null,
   "contributes": {
     "languages": [
       {
