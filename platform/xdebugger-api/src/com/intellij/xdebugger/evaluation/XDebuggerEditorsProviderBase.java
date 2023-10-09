@@ -42,7 +42,7 @@ public abstract class XDebuggerEditorsProviderBase extends XDebuggerEditorsProvi
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-304707, EA-597817, EA-832153, ...")) {
       codeFragment = createExpressionCodeFragment(project, expression, context, true);
     }
-    Document document = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+    Document document = codeFragment.getViewProvider().getDocument();
     assert document != null;
     return document;
   }

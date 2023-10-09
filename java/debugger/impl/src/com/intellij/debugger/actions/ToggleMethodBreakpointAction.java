@@ -88,7 +88,7 @@ public class ToggleMethodBreakpointAction extends AnAction implements ActionRemo
         final PsiFile containingFile = psiElement.getContainingFile();
         if (containingFile != null) {
           method = psiElement;
-          document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
+          document = containingFile.getViewProvider().getDocument();
         }
       }
     }

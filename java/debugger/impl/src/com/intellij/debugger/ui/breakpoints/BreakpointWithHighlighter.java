@@ -345,7 +345,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   public Document getDocument() {
     PsiFile file = DebuggerUtilsEx.getPsiFile(myXBreakpoint.getSourcePosition(), myProject);
     if (file != null) {
-      return PsiDocumentManager.getInstance(myProject).getDocument(file);
+      return file.getViewProvider().getDocument();
     }
     return null;
   }

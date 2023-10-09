@@ -263,7 +263,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         PsiFile file = original.getFile();
         int line = original.getLine();
 
-        Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        Document document = file.getViewProvider().getDocument();
         if (document == null || line >= document.getLineCount()) {
           return original;
         }
@@ -302,7 +302,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
   @RequiresReadLock
   protected static Set<PsiClass> getLineClasses(final PsiFile file, int lineNumber) {
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    Document document = file.getViewProvider().getDocument();
     Set<PsiClass> res = new HashSet<>();
     if (document != null) {
       XDebuggerUtil.getInstance().iterateLine(file.getProject(), document, lineNumber, element -> {
@@ -651,7 +651,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     public SourcePosition mapDelegate(SourcePosition original) {
       PsiFile file = getFile();
       if (myOriginalLine < 0 || !file.isValid()) return original;
-      PsiDocumentManager.getInstance(file.getProject()).getDocument(file); // to ensure decompilation
+      file.getViewProvider().getDocument(); // to ensure decompilation
       SourcePosition position = calcLineMappedSourcePosition(file, myOriginalLine);
       return position != null ? position : original;
     }

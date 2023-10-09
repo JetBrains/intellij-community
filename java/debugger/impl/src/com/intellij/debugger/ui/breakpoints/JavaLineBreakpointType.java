@@ -112,7 +112,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     SourcePosition pos = SourcePosition.createFromLine(file, position.getLine());
 
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    Document document = file.getViewProvider().getDocument();
     if (document == null) {
       return Collections.emptyList();
     }
@@ -174,7 +174,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
   public static @Nullable PsiElement findSingleConditionalReturn(@NotNull PsiFile file, int line) {
     Project project = file.getProject();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    Document document = file.getViewProvider().getDocument();
     if (document == null) return null;
     return findSingleConditionalReturn(project, document, line);
   }

@@ -162,7 +162,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
           return false;
         }
         PsiFile psiFile = psiClass.getContainingFile();
-        Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+        Document document = psiFile.getViewProvider().getDocument();
         if (document == null) {
           return false;
         }

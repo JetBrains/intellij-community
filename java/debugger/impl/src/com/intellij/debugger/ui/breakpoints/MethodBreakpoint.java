@@ -450,7 +450,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
    * finds FQ method's class name and method's signature
    */
   private static @Nullable MethodDescriptor getMethodDescriptor(final @NotNull Project project, final @NotNull SourcePosition sourcePosition) {
-    Document document = PsiDocumentManager.getInstance(project).getDocument(sourcePosition.getFile());
+    Document document = sourcePosition.getFile().getViewProvider().getDocument();
     if (document == null) {
       return null;
     }
