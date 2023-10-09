@@ -104,7 +104,7 @@ final class HighlightingMarkupGrave implements Disposable {
       return;
     }
     boolean replaced = myResurrectedZombies.replace(fileWithId.getId(), false, true);
-    if (replaced) {
+    if (!replaced) {
       // no zombie or zombie already disposed
       return;
     }
