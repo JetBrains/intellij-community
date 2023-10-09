@@ -206,6 +206,11 @@
                     area="IDEA_PROJECT"
                     dynamic="true"/>
 
+    <extensionPoint name="vcs.lineStatusClientIdRenderer"
+                    interface="com.intellij.openapi.vcs.ex.LineStatusClientIdRenderer"
+                    area="IDEA_PROJECT"
+                    dynamic="false"/>
+
     <extensionPoint name="vcs.envCustomizer"
                     interface="com.intellij.openapi.vcs.VcsEnvCustomizer"
                     dynamic="true"/>

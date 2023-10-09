@@ -264,6 +264,7 @@
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$CheckinFactory"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.ActiveChangeListTracker"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ActiveChangeListTrackerImpl"/>
+    <gutterMarkPreprocessor implementation="com.intellij.openapi.vcs.ex.ClientIdGutterIconMerge"/>
 
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"
                       order="first"/>

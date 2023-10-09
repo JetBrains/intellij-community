@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
@@ -18,8 +20,10 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.RollbackLineStatusAction.rollback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.awt.Point
+import javax.swing.JComponent
 
 interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
   override val project: Project
@@ -82,6 +86,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   abstract override val renderer: LocalLineStatusMarkerRenderer
 
   private val innerRangesHandler = MyInnerRangesDocumentTrackerHandler()
+  private val clientIdsHandler = MyClientIdsDocumentTrackerHandler()
 
   override var mode: LocalLineStatusTracker.Mode = LocalLineStatusTracker.Mode(true, true, false)
     set(value) {
@@ -94,6 +99,9 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   init {
     documentTracker.addHandler(LocalDocumentTrackerHandler())
     documentTracker.addHandler(innerRangesHandler)
+    if (showClientIdGutterIconRenderer(project)) {
+      documentTracker.addHandler(clientIdsHandler)
+    }
   }
 
   @RequiresEdt
@@ -124,7 +132,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
   protected open class LocalLineStatusMarkerRenderer(
     protected open val tracker: LocalLineStatusTrackerImpl<*>
-  ): LineStatusTrackerMarkerRenderer(tracker, MarkupEditorFilterFactory.createIsNotDiffFilter()) {
+  ) : LineStatusTrackerMarkerRenderer(tracker, MarkupEditorFilterFactory.createIsNotDiffFilter()) {
 
     override fun shouldPaintGutter(): Boolean {
       return tracker.mode.isVisible
@@ -143,6 +151,11 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
       actions.add(LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range))
       actions.add(LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this))
       return actions
+    }
+
+    override fun createAdditionalInfoPanel(editor: Editor, range: Range, mousePosition: Point?, disposable: Disposable): JComponent? {
+      val clientIds = (range as? LstLocalRange)?.clientIds ?: return null
+      return createClientIdGutterPopupPanel(tracker.project, clientIds)
     }
 
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
@@ -177,6 +190,19 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
       }
   }
 
+  private inner class MyClientIdsDocumentTrackerHandler : ClientIdsDocumentTrackerHandler(project) {
+    /**
+     * Sorted by [ClientId.value]
+     */
+    override var Block.clientIds: List<ClientId>
+      get() {
+        return ourData.clientIds
+      }
+      set(value) {
+        ourData.clientIds = value
+      }
+  }
+
   @CalledInAny
   override fun freeze() {
     documentTracker.freeze(Side.LEFT)
@@ -191,6 +217,12 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
   protected interface LocalBlockData : DocumentTracker.BlockData {
     var innerRanges: List<Range.InnerRange>?
+    var clientIds: List<ClientId>
+  }
+
+  @ApiStatus.Experimental
+  interface LstLocalRange {
+    val clientIds: List<ClientId>
   }
 }
 

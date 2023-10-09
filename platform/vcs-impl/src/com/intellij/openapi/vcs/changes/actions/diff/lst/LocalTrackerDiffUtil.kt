@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff.lst
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diff.comparison.ComparisonManagerImpl
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.tools.util.base.DiffViewerBase
@@ -136,7 +137,8 @@ object LocalTrackerDiffUtil {
       val localRange = ranges[i]
       val lineRange = linesRanges[i]
 
-      val rangesFragmentData = LineFragmentData(activeChangelistId, localRange.changelistId, localRange.exclusionState)
+      val rangesFragmentData = LineFragmentData(activeChangelistId, localRange.changelistId, localRange.exclusionState,
+                                                localRange.clientIds)
       if (rangesFragmentData.isPartiallyExcluded() && allowExcludeChangesFromCommit) {
         val fragment = ComparisonManagerImpl.createLineFragment(lineRange.start1, lineRange.end1,
                                                                 lineRange.start2, lineRange.end2,
@@ -171,6 +173,7 @@ object LocalTrackerDiffUtil {
     val activeChangelistId: String,
     val changelistId: String,
     val exclusionState: RangeExclusionState,
+    val clientIds: List<ClientId>
   ) {
     fun isFromActiveChangelist() = changelistId == activeChangelistId
     fun isSkipped() = !isFromActiveChangelist()
@@ -285,7 +288,8 @@ object LocalTrackerDiffUtil {
 
     val actualChanges = totalCount - excludedCount
     var message = DiffBundle.message("diff.count.differences.status.text", totalCount - excludedCount)
-    if (includedIntoCommitCount != actualChanges) message += DiffBundle.message("diff.included.count.differences.status.text", includedIntoCommitCount)
+    if (includedIntoCommitCount != actualChanges) message += DiffBundle.message("diff.included.count.differences.status.text",
+                                                                                includedIntoCommitCount)
     if (excludedCount > 0) message += " " + DiffBundle.message("diff.inactive.count.differences.status.text", excludedCount)
     return message
   }

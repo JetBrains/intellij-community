@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
@@ -27,17 +28,28 @@ class SimpleLocalLineStatusTracker(project: Project,
 ) : LocalLineStatusTrackerImpl<Range>(project, document, virtualFile) {
 
   override val renderer: LocalLineStatusMarkerRenderer = LocalLineStatusMarkerRenderer(this)
-  override fun toRange(block: Block): Range = Range(block.start, block.end, block.vcsStart, block.vcsEnd,
-                                                    block.ourData.innerRanges)
+  override fun toRange(block: Block): Range = SimpleLocalRange(block.start, block.end, block.vcsStart, block.vcsEnd,
+                                                               block.ourData.innerRanges, block.ourData.clientIds)
 
   @RequiresEdt
   override fun setBaseRevision(vcsContent: CharSequence) {
     setBaseRevisionContent(vcsContent, null)
   }
 
+  fun hasPartialState() {
+    return documentTracker.readLock {
+      blocks.any { it.ourData.clientIds.isNotEmpty() }
+    }
+  }
+
   protected data class SimpleBlockData(
-    override var innerRanges: List<Range.InnerRange>? = null
+    override var innerRanges: List<Range.InnerRange>? = null,
+    override var clientIds: List<ClientId> = emptyList()
   ) : LocalBlockData
+
+  private class SimpleLocalRange(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRanges: List<InnerRange>?,
+                                 override val clientIds: List<ClientId>
+  ) : Range(line1, line2, vcsLine1, vcsLine2, innerRanges), LstLocalRange
 
   override val Block.ourData: SimpleBlockData
     get() {

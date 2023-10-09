@@ -264,6 +264,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
           }
         }
       }
+      if (data.tracker is SimpleLocalLineStatusTracker) {
+        return data.tracker.hasPartialState()
+      }
 
       releaseTracker(document)
     }
