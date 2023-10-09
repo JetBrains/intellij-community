@@ -2,6 +2,5 @@
   "mainFile": "foo/MemberEndJava.java",
   "type": "MOVE_MEMBERS",
   "targetClass": "bar.MemberNewEndJava",
-  "enabledInK2": "false",
   "enabledInK2": "false"
 }
