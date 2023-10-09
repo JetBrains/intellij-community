@@ -20,11 +20,6 @@ public class JavaUnnamedClassIndex extends StringStubIndexExtension<PsiUnnamedCl
   }
 
   @Override
-  public int getVersion() {
-    return super.getVersion();
-  }
-
-  @Override
   public @NotNull StubIndexKey<String, PsiUnnamedClass> getKey() {
     return JavaStubIndexKeys.UNNAMED_CLASSES;
   }
