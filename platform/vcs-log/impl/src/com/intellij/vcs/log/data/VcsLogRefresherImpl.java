@@ -340,10 +340,12 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
     private static @NotNull Map<VirtualFile, VcsLogProvider.Requirements> prepareRequirements(@NotNull Collection<? extends VirtualFile> roots,
                                                                                               int commitCount,
-                                                                                              @NotNull Map<VirtualFile, CompressedRefs> prevRefs) {
+                                                                                              @Nullable Map<VirtualFile, CompressedRefs> prevRefs) {
       Map<VirtualFile, VcsLogProvider.Requirements> requirements = new HashMap<>();
       for (VirtualFile root : roots) {
-        requirements.put(root, new RequirementsImpl(commitCount, true, prevRefs.get(root).getRefs()));
+        requirements.put(root, prevRefs == null
+                               ? new RequirementsImpl(commitCount, true, Collections.emptyList(), false)
+                               : new RequirementsImpl(commitCount, true, prevRefs.get(root).getRefs()));
       }
       return requirements;
     }
@@ -417,8 +419,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       return computeWithSpanThrows(myTracer, LogData.PartialRefreshing.getName(), span -> {
         try {
           int commitCount = SMALL_DATA_PACK_COMMITS_COUNT;
-          Map<VirtualFile, CompressedRefs> currentRefs = myCurrentDataPack.getRefsModel().getAllRefsByRoot();
-          Map<VirtualFile, VcsLogProvider.Requirements> requirements = prepareRequirements(myProviders.keySet(), commitCount, currentRefs);
+          Map<VirtualFile, VcsLogProvider.Requirements> requirements = prepareRequirements(myProviders.keySet(), commitCount, null);
           return buildMultiRepoDataPack(requirements, commitCount, true);
         }
         catch (ProcessCanceledException e) {
