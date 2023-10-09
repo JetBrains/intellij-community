@@ -41,6 +41,7 @@ private val LOG = logger<ChangesViewContentManager>()
 
 class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
   private val addedContents = mutableListOf<Content>()
+  private var selectedAddedContent: Content? = null
 
   private val toolWindows = mutableSetOf<ToolWindow>()
   private val contentManagers: Collection<ContentManager> get() = toolWindows.map { it.contentManager }
@@ -114,8 +115,15 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     }
     addedContents.removeAll(contents)
 
-    // Ensure that first tab is selected after tabs reordering
-    contentManager.selectFirstContent()
+    val toSelect = selectedAddedContent
+    if (toSelect != null && contents.contains(toSelect)) {
+      contentManager.setSelectedContent(toSelect)
+    }
+    else {
+      // Ensure that first tab is selected after tabs reordering
+      contentManager.selectFirstContent()
+    }
+    selectedAddedContent = null
   }
 
   override fun dispose() {
@@ -123,6 +131,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
       Disposer.dispose(content)
     }
     addedContents.clear()
+    selectedAddedContent = null
   }
 
   override fun addContent(content: Content) {
@@ -141,6 +150,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     val contentManager = content.manager
     if (contentManager == null || contentManager.isDisposed) {
       addedContents.remove(content)
+      if (selectedAddedContent == content) selectedAddedContent = null
       if (dispose) Disposer.dispose(content)
     }
     else {
@@ -153,7 +163,15 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   override fun setSelectedContent(content: Content, requestFocus: Boolean) {
-    content.manager?.setSelectedContent(content, requestFocus)
+    LOG.debug("select content: ${content.tabName}")
+    val contentManager = content.manager
+    if (contentManager != null) {
+      contentManager.setSelectedContent(content, requestFocus)
+      selectedAddedContent = null
+    }
+    else if (addedContents.contains(content)) {
+      selectedAddedContent = content
+    }
   }
 
   override fun <T : Any> getActiveComponent(aClass: Class<T>): T? =
@@ -168,8 +186,8 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
   fun selectContent(tabName: String, requestFocus: Boolean) {
     LOG.debug("select content: $tabName")
-    val content = contentManagers.flatMap { it.contents.asList() }.find { it.tabName == tabName } ?: return
-    content.manager?.setSelectedContent(content, requestFocus)
+    val content = findContent(tabName) ?: return
+    setSelectedContent(content, requestFocus)
   }
 
   override fun findContents(predicate: Predicate<Content>): List<Content> {
