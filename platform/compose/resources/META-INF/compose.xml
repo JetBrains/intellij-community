@@ -1,0 +1,6 @@
+<idea-plugin>
+  <actions>
+    <action id="ComposeShowcaseAction" internal="true" class="com.intellij.compose.showcase.ComposeShowcaseAction"
+            text="Compose Components Showcase"/>
+  </actions>
+</idea-plugin>
