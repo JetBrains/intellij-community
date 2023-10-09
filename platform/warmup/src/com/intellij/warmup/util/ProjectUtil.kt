@@ -100,7 +100,7 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
   if (isPredicateBasedWarmup()) {
     runTaskAndLogTime("awaiting completion predicates") {
       withLoggingProgressReporter {
-        Observation.awaitConfiguration(project)
+        Observation.awaitConfiguration(project, WarmupLogger::logInfo)
       }
       dumpThreadsAfterConfiguration()
     }
