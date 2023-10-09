@@ -11,11 +11,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class SLRUMap<K,V> {
+public class SLRUMap<K, V> {
   private static final int FACTOR = Integer.getInteger("idea.slru.factor", 1);
 
-  private final LinkedHashMap<K,V> protectedQueue;
-  private final LinkedHashMap<K,V> probationalQueue;
+  private final LinkedHashMap<K, V> protectedQueue;
+  private final LinkedHashMap<K, V> probationalQueue;
 
   private final int protectedQueueSize;
   private final int probationalQueueSize;
@@ -32,7 +32,7 @@ public class SLRUMap<K,V> {
     this.protectedQueueSize = protectedQueueSize * FACTOR;
     this.probationalQueueSize = probationalQueueSize * FACTOR;
 
-    protectedQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy, true) {
+    protectedQueue = new LinkedHashMap<K, V>(10, 0.6f, hashingStrategy, true) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<K, V> eldest, K key, V value) {
         if (size() > SLRUMap.this.protectedQueueSize) {
@@ -44,7 +44,7 @@ public class SLRUMap<K,V> {
       }
     };
 
-    probationalQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy, true) {
+    probationalQueue = new LinkedHashMap<K, V>(10, 0.6f, hashingStrategy, true) {
       @Override
       protected boolean removeEldestEntry(final Map.Entry<K, V> eldest, K key, V value) {
         if (size() > SLRUMap.this.probationalQueueSize) {
@@ -90,7 +90,7 @@ public class SLRUMap<K,V> {
     }
   }
 
-  protected void onDropFromCache(K key, @NotNull V value) {}
+  protected void onDropFromCache(K key, @NotNull V value) { }
 
   public boolean remove(K key) {
     V value = protectedQueue.remove(key);
