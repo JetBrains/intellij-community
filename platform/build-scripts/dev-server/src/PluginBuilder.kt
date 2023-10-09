@@ -54,7 +54,22 @@ internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
 
   val reason = withContext(Dispatchers.IO) {
     // check cache
-    val reason = checkCache(plugin = plugin, projectOutDir = outDir, pluginCacheRootDir = pluginCacheRootDir) ?: return@withContext null
+    val reason = checkCache(plugin = plugin, projectOutDir = outDir, pluginCacheRootDir = pluginCacheRootDir)
+
+    if (reason == null || reason == "initial build") {
+      if (plugin.layout.directoryName == "clion-radler" && hasResourcePaths(plugin.layout)) {
+        // copy custom resources
+        spanBuilder("build plugin")
+          .setAttribute("mainModule", mainModule)
+          .setAttribute("dir", plugin.layout.directoryName)
+          .setAttribute("reason", "copy custom resources")
+          .useWithScope2 {
+            layoutResourcePaths(layout = plugin.layout, context = context, targetDirectory = plugin.dir, overwrite = true)
+          }
+      }
+    }
+
+    if (reason == null) return@withContext null
 
     if (mainModule != "intellij.platform.builtInHelp") {
       checkOutputOfPluginModules(mainPluginModule = mainModule,

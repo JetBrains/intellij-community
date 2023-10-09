@@ -21,6 +21,7 @@ import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -38,6 +39,7 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -938,14 +940,18 @@ suspend fun layoutDistribution(layout: BaseLayout,
   return entries to targetDirectory
 }
 
-private suspend fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
+@Internal
+fun hasResourcePaths(layout: BaseLayout): Boolean = !layout.resourcePaths.isEmpty()
+
+@Internal
+fun layoutResourcePaths(layout: BaseLayout, context: BuildContext, targetDirectory: Path, overwrite: Boolean) {
   for (resourceData in layout.resourcePaths) {
     val source = basePath(buildContext = context, moduleName = resourceData.moduleName).resolve(resourceData.resourcePath).normalize()
     var target = targetDirectory.resolve(resourceData.relativeOutputPath).normalize()
     if (resourceData.packToZip) {
       if (Files.isDirectory(source)) {
         // do not compress - doesn't make sense as it is a part of distribution
-        zip(target, mapOf(source to ""))
+        zip(targetFile = target, dirs = mapOf(source to ""), overwrite = overwrite)
       }
       else {
         target = target.resolve(source.fileName)
@@ -954,14 +960,44 @@ private suspend fun layoutAdditionalResources(layout: BaseLayout, context: Build
     }
     else {
       if (Files.isRegularFile(source)) {
-        copyFileToDir(source, target)
+        if (overwrite) {
+          val targetFile = target.resolve(source.fileName)
+          Files.createDirectories(target)
+          Files.copy(source, targetFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
+        }
+        else {
+          copyFileToDir(source, target)
+        }
       }
       else {
-        copyDir(source, target)
+        if (overwrite) {
+          copyDir(sourceDir = source, targetDir = target, fileFilter = Predicate {
+            copyIfChanged(target, source, it)
+          })
+        }
+        else {
+          copyDir(sourceDir = source, targetDir = target)
+        }
       }
     }
   }
+}
 
+private fun copyIfChanged(targetDir: Path, sourceDir: Path, sourceFile: Path): Boolean {
+  val targetFile = targetDir.resolve(sourceDir.relativize(sourceFile))
+  if (Files.exists(targetFile)) {
+    val t = Files.getLastModifiedTime(targetFile).toMillis()
+    val s = Files.getLastModifiedTime(sourceDir).toMillis()
+    if (t == s) {
+      return false
+    }
+    Files.delete(targetFile)
+  }
+  return true
+}
+
+private suspend fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
+  layoutResourcePaths(layout = layout, context = context, targetDirectory = targetDirectory, overwrite = false)
   if (layout !is PluginLayout) {
     return
   }
