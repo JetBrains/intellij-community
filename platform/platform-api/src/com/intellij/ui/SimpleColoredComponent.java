@@ -1103,7 +1103,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @Override
   public int getBaseline(int width, int height) {
     super.getBaseline(width, height);
-    return getTextBaseLine(getFontMetrics(getFont()), height);
+    Font font = getFont();
+    if (font == null) return -1;
+    return getTextBaseLine(getFontMetrics(font), height);
   }
 
   public boolean isTransparentIconBackground() {
