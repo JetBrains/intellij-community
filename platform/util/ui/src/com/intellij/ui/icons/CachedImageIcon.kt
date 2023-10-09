@@ -62,7 +62,7 @@ open class CachedImageIcon private constructor(
   private val toolTip: Supplier<String?>? = null,
   private val scaleContext: ScaleContext? = null,
   private val originalResolver: ImageDataLoader? = resolver,
-) : CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider, IconWithToolTip {
+) : CopyableIcon, ScalableIcon, DarkIconProvider, IconWithToolTip {
   private var pathTransformModCount = -1
 
   private val scaledIconCache = ScaledIconCache()
@@ -247,15 +247,18 @@ open class CachedImageIcon private constructor(
     return result!!
   }
 
-  override fun getMenuBarIcon(isDark: Boolean): Icon {
-    val useMRI = SystemInfoRt.isMac
-    val scaleContext = if (useMRI) ScaleContext.create() else ScaleContext.createIdentity()
+  fun getMenuBarIcon(isDark: Boolean): Icon {
+    val useMultiResolution = SystemInfoRt.isMac
+    val scaleContext = if (useMultiResolution) ScaleContext.create() else ScaleContext.createIdentity()
     scaleContext.setScale(ScaleType.USR_SCALE.of(1f))
-    var img = loadImage(scaleContext = scaleContext, isDark = isDark)
-    if (useMRI) {
-      img = MultiResolutionImageProvider.convertFromJBImage(img)
+
+    checkPathTransform()
+
+    var image = loadImage(scaleContext = scaleContext, isDark = isDark)
+    if (useMultiResolution) {
+      image = MultiResolutionImageProvider.convertFromJBImage(image)
     }
-    return ImageIcon(img ?: return this)
+    return ImageIcon(image ?: return this)
   }
 
   internal fun createWithFilter(filterSupplier: () -> RGBImageFilter): Icon = copy(localFilterSupplier = filterSupplier)

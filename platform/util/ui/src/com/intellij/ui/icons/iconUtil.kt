@@ -125,7 +125,13 @@ fun getMenuBarIcon(icon: Icon, dark: Boolean): Icon {
   if (effectiveIcon is RetrievableIcon) {
     effectiveIcon = getOriginIcon(effectiveIcon)
   }
-  return if (effectiveIcon is MenuBarIconProvider) effectiveIcon.getMenuBarIcon(dark) else effectiveIcon
+
+  if (effectiveIcon is CachedImageIcon) {
+    return effectiveIcon.getMenuBarIcon(dark)
+  }
+  else {
+    return if (effectiveIcon is MenuBarIconProvider) effectiveIcon.getMenuBarIcon(dark) else effectiveIcon
+  }
 }
 
 internal fun convertImage(image: Image,
