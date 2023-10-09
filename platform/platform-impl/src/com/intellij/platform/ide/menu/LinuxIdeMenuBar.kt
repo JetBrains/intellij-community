@@ -16,7 +16,6 @@ internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame, cu
   companion object {
     fun doBindAppMenuOfParent(frame: JFrame, parentFrame: JFrame) {
       val globalMenu = (parentFrame.jMenuBar as? LinuxIdeMenuBar)?.globalMenu ?: return
-
       if (GlobalMenuLinux.isPresented()) {
         // all children of IdeFrame mustn't show swing-menubar
         frame.jMenuBar?.isVisible = false
@@ -46,19 +45,17 @@ internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame, cu
   }
 
   override fun doInstallAppMenuIfNeeded(frame: JFrame) {
-    if (IdeRootPane.isMenuButtonInToolbar || !GlobalMenuLinux.isAvailable()) {
+    if (globalMenu != null || IdeRootPane.isMenuButtonInToolbar || !GlobalMenuLinux.isAvailable()) {
       return
     }
 
-    if (globalMenu == null) {
-      val globalMenuLinux = GlobalMenuLinux.create(frame)
-      globalMenu = globalMenuLinux
-      coroutineScope.coroutineContext.job.invokeOnCompletion {
-        Disposer.dispose(globalMenuLinux)
-      }
-      coroutineScope.launch {
-        updateMenuActions(forceRebuild = true)
-      }
+    val globalMenuLinux = GlobalMenuLinux.create(frame)
+    globalMenu = globalMenuLinux
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      Disposer.dispose(globalMenuLinux)
+    }
+    coroutineScope.launch {
+      updateMenuActions(forceRebuild = true)
     }
   }
 
