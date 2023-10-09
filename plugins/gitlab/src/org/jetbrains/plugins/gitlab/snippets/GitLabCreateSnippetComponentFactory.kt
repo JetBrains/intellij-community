@@ -124,7 +124,7 @@ internal object GitLabCreateSnippetComponentFactory {
           }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
 
           row(message("snippet.create.path-mode")) {
-            comboBox(PathHandlingMode.values().toList(),
+            comboBox(PathHandlingMode.entries,
                      ListCellRenderer { _, value, _, _, _ ->
                        val selectable = value in createSnippetVm.availablePathModes
                        object : JLabel(value?.displayName), ComboBox.SelectableItem {
