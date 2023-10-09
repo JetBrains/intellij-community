@@ -61,7 +61,7 @@ interface ModuleInfoProviderExtension {
         project: Project,
         virtualFile: VirtualFile,
         isLibrarySource: Boolean,
-        scriptFile: VirtualFile?
+        config: ModuleInfoProvider.Configuration,
     )
 
     fun SeqScope<Module>.findContainingModules(project: Project, virtualFile: VirtualFile)
@@ -87,9 +87,10 @@ class ModuleInfoProvider(private val project: Project) {
         }
     }
 
-    class Configuration(
+    data class Configuration(
         val createSourceLibraryInfoForLibraryBinaries: Boolean = true,
         val preferModulesFromExtensions: Boolean = false,
+        val contextualModuleInfo: IdeaModuleInfo? = null,
     ) {
         companion object {
             val Default = Configuration()
@@ -105,12 +106,6 @@ class ModuleInfoProvider(private val project: Project) {
         }
     }
 
-    fun collect(element: PsiElement, config: Configuration = Configuration.Default, scriptFile: VirtualFile?): Sequence<Result<IdeaModuleInfo>> {
-        return seq {
-            collectByElement(element, config, scriptFile)
-        }
-    }
-
     fun collect(
         virtualFile: VirtualFile,
         isLibrarySource: Boolean = false,
@@ -121,11 +116,7 @@ class ModuleInfoProvider(private val project: Project) {
         }
     }
 
-    private fun SeqScope<Result<IdeaModuleInfo>>.collectByElement(
-        element: PsiElement,
-        config: Configuration,
-        scriptFile: VirtualFile? = null
-    ) {
+    private fun SeqScope<Result<IdeaModuleInfo>>.collectByElement(element: PsiElement, config: Configuration) {
         val containingFile = element.containingFile
 
         if (containingFile != null) {
@@ -136,12 +127,12 @@ class ModuleInfoProvider(private val project: Project) {
         }
 
         if (element is PsiDirectory) {
-            collectByFile(element.virtualFile, isLibrarySource = false, config, scriptFile)
+            collectByFile(element.virtualFile, isLibrarySource = false, config)
             return
         }
 
         if (element is KtLightElement<*, *>) {
-            collectByLightElement(element, config, scriptFile)
+            collectByLightElement(element, config)
         }
 
         collectByUserData(UserDataModuleContainer.ForElement(element))
@@ -160,7 +151,7 @@ class ModuleInfoProvider(private val project: Project) {
 
             val analysisContext = containingKtFile.analysisContext
             if (analysisContext != null) {
-                collectByElement(analysisContext, config, scriptFile)
+                collectByElement(analysisContext, config)
             }
 
             if (containingKtFile.doNotAnalyze != null) {
@@ -175,7 +166,7 @@ class ModuleInfoProvider(private val project: Project) {
             if (containingKtFile is KtCodeFragment) {
                 val context = containingKtFile.getContext()
                 if (context != null) {
-                    collectByElement(context, config, scriptFile)
+                    collectByElement(context, config)
                 } else {
                     val message = "Analyzing code fragment of type ${containingKtFile::class.java} with no context"
                     val error = KotlinExceptionWithAttachments(message).withAttachment("file.kt", containingKtFile.text)
@@ -192,7 +183,7 @@ class ModuleInfoProvider(private val project: Project) {
                     extensionBlock = { collectByElement(element, containingFile, virtualFile) },
                 ) {
                     val isLibrarySource = if (containingKtFile != null) isLibrarySource(containingKtFile, config) else false
-                    collectByFile(virtualFile, isLibrarySource, config, scriptFile)
+                    collectByFile(virtualFile, isLibrarySource, config)
                 }
             } else {
                 val message = "Analyzing element of type ${element::class.java} in non-physical file of type ${containingFile::class.java}"
@@ -228,17 +219,17 @@ class ModuleInfoProvider(private val project: Project) {
         return if (config.createSourceLibraryInfoForLibraryBinaries) isCompiled else !isCompiled
     }
 
-    private fun SeqScope<Result<IdeaModuleInfo>>.collectByLightElement(element: KtLightElement<*, *>, config: Configuration, scriptFile: VirtualFile?) {
+    private fun SeqScope<Result<IdeaModuleInfo>>.collectByLightElement(element: KtLightElement<*, *>, config: Configuration) {
         if (element.getNonStrictParentOfType<KtLightClassForDecompiledDeclaration>() != null) {
             val virtualFile = element.containingFile.virtualFile ?: error("Decompiled class should be build from physical file")
-            collectByFile(virtualFile, isLibrarySource = false, config, scriptFile)
+            collectByFile(virtualFile, isLibrarySource = false, config)
         }
 
         val originalElement = element.kotlinOrigin
         if (originalElement != null) {
-            collectByElement(originalElement, config, scriptFile)
+            collectByElement(originalElement, config)
         } else if (element is KtLightClassForFacade) {
-            collectByElement(element.files.first(), config, scriptFile)
+            collectByElement(element.files.first(), config)
         } else {
             val error = KotlinExceptionWithAttachments("Light element without origin is referenced by resolve")
                 .withAttachment("element.txt", element)
@@ -251,12 +242,11 @@ class ModuleInfoProvider(private val project: Project) {
         virtualFile: VirtualFile,
         isLibrarySource: Boolean,
         config: Configuration,
-        scriptFile: VirtualFile? = null
     ) {
         collectByUserData(UserDataModuleContainer.ForVirtualFile(virtualFile, project))
         withCallExtensions(
             config = config,
-            extensionBlock = { collectByFile(project, virtualFile, isLibrarySource, scriptFile) }
+            extensionBlock = { collectByFile(project, virtualFile, isLibrarySource, config) }
         ) {
             collectSourceRelatedByFile(virtualFile, config)
 

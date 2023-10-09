@@ -6,7 +6,6 @@ import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -25,6 +24,8 @@ import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 @ApiStatus.Internal
 interface KtModuleFactory {
@@ -55,12 +56,23 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
         }
 
         val anchorElement = ModuleInfoProvider.findAnchorElement(element)
-        val scriptFile = (contextualModule as? KtScriptModule)?.file?.virtualFile
+
+        // Potentially, we can use any contextualModule,
+        // but we select only those modules that can affect the calculation of the result
+        // to improve the cache hit rate and reduce it's size
+        val crucialContextualModule = when (contextualModule) {
+            // Only info-based modules can be used during search
+            !is KtModuleByModuleInfoBase -> null
+
+            // KTIJ-27174: to distinguish between script and regular libraries
+            is KtScriptModule -> contextualModule
+            else -> null
+        }
 
         return if (anchorElement != null) {
-            cachedKtModule(anchorElement, scriptFile)
+            cachedKtModule(anchorElement, crucialContextualModule)
         } else {
-            calculateKtModule(element, scriptFile)
+            calculateKtModule(element, crucialContextualModule)
         }
     }
 
@@ -70,22 +82,26 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
     }
 }
 
-private fun cachedKtModule(
+private fun <T> cachedKtModule(
     anchorElement: PsiElement,
-    scriptFile: VirtualFile?
-): KtModule {
-    val fileToKtModule = CachedValuesManager.getCachedValue(anchorElement) {
+    contextualModule: T?,
+): KtModule where T : KtModule, T : KtModuleByModuleInfoBase {
+    val contextToKtModule = CachedValuesManager.getCachedValue(anchorElement) {
         val project = anchorElement.project
         CachedValueProvider.Result.create(
-            ConcurrentFactoryMap.createMap<VirtualFile?, KtModule> { file -> calculateKtModule(anchorElement, file) },
+            ConcurrentFactoryMap.createMap<T?, KtModule> { context ->
+                calculateKtModule(anchorElement, context)
+            },
             ProjectRootModificationTracker.getInstance(project),
             JavaLibraryModificationTracker.getInstance(project),
             KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker(),
         )
     }
 
-    return fileToKtModule[scriptFile]
-        ?: error("No KtModule found for element=${anchorElement} and scriptFile=$scriptFile")
+    return contextToKtModule[contextualModule] ?: errorWithAttachment("No ${KtModule::class.simpleName} found") {
+        withPsiEntry("anchorElement", anchorElement)
+        withEntry("contextualModule", contextualModule.toString())
+    }
 }
 
 private inline fun forEachModuleFactory(action: KtModuleFactory.() -> Unit) {
@@ -109,16 +125,22 @@ private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
     }
 }
 
-private fun calculateKtModule(psiElement: PsiElement, scriptFile: VirtualFile? = null): KtModule {
+private fun <T> calculateKtModule(
+    psiElement: PsiElement,
+    contextualModule: T? = null
+): KtModule where T : KtModule, T : KtModuleByModuleInfoBase {
     val containingFile = psiElement.containingFile
     val virtualFile = containingFile?.virtualFile
     val project = psiElement.project
     val config = ModuleInfoProvider.Configuration(
         createSourceLibraryInfoForLibraryBinaries = false,
-        preferModulesFromExtensions =  (scriptFile != null) || (virtualFile?.nameSequence?.endsWith(".kts") == true)
+        preferModulesFromExtensions = (contextualModule is KtScriptModule) || (virtualFile?.nameSequence?.endsWith(".kts") == true),
+        contextualModuleInfo = contextualModule?.ideaModuleInfo,
     )
 
-    val moduleInfo = ModuleInfoProvider.getInstance(project).firstOrNull(psiElement, config, scriptFile)
+    val infoProvider = ModuleInfoProvider.getInstance(project)
+    val moduleInfo = infoProvider.firstOrNull(psiElement, config)
+        ?: contextualModule?.let { config.copy(contextualModuleInfo = null) }?.let { infoProvider.firstOrNull(psiElement, it) }
         ?: NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile)
 
     if (virtualFile != null && isOutsiderFile(virtualFile) && moduleInfo is ModuleSourceInfo) {
