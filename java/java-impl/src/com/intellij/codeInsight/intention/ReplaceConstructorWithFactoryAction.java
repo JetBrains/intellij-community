@@ -55,7 +55,10 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
       ContainerUtil.map(targets, target -> ModCommand.psiUpdateStep(
         target, PsiFormatUtil.formatClass(target, PsiFormatUtilBase.SHOW_NAME),
         (cls, updater) -> invoke(cls, updater, constructorOrClassPtr),
-        cls -> Objects.requireNonNull(cls.getNameIdentifier()).getTextRange()));
+        cls -> {
+          PsiIdentifier identifier = cls.getNameIdentifier();
+          return identifier == null ? cls.getTextRange() : identifier.getTextRange();
+        }));
     return new ModChooseAction(JavaBundle.message("popup.title.choose.target.class"), options);
   }
 
