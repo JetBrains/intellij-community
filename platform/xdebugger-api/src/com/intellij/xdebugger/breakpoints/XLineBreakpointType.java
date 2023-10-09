@@ -78,11 +78,11 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   private int getColumn(XLineBreakpoint<P> breakpoint) {
     if (!Registry.is("debugger.show.breakpoints.inline")) return -1;
 
-    var range = breakpoint.getType().getHighlightRange(breakpoint);
-    if (range == null) return 0; // full line breakpoint
-    var offset = range.getStartOffset();
-
     return ReadAction.compute(() -> {
+      var range = breakpoint.getType().getHighlightRange(breakpoint);
+      if (range == null) return 0; // full line breakpoint
+      var offset = range.getStartOffset();
+
       var file = VirtualFileManager.getInstance().findFileByUrl(breakpoint.getFileUrl());
       if (file == null) return -1;
       var document = FileDocumentManager.getInstance().getDocument(file);
