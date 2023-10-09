@@ -128,20 +128,19 @@ public final class JavaBuilderUtil {
       Delta delta = null;
       BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
       
-      // only work if builders registered their input to make use of dependency analysis mechanism
-      if (callback != null && FILES_TO_COMPILE_KEY.get(context) != null) {
-        Set<File> inputFiles = getFilesContainer(context, FILES_TO_COMPILE_KEY);
+      if (callback != null) {
         Set<File> compiledWithErrors = getFilesContainer(context, COMPILED_WITH_ERRORS_KEY);
 
-        // todo: this might be an alternative way to determine the set of input files, though explicitly defined set of files that were sent to builders is better
-        //dirtyFilesHolder.processDirtyFiles((target, file, root) -> {
-        //  inputFiles.add(file);
-        //  return true;
-        //});
+        // Important: in case of errors some sources sent to recompilation might not have corresponding output classes either because a source has compilation errors
+        // or because compiler stopped compilation and has not managed to compile some sources.
+        // In this case use empty set of delta's "base sources" for dependency calculation, so that only actually recompiled sources will take part in dependency analysis and affected files calculation.
+        // Otherwise, some classes that correspond to non-compiled sources might be considered as "deleted" which might result in a large set of affected files,
+        // so the next compilation might compile much more files than is actually needed.
+        Iterable<File> inputFiles = Utils.errorsDetected(context)? Collections.emptyList() : Iterators.filter(getFilesContainer(context, FILES_TO_COMPILE_KEY), f -> !compiledWithErrors.contains(f));
 
         DependencyGraph graph = context.getProjectDescriptor().dataManager.getDependencyGraph();
         delta = graph.createDelta(
-          Iterators.map(Iterators.filter(inputFiles, f -> !compiledWithErrors.contains(f)), f -> new FileSource(f)),
+          Iterators.map(inputFiles, f -> new FileSource(f)),
           Iterators.map(getRemovedPaths(chunk, dirtyFilesHolder), p -> new FileSource(Path.of(p)))
         );
         for (var nodeData : callback.getNodes()) {
