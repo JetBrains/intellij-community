@@ -204,25 +204,27 @@ class InlineCompletionHandler(
     }
   }
 
-    @RequiresEdt
-    internal fun allowTyping(event: TypingEvent) {
-      typingTracker.allowTyping(event)
-    }
+  @RequiresEdt
+  @RequiresBlockingContext
+  internal fun allowTyping(event: TypingEvent) {
+    typingTracker.allowTyping(event)
+  }
 
-    /**
-     * If [documentEvent] offers the same as the last [allowTyping], then it creates [InlineCompletionEvent.DocumentChange] and
-     * invokes it. Otherwise, [documentEvent] is considered as 'non-typing' and a current session is invalidated (removed).
-     */
-    @RequiresEdt
-    internal fun onDocumentEvent(documentEvent: DocumentEvent, editor: Editor) {
-      val event = typingTracker.getDocumentChangeEvent(documentEvent, editor)
-      if (event != null) {
-        invokeEvent(event)
-      }
-      else {
-        sessionManager.invalidate()
-      }
+  /**
+   * If [documentEvent] offers the same as the last [allowTyping], then it creates [InlineCompletionEvent.DocumentChange] and
+   * invokes it. Otherwise, [documentEvent] is considered as 'non-typing' and a current session is invalidated (removed).
+   */
+  @RequiresEdt
+  @RequiresBlockingContext
+  internal fun onDocumentEvent(documentEvent: DocumentEvent, editor: Editor) {
+    val event = typingTracker.getDocumentChangeEvent(documentEvent, editor)
+    if (event != null) {
+      invokeEvent(event)
     }
+    else {
+      sessionManager.invalidate()
+    }
+  }
 
   private suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): InlineCompletionSuggestion {
     withContext(Dispatchers.EDT) {
@@ -274,8 +276,8 @@ class InlineCompletionHandler(
       override fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult) {
         val context = session.context
         when (result) {
-          is UpdateSessionResult.Changed -> {
-            trace(InlineCompletionEventType.Change(result.truncateTyping))
+          is UpdateSessionResult.PrefixTruncated -> {
+            trace(InlineCompletionEventType.Change(result.truncatedLength))
             editor.inlayModel.execute(true) {
               context.clear()
               result.newElements.forEach { context.renderElement(it, context.endOffset() ?: result.newOffset) }

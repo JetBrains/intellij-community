@@ -20,12 +20,14 @@ import kotlinx.coroutines.flow.debounce
  *   - In case a newer inline completion proposals are generated, previous call will be cancelled and hidden
  *   - If some event requires hiding of shown elements, implement [restartOn]
  *   - If you need to do something specific after insertion of provided elements, provide custom [InlineCompletionInsertHandler]
+ *   - If some elements are rendered and a user types a new symbol, [prefixTruncator] is used to update rendered elements.
  *
  *
  * @see InlineCompletionElement
  * @see InlineCompletionRequest
  * @see InlineCompletionEvent
  * @see InlineCompletionInsertHandler
+ * @see InlineCompletionPrefixTruncator
  */
 interface InlineCompletionProvider {
   /**
@@ -47,6 +49,9 @@ interface InlineCompletionProvider {
 
   val insertHandler: InlineCompletionInsertHandler
     get() = DefaultInlineCompletionInsertHandler.INSTANCE
+
+  val prefixTruncator: InlineCompletionPrefixTruncator
+    get() = StandardInlineCompletionPrefixTruncator()
 
   companion object {
     val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")

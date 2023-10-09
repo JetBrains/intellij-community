@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 
@@ -11,11 +12,13 @@ internal class InlineCompletionTypingTracker {
   private var lastTypingEvent: TypingEvent? = null
 
   @RequiresEdt
+  @RequiresBlockingContext
   fun allowTyping(typingEvent: TypingEvent) {
     lastTypingEvent = typingEvent
   }
 
   @RequiresEdt
+  @RequiresBlockingContext
   fun getDocumentChangeEvent(documentEvent: DocumentEvent, editor: Editor): InlineCompletionEvent.DocumentChange? {
     val lastTypingEvent = lastTypingEvent
     reset()

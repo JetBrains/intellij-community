@@ -2,11 +2,11 @@
 package com.intellij.codeInsight.inline.completion.session
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+import com.intellij.codeInsight.inline.completion.InlineCompletionPrefixTruncator
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
-import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
-import com.intellij.codeInsight.inline.completion.TypingEvent
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 internal abstract class InlineCompletionSessionManager {
@@ -49,10 +49,13 @@ internal abstract class InlineCompletionSessionManager {
    * After that, it results in one of [UpdateSessionResult], and calls [onUpdate] with this result.
    *
    * @return `false` if session does not exist.
-   * Otherwise, whether [onUpdate] was called with either [UpdateSessionResult.Same] or [UpdateSessionResult.Changed], meaning that
+   * Otherwise, whether [onUpdate] was called with either [UpdateSessionResult.Same] or [UpdateSessionResult.PrefixTruncated], meaning that
    * the update succeeded.
+   *
+   * @see InlineCompletionPrefixTruncator
    */
   @RequiresEdt
+  @RequiresBlockingContext
   fun updateSession(request: InlineCompletionRequest, provider: InlineCompletionProvider?): Boolean {
     val session = currentSession
     if (session == null) {
@@ -69,7 +72,7 @@ internal abstract class InlineCompletionSessionManager {
       invalidate(session)
       return false
     }
-    val result = updateContext(session.context, request)
+    val result = updateContext(session.context, session.provider.prefixTruncator, request)
     onUpdate(session, result)
     return result !is UpdateSessionResult.Invalidated
   }
@@ -78,11 +81,15 @@ internal abstract class InlineCompletionSessionManager {
 
   private fun updateContext(
     context: InlineCompletionContext,
+    prefixTruncator: InlineCompletionPrefixTruncator,
     request: InlineCompletionRequest
   ): UpdateSessionResult {
     return when (request.event) {
       is InlineCompletionEvent.DocumentChange -> {
-        applyPrefixAppend(context, request.event.typing, request) ?: UpdateSessionResult.Invalidated
+        val updatedResult = prefixTruncator.truncate(context, request.event.typing)?.let { truncated ->
+          UpdateSessionResult.PrefixTruncated(truncated.elements, truncated.truncatedLength, request.endOffset)
+        }
+        updatedResult ?: UpdateSessionResult.Invalidated
       }
       is InlineCompletionEvent.InlineLookupEvent -> {
         if (context.isCurrentlyDisplaying()) UpdateSessionResult.Same else UpdateSessionResult.Invalidated
@@ -91,44 +98,10 @@ internal abstract class InlineCompletionSessionManager {
     }
   }
 
-  private fun applyPrefixAppend(
-    context: InlineCompletionContext,
-    typingEvent: TypingEvent,
-    request: InlineCompletionRequest
-  ): UpdateSessionResult.Changed? {
-    if (typingEvent !is TypingEvent.Simple) {
-      return null
-    }
-    val fragment = typingEvent.typed
-    if (!context.textToInsert().startsWith(fragment) || context.textToInsert() == fragment) {
-      return null
-    }
-    val truncateTyping = fragment.length
-    val newElements = truncateElementsPrefix(context.state.elements.map { it.element }, truncateTyping)
-    return newElements?.let { UpdateSessionResult.Changed(it, truncateTyping, request.endOffset) }
-  }
-
-  private fun truncateElementsPrefix(elements: List<InlineCompletionElement>, length: Int): List<InlineCompletionElement>? {
-    var currentLength = length
-    val newFirstElementIndex = elements.indexOfFirst {
-      currentLength -= it.text.length
-      currentLength <= 0 // Searching for the element that reaches [length]
-    }
-    check(newFirstElementIndex >= 0)
-    val firstElement = elements[newFirstElementIndex]
-    currentLength += firstElement.text.length
-    if (firstElement !is InlineCompletionGrayTextElement) {
-      // will be fixed when a prefix truncator appears
-      return null
-    }
-    val newFirstElement = firstElement.withTruncatedPrefix(currentLength)
-    return listOfNotNull(newFirstElement) + elements.drop(newFirstElementIndex + 1).map { it.withSameContent() }
-  }
-
   protected sealed interface UpdateSessionResult {
-    class Changed(
+    class PrefixTruncated(
       val newElements: List<InlineCompletionElement>,
-      val truncateTyping: Int,
+      val truncatedLength: Int,
       val newOffset: Int
     ) : UpdateSessionResult
 
