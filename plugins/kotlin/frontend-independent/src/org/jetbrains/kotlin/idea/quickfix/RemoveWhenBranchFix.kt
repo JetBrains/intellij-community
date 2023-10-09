@@ -5,6 +5,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -18,7 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 class RemoveWhenBranchFix(
     element: KtWhenEntry,
 ) : KotlinCrossLanguageQuickFixAction<KtWhenEntry>(element) {
-    override fun getFamilyName() = if (element?.isElse == true) {
+    override fun getFamilyName() = if (runReadAction { element?.isElse } == true) {
         KotlinBundle.message("remove.else.branch")
     } else {
         KotlinBundle.message("remove.branch")

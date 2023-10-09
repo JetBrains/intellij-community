@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -83,18 +84,19 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
         }
     }
 
-    override fun getText(): String {
-        val expression = element ?: return ""
-        return when (expression.getReferencedName()) {
-            HASH_CODE -> KotlinBundle.message("hash.code.text")
-            EQUALS -> KotlinBundle.message("equals.text")
-            TO_STRING -> KotlinBundle.message("action.generate.tostring.name")
-            else -> {
-                val nameToReferTo = getSuperClassFqNameToReferTo(expression) ?: error("isAvailable() was supposed to prevent null")
-                KotlinBundle.message("specify.super.type", nameToReferTo.shortName().asString())
+    override fun getText(): String =
+        runReadAction {
+            val expression = element ?: return@runReadAction ""
+            when (expression.getReferencedName()) {
+                HASH_CODE -> KotlinBundle.message("hash.code.text")
+                EQUALS -> KotlinBundle.message("equals.text")
+                TO_STRING -> KotlinBundle.message("action.generate.tostring.name")
+                else -> {
+                    val nameToReferTo = getSuperClassFqNameToReferTo(expression) ?: error("isAvailable() was supposed to prevent null")
+                    KotlinBundle.message("specify.super.type", nameToReferTo.shortName().asString())
+                }
             }
         }
-    }
 
     override fun getFamilyName(): String = text
 }

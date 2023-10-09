@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -21,8 +21,8 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
     override fun isFirPlugin(): Boolean = true
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
-            ThrowableRunnable { super.tearDown() },
+            { runInEdtAndWait { project.invalidateCaches() } },
+            { super.tearDown() }
         )
 
     }

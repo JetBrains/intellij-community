@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.fe10bindings.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
@@ -26,7 +27,7 @@ abstract class AbstractFe10BindingQuickFixTest : AbstractQuickFixTest() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
+            ThrowableRunnable { runInEdtAndWait { project.invalidateCaches() } },
             ThrowableRunnable { super.tearDown() }
         )
     }
