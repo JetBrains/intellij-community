@@ -22,6 +22,10 @@ public interface LookupEx extends Lookup {
   @NotNull
   LookupPresentation getPresentation();
 
+  /**
+   * Allows modifying the visual presentation of the lookup (the size, it's position, item ordering).
+   * Should be set before lookup is shown, for example in {@link LookupManagerListener#activeLookupChanged(Lookup, Lookup)}.
+   */
   @ApiStatus.Experimental
   void setPresentation(@NotNull LookupPresentation presentation);
 }

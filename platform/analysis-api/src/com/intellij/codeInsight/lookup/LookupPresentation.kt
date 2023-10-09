@@ -24,7 +24,9 @@ class LookupPresentation private constructor(
     private var mostRelevantOnTop = base?.mostRelevantOnTop ?: true
     private var maxVisibleItemsProperty = base?.maxVisibleItemsProperty ?: DefaultMaxVisibleItemsProperty()
 
-    /** See [LookupPositionStrategy] */
+    /**
+     * Default is [LookupPositionStrategy.PREFER_BELOW]. See [LookupPositionStrategy] for more details.
+     */
     fun withPositionStrategy(strategy: LookupPositionStrategy): Builder {
       positionStrategy = strategy
       return this
@@ -32,6 +34,7 @@ class LookupPresentation private constructor(
 
     /**
      * If true, the first selected item most probably will be on top of the popup, otherwise - in the bottom.
+     * Default value is true.
      */
     fun withMostRelevantOnTop(onTop: Boolean): Builder {
       mostRelevantOnTop = onTop
@@ -41,6 +44,7 @@ class LookupPresentation private constructor(
     /**
      * Allows specifying the maximum number of items to be displayed in the visible part of the lookup list.
      * This value can be adjusted by resizing the popup, so it is worth to store it in some place.
+     * Default value is 11.
      */
     fun withMaxVisibleItemsCount(property: ReadWriteProperty<LookupPresentation, Int>): Builder {
       maxVisibleItemsProperty = property
