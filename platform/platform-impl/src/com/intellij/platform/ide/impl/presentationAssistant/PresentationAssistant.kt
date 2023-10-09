@@ -61,7 +61,7 @@ enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val 
 
 class PresentationAssistantState {
   var showActionDescriptions = false
-  var size: Int = 1
+  var popupSize: Int = 1
   var popupDuration = 4 * 1000
 
   /**
@@ -89,9 +89,6 @@ class PresentationAssistantState {
   var showAlternativeKeymap = false
   var alternativeKeymap: String = defaultKeymapForOS().getAlternativeKind().value
   var alternativeKeymapLabel: String = defaultKeymapForOS().getAlternativeKind().defaultLabel
-
-  var fontSize = 24
-  var margin = 5
 }
 
 internal fun PresentationAssistantState.mainKeymapKind() = KeymapKind.from(mainKeymap)
@@ -127,9 +124,14 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
         }
       }
     }
-    if (!isEnabled && presenter != null) {
-      presenter?.disable()
-      presenter = null
+    else if (presenter != null) {
+      if (!isEnabled) {
+        presenter?.disable()
+        presenter = null
+      }
+      else {
+        presenter?.refreshPresentedPopupIfNeeded()
+      }
     }
   }
 

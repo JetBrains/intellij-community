@@ -8,14 +8,16 @@ package com.intellij.platform.ide.impl.presentationAssistant
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
+import java.awt.font.TextAttribute
 import javax.swing.JPanel
 
-internal class ActionInfoPanel(textData: TextData) : JPanel() {
+internal class ActionInfoPanel(textData: TextData, private val appearance: ActionInfoPopupGroup.Appearance) : JPanel() {
   private val titleLabel = JBLabel()
   private val subtitleLabel = JBLabel()
   var textData: TextData = textData
@@ -28,32 +30,36 @@ internal class ActionInfoPanel(textData: TextData) : JPanel() {
     background = BACKGROUND
 
     layout = GridLayout()
+    val titleSubtitleIntersection = if (appearance.titleSubtitleGap < 0) UnscaledGaps(bottom = -appearance.titleSubtitleGap) else UnscaledGaps.EMPTY
+
     RowsGridBuilder(this)
-      .row(resizable = true).cell(component = titleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
+      .row(resizable = true).cell(component = titleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true, visualPaddings = titleSubtitleIntersection)
       .row(resizable = true).cell(component = subtitleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
 
-    titleLabel.border = JBEmptyBorder(6, 16, 0, 16)
+    titleLabel.border = JBEmptyBorder(appearance.titleInsets.unscaled)
     titleLabel.foreground = TITLE_COLOR
 
-    subtitleLabel.border = JBEmptyBorder(0, 18, 8, 16)
+    subtitleLabel.border = JBEmptyBorder(appearance.subtitleInsets.unscaled.apply {
+      if (appearance.titleSubtitleGap > 0) top += appearance.titleSubtitleGap
+    })
     subtitleLabel.foreground = TITLE_COLOR
-    subtitleLabel.font = JBFont.label().deriveFont(JBUIScale.scale(SUBTITLE_FONT_SIZE))
+    subtitleLabel.font = JBFont.label().deriveFont(JBUIScale.scale(appearance.subtitleFontSize))
 
     updateLabels()
   }
 
   private fun updateLabels() {
-    titleLabel.text = "<html>${textData.title}</html>"
-    titleLabel.font = (font?.let { JBFont.create(it) } ?: JBFont.label()).deriveFont(JBUIScale.scale(TITLE_FONT_SIZE))
+    titleLabel.text = textData.title
+    titleLabel.font = (textData.titleFont?.let { JBFont.create(it) } ?: JBFont.label())
+      .deriveFont(JBUIScale.scale (appearance.titleFontSize))
+      .deriveFont(mapOf(TextAttribute.WEIGHT to TextAttribute.WEIGHT_BOLD))
 
     val subtitle = textData.subtitle
-    subtitleLabel.text = subtitle?.let { "<html>${subtitle}</html>" } ?: " "
+    subtitleLabel.text = subtitle ?: " "
   }
 
   companion object {
     val BACKGROUND = EditorColorsManager.getInstance().globalScheme.getColor(BACKGROUND_COLOR_KEY)
-    private const val TITLE_FONT_SIZE = 40f
-    private const val SUBTITLE_FONT_SIZE = 14f
     private val TITLE_COLOR = EditorColorsManager.getInstance().globalScheme.getColor(FOREGROUND_COLOR_KEY)
   }
 }

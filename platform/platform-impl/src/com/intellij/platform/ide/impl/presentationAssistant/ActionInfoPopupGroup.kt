@@ -16,6 +16,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.ui.Animator
+import com.intellij.util.ui.JBInsets
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
@@ -27,15 +28,16 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
     val isDisposed: Boolean get() = popup.isDisposed
   }
 
-  private val actionBlocks = textFragments.mapIndexed { index, fragment ->
-    val panel = ActionInfoPanel(fragment)
+  private val configuration = PresentationAssistant.INSTANCE.configuration
+  private val appearance = appearanceFromSize(PresentationAssistantPopupSize.from(configuration.popupSize))
+  private val actionBlocks = textFragments.map { fragment ->
+    val panel = ActionInfoPanel(fragment, appearance)
     val popup = createPopup(panel, showAnimated)
     ActionBlock(popup, panel)
   }
 
   private val hideAlarm = Alarm(this)
   private var animator: Animator
-  private val configuration = PresentationAssistant.INSTANCE.configuration
   var phase = Phase.FADING_IN
     private set
   val isShown: Boolean get() = phase == Phase.SHOWN
@@ -156,21 +158,21 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
 
   private fun computeLocation(project: Project, index: Int?): RelativePoint {
     val preferredSizes = actionBlocks.map { it.panel.preferredSize }
-    val gap = JBUIScale.scale(12)
+    val gap = JBUIScale.scale(appearance.spaceBetweenPopups)
     val popupGroupSize: Dimension = if (actionBlocks.isNotEmpty()) {
-      val totalWidth = preferredSizes.map { it.width }.reduce { total, width -> total + width + gap } - gap
+      val totalWidth = preferredSizes.sumOf { it.width } + (gap * (preferredSizes.size - 1))
       Dimension(totalWidth, preferredSizes.first().height)
     }
     else Dimension()
 
     val ideFrame = WindowManager.getInstance().getIdeFrame(project)!!
-    val statusBarHeight = ideFrame.statusBar?.component?.height ?: 0
     val visibleRect = ideFrame.component.visibleRect
+    val margin = JBUIScale.scale(60)
 
     val x = when (configuration.horizontalAlignment) {
-      0 -> visibleRect.x + configuration.margin
+      0 -> visibleRect.x + margin
       1 -> visibleRect.x + (visibleRect.width - popupGroupSize.width) / 2
-      else -> visibleRect.x + visibleRect.width - popupGroupSize.width - configuration.margin
+      else -> visibleRect.x + visibleRect.width - popupGroupSize.width - margin
     } + (index?.takeIf {
       0 < index && index < actionBlocks.size
     }?.let {
@@ -181,8 +183,8 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
     } ?: 0)
 
     val y = when (configuration.verticalAlignment) {
-      0 -> visibleRect.y + configuration.margin
-      else -> visibleRect.y + visibleRect.height - popupGroupSize.height - statusBarHeight - configuration.margin
+      0 -> visibleRect.y + margin
+      else -> visibleRect.y + visibleRect.height - popupGroupSize.height - margin
     }
 
     return RelativePoint(ideFrame.component, Point(x, y))
@@ -202,6 +204,38 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
       else {
         close()
       }
+    }
+  }
+
+  internal data class Appearance(val titleFontSize: Float,
+                                 val subtitleFontSize: Float,
+                                 val titleInsets: JBInsets,
+                                 val subtitleInsets: JBInsets,
+                                 val spaceBetweenPopups: Int,
+                                 val titleSubtitleGap: Int)
+
+  companion object {
+    private fun appearanceFromSize(popupSize: PresentationAssistantPopupSize): Appearance = when(popupSize) {
+      PresentationAssistantPopupSize.SMALL -> Appearance(22f,
+                                                         12f,
+                                                         JBInsets(6, 12, 0, 12),
+                                                         JBInsets(0, 14, 6, 14),
+                                                         8,
+                                                         1)
+
+      PresentationAssistantPopupSize.MEDIUM -> Appearance(32f,
+                                                          13f,
+                                                          JBInsets(6, 16, 0, 16),
+                                                          JBInsets(0, 18, 8, 18),
+                                                          12,
+                                                          -2)
+
+      PresentationAssistantPopupSize.LARGE -> Appearance(40f,
+                                                         14f,
+                                                         JBInsets(6, 16, 0, 16),
+                                                         JBInsets(0, 18, 8, 18),
+                                                         12,
+                                                         -2)
     }
   }
 }

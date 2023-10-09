@@ -24,10 +24,10 @@ class PresentationAssistantConfigurable: DslConfigurableBase() {
       indent {
         panel {
           row(IdeBundle.message("presentation.assistant.configurable.popup.size")) {
-            comboBox(CollectionComboBoxModel(PresentationAssistantPopupSize.entries, PresentationAssistantPopupSize.from(configuration.size)),
+            comboBox(CollectionComboBoxModel(PresentationAssistantPopupSize.entries, PresentationAssistantPopupSize.from(configuration.popupSize)),
                      textListCellRenderer { it?.stringValue })
-              .bindItem({ PresentationAssistantPopupSize.from(configuration.size) }) {
-                configuration.size = it?.value ?: PresentationAssistantPopupSize.MEDIUM.value
+              .bindItem({ PresentationAssistantPopupSize.from(configuration.popupSize) }) {
+                configuration.popupSize = it?.value ?: PresentationAssistantPopupSize.MEDIUM.value
               }
           }
           row(IdeBundle.message("presentation.assistant.configurable.duration")) {

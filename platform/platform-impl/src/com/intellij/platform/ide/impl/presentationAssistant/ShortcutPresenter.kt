@@ -36,6 +36,7 @@ class ShortcutPresenter : Disposable {
   private val parentGroupIds = setOf("CodeCompletionGroup", "FoldingGroup", "GoToMenu", "IntroduceActionsGroup")
   private var infoPopupGroup: ActionInfoPopupGroup? = null
   private val parentNames by lazy(::loadParentNames)
+  private var lastPresentedActionData: ActionData? = null
 
   init {
     enable()
@@ -53,6 +54,15 @@ class ShortcutPresenter : Disposable {
         }
       }
     })
+  }
+
+  fun refreshPresentedPopupIfNeeded() {
+    if (infoPopupGroup?.isShown == true) {
+      infoPopupGroup?.close()
+      lastPresentedActionData?.let {
+        showActionInfo(it)
+      }
+    }
   }
 
   private fun loadParentNames(): Map<String, String> {
@@ -92,6 +102,8 @@ class ShortcutPresenter : Disposable {
   }
 
   fun showActionInfo(actionData: ActionData) {
+    if (actionData.actionId == "UiInspector") return
+
     val configuration = PresentationAssistant.INSTANCE.configuration
 
     val actionId = actionData.actionId
@@ -101,7 +113,7 @@ class ShortcutPresenter : Disposable {
 
     val fragments = ArrayList<TextData>()
     if (actionText.isNotEmpty()) {
-      fragments.add(TextData("<b>$actionText</b>"))
+      fragments.add(TextData(actionText))
     }
 
     val mainKeymap = configuration.mainKeymapKind()
@@ -119,6 +131,7 @@ class ShortcutPresenter : Disposable {
 
     val realProject = actionData.project ?: ProjectManager.getInstance().openProjects.firstOrNull()
     if (realProject != null && !realProject.isDisposed && realProject.isOpen) {
+      lastPresentedActionData = actionData
       if (infoPopupGroup == null || !infoPopupGroup!!.canBeReused(fragments.size)) {
         infoPopupGroup?.close()
         infoPopupGroup = ActionInfoPopupGroup(realProject, fragments, false)
@@ -185,7 +198,7 @@ class ShortcutPresenter : Disposable {
       }
     }
     val keymapText = label ?: keymap.defaultLabel
-    if (keymapText.isNotEmpty()) subtitle = "&nbsp;$keymapText"
+    if (keymapText.isNotEmpty()) subtitle = keymapText
     else subtitle = null
 
     return TextData(title, titleFont, subtitle)
