@@ -38,6 +38,9 @@ class IndexingStampInfo {
   final boolean isBinary;
 
   IndexingStampInfo(long indexingFileStamp, long indexingByteLength, int indexingCharLength, boolean isBinary) {
+    assert (indexingByteLength >= 0) : this.toString();
+    assert (indexingCharLength >= 0 || (indexingCharLength == -1 && isBinary)) : this.toString();
+
     this.indexingFileStamp = indexingFileStamp;
     this.indexingByteLength = indexingByteLength;
     this.indexingCharLength = indexingCharLength;
@@ -79,8 +82,6 @@ class IndexingStampInfo {
     // 16 bits for indexingCharLengthDiff (indexingCharLength = indexingByteLength + indexingCharLengthDiff)
     // 1 bit for binary flag
     // 31 bits for indexingByteLength, unsigned (files >2GB are represented with 2^31-1)
-    assert (indexingByteLength >= 0);
-    assert (indexingCharLength >= 0);
 
     int representableByteLength = coerceToNonNegativeInt(indexingByteLength);
     int binary = isBinary ? 0x80_00_00_00 : 0;
@@ -100,7 +101,7 @@ class IndexingStampInfo {
     long indexingByteLength = (ints[2] & ~0x80_00_00_00);
     int indexingCharLength = (int)(indexingByteLength + indexingCharLengthDiff);
 
-    return new IndexingStampInfo(indexingFileStamp, indexingByteLength, indexingCharLength, isBinary);
+    return new IndexingStampInfo(indexingFileStamp, indexingByteLength, isBinary ? -1 : indexingCharLength, isBinary);
   }
 
   private static short coerceToShort(int l) {

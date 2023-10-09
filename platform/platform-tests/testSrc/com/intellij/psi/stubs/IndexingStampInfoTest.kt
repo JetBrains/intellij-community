@@ -21,12 +21,19 @@ class IndexingStampInfoTest {
 
     fun toDeserializedInfoObject(): IndexingStampInfo {
       val deserializedBytesLength = indexingByteLength.coerceAtMost(maxByteLength.toLong())
+      val deserializedCharLength = if (isBinary) {
+        -1
+      }
+      else {
+        indexingCharLength.toLong()
+          .coerceIn(deserializedBytesLength + Short.MIN_VALUE, deserializedBytesLength + Short.MAX_VALUE)
+          .coerceIn(0, Int.MAX_VALUE.toLong())
+          .toInt()
+      }
+
       return IndexingStampInfo(indexingFileStamp and 0x0_ff_ff_ff_ff_ff_ffL /* 48 bits */,
                                deserializedBytesLength,
-                               indexingCharLength.toLong()
-                                 .coerceIn(deserializedBytesLength + Short.MIN_VALUE, deserializedBytesLength + Short.MAX_VALUE)
-                                 .coerceIn(0, Int.MAX_VALUE.toLong())
-                                 .toInt(),
+                               deserializedCharLength,
                                isBinary)
     }
   }
@@ -51,7 +58,8 @@ class IndexingStampInfoTest {
       interestingLongValues.forEach { indexingByteLength ->
         interestingIntValues.forEach { indexingCharLength ->
           interestingBoolValues.forEach { isBinary ->
-            val template = IndexingStampInfoTemplate(indexingFileStamp, indexingByteLength, indexingCharLength, isBinary)
+            val validIndexingCharLength = if (isBinary) -1 else indexingCharLength
+            val template = IndexingStampInfoTemplate(indexingFileStamp, indexingByteLength, validIndexingCharLength, isBinary)
             val int3 = template.toInfoObject().toInt3()
             val deserialized = IndexingStampInfo.fromInt3(int3)
             val expected = template.toDeserializedInfoObject()
