@@ -5,6 +5,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.observable.util.addMouseHoverListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -13,17 +14,15 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.ui.Animator
 import com.intellij.util.ui.JBInsets
-import java.awt.Dimension
-import java.awt.Point
-import java.awt.Rectangle
-import java.awt.Window
+import java.awt.*
 import javax.swing.SwingUtilities
 
-internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextData>, showAnimated: Boolean) : Disposable {
+internal class ActionInfoPopupGroup(val project: Project, textFragments: List<TextData>, showAnimated: Boolean) : Disposable {
   data class ActionBlock(val popup: JBPopup, val panel: ActionInfoPanel) {
     val isDisposed: Boolean get() = popup.isDisposed
   }
@@ -35,6 +34,38 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
     val popup = createPopup(panel, showAnimated)
     ActionBlock(popup, panel)
   }
+  private val settingsButton = PresentationAssistantQuickSettingsButton(project, appearance) { isSettingsButtonForcedToBeShown = (it > 0) }
+
+  private var isPopupHovered: Boolean = false
+    set(value) {
+      val oldValue = field
+      field = value
+
+      if (oldValue != isPopupHovered) {
+        if (isPopupHovered) {
+          settingsButton.acquireShownStateRequest(computeLocation(project, actionBlocks.size))
+        }
+        else {
+          settingsButton.releaseShownStateRequest()
+        }
+      }
+      updateForcedToBeShown()
+    }
+
+  private var isSettingsButtonForcedToBeShown: Boolean = true
+    set(value) {
+      field = value
+      updateForcedToBeShown()
+    }
+
+  private var forcedToBeShown: Boolean = false
+    set(value) {
+      if (value != field) {
+        if (value) hideAlarm.cancelAllRequests()
+        else if (isShown) resetHideAlarm()
+      }
+      field = value
+    }
 
   private val hideAlarm = Alarm(this)
   private var animator: Animator
@@ -82,6 +113,12 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
       }
     })
 
+    popup.content.addMouseHoverListener(this, object: HoverListener() {
+      override fun mouseEntered(component: Component, x: Int, y: Int) { isPopupHovered = true }
+      override fun mouseMoved(component: Component, x: Int, y: Int) { isPopupHovered = true }
+      override fun mouseExited(component: Component) { isPopupHovered = false }
+    })
+
     return popup
   }
 
@@ -107,6 +144,7 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
       actionBlock.popup.setBounds(newBounds)
     }
 
+    settingsButton.hidePopup()
     showFinalAnimationFrame()
   }
 
@@ -122,6 +160,7 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
       }
     }
     Disposer.dispose(animator)
+    Disposer.dispose(settingsButton)
   }
 
   fun canBeReused(size: Int): Boolean = size == actionBlocks.size && (phase == Phase.FADING_IN || phase == Phase.SHOWN)
@@ -148,12 +187,17 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
     phase = Phase.SHOWN
     setAlpha(0f)
   }
+
   private fun fadeOut() {
     if (phase != Phase.SHOWN) return
     phase = Phase.FADING_OUT
     Disposer.dispose(animator)
     animator = FadeInOutAnimator(false, true)
     animator.resume()
+  }
+
+  private fun updateForcedToBeShown() {
+    forcedToBeShown = isPopupHovered || isSettingsButtonForcedToBeShown
   }
 
   private fun computeLocation(project: Project, index: Int?): RelativePoint {
@@ -174,7 +218,7 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
       1 -> visibleRect.x + (visibleRect.width - popupGroupSize.width) / 2
       else -> visibleRect.x + visibleRect.width - popupGroupSize.width - margin
     } + (index?.takeIf {
-      0 < index && index < actionBlocks.size
+      0 < index && index <= actionBlocks.size
     }?.let {
       // Calculate X for particular popup
       (0..<index).map { preferredSizes[it].width }.reduce { total, width ->
@@ -212,7 +256,8 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
                                  val titleInsets: JBInsets,
                                  val subtitleInsets: JBInsets,
                                  val spaceBetweenPopups: Int,
-                                 val titleSubtitleGap: Int)
+                                 val titleSubtitleGap: Int,
+                                 val settingsButtonWidth: Int)
 
   companion object {
     private fun appearanceFromSize(popupSize: PresentationAssistantPopupSize): Appearance = when(popupSize) {
@@ -221,21 +266,24 @@ internal class ActionInfoPopupGroup(project: Project, textFragments: List<TextDa
                                                          JBInsets(6, 12, 0, 12),
                                                          JBInsets(0, 14, 6, 14),
                                                          8,
-                                                         1)
+                                                         1,
+                                                         25)
 
       PresentationAssistantPopupSize.MEDIUM -> Appearance(32f,
                                                           13f,
                                                           JBInsets(6, 16, 0, 16),
                                                           JBInsets(0, 18, 8, 18),
                                                           12,
-                                                          -2)
+                                                          -2,
+                                                          30)
 
       PresentationAssistantPopupSize.LARGE -> Appearance(40f,
                                                          14f,
                                                          JBInsets(6, 16, 0, 16),
                                                          JBInsets(0, 18, 8, 18),
                                                          12,
-                                                         -2)
+                                                         -2,
+                                                         34)
     }
   }
 }

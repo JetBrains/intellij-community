@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.annotations.Nls
 
-enum class PresentationAssistantPopupSize(val value: Int, @Nls val stringValue: String) {
+enum class PresentationAssistantPopupSize(val value: Int, @Nls val displayName: String) {
   SMALL(0, IdeBundle.message("presentation.assistant.configurable.size.small")),
   MEDIUM(1, IdeBundle.message("presentation.assistant.configurable.size.medium")),
   LARGE(2, IdeBundle.message("presentation.assistant.configurable.size.large"));
@@ -33,7 +33,7 @@ enum class PresentationAssistantPopupSize(val value: Int, @Nls val stringValue: 
   }
 }
 
-enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val stringValue: String) {
+enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val displayName: String) {
   TOP_LEFT(0, 0, IdeBundle.message("presentation.assistant.configurable.alignment.top.left")),
   TOP_CENTER(1, 0, IdeBundle.message("presentation.assistant.configurable.alignment.top.center")),
   TOP_RIGHT(2, 0, IdeBundle.message("presentation.assistant.configurable.alignment.top.right")),

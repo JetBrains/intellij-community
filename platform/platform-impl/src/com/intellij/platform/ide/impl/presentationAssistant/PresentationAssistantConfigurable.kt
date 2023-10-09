@@ -29,7 +29,7 @@ class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
         panel {
           row(IdeBundle.message("presentation.assistant.configurable.popup.size")) {
             comboBox(CollectionComboBoxModel(PresentationAssistantPopupSize.entries, PresentationAssistantPopupSize.from(configuration.popupSize)),
-                     textListCellRenderer { it?.stringValue })
+                     textListCellRenderer { it?.displayName })
               .bindItem({ PresentationAssistantPopupSize.from(configuration.popupSize) }) {
                 configuration.popupSize = it?.value ?: PresentationAssistantPopupSize.MEDIUM.value
               }
@@ -41,7 +41,7 @@ class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
           row(IdeBundle.message("presentation.assistant.configurable.popup.position")) {
             comboBox(CollectionComboBoxModel(PresentationAssistantPopupAlignment.entries,
                                              PresentationAssistantPopupAlignment.from(configuration.horizontalAlignment, configuration.verticalAlignment)),
-                     textListCellRenderer { it?.stringValue })
+                     textListCellRenderer { it?.displayName })
               .bindItem({ PresentationAssistantPopupAlignment.from(configuration.horizontalAlignment, configuration.verticalAlignment) }) {
                 configuration.horizontalAlignment = it?.x ?: PresentationAssistantPopupAlignment.defaultAlignment.x
                 configuration.verticalAlignment = it?.y ?: PresentationAssistantPopupAlignment.defaultAlignment.y

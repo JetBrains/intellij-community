@@ -139,6 +139,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Play_forward = load("actions/play_forward.svg", 84808551, 2);
     /** 16x16 */ public static final @NotNull Icon Play_last = load("actions/play_last.svg", 1200003259, 2);
     /** 16x16 */ public static final @NotNull Icon PopFrame = load("actions/popFrame.svg", -2061379356, 2);
+    /** 26x26 */ public static final @NotNull Icon PresentationAssistantSettings = load("actions/presentationAssistantSettings.svg", -1777013294, 0);
     /** 16x16 */ public static final @NotNull Icon PreserveCase = load("actions/preserveCase.svg", 1309462994, 0);
     /** 16x16 */ public static final @NotNull Icon PreserveCaseHover = load("actions/preserveCaseHover.svg", 819147333, 0);
     /** 16x16 */ public static final @NotNull Icon PreserveCaseSelected = load("actions/preserveCaseSelected.svg", 456685590, 0);

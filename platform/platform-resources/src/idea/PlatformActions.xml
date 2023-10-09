@@ -1637,6 +1637,8 @@
 
     <group id="ChangeProjectColorActionGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.ChangeProjectColorActionGroup" searchable="false" popup="true"/>
 
+    <group id="PresentationAssistantQuickSettingsGroup" class="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantQuickSettingsGroup" searchable="false" popup="true"/>
+
     <group id="ToolbarPopupActions"/>
 
     <group id="ToolbarPopupActions.MainToolbarNewUI">
