@@ -8,6 +8,9 @@
     <applicationService serviceInterface="com.intellij.platform.ide.impl.feedback.GeneralFeedbackDialogs"
                         serviceImplementation="com.intellij.platform.feedback.general.GeneralFeedbackDialogsImpl"
                         overrides="true"/>
+    <applicationService serviceInterface="com.intellij.ide.feedback.PluginPageFeedbackDialogProvider"
+                        serviceImplementation="com.intellij.platform.feedback.pluginPage.PluginPageFeedbackDialogProviderImpl"
+                        overrides="true"/>
 
     <applicationService serviceImplementation="com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService"/>
 
