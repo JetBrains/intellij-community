@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.models
 
 import com.intellij.ide.RecentProjectMetaInfo
@@ -14,7 +14,9 @@ open class Settings(
    * Don't forget to set info.projectOpenTimestamp
    */
   val recentProjects: MutableList<RecentPathInfo> = mutableListOf()
-)
+) {
+  val notes = mutableMapOf<String, Any>()
+}
 
 data class RecentPathInfo(
   val path: String,

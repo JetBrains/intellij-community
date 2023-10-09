@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings
 
 import com.intellij.ide.IdeBundle
@@ -18,7 +19,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-class TransferSettingsDialog(private val project: Project,
+class TransferSettingsDialog(val project: Project,
                              private val config: TransferSettingsConfiguration) : DialogWrapper(project) {
   private val model: TransferSettingsModel = TransferSettingsModel(config, true)
   private val view = TransferSettingsView(config, model)
@@ -41,7 +42,7 @@ class TransferSettingsDialog(private val project: Project,
 
   init {
     init()
-    setSize(640, 480)
+    setSize(800, 600)
 
     config.controller.addListener(object : TransferSettingsListener {
       override fun importStarted(ideVersion: IdeVersion, settings: Settings) {
@@ -80,6 +81,7 @@ class TransferSettingsDialog(private val project: Project,
   override fun createCenterPanel(): JComponent {
     return BorderLayoutPanel().apply {
       addToCenter(view.panel)
+      pack()
     }
   }
 
