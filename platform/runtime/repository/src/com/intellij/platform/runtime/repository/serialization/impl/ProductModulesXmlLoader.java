@@ -64,7 +64,13 @@ public final class ProductModulesXmlLoader {
             rootMainGroupModules.add(new RawIncludedRuntimeModule(RuntimeModuleId.raw(moduleName), importance, Collections.emptySet()));
           }
           else {
-            bundledPluginModuleGroups.add(new PluginModuleGroup(repository.getModule(RuntimeModuleId.raw(moduleName)), repository));
+            RuntimeModuleDescriptor module = repository.resolveModule(RuntimeModuleId.raw(moduleName)).getResolvedModule();
+            /* todo: this check is temporarily added for JetBrains Client; 
+               It includes intellij.performanceTesting.async plugin which dependencies aren't available in all IDEs, so we need to skip it.
+               Plugins should define which modules from them should be included into JetBrains Client instead. */
+            if (module != null) {
+              bundledPluginModuleGroups.add(new PluginModuleGroup(module, currentMode, repository));
+            }
           }
           moduleName = null;
           importance = null;
