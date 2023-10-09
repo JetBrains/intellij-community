@@ -224,7 +224,7 @@ open class CachedImageIcon private constructor(
     return result
   }
 
-  override fun getDarkIcon(isDark: Boolean): Icon {
+  override fun getDarkIcon(isDark: Boolean): CachedImageIcon {
     if (isDarkOverridden != null && isDarkOverridden == isDark) {
       return this
     }
