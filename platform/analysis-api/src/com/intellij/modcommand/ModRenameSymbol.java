@@ -4,6 +4,7 @@ package com.intellij.modcommand;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -29,6 +30,6 @@ public record ModRenameSymbol(@NotNull VirtualFile file, @NotNull RenameSymbolRa
    * @param range               whole symbol's range
    * @param nameIdentifierRange symbol's name identifier range
    */
-  public record RenameSymbolRange(@NotNull TextRange range, @NotNull TextRange nameIdentifierRange) {
+  public record RenameSymbolRange(@NotNull TextRange range, @Nullable TextRange nameIdentifierRange) {
   }
 }

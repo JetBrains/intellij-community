@@ -425,7 +425,7 @@ final class PsiUpdateImpl {
         throw new IllegalArgumentException("Element disappeared after postponed operations: " + element);
       }
       PsiElement nameIdentifier = element.getNameIdentifier();
-      TextRange identifierRange = nameIdentifier != null ? nameIdentifier.getTextRange() : range;
+      TextRange identifierRange = nameIdentifier != null ? nameIdentifier.getTextRange() : null;
       myRenameSymbol = new ModRenameSymbol(myNavigationFile, new ModRenameSymbol.RenameSymbolRange(range, identifierRange), suggestedNames);
     }
 
@@ -504,8 +504,9 @@ final class PsiUpdateImpl {
 
     private static @NotNull ModRenameSymbol.RenameSymbolRange updateRange(@NotNull DocumentEvent event,
                                                                           @NotNull ModRenameSymbol.RenameSymbolRange range) {
+      TextRange idRange = range.nameIdentifierRange();
       return new ModRenameSymbol.RenameSymbolRange(
-        updateRange(event, range.range()), updateRange(event, range.nameIdentifierRange()));
+        updateRange(event, range.range()), idRange != null ? updateRange(event, idRange) : null);
     }
 
     private static @NotNull TextRange updateRange(@NotNull DocumentEvent event, @NotNull TextRange range) {
