@@ -48,7 +48,7 @@ public interface PsiSubstitutor {
    * @param type the type to substitute the type parameters for.
    * @return the result of the substitution.
    */
-  @Contract(pure = true)
+  @Contract(pure = true, value = "null -> null")
   PsiType substitute(@Nullable PsiType type);
 
   //Should be used with great care, be sure to prevent infinite recursion that could arise

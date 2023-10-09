@@ -674,31 +674,64 @@ public final class MethodParameterInfoHandler
     return results.toArray(CandidateInfo.EMPTY_ARRAY);
   }
 
-  public static String updateMethodPresentation(@NotNull PsiMethod method, @Nullable PsiSubstitutor substitutor, @NotNull ParameterInfoUIContext context) {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+  private record ParameterPresentation(@NotNull String modifiers, @NotNull String type, @NotNull String name, @Nullable String javaDoc,
+                                       boolean varArgs) {
+    static @NotNull ParameterPresentation from(@NotNull PsiParameter param, @NotNull PsiSubstitutor substitutor) {
+      PsiType paramType = substitutor.substitute(param.getType());
+      String type = paramType.getPresentableText(!DumbService.isDumb(param.getProject()));
+      StringBuilder buffer = new StringBuilder();
+      appendModifierList(buffer, param);
+      String modifiers = buffer.toString();
+      String name = param.getName();
+      String javaDoc = JavaDocInfoGeneratorFactory.create(param.getProject(), param).generateMethodParameterJavaDoc();
+      if (javaDoc != null) {
+        javaDoc = removeHyperlinks(javaDoc);
+      }
+      return new ParameterPresentation(modifiers, type, name, javaDoc, param.isVarArgs());
+    }
+  }
 
-    if (!method.isValid() || substitutor != null && !substitutor.isValid()) {
+  private record MethodPresentation(@NotNull String modifiers, @NotNull String type, @NotNull String name, boolean constructor,
+                                    boolean deprecated, boolean varArgs,
+                                    @NotNull List<@NotNull ParameterPresentation> parameters) {
+    static @NotNull MethodPresentation from(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+      PsiType returnType = substitutor.substitute(method.getReturnType());
+      String type = returnType == null ? "" : returnType.getPresentableText(true);
+      StringBuilder buffer = new StringBuilder();
+      appendModifierList(buffer, method);
+      String modifiers = buffer.toString();
+      List<ParameterPresentation> parameters =
+        ContainerUtil.map(method.getParameterList().getParameters(), param -> ParameterPresentation.from(param, substitutor));
+      return new MethodPresentation(modifiers, type, method.getName(), method.isConstructor(), method.isDeprecated(), 
+                                    method.isVarArgs(), parameters);
+    }
+  }
+
+  public static String updateMethodPresentation(@NotNull PsiMethod method, @Nullable PsiSubstitutor substitutor, @NotNull ParameterInfoUIContext context) {
+    if (substitutor == null) {
+      substitutor = PsiSubstitutor.EMPTY;
+    }
+    if (!method.isValid() || !substitutor.isValid()) {
       context.setUIComponentEnabled(false);
       return null;
     }
 
-    PsiParameter[] parms = method.getParameterList().getParameters();
-    int numParams = parms.length;
+    MethodPresentation methodPresentation = MethodPresentation.from(method, substitutor);
+    return updateMethodPresentation(context, methodPresentation);
+  }
+
+  private static String updateMethodPresentation(@NotNull ParameterInfoUIContext context, @NotNull MethodPresentation methodPresentation) {
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    int numParams = methodPresentation.parameters().size();
     @Nls StringBuilder buffer = new StringBuilder(numParams * 8); // crude heuristics
 
     if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO && !context.isSingleParameterInfo()) {
-      if (!method.isConstructor()) {
-        PsiType returnType = method.getReturnType();
-        if (substitutor != null) {
-          returnType = substitutor.substitute(returnType);
-        }
-        assert returnType != null : method;
-
-        appendModifierList(buffer, method);
-        buffer.append(returnType.getPresentableText(true));
+      if (!methodPresentation.constructor()) {
+        buffer.append(methodPresentation.modifiers());
+        buffer.append(methodPresentation.type());
         buffer.append(" ");
       }
-      buffer.append(method.getName());
+      buffer.append(methodPresentation.name());
       buffer.append("(");
     }
 
@@ -707,38 +740,29 @@ public final class MethodParameterInfoHandler
     int highlightStartOffset = -1;
     int highlightEndOffset = -1;
     if (numParams > 0) {
-      if (context.isSingleParameterInfo() && method.isVarArgs() && currentParameter >= numParams) currentParameter = numParams - 1;
+      if (context.isSingleParameterInfo() && methodPresentation.varArgs() && currentParameter >= numParams) currentParameter = numParams - 1;
 
       for (int j = 0; j < numParams; j++) {
         if (context.isSingleParameterInfo() && j != currentParameter) continue;
 
-        PsiParameter param = parms[j];
+        ParameterPresentation parameterPresentation = methodPresentation.parameters().get(j);
 
         int startOffset = buffer.length();
 
-        if (param.isValid()) {
-          PsiType paramType = param.getType();
-          assert paramType.isValid();
-          if (substitutor != null) {
-            assert substitutor.isValid();
-            paramType = substitutor.substitute(paramType);
-          }
-          if (context.isSingleParameterInfo()) buffer.append("<b>");
-          appendModifierList(buffer, param);
-          String type = paramType.getPresentableText(!DumbService.isDumb(param.getProject()));
-          buffer.append(context.isSingleParameterInfo() ? StringUtil.escapeXmlEntities(type) : type);
-          String name = param.getName();
-          if (!context.isSingleParameterInfo()) {
-            buffer.append(" ");
-            buffer.append(name);
-          }
-          if (context.isSingleParameterInfo()) buffer.append("</b>");
+        if (context.isSingleParameterInfo()) buffer.append("<b>");
+        buffer.append(parameterPresentation.modifiers());
+        String type = parameterPresentation.type();
+        buffer.append(context.isSingleParameterInfo() ? StringUtil.escapeXmlEntities(type) : type);
+        String name = parameterPresentation.name();
+        if (!context.isSingleParameterInfo()) {
+          buffer.append(" ");
+          buffer.append(name);
         }
+        if (context.isSingleParameterInfo()) buffer.append("</b>");
 
         if (context.isSingleParameterInfo()) {
-          String javaDoc = JavaDocInfoGeneratorFactory.create(param.getProject(), param).generateMethodParameterJavaDoc();
+          String javaDoc = parameterPresentation.javaDoc();
           if (javaDoc != null) {
-            javaDoc = removeHyperlinks(javaDoc);
             if (javaDoc.length() < 100) {
               buffer.append("&nbsp;&nbsp;<i>").append(javaDoc).append("</i>");
             }
@@ -756,7 +780,7 @@ public final class MethodParameterInfoHandler
           }
 
           if (context.isUIComponentEnabled() &&
-              (j == currentParameter || j == numParams - 1 && param.isVarArgs() && currentParameter >= numParams)) {
+              (j == currentParameter || j == numParams - 1 && parameterPresentation.varArgs() && currentParameter >= numParams)) {
             highlightStartOffset = startOffset;
             highlightEndOffset = endOffset;
           }
@@ -782,7 +806,7 @@ public final class MethodParameterInfoHandler
         highlightStartOffset,
         highlightEndOffset,
         !context.isUIComponentEnabled(),
-        method.isDeprecated() && !context.isSingleParameterInfo() && !context.isSingleOverload(),
+        methodPresentation.deprecated() && !context.isSingleParameterInfo() && !context.isSingleOverload(),
         false,
         context.getDefaultParameterColor()
       );
