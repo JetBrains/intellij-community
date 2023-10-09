@@ -619,7 +619,8 @@ internal class MutableEntityStorageImpl(
     val newIndexes = indexes.toImmutable()
     val cache = TracedSnapshotCacheImpl()
     val snapshot = EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes, cache)
-    cache.pullCache(this.originalSnapshot.snapshotCache, this.collectChanges())
+    // Temporally disable cache due to IDEA-332686
+    //cache.pullCache(this.originalSnapshot.snapshotCache, this.collectChanges())
     toSnapshotTimeMs.addElapsedTimeMs(start)
     return snapshot
   }
