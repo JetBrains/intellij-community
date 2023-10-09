@@ -51,9 +51,19 @@ class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeMo
                                             isUnitTestMode: Boolean,
                                             context: DescriptorListLoadingContext,
                                             zipFilePool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>> {
+    val mainGroupModules = productModules.mainModuleGroup.includedModules.map { it.moduleDescriptor.moduleId }
     return productModules.bundledPluginModuleGroups.map { moduleGroup ->
       scope.async {
-        loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool)
+        if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModules }) {
+          loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool)
+        }
+        else {
+          /* todo: intellij.performanceTesting.async plugin has different distributions for different IDEs, in some IDEs it has dependencies 
+             on 'intellij.profiler.common' and other module from the platform, in other IDEs it includes them as its own content. In the
+             latter case we currently cannot run it using the modular loader, because these modules will be loaded twice. */
+          logger<ModuleBasedProductLoadingStrategy>().debug("Skipped $moduleGroup: ${moduleGroup.includedModules}")
+          null
+        }
       }
     }
   }
