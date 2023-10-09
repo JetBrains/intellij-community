@@ -3,17 +3,17 @@ package org.jetbrains.kotlin.idea.base.analysis.libraries
 
 import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
-import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryUsageIndex
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
@@ -40,6 +40,12 @@ class LibraryUsageIndexImpl(private val project: Project) : LibraryUsageIndex {
                 yield(module)
             }
         }
+    }
+
+    override fun hasDependentModule(libraryInfo: LibraryInfo, module: Module): Boolean {
+        // TODO: probably it is not fully true in the case of hmpp (as in getDependentModules)
+        // but we accept it as a more performant
+        return module in moduleDependentsByLibrary.value[libraryInfo.library]
     }
 
     private fun computeLibraryModuleDependents(): MultiMap<Library, Module> = runReadAction {

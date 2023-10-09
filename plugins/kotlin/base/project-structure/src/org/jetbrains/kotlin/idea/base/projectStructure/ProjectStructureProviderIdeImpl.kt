@@ -14,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
 import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.project.structure.impl.KtCodeFragmentModuleImpl
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
@@ -66,6 +67,9 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
 
             // KTIJ-27174: to distinguish between script and regular libraries
             is KtScriptModule -> contextualModule
+
+            // KTIJ-27159: to distinguish between libraries with the same content
+            is KtSourceModule -> contextualModule
             else -> null
         }
 
