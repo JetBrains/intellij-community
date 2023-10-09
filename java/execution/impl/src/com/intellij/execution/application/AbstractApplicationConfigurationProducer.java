@@ -61,7 +61,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
 
   private void setupConfiguration(T configuration, final PsiClass aClass, final ConfigurationContext context) {
     if (aClass instanceof PsiUnnamedClass) {
-      configuration.setMainClassName(JavaUnnamedClassUtil.trimJavaExtension(aClass.getContainingFile().getName()));
+      configuration.setMainClassName(JavaUnnamedClassUtil.getJvmName(aClass.getContainingFile().getName()));
       configuration.setUnnamedClassConfiguration(true);
     } else {
       configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(aClass));
@@ -81,7 +81,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
     final PsiClass aClass = PsiTreeUtil.getParentOfType(singleClassLocation.getPsiElement(), PsiClass.class, false);
     if (aClass != null) {
       final String className = aClass instanceof PsiUnnamedClass
-                               ? JavaUnnamedClassUtil.trimJavaExtension(aClass.getContainingFile().getName())
+                               ? JavaUnnamedClassUtil.getJvmName(aClass.getContainingFile().getName())
                                : JavaExecutionUtil.getRuntimeQualifiedName(aClass);
       if (!Objects.equals(className, appConfiguration.getMainClassName())) return false;
 

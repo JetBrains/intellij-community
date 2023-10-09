@@ -61,7 +61,7 @@ public interface JavaStubElementTypes {
     public void indexStub(@NotNull PsiClassStub stub, @NotNull IndexSink sink) {
       StubElement parent = stub.getParentStub();
       if (parent instanceof PsiJavaFileStub) {
-        sink.occurrence(JavaStubIndexKeys.UNNAMED_CLASSES, JavaUnnamedClassUtil.trimJavaExtension(((PsiJavaFileStub)parent).getPsi().getName()));
+        sink.occurrence(JavaStubIndexKeys.UNNAMED_CLASSES, JavaUnnamedClassUtil.getJvmName(((PsiJavaFileStub)parent).getPsi().getName()));
       }
     }
   };

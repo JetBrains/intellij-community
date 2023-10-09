@@ -104,7 +104,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
                    ? List.of()
                    : ContainerUtil.map(
                      StubIndex.getInstance().getAllKeys(JavaStubIndexKeys.UNNAMED_CLASSES, getProject()),
-                     JavaUnnamedClassUtil::trimJavaExtension
+                     JavaUnnamedClassUtil::getJvmName
                    );
         }
       }, true, null);

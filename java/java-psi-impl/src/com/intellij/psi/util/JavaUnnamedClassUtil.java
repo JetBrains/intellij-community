@@ -49,7 +49,11 @@ public final class JavaUnnamedClassUtil {
     return name.substring(0, extensionIndex);
   }
 
-  public static String trimJavaExtension(String name) {
+  /**
+   * @param name the name of the unnamed class (might include the ".java" extension)
+   * @return the JVM name of the unnamed class
+   */
+  public static String getJvmName(@NotNull String name) {
     return StringUtil.trimEnd(name, ".java", true);
   }
 }
