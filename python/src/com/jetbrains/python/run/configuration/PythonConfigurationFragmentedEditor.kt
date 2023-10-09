@@ -15,8 +15,6 @@ import com.intellij.ui.RawCommandLineEditor
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonRunConfiguration
 import java.awt.BorderLayout
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 
 class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfiguration) :
   AbstractPythonConfigurationFragmentedEditor<PythonRunConfiguration>(runConfiguration) {
@@ -35,6 +33,7 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
       { config: PythonRunConfiguration, field: RawCommandLineEditor -> config.scriptParameters = field.text.trim() },
       { true })
     MacrosDialog.addMacroSupport(parametersEditor.editorField, MacrosDialog.Filters.ALL) { false }
+    parametersEditor.editorField.emptyText.setText(PyBundle.message("python.run.configuration.fragments.script.parameters.hint"))
     scriptParametersFragment.setHint(PyBundle.message("python.run.configuration.fragments.script.parameters.hint"))
     scriptParametersFragment.actionHint = PyBundle.message("python.run.configuration.fragments.script.parameters.hint")
     fragments.add(scriptParametersFragment)
@@ -87,19 +86,5 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
     editors.add(emulateTerminal)
     editors.add(redirectInputFrom)
     addSingleSelectionListeners(editors)
-  }
-
-  private fun addSingleSelectionListeners(editors: MutableList<SettingsEditorFragment<PythonRunConfiguration, *>>) {
-    for ((i, editor) in editors.withIndex()) {
-      editor.component().addComponentListener(object : ComponentAdapter() {
-        override fun componentShown(e: ComponentEvent?) {
-          for ((j, otherEditor) in editors.withIndex()) {
-            if (i != j) {
-              otherEditor.isSelected = false
-            }
-          }
-        }
-      })
-    }
   }
 }
