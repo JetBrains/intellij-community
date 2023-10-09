@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.plugincomponents
 
-import com.intellij.application.options.codeStyle.cache.IS_CLI_FORMATTER_KEY
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ReadAction
@@ -134,7 +133,7 @@ class EditorConfigPropertiesService(private val project: Project, private val co
 
   suspend fun getPropertiesAndEditorConfigs(file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
     val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode || app.getUserData(IS_CLI_FORMATTER_KEY) == true) {
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
       return doGetPropertiesAndEditorConfigs(file)
     }
     else {
