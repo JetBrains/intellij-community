@@ -262,7 +262,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @DirtyUI
   @Override
   public void paintComponent(Graphics g) {
-    WriteIntentReadAction.run((Runnable)() -> {
+    ReadAction.run(() -> {
       myEditor.measureTypingLatency();
 
       Graphics2D gg = (Graphics2D)g;
