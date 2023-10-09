@@ -292,7 +292,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
-    importProjectAsync()
+    updateAllProjects()
     assertEquals("1.8", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")))
 
     createModulePom("m1", """
@@ -310,7 +310,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
         </plugins>
       </build>
       """.trimIndent())
-    importProjectAsync()
+    updateAllProjects()
     assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")))
 
     createModulePom("m1", """
@@ -329,7 +329,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       </build>
       """.trimIndent())
 
-    importProjectAsync()
+    updateAllProjects()
     assertEquals("1.6", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")))
 
     // after configuration/target element delete in maven-compiler-plugin CompilerConfiguration#getBytecodeTargetLevel should be also updated
@@ -338,7 +338,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
-    importProjectAsync()
+    updateAllProjects()
     assertEquals("1.8", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")))
   }
 
