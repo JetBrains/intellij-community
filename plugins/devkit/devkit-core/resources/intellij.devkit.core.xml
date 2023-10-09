@@ -192,12 +192,6 @@
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderInspection"
                      key="inspection.use.DPI.aware.borders.display.name"/>
-    <localInspection language="UAST" shortName="UseCouple"
-                     projectType="INTELLIJ_PLUGIN"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="WARNING" cleanupTool="true"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseCoupleInspection"
-                     key="inspection.use.couple.display.name"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection language="UAST" shortName="UseVirtualFileEquals"
                      projectType="INTELLIJ_PLUGIN"
