@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -144,7 +145,7 @@ final class HighlightingMarkupGrave implements Disposable {
       return;
     }
 
-    if (document.getText().hashCode() != markupInfo.contentHash()) {
+    if (contentHash(document) != markupInfo.contentHash()) {
       // text changed since the cached markup was saved on-disk
       if (LOG.isDebugEnabled()) {
         LOG.debug("restore canceled hash mismatch " + markupInfo.size() + " for " + file);
@@ -246,7 +247,7 @@ final class HighlightingMarkupGrave implements Disposable {
 
   private @NotNull FileMarkupInfo getMarkupFromModel(@NotNull Document document, @NotNull EditorColorsScheme colorsScheme) {
     return new FileMarkupInfo(
-      document.getText().hashCode(),
+      contentHash(document),
       HighlighterState.allHighlightersFromMarkup(myProject, document, colorsScheme)
     );
   }
@@ -473,5 +474,9 @@ final class HighlightingMarkupGrave implements Disposable {
   @TestOnly
   void clearResurrectedZombies() {
     myResurrectedZombies.clear();
+  }
+
+  private static int contentHash(@NotNull Document document) {
+    return Hashing.komihash5_0().hashCharsToInt(document.getImmutableCharSequence());
   }
 }
