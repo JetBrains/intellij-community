@@ -5,25 +5,28 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Allows to track subsystem activities and get a "dumb mode" w.r.t. tracked computations.
  *
  * To use this class, consider creating a service with an injected [CoroutineScope] and pass this scope here.
- * This is needed because the lifetime of tracker is bound by the lifetime of 'plugin ∩ project' that use tracking.
+ * This is needed because the lifetime of tracker is bound by the lifetime of 'plugin x project' that use tracking.
  */
 abstract class AbstractInProgressService(private val scope: CoroutineScope) {
 
-  @Volatile
-  private var inProgress: Int = 0
+  /**
+   * Basically an imitation of [java.util.concurrent.Phaser], but in suspending way.
+   */
+  private val currentConfigurationGeneration : AtomicReference<CompletableJob> = AtomicReference(Job())
+
+  private val concurrentConfigurationCounter = AtomicInteger(0)
 
   /**
    * Installs a tracker for a suspending asynchronous activity of [action].
-   * This method is cheap to use: it does not add any complex computations.
+   * This method is cheap to use: it does not perform any complex computations, and it is essentially equivalent to `withContext`.
    */
   suspend fun <T> trackConfigurationActivity(action: suspend () -> T) : T {
     return withBlockingJob { blockingJob ->
@@ -48,11 +51,11 @@ abstract class AbstractInProgressService(private val scope: CoroutineScope) {
   }
 
   private inline fun <T> withBlockingJob(consumer: (BlockingJob) -> T) : T {
-    inProgress += 1
+    enterConfiguration()
     // new job here to track those and only those computations which are invoked under explicit `trackConfigurationActivity`
     val tracker = Job()
     tracker.invokeOnCompletion {
-      inProgress -= 1
+      leaveConfiguration()
     }
     val blockingJob = BlockingJob(tracker)
     try {
@@ -60,15 +63,36 @@ abstract class AbstractInProgressService(private val scope: CoroutineScope) {
     } finally {
       scope.launch {
         tracker.children.forEach { it.join() }
-        tracker.complete()
       }.invokeOnCompletion {
         tracker.complete()
       }
     }
   }
 
+  private fun enterConfiguration() {
+    concurrentConfigurationCounter.getAndIncrement()
+  }
+
+  private fun leaveConfiguration() {
+    if (concurrentConfigurationCounter.decrementAndGet() == 0) {
+      val currentJob = currentConfigurationGeneration.getAndSet(Job())
+      currentJob.complete()
+    }
+  }
+
   open fun isInProgress(): Boolean {
-    return inProgress != 0
+    return concurrentConfigurationCounter.get() != 0
+  }
+
+  open suspend fun awaitConfiguration() {
+    // order of lines is important
+    val currentJob = currentConfigurationGeneration.get()
+    if (isInProgress()) {
+      // isInProgress == true -> either currentJob corresponds to the current configuration process,
+      // or its configuration was completed earlier, and in this case join() will immediately return
+      // isInProgress == false -> immediately return, since no configuration process is here currently
+      currentJob.join()
+    }
   }
 }
 

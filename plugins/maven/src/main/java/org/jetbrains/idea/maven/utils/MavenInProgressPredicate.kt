@@ -12,4 +12,7 @@ internal class MavenInProgressPredicate: ActivityInProgressPredicate {
     return project.serviceAsync<MavenInProgressService>().isInProgress()
   }
 
+  override suspend fun awaitConfiguration(project: Project) {
+    return project.serviceAsync<MavenInProgressService>().awaitConfiguration()
+  }
 }

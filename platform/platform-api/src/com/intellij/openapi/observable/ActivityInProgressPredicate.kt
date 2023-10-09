@@ -56,5 +56,5 @@ interface ActivityInProgressPredicate {
    *
    * @param project the project which is configured
    */
-  suspend fun awaitFinished(project: Project) : Unit {}
+  suspend fun awaitConfiguration(project: Project) : Unit {}
 }

@@ -5,7 +5,6 @@ package com.intellij.ide.observation
 import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.openapi.observable.ActivityInProgressPredicate
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.delay
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
@@ -33,8 +32,8 @@ object Observation {
       for (processBusyPredicate in ActivityInProgressPredicate.EP_NAME.extensionList) {
         if (processBusyPredicate.isInProgress(project)) {
           isModificationOccurred = true
-          delay(1000)
           messageCallback?.invoke("'${processBusyPredicate.presentableName}' is in progress...") // NON-NLS
+          processBusyPredicate.awaitConfiguration(project)
           messageCallback?.invoke("'${processBusyPredicate.presentableName}' is completed.") // NON-NLS
           continue@predicateLoop
         }

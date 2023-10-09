@@ -11,4 +11,8 @@ class StartupActivityInProgressPredicate : ActivityInProgressPredicate {
   override suspend fun isInProgress(project: Project): Boolean {
     return !StartupManager.getInstance(project).postStartupActivityPassed()
   }
+
+  override suspend fun awaitConfiguration(project: Project) {
+    StartupManager.getInstance(project).allActivitiesPassedFuture.join()
+  }
 }

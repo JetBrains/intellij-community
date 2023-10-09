@@ -13,4 +13,8 @@ class ExternalSystemInProgressPredicate : ActivityInProgressPredicate {
   override suspend fun isInProgress(project: Project): Boolean {
     return project.serviceAsync<ExternalSystemInProgressService>().isInProgress()
   }
+
+  override suspend fun awaitConfiguration(project: Project) {
+    return project.serviceAsync<ExternalSystemInProgressService>().awaitConfiguration()
+  }
 }

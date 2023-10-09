@@ -12,4 +12,8 @@ class PythonInProgressPredicate : ActivityInProgressPredicate {
   override suspend fun isInProgress(project: Project): Boolean {
     return project.serviceAsync<PythonInProgressService>().isInProgress()
   }
+
+  override suspend fun awaitConfiguration(project: Project) {
+    return project.serviceAsync<PythonInProgressService>().awaitConfiguration()
+  }
 }

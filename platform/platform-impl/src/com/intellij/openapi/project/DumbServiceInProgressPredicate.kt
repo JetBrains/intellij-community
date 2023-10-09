@@ -2,10 +2,19 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.observable.ActivityInProgressPredicate
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 class DumbServiceInProgressPredicate : ActivityInProgressPredicate {
 
   override val presentableName: String = "dumb-mode"
 
   override suspend fun isInProgress(project: Project): Boolean = DumbService.isDumb(project)
+
+  override suspend fun awaitConfiguration(project: Project) {
+    suspendCancellableCoroutine {
+      DumbService.getInstance(project).runWhenSmart {
+        it.resumeWith(Result.success(Unit))
+      }
+    }
+  }
 }
