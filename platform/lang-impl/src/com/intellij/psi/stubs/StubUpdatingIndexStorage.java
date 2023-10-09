@@ -65,7 +65,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
       try {
         Boolean result = indexUpdateComputable.compute();
         if (Boolean.TRUE.equals(result) && !StaleIndexesChecker.isStaleIdDeletion()) {
-          StubTreeLoaderImpl.saveIndexingStampInfo(indexingStampInfo, inputId);
+          ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
         }
         return result;
       }
