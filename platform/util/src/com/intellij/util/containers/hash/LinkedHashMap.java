@@ -21,24 +21,24 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   @TestOnly
   public LinkedHashMap() {
     //noinspection rawtypes,unchecked
-    this(0, HashUtil.DEFAULT_LOAD_FACTOR, (EqualityPolicy)EqualityPolicy.CANONICAL, false);
+    this(0, 1, (EqualityPolicy)EqualityPolicy.CANONICAL, false);
   }
 
   @TestOnly
   public LinkedHashMap(int capacity, boolean accessOrder) {
     //noinspection rawtypes,unchecked
-    this(capacity, HashUtil.DEFAULT_LOAD_FACTOR, (EqualityPolicy)EqualityPolicy.CANONICAL, accessOrder);
+    this(capacity, 1, (EqualityPolicy)EqualityPolicy.CANONICAL, accessOrder);
   }
 
   public LinkedHashMap(@NotNull EqualityPolicy<? super K> hashingStrategy) {
-    this(0, HashUtil.DEFAULT_LOAD_FACTOR, hashingStrategy, false);
+    this(0, 1, hashingStrategy, false);
   }
 
   public LinkedHashMap(int capacity, float loadFactor, @NotNull EqualityPolicy<? super K> hashingStrategy, boolean accessOrder) {
     this.loadFactor = loadFactor;
     this.hashingStrategy = hashingStrategy;
-    clear(capacity);
     this.accessOrder = accessOrder;
+    clear(capacity);
   }
 
   @Override
@@ -390,7 +390,6 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   }
 
   private final class Values extends AbstractCollection<V> {
-
     @Override
     public @NotNull Iterator<V> iterator() {
       return new LinkedHashIterator<V>() {

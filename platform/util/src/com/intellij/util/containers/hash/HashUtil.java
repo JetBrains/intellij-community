@@ -8,8 +8,6 @@ import java.util.Arrays;
 final class HashUtil {
   static final int MIN_CAPACITY = 5;
 
-  static final float DEFAULT_LOAD_FACTOR = 1;
-
   static final float CAPACITY_MULTIPLE = 1.618033989f;
 
   public static int hash(Object key) {
