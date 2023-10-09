@@ -24,9 +24,9 @@ internal sealed interface IndexingStampInfoStorage {
 
 internal class IndexingStampInfoStorageOverFastAttributes(private val attribute: FileAttribute) : IndexingStampInfoStorage {
   @Volatile
-  private var attributeAccessor: FastFileAttributes.Int3FileAttribute? = null
+  private var attributeAccessor: FastFileAttributes.Int4FileAttribute? = null
 
-  private fun attributeAccessor(): FastFileAttributes.Int3FileAttribute {
+  private fun attributeAccessor(): FastFileAttributes.Int4FileAttribute {
     // we need synchronized to make sure that we don't create too many int3FileAttributes instances from different threads.
     // attributeAccessor itself is volatile, and will be `null`-ed without synchronized (because attributeAccessor can become invalid
     // immediately after synchronized block finished, so there must be another way to make sure that initialization and shutdown

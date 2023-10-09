@@ -32,17 +32,17 @@ public final class FastFileAttributes {
     throw new AssertionError("Not for instantiation");
   }
 
-  public static @NotNull Int3FileAttribute int3FileAttributes(@NotNull FSRecordsImpl vfs,
+  public static @NotNull Int4FileAttribute int3FileAttributes(@NotNull FSRecordsImpl vfs,
                                                               @NotNull String storageName,
                                                               int version) throws IOException {
     MappedFileStorageHelper helper = openHelperAndVerifyVersions(
       vfs,
       storageName,
       version,
-      Int3FileAttribute.ROW_SIZE
+      Int4FileAttribute.ROW_SIZE
     );
 
-    Int3FileAttribute attribute = new Int3FileAttribute(helper);
+    Int4FileAttribute attribute = new Int4FileAttribute(helper);
     vfs.addCloseable(attribute);
     vfs.addFileIdIndexedStorage(attribute);
     return attribute;
@@ -68,13 +68,13 @@ public final class FastFileAttributes {
     return accessor;
   }
 
-  public static final class Int3FileAttribute implements FileIdIndexedStorage, Closeable, Unmappable, CleanableStorage {
+  public static final class Int4FileAttribute implements FileIdIndexedStorage, Closeable, Unmappable, CleanableStorage {
     public static final int FIELDS = 4;
     public static final int ROW_SIZE = FIELDS * Integer.BYTES;
 
     private final MappedFileStorageHelper storageHelper;
 
-    public Int3FileAttribute(@NotNull MappedFileStorageHelper helper) { storageHelper = helper; }
+    public Int4FileAttribute(@NotNull MappedFileStorageHelper helper) { storageHelper = helper; }
 
     public int readField(@NotNull VirtualFile vFile,
                          int fieldNo) throws IOException {
@@ -109,6 +109,7 @@ public final class FastFileAttributes {
       storageHelper.writeIntField(fileId, 0, 0);
       storageHelper.writeIntField(fileId, 1, 0);
       storageHelper.writeIntField(fileId, 2, 0);
+      storageHelper.writeIntField(fileId, 3, 0);
     }
 
     public void fsync() throws IOException {
@@ -117,7 +118,7 @@ public final class FastFileAttributes {
 
     private static int fieldOffset(int fieldNo) {
       if (fieldNo < 0 || fieldNo >= FIELDS) {
-        throw new IllegalArgumentException("fieldNo(=" + fieldNo + ") must be in [0,3)");
+        throw new IllegalArgumentException("fieldNo(=" + fieldNo + ") must be in [0," + FIELDS + ")");
       }
       return fieldNo * Integer.BYTES;
     }
