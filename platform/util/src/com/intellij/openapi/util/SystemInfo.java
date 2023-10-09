@@ -26,6 +26,8 @@ public final class SystemInfo {
   public static final String JAVA_RUNTIME_VERSION = getRtVersion(JAVA_VERSION);
   public static final String JAVA_VENDOR = System.getProperty("java.vm.vendor", "Unknown");
 
+  public static final boolean isAarch64 = OS_ARCH.equals("aarch64");
+
   private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {
     String rtVersion = System.getProperty("java.runtime.version");
     return rtVersion != null && Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
