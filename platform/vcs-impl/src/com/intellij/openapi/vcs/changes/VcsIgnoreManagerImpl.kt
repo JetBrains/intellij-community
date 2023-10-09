@@ -2,15 +2,19 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.ProjectInitialActivitiesNotifier
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.actions.VcsContextFactory
@@ -21,6 +25,7 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.util.Alarm
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
@@ -32,7 +37,8 @@ import java.util.concurrent.TimeUnit
 private val LOG = Logger.getInstance(VcsIgnoreManagerImpl::class.java)
 
 private const val RUN_CONFIGURATIONS_DIRECTORY = "runConfigurations"
-class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
+
+class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager, Disposable {
   companion object {
     @JvmStatic
     fun getInstanceImpl(project: Project) = VcsIgnoreManager.getInstance(project) as VcsIgnoreManagerImpl
@@ -44,8 +50,14 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
 
   init {
     checkProjectNotDefault(project)
-    ignoreRefreshQueue = MergingUpdateQueue("VcsIgnoreUpdate", 500, true, null, project, null,
+    ignoreRefreshQueue = MergingUpdateQueue("VcsIgnoreUpdate", 500, true, null, this, null,
                                             Alarm.ThreadToUse.POOLED_THREAD)
+
+    ignoreRefreshQueue.queue(DisposableUpdate.createDisposable(this, "wait Project opening activities scan") {
+      runBlockingCancellable {
+        project.service<ProjectInitialActivitiesNotifier>().awaitInitialVfsRefreshFinished()
+      }
+    })
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
       project.messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
@@ -62,6 +74,9 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
         }
       })
     }
+  }
+
+  override fun dispose() {
   }
 
   fun awaitRefreshQueue() {
