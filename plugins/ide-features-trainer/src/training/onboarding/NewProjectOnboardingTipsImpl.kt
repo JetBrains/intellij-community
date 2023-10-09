@@ -36,6 +36,7 @@ import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import training.learn.LearnBundle
 import training.ui.LearningUiUtil
@@ -50,8 +51,10 @@ private var onboardingGenerationShowDisableMessage: Boolean
   get() = PropertiesComponent.getInstance().getBoolean("onboarding.generation.show.disable.message", true)
   set(value) { PropertiesComponent.getInstance().setValue("onboarding.generation.show.disable.message", value, true) }
 
-private var Project.onboardingTipsDebugPath: String?
+var Project.filePathWithOnboardingTips: String?
+  @ApiStatus.Internal
   get() = PropertiesComponent.getInstance(this).getValue("onboarding.tips.debug.path")
+  @ApiStatus.Internal
   set(value) { PropertiesComponent.getInstance(this).setValue("onboarding.tips.debug.path", value) }
 
 private val RESET_TOOLTIP_SAMPLE_TEXT = Key.create<String>("reset.tooltip.sample.text")
@@ -95,7 +98,7 @@ private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
     XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, true)
 
     val pathToRunningFile = file.path
-    project.onboardingTipsDebugPath = pathToRunningFile
+    project.filePathWithOnboardingTips = pathToRunningFile
     installDebugListener(project, pathToRunningFile)
     installActionListener(project, pathToRunningFile)
 
@@ -109,7 +112,7 @@ private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
 
 private class InstallOnboardingTooltip : ProjectActivity {
   override suspend fun execute(project: Project) {
-    val pathToRunningFile = project.onboardingTipsDebugPath
+    val pathToRunningFile = project.filePathWithOnboardingTips
     if (pathToRunningFile != null) {
       installDebugListener(project, pathToRunningFile)
     }
@@ -167,7 +170,6 @@ private fun installDebugListener(project: Project, pathToRunningFile: @NonNls St
                   .withHeader(LearnBundle.message("onboarding.debug.got.it.header"))
                   .withPosition(Balloon.Position.above)
                   .show(targetComponent, GotItTooltip.TOP_MIDDLE)
-                project.onboardingTipsDebugPath = null
                 connection.disconnect()
               }
             }
@@ -190,6 +192,7 @@ private class DoNotGenerateTipsNotification : EditorNotificationProvider {
 
           PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, false)
 
+          project.filePathWithOnboardingTips = null
           val document = (editor as? TextEditor)?.editor?.document ?: return@createActionLabel
           DocumentUtil.writeInRunUndoTransparentAction {
             document.setText(simpleSampleText)

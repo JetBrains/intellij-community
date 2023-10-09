@@ -7,6 +7,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.tree.IElementType
+import training.onboarding.filePathWithOnboardingTips
 import java.util.function.Consumer
 
 private const val tipPrefix = "//TIP"
@@ -16,6 +17,12 @@ class JavaOnboardingTipsDocumentationProvider: DocumentationProvider {
 
   override fun collectDocComments(file: PsiFile, sink: Consumer<in PsiDocCommentBase>) {
     if (!enabled || file !is PsiJavaFile) return
+
+    val filePath = file.virtualFile.path
+    val onboardingTipsDebugPath = file.project.filePathWithOnboardingTips
+    if (filePath != onboardingTipsDebugPath) {
+      return
+    }
 
     val visitedComments = mutableSetOf<PsiElement>()
 
