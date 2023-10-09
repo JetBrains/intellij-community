@@ -43,6 +43,11 @@ public class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2LocalInsp
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/catchParameter.kt");
     }
 
+    @TestMetadata("catchUnderscoreParameter.kt")
+    public void testCatchUnderscoreParameter() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/catchUnderscoreParameter.kt");
+    }
+
     @TestMetadata("classByPrimaryConstructor.kt")
     public void testClassByPrimaryConstructor() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/classByPrimaryConstructor.kt");

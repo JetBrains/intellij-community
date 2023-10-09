@@ -16946,6 +16946,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/catchParameter.kt");
         }
 
+        @TestMetadata("catchUnderscoreParameter.kt")
+        public void testCatchUnderscoreParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/catchUnderscoreParameter.kt");
+        }
+
         @TestMetadata("classByPrimaryConstructor.kt")
         public void testClassByPrimaryConstructor() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/classByPrimaryConstructor.kt");
