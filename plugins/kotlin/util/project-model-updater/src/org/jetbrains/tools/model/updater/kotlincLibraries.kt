@@ -84,33 +84,6 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide")
         kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates)
-
-        run {
-            // jdk8 and jdk7 artifacts are redundant and should be dropped, but we can't do it right now due to KTIJ-26637.
-            // We will be able to remove them only after fixing KTIJ-26657, and when all developers receive this fix.
-            val stdlibMavenId = MavenId.parse("$ktGroup:kotlin-stdlib:${kotlincCoordinates.version}")
-            val mavenIds = listOf(
-                MavenId.parse("$ktGroup:kotlin-stdlib-jdk8:${kotlincCoordinates.version}"),
-                stdlibMavenId,
-            )
-
-            val annotationLibrary = JpsLibrary(
-                "kotlinc.kotlin-stdlib",
-                JpsLibrary.LibraryType.Repository(
-                    mavenIds.first(),
-                    excludes = listOf(
-                        MavenId("org.jetbrains", "annotations"),
-                        MavenId(ktGroup, "kotlin-stdlib-jdk7"),
-                    ),
-                    remoteRepository = KOTLIN_IDE_DEPS_REPOSITORY
-                ),
-                annotations = listOf(JpsUrl.File(JpsPath.ProjectDir("lib/annotations/kotlin", isCommunity))),
-                classes = mavenIds.map { JpsUrl.Jar(JpsPath.MavenRepository(it)) },
-                sources = mavenIds.map { JpsUrl.Jar(JpsPath.MavenRepository(it, "sources")) },
-            )
-
-            addLibrary(annotationLibrary.convertMavenUrlToCooperativeIfNeeded(kotlincCoordinates.mode, isCommunity))
-        }
     }
 }
 

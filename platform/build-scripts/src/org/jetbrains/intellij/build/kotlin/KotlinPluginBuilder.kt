@@ -316,7 +316,6 @@ object KotlinPluginBuilder {
       spec.withProjectLibrary("kotlinc.kotlin-compiler-ir")
 
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
-      spec.withProjectLibrary("kotlinc.kotlin-stdlib", "kotlinc-lib.jar")
       spec.withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
       spec.withProjectLibrary("javaslang", LibraryPackMode.STANDALONE_MERGED)
