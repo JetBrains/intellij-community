@@ -33,7 +33,6 @@ interface MapIndexStorageCacheProvider {
                                cacheSize: Int): MapIndexStorageCache<Key, Value>
 
   companion object {
-    @JvmStatic
     val actualProvider: MapIndexStorageCacheProvider by lazy {
       ServiceLoader.load(MapIndexStorageCacheProvider::class.java).firstOrNull()
       ?: MapIndexStorageCacheSlruProvider
@@ -43,7 +42,7 @@ interface MapIndexStorageCacheProvider {
 
 @Internal
 object MapIndexStorageCacheSlruProvider: MapIndexStorageCacheProvider {
-  private val USE_SLRU = SystemProperties.getBooleanProperty("idea.use.slru.for.file.based.index", true);
+  private val USE_SLRU = SystemProperties.getBooleanProperty("idea.use.slru.for.file.based.index", true)
 
   override fun <Key, Value> createCache(keyReader: Function<Key, ChangeTrackingValueContainer<Value>>,
                                         evictionListener: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
@@ -90,9 +89,7 @@ private class MapIndexStorageSlruCache<Key, Value>(val valueReader: Function<Key
 
   override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? = cacheAccessLock.withLock { cache.getIfCached(key) }
 
-  override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> = cacheAccessLock.withLock {
-    cache.values()
-  }
+  override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> = cacheAccessLock.withLock { cache.values() }
 
   override fun invalidateAll() {
     while (!cacheAccessLock.tryLock(10, TimeUnit.MILLISECONDS)) {
