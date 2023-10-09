@@ -561,6 +561,12 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         public void setSelected(@NotNull AnActionEvent e, boolean state) {
           myPinned = state;
         }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setEnabledAndVisible(!myEditConfigOnly);
+        }
       };
 
     // Switch action
@@ -1136,9 +1142,9 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       mySearchEditorPanel.setSecondComponent(uiState.filtersVisible ? myFilterPanel.getComponent() : null);
     }
     setExistingTemplatesPanelVisible(uiState.existingTemplatesVisible);
-    myPinned = uiState.pinned;
     myExistingTemplatesComponent.setTreeState(uiState.templatesTreeState);
     if (!myEditConfigOnly) {
+      myPinned = uiState.pinned;
       myInjected.setSelected(uiState.searchInjectedCode);
       myMatchCase.setSelected(uiState.matchCase);
       if (uiState.scopeDescriptor != null && uiState.scopeType != null) {
@@ -1155,10 +1161,10 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     final UIState uiState = UIState.getInstance();
     uiState.filtersVisible = isFilterPanelVisible();
     uiState.existingTemplatesVisible = isExistingTemplatesPanelVisible();
-    uiState.pinned = myPinned;
     uiState.templatesTreeState = myExistingTemplatesComponent.getTreeState();
 
     if (!myEditConfigOnly) {
+      uiState.pinned = myPinned;
       if (myInjected.isVisible()) {
         uiState.searchInjectedCode = myInjected.isSelected();
       }
