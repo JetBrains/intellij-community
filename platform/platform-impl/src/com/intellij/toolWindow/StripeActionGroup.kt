@@ -68,15 +68,15 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
-    val layout = ToolWindowManagerEx.getInstanceEx(project).getLayout()
+    val twm = ToolWindowManagerEx.getInstanceEx(project)
     val toolWindows = ToolWindowsGroup.getToolWindowActions(project, false)
-    val actions = toolWindows.sortedBy { getOrder(layout, it.toolWindowId) }.mapNotNullTo(ArrayList(), myFactory::get)
+    val actions = toolWindows.sortedBy { getOrder(twm, it.toolWindowId) }.mapNotNullTo(ArrayList(), myFactory::get)
     actions += myMore
     return actions.toTypedArray()
   }
 
-  private fun getOrder(layout: DesktopLayout, twId: String): Int =
-    layout.getInfo(twId)?.run {
+  private fun getOrder(twm: ToolWindowManagerEx, twId: String): Int =
+    (twm.getLayout().getInfo(twId) ?: (twm as? ToolWindowManagerImpl)?.getEntry(twId)?.readOnlyWindowInfo)?.run {
       when (anchor) {
         ToolWindowAnchor.LEFT -> order
         ToolWindowAnchor.TOP -> 100 + order
