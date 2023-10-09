@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.runtime.repository.ProductMode
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
@@ -201,6 +202,14 @@ abstract class ProductProperties {
    */
   @ApiStatus.Experimental
   var embeddedJetBrainsClientMainModule: String? = null 
+
+  /**
+   * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by 
+   * [the modular loader][com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategy].
+   * This property makes sense only if [supportModularLoading] is set to `true`.
+   */
+  @ApiStatus.Experimental
+  var productMode: ProductMode = ProductMode.LOCAL_IDE
 
   /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.

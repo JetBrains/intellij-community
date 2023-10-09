@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
+import com.intellij.platform.runtime.repository.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
@@ -19,7 +20,7 @@ class JetBrainsClientModuleFilterImpl(clientMainModuleName: String, context: Bui
     val repositoryForCompiledModulesPath = context.classesOutputDirectory.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME)
     val repository = RuntimeModuleRepository.create(repositoryForCompiledModulesPath)
     val productModulesFile = findProductModulesFile(context, clientMainModuleName)!!
-    val productModules = RuntimeModuleRepositorySerialization.loadProductModules(productModulesFile, repository)
+    val productModules = RuntimeModuleRepositorySerialization.loadProductModules(productModulesFile, ProductMode.FRONTEND, repository)
     includedModules = (sequenceOf(productModules.mainModuleGroup) + productModules.bundledPluginModuleGroups.asSequence())
        .flatMap { it.includedModules.asSequence() } 
        .mapTo(HashSet()) { it.moduleDescriptor.moduleId }

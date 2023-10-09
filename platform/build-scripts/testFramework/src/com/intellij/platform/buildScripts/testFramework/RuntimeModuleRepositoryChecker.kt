@@ -20,7 +20,8 @@ import kotlin.io.path.*
 class RuntimeModuleRepositoryChecker private constructor(
   private val commonDistPath: Path,
   private val osSpecificDistPath: Path?,
-  private val context: BuildContext, 
+  private val currentMode: ProductMode,
+  private val context: BuildContext,
 ): AutoCloseable {
   private val descriptorsJarFile: Path
   private val repository: RuntimeModuleRepository
@@ -45,8 +46,8 @@ class RuntimeModuleRepositoryChecker private constructor(
   }
   
   companion object {
-    fun checkProductModules(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
-      createCheckers(context).forEach { 
+    fun checkProductModules(productModulesModule: String, currentMode: ProductMode, context: BuildContext, softly: SoftAssertions) {
+      createCheckers(currentMode, context).forEach { 
         it().use { checker ->
           checker.checkProductModules(productModulesModule, softly)
         }
@@ -58,24 +59,24 @@ class RuntimeModuleRepositoryChecker private constructor(
      * separate product: JARs referenced from its modules must not include resources from modules not included to the product, or they are
      * split by packages in a way that the class-loader may load relevant classes only.
      */
-    fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
-      createCheckers(context).forEach {
+    fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, currentMode: ProductMode, context: BuildContext, softly: SoftAssertions) {
+      createCheckers(currentMode, context).forEach {
         it().use { checker ->
           checker.checkIntegrityOfEmbeddedProduct(productModulesModule, softly)
         }
       }
     }
 
-    private fun createCheckers(context: BuildContext): List<() -> RuntimeModuleRepositoryChecker> {
+    private fun createCheckers(currentMode: ProductMode, context: BuildContext): List<() -> RuntimeModuleRepositoryChecker> {
       val commonDistPath = context.paths.distAllDir 
       if (commonDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH).exists()) {
-        return listOf { RuntimeModuleRepositoryChecker(commonDistPath, null, context) }
+        return listOf { RuntimeModuleRepositoryChecker(commonDistPath, null, currentMode, context) }
       }
       return SUPPORTED_DISTRIBUTIONS
         .mapNotNull { distribution ->
           val osSpecificDistPath = getOsAndArchSpecificDistDirectory(distribution.os, distribution.arch, context)
           if (osSpecificDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH).exists()) {
-            { RuntimeModuleRepositoryChecker(commonDistPath, osSpecificDistPath, context) }
+            { RuntimeModuleRepositoryChecker(commonDistPath, osSpecificDistPath, currentMode, context) }
           }
           else null
         }
@@ -157,7 +158,7 @@ class RuntimeModuleRepositoryChecker private constructor(
 
   private fun loadProductModules(productModulesModule: String): ProductModules {
     val moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(productModulesModule))
-    return RuntimeModuleRepositorySerialization.loadProductModules(moduleOutputDir.resolve("META-INF/$productModulesModule/product-modules.xml"), repository)
+    return RuntimeModuleRepositorySerialization.loadProductModules(moduleOutputDir.resolve("META-INF/$productModulesModule/product-modules.xml"), currentMode, repository)
   }
 
   private fun RuntimeModuleRepository.collectDependencies(moduleDescriptor: RuntimeModuleDescriptor, path: FList<String>, result: MutableMap<RuntimeModuleId, FList<String>> = LinkedHashMap()): MutableMap<RuntimeModuleId, FList<String>> {

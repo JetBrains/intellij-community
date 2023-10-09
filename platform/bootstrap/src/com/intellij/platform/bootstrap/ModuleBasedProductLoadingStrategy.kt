@@ -3,6 +3,7 @@ package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.runtime.repository.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleGroup
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
@@ -21,13 +22,19 @@ class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeMo
     if (rootModuleName == null) {
       error("'$PLATFORM_ROOT_MODULE_PROPERTY' system property is not specified")
     }
+    val currentModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.LOCAL_IDE.id)
+    val currentMode = ProductMode.entries.find { it.id == currentModeId}
+    if (currentMode == null) {
+      error("Unknown mode '$currentModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
+    }
+
     val rootModule = moduleRepository.getModule(RuntimeModuleId.module(rootModuleName))
     val productModulesPath = "META-INF/$rootModuleName/product-modules.xml"
     val moduleGroupStream = rootModule.readFile(productModulesPath)
     if (moduleGroupStream == null) {
       error("$productModulesPath is not found in '$rootModuleName' module")
     }
-    RuntimeModuleRepositorySerialization.loadProductModules(moduleGroupStream, productModulesPath, moduleRepository)
+    RuntimeModuleRepositorySerialization.loadProductModules(moduleGroupStream, productModulesPath, currentMode, moduleRepository)
   }
   
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
@@ -92,3 +99,4 @@ class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeMo
 }
 
 private const val PLATFORM_ROOT_MODULE_PROPERTY = "intellij.platform.root.module"
+private const val PLATFORM_PRODUCT_MODE_PROPERTY = "intellij.platform.product.mode"

@@ -14,11 +14,14 @@ import java.util.stream.Collectors;
  */
 public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
   private final @NotNull List<RawIncludedRuntimeModule> myRawRootModules;
+  private final ProductMode myProductMode;
   private final RuntimeModuleRepository myRepository;
   private volatile List<IncludedRuntimeModule> myIncludedModules;
 
-  public MainRuntimeModuleGroup(@NotNull List<RawIncludedRuntimeModule> rawRootModules, @NotNull RuntimeModuleRepository repository) {
+  public MainRuntimeModuleGroup(@NotNull List<RawIncludedRuntimeModule> rawRootModules, @NotNull ProductMode currentMode, 
+                                @NotNull RuntimeModuleRepository repository) {
     myRawRootModules = rawRootModules;
+    myProductMode = currentMode;
     myRepository = repository;
   }
 
@@ -42,9 +45,10 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
   private List<IncludedRuntimeModule> computeIncludedModules() {
     List<IncludedRuntimeModule> rootIncludedModules = new ArrayList<>();
     Set<RuntimeModuleDescriptor> rootModules = new HashSet<>();
+    ProductModeMatcher matcher = new ProductModeMatcher(myProductMode);
     for (RawIncludedRuntimeModule rawRootModule : myRawRootModules) {
       IncludedRuntimeModule included = rawRootModule.resolve(myRepository);
-      if (included != null) {
+      if (included != null && matcher.matches(included.getModuleDescriptor())) {
         rootIncludedModules.add(included);
         rootModules.add(included.getModuleDescriptor());
       }

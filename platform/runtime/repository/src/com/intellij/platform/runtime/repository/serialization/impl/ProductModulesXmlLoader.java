@@ -17,7 +17,9 @@ import java.util.List;
 import java.util.Locale;
 
 public final class ProductModulesXmlLoader {
-  public static @NotNull ProductModules parseModuleXml(@NotNull InputStream inputStream, @NotNull String debugName, @NotNull RuntimeModuleRepository repository) throws XMLStreamException {
+  public static @NotNull ProductModules parseModuleXml(@NotNull InputStream inputStream, @NotNull String debugName,
+                                                       @NotNull ProductMode currentMode,
+                                                       @NotNull RuntimeModuleRepository repository) throws XMLStreamException {
     XMLStreamReader reader = XMLInputFactory.newDefaultFactory().createXMLStreamReader(inputStream);
     int level = 0;
     ModuleImportance importance = null;
@@ -73,7 +75,7 @@ public final class ProductModulesXmlLoader {
       }
     }
     reader.close();
-    MainRuntimeModuleGroup mainGroup = new MainRuntimeModuleGroup(rootMainGroupModules, repository);
+    MainRuntimeModuleGroup mainGroup = new MainRuntimeModuleGroup(rootMainGroupModules, currentMode, repository);
     return new ProductModulesImpl(debugName, mainGroup, bundledPluginModuleGroups);
   }
 }

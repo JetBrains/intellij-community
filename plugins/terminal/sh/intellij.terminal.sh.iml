@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.terminal" />
     <orderEntry type="module" module-name="intellij.sh" />
+    <orderEntry type="module" module-name="intellij.platform.localIde" scope="RUNTIME" />
   </component>
 </module>

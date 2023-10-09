@@ -273,6 +273,7 @@ class BuildContextImpl(
     }
     if (useModularLoader) {
       jvmArgs.add("-Dintellij.platform.root.module=${productProperties.applicationInfoModule}")
+      jvmArgs.add("-Dintellij.platform.product.mode=${productProperties.productMode.id}")
     }
 
     if (productProperties.platformPrefix != null) {

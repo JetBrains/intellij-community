@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.bootstrap.RuntimeModuleIntrospection
+import com.intellij.platform.runtime.repository.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.util.JavaModuleOptions
@@ -165,6 +166,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.PerProcessPathCustomizer",
       "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
       "-Dintellij.platform.root.module=${CLIENT_ROOT_MODULE.stringId}",
+      "-Dintellij.platform.product.scope=${ProductMode.FRONTEND.id}",
       "-Dintellij.platform.load.app.info.from.resources=true",
       "-Dsplash=true",
     )

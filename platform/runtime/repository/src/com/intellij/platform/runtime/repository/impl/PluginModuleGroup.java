@@ -13,12 +13,14 @@ import java.util.*;
  */
 public final class PluginModuleGroup implements RuntimeModuleGroup {
   private final RuntimeModuleDescriptor myMainModule;
+  private final ProductMode myCurrentMode;
   private final RuntimeModuleRepository myRepository;
   private volatile List<IncludedRuntimeModule> myIncludedModules;
   private volatile Set<RuntimeModuleId> myOptionalModuleIds;
 
-  public PluginModuleGroup(@NotNull RuntimeModuleDescriptor mainModule, @NotNull RuntimeModuleRepository repository) {
+  public PluginModuleGroup(@NotNull RuntimeModuleDescriptor mainModule, @NotNull ProductMode currentMode, @NotNull RuntimeModuleRepository repository) {
     myMainModule = mainModule;
+    myCurrentMode = currentMode;
     myRepository = repository;
   }
 
@@ -34,9 +36,10 @@ public final class PluginModuleGroup implements RuntimeModuleGroup {
     List<RawIncludedRuntimeModule> rawIncludedModules = PluginXmlReader.loadPluginModules(myMainModule, myRepository);
     List<IncludedRuntimeModule> includedModules = new ArrayList<>();
     Set<RuntimeModuleId> optionalModuleIds = new LinkedHashSet<>();
+    ProductModeMatcher matcher = new ProductModeMatcher(myCurrentMode);
     for (RawIncludedRuntimeModule rawModule : rawIncludedModules) {
       IncludedRuntimeModule included = rawModule.resolve(myRepository);
-      if (included != null) {
+      if (included != null && matcher.matches(included.getModuleDescriptor())) {
         includedModules.add(included);
       }
       if (!rawModule.getImportance().equals(ModuleImportance.FUNCTIONAL)) {
