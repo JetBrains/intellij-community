@@ -64,6 +64,7 @@ enum class TransferableIdeFeatureId {
   ReSharper,
   RunConfigurations,
   Scala,
+  Rust,
   Solarized,
   SpellChecker,
   TeamCity,

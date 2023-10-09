@@ -1569,6 +1569,18 @@
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.SynchronizeQuickAction" listGroupID="MainToolbarQuickActions.General" />
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.BackForwardQuickAction" listGroupID="MainToolbarQuickActions.General" />
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.UndoRedoQuickAction" listGroupID="MainToolbarQuickActions.General" />
+    <registryKey key="transferSettings.vscode.showRunningInfo"
+                 defaultValue="false"
+                 description="Show info about possible running vscode instance"
+                 />
+    <registryKey key="transferSettings.vscode.onlyCargoToml"
+                 defaultValue="false"
+                 description="Import only projects that contain cargo.toml file"
+    />
+    <registryKey key="transferSettings.vscode.showRust"
+                 defaultValue="false"
+                 description="Suggest rust"
+    />
 
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.BuildQuickAction" listGroupID="MainToolbarQuickActions.Run" />
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.CoverageQuickAction" listGroupID="MainToolbarQuickActions.Run" />
