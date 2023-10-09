@@ -63,11 +63,11 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       }
 
       val visibleRoots = VcsLogUtil.getAllVisibleRoots(dataPack.logProviders.keys, filters)
-      var matchingHeads = getMatchingHeads(dataPack.refsModel, visibleRoots, filters)
 
-      val rangeFilters = allFilters.get(VcsLogFilterCollection.RANGE_FILTER)
+      val matchingHeads: Set<Int>?
       val commitCandidates: IntSet?
       val forceFilterByVcs: Boolean
+      val rangeFilters = allFilters.get(VcsLogFilterCollection.RANGE_FILTER)
       if (rangeFilters != null) {
         /*
           If we have both a range filter and a branch filter (e.g. `183\nmaster..feature`) they should be united: the graph should show both
@@ -84,31 +84,23 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
           collectCommitsReachableFromHeads(dataPack, explicitMatchingHeads)
         else IntOpenHashSet()
 
-        when (val commitsForRangeFilter = filterByRange(storage, logProviders, dataPack, rangeFilters)) {
-          is RangeFilterResult.Commits -> {
-            commitCandidates = IntCollectionUtil.union(listOf(commitsReachableFromHeads, commitsForRangeFilter.commits))
-            forceFilterByVcs = false
-          }
-          is RangeFilterResult.Error -> {
-            commitCandidates = null
-            forceFilterByVcs = true
-          }
-          is RangeFilterResult.InvalidRange -> {
-            commitCandidates = null
-            forceFilterByVcs = true
-          }
+        commitCandidates = when (val commitsForRangeFilter = filterByRange(storage, logProviders, dataPack, rangeFilters)) {
+          is RangeFilterResult.Commits -> IntCollectionUtil.union(listOf(commitsReachableFromHeads, commitsForRangeFilter.commits))
+          is RangeFilterResult.Error -> null
+          is RangeFilterResult.InvalidRange -> null
         }
+        forceFilterByVcs = commitCandidates == null
 
         /*
           At the same time, the root filter should intersect with the range filter (and the branch filter),
           therefore we take matching heads from the root filter, but use reachable commits set for the branch filter.
         */
-        val matchingHeadsFromRoots = getMatchingHeads(dataPack.refsModel, visibleRoots)
-        matchingHeads = matchingHeadsFromRoots
+        matchingHeads = getMatchingHeads(dataPack.refsModel, visibleRoots)
       }
       else {
         commitCandidates = null
         forceFilterByVcs = false
+        matchingHeads = getMatchingHeads(dataPack.refsModel, visibleRoots, filters)
       }
 
       try {
