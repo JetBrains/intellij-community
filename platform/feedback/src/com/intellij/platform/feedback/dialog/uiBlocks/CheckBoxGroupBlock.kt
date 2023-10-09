@@ -13,6 +13,7 @@ class CheckBoxGroupBlock(
   private val myItemsData: List<CheckBoxItemData>,
   private val myJsonGroupName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
+  private var requireAnswer = false
   private var myIncludeOtherTextField = false
   private var myOtherProperty: String = ""
 
@@ -20,7 +21,17 @@ class CheckBoxGroupBlock(
     panel.apply {
       buttonsGroup(indent = false) {
         row {
-          label(myGroupLabel).bold()
+          label(myGroupLabel).bold().errorOnApply(CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.require.not.empty")) {
+            val isAllCheckboxEmpty = myItemsData.all {
+              !it.property
+            }
+            if (myIncludeOtherTextField) {
+              return@errorOnApply isAllCheckboxEmpty && myOtherProperty.isBlank()
+            }
+            else {
+              return@errorOnApply isAllCheckboxEmpty
+            }
+          }
         }.bottomGap(BottomGap.NONE)
         myItemsData.forEachIndexed { i, itemData ->
           row {
@@ -76,6 +87,11 @@ class CheckBoxGroupBlock(
 
   fun addOtherTextField(): CheckBoxGroupBlock {
     myIncludeOtherTextField = true
+    return this
+  }
+
+  fun requireAnswer(): CheckBoxGroupBlock {
+    requireAnswer = true
     return this
   }
 }
