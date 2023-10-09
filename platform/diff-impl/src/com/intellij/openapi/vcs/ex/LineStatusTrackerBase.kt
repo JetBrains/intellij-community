@@ -284,6 +284,8 @@ abstract class LineStatusTrackerBase<R : Range>(
     listeners.removeListener(listener)
   }
 
+  protected abstract val Block.ourData: DocumentTracker.BlockData
+
   companion object {
     @JvmStatic
     protected val LOG: Logger = Logger.getInstance(LineStatusTrackerBase::class.java)

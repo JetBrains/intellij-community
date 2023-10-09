@@ -27,18 +27,22 @@ class SimpleLocalLineStatusTracker(project: Project,
 ) : LocalLineStatusTrackerImpl<Range>(project, document, virtualFile) {
 
   override val renderer: LocalLineStatusMarkerRenderer = LocalLineStatusMarkerRenderer(this)
-  override fun toRange(block: Block): Range = Range(block.start, block.end, block.vcsStart, block.vcsEnd, block.innerRanges)
+  override fun toRange(block: Block): Range = Range(block.start, block.end, block.vcsStart, block.vcsEnd,
+                                                    block.ourData.innerRanges)
 
   @RequiresEdt
   override fun setBaseRevision(vcsContent: CharSequence) {
     setBaseRevisionContent(vcsContent, null)
   }
 
-  @Suppress("UNCHECKED_CAST")
-  override var Block.innerRanges: List<Range.InnerRange>?
-    get() = data as List<Range.InnerRange>?
-    set(value) {
-      data = value
+  protected data class SimpleBlockData(
+    override var innerRanges: List<Range.InnerRange>? = null
+  ) : LocalBlockData
+
+  override val Block.ourData: SimpleBlockData
+    get() {
+      if (data == null) data = SimpleBlockData()
+      return data as SimpleBlockData
     }
 
   companion object {

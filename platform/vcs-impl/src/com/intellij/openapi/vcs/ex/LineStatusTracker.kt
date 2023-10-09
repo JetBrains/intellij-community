@@ -101,7 +101,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
   override fun isClearLineModificationFlagOnRollback(): Boolean = true
 
-  protected abstract var Block.innerRanges: List<Range.InnerRange>?
+  abstract override val Block.ourData: LocalBlockData
 
   @RequiresEdt
   abstract fun setBaseRevision(vcsContent: CharSequence)
@@ -170,19 +170,12 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
     override var Block.innerRanges: List<Range.InnerRange>?
       get() {
-        val block = this
-        with(this@LocalLineStatusTrackerImpl) {
-          return block.innerRanges
-        }
+        return ourData.innerRanges
       }
       set(value) {
-        val block = this
-        with(this@LocalLineStatusTrackerImpl) {
-          block.innerRanges = value
-        }
+        ourData.innerRanges = value
       }
   }
-
 
   @CalledInAny
   override fun freeze() {
@@ -194,6 +187,10 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   override fun unfreeze() {
     documentTracker.unfreeze(Side.LEFT)
     documentTracker.unfreeze(Side.RIGHT)
+  }
+
+  protected interface LocalBlockData : DocumentTracker.BlockData {
+    var innerRanges: List<Range.InnerRange>?
   }
 }
 

@@ -171,7 +171,8 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     assert(blocks.isEmpty())
   }
 
-  override fun toRange(block: Block): LocalRange = LocalRange(block.start, block.end, block.vcsStart, block.vcsEnd, block.innerRanges,
+  override fun toRange(block: Block): LocalRange = LocalRange(block.start, block.end, block.vcsStart, block.vcsEnd,
+                                                              block.ourData.innerRanges,
                                                               block.marker.changelistId, block.excludedFromCommit)
 
   private fun toIncludedRanges(block: Block, exclusionState: RangeExclusionState.Partial): List<LocalRange> {
@@ -999,25 +1000,20 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     val excludedFromCommit: RangeExclusionState? = null // should not be persisted
   )
 
-  private data class ChangeListMarker(val changelistId: String) {
+  protected data class ChangeListMarker(val changelistId: String) {
     constructor(changelist: LocalChangeList) : this(changelist.id)
   }
 
+  protected data class ChangeListBlockData(
+    override var innerRanges: List<Range.InnerRange>? = null,
+    var marker: ChangeListMarker? = null,
+    var excludedFromCommit: RangeExclusionState = RangeExclusionState.Excluded
+  ) : LocalBlockData
 
-  private data class BlockData(var innerRanges: List<Range.InnerRange>? = null,
-                               var marker: ChangeListMarker? = null,
-                               var excludedFromCommit: RangeExclusionState = RangeExclusionState.Excluded)
-
-  private val Block.ourData: BlockData
+  override val Block.ourData: ChangeListBlockData
     get() {
-      if (data == null) data = BlockData()
-      return data as BlockData
-    }
-
-  override var Block.innerRanges: List<Range.InnerRange>?
-    get() = this.ourData.innerRanges
-    set(value) {
-      this.ourData.innerRanges = value
+      if (data == null) data = ChangeListBlockData()
+      return data as ChangeListBlockData
     }
 
   private var Block.marker: ChangeListMarker

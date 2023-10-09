@@ -30,6 +30,9 @@ class SimpleLineStatusTracker(project: Project?,
   override val virtualFile: VirtualFile? = FileDocumentManager.getInstance().getFile(document)
   override fun toRange(block: Block): Range = Range(block.start, block.end, block.vcsStart, block.vcsEnd, null)
 
+  override val Block.ourData: DocumentTracker.BlockData
+    get() = DocumentTracker.BlockData.Empty
+
   @RequiresEdt
   fun setBaseRevision(vcsContent: CharSequence) {
     setBaseRevisionContent(vcsContent, null)
