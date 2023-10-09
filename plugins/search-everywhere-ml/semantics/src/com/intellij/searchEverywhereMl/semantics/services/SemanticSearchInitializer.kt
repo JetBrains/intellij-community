@@ -50,5 +50,9 @@ class SemanticSearchInitializer : ProjectActivity {
     if (SemanticSearchSettings.getInstance().enabledInSymbolsTab) {
       SymbolEmbeddingStorage.getInstance(project).prepareForSearch()
     }
+
+    if (SemanticSearchSettings.getInstance().enabledInClassesTab) {
+      ClassEmbeddingsStorage.getInstance(project).prepareForSearch()
+    }
   }
 }
