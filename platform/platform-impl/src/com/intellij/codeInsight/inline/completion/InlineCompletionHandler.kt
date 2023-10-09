@@ -15,6 +15,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Disposer
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEmpty
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.errorIfNotMessage
 
@@ -44,7 +46,7 @@ class InlineCompletionHandler(
   private val executor = SafeInlineCompletionExecutor(scope)
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
   private val sessionManager = createSessionManager()
-  private val requestManager = InlineCompletionRequestManager(sessionManager::invalidate)
+  private val typingTracker = InlineCompletionTypingTracker()
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
@@ -63,7 +65,16 @@ class InlineCompletionHandler(
     eventListeners.removeListener(listener)
   }
 
-  fun invoke(event: InlineCompletionEvent.DocumentChange) = invokeEvent(event)
+  @Deprecated(
+    message = "Direct invocations of DocumentChange are forbidden. Use [onDocumentEvent].",
+    ReplaceWith("onDocumentEvent(..., event.editor)"),
+    level = DeprecationLevel.ERROR
+  )
+  @ScheduledForRemoval
+  fun invoke(@Suppress("UNUSED_PARAMETER") event: InlineCompletionEvent.DocumentChange) {
+    throw UnsupportedOperationException("Direct `DocumentChange` events are not supported anymore.")
+  }
+
   fun invoke(event: InlineCompletionEvent.LookupChange) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.LookupCancelled) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
@@ -73,12 +84,13 @@ class InlineCompletionHandler(
     ThreadingAssertions.assertEventDispatchThread()
     LOG.trace("Start processing inline event $event")
 
-    val request = requestManager.getRequest(event) ?: return
+    val request = event.toRequest() ?: return
     if (editor != request.editor) {
       LOG.warn("Request has an inappropriate editor. Another editor was expected. Will not be invoked.")
       return
     }
 
+    typingTracker.reset()
     val provider = getProvider(event)
     if (sessionManager.updateSession(request, provider) || provider == null) {
       return
@@ -192,10 +204,25 @@ class InlineCompletionHandler(
     }
   }
 
-  @RequiresEdt
-  internal fun allowDocumentChange(event: SimpleTypingEvent) {
-    requestManager.allowDocumentChange(event)
-  }
+    @RequiresEdt
+    internal fun allowTyping(event: TypingEvent) {
+      typingTracker.allowTyping(event)
+    }
+
+    /**
+     * If [documentEvent] offers the same as the last [allowTyping], then it creates [InlineCompletionEvent.DocumentChange] and
+     * invokes it. Otherwise, [documentEvent] is considered as 'non-typing' and a current session is invalidated (removed).
+     */
+    @RequiresEdt
+    internal fun onDocumentEvent(documentEvent: DocumentEvent, editor: Editor) {
+      val event = typingTracker.getDocumentChangeEvent(documentEvent, editor)
+      if (event != null) {
+        invokeEvent(event)
+      }
+      else {
+        sessionManager.invalidate()
+      }
+    }
 
   private suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): InlineCompletionSuggestion {
     withContext(Dispatchers.EDT) {
@@ -248,10 +275,10 @@ class InlineCompletionHandler(
         val context = session.context
         when (result) {
           is UpdateSessionResult.Changed -> {
+            trace(InlineCompletionEventType.Change(result.truncateTyping))
             editor.inlayModel.execute(true) {
               context.clear()
-              trace(InlineCompletionEventType.Change(result.truncateTyping))
-              result.newElements.forEach { context.renderElement(it, context.endOffset() ?: result.reason.endOffset) }
+              result.newElements.forEach { context.renderElement(it, context.endOffset() ?: result.newOffset) }
             }
           }
           is UpdateSessionResult.Same -> Unit

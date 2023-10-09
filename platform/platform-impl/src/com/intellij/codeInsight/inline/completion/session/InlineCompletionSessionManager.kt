@@ -6,6 +6,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
+import com.intellij.codeInsight.inline.completion.TypingEvent
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 internal abstract class InlineCompletionSessionManager {
@@ -81,9 +82,7 @@ internal abstract class InlineCompletionSessionManager {
   ): UpdateSessionResult {
     return when (request.event) {
       is InlineCompletionEvent.DocumentChange -> {
-        check(request.event.event.oldLength == 0) { "Unsupported document event: ${request.event.event}" }
-        val fragment = request.event.event.newFragment.toString()
-        applyPrefixAppend(context, fragment, request) ?: UpdateSessionResult.Invalidated
+        applyPrefixAppend(context, request.event.typing, request) ?: UpdateSessionResult.Invalidated
       }
       is InlineCompletionEvent.InlineLookupEvent -> {
         if (context.isCurrentlyDisplaying()) UpdateSessionResult.Same else UpdateSessionResult.Invalidated
@@ -94,16 +93,19 @@ internal abstract class InlineCompletionSessionManager {
 
   private fun applyPrefixAppend(
     context: InlineCompletionContext,
-    fragment: String,
-    reason: InlineCompletionRequest
+    typingEvent: TypingEvent,
+    request: InlineCompletionRequest
   ): UpdateSessionResult.Changed? {
-    // only one symbol is permitted
-    if (fragment.length != 1 || !context.textToInsert().startsWith(fragment) || context.textToInsert() == fragment) {
+    if (typingEvent !is TypingEvent.Simple) {
+      return null
+    }
+    val fragment = typingEvent.typed
+    if (!context.textToInsert().startsWith(fragment) || context.textToInsert() == fragment) {
       return null
     }
     val truncateTyping = fragment.length
     val newElements = truncateElementsPrefix(context.state.elements.map { it.element }, truncateTyping)
-    return newElements?.let { UpdateSessionResult.Changed(it, truncateTyping, reason) }
+    return newElements?.let { UpdateSessionResult.Changed(it, truncateTyping, request.endOffset) }
   }
 
   private fun truncateElementsPrefix(elements: List<InlineCompletionElement>, length: Int): List<InlineCompletionElement>? {
@@ -127,7 +129,7 @@ internal abstract class InlineCompletionSessionManager {
     class Changed(
       val newElements: List<InlineCompletionElement>,
       val truncateTyping: Int,
-      val reason: InlineCompletionRequest
+      val newOffset: Int
     ) : UpdateSessionResult
 
     data object Same : UpdateSessionResult

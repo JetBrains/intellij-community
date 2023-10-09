@@ -8,8 +8,8 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -27,6 +27,25 @@ data class InlineCompletionRequest(
   val endOffset: Int,
   val lookupElement: LookupElement? = null,
 ) : UserDataHolderBase()
+
+sealed interface TypingEvent {
+
+  val typed: String
+
+  val range: TextRange
+
+  class Simple internal constructor(symbol: Char, offset: Int) : TypingEvent {
+    override val typed: String = symbol.toString()
+
+    override val range: TextRange = TextRange(offset, offset + 1)
+  }
+
+  class NewLine internal constructor(override val typed: String, override val range: TextRange) : TypingEvent
+
+  class PairedEnclosureInsertion internal constructor(override val typed: String, offset: Int) : TypingEvent {
+    override val range: TextRange = TextRange(offset, offset) // caret does not move
+  }
+}
 
 /**
  * Be aware that creating your own event is unsafe for a while and might face compatibility issues
@@ -54,15 +73,17 @@ interface InlineCompletionEvent {
 
   /**
    * Represents a non-dummy not empty document event call in the editor.
+   *
+   * Since document changes are hard to correctly track, it's forbidden to create them outside this module.
    */
-  data class DocumentChange(val event: DocumentEvent, val editor: Editor) : InlineCompletionEvent {
+  data class DocumentChange internal constructor(val typing: TypingEvent, val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val project = editor.project ?: return null
       val caretModel = editor.caretModel
       if (caretModel.caretCount != 1) return null
 
       val file = getPsiFile(caretModel.currentCaret, project) ?: return null
-      return InlineCompletionRequest(this, file, editor, event.document, event.offset, event.offset + event.newLength)
+      return InlineCompletionRequest(this, file, editor, editor.document, typing.range.startOffset, typing.range.endOffset)
     }
   }
 
