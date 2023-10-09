@@ -255,7 +255,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private val importMutex = Mutex()
 
   override fun scheduleUpdateAllMavenProjects(spec: MavenImportSpec) {
-    cs.launch { updateAllMavenProjects(spec) }
+    cs.launch {
+      project.serviceAsync<MavenInProgressService>().trackConfigurationActivity {
+        updateAllMavenProjects(spec)
+      }
+    }
   }
 
   override suspend fun updateAllMavenProjects(spec: MavenImportSpec): List<Module> {

@@ -71,7 +71,9 @@ internal class MavenProjectAsyncBuilder {
       // do not update all modules because it can take a lot of time (freeze at project opening)
       val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
       cs.launch {
-        doCommit(project, importProjectFile, rootDirectoryPath, modelsProvider, previewModule, importingSettings, generalSettings)
+        project.serviceAsync<MavenInProgressService>().trackConfigurationActivity {
+          doCommit(project, importProjectFile, rootDirectoryPath, modelsProvider, previewModule, importingSettings, generalSettings)
+        }
       }
       //blockingContext { manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, previewModule) }
       return@trackConfigurationActivity if (null == previewModule) emptyList() else listOf(previewModule)
