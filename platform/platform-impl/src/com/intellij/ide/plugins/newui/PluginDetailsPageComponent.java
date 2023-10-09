@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.feedback.PluginPageFeedbackDialogProvider;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate;
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata;
@@ -17,6 +18,7 @@ import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -32,6 +34,9 @@ import com.intellij.ui.components.panels.ListLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.dsl.builder.HyperlinkEventAction;
+import com.intellij.ui.dsl.builder.components.DslLabel;
+import com.intellij.ui.dsl.builder.components.DslLabelType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -54,11 +59,10 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
@@ -106,6 +110,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private LinkPanel myAuthor;
   private BorderLayoutPanel myControlledByOrgNotification;
   private BorderLayoutPanel myPlatformIncompatibleNotification;
+  private BorderLayoutPanel myUninstallFeedbackNotification;
+  private BorderLayoutPanel myDisableFeedbackNotification;
+  private HashSet<PluginId> mySentFeedbackPlugins = new HashSet<>();
   private final LicensePanel myLicensePanel = new LicensePanel(false);
   private LinkPanel myHomePage;
   private LinkPanel myForumUrl;
@@ -212,6 +219,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myPlatformIncompatibleNotification = createNotificationPanel(
       AllIcons.General.Information,
       IdeBundle.message("plugins.configurable.plugin.unavailable.for.platform", SystemInfo.getOsName()));
+
+    final PluginPageFeedbackDialogProvider feedbackDialogProvider = PluginPageFeedbackDialogProvider.getInstance();
+    myUninstallFeedbackNotification = createFeedbackNotificationPanel(feedbackDialogProvider::getUninstallFeedbackDialog);
+    myDisableFeedbackNotification = createFeedbackNotificationPanel(feedbackDialogProvider::getDisableFeedbackDialog);
     myRootPanel.add(myPanel, BorderLayout.CENTER);
   }
 
@@ -265,20 +276,68 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     createTabs(myPanel);
   }
 
-  private static @NotNull BorderLayoutPanel createNotificationPanel(@NotNull Icon icon, @NotNull @Nls String message) {
-    BorderLayoutPanel panel = new BorderLayoutPanel();
-    Border customLine = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);
-    panel.setBorder(JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true));
-    panel.setBackground(JBUI.CurrentTheme.Notification.BACKGROUND);
-    panel.setForeground(JBUI.CurrentTheme.Notification.FOREGROUND);
+  private @NotNull BorderLayoutPanel createFeedbackNotificationPanel(
+    @NotNull Function<@NotNull String, DialogWrapper> createDialogWrapperFunction) {
+    final BorderLayoutPanel panel = createBaseNotificationPanel();
 
-    JBLabel notificationLabel = new JBLabel();
-    notificationLabel.setIcon(icon);
-    notificationLabel.setVerticalTextPosition(SwingConstants.TOP);
-    notificationLabel.setText(HtmlChunk.html().addText(message).toString());
+    final HyperlinkEventAction action = (e) -> {
+      if (myPlugin == null) {
+        return;
+      }
 
-    panel.addToCenter(notificationLabel);
+      if (e.getDescription().equals("showFeedback")) {
+        final DialogWrapper feedbackDialog = createDialogWrapperFunction.apply(myPlugin.getName());
+        if (feedbackDialog == null) {
+          return;
+        }
+        boolean isSent = feedbackDialog.showAndGet();
+        if (isSent) {
+          mySentFeedbackPlugins.add(myPlugin.getPluginId());
+          updateNotifications();
+        }
+      }
+    };
+    final DslLabel label = new DslLabel(DslLabelType.LABEL);
+    label.setText(IdeBundle.message("plugins.configurable.plugin.feedback"));
+    label.setAction(action);
+
+    panel.addToCenter(label);
     return panel;
+  }
+
+  private void updateNotifications() {
+    myRootPanel.remove(myControlledByOrgNotification);
+    myRootPanel.remove(myPlatformIncompatibleNotification);
+    myRootPanel.remove(myUninstallFeedbackNotification);
+    myRootPanel.remove(myDisableFeedbackNotification);
+
+    if (!myIsPluginAvailable) {
+      if (!myIsPluginCompatible) {
+        myRootPanel.add(myPlatformIncompatibleNotification, BorderLayout.NORTH);
+      }
+      else {
+        myRootPanel.add(myControlledByOrgNotification, BorderLayout.NORTH);
+      }
+    }
+
+    if (myPlugin != null && !mySentFeedbackPlugins.contains(myPlugin.getPluginId())) {
+      final Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
+      final IdeaPluginDescriptorImpl pluginDescriptor = pluginIdMap.getOrDefault(myPlugin.getPluginId(), null);
+      if (pluginDescriptor != null && myPluginModel.isUninstalled(pluginDescriptor)) {
+        myRootPanel.add(myUninstallFeedbackNotification, BorderLayout.NORTH);
+      }
+      else if (myPluginModel.isDisabledInDiff(myPlugin.getPluginId())) {
+        myRootPanel.add(myDisableFeedbackNotification, BorderLayout.NORTH);
+      }
+    }
+  }
+
+  private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action) {
+    return new SelectionBasedPluginModelAction.EnableDisableAction<>(
+      myPluginModel, action, false, List.of(this),
+      PluginDetailsPageComponent::getDescriptorForActions, () -> {
+      updateNotifications();
+    });
   }
 
   private @NotNull JPanel createHeaderPanel() {
@@ -1218,17 +1277,12 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
-  private void updateNotifications() {
-    myRootPanel.remove(myControlledByOrgNotification);
-    myRootPanel.remove(myPlatformIncompatibleNotification);
-    if (!myIsPluginAvailable) {
-      if (!myIsPluginCompatible) {
-        myRootPanel.add(myPlatformIncompatibleNotification, BorderLayout.NORTH);
-      }
-      else {
-        myRootPanel.add(myControlledByOrgNotification, BorderLayout.NORTH);
-      }
-    }
+  private @NotNull SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> createUninstallAction() {
+    return new SelectionBasedPluginModelAction.UninstallAction<>(
+      myPluginModel, false, this, List.of(this),
+      PluginDetailsPageComponent::getDescriptorForActions, () -> {
+      updateNotifications();
+    });
   }
 
   private boolean isPluginFromMarketplace() {
@@ -1616,14 +1670,25 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     return Strings.isEmptyOrSpaces(notes) ? null : notes;
   }
 
-  private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action) {
-    return new SelectionBasedPluginModelAction.EnableDisableAction<>(myPluginModel, action, false, List.of(this),
-                                                                     PluginDetailsPageComponent::getDescriptorForActions);
+  private static @NotNull BorderLayoutPanel createNotificationPanel(@NotNull Icon icon, @NotNull @Nls String message) {
+    BorderLayoutPanel panel = createBaseNotificationPanel();
+
+    JBLabel notificationLabel = new JBLabel();
+    notificationLabel.setIcon(icon);
+    notificationLabel.setVerticalTextPosition(SwingConstants.TOP);
+    notificationLabel.setText(HtmlChunk.html().addText(message).toString());
+
+    panel.addToCenter(notificationLabel);
+    return panel;
   }
 
-  private @NotNull SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> createUninstallAction() {
-    return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel, false, this, List.of(this),
-                                                                 PluginDetailsPageComponent::getDescriptorForActions);
+  private static @NotNull BorderLayoutPanel createBaseNotificationPanel() {
+    BorderLayoutPanel panel = new BorderLayoutPanel();
+    Border customLine = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);
+    panel.setBorder(JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true));
+    panel.setBackground(JBUI.CurrentTheme.Notification.BACKGROUND);
+    panel.setForeground(JBUI.CurrentTheme.Notification.FOREGROUND);
+    return panel;
   }
 
   @Override

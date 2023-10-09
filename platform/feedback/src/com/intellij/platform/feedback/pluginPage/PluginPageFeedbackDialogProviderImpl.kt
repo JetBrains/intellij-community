@@ -2,15 +2,14 @@
 package com.intellij.platform.feedback.pluginPage
 
 import com.intellij.ide.feedback.PluginPageFeedbackDialogProvider
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 
 internal class PluginPageFeedbackDialogProviderImpl : PluginPageFeedbackDialogProvider() {
-  override fun getUninstallFeedbackDialog(pluginName: String, project: Project?, forTest: Boolean): DialogWrapper {
-    return UninstallPluginPageFeedbackDialog(pluginName, project, forTest)
+  override fun getUninstallFeedbackDialog(pluginName: String): DialogWrapper {
+    return UninstallPluginPageFeedbackDialog(pluginName, null, false)
   }
 
-  override fun getDisableFeedbackDialog(pluginName: String, project: Project?, forTest: Boolean): DialogWrapper {
-    return DisablePluginPageFeedbackDialog(pluginName, project, forTest)
+  override fun getDisableFeedbackDialog(pluginName: String): DialogWrapper {
+    return DisablePluginPageFeedbackDialog(pluginName, null, false)
   }
 }

@@ -217,6 +217,19 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     myPluginsToRemoveOnCancel.clear();
   }
 
+  public boolean isDisabledInDiff(@NotNull PluginId pluginId) {
+    final Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
+    final IdeaPluginDescriptorImpl pluginDescriptor = pluginIdMap.getOrDefault(pluginId, null);
+    if (pluginDescriptor == null) {
+      return false;
+    }
+    final Pair<PluginEnableDisableAction, PluginEnabledState> diffStatePair = myDiff.getOrDefault(pluginDescriptor, null);
+    if (diffStatePair == null) {
+      return false;
+    }
+    return diffStatePair.second.isEnabled();
+  }
+
   private boolean applyEnableDisablePlugins(@NotNull PluginEnabler pluginEnabler,
                                             @Nullable JComponent parentComponent) {
     EnumMap<PluginEnableDisableAction, List<IdeaPluginDescriptor>> descriptorsByAction = new EnumMap<>(PluginEnableDisableAction.class);
