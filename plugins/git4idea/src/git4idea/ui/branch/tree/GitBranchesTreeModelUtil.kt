@@ -53,7 +53,7 @@ private fun GitBranch.isNotCurrentBranch(repositories: List<GitRepository>) =
 
 private fun GitBranch.isNotFavorite(favoriteBranches: Map<GitRepository, Collection<String>>,
                                     repositories: List<GitRepository>): Boolean {
-  return repositories.any { repo -> !favoriteBranches[repo]!!.contains(this.name) }
+  return repositories.any { repo -> !(favoriteBranches[repo]?.contains(this.name) ?: false) }
 }
 
 internal fun buildBranchTreeNodes(branchType: BranchType,
