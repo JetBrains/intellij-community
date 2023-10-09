@@ -46,7 +46,7 @@ class InlineCompletionHandler(
   private val executor = SafeInlineCompletionExecutor(scope)
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
   private val sessionManager = createSessionManager()
-  private val typingTracker = InlineCompletionTypingTracker()
+  private val typingTracker = InlineCompletionTypingTracker(parentDisposable)
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
@@ -90,7 +90,6 @@ class InlineCompletionHandler(
       return
     }
 
-    typingTracker.reset()
     val provider = getProvider(event)
     if (sessionManager.updateSession(request, provider) || provider == null) {
       return

@@ -51,7 +51,7 @@ class InlineCompletionSession private constructor(
     ): InlineCompletionSession {
       val currentSession = getOrNull(editor)
       check(currentSession == null) { "Inline completion session already exists." }
-      return InlineCompletionSession(InlineCompletionContext(editor), provider, request).also {
+      return InlineCompletionSession(InlineCompletionContext(editor, request.file.language), provider, request).also {
         Disposer.register(parentDisposable, it)
         editor.putUserData(INLINE_COMPLETION_SESSION, it)
       }
