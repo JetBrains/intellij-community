@@ -23,7 +23,7 @@ class MLKindSorter(private val decisionFunction: DecisionFunction, override val 
   override fun sort(kinds: List<CompletionKind>,
                     parameters: CompletionParameters): List<RankedKind>? {
 
-    val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return null
+    val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl? ?: return null
 
     val lookupStorage = MutableLookupStorage.get(lookup)
 
