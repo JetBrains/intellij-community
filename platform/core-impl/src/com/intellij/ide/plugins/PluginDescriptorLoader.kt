@@ -632,14 +632,16 @@ private fun CoroutineScope.loadCoreModules(context: DescriptorListLoadingContext
       loadCoreProductPlugin("${PluginManagerCore.META_INF}$fileName", classLoader, context, pathResolver, useCoreClassLoader)
     })
 
-    val urlToFilename = collectPluginFilesInClassPath(classLoader)
-    if (!urlToFilename.isEmpty()) {
-      @Suppress("SuspiciousCollectionReassignment")
-      result += loadDescriptorsFromClassPath(urlToFilename = urlToFilename,
-                                             context = context,
-                                             pathResolver = pathResolver,
-                                             useCoreClassLoader = useCoreClassLoader,
-                                             pool = pool)
+    if (ProductLoadingStrategy.strategy.shouldLoadDescriptorsFromCoreClassPath) {
+      val urlToFilename = collectPluginFilesInClassPath(classLoader)
+      if (!urlToFilename.isEmpty()) {
+        @Suppress("SuspiciousCollectionReassignment")
+        result += loadDescriptorsFromClassPath(urlToFilename = urlToFilename,
+                                               context = context,
+                                               pathResolver = pathResolver,
+                                               useCoreClassLoader = useCoreClassLoader,
+                                               pool = pool)
+      }
     }
 
     result

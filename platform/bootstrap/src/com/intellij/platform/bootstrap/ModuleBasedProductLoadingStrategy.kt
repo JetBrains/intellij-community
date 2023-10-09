@@ -93,6 +93,9 @@ class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeMo
     }
   }
 
+  override val shouldLoadDescriptorsFromCoreClassPath: Boolean
+    get() = false
+
   override fun isOptionalProductModule(moduleName: String): Boolean {
     return productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.raw(moduleName))
   }
