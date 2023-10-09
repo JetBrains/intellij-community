@@ -48,9 +48,8 @@ fun SelectableLazyColumn(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: SelectableLazyListScope.() -> Unit,
 ) {
-    val container = remember(content) {
-        SelectableLazyListScopeContainer().apply(content)
-    }
+    val container = SelectableLazyListScopeContainer()
+        .apply(content)
 
     val keys = remember(container) {
         container.getKeys()
