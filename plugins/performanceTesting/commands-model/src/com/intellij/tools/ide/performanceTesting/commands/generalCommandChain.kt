@@ -596,8 +596,8 @@ fun <T : CommandChain> T.recordStateCollectors(): T {
 }
 
 const val RELOAD_FILES = "${CMD_PREFIX}reloadFiles"
-fun <T : CommandChain> T.reloadFiles(): T {
-  addCommand(RELOAD_FILES)
+fun <T : CommandChain> T.reloadFiles(filePaths: List<String> = listOf()): T {
+  addCommand("$RELOAD_FILES ${filePaths.joinToString(" ")}")
   return this
 }
 
