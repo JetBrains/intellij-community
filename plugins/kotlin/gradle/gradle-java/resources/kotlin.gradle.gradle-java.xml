@@ -7,6 +7,13 @@
     <module name="kotlin.project-wizard.idea"/>
   </dependencies>
 
+  <projectListeners>
+    <listener
+            class="org.jetbrains.kotlin.idea.gradleJava.scripting.ProjectGradleSettingsListener"
+            topic="org.jetbrains.plugins.gradle.settings.GradleSettingsListener"/>
+  </projectListeners>
+
+
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.gradleProjectImportHandler" area="IDEA_PROJECT"
