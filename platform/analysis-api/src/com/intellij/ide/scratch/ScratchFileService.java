@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CollectionFactory;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -22,6 +24,10 @@ public abstract class ScratchFileService {
   private static final Supplier<ScratchFileService> ourInstance = CachedSingletonsRegistry.lazy(() -> {
     return ApplicationManager.getApplication().getService(ScratchFileService.class);
   });
+
+  public static boolean isWorkspaceModelIntegrationEnabled() {
+    return Registry.is("scratch.files.use.workspace.model");
+  }
 
   public static ScratchFileService getInstance() {
     return ourInstance.get();
@@ -42,6 +48,8 @@ public abstract class ScratchFileService {
   }
 
   public static @NotNull Set<VirtualFile> getAllRootPaths() {
+    if (isWorkspaceModelIntegrationEnabled()) return Collections.emptySet();
+
     ScratchFileService instance = getInstance();
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     Set<VirtualFile> result = CollectionFactory.createSmallMemoryFootprintSet();

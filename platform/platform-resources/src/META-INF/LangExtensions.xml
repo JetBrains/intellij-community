@@ -453,6 +453,10 @@
     <applicationService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
                         serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl"/>
     <treeStructureProvider implementation="com.intellij.ide.scratch.ScratchTreeStructureProvider" order="last"/>
+    <registryKey defaultValue="false" key="scratch.files.use.workspace.model"
+                 description="Use WorkspaceModel API for scratch files integration"/>
+    <postStartupActivity implementation="com.intellij.ide.scratch.workspace.ScratchWorkspaceStartupActivity"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.ide.scratch.workspace.ScratchRootsEntityWorkspaceFileIndexContributor"/>
 
     <projectService serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager" preload="true"/>
     <fileTypeOverrider implementation="com.intellij.openapi.file.exclude.UserFileTypeOverrider"/>
