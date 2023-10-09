@@ -129,7 +129,10 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
 
     // must be after installPluginUpdates
     span("marketplace init") {
-      initMarketplace()
+      // 'marketplace' plugin breaks JetBrains Client, so for now this condition is used to disable it
+      if (changeClassPath == null) {  
+        initMarketplace()
+      }
     }
 
     // must be after initMarketplace because initMarketplace can affect the main class loading (byte code transformer)
