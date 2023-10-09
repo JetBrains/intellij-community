@@ -98,7 +98,25 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     }
 
     override fun setSelected(e: AnActionEvent?, state: Boolean) {
-      if (e != null) activateAction.actionPerformed(e)
+      val project = e?.project ?: return
+      val twm = ToolWindowManager.getInstance(project)
+      val toolWindowId = activateAction.toolWindowId
+      val toolWindow = twm.getToolWindow(toolWindowId)
+      val visible = toolWindow?.isVisible == true
+      if (visible == state) {
+        return
+      }
+      if (visible) {
+        if (twm is ToolWindowManagerImpl) {
+          twm.hideToolWindow(toolWindowId, false, true, false, ToolWindowEventSource.StripeButton)
+        }
+        else {
+          toolWindow!!.hide(null)
+        }
+      }
+      else {
+        activateAction.actionPerformed(e)
+      }
     }
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
