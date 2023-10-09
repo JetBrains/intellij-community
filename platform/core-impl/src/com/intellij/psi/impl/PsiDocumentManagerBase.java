@@ -174,6 +174,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     document = FileDocumentManager.getInstance().getDocument(virtualFile, myProject);
     if (document != null) {
       if (document.getTextLength() != file.getTextLength()) {
+        // We have internal state inconsistency, it might be a good idea to contact the core team if you are able to reproduce this error.
         String message = "Document/PSI mismatch: " + file + " of " + file.getClass() +
                          "; viewProvider=" + viewProvider +
                          "; uncommitted=" + Arrays.toString(getUncommittedDocuments());
