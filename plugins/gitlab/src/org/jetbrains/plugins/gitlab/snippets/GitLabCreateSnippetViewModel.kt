@@ -128,22 +128,6 @@ internal class GitLabCreateSnippetViewModel(
   }
 
   /**
-   * Launches a dialog to login to a new account. Called when no account is currently present in the
-   * account state and the user clicks some link to add an account. After this function is complete
-   * and a new account is added, an update should be pushed to the account state from [GitLabAccountManager].
-   */
-  fun performNewLogin(parentComponent: JComponent) {
-    cs.launch(Dispatchers.Main + ModalityState.stateForComponent(parentComponent).asContextElement()) {
-      val defaultServer = project.service<GitLabProjectsManager>().knownRepositories.firstOrNull()?.repository?.serverPath
-                          ?: GitLabServerPath.DEFAULT_SERVER
-      val (account, token) = GitLabLoginUtil.logInViaToken(project, parentComponent, defaultServer) { server, username ->
-        GitLabLoginUtil.isAccountUnique(glAccountManager.accountsState.value, server, username)
-      } ?: return@launch
-      glAccountManager.updateAccount(account, token)
-    }
-  }
-
-  /**
    * Converts the values in this view model to a final immutable result.
    */
   suspend fun toResult(): GitLabCreateSnippetResult? {
