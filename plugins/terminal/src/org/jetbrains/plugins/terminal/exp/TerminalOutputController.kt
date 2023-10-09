@@ -14,11 +14,10 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.TerminalUiSettingsManager
+import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
-import com.jediterm.terminal.emulator.ColorPalette
 import com.jediterm.terminal.model.CharBuffer
 import com.jediterm.terminal.ui.AwtTransformers
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
@@ -39,7 +38,7 @@ class TerminalOutputController(
   private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
   private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
 
-  private val palette: ColorPalette
+  private val palette: TerminalColorPalette
     get() = settings.terminalColorPalette
 
   @Volatile
@@ -250,7 +249,7 @@ class TerminalOutputController(
   private fun TextStyle.toTextAttributes(): TextAttributes {
     return TextAttributes().also { attr ->
       val background = palette.getBackground(terminalModel.styleState.getBackground(backgroundForRun))
-      val defaultBackground = AwtTransformers.fromAwtColor(TerminalUiSettingsManager.getInstance().getDefaultBackground())
+      val defaultBackground = palette.defaultBackground
       // todo: it is a hack to not set default background, because it is different from the block background.
       //  They should match to remove this hack.
       if (background != defaultBackground) {

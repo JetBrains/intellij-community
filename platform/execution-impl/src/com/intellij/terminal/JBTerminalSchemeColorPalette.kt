@@ -2,13 +2,24 @@
 package com.intellij.terminal
 
 import com.intellij.execution.process.ColoredOutputTypeRegistryImpl
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.jediterm.core.Color
-import com.jediterm.terminal.emulator.ColorPalette
 import com.jediterm.terminal.ui.AwtTransformers
 
-internal class JBTerminalSchemeColorPalette(private val colorsScheme: EditorColorsScheme) : ColorPalette() {
+internal class JBTerminalSchemeColorPalette(private val colorsScheme: EditorColorsScheme) : TerminalColorPalette() {
+  override val defaultForeground: Color
+    get() {
+      val foregroundColor = colorsScheme.getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY).foregroundColor
+      return AwtTransformers.fromAwtColor(foregroundColor ?: colorsScheme.defaultForeground)!!
+    }
+  override val defaultBackground: Color
+    get() {
+      val backgroundColor = colorsScheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY)
+      return AwtTransformers.fromAwtColor(backgroundColor ?: colorsScheme.defaultBackground)!!
+    }
+
   override fun getForegroundByColorIndex(colorIndex: Int): Color {
     val attributes = colorsScheme.getAttributes(ColoredOutputTypeRegistryImpl.getAnsiColorKey(colorIndex))
     return when {
