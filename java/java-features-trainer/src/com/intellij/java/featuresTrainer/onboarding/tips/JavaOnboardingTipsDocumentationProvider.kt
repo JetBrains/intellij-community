@@ -3,17 +3,17 @@ package com.intellij.java.featuresTrainer.onboarding.tips
 
 import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.tree.IElementType
 import training.onboarding.filePathWithOnboardingTips
+import training.onboarding.renderedOnboardingTipsEnabled
 import java.util.function.Consumer
 
 private const val tipPrefix = "//TIP"
 
 class JavaOnboardingTipsDocumentationProvider: DocumentationProvider {
-  private val enabled get() = Registry.`is`("doc.onboarding.tips.render")
+  private val enabled get() = renderedOnboardingTipsEnabled
 
   override fun collectDocComments(file: PsiFile, sink: Consumer<in PsiDocCommentBase>) {
     if (!enabled || file !is PsiJavaFile) return

@@ -3,6 +3,7 @@
 
 package training.onboarding
 
+import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.NewProjectOnboardingTips
@@ -13,18 +14,21 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil.getDelegateChainRootActio
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -36,6 +40,9 @@ import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import training.learn.LearnBundle
@@ -56,6 +63,11 @@ var Project.filePathWithOnboardingTips: String?
   get() = PropertiesComponent.getInstance(this).getValue("onboarding.tips.debug.path")
   @ApiStatus.Internal
   set(value) { PropertiesComponent.getInstance(this).setValue("onboarding.tips.debug.path", value) }
+
+
+val renderedOnboardingTipsEnabled: Boolean
+  @ApiStatus.Internal
+  get() = Registry.`is`("doc.onboarding.tips.render")
 
 private val RESET_TOOLTIP_SAMPLE_TEXT = Key.create<String>("reset.tooltip.sample.text")
 
@@ -115,6 +127,26 @@ private class InstallOnboardingTooltip : ProjectActivity {
     val pathToRunningFile = project.filePathWithOnboardingTips
     if (pathToRunningFile != null) {
       installDebugListener(project, pathToRunningFile)
+
+      if (!renderedOnboardingTipsEnabled) return
+
+      coroutineScope {
+        launch(Dispatchers.EDT) {
+          for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
+            val editor = (fileEditor as? TextEditor)?.editor
+            if (editor?.virtualFile?.path == pathToRunningFile) {
+              DocRenderManager.setDocRenderingEnabled(editor, true)
+            }
+          }
+        }
+      }
+
+      EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+        override fun editorCreated(event: EditorFactoryEvent) {
+          if (event.editor.virtualFile?.path != pathToRunningFile) return
+          DocRenderManager.setDocRenderingEnabled(event.editor, true)
+        }
+      }, project)
     }
   }
 }
