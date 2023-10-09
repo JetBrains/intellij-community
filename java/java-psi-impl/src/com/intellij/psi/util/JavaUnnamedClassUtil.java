@@ -18,11 +18,20 @@ public final class JavaUnnamedClassUtil {
     return false;
   }
 
+  /**
+   * Retrieves the unnamed class PSI element from the given PsiFile.
+   *
+   * @param file the PsiFile from which to retrieve the unnamed class
+   * @return the unnamed class if found, null otherwise
+   */
   @Nullable
-  public static PsiUnnamedClass getUnnamedClassFor(PsiJavaFile javaFile) {
-    PsiClass[] classes = javaFile.getClasses();
-    if (classes.length == 1 && classes[0] instanceof PsiUnnamedClass) {
-      return (PsiUnnamedClass)classes[0];
+  public static PsiUnnamedClass getUnnamedClassFor(@NotNull PsiFile file) {
+    if (file instanceof PsiJavaFile) {
+      final PsiJavaFile javaFile = (PsiJavaFile)file;
+      PsiClass[] classes = javaFile.getClasses();
+      if (classes.length == 1 && classes[0] instanceof PsiUnnamedClass) {
+        return (PsiUnnamedClass)classes[0];
+      }
     }
     return null;
   }
