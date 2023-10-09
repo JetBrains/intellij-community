@@ -6,6 +6,7 @@
 
   <module value="com.intellij.modules.python"/>
 
+  <xi:include href="/META-INF/PythonParser.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PythonPsi.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PythonPsiImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PythonSdk.xml" xpointer="xpointer(/idea-plugin/*)"/>

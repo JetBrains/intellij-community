@@ -1034,7 +1034,8 @@ class PyTypeHintsInspection : PyInspection() {
         else {
           val newIndexText = newIndexElements.joinToString(prefix = "(", postfix = ")") { it.text }
 
-          val expression = PyElementGenerator.getInstance(project).createExpressionFromText(LanguageLevel.forElement(element), newIndexText)
+          val expression = PyElementGenerator.getInstance(project)
+            .createExpressionFromText(LanguageLevel.forElement(element), newIndexText)
           val newIndex = (expression as? PyParenthesizedExpression)?.containedExpression as? PyTupleExpression ?: return
 
           index.replace(newIndex)

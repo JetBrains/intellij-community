@@ -10,6 +10,12 @@
     <projectService serviceInterface="com.jetbrains.python.psi.PyPsiFacade"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyPsiFacadeImpl"/>
 
+    <applicationService serviceInterface="com.jetbrains.python.PyElementTypesFacade"
+                        serviceImplementation="com.jetbrains.python.PyElementTypesFacadeImpl"/>
+
+    <applicationService serviceInterface="com.jetbrains.python.PyLanguageFacade"
+                        serviceImplementation="com.jetbrains.python.PyLanguageFacadeImpl"/>
+
     <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
                     serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
 

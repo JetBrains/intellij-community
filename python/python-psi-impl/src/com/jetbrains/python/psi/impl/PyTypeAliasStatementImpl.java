@@ -6,6 +6,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTypeAliasStatementStub;
@@ -61,7 +62,7 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
   @Override
   @Nullable
   public PyTypeParameterList getTypeParameterList() {
-    return getStubOrPsiChild(PyElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST);
   }
 
   @Override

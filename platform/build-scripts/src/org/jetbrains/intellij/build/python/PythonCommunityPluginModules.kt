@@ -13,6 +13,7 @@ object PythonCommunityPluginModules {
     "intellij.python.community",
     "intellij.python.community.plugin.impl",
     "intellij.python.community.plugin.java",
+    "intellij.python.parser",
     "intellij.python.psi",
     "intellij.python.psi.impl",
     "intellij.python.community.core.impl",

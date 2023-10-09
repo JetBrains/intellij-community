@@ -988,7 +988,8 @@ public final class PyUtil {
    */
   public static boolean isPackage(@NotNull PsiDirectory directory, boolean checkSetupToolsPackages, @Nullable PsiElement anchor) {
     if (isExplicitPackage(directory)) return true;
-    final LanguageLevel level = anchor != null ? LanguageLevel.forElement(anchor) : LanguageLevel.forElement(directory);
+    @NotNull PsiElement element = anchor != null ? anchor : directory;
+    final LanguageLevel level = LanguageLevel.forElement(element);
     if (!level.isPython2()) {
       return true;
     }
