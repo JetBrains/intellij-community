@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -19,7 +20,13 @@ import java.util.*
 abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
 
   fun withJavaSampleCodeAsset(sourceRootPath: String, aPackage: String, generateOnboardingTips: Boolean) {
-    val templateName = if (generateOnboardingTips) "SampleCodeWithOnboardingTips.java" else "SampleCode"
+    val renderedOnboardingTips = Registry.`is`("doc.onboarding.tips.render")
+    val templateName = when {
+      !generateOnboardingTips -> "SampleCode"
+      renderedOnboardingTips -> "SampleCodeWithRenderedOnboardingTips.java"
+      else -> "SampleCodeWithOnboardingTips.java"
+    }
+
     val sourcePath = createJavaSourcePath(sourceRootPath, aPackage, "Main.java")
     addTemplateAsset(sourcePath, templateName, buildMap {
       put("PACKAGE_NAME", aPackage)
@@ -27,18 +34,39 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
         val tipsContext = object : KeymapTextContext() {
           override fun isSimplifiedMacShortcuts(): Boolean = SystemInfo.isMac
         }
-        //@formatter:off
-        put("SearchEverywhereComment1", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.1", "Shift"))
-        put("SearchEverywhereComment2", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.2"))
+        if (renderedOnboardingTips) {
+          fun rawShortcut(shortcut: String) = """<shortcut raw="$shortcut"/>"""
+          fun shortcut(actionId: String) = """<shortcut actionId="$actionId"/>"""
+          fun icon(allIconsId: String) = """<icon src="$allIconsId"/>"""
 
-        put("ShowIntentionComment1", JavaStartersBundle.message("onboarding.show.intention.tip.comment.1", tipsContext.getShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
-        put("ShowIntentionComment2", JavaStartersBundle.message("onboarding.show.intention.tip.comment.2", ApplicationNamesInfo.getInstance().fullProductName))
+          //@formatter:off
+          put("SearchEverywhereComment1", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.render.1", rawShortcut("SHIFT")))
+          put("SearchEverywhereComment2", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.render.2", rawShortcut("ENTER")))
 
-        put("RunComment", JavaStartersBundle.message("onboarding.run.comment", tipsContext.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER)))
+          put("RunComment1", JavaStartersBundle.message("onboarding.run.comment.render.1", shortcut(IdeActions.ACTION_DEFAULT_RUNNER)))
+          put("RunComment2", JavaStartersBundle.message("onboarding.run.comment.render.2", icon("AllIcons.Actions.Execute")))
 
-        put("DebugComment1", JavaStartersBundle.message("onboarding.debug.comment.1", tipsContext.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER)))
-        put("DebugComment2", JavaStartersBundle.message("onboarding.debug.comment.2", tipsContext.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
-        //@formatter:on
+          put("ShowIntentionComment1", JavaStartersBundle.message("onboarding.show.intention.tip.comment.render.1", shortcut(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
+          put("ShowIntentionComment2", JavaStartersBundle.message("onboarding.show.intention.tip.comment.render.2", ApplicationNamesInfo.getInstance().fullProductName))
+
+          put("DebugComment1", JavaStartersBundle.message("onboarding.debug.comment.render.1", shortcut(IdeActions.ACTION_DEFAULT_DEBUGGER), icon("AllIcons.Debugger.Db_set_breakpoint")))
+          put("DebugComment2", JavaStartersBundle.message("onboarding.debug.comment.render.2", shortcut(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
+          //@formatter:on
+        }
+        else {
+          //@formatter:off
+          put("SearchEverywhereComment1", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.1", "Shift"))
+          put("SearchEverywhereComment2", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.2"))
+
+          put("ShowIntentionComment1", JavaStartersBundle.message("onboarding.show.intention.tip.comment.1", tipsContext.getShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
+          put("ShowIntentionComment2", JavaStartersBundle.message("onboarding.show.intention.tip.comment.2", ApplicationNamesInfo.getInstance().fullProductName))
+
+          put("RunComment", JavaStartersBundle.message("onboarding.run.comment", tipsContext.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER)))
+
+          put("DebugComment1", JavaStartersBundle.message("onboarding.debug.comment.1", tipsContext.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER)))
+          put("DebugComment2", JavaStartersBundle.message("onboarding.debug.comment.2", tipsContext.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
+          //@formatter:on
+        }
       }
     })
     addFilesToOpen(sourcePath)
