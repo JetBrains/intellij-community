@@ -5,9 +5,12 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector
 import java.lang.ref.WeakReference
 
+@Deprecated(message = "Obsolete")
+@ApiStatus.ScheduledForRemoval
 class GradleExecutionStageFusHandler(val taskId: Long, val project: WeakReference<Project>) : GradleExecutionStageHandler {
 
   override fun onGradleExecutionCompleted(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.EXECUTION_COMPLETED)

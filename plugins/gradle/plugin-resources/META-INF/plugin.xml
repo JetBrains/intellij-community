@@ -202,7 +202,7 @@
                  description="Enable experimental support of version catalogs based on after-sync gradle models"/>
     <registryKey key="gradle.download.sources" defaultValue="false"
                  description="Download sources of project dependencies during import"/>
-    <registryKey key="gradle.import.performance.statistics" defaultValue="true"
+    <registryKey key="gradle.import.performance.statistics" defaultValue="false"
                  description="Collect performance-related statistics of Gradle import"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>

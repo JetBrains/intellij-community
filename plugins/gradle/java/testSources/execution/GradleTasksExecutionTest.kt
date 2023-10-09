@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.runTask
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ExtensionTestUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import junit.framework.AssertionFailedError
@@ -35,6 +36,7 @@ class GradleTasksExecutionTest : GradleImportingTestCase() {
 
   @Test
   fun `test fus contains only well known task metrics`() {
+    Registry.get("gradle.import.performance.statistics").setValue("true", testRootDisposable)
     ExtensionTestUtil.maskExtensions(ExternalEventLogSettings.EP_NAME, listOf(object : ExternalEventLogSettings {
       override fun forceLoggingAlwaysEnabled(): Boolean = true
       override fun getExtraLogUploadHeaders(): Map<String, String> = emptyMap()

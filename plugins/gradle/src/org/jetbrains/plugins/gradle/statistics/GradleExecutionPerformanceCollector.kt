@@ -7,8 +7,11 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.util.GradleTaskClassifier
 
+@Deprecated(message = "Obsolete")
+@ApiStatus.ScheduledForRemoval
 class GradleExecutionPerformanceCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP

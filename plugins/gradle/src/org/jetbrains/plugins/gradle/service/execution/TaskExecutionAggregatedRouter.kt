@@ -6,11 +6,14 @@ import org.gradle.tooling.events.internal.DefaultFinishEvent
 import org.gradle.tooling.events.lifecycle.internal.DefaultBuildPhaseFinishEvent
 import org.gradle.tooling.events.task.internal.DefaultTaskFailureResult
 import org.gradle.tooling.events.task.internal.DefaultTaskFinishEvent
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.execution.statistics.AggregatedTaskReport
 import org.jetbrains.plugins.gradle.service.execution.statistics.GradleExecutionStageHandler
 import org.jetbrains.plugins.gradle.service.execution.statistics.TaskGraphExecutionReport
 import org.jetbrains.plugins.gradle.util.GradleTaskClassifier
 
+@Deprecated(message = "Obsolete")
+@ApiStatus.ScheduledForRemoval
 class TaskExecutionAggregatedRouter(val handler: GradleExecutionStageHandler) {
 
   private companion object {

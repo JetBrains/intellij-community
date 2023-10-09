@@ -17,9 +17,9 @@ class GradleImportPerformanceFusTest : GradleImportingTestCase() {
 
   @Test
   @TargetVersions("5.1+")
-  fun `test gradle import performance events collected by default`() {
+  fun `test gradle import performance events not collected by default`() {
     toggleFus(true)
-    assertThat(collectGradleImportPerformanceEvents()).isNotEmpty()
+    assertThat(collectGradleImportPerformanceEvents()).isEmpty()
   }
 
   @Test
