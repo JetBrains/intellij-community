@@ -1349,8 +1349,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         }
       }
     }
-    String fileTypeMask = getFileTypeMask();
-    if (fileTypeMask != null && (FindInProjectUtil.createFileMaskCondition(fileTypeMask) != Conditions.<CharSequence>alwaysTrue())) {
+    if (FindInProjectUtil.createFileMaskCondition(model.getFileFilter()) != Conditions.<CharSequence>alwaysTrue()) {
       usedOptions.add(header.cbFileFilter);
     }
     if (model.isInCommentsOnly()
@@ -1373,7 +1372,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         emptyText.appendLine(FindBundle.message("message.nothingFound.used.options"));
         @NlsSafe StringBuilder sb = new StringBuilder();
         for (Object option : usedOptions) {
-          if (sb.length() > 0) sb.append("  ");
+          if (!sb.isEmpty()) sb.append("  ");
           String optionText = getOptionText(option, true);
           if (optionText == null) continue;
           sb.append(optionText);
