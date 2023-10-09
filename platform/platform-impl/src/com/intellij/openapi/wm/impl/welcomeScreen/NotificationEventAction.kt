@@ -64,7 +64,7 @@ internal class NotificationEventAction(parentDisposable: Disposable) : DumbAware
   private fun checkAutoPopup(actionButton: JComponent) {
     if (actionButton.parent != null && actionButton.width > 0 && actionButton.height > 0 && actionButton.isVisible) {
       val balloonLayout = getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl
-      if (myAutoPopup && balloonLayout != null && !balloonLayout.myVisible) {
+      if (myAutoPopup && balloonLayout != null && !balloonLayout.myVisible && balloonLayout.locationComponent != null) {
         actionPerformed { balloonLayout.locationComponent as JComponent }
       }
       myAutoPopup = false
