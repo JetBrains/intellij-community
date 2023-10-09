@@ -104,7 +104,8 @@ public class MavenProject {
   }
 
   @NotNull
-  MavenProjectChanges set(@NotNull MavenProjectReaderResult readerResult,
+  @ApiStatus.Internal
+  public MavenProjectChanges set(@NotNull MavenProjectReaderResult readerResult,
                           @NotNull MavenGeneralSettings settings,
                           boolean updateLastReadStamp,
                           boolean resetArtifacts,
@@ -386,14 +387,14 @@ public class MavenProject {
       MavenPlugin bscMavenPlugin = findPlugin("org.bsc.maven", "maven-processor-plugin");
       Element cfg = getPluginGoalConfiguration(bscMavenPlugin, testSources ? "process-test" : "process");
       if (bscMavenPlugin != null && cfg == null) {
-        return getBuildDirectory() + (testSources ?  "/generated-sources/apt-test" : "/generated-sources/apt");
+        return getBuildDirectory() + (testSources ? "/generated-sources/apt-test" : "/generated-sources/apt");
       }
       if (cfg != null) {
         String out = MavenJDOMUtil.findChildValueByPath(cfg, "outputDirectory");
         if (out == null) {
           out = MavenJDOMUtil.findChildValueByPath(cfg, "defaultOutputDirectory");
           if (out == null) {
-            return getBuildDirectory() + (testSources ?  "/generated-sources/apt-test" : "/generated-sources/apt");
+            return getBuildDirectory() + (testSources ? "/generated-sources/apt-test" : "/generated-sources/apt");
           }
         }
 
@@ -512,7 +513,8 @@ public class MavenProject {
       int idx = compilerArg.indexOf('=', 3);
       if (idx >= 0) {
         optionsMap.put(compilerArg.substring(2, idx), compilerArg.substring(idx + 1));
-      } else {
+      }
+      else {
         optionsMap.put(compilerArg.substring(2), "");
       }
     }
@@ -871,10 +873,10 @@ public class MavenProject {
 
   public @NotNull Set<String> getSupportedDependencyScopes() {
     Set<String> result = ContainerUtil.newHashSet(MavenConstants.SCOPE_COMPILE,
-                                           MavenConstants.SCOPE_PROVIDED,
-                                           MavenConstants.SCOPE_RUNTIME,
-                                           MavenConstants.SCOPE_TEST,
-                                           MavenConstants.SCOPE_SYSTEM);
+                                                  MavenConstants.SCOPE_PROVIDED,
+                                                  MavenConstants.SCOPE_RUNTIME,
+                                                  MavenConstants.SCOPE_TEST,
+                                                  MavenConstants.SCOPE_SYSTEM);
     for (MavenImporter each : MavenImporter.getSuitableImporters(this)) {
       each.getSupportedDependencyScopes(result);
     }
@@ -1048,14 +1050,15 @@ public class MavenProject {
   }
 
   private @Nullable Element getCompilerConfig() {
-    Element executionConfiguration = getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin", "default-compile");
-    if(executionConfiguration != null) return executionConfiguration;
+    Element executionConfiguration =
+      getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin", "default-compile");
+    if (executionConfiguration != null) return executionConfiguration;
     return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
   }
 
   private @NotNull List<Element> getCompilerConfigs() {
     List<Element> configurations = getCompileExecutionConfigurations();
-    if(!configurations.isEmpty()) return configurations;
+    if (!configurations.isEmpty()) return configurations;
     Element configuration = getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
     return ContainerUtil.createMaybeSingletonList(configuration);
   }
@@ -1254,5 +1257,19 @@ public class MavenProject {
       in.defaultReadObject();
       myCache = new ConcurrentHashMap<>();
     }
+  }
+
+  public class Updater {
+    public void setDependencies(@NotNull List<MavenArtifact> dependencies) {
+      myState.myDependencies = dependencies;
+    }
+
+    public void setProperties(@NotNull Properties properties) {
+      myState.myProperties = properties;
+    }
+  }
+
+  public Updater updater() {
+    return new Updater();
   }
 }

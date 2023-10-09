@@ -345,6 +345,12 @@
     <registryKey key="maven.create.dummy.module.on.first.import" defaultValue="true"
                  description="Create maven dummy module on import"/>
 
+    <registryKey key="maven.preimport.project" defaultValue="false"
+                 description="Make fast project preimport"/>
+
+    <registryKey key="maven.preimport.only" defaultValue="false"
+                 description="Make fast project preimport only, without running maven import"/>
+
     <registryKey key="maven.server.per.idea.project" defaultValue="false"
                  description="Single Maven server per idea project, .mvn could be ignored"/>
 
