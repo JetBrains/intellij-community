@@ -161,8 +161,7 @@ public final class PersistentHashMapValueStorage {
 
   // cache size is twice larger than constants because (when used) it replaces two caches
   private static final FileAccessorCache<Path, FileChannelWithSizeTracking> ourFileChannelCache =
-    new FileAccessorCache<Path, FileChannelWithSizeTracking>(
-      2 * CACHE_PROTECTED_QUEUE_SIZE, 2 * CACHE_PROBATIONAL_QUEUE_SIZE) {
+    new FileAccessorCache<Path, FileChannelWithSizeTracking>(2 * CACHE_PROTECTED_QUEUE_SIZE, 2 * CACHE_PROBATIONAL_QUEUE_SIZE) {
       @Override
       protected @NotNull FileChannelWithSizeTracking createAccessor(Path path) throws IOException {
         return new FileChannelWithSizeTracking(path);

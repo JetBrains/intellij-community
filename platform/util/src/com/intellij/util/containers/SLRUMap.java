@@ -2,7 +2,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.containers.hash.EqualityPolicy;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +13,8 @@ import java.util.function.Consumer;
 public class SLRUMap<K, V> {
   private static final int FACTOR = Integer.getInteger("idea.slru.factor", 1);
 
-  private final LinkedHashMap<K, V> protectedQueue;
-  private final LinkedHashMap<K, V> probationalQueue;
+  private final LinkedCustomHashMap<K, V> protectedQueue;
+  private final LinkedCustomHashMap<K, V> probationalQueue;
 
   private final int protectedQueueSize;
   private final int probationalQueueSize;
@@ -25,35 +24,29 @@ public class SLRUMap<K, V> {
   private int misses;
 
   public SLRUMap(int protectedQueueSize, int probationalQueueSize) {
+    //noinspection unchecked
     this(protectedQueueSize, probationalQueueSize, (EqualityPolicy<? super K>)EqualityPolicy.CANONICAL);
   }
 
-  public SLRUMap(final int protectedQueueSize, final int probationalQueueSize, @NotNull EqualityPolicy<? super K> hashingStrategy) {
+  public SLRUMap(int protectedQueueSize, int probationalQueueSize, @NotNull EqualityPolicy<? super K> hashingStrategy) {
     this.protectedQueueSize = protectedQueueSize * FACTOR;
     this.probationalQueueSize = probationalQueueSize * FACTOR;
 
-    protectedQueue = new LinkedHashMap<K, V>(10, 0.6f, hashingStrategy, true) {
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<K, V> eldest, K key, V value) {
-        if (size() > SLRUMap.this.protectedQueueSize) {
-          probationalQueue.put(key, value);
-          return true;
-        }
-
-        return false;
+    probationalQueue = new LinkedCustomHashMap<>(hashingStrategy, (size, eldest, key, value) -> {
+      if (size > this.probationalQueueSize) {
+        onDropFromCache(key, value);
+        return true;
       }
-    };
+      return false;
+    });
 
-    probationalQueue = new LinkedHashMap<K, V>(10, 0.6f, hashingStrategy, true) {
-      @Override
-      protected boolean removeEldestEntry(final Map.Entry<K, V> eldest, K key, V value) {
-        if (size() > SLRUMap.this.probationalQueueSize) {
-          onDropFromCache(key, value);
-          return true;
-        }
-        return false;
+    protectedQueue = new LinkedCustomHashMap<>(hashingStrategy, (size, eldest, key, value) -> {
+      if (size > this.protectedQueueSize) {
+        probationalQueue.put(key, value);
+        return true;
       }
-    };
+      return false;
+    });
   }
 
   public @Nullable V get(K key) {
@@ -148,9 +141,9 @@ public class SLRUMap<K, V> {
 
   private K getStableKey(K key) {
     if (key instanceof ShareableKey) {
+      //noinspection unchecked
       return (K)((ShareableKey)key).getStableCopy();
     }
-
     return key;
   }
 
