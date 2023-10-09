@@ -1300,8 +1300,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     emptyText.clear();
     FindModel model = myHelper.getModel();
     boolean dotAdded = false;
-    if (StringUtil.isEmpty(model.getStringToFind())) {
+    if (StringUtil.isEmpty(model.getStringToFind()) && model.getFileFilter() == null) {
       emptyText.setText(FindBundle.message("message.type.search.query"));
+      return;
     }
     else {
       emptyText.setText(message);
@@ -1310,7 +1311,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       emptyText.appendText(".");
       dotAdded = true;
       emptyText.appendSecondaryText(FindBundle.message("find.recursively.hint"),
-                                                               SimpleTextAttributes.LINK_ATTRIBUTES,
+                                    LINK_PLAIN_ATTRIBUTES,
                                     e -> {
                                       model.setWithSubdirectories(true);
                                       scheduleResultsUpdate();
