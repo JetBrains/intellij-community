@@ -36,6 +36,7 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
@@ -195,13 +196,13 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         LOG.info("Closed dbus-service 'com.canonical.AppMenu.Registrar'");
         isServiceAvailable = false;
         boolean isMainMenuVisible = UISettings.getInstance().getShowMainMenu();
-        for (GlobalMenuLinux menuBar : instances) {
-          menuBar.windowHandle = null;
+        for (GlobalMenuLinux menuLinux : instances) {
+          menuLinux.windowHandle = null;
           if (isMainMenuVisible) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              JMenuBar jmenubar = menuBar.frame.getRootPane().getJMenuBar();
-              if (jmenubar != null) {
-                jmenubar.setVisible(true);
+            EventQueue.invokeLater(() -> {
+              JMenuBar menuBar = getMenuBar(menuLinux.frame);
+              if (menuBar != null) {
+                menuBar.setVisible(true);
               }
             });
           }
@@ -212,6 +213,11 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       new Thread(() -> ourLib.runMainLoop(ourGLogger, onAppmenuServiceAppeared, onAppmenuServiceVanished), threadName).start();
       LOG.info("Start glib main loop in thread: " + threadName);
     }
+  }
+
+  private static @Nullable JMenuBar getMenuBar(@NotNull JFrame menuBar) {
+    JRootPane rootPane = menuBar.getRootPane();
+    return rootPane == null ? null : rootPane.getJMenuBar();
   }
 
   private final @NotNull JFrame frame;
@@ -421,9 +427,12 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
 
     if (!SHOW_SWING_MENU) {
-      ApplicationManager.getApplication().invokeLater(() -> {
+      EventQueue.invokeLater(() -> {
         if (isEnabled) {
-          frame.getRootPane().getJMenuBar().setVisible(false);
+          JMenuBar menuBar = getMenuBar(frame);
+          if (menuBar != null) {
+            menuBar.setVisible(false);
+          }
         }
       });
     }
@@ -457,7 +466,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       }
 
       if (UISettings.getInstance().getShowMainMenu()) {
-        JMenuBar frameMenu = frame.getRootPane().getJMenuBar();
+        JMenuBar frameMenu = getMenuBar(frame);
         if (frameMenu != null) {
           frameMenu.setVisible(true);
         }
