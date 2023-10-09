@@ -58,10 +58,10 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
     //TODO RC: with mapped files we actually don't know are there any unsaved changes,
     //         since OS is responsible for that. We could force OS to flush the changes,
     //         but we couldn't ask are there changes.
-    //         I think return false is +/- safe option, since the data is almost always
-    //         'safe' (as long as OS doesn't crash), but it is a bit logically inconsistent:
+    //         I think return false is +/- safe option, since the data is almost always 'safe'
+    //         (as long as OS doesn't crash). But it is still a bit logically inconsistent:
     //         .isDirty() is supposed to return false if .force() has nothing to do, but
-    //         .force() still _can_ something, i.e. forcing OS to flush.
+    //         .force() still _can_ do something, i.e. forcing OS to flush.
     return false;
   }
 

@@ -50,6 +50,9 @@ public class AppendOnlyLogOverMMappedFileTest {
   @After
   public void tearDown() throws IOException {
     for (AppendOnlyLogOverMMappedFile log : openedLogs) {
+      log.closeAndUnsafelyUnmap();
+    }
+    for (AppendOnlyLogOverMMappedFile log : openedLogs) {
       log.closeAndClean();
     }
   }
