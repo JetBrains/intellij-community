@@ -4,12 +4,14 @@ package com.intellij.collaboration.ui.util
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
+import com.intellij.collaboration.ui.setItems
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Cell
@@ -20,7 +22,6 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
 import javax.swing.*
@@ -29,20 +30,44 @@ import javax.swing.event.ListDataListener
 import javax.swing.text.JTextComponent
 import kotlin.coroutines.CoroutineContext
 
-//TODO: generalise
-fun <T : Any> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
-                                                 itemsState: StateFlow<Collection<T>>,
-                                                 selectionState: MutableStateFlow<T?>,
-                                                 sortComparator: Comparator<T>) {
-  scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    itemsState.collect {
-      items = it.sortedWith(sortComparator)
+/**
+ * Binds the state of the combo box model with the given items state and selection flows.
+ */
+fun <T : Any> MutableCollectionComboBoxModel<T>.bindIn(scope: CoroutineScope,
+                                                       items: Flow<Collection<T>>,
+                                                       selectionState: MutableStateFlow<T?>,
+                                                       sortComparator: Comparator<T>) {
+  scope.launchNow {
+    items.collect {
+      setItems(it.sortedWith(sortComparator))
+    }
+  }
+  addSelectionChangeListenerIn(scope) {
+    @Suppress("UNCHECKED_CAST")
+    selectionState.value = selectedItem as? T
+  }
+  scope.launchNow {
+    selectionState.collect { item ->
+      if (selectedItem != item) {
+        selectedItem = item
+      }
+    }
+  }
+}
+
+fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                           items: Flow<Collection<T>>,
+                                           selectionState: MutableStateFlow<T?>,
+                                           sortComparator: Comparator<T>) {
+  scope.launchNow {
+    items.collect {
+      this@bindIn.items = it.sortedWith(sortComparator)
     }
   }
   addSelectionChangeListenerIn(scope) {
     selectionState.value = selectedItem?.wrappee
   }
-  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+  scope.launchNow {
     selectionState.collect { item ->
       if (selectedItem?.wrappee != item) {
         selectedItem = item?.let { ComboBoxWithActionsModel.Item.Wrapper(it) }
@@ -51,17 +76,16 @@ fun <T : Any> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
   }
 }
 
-//TODO: generalise
-fun <T : Any> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
-                                                 itemsState: StateFlow<Collection<T>>,
-                                                 selectionState: MutableStateFlow<T?>,
-                                                 actionsState: StateFlow<List<Action>>,
-                                                 sortComparator: Comparator<T>) {
-  bindIn(scope, itemsState, selectionState, sortComparator)
+fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                           items: Flow<Collection<T>>,
+                                           selectionState: MutableStateFlow<T?>,
+                                           actions: Flow<List<Action>>,
+                                           sortComparator: Comparator<T>) {
+  bindIn(scope, items, selectionState, sortComparator)
 
-  scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    actionsState.collect {
-      actions = it
+  scope.launchNow {
+    actions.collect {
+      this@bindIn.actions = it
     }
   }
 }

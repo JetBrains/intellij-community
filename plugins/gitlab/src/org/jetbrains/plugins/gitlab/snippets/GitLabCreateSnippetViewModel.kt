@@ -16,6 +16,8 @@ import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import java.util.*
+import kotlin.jvm.optionals.getOrNull
 
 private val LOG = logger<GitLabCreateSnippetViewModel>()
 
@@ -88,9 +90,10 @@ internal class GitLabCreateSnippetViewModel(
   }.stateIn(cs, SharingStarted.Lazily, listOf())
 
   /**
-   * The project currently assigned to the project coordinates
+   * The project the snippet will be posted under.
+   * Can be `null` or `Optional.empty`, but both mean the project coordinates are left unassigned.
    */
-  val onProject: MutableStateFlow<GitLabProjectCoordinates?> = MutableStateFlow(null)
+  val onProject: MutableStateFlow<Optional<GitLabProjectCoordinates>?> = MutableStateFlow(Optional.empty())
 
   /**
    * Lists the collected contents for the snippet that are completely empty.
@@ -114,14 +117,14 @@ internal class GitLabCreateSnippetViewModel(
       val projectsManager = project.serviceAsync<GitLabProjectsManager>()
       glRepositories.collectLatest { glProjects ->
         onProject.update {
-          if (it != null) {
+          if (it?.isPresent == true) {
             return@update it
           }
 
           val knownRepositories = projectsManager.knownRepositoriesState.value
           val currentRepository = knownRepositories.find { glProjects.contains(it.repository) }
-                                  ?: return@update null
-          currentRepository.repository
+                                  ?: return@update Optional.empty()
+          Optional.of(currentRepository.repository)
         }
       }
     }
@@ -134,7 +137,7 @@ internal class GitLabCreateSnippetViewModel(
     val (account, _) = glAccountAndCredentials.firstOrNull() ?: return null
     return GitLabCreateSnippetResult(
       account,
-      onProject.value,
+      onProject.value?.getOrNull(),
       nonEmptyContents.await(),
       data.value
     )

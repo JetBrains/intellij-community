@@ -1,13 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.snippets
 
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.ui.util.bindIn
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.*
@@ -16,18 +18,17 @@ import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JTextField
 import javax.swing.ListCellRenderer
+import kotlin.jvm.optionals.getOrNull
 
 internal object GitLabCreateSnippetComponentFactory {
   /**
@@ -73,39 +74,27 @@ internal object GitLabCreateSnippetComponentFactory {
        */
       private fun createPanel(createSnippetVm: GitLabCreateSnippetViewModel): JComponent {
         val data = createSnippetVm.data
-        val projectsManager = project.service<GitLabProjectsManager>()
-
-        fun setAccount(glAccount: GitLabAccount?) {
-          if (glAccount != null) {
-            cs.launch {
-              createSnippetVm.glAccount.update { glAccount }
-            }
-          }
-        }
 
         return panel {
           row(message("snippet.create.project.label")) {
-            val model = ComboBoxWithActionsModel<GitLabProjectCoordinates>(actionsFirst = true)
+            val model = MutableCollectionComboBoxModel<Optional<GitLabProjectCoordinates>>()
             model.bindIn(
               cs,
-              createSnippetVm.glRepositories,
+              createSnippetVm.glRepositories.mapState(cs) { repositories ->
+                listOf(Optional.empty<GitLabProjectCoordinates>()) + repositories.map { Optional.of(it) }
+              },
               createSnippetVm.onProject,
-              MutableStateFlow(listOf(swingAction(message("snippet.create.project.none")) {
-                model.selectedItem = null
-              })),
-              Comparator.comparing { it.projectPath.toString() }
+              Comparator.comparing { it.getOrNull()?.projectPath?.toString() ?: "" }
             )
 
             comboBox(
               model,
               ListCellRenderer { _, value, _, _, _ ->
-                when (value) {
-                  is ComboBoxWithActionsModel.Item.Wrapper ->
-                    JBLabel(value.wrappee.projectPath.toString())
-                  is ComboBoxWithActionsModel.Item.Action,
-                  null ->
-                    JBLabel(message("snippet.create.project.none"))
+                if (value == null) {
+                  return@ListCellRenderer JBLabel()
                 }
+
+                JBLabel(value.getOrNull()?.projectPath?.toString() ?: message("snippet.create.project.none"))
               }
             )
               .align(AlignX.FILL)
@@ -165,30 +154,23 @@ internal object GitLabCreateSnippetComponentFactory {
 
           // Account selection if >1 accounts available
           row(message("snippet.create.account.label")) {
-            val selectAccount = comboBox(
-              createSnippetVm.glAccounts.value,
-              ListCellRenderer<GitLabAccount?> { _, accountOrNull, _, _, _ ->
+            val model = MutableCollectionComboBoxModel<GitLabAccount>()
+            model.bindIn(cs, createSnippetVm.glAccounts, createSnippetVm.glAccount, Comparator.comparing { it.name })
+
+            comboBox(
+              model,
+              ListCellRenderer { _, account, _, _, _ ->
                 // The list shouldn't contain nulls, but if they do, don't render anything
-                val account = accountOrNull ?: return@ListCellRenderer JBLabel()
+                if (account == null) {
+                  return@ListCellRenderer JBLabel()
+                }
 
                 JBLabel("${account.name} @ ${account.server.uri}")
               })
               .align(Align.FILL)
-              .bindItem({ createSnippetVm.glAccount.value }, ::setAccount)
 
             cs.launch {
               createSnippetVm.glAccounts.collectLatest { accounts ->
-                // Re-fill the list of accounts
-                val selected = selectAccount.component.selectedItem
-                selectAccount.component.removeAllItems()
-                accounts.forEach { selectAccount.component.addItem(it) }
-                selectAccount.component.selectedItem = selected
-
-                // If none is selected yet, select the first account
-                if (selectAccount.component.selectedItem == null && selectAccount.component.itemCount > 0) {
-                  selectAccount.component.selectedIndex = 0
-                }
-
                 // If there are multiple accounts make the row visible
                 visible(accounts.size > 1)
               }

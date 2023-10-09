@@ -12,18 +12,22 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import kotlin.properties.Delegates
 
-class ComboBoxWithActionsModel<T : Any>(private val actionsFirst: Boolean = false)
+fun <T : Any> MutableCollectionComboBoxModel<T>.setItems(value: List<T>) {
+  val delta = CollectionDelta(items, value)
+  delta.removedItems.forEach { removeElement(it) }
+  delta.newItems.forEach { addElement(it) }
+}
+
+class ComboBoxWithActionsModel<T>
   : ComboBoxModel<ComboBoxWithActionsModel.Item<T>> {
 
-  private val itemsModel = MutableCollectionComboBoxModel<T>()
+  private val itemsModel = MutableCollectionComboBoxModel<Item.Wrapper<T>>()
   private val listEventDispatcher = EventDispatcher.create(ListDataListener::class.java)
 
   var items: List<T>
-    get() = itemsModel.items
+    get() = itemsModel.items.map { it.wrappee }
     set(value) {
-      val delta = CollectionDelta<T>(itemsModel.items, value)
-      delta.removedItems.forEach { itemsModel.remove(it) }
-      delta.newItems.forEach { itemsModel.addElement(it) }
+      itemsModel.setItems(value.map { Item.Wrapper(it) })
     }
 
   var actions: List<Action> by Delegates.observable(emptyList()) { _, oldValue, newValue ->
@@ -61,20 +65,17 @@ class ComboBoxWithActionsModel<T : Any>(private val actionsFirst: Boolean = fals
       if (action.isEnabled) action.actionPerformed(ActionEvent(this, ActionEvent.ACTION_PERFORMED, null))
       return
     }
-    itemsModel.selectedItem = item.asSafely<Item.Wrapper<T>>()?.wrappee
+    itemsModel.selectedItem = item.asSafely<Item.Wrapper<T>>()
   }
 
   override fun getSize() = itemsModel.size + actions.size
 
   override fun getElementAt(index: Int): Item<T> {
-    val itemIndices = if (!actionsFirst) 0 until itemsModel.size else actions.size until (itemsModel.size + actions.size)
-    val actionIndices = if (!actionsFirst) itemsModel.size until (itemsModel.size + actions.size) else actions.indices
-
-    if (index in itemIndices) {
-      return itemsModel.getElementAt(index - itemIndices.first).let { Item.Wrapper(it) }
+    if (index in 0 until itemsModel.size) {
+      return itemsModel.getElementAt(index)
     }
-    if (index in actionIndices) {
-      val actionIndex = index - actionIndices.first
+    val actionIndex = index - itemsModel.size
+    if (actionIndex in actions.indices) {
       return actions[actionIndex].let { Item.Action(it, actionIndex == 0 && itemsModel.size != 0) }
     }
     error("Invalid index $index")
