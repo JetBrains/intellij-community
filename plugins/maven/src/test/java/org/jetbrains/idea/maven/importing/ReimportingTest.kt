@@ -273,13 +273,13 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <version>1</version>
       """.trimIndent())
 
-    importProjects(m1, m2)
+    importProjectsAsync(m1, m2)
     val dep = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"))
     assertNotNull(dep)
     assertFalse(dep!!.isProductionOnTestDependency())
 
     createModulePom("m1", createPomXmlWithModuleDependency("test-jar"))
-    importProjects(m1, m2)
+    importProjectsAsync(m1, m2)
     val dep2 = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"))
     assertNotNull(dep2)
     assertTrue(dep2!!.isProductionOnTestDependency())
