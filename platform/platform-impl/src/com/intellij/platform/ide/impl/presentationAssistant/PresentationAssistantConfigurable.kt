@@ -3,6 +3,7 @@ package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.CollectionComboBoxModel
@@ -10,8 +11,11 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 
 
-class PresentationAssistantConfigurable: DslConfigurableBase() {
+class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
   private val assistant: PresentationAssistant = PresentationAssistant.INSTANCE
+
+  override fun getDisplayName(): String = IdeBundle.message("presentation.assistant.settings")
+
   override fun createPanel(): DialogPanel {
     val configuration = assistant.configuration
 
@@ -97,7 +101,7 @@ class PresentationAssistantConfigurable: DslConfigurableBase() {
   }
 
   override fun reset() {
-    super.reset()
+    super<DslConfigurableBase>.reset()
     PresentationAssistant.INSTANCE.updatePresenter()
   }
 
