@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.java.stubs.index.JavaUnnamedClassIndex;
-import com.intellij.psi.util.JavaUnnamedClassUtil;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.PathUtil;
@@ -195,10 +194,9 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     if (getOptions().isUnnamedClassConfiguration()) {
       if (mainClass != null && !DumbService.isDumb(getProject())) {
         try {
-          final boolean matchingClass = ContainerUtil.exists(
-            JavaUnnamedClassIndex.getInstance().getAllClasses(getProject()),
-            indexed -> JavaUnnamedClassUtil.trimJavaExtension(indexed).equals(mainClass)
-          );
+          final boolean matchingClass = !JavaUnnamedClassIndex.getInstance()
+            .getElements(mainClass, getProject(), configurationModule.getSearchScope())
+            .isEmpty();
           if (!matchingClass) {
             throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", mainClass));
           }

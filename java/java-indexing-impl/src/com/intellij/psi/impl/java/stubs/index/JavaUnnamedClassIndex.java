@@ -3,10 +3,12 @@ package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiUnnamedClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -29,5 +31,9 @@ public class JavaUnnamedClassIndex extends StringStubIndexExtension<PsiUnnamedCl
 
   public Collection<String> getAllClasses(@NotNull Project project) {
     return StubIndex.getInstance().getAllKeys(getKey(), project);
+  }
+
+  public @NotNull Collection<PsiUnnamedClass> getElements(@NotNull String key, @NotNull Project project, @Nullable GlobalSearchScope scope) {
+    return StubIndex.getElements(JavaStubIndexKeys.UNNAMED_CLASSES, key, project, scope, PsiUnnamedClass.class);
   }
 }
