@@ -16,13 +16,6 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class.java, KotlinBundle.lazyMessage("remove.braces")) {
-    private fun KtElement.findChildBlock() = when (this) {
-        is KtBlockExpression -> this
-        is KtLoopExpression -> body as? KtBlockExpression
-        is KtWhenEntry -> expression as? KtBlockExpression
-        else -> null
-    }
-
     override fun isApplicableTo(element: KtElement, caretOffset: Int): Boolean {
         val block = element.findChildBlock() ?: return false
         if (!Holder.isApplicableTo(block)) return false
@@ -41,6 +34,16 @@ internal class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtEleme
     override fun applyTo(element: KtElement, editor: Editor?) {
         val block = element.findChildBlock() ?: return
         Holder.removeBraces(element, block, editor)
+    }
+
+    override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean =
+        element is KtBlockExpression && element.parent !is KtWhenEntry
+
+    private fun KtElement.findChildBlock(): KtBlockExpression? = when (this) {
+        is KtBlockExpression -> this
+        is KtLoopExpression -> body as? KtBlockExpression
+        is KtWhenEntry -> expression as? KtBlockExpression
+        else -> null
     }
 
     object Holder {
@@ -99,8 +102,8 @@ internal class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtEleme
         }
 
         private fun KtExpression.handleComments(block: KtBlockExpression, factory: KtPsiFactory) {
-            val nextComments = comments(true).dropLastWhile { it is PsiWhiteSpace }
-            val prevComments = comments(false).reversed().ifEmpty {
+            val nextComments = comments(forward = true).dropLastWhile { it is PsiWhiteSpace }
+            val prevComments = comments(forward = false).reversed().ifEmpty {
                 if (nextComments.hasLineBreak()) listOf(factory.createNewLine()) else emptyList()
             }
             val blockParent = block.parent
@@ -113,12 +116,13 @@ internal class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtEleme
         }
 
         private fun KtExpression.comments(forward: Boolean): List<PsiElement> {
-            val elements = siblings(forward = forward, withItself = false).takeWhile { it is PsiComment || it is PsiWhiteSpace }.toList()
+            val elements = siblings(forward = forward, withItself = false)
+                .takeWhile { it is PsiComment || it is PsiWhiteSpace }
+                .toList()
             return if (elements.any { it is PsiComment }) elements else emptyList()
         }
 
-        private fun List<PsiElement>.hasLineBreak(): Boolean = any { it is PsiWhiteSpace && it.textContains('\n') }
+        private fun List<PsiElement>.hasLineBreak(): Boolean =
+            any { it is PsiWhiteSpace && it.textContains('\n') }
     }
-
-    override fun skipProcessingFurtherElementsAfter(element: PsiElement) = element is KtBlockExpression && element.parent !is KtWhenEntry
 }
