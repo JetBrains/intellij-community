@@ -24,6 +24,7 @@ import org.junit.runners.JUnit4
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileAttribute
+import java.nio.file.attribute.FileTime
 import java.time.Instant
 import java.util.*
 import kotlin.io.path.*
@@ -420,8 +421,26 @@ internal class GitSettingsLogTest {
     Disposer.dispose(gitSettingsLog)
     val indexLock  = settingsSyncStorage / ".git" / "index.lock"
     indexLock.createFile()
-    val newGitSettingsLog = initializeGitSettingsLog()
+    val headLock  = settingsSyncStorage / ".git" / "HEAD.lock"
+    headLock.createFile()
+    try {
+      val newGitSettingsLog = initializeGitSettingsLog()
+      fail("Should have failed")
+    } catch (ex: Exception) {
+
+    }
+    indexLock.setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis() - 7000L))
+    try {
+      val newGitSettingsLog = initializeGitSettingsLog()
+      fail("Should have failed")
+    } catch (ex: Exception) {
+
+    }
     assertFalse(indexLock.exists())
+
+    headLock.setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis() - 7000L))
+    val newGitSettingsLog = initializeGitSettingsLog()
+    assertFalse(headLock.exists())
   }
 
   private fun checkUsernameEmail(expectedName: String, expectedEmail: String) {
