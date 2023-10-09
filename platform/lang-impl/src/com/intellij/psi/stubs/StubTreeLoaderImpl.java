@@ -11,6 +11,7 @@ import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
@@ -33,7 +34,16 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   private static final Logger LOG = Logger.getInstance(StubTreeLoaderImpl.class);
   // todo remove once we don't need this for stub-ast mismatch debug info
   private static volatile boolean ourStubReloadingProhibited;
-  private final IndexingStampInfoStorage indexingStampInfoStorage = IndexingStampInfoStorage.create("stubIndexStamp", 3);
+  private final IndexingStampInfoStorage indexingStampInfoStorage = createStorage();
+
+  private static IndexingStampInfoStorage createStorage() {
+    boolean shouldUseFastAttributes = Registry.is("scanning.stamps.over.fast.attributes", true)
+                                      || Registry.is("scanning.trust.indexing.flag", false);
+    // TODO-ank: hardcoded false, because of IAE here:
+    //  java.lang.IllegalArgumentException: bytesPerRow(=3) is not aligned with pageSize(=4194304): rows must be page-aligned
+    //    at com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper.<init>(MappedFileStorageHelper.java:213)
+    return IndexingStampInfoStorage.create("stubIndexStamp", 3, false);
+  }
 
   @Override
   public @Nullable ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile) {

@@ -32,9 +32,9 @@ public final class FastFileAttributes {
     throw new AssertionError("Not for instantiation");
   }
 
-  public static Int3FileAttribute int3FileAttributes(@NotNull FSRecordsImpl vfs,
-                                                     @NotNull String storageName,
-                                                     int version) throws IOException {
+  public static @NotNull Int3FileAttribute int3FileAttributes(@NotNull FSRecordsImpl vfs,
+                                                              @NotNull String storageName,
+                                                              int version) throws IOException {
     MappedFileStorageHelper helper = openHelperAndVerifyVersions(
       vfs,
       storageName,
@@ -81,10 +81,21 @@ public final class FastFileAttributes {
       return storageHelper.readIntField(vFile, fieldOffset(fieldNo));
     }
 
+    public int readField(int fileId,
+                         int fieldNo) throws IOException {
+      return storageHelper.readIntField(fileId, fieldOffset(fieldNo));
+    }
+
     public void write(@NotNull VirtualFile vFile,
                       int fieldNo,
                       int value) throws IOException {
       storageHelper.writeIntField(vFile, fieldOffset(fieldNo), value);
+    }
+
+    public void write(int fileId,
+                      int fieldNo,
+                      int value) throws IOException {
+      storageHelper.writeIntField(fileId, fieldOffset(fieldNo), value);
     }
 
     public void update(@NotNull VirtualFile vFile,
