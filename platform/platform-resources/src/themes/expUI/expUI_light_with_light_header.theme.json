@@ -198,6 +198,14 @@
       }
     },
 
+    "PresentationAssistant": {
+      "Popup": {
+        "background": "Grey14",
+        "foreground": "Grey2"
+      },
+      "keymapLabel": "Grey7"
+    },
+
     "DataSummary.Chart.background": "Blue4"
   }
 }

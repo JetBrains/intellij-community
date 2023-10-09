@@ -202,6 +202,21 @@
       "since": "2022.2"
     },
     {
+      "key": "PresentationAssistant.Popup.foreground",
+      "description": "Presentation Assistant popup foreground (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Popup.background",
+      "description": "Presentation Assistant popup background (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.keymapLabel",
+      "description": "Presentation Assistant keymap label text color (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
       "key": "ContextHelp.fontSizeOffset",
       "description": "Font size offset for comments (usually gray description text under components), used only in legacy UI",
       "since": "2022.1",

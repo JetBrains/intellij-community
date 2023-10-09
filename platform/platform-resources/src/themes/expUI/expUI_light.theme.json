@@ -923,6 +923,13 @@
         "foreground" : "Grey8"
       }
     },
+    "PresentationAssistant": {
+      "Popup": {
+        "background": "Grey2",
+        "foreground": "Grey14"
+      },
+      "keymapLabel": "Grey9"
+    },
     "HelpBrowser": {
       "AiEditor" : {
         "verticalMarkerColor": "Purple5",

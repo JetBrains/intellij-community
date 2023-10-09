@@ -5,7 +5,7 @@
  */
 package com.intellij.platform.ide.impl.presentationAssistant
 
-import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -42,7 +42,7 @@ internal class ActionInfoPanel(textData: TextData, private val appearance: Actio
     subtitleLabel.border = JBEmptyBorder(appearance.subtitleInsets.unscaled.apply {
       if (appearance.titleSubtitleGap > 0) top += appearance.titleSubtitleGap
     })
-    subtitleLabel.foreground = TITLE_COLOR
+    subtitleLabel.foreground = SUBTITLE_COLOR
     subtitleLabel.font = JBFont.label().deriveFont(JBUIScale.scale(appearance.subtitleFontSize))
 
     updateLabels()
@@ -59,7 +59,8 @@ internal class ActionInfoPanel(textData: TextData, private val appearance: Actio
   }
 
   companion object {
-    val BACKGROUND = EditorColorsManager.getInstance().globalScheme.getColor(BACKGROUND_COLOR_KEY)
-    private val TITLE_COLOR = EditorColorsManager.getInstance().globalScheme.getColor(FOREGROUND_COLOR_KEY)
+    val BACKGROUND = JBColor.namedColor("PresentationAssistant.Popup.background", JBColor.PanelBackground)
+    private val TITLE_COLOR = JBColor.namedColor("PresentationAssistant.Popup.foreground", JBColor.foreground())
+    private val SUBTITLE_COLOR = JBColor.namedColor("PresentationAssistant.keymapLabel", JBColor.foreground())
   }
 }
