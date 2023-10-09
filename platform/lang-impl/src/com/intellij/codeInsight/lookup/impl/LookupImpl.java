@@ -193,6 +193,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Override
   public void setPresentation(@NotNull LookupPresentation presentation) {
     myPresentation = presentation;
+    refreshUi(false, true);
   }
 
   @NotNull
