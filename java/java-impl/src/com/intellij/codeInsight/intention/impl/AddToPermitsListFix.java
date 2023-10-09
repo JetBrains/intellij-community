@@ -24,7 +24,7 @@ public class AddToPermitsListFix extends PsiUpdateModCommandAction<PsiClass> {
   public AddToPermitsListFix(@NotNull PsiClass subClass, @NotNull PsiClass superClass) {
     super(superClass);
     myParentName = Objects.requireNonNull(superClass.getName());
-    myClassQualifiedName = Objects.requireNonNull(subClass.getQualifiedName());
+    myClassQualifiedName = subClass.getQualifiedName();
     myClassName = Objects.requireNonNull(subClass.getName());
   }
 
@@ -39,6 +39,7 @@ public class AddToPermitsListFix extends PsiUpdateModCommandAction<PsiClass> {
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiClass element) {
+    if (myClassQualifiedName == null) return null;
     return Presentation.of(JavaBundle.message("add.to.permits.list", myClassName, myParentName)).withFixAllOption(this);
   }
 
