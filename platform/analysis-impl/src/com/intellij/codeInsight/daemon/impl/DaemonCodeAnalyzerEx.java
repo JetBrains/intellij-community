@@ -23,8 +23,9 @@ import java.util.List;
 
 public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   private static final Logger LOG = Logger.getInstance(DaemonCodeAnalyzerEx.class);
+
   public static DaemonCodeAnalyzerEx getInstanceEx(Project project) {
-    return (DaemonCodeAnalyzerEx)project.getService(DaemonCodeAnalyzer.class);
+    return (DaemonCodeAnalyzerEx)DaemonCodeAnalyzer.getInstance(project);
   }
 
   public static boolean processHighlights(@NotNull Document document,
@@ -90,4 +91,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return fileEditor instanceof TextEditor textEditor
            && getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNull(textEditor.getEditor().getDocument());
   }
+  abstract boolean cutOperationJustHappened();
+  abstract boolean isEscapeJustPressed();
+
 }

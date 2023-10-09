@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingListener;
@@ -98,17 +97,13 @@ public final class DaemonListeners implements Disposable {
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private boolean myEscPressed;
-  private volatile boolean cutOperationJustHappened;
+  volatile boolean cutOperationJustHappened;
   private List<Editor> myActiveEditors = Collections.emptyList();
   private static final Key<Boolean> DAEMON_INITIALIZED = Key.create("DAEMON_INITIALIZED");
 
-  public static DaemonListeners getInstance(@NotNull Project project) {
-    return project.getService(DaemonListeners.class);
-  }
-
-  public DaemonListeners(@NotNull Project project) {
+  DaemonListeners(@NotNull Project project, @NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer) {
     myProject = project;
-    myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    myDaemonCodeAnalyzer = daemonCodeAnalyzer;
 
     boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, null, Boolean.TRUE);
     if (!replaced) {
@@ -236,7 +231,7 @@ public final class DaemonListeners implements Disposable {
       }
     }, this);
 
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiChangeHandler(myProject, connection, this), this);
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiChangeHandler(myProject, connection, daemonCodeAnalyzer, this), this);
 
     connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
@@ -511,12 +506,12 @@ public final class DaemonListeners implements Disposable {
                                               @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     ThreadingAssertions.assertEventDispatchThread();
     Project project = file.getProject();
-    DaemonListeners listeners = getInstance(project);
-    if (listeners == null) {
+    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
+    if (daemonCodeAnalyzer == null) {
       return true;
     }
 
-    if (listeners.cutOperationJustHappened) {
+    if (daemonCodeAnalyzer.cutOperationJustHappened()) {
       return false;
     }
     return CanISilentlyChange.thisFile(file).canIReally(isInContent, extensionsAllowToChangeFileSilently);

@@ -96,6 +96,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private static final @NotNull Key<Boolean> COMPLETE_ESSENTIAL_HIGHLIGHTING_KEY = Key.create("COMPLETE_ESSENTIAL_HIGHLIGHTING");
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
+  private final DaemonListeners myListeners;
   private PsiDocumentManager psiDocumentManager;
   private FileEditorManager fileEditorManager;
   private final Map<FileEditor, DaemonProgressIndicator> myUpdateProgress = new ConcurrentHashMap<>();
@@ -153,6 +154,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       myLastSettings = null;
     });
     myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
+    myListeners = new DaemonListeners(project, this);
+    Disposer.register(this, myListeners);
   }
 
   private FileEditorManager getFileEditorManager() {
@@ -318,6 +321,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         }
       }
     }
+  }
+
+  @Override
+  boolean cutOperationJustHappened() {
+    return myListeners.cutOperationJustHappened;
+  }
+
+  @Override
+  boolean isEscapeJustPressed() {
+    return myListeners.isEscapeJustPressed();
   }
 
   @Override
@@ -977,7 +990,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
     if (PowerSaveMode.isEnabled()) {
       // to show the correct "power save" traffic light icon
-      DaemonListeners.getInstance(project).repaintTrafficLightIconForAllEditors();
+      dca.myListeners.repaintTrafficLightIconForAllEditors();
       return;
     }
 

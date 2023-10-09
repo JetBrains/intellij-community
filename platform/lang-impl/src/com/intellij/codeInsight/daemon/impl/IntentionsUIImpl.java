@@ -60,7 +60,7 @@ public class IntentionsUIImpl extends IntentionsUI {
         && editor.getCaretModel().getCaretCount() == 1
         && cachedIntentions.showBulb()
         // do not show bulb when the user explicitly ESCaped it away
-        && !DaemonListeners.getInstance(project).isEscapeJustPressed()) {
+        && !DaemonCodeAnalyzerEx.getInstanceEx(project).isEscapeJustPressed()) {
       myLastIntentionHint = IntentionHintComponent.showIntentionHint(project, cachedIntentions.getFile(), editor, false, cachedIntentions);
     }
   }
