@@ -8,7 +8,7 @@ import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TerminalDisplay
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
-import com.jediterm.terminal.model.JediTerminal
+import com.jediterm.terminal.model.TerminalSelection
 import java.awt.Toolkit
 
 internal class ModelUpdatingTerminalDisplay(private val model: TerminalModel,
@@ -28,20 +28,8 @@ internal class ModelUpdatingTerminalDisplay(private val model: TerminalModel,
     }
   }
 
-  override fun requestResize(newWinSize: TermSize,
-                             origin: RequestOrigin,
-                             cursorX: Int,
-                             cursorY: Int,
-                             resizeHandler: JediTerminal.ResizeHandler) {
-    val oldWidth = model.width
-    val oldHeight = model.height
-    val delegatingResizeHandler = JediTerminal.ResizeHandler { newTermWidth, newTermHeight, newCursorX, newCursorY ->
-      resizeHandler.sizeUpdated(newTermWidth, newTermHeight, newCursorX, newCursorY)
-      if (oldWidth != newTermWidth || oldHeight != newTermHeight) {
-        model.terminalListeners.forEach { it.onSizeChanged(newTermWidth, newTermHeight) }
-      }
-    }
-    model.textBuffer.resize(newWinSize, origin, cursorX, cursorY, delegatingResizeHandler, null)
+  override fun onResize(newTermSize: TermSize, origin: RequestOrigin) {
+    model.terminalListeners.forEach { it.onSizeChanged(newTermSize.columns, newTermSize.rows) }
   }
 
   override fun scrollArea(scrollRegionTop: Int, scrollRegionSize: Int, dy: Int) {}
@@ -63,6 +51,8 @@ internal class ModelUpdatingTerminalDisplay(private val model: TerminalModel,
   override fun setWindowTitle(windowTitle: String) {
     model.windowTitle = windowTitle
   }
+
+  override fun getSelection(): TerminalSelection? = null
 
   override fun terminalMouseModeSet(mouseMode: MouseMode) {
     model.mouseMode = mouseMode
