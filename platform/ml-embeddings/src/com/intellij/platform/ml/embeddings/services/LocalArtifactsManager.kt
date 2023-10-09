@@ -3,26 +3,27 @@ package com.intellij.platform.ml.embeddings.services
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.openapi.progress.withRawProgressReporter
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.delete
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
@@ -33,9 +34,11 @@ class LocalArtifactsManager {
     .resolve(SEMANTIC_SEARCH_RESOURCES_DIR)
     .resolve(MODEL_VERSION)
     .also { Files.createDirectories(it.toPath()) }
+
   private val modelArtifactsRoot = root.resolve(MODEL_ARTIFACTS_DIR)
-  private val mutex = ReentrantLock()
+  private val mutex = Mutex()
   private var failNotificationShown = false
+  private var downloadCanceled = false
 
   init {
     root.parentFile.toPath().listDirectoryEntries().filter { it.name != MODEL_VERSION }.forEach { it.delete(recursively = true) }
@@ -44,12 +47,31 @@ class LocalArtifactsManager {
   fun getCustomRootDataLoader() = CustomRootDataLoader(modelArtifactsRoot.toPath())
 
   @RequiresBackgroundThread
-  fun downloadArtifactsIfNecessary() = mutex.withLock {
-    if (!checkArtifactsPresent()) {
-      logger.debug { "Semantic search artifacts are not present, starting the download..." }
-      val indicator = BackgroundableProcessIndicator(null, ARTIFACTS_DOWNLOAD_TASK_NAME, null, "", false)
-      ProgressManager.getInstance().runProcess(this::downloadArtifacts, indicator)
-      ApplicationManager.getApplication().invokeLater { Disposer.dispose(indicator) }
+  suspend fun downloadArtifactsIfNecessary(project: Project? = null,
+                                           retryIfCanceled: Boolean = true) = withContext(Dispatchers.IO) {
+    mutex.withLock {
+      if (!checkArtifactsPresent() && (retryIfCanceled || !downloadCanceled)) {
+        logger.debug { "Semantic search artifacts are not present, starting the download..." }
+        if (project != null) {
+          withBackgroundProgress(project, ARTIFACTS_DOWNLOAD_TASK_NAME) {
+            withRawProgressReporter {
+              try {
+                coroutineToIndicator { // platform code relies on the existence of indicator
+                  downloadArtifacts()
+                }
+              }
+              catch (e: CancellationException) {
+                logger.debug { "Artifacts downloading was canceled" }
+                downloadCanceled = true
+                throw e
+              }
+            }
+          }
+        }
+        else {
+          downloadArtifacts()
+        }
+      }
     }
   }
 
@@ -98,7 +120,7 @@ class LocalArtifactsManager {
     private const val ARCHIVE_NAME = "semantic-text-search.jar"
     private const val NOTIFICATION_GROUP_ID = "Semantic search"
 
-    private val logger by lazy { logger<LocalArtifactsManager>() }
+    private val logger by lazy { Logger.getInstance(LocalArtifactsManager::class.java) }
 
     fun getInstance() = service<LocalArtifactsManager>()
 

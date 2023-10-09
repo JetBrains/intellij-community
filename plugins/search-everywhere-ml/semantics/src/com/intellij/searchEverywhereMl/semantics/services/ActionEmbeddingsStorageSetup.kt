@@ -3,61 +3,55 @@ package com.intellij.searchEverywhereMl.semantics.services
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.*
 import com.intellij.platform.ml.embeddings.utils.normalized
-import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.EmbeddingSearchIndex
+import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicReference
 
 class ActionEmbeddingsStorageSetup(
   private val index: EmbeddingSearchIndex,
-  private val setupTaskIndicator: AtomicReference<ProgressIndicator>
-) : Task.Backgroundable(null, setupTitle) {
+  private val indexSetupJob: AtomicReference<Job>
+) {
   private var shouldSaveToDisk = true
 
-  override fun run(indicator: ProgressIndicator) {
+  suspend fun run() = coroutineScope {
     val indexableActionIds = ActionEmbeddingsStorage.getIndexableActionIds()
     if (checkEmbeddingsReady(indexableActionIds)) {
       shouldSaveToDisk = false
-      return
+      return@coroutineScope
     }
 
-    val embeddingService = LocalEmbeddingServiceProvider.getInstance().getServiceBlocking() ?: return
+    val embeddingService = LocalEmbeddingServiceProvider.getInstance().getService() ?: return@coroutineScope
     // Cancel the previous embeddings calculation task if it's not finished
-    setupTaskIndicator.getAndSet(indicator)?.cancel()
+    indexSetupJob.getAndSet(launch {
+      val indexedActionsCount = index.size
+      val totalIndexableActionsCount = indexableActionIds.size
 
-    indicator.text = setupTitle
-    var indexedActionsCount = index.size
-    val totalIndexableActionsCount = indexableActionIds.size
-    indicator.isIndeterminate = false
+      val actionManager = ActionManager.getInstance() as ActionManagerImpl
+      indexableActionIds
+        .asSequence()
+        .filter { it !in index }
+        .map { it to actionManager.getActionOrStub(it) }
+        .chunked(BATCH_SIZE)
+        .forEach { batch ->
+          val actionIds = batch.map { (id, _) -> id }
+          val texts = batch.map { (_, action) -> action!!.templateText!! }
 
-    val actionManager = ActionManager.getInstance() as ActionManagerImpl
-    indexableActionIds
-      .asSequence()
-      .filter { it !in index }
-      .map { it to actionManager.getActionOrStub(it) }
-      .chunked(BATCH_SIZE)
-      .forEach { batch ->
-        ProgressManager.checkCanceled()
-        val actionIds = batch.map { (id, _) -> id }
-        val texts = batch.map { (_, action) -> action!!.templateText!! }
-        val embeddings = runBlockingCancellable { embeddingService.embed(texts) }.map { it.normalized() }
-        index.addEntries(actionIds zip embeddings)
-        indexedActionsCount += embeddings.size
-        indicator.fraction = indexedActionsCount.toDouble() / totalIndexableActionsCount
-      }
-
-    // If the indicator is already changed, then the current task is already canceled
-    if (setupTaskIndicator.compareAndSet(indicator, null)) indicator.cancel()
+          durationStep(texts.size.toDouble() / (totalIndexableActionsCount - indexedActionsCount)) {
+            val embeddings = embeddingService.embed(texts).map { it.normalized() }
+            index.addEntries(actionIds zip embeddings)
+          }
+        }
+    })?.cancel()
   }
 
-  override fun onCancel() {
+  fun onFinish(cs: CoroutineScope) {
+    indexSetupJob.set(null)
     if (shouldSaveToDisk) {
-      ApplicationManager.getApplication().executeOnPooledThread { index.saveToDisk() }
+      cs.launch(Dispatchers.IO) {
+        index.saveToDisk()
+      }
     }
   }
 
@@ -67,9 +61,6 @@ class ActionEmbeddingsStorageSetup(
   }
 
   companion object {
-    private val setupTitle
-      get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.actions.generation.label")
-
     private const val BATCH_SIZE = 1
   }
 }

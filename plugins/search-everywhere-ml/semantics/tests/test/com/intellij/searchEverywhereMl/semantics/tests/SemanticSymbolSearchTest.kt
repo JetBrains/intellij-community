@@ -15,6 +15,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.editor.saveToDisk
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
+import kotlinx.coroutines.test.runTest
 import org.jetbrains.kotlin.psi.KtFunction
 
 
@@ -22,7 +23,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
   private val storage
     get() = SymbolEmbeddingStorage.getInstance(project)
 
-  fun `test basic semantics`() {
+  fun `test basic semantics`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
     assertEquals(5, storage.index.size)
 
@@ -36,12 +37,12 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("handleScoresFile", "clearFileWithScores"), neighbours.map { it.text }.toSet())
   }
 
-  fun `test index ids are not duplicated`() {
+  fun `test index ids are not duplicated`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/IndexProjectAction.kt")
     assertEquals(1, storage.index.size)
   }
 
-  fun `test search everywhere contributor`() {
+  fun `test search everywhere contributor`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
     val searchEverywhereUI = SearchEverywhereUI(project, listOf(SemanticSymbolSearchEverywhereContributor(createEvent())),
                                                 { _ -> null }, null)
@@ -58,7 +59,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("ProjectIndexingTask", "startIndexing"), methods.map { it.id }.toSet())
   }
 
-  fun `test method renaming changes the index`() {
+  fun `test method renaming changes the index`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
     assertEquals(5, storage.index.size)
 
@@ -86,7 +87,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("buyHelicopter"), neighbours.map { it.text }.toSet())
   }
 
-  fun `test removal of file with method changes the index`() {
+  fun `test removal of file with method changes the index`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
     assertEquals(5, storage.index.size)
 
@@ -111,10 +112,10 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("handleScoresFile", "clearFileWithScores"), neighbours.map { it.text }.toSet())
   }
 
-  private fun setupTest(vararg filePaths: String) {
+  private suspend fun setupTest(vararg filePaths: String) {
     myFixture.configureByFiles(*filePaths)
     LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
     SemanticSearchSettings.getInstance().enabledInSymbolsTab = true
-    storage.generateEmbeddingsIfNecessary()
+    storage.generateEmbeddingsIfNecessary().join()
   }
 }

@@ -3,9 +3,6 @@ package com.intellij.platform.ml.embeddings.utils
 
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import kotlin.math.sqrt
 
 private const val SEPARATOR = "~"
@@ -48,18 +45,12 @@ fun splitIdentifierIntoTokens(identifier: String): List<String> {
   }
 }
 
-fun generateEmbedding(indexableRepresentation: String, downloadArtifacts: Boolean = false): FloatTextEmbedding? {
+suspend fun generateEmbedding(indexableRepresentation: String, downloadArtifacts: Boolean = false): FloatTextEmbedding? {
   return generateEmbeddings(listOf(indexableRepresentation), downloadArtifacts)?.single()
 }
 
-fun generateEmbeddings(texts: List<String>, downloadArtifacts: Boolean = false): List<FloatTextEmbedding>? {
-  return ProgressManager.getInstance().runProcess<List<FloatTextEmbedding>?>(
-    {
-      val embeddingService = LocalEmbeddingServiceProvider.getInstance().getServiceBlocking(downloadArtifacts) ?: return@runProcess null
-      runBlockingCancellable { embeddingService.embed(texts) }.map { it.normalized() }
-    },
-    EmptyProgressIndicator()
-  )
+suspend fun generateEmbeddings(texts: List<String>, downloadArtifacts: Boolean = false): List<FloatTextEmbedding>? {
+  return LocalEmbeddingServiceProvider.getInstance().getService(downloadArtifacts)?.embed(texts)?.map { it.normalized() } ?: return null
 }
 
 fun FloatTextEmbedding.normalized(): FloatTextEmbedding {

@@ -18,7 +18,7 @@ class ServerSemanticActionsProvider(model: GotoActionModel) : SemanticActionsPro
 
   private val URL_BASE = Registry.stringValue("search.everywhere.ml.semantic.actions.server.host")
 
-  override fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
+  override suspend fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
     if (!SemanticSearchSettings.getInstance().enabledInActionsTab || pattern.isBlank()) return emptyList()
 
     val requestJson: String = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapOf(
@@ -41,7 +41,7 @@ class ServerSemanticActionsProvider(model: GotoActionModel) : SemanticActionsPro
     return modelResponse.nearestCandidates.mapNotNull { createItemDescriptor(it.actionId, it.similarityScore, pattern) }
   }
 
-  override fun streamSearch(pattern: String, similarityThreshold: Double?): Sequence<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
+  override suspend fun streamSearch(pattern: String, similarityThreshold: Double?): Sequence<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
     return search(pattern, similarityThreshold).asSequence()
   }
 

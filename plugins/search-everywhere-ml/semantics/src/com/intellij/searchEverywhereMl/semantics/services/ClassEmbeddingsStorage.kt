@@ -16,6 +16,7 @@ import com.intellij.searchEverywhereMl.semantics.indices.FileIndexableEntitiesPr
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.CoroutineScope
 import java.io.File
 
 /**
@@ -25,7 +26,7 @@ import java.io.File
  * Generates the embeddings for classes not present in the loaded state at the IDE startup event if semantic classes search is enabled.
  */
 @Service(Service.Level.PROJECT)
-class ClassEmbeddingsStorage(project: Project) : FileContentBasedEmbeddingsStorage<IndexableClass>(project) {
+class ClassEmbeddingsStorage(project: Project, cs: CoroutineScope) : FileContentBasedEmbeddingsStorage<IndexableClass>(project, cs) {
   override val index = DiskSynchronizedEmbeddingSearchIndex(
     project.getProjectCachePath(
       File(SEMANTIC_SEARCH_RESOURCES_DIR)
@@ -33,7 +34,6 @@ class ClassEmbeddingsStorage(project: Project) : FileContentBasedEmbeddingsStora
         .resolve(INDEX_DIR).toString()
     )
   )
-  override val indexingTaskManager = EmbeddingIndexingTaskManager(index)
 
   override val scanningTitle
     get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.classes.scanning.label")
@@ -52,7 +52,7 @@ class ClassEmbeddingsStorage(project: Project) : FileContentBasedEmbeddingsStora
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInClassesTab
 
   @RequiresBackgroundThread
-  override fun getIndexableEntities() = collectEntities(ClassesSemanticSearchFileChangeListener.getInstance(project))
+  override suspend fun getIndexableEntities() = collectEntities(ClassesSemanticSearchFileChangeListener.getInstance(project))
 
   override fun traversePsiFile(file: PsiFile) = FileIndexableEntitiesProvider.extractClasses(file)
 

@@ -19,6 +19,8 @@ import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddi
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.io.File
 
 /**
@@ -27,7 +29,8 @@ import java.io.File
  * Generates the embeddings for files not present in the loaded state at the IDE startup event if semantic files search is enabled.
  */
 @Service(Service.Level.PROJECT)
-class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorage<IndexableFile>(project), Disposable {
+class FileEmbeddingsStorage(project: Project, private val cs: CoroutineScope)
+  : DiskSynchronizedEmbeddingsStorage<IndexableFile>(project, cs), Disposable {
   // At unique path based on project location in a file system
   override val index = DiskSynchronizedEmbeddingSearchIndex(
     project.getProjectCachePath(
@@ -36,7 +39,6 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
         .resolve(INDEX_DIR).toString()
     )
   )
-  override val indexingTaskManager = EmbeddingIndexingTaskManager(index)
 
   override val scanningTitle
     get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.files.scanning.label")
@@ -55,14 +57,14 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInFilesTab
 
   @RequiresBackgroundThread
-  override fun getIndexableEntities(): List<IndexableFile> {
+  override suspend fun getIndexableEntities(): List<IndexableFile> {
     // It's important that we do not block write actions here:
     // If the write action is invoked, the read action is restarted
     return ReadAction.nonBlocking<List<IndexableFile>> {
       buildList {
-        ProjectFileIndex.getInstance(project).iterateContent{
-            if (it.isFile and it.isInLocalFileSystem) add(IndexableFile(it))
-            true
+        ProjectFileIndex.getInstance(project).iterateContent {
+          if (it.isFile and it.isInLocalFileSystem) add(IndexableFile(it))
+          true
         }
       }
     }.executeSynchronously()
@@ -70,9 +72,12 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
 
   fun renameFile(oldFileName: String, newFile: IndexableFile) {
     if (!checkSearchEnabled()) return
-    indexingTaskManager.scheduleTask(
-      EmbeddingIndexingTask.RenameDiskSynchronized(oldFileName.intern(), newFile.id.intern(), newFile.indexableRepresentation.intern())
-    )
+    cs.launch {
+      indexSetupJob.get()?.join()
+      EmbeddingIndexingTask.RenameDiskSynchronized(
+        oldFileName.intern(), newFile.id.intern(), newFile.indexableRepresentation.intern()
+      ).run(index)
+    }
   }
 
   companion object {

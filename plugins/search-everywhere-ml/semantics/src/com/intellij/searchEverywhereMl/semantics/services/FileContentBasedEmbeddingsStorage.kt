@@ -10,9 +10,10 @@ import com.intellij.openapi.vfs.isFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
+import kotlinx.coroutines.CoroutineScope
 
-abstract class FileContentBasedEmbeddingsStorage<T : IndexableEntity>(project: Project)
-  : DiskSynchronizedEmbeddingsStorage<T>(project), Disposable {
+abstract class FileContentBasedEmbeddingsStorage<T : IndexableEntity>(project: Project, cs: CoroutineScope)
+  : DiskSynchronizedEmbeddingsStorage<T>(project, cs), Disposable {
   abstract fun traversePsiFile(file: PsiFile): List<T>
 
   protected fun collectEntities(fileChangeListener: SemanticSearchFileContentChangeListener<T>): List<T> {

@@ -14,14 +14,14 @@ interface SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimi
 
   fun getEmbeddingsStorage(): DiskSynchronizedEmbeddingsStorage<*>
 
-  override fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
+  override suspend fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
     if (pattern.isBlank()) return emptyList()
     return getEmbeddingsStorage()
       .searchNeighboursIfEnabled(pattern, itemLimit, similarityThreshold)
       .flatMap { createItemDescriptors(it.text, it.similarity, pattern) }
   }
 
-  override fun streamSearch(pattern: String, similarityThreshold: Double?): Sequence<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
+  override suspend fun streamSearch(pattern: String, similarityThreshold: Double?): Sequence<FoundItemDescriptor<PsiItemWithSimilarity<*>>> {
     if (pattern.isBlank()) return emptySequence()
     return getEmbeddingsStorage()
       .streamSearchNeighbours(pattern, similarityThreshold)

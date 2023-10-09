@@ -3,7 +3,7 @@ package com.intellij.searchEverywhereMl.semantics.contributors
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.MergeableElement
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.*
 import com.intellij.searchEverywhereMl.semantics.providers.StreamSemanticItemsProvider
 import com.intellij.util.Processor
 import com.intellij.util.TimeoutUtil
@@ -55,26 +55,28 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
         val cachedDescriptors = mutableListOf<FoundItemDescriptor<I>>()
 
         val iterate = {
-          val semanticMatches = itemsProvider.streamSearch(pattern, getPriorityThresholds()[DescriptorPriority.LOW])
-          for (priority in ORDERED_PRIORITIES) {
-            val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
-            else cachedDescriptors.filter { it.findPriority() == priority }.iterator()
+          runBlockingCancellable {
+            val semanticMatches = itemsProvider.streamSearch(pattern, getPriorityThresholds()[DescriptorPriority.LOW])
+            for (priority in ORDERED_PRIORITIES) {
+              val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
+              else cachedDescriptors.filter { it.findPriority() == priority }.iterator()
 
-            for (descriptor in iterator) {
-              progressIndicator.checkCanceled()
-              if (descriptor.findPriority() != priority) {
-                cachedDescriptors.add(descriptor)
-                continue
-              }
+              for (descriptor in iterator) {
+                progressIndicator.checkCanceled()
+                if (descriptor.findPriority() != priority) {
+                  cachedDescriptors.add(descriptor)
+                  continue
+                }
 
-              val durationMs = TimeoutUtil.getDurationMillis(searchStart)
-              prepareSemanticDescriptor(descriptor, knownItems, mutex, durationMs)?.let {
-                consumer.process(it)
-                foundItemsCount++
+                val durationMs = TimeoutUtil.getDurationMillis(searchStart)
+                prepareSemanticDescriptor(descriptor, knownItems, mutex, durationMs)?.let {
+                  consumer.process(it)
+                  foundItemsCount++
+                }
+                if (priority != DescriptorPriority.HIGH && foundItemsCount >= getDesiredResultsCount()) break
               }
-              if (priority != DescriptorPriority.HIGH && foundItemsCount >= getDesiredResultsCount()) break
+              if (progressIndicator.isCanceled || foundItemsCount >= getDesiredResultsCount()) break
             }
-            if (progressIndicator.isCanceled || foundItemsCount >= getDesiredResultsCount()) break
           }
         }
 
@@ -85,7 +87,8 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
               progressIndicator.checkCanceled()
             }
           }
-          if (useReadAction) runReadAction(iterate) else iterate()
+          ProgressManager.getInstance().executeProcessUnderProgress({ if (useReadAction) runReadAction(iterate) else iterate() },
+                                                                    progressIndicator)
         }
         finally {
           mutex.withLock {

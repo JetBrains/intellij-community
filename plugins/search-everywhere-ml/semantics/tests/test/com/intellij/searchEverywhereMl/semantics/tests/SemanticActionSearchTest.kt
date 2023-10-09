@@ -8,12 +8,13 @@ import com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSear
 import com.intellij.searchEverywhereMl.semantics.services.ActionEmbeddingsStorage
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.testFramework.PlatformTestUtil
+import kotlinx.coroutines.test.runTest
 
 class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
   private val storage
     get() = ActionEmbeddingsStorage.getInstance()
 
-  fun `test basic semantics`() {
+  fun `test basic semantics`() = runTest {
     setupTest("java/IndexProjectAction.java") // open file in the editor to make all actions indexable
 
     var neighbours = storage.searchNeighboursIfEnabled("delete all breakpoints", 10, 0.5).toIdsSet()
@@ -30,7 +31,7 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
     assertContainsElements(neighbours, "WebBrowser", "BrowseWeb")
   }
 
-  fun `test search everywhere contributor`() {
+  fun `test search everywhere contributor`() = runTest {
     setupTest("java/IndexProjectAction.java")
 
     val standardActionContributor = ActionSearchEverywhereContributor.Factory()
@@ -45,10 +46,10 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
     assertContainsElements(items, "Remove All Breakpoints", "Remove All Breakpoints In The Current File")
   }
 
-  private fun setupTest(vararg filePaths: String) {
+  private suspend fun setupTest(vararg filePaths: String) {
     myFixture.configureByFiles(*filePaths)
     LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
     SemanticSearchSettings.getInstance().enabledInActionsTab = true
-    storage.generateEmbeddingsIfNecessary()
+    storage.generateEmbeddingsIfNecessary(project)
   }
 }

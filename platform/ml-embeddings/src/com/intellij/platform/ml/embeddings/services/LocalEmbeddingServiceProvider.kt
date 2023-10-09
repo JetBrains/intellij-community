@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.embeddings.services
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingServiceLoader
@@ -21,13 +22,14 @@ class LocalEmbeddingServiceProvider {
   private var localServiceRef: SoftReference<LocalEmbeddingService>? = null
   private val mutex = Mutex()
 
-  private suspend fun getService(downloadArtifacts: Boolean = false): LocalEmbeddingService? {
+  suspend fun getService(downloadArtifacts: Boolean = false): LocalEmbeddingService? {
     return mutex.withLock {
       var service = localServiceRef?.get()
       if (service == null) {
         val artifactsManager = LocalArtifactsManager.getInstance()
         if (!artifactsManager.checkArtifactsPresent()) {
           if (!downloadArtifacts) return null
+          logger.debug { "Downloading model artifacts because requested embedding calculation" }
           artifactsManager.downloadArtifactsIfNecessary()
         }
 
@@ -41,6 +43,8 @@ class LocalEmbeddingServiceProvider {
   fun getServiceBlocking(downloadArtifacts: Boolean = false): LocalEmbeddingService? = runBlockingCancellable { getService(downloadArtifacts) }
 
   companion object {
+    private val logger by lazy { Logger.getInstance(LocalEmbeddingServiceProvider::class.java) }
+
     fun getInstance() = service<LocalEmbeddingServiceProvider>()
   }
 }

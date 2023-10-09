@@ -27,7 +27,6 @@ class LowMemoryNotificationManager {
       )
 
     notification.whenExpired {
-      // User may struggle to find settings again; that's why we allow to open settings from the notification again
       isShownAndNotExpired.compareAndSet(true, false)
     }
 

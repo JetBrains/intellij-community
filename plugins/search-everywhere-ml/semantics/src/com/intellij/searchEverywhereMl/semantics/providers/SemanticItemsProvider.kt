@@ -3,7 +3,7 @@ package com.intellij.searchEverywhereMl.semantics.providers
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 
 interface SemanticItemsProvider<I> {
-  fun search(pattern: String, similarityThreshold: Double? = null): List<FoundItemDescriptor<I>>
+  suspend fun search(pattern: String, similarityThreshold: Double? = null): List<FoundItemDescriptor<I>>
 
   fun convertCosineSimilarityToInteger(similarityScore: Double): Int {
     return MIN_WEIGHT + (

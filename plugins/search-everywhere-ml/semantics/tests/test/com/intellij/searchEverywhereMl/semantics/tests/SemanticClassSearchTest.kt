@@ -15,12 +15,13 @@ import com.intellij.testFramework.utils.editor.saveToDisk
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
 import org.jetbrains.kotlin.psi.KtClass
+import kotlinx.coroutines.test.runTest
 
 class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
   private val storage
     get() = ClassEmbeddingsStorage.getInstance(project)
 
-  fun `test basic semantics`() {
+  fun `test basic semantics`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
     assertEquals(3, storage.index.size)
 
@@ -34,12 +35,12 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("ScoresFileManager"), neighbours.map { it.text }.toSet())
   }
 
-  fun `test index ids are not duplicated`() {
+  fun `test index ids are not duplicated`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/IndexProjectAction.kt")
     assertEquals(1, storage.index.size)
   }
 
-  fun `test search everywhere contributor`() {
+  fun `test search everywhere contributor`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
     val searchEverywhereUI = SearchEverywhereUI(project, listOf(SemanticClassSearchEverywhereContributor(createEvent())),
                                                 { _ -> null }, null)
@@ -55,7 +56,7 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), classes.map { it.id }.toSet())
   }
 
-  fun `test class renaming changes the index`() {
+  fun `test class renaming changes the index`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
     assertEquals(3, storage.index.size)
 
@@ -83,7 +84,7 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("ScoresFileManager", "ScoresFileHandler"), neighbours.map { it.text }.toSet())
   }
 
-  fun `test removal of file with class changes the index`() {
+  fun `test removal of file with class changes the index`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
     assertEquals(3, storage.index.size)
 
@@ -108,10 +109,10 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("ScoresFileManager"), neighbours.map { it.text }.toSet())
   }
 
-  private fun setupTest(vararg filePaths: String) {
+  private suspend fun setupTest(vararg filePaths: String) {
     myFixture.configureByFiles(*filePaths)
     LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
     SemanticSearchSettings.getInstance().enabledInClassesTab = true
-    storage.generateEmbeddingsIfNecessary()
+    storage.generateEmbeddingsIfNecessary().join()
   }
 }

@@ -6,21 +6,25 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
+import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.InMemoryEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.semantics.utils.ScoredText
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 
@@ -30,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Generates the embeddings for actions not present in the loaded state at the IDE startup event if semantic action search is enabled
  */
 @Service(Service.Level.APP)
-class ActionEmbeddingsStorage : AbstractEmbeddingsStorage() {
+class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddingsStorage() {
   val index = InMemoryEmbeddingSearchIndex(
     File(PathManager.getSystemPath())
       .resolve(SEMANTIC_SEARCH_RESOURCES_DIR)
@@ -38,48 +42,54 @@ class ActionEmbeddingsStorage : AbstractEmbeddingsStorage() {
       .resolve(INDEX_DIR).toPath()
   )
 
-  private val setupTaskIndicator = AtomicReference<ProgressIndicator>(null)
+  private val indexSetupJob = AtomicReference<Job>(null)
 
-  fun prepareForSearch(project: Project) {
-    DumbService.getInstance(project).runWhenSmart {
-      ApplicationManager.getApplication().executeOnPooledThread {
-        LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
-        index.loadFromDisk()
-        generateEmbeddingsIfNecessary()
-      }
-    }
+  private val setupTitle
+    get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.actions.generation.label")
+
+  fun prepareForSearch(project: Project) = cs.launch {
+    project.waitForSmartMode()
+    LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
+    index.loadFromDisk()
+    generateEmbeddingsIfNecessary(project)
   }
 
-  fun tryStopGeneratingEmbeddings() = setupTaskIndicator.getAndSet(null)?.cancel()
+  fun tryStopGeneratingEmbeddings() = indexSetupJob.getAndSet(null)?.cancel()
 
   /* Thread-safe job for updating embeddings. Consequent call stops the previous execution */
   @RequiresBackgroundThread
-  fun generateEmbeddingsIfNecessary() {
-    val backgroundable = ActionEmbeddingsStorageSetup(index, setupTaskIndicator)
-    if (Registry.`is`("search.everywhere.ml.semantic.indexing.show.progress")) {
-      ProgressManager.getInstance().run(backgroundable)
+  suspend fun generateEmbeddingsIfNecessary(project: Project) {
+    val backgroundable = ActionEmbeddingsStorageSetup(index, indexSetupJob)
+    try {
+      if (Registry.`is`("search.everywhere.ml.semantic.indexing.show.progress")) {
+        withBackgroundProgress(project, setupTitle) {
+          backgroundable.run()
+        }
+      }
+      else {
+        backgroundable.run()
+      }
     }
-    else {
-      val indicator = EmptyProgressIndicator()
-      ProgressManager.getInstance().runProcess({ backgroundable.run(indicator) }, indicator)
-      backgroundable.onCancel()
+    catch (e: CancellationException) {
+      logger.debug { "Actions embedding indexing was cancelled" }
     }
+    backgroundable.onFinish(cs)
   }
 
   @RequiresBackgroundThread
-  override fun searchNeighboursIfEnabled(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
+  override suspend fun searchNeighboursIfEnabled(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     if (!checkSearchEnabled()) return emptyList()
     return searchNeighbours(text, topK, similarityThreshold)
   }
 
   @RequiresBackgroundThread
-  override fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
+  override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     val embedding = generateEmbedding(text) ?: return emptyList()
     return index.findClosest(embedding, topK, similarityThreshold)
   }
 
   @RequiresBackgroundThread
-  fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Sequence<ScoredText> {
+  suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Sequence<ScoredText> {
     if (!checkSearchEnabled()) return emptySequence()
     val embedding = generateEmbedding(text) ?: return emptySequence()
     return index.streamFindClose(embedding, similarityThreshold)
@@ -87,6 +97,8 @@ class ActionEmbeddingsStorage : AbstractEmbeddingsStorage() {
 
   companion object {
     private const val INDEX_DIR = "actions"
+
+    private val logger by lazy { Logger.getInstance(ActionEmbeddingsStorage::class.java) }
 
     fun getInstance() = service<ActionEmbeddingsStorage>()
 

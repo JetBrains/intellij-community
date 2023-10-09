@@ -14,29 +14,41 @@ class SemanticSearchInitializer : ProjectActivity {
    * Whether the state exists or not, we generate the missing embeddings:
    */
   override suspend fun execute(project: Project) {
-    if ((ApplicationManager.getApplication().isInternal
-         || (ApplicationManager.getApplication().isEAP &&
-             SearchEverywhereSemanticExperiments.getInstance().getSemanticFeatureForTab(
-               ActionSearchEverywhereContributor::class.java.simpleName) == SemanticSearchFeature.ENABLED))
-        && !SemanticSearchSettings.getInstance().manuallyDisabledInActionsTab
+    if (SemanticSearchSettings.getInstance().enabledInActionsTab) {
+      ActionEmbeddingsStorage.getInstance().prepareForSearch(project).join()
+    }
+    else if ((ApplicationManager.getApplication().isInternal
+              || (ApplicationManager.getApplication().isEAP &&
+                  SearchEverywhereSemanticExperiments.getInstance().getSemanticFeatureForTab(
+                    ActionSearchEverywhereContributor::class.java.simpleName) == SemanticSearchFeature.ENABLED))
+             && !SemanticSearchSettings.getInstance().manuallyDisabledInActionsTab
     ) {
       // Manually enable search in the corresponding experiment groups
       SemanticSearchSettings.getInstance().enabledInActionsTab = true
     }
-    if (SemanticSearchSettings.getInstance().enabledInActionsTab) {
-      ActionEmbeddingsStorage.getInstance().prepareForSearch(project)
+
+    if (SemanticSearchSettings.getInstance().enabledInClassesTab) {
+      ClassEmbeddingsStorage.getInstance(project).registerIndexInMemoryManager()
     }
 
     if (SemanticSearchSettings.getInstance().enabledInFilesTab) {
-      FileEmbeddingsStorage.getInstance(project).prepareForSearch()
+      FileEmbeddingsStorage.getInstance(project).registerIndexInMemoryManager()
     }
 
     if (SemanticSearchSettings.getInstance().enabledInSymbolsTab) {
-      SymbolEmbeddingStorage.getInstance(project).prepareForSearch()
+      SymbolEmbeddingStorage.getInstance(project).registerIndexInMemoryManager()
     }
 
     if (SemanticSearchSettings.getInstance().enabledInClassesTab) {
-      ClassEmbeddingsStorage.getInstance(project).prepareForSearch()
+      ClassEmbeddingsStorage.getInstance(project).prepareForSearch().join()
+    }
+
+    if (SemanticSearchSettings.getInstance().enabledInFilesTab) {
+      FileEmbeddingsStorage.getInstance(project).prepareForSearch().join()
+    }
+
+    if (SemanticSearchSettings.getInstance().enabledInSymbolsTab) {
+      SymbolEmbeddingStorage.getInstance(project).prepareForSearch().join()
     }
   }
 }
