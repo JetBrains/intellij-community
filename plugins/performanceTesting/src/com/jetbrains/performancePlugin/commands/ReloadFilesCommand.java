@@ -4,6 +4,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand;
+import kotlin.Suppress;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,9 +20,19 @@ public final class ReloadFilesCommand extends AbstractCallbackBasedCommand {
     super(text, line, true);
   }
 
+  // Need for driver call
+  @Suppress(names = "UNUSED")
+  public ReloadFilesCommand() {
+    super("", 0);
+  }
+
   @Override
   protected void execute(@NotNull ActionCallback callback, @NotNull PlaybackContext context) {
-    LocalFileSystem.getInstance().refresh(false);
+    synchronizeFiles();
     callback.setDone();
+  }
+
+  public void synchronizeFiles() {
+    LocalFileSystem.getInstance().refresh(false);
   }
 }
