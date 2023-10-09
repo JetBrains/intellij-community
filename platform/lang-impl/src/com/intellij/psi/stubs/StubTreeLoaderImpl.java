@@ -39,10 +39,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   private static IndexingStampInfoStorage createStorage() {
     boolean shouldUseFastAttributes = Registry.is("scanning.stamps.over.fast.attributes", true)
                                       || Registry.is("scanning.trust.indexing.flag", false);
-    // TODO-ank: hardcoded false, because of IAE here:
-    //  java.lang.IllegalArgumentException: bytesPerRow(=3) is not aligned with pageSize(=4194304): rows must be page-aligned
-    //    at com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper.<init>(MappedFileStorageHelper.java:213)
-    return IndexingStampInfoStorage.create("stubIndexStamp", 3, false);
+    return IndexingStampInfoStorage.create("stubIndexStamp", 3, shouldUseFastAttributes);
   }
 
   @Override

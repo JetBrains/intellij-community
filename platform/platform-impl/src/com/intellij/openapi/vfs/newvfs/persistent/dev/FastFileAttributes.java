@@ -38,8 +38,8 @@ public final class FastFileAttributes {
     MappedFileStorageHelper helper = openHelperAndVerifyVersions(
       vfs,
       storageName,
-      Int3FileAttribute.ROW_SIZE,
-      version
+      version,
+      Int3FileAttribute.ROW_SIZE
     );
 
     Int3FileAttribute attribute = new Int3FileAttribute(helper);
@@ -69,7 +69,7 @@ public final class FastFileAttributes {
   }
 
   public static final class Int3FileAttribute implements FileIdIndexedStorage, Closeable, Unmappable, CleanableStorage {
-    public static final int FIELDS = 3;
+    public static final int FIELDS = 4;
     public static final int ROW_SIZE = FIELDS * Integer.BYTES;
 
     private final MappedFileStorageHelper storageHelper;
