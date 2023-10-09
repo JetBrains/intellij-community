@@ -4,7 +4,6 @@
 package training.onboarding
 
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
-import com.intellij.execution.lineMarker.LineMarkerActionWrapper
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.NewProjectOnboardingTips
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -16,12 +15,15 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -70,18 +72,27 @@ private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
     // Set this option explicitly, because its default depends on the number of empty projects.
     PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, true)
 
-    val fileEditorManager = FileEditorManager.getInstance(project)
+    val disposable = Disposer.newDisposable()
+    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+      override fun editorCreated(event: EditorFactoryEvent) {
+        Disposer.dispose(disposable) // just wait the first editor opened
 
-    val textEditor = fileEditorManager.selectedEditor as? TextEditor ?: return
+        installTipsInFirstEditor(event, project, simpleSampleText)
+      }
+    }, disposable)
+  }
 
-    val document = textEditor.editor.document
+  private fun installTipsInFirstEditor(event: EditorFactoryEvent, project: Project, simpleSampleText: String) {
+    val editor = event.editor
+
+    val document = editor.document
     // need to generalize this code in the future
     val offset = document.charsSequence.indexOf("System.out.println").takeIf { it >= 0 } ?: return
 
-    val file = textEditor.file
+    val file = editor.virtualFile ?: return
     val position = XDebuggerUtil.getInstance().createPositionByOffset(file, offset) ?: return
 
-    XBreakpointUtil.toggleLineBreakpoint(project, position, textEditor.editor, false, false, true)
+    XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, true)
 
     val pathToRunningFile = file.path
     project.onboardingTipsDebugPath = pathToRunningFile
