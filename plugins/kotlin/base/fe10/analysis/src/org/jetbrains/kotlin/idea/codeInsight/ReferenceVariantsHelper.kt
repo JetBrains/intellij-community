@@ -317,7 +317,7 @@ class ReferenceVariantsHelper(
                     .flatMapTo(descriptors) { it.collectStaticMembers(resolutionFacade, kindFilter, nameFilter) }
             }
         } else {
-            val constructorFilter: (ClassDescriptor) -> Boolean = { !it.isInner }
+            val constructorFilter: (ClassDescriptor) -> Boolean = { true }
 
             resolutionScope.ownerDescriptor.parentsWithSelf.firstIsInstanceOrNull<ClassDescriptor>()?.let { classDescriptor ->
                 // process instance members, class constructors and companion object

@@ -48,7 +48,7 @@ abstract class AbstractClass
 // ABSENT: local
 // EXIST: { itemText: "C", attributes: "" }
 // EXIST: { itemText: "NestedClass", attributes: "" }
-// ABSENT: InnerClass
+// EXIST: { itemText: "InnerClass", attributes: "grayed" }
 // ABSENT: WithPrivateConstructor
 // ABSENT: AbstractClass
 // ABSENT: class
