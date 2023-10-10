@@ -9,9 +9,7 @@ import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -74,7 +72,7 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
-    boolean showUpdateOptions = myActionInfo.showOptions(project);
+    boolean showUpdateOptions = isShowOptions(project);
 
     LOG.debug("project: " + project + ", show update options: " + showUpdateOptions);
 
@@ -83,10 +81,7 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
     }
 
     try {
-      List<FilePath> filePaths = myScopeInfo.getRoots(e.getDataContext(), myActionInfo);
-      String scopeName = myScopeInfo.getScopeName(e.getDataContext(), myActionInfo);
-
-      final FilePath[] roots = DescindingFilesFilter.filterDescindingFiles(filterRoots(project, filePaths), project);
+      FilePath[] roots = getRoots(project, e.getDataContext());
       if (roots.length == 0) {
         LOG.debug("No roots found.");
         return;
@@ -104,6 +99,7 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
       }
 
       if (showUpdateOptions || OptionsDialog.shiftIsPressed(e.getModifiers())) {
+        String scopeName = myScopeInfo.getScopeName(e.getDataContext(), myActionInfo);
         showOptionsDialog(vcsToVirtualFiles, project, scopeName);
       }
 
@@ -134,6 +130,10 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
     }
     catch (ProcessCanceledException ignored) {
     }
+  }
+
+  protected boolean isShowOptions(Project project) {
+    return myActionInfo.showOptions(project);
   }
 
   protected void onSuccess() { }
@@ -168,6 +168,11 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
     }
   }
 
+  private FilePath[] getRoots(Project project, @NotNull DataContext context) {
+    List<FilePath> filePaths = myScopeInfo.getRoots(context, myActionInfo);
+    return DescindingFilesFilter.filterDescindingFiles(filterRoots(project, filePaths), project);
+  }
+
   private LinkedHashMap<Configurable, AbstractVcs> createConfigurableToEnvMap(Map<AbstractVcs, Collection<FilePath>> updateEnvToVirtualFiles) {
     LinkedHashMap<Configurable, AbstractVcs> envToConfMap = new LinkedHashMap<>();
     for (AbstractVcs vcs : updateEnvToVirtualFiles.keySet()) {
@@ -177,6 +182,12 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
       }
     }
     return envToConfMap;
+  }
+
+  public LinkedHashMap<Configurable, AbstractVcs> getConfigurableToEnvMap(Project project) {
+    FilePath[] roots = getRoots(project, dataId -> CommonDataKeys.PROJECT.is(dataId) ? project : null);
+    Map<AbstractVcs, Collection<FilePath>> vcsToFilesMap = createVcsToFilesMap(roots, project);
+    return createConfigurableToEnvMap(vcsToFilesMap);
   }
 
   private Map<AbstractVcs, Collection<FilePath>> createVcsToFilesMap(FilePath @NotNull [] roots, @NotNull Project project) {

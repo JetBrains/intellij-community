@@ -43,7 +43,7 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
         }
         for (step in group.value) {
           step.getDetailsComponent(project)?.let {
-            indent { row { cell(it) } }.visibleIf(checkbox.selected.and(combobox.component.selectedValueIs(step)))
+            indent { row { cell(it) } }.visibleIf(checkbox.selected.and(combobox.component.selectedValueIs(step)).and(step.detailsVisible(project)))
           }
         }
         combobox.component.selectedItem = group.value.find { options.value(it.id) } ?: group.value.first()
