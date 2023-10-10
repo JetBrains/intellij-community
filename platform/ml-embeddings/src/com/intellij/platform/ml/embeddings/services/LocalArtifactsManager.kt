@@ -51,7 +51,7 @@ class LocalArtifactsManager {
                                            retryIfCanceled: Boolean = true) = withContext(Dispatchers.IO) {
     mutex.withLock {
       if (!checkArtifactsPresent() && (retryIfCanceled || !downloadCanceled)) {
-        logger.debug { "Semantic search artifacts are not present, starting the download..." }
+        logger.debug("Semantic search artifacts are not present, starting the download...")
         if (project != null) {
           withBackgroundProgress(project, ARTIFACTS_DOWNLOAD_TASK_NAME) {
             withRawProgressReporter {
@@ -61,7 +61,7 @@ class LocalArtifactsManager {
                 }
               }
               catch (e: CancellationException) {
-                logger.debug { "Artifacts downloading was canceled" }
+                logger.debug("Artifacts downloading was canceled")
                 downloadCanceled = true
                 throw e
               }
@@ -120,7 +120,7 @@ class LocalArtifactsManager {
     private const val ARCHIVE_NAME = "semantic-text-search.jar"
     private const val NOTIFICATION_GROUP_ID = "Semantic search"
 
-    private val logger by lazy { Logger.getInstance(LocalArtifactsManager::class.java) }
+    private val logger = Logger.getInstance(LocalArtifactsManager::class.java)
 
     fun getInstance() = service<LocalArtifactsManager>()
 

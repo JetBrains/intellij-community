@@ -29,7 +29,7 @@ class LocalEmbeddingServiceProvider {
         val artifactsManager = LocalArtifactsManager.getInstance()
         if (!artifactsManager.checkArtifactsPresent()) {
           if (!downloadArtifacts) return null
-          logger.debug { "Downloading model artifacts because requested embedding calculation" }
+          logger.debug("Downloading model artifacts because requested embedding calculation")
           artifactsManager.downloadArtifactsIfNecessary()
         }
 
@@ -43,7 +43,7 @@ class LocalEmbeddingServiceProvider {
   fun getServiceBlocking(downloadArtifacts: Boolean = false): LocalEmbeddingService? = runBlockingCancellable { getService(downloadArtifacts) }
 
   companion object {
-    private val logger by lazy { Logger.getInstance(LocalEmbeddingServiceProvider::class.java) }
+    private val logger = Logger.getInstance(LocalEmbeddingServiceProvider::class.java)
 
     fun getInstance() = service<LocalEmbeddingServiceProvider>()
   }

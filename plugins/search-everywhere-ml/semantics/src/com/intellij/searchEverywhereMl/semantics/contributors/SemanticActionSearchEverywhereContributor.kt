@@ -125,7 +125,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   }
 
   companion object {
-    private val logger by lazy { Logger.getInstance(SemanticActionSearchEverywhereContributor::class.java) }
+    private val logger = Logger.getInstance(SemanticActionSearchEverywhereContributor::class.java)
 
     val PRIORITY_THRESHOLDS = (ORDERED_PRIORITIES zip listOf(0.35, 0.25, 0.2)).toMap()
     private const val DESIRED_RESULTS_COUNT = 10

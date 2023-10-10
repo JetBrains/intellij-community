@@ -129,6 +129,6 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
   }
 
   companion object {
-    private val logger by lazy { Logger.getInstance(DiskSynchronizedEmbeddingsStorage::class.java) }
+    private val logger = Logger.getInstance(DiskSynchronizedEmbeddingsStorage::class.java)
   }
 }

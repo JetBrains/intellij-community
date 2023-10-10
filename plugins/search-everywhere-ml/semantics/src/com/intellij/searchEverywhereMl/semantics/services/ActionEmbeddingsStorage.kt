@@ -98,7 +98,7 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
   companion object {
     private const val INDEX_DIR = "actions"
 
-    private val logger by lazy { Logger.getInstance(ActionEmbeddingsStorage::class.java) }
+    private val logger = Logger.getInstance(ActionEmbeddingsStorage::class.java)
 
     fun getInstance() = service<ActionEmbeddingsStorage>()
 
