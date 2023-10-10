@@ -42,7 +42,7 @@ import static com.intellij.util.SystemProperties.getIntProperty;
 public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   private static final Logger LOG = Logger.getInstance(MappedFileTypeIndex.class);
 
-  private static final int INVERTED_INDEX_SIZE_THRESHOLD = getIntProperty("mapped.file.type.index.inverse.upgrade.threshold", 256);
+  private static final int INVERTED_INDEX_SIZE_THRESHOLD = getIntProperty("mapped.file.type.index.inverse.upgrade.threshold", 16384);
 
   /** Use experimental forward-index implementation over fast (mapped) file attributes? */
   private static final boolean FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE =
@@ -368,7 +368,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     return new UpgradableRandomAccessIntContainer<>(
       INVERTED_INDEX_SIZE_THRESHOLD,
       () -> {
-        return new IntHashSetAsRAIntContainer(INVERTED_INDEX_SIZE_THRESHOLD, Hash.DEFAULT_LOAD_FACTOR);
+        return new IntHashSetAsRAIntContainer(Hash.DEFAULT_INITIAL_SIZE, Hash.DEFAULT_LOAD_FACTOR);
       },
       (container) -> {
         // calculate needed capacity so there are less memory allocations
