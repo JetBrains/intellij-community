@@ -13,7 +13,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -21,10 +23,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * Tests VFS ability to recover from various corruptions
@@ -192,6 +194,34 @@ public class VFSCorruptionRecoveryTest {
   }
 
   @Test
+  public void VFS_init_WithoutRecoverers_Fails_If_NotClosedProperly() throws Exception {
+    Path cachesDir = temporaryDirectory.createDir();
+
+    setupVFSFillSomeDataAndClose(cachesDir);
+    fakeImproperClose(cachesDir);
+
+    try {
+      //try reopen:
+      PersistentFSConnection connection = PersistentFSConnector.tryInit(
+        cachesDir,
+        FSRecordsImpl.currentImplementationVersion(),
+        false,
+        Collections.emptyList(),
+        Collections.emptyList()
+      );
+      PersistentFSConnector.disconnect(connection);
+      fail("VFS wasn't closed properly, no recoverers -> VFS init must fail");
+    }
+    catch (VFSInitException ex) {
+      assertEquals(
+        "VFS wasn't closed properly, no recoverers -> VFS init must fail with NOT_CLOSED_PROPERLY",
+        VFSInitException.ErrorCategory.NOT_CLOSED_PROPERLY,
+        ex.category()
+      );
+    }
+  }
+
+  @Test
   public void VFS_init_WithContentStoragesRecoverer_DoesntFail_If_ContentHashesStorageFilesRemoved() throws Exception {
     List<String> contentHashesDataFilesNames = vfsCrucialDataFilesNames.stream().filter(name -> name.contains("contentHashes")).toList();
     for (int i = 0; i < contentHashesDataFilesNames.size(); i++) {
@@ -284,8 +314,9 @@ public class VFSCorruptionRecoveryTest {
   }
 
 
-  private static void setupVFSFillSomeDataAndClose(Path cachesDir) throws IOException {
-    try (FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir)) {
+  private static void setupVFSFillSomeDataAndClose(Path cachesDir) throws Exception {
+    FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir);
+    try {
       //add something to VFS so it is not empty
       int testFileId = fsRecords.createRecord();
       fsRecords.setName(testFileId, "test", PersistentFSRecordsStorage.NULL_ID);
@@ -296,9 +327,29 @@ public class VFSCorruptionRecoveryTest {
         stream.writeInt(42);
       }
     }
-    //finally {
-    //StorageTestingUtils.bestEffortToCloseAndUnmap();
-    //}
+    finally {
+      fsRecords.close();
+      //TODO RC: StorageTestingUtils.bestEffortToCloseAndUnmap();
+    }
+  }
+
+  private static void fakeImproperClose(Path cachesDir) throws IOException {
+    //RC: don't use StorageTestingUtils.emulateImproperClose(fsRecords) since JVM crash is quite
+    //    likely: VFSFlusher still does its flushing even after memory buffers are unmapped, and
+    //    .emulateImproperClose() doesn't stop the flusher, or not guaranteed to stop it early
+    //    enough
+
+    PersistentFSPaths paths = new PersistentFSPaths(cachesDir);
+    Path recordsPath = paths.storagePath("records");
+    try (SeekableByteChannel channel = Files.newByteChannel(recordsPath, WRITE)) {
+      ByteBuffer oneFieldBuffer = ByteBuffer.allocate(Integer.BYTES)
+        .order(ByteOrder.nativeOrder());
+      oneFieldBuffer.putInt(PersistentFSHeaders.CONNECTED_MAGIC)
+        .clear();
+
+      channel.position(HEADER_CONNECTION_STATUS_OFFSET);
+      channel.write(oneFieldBuffer);
+    }
   }
 
   @After
