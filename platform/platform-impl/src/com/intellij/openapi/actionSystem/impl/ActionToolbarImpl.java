@@ -131,9 +131,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     Utils.clearAllCachesAndUpdates();
     boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
     for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {
-      CancellablePromise<List<AnAction>> promise = toolbar.myLastUpdate;
-      toolbar.myLastUpdate = null;
-      if (promise != null) promise.cancel();
+      toolbar.cancelCurrentUpdate();
       Image image = !isTestMode && toolbar.isShowing() ? paintToImage(toolbar) : null;
       toolbar.reset();
       if (image != null) {
@@ -381,9 +379,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       myPopup = null;
     }
 
-    CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
-    myLastUpdate = null;
-    if (lastUpdate != null) lastUpdate.cancel();
+    cancelCurrentUpdate();
   }
 
   @Override
@@ -1349,9 +1345,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     ActionGroup adjustedGroup = myHideDisabled ? ActionGroupUtil.forceHideDisabledChildren(myActionGroup) : myActionGroup;
     DataContext dataContext = Utils.createAsyncDataContext(getDataContext());
 
-    CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
-    myLastUpdate = null;
-    if (lastUpdate != null) lastUpdate.cancel();
+    cancelCurrentUpdate();
 
     boolean firstTimeFastTrack = !hasVisibleActions() &&
                                  getComponentCount() == 1 &&
@@ -1906,6 +1900,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myPresentationFactory.reset();
     myVisibleActions.clear();
     removeAll();
+  }
+
+  private void cancelCurrentUpdate() {
+    CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
+    myLastUpdate = null;
+    if (lastUpdate != null) lastUpdate.cancel();
   }
 
   public interface SecondaryGroupUpdater {
