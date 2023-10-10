@@ -14,10 +14,10 @@ import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
-import org.jetbrains.kotlin.analysis.providers.impl.KotlinDeclarationProviderMergerBase
+import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderMerger
 import org.jetbrains.kotlin.analysis.providers.impl.declarationProviders.CompositeKotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.impl.declarationProviders.FileBasedKotlinDeclarationProvider
-import org.jetbrains.kotlin.analysis.providers.impl.util.mergeOnly
+import org.jetbrains.kotlin.analysis.providers.impl.mergeSpecificProviders
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
@@ -48,12 +48,12 @@ internal class IdeKotlinDeclarationProviderFactory(private val project: Project)
     }
 }
 
-internal class IdeKotlinDeclarationProviderMerger(private val project: Project) : KotlinDeclarationProviderMergerBase() {
-    override fun mergeToList(declarationProviders: List<KotlinDeclarationProvider>): List<KotlinDeclarationProvider> =
-        declarationProviders.mergeOnly<_, IdeKotlinDeclarationProvider> { providers ->
+internal class IdeKotlinDeclarationProviderMerger(private val project: Project) : KotlinDeclarationProviderMerger() {
+    override fun merge(providers: List<KotlinDeclarationProvider>): KotlinDeclarationProvider =
+        providers.mergeSpecificProviders<_, IdeKotlinDeclarationProvider>(CompositeKotlinDeclarationProvider.factory) { targetProviders ->
             IdeKotlinDeclarationProvider(
                 project,
-                GlobalSearchScope.union(providers.map { it.scope }),
+                GlobalSearchScope.union(targetProviders.map { it.scope }),
             )
         }
 }
