@@ -61,7 +61,9 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
                 }
               }
             })
-          .enabled(PlatformUtils.isAqua().not()) // the new UI is always enabled for Aqua and cannot be disabled
+          .enabled(
+            PlatformUtils.isAqua().or(PlatformUtils.isWriterside()).not()
+          ) // the new UI is always enabled for Aqua / WRS and cannot be disabled
       }.comment(IdeBundle.message("ide.restart.required.comment"))
 
       indent {
