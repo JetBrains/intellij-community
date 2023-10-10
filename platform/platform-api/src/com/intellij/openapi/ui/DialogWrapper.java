@@ -124,6 +124,7 @@ public abstract class DialogWrapper {
 
   public static final String FOCUSED_ACTION = "FocusedAction";
   public static final String MAC_ACTION_ORDER = "MacActionOrder";
+  public static final int DEFAULT_ACTION_ORDER = 100;
 
   public static final Object DIALOG_CONTENT_PANEL_PROPERTY = new Object();
 
@@ -521,19 +522,18 @@ public abstract class DialogWrapper {
       addHelpToLeftSide = true;
     }
 
+    if (!Registry.is("ide.allow.merge.buttons", true)) {
+      actions = flattenOptionsActions(actions);
+      leftSideActions = flattenOptionsActions(leftSideActions);
+    }
     if (SystemInfoRt.isMac) {
       Action macOtherAction = ContainerUtil.find(actions, MacOtherAction.class::isInstance);
       if (macOtherAction != null) {
         leftSideActions.add(macOtherAction);
         actions.remove(macOtherAction);
       }
-      actions.sort(Comparator.comparing(action -> action instanceof AbstractAction ? Objects.<Integer>requireNonNullElse(
-        (Integer)action.getValue(MAC_ACTION_ORDER), 0) : 0));
-    }
-
-    if (!Registry.is("ide.allow.merge.buttons", true)) {
-      actions = flattenOptionsActions(actions);
-      leftSideActions = flattenOptionsActions(leftSideActions);
+      actions.sort(Comparator.comparing(action -> Objects.<Integer>requireNonNullElse(
+        (Integer)action.getValue(MAC_ACTION_ORDER), action.getValue(DEFAULT_ACTION) == null ? 0 : DEFAULT_ACTION_ORDER)));
     }
 
     List<JButton> leftSideButtons = createButtons(leftSideActions);
@@ -584,7 +584,10 @@ public abstract class DialogWrapper {
     for (Action action : actions) {
       newActions.add(action);
       if (action instanceof OptionAction it) {
-        Collections.addAll(newActions, it.getOptions());
+        for (Action option : it.getOptions()) {
+          option.putValue(MAC_ACTION_ORDER, action.getValue(DEFAULT_ACTION) != null ? DEFAULT_ACTION_ORDER - 1 : 0);
+          newActions.add(option);
+        }
       }
     }
     return newActions;
@@ -1892,7 +1895,7 @@ public abstract class DialogWrapper {
       super(CommonBundle.getOkButtonText());
       addPropertyChangeListener(myRepaintOnNameChangeListener);
       putValue(DEFAULT_ACTION, Boolean.TRUE);
-      putValue(MAC_ACTION_ORDER, 100);
+      putValue(MAC_ACTION_ORDER, DEFAULT_ACTION_ORDER);
     }
 
     @Override
