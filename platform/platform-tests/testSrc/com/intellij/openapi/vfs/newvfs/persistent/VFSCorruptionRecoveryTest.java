@@ -212,13 +212,14 @@ public class VFSCorruptionRecoveryTest {
       FileUtil.delete(contentHashesFileToDelete);
 
       //reopen:
-      PersistentFSConnector.tryInit(
+      PersistentFSConnection connection = PersistentFSConnector.tryInit(
         cachesDir,
         FSRecordsImpl.currentImplementationVersion(),
         false,
         Collections.emptyList(),
         List.of(new ContentStoragesRecoverer())
       );
+      connection.close();
     }
   }
 
@@ -251,13 +252,17 @@ public class VFSCorruptionRecoveryTest {
         Collections.emptyList(),
         List.of(new ContentStoragesRecoverer())
       );
-      assertTrue(
-        "contentIds must be invalidated since ContentStorage was cleared",
-        connection.recoveryInfo().invalidateContentIds
-      );
+      try {
+        assertTrue(
+          "contentIds must be invalidated since ContentStorage was cleared",
+          connection.recoveryInfo().invalidateContentIds
+        );
+      }
+      finally {
+        connection.close();
+      }
     }
   }
-
 
 
   //================ infrastructure: ================================================================
@@ -280,19 +285,20 @@ public class VFSCorruptionRecoveryTest {
 
 
   private static void setupVFSFillSomeDataAndClose(Path cachesDir) throws IOException {
-    FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir);
-
-    //add something to VFS so it is not empty
-    int testFileId = fsRecords.createRecord();
-    fsRecords.setName(testFileId, "test", PersistentFSRecordsStorage.NULL_ID);
-    try (var stream = fsRecords.writeContent(testFileId, false)) {
-      stream.writeUTF("test");
+    try (FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir)) {
+      //add something to VFS so it is not empty
+      int testFileId = fsRecords.createRecord();
+      fsRecords.setName(testFileId, "test", PersistentFSRecordsStorage.NULL_ID);
+      try (var stream = fsRecords.writeContent(testFileId, false)) {
+        stream.writeUTF("test");
+      }
+      try (var stream = fsRecords.writeAttribute(testFileId, TEST_FILE_ATTRIBUTE)) {
+        stream.writeInt(42);
+      }
     }
-    try (var stream = fsRecords.writeAttribute(testFileId, TEST_FILE_ATTRIBUTE)) {
-      stream.writeInt(42);
-    }
-
-    fsRecords.close();
+    //finally {
+    //StorageTestingUtils.bestEffortToCloseAndUnmap();
+    //}
   }
 
   @After
