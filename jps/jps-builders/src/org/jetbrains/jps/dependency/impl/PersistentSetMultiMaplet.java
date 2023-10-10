@@ -23,44 +23,43 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.function.Supplier;
 
-public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, V extends SerializableGraphElement> implements MultiMaplet<K, V> {
+public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, V extends SerializableGraphElement>
+  implements MultiMaplet<K, V> {
 
   private static final Collection<?> NULL_COLLECTION = Collections.emptyList();
   private static final int CACHE_SIZE = 128;
-  private final PersistentHashMap<K, Collection<V>> myMap;
-  private final SLRUCache<K, Collection<V>> myCache;
+
+  private final PersistentHashMap<K, Collection<V>> map;
+  private final SLRUCache<K, Collection<V>> cache;
 
   public PersistentSetMultiMaplet(Path mapFile) {
     try {
-      final Supplier<Collection<V>> fileCollectionFactory = NodeKeyDescriptor::createNodeSet;
+      Supplier<Collection<V>> fileCollectionFactory = NodeKeyDescriptor::createNodeSet;
       KeyDescriptor<K> keyDescriptor = NodeKeyDescriptorImpl.getInstance();
       DataExternalizer<Collection<V>> valueExternalizer =
         new CollectionDataExternalizer<>(NodeKeyDescriptorImpl.getInstance(), fileCollectionFactory);
-      myMap = new PersistentHashMap<>(mapFile, keyDescriptor, valueExternalizer);
+      map = new PersistentHashMap<>(mapFile, keyDescriptor, valueExternalizer);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
 
-    myCache = new SLRUCache<>(CACHE_SIZE, CACHE_SIZE) {
-      @Override
-      public @NotNull Collection<V> createValue(K key) {
-        try {
-          final Collection<V> collection = myMap.get(key);
-          //noinspection unchecked
-          return collection == null ? (Collection<V>)NULL_COLLECTION : collection;
-        }
-        catch (IOException e) {
-          throw new BuildDataCorruptedException(e);
-        }
+    cache = SLRUCache.slruCache(CACHE_SIZE, CACHE_SIZE, key -> {
+      try {
+        Collection<V> collection = map.get(key);
+        //noinspection unchecked
+        return collection == null ? (Collection<V>)NULL_COLLECTION : collection;
       }
-    };
+      catch (IOException e) {
+        throw new BuildDataCorruptedException(e);
+      }
+    });
   }
 
   @Override
   public boolean containsKey(K key) {
     try {
-      return myMap.containsMapping(key);
+      return map.containsMapping(key);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -69,15 +68,15 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
 
   @Override
   public @Nullable Iterable<V> get(K key) {
-    final Collection<V> collection = myCache.get(key);
+    final Collection<V> collection = cache.get(key);
     return collection == NULL_COLLECTION ? null : collection;
   }
 
   @Override
   public void put(K key, Iterable<? extends V> values) {
     try {
-      myCache.remove(key);
-      myMap.put(key, Iterators.collect(values, new HashSet<>()));
+      cache.remove(key);
+      map.put(key, Iterators.collect(values, new HashSet<>()));
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -87,8 +86,8 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
   @Override
   public void remove(K key) {
     try {
-      myCache.remove(key);
-      myMap.remove(key);
+      cache.remove(key);
+      map.remove(key);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -98,7 +97,7 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
   @Override
   public void appendValue(K key, V value) {
     try {
-      myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
+      map.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
         public void append(final @NotNull DataOutput out) throws IOException {
           NodeKeyDescriptorImpl.getInstance().save(out, value);
@@ -113,15 +112,15 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
   @Override
   public void removeValue(K key, V value) {
     try {
-      final Collection<V> collection = myCache.get(key);
+      final Collection<V> collection = cache.get(key);
       if (collection != NULL_COLLECTION) {
         if (collection.remove(value)) {
-          myCache.remove(key);
+          cache.remove(key);
           if (collection.isEmpty()) {
-            myMap.remove(key);
+            map.remove(key);
           }
           else {
-            myMap.put(key, collection);
+            map.put(key, collection);
           }
         }
       }
@@ -134,10 +133,20 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
   @Override
   public Iterable<K> getKeys() {
     try {
-      return myMap.getAllKeysWithExistingMapping();
+      return map.getAllKeysWithExistingMapping();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  public void close() {
+    try {
+      cache.clear();
+      map.close();
+    }
+    catch (IOException e) {
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -167,15 +176,4 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
       return result;
     }
   }
-
-  public void close() {
-    try {
-      myCache.clear();
-      myMap.close();
-    }
-    catch (IOException e) {
-      throw new BuildDataCorruptedException(e);
-    }
-  }
-
 }

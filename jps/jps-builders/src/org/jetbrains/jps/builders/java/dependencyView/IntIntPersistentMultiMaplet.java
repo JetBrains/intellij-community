@@ -15,29 +15,26 @@ import java.util.function.ObjIntConsumer;
 public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private static final IntSet NULL_COLLECTION = new IntOpenHashSet();
   private static final int CACHE_SIZE = 128;
-  private final PersistentHashMap<Integer, IntSet> myMap;
-  private final SLRUCache<Integer, IntSet> myCache;
+  private final PersistentHashMap<Integer, IntSet> map;
+  private final SLRUCache<Integer, IntSet> cache;
 
   public IntIntPersistentMultiMaplet(final File file, final KeyDescriptor<Integer> keyExternalizer) throws IOException {
-    myMap = new PersistentHashMap<>(file, keyExternalizer, new IntSetExternalizer());
-    myCache = new SLRUCache<>(CACHE_SIZE, CACHE_SIZE) {
-      @Override
-      public @NotNull IntSet createValue(Integer key) {
-        try {
-          final IntSet collection = myMap.get(key);
-          return collection == null? NULL_COLLECTION : collection;
-        }
-        catch (IOException e) {
-          throw new BuildDataCorruptedException(e);
-        }
+    map = new PersistentHashMap<>(file, keyExternalizer, new IntSetExternalizer());
+    cache = SLRUCache.slruCache(CACHE_SIZE, CACHE_SIZE, key -> {
+      try {
+        IntSet collection = map.get(key);
+        return collection == null ? NULL_COLLECTION : collection;
       }
-    };
+      catch (IOException e) {
+        throw new BuildDataCorruptedException(e);
+      }
+    });
   }
 
   @Override
   public boolean containsKey(final int key) {
     try {
-      return myMap.containsMapping(key);
+      return map.containsMapping(key);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -46,19 +43,19 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
 
   @Override
   public IntSet get(final int key) {
-    final IntSet collection = myCache.get(key);
-    return collection == NULL_COLLECTION? null : collection;
+    final IntSet collection = cache.get(key);
+    return collection == NULL_COLLECTION ? null : collection;
   }
 
   @Override
   public void replace(int key, IntSet value) {
     try {
-      myCache.remove(key);
+      cache.remove(key);
       if (value == null || value.isEmpty()) {
-        myMap.remove(key);
+        map.remove(key);
       }
       else {
-        myMap.put(key, value);
+        map.put(key, value);
       }
     }
     catch (IOException e) {
@@ -69,8 +66,8 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void put(final int key, final IntSet value) {
     try {
-      myCache.remove(key);
-      myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
+      cache.remove(key);
+      map.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
         public void append(final @NotNull DataOutput out) throws IOException {
           IntIterator iterator = value.iterator();
@@ -89,8 +86,8 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void put(final int key, final int value) {
     try {
-      myCache.remove(key);
-      myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
+      cache.remove(key);
+      map.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
         public void append(final @NotNull DataOutput out) throws IOException {
           DataInputOutputUtil.writeINT(out, value);
@@ -105,16 +102,16 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void removeAll(int key, IntSet values) {
     try {
-      final IntSet collection = myCache.get(key);
+      final IntSet collection = cache.get(key);
 
       if (collection != NULL_COLLECTION) {
         if (collection.removeAll(values)) {
-          myCache.remove(key);
+          cache.remove(key);
           if (collection.isEmpty()) {
-            myMap.remove(key);
+            map.remove(key);
           }
           else {
-            myMap.put(key, collection);
+            map.put(key, collection);
           }
         }
       }
@@ -127,15 +124,15 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void removeFrom(final int key, final int value) {
     try {
-      final IntSet collection = myCache.get(key);
+      final IntSet collection = cache.get(key);
       if (collection != NULL_COLLECTION) {
         if (collection.remove(value)) {
-          myCache.remove(key);
+          cache.remove(key);
           if (collection.isEmpty()) {
-            myMap.remove(key);
+            map.remove(key);
           }
           else {
-            myMap.put(key, collection);
+            map.put(key, collection);
           }
         }
       }
@@ -148,8 +145,8 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void remove(final int key) {
     try {
-      myCache.remove(key);
-      myMap.remove(key);
+      cache.remove(key);
+      map.remove(key);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -169,8 +166,8 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void close() {
     try {
-      myCache.clear();
-      myMap.close();
+      cache.clear();
+      map.close();
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -180,21 +177,21 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void flush(boolean memoryCachesOnly) {
     if (memoryCachesOnly) {
-      if (myMap.isDirty()) {
-        myMap.dropMemoryCaches();
+      if (map.isDirty()) {
+        map.dropMemoryCaches();
       }
     }
     else {
-      myMap.force();
+      map.force();
     }
   }
 
   @Override
   public void forEachEntry(ObjIntConsumer<? super IntSet> procedure) {
     try {
-      myMap.processKeysWithExistingMapping(key -> {
+      map.processKeysWithExistingMapping(key -> {
         try {
-          procedure.accept(myMap.get(key), key);
+          procedure.accept(map.get(key), key);
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);
