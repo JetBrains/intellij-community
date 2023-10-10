@@ -980,7 +980,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (parentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)parentScheme).getParentName();
       EditorColorsScheme newParent = nameResolver.apply(parentName);
-      if (!newParent.isReadOnly()) {
+      if (newParent == null || !newParent.isReadOnly()) {
         throw new InvalidDataException(parentName);
       }
       parentScheme = newParent;
