@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.quickDoc
+package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol

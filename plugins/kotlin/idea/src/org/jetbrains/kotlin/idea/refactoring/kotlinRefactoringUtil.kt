@@ -29,7 +29,6 @@ import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.VisibilityUtil
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -71,7 +70,6 @@ import org.jetbrains.kotlin.types.typeUtil.unCapture
 import java.lang.annotation.Retention
 import java.util.*
 import kotlin.math.min
-import org.jetbrains.kotlin.idea.base.psi.getLineCount as newGetLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
@@ -508,8 +506,6 @@ fun KtNamedDeclaration.isAbstract(): Boolean = when {
     this is KtNamedFunction -> !hasBody()
     else -> false
 }
-
-fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD) || this.isAbstract() || this.isInterfaceClass() || this.isSealed()
 
 fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     changeInfo: KotlinChangeInfo,

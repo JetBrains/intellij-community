@@ -2,13 +2,13 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiPackage
+import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 fun PsiElement.canRefactorElement(): Boolean {
   return when {
@@ -20,3 +20,21 @@ fun PsiElement.canRefactorElement(): Boolean {
     else -> false
   }
 }
+
+fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD) || this.isAbstract() || this.isInterfaceClass() || this.isSealed()
+
+fun PsiElement.isInterfaceClass(): Boolean = when (this) {
+    is KtClass -> isInterface()
+    is PsiClass -> isInterface
+    is KtPsiClassWrapper -> psiClass.isInterface
+    else -> false
+}
+
+fun KtDeclaration.isAbstract(): Boolean = when {
+    hasModifier(KtTokens.ABSTRACT_KEYWORD) -> true
+    containingClassOrObject?.isInterfaceClass() != true -> false
+    this is KtProperty -> initializer == null && delegate == null && accessors.isEmpty()
+    this is KtNamedFunction -> !hasBody()
+    else -> false
+}
+

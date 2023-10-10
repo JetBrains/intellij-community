@@ -42,5 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="library" name="jetbrains.markdown" level="project" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
   </component>
 </module>

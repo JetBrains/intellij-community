@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.kdoc
 
@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
 import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager
 import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager.Companion.eraseTypeParameter
 import org.jetbrains.kotlin.idea.references.KDocReference
-import org.jetbrains.kotlin.idea.util.wrapTag
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
@@ -746,4 +745,17 @@ object KDocRenderer {
         }
             .eraseTypeParameter()
     }
+}
+
+inline fun StringBuilder.wrapTag(tag: String, crossinline body: () -> Unit) {
+    wrap("<$tag>", "</$tag>", body)
+}
+
+inline fun StringBuilder.wrapTag(tag: String, params: String, crossinline body: () -> Unit) {
+    wrap("<$tag $params>", "</$tag>", body)
+}
+inline fun StringBuilder.wrap(prefix: String, postfix: String, crossinline body: () -> Unit) {
+    append(prefix)
+    body()
+    append(postfix)
 }

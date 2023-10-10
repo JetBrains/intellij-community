@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.quickDoc
+package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
 import com.google.common.html.HtmlEscapers
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
@@ -316,7 +316,7 @@ private fun renderKDoc(
         return
     }
     if (declaration is KtSecondaryConstructor) {
-        declaration.getContainingClassOrObject().findKDoc()?.let {
+        declaration.getContainingClassOrObject().findKDocByPsi()?.let {
             stringBuilder.renderKDoc(it.contentTag, it.sections)
         }
     } else if (declaration is KtFunction &&
@@ -333,7 +333,7 @@ private fun renderKDoc(
 context(KtAnalysisSession)
 private fun findKDoc(symbol: KtSymbol): KDocContent? {
     val ktElement = symbol.psi as? KtElement
-    ktElement?.findKDoc()?.let {
+    ktElement?.findKDocByPsi()?.let {
         return it
     }
 
