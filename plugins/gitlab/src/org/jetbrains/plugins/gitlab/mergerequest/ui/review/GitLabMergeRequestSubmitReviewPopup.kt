@@ -38,6 +38,7 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import kotlin.coroutines.resume
 
 internal object GitLabMergeRequestSubmitReviewPopup {
   suspend fun show(vm: GitLabMergeRequestSubmitReviewViewModel, parentComponent: JComponent, above: Boolean = false) {
@@ -52,7 +53,13 @@ internal object GitLabMergeRequestSubmitReviewPopup {
           .setResizable(true)
           .createPopup()
 
-        popup.showAndAwait(parentComponent, above)
+        if (above) {
+          popup.showAbove(parentComponent)
+        }
+        else {
+          popup.showUnderneathOf(parentComponent)
+        }
+        popup.awaitClose()
       }
     }
   }
@@ -161,26 +168,24 @@ internal object GitLabMergeRequestSubmitReviewPopup {
     }
   }
 
-  private suspend fun JBPopup.showAndAwait(component: JComponent, above: Boolean = false) {
+  private suspend fun JBPopup.awaitClose() {
+    if (isDisposed) {
+      currentCoroutineContext().cancel()
+      return
+    }
     try {
-      val result = CompletableDeferred<Unit>(currentCoroutineContext()[Job])
-      addListener(object : JBPopupListener {
-        override fun onClosed(event: LightweightWindowEvent) {
-          if (event.isOk) {
-            result.complete(Unit)
+      suspendCancellableCoroutine<Unit> { cont ->
+        addListener(object : JBPopupListener {
+          override fun onClosed(event: LightweightWindowEvent) {
+            if (event.isOk) {
+              cont.resume(Unit)
+            }
+            else {
+              cont.cancel()
+            }
           }
-          else {
-            result.cancel()
-          }
-        }
-      })
-      if (above) {
-        showAbove(component)
+        })
       }
-      else {
-        showUnderneathOf(component)
-      }
-      result.await()
     }
     catch (e: CancellationException) {
       cancel()
