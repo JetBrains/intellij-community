@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.service.task.ui;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TreeUIHelper;
@@ -84,7 +85,8 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
         if (task == null) {
           return;
         }
-        ExternalSystemUtil.runTask(task.getSettings(), task.getExecutorId(), project, externalSystemId);
+        ExternalSystemUtil.runTask(task.getSettings(), task.getExecutorId(), project, externalSystemId, null,
+                                   ProgressExecutionMode.NO_PROGRESS_ASYNC);
       }
     });
   }

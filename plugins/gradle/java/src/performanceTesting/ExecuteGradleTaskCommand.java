@@ -59,6 +59,6 @@ public final class ExecuteGradleTaskCommand extends AbstractCommand {
 
     ExternalSystemUtil.runTask(taskExecutionInfo.getSettings(), taskExecutionInfo.getExecutorId(), project, GradleConstants.SYSTEM_ID,
                                callback,
-                               ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+                               ProgressExecutionMode.NO_PROGRESS_ASYNC);
   }
 }
