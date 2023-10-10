@@ -15,7 +15,6 @@ internal class InlineCompletionTypingTracker(parentDisposable: Disposable) {
   private var lastTypingEvent: TypingEvent? = null
 
   init {
-    // [allowTyping] must be called in the same Write Action as [getDocumentChangeEvent]
     application.addApplicationListener(
       object : ApplicationListener {
         override fun afterWriteActionFinished(action: Any) {
@@ -26,12 +25,31 @@ internal class InlineCompletionTypingTracker(parentDisposable: Disposable) {
     )
   }
 
+  /**
+   * Informs this tracker that the next [DocumentEvent] that changes the same as [typingEvent] will create an event, that will be
+   * handled by [InlineCompletionHandler].
+   *
+   * Note that [allowTyping] and [getDocumentChangeEvent] must be called within the same Write Action, otherwise [allowTyping]
+   * will not influence on the next [getDocumentChangeEvent].
+   *
+   * @see getDocumentChangeEvent
+   */
   @RequiresEdt
   @RequiresBlockingContext
   fun allowTyping(typingEvent: TypingEvent) {
     lastTypingEvent = typingEvent
   }
 
+  /**
+   * If [documentEvent] was confirmed by the previous [allowTyping], which means they change the same in a document, this method
+   * returns [InlineCompletionEvent.DocumentChange] that will be handled by [InlineCompletionHandler]. Otherwise, [documentEvent]
+   * will cause [InlineCompletionHandler] to invalidate the current session (without starting a new one).
+   *
+   * Note that [allowTyping] and [getDocumentChangeEvent] must be called within the same Write Action, otherwise [allowTyping]
+   * will not influence on the next [getDocumentChangeEvent].
+   *
+   * @see allowTyping
+   */
   @RequiresEdt
   @RequiresBlockingContext
   fun getDocumentChangeEvent(documentEvent: DocumentEvent, editor: Editor): InlineCompletionEvent.DocumentChange? {

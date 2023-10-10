@@ -203,6 +203,10 @@ class InlineCompletionHandler(
     }
   }
 
+  /**
+   * @see InlineCompletionTypingTracker.allowTyping
+   * @see onDocumentEvent
+   */
   @RequiresEdt
   @RequiresBlockingContext
   internal fun allowTyping(event: TypingEvent) {
@@ -211,7 +215,11 @@ class InlineCompletionHandler(
 
   /**
    * If [documentEvent] offers the same as the last [allowTyping], then it creates [InlineCompletionEvent.DocumentChange] and
-   * invokes it. Otherwise, [documentEvent] is considered as 'non-typing' and a current session is invalidated (removed).
+   * invokes it. Otherwise, [documentEvent] is considered as 'non-typing' and a current session is invalidated.
+   * No new session is started in such a case.
+   *
+   * @see allowTyping
+   * @see InlineCompletionTypingTracker.getDocumentChangeEvent
    */
   @RequiresEdt
   @RequiresBlockingContext
