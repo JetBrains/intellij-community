@@ -15,10 +15,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
+import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -195,30 +192,26 @@ internal fun KtDeclaration.findAllExpectForActual(searchScope: SearchScope = run
     val containingClassOrObjectOrSelf = containingClassOrObjectOrSelf()
     // covers cases like classes, class functions and class properties
     containingClassOrObjectOrSelf?.fqName?.let { fqName ->
-        val classOrObjects = KotlinFullClassNameIndex.getAllElements(fqName.asString(), project, scope, filter = {
+        val fqNameAsString = fqName.asString()
+        val targetDeclarations: List<KtDeclaration> = KotlinFullClassNameIndex.getAllElements(fqNameAsString, project, scope, filter = {
+            it.matchesWithActual(containingClassOrObjectOrSelf)
+        }) + KotlinTopLevelTypeAliasFqNameIndex.getAllElements(fqNameAsString, project, scope, filter = {
             it.matchesWithActual(containingClassOrObjectOrSelf)
         })
-        return if (classOrObjects.isNotEmpty()) {
-            classOrObjects.asSequence().mapNotNull { classOrObject ->
-                when (declaration) {
-                    is KtClassOrObject -> classOrObject
-                    is KtNamedDeclaration -> classOrObject.declarations.firstOrNull {
-                        it is KtNamedDeclaration && it.name == declaration.name && it.matchesWithActual(declaration)
+
+        return targetDeclarations.asSequence().mapNotNull { targetDeclaration ->
+            when (declaration) {
+                is KtClassOrObject -> targetDeclaration
+                is KtNamedDeclaration ->
+                    when (targetDeclaration) {
+                        is KtClassOrObject -> targetDeclaration.declarations.firstOrNull {
+                            it is KtNamedDeclaration && it.name == declaration.name && it.matchesWithActual(declaration)
+                        }
+                        else -> null
                     }
 
-                    else -> null
-                }?.createSmartPointer()
-            }
-        } else {
-            val typeAliases = KotlinTopLevelTypeAliasFqNameIndex.getAllElements(fqName.asString(), project, scope, filter = {
-                it.matchesWithActual(containingClassOrObjectOrSelf)
-            })
-            typeAliases.asSequence().mapNotNull { classOrObject ->
-                when (declaration) {
-                    is KtClassOrObject -> classOrObject
-                    else -> null
-                }?.createSmartPointer()
-            }
+                else -> null
+            }?.createSmartPointer()
         }
     }
     // top level functions
