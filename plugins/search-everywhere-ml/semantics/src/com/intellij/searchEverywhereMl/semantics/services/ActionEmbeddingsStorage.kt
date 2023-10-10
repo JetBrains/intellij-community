@@ -48,7 +48,7 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
     get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.actions.generation.label")
 
   fun prepareForSearch(project: Project) = cs.launch {
-    project.waitForSmartMode()
+    project.waitForSmartMode() // project may become dumb again, but we don't interfere initial indexing
     LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
     index.loadFromDisk()
     generateEmbeddingsIfNecessary(project)
