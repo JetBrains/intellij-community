@@ -115,7 +115,11 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       }
 
       private void checkPredicatesUtilityMethod(PsiMethodCallExpression expression) {
-        if (GuavaPredicateConversionRule.isPredicates(expression)) {
+        if (GuavaPredicateConversionRule.isPredicates(expression) && (
+          isReceiverOfEnclosingCallAFluentIterable(expression) ||
+          GuavaPredicateConversionRule.isEnclosingCallPredicate(expression) ||
+          GuavaPredicateConversionRule.isPredicateConvertibleInsideEnclosingMethod(expression)
+        )) {
           final PsiClassType initialType = (PsiClassType)expression.getType();
           if (initialType == null) return;
           PsiClassType targetType = createTargetType(initialType);
@@ -187,12 +191,25 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
         return result;
       }
 
+      public static boolean isReceiverOfEnclosingCallAFluentIterable(PsiMethodCallExpression expression) {
+        PsiMethodCallExpression enclosingMethodCallExpression =
+          PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
+        if (enclosingMethodCallExpression == null) return false;
+        PsiMethod method = enclosingMethodCallExpression.resolveMethod();
+        if (method == null) return false;
+        return isFluentIterable(method.getContainingClass());
+      }
+
       private static boolean isFluentIterableFromCall(PsiMethodCallExpression expression) {
         PsiMethod method = expression.resolveMethod();
         if (method == null || !GuavaFluentIterableConversionRule.CHAIN_HEAD_METHODS.contains(method.getName())) {
           return false;
         }
         PsiClass aClass = method.getContainingClass();
+        return isFluentIterable(aClass);
+      }
+
+      private static boolean isFluentIterable(PsiClass aClass) {
         return aClass != null && (GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(aClass.getQualifiedName()) ||
                                   GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName()));
       }
