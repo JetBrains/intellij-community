@@ -19,6 +19,7 @@ import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import it.unimi.dsi.fastutil.ints.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
 
 class MiniDetailsGetter internal constructor(project: Project,
@@ -46,6 +47,7 @@ class MiniDetailsGetter internal constructor(project: Project,
     return getCommitData(commit, emptySet())
   }
 
+  @ApiStatus.Internal
   fun getCommitData(commit: Int, commitsToLoad: Iterable<Int>): VcsCommitMetadata {
     val details = getFromCacheAndCleanOldPlaceholder(commit)
     if (details != null) return details
