@@ -63,6 +63,7 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
         BitSet declarations = getDeclarations(statements);
         if (declarations.isEmpty()) return;
         int maxLength = body.getTextLength() * 3 / 5;
+        if (maxLength < minLength) return;
         int maxCount;
         if (block == body) {
           maxCount = statements.length - 1;
