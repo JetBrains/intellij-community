@@ -22,6 +22,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,6 +112,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     /**
      * @see #create(Object, Object)
      */
+    @ApiStatus.Internal
     public PsiItemWithPresentation(PsiElement first, TargetPresentation second) {
       super(first, second);
     }
