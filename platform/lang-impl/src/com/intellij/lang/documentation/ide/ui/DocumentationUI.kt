@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
-import com.intellij.ui.FontSizeModel
 import com.intellij.ui.PopupHandler
 import com.intellij.util.flow.collectLatestUndispatched
 import com.intellij.util.ui.EDT
@@ -48,7 +47,7 @@ internal class DocumentationUI(
 
   val scrollPane: JScrollPane
   val editorPane: DocumentationHintEditorPane
-  val fontSize: FontSizeModel = DocumentationFontSizeModel()
+  val fontSize: DocumentationFontSizeModel = DocumentationFontSizeModel()
 
   private val icons = mutableMapOf<String, Icon>()
   private var imageResolver: DocumentationImageResolver? = null

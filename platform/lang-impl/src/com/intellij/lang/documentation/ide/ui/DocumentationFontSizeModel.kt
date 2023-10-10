@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
-internal class DocumentationFontSizeModel : FontSizeModel {
+internal class DocumentationFontSizeModel : FontSizeModel<FontSize> {
 
   private val myFontSize: MutableStateFlow<FontSize> = MutableStateFlow(getDocumentationFontSize()) // initialize with current state
 
@@ -21,6 +21,9 @@ internal class DocumentationFontSizeModel : FontSizeModel {
       setDocumentationFontSize(value) // persist modifications
       myFontSize.value = value
     }
+
+  override val values: List<FontSize>
+    get() = FontSize.entries.toList()
 
   override val updates: Flow<FontSize> = myFontSize.asSharedFlow()
 }
