@@ -136,6 +136,10 @@ internal class FirClassifierReferenceCompletionContributor(
 ) : FirClassifierCompletionContributor(basicContext, priority) {
 
     context(KtAnalysisSession)
-    override fun getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
-        ImportStrategy.DoNothing
+    override fun getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy = when (classifierSymbol) {
+        is KtTypeParameterSymbol -> ImportStrategy.DoNothing
+        is KtClassLikeSymbol -> {
+            classifierSymbol.classIdIfNonLocal?.let { ImportStrategy.AddImport(it.asSingleFqName()) } ?: ImportStrategy.DoNothing
+        }
+    }
 }

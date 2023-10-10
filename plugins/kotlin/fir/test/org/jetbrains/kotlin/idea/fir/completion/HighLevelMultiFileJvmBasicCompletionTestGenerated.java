@@ -63,6 +63,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../completion/testData/basic/multifile/CompletionOnImportedFunction/");
     }
 
+    @TestMetadata("ConstructorReferenceNotImported")
+    public void testConstructorReferenceNotImported() throws Exception {
+        runTest("../completion/testData/basic/multifile/ConstructorReferenceNotImported/");
+    }
+
     @TestMetadata("DoNotCompleteWithConstraints")
     public void testDoNotCompleteWithConstraints() throws Exception {
         runTest("../completion/testData/basic/multifile/DoNotCompleteWithConstraints/");

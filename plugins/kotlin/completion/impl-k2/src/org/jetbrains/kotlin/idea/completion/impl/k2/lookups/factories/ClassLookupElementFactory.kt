@@ -60,11 +60,12 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
         val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
         val targetFile = context.file as? KtFile ?: return
         val lookupObject = item.`object` as ClassifierLookupObject
+        val importingStrategy = lookupObject.importingStrategy
 
         super.handleInsert(context, item)
 
-        if (lookupObject.importingStrategy is ImportStrategy.InsertFqNameAndShorten) {
-            val fqNameRendered = lookupObject.importingStrategy.fqName.render()
+        if (importingStrategy is ImportStrategy.InsertFqNameAndShorten) {
+            val fqNameRendered = importingStrategy.fqName.render()
 
             val token = context.file.findElementAt(context.startOffset)
 
@@ -103,6 +104,8 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
                 context.document.deleteString(rangeMarker.startOffset, fqNameRangeMarker.startOffset)
                 context.document.deleteString(fqNameRangeMarker.endOffset, rangeMarker.endOffset)
             }
+        } else if (importingStrategy is ImportStrategy.AddImport) {
+            addImportIfRequired(targetFile, importingStrategy.nameToImport)
         }
     }
 

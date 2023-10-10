@@ -18,7 +18,7 @@ sealed class ImportStrategy {
     data class InsertFqNameAndShorten(val fqName: FqName) : ImportStrategy()
 }
 
-internal fun addCallableImportIfRequired(targetFile: KtFile, nameToImport: FqName) {
+internal fun addImportIfRequired(targetFile: KtFile, nameToImport: FqName) {
     if (!alreadyHasImport(targetFile, nameToImport)) {
         targetFile.addImport(nameToImport)
     }

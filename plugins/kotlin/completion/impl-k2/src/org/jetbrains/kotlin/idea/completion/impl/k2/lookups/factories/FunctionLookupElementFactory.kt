@@ -296,7 +296,7 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
             context.commitDocument()
 
             if (importStrategy is ImportStrategy.AddImport) {
-                addCallableImportIfRequired(targetFile, importStrategy.nameToImport)
+                addImportIfRequired(targetFile, importStrategy.nameToImport)
             }
         }
     }
