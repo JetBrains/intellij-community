@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.util.Comparing
@@ -249,7 +250,12 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                                 myFixture.availableIntentions.joinToString(separator = "\n") { "// \"${it.text}\" \"true\"" })
                     return
                 }
-                IntentionManagerSettings.getInstance().isShowLightBulb(intention)
+
+                runReadAction {
+                    if (intention.isAvailable(project, myFixture.editor, file)) {
+                        IntentionManagerSettings.getInstance().isShowLightBulb(intention)
+                    }
+                }
 
                 runInEdtAndWait {
                     CommandProcessor.getInstance().executeCommand(project, {

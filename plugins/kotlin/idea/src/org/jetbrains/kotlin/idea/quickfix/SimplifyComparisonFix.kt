@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class SimplifyComparisonFix(element: KtExpression, val value: Boolean) : KotlinQuickFixAction<KtExpression>(element) {
     override fun getFamilyName(): String =
-        KotlinBundle.message("simplify.0.to.1", runReadAction { element.toString() }, value)
+        KotlinBundle.message("simplify.comparison")
 
     override fun getText(): String =
         KotlinBundle.message("simplify.comparison")

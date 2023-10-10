@@ -15,6 +15,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -388,17 +389,19 @@ public final class CachedIntentions implements IntentionContainer {
       }
     }
 
-    if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
-      return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb :
-             myInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :
-             ExperimentalUI.isNewUI() ? null :
-             AllIcons.Actions.RealIntentionBulb;
-    }
-    else {
-      return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixOffBulb :
-             ExperimentalUI.isNewUI() ? null :
-             IconLoader.getDisabledIcon(AllIcons.Actions.RealIntentionBulb);
-    }
+    return ReadAction.compute(() -> {
+      if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
+        return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb :
+               myInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :
+               ExperimentalUI.isNewUI() ? null :
+               AllIcons.Actions.RealIntentionBulb;
+      }
+      else {
+        return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixOffBulb :
+               ExperimentalUI.isNewUI() ? null :
+               IconLoader.getDisabledIcon(AllIcons.Actions.RealIntentionBulb);
+      }
+    });
   }
 
   public boolean showBulb() {

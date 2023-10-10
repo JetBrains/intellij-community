@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -52,12 +51,10 @@ class OverloadResolutionChangeFix(element: KtExpression) : KotlinPsiOnlyQuickFix
     }
 
     override fun getText(): String {
-        val typeArgument = runReadAction {
-            val expression = element ?: return@runReadAction null
-            getTypeArgumentForCast(expression) ?: return@runReadAction null
-        } ?: return ""
+        val expression = element ?: return ""
+        val typeArgument = getTypeArgumentForCast(expression) ?: return ""
         return QuickFixBundle.message("add.typecast.text", "Iterable<$typeArgument>")
     }
 
-    override fun getFamilyName(): String = text
+    override fun getFamilyName(): String = QuickFixBundle.message("add.typecast.family")
 }
