@@ -573,6 +573,9 @@
                        key="black.configurable.name"/>
 
     <dependencyCollector kind="python" implementation="com.jetbrains.python.packaging.PyDependencyCollector"/>
+
+    <registryKey key="python.new.interpreter.creation.ui" defaultValue="true"
+                 description="Enable new UI for adding Python interpreter in New Project dialog." />
   </extensions>
 
   <extensionPoints>
@@ -892,6 +895,8 @@
       <!--suppress PluginXmlI18n -->
       <action id="PyUpdateProjectSdk" internal="true" class="com.jetbrains.python.sdk.PyUpdateProjectSdkAction"
               text="Update Python SDK" description="Forcibly update all configured Python SDKs in the project"/>
+      <action id="PySetPropertyAction" internal="true" class="com.jetbrains.python.sdk.add.v2.PySetPropertyAction"
+              text="Set PropertiesComponent Value" description="Set value in application-level PropertiesComponent"/>
       <add-to-group group-id="Internal"/>
     </group>
   </actions>

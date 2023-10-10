@@ -144,7 +144,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
    * @return path for project on remote side provided by user
    */
   @Nullable
-  public final String getRemotePath() {
+  public String getRemotePath() {
     final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
     if (interpreterPanel == null) return null;
     final PyAddExistingSdkPanel panel = ObjectUtils.tryCast(interpreterPanel.getSelectedPanel(), PyAddExistingSdkPanel.class);
