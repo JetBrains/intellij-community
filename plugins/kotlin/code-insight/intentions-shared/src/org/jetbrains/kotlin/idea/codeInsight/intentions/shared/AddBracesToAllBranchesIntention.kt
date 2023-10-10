@@ -39,7 +39,8 @@ internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpres
     override fun applyTo(element: KtExpression, editor: Editor?) {
         val targetIfOrWhenExpression = Util.targetIfOrWhenExpression(element) ?: return
         targetIfOrWhenExpression.targetBranchExpressions().forEach {
-            AddBracesIntention.Util.addBraces(targetIfOrWhenExpression, it)
+            val container = it.parent as? KtWhenEntry ?: targetIfOrWhenExpression
+            AddBracesIntention.Util.addBraces(container, it)
         }
     }
 
