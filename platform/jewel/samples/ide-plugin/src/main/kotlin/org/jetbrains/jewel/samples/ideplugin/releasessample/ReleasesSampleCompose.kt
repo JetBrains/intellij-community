@@ -3,6 +3,7 @@ package org.jetbrains.jewel.samples.ideplugin.releasessample
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -38,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,6 +69,8 @@ import com.intellij.ui.NewUI
 import com.intellij.ui.RelativeFont
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.toJavaLocalDate
 import org.jetbrains.jewel.HorizontalSplitLayout
@@ -475,17 +479,27 @@ private fun ReleaseImage(imagePath: String) {
             tween(durationMillis = 2.seconds.inWholeMilliseconds.toInt(), easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
+        "holoFoil offset",
     )
-
     var isHovered by remember { mutableStateOf(false) }
+    var applyModifier by remember { mutableStateOf(false) }
+    val intensity by animateFloatAsState(if (isHovered) 1f else 0f, animationSpec = tween(300))
+
+    val scope = rememberCoroutineScope()
 
     Image(
         painter = painter,
         contentDescription = null,
         modifier = Modifier.fillMaxWidth()
-            .sizeIn(maxHeight = 200.dp)
-            .onHover { isHovered = it }
-            .thenIf(isHovered) { holoFoil(offset) },
+            .sizeIn(minHeight = 150.dp, maxHeight = 250.dp)
+            .onHover { newIsHovered ->
+                scope.launch {
+                    isHovered = newIsHovered
+                    if (!newIsHovered) delay(300)
+                    applyModifier = newIsHovered
+                }
+            }
+            .thenIf(applyModifier) { holoFoil(offset, intensity) },
         contentScale = ContentScale.Fit,
     )
 }

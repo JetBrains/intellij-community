@@ -10,13 +10,13 @@ import org.jetbrains.skia.RuntimeShaderBuilder
 
 @Language("GLSL") // Technically, SkSL
 private const val FOIL_SHADER_CODE = """
-const float STRENGTH = 0.4; // 0.0 = no effect, 1.0 = full effect
 const float SATURATION = 0.9; // Color saturation (0.0 = grayscale, 1.0 = full color)
 const float LIGHTNESS = 0.65; // Color lightness (0.0 = black, 1.0 = white)
  
 uniform shader content; // Input texture (the application canvas)
 uniform vec2 resolution;  // Size of the canvas
 uniform vec2 offset;     // Additional offset of the effect
+uniform float intensity; // 0.0 = no effect, 1.0 = full effect
 
 // From https://www.ryanjuckett.com/photoshop-blend-modes-in-hlsl/
 vec3 BlendMode_Screen(vec3 base, vec3 blend) {
@@ -64,7 +64,7 @@ vec4 rainbowEffect(vec2 uv, vec2 coord, vec2 offset) {
     }
 
     vec3 rainbow = BlendMode_Screen(srcColor.rgb, rainbowPrime + m);
-    return mix(srcColor, vec4(rainbow, srcColor.a), STRENGTH);
+    return mix(srcColor, vec4(rainbow, srcColor.a), intensity);
 }
 
 vec4 chromaticAberration(vec2 coord, vec2 offset) {
@@ -85,10 +85,11 @@ vec4 main(float2 fragCoord) {
 private val runtimeEffect = RuntimeEffect.makeForShader(FOIL_SHADER_CODE)
 private val shaderBuilder = RuntimeShaderBuilder(runtimeEffect)
 
-internal fun Modifier.holoFoil(offset: Float) =
+internal fun Modifier.holoFoil(offset: Float, intensity: Float = 1f) =
     graphicsLayer {
         shaderBuilder.uniform("resolution", size.width, size.height)
         shaderBuilder.uniform("offset", 0f, offset)
+        shaderBuilder.uniform("intensity", intensity * .65f)
 
         renderEffect =
             ImageFilter.makeRuntimeShader(
@@ -97,9 +98,9 @@ internal fun Modifier.holoFoil(offset: Float) =
                 inputs = arrayOf(null),
             ).asComposeRenderEffect()
 
-        rotationX = offset * 4f
-        rotationY = offset * 10f
-        rotationZ = offset * -3f
-        scaleX = .9f
-        scaleY = .9f
+        rotationX = offset * 4f * intensity
+        rotationY = offset * 10f * intensity
+        rotationZ = offset * -3f * intensity
+        scaleX = 1f - .1f * intensity
+        scaleY = 1f - .1f * intensity
     }
