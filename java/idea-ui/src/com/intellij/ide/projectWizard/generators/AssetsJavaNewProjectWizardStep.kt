@@ -40,9 +40,6 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
           fun icon(allIconsId: String) = """<icon src="$allIconsId"/>"""
 
           //@formatter:off
-          put("SearchEverywhereComment1", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.render.1", rawShortcut("SHIFT")))
-          put("SearchEverywhereComment2", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.render.2", rawShortcut("ENTER")))
-
           put("RunComment1", JavaStartersBundle.message("onboarding.run.comment.render.1", shortcut(IdeActions.ACTION_DEFAULT_RUNNER)))
           put("RunComment2", JavaStartersBundle.message("onboarding.run.comment.render.2", icon("AllIcons.Actions.Execute")))
 
