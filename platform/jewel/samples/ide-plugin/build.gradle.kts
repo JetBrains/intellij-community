@@ -2,6 +2,7 @@ plugins {
     jewel
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.ideaGradlePlugin)
+    `android-studio-releases-generator`
 }
 
 intellij {
@@ -21,8 +22,19 @@ repositories {
 }
 
 dependencies {
-    implementation(projects.ideLafBridge)
+    implementation(projects.ideLafBridge) {
+        exclude(group = "org.jetbrains.kotlinx")
+    }
+
     implementation(compose.desktop.currentOs) {
         exclude(group = "org.jetbrains.compose.material")
+        exclude(group = "org.jetbrains.kotlinx")
+    }
+}
+
+tasks {
+    // We don't have any settings in the demo plugin
+    buildSearchableOptions {
+        enabled = false
     }
 }

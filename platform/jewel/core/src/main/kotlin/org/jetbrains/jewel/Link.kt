@@ -176,7 +176,7 @@ fun DropdownLink(
         )
 
         if (expanded) {
-            DropdownMenu(
+            PopupMenu(
                 onDismissRequest = {
                     expanded = false
                     if (it == InputMode.Touch && hovered) {

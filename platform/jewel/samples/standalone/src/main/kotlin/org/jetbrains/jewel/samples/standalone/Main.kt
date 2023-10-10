@@ -31,6 +31,7 @@ import org.jetbrains.jewel.CheckboxRow
 import org.jetbrains.jewel.Divider
 import org.jetbrains.jewel.JewelSvgLoader
 import org.jetbrains.jewel.LocalResourceLoader
+import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.VerticalScrollbar
 import org.jetbrains.jewel.intui.standalone.IntUiTheme
 import org.jetbrains.jewel.intui.standalone.rememberSvgLoader
@@ -79,7 +80,7 @@ fun main() {
                     CheckboxRow("Swing compat", swingCompat, resourceLoader, { swingCompat = it })
                 }
 
-                Divider(Modifier.fillMaxWidth())
+                Divider(Orientation.Horizontal, Modifier.fillMaxWidth())
 
                 ComponentShowcase(svgLoader, resourceLoader)
             }

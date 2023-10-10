@@ -20,6 +20,7 @@ import org.jetbrains.jewel.styling.ButtonStyle
 import org.jetbrains.jewel.styling.CheckboxStyle
 import org.jetbrains.jewel.styling.ChipStyle
 import org.jetbrains.jewel.styling.CircularProgressStyle
+import org.jetbrains.jewel.styling.DividerStyle
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.GroupHeaderStyle
 import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
@@ -31,6 +32,7 @@ import org.jetbrains.jewel.styling.LocalChipStyle
 import org.jetbrains.jewel.styling.LocalCircularProgressStyle
 import org.jetbrains.jewel.styling.LocalDefaultButtonStyle
 import org.jetbrains.jewel.styling.LocalDefaultTabStyle
+import org.jetbrains.jewel.styling.LocalDividerStyle
 import org.jetbrains.jewel.styling.LocalDropdownStyle
 import org.jetbrains.jewel.styling.LocalEditorTabStyle
 import org.jetbrains.jewel.styling.LocalGroupHeaderStyle
@@ -113,6 +115,11 @@ interface BaseIntUiTheme : IntelliJTheme {
         @Composable
         @ReadOnlyComposable
         get() = IntelliJTheme.chipStyle
+
+    val dividerStyle: DividerStyle
+        @Composable
+        @ReadOnlyComposable
+        get() = IntelliJTheme.dividerStyle
 
     val dropdownStyle: DropdownStyle
         @Composable
@@ -208,6 +215,7 @@ fun BaseIntUiTheme(
         LocalChipStyle provides componentStyling.chipStyle,
         LocalContextMenuRepresentation provides IntelliJContextMenuRepresentation,
         LocalDefaultButtonStyle provides componentStyling.defaultButtonStyle,
+        LocalDividerStyle provides componentStyling.dividerStyle,
         LocalDropdownStyle provides componentStyling.dropdownStyle,
         LocalGroupHeaderStyle provides componentStyling.groupHeaderStyle,
         LocalHorizontalProgressBarStyle provides componentStyling.horizontalProgressBarStyle,

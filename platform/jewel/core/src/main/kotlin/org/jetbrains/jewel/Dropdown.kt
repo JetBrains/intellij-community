@@ -148,7 +148,7 @@ fun Dropdown(
         }
 
         if (expanded) {
-            DropdownMenu(
+            PopupMenu(
                 onDismissRequest = {
                     expanded = false
                     if (it == InputMode.Touch && dropdownState.isHovered) {

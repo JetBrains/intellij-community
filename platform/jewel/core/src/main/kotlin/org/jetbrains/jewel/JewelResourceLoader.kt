@@ -5,7 +5,7 @@ import java.io.InputStream
 
 abstract class JewelResourceLoader : ResourceLoader {
 
-    protected var verbose = true
+    private val verbose = true
 
     protected fun loadResourceOrNull(path: String, classLoaders: List<ClassLoader>): InputStream? {
         for (classLoader in classLoaders) {

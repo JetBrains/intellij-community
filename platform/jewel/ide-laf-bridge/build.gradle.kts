@@ -5,7 +5,9 @@ plugins {
 }
 
 dependencies {
-    api(projects.intUi.intUiStandalone)
+    api(projects.intUi.intUiStandalone) {
+        exclude(group = "org.jetbrains.kotlinx")
+    }
     compileOnly(libs.bundles.idea)
 
     testImplementation(compose.desktop.uiTestJUnit4)

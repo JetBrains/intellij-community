@@ -70,9 +70,61 @@ import org.jetbrains.jewel.CommonStateBitMask.Selected
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.foundation.onHover
+import org.jetbrains.jewel.styling.LocalMenuStyle
 import org.jetbrains.jewel.styling.MenuItemColors
 import org.jetbrains.jewel.styling.MenuItemMetrics
 import org.jetbrains.jewel.styling.MenuStyle
+
+@Composable
+fun PopupMenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    horizontalAlignment: Alignment.Horizontal,
+    resourceLoader: ResourceLoader,
+    modifier: Modifier = Modifier,
+    style: MenuStyle = IntelliJTheme.menuStyle,
+    content: MenuScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+
+    val popupPositionProvider = AnchorVerticalMenuPositionProvider(
+        contentOffset = style.metrics.offset,
+        contentMargin = style.metrics.menuMargin,
+        alignment = horizontalAlignment,
+        density = density,
+    )
+
+    var focusManager: FocusManager? by mutableStateOf(null)
+    var inputModeManager: InputModeManager? by mutableStateOf(null)
+    val menuManager = remember(onDismissRequest) {
+        MenuManager(onDismissRequest = onDismissRequest)
+    }
+
+    Popup(
+        popupPositionProvider = popupPositionProvider,
+        onDismissRequest = { onDismissRequest(InputMode.Touch) },
+        properties = PopupProperties(focusable = true),
+        onPreviewKeyEvent = { false },
+        onKeyEvent = {
+            val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
+            val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
+            handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuManager)
+        },
+    ) {
+        focusManager = LocalFocusManager.current
+        inputModeManager = LocalInputModeManager.current
+
+        CompositionLocalProvider(
+            LocalMenuManager provides menuManager,
+            LocalMenuStyle provides style,
+        ) {
+            MenuContent(
+                modifier = modifier,
+                content = content,
+                resourceLoader = resourceLoader,
+            )
+        }
+    }
+}
 
 @Composable
 internal fun MenuContent(
@@ -244,10 +296,10 @@ fun MenuSeparator(
     colors: MenuItemColors = IntelliJTheme.menuStyle.colors.itemColors,
 ) {
     Divider(
-        modifier = modifier.padding(metrics.separatorPadding),
-        thickness = metrics.separatorThickness,
         orientation = Orientation.Horizontal,
+        modifier = modifier.padding(metrics.separatorPadding),
         color = colors.separator,
+        thickness = metrics.separatorThickness,
     )
 }
 

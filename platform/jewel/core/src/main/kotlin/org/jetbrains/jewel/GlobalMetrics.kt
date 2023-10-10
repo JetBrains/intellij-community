@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.Dp
 interface GlobalMetrics {
 
     val outlineWidth: Dp
+    val rowHeight: Dp
 }
 
 val LocalGlobalMetrics = staticCompositionLocalOf<GlobalMetrics> {

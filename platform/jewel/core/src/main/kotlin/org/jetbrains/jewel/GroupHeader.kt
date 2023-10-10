@@ -18,10 +18,10 @@ fun GroupHeader(
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         Text(text, color = textColor)
         Divider(
-            color = style.colors.divider,
             orientation = Orientation.Horizontal,
-            startIndent = style.metrics.indent,
+            color = style.colors.divider,
             thickness = style.metrics.dividerThickness,
+            startIndent = style.metrics.indent,
         )
     }
 }

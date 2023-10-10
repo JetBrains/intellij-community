@@ -42,7 +42,7 @@ fun Dropdowns() {
             menuContent = {
             },
         ) {
-            Text(selected)
+            Text("Disabled")
         }
         Dropdown(
             resourceLoader = resourceLoader,

@@ -9,7 +9,8 @@ import org.jetbrains.jewel.ExperimentalJewelApi
 import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.intui.standalone.IntUiTheme
 
-private val bridgeService = service<SwingBridgeService>()
+private val bridgeService
+    get() = service<SwingBridgeService>()
 
 @ExperimentalJewelApi
 @Composable

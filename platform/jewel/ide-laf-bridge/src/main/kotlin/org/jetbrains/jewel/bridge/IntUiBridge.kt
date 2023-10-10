@@ -38,6 +38,8 @@ import org.jetbrains.jewel.intui.standalone.styling.IntUiChipColors
 import org.jetbrains.jewel.intui.standalone.styling.IntUiChipMetrics
 import org.jetbrains.jewel.intui.standalone.styling.IntUiChipStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiCircularProgressStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiDividerMetrics
+import org.jetbrains.jewel.intui.standalone.styling.IntUiDividerStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownColors
 import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownIcons
 import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownMetrics
@@ -154,6 +156,7 @@ internal fun createSwingIntUiComponentStyling(
         chipStyle = readChipStyle(),
         defaultButtonStyle = readDefaultButtonStyle(),
         defaultTabStyle = readDefaultTabStyle(theme.iconData, svgLoader),
+        dividerStyle = readDividerStyle(),
         dropdownStyle = readDropdownStyle(theme.iconData, svgLoader, menuStyle, dropdownTextStyle),
         editorTabStyle = readEditorTabStyle(theme.iconData, svgLoader),
         groupHeaderStyle = readGroupHeaderStyle(),
@@ -344,6 +347,12 @@ private fun readChipStyle(): IntUiChipStyle {
         ),
     )
 }
+
+private fun readDividerStyle() =
+    IntUiDividerStyle(
+        color = retrieveColorOrUnspecified("Borders.color"),
+        metrics = IntUiDividerMetrics(),
+    )
 
 private fun readDropdownStyle(
     iconData: IntelliJThemeIconData,
@@ -621,12 +630,12 @@ private fun readRadioButtonStyle(iconData: IntelliJThemeIconData, svgLoader: Svg
 
 private fun readScrollbarStyle(isDark: Boolean) = IntUiScrollbarStyle(
     colors = IntUiScrollbarColors(
-        // See ScrollBarPainter.THUMB_BACKGROUND
+        // See ScrollBarPainter.THUMB_OPAQUE_BACKGROUND
         thumbBackground = retrieveColorOrUnspecified("ScrollBar.Mac.Transparent.thumbColor")
-            .takeOrElse { if (isDark) Color(0x00000000) else Color(0x00808080) },
-        // See ScrollBarPainter.THUMB_HOVERED_BACKGROUND
+            .takeOrElse { if (isDark) Color(0x59808080) else Color(0x33000000) },
+        // See ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND
         thumbBackgroundHovered = retrieveColorOrUnspecified("ScrollBar.Mac.Transparent.hoverThumbColor")
-            .takeOrElse { if (isDark) Color(0x00000000) else Color(0x00808080) },
+            .takeOrElse { if (isDark) Color(0x8C808080) else Color(0x80000000) },
     ),
     metrics = IntUiScrollbarMetrics(
         thumbCornerSize = CornerSize(100),

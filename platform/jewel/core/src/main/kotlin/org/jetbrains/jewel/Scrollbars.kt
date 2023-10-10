@@ -27,14 +27,14 @@ fun VerticalScrollbar(
     style: ScrollbarStyle = IntelliJTheme.scrollbarStyle,
 ) {
     val shape by remember { mutableStateOf(RoundedCornerShape(style.metrics.thumbCornerSize)) }
-    val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.toInt(DurationUnit.MILLISECONDS)) }
+    val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.inWholeMilliseconds) }
 
     CompositionLocalProvider(
         LocalScrollbarStyle provides ComposeScrollbarStyle(
             minimalHeight = style.metrics.minThumbLength,
             thickness = style.metrics.thumbThickness,
             shape = shape,
-            hoverDurationMillis = hoverDurationMillis,
+            hoverDurationMillis = hoverDurationMillis.toInt(),
             unhoverColor = style.colors.thumbBackground,
             hoverColor = style.colors.thumbBackgroundHovered,
         ),

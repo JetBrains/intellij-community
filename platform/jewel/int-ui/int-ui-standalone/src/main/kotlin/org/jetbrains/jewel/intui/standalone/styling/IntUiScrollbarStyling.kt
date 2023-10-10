@@ -49,14 +49,14 @@ data class IntUiScrollbarColors(
 
         @Composable
         fun light(
-            thumbBackground: Color = Color(0xFFD9D9D9),
-            thumbBackgroundHovered: Color = Color(0xFF7B7C7D),
+            thumbBackground: Color = Color(0x33000000),
+            thumbBackgroundHovered: Color = Color(0x80000000),
         ) = IntUiScrollbarColors(thumbBackground, thumbBackgroundHovered)
 
         @Composable
         fun dark(
-            thumbBackground: Color = Color(0xFF48494B),
-            thumbBackgroundHovered: Color = Color(0xFF595A5C),
+            thumbBackground: Color = Color(0x59808080),
+            thumbBackgroundHovered: Color = Color(0x8C808080),
         ) = IntUiScrollbarColors(thumbBackground, thumbBackgroundHovered)
     }
 }

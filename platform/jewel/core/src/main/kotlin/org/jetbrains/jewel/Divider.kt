@@ -10,32 +10,37 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.takeOrElse
+import org.jetbrains.jewel.styling.DividerStyle
 
 @Composable
 fun Divider(
+    orientation: Orientation,
     modifier: Modifier = Modifier,
-    color: Color = IntelliJTheme.globalColors.borders.normal,
-    thickness: Dp = 1.dp,
-    orientation: Orientation = Orientation.Horizontal,
-    startIndent: Dp = 0.dp,
+    color: Color = Color.Unspecified,
+    thickness: Dp = Dp.Unspecified,
+    startIndent: Dp = Dp.Unspecified,
+    style: DividerStyle = IntelliJTheme.dividerStyle,
 ) {
     val indentMod = if (startIndent.value != 0f) {
-        Modifier.padding(start = startIndent)
+        Modifier.padding(start = startIndent.takeOrElse { style.metrics.startIndent })
     } else {
         Modifier
     }
 
+    val actualThickness = thickness.takeOrElse { style.metrics.thickness }
     val orientationModifier = when (orientation) {
-        Orientation.Horizontal -> Modifier.height(thickness).fillMaxWidth()
-        Orientation.Vertical -> Modifier.width(thickness).fillMaxHeight()
+        Orientation.Horizontal -> Modifier.height(actualThickness).fillMaxWidth()
+        Orientation.Vertical -> Modifier.width(actualThickness).fillMaxHeight()
     }
 
+    val lineColor = color.takeOrElse { style.color }
     Box(
         modifier
             .then(indentMod)
             .then(orientationModifier)
-            .background(color = color),
+            .background(color = lineColor),
     )
 }

@@ -11,9 +11,14 @@ See the <a href="https://github.com/JetBrains/jewel">Jewel repository</a> for mo
 
     <depends>com.intellij.modules.platform</depends>
 
+    <resource-bundle>messages.JewelBundle</resource-bundle>
+
     <extensions defaultExtensionNs="com.intellij">
 
         <toolWindow id="JewelDemo" anchor="bottom" secondary="false" canCloseContents="false"
-            factoryClass="org.jetbrains.jewel.samples.ideplugin.JewelDemoToolWindow" />
+                    icon="JewelIcons.ToolWindowIcon"
+                    factoryClass="org.jetbrains.jewel.samples.ideplugin.JewelDemoToolWindowFactory"/>
+
+        <iconMapper mappingFile="JewelIntUiIconMappings.json"/>
     </extensions>
 </idea-plugin>

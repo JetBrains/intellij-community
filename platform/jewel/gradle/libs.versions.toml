@@ -11,6 +11,8 @@ dokka = "1.8.20"
 kotlinterGradlePlugin = "3.16.0"
 kotlinxSerialization = "1.5.1"
 kotlinpoet = "1.14.2"
+semVer = "1.2.0"
+simpleXml = "2.7.1"
 
 [libraries]
 javaSarif = { module = "com.contrastsecurity:java-sarif", version.ref = "javaSarif" }
@@ -20,6 +22,8 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 ij-platform-ide-core = { module = "com.jetbrains.intellij.platform:ide-core", version.ref = "idea" }
 ij-platform-ide-impl = { module = "com.jetbrains.intellij.platform:ide-impl", version.ref = "idea" }
 ij-platform-core-ui = { module = "com.jetbrains.intellij.platform:core-ui", version.ref = "idea" }
+semVer = { module = "net.swiftzer.semver:semver", version.ref = "semVer" }
+simpleXml = { module = "org.simpleframework:simple-xml", version.ref = "simpleXml" }
 
 # Plugin libraries for build-logic's convention plugins to use to resolve the types/tasks coming from these plugins
 detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }

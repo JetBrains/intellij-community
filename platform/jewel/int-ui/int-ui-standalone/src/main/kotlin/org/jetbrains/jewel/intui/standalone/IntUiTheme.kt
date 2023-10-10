@@ -36,6 +36,7 @@ import org.jetbrains.jewel.intui.standalone.styling.IntUiButtonStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiCheckboxStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiChipStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiCircularProgressStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiDividerStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiGroupHeaderStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiHorizontalProgressBarStyle
@@ -53,6 +54,7 @@ import org.jetbrains.jewel.styling.ButtonStyle
 import org.jetbrains.jewel.styling.CheckboxStyle
 import org.jetbrains.jewel.styling.ChipStyle
 import org.jetbrains.jewel.styling.CircularProgressStyle
+import org.jetbrains.jewel.styling.DividerStyle
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.GroupHeaderStyle
 import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
@@ -118,6 +120,7 @@ object IntUiTheme : BaseIntUiTheme {
         outlinedButtonStyle: ButtonStyle = IntUiButtonStyle.Outlined.dark(),
         checkboxStyle: CheckboxStyle = IntUiCheckboxStyle.dark(svgLoader),
         chipStyle: ChipStyle = IntUiChipStyle.dark(),
+        dividerStyle: DividerStyle = IntUiDividerStyle.dark(),
         dropdownStyle: DropdownStyle = IntUiDropdownStyle.dark(svgLoader),
         groupHeaderStyle: GroupHeaderStyle = IntUiGroupHeaderStyle.dark(),
         labelledTextFieldStyle: LabelledTextFieldStyle = IntUiLabelledTextFieldStyle.dark(),
@@ -139,6 +142,7 @@ object IntUiTheme : BaseIntUiTheme {
             chipStyle = chipStyle,
             defaultButtonStyle = defaultButtonStyle,
             defaultTabStyle = defaultTabStyle,
+            dividerStyle = dividerStyle,
             dropdownStyle = dropdownStyle,
             editorTabStyle = editorTabStyle,
             groupHeaderStyle = groupHeaderStyle,
@@ -163,6 +167,7 @@ object IntUiTheme : BaseIntUiTheme {
         outlinedButtonStyle: ButtonStyle = IntUiButtonStyle.Outlined.light(),
         checkboxStyle: CheckboxStyle = IntUiCheckboxStyle.light(svgLoader),
         chipStyle: ChipStyle = IntUiChipStyle.light(),
+        dividerStyle: DividerStyle = IntUiDividerStyle.light(),
         dropdownStyle: DropdownStyle = IntUiDropdownStyle.light(svgLoader),
         groupHeaderStyle: GroupHeaderStyle = IntUiGroupHeaderStyle.light(),
         labelledTextFieldStyle: LabelledTextFieldStyle = IntUiLabelledTextFieldStyle.light(),
@@ -183,6 +188,7 @@ object IntUiTheme : BaseIntUiTheme {
         chipStyle = chipStyle,
         defaultButtonStyle = defaultButtonStyle,
         defaultTabStyle = defaultTabStyle,
+        dividerStyle = dividerStyle,
         dropdownStyle = dropdownStyle,
         editorTabStyle = editorTabStyle,
         groupHeaderStyle = groupHeaderStyle,
