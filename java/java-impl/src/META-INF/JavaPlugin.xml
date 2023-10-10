@@ -2492,6 +2492,8 @@
               topic="com.intellij.codeInsight.hints.InlayHintsSettings$SettingsListener"/>
     <listener class="com.intellij.openapi.roots.impl.ProjectJavaLevelPusher"
               topic="com.intellij.lang.ProjectExtraDataPusher"/>
+    <listener class="com.intellij.openapi.roots.impl.VirtualFileJavaLevelInfoPusher"
+              topic="com.intellij.lang.VirtualFileExtraDataPusher"/>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileRefactoringEventListener"
               topic="com.intellij.refactoring.listeners.RefactoringEventListener"/>
     <listener class="com.intellij.ide.compilation.InvalidCompilationListener"
