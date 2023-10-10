@@ -10,8 +10,8 @@ import com.intellij.util.SystemProperties
 import com.jetbrains.python.sdk.PythonSdkUtil
 
 object CondaExecutablesLocator {
-  private val CONDA_DEFAULT_ROOTS = arrayOf("anaconda", "anaconda3", "miniconda", "miniconda3", "Anaconda", "Anaconda3", "Miniconda",
-                                            "Miniconda3")
+  private val CONDA_DEFAULT_ROOTS = listOf("anaconda", "anaconda3", "miniconda", "miniconda3", "Anaconda", "Anaconda3", "Miniconda",
+                                           "Miniconda3")
   private const val CONDA_ENVS_DIR = "envs"
   private const val CONDA_BAT_NAME = "conda.bat"
   private const val CONDA_BINARY_NAME = "conda"
