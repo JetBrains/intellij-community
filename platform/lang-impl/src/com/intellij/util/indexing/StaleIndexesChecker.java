@@ -90,7 +90,7 @@ public final class StaleIndexesChecker {
     try {
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
         staleIds.forEach((staleId) -> {
-          if (unitTest) {
+          if (unitTest || FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
             LOG.info("clearing stale id = " + staleId + ", path =  " + getRecordPath(staleId));
           }
           clearStaleIndexesForId(staleId);
