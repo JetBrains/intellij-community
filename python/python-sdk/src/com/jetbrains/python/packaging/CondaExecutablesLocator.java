@@ -16,9 +16,19 @@ import java.io.File;
 public final class CondaExecutablesLocator {
   private final static String[] CONDA_DEFAULT_ROOTS =
     new String[]{"anaconda", "anaconda3", "miniconda", "miniconda3", "Anaconda", "Anaconda3", "Miniconda", "Miniconda3"};
+  private static final String CONDA_ENVS_DIR = "envs";
+  private static final String CONDA_BAT_NAME = "conda.bat";
+  private static final String CONDA_BINARY_NAME = "conda";
+  private static final String WIN_CONDA_BIN_DIR_NAME = "condabin";
+  private static final String UNIX_CONDA_BIN_DIR_NAME = "bin";
+  private static final String PYTHON_EXE_NAME = "python.exe";
+  private static final String PYTHON_UNIX_BINARY_NAME = "python";
+  private static final String WIN_CONTINUUM_DIR_PATH = "AppData\\Local\\Continuum\\";
+  private static final String WIN_PROGRAM_DATA_PATH = "C:\\ProgramData\\";
+  private static final String WIN_C_ROOT_PATH = "C:\\";
+  private static final String UNIX_OPT_PATH = "/opt/";
 
   private static final Logger LOG = Logger.getInstance(CondaExecutablesLocator.class);
-  private static final String CONDA_ENVS_DIR = "envs";
 
   private CondaExecutablesLocator() {
   }
@@ -38,7 +48,7 @@ public final class CondaExecutablesLocator {
 
   @NotNull
   private static String getPythonName() {
-    return SystemInfo.isWindows ? "python.exe" : "python";
+    return SystemInfo.isWindows ? PYTHON_EXE_NAME : PYTHON_UNIX_BINARY_NAME;
   }
 
   @Nullable
@@ -52,18 +62,18 @@ public final class CondaExecutablesLocator {
     final String condaName;
     final VirtualFile condaFolder;
     if (SystemInfo.isWindows) {
-      condaName = "conda.bat";
+      condaName = CONDA_BAT_NAME;
       // On Windows python.exe is directly inside base interpreter/environment directory.
       // On other systems executable normally resides in "bin" subdirectory.
       condaFolder = pyExecutableDir;
     }
     else {
-      condaName = "conda";
+      condaName = CONDA_BINARY_NAME;
       condaFolder = pyExecutableDir.getParent();
     }
 
     // XXX Do we still need to support this? When did they drop per-environment conda executable?
-    final String localCondaName = SystemInfo.isWindows && !isBaseConda ? "conda.bat" : condaName;
+    final String localCondaName = SystemInfo.isWindows && !isBaseConda ? CONDA_BAT_NAME : condaName;
     final String immediateConda = findExecutable(localCondaName, condaFolder);
     if (immediateConda != null) {
       return immediateConda;
@@ -86,20 +96,20 @@ public final class CondaExecutablesLocator {
 
       //noinspection IfStatementWithIdenticalBranches
       if (SystemInfo.isWindows) {
-        condaFolder = userHome == null ? null : userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
+        condaFolder = userHome == null ? null : userHome.findFileByRelativePath(WIN_CONTINUUM_DIR_PATH + root);
         executableFile = findExecutable(condaName, condaFolder);
         if (executableFile != null) return executableFile;
 
-        condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\ProgramData\\" + root);
+        condaFolder = LocalFileSystem.getInstance().findFileByPath(WIN_PROGRAM_DATA_PATH + root);
         executableFile = findExecutable(condaName, condaFolder);
         if (executableFile != null) return executableFile;
 
-        condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
+        condaFolder = LocalFileSystem.getInstance().findFileByPath(WIN_C_ROOT_PATH + root);
         executableFile = findExecutable(condaName, condaFolder);
         if (executableFile != null) return executableFile;
       }
       else {
-        condaFolder = LocalFileSystem.getInstance().findFileByPath("/opt/" + root);
+        condaFolder = LocalFileSystem.getInstance().findFileByPath(UNIX_OPT_PATH + root);
         executableFile = findExecutable(condaName, condaFolder);
         if (executableFile != null) return executableFile;
       }
@@ -111,7 +121,7 @@ public final class CondaExecutablesLocator {
   @Nullable
   private static String findExecutable(String condaName, @Nullable final VirtualFile condaFolder) {
     if (condaFolder != null) {
-      final VirtualFile binFolder = condaFolder.findChild(SystemInfo.isWindows ? "condabin" : "bin");
+      final VirtualFile binFolder = condaFolder.findChild(SystemInfo.isWindows ? WIN_CONDA_BIN_DIR_NAME : UNIX_CONDA_BIN_DIR_NAME);
       if (binFolder != null) {
         final VirtualFile bin = binFolder.findChild(condaName);
         if (bin != null) {
@@ -128,7 +138,7 @@ public final class CondaExecutablesLocator {
 
   @Nullable
   static String getSystemCondaExecutable() {
-    final String condaName = SystemInfo.isWindows ? "conda.bat" : "conda";
+    final String condaName = SystemInfo.isWindows ? CONDA_BAT_NAME : CONDA_BINARY_NAME;
 
     final File condaInPath = PathEnvironmentVariableUtil.findInPath(condaName);
     if (condaInPath != null) {
