@@ -1,11 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -20,16 +16,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
-import com.jetbrains.python.PySdkBundle;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
 
 import java.io.File;
-import java.util.*;
 
 /**
  * @deprecated This class doesn't support targets, can't work with remote systems and shouldn't be used
@@ -58,16 +50,6 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
 
   public static PyCondaPackageService getInstance() {
     return ApplicationManager.getApplication().getService(PyCondaPackageService.class);
-  }
-
-  @Nullable
-  private static String getCondaPython() {
-    final String conda = getCondaExecutable(null);
-    if (conda != null) {
-      final String python = getCondaBasePython(conda);
-      if (python != null) return python;
-    }
-    return getCondaExecutableByName(getPythonName());
   }
 
   @Nullable
@@ -216,51 +198,5 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
       }
     }
     return null;
-  }
-
-  @Nullable
-  public static Multimap<String, String> listAllPackagesAndVersions() {
-    try {
-      final String output = runCondaPackagingHelper("listall");
-      final Multimap<String, String> nameToVersions =
-        Multimaps.newSortedSetMultimap(new HashMap<>(), () -> new TreeSet<>(PyPackageVersionComparator.getSTR_COMPARATOR().reversed()));
-      for (String line : StringUtil.split(output, "\n")) {
-        final List<String> split = StringUtil.split(line, "\t");
-        if (split.size() < 2) continue;
-        nameToVersions.put(split.get(0), split.get(1));
-      }
-      return nameToVersions;
-    }
-    catch (ExecutionException e) {
-      LOG.warn("Failed to get list of conda packages. " + e);
-      return null;
-    }
-  }
-
-  @NotNull
-  public static List<String> listPackageVersions(@NotNull String packageName) throws ExecutionException {
-    final String output = runCondaPackagingHelper("versions", packageName);
-    return StringUtil.split(output, "\n");
-  }
-
-  @NotNull
-  public static List<String> listChannels() throws ExecutionException {
-    final String output = runCondaPackagingHelper("channels");
-    return StringUtil.split(output, "\n");
-  }
-
-  @NotNull
-  private static String runCondaPackagingHelper(String @NotNull ... args) throws ExecutionException {
-    final List<String> commandArgs = new ArrayList<>();
-    commandArgs.add(PythonHelpersLocator.getHelperPath("conda_packaging_tool.py"));
-    commandArgs.addAll(Arrays.asList(args));
-    // "conda" module required for conda_packaging_tool.py is available only in a base interpreter
-    final String condaPython = getCondaPython();
-    if (condaPython == null) {
-      throw new PyExecutionException(PySdkBundle.message("python.conda.cannot.find.python.executable"),
-                                     "python", commandArgs, new ProcessOutput());
-    }
-    final ProcessOutput output = PyCondaRunKt.runCondaPython(condaPython, commandArgs);
-    return output.getStdout();
   }
 }
