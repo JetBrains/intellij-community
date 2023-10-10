@@ -134,4 +134,7 @@ public abstract class AbstractBasicClassParsingTest extends AbstractBasicJavaPar
   public void testUnnamedClass4() {
     doTest(true);
   }
+  public void testUnnamedClass5() {
+    doTest(true);
+  }
 }

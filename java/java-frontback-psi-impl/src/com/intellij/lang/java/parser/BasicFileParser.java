@@ -71,9 +71,9 @@ public class BasicFileParser {
         }
         if (firstDeclarationOk == null) {
           firstDeclarationOk = exprType(declaration) != myJavaElementTypeContainer.MODIFIER_LIST;
-          if (firstDeclarationOk) {
-            firstDeclaration = declaration;
-          }
+        }
+        if (firstDeclaration == null) {
+          firstDeclaration = declaration;
         }
         if (!isUnnamedClass && UNNAMED_CLASS_INDICATORS.contains(exprType(declaration))) {
           isUnnamedClass = true;
