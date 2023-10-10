@@ -18,7 +18,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
     internal val ITEM_TYPE = EventFields.Enum<GotoActionModel.MatchedValueType>("type")
     internal val TYPE_WEIGHT = EventFields.Int("typeWeight")
     internal val ACTION_SIMILARITY_SCORE = EventFields.Double("actionSimilarityScore")
-    internal val IS_ACTION_PURE_SEMANTIC = EventFields.Boolean("asActionPureSemantic")
+    internal val IS_ACTION_PURE_SEMANTIC = EventFields.Boolean("isActionPureSemantic")
     internal val IS_HIGH_PRIORITY = EventFields.Boolean("isHighPriority")
   }
 
