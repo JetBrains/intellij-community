@@ -67,9 +67,6 @@ open class CachedImageIcon private constructor(
 
   private val scaledIconCache = ScaledIconCache()
 
-  @Volatile
-  private var darkVariant: CachedImageIcon? = null
-
   val originalPath: String?
     get() = originalResolver?.path
 
@@ -224,28 +221,7 @@ open class CachedImageIcon private constructor(
     return result
   }
 
-  override fun getDarkIcon(isDark: Boolean): CachedImageIcon {
-    if (isDarkOverridden != null && isDarkOverridden == isDark) {
-      return this
-    }
-
-    var result = if (isDark) darkVariant else null
-    if (result == null) {
-      synchronized(scaledIconCache) {
-        if (isDark) {
-          result = darkVariant
-        }
-
-        if (result == null) {
-          result = copy(isDarkOverridden = isDark)
-          if (isDark) {
-            darkVariant = result
-          }
-        }
-      }
-    }
-    return result!!
-  }
+  override fun getDarkIcon(isDark: Boolean): CachedImageIcon = copy(isDarkOverridden = isDark)
 
   fun getMenuBarIcon(isDark: Boolean): Icon {
     val useMultiResolution = SystemInfoRt.isMac
@@ -328,20 +304,12 @@ open class CachedImageIcon private constructor(
 
       this.resolver = null
       scaledIconCache.clear()
-
-      val darkVariant = darkVariant
-      if (darkVariant != null) {
-        this.darkVariant = null
-        darkVariant.detachClassLoader(loader)
-      }
       return true
     }
   }
 
   val imageFlags: Int
-    get() {
-      return (resolver ?: return 0).flags
-    }
+    get() = resolver?.flags ?: 0
 }
 
 @TestOnly
