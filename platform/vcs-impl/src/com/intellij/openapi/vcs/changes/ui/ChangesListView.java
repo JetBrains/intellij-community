@@ -323,15 +323,7 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
   }
 
   @Override
-  public void processMouseEvent(final MouseEvent e) {
-    if (MouseEvent.MOUSE_RELEASED == e.getID() && !isSelectionEmpty() && !e.isShiftDown() && !e.isControlDown() &&
-        !e.isMetaDown() && !e.isPopupTrigger()) {
-      if (isOverSelection(e.getPoint())) {
-        TreePath path = getPathForLocation(e.getPoint().x, e.getPoint().y);
-        setSelectionPath(path);
-      }
-    }
-
+  public void processMouseEvent(MouseEvent e) {
     super.processMouseEvent(e);
   }
 
