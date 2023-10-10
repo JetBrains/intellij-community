@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -23,6 +24,8 @@ import org.jetbrains.ide.UpdateActionsListener
 import java.time.Duration
 import java.time.LocalTime
 import java.util.*
+
+private val LOG = logger<SmartUpdate>()
 
 @State(name = "SmartUpdateOptions", storages = [Storage(value = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.PROJECT)
@@ -62,12 +65,16 @@ class SmartUpdate(val project: Project, private val coroutineScope: CoroutineSco
   fun availableSteps(): List<SmartUpdateStep> = EP_NAME.extensionList.filter { it.isAvailable(project) }
 
   fun execute(project: Project, e: AnActionEvent? = null) {
-    executeNext(LinkedList(availableSteps().filter { options.value(it.id) }), project, e)
+    val steps = LinkedList(availableSteps().filter { options.value(it.id) })
+    LOG.info("Executing ${steps.joinToString(" ")}")
+    executeNext(steps, project, e)
     scheduleUpdate()
   }
 
   private fun executeNext(steps: Queue<SmartUpdateStep>, project: Project, e: AnActionEvent?) {
-    steps.poll()?.performUpdateStep(project, e) { executeNext(steps, project, e) }
+    val step = steps.poll()
+    LOG.info("Next step: ${step}")
+    step?.performUpdateStep(project, e) { executeNext(steps, project, e) }
   }
 
   internal fun scheduleUpdate() {
@@ -76,7 +83,9 @@ class SmartUpdate(val project: Project, private val coroutineScope: CoroutineSco
     updateScheduled = coroutineScope.async {
       var duration = Duration.between(LocalTime.now(), LocalTime.ofSecondOfDay(options.scheduledTime.toLong()))
       if (duration.isNegative) duration = duration.plusDays(1)
+      SmartUpdateUsagesCollector.logScheduled()
       delay(duration.toMillis())
+      LOG.info("Scheduled update started")
       blockingContext { execute(project) }
     }
   }

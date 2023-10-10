@@ -30,7 +30,7 @@ class IdeUpdateStep: StepOption {
 
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
     val updateAction = getUpdateAction()
-    LOG.debug("Update action: $updateAction")
+    LOG.info("Update action: $updateAction")
     if (updateAction != null) {
       updateAction.perform()
       project.service<SmartUpdate>().restartRequested = true
