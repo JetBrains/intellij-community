@@ -2,7 +2,10 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -23,11 +26,13 @@ import com.intellij.util.IconUtil
 import com.intellij.util.containers.WeakList
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.Color
 import javax.swing.JComponent
 
@@ -42,6 +47,9 @@ internal class FilenameToolbarWidgetUpdateService(
     private val FILE_FULL_PATH: Key<String?> = Key.create("FILENAME_WIDGET_FILE_PATH")
     private const val isIDEA331002Fixed = false //todo[mikhail.sokolov]
   }
+
+  private val fileFlow = MutableSharedFlow<VirtualFile?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val components = WeakList<JComponent>()
 
   init {
     project.messageBus.connect(coroutineScope).subscribe(
@@ -60,17 +68,40 @@ internal class FilenameToolbarWidgetUpdateService(
         }
       }
     )
+    coroutineScope.launch {
+      fileFlow.distinctUntilChanged().collectLatest { file ->
+        update(file)
+      }
+    }
+  }
+
+  fun registerComponent(component: JBLabel) {
+    components += component
+  }
+
+  fun deregisterComponent(component: JBLabel) {
+    components -= component
   }
 
   private fun update() {
+    fileFlow.tryEmit(getCurrentFile())
+  }
+
+  private suspend fun update(virtualFile: VirtualFile?) {
+    val action = ActionManager.getInstance().getAction(FilenameToolbarWidgetAction.ID) ?: return
+    val presentation = action.templatePresentation.clone()
+    readAction {
+      updatePresentationFromFile(project, virtualFile, presentation)
+    }
+    withContext(Dispatchers.EDT) {
+      for (component in components) {
+        updateComponent(component, presentation)
+      }
+    }
   }
 
   fun updatePresentation(presentation: Presentation) {
-    presentation.isEnabledAndVisible = false
-    val file = getCurrentFile()
-    if (file != null) {
-      updatePresentationFromFile(project, file, presentation)
-    }
+    updatePresentationFromFile(project, getCurrentFile(), presentation)
   }
 
   private fun getCurrentFile(): VirtualFile? {
@@ -80,7 +111,11 @@ internal class FilenameToolbarWidgetUpdateService(
     return file
   }
 
-  private fun updatePresentationFromFile(project: Project, file: VirtualFile, presentation: Presentation) {
+  private fun updatePresentationFromFile(project: Project, file: VirtualFile?, presentation: Presentation) {
+    if (file?.isValid != true) {
+      presentation.isEnabledAndVisible = false
+      return
+    }
     val status = FileStatusManager.getInstance(project).getStatus(file)
     var fg:Color?
 
