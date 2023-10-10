@@ -2,27 +2,26 @@
 package com.intellij.platform.feedback.pluginPage
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
+import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
 import java.util.*
 
-enum class CaseType {
+internal enum class CaseType {
   DISABLE, UNINSTALL
 }
 
 internal abstract class PluginPageFeedbackDialog(pluginName: String, caseType: CaseType, project: Project?, forTest: Boolean) :
-  BlockBasedFeedbackDialog<CommonFeedbackSystemData>(project, forTest) {
-
+  BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemData>(project, forTest) {
 
   private val pluginNameCapitalized = pluginName.replaceFirstChar {
     if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
   }
-
   private val messageIdPrefixForCase = caseType.name.lowercase()
 
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
+  override val zendeskTicketTitle: String = PluginPageFeedbackBundle.message("dialog.zendesk.ticket.title", pluginNameCapitalized)
   override val myTitle: String = PluginPageFeedbackBundle.message("dialog.top.title")
   override val mySystemInfoData: CommonFeedbackSystemData by lazy {
     CommonFeedbackSystemData.getCurrentData()
@@ -46,5 +45,4 @@ internal abstract class PluginPageFeedbackDialog(pluginName: String, caseType: C
                        reasonsItems, "reasons").addOtherTextField().requireAnswer(),
     TextAreaBlock(PluginPageFeedbackBundle.message("dialog.textarea.label"), "what_to_improve")
   )
-
 }

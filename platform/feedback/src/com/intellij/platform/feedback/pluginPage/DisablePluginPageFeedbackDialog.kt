@@ -7,6 +7,7 @@ internal class DisablePluginPageFeedbackDialog(pluginName: String, project: Proj
   PluginPageFeedbackDialog(pluginName, CaseType.DISABLE, project, forTest) {
 
   override val myFeedbackReportId: String = "disable_plugin_page_feedback"
+  override val zendeskFeedbackType: String = "disable_plugin_page_feedback"
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
 
   init {

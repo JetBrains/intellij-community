@@ -7,6 +7,7 @@ internal class UninstallPluginPageFeedbackDialog(pluginName: String, project: Pr
   PluginPageFeedbackDialog(pluginName, CaseType.UNINSTALL, project, forTest) {
 
   override val myFeedbackReportId: String = "uninstall_plugin_page_feedback"
+  override val zendeskFeedbackType: String = "uninstall_plugin_page_feedback"
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
 
   init {

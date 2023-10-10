@@ -3,6 +3,8 @@ package com.intellij.platform.feedback.dialog.uiBlocks
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonObject
@@ -18,15 +20,18 @@ class CheckBoxGroupBlock(
   private var myOtherProperty: String = ""
 
   override fun addToPanel(panel: Panel) {
+    val allCheckBoxes: ArrayList<JBCheckBox> = arrayListOf()
+    var otherTextField: JBTextField? = null
+
     panel.apply {
       buttonsGroup(indent = false) {
         row {
           label(myGroupLabel).bold().errorOnApply(CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.require.not.empty")) {
-            val isAllCheckboxEmpty = myItemsData.all {
-              !it.property
+            val isAllCheckboxEmpty = allCheckBoxes.all {
+              !it.isSelected
             }
             if (myIncludeOtherTextField) {
-              return@errorOnApply isAllCheckboxEmpty && myOtherProperty.isBlank()
+              return@errorOnApply isAllCheckboxEmpty && otherTextField?.text?.isBlank() ?: false
             }
             else {
               return@errorOnApply isAllCheckboxEmpty
@@ -38,7 +43,9 @@ class CheckBoxGroupBlock(
             checkBox(itemData.label).bindSelected(
               { myItemsData[i].property },
               { myItemsData[i].property = it }
-            )
+            ).applyToComponent {
+              allCheckBoxes.add(this)
+            }
           }.apply {
             if (i == myItemsData.size - 1 && !myIncludeOtherTextField) {
               this.bottomGap(BottomGap.MEDIUM)
@@ -52,6 +59,7 @@ class CheckBoxGroupBlock(
               emptyText.text = CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.other.placeholder")
             }.bindText(::myOtherProperty.toMutableProperty())
               .columns(COLUMNS_MEDIUM)
+              .applyToComponent { otherTextField = this }
           }.bottomGap(BottomGap.MEDIUM)
         }
       }
