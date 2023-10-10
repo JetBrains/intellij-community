@@ -644,6 +644,13 @@ internal class FirCallableReferenceCompletionContributor(
     }
 
     context(KtAnalysisSession)
+    override fun filter(symbol: KtCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean =
+        symbol !is KtValueParameterSymbol &&
+                symbol !is KtLocalVariableSymbol &&
+                symbol !is KtEnumEntrySymbol &&
+                symbol !is KtBackingFieldSymbol
+
+    context(KtAnalysisSession)
     override fun collectDotCompletion(
         scopeContext: KtScopeContext,
         explicitReceiver: KtElement,

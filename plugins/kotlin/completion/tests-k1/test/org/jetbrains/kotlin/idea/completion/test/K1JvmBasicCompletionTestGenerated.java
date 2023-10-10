@@ -539,6 +539,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             public void testNonEmptyQualifier() throws Exception {
                 runTest("../testData/basic/common/callableReference/NonEmptyQualifier.kt");
             }
+
+            @TestMetadata("Unsupported.kt")
+            public void testUnsupported() throws Exception {
+                runTest("../testData/basic/common/callableReference/Unsupported.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
