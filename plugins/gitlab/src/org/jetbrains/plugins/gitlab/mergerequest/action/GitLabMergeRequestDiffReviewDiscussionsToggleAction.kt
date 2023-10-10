@@ -16,24 +16,21 @@ internal class GitLabMergeRequestDiffReviewDiscussionsToggleAction : ActionGroup
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    return DiscussionsViewOption.entries.map(::ToggleOptionAction).toTypedArray()
+    val vm = e?.getData(GitLabMergeRequestReviewViewModel.DATA_KEY) ?: return EMPTY_ARRAY
+    return DiscussionsViewOption.entries.map {
+      ToggleOptionAction(vm, it)
+    }.toTypedArray()
   }
 
-  private class ToggleOptionAction(private val viewOption: DiscussionsViewOption) : ToggleAction(viewOption.toActionName()) {
+  private class ToggleOptionAction(private val vm: GitLabMergeRequestReviewViewModel,
+                                   private val viewOption: DiscussionsViewOption) : ToggleAction(viewOption.toActionName()) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-      e.presentation.isEnabledAndVisible = e.getData(GitLabMergeRequestReviewViewModel.DATA_KEY) != null
-    }
-
     override fun isSelected(e: AnActionEvent): Boolean {
-      val vm = e.getData(GitLabMergeRequestReviewViewModel.DATA_KEY) ?: return false
       return vm.discussionsViewOption.value == viewOption
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      val vm = e.getRequiredData(GitLabMergeRequestReviewViewModel.DATA_KEY)
       vm.setDiscussionsViewOption(viewOption)
     }
   }
