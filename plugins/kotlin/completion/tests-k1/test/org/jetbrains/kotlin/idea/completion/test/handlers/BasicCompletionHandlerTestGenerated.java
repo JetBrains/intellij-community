@@ -1181,6 +1181,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/AmbiguousSuperMethod.kt");
         }
 
+        @TestMetadata("AmbiguousSuperMethodLambdaArgument.kt")
+        public void testAmbiguousSuperMethodLambdaArgument() throws Exception {
+            runTest("../testData/handlers/basic/AmbiguousSuperMethodLambdaArgument.kt");
+        }
+
         @TestMetadata("AmbiguousSuperMethodWithArgument.kt")
         public void testAmbiguousSuperMethodWithArgument() throws Exception {
             runTest("../testData/handlers/basic/AmbiguousSuperMethodWithArgument.kt");

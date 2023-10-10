@@ -21,9 +21,9 @@ import org.jetbrains.kotlin.types.Variance
 
 internal object TailTextProvider {
     context(KtAnalysisSession)
-    fun getTailText(signature: KtCallableSignature<*>): String = buildString {
+    fun getTailText(signature: KtCallableSignature<*>, options: CallableInsertionOptions): String = buildString {
         if (signature is KtFunctionLikeSignature<*>) {
-            if (insertLambdaBraces(signature)) {
+            if (insertLambdaBraces(signature, options)) {
                 append(" {...} ")
             }
             append(renderFunctionParameters(signature))
@@ -96,7 +96,17 @@ internal object TailTextProvider {
         if (isRoot) "<root>" else asString()
 
     context(KtAnalysisSession)
-    fun insertLambdaBraces(symbol: KtFunctionLikeSignature<*>): Boolean {
+    fun insertLambdaBraces(symbol: KtFunctionLikeSignature<*>, options: CallableInsertionOptions): Boolean {
+        val lambdaBracesAreDisabledByInsertionStrategy = when (options.insertionStrategy) {
+            is CallableInsertionStrategy.AsCall,
+            is CallableInsertionStrategy.WithSuperDisambiguation -> false
+
+            is CallableInsertionStrategy.AsIdentifier,
+            is CallableInsertionStrategy.WithCallArgs,
+            is CallableInsertionStrategy.AsIdentifierCustom -> true
+        }
+        if (lambdaBracesAreDisabledByInsertionStrategy) return false
+
         val singleParam = symbol.valueParameters.singleOrNull()
         return singleParam != null && !singleParam.symbol.hasDefaultValue && singleParam.returnType is KtFunctionalType
     }

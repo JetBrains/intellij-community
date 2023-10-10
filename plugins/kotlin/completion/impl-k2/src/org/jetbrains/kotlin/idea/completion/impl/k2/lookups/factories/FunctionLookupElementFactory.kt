@@ -34,13 +34,13 @@ import org.jetbrains.kotlin.renderer.render
 
 internal class FunctionLookupElementFactory {
     context(KtAnalysisSession)
-fun createLookup(
+    fun createLookup(
         name: Name,
         signature: KtFunctionLikeSignature<*>,
         options: CallableInsertionOptions,
         expectedType: KtType? = null,
     ): LookupElementBuilder {
-        val insertEmptyLambda = insertLambdaBraces(signature)
+        val insertEmptyLambda = insertLambdaBraces(signature, options)
         val lookupObject = FunctionCallLookupObject(
             name,
             options,
@@ -51,7 +51,7 @@ fun createLookup(
         )
 
         val builder = LookupElementBuilder.create(lookupObject, name.asString())
-            .withTailText(getTailText(signature))
+            .withTailText(getTailText(signature, options))
             .let { withCallableSignatureInfo(signature, it) }
             .also { it.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit) }
         return updateLookupElementBuilder(options, builder)

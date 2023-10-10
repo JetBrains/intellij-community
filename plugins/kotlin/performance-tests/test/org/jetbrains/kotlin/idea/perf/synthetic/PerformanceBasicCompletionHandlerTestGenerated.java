@@ -1181,6 +1181,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/AmbiguousSuperMethod.kt");
         }
 
+        @TestMetadata("AmbiguousSuperMethodLambdaArgument.kt")
+        public void testAmbiguousSuperMethodLambdaArgument() throws Exception {
+            runTest("../completion/testData/handlers/basic/AmbiguousSuperMethodLambdaArgument.kt");
+        }
+
         @TestMetadata("AmbiguousSuperMethodWithArgument.kt")
         public void testAmbiguousSuperMethodWithArgument() throws Exception {
             runTest("../completion/testData/handlers/basic/AmbiguousSuperMethodWithArgument.kt");

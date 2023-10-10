@@ -193,11 +193,6 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/InImportHighOrderTopLevelFun/");
     }
 
-    @TestMetadata("InImportHighOrderTopLevelFunNoTailText")
-    public void testInImportHighOrderTopLevelFunNoTailText() throws Exception {
-        runTest("../testData/basic/multifile/InImportHighOrderTopLevelFunNoTailText/");
-    }
-
     @TestMetadata("InImportJavaClass")
     public void testInImportJavaClass() throws Exception {
         runTest("../testData/basic/multifile/InImportJavaClass/");

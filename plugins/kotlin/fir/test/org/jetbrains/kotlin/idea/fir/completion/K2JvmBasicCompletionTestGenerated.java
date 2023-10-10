@@ -2583,6 +2583,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../completion/testData/basic/common/ambiguousSuperMethodHigherUp.kt");
             }
 
+            @TestMetadata("ambiguousSuperMethodLambdaArgument.kt")
+            public void testAmbiguousSuperMethodLambdaArgument() throws Exception {
+                runTest("../completion/testData/basic/common/ambiguousSuperMethodLambdaArgument.kt");
+            }
+
             @TestMetadata("ambiguousSuperMethodSingleImpl.kt")
             public void testAmbiguousSuperMethodSingleImpl() throws Exception {
                 runTest("../completion/testData/basic/common/ambiguousSuperMethodSingleImpl.kt");
