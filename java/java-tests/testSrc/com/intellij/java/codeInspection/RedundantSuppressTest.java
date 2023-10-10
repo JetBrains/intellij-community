@@ -28,12 +28,11 @@ import java.util.List;
 
 public class RedundantSuppressTest extends JavaInspectionTestCase {
   private GlobalInspectionToolWrapper myWrapper;
-  private List<InspectionToolWrapper<?, ?>> myInspectionToolWrappers;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myInspectionToolWrappers = Arrays.asList(new LocalInspectionToolWrapper(new JavaDocReferenceInspection()),
+    List<InspectionToolWrapper<?, ?>> myInspectionToolWrappers = Arrays.asList(new LocalInspectionToolWrapper(new JavaDocReferenceInspection()),
                                              new LocalInspectionToolWrapper(new PossibleHeapPollutionVarargsInspection()),
                                              new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection()),
                                              new LocalInspectionToolWrapper(new I18nInspection()),
@@ -62,7 +61,6 @@ public class RedundantSuppressTest extends JavaInspectionTestCase {
   @Override
   protected void tearDown() throws Exception {
     myWrapper = null;
-    myInspectionToolWrappers = null;
     super.tearDown();
   }
 

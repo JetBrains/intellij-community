@@ -58,18 +58,15 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
     InspectionProfileImpl profile = getProfile(manager, globalContext);
     CommonProblemDescriptor[] descriptors = checkElement(file, redundantSuppressionDetector, manager, profile);
     for (CommonProblemDescriptor descriptor : descriptors) {
-      if (descriptor instanceof ProblemDescriptor) {
-        PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+      if (descriptor instanceof ProblemDescriptor problemDescriptor) {
+        PsiElement psiElement = problemDescriptor.getPsiElement();
         if (psiElement != null) {
           PsiElement member = globalContext.getRefManager().getContainerElement(psiElement);
           RefElement reference = globalContext.getRefManager().getReference(member);
           if (reference != null) {
             problemDescriptionsProcessor.addProblemElement(reference, descriptor);
+            continue;
           }
-          else {
-            problemsHolder.registerProblem(psiElement, descriptor.getDescriptionTemplate());
-          }
-          continue;
         }
       }
       problemsHolder.registerProblem(file, descriptor.getDescriptionTemplate());
@@ -149,8 +146,8 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
             PsiElement suppressedScope = e.getKey();
             if (!suppressedIds.contains(toolId)) continue;
             for (CommonProblemDescriptor descriptor : descriptors) {
-              if (!(descriptor instanceof ProblemDescriptor)) continue;
-              PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+              if (!(descriptor instanceof ProblemDescriptor problemDescriptor)) continue;
+              PsiElement element = problemDescriptor.getPsiElement();
               if (element == null) continue;
               PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
               if (extension.isSuppressionFor(suppressedScope, ObjectUtils.notNull(host, element), toolId)) {
@@ -177,8 +174,8 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
                 }
               }
               PsiElement identifier;
-              if (suppressedScope instanceof PsiNameIdentifierOwner && suppressedScope == documentedElement) {
-                identifier = ObjectUtils.notNull(((PsiNameIdentifierOwner)suppressedScope).getNameIdentifier(), suppressedScope);
+              if (suppressedScope instanceof PsiNameIdentifierOwner nameIdentifierOwner && suppressedScope == documentedElement) {
+                identifier = ObjectUtils.notNull(nameIdentifierOwner.getNameIdentifier(), suppressedScope);
               }
               else {
                 identifier = suppressedScope;
@@ -236,8 +233,8 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
   }
 
   private static @NotNull InspectionProfileImpl getProfile(@NotNull InspectionManager manager, @NotNull GlobalInspectionContext globalContext) {
-    if (globalContext instanceof GlobalInspectionContextBase) {
-      InspectionProfileImpl profile = ((GlobalInspectionContextBase)globalContext).getCurrentProfile();
+    if (globalContext instanceof GlobalInspectionContextBase globalInspectionContext) {
+      InspectionProfileImpl profile = globalInspectionContext.getCurrentProfile();
       if (profile.getSingleTool() == null) {
         return profile;
       }
