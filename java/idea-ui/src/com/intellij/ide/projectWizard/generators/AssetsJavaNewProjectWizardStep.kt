@@ -72,7 +72,7 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
     addFilesToOpen(sourcePath)
   }
 
-  fun prepareTipsInEditor(project: Project) = whenProjectCreated(project) {
+  fun prepareTipsInEditor(project: Project) {
     val templateManager = FileTemplateManager.getDefaultInstance()
     val properties = getTemplateProperties()
     val defaultProperties = templateManager.defaultProperties

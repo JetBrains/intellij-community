@@ -14,14 +14,13 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil.getDelegateChainRootActio
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -40,9 +39,6 @@ import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import training.learn.LearnBundle
@@ -79,75 +75,64 @@ internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
                                       "DebugClass",
                                       IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)
 
+// The presence of this data means that we need to install onboarding tips on the first editor in the new created project
+private val sampleTextAfterRestoreKey = Key<String>("sampleTextAfterRestore")
+
 private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
   @RequiresEdt
   override fun installTips(project: Project, simpleSampleText: String) {
-    OnboardingTipsStatistics.logOnboardingTipsInstalled(project, onboardingGenerationNumber)
-
-    // Set this option explicitly, because its default depends on the number of empty projects.
-    PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, true)
-
-    val disposable = Disposer.newDisposable()
-    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
-      override fun editorCreated(event: EditorFactoryEvent) {
-        Disposer.dispose(disposable) // just wait the first editor opened
-
-        installTipsInFirstEditor(event, project, simpleSampleText)
-      }
-    }, disposable)
+    project.putUserData(sampleTextAfterRestoreKey, simpleSampleText)
   }
+}
 
-  private fun installTipsInFirstEditor(event: EditorFactoryEvent, project: Project, simpleSampleText: String) {
-    val editor = event.editor
+private fun installTipsInFirstEditor(editor: Editor, project: Project, simpleSampleText: String) {
+  OnboardingTipsStatistics.logOnboardingTipsInstalled(project, onboardingGenerationNumber)
 
-    val document = editor.document
-    // need to generalize this code in the future
-    val offset = document.charsSequence.indexOf("System.out.println").takeIf { it >= 0 } ?: return
+  // Set this option explicitly, because its default depends on the number of empty projects.
+  PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, true)
 
-    val file = editor.virtualFile ?: return
-    val position = XDebuggerUtil.getInstance().createPositionByOffset(file, offset) ?: return
+  val document = editor.document
+  // need to generalize this code in the future
+  val offset = document.charsSequence.indexOf("System.out.println").takeIf { it >= 0 } ?: return
 
-    XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, true)
+  val file = editor.virtualFile ?: return
+  val position = XDebuggerUtil.getInstance().createPositionByOffset(file, offset) ?: return
 
-    val pathToRunningFile = file.path
-    project.filePathWithOnboardingTips = pathToRunningFile
-    installDebugListener(project, pathToRunningFile)
-    installActionListener(project, pathToRunningFile)
+  XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, true)
 
-    val number = onboardingGenerationNumber
-    if (number != 0 && onboardingGenerationShowDisableMessage) {
-      RESET_TOOLTIP_SAMPLE_TEXT.set(file, simpleSampleText)
-    }
-    onboardingGenerationNumber = number + 1
+  val pathToRunningFile = file.path
+  project.filePathWithOnboardingTips = pathToRunningFile
+  installDebugListener(project, pathToRunningFile)
+  installActionListener(project, pathToRunningFile)
+
+  val number = onboardingGenerationNumber
+  if (number != 0 && onboardingGenerationShowDisableMessage) {
+    RESET_TOOLTIP_SAMPLE_TEXT.set(file, simpleSampleText)
   }
+  onboardingGenerationNumber = number + 1
 }
 
 private class InstallOnboardingTooltip : ProjectActivity {
   override suspend fun execute(project: Project) {
-    val pathToRunningFile = project.filePathWithOnboardingTips
-    if (pathToRunningFile != null) {
-      installDebugListener(project, pathToRunningFile)
+    val pathToRunningFile = project.filePathWithOnboardingTips ?: return
+    installDebugListener(project, pathToRunningFile)
+  }
+}
 
-      if (!renderedOnboardingTipsEnabled) return
+private class InstallOnboardingTipsEditorListener : EditorFactoryListener {
+  override fun editorCreated(event: EditorFactoryEvent) {
+    val project = event.editor.project ?: return
 
-      coroutineScope {
-        launch(Dispatchers.EDT) {
-          for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
-            val editor = (fileEditor as? TextEditor)?.editor
-            if (editor?.virtualFile?.path == pathToRunningFile) {
-              DocRenderManager.setDocRenderingEnabled(editor, true)
-            }
-          }
-        }
-      }
+    val sampleTextAfterRestore = sampleTextAfterRestoreKey.get(project)
 
-      EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
-        override fun editorCreated(event: EditorFactoryEvent) {
-          if (event.editor.virtualFile?.path != pathToRunningFile) return
-          DocRenderManager.setDocRenderingEnabled(event.editor, true)
-        }
-      }, project)
+    if (sampleTextAfterRestore != null) {
+      project.putUserData(sampleTextAfterRestoreKey, null)
+      installTipsInFirstEditor(event.editor, project, sampleTextAfterRestore)
+    } else {
+      val pathToRunningFile = project.filePathWithOnboardingTips ?: return
+      if (event.editor.virtualFile?.path != pathToRunningFile) return
     }
+    DocRenderManager.setDocRenderingEnabled(event.editor, true)
   }
 }
 
