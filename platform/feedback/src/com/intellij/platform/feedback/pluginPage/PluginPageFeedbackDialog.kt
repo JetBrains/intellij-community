@@ -2,18 +2,28 @@
 package com.intellij.platform.feedback.pluginPage
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 import java.util.*
 
 internal enum class CaseType {
   DISABLE, UNINSTALL
 }
 
-internal abstract class PluginPageFeedbackDialog(pluginName: String, caseType: CaseType, project: Project?, forTest: Boolean) :
-  BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemData>(project, forTest) {
+internal abstract class PluginPageFeedbackDialog(pluginId: String,
+                                                 pluginName: String,
+                                                 caseType: CaseType,
+                                                 project: Project?,
+                                                 forTest: Boolean) :
+  BlockBasedFeedbackDialogWithEmail<PluginPageFeedbackSystemData>(project, forTest) {
 
   private val pluginNameCapitalized = pluginName.replaceFirstChar {
     if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
@@ -23,11 +33,12 @@ internal abstract class PluginPageFeedbackDialog(pluginName: String, caseType: C
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
   override val zendeskTicketTitle: String = PluginPageFeedbackBundle.message("dialog.zendesk.ticket.title", pluginNameCapitalized)
   override val myTitle: String = PluginPageFeedbackBundle.message("dialog.top.title")
-  override val mySystemInfoData: CommonFeedbackSystemData by lazy {
-    CommonFeedbackSystemData.getCurrentData()
+  override val mySystemInfoData: PluginPageFeedbackSystemData by lazy {
+    val commonFeedbackSystemData = CommonFeedbackSystemData.getCurrentData()
+    PluginPageFeedbackSystemData(pluginId, pluginNameCapitalized, commonFeedbackSystemData)
   }
   override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
+    showPluginPageFeedbackSystemInfoDialog(myProject, mySystemInfoData)
   }
 
   private val reasonsItems: List<CheckBoxItemData> = listOf(
@@ -46,3 +57,35 @@ internal abstract class PluginPageFeedbackDialog(pluginName: String, caseType: C
     TextAreaBlock(PluginPageFeedbackBundle.message("dialog.textarea.label"), "what_to_improve")
   )
 }
+
+@Serializable
+internal data class PluginPageFeedbackSystemData(
+  @NlsSafe val pluginId: String,
+  @NlsSafe val pluginName: String,
+  val commonSystemInfo: CommonFeedbackSystemData
+) : SystemDataJsonSerializable {
+  override fun toString(): String {
+    return buildString {
+      appendLine(PluginPageFeedbackBundle.message("dialog.system.info.plugin.id"))
+      appendLine(pluginId)
+      appendLine(PluginPageFeedbackBundle.message("dialog.system.info.plugin.name"))
+      appendLine(pluginName)
+      appendLine()
+      commonSystemInfo.toString()
+    }
+  }
+
+  override fun serializeToJson(json: Json): JsonElement {
+    return json.encodeToJsonElement(this)
+  }
+}
+
+private fun showPluginPageFeedbackSystemInfoDialog(project: Project?, systemInfoData: PluginPageFeedbackSystemData) =
+  showFeedbackSystemInfoDialog(project, systemInfoData.commonSystemInfo) {
+    row(PluginPageFeedbackBundle.message("dialog.system.info.plugin.id")) {
+      label(systemInfoData.pluginId)
+    }
+    row(PluginPageFeedbackBundle.message("dialog.system.info.plugin.name")) {
+      label(systemInfoData.pluginName)
+    }
+  }

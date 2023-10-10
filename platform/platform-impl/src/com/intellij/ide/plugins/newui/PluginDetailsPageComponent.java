@@ -61,8 +61,8 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
@@ -277,7 +277,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private @NotNull BorderLayoutPanel createFeedbackNotificationPanel(
-    @NotNull Function<@NotNull String, DialogWrapper> createDialogWrapperFunction) {
+    @NotNull BiFunction<@NotNull String, @NotNull String, @Nullable DialogWrapper> createDialogWrapperFunction) {
     final BorderLayoutPanel panel = createBaseNotificationPanel();
 
     final HyperlinkEventAction action = (e) -> {
@@ -286,7 +286,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       }
 
       if (e.getDescription().equals("showFeedback")) {
-        final DialogWrapper feedbackDialog = createDialogWrapperFunction.apply(myPlugin.getName());
+        final String pluginIdString = myPlugin.getPluginId().getIdString();
+        final String pluginName = myPlugin.getName();
+        final DialogWrapper feedbackDialog = createDialogWrapperFunction.apply(pluginIdString, pluginName);
         if (feedbackDialog == null) {
           return;
         }

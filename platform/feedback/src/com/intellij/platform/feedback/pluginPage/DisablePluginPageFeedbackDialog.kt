@@ -3,8 +3,8 @@ package com.intellij.platform.feedback.pluginPage
 
 import com.intellij.openapi.project.Project
 
-internal class DisablePluginPageFeedbackDialog(pluginName: String, project: Project?, forTest: Boolean) :
-  PluginPageFeedbackDialog(pluginName, CaseType.DISABLE, project, forTest) {
+internal class DisablePluginPageFeedbackDialog(pluginId: String, pluginName: String, project: Project?, forTest: Boolean) :
+  PluginPageFeedbackDialog(pluginId, pluginName, CaseType.DISABLE, project, forTest) {
 
   override val myFeedbackReportId: String = "disable_plugin_page_feedback"
   override val zendeskFeedbackType: String = "disable_plugin_page_feedback"

@@ -3,8 +3,8 @@ package com.intellij.platform.feedback.pluginPage
 
 import com.intellij.openapi.project.Project
 
-internal class UninstallPluginPageFeedbackDialog(pluginName: String, project: Project?, forTest: Boolean) :
-  PluginPageFeedbackDialog(pluginName, CaseType.UNINSTALL, project, forTest) {
+internal class UninstallPluginPageFeedbackDialog(pluginId: String, pluginName: String, project: Project?, forTest: Boolean) :
+  PluginPageFeedbackDialog(pluginId, pluginName, CaseType.UNINSTALL, project, forTest) {
 
   override val myFeedbackReportId: String = "uninstall_plugin_page_feedback"
   override val zendeskFeedbackType: String = "uninstall_plugin_page_feedback"

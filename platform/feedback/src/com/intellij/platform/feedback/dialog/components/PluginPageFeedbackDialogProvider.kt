@@ -19,11 +19,11 @@ open class PluginPageFeedbackDialogProvider {
     fun getInstance(): PluginPageFeedbackDialogProvider = service()
   }
 
-  open fun getUninstallFeedbackDialog(pluginName: String): DialogWrapper? {
+  open fun getUninstallFeedbackDialog(pluginId: String, pluginName: String): DialogWrapper? {
     return null
   }
 
-  open fun getDisableFeedbackDialog(pluginName: String): DialogWrapper? {
+  open fun getDisableFeedbackDialog(pluginId: String, pluginName: String): DialogWrapper? {
     return null
   }
 }
