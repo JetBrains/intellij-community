@@ -4,8 +4,6 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.RunAll.Companion.runAll
-import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
@@ -31,12 +29,15 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
 
   public override fun tearDown() {
-    runAll(
-      ThrowableRunnable<Throwable> {
-        httpServerFixture.tearDown()
-      },
-      ThrowableRunnable<Throwable> { super.tearDown() }
-    )
+    try {
+      httpServerFixture.tearDown()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   @Test
