@@ -19,13 +19,13 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -831,7 +831,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     for (int i = 0; i < stringValue.length(); i++) {
       final char c = stringValue.charAt(i);
       if (Character.isUpperCase(c)) {
-        if (currentWord.length() > 0 && !prevIsUpperCase) {
+        if (!currentWord.isEmpty() && !prevIsUpperCase) {
           result.add(currentWord.toString());
           currentWord = new StringBuilder();
         }
@@ -841,12 +841,12 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         currentWord.append(Character.toUpperCase(c));
       }
       else if (Character.isJavaIdentifierPart(c) && c != '_') {
-        if (Character.isJavaIdentifierStart(c) || currentWord.length() > 0 || !result.isEmpty()) {
+        if (Character.isJavaIdentifierStart(c) || !currentWord.isEmpty() || !result.isEmpty()) {
           currentWord.append(c);
         }
       }
       else {
-        if (currentWord.length() > 0) {
+        if (!currentWord.isEmpty()) {
           result.add(currentWord.toString());
           currentWord = new StringBuilder();
         }
@@ -855,7 +855,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       prevIsUpperCase = Character.isUpperCase(c);
     }
 
-    if (currentWord.length() > 0) {
+    if (!currentWord.isEmpty()) {
       result.add(currentWord.toString());
     }
     return ArrayUtilRt.toStringArray(result);
@@ -867,8 +867,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       PsiElement listParent = list.getParent();
       PsiSubstitutor subst = PsiSubstitutor.EMPTY;
       PsiMethod method = null;
-      if (listParent instanceof PsiMethodCallExpression) {
-        final JavaResolveResult resolveResult = ((PsiMethodCallExpression)listParent).getMethodExpression().advancedResolve(false);
+      if (listParent instanceof PsiMethodCallExpression call) {
+        final JavaResolveResult resolveResult = call.getMethodExpression().advancedResolve(false);
         method = (PsiMethod)resolveResult.getElement();
         subst = resolveResult.getSubstitutor();
       }
@@ -876,24 +876,18 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         if (listParent instanceof PsiAnonymousClass) {
           listParent = listParent.getParent();
         }
-        if (listParent instanceof PsiNewExpression) {
-          method = ((PsiNewExpression)listParent).resolveConstructor();
+        if (listParent instanceof PsiNewExpression newExpression) {
+          method = newExpression.resolveConstructor();
         }
       }
 
       if (method != null) {
-        final PsiElement navElement = method.getNavigationElement();
-        if (navElement instanceof PsiMethod) {
-          method = (PsiMethod)navElement;
-        }
-        PsiExpression[] expressions = list.getExpressions();
-        int index = ArrayUtil.indexOf(expressions, expr);
-        PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (index < parameters.length) {
-          String name = parameters[index].getName();
-          if (TypeConversionUtil.areTypesAssignmentCompatible(subst.substitute(parameters[index].getType()), expr)) {
+        PsiParameter parameter = MethodCallUtils.getParameterForArgument(expr);
+        if (parameter != null) {
+          String name = parameter.getName();
+          if (TypeConversionUtil.areTypesAssignmentCompatible(subst.substitute(parameter.getType()), expr)) {
             name = variableNameToPropertyName(name, VariableKind.PARAMETER);
-            if (expressions.length == 1) {
+            if (list.getExpressionCount() == 1) {
               final String methodName = method.getName();
               String[] words = NameUtilCore.nameToWords(methodName);
               if (words.length > 0) {
@@ -912,8 +906,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     else if (expr.getParent() instanceof PsiAssignmentExpression assignmentExpression) {
       if (expr == assignmentExpression.getRExpression()) {
         final PsiExpression leftExpression = assignmentExpression.getLExpression();
-        if (leftExpression instanceof PsiReferenceExpression) {
-          String name = getPropertyName((PsiReferenceExpression)leftExpression);
+        if (leftExpression instanceof PsiReferenceExpression ref) {
+          String name = getPropertyName(ref);
           if (name != null) {
             return new NamesByExprInfo(name);
           }

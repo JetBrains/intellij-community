@@ -462,6 +462,10 @@ public final class MethodCallUtils {
     if (index == -1) return null;
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
+    final PsiElement navElement = method.getNavigationElement();
+    if (navElement instanceof PsiMethod navMethod) {
+      method = navMethod;
+    }
     PsiParameterList list = method.getParameterList();
     int count = list.getParametersCount();
     if (index >= count) return null;
