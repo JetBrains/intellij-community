@@ -40,6 +40,7 @@ import org.spdx.library.model.enumerations.ReferenceCategory
 import org.spdx.library.model.enumerations.RelationshipType
 import org.spdx.library.model.license.AnyLicenseInfo
 import org.spdx.library.model.license.ExtractedLicenseInfo
+import org.spdx.library.model.license.InvalidLicenseStringException
 import org.spdx.library.model.license.LicenseInfoFactory
 import org.spdx.library.model.license.SpdxNoAssertionLicense
 import org.spdx.storage.IModelStore.IdType
@@ -636,7 +637,12 @@ internal class SoftwareBillOfMaterialsImpl(
    * @param id one of [SpdxConstants.LISTED_LICENSE_URL]
    */
   private fun SpdxDocument.parseLicense(id: String): AnyLicenseInfo {
-    return LicenseInfoFactory.parseSPDXLicenseString(id, modelStore, documentUri, copyManager)
+    return try {
+      LicenseInfoFactory.parseSPDXLicenseString(id, modelStore, documentUri, copyManager)
+    }
+    catch (e: InvalidLicenseStringException) {
+      throw IllegalArgumentException(id).apply { addSuppressed(e) }
+    }
   }
 
   private fun SpdxDocument.extractedLicenseInfo(name: String, text: String, url: String?): ExtractedLicenseInfo {
