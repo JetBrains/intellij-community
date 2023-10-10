@@ -136,7 +136,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       if (promise != null) promise.cancel();
       Image image = !isTestMode && toolbar.isShowing() ? paintToImage(toolbar) : null;
       toolbar.reset();
-      if (image != null) toolbar.myCachedImage = image;
+      if (image != null) {
+        toolbar.myCachedImage = image;
+      }
       else if (!isTestMode) toolbar.addLoadingIcon();
     }
   }
@@ -252,6 +254,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           mySecondaryGroupUpdater.update(e);
         }
       }
+
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.EDT;
@@ -267,7 +270,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     // If the panel doesn't handle mouse event then it will be passed to its parent.
     // It means that if the panel is in sliding mode then the focus goes to the editor
     // and panel will be automatically hidden.
-    enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK |
+                 AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniModeInner(false);
 
     if (customizable) {
@@ -557,7 +561,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private void tweakActionComponentUI(@NotNull Component actionComponent) {
     if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
       // tweak font & color for editor toolbar to match editor tabs style
-      actionComponent.setFont(RelativeFont.NORMAL.fromResource("Toolbar.Component.fontSizeOffset", -2).derive(StartupUiUtil.getLabelFont()));
+      actionComponent.setFont(RelativeFont.NORMAL.fromResource("Toolbar.Component.fontSizeOffset", -2)
+                                .derive(StartupUiUtil.getLabelFont()));
       actionComponent.setForeground(ColorUtil.dimmer(JBColor.BLACK));
     }
   }
@@ -589,8 +594,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       ActionButtonWithText buttonWithText = new ActionButtonWithText(action, presentation, place, minimumSize);
 
       if (mnemonic != KeyEvent.VK_UNDEFINED) {
-        buttonWithText.registerKeyboardAction(__ -> buttonWithText.click(), KeyStroke.getKeyStroke(mnemonic,
-                                InputEvent.ALT_DOWN_MASK), WHEN_IN_FOCUSED_WINDOW);
+        buttonWithText.registerKeyboardAction(__ -> buttonWithText.click(),
+                                              KeyStroke.getKeyStroke(mnemonic, InputEvent.ALT_DOWN_MASK), WHEN_IN_FOCUSED_WINDOW);
       }
       applyToolbarLook(look, presentation, buttonWithText);
       return buttonWithText;
@@ -1057,7 +1062,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         union = union == null ? bound : union.union(bound);
       }
       forcedHeight = union != null ? union.height : 0;
-    } else {
+    }
+    else {
       calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds); // it doesn't take into account wrapping
       forcedHeight = 0;
     }
@@ -1559,7 +1565,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     DataContext context = DataManager.getInstance().getDataContext(target);
     if (myAdditionalDataProvider != null) {
       return CustomizedDataContext.create(context, myAdditionalDataProvider);
-    } else {
+    }
+    else {
       return context;
     }
   }
@@ -1859,7 +1866,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                                                           : JBUI.CurrentTheme.Toolbar.horizontalToolbarInsets();
       if (i != null) {
         setBorder(JBUI.Borders.empty(i));
-      } else {
+      }
+      else {
         setBorder(JBUI.Borders.empty(2));
       }
 
