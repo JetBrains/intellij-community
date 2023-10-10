@@ -28,6 +28,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.*;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.panels.ListLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -622,7 +623,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void createReviewTab(@NotNull JBTabbedPane pane) {
-    JPanel topPanel = new Wrapper();
+    JPanel topPanel = new Wrapper(new BorderLayout(0, JBUI.scale(5)));
     topPanel.setBorder(JBUI.Borders.empty(16, 16, 12, 16));
 
     LinkPanel newReviewLink = new LinkPanel(topPanel, true, false, null, BorderLayout.WEST);
@@ -631,6 +632,12 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(pluginId);
       return MarketplaceUrls.getPluginWriteReviewUrl(pluginId, installedPlugin != null ? installedPlugin.getVersion() : null);
     });
+
+    JPanel notePanel = new Wrapper(ListLayout.horizontal(JBUI.scale(5), ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.NO_GROW));
+    LinkPanel noteLink = new LinkPanel(notePanel, true, true, null, null);
+    noteLink.showWithBrowseUrl(IdeBundle.message("plugins.review.note"), IdeBundle.message("plugins.review.note.link"), false,
+                               () -> MarketplaceUrls.getPluginReviewNoteUrl());
+    topPanel.add(notePanel, BorderLayout.SOUTH);
 
     JPanel reviewsPanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
     reviewsPanel.add(topPanel, BorderLayout.NORTH);

@@ -68,6 +68,9 @@ internal object MarketplaceUrls {
   fun getPluginHomepage(pluginId: PluginId) = "$pluginManagerUrl/plugin/index?xmlId=${pluginId.urlEncode()}"
 
   @JvmStatic
+  fun getPluginReviewNoteUrl() = "https://plugins.jetbrains.com/docs/marketplace/reviews-policy.html"
+
+  @JvmStatic
   fun getPluginWriteReviewUrl(pluginId: PluginId, version: String? = null) = buildString {
     append("$pluginManagerUrl/intellij/${pluginId.urlEncode()}/review/new")
     append("?build=$IDE_BUILD_FOR_REQUEST")

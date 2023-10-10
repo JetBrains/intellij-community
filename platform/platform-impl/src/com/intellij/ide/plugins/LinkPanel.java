@@ -67,6 +67,15 @@ public final class LinkPanel {
     });
   }
 
+  public void showWithBrowseUrl(@NotNull @Nls String text,
+                                @NotNull @Nls String linkText,
+                                boolean addAugments,
+                                @NotNull Supplier<String> urlProvider) {
+    showWithBrowseUrl(linkText, addAugments, urlProvider);
+    myTextLabel.setText(text);
+    myTextLabel.setVisible(true);
+  }
+
   public void hide() {
     myRunnable = null;
     myTextLabel.setVisible(false);
