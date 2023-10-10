@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
+import java.lang.ref.WeakReference
 
 @ApiStatus.Internal
 interface SearchEverywhereMlContributorReplacementService {
@@ -11,7 +12,7 @@ interface SearchEverywhereMlContributorReplacementService {
     val EP_NAME: ExtensionPointName<SearchEverywhereMlContributorReplacementService> = ExtensionPointName.create(
       "com.intellij.searchEverywhereMlContributorReplacementService")
 
-    var initEvent: AnActionEvent? = null
+    var initEvent = WeakReference<AnActionEvent>(null)
       private set
 
     @JvmStatic
@@ -21,7 +22,7 @@ interface SearchEverywhereMlContributorReplacementService {
 
     @JvmStatic
     fun saveInitEvent(event: AnActionEvent) {
-      initEvent = event
+      initEvent = WeakReference(event)
     }
   }
 
