@@ -59,10 +59,22 @@ object IndexingFlag {
   }
 
   @JvmStatic
+  fun cleanProcessingFlag(fileId: Int) {
+    // file might have already been deleted, so there might be no VirtualFile for given fileId
+    setFileIndexed(fileId, ProjectIndexingDependenciesService.NULL_STAMP)
+  }
+
+  @JvmStatic
   fun setFileIndexed(file: VirtualFile, stamp: FileIndexingStamp) {
     file.asApplicable()?.also { fileWithId ->
+      setFileIndexed(fileWithId.id, stamp)
+    }
+  }
+
+  private fun setFileIndexed(fileId: Int, stamp: FileIndexingStamp) {
+    if (!VfsData.isIsIndexedFlagDisabled()) {
       stamp.store { s ->
-        persistence.writeInt(fileWithId.id, s)
+        persistence.writeInt(fileId, s)
       }
     }
   }

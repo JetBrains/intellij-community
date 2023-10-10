@@ -648,11 +648,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     VirtualFile originalFile = file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).getOriginalFile() : file;
     final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
+    cleanProcessingFlag(fileId);
     if (!states.isEmpty()) {
       ProgressManager.getInstance().executeNonCancelableSection(() -> removeFileDataFromIndices(states, fileId, originalFile));
-    }
-    if (file instanceof VirtualFileSystemEntry && file.isValid()) {
-      cleanProcessingFlag(file);
     }
     boolean isValid =
       file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).isOriginalValid() : file.isValid();
@@ -666,7 +664,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     try {
       // document diff can depend on the previous value that will be removed
       removeTransientFileDataFromIndices(indexIds, fileId, file);
-
+      cleanProcessingFlag(fileId);
       Throwable unexpectedError = null;
       for (ID<?, ?> indexId : indexIds) {
         try {
