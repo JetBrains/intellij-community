@@ -53,8 +53,8 @@ internal open class FirCallableCompletionContributor(
     priority: Int,
 ) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(basicContext, priority) {
     context(KtAnalysisSession)
-    protected open fun getImportStrategy(signature: KtCallableSignature<*>, noImportRequired: Boolean): ImportStrategy =
-        if (noImportRequired) {
+    protected open fun getImportStrategy(signature: KtCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy =
+        if (isImportDefinitelyNotRequired) {
             ImportStrategy.DoNothing
         } else {
             importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol)
@@ -80,9 +80,11 @@ internal open class FirCallableCompletionContributor(
     context(KtAnalysisSession)
     private fun getOptions(
         signature: KtCallableSignature<*>,
-        noImportRequired: Boolean = false
-    ): CallableInsertionOptions = CallableInsertionOptions(getImportStrategy(signature, noImportRequired), getInsertionStrategy(signature))
-
+        isImportDefinitelyNotRequired: Boolean = false
+    ): CallableInsertionOptions = CallableInsertionOptions(
+        getImportStrategy(signature, isImportDefinitelyNotRequired),
+        getInsertionStrategy(signature)
+    )
 
     context(KtAnalysisSession)
     private fun getExtensionOptions(
@@ -366,7 +368,7 @@ internal open class FirCallableCompletionContributor(
             val callableWithMetadata = createCallableWithMetadata(
                 signatureWithScopeKind.signature,
                 signatureWithScopeKind.scopeKind,
-                noImportRequired = true,
+                isImportDefinitelyNotRequired = true,
                 explicitReceiverTypeHint = explicitReceiverTypeHint
             )
             yield(callableWithMetadata)
@@ -375,7 +377,15 @@ internal open class FirCallableCompletionContributor(
         extensionNonMembers.forEach { (signatureWithScopeKind, insertionOptions) ->
             val signature = signatureWithScopeKind.signature
             val scopeKind = signatureWithScopeKind.scopeKind
-            yield(createCallableWithMetadata(signature, scopeKind, noImportRequired = false, insertionOptions, explicitReceiverTypeHint))
+            yield(
+                createCallableWithMetadata(
+                    signature,
+                    scopeKind,
+                    isImportDefinitelyNotRequired = false,
+                    insertionOptions,
+                    explicitReceiverTypeHint
+                )
+            )
         }
 
         collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
@@ -493,12 +503,16 @@ internal open class FirCallableCompletionContributor(
         return ApplicableExtension(signature, insertionOptions)
     }
 
+    /**
+     * Note, that [isImportDefinitelyNotRequired] should be set to true only if the callable is available without import, and it doesn't
+     * require import or fully-qualified name to be resolved unambiguously.
+     */
     context(KtAnalysisSession)
     protected fun createCallableWithMetadata(
         signature: KtCallableSignature<*>,
         scopeKind: KtScopeKind,
-        noImportRequired: Boolean = false,
-        options: CallableInsertionOptions = getOptions(signature, noImportRequired),
+        isImportDefinitelyNotRequired: Boolean = false,
+        options: CallableInsertionOptions = getOptions(signature, isImportDefinitelyNotRequired),
         explicitReceiverTypeHint: KtType? = null,
         withExpectedType: Boolean = true,
     ): CallableWithMetadataForCompletion {
@@ -627,8 +641,11 @@ internal class FirCallableReferenceCompletionContributor(
     priority: Int
 ) : FirCallableCompletionContributor(basicContext, priority) {
     context(KtAnalysisSession)
-    override fun getImportStrategy(signature: KtCallableSignature<*>, noImportRequired: Boolean): ImportStrategy =
-        ImportStrategy.DoNothing
+    override fun getImportStrategy(signature: KtCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy {
+        if (isImportDefinitelyNotRequired) return ImportStrategy.DoNothing
+
+        return signature.callableIdIfNonLocal?.let { ImportStrategy.AddImport(it.asSingleFqName()) } ?: ImportStrategy.DoNothing
+    }
 
     context(KtAnalysisSession)
     override fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy =
@@ -689,7 +706,14 @@ internal class FirCallableReferenceCompletionContributor(
                 ) { filter(it, sessionParameters) }.map { KtCallableSignatureWithContainingScopeKind(it, staticScopeKind) }
 
                 (nonExtensionMembers + staticMembers).forEach {
-                    yield(createCallableWithMetadata(it.signature, it.scopeKind, noImportRequired = true, withExpectedType = false))
+                    yield(
+                        createCallableWithMetadata(
+                            it.signature,
+                            it.scopeKind,
+                            isImportDefinitelyNotRequired = true,
+                            withExpectedType = false
+                        )
+                    )
                 }
             }
 
@@ -787,7 +811,15 @@ internal class FirKDocCallableCompletionContributor(
         for (scopeWithKind in scopesWithKinds) {
             scopeWithKind.scope.getCallableSymbols(scopeNameFilter)
                 .filter { it !is KtSyntheticJavaPropertySymbol }
-                .forEach { symbol -> yield(createCallableWithMetadata(symbol.asSignature(), scopeWithKind.kind, noImportRequired = true)) }
+                .forEach { symbol ->
+                    yield(
+                        createCallableWithMetadata(
+                            symbol.asSignature(),
+                            scopeWithKind.kind,
+                            isImportDefinitelyNotRequired = true
+                        )
+                    )
+                }
         }
     }
 }
