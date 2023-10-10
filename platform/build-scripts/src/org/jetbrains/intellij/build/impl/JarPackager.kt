@@ -96,7 +96,7 @@ private val predefinedMergeRules = persistentMapOf<String, (String, JetBrainsCli
   }
 
   // used in external process - see ConsoleProcessListFetcher.getConsoleProcessCount
-  map.put(UTIL_JAR) { it, _ -> it == "pty4j" || it == "jvm-native-trusted-roots" }
+  map.put(UTIL_JAR) { it, _ -> it == "pty4j" || it == "jvm-native-trusted-roots" || it == "caffeine" }
 }
 
 internal fun getLibraryFileName(library: JpsLibrary): String {

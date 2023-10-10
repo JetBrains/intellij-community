@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.Gson;
 import com.google.protobuf.Message;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
@@ -78,8 +79,6 @@ public final class ClasspathBootstrap {
     "jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED"
   };
 
-  private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
-
   private static void addToClassPath(Class<?> aClass, Set<String> result) {
     Path path = PathManager.getJarForClass(aClass);
     if (path == null) {
@@ -129,6 +128,8 @@ public final class ClasspathBootstrap {
     addToClassPath(JavaProjectBuilder.class, cp);  // QDox lightweight java parser
     addToClassPath(Gson.class, cp);  // gson
     addToClassPath(Xxh3.class, cp);
+    // caffeine
+    addToClassPath(Caffeine.class, cp);
 
     addToClassPath(cp, ArtifactRepositoryManager.getClassesFromDependencies());
     addToClassPath(Tracer.class, cp); // tracing infrastructure
@@ -214,11 +215,6 @@ public final class ClasspathBootstrap {
     }
 
     return new ArrayList<>(cp);
-  }
-
-  private static @NotNull File getMavenLocalRepositoryDir() {
-    final String userHome = System.getProperty("user.home", null);
-    return userHome != null ? new File(userHome, DEFAULT_MAVEN_REPOSITORY_PATH) : new File(DEFAULT_MAVEN_REPOSITORY_PATH);
   }
 
   public static @Nullable String getResourcePath(Class<?> aClass) {

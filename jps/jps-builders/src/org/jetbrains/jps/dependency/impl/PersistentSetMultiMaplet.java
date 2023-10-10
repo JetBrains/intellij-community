@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
-import com.intellij.util.containers.SLRUCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -30,7 +31,7 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
   private static final int CACHE_SIZE = 128;
 
   private final PersistentHashMap<K, Collection<V>> map;
-  private final SLRUCache<K, Collection<V>> cache;
+  private final LoadingCache<K, Collection<V>> cache;
 
   public PersistentSetMultiMaplet(Path mapFile) {
     try {
@@ -44,7 +45,7 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
       throw new RuntimeException(e);
     }
 
-    cache = SLRUCache.slruCache(CACHE_SIZE, CACHE_SIZE, key -> {
+    cache = Caffeine.newBuilder().maximumSize(CACHE_SIZE).build(key -> {
       try {
         Collection<V> collection = map.get(key);
         //noinspection unchecked
@@ -75,7 +76,7 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
   @Override
   public void put(K key, Iterable<? extends V> values) {
     try {
-      cache.remove(key);
+      cache.invalidate(key);
       map.put(key, Iterators.collect(values, new HashSet<>()));
     }
     catch (IOException e) {
@@ -86,7 +87,7 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
   @Override
   public void remove(K key) {
     try {
-      cache.remove(key);
+      cache.invalidate(key);
       map.remove(key);
     }
     catch (IOException e) {
@@ -115,7 +116,7 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
       final Collection<V> collection = cache.get(key);
       if (collection != NULL_COLLECTION) {
         if (collection.remove(value)) {
-          cache.remove(key);
+          cache.invalidate(key);
           if (collection.isEmpty()) {
             map.remove(key);
           }
@@ -142,7 +143,7 @@ public final class PersistentSetMultiMaplet<K extends SerializableGraphElement, 
 
   public void close() {
     try {
-      cache.clear();
+      cache.invalidateAll();
       map.close();
     }
     catch (IOException e) {

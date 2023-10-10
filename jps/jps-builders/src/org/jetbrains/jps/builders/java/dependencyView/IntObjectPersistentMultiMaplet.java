@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import com.intellij.util.containers.SLRUCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -20,15 +21,15 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<Integer, Collection<V>> map;
   private final DataExternalizer<V> valueExternalizer;
-  private final SLRUCache<Integer, Collection<V>> cache;
+  private final LoadingCache<Integer, Collection<V>> cache;
 
   public IntObjectPersistentMultiMaplet(final File file,
                                         final KeyDescriptor<Integer> keyExternalizer,
                                         final DataExternalizer<V> valueExternalizer,
                                         final Supplier<? extends Collection<V>> collectionFactory) throws IOException {
     this.valueExternalizer = valueExternalizer;
-    map = new PersistentHashMap<>(file, keyExternalizer, new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
-    cache = SLRUCache.slruCache(CACHE_SIZE, CACHE_SIZE, key -> {
+    map = new PersistentHashMap<>(file.toPath(), keyExternalizer, new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
+    cache = Caffeine.newBuilder().maximumSize(CACHE_SIZE).build(key -> {
       try {
         final Collection<V> collection = map.get(key);
         //noinspection unchecked
@@ -59,7 +60,7 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
   @Override
   public void replace(int key, Collection<V> value) {
     try {
-      cache.remove(key);
+      cache.invalidate(key);
       if (value == null || value.isEmpty()) {
         map.remove(key);
       }
@@ -75,7 +76,7 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
   @Override
   public void put(final int key, final Collection<V> value) {
     try {
-      cache.remove(key);
+      cache.invalidate(key);
       map.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
         public void append(@NotNull DataOutput out) throws IOException {
@@ -103,7 +104,7 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
 
         if (collection != NULL_COLLECTION) {
           if (collection.removeAll(values)) {
-            cache.remove(key);
+            cache.invalidate(key);
             if (collection.isEmpty()) {
               map.remove(key);
             }
@@ -126,7 +127,7 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
 
       if (collection != NULL_COLLECTION) {
         if (collection.remove(value)) {
-          cache.remove(key);
+          cache.invalidate(key);
           if (collection.isEmpty()) {
             map.remove(key);
           }
@@ -144,7 +145,7 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
   @Override
   public void remove(final int key) {
     try {
-      cache.remove(key);
+      cache.invalidate(key);
       map.remove(key);
     }
     catch (IOException e) {
@@ -165,7 +166,7 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
   @Override
   public void close() {
     try {
-      cache.clear();
+      cache.invalidateAll();
       map.close();
     }
     catch (IOException e) {

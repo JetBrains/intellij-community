@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import com.intellij.util.containers.SLRUCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.intellij.util.io.*;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -46,18 +47,18 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
     }
   };
   private final PersistentHashMap<Integer, IntSet> map;
-  private final SLRUCache<Integer, IntSet> cache;
+  private final LoadingCache<Integer, IntSet> cache;
 
   NaturalIntIntPersistentMultiMaplet(final File file, final KeyDescriptor<Integer> keyExternalizer) throws IOException {
     final Boolean prevValue = PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.get();
     try {
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
-      map = new PersistentHashMap<>(file, keyExternalizer, EXTERNALIZER);
+      map = new PersistentHashMap<>(file.toPath(), keyExternalizer, EXTERNALIZER);
     }
     finally {
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(prevValue);
     }
-    cache = SLRUCache.slruCache(CACHE_SIZE, 2 * CACHE_SIZE, key -> {
+    cache = Caffeine.newBuilder().maximumSize(CACHE_SIZE).build(key -> {
       try {
         IntSet collection = map.get(key);
         if (collection == null) {
@@ -94,7 +95,7 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void replace(int key, IntSet value) {
     try {
-      cache.remove(key);
+      cache.invalidate(key);
       if (value == null || value.isEmpty()) {
         map.remove(key);
       }
@@ -111,7 +112,7 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   public void put(final int key, final IntSet values) {
     try {
       if (!values.isEmpty()) {
-        cache.remove(key);
+        cache.invalidate(key);
         map.appendData(key, getAddAppender(values));
       }
     }
@@ -123,7 +124,7 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void put(final int key, final int value) {
     try {
-      cache.remove(key);
+      cache.invalidate(key);
       map.appendData(key, getAddAppender(value));
     }
     catch (IOException e) {
@@ -135,7 +136,7 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   public void removeAll(int key, IntSet values) {
     try {
       if (!values.isEmpty()) {
-        cache.remove(key);
+        cache.invalidate(key);
         map.appendData(key, getRemoveAppender(values));
       }
     }
@@ -150,7 +151,7 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       final IntSet collection = cache.get(key);
       if (collection != NULL_COLLECTION) {
         if (collection.remove(value)) {
-          cache.remove(key);
+          cache.invalidate(key);
           if (collection.isEmpty()) {
             map.remove(key);
           }
@@ -168,7 +169,7 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void remove(final int key) {
     try {
-      cache.remove(key);
+      cache.invalidate(key);
       map.remove(key);
     }
     catch (IOException e) {
@@ -189,7 +190,7 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void close() {
     try {
-      cache.clear();
+      cache.invalidateAll();
       map.close();
     }
     catch (IOException e) {
