@@ -86,11 +86,10 @@ class TerminalModel(internal val textBuffer: TerminalTextBuffer, val styleState:
       }
     }
 
-  var useAlternateBuffer: Boolean
-    get() = textBuffer.isUsingAlternateBuffer
+  var useAlternateBuffer: Boolean = textBuffer.isUsingAlternateBuffer
     set(value) {
-      if (textBuffer.isUsingAlternateBuffer != value) {
-        textBuffer.useAlternateBuffer(value)
+      if (field != value) {
+        field = value
         terminalListeners.forEach { it.onAlternateBufferChanged(value) }
       }
     }
