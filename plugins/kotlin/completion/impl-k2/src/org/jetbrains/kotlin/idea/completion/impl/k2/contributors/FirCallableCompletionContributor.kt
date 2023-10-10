@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMultiplatformSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -644,11 +645,19 @@ internal class FirCallableReferenceCompletionContributor(
     }
 
     context(KtAnalysisSession)
-    override fun filter(symbol: KtCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean =
-        symbol !is KtValueParameterSymbol &&
-                symbol !is KtLocalVariableSymbol &&
-                symbol !is KtEnumEntrySymbol &&
-                symbol !is KtBackingFieldSymbol
+    override fun filter(symbol: KtCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean = when {
+        // References to elements which are members and extensions at the same time are not allowed
+        symbol.isExtension && symbol.symbolKind == KtSymbolKind.CLASS_MEMBER -> false
+
+        // References to variables and parameters are unsupported
+        symbol is KtValueParameterSymbol || symbol is KtLocalVariableSymbol || symbol is KtBackingFieldSymbol -> false
+
+        // References to enum entries aren't supported
+        symbol is KtEnumEntrySymbol -> false
+
+        else -> true
+    }
+
 
     context(KtAnalysisSession)
     override fun collectDotCompletion(
