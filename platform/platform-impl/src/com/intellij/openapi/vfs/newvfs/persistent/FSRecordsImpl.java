@@ -307,6 +307,13 @@ public final class FSRecordsImpl implements Closeable {
         catch (Throwable scanningEx) {
           e.addSuppressed(scanningEx);
         }
+
+        try {
+          connection.close();
+        }
+        catch (Throwable closingEx) {
+          e.addSuppressed(closingEx);
+        }
         LOG.error(e);//because we need more details
         //FIXME throw handleError(e) ?
 

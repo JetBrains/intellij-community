@@ -79,9 +79,10 @@ public class VFSCorruptionRecoveryTest {
 
 
     List<String> vfsFilesToTryCorrupt = vfsCrucialDataFilesNames.stream()
+      //old-school ContentStorage doesn't recognize corruptions:
       .filter(name -> !name.startsWith("content.dat"))
+      //attributes_enum is plain text, has no way to recognize corruptions:
       .filter(name -> !name.startsWith("attributes_enums.dat"))
-      .filter(name -> !name.startsWith("records.dat"))
       .toList();
 
     List<String> filesCorruptionsVFSCantOvercome = new ArrayList<>();
@@ -124,7 +125,7 @@ public class VFSCorruptionRecoveryTest {
     }
 
     assertTrue(
-      "VFS init must not fail if any of " + filesCorruptionsVFSCantOvercome + " is corrupted",
+      "VFS init must NOT fail if any of " + filesCorruptionsVFSCantOvercome + " is corrupted",
       filesCorruptionsVFSCantOvercome.isEmpty()
     );
 
