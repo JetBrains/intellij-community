@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
 import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.ui.search.SearchUtil.ADDITIONAL_SEARCH_LABELS_KEY
 import com.intellij.lang.LangBundle
@@ -29,6 +30,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
+import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.Scheme
@@ -47,7 +51,6 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
-import com.intellij.util.applyIf
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
@@ -157,6 +160,8 @@ internal val optionDescriptors: List<OptionDescription>
   }
 
 private val EP_NAME = ExtensionPointName<GeneralEditorOptionsProviderEP>("com.intellij.generalEditorOptionsExtension")
+
+private val screenReaderEnabledProperty = AtomicBooleanProperty(GeneralSettings.getInstance().isSupportScreenReaders)
 
 class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(message("title.editor"), ID), WithEpDependencies {
   companion object {
@@ -358,6 +363,12 @@ private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOp
     const val ID = "preferences.editor.code.editing"
   }
 
+  init {
+    ApplicationManager.getApplication().messageBus.connect().subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      screenReaderEnabledProperty.set(GeneralSettings.getInstance().isSupportScreenReaders)
+    })
+  }
+
   override fun createConfigurables() = ConfigurableWrapper.createConfigurables(ErrorOptionsProviderEP.EP_NAME)
   override fun getDependencies() = setOf(ErrorOptionsProviderEP.EP_NAME)
 
@@ -370,8 +381,13 @@ private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOp
       }
       group(message("group.quick.documentation")) {
         row {
-          val supportScreenReaders = GeneralSettings.getInstance().isSupportScreenReaders
-          checkBox(cdShowQuickDocOnMouseMove).enabled(!supportScreenReaders).applyIf(supportScreenReaders) {
+          val quickDocCheckBox = checkBox(cdShowQuickDocOnMouseMove).enabledIf(screenReaderEnabledProperty.not())
+          screenReaderEnabledProperty.whenPropertyChanged {
+            quickDocCheckBox.selected(editorSettings.isShowQuickDocOnMouseOverElement)
+          }
+        }
+        indent {
+          row {
             comment(message("editor.options.quick.doc.on.mouse.hover.comment.screen.reader.support")) {
               DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
                 if (context == null) {
@@ -380,7 +396,7 @@ private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOp
                 val settings = context.getData(Settings.KEY) ?: return@onSuccess
                 settings.select(settings.find("preferences.lookFeel"))
               }
-            }
+            }.visibleIf(screenReaderEnabledProperty)
           }
         }
       }
