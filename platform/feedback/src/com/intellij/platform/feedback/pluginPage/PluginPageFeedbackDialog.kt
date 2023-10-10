@@ -8,6 +8,7 @@ import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
+import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -56,6 +57,11 @@ internal abstract class PluginPageFeedbackDialog(pluginId: String,
                        reasonsItems, "reasons").addOtherTextField().requireAnswer(),
     TextAreaBlock(PluginPageFeedbackBundle.message("dialog.textarea.label"), "what_to_improve")
   )
+
+  override fun showThanksNotification() {
+    ThanksForFeedbackNotification(description = PluginPageFeedbackBundle.message(
+      "notification.thanks.feedback.content")).notify(myProject)
+  }
 }
 
 @Serializable
