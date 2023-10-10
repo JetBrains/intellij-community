@@ -108,14 +108,10 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
     listOfNotNull(
       buildPlatformJob,
       async {
-        buildBundledPlugins(state = state, plugins = pluginLayouts, buildPlatformJob = buildPlatformJob, context = context)
+        buildBundledPlugins(state, pluginLayouts, isUpdateFromSources, buildPlatformJob, context)
       },
       async {
-        buildOsSpecificBundledPlugins(state = state,
-                                      pluginLayouts = pluginLayouts,
-                                      isUpdateFromSources = isUpdateFromSources,
-                                      buildPlatformJob = buildPlatformJob,
-                                      context = context)
+        buildOsSpecificBundledPlugins(state, pluginLayouts, isUpdateFromSources, buildPlatformJob, context)
       },
       async {
         buildNonBundledPlugins(pluginsToPublish = state.pluginsToPublish,
@@ -131,7 +127,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
   // must be before reorderJars as these additional plugins maybe required for IDE start-up
   val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
   if (!additionalPluginPaths.isEmpty()) {
-    val pluginDir = context.paths.distAllDir.resolve("plugins")
+    val pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
     withContext(Dispatchers.IO) {
       for (sourceDir in additionalPluginPaths) {
         copyDir(sourceDir = sourceDir, targetDir = pluginDir.resolve(sourceDir.fileName))
@@ -183,87 +179,75 @@ fun getProductModules(state: DistributionBuilderState): List<String> {
     .toList()
 }
 
+private fun getPluginDirectories(context: BuildContext, isUpdateFromSources: Boolean): Map<SupportedDistribution, Path> =
+  if (isUpdateFromSources)
+    mapOf(SupportedDistribution(OsFamily.currentOs, JvmArchitecture.currentJvmArch) to context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
+  else
+    SUPPORTED_DISTRIBUTIONS.associate { it to getOsAndArchSpecificDistDirectory(it.os, it.arch, context).resolve(PLUGINS_DIRECTORY) }
+
 suspend fun buildBundledPlugins(state: DistributionBuilderState,
                                 plugins: Collection<PluginLayout>,
+                                isUpdateFromSources: Boolean,
                                 buildPlatformJob: Job?,
-                                context: BuildContext): List<DistributionFileEntry> {
-  val pluginDirectoriesToSkip = context.options.bundledPluginDirectoriesToSkip
-  return spanBuilder("build bundled plugins")
-    .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), pluginDirectoriesToSkip.toList())
+                                context: BuildContext): List<DistributionFileEntry> =
+  spanBuilder("build bundled plugins")
+    .setAttribute("isUpdateFromSources", isUpdateFromSources)
+    .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
     .setAttribute("count", plugins.size.toLong())
     .useWithScope2 { span ->
       val pluginsToBundle = ArrayList<PluginLayout>(plugins.size)
-      plugins.filterTo(pluginsToBundle) {
-        satisfiesBundlingRequirements(plugin = it, osFamily = null, arch = null, withEphemeral = false, context = context) &&
-        !pluginDirectoriesToSkip.contains(it.directoryName)
-      }
-
-      // Doesn't make sense to require passing here a list with a stable order, unnecessary complication. Just sort by main module.
-      pluginsToBundle.sortWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
+      plugins.filterTo(pluginsToBundle) { satisfiesBundlingRequirements(it, osFamily = null, arch = null, withEphemeral = false, context) }
       span.setAttribute("satisfiableCount", pluginsToBundle.size.toLong())
+
+      // doesn't make sense to require passing here a list with a stable order (unnecessary complication, sorting by main module is enough)
+      pluginsToBundle.sortWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
       val targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
-      buildPlugins(moduleOutputPatcher = ModuleOutputPatcher(),
-                   plugins = pluginsToBundle,
-                   targetDir = targetDir,
-                   state = state,
-                   context = context,
-                   buildPlatformJob = buildPlatformJob)
+      val entries = buildPlugins(ModuleOutputPatcher(), pluginsToBundle, targetDir, state, context, buildPlatformJob)
+
+      buildPlatformSpecificPluginResources(
+        pluginsToBundle.filter { it.platformResourceGenerators.isNotEmpty() },
+        getPluginDirectories(context, isUpdateFromSources),
+        context)
+
+      entries
     }
-}
 
 private suspend fun buildOsSpecificBundledPlugins(state: DistributionBuilderState,
-                                                  pluginLayouts: Set<PluginLayout>,
+                                                  plugins: Set<PluginLayout>,
                                                   isUpdateFromSources: Boolean,
                                                   buildPlatformJob: Job?,
-                                                  context: BuildContext): List<DistributionFileEntry> {
-  return spanBuilder("build os-specific bundled plugins")
+                                                  context: BuildContext): List<DistributionFileEntry> =
+  spanBuilder("build os-specific bundled plugins")
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
+    .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
     .useWithScope2 {
-      val platforms = if (isUpdateFromSources) {
-        listOf(SupportedDistribution(os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch))
-      }
-      else {
-        SUPPORTED_DISTRIBUTIONS
-      }
-
       coroutineScope {
-        platforms.mapNotNull { (osFamily, arch) ->
-          if (!context.shouldBuildDistributionForOS(osFamily, arch)) {
+        getPluginDirectories(context, isUpdateFromSources).mapNotNull { (dist, targetDir) ->
+          val (os, arch) = dist
+          if (!context.shouldBuildDistributionForOS(os, arch)) {
             return@mapNotNull null
           }
 
-          val osSpecificPlugins = pluginLayouts.filter {
-            satisfiesBundlingRequirements(it, osFamily, arch, withEphemeral = false, context)
+          val osSpecificPlugins = plugins.filter {
+            satisfiesBundlingRequirements(it, os, arch, withEphemeral = false, context)
           }
           if (osSpecificPlugins.isEmpty()) {
             return@mapNotNull null
           }
 
-          val outDir = if (isUpdateFromSources) {
-            context.paths.distAllDir.resolve("plugins")
-          }
-          else {
-            getOsAndArchSpecificDistDirectory(osFamily, arch, context).resolve("plugins")
-          }
-
           async(Dispatchers.IO) {
             spanBuilder("build bundled plugins")
-              .setAttribute("os", osFamily.osName)
+              .setAttribute("os", os.osName)
               .setAttribute("arch", arch.name)
               .setAttribute("count", osSpecificPlugins.size.toLong())
-              .setAttribute("outDir", outDir.toString())
+              .setAttribute("outDir", targetDir.toString())
               .useWithScope2 {
-                buildPlugins(moduleOutputPatcher = ModuleOutputPatcher(),
-                             plugins = osSpecificPlugins, targetDir = outDir,
-                             state = state,
-                             context = context,
-                             buildPlatformJob = buildPlatformJob)
+                buildPlugins(ModuleOutputPatcher(), osSpecificPlugins, targetDir, state, context, buildPlatformJob)
               }
           }
         }
       }
     }.flatMap { it.getCompleted() }
-}
 
 suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
                                    compressPluginArchive: Boolean,
@@ -464,7 +448,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
                                                    platformLayout = state.platform,
                                                    targetDirectory = pluginDir,
                                                    copyFiles = true,
-                                                   simplify = simplify,
+                                                   simplify = simplify && plugin.platformResourceGenerators.isEmpty(),
                                                    moduleOutputPatcher = moduleOutputPatcher,
                                                    includedModules = plugin.includedModules,
                                                    context = context)
@@ -511,6 +495,23 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
     }
   }
   return entries
+}
+
+private suspend fun buildPlatformSpecificPluginResources(
+  plugins: Collection<PluginLayout>,
+  targetDirs: Map<SupportedDistribution, Path>,
+  context: BuildContext
+) {
+  plugins.asSequence()
+    .flatMap { it.platformResourceGenerators.entries.map { (dist, generator) -> Triple(dist, generator, it.directoryName) } }
+    .mapNotNull { (dist, generator, dirName) -> targetDirs[dist]?.let { path -> generator to path.resolve(dirName) } }
+    .forEach { (generator, pluginDir) ->
+      spanBuilder("plugin")
+        .setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString())
+        .useWithScope2 {
+          generator(pluginDir, context)
+        }
+    }
 }
 
 private fun getAtMostTwoNonHiddenChildren(outDir: Path): List<Path> {
@@ -763,6 +764,10 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
                                   arch: JvmArchitecture?,
                                   withEphemeral: Boolean,
                                   context: BuildContext): Boolean {
+  if (plugin.directoryName in context.options.bundledPluginDirectoriesToSkip) {
+    return false
+  }
+
   val bundlingRestrictions = plugin.bundlingRestrictions
 
   if (context.options.useReleaseCycleRelatedBundlingRestrictionsForContentReport) {

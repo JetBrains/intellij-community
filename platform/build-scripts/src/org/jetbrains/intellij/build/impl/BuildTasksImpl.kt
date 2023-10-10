@@ -840,6 +840,7 @@ private fun checkProductLayout(context: BuildContext) {
   for (plugin in pluginLayouts) {
     checkBaseLayout(plugin, "\'${plugin.mainModule}\' plugin", context)
   }
+  checkPlatformSpecificPluginResources(pluginLayouts, layout.pluginModulesToPublish.toSet())
 }
 
 private fun checkBaseLayout(layout: BaseLayout, description: String, context: BuildContext) {
@@ -1084,6 +1085,13 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
 
   if (forbiddenSubPaths.isNotEmpty()) {
     context.messages.warning("checkClassFiles: SUCCESS for forbiddenSubPaths at '$root': ${forbiddenSubPaths.joinToString()}")
+  }
+}
+
+private fun checkPlatformSpecificPluginResources(pluginLayouts: List<PluginLayout>, pluginModulesToPublish: Set<String>) {
+  val offenders = pluginLayouts.filter { it.platformResourceGenerators.isNotEmpty() && it.mainModule in pluginModulesToPublish }
+  check(offenders.isEmpty()) {
+    "Non-bundled plugins are not allowed yet to specify platform-specific resources. Offenders:\n  ${offenders.joinToString("  \n")}"
   }
 }
 

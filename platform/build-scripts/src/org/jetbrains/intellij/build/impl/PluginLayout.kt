@@ -7,11 +7,15 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
@@ -70,6 +74,9 @@ class PluginLayout private constructor(val mainModule: String,
   var enableSymlinksAndExecutableResources: Boolean = false
 
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
+    private set
+
+  internal var platformResourceGenerators: PersistentMap<SupportedDistribution, ResourceGenerator> = persistentMapOf()
     private set
 
   fun getMainJarName(): String = mainJarName
@@ -174,6 +181,10 @@ class PluginLayout private constructor(val mainModule: String,
       layout.resourceGenerators += generator
     }
 
+    fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, generator: ResourceGenerator) {
+      layout.platformResourceGenerators += SupportedDistribution(os, arch) to generator
+    }
+
     /**
      * @param resourcePath path to resource file or directory relative to `moduleName` module content root
      * @param relativeOutputPath target path relative to the plugin root directory
@@ -229,23 +240,39 @@ class PluginLayout private constructor(val mainModule: String,
     @JvmOverloads
     fun withBin(binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
       withGeneratedResources { targetDir, context ->
-        val source = context.paths.communityHomeDir.resolve(binPathRelativeToCommunity).normalize()
-        val attributes = try {
-          Files.readAttributes(source, BasicFileAttributes::class.java)
-        }
-        catch (ignored: FileSystemException) {
-          if (skipIfDoesntExist) {
-            return@withGeneratedResources
-          }
-          error("$source doesn't exist")
-        }
+        copyBinaryResource(binPathRelativeToCommunity, outputPath, skipIfDoesntExist, targetDir, context)
+      }
+    }
 
-        if (attributes.isRegularFile) {
-          copyFileToDir(source, targetDir.resolve(outputPath))
+    fun withPlatformBin(os: OsFamily, arch: JvmArchitecture, binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
+      withGeneratedPlatformResources(os, arch) { targetDir, context ->
+        copyBinaryResource(binPathRelativeToCommunity, outputPath, skipIfDoesntExist, targetDir, context)
+      }
+    }
+
+    private fun copyBinaryResource(
+      binPathRelativeToCommunity: String,
+      outputPath: String,
+      skipIfDoesntExist: Boolean,
+      targetDir: Path,
+      context: BuildContext
+    ) {
+      val source = context.paths.communityHomeDir.resolve(binPathRelativeToCommunity).normalize()
+      val attributes = try {
+        Files.readAttributes(source, BasicFileAttributes::class.java)
+      }
+      catch (_: FileSystemException) {
+        if (skipIfDoesntExist) {
+          return
         }
-        else {
-          copyDir(source, targetDir.resolve(outputPath))
-        }
+        error("$source doesn't exist")
+      }
+
+      if (attributes.isRegularFile) {
+        copyFileToDir(source, targetDir.resolve(outputPath))
+      }
+      else {
+        copyDir(source, targetDir.resolve(outputPath))
       }
     }
 
