@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentExecFileProvider
 import com.intellij.platform.ijent.IjentSessionProvider
+import com.intellij.platform.ijent.getIjentGrpcArgv
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.VisibleForTesting
 import kotlin.io.path.absolutePathString
@@ -38,24 +39,12 @@ suspend fun deployAndLaunchIjentGettingPath(
 
   val wslIjentBinary = wslDistribution.getWslPath(ijentBinary.absolutePathString())!!
 
-  val (debuggingLogLevel, backtrace) = when {
-    LOG.isTraceEnabled -> "trace" to true
-    LOG.isDebugEnabled -> "debug" to true
-    else -> "info" to false
-  }
-
-  val commandLine = GeneralCommandLine(listOfNotNull(
+  val commandLine = GeneralCommandLine(
     // It's supposed that WslDistribution always converts commands into SHELL.
     // There's no strict reason to call 'exec', just a tiny optimization.
-    "exec",
-
-    "/usr/bin/env",
-    "RUST_LOG=ijent=$debuggingLogLevel",
-    if (backtrace) "RUST_BACKTRACE=1" else null,
-    // "gdbserver", "0.0.0.0:12345",  // https://sourceware.org/gdb/onlinedocs/gdb/Connecting.html
-    wslIjentBinary,
-    "grpc-stdio-server",
-  ))
+    listOf("exec") +
+    getIjentGrpcArgv(wslIjentBinary)
+  )
   wslDistribution.patchCommandLine(commandLine, project, wslCommandLineOptions)
 
   LOG.debug {
