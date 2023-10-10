@@ -120,7 +120,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private var isFirstSetup = true
   private var autodetect = false
 
-  // We remember the last used editor scheme for each laf in order to restore it after switching laf
+  // we remember the last used editor scheme for each laf to restore it after switching laf
   private var rememberSchemeForLaf = true
   private val lafToPreviousScheme = HashMap<String, String>()
 
@@ -354,27 +354,14 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   override fun getLafComboBoxModel(): CollectionComboBoxModel<LafReference> = lafComboBoxModel.value
 
-  private val allReferences: List<LafReference>
-    get() {
-      val result = ArrayList<LafReference>()
-      for (group in ThemeListProvider.getInstance().getShownThemes()) {
-        if (result.isNotEmpty()) {
-          result.add(SEPARATOR)
-        }
-        for (info in group) {
-          result.add(createLafReference(info))
-        }
-      }
-      return result
-    }
-
   internal fun updateLafComboboxModel() {
     lafComboBoxModel.drop()
   }
 
   private fun selectComboboxModel() {
     if (lafComboBoxModel.isInitialized()) {
-      lafComboBoxModel.value.selectedItem = createLafReference(currentTheme!!)
+      val theme = currentTheme!!
+      lafComboBoxModel.value.selectedItem = LafReference(theme.name, theme.id)
     }
   }
 
@@ -391,7 +378,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   override fun getCurrentUIThemeLookAndFeel(): UIThemeLookAndFeelInfo? = currentTheme
 
-  override fun getLookAndFeelReference(): LafReference = createLafReference(currentTheme!!)
+  override fun getLookAndFeelReference(): LafReference = currentTheme!!.let { LafReference(it.name, it.id) }
 
   override fun getLookAndFeelCellRenderer(): ListCellRenderer<LafReference> = LafCellRenderer()
 
@@ -708,7 +695,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun getPreviousSchemeForLaf(lookAndFeelInfo: UIThemeLookAndFeelInfo): EditorColorsScheme? {
-    val schemeName = lafToPreviousScheme.get(lookAndFeelInfo.name) ?: return null
+    val schemeName = lafToPreviousScheme.get(lookAndFeelInfo.id) ?: return null
     return EditorColorsManager.getInstance().getScheme(schemeName)
   }
 
@@ -724,10 +711,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     val theme = currentTheme ?: return
     val baseSchemeId = Scheme.getBaseName(scheme.name)
     if (baseSchemeId == theme.editorSchemeId || baseSchemeId == EditorColorsScheme.DEFAULT_SCHEME_NAME) {
-      lafToPreviousScheme.remove(theme.name)
+      lafToPreviousScheme.remove(theme.id)
     }
     else {
-      lafToPreviousScheme.put(theme.name, scheme.name)
+      lafToPreviousScheme.put(theme.id, scheme.name)
     }
   }
 
@@ -735,14 +722,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     setLookAndFeelImpl(lookAndFeelInfo = newLaF, installEditorScheme = true)
     JBColor.setDark(newLaF.isDark)
     updateUI()
-  }
-
-  private inner class LafComboBoxModel : CollectionComboBoxModel<LafReference>(allReferences) {
-    override fun setSelectedItem(item: Any?) {
-      if (item !== SEPARATOR) {
-        super.setSelectedItem(item)
-      }
-    }
   }
 
   private inner class PreferredLafAction : DefaultActionGroup(), DumbAware {
@@ -959,10 +938,6 @@ private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory
     }
     return popup
   }
-}
-
-private fun createLafReference(laf: UIThemeLookAndFeelInfo): LafManager.LafReference {
-  return LafManager.LafReference(laf.name, laf.id)
 }
 
 private fun getFont(yosemite: String, size: Int, style: Int): FontUIResource {
@@ -1310,4 +1285,25 @@ internal fun getDefaultLaf(isDark: Boolean): UIThemeLookAndFeelInfo {
 
   id = strategy.getPlatformDefaultId(isDark)
   return themeListManager.findThemeById(id) ?: error("Default theme not found(id=$id, isDark=$isDark, isNewUI=$isNewUi)")
+}
+
+private class LafComboBoxModel : CollectionComboBoxModel<LafManager.LafReference>(getAllReferences()) {
+  override fun setSelectedItem(item: Any?) {
+    if (item !== SEPARATOR) {
+      super.setSelectedItem(item)
+    }
+  }
+}
+
+private fun getAllReferences(): List<LafManager.LafReference> {
+  val result = ArrayList<LafManager.LafReference>()
+  for (group in ThemeListProvider.getInstance().getShownThemes()) {
+    if (result.isNotEmpty()) {
+      result.add(SEPARATOR)
+    }
+    for (info in group) {
+      result.add(LafManager.LafReference(info.name, info.id))
+    }
+  }
+  return result
 }
