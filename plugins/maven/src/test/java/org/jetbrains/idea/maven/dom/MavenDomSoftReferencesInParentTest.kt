@@ -25,6 +25,11 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
+  override fun setUp() {
+    super.setUp()
+    VirtualFileManager.getInstance().syncRefresh()
+  }
+
   @Test
   fun testDoNotHighlightSourceDirectoryInParentPom() = runBlocking {
     importProjectAsync("""
@@ -67,7 +72,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                     </build>
                     """.trimIndent())
 
-    createProjectPom("""
+    setFileContent(myProjectPom, createPomXml("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -77,7 +82,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                        <testSourceDirectory><error>foo2</error></testSourceDirectory>
                        <scriptSourceDirectory><error>foo3</error></scriptSourceDirectory>
                        </build>
-                       """.trimIndent())
+                       """.trimIndent()), false)
 
     checkHighlighting()
   }
