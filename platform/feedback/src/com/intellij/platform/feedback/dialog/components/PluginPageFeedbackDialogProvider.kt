@@ -2,6 +2,7 @@
 package com.intellij.ide.feedback
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 
 /**
@@ -19,11 +20,11 @@ open class PluginPageFeedbackDialogProvider {
     fun getInstance(): PluginPageFeedbackDialogProvider = service()
   }
 
-  open fun getUninstallFeedbackDialog(pluginId: String, pluginName: String): DialogWrapper? {
+  open fun getUninstallFeedbackDialog(pluginId: String, pluginName: String, project: Project?): DialogWrapper? {
     return null
   }
 
-  open fun getDisableFeedbackDialog(pluginId: String, pluginName: String): DialogWrapper? {
+  open fun getDisableFeedbackDialog(pluginId: String, pluginName: String, project: Project?): DialogWrapper? {
     return null
   }
 }

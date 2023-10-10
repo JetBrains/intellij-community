@@ -18,6 +18,8 @@ import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -38,6 +40,7 @@ import com.intellij.ui.dsl.builder.HyperlinkEventAction;
 import com.intellij.ui.dsl.builder.components.DslLabel;
 import com.intellij.ui.dsl.builder.components.DslLabelType;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -61,7 +64,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import static java.util.Collections.emptyList;
@@ -277,7 +279,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private @NotNull BorderLayoutPanel createFeedbackNotificationPanel(
-    @NotNull BiFunction<@NotNull String, @NotNull String, @Nullable DialogWrapper> createDialogWrapperFunction) {
+    @NotNull TripleFunction<@NotNull String, @NotNull String, @Nullable Project, @Nullable DialogWrapper> createDialogWrapperFunction) {
     final BorderLayoutPanel panel = createBaseNotificationPanel();
 
     final HyperlinkEventAction action = (e) -> {
@@ -288,7 +290,16 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       if (e.getDescription().equals("showFeedback")) {
         final String pluginIdString = myPlugin.getPluginId().getIdString();
         final String pluginName = myPlugin.getName();
-        final DialogWrapper feedbackDialog = createDialogWrapperFunction.apply(pluginIdString, pluginName);
+        final Project project;
+        final Project[] openedProjects = ProjectManager.getInstance().getOpenProjects();
+        if (openedProjects.length != 0) {
+          project = openedProjects[0];
+        }
+        else {
+          project = null;
+        }
+
+        final DialogWrapper feedbackDialog = createDialogWrapperFunction.fun(pluginIdString, pluginName, project);
         if (feedbackDialog == null) {
           return;
         }
