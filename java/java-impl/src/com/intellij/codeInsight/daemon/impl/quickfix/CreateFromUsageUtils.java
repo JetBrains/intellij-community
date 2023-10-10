@@ -310,7 +310,7 @@ public final class CreateFromUsageUtils {
         parameter = postprocessReformattingAspect.postponeFormattingInside(() -> (PsiParameter) parameterList.add(param));
       }
 
-      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailTypes.NONE);
+      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailTypes.noneType());
 
       PsiElement context = PsiTreeUtil.getParentOfType(contextElement, PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info}, context, containingClass);
@@ -691,7 +691,7 @@ public final class CreateFromUsageUtils {
       type = ((PsiPrimitiveType)type).getBoxedType(methodCall);
     }
     if (type == null) return ExpectedTypeInfo.EMPTY_ARRAY;
-    return new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailTypes.NONE)};
+    return new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailTypes.noneType())};
   }
 
   public static ExpectedTypeInfo @NotNull [] guessExpectedTypes(@NotNull PsiExpression expression, boolean allowVoidType) {
@@ -741,7 +741,7 @@ public final class CreateFromUsageUtils {
 
     if (expectedTypes.length == 0) {
       PsiType t = allowVoidType ? PsiTypes.voidType() : PsiType.getJavaLangObject(manager, resolveScope);
-      expectedTypes = new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailTypes.NONE)};
+      expectedTypes = new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailTypes.noneType())};
     }
 
     return expectedTypes;
@@ -871,7 +871,7 @@ public final class CreateFromUsageUtils {
         else {
           type = factory.createType(aClass);
         }
-        l.add(ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.NONE));
+        l.add(ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.noneType()));
         if (l.size() == MAX_GUESSED_MEMBERS_COUNT) break;
       }
     }

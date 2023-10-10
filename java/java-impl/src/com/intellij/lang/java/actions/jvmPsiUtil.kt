@@ -67,7 +67,7 @@ private fun toExpectedTypeInfo(project: Project, expectedType: ExpectedType): Ex
   if (expectedType is ExpectedJavaType) return expectedType.info
   val helper = JvmPsiConversionHelper.getInstance(project)
   val psiType = helper.convertType(expectedType.theType) ?: return null
-  return createInfo(psiType, expectedType.theKind.infoKind(), psiType, TailTypes.NONE)
+  return createInfo(psiType, expectedType.theKind.infoKind(), psiType, TailTypes.noneType())
 }
 
 @ExpectedTypeInfo.Type
@@ -83,7 +83,7 @@ internal fun JvmSubstitutor.toPsiSubstitutor(project: Project): PsiSubstitutor {
   return JvmPsiConversionHelper.getInstance(project).convertSubstitutor(this)
 }
 
-internal fun PsiType.toExpectedType(): ExpectedTypeInfo = createInfo(this, ExpectedTypeInfo.TYPE_STRICTLY, this, TailTypes.NONE)
+internal fun PsiType.toExpectedType(): ExpectedTypeInfo = createInfo(this, ExpectedTypeInfo.TYPE_STRICTLY, this, TailTypes.noneType())
 
 internal fun List<ExpectedTypeInfo>.orObject(context: PsiElement): List<ExpectedTypeInfo> {
   if (isEmpty() || get(0).type == PsiTypes.voidType()) {

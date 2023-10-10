@@ -76,7 +76,7 @@ public abstract class TailType {
   }
 
   //<editor-fold desc="Deprecated static constants">
-  /** @deprecated use {@link TailTypes#UNKNOWN} instead. */
+  /** @deprecated use {@link TailTypes#unknownType()} instead. */
   @Deprecated(forRemoval = true)
   public static final TailType UNKNOWN = new TailType() {
     @Override
@@ -89,7 +89,7 @@ public abstract class TailType {
     }
   };
 
-  /** @deprecated use {@link TailTypes#NONE} instead. */
+  /** @deprecated use {@link TailTypes#noneType()} instead. */
   @Deprecated(forRemoval = true)
   public static final TailType NONE = new TailType() {
     @Override
@@ -102,14 +102,14 @@ public abstract class TailType {
     }
   };
 
-  /** @deprecated use {@link TailTypes#SEMICOLON} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  /** @deprecated use {@link TailTypes#semicolonType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated(forRemoval = true)
   public static final TailType SEMICOLON = new CharTailType(';');
 
   /**
    * insert a space, overtype if already present
    *
-   * @deprecated use {@link TailTypes#SPACE} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details.
+   * @deprecated use {@link TailTypes#spaceType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details.
    */
   @Deprecated(forRemoval = true)
   public static final TailType SPACE = new CharTailType(' ');
@@ -117,7 +117,7 @@ public abstract class TailType {
   /**
    * always insert a space
    *
-   * @deprecated use {@link TailTypes#INSERT_SPACE} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details.
+   * @deprecated use {@link TailTypes#insertSpaceType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details.
    */
   @Deprecated(forRemoval = true)
   public static final TailType INSERT_SPACE = new CharTailType(' ', false);
@@ -125,7 +125,7 @@ public abstract class TailType {
   /**
    * insert a space unless there's one at the caret position already, followed by a word or '@'
    *
-   * @deprecated use {@link TailTypes#HUMBLE_SPACE_BEFORE_WORD} instead,
+   * @deprecated use {@link TailTypes#humbleSpaceBeforeWordType()} instead,
    * see <a href="#deprecated-constants">Deprecated Constants</a> for details.
    */
   @Deprecated(forRemoval = true)
@@ -149,19 +149,19 @@ public abstract class TailType {
     }
   };
 
-  /** @deprecated use {@link TailTypes#DOT} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  /** @deprecated use {@link TailTypes#dotType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated(forRemoval = true)
   public static final TailType DOT = new CharTailType('.');
 
-  /** @deprecated use {@link TailTypes#CASE_COLON} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  /** @deprecated use {@link TailTypes#caseColonType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated(forRemoval = true)
   public static final TailType CASE_COLON = new CharTailType(':');
 
-  /** @deprecated use {@link TailTypes#EQUALS} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  /** @deprecated use {@link TailTypes#equalsType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated(forRemoval = true)
   public static final TailType EQUALS = new CharTailType('=');
 
-  /** @deprecated use {@link TailTypes#COND_EXPR_COLON} instead. */
+  /** @deprecated use {@link TailTypes#conditionalExpressionColonType()} instead. */
   @Deprecated(forRemoval = true)
   public static final TailType COND_EXPR_COLON = new TailType() {
     @Override

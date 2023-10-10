@@ -45,7 +45,7 @@ public final class LookupItemUtil {
     if (object instanceof PsiElement) {
       s = PsiUtilCore.getName((PsiElement)object);
     }
-    TailType tailType = TailTypes.NONE;
+    TailType tailType = TailTypes.noneType();
     if (object instanceof PsiMetaData) {
       s = ((PsiMetaData)object).getName();
     }

@@ -143,12 +143,12 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       Icon icon = option.getKind().icon();
       if ("bool".equals(type)) {
         String lookupString = (booleanStart ? "" : Boolean.parseBoolean(option.getDefaultValue()) ? "-" : "+") + option.getOptionName();
-        tailType = TailTypes.SPACE;
+        tailType = TailTypes.spaceType();
         e = LookupElementBuilder.create(option.createPointer(), lookupString);
       }
       else if (!booleanStart) {
         String tailText = " = " + option.getDefaultValue();
-        tailType = TailTypes.EQUALS;
+        tailType = TailTypes.equalsType();
         e = LookupElementBuilder.create(option.createPointer(), option.getOptionName()).withTailText(tailText, true);
       }
       if (e != null) {

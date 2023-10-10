@@ -68,7 +68,7 @@ fun addMethodToResult(result: CompletionResultSet,
   if (pyClass?.findMethodByName(methodName, false, typeEvalContext) != null) return
 
   val item = LookupElementBuilder.create(methodName + methodParentheses).withIcon(PythonPsiApiIcons.Nodes.CyanDot)
-  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailTypes.CASE_COLON))
+  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailTypes.caseColonType()))
 }
 
 /**
@@ -85,7 +85,7 @@ fun addFunctionToResult(result: CompletionResultSet,
   if (pyFile?.findTopLevelFunction(functionName) != null) return
 
   val item = LookupElementBuilder.create(functionName + functionParentheses).withIcon(PythonPsiApiIcons.Nodes.CyanDot)
-  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailTypes.CASE_COLON))
+  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailTypes.caseColonType()))
 }
 
 /**

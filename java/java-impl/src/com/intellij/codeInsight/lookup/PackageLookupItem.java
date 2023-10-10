@@ -61,7 +61,7 @@ public class PackageLookupItem extends LookupElement {
   public void handleInsert(@NotNull InsertionContext context) {
     if (myAddDot) {
       context.setAddCompletionChar(false);
-      TailTypes.DOT.processTail(context.getEditor(), context.getTailOffset());
+      TailTypes.dotType().processTail(context.getEditor(), context.getTailOffset());
     }
     if (myAddDot || context.getCompletionChar() == '.') {
       AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());

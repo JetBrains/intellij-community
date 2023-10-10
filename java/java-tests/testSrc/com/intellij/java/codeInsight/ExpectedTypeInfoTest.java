@@ -185,6 +185,6 @@ public class ExpectedTypeInfoTest extends LightJavaCodeInsightTestCase {
   @NotNull
   private ExpectedTypeInfo createInfo(String className, @ExpectedTypeInfo.Type int kind) {
     PsiType type = getJavaFacade().getElementFactory().createTypeByFQClassName(className, GlobalSearchScope.allScope(getProject()));
-    return ExpectedTypesProvider.createInfo(type, kind, type, TailTypes.NONE);
+    return ExpectedTypesProvider.createInfo(type, kind, type, TailTypes.noneType());
   }
 }

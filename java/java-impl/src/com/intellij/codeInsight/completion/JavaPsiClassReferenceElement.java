@@ -33,7 +33,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     myQualifiedName = psiClass.getQualifiedName();
     myClass = psiClass;
     setInsertHandler(AllClassesGetter.TRY_SHORTENING);
-    setTailType(TailTypes.NONE);
+    setTailType(TailTypes.noneType());
     myPackageDisplayName = PsiFormatUtil.getPackageDisplayName(psiClass);
   }
 

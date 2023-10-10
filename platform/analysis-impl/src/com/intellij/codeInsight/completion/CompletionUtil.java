@@ -35,7 +35,7 @@ public final class CompletionUtil {
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
     {
       final CompletionVariant variant = new CompletionVariant(PsiElement.class, TrueFilter.INSTANCE);
-      variant.addCompletionFilter(TrueFilter.INSTANCE, TailTypes.NONE);
+      variant.addCompletionFilter(TrueFilter.INSTANCE, TailTypes.noneType());
       registerVariant(variant);
     }
   };

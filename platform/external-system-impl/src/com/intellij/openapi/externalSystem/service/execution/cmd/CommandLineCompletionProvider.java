@@ -38,7 +38,7 @@ public abstract class CommandLineCompletionProvider extends TextFieldCompletionP
     LookupElementBuilder res = LookupElementBuilder.create(text);
 
     if (option.getDescription() != null) {
-      return TailTypeDecorator.withTail(res.withTypeText(option.getDescription(), true), TailTypes.INSERT_SPACE);
+      return TailTypeDecorator.withTail(res.withTypeText(option.getDescription(), true), TailTypes.insertSpaceType());
     }
 
     return res;

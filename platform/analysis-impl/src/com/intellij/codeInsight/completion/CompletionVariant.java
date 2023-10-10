@@ -20,7 +20,7 @@ import java.util.*;
  */
 @Deprecated(forRemoval = true)
 public class CompletionVariant {
-  protected static final TailType DEFAULT_TAIL_TYPE = TailTypes.SPACE;
+  protected static final TailType DEFAULT_TAIL_TYPE = TailTypes.spaceType();
 
   private final Set<Scope> myScopeClasses = new HashSet<>();
   private ElementFilter myPosition;
@@ -96,7 +96,7 @@ public class CompletionVariant {
   }
 
   public void addCompletionFilter(ElementFilter filter){
-    addCompletionFilter(filter, TailTypes.NONE);
+    addCompletionFilter(filter, TailTypes.noneType());
   }
 
   public void addCompletion(@NonNls String keyword){

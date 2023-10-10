@@ -57,7 +57,7 @@ public class RncCompletionContributor extends CompletionContributor {
                                     @NotNull CompletionResultSet result) {
         String[] keywords = getKeywords(parameters.getPosition());
         for (String keyword : keywords) {
-          result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(keyword).bold(), TailTypes.SPACE));
+          result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(keyword).bold(), TailTypes.spaceType()));
         }
       }
     };

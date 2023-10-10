@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public final class TailTypes {
   private TailTypes() { }
 
-  public static final TailType UNKNOWN = new TailType() {
+  private static final TailType UNKNOWN = new TailType() {
     @Override
     public int processTail(final Editor editor, final int tailOffset) {
       return tailOffset;
@@ -21,7 +21,7 @@ public final class TailTypes {
     }
   };
 
-  public static final TailType NONE = new TailType() {
+  private static final TailType NONE = new TailType() {
     @Override
     public int processTail(final Editor editor, final int tailOffset) {
       return tailOffset;
@@ -32,22 +32,13 @@ public final class TailTypes {
     }
   };
 
-  public static final TailType SEMICOLON = new CharTailType(';');
+  private static final TailType SEMICOLON = new CharTailType(';');
 
-  /**
-   * insert a space, overtype if already present
-   */
-  public static final TailType SPACE = new CharTailType(' ');
+  private static final TailType SPACE = new CharTailType(' ');
 
-  /**
-   * always insert a space
-   */
-  public static final TailType INSERT_SPACE = new CharTailType(' ', false);
+  private static final TailType INSERT_SPACE = new CharTailType(' ', false);
 
-  /**
-   * insert a space unless there's one at the caret position already, followed by a word or '@'
-   */
-  public static final TailType HUMBLE_SPACE_BEFORE_WORD = new CharTailType(' ', false) {
+  private static final TailType HUMBLE_SPACE_BEFORE_WORD = new CharTailType(' ', false) {
     @Override
     public boolean isApplicable(@NotNull InsertionContext context) {
       CharSequence text = context.getDocument().getCharsSequence();
@@ -67,13 +58,13 @@ public final class TailTypes {
     }
   };
 
-  public static final TailType DOT = new CharTailType('.');
+  private static final TailType DOT = new CharTailType('.');
 
-  public static final TailType CASE_COLON = new CharTailType(':');
+  private static final TailType CASE_COLON = new CharTailType(':');
 
-  public static final TailType EQUALS = new CharTailType('=');
+  private static final TailType EQUALS = new CharTailType('=');
 
-  public static final TailType COND_EXPR_COLON = new TailType() {
+  private static final TailType COND_EXPR_COLON = new TailType() {
     @Override
     public int processTail(final Editor editor, final int tailOffset) {
       Document document = editor.getDocument();
@@ -92,4 +83,53 @@ public final class TailTypes {
       return "COND_EXPR_COLON";
     }
   };
+
+  public static TailType unknownType() {
+    return UNKNOWN;
+  }
+
+  public static TailType noneType() {
+    return NONE;
+  }
+
+  public static TailType semicolonType() {
+    return SEMICOLON;
+  }
+
+  /**
+   * insert a space, overtype if already present
+   */
+  public static TailType spaceType() {
+    return SPACE;
+  }
+
+  /**
+   * always insert a space
+   */
+  public static TailType insertSpaceType() {
+    return INSERT_SPACE;
+  }
+
+  /**
+   * insert a space unless there's one at the caret position already, followed by a word or '@'
+   */
+  public static TailType humbleSpaceBeforeWordType() {
+    return HUMBLE_SPACE_BEFORE_WORD;
+  }
+
+  public static TailType dotType() {
+    return DOT;
+  }
+
+  public static TailType caseColonType() {
+    return CASE_COLON;
+  }
+
+  public static TailType equalsType() {
+    return EQUALS;
+  }
+
+  public static TailType conditionalExpressionColonType() {
+    return COND_EXPR_COLON;
+  }
 }

@@ -144,7 +144,7 @@ public final class JavaTailTypes {
   public static final TailType DO_LBRACE = BRACES;
 
   public static TailType forSwitchLabel(@NotNull PsiSwitchBlock block) {
-    return SwitchUtils.isRuleFormatSwitch(block) ? CASE_ARROW : TailTypes.CASE_COLON;
+    return SwitchUtils.isRuleFormatSwitch(block) ? CASE_ARROW : TailTypes.caseColonType();
   }
 
 

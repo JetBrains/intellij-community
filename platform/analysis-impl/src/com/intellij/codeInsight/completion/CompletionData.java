@@ -115,7 +115,7 @@ public class CompletionData {
     @Override
     void addReferenceCompletions(PsiReference reference, PsiElement position, Set<? super LookupElement> set, final PsiFile file,
                                  final CompletionData completionData) {
-      completeReference(reference, position, set, TailTypes.NONE, TrueFilter.INSTANCE, this);
+      completeReference(reference, position, set, TailTypes.noneType(), TrueFilter.INSTANCE, this);
     }
   };
 
@@ -159,7 +159,7 @@ public class CompletionData {
     if (object instanceof LookupElement) return (LookupElement)object;
 
     String s = null;
-    TailType tailType = TailTypes.NONE;
+    TailType tailType = TailTypes.noneType();
     if (object instanceof PsiElement){
       s = PsiUtilCore.getName((PsiElement)object);
     }
@@ -194,9 +194,9 @@ public class CompletionData {
     InsertHandler<?> insertHandler = variant.getInsertHandler();
     if(insertHandler != null && item.getInsertHandler() == null) {
       item.setInsertHandler(insertHandler);
-      item.setTailType(TailTypes.UNKNOWN);
+      item.setTailType(TailTypes.unknownType());
     }
-    else if (tailType != TailTypes.NONE) {
+    else if (tailType != TailTypes.noneType()) {
       item.setTailType(tailType);
     }
     final Map<Object, Object> itemProperties = variant.getItemProperties();

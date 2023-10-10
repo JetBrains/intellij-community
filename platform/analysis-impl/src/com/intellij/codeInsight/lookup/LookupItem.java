@@ -158,7 +158,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
       //noinspection unchecked
       ((InsertHandler)handler).handleInsert(context, this);
     }
-    if (getTailType() != TailTypes.UNKNOWN && myInsertHandler == null) {
+    if (getTailType() != TailTypes.unknownType() && myInsertHandler == null) {
       context.setAddCompletionChar(false);
       final TailType type = handleCompletionChar(context.getEditor(), this, context.getCompletionChar());
       type.processTail(context.getEditor(), context.getTailOffset());
@@ -169,10 +169,10 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
     return switch (completionChar) {
       case '.' -> new CharTailType('.', false);
       case ',' -> CommaTailType.INSTANCE;
-      case ';' -> TailTypes.SEMICOLON;
+      case ';' -> TailTypes.semicolonType();
       case '=' -> EqTailType.INSTANCE;
-      case ' ' -> TailTypes.SPACE;
-      case ':' -> TailTypes.CASE_COLON; //?
+      case ' ' -> TailTypes.spaceType();
+      case ':' -> TailTypes.caseColonType(); //?
       default -> null;
     };
   }
@@ -190,13 +190,13 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
         return attr;
       }
     }
-    return TailTypes.NONE;
+    return TailTypes.noneType();
   }
 
 
   public @NotNull TailType getTailType(){
     final TailType tailType = getAttribute(TAIL_TYPE_ATTR);
-    return tailType != null ? tailType : TailTypes.UNKNOWN;
+    return tailType != null ? tailType : TailTypes.unknownType();
   }
 
   public @NotNull LookupItem<T> setTailType(@NotNull TailType type) {

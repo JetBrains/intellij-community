@@ -103,7 +103,7 @@ public class PySuperMethodCompletionContributor extends CompletionContributor im
                        PyClassRefactoringUtil.transplantImportsFromSignature(superMethod, insertedMethod);
                      });
                    });
-                 result.addElement(TailTypeDecorator.withTail(element, TailTypes.NONE));
+                 result.addElement(TailTypeDecorator.withTail(element, TailTypes.noneType()));
                }
              }
            });

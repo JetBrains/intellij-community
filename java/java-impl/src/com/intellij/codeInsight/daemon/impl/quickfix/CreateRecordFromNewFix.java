@@ -113,7 +113,7 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
 
       int kind =
         TypeConversionUtil.isPrimitiveAndNotNull(data.myType) ? ExpectedTypeInfo.TYPE_STRICTLY : ExpectedTypeInfo.TYPE_OR_SUPERTYPE;
-      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(data.myType, kind, data.myType, TailTypes.NONE);
+      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(data.myType, kind, data.myType, TailTypes.noneType());
 
       PsiElement context = PsiTreeUtil.getParentOfType(elements[i], PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(Objects.requireNonNull(component.getTypeElement()), new ExpectedTypeInfo[]{info}, context, containingClass);

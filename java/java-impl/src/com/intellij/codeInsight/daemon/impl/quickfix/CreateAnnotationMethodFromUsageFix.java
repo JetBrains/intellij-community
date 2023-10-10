@@ -90,7 +90,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     final PsiType type = getAnnotationValueType(nameValuePair.getValue());
     LOG.assertTrue(type != null);
     final ExpectedTypeInfo[] expectedTypes =
-      new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.NONE)};
+      new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.noneType())};
     CreateMethodFromUsageFix.doCreate(targetClass, method, true, Collections.emptyList(), 
                                       getTargetSubstitutor(nameValuePair), expectedTypes, context);
   }

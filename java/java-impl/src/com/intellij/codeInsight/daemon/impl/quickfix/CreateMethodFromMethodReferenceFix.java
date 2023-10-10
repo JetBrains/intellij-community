@@ -180,7 +180,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
   
       final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, classResolveResult);
       final ExpectedTypeInfo[] expectedTypes =
-        {new ExpectedTypeInfoImpl(interfaceReturnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, interfaceReturnType, TailTypes.NONE, null,
+        {new ExpectedTypeInfoImpl(interfaceReturnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, interfaceReturnType, TailTypes.noneType(), null,
                                   ExpectedTypeInfoImpl.NULL)};
       PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
       List<Pair<PsiExpression, PsiType>> origArgs = ContainerUtil.map(parameters, parameter -> Pair.create(null, substitutor.substitute(parameter.getType())));

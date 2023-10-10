@@ -112,7 +112,7 @@ public final class GroovyCompletionData {
 
     final String[] extendsImplements = addExtendsImplements(position);
     for (String keyword : extendsImplements) {
-      consumer.consume(keyword(keyword, TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+      consumer.consume(keyword(keyword, TailTypes.humbleSpaceBeforeWordType()));
     }
     if (extendsImplements.length > 0) {
       return;
@@ -125,26 +125,26 @@ public final class GroovyCompletionData {
     }
 
     if (afterAtInType(position)) {
-      consumer.consume(keyword(PsiKeyword.INTERFACE, TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+      consumer.consume(keyword(PsiKeyword.INTERFACE, TailTypes.humbleSpaceBeforeWordType()));
     }
 
     if (!psiElement().afterLeaf(".", ".&", "@", "*.", "?.").accepts(position)) {
       if (afterAbstractMethod(position, false, true)) {
-        consumer.consume(keyword(PsiKeyword.THROWS, TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(keyword(PsiKeyword.THROWS, TailTypes.humbleSpaceBeforeWordType()));
         if (afterAbstractMethod(position, false, false)) return;
       }
 
       if (suggestPackage(position)) {
-        consumer.consume(keyword(PsiKeyword.PACKAGE, TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(keyword(PsiKeyword.PACKAGE, TailTypes.humbleSpaceBeforeWordType()));
       }
       if (suggestImport(position)) {
-        consumer.consume(keyword(PsiKeyword.IMPORT, TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(keyword(PsiKeyword.IMPORT, TailTypes.humbleSpaceBeforeWordType()));
       }
 
       addTypeDefinitionKeywords(consumer, position);
 
       if (isAfterAnnotationMethodIdentifier(position)) {
-        consumer.consume(keyword(PsiKeyword.DEFAULT, TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(keyword(PsiKeyword.DEFAULT, TailTypes.humbleSpaceBeforeWordType()));
       }
 
       addExtendsForTypeParams(position, consumer);
@@ -153,7 +153,7 @@ public final class GroovyCompletionData {
 
       if (parent instanceof GrExpression || isInfixOperatorPosition(position)) {
         addKeywords(consumer, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.THIS);
-        consumer.consume(keyword(PsiKeyword.NEW, TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(keyword(PsiKeyword.NEW, TailTypes.humbleSpaceBeforeWordType()));
         if (GroovyConfigUtils.isAtLeastGroovy40(position)) {
           consumer.consume(keyword(PsiKeyword.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
         }
@@ -161,7 +161,7 @@ public final class GroovyCompletionData {
 
 
       if (isAfterForParameter(position)) {
-        consumer.consume(keyword("in", TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(keyword("in", TailTypes.humbleSpaceBeforeWordType()));
       }
       if (isInfixOperatorPosition(position)) {
         addKeywords(consumer, true, "as", "in", PsiKeyword.INSTANCEOF);
@@ -320,13 +320,13 @@ public final class GroovyCompletionData {
 
   public static void addKeywords(GroovyCompletionConsumer consumer, boolean space, String... keywords) {
     for (String s : keywords) {
-      consumer.consume(keyword(s, space ? TailTypes.HUMBLE_SPACE_BEFORE_WORD : TailTypes.NONE));
+      consumer.consume(keyword(s, space ? TailTypes.humbleSpaceBeforeWordType() : TailTypes.noneType()));
     }
   }
 
   private static LookupElement keyword(final String keyword, @NotNull TailType tail) {
     LookupElementBuilder element = LookupElementBuilder.create(keyword).bold();
-    return tail != TailTypes.NONE ? new JavaKeywordCompletion.OverridableSpace(element, tail) : element;
+    return tail != TailTypes.noneType() ? new JavaKeywordCompletion.OverridableSpace(element, tail) : element;
   }
 
   private static void registerControlCompletion(PsiElement context, GroovyCompletionConsumer result) {
@@ -335,15 +335,15 @@ public final class GroovyCompletionData {
       result.consume(keyword(PsiKeyword.WHILE, JavaTailTypes.WHILE_LPARENTH));
       result.consume(keyword(PsiKeyword.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
       result.consume(keyword(PsiKeyword.FOR, JavaTailTypes.FOR_LPARENTH));
-      result.consume(keyword(PsiKeyword.THROW, TailTypes.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(keyword(PsiKeyword.ASSERT, TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(keyword(PsiKeyword.THROW, TailTypes.humbleSpaceBeforeWordType()));
+      result.consume(keyword(PsiKeyword.ASSERT, TailTypes.humbleSpaceBeforeWordType()));
       result.consume(keyword(PsiKeyword.SYNCHRONIZED, JavaTailTypes.SYNCHRONIZED_LPARENTH));
-      result.consume(keyword(PsiKeyword.RETURN, hasReturnValue(context) ? TailTypes.HUMBLE_SPACE_BEFORE_WORD : TailTypes.NONE));
+      result.consume(keyword(PsiKeyword.RETURN, hasReturnValue(context) ? TailTypes.humbleSpaceBeforeWordType() : TailTypes.noneType()));
     }
     if (inCaseSection(context)) {
       boolean isArrowAllowed = GroovyConfigUtils.isAtLeastGroovy40(context);
-      TailType defaultType = isArrowAllowed ? JavaTailTypes.CASE_ARROW : TailTypes.CASE_COLON;
-      result.consume(keyword("case", TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+      TailType defaultType = isArrowAllowed ? JavaTailTypes.CASE_ARROW : TailTypes.caseColonType();
+      result.consume(keyword("case", TailTypes.humbleSpaceBeforeWordType()));
       result.consume(keyword("default", defaultType));
     }
     if (afterTry(context)) {
@@ -351,16 +351,16 @@ public final class GroovyCompletionData {
       result.consume(keyword(PsiKeyword.FINALLY, JavaTailTypes.FINALLY_LBRACE));
     }
     if (afterIfOrElse(context)) {
-      result.consume(keyword(PsiKeyword.ELSE, TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(keyword(PsiKeyword.ELSE, TailTypes.humbleSpaceBeforeWordType()));
     }
     if (WHILE_KEYWORD_POSITION.accepts(context)) {
       result.consume(keyword(PsiKeyword.WHILE, JavaTailTypes.WHILE_LPARENTH));
     }
 
     if (isCommandCallWithOneArg(context)) {
-      result.consume(keyword(PsiKeyword.ASSERT, TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(keyword(PsiKeyword.ASSERT, TailTypes.humbleSpaceBeforeWordType()));
       if (hasReturnValue(context)) {
-        result.consume(keyword(PsiKeyword.RETURN, TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+        result.consume(keyword(PsiKeyword.RETURN, TailTypes.humbleSpaceBeforeWordType()));
       }
     }
   }
@@ -395,7 +395,7 @@ public final class GroovyCompletionData {
       position)) {
       String[] tags = position.getParent() instanceof GrDocInlinedTag ? INLINED_DOC_TAGS : DOC_TAGS;
       for (String docTag : tags) {
-        consumer.consume(TailTypeDecorator.withTail(LookupElementBuilder.create(docTag), TailTypes.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(TailTypeDecorator.withTail(LookupElementBuilder.create(docTag), TailTypes.humbleSpaceBeforeWordType()));
       }
     }
   }

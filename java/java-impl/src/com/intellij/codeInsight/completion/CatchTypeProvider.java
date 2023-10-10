@@ -92,6 +92,6 @@ final class CatchTypeProvider {
 
   @NotNull
   private static LookupElement createCatchTypeVariant(PsiCodeBlock tryBlock, PsiClassType type) {
-    return TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock), TailTypes.HUMBLE_SPACE_BEFORE_WORD);
+    return TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock), TailTypes.humbleSpaceBeforeWordType());
   }
 }

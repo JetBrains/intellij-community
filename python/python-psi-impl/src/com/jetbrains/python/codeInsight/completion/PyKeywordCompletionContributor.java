@@ -414,8 +414,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
           @NotNull final ProcessingContext context,
           @NotNull final CompletionResultSet result
         ) {
-          putKeywords(result, TailTypes.NONE, PyNames.DEF, PyNames.CLASS, PyNames.FOR, PyNames.IF, PyNames.WHILE, PyNames.WITH);
-          putKeywords(result, TailTypes.CASE_COLON, PyNames.TRY);
+          putKeywords(result, TailTypes.noneType(), PyNames.DEF, PyNames.CLASS, PyNames.FOR, PyNames.IF, PyNames.WHILE, PyNames.WITH);
+          putKeywords(result, TailTypes.caseColonType(), PyNames.TRY);
         }
       }
     );
@@ -430,7 +430,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
           @NotNull final ProcessingContext context,
           @NotNull final CompletionResultSet result
         ) {
-          putKeywords(result, TailTypes.NONE, PyNames.MATCH);
+          putKeywords(result, TailTypes.noneType(), PyNames.MATCH);
         }
       }
     );
@@ -457,13 +457,13 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
           @NotNull final ProcessingContext context,
           @NotNull final CompletionResultSet result
         ) {
-          putKeywords(result, TailTypes.SPACE, PyNames.ASSERT, PyNames.DEL, PyNames.EXEC, PyNames.FROM, PyNames.IMPORT, PyNames.RAISE);
-          putKeywords(result, TailTypes.NONE, PyNames.PASS);
+          putKeywords(result, TailTypes.spaceType(), PyNames.ASSERT, PyNames.DEL, PyNames.EXEC, PyNames.FROM, PyNames.IMPORT, PyNames.RAISE);
+          putKeywords(result, TailTypes.noneType(), PyNames.PASS);
         }
       }
     );
 
-    extend(CompletionType.BASIC, inStatement.andNot(PY3K), new PyKeywordCompletionProvider(TailTypes.SPACE, PyNames.PRINT));
+    extend(CompletionType.BASIC, inStatement.andNot(PY3K), new PyKeywordCompletionProvider(TailTypes.spaceType(), PyNames.PRINT));
   }
 
   private void addBreak() {
@@ -476,7 +476,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
       .andNot(IN_ARG_LIST)
       .and(IN_LOOP)
       ,
-      new PyKeywordCompletionProvider(TailTypes.NONE, PyNames.BREAK)
+      new PyKeywordCompletionProvider(TailTypes.noneType(), PyNames.BREAK)
     );
   }
 
@@ -491,7 +491,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
       .andOr(not(IN_FINALLY_NO_LOOP), new FilterPattern(new LanguageLevelAtLeastFilter(LanguageLevel.PYTHON38)))
       .and(IN_LOOP)
       ,
-      new PyKeywordCompletionProvider(TailTypes.NONE, PyNames.CONTINUE)
+      new PyKeywordCompletionProvider(TailTypes.noneType(), PyNames.CONTINUE)
     );
   }
 
@@ -502,7 +502,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
         .and(PY310)
         .and(IN_BEGIN_STMT)
         .and(psiElement().withSuperParent(4, PyMatchStatement.class)),
-      new PyKeywordCompletionProvider(TailTypes.NONE, PyNames.CASE));
+      new PyKeywordCompletionProvider(TailTypes.noneType(), PyNames.CASE));
   }
 
   private void addWithinFuncs() {
@@ -558,7 +558,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
       .andOr(IN_IF_BODY, AFTER_IF)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
-      new PyKeywordCompletionProvider(TailTypes.NONE, PyUnindentingInsertHandler.INSTANCE, PyNames.ELIF));
+      new PyKeywordCompletionProvider(TailTypes.noneType(), PyUnindentingInsertHandler.INSTANCE, PyNames.ELIF));
   }
 
   private void addWithinTry() {
@@ -578,7 +578,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
           @NotNull final ProcessingContext context,
           @NotNull final CompletionResultSet result
         ) {
-          putKeyword(PyNames.FINALLY, PyUnindentingInsertHandler.INSTANCE, TailTypes.CASE_COLON, result);
+          putKeyword(PyNames.FINALLY, PyUnindentingInsertHandler.INSTANCE, TailTypes.caseColonType(), result);
         }
       }
     );
@@ -598,7 +598,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
           @NotNull final ProcessingContext context,
           @NotNull final CompletionResultSet result
         ) {
-          putKeyword(PyNames.EXCEPT, PyUnindentingInsertHandler.INSTANCE, TailTypes.NONE, result);
+          putKeyword(PyNames.EXCEPT, PyUnindentingInsertHandler.INSTANCE, TailTypes.noneType(), result);
         }
       }
     );
@@ -612,7 +612,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
       .andOr(IN_COND_STMT, IN_EXCEPT_BODY, AFTER_COND_STMT_NO_ELSE, AFTER_LOOP_NO_ELSE, AFTER_EXCEPT)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
-      new PyKeywordCompletionProvider(TailTypes.CASE_COLON, PyUnindentingInsertHandler.INSTANCE, PyNames.ELSE));
+      new PyKeywordCompletionProvider(TailTypes.caseColonType(), PyUnindentingInsertHandler.INSTANCE, PyNames.ELSE));
   }
 
   private void addInfixOperators() {
@@ -658,7 +658,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
       .andNot(IN_STRING_LITERAL)
       .andNot(TARGET_AFTER_QUALIFIER)
       ,
-      new PyKeywordCompletionProvider(TailTypes.NONE, PyNames.TRUE, PyNames.FALSE, PyNames.NONE));
+      new PyKeywordCompletionProvider(TailTypes.noneType(), PyNames.TRUE, PyNames.FALSE, PyNames.NONE));
     extend(CompletionType.BASIC,
            psiElement()
              .withLanguage(PythonLanguage.getInstance())
@@ -681,7 +681,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
            psiElement()
              .withLanguage(PythonLanguage.getInstance())
              .and(IN_ANNOTATION),
-           new PyKeywordCompletionProvider(TailTypes.NONE, PyNames.NONE));
+           new PyKeywordCompletionProvider(TailTypes.noneType(), PyNames.NONE));
   }
 
   private void addAs() {
@@ -741,7 +741,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
                          psiElement().inside(psiElement(PyConditionalExpression.class))
                            .and(psiElement().afterLeaf(PyNames.IF)))
       ,
-      new PyKeywordCompletionProvider(TailTypes.SPACE, PyNames.ELSE));
+      new PyKeywordCompletionProvider(TailTypes.spaceType(), PyNames.ELSE));
   }
 
   private void addRaiseFrom() {
@@ -829,7 +829,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
     private final InsertHandler<PythonLookupElement> myInsertHandler;
 
     private PyKeywordCompletionProvider(String... keywords) {
-      this(TailTypes.SPACE, keywords);
+      this(TailTypes.spaceType(), keywords);
     }
 
     private PyKeywordCompletionProvider(TailType tailType, String... keywords) {

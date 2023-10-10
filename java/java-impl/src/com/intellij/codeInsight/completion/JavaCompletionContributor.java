@@ -801,7 +801,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           @Override
           protected TailType computeTailType(InsertionContext context) {
             if (context.getCompletionChar() == ':' && forcedTail == JavaTailTypes.CASE_ARROW) {
-              return TailTypes.CASE_COLON;
+              return TailTypes.caseColonType();
             }
             return forcedTail;
           }
@@ -813,7 +813,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
       if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
           !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
-        item.setTailType(TailTypes.NONE);
+        item.setTailType(TailTypes.noneType());
       }
       if (item instanceof JavaMethodCallElement call) {
         PsiMethod method = call.getObject();
@@ -843,7 +843,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return JavaTailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)));
     }
     if (!smart && shouldInsertSemicolon(position)) {
-      return TailTypes.SEMICOLON;
+      return TailTypes.semicolonType();
     }
     return null;
   }
@@ -930,7 +930,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   }
 
   private static List<LookupElement> processLabelReference(PsiLabelReference reference) {
-    return ContainerUtil.map(reference.getVariants(), s -> TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailTypes.SEMICOLON));
+    return ContainerUtil.map(reference.getVariants(), s -> TailTypeDecorator.withTail(LookupElementBuilder.create(s),
+                                                                                      TailTypes.semicolonType()));
   }
 
   static boolean isClassNamePossible(CompletionParameters parameters) {
@@ -1322,7 +1323,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         for (String name : index.getAllKeys(project)) {
           if (!index.getModules(name, project, scope).isEmpty() && filter.add(name)) {
             LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule);
-            if (requires) lookup = TailTypeDecorator.withTail(lookup, TailTypes.SEMICOLON);
+            if (requires) lookup = TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());
             result.addElement(lookup);
           }
         }
@@ -1364,7 +1365,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   private static void addAutoModuleReference(String name, PsiElement parent, Set<? super String> filter, CompletionResultSet result) {
     if (PsiNameHelper.isValidModuleName(name, parent) && filter.add(name)) {
       LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
-      lookup = TailTypeDecorator.withTail(lookup, TailTypes.SEMICOLON);
+      lookup = TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());
       lookup = PrioritizedLookupElement.withPriority(lookup, -1);
       result.addElement(lookup);
     }

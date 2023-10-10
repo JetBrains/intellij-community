@@ -205,7 +205,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
                                                                                      result.getPrefixMatcher())) {
             LookupElement chain = highlighter.highlightIfNeeded(null, new JavaChainLookupElement(base, item, separator), item.getObject());
             if (JavaCompletionContributor.shouldInsertSemicolon(position)) {
-              chain = TailTypeDecorator.withTail(chain, TailTypes.SEMICOLON);
+              chain = TailTypeDecorator.withTail(chain, TailTypes.semicolonType());
             }
             qualifiedCollector.addElement(chain);
             added = true;

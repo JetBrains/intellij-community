@@ -257,14 +257,14 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       context.setAddCompletionChar(false);
       EqTailType.INSTANCE.processTail(context.getEditor(), context.getTailOffset());
     }
-    else if (completionChar == ',' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.UNKNOWN) {
+    else if (completionChar == ',' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.unknownType()) {
       context.setAddCompletionChar(false);
       CommaTailType.INSTANCE.processTail(context.getEditor(), context.getTailOffset());
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
-    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.UNKNOWN && isTernaryCondition(ref)) {
+    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.unknownType() && isTernaryCondition(ref)) {
       context.setAddCompletionChar(false);
-      TailTypes.COND_EXPR_COLON.processTail(context.getEditor(), context.getTailOffset());
+      TailTypes.conditionalExpressionColonType().processTail(context.getEditor(), context.getTailOffset());
     }
     else if (completionChar == '.') {
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
