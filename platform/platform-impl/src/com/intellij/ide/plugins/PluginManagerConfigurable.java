@@ -395,10 +395,10 @@ public final class PluginManagerConfigurable
               }
               addGroupViaLightDescriptor(
                 groups,
-                IdeBundle.message("plugins.configurable.featured"),
-                PluginsGroupType.FEATURED,
+                IdeBundle.message("plugins.configurable.staff.picks"),
+                PluginsGroupType.STAFF_PICKS,
                 "is_featured_search=true",
-                "/sortBy:featured"
+                SearchWords.STAFF_PICKS.getValue()
               );
               addGroupViaLightDescriptor(
                 groups,
@@ -504,10 +504,11 @@ public final class PluginManagerConfigurable
             List<String> attributes = new ArrayList<>();
             attributes.add(SearchWords.TAG.getValue());
             attributes.add(SearchWords.SORT_BY.getValue());
-            attributes.add(SearchWords.ORGANIZATION.getValue());
+            attributes.add(SearchWords.VENDOR.getValue());
             if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
               attributes.add(SearchWords.REPOSITORY.getValue());
             }
+            attributes.add(SearchWords.STAFF_PICKS.getValue());
             attributes.add(SearchWords.SUGGESTED.getValue());
             return attributes;
           }
@@ -539,7 +540,7 @@ public final class PluginManagerConfigurable
                 yield myTagsSorted;
               }
               case SORT_BY -> Arrays.asList("downloads", "name", "rating", "updated");
-              case ORGANIZATION -> {
+              case VENDOR -> {
                 if (myVendorsSorted == null || myVendorsSorted.isEmpty()) {
                   LinkedHashSet<String> vendors = new LinkedHashSet<>();
                   try {
@@ -555,7 +556,7 @@ public final class PluginManagerConfigurable
                 yield myVendorsSorted;
               }
               case REPOSITORY -> UpdateSettings.getInstance().getPluginHosts();
-              case SUGGESTED -> null;
+              case SUGGESTED, STAFF_PICKS -> null;
             };
           }
 
@@ -992,14 +993,14 @@ public final class PluginManagerConfigurable
                 "/disabled",
                 "/invalid",
                 "/bundled",
-                SearchWords.ORGANIZATION.getValue(),
+                SearchWords.VENDOR.getValue(),
                 SearchWords.TAG.getValue()
               );
           }
 
           @Override
           protected @Nullable SortedSet<String> getValues(@NotNull String attribute) {
-            return SearchWords.ORGANIZATION.getValue().equals(attribute) ?
+            return SearchWords.VENDOR.getValue().equals(attribute) ?
                    myPluginModel.getVendors() :
                    SearchWords.TAG.getValue().equals(attribute) ?
                    myPluginModel.getTags() :

@@ -4,15 +4,16 @@ package com.intellij.ide.plugins.newui
 import org.jetbrains.annotations.NonNls
 
 enum class SearchWords(@NonNls val value: String) {
-  ORGANIZATION("/organization:"),
+  VENDOR("/vendor:"),
   TAG("/tag:"),
   SORT_BY("/sortBy:"),
   REPOSITORY("/repository:"),
+  STAFF_PICKS("/staffPicks"),
   SUGGESTED("/suggested");
 
   companion object {
     @JvmStatic
-    fun find(value: String): SearchWords? = values().find { it.value == value }
+    fun find(value: String): SearchWords? = entries.find { it.value == value }
   }
 
 }

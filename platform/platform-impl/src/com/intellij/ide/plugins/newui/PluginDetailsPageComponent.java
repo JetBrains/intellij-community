@@ -1051,7 +1051,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     if (!Strings.isEmptyOrSpaces(organization)) {
       myAuthor.show(organization, () -> mySearchListener.linkSelected(
         null,
-        SearchWords.ORGANIZATION.getValue() + (organization.indexOf(' ') == -1 ? organization : '\"' + organization + "\"")
+        SearchWords.VENDOR.getValue() + (organization.indexOf(' ') == -1 ? organization : '\"' + organization + "\"")
       ));
     }
     else if (!Strings.isEmptyOrSpaces(vendor)) {
