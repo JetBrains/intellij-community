@@ -178,7 +178,6 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "TB" |
   "BT" { return DIR; }
   [^\S\r\n]+ { return WHITE_SPACE; }
-  \S+ { return BAD_CHARACTER; }
 }
 <flowchart> {
   ";" { yybegin(flowchart_body); return SEMICOLON; }

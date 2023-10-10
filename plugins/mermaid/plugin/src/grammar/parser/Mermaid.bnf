@@ -826,7 +826,7 @@ quadrantHeader ::= QUADRANT_CHART
 
 quadrantBody ::= quadrantLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private quadrantLines ::= quadrantLine [quadrantLines]
-private quadrantLine ::= quadrantStatement [EOL] | EOL
+private quadrantLine ::= quadrantStatement [separator] | separator
 private quadrantStatement ::= titleStatement
   | directive
   | accStatement
