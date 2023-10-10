@@ -11,6 +11,6 @@ data class GitLabDiffPositionInput(
 )
 
 data class DiffPathsInput(
-  val newPath: String?,
-  val oldPath: String?
+  val oldPath: String?,
+  val newPath: String?
 )
