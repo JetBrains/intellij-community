@@ -345,6 +345,11 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
                 runTest("../testData/intentions/addBracesToAllBranches/whenEntry.kt");
             }
 
+            @TestMetadata("whenWithComment.kt")
+            public void testWhenWithComment() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/whenWithComment.kt");
+            }
+
             @TestMetadata("whenWithOneEntry.kt")
             public void testWhenWithOneEntry() throws Exception {
                 runTest("../testData/intentions/addBracesToAllBranches/whenWithOneEntry.kt");
