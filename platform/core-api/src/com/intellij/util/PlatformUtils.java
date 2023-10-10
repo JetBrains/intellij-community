@@ -49,6 +49,7 @@ public final class PlatformUtils {
   public static final String RIDER_PREFIX = "Rider";
   public static final String GOIDE_PREFIX = "GoLand";
   public static final String FLEET_PREFIX = "FleetBackend";
+  public static final String WRITERSIDE_PREFIX = "Writerside";
 
   /**
    * @deprecated Code With Me Guest is an old name for JetBrains Client
@@ -200,6 +201,10 @@ public final class PlatformUtils {
 
   public static boolean isFleetBackend() {
     return is(FLEET_PREFIX);
+  }
+
+  public static boolean isWriterside() {
+    return is(WRITERSIDE_PREFIX);
   }
 
   private static boolean is(String idePrefix) {
