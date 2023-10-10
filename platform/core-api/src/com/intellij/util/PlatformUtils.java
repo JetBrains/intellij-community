@@ -207,6 +207,10 @@ public final class PlatformUtils {
     return is(RUSTROVER_PREFIX);
   }
 
+  public static boolean isWriterside() {
+    return is(WRITERSIDE_PREFIX);
+  }
+
   public static boolean isQodana() {
     return SystemProperties.getBooleanProperty("qodana.application", false);
   }
