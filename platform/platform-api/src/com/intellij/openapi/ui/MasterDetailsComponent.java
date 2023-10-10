@@ -767,7 +767,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     private final @Nullable Predicate<Object[]> myCondition;
 
     public MyDeleteAction() {
-      this((Predicate<Object[]>)null);
+      this(null);
     }
 
     public MyDeleteAction(@Nullable Predicate<Object[]> availableCondition) {
