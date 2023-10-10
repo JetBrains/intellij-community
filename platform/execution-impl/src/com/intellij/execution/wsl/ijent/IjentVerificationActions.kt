@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ijent.*
+import com.intellij.platform.ijent.fs.nio.asNioFileSystem
 import com.intellij.util.childScope
 import com.intellij.util.system.CpuArch
 import kotlinx.coroutines.*
@@ -29,6 +30,7 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.isDirectory
 
 class IjentWslVerificationAction : AbstractIjentVerificationAction() {
   override fun update(e: AnActionEvent) {
@@ -142,14 +144,27 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
             coroutineScope {
               val (ijent, title) = launchIjent(childScope())
 
-              val process = when (val p = ijent.executeProcess("uname", "-a")) {
-                is IjentApi.ExecuteProcessResult.Failure -> error(p)
-                is IjentApi.ExecuteProcessResult.Success -> p.process
-              }
-              val stdout = ByteArrayOutputStream()
-              process.stdout.consumeEach(stdout::write)
-              withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-                Messages.showInfoMessage(stdout.toString(), title)
+              coroutineScope {
+                launch {
+                  val process = when (val p = ijent.executeProcess("uname", "-a")) {
+                    is IjentApi.ExecuteProcessResult.Failure -> error(p)
+                    is IjentApi.ExecuteProcessResult.Success -> p.process
+                  }
+                  val stdout = ByteArrayOutputStream()
+                  process.stdout.consumeEach(stdout::write)
+                  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                    Messages.showInfoMessage(stdout.toString(), title)
+                  }
+                }
+
+                launch(Dispatchers.IO) {
+                  val nioFs = ijent.fs.asNioFileSystem()
+                  val path = "/etc"
+                  val isDir = nioFs.getPath(path).isDirectory()
+                  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                    Messages.showInfoMessage("$path is directory: $isDir", title)
+                  }
+                }
               }
               coroutineContext.cancelChildren()
             }
