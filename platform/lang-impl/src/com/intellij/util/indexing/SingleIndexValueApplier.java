@@ -68,24 +68,11 @@ class SingleIndexValueApplier<FileIndexMetaData> {
           //noinspection unchecked
           UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index =
             (UpdatableIndex<?, ?, FileContent, FileIndexMetaData>)myIndex.getIndex(indexId);
-          setIndexedState(index, myFileIndexMetaData, inputId, wasIndexProvidedByExtension());
+          index.setIndexedStateForFileOnFileIndexMetaData(inputId, myFileIndexMetaData, wasIndexProvidedByExtension());
         });
       }
     }
     return true;
-  }
-
-  private static <FileIndexMetaData> void setIndexedState(@NotNull UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index,
-                                                          @Nullable FileIndexMetaData fileData,
-                                                          int inputId,
-                                                          boolean indexWasProvided) {
-    if (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
-      ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, FileIndexMetaData>)index)
-        .setIndexedStateForFileOnFileIndexMetaData(inputId, fileData, indexWasProvided);
-    }
-    else {
-      index.setIndexedStateForFileOnFileIndexMetaData(inputId, fileData);
-    }
   }
 
   @Override

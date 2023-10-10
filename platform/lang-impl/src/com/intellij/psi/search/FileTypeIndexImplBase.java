@@ -135,13 +135,15 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   }
 
   @Override
-  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void data) {
-    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
+  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void data, boolean isProvidedByInfrastructureExtension) {
+    assert !isProvidedByInfrastructureExtension : "File type index should not be provided by infrastructure extensions";
+    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId, isProvidedByInfrastructureExtension);
   }
 
   @Override
-  public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
-    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
+  public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file, boolean isProvidedByInfrastructureExtension) {
+    assert !isProvidedByInfrastructureExtension : "File type index should not be provided by infrastructure extensions";
+    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId, isProvidedByInfrastructureExtension);
   }
 
   @Override

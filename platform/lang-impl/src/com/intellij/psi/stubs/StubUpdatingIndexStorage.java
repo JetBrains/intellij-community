@@ -143,15 +143,17 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   }
 
   @Override
-  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable StubUpdatingIndexStorage.Data fileData) {
-    super.setIndexedStateForFileOnFileIndexMetaData(fileId, fileData);
+  public void setIndexedStateForFileOnFileIndexMetaData(int fileId,
+                                                        @Nullable StubUpdatingIndexStorage.Data fileData,
+                                                        boolean isProvidedByInfrastructureExtension) {
+    super.setIndexedStateForFileOnFileIndexMetaData(fileId, fileData, isProvidedByInfrastructureExtension);
     LOG.assertTrue(fileData != null, "getFileIndexMetaData doesn't return null");
     setBinaryBuilderConfiguration(fileId, fileData);
   }
 
   @Override
-  public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
-    super.setIndexedStateForFile(fileId, file);
+  public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file, boolean isProvidedByInfrastructureExtension) {
+    super.setIndexedStateForFile(fileId, file, isProvidedByInfrastructureExtension);
     setBinaryBuilderConfiguration(fileId, file);
   }
 

@@ -433,7 +433,7 @@ final class UnindexedFilesFinder {
   private boolean tryIndexWithoutContentViaInfrastructureExtension(IndexedFile fileContent, int inputId, ID<?, ?> indexId) {
     for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
       if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
-        FileBasedIndexImpl.setIndexedState(myFileBasedIndex.getIndex(indexId), fileContent, inputId, true);
+        myFileBasedIndex.getIndex(indexId).setIndexedStateForFile(inputId, fileContent, true);
         if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
           LOG.info("File " + fileContent.getFileName() + " indexed using extension for " + indexId + " without content");
         }

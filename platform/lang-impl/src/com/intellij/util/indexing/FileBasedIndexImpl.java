@@ -79,7 +79,6 @@ import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.projectFilter.FileAddStatus;
 import com.intellij.util.indexing.projectFilter.IncrementalProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
-import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
@@ -1551,7 +1550,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, currentFC);
       }
       catch (MapReduceIndexMappingException e) {
-        setIndexedState(index, currentFC, inputId, false);
+        index.setIndexedStateForFile(inputId, currentFC, false);
         BrokenIndexingDiagnostics.INSTANCE.getExceptionListener().onFileIndexMappingFailed(
           inputId,
           currentFC.getFile(),
@@ -1617,19 +1616,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myStorageBufferingHandler.runUpdate(false, () -> {
       return ProgressManager.getInstance().computeInNonCancelableSection(() -> storageUpdate.get());
     });
-  }
-
-  static void setIndexedState(UpdatableIndex<?, ?, FileContent, ?> index,
-                              @NotNull IndexedFile currentFC,
-                              int inputId,
-                              boolean indexWasProvided) {
-    if (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
-      ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, ?>)index)
-        .setIndexedStateForFile(inputId, currentFC, indexWasProvided);
-    }
-    else {
-      index.setIndexedStateForFile(inputId, currentFC);
-    }
   }
 
   public static void markFileIndexed(@Nullable VirtualFile file,

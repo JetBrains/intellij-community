@@ -53,7 +53,8 @@ public final class IndexingStamp {
     return FileIndexingState.OUT_DATED;
   }
 
-  public static void setFileIndexedStateCurrent(int fileId, @NotNull ID<?, ?> id) {
+  public static void setFileIndexedStateCurrent(int fileId, @NotNull ID<?, ?> id, boolean isProvidedByInfrastructureExtension) {
+    // TODO-ank: use isProvidedByInfrastructureExtension (DEA-334413)
     update(fileId, id, IndexVersion.getIndexCreationStamp(id));
   }
 
