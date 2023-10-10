@@ -50,17 +50,15 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
         loader.problemsWereRecovered(contentStoragesProblems);
         LOG.info("ContentHashesEnumerator was successfully rebuild, ContentStorage was verified along the way");
       }
-      catch (IOException ex) {
+      catch (Exception ex) {
         LOG.warn("ContentStorage check is failed: " + ex.getMessage());
         //Seems like the ContentStorage itself is broken -> clean both Content & ContentHashes storages,
         //  and invalidate all the contentId references from fs-records:
 
         RefCountingContentStorage contentStorage = loader.contentsStorage();
-        contentStorage.dispose();
+        contentStorage.closeAndClean();
         ContentHashEnumerator contentHashEnumerator = loader.contentHashesEnumerator();
-        contentHashEnumerator.close();
-        IOUtil.deleteAllFilesStartingWith(loader.contentsFile);
-        IOUtil.deleteAllFilesStartingWith(loader.contentsHashesFile);
+        contentHashEnumerator.closeAndClean();
 
         RefCountingContentStorage emptyContentStorage = loader.createContentStorage(loader.contentsFile);
         ContentHashEnumerator emptyHashesEnumerator = PersistentFSLoader.createContentHashStorage(loader.contentsHashesFile);
