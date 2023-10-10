@@ -63,12 +63,7 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
     })
   }
 
-  override fun updateUI() {
-    super.updateUI()
-    if (parent != null) updatePreferredSize()
-  }
-
-  private fun updatePreferredSize() {
+  fun updatePreferredSize() {
     val width = JBUIScale.scale(appearance.settingsButtonWidth)
     preferredSize = Dimension(width, width)
   }

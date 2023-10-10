@@ -145,6 +145,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     }
 
     settingsButton.hidePopup()
+    settingsButton.updatePreferredSize()
     showFinalAnimationFrame()
   }
 
