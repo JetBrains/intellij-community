@@ -129,15 +129,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   public static void resetAllToolbars() {
     ThreadingAssertions.assertEventDispatchThread();
     Utils.clearAllCachesAndUpdates();
-    boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
     for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {
-      toolbar.cancelCurrentUpdate();
-      Image image = !isTestMode && toolbar.isShowing() ? paintToImage(toolbar) : null;
       toolbar.reset();
-      if (image != null) {
-        toolbar.myCachedImage = image;
-      }
-      else if (!isTestMode) toolbar.addLoadingIcon();
     }
   }
 
@@ -1897,9 +1890,21 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
    * to make sure toolbar does not reference old {@link AnAction} instances.
    */
   public void reset() {
+    cancelCurrentUpdate();
+
+    boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    Image image = !isTestMode && isShowing() ? paintToImage(this) : null;
+    if (image != null) {
+      myCachedImage = image;
+    }
+
     myPresentationFactory.reset();
     myVisibleActions.clear();
     removeAll();
+
+    if (!isTestMode && image == null) {
+      addLoadingIcon();
+    }
   }
 
   private void cancelCurrentUpdate() {
