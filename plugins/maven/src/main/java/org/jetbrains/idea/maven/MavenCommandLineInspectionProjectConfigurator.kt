@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.pom.java.LanguageLevel.HIGHEST
 import com.intellij.util.ExceptionUtil
@@ -63,7 +62,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
   override fun getDescription(): String = MavenProjectBundle.message("maven.commandline.description")
 
   override fun configureEnvironment(context: ConfiguratorContext) = context.run {
-    System.setProperty(DISABLE_EXTERNAL_SYSTEM_AUTO_IMPORT, true.toString())
+    System.setProperty(DISABLE_EXTERNAL_SYSTEM_AUTO_IMPORT, false.toString())
     System.setProperty(MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY, false.toString())
     Unit
   }
