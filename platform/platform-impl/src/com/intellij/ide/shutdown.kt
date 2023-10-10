@@ -25,7 +25,7 @@ private val LOG = Logger.getInstance("#com.intellij.ide.shutdown")
 // todo convert ApplicationImpl and IdeEventQueue to kotlin
 
 internal fun cancelAndJoinExistingContainerCoroutines(application: ApplicationImpl) {
-  val containerScope = application.pluginScopes.containerScope
+  val containerScope = application.scopeHolder.containerScope
   val joiner = containerScope.cancelAndJoinChildren()
   dumpCoroutinesAfterTimeout("Application $application children", containerScope) {
     joiner.invokeOnCompletion {
@@ -49,7 +49,7 @@ internal fun cancelAndJoinExistingContainerCoroutines(project: ProjectImpl) {
   // => we cannot cancel the project scope before `startDispose()`.
   // Requesting an uninitialized service during disposal is incorrect,
   // but it's legacy, and we have to live with it for a while.
-  val containerScope = project.pluginScopes.containerScope
+  val containerScope = project.scopeHolder.containerScope
   val joiner = containerScope.cancelAndJoinChildren()
   dumpCoroutinesAfterTimeout("Project $project children", containerScope) {
     runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.closing.project"), TaskCancellation.nonCancellable()) {

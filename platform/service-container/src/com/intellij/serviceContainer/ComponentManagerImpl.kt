@@ -177,14 +177,14 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  val pluginScopes = ScopeHolder(
+  val scopeHolder = ScopeHolder(
     parentScope = coroutineScope,
     containerName = debugString(true),
   )
 
   @Suppress("LeakingThis")
   private val serviceContainer = InstanceContainerImpl(
-    scopeHolder = pluginScopes,
+    scopeHolder = scopeHolder,
     containerName = "${debugString(true)} services",
     dynamicInstanceSupport = if (isLightServiceSupported) LightServiceInstanceSupport(
       componentManager = this,
@@ -197,7 +197,7 @@ abstract class ComponentManagerImpl(
   val serviceContainerInternal: InstanceContainerInternal get() = serviceContainer
 
   private val componentContainer = InstanceContainerImpl(
-    scopeHolder = pluginScopes,
+    scopeHolder = scopeHolder,
     containerName = "${debugString(true)} components",
     dynamicInstanceSupport = null,
     ordered = true,
@@ -2090,13 +2090,13 @@ abstract class ComponentManagerImpl(
     }
     else {
       // non-unloadable
-      pluginScopes.containerScope
+      scopeHolder.containerScope
     }
     return intersectionScope
   }
 
   private fun intersectionCoroutineScope(pluginScope: CoroutineScope): CoroutineScope {
-    return pluginScopes.intersectScope(pluginScope)
+    return scopeHolder.intersectScope(pluginScope)
   }
 }
 
