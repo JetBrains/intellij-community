@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
+import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -62,7 +63,7 @@ public class JavaNextParameterHandler extends EditorActionHandler {
                   boolean checkTabOut = CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
                   int tabOutOffset = checkTabOut ? TabOutScopesTracker.getInstance().getScopeEndingAt(editor, offset) : -1;
                   if (currentIndex >= 0 && (tabOutOffset <= offset || rParOffset < tabOutOffset)) {
-                    PsiMethod currentMethod = (PsiMethod)((CandidateInfo)objects[currentIndex]).getElement();
+                    PsiMethod currentMethod = MethodParameterInfoHandler.getMethodFromCandidate(objects[currentIndex]);
                     if (currentMethod.isVarArgs() || actualParameterCount < currentMethod.getParameterList().getParametersCount() &&
                                                      currentMethod.getParameterList().getParametersCount() > 1) {
                       boolean lastParameterIsEmpty = CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(prev + 1, rParOffset));

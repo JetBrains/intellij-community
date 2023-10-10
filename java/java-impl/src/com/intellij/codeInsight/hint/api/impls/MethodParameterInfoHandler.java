@@ -45,6 +45,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -54,7 +55,8 @@ import java.util.*;
  * @author Maxim.Mossienko
  */
 public final class MethodParameterInfoHandler
-  implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>, DumbAware {
+  implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>,
+             DumbAware {
   private static final Set<Class<?>> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
     PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
   private static final Set<Class<?>> ourStopSearch = Collections.singleton(PsiMethod.class);
@@ -106,7 +108,12 @@ public final class MethodParameterInfoHandler
     if (candidates.length == 0) {
       return null;
     }
-    context.setItemsToShow(candidates);
+    PsiMethod method = argumentList.getParent() instanceof PsiCall call ? call.resolveMethod() : null;
+    CandidateWithPresentation[] items = ContainerUtil.map2Array(candidates, CandidateWithPresentation.class,
+      c -> new CandidateWithPresentation(c,
+                                         MethodPresentation.from((PsiMethod)c.getElement(), 
+                                                    getCandidateInfoSubstitutor(c, method != null && c.getElement() == method))));
+    context.setItemsToShow(items);
     return argumentList;
   }
 
@@ -122,7 +129,7 @@ public final class MethodParameterInfoHandler
         if (objects != null && objects.length > 0 && (highlighted != null || objects.length == 1)) {
           PsiCall methodCall = (PsiCall)parent;
           JavaMethodCallElement.setCompletionModeIfNotSet(methodCall, controller);
-          PsiMethod targetMethod = (PsiMethod)((CandidateInfo)(highlighted == null ? objects[0] : highlighted)).getElement();
+          PsiMethod targetMethod = getMethodFromCandidate(highlighted == null ? objects[0] : highlighted);
           CompletionMemory.registerChosenMethod(targetMethod, methodCall);
           controller.setPreservedOnHintHidden(true);
           ParameterHintsPass.asyncUpdate(methodCall, context.getEditor());
@@ -143,28 +150,30 @@ public final class MethodParameterInfoHandler
     if (expressionList != null) {
       Object[] candidates = context.getObjectsToView();
       if (candidates != null && candidates.length != 0) {
-        Object currentMethodInfo = context.getHighlightedParameter();
-        if (currentMethodInfo == null) currentMethodInfo = candidates[0];
-        PsiElement element = currentMethodInfo instanceof CandidateInfo ? ((CandidateInfo)currentMethodInfo).getElement() :
-                             currentMethodInfo instanceof PsiElement ? (PsiElement) currentMethodInfo :
-                             null;
-        if ((element instanceof PsiMethod method)) {
-          PsiElement parent = expressionList.getParent();
+        Object highlighted = context.getHighlightedParameter();
+        CandidateWithPresentation currentMethodInfo;
+        if (highlighted instanceof PsiMethod method) {
+          currentMethodInfo = (CandidateWithPresentation)ContainerUtil.find(candidates, c -> getMethodFromCandidate(c).equals(method));
+        } else {
+          currentMethodInfo = (CandidateWithPresentation)highlighted;
+        }
+        if (currentMethodInfo == null) currentMethodInfo = (CandidateWithPresentation)candidates[0];
+        PsiMethod method = currentMethodInfo.getMethod();
+        PsiElement parent = expressionList.getParent();
 
-          String originalMethodName = method.getName();
-          PsiQualifiedReference currentMethodReference = null;
-          if (parent instanceof PsiMethodCallExpression && !method.isConstructor()) {
-            currentMethodReference = ((PsiMethodCallExpression)parent).getMethodExpression();
-          }
-          else if (parent instanceof PsiNewExpression) {
-            currentMethodReference = ((PsiNewExpression)parent).getClassReference();
-          }
-          else if (parent instanceof PsiAnonymousClass) {
-            currentMethodReference = ((PsiAnonymousClass)parent).getBaseClassReference();
-          }
-          if (currentMethodReference == null || originalMethodName.equals(currentMethodReference.getReferenceName())) {
-            return expressionList;
-          }
+        String originalMethodName = method.getName();
+        PsiQualifiedReference currentMethodReference = null;
+        if (parent instanceof PsiMethodCallExpression call && !method.isConstructor()) {
+          currentMethodReference = call.getMethodExpression();
+        }
+        else if (parent instanceof PsiNewExpression newExpression) {
+          currentMethodReference = newExpression.getClassReference();
+        }
+        else if (parent instanceof PsiAnonymousClass anonymousClass) {
+          currentMethodReference = anonymousClass.getBaseClassReference();
+        }
+        if (currentMethodReference == null || originalMethodName.equals(currentMethodReference.getReferenceName())) {
+          return expressionList;
         }
       }
     }
@@ -176,34 +185,27 @@ public final class MethodParameterInfoHandler
     if (expressionList != null) {
       Object[] candidates = context.getObjectsToView();
       if (candidates != null && candidates.length != 0) {
-        Object currentMethodInfo = context.getHighlightedParameter();
-        if (currentMethodInfo == null) currentMethodInfo = candidates[0];
-        PsiElement element = currentMethodInfo instanceof CandidateInfo ? ((CandidateInfo)currentMethodInfo).getElement() :
-                             currentMethodInfo instanceof PsiElement ? (PsiElement)currentMethodInfo :
-                             null;
-        if ((element instanceof PsiMethod)) {
-          PsiElement parent = expressionList.getParent();
+        PsiElement parent = expressionList.getParent();
 
-          int currentNumberOfParameters = expressionList.getExpressionCount();
-          PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
-          Document document = psiDocumentManager.getCachedDocument(context.getFile());
-          if (parent instanceof PsiCallExpression && JavaMethodCallElement.isCompletionMode((PsiCall)parent)) {
-            PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
-            if ((context.getHighlightedParameter() != null || candidates.length == 1) && chosenMethod != null &&
-                document != null && psiDocumentManager.isCommitted(document) &&
-                isIncompatibleParameterCount(chosenMethod, currentNumberOfParameters)) {
-              JavaMethodCallElement.setCompletionMode((PsiCall)parent, false);
-              // make sure the statement above takes effect
-              asyncHighlightHints(context.getEditor(), null, -1, context.getCustomContext());
-            }
-            else {
-              int index = ParameterInfoUtils.getCurrentParameterIndex(expressionList.getNode(),
-                                                                      context.getOffset(), JavaTokenType.COMMA);
-              TextRange textRange = expressionList.getTextRange();
-              if (context.getOffset() <= textRange.getStartOffset() || context.getOffset() >= textRange.getEndOffset()) index = -1;
-              asyncHighlightHints(context.getEditor(), expressionList, context.isInnermostContext() ? index : -1,
-                                  context.getCustomContext());
-            }
+        int currentNumberOfParameters = expressionList.getExpressionCount();
+        PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
+        Document document = psiDocumentManager.getCachedDocument(context.getFile());
+        if (parent instanceof PsiCallExpression call && JavaMethodCallElement.isCompletionMode(call)) {
+          PsiMethod chosenMethod = CompletionMemory.getChosenMethod(call);
+          if ((context.getHighlightedParameter() != null || candidates.length == 1) && chosenMethod != null &&
+              document != null && psiDocumentManager.isCommitted(document) &&
+              isIncompatibleParameterCount(chosenMethod, currentNumberOfParameters)) {
+            JavaMethodCallElement.setCompletionMode(call, false);
+            // make sure the statement above takes effect
+            asyncHighlightHints(context.getEditor(), null, -1, context.getCustomContext());
+          }
+          else {
+            int index = ParameterInfoUtils.getCurrentParameterIndex(expressionList.getNode(),
+                                                                    context.getOffset(), JavaTokenType.COMMA);
+            TextRange textRange = expressionList.getTextRange();
+            if (context.getOffset() <= textRange.getStartOffset() || context.getOffset() >= textRange.getEndOffset()) index = -1;
+            asyncHighlightHints(context.getEditor(), expressionList, context.isInnermostContext() ? index : -1,
+                                context.getCustomContext());
           }
         }
       }
@@ -262,9 +264,7 @@ public final class MethodParameterInfoHandler
   private static boolean overloadWithNoParametersExists(PsiMethod method, Object[] candidates) {
     String methodName = method.getName();
     return ContainerUtil.find(candidates, c -> {
-      if (!(c instanceof CandidateInfo)) return false;
-      PsiElement e = ((CandidateInfo)c).getElement();
-      if (!(e instanceof PsiMethod m)) return false;
+      PsiMethod m = getMethodFromCandidate(c);
       return m.getParameterList().isEmpty() && m.getName().equals(methodName);
     }) != null;
   }
@@ -295,14 +295,15 @@ public final class MethodParameterInfoHandler
     PsiElement realResolve = call != null ? call.resolveMethod() : null;
 
     PsiMethod chosenMethod = CompletionMemory.getChosenMethod(call);
-    CandidateInfo chosenInfo = null;
-    CandidateInfo completeMatch = null;
+    CandidateWithPresentation chosenInfo = null;
+    CandidateWithPresentation completeMatch = null;
 
     for (int i = 0; i < candidates.length; i++) {
-      CandidateInfo candidate = (CandidateInfo)candidates[i];
-      PsiMethod method = (PsiMethod)candidate.getElement();
+      CandidateWithPresentation candidateWithPresentation = (CandidateWithPresentation)candidates[i];
+      CandidateInfo candidate = candidateWithPresentation.candidateInfo;
+      PsiMethod method = candidateWithPresentation.getMethod();
       if (!method.isValid()) continue;
-      if (candidate instanceof MethodCandidateInfo && !((MethodCandidateInfo)candidate).getSiteSubstitutor().isValid()) continue;
+      if (candidate instanceof MethodCandidateInfo methodCandidateInfo && !methodCandidateInfo.getSiteSubstitutor().isValid()) continue;
       PsiSubstitutor substitutor = getCandidateInfoSubstitutor(candidate, method == realResolve);
       assert substitutor != null;
 
@@ -364,38 +365,36 @@ public final class MethodParameterInfoHandler
       context.setUIComponentEnabled(i, enabled);
       if (candidates.length > 1 && enabled) {
         if (PsiManager.getInstance(context.getProject()).areElementsEquivalent(chosenMethod, method)) {
-          chosenInfo = candidate;
+          chosenInfo = candidateWithPresentation;
         }
 
         if (realResolve == method) {
           if (parms.length == args.length && isAssignableParametersBeforeGivenIndex(parms, args, args.length, substitutor) ||
               method.isVarArgs() && parms.length - 1 <= args.length &&
               isAssignableParametersBeforeGivenIndex(parms, args, Math.min(parms.length, args.length), substitutor)) {
-            completeMatch = candidate;
+            completeMatch = candidateWithPresentation;
           }
         }
       }
     }
 
-    CandidateInfo parameterToHighlight = chosenInfo;
+    CandidateWithPresentation parameterToHighlight = chosenInfo;
     if (completeMatch != null &&
         (chosenInfo == null || (args.length > 0 && !(context.isPreservedOnHintHidden() &&
                                                      Registry.is("editor.completion.hints.virtual.comma") &&
-                                                     getParameterCount(completeMatch) < getParameterCount(chosenInfo))))) {
+                                                     completeMatch.presentation().parameters().size() <
+                                                     chosenInfo.presentation().parameters().size())))) {
       parameterToHighlight = completeMatch;
     }
     context.setHighlightedParameter(parameterToHighlight);
 
     Object highlightedCandidate = candidates.length == 1 ? candidates[0] : context.getHighlightedParameter();
     if (highlightedCandidate != null) {
-      PsiMethod method = (PsiMethod)(highlightedCandidate instanceof CandidateInfo
-                                     ? ((CandidateInfo)highlightedCandidate).getElement() : highlightedCandidate);
-      if (!method.isVarArgs() && index > 0 && index >= method.getParameterList().getParametersCount()) context.setCurrentParameter(-1);
+      PsiMethod method = getMethodFromCandidate(highlightedCandidate);
+      if (!method.isVarArgs() && index > 0 && index >= method.getParameterList().getParametersCount()) {
+        context.setCurrentParameter(-1);
+      }
     }
-  }
-
-  private static int getParameterCount(@NotNull CandidateInfo info) {
-    return ((PsiMethod)info.getElement()).getParameterList().getParametersCount();
   }
 
   private static void asyncHighlightHints(@NotNull Editor editor,
@@ -674,39 +673,6 @@ public final class MethodParameterInfoHandler
     return results.toArray(CandidateInfo.EMPTY_ARRAY);
   }
 
-  private record ParameterPresentation(@NotNull String modifiers, @NotNull String type, @NotNull String name, @Nullable String javaDoc,
-                                       boolean varArgs) {
-    static @NotNull ParameterPresentation from(@NotNull PsiParameter param, @NotNull PsiSubstitutor substitutor) {
-      PsiType paramType = substitutor.substitute(param.getType());
-      String type = paramType.getPresentableText(!DumbService.isDumb(param.getProject()));
-      StringBuilder buffer = new StringBuilder();
-      appendModifierList(buffer, param);
-      String modifiers = buffer.toString();
-      String name = param.getName();
-      String javaDoc = JavaDocInfoGeneratorFactory.create(param.getProject(), param).generateMethodParameterJavaDoc();
-      if (javaDoc != null) {
-        javaDoc = removeHyperlinks(javaDoc);
-      }
-      return new ParameterPresentation(modifiers, type, name, javaDoc, param.isVarArgs());
-    }
-  }
-
-  private record MethodPresentation(@NotNull String modifiers, @NotNull String type, @NotNull String name, boolean constructor,
-                                    boolean deprecated, boolean varArgs,
-                                    @NotNull List<@NotNull ParameterPresentation> parameters) {
-    static @NotNull MethodPresentation from(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
-      PsiType returnType = substitutor.substitute(method.getReturnType());
-      String type = returnType == null ? "" : returnType.getPresentableText(true);
-      StringBuilder buffer = new StringBuilder();
-      appendModifierList(buffer, method);
-      String modifiers = buffer.toString();
-      List<ParameterPresentation> parameters =
-        ContainerUtil.map(method.getParameterList().getParameters(), param -> ParameterPresentation.from(param, substitutor));
-      return new MethodPresentation(modifiers, type, method.getName(), method.isConstructor(), method.isDeprecated(), 
-                                    method.isVarArgs(), parameters);
-    }
-  }
-
   public static String updateMethodPresentation(@NotNull PsiMethod method, @Nullable PsiSubstitutor substitutor, @NotNull ParameterInfoUIContext context) {
     if (substitutor == null) {
       substitutor = PsiSubstitutor.EMPTY;
@@ -718,6 +684,11 @@ public final class MethodParameterInfoHandler
 
     MethodPresentation methodPresentation = MethodPresentation.from(method, substitutor);
     return updateMethodPresentation(context, methodPresentation);
+  }
+
+  @TestOnly
+  public static String updateMethodPresentationFromCandidate(@NotNull ParameterInfoUIContext context, @NotNull Object candidate) {
+    return updateMethodPresentation(context, ((CandidateWithPresentation)candidate).presentation());
   }
 
   private static String updateMethodPresentation(@NotNull ParameterInfoUIContext context, @NotNull MethodPresentation methodPresentation) {
@@ -850,22 +821,8 @@ public final class MethodParameterInfoHandler
   }
 
   @Override
-  public void updateUI(final Object p, @NotNull final ParameterInfoUIContext context) {
-    if (p instanceof CandidateInfo info) {
-      PsiMethod method = (PsiMethod)info.getElement();
-      PsiElement parameterOwner = context.getParameterOwner();
-      if (!method.isValid() || !parameterOwner.isValid() || 
-          info instanceof MethodCandidateInfo && !((MethodCandidateInfo)info).getSiteSubstitutor().isValid()) {
-        context.setUIComponentEnabled(false);
-        return;
-      }
-      PsiCall call = parameterOwner instanceof PsiExpressionList ? getCall((PsiExpressionList)parameterOwner) : null;
-
-      updateMethodPresentation(method, getCandidateInfoSubstitutor(info, call != null && call.resolveMethod() == method), context);
-    }
-    else if (p instanceof PsiMethod) {
-      updateMethodPresentation((PsiMethod)p, null, context);
-    }
+  public void updateUI(@NotNull final Object p, @NotNull final ParameterInfoUIContext context) {
+    updateMethodPresentation(context, ((CandidateWithPresentation)p).presentation);
   }
 
   @Override
@@ -917,5 +874,52 @@ public final class MethodParameterInfoHandler
     VisualPosition caretPosition = caret.getVisualPosition();
     return ContainerUtil.count(inlays, inlay -> StringUtil.startsWithChar(pm.getHintText(inlay), ',') &&
                                                 caretPosition.after(inlay.getVisualPosition()));
+  }
+
+  public static @NotNull PsiMethod getMethodFromCandidate(@NotNull Object object) {
+    return ((CandidateWithPresentation)object).getMethod();
+  }
+  
+  public static @Nullable PsiMethod tryGetMethodFromCandidate(@NotNull Object object) {
+    return object instanceof CandidateWithPresentation cwp ? cwp.getMethod() : null;
+  }
+
+  private record CandidateWithPresentation(@NotNull CandidateInfo candidateInfo, @NotNull MethodPresentation presentation) {
+    public @NotNull PsiMethod getMethod() {
+      return (PsiMethod)candidateInfo.getElement();
+    }
+  }
+
+  private record ParameterPresentation(@NotNull String modifiers, @NotNull String type, @NotNull String name, @Nullable String javaDoc,
+                                       boolean varArgs) {
+    static @NotNull ParameterPresentation from(@NotNull PsiParameter param, @NotNull PsiSubstitutor substitutor) {
+      PsiType paramType = substitutor.substitute(param.getType());
+      String type = paramType.getPresentableText(!DumbService.isDumb(param.getProject()));
+      StringBuilder buffer = new StringBuilder();
+      appendModifierList(buffer, param);
+      String modifiers = buffer.toString();
+      String name = param.getName();
+      String javaDoc = JavaDocInfoGeneratorFactory.create(param.getProject(), param).generateMethodParameterJavaDoc();
+      if (javaDoc != null) {
+        javaDoc = removeHyperlinks(javaDoc);
+      }
+      return new ParameterPresentation(modifiers, type, name, javaDoc, param.isVarArgs());
+    }
+  }
+
+  private record MethodPresentation(@NotNull String modifiers, @NotNull String type, @NotNull String name, boolean constructor,
+                                    boolean deprecated, boolean varArgs,
+                                    @NotNull List<@NotNull ParameterPresentation> parameters) {
+    static @NotNull MethodPresentation from(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+      PsiType returnType = substitutor.substitute(method.getReturnType());
+      String type = returnType == null ? "" : returnType.getPresentableText(true);
+      StringBuilder buffer = new StringBuilder();
+      appendModifierList(buffer, method);
+      String modifiers = buffer.toString();
+      List<ParameterPresentation> parameters =
+        ContainerUtil.map(method.getParameterList().getParameters(), param -> ParameterPresentation.from(param, substitutor));
+      return new MethodPresentation(modifiers, type, method.getName(), method.isConstructor(), method.isDeprecated(),
+                                    method.isVarArgs(), parameters);
+    }
   }
 }

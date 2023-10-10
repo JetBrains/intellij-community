@@ -180,7 +180,6 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
     assertEquals(3, itemsToShow.length);
-    assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
     ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, -1);
     MockUpdateParameterInfoContext updateParameterInfoContext = updateParameterInfo(handler, list, itemsToShow);
     assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) ||
@@ -198,7 +197,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
     assertEquals(2, itemsToShow.length);
-    assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
+    MethodParameterInfoHandler.getMethodFromCandidate(itemsToShow[0]);
     ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, -1);
     MockUpdateParameterInfoContext updateParameterInfoContext = updateParameterInfo(handler, list, itemsToShow);
     assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) || updateParameterInfoContext.isUIComponentEnabled(1));
@@ -225,7 +224,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
     assertEquals(1, itemsToShow.length);
-    assertEquals(0, ((MethodCandidateInfo)itemsToShow[0]).getElement().getParameterList().getParametersCount());
+    assertEquals(0, MethodParameterInfoHandler.getMethodFromCandidate(itemsToShow[0]).getParameterList().getParametersCount());
   }
 
   public void testAfterGenericsInsideCall() {
@@ -238,12 +237,9 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
     assertEquals(2, itemsToShow.length);
-    assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
-    PsiMethod method = ((MethodCandidateInfo)itemsToShow[0]).getElement();
     ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, 1);
     parameterContext.setUIComponentEnabled(true);
-    PsiSubstitutor substitutor = ((MethodCandidateInfo)itemsToShow[0]).getSubstitutor();
-    String presentation = MethodParameterInfoHandler.updateMethodPresentation(method, substitutor, parameterContext);
+    String presentation = MethodParameterInfoHandler.updateMethodPresentationFromCandidate(parameterContext, itemsToShow[0]);
     assertEquals("<html>Class&lt;T&gt; type, <b>boolean tags</b></html>", removeCurrentParameterColor(presentation));
   }
 
@@ -269,11 +265,8 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertNotNull(list);
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
-    assertTrue(itemsToShow[lineIndex] instanceof MethodCandidateInfo);
-    PsiMethod method = ((MethodCandidateInfo)itemsToShow[lineIndex]).getElement();
     ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, parameterIndex);
-    PsiSubstitutor substitutor = ((MethodCandidateInfo)itemsToShow[lineIndex]).getSubstitutor();
-    return MethodParameterInfoHandler.updateMethodPresentation(method, substitutor, parameterContext);
+    return MethodParameterInfoHandler.updateMethodPresentationFromCandidate(parameterContext, itemsToShow[lineIndex]);
   }
 
   private CreateParameterInfoContext createContext() {
