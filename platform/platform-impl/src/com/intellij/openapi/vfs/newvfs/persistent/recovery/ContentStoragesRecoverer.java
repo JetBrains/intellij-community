@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.recovery;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.*;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.RecordIdIterator;
 import com.intellij.util.io.storage.RefCountingContentStorage;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +49,7 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
         loader.problemsWereRecovered(contentStoragesProblems);
         LOG.info("ContentHashesEnumerator was successfully rebuild, ContentStorage was verified along the way");
       }
-      catch (Exception ex) {
+      catch (Throwable ex) {
         LOG.warn("ContentStorage check is failed: " + ex.getMessage());
         //Seems like the ContentStorage itself is broken -> clean both Content & ContentHashes storages,
         //  and invalidate all the contentId references from fs-records:
@@ -106,20 +105,18 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
   private static void tryRebuildHashesStorageByContentStorage(@NotNull PersistentFSLoader loader) throws IOException {
 
     ContentHashEnumerator contentHashEnumerator = loader.contentHashesEnumerator();
+    contentHashEnumerator.closeAndClean();
 
-    contentHashEnumerator.close();
     Path contentsHashesFile = loader.contentsHashesFile;
-    IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
-
     ContentHashEnumerator recoveringHashesEnumerator = PersistentFSLoader.createContentHashStorage(contentsHashesFile);
+
     RefCountingContentStorage contentStorage = loader.contentsStorage();
     try {
       fillHashesEnumeratorByContentStorage(contentStorage, recoveringHashesEnumerator);
       loader.setContentHashesEnumerator(recoveringHashesEnumerator);
     }
     catch (Throwable t) {
-      recoveringHashesEnumerator.close();
-      IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
+      recoveringHashesEnumerator.closeAndClean();
       throw t;
     }
   }

@@ -500,6 +500,7 @@ public final class PersistentFSLoader {
 
   private boolean contentResolvedSuccessfully(int fileId) throws IOException {
     int contentId = recordsStorage.getContentRecordId(fileId);
+    //Check only contentHashEnumerator -- it is faster than contentStorage:
     if (contentHashesEnumerator != null
         && contentId != DataEnumerator.NULL_ID) {
       try {
