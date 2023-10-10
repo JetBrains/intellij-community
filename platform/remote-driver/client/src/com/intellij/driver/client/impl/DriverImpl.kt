@@ -318,7 +318,12 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   }
 
   override fun close() {
-    invoker.close()
+    try {
+      invoker.close()
+    } catch (t: Throwable) {
+      System.err.println("Error on close of JMX session")
+      t.printStackTrace()
+    }
   }
 
   override fun <T> withReadAction(dispatcher: OnDispatcher, code: Driver.() -> T): T {
