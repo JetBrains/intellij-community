@@ -31,7 +31,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   private boolean useQualifiedModuleNames = false;
   private boolean delegatedBuild = true;
   private boolean downloadSources = false;
-  private boolean isParallelModelFetch = false;
+  private boolean isParallelModelFetch = true;
 
   private boolean myBuiltInTestEventsUsed = false;
 
