@@ -10,7 +10,7 @@ def remove_exception_breakpoint(plugin, pydb, type, exception):
 def get_breakpoints(plugin, pydb):
     return None
 
-def can_not_skip(plugin, pydb, pydb_frame, frame, info):
+def can_not_skip(plugin, pydb, frame, info):
     return False
 
 def has_exception_breaks(plugin):
@@ -28,13 +28,13 @@ def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
 def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):
     return False
 
-def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
+def get_breakpoint(plugin, pydb, frame, event, args):
     return None
 
 def suspend(plugin, pydb, thread, frame):
     return None
 
-def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
+def exception_break(plugin, pydb, frame, args, arg):
     return None
 
 def change_variable(plugin, frame, attr, expression):
