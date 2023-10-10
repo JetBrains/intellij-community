@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "FormatOnSaveOptions", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class FormatOnSaveOptions extends FormatOnSaveOptionsBase<FormatOnSaveOptions.State>
   implements PersistentStateComponent<FormatOnSaveOptions.State>, Cloneable {

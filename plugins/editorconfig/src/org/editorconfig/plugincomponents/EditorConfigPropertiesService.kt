@@ -34,7 +34,7 @@ import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
-@Service
+@Service(Service.Level.PROJECT)
 class EditorConfigPropertiesService(private val project: Project, private val coroutineScope: CoroutineScope) : SimpleModificationTracker() {
   companion object {
     private val LOG = thisLogger()

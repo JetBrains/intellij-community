@@ -10,7 +10,7 @@ import com.intellij.psi.PsiMigration;
 import com.intellij.psi.impl.PsiManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class PsiMigrationManager {
   private static final Logger LOG = Logger.getInstance(PsiMigrationManager.class);
 

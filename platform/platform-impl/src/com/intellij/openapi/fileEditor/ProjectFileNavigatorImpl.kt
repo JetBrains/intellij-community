@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.*
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class ProjectFileNavigatorImpl(
   private val project: Project,
   private val cs: CoroutineScope,

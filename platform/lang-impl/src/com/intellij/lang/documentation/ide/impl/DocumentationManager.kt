@@ -43,7 +43,7 @@ import java.awt.Point
 import java.lang.ref.WeakReference
 
 @ApiStatus.Internal
-@Service
+@Service(Service.Level.PROJECT)
 class DocumentationManager(private val project: Project, private val cs: CoroutineScope) : Disposable {
   companion object {
     fun getInstance(project: Project): DocumentationManager = project.service()

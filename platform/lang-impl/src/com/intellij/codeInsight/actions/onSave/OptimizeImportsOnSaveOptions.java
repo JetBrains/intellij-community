@@ -6,7 +6,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "OptimizeOnSaveOptions", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class OptimizeImportsOnSaveOptions extends FormatOnSaveOptionsBase<OptimizeImportsOnSaveOptions.State>
   implements PersistentStateComponent<OptimizeImportsOnSaveOptions.State>, Cloneable {

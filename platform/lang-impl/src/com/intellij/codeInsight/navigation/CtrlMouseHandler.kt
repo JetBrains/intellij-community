@@ -72,7 +72,7 @@ internal class InitCtrlMouseHandlerActivity : ProjectActivity {
 }
 
 @VisibleForTesting
-@Service
+@Service(Service.Level.PROJECT)
 class CtrlMouseHandler2(
   private val project: Project,
   private val cs: CoroutineScope,

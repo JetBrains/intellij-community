@@ -36,7 +36,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.swing.JPanel
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class DocumentationToolWindowManager(
   private val project: Project,
   private val cs: CoroutineScope,

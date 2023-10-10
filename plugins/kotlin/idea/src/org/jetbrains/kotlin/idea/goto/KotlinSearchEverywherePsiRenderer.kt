@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class KotlinSearchEverywherePsiRenderer(project: Project) :
     SearchEverywherePsiRenderer(KotlinPluginDisposable.getInstance(project)) {
     companion object {

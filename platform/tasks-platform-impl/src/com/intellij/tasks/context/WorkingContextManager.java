@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class WorkingContextManager {
   private static final Logger LOG = Logger.getInstance(WorkingContextManager.class);
   @NonNls private static final String TASKS_FOLDER = "tasks";
