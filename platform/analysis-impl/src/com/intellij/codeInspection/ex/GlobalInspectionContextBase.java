@@ -192,11 +192,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
            !((RefElementImpl)owner).isSuppressed(tool.getShortName(), tool.getAlternativeID());
   }
 
-  public boolean isToCheckFile(PsiFile file, @NotNull InspectionProfileEntry tool) {
-    return isToCheckFile((PsiFileSystemItem)file, tool);
-  }
-
-  public boolean isToCheckFile(PsiFileSystemItem file, @NotNull InspectionProfileEntry tool) {
+  public boolean isToCheckFile(@Nullable PsiFileSystemItem file, @NotNull InspectionProfileEntry tool) {
     Tools tools = getTools().get(tool.getShortName());
     if (tools != null && file != null) {
       for (ScopeToolState state : tools.getTools()) {
