@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import org.junit.jupiter.api.assertThrows
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.*
 
 internal inline fun ScopeHolder.use(action: (ScopeHolder) -> Unit) {
@@ -23,7 +24,7 @@ internal inline fun ScopeHolder.use(action: (ScopeHolder) -> Unit) {
 
 internal suspend fun withContainer(containerName: String, test: suspend CoroutineScope.(InstanceContainerImpl) -> Unit) {
   coroutineScope {
-    ScopeHolder(this, containerName).use { holder ->
+    ScopeHolder(this, EmptyCoroutineContext, containerName).use { holder ->
       val container = InstanceContainerImpl(holder, containerName, null, false)
       try {
         test(container)

@@ -16,11 +16,11 @@ import org.jetbrains.annotations.ApiStatus
 private val logger = logger<ClientAwareComponentManager>()
 
 @ApiStatus.Internal
-abstract class ClientAwareComponentManager(
-  parent: ComponentManagerImpl?,
-  coroutineScope: CoroutineScope,
-  setExtensionsRootArea: Boolean = parent == null
-) : ComponentManagerImpl(parent, coroutineScope, setExtensionsRootArea) {
+abstract class ClientAwareComponentManager: ComponentManagerImpl {
+
+  protected constructor(parent: ComponentManagerImpl) : super(parent)
+  protected constructor(parentScope: CoroutineScope): super(parentScope)
+
   override fun <T : Any> getServices(serviceClass: Class<T>, clientKind: ClientKind): List<T> {
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     return sessionsManager.getSessions(clientKind).mapNotNull {

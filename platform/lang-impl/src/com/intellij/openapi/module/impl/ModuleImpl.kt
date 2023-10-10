@@ -33,7 +33,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
-import com.intellij.util.namedChildScope
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
@@ -49,10 +48,7 @@ private val LOG: Logger
 open class ModuleImpl @ApiStatus.Internal constructor(
   name: String,
   project: Project,
-) : ComponentManagerImpl(
-  parent = project as ComponentManagerImpl,
-  coroutineScope = project.getCoroutineScope().namedChildScope("ModuleImpl@${System.identityHashCode(this)}"),
-), ModuleEx, Queryable {
+) : ComponentManagerImpl(project as ComponentManagerImpl), ModuleEx, Queryable {
 
   private val project: Project
   protected var imlFilePointer: VirtualFilePointer? = null

@@ -41,7 +41,6 @@ import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.platform.ide.bootstrap.StartupUtil;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.serviceContainer.ComponentManagerImpl;
-import com.intellij.serviceContainer.ComponentManagerImplKt;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.*;
@@ -50,7 +49,6 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
-import kotlin.coroutines.EmptyCoroutineContext;
 import kotlin.jvm.functions.Function0;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.GlobalScope;
@@ -127,9 +125,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @TestOnly
   public ApplicationImpl(boolean isHeadless) {
-    super(null,
-          CoroutineScopeKt.namedChildScope(GlobalScope.INSTANCE, ApplicationImpl.class.getName(), EmptyCoroutineContext.INSTANCE, true),
-          true);
+    super(GlobalScope.INSTANCE);
 
     myLock = IdeEventQueue.getInstance().getRwLockHolder().lock;
 
@@ -149,8 +145,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
   private volatile boolean myWriteActionPending;
 
-  public ApplicationImpl(@NotNull CoroutineScope coroutineScope, boolean isInternal) {
-    super(null, coroutineScope, true);
+  public ApplicationImpl(@NotNull CoroutineScope parentScope, boolean isInternal) {
+    super(parentScope);
 
     registerFakeServices(this);
 

@@ -2,7 +2,6 @@
 package com.intellij.platform.instanceContainer.internal
 
 import com.intellij.util.attachAsChildTo
-import com.intellij.util.childScope
 import com.intellij.util.namedChildScope
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
@@ -11,13 +10,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.CoroutineContext
 
 class ScopeHolder(
   parentScope: CoroutineScope,
+  additionalContext: CoroutineContext,
   private val containerName: String,
 ) {
 
-  val containerScope: CoroutineScope = parentScope.namedChildScope("$containerName container")
+  val containerScope: CoroutineScope = parentScope.namedChildScope("$containerName container", additionalContext)
 
   /**
    * Key: plugin coroutine scope.

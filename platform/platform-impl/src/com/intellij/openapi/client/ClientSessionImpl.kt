@@ -23,7 +23,6 @@ import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.messages.MessageBus
-import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
@@ -40,8 +39,9 @@ abstract class ClientSessionImpl(
   private val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(
   parent = null,
-  coroutineScope = GlobalScope.namedChildScope("ClientSessionImpl", clientId.asContextElement2()),
   setExtensionsRootArea = false,
+  parentScope = GlobalScope,
+  additionalContext = clientId.asContextElement2(),
 ), ClientSession {
   final override val isLightServiceSupported: Boolean = false
   final override val isMessageBusSupported: Boolean = false

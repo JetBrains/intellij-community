@@ -41,7 +41,6 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
-import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -61,8 +60,7 @@ private val LOG = logger<ProjectImpl>()
 
 @Internal
 open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
-  : ClientAwareComponentManager(parent = parent,
-                                coroutineScope = parent.getCoroutineScope().namedChildScope("ProjectImpl")), ProjectEx, ProjectStoreOwner {
+  : ClientAwareComponentManager(parent), ProjectEx, ProjectStoreOwner {
   companion object {
     @Internal
     val RUN_START_UP_ACTIVITIES: Key<Boolean> = Key.create("RUN_START_UP_ACTIVITIES")

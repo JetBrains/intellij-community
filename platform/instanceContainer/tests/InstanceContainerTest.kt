@@ -24,7 +24,7 @@ class InstanceContainerTest {
   @Test
   fun `disposed container`(testInfo: TestInfo): Unit = timeoutRunBlocking {
     val containerName = testInfo.displayName
-    ScopeHolder(this, containerName).use { holder ->
+    ScopeHolder(this, EmptyCoroutineContext, containerName).use { holder ->
       val container = InstanceContainerImpl(holder, containerName, null, false)
       container.dispose()
       assertThrows<ContainerDisposedException> {

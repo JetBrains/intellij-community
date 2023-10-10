@@ -57,6 +57,8 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.stream.Stream
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.streams.asSequence
 
 internal val LOG: Logger
@@ -94,13 +96,28 @@ fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: MethodType
 @Internal
 abstract class ComponentManagerImpl(
   internal val parent: ComponentManagerImpl?,
-  private val coroutineScope: CoroutineScope,
-  setExtensionsRootArea: Boolean = parent == null,
+  setExtensionsRootArea: Boolean,
+  parentScope: CoroutineScope,
+  additionalContext: CoroutineContext,
 ) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner {
 
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
+
+  protected constructor(parentScope: CoroutineScope) : this(
+    parent = null,
+    setExtensionsRootArea = true,
+    parentScope,
+    additionalContext = EmptyCoroutineContext,
+  )
+
+  protected constructor(parent: ComponentManagerImpl) : this(
+    parent,
+    setExtensionsRootArea = false,
+    parentScope = parent.getCoroutineScope(),
+    additionalContext = EmptyCoroutineContext,
+  )
 
   companion object {
     @Internal
@@ -178,7 +195,8 @@ abstract class ComponentManagerImpl(
   }
 
   val scopeHolder = ScopeHolder(
-    parentScope = coroutineScope,
+    parentScope,
+    additionalContext,
     containerName = debugString(true),
   )
 
@@ -254,7 +272,7 @@ abstract class ComponentManagerImpl(
   @Suppress("MemberVisibilityCanBePrivate")
   fun getCoroutineScope(): CoroutineScope {
     return if (parent?.parent == null) {
-      coroutineScope
+      scopeHolder.containerScope
     }
     else {
       throw RuntimeException("Module doesn't have coroutineScope")
@@ -1660,7 +1678,7 @@ abstract class ComponentManagerImpl(
       throw IllegalStateException("Expected current state is DISPOSE_IN_PROGRESS, but actual state is ${containerState.get()} ($this)")
     }
 
-    coroutineScope.cancel("ComponentManagerImpl.dispose is called")
+    scopeHolder.containerScope.cancel("ComponentManagerImpl.dispose is called")
 
     // dispose components and services
     Disposer.dispose(serviceParentDisposable)
