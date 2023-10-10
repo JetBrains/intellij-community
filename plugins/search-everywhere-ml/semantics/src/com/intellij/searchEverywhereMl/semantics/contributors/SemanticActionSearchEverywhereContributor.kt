@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.contributors
 
+import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
@@ -8,6 +9,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.Companion.ORDERED_PRIORITIES
@@ -19,9 +21,7 @@ import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.ui.JBColor
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.locks.ReentrantLock
 import javax.swing.ListCellRenderer
-import kotlin.concurrent.withLock
 
 
 /**
@@ -61,13 +61,14 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   override fun fetchWeightedElements(pattern: String,
                                      progressIndicator: ProgressIndicator,
                                      consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
-    fetchElementsConcurrently(pattern, progressIndicator, consumer)
+    // We wrap the progressIndicator here to make sure we don't run standard search under the same indicator
+    ProgressManager.getInstance().executeProcessUnderProgress(
+      { fetchElementsConcurrently(pattern, SensitiveProgressWrapper(progressIndicator), consumer) }, progressIndicator)
   }
 
   override fun prepareSemanticDescriptor(descriptor: FoundItemDescriptor<MatchedValue>,
                                          knownItems: MutableList<FoundItemDescriptor<MatchedValue>>,
-                                         mutex: ReentrantLock,
-                                         durationMs: Long): FoundItemDescriptor<MatchedValue>? = mutex.withLock {
+                                         durationMs: Long): () -> FoundItemDescriptor<MatchedValue>? = {
     val knownEqualAction = knownItems.firstOrNull { checkActionsEqual(it.item, descriptor.item) }
     if (knownEqualAction != null) {
       mergeOrSkipAction(descriptor, knownEqualAction, durationMs)
@@ -92,10 +93,9 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   }
 
   override fun prepareStandardDescriptor(descriptor: FoundItemDescriptor<MatchedValue>,
-                                         knownItems: MutableList<FoundItemDescriptor<MatchedValue>>,
-                                         mutex: ReentrantLock): FoundItemDescriptor<MatchedValue> = mutex.withLock {
+                                         knownItems: MutableList<FoundItemDescriptor<MatchedValue>>): () -> FoundItemDescriptor<MatchedValue> = {
     val equal = knownItems.firstOrNull { checkActionsEqual(it.item, descriptor.item) }
-    return if (equal != null) {
+    if (equal != null) {
       if (equal.item.shouldBeMergedIntoAnother()) {
         val mergedElement = descriptor.item.mergeWith(equal.item) as MatchedValue
         FoundItemDescriptor(mergedElement, descriptor.weight + 1)
