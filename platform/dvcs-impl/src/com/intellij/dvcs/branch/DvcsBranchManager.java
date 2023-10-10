@@ -71,13 +71,13 @@ public abstract class DvcsBranchManager<T extends Repository> {
     }
 
     for (DvcsBranchInfo info : excludedFavorites) {
-      T repo = myRepositoryManager.getRepositoryForRootQuick(VcsUtil.getFilePath(info.repoPath, false));
+      T repo = myRepositoryManager.getRepositoryForRootQuick(VcsUtil.getFilePath(info.repoPath, true));
       if (repo == null) continue;
       result.remove(repo, info.sourceName);
     }
 
     for (DvcsBranchInfo info : favorites) {
-      T repo = myRepositoryManager.getRepositoryForRootQuick(VcsUtil.getFilePath(info.repoPath, false));
+      T repo = myRepositoryManager.getRepositoryForRootQuick(VcsUtil.getFilePath(info.repoPath, true));
       if (repo == null) continue;
       result.putValue(repo, info.sourceName);
     }
