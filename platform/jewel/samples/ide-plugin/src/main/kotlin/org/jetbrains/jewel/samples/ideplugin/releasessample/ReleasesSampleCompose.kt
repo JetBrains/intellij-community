@@ -1,6 +1,6 @@
 package org.jetbrains.jewel.samples.ideplugin.releasessample
 
-import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -472,7 +472,7 @@ private fun ReleaseImage(imagePath: String) {
         initialValue = -1f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            tween(durationMillis = 2.seconds.inWholeMilliseconds.toInt(), easing = LinearEasing),
+            tween(durationMillis = 2.seconds.inWholeMilliseconds.toInt(), easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
     )
