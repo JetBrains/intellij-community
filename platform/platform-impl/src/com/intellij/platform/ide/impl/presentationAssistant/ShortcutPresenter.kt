@@ -180,7 +180,7 @@ class ShortcutPresenter : Disposable {
     val subtitle: String?
 
     when {
-      keymap == KeymapKind.WIN || SystemInfo.isMac -> {
+      keymap == KeymapKind.WIN || SystemInfo.isMac || ActionInfoPanel.DEFAULT_FONT.canDisplayUpTo(shortcutText) == -1 -> {
         title = shortcutText
         titleFont = null
       }

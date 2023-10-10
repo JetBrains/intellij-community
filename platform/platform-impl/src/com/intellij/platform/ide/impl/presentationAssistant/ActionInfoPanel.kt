@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
+import java.awt.Font
 import java.awt.font.TextAttribute
 import javax.swing.JPanel
 
@@ -43,14 +44,14 @@ internal class ActionInfoPanel(textData: TextData, private val appearance: Actio
       if (appearance.titleSubtitleGap > 0) top += appearance.titleSubtitleGap
     })
     subtitleLabel.foreground = SUBTITLE_COLOR
-    subtitleLabel.font = JBFont.label().deriveFont(JBUIScale.scale(appearance.subtitleFontSize))
+    subtitleLabel.font = DEFAULT_FONT.deriveFont(JBUIScale.scale(appearance.subtitleFontSize))
 
     updateLabels()
   }
 
   private fun updateLabels() {
     titleLabel.text = textData.title
-    titleLabel.font = (textData.titleFont?.let { JBFont.create(it) } ?: JBFont.label())
+    titleLabel.font = (textData.titleFont?.let { JBFont.create(it) } ?: DEFAULT_FONT)
       .deriveFont(JBUIScale.scale (appearance.titleFontSize))
       .deriveFont(mapOf(TextAttribute.WEIGHT to TextAttribute.WEIGHT_BOLD))
 
@@ -59,6 +60,7 @@ internal class ActionInfoPanel(textData: TextData, private val appearance: Actio
   }
 
   companion object {
+    val DEFAULT_FONT: Font get() = JBFont.label()
     val BACKGROUND = JBColor.namedColor("PresentationAssistant.Popup.background", JBColor.PanelBackground)
     private val TITLE_COLOR = JBColor.namedColor("PresentationAssistant.Popup.foreground", JBColor.foreground())
     private val SUBTITLE_COLOR = JBColor.namedColor("PresentationAssistant.keymapLabel", JBColor.foreground())
