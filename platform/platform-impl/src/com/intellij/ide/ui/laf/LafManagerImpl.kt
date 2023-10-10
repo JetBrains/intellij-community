@@ -105,7 +105,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private var preferredLightThemeId: String? = null
   private var preferredDarkThemeId: String? = null
 
-  private val storedDefaults = HashMap<LafReference?, MutableMap<String, Any?>>()
+  private val storedDefaults = HashMap<String?, MutableMap<String, Any?>>()
   private val lafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> { LafComboBoxModel() }
   private val settingsToolbar = lazy {
     val group = DefaultActionGroup(PreferredLafAction())
@@ -365,12 +365,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  override fun findLaf(reference: LafReference): UIThemeLookAndFeelInfo {
+  override fun findLaf(themeId: String): UIThemeLookAndFeelInfo {
     return UiThemeProviderListManager.getInstance().getDescriptors()
-             .singleOrNull { it.id == reference.themeId }
+             .singleOrNull { it.id == themeId }
              ?.theme
              ?.get()
-           ?: error("Theme not found for themeId: ${reference.themeId}")
+           ?: error("Theme not found for themeId: $themeId")
   }
 
   @Suppress("removal")
@@ -378,7 +378,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   override fun getCurrentUIThemeLookAndFeel(): UIThemeLookAndFeelInfo? = currentTheme
 
-  override fun getLookAndFeelReference(): LafReference = currentTheme!!.let { LafReference(it.name, it.id) }
+  override fun getLookAndFeelReference(): LafReference = currentTheme!!.let {
+    LafReference(it.name, it.id)
+  }
 
   override fun getLookAndFeelCellRenderer(): ListCellRenderer<LafReference> = LafCellRenderer()
 
@@ -618,32 +620,27 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
   private val storedLafFont: Font?
-    get() {
-      val laf = if (currentTheme == null) null else lookAndFeelReference
-      val lafDefaults = storedDefaults.get(laf) ?: return null
-      return lafDefaults.get("Label.font") as Font?
-    }
+    get() = storedDefaults.get(currentTheme?.id)?.get("Label.font") as Font?
 
   private fun restoreOriginalFontDefaults(defaults: UIDefaults) {
-    val laf = if (currentTheme == null) null else lookAndFeelReference
-    val lafDefaults = storedDefaults.get(laf)
+    val lafDefaults = storedDefaults.get(currentTheme?.id)
     if (lafDefaults != null) {
       for (resource in patchableFontResources) {
         defaults.put(resource, lafDefaults.get(resource))
       }
     }
-    setUserScaleFactor(getFontScale(JBFont.label().size.toFloat()))
+    setUserScaleFactor(getFontScale(fontSize = JBFont.label().size.toFloat()))
   }
 
   private fun storeOriginalFontDefaults(defaults: UIDefaults) {
-    val laf = if (currentTheme == null) null else lookAndFeelReference
-    var lafDefaults = storedDefaults.get(laf)
+    val key = currentTheme?.id
+    var lafDefaults = storedDefaults.get(key)
     if (lafDefaults == null) {
       lafDefaults = HashMap()
       for (resource in patchableFontResources) {
         lafDefaults.put(resource, defaults.get(resource))
       }
-      storedDefaults.put(laf, lafDefaults)
+      storedDefaults.put(key, lafDefaults)
     }
   }
 
@@ -774,32 +771,30 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
       val result = ArrayList<AnAction>()
       result.add(Separator.create(separatorText))
-      lafs.mapTo(result) { LafToggleAction(name = it.name, lafInfo = it, isDark = isDark) }
+      lafs.mapTo(result) { LafToggleAction(name = it.name, themeId = it.id, isDark = isDark) }
       return result
     }
   }
 
-  private inner class LafToggleAction(name: @Nls String?,
-                                      private val lafInfo: UIThemeLookAndFeelInfo,
-                                      private val isDark: Boolean) : ToggleAction(name) {
+  private inner class LafToggleAction(name: @Nls String?, private val themeId: String, private val isDark: Boolean) : ToggleAction(name) {
     override fun isSelected(e: AnActionEvent): Boolean {
       return if (isDark) {
-        (preferredDarkThemeId ?: defaultDarkLaf.id) == lafInfo.id
+        (preferredDarkThemeId ?: defaultDarkLaf.id) == themeId
       }
       else {
-        (preferredLightThemeId ?: defaultLightLaf.id) == lafInfo.id
+        (preferredLightThemeId ?: defaultLightLaf.id) == themeId
       }
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       if (isDark) {
-        if (preferredDarkThemeId != lafInfo.id) {
-          preferredDarkThemeId = if (lafInfo.id == defaultDarkLaf.id) null else lafInfo.id
+        if (preferredDarkThemeId != themeId) {
+          preferredDarkThemeId = themeId.takeIf { it != defaultDarkLaf.id }
           detectAndSyncLaf()
         }
       }
-      else if (preferredLightThemeId != lafInfo.id) {
-        preferredLightThemeId = if (lafInfo.id == defaultLightLaf.id) null else lafInfo.id
+      else if (preferredLightThemeId != themeId) {
+        preferredLightThemeId = themeId.takeIf { it != defaultLightLaf.id }
         detectAndSyncLaf()
       }
     }
@@ -810,7 +805,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 }
 
-private class LafCellRenderer : SimpleListCellRenderer<LafManager.LafReference>() {
+private class LafCellRenderer : SimpleListCellRenderer<LafReference>() {
   companion object {
     private val separator: SeparatorWithText = object : SeparatorWithText() {
       override fun paintComponent(g: Graphics) {
@@ -822,24 +817,24 @@ private class LafCellRenderer : SimpleListCellRenderer<LafManager.LafReference>(
     }
   }
 
-  override fun getListCellRendererComponent(list: JList<out LafManager.LafReference>,
-                                            value: LafManager.LafReference,
+  override fun getListCellRendererComponent(list: JList<out LafReference>,
+                                            value: LafReference,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
     return if (value === SEPARATOR) separator else super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
   }
 
-  override fun customize(list: JList<out LafManager.LafReference>,
-                         value: LafManager.LafReference,
+  override fun customize(list: JList<out LafReference>,
+                         value: LafReference,
                          index: Int,
                          selected: Boolean,
                          hasFocus: Boolean) {
-    text = value.toString()
+    text = value.name
   }
 }
 
-private val SEPARATOR = LafManager.LafReference("", null)
+private val SEPARATOR = LafReference(name = "", themeId = "")
 
 private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory() {
   companion object {
@@ -1287,7 +1282,7 @@ internal fun getDefaultLaf(isDark: Boolean): UIThemeLookAndFeelInfo {
   return themeListManager.findThemeById(id) ?: error("Default theme not found(id=$id, isDark=$isDark, isNewUI=$isNewUi)")
 }
 
-private class LafComboBoxModel : CollectionComboBoxModel<LafManager.LafReference>(getAllReferences()) {
+private class LafComboBoxModel : CollectionComboBoxModel<LafReference>(getAllReferences()) {
   override fun setSelectedItem(item: Any?) {
     if (item !== SEPARATOR) {
       super.setSelectedItem(item)
@@ -1295,14 +1290,14 @@ private class LafComboBoxModel : CollectionComboBoxModel<LafManager.LafReference
   }
 }
 
-private fun getAllReferences(): List<LafManager.LafReference> {
-  val result = ArrayList<LafManager.LafReference>()
+private fun getAllReferences(): List<LafReference> {
+  val result = ArrayList<LafReference>()
   for (group in ThemeListProvider.getInstance().getShownThemes()) {
     if (result.isNotEmpty()) {
       result.add(SEPARATOR)
     }
     for (info in group) {
-      result.add(LafManager.LafReference(info.name, info.id))
+      result.add(LafReference(info.name, info.id))
     }
   }
   return result
