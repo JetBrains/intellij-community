@@ -3,7 +3,10 @@ package org.jetbrains.jewel
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,6 +35,7 @@ fun HorizontalSplitLayout(
     dividerColor: Color = IntelliJTheme.globalColors.borders.normal,
     dividerThickness: Dp = 1.dp,
     dividerIndent: Dp = 0.dp,
+    draggableWidth: Dp = 8.dp,
     minRatio: Float = 0f,
     maxRatio: Float = 1f,
     initialDividerPosition: Dp = 300.dp,
@@ -47,8 +51,17 @@ fun HorizontalSplitLayout(
 
         Divider(
             orientation = Orientation.Vertical,
-            modifier = Modifier.width(1.dp)
-                .fillMaxHeight()
+            modifier = Modifier.fillMaxHeight().layoutId("divider"),
+            color = dividerColor,
+            thickness = dividerThickness,
+            startIndent = dividerIndent,
+        )
+
+        second(Modifier.layoutId("second"))
+
+        Box(
+            Modifier.fillMaxHeight()
+                .width(draggableWidth)
                 .draggable(
                     interactionSource = dividerInteractionSource,
                     orientation = ComposeOrientation.Horizontal,
@@ -57,13 +70,8 @@ fun HorizontalSplitLayout(
                     },
                 )
                 .pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
-                .layoutId("divider"),
-            color = dividerColor,
-            thickness = dividerThickness,
-            startIndent = dividerIndent,
+                .layoutId("divider-handle"),
         )
-
-        second(Modifier.layoutId("second"))
     }) { measurables, incomingConstraints ->
         val availableWidth = incomingConstraints.maxWidth
         val actualDividerX = dividerX.coerceIn(0, availableWidth)
@@ -74,7 +82,7 @@ fun HorizontalSplitLayout(
             .measure(Constraints.fixed(dividerThickness.roundToPx(), incomingConstraints.maxHeight))
 
         val firstComponentConstraints =
-            Constraints.fixed((actualDividerX - 1).coerceAtLeast(0), incomingConstraints.maxHeight)
+            Constraints.fixed((actualDividerX).coerceAtLeast(0), incomingConstraints.maxHeight)
         val firstPlaceable = (
             measurables.find { it.layoutId == "first" }
                 ?: error("No first component found. Have you applied the provided Modifier to it?")
@@ -92,10 +100,14 @@ fun HorizontalSplitLayout(
             )
             .measure(secondComponentConstraints)
 
+        val dividerHandlePlaceable = measurables.single { it.layoutId == "divider-handle" }
+            .measure(Constraints.fixedHeight(incomingConstraints.maxHeight))
+
         layout(availableWidth, incomingConstraints.maxHeight) {
             firstPlaceable.placeRelative(0, 0)
-            dividerPlaceable.placeRelative(actualDividerX, 0)
+            dividerPlaceable.placeRelative(actualDividerX - dividerPlaceable.width / 2, 0)
             secondPlaceable.placeRelative(actualDividerX + dividerPlaceable.width, 0)
+            dividerHandlePlaceable.placeRelative(actualDividerX - dividerHandlePlaceable.measuredWidth / 2, 0)
         }
     }
 }
@@ -108,6 +120,7 @@ fun VerticalSplitLayout(
     dividerColor: Color = IntelliJTheme.globalColors.borders.normal,
     dividerThickness: Dp = 1.dp,
     dividerIndent: Dp = 0.dp,
+    draggableWidth: Dp = 8.dp,
     minRatio: Float = 0f,
     maxRatio: Float = 1f,
     initialDividerPosition: Dp = 300.dp,
@@ -123,7 +136,17 @@ fun VerticalSplitLayout(
 
         Divider(
             orientation = Orientation.Horizontal,
-            modifier = Modifier.fillMaxHeight()
+            modifier = Modifier.fillMaxHeight().layoutId("divider"),
+            color = dividerColor,
+            thickness = dividerThickness,
+            startIndent = dividerIndent,
+        )
+
+        second(Modifier.layoutId("second"))
+
+        Box(
+            Modifier.fillMaxWidth()
+                .height(draggableWidth)
                 .draggable(
                     interactionSource = dividerInteractionSource,
                     orientation = ComposeOrientation.Vertical,
@@ -132,13 +155,8 @@ fun VerticalSplitLayout(
                     },
                 )
                 .pointerHoverIcon(PointerIcon(Cursor(Cursor.N_RESIZE_CURSOR)))
-                .layoutId("divider"),
-            color = dividerColor,
-            thickness = dividerThickness,
-            startIndent = dividerIndent,
+                .layoutId("divider-handle"),
         )
-
-        second(Modifier.layoutId("second"))
     }) { measurables, incomingConstraints ->
         val availableHeight = incomingConstraints.maxHeight
         val actualDividerY = dividerY.coerceIn(0, availableHeight)
@@ -167,10 +185,14 @@ fun VerticalSplitLayout(
             )
             .measure(secondComponentConstraints)
 
+        val dividerHandlePlaceable = measurables.single { it.layoutId == "divider-handle" }
+            .measure(Constraints.fixedWidth(incomingConstraints.maxWidth))
+
         layout(incomingConstraints.maxWidth, availableHeight) {
             firstPlaceable.placeRelative(0, 0)
-            dividerPlaceable.placeRelative(0, actualDividerY)
+            dividerPlaceable.placeRelative(0, actualDividerY - dividerPlaceable.height / 2)
             secondPlaceable.placeRelative(0, actualDividerY + dividerPlaceable.height)
+            dividerHandlePlaceable.placeRelative(0, actualDividerY - dividerHandlePlaceable.measuredHeight / 2)
         }
     }
 }
