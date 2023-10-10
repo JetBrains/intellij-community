@@ -14,6 +14,8 @@ fun <T> genericFun(t: T): T = t
 class C {
     fun memberFun(){}
 
+    fun Int.memberExtensionFun(){}
+
     val memberVal = 1
 
     class NestedClass
@@ -43,6 +45,7 @@ abstract class AbstractClass
 // EXIST: { itemText: "memberVal", attributes: "grayed" }
 // EXIST: { itemText: "companionObjectFun", attributes: "grayed" }
 // ABSENT: extensionFun
+// ABSENT: memberExtensionFun
 // ABSENT: extensionVal
 // EXIST: { itemText: "localFun", attributes: "" }
 // ABSENT: local

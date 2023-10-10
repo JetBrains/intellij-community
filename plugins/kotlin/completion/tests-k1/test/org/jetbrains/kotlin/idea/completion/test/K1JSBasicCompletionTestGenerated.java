@@ -485,6 +485,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/callableReference/EmptyQualifier.kt");
             }
 
+            @TestMetadata("EmptyQualifierExtensionFun.kt")
+            public void testEmptyQualifierExtensionFun() throws Exception {
+                runTest("../testData/basic/common/callableReference/EmptyQualifierExtensionFun.kt");
+            }
+
             @TestMetadata("EmptyQualifierInExtensionFun.kt")
             public void testEmptyQualifierInExtensionFun() throws Exception {
                 runTest("../testData/basic/common/callableReference/EmptyQualifierInExtensionFun.kt");
