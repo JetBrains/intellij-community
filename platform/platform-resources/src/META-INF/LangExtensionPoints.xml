@@ -627,6 +627,8 @@
 
     <extensionPoint name="projectExtraDataReceiver" interface="com.intellij.lang.ProjectExtraDataReceiver" dynamic="true"/>
 
+    <extensionPoint name="virtualFileExtraDataReceiver" interface="com.intellij.lang.VirtualFileExtraDataReceiver" dynamic="true"/>
+
     <extensionPoint name="intentionsOrderProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.impl.IntentionsOrderProvider"/>
     </extensionPoint>
