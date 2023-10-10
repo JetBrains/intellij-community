@@ -197,10 +197,6 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     check(updateRequests.tryEmit(Unit))
   }
 
-  override fun updateToolbarActionsImmediately() {
-    toolbar?.updateActionsImmediately()
-  }
-
   override fun paintComponent(g: Graphics) {
     if (mode == ShowMode.MENU && menuBarHeaderTitle.isVisible ||
         toolbarHeaderTitle.parent != null ||

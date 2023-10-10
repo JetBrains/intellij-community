@@ -547,18 +547,6 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     }
   }
 
-  internal fun updateToolbarImmediately() {
-    val delegate = helper.toolbarHolder
-    if (delegate != null) {
-      // The toolbar is in the frame header case.
-      delegate.updateToolbarActionsImmediately()
-    }
-    else {
-      // The toolbar is not in the frame header case.
-      (toolbar as? MainToolbar?)?.updateActionsImmediately()
-    }
-  }
-
   internal fun createAndConfigureStatusBar(frameHelper: ProjectFrameHelper) {
     val statusBar = createStatusBar(frameHelper)
     this.statusBar = statusBar
