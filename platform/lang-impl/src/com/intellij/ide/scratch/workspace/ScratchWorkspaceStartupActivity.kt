@@ -19,7 +19,7 @@ class ScratchWorkspaceStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     RootType.ROOT_EP.addChangeListener({
                                          getEntityBuilderIfNeeded(project)?.also { builder ->
-                                           ApplicationManager.getApplication().invokeLater {
+                                           ApplicationManager.getApplication().invokeAndWait {
                                              WriteAction.run<RuntimeException> { writeBuilder(builder, project) }
                                            }
                                          }
