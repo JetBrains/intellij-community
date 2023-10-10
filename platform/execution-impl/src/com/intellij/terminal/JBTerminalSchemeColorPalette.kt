@@ -14,19 +14,19 @@ import com.jediterm.terminal.ui.AwtTransformers
 
 internal class JBTerminalSchemeColorPalette(private val colorsScheme: EditorColorsScheme) : TerminalColorPalette() {
   private val colorKeys: Array<TextAttributesKey> = if (isBlockTerminalEnabled) {
-    BLOCK_TERMINAL_COLOR_KEYS
+    BlockTerminalColors.KEYS
   }
   else ColoredOutputTypeRegistryImpl.getAnsiColorKeys()
 
   private val defaultForegroundGetter: () -> java.awt.Color? = if (isBlockTerminalEnabled) {
-    { colorsScheme.getColor(BLOCK_TERMINAL_DEFAULT_FOREGROUND) }
+    { colorsScheme.getColor(BlockTerminalColors.BLOCK_TERMINAL_DEFAULT_FOREGROUND) }
   }
   else {
     { colorsScheme.getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY).foregroundColor }
   }
 
   private val defaultBackgroundKey: ColorKey = if (isBlockTerminalEnabled) {
-    BLOCK_TERMINAL_DEFAULT_BACKGROUND
+    BlockTerminalColors.BLOCK_TERMINAL_DEFAULT_BACKGROUND
   }
   else ConsoleViewContentType.CONSOLE_BACKGROUND_KEY
 
@@ -81,33 +81,5 @@ internal class JBTerminalSchemeColorPalette(private val colorsScheme: EditorColo
 
     private val isBlockTerminalEnabled: Boolean
       get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.experimental.ui.new.terminal")
-
-    private val BLOCK_TERMINAL_DEFAULT_FOREGROUND: ColorKey = ColorKey.createColorKey("BLOCK_TERMINAL_DEFAULT_FOREGROUND")
-    private val BLOCK_TERMINAL_DEFAULT_BACKGROUND: ColorKey = ColorKey.createColorKey("BLOCK_TERMINAL_DEFAULT_BACKGROUND")
-
-    private val BLOCK_TERMINAL_COLOR_KEYS: Array<TextAttributesKey>
-      get() = arrayOf(
-        textAttributesKey("BLOCK_TERMINAL_BLACK"),
-        textAttributesKey("BLOCK_TERMINAL_RED"),
-        textAttributesKey("BLOCK_TERMINAL_GREEN"),
-        textAttributesKey("BLOCK_TERMINAL_YELLOW"),
-        textAttributesKey("BLOCK_TERMINAL_BLUE"),
-        textAttributesKey("BLOCK_TERMINAL_MAGENTA"),
-        textAttributesKey("BLOCK_TERMINAL_CYAN"),
-        textAttributesKey("BLOCK_TERMINAL_WHITE"),
-
-        textAttributesKey("BLOCK_TERMINAL_BLACK_BRIGHT"),
-        textAttributesKey("BLOCK_TERMINAL_RED_BRIGHT"),
-        textAttributesKey("BLOCK_TERMINAL_GREEN_BRIGHT"),
-        textAttributesKey("BLOCK_TERMINAL_YELLOW_BRIGHT"),
-        textAttributesKey("BLOCK_TERMINAL_BLUE_BRIGHT"),
-        textAttributesKey("BLOCK_TERMINAL_MAGENTA_BRIGHT"),
-        textAttributesKey("BLOCK_TERMINAL_CYAN_BRIGHT"),
-        textAttributesKey("BLOCK_TERMINAL_WHITE_BRIGHT")
-      )
-
-    private fun textAttributesKey(name: String): TextAttributesKey {
-      return TextAttributesKey.createTextAttributesKey(name)
-    }
   }
 }

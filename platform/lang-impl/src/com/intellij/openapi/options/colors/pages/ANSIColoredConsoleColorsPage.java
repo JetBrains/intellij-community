@@ -14,10 +14,14 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
+import com.intellij.terminal.BlockTerminalColors;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.ui.EditorCustomization;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -65,7 +69,7 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
       <stdsys>Process finished with exit code 1</stdsys>
       """;
 
-  private static final AttributesDescriptor[] ATTRS = {
+  private static AttributesDescriptor[] ATTRS = {
     new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stdout"), ConsoleViewContentType.NORMAL_OUTPUT_KEY),
     new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stderr"), ConsoleViewContentType.ERROR_OUTPUT_KEY),
     new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stdin"), ConsoleViewContentType.USER_INPUT_KEY),
@@ -100,6 +104,11 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
                              JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY),
   };
 
+  private static ColorDescriptor[] COLORS = {
+    new ColorDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.background"),
+                        ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, ColorDescriptor.Kind.BACKGROUND),
+  };
+
   private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
   static {
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("stdsys", ConsoleViewContentType.SYSTEM_OUTPUT_KEY);
@@ -132,11 +141,61 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("white", ConsoleHighlighter.WHITE);
 
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("terminalCommandToRunUsingIDE", JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY);
+
+    if (ExperimentalUI.isNewUI() && Registry.is("ide.experimental.ui.new.terminal", false)) {
+      AttributesDescriptor[] terminalAttrs = getBlockTerminalAttributes();
+      ATTRS = ArrayUtil.mergeArrays(ATTRS, terminalAttrs);
+      ColorDescriptor[] terminalColors = getBlockTerminalColors();
+      COLORS = ArrayUtil.mergeArrays(COLORS, terminalColors);
+    }
   }
 
-  private static final ColorDescriptor[] COLORS = {
-    new ColorDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.background"), ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, ColorDescriptor.Kind.BACKGROUND),
-  };
+  private static AttributesDescriptor[] getBlockTerminalAttributes() {
+    return new AttributesDescriptor[]{
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.black"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_BLACK()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.red"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_RED()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.green"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_GREEN()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.yellow"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_YELLOW()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.blue"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_BLUE()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.magenta"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_MAGENTA()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.cyan"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_CYAN()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.white"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_WHITE()),
+
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.blackBright"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_BLACK_BRIGHT()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.redBright"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_RED_BRIGHT()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.greenBright"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_GREEN_BRIGHT()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.yellowBright"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_YELLOW_BRIGHT()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.blueBright"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_BLUE_BRIGHT()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.magentaBright"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_MAGENTA_BRIGHT()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.cyanBright"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_CYAN_BRIGHT()),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.whiteBright"),
+                               BlockTerminalColors.getBLOCK_TERMINAL_WHITE_BRIGHT()),
+    };
+  }
+
+  private static ColorDescriptor[] getBlockTerminalColors() {
+    return new ColorDescriptor[]{
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.defaultForeground"),
+                          BlockTerminalColors.getBLOCK_TERMINAL_DEFAULT_FOREGROUND(), ColorDescriptor.Kind.FOREGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.defaultBackground"),
+                          BlockTerminalColors.getBLOCK_TERMINAL_DEFAULT_BACKGROUND(), ColorDescriptor.Kind.BACKGROUND),
+    };
+  }
 
   @Override
   public @NotNull Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
