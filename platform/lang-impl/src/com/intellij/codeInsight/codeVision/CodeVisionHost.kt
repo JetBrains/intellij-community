@@ -268,7 +268,7 @@ open class CodeVisionHost(val project: Project) {
   open fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
     if (actionId == settingsLensProviderId) {
       val provider = getProviderById(entry.providerId)
-      openCodeVisionSettings(provider?.groupId)
+      openCodeVisionSettings(provider)
       return
     }
 
@@ -520,7 +520,8 @@ open class CodeVisionHost(val project: Project) {
     }
   }
 
-  protected open fun openCodeVisionSettings(groupId: String? = null) {
+  protected open fun openCodeVisionSettings(provider: CodeVisionProvider<*>? = null) {
+    val groupId = provider?.groupId
     showInlaySettings(project, Language.ANY) {
       if (groupId == null) return@showInlaySettings it.group == InlayGroup.CODE_VISION_GROUP_NEW
 
