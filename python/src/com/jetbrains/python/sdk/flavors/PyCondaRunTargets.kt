@@ -12,9 +12,9 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.packaging.CondaExecutablesLocator
 import com.jetbrains.python.packaging.IndicatedProcessOutputListener
 import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.packaging.getCondaBasePython
 import com.jetbrains.python.sdk.PySdkUtil
 
 @Deprecated("Do not run conda directly, use  configureBuilderToRunPythonOnTarget")
@@ -52,7 +52,7 @@ private fun runOnTarget(targetEnvironmentRequest: TargetEnvironmentRequest,
 
 @Deprecated("Do not run conda directly, use  configureBuilderToRunPythonOnTarget")
 private fun readCondaEnv(condaExecutable: String): Map<String, String>? {
-  return CondaExecutablesLocator.getCondaBasePython(condaExecutable)?.let { PySdkUtil.activateVirtualEnv(it) }
+  return getCondaBasePython(condaExecutable)?.let { PySdkUtil.activateVirtualEnv(it) }
 }
 
 @Throws(PyExecutionException::class)

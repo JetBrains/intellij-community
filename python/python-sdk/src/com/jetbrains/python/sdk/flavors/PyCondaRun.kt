@@ -56,7 +56,7 @@ private fun run(executable: String, arguments: List<String>, env: Map<String, St
 }
 
 private fun readCondaEnv(condaExecutable: String): Map<String, String>? {
-  return CondaExecutablesLocator.getCondaBasePython(condaExecutable)?.let { PySdkUtil.activateVirtualEnv(it) }
+  return getCondaBasePython(condaExecutable)?.let { PySdkUtil.activateVirtualEnv(it) }
 }
 
 @Throws(ExecutionException::class)
