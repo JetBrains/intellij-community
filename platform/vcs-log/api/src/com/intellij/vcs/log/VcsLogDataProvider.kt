@@ -20,6 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile
 /**
  */
 interface VcsLogDataProvider {
+  val fullCommitDetailsCache: VcsLogCommitDataCache<VcsFullCommitDetails>
+  val commitMetadataCache: VcsLogCommitDataCache<VcsCommitMetadata>
+
   fun getCommitId(commitIndex: Int): CommitId?
   fun getCommitIndex(hash: Hash, root: VirtualFile): Int
 }

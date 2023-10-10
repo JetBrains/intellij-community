@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.table
 
 import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.VcsLogDataProvider
 import org.jetbrains.annotations.ApiStatus
@@ -42,4 +43,8 @@ interface VcsLogCommitListModel {
 
 fun VcsLogCommitListModel.getCommitId(row: Int): CommitId? {
   return dataProvider.getCommitId(getId(row))
+}
+
+fun VcsLogCommitListModel.getCachedCommitMetadata(row: Int): VcsCommitMetadata? {
+  return dataProvider.commitMetadataCache.getCachedData(getId(row))
 }

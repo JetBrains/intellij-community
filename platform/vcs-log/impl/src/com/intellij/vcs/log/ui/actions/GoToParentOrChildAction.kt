@@ -17,7 +17,9 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector.PARENT_COMMIT
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
-import com.intellij.vcs.log.ui.table.GraphTableModel
+import com.intellij.vcs.log.ui.table.VcsLogCommitListModel
+import com.intellij.vcs.log.ui.table.getCachedCommitMetadata
+import com.intellij.vcs.log.ui.table.getCommitId
 import java.awt.event.KeyEvent
 
 open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
@@ -82,8 +84,8 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
   }
 
   @NlsActions.ActionText
-  private fun GraphTableModel.getActionText(row: Int): String {
-    val commitMetadata = logData.miniDetailsGetter.getCachedData(getId(row))
+  private fun VcsLogCommitListModel.getActionText(row: Int): String {
+    val commitMetadata = getCachedCommitMetadata(row)
     if (commitMetadata != null) {
       val time: Long = commitMetadata.authorTime
       val commitMessage = "\"" + StringUtil.shortenTextWithEllipsis(commitMetadata.subject,

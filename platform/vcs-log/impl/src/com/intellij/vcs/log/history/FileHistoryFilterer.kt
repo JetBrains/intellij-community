@@ -54,7 +54,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
   private val logProviders = logData.logProviders
   private val storage = logData.storage
   private val index = logData.index
-  private val vcsLogFilterer = VcsLogFiltererImpl(logProviders, storage, logData.topCommitsCache, logData.commitDetailsGetter, index)
+  private val vcsLogFilterer = VcsLogFiltererImpl(logProviders, storage, logData.topCommitsCache, logData.fullCommitDetailsCache, index)
 
   private var fileHistoryTask: FileHistoryTask? = null
 
