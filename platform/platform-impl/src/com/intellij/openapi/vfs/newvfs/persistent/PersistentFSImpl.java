@@ -70,8 +70,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * Eager VFS saving causes a lot of issues with dispose ordering. So far disable it by default -- until we'll
    * be able to sort that out.
    */
-  private static final boolean SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN =
-    getBooleanProperty("PersistentFSImpl.SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN", false);
+  private static final boolean SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN = getBooleanProperty("PersistentFSImpl.SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN", false);
+  private static final boolean SAVE_VFS_REGULARLY_ON_UNEXPECTED_SHUTDOWN = getBooleanProperty("PersistentFSImpl.SAVE_VFS_REGULARLY_ON_UNEXPECTED_SHUTDOWN", true);
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
@@ -140,7 +140,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN && !app.isUnitTestMode()) {
       ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
     }
-    else {
+    else if(SAVE_VFS_REGULARLY_ON_UNEXPECTED_SHUTDOWN){
       ShutDownTracker.getInstance().registerShutdownTask(this::disconnect);
     }
   }
