@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName")
-
 package org.jetbrains.intellij.build.impl
 
 import com.fasterxml.jackson.jr.ob.JSON
@@ -41,7 +39,7 @@ import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Predicate
-import kotlin.streams.asSequence
+import kotlin.io.path.useLines
 
 /**
  * Assembles output of modules to platform JARs (in [BuildPaths.distAllDir]/lib directory),
@@ -114,11 +112,8 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
         buildOsSpecificBundledPlugins(state, pluginLayouts, isUpdateFromSources, buildPlatformJob, context)
       },
       async {
-        buildNonBundledPlugins(pluginsToPublish = state.pluginsToPublish,
-                               compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles,
-                               buildPlatformLibJob = buildPlatformJob,
-                               state = state,
-                               context = context)
+        val compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles
+        buildNonBundledPlugins(state.pluginsToPublish, compressPluginArchive, buildPlatformJob, state, context)
       },
       if (antDir == null) null else async(Dispatchers.IO) { copyAnt(antDir, antTargetFile!!, context) }
     )
@@ -162,7 +157,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
 }
 
 /**
- * Validates module structure to be ensure all module dependencies are included
+ * Validates module structure to be ensure all module dependencies are included.
  */
 fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
   if (context.options.validateModuleStructure) {
@@ -170,14 +165,12 @@ fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
   }
 }
 
-fun getProductModules(state: DistributionBuilderState): List<String> {
-  // filter out jars with relative paths in name
-  return state.platform.includedModules.asSequence()
-    .filter { !it.relativeOutputFile.contains('\\') && !it.relativeOutputFile.contains('/') }
-    .map { it.moduleName }
-    .distinct()
-    .toList()
-}
+fun getProductModules(state: DistributionBuilderState): List<String> =
+  state.platform.includedModules.asSequence()
+  .filter { !it.relativeOutputFile.contains('\\') && !it.relativeOutputFile.contains('/') }  // filter out jars with relative paths in the name
+  .map { it.moduleName }
+  .distinct()
+  .toList()
 
 private fun getPluginDirectories(context: BuildContext, isUpdateFromSources: Boolean): Map<SupportedDistribution, Path> =
   if (isUpdateFromSources)
@@ -393,7 +386,7 @@ internal suspend fun generateProjectStructureMapping(context: BuildContext, plat
                                                       productLayout = context.productProperties.productLayout)
     val entries = ArrayList<DistributionFileEntry>()
     for (plugin in allPlugins) {
-      if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, withEphemeral = true, context = context)) {
+      if (satisfiesBundlingRequirements(plugin, osFamily = null, arch = null, withEphemeral = true, context)) {
         val targetDirectory = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(plugin.directoryName)
         entries.addAll(layoutDistribution(layout = plugin,
                                           platformLayout = platformLayout,
@@ -460,8 +453,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
       if (!plugin.pathsToScramble.isEmpty()) {
         val attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)
         if (scrambleTool == null) {
-          Span.current().addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled",
-                                  attributes)
+          Span.current().addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled", attributes)
         }
         else if (isScramblingSkipped) {
           Span.current().addEvent("skip scrambling plugin because step is disabled", attributes)
@@ -514,11 +506,10 @@ private suspend fun buildPlatformSpecificPluginResources(
     }
 }
 
-private fun getAtMostTwoNonHiddenChildren(outDir: Path): List<Path> {
-  return Files.newDirectoryStream(outDir).use { stream ->
-    stream.asSequence().filter { !Files.isHidden(it) && !it.fileName.startsWith(".") }.take(2).toList()
+private fun getAtMostTwoNonHiddenChildren(outDir: Path): List<Path> =
+  Files.newDirectoryStream(outDir).use { stream ->
+    stream.asSequence().filter { !it.fileName.startsWith(".") && !Files.isHidden(it) }.take(2).toList()
   }
-}
 
 private const val PLUGINS_DIRECTORY = "plugins"
 private val PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE: Comparator<PluginLayout> = compareBy { it.mainModule }
@@ -534,7 +525,7 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
   val pluginLayoutsByMainModule = pluginLayouts.groupBy { it.mainModule }
   val result = createPluginLayoutSet(modules.size)
   for (moduleName in modules) {
-    val customLayouts = pluginLayoutsByMainModule.get(moduleName)
+    val customLayouts = pluginLayoutsByMainModule[moduleName]
     if (customLayouts == null) {
       check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.pluginAuto(listOf(moduleName)))) {
         "Plugin layout for module $moduleName is already added (duplicated module name?)"
@@ -551,9 +542,8 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
   return result
 }
 
-private fun basePath(buildContext: BuildContext, moduleName: String): Path {
-  return Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
-}
+private fun basePath(buildContext: BuildContext, moduleName: String): Path =
+  Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
 
 suspend fun buildLib(moduleOutputPatcher: ModuleOutputPatcher,
                      platform: PlatformLayout,
@@ -602,9 +592,8 @@ private fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatche
 }
 
 @VisibleForTesting
-fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, context: BuildContext): Path {
-  return context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
-}
+fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, context: BuildContext): Path =
+  context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
 
 fun checkOutputOfPluginModules(mainPluginModule: String,
                                includedModules: Collection<ModuleItem>,
@@ -617,7 +606,7 @@ fun checkOutputOfPluginModules(mainPluginModule: String,
       val moduleName = item.moduleName
       if (containsFileInOutput(moduleName = moduleName,
                                filePath = "META-INF/plugin.xml",
-                               excludes = moduleExcludes.get(moduleName) ?: emptyList(),
+                               excludes = moduleExcludes[moduleName] ?: emptyList(),
                                context = context)) {
         modulesWithPluginXml.add(moduleName)
       }
@@ -635,7 +624,7 @@ fun checkOutputOfPluginModules(mainPluginModule: String,
     if (module == "intellij.java.guiForms.rt" ||
         !containsFileInOutput(moduleName = module,
                               filePath = "com/intellij/uiDesigner/core/GridLayoutManager.class",
-                              excludes = moduleExcludes.get(module) ?: emptyList(),
+                              excludes = moduleExcludes[module] ?: emptyList(),
                               context = context)) {
       "Runtime classes of GUI designer must not be packaged to \'$module\' module in \'$mainPluginModule\' plugin, " +
       "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
@@ -669,27 +658,23 @@ fun getPluginAutoUploadFile(context: BuildContext): Path? {
   }
 }
 
-fun readPluginAutoUploadFile(autoUploadFile: Path): Collection<String> {
-  val config = Files.lines(autoUploadFile).use { lines ->
+fun readPluginAutoUploadFile(autoUploadFile: Path): Collection<String> =
+  autoUploadFile.useLines { lines ->
     lines
-      .asSequence()
       .map { StringUtil.split(it, "//", true, false)[0] }
       .map { StringUtil.split(it, "#", true, false)[0].trim() }
       .filter { !it.isEmpty() }
       .toCollection(TreeSet(String.CASE_INSENSITIVE_ORDER))
   }
 
-  return config
-}
-
 private suspend fun scramble(platform: PlatformLayout, context: BuildContext) {
   val tool = context.proprietaryBuildTools.scrambleTool
   if (tool == null) {
     Span.current().addEvent("skip scrambling because `scrambleTool` isn't defined")
-    return
   }
-
-  tool.scramble(platform, context)
+  else{
+    tool.scramble(platform, context)
+  }
 }
 
 private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildContext): List<DistributionFileEntry> {
@@ -705,9 +690,7 @@ private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildCon
                 sources.add(ZipSource(file = file) { result.add(ProjectLibraryEntry(antTargetFile, libraryData, file, it)) })
                 false
               }
-              else {
-                true
-              }
+              else true
             })
     sources.sort()
     buildJar(targetFile = antTargetFile, sources = sources)
@@ -890,11 +873,12 @@ suspend fun layoutDistribution(layout: BaseLayout,
       }
     })
 
-    if (!context.options.skipCustomResourceGenerators && copyFiles &&
-        (!layout.resourcePaths.isEmpty() || (layout is PluginLayout && !layout.resourceGenerators.isEmpty()))) {
+    if (copyFiles &&
+        !context.options.skipCustomResourceGenerators &&
+        (layout.resourcePaths.isNotEmpty() || layout is PluginLayout && !layout.resourceGenerators.isEmpty())) {
       tasks.add(async {
         spanBuilder("pack additional resources").useWithScope2 {
-          layoutAdditionalResources(layout = layout, context = context, targetDirectory = targetDirectory)
+          layoutAdditionalResources(layout, context, targetDirectory)
           emptyList()
         }
       })
@@ -1033,13 +1017,11 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
 }
 
 private fun checkModuleExcludes(moduleExcludes: Map<String, List<String>>, context: CompilationContext) {
-  for ((module, value) in moduleExcludes) {
-    for (pattern in value) {
-      check(Files.exists(context.getModuleOutputDir(context.findRequiredModule(module)))) {
-        "There are excludes defined for module `$module`, but the module wasn't compiled;" +
-        " most probably it means that \'$module\' isn\'t include into the product distribution " +
-        "so it makes no sense to define excludes for it."
-      }
+  moduleExcludes.keys.forEach { module ->
+    check(Files.exists(context.getModuleOutputDir(context.findRequiredModule(module)))) {
+      "There are excludes defined for module '${module}', but the module wasn't compiled;" +
+      " most probably it means that '${module}' isn't included into the product distribution," +
+      " so it doesn't make sense to define excludes for it."
     }
   }
 }
@@ -1187,7 +1169,7 @@ suspend fun buildSearchableOptions(ideClassPath: Set<String>,
     BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
-    // It'll process all UI elements in `Settings` dialog and build index for them.
+    // It'll process all UI elements in the `Settings` dialog and build an index for them.
     runApplicationStarter(context = context,
                           tempDir = context.paths.tempDir.resolve("searchableOptions"),
                           ideClasspath = ideClassPath,
@@ -1204,7 +1186,6 @@ suspend fun buildSearchableOptions(ideClassPath: Set<String>,
   }
 
   span.setAttribute(AttributeKey.longKey("moduleCountWithSearchableOptions"), modules.size)
-  span.setAttribute(AttributeKey.stringArrayKey("modulesWithSearchableOptions"),
-                    modules.map { targetDirectory.relativize(it).toString() })
+  span.setAttribute(AttributeKey.stringArrayKey("modulesWithSearchableOptions"), modules.map { targetDirectory.relativize(it).toString() })
   return targetDirectory
 }

@@ -262,7 +262,8 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         }
         runProcess(
           args = listOf(
-            "docker", "run", "--rm", "--volume=$snapcraftConfig:/build/snapcraft.yaml:ro",
+            "docker", "run", "--rm",
+            "--volume=$snapcraftConfig:/build/snapcraft.yaml:ro",
             "--volume=$snapDir/$snapName.desktop:/build/snap/gui/$snapName.desktop:ro",
             "--volume=$snapDir/$snapName.png:/build/prime/meta/gui/icon.png:ro",
             "--volume=$snapDir/result:/build/result",
@@ -278,7 +279,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           workingDir = snapDir,
           timeout = context.options.snapDockerBuildTimeoutMin.minutes,
         )
-        val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifactName!!), context.paths.artifactDir)
+        val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifactName), context.paths.artifactDir)
         context.notifyArtifactBuilt(snapArtifactPath)
         checkExecutablePermissions(unSquashSnap(snapArtifactPath), root = "", includeRuntime = true, arch = arch)
       }

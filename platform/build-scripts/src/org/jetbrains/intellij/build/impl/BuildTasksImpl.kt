@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("BlockingMethodInNonBlockingContext")
-
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -585,7 +583,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
           context.builtinModule = builtinModuleData
           builtinModuleData
         }
-        catch (e: NoSuchFileException) {
+        catch (_: NoSuchFileException) {
           throw IllegalStateException("Failed to build provided modules list: $providedModuleFile doesn\'t exist")
         }
       }
@@ -1095,19 +1093,12 @@ private fun checkPlatformSpecificPluginResources(pluginLayouts: List<PluginLayou
   }
 }
 
-fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context: BuildContext): OsSpecificDistributionBuilder? {
-  return when (os) {
-    OsFamily.WINDOWS -> WindowsDistributionBuilder(context = context,
-                                                   customizer = context.windowsDistributionCustomizer ?: return null,
-                                                   ideaProperties = ideaProperties)
-    OsFamily.LINUX -> LinuxDistributionBuilder(context = context,
-                                               customizer = context.linuxDistributionCustomizer ?: return null,
-                                               ideaProperties = ideaProperties)
-    OsFamily.MACOS -> MacDistributionBuilder(context = context,
-                                             customizer = (context as BuildContextImpl).macDistributionCustomizer ?: return null,
-                                             ideaProperties = ideaProperties)
+fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context: BuildContext): OsSpecificDistributionBuilder? =
+  when (os) {
+    OsFamily.WINDOWS -> context.windowsDistributionCustomizer?.let { WindowsDistributionBuilder(context, it, ideaProperties) }
+    OsFamily.MACOS -> context.macDistributionCustomizer?.let { MacDistributionBuilder(context, it, ideaProperties) }
+    OsFamily.LINUX -> context.linuxDistributionCustomizer?.let { LinuxDistributionBuilder(context, it, ideaProperties) }
   }
-}
 
 // keep in sync with AppUIUtil#getFrameClass
 internal fun getLinuxFrameClass(context: BuildContext): String {

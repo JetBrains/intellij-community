@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -29,7 +28,7 @@ class BuildContextImpl(
   override val productProperties: ProductProperties,
   override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
   override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
-  internal val macDistributionCustomizer: MacDistributionCustomizer?,
+  override val macDistributionCustomizer: MacDistributionCustomizer?,
   override val proprietaryBuildTools: ProprietaryBuildTools,
 ) : BuildContext, CompilationContext by compilationContext {
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
@@ -300,20 +299,18 @@ class BuildContextImpl(
 
   override fun addExtraExecutablePattern(os: OsFamily, pattern: String) {
     extraExecutablePatterns.updateAndGet { prev ->
-      prev.put(os, (prev.get(os) ?: persistentListOf()).add(pattern))
+      prev.put(os, (prev[os] ?: persistentListOf()).add(pattern))
     }
   }
 
-  override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get().get(os) ?: emptyList()
+  override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get()[os] ?: emptyList()
 }
 
 private fun createBuildOutputRootEvaluator(projectHome: Path,
                                            productProperties: ProductProperties,
                                            buildOptions: BuildOptions): (JpsProject) -> Path {
   return { project ->
-    val appInfo = ApplicationInfoPropertiesImpl(project = project,
-                                                productProperties = productProperties,
-                                                buildOptions = buildOptions)
+    val appInfo = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions)
     projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
   }
 }
@@ -338,6 +335,5 @@ private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, S
     }
 }
 
-internal fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {
-  return Files.readString(communityHome.communityRoot.resolve("build.txt")).trim { it <= ' ' }
-}
+internal fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String =
+  Files.readString(communityHome.communityRoot.resolve("build.txt")).trim { it <= ' ' }

@@ -44,10 +44,10 @@ class PluginBundlingRestrictions private constructor(
     val EPHEMERAL = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), PluginDistribution.ALL)
 
     /**
-     * Use for the plugin version which is uploaded to marketplace, since marketplace does not support per-OS/ARCH plugins.
+     * Use for the plugin version which is uploaded to the Marketplace, since the latter does not support per-OS/ARCH plugins.
      * Bundled plugins must also have other PluginLayouts with different restrictions.
      *
-     * If plugin is identical for both bundled and marketplace-uploaded versions, use [NONE] instead.
+     * If bundled and marketplace-uploaded versions of the plugin are identical, use [NONE] instead.
      */
     @JvmField
     val MARKETPLACE = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), PluginDistribution.ALL)
