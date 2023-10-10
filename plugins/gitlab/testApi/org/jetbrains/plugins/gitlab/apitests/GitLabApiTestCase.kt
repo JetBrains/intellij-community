@@ -23,8 +23,8 @@ import java.time.Duration
 import kotlin.io.path.isDirectory
 import kotlin.io.path.writeText
 
-typealias VersionCheck = (GitLabVersion) -> Boolean
-typealias MetadataCheck = (GitLabServerMetadata) -> Boolean
+typealias VersionPredicate = (GitLabVersion) -> Boolean
+typealias MetadataPredicate = (GitLabServerMetadata) -> Boolean
 
 @TestApplication
 abstract class GitLabApiTestCase {
@@ -121,8 +121,8 @@ abstract class GitLabApiTestCase {
     /**
      * Checks that the edition is exactly the given edition.
      */
-    fun checkMetadata(metadataCheck: MetadataCheck) {
-      Assumptions.assumeTrue(metadataCheck(metadata), "Skipped on metadata: $metadata")
+    fun checkMetadata(metadataPredicate: MetadataPredicate) {
+      Assumptions.assumeTrue(metadataPredicate(metadata), "Skipped on metadata: $metadata")
     }
 
     /**
@@ -132,8 +132,8 @@ abstract class GitLabApiTestCase {
      *
      * Used at the start of an API test method.
      */
-    fun checkVersion(versionCheck: VersionCheck) {
-      Assumptions.assumeTrue(versionCheck(version), "Version not in range: $version")
+    fun checkVersion(versionPredicate: VersionPredicate) {
+      Assumptions.assumeTrue(versionPredicate(version), "Version not in range: $version")
     }
 
     /**
@@ -285,13 +285,13 @@ abstract class GitLabApiTestCase {
       throw RuntimeException()
     }
 
-    fun after(version: GitLabVersion): VersionCheck =
+    fun after(version: GitLabVersion): VersionPredicate =
       { version <= it }
 
-    fun until(version: GitLabVersion): VersionCheck =
+    fun until(version: GitLabVersion): VersionPredicate =
       { it < version }
 
-    fun inRange(start: GitLabVersion, end: GitLabVersion): VersionCheck =
+    fun inRange(start: GitLabVersion, end: GitLabVersion): VersionPredicate =
       { start <= it && it < end }
   }
 
