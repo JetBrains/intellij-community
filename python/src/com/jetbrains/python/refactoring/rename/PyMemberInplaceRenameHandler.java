@@ -2,8 +2,6 @@
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -12,6 +10,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,16 +25,14 @@ public class PyMemberInplaceRenameHandler extends MemberInplaceRenameHandler {
       nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset() - 1);
     }
 
-    if (nameSuggestionContext != null && PyUtil.isInitOrNewMethod(nameSuggestionContext.getParent())) return false;
-
     if (element == null && LookupManager.getActiveLookup(editor) != null) {
       element = PsiTreeUtil.getParentOfType(nameSuggestionContext, PsiNamedElement.class);
     }
-    final RefactoringSupportProvider
-      supportProvider = element == null ? null : LanguageRefactoringSupport.INSTANCE.forContext(element);
-    return editor.getSettings().isVariableInplaceRenameEnabled()
-           && supportProvider != null
-           && element instanceof PsiNameIdentifierOwner;
+    if (element == null) return false;
+
+    return editor.getSettings().isVariableInplaceRenameEnabled() &&
+           element instanceof PsiNameIdentifierOwner &&
+           element instanceof PyElement;
   }
 
   @Override
