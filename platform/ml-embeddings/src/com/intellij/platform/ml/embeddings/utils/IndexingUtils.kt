@@ -8,10 +8,10 @@ import kotlin.math.sqrt
 private const val SEPARATOR = "~"
 
 private object SplittingRegExps {
-  val wordsEndingLocations = arrayOf(
+  val wordsEndingLocations: List<Regex> = arrayOf(
     "(?<=[A-Za-z])(?=[A-Z][a-z])", "[^\\w\\s]", "[_\\-]").map { it.toRegex() }
 
-  val boundDigitsLocation = "(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)".toRegex()
+  val boundDigitsLocation: Regex = "(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)".toRegex()
 }
 
 fun splitIdentifierIntoTokens(identifier: String): List<String> {
