@@ -22,7 +22,7 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
 
   private static final Logger LOG = Logger.getInstance(WaitForContributorsListenerWrapper.class);
 
-  static final long DEFAULT_WAIT_TIMEOUT_MS = 3000;
+  static final long DEFAULT_WAIT_TIMEOUT_MS = 2000;
   static final long DEFAULT_THROTTLING_TIMEOUT_MS = 100;
 
   private final Map<SearchEverywhereContributor<?>, Boolean> contributorsMap = new HashMap<>();
@@ -54,8 +54,9 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
   public void searchStarted(@NotNull String pattern, @NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
     resetState(contributors);
     delegateListener.searchStarted(pattern, contributors);
-    long timeout = contributors.size() > 1 ? waitTimeoutMs : throttlingTimeoutMs;
-    scheduleFlush(timeout);
+    boolean multiContributor = contributors.size() > 1;
+    long timeout = multiContributor ? waitTimeoutMs : throttlingTimeoutMs;
+    scheduleFlush(timeout, multiContributor);
   }
 
   @Override
@@ -68,13 +69,14 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
   @Override
   public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
     buffer.addElements(list);
-    scheduleFlush(throttlingTimeoutMs);
+    scheduleFlush(throttlingTimeoutMs, false);
+    ContainerUtil.map2SetNotNull(list, info -> info.contributor).forEach(this::markContributorAndCheckFlush);
   }
 
   @Override
   public void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
     buffer.removeElements(list);
-    scheduleFlush(throttlingTimeoutMs);
+    scheduleFlush(throttlingTimeoutMs, false);
   }
 
   @Override
@@ -104,11 +106,11 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
     if (flushFuture != null) flushFuture.cancel(false);
   }
 
-  private void scheduleFlush(long timeoutMs) {
+  private void scheduleFlush(long timeoutMs, boolean logIfNotFinished) {
     if (flushFuture != null && !flushFuture.isDone()) return;
 
     Runnable command = () -> {
-      logNonFinished();
+      if (logIfNotFinished) logNonFinished(timeoutMs);
       buffer.flushBuffer(delegateListener);
       listModel.freezeElements();
     };
@@ -116,12 +118,12 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
     flushFuture = executorService.schedule(command, timeoutMs, TimeUnit.MILLISECONDS);
   }
 
-  private void logNonFinished() {
+  private void logNonFinished(long timeoutMs) {
     contributorsMap.forEach((contributor, finished) -> {
       if (!finished) {
         LOG.warn("Contributor '" + contributor.getSearchProviderId() +
                  "' did not finish search for '" + mySearchPattern.get() + "'" +
-                 " in " + waitTimeoutMs +"ms. Maybe it should implement PossibleSlowContributor interface?");
+                 " in " + timeoutMs +"ms. Maybe it should implement PossibleSlowContributor interface?");
       }
     });
   }
