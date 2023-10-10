@@ -60,8 +60,10 @@ internal class InlineCompletionDocumentListener(private val editor: Editor) : Bu
     if (lineSeparatorsNumber == fragment.length) {
       return true
     }
-    val startOffset = document.getLineStartOffset(document.getLineNumber(offset + newLength))
-    return startOffset == offset + lineSeparatorsNumber
+    val lineNumber = document.getLineNumber(offset + newLength)
+    val startOffset = document.getLineStartOffset(lineNumber)
+    val endOffset = document.getLineEndOffset(lineNumber)
+    return startOffset == offset + lineSeparatorsNumber && endOffset == offset + newLength
   }
 
   fun isEnabled(event: DocumentEvent): Boolean {
