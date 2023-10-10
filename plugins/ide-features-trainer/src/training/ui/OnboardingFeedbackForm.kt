@@ -213,7 +213,6 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     val collectedData = buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, onboardingFeedbackData.feedbackReportId)
       put("format_version", FEEDBACK_JSON_VERSION + onboardingFeedbackData.additionalFeedbackFormatVersion)
-      put("email", if (emailCheckBox.isSelected) emailTextField.text else "")
       for (function in saver) {
         function()
       }
