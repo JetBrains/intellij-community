@@ -1,7 +1,7 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -16,11 +16,11 @@ abstract class FileContentBasedEmbeddingsStorage<T : IndexableEntity>(project: P
   : DiskSynchronizedEmbeddingsStorage<T>(project, cs), Disposable {
   abstract fun traversePsiFile(file: PsiFile): List<T>
 
-  protected fun collectEntities(fileChangeListener: SemanticSearchFileContentChangeListener<T>): List<T> {
+  protected suspend fun collectEntities(fileChangeListener: SemanticSearchFileContentChangeListener<T>): List<T> {
     val psiManager = PsiManager.getInstance(project)
     // It's important that we do not block write actions here:
     // If the write action is invoked, the read action is restarted
-    return ReadAction.nonBlocking<List<T>> {
+    return readAction {
       buildList {
         ProjectRootManager.getInstance(project).contentSourceRoots.forEach { root ->
           VfsUtilCore.iterateChildrenRecursively(root, null) { virtualFile ->
@@ -36,7 +36,7 @@ abstract class FileContentBasedEmbeddingsStorage<T : IndexableEntity>(project: P
           }
         }
       }
-    }.executeSynchronously()
+    }
   }
 
   override fun dispose() {}

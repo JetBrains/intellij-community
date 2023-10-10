@@ -1,7 +1,7 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -18,7 +18,6 @@ import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
@@ -56,18 +55,17 @@ class FileEmbeddingsStorage(project: Project, private val cs: CoroutineScope)
 
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInFilesTab
 
-  @RequiresBackgroundThread
   override suspend fun getIndexableEntities(): List<IndexableFile> {
     // It's important that we do not block write actions here:
     // If the write action is invoked, the read action is restarted
-    return ReadAction.nonBlocking<List<IndexableFile>> {
+    return readAction {
       buildList {
         ProjectFileIndex.getInstance(project).iterateContent {
           if (it.isFile and it.isInLocalFileSystem) add(IndexableFile(it))
           true
         }
       }
-    }.executeSynchronously()
+    }
   }
 
   fun renameFile(oldFileName: String, newFile: IndexableFile) {
