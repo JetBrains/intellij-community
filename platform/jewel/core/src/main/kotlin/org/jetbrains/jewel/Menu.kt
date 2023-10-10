@@ -62,6 +62,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.jewel.CommonStateBitMask.Active
+import org.jetbrains.jewel.CommonStateBitMask.Enabled
+import org.jetbrains.jewel.CommonStateBitMask.Focused
+import org.jetbrains.jewel.CommonStateBitMask.Hovered
+import org.jetbrains.jewel.CommonStateBitMask.Pressed
+import org.jetbrains.jewel.CommonStateBitMask.Selected
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.foundation.onHover
@@ -356,7 +361,7 @@ fun MenuSubmenuItem(
                 is PressInteraction.Press -> itemState = itemState.copy(pressed = true)
                 is PressInteraction.Cancel, is PressInteraction.Release -> itemState = itemState.copy(pressed = false)
                 is HoverInteraction.Enter -> {
-                    itemState = itemState.copy(hovered = true)
+                    itemState = itemState.copy(hovered = true, selected = true)
                     focusRequester.requestFocus()
                 }
 
@@ -479,8 +484,8 @@ internal fun Submenu(
         density = density,
     )
 
-    var focusManager: FocusManager? by mutableStateOf(null)
-    var inputModeManager: InputModeManager? by mutableStateOf(null)
+    var focusManager: FocusManager? by remember { mutableStateOf(null) }
+    var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
     val parentMenuManager = LocalMenuManager.current
     val menuManager = remember(parentMenuManager, onDismissRequest) {
         parentMenuManager.submenuManager(onDismissRequest)
@@ -555,12 +560,6 @@ value class MenuItemState(val state: ULong) : SelectableComponentState {
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
     companion object {
-
-        private val Enabled = 1UL shl 0
-        private val Focused = 1UL shl 1
-        private val Hovered = 1UL shl 2
-        private val Pressed = 1UL shl 3
-        private val Selected = 1UL shl 4
 
         fun of(
             selected: Boolean,

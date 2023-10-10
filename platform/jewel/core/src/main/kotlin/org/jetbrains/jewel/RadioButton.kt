@@ -34,6 +34,7 @@ import org.jetbrains.jewel.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.CommonStateBitMask.Focused
 import org.jetbrains.jewel.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.CommonStateBitMask.Pressed
+import org.jetbrains.jewel.CommonStateBitMask.Selected
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.styling.RadioButtonStyle
 
@@ -248,10 +249,6 @@ value class RadioButtonState(val state: ULong) : SelectableComponentState {
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
     companion object {
-
-        private const val SELECTED_BIT_OFFSET = CommonStateBitMask.FIRST_AVAILABLE_OFFSET
-
-        private val Selected = 1UL shl SELECTED_BIT_OFFSET
 
         fun of(
             selected: Boolean,
