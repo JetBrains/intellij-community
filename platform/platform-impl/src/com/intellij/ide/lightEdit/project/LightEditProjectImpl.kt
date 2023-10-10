@@ -3,6 +3,7 @@ package com.intellij.ide.lightEdit.project
 
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.ide.lightEdit.LightEditUtil.PROJECT_NAME
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -19,15 +20,13 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.file.Path
 
-private const val NAME = "LightEditProject"
-
 private val projectPath: Path
   get() = Path.of(PathManager.getConfigPath() + File.separator + "light-edit")
 
 internal class LightEditProjectImpl private constructor(projectPath: Path) :
   ProjectImpl(parent = ApplicationManager.getApplication() as ComponentManagerImpl,
               filePath = projectPath,
-              projectName = NAME), LightEditCompatible {
+              projectName = PROJECT_NAME), LightEditCompatible {
   constructor() : this(projectPath)
 
   init {
@@ -78,7 +77,7 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) :
     throw IllegalStateException()
   }
 
-  override fun getName(): String = NAME
+  override fun getName(): String = PROJECT_NAME
 
   override fun getLocationHash(): String = name
 
