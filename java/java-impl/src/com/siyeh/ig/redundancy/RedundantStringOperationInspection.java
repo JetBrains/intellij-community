@@ -422,6 +422,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     private boolean lengthMatches(PsiExpression equalTo, PsiExpression from, PsiExpression to) {
+      if (!ExpressionUtils.hasStringType(equalTo)) return false;
       String str = tryCast(ExpressionUtils.computeConstantExpression(equalTo), String.class);
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(myHolder.getProject());
       if (str != null) {
