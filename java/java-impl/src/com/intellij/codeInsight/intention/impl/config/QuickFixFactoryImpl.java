@@ -19,7 +19,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.UnimplementInterfaceAction;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.CoreAttachmentFactory;
@@ -43,6 +43,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
@@ -62,10 +63,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class QuickFixFactoryImpl extends QuickFixFactory {
   private static final Logger LOG = Logger.getInstance(QuickFixFactoryImpl.class);
@@ -729,8 +727,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter,
                                                                                 boolean excludingHierarchy) {
     if (excludingHierarchy) {
-      return new UpdateInspectionOptionFix(new UnusedSymbolLocalInspectionBase(), "myCheckParameterExcludingHierarchy",
-                                           JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false).asIntention();
+      InspectionToolWrapper<?, ?> toolWrapper = Objects.requireNonNull(InspectionProfileManager.getInstance(parameter.getProject())
+                                                                         .getCurrentProfile().getInspectionTool("unused", parameter));
+      InspectionProfileEntry tool = toolWrapper.getTool();
+      return new UpdateInspectionOptionFix(tool, "members.myCheckParameterExcludingHierarchy",
+        JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false).asIntention();
     }
     else {
       return new SafeDeleteFix(parameter);
