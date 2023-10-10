@@ -1,158 +1,146 @@
-package com.jetbrains.python.packaging;
+package com.jetbrains.python.packaging
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SystemProperties;
-import com.jetbrains.python.sdk.PythonSdkUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.SystemProperties
+import com.jetbrains.python.sdk.PythonSdkUtil
 
-import java.io.File;
+object CondaExecutablesLocator {
+  private val CONDA_DEFAULT_ROOTS = arrayOf("anaconda", "anaconda3", "miniconda", "miniconda3", "Anaconda", "Anaconda3", "Miniconda",
+                                            "Miniconda3")
+  private const val CONDA_ENVS_DIR = "envs"
+  private const val CONDA_BAT_NAME = "conda.bat"
+  private const val CONDA_BINARY_NAME = "conda"
+  private const val WIN_CONDA_BIN_DIR_NAME = "condabin"
+  private const val UNIX_CONDA_BIN_DIR_NAME = "bin"
+  private const val PYTHON_EXE_NAME = "python.exe"
+  private const val PYTHON_UNIX_BINARY_NAME = "python"
+  private const val WIN_CONTINUUM_DIR_PATH = "AppData\\Local\\Continuum\\"
+  private const val WIN_PROGRAM_DATA_PATH = "C:\\ProgramData\\"
+  private const val WIN_C_ROOT_PATH = "C:\\"
+  private const val UNIX_OPT_PATH = "/opt/"
 
-public final class CondaExecutablesLocator {
-  private final static String[] CONDA_DEFAULT_ROOTS =
-    new String[]{"anaconda", "anaconda3", "miniconda", "miniconda3", "Anaconda", "Anaconda3", "Miniconda", "Miniconda3"};
-  private static final String CONDA_ENVS_DIR = "envs";
-  private static final String CONDA_BAT_NAME = "conda.bat";
-  private static final String CONDA_BINARY_NAME = "conda";
-  private static final String WIN_CONDA_BIN_DIR_NAME = "condabin";
-  private static final String UNIX_CONDA_BIN_DIR_NAME = "bin";
-  private static final String PYTHON_EXE_NAME = "python.exe";
-  private static final String PYTHON_UNIX_BINARY_NAME = "python";
-  private static final String WIN_CONTINUUM_DIR_PATH = "AppData\\Local\\Continuum\\";
-  private static final String WIN_PROGRAM_DATA_PATH = "C:\\ProgramData\\";
-  private static final String WIN_C_ROOT_PATH = "C:\\";
-  private static final String UNIX_OPT_PATH = "/opt/";
+  private val LOG = Logger.getInstance(CondaExecutablesLocator::class.java)
 
-  private static final Logger LOG = Logger.getInstance(CondaExecutablesLocator.class);
-
-  private CondaExecutablesLocator() {
-  }
-
-  @Nullable
-  public static String getCondaBasePython(@NotNull String systemCondaExecutable) {
-    final VirtualFile condaFile = LocalFileSystem.getInstance().findFileByPath(systemCondaExecutable);
+  fun getCondaBasePython(systemCondaExecutable: String): String? {
+    val condaFile = LocalFileSystem.getInstance().findFileByPath(systemCondaExecutable)
     if (condaFile != null) {
-      final VirtualFile condaDir = SystemInfo.isWindows ? condaFile.getParent().getParent() : condaFile.getParent();
-      final VirtualFile python = condaDir.findChild(getPythonName());
+      val condaDir = if (SystemInfo.isWindows) condaFile.parent.parent else condaFile.parent
+      val python = condaDir.findChild(pythonName)
       if (python != null) {
-        return python.getPath();
+        return python.path
       }
     }
-    return null;
+    return null
   }
 
-  @NotNull
-  private static String getPythonName() {
-    return SystemInfo.isWindows ? PYTHON_EXE_NAME : PYTHON_UNIX_BINARY_NAME;
-  }
+  private val pythonName: String
+    get() = if (SystemInfo.isWindows) PYTHON_EXE_NAME else PYTHON_UNIX_BINARY_NAME
 
-  @Nullable
-  static String findCondaExecutableRelativeToEnv(@NotNull String sdkPath) {
-    final VirtualFile pyExecutable = StandardFileSystems.local().findFileByPath(sdkPath);
+  @JvmStatic
+  fun findCondaExecutableRelativeToEnv(sdkPath: String): String? {
+    val pyExecutable = StandardFileSystems.local().findFileByPath(sdkPath)
     if (pyExecutable == null) {
-      return null;
+      return null
     }
-    final VirtualFile pyExecutableDir = pyExecutable.getParent();
-    final boolean isBaseConda = pyExecutableDir.findChild(CONDA_ENVS_DIR) != null;
-    final String condaName;
-    final VirtualFile condaFolder;
+    val pyExecutableDir = pyExecutable.parent
+    val isBaseConda = pyExecutableDir.findChild(CONDA_ENVS_DIR) != null
+    val condaName: String
+    val condaFolder: VirtualFile
     if (SystemInfo.isWindows) {
-      condaName = CONDA_BAT_NAME;
+      condaName = CONDA_BAT_NAME
       // On Windows python.exe is directly inside base interpreter/environment directory.
       // On other systems executable normally resides in "bin" subdirectory.
-      condaFolder = pyExecutableDir;
+      condaFolder = pyExecutableDir
     }
     else {
-      condaName = CONDA_BINARY_NAME;
-      condaFolder = pyExecutableDir.getParent();
+      condaName = CONDA_BINARY_NAME
+      condaFolder = pyExecutableDir.parent
     }
 
     // XXX Do we still need to support this? When did they drop per-environment conda executable?
-    final String localCondaName = SystemInfo.isWindows && !isBaseConda ? CONDA_BAT_NAME : condaName;
-    final String immediateConda = findExecutable(localCondaName, condaFolder);
+    val localCondaName = if (SystemInfo.isWindows && !isBaseConda) CONDA_BAT_NAME else condaName
+    val immediateConda = findExecutable(localCondaName, condaFolder)
     if (immediateConda != null) {
-      return immediateConda;
+      return immediateConda
     }
-    final VirtualFile envsDir = condaFolder.getParent();
-    if (!isBaseConda && envsDir != null && envsDir.getName().equals(CONDA_ENVS_DIR)) {
-      return findExecutable(condaName, envsDir.getParent());
+    val envsDir = condaFolder.parent
+    if (!isBaseConda && envsDir != null && envsDir.name == CONDA_ENVS_DIR) {
+      return findExecutable(condaName, envsDir.parent)
     }
-    return null;
+    return null
   }
 
-  @Nullable
-  private static String getCondaExecutableByName(@NotNull final String condaName) {
-    final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\', '/'));
+  private fun getCondaExecutableByName(condaName: String): String? {
+    val userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\', '/'))
 
-    for (String root : CONDA_DEFAULT_ROOTS) {
-      VirtualFile condaFolder = userHome == null ? null : userHome.findChild(root);
-      String executableFile = findExecutable(condaName, condaFolder);
-      if (executableFile != null) return executableFile;
+    for (root in CONDA_DEFAULT_ROOTS) {
+      var condaFolder = userHome?.findChild(root)
+      var executableFile = findExecutable(condaName, condaFolder)
+      if (executableFile != null) return executableFile
 
-      //noinspection IfStatementWithIdenticalBranches
       if (SystemInfo.isWindows) {
-        condaFolder = userHome == null ? null : userHome.findFileByRelativePath(WIN_CONTINUUM_DIR_PATH + root);
-        executableFile = findExecutable(condaName, condaFolder);
-        if (executableFile != null) return executableFile;
+        condaFolder = userHome?.findFileByRelativePath(WIN_CONTINUUM_DIR_PATH + root)
+        executableFile = findExecutable(condaName, condaFolder)
+        if (executableFile != null) return executableFile
 
-        condaFolder = LocalFileSystem.getInstance().findFileByPath(WIN_PROGRAM_DATA_PATH + root);
-        executableFile = findExecutable(condaName, condaFolder);
-        if (executableFile != null) return executableFile;
+        condaFolder = LocalFileSystem.getInstance().findFileByPath(WIN_PROGRAM_DATA_PATH + root)
+        executableFile = findExecutable(condaName, condaFolder)
+        if (executableFile != null) return executableFile
 
-        condaFolder = LocalFileSystem.getInstance().findFileByPath(WIN_C_ROOT_PATH + root);
-        executableFile = findExecutable(condaName, condaFolder);
-        if (executableFile != null) return executableFile;
+        condaFolder = LocalFileSystem.getInstance().findFileByPath(WIN_C_ROOT_PATH + root)
+        executableFile = findExecutable(condaName, condaFolder)
+        if (executableFile != null) return executableFile
       }
       else {
-        condaFolder = LocalFileSystem.getInstance().findFileByPath(UNIX_OPT_PATH + root);
-        executableFile = findExecutable(condaName, condaFolder);
-        if (executableFile != null) return executableFile;
+        condaFolder = LocalFileSystem.getInstance().findFileByPath(UNIX_OPT_PATH + root)
+        executableFile = findExecutable(condaName, condaFolder)
+        if (executableFile != null) return executableFile
       }
     }
 
-    return null;
+    return null
   }
 
-  @Nullable
-  private static String findExecutable(String condaName, @Nullable final VirtualFile condaFolder) {
+  private fun findExecutable(condaName: String, condaFolder: VirtualFile?): String? {
     if (condaFolder != null) {
-      final VirtualFile binFolder = condaFolder.findChild(SystemInfo.isWindows ? WIN_CONDA_BIN_DIR_NAME : UNIX_CONDA_BIN_DIR_NAME);
+      val binFolder = condaFolder.findChild(if (SystemInfo.isWindows) WIN_CONDA_BIN_DIR_NAME else UNIX_CONDA_BIN_DIR_NAME)
       if (binFolder != null) {
-        final VirtualFile bin = binFolder.findChild(condaName);
+        val bin = binFolder.findChild(condaName)
         if (bin != null) {
-          String directoryPath = bin.getPath();
-          final String executableFile = PythonSdkUtil.getExecutablePath(directoryPath, condaName);
+          val directoryPath = bin.path
+          val executableFile = PythonSdkUtil.getExecutablePath(directoryPath, condaName)
           if (executableFile != null) {
-            return executableFile;
+            return executableFile
           }
         }
       }
     }
-    return null;
+    return null
   }
 
-  @Nullable
-  static String getSystemCondaExecutable() {
-    final String condaName = SystemInfo.isWindows ? CONDA_BAT_NAME : CONDA_BINARY_NAME;
+  @JvmStatic
+  val systemCondaExecutable: String?
+    get() {
+      val condaName = if (SystemInfo.isWindows) CONDA_BAT_NAME else CONDA_BINARY_NAME
 
-    final File condaInPath = PathEnvironmentVariableUtil.findInPath(condaName);
-    if (condaInPath != null) {
-      LOG.info("Using " + condaInPath + " as a conda executable (found in PATH)");
-      return condaInPath.getPath();
+      val condaInPath = PathEnvironmentVariableUtil.findInPath(condaName)
+      if (condaInPath != null) {
+        LOG.info("Using $condaInPath as a conda executable (found in PATH)")
+        return condaInPath.path
+      }
+
+      val condaInRoots = getCondaExecutableByName(condaName)
+      if (condaInRoots != null) {
+        LOG.info("Using $condaInRoots as a conda executable (found by visiting possible conda roots)")
+        return condaInRoots
+      }
+
+      LOG.info("System conda executable is not found")
+      return null
     }
-
-    final String condaInRoots = getCondaExecutableByName(condaName);
-    if (condaInRoots != null) {
-      LOG.info("Using " + condaInRoots + " as a conda executable (found by visiting possible conda roots)");
-      return condaInRoots;
-    }
-
-    LOG.info("System conda executable is not found");
-    return null;
-  }
 }
