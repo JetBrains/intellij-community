@@ -6,6 +6,11 @@
     <!--suppress PluginXmlI18n -->
     <action id="SettingChooserDialogAction" class="com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingChooserDialogAction" text="[INTERNAL] Transfer: Show Setting Chooser Dialog" internal="true"/>
     <action id="SettingChooserSimpleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingChooserSimpleDialogAction" text="[INTERNAL] Transfer: Show Setting Chooser Dialog Single" internal="true"/>
+
+    <action id="ImportProgressDialogAction" class="com.intellij.ide.startup.importSettings.chooser.importProgress.ImportProgressDialogAction" text="[INTERNAL] Transfer: Import Progress Dialog" internal="true"/>
+    <action id="ImportProgressSingleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.importProgress.ImportProgressSingleDialogAction" text="[INTERNAL] Transfer: Import Progress Dialog Single" internal="true"/>
+
+
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

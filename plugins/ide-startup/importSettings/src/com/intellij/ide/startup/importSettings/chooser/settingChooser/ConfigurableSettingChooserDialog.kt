@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
+import com.intellij.ide.startup.importSettings.chooser.importProgress.ImportProgressDialog
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.*
 import java.awt.event.ActionEvent
@@ -25,15 +26,28 @@ class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDat
     }
   }
 
-  override fun applyFields() {
+  override fun doOKAction() {
     val productService = provider.productService
+
 
     val dataForSaves = settingPanes.map { it.item }.filter { it.configurable && it.selected }.map {
       val chs = it.childItems?.filter { it.selected }?.map { it.child.id }?.toList()
       DataForSave(it.setting.id, chs)
     }.toList()
-    productService.importSettings(product.id, dataForSaves)
-    super.applyFields()
+
+    val importSettings = productService.importSettings(product.id, dataForSaves)
+    val dialog = ImportProgressDialog(importSettings)
+
+    parentDialog?.let {
+      it.showPage(dialog)
+    } ?: run {
+      super.doOKAction()
+
+      dialog.isModal = false
+      dialog.isResizable = false
+      dialog.show()
+    }
+
   }
 }
 

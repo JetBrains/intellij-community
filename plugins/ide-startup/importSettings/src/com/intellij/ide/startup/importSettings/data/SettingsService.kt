@@ -135,22 +135,18 @@ interface ChildSetting {
 
 data class DataForSave(val id: String, val childIds: List<String>? = null)
 
-
-interface SimpleImport : DialogImportData {
-  val message: String
-}
-
-interface ImportFromProduct: DialogImportData {
+interface  ImportFromProduct: DialogImportData {
   val from: DialogImportItem
   val to: DialogImportItem
 }
 
 interface DialogImportData {
+  val message: String?
   val progress : ImportProgress
 }
 
 interface ImportProgress {
-  val progressMessage: IOptPropertyView<String>
+  val progressMessage: IPropertyView<String?>
   val progress: IOptPropertyView<Int>
   val error : IOptPropertyView<ImportError>
 }

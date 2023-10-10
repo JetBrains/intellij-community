@@ -34,10 +34,10 @@ class TestJbService : JbService {
     val empty = emptyList<Product>()
     val old = listOf(
       TestProduct("Idea222", "версия", Date()),
-                     TestProduct("Idea333", "версия", Date()),
-                     TestProduct("Idea444", "версия", Date()),
-                     TestProduct("Idea555", "версия", Date()),
-                     TestProduct("Idea666", "версия", Date()))
+      TestProduct("Idea333", "версия", Date()),
+      TestProduct("Idea444", "версия", Date()),
+      TestProduct("Idea555", "версия", Date()),
+      TestProduct("Idea666", "версия", Date()))
 
 
     val children = listOf(
@@ -83,7 +83,12 @@ class TestJbService : JbService {
 
     val progress = TestImportProgress(Lifetime.Eternal)
 
-    val importFromProduct = TestImportFromProduct(DialogImportItem(from, AllIcons.TransferSettings.VS), DialogImportItem(to, AllIcons.TransferSettings.Xcode), progress)
+    val importFromProduct = TestImportFromProduct(DialogImportItem(from, AllIcons.TransferSettings.VS),
+                                                  DialogImportItem(to, AllIcons.TransferSettings.Xcode), progress)
+
+    val importFromProduct_ = TestImportFromProduct(DialogImportItem(from, AllIcons.TransferSettings.VS),
+                                                   DialogImportItem(to, AllIcons.TransferSettings.Xcode), progress, null)
+
 
     val simpleImport = TestSimpleImport("From Config or Installation Directory", progress)
 
@@ -100,7 +105,7 @@ class TestJbService : JbService {
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
     LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
-    return if(productId == getConfig().id) simpleImport else importFromProduct
+    return if (productId == getConfig().id) simpleImport else importFromProduct
   }
 
   override fun products(): List<Product> {
@@ -139,7 +144,7 @@ class TestExternalService : ExternalService {
   }
 
   override fun products(): List<Product> {
-    return emptyList()// listOf (TestJbService.main2)
+    return listOf(TestJbService.main2)
   }
 
 
@@ -152,8 +157,8 @@ class TestExternalService : ExternalService {
   }
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
-    LOG.info("$IMPORT_SERVICE importSettings product: $productId data: ${data.size}")
-    return TestJbService.importFromProduct
+    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
+    return TestJbService.simpleImport
   }
 }
 
@@ -169,31 +174,31 @@ class TestSyncService : SyncService {
   override val syncState: IProperty<SyncService.SYNC_STATE> = Property(SyncService.SYNC_STATE.LOGGED)
 
   override fun tryToLogin(): String? {
-    LOG.info("$IMPORT_SERVICE tryToLogin")
+    LOG.info("${IMPORT_SERVICE} tryToLogin")
     return null
   }
 
   override fun syncSettings(): DialogImportData {
-    LOG.info("$IMPORT_SERVICE syncSettings")
+    LOG.info("${IMPORT_SERVICE} syncSettings")
     return TestJbService.importFromProduct
   }
 
   override fun importSyncSettings(): DialogImportData {
-    LOG.info("$IMPORT_SERVICE importSettings")
+    LOG.info("${IMPORT_SERVICE} importSettings")
     return TestJbService.importFromProduct
   }
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
-    LOG.info("$IMPORT_SERVICE importSettings product: $productId data: ${data.size}")
+    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
     return TestJbService.importFromProduct
   }
 
   override fun generalSync() {
-    LOG.info("$IMPORT_SERVICE generalSync")
+    LOG.info("${IMPORT_SERVICE} generalSync")
   }
 
   override fun getMainProduct(): Product? {
-    return null//TestJbService.main
+    return null //TestJbService.main
   }
 
   override fun products(): List<Product> {
@@ -245,14 +250,15 @@ class TestChildrenSettings(override val name: String,
                            override val rightComment: String? = null,
                            override val id: String = UUID.randomUUID().toString()) : ChildSetting
 
-class TestSimpleImport(override val message: String, override val progress: ImportProgress) : SimpleImport
+class TestSimpleImport(override val message: String, override val progress: ImportProgress) : DialogImportData
 
-class TestImportFromProduct(override val from: DialogImportItem,
-                            override val to: DialogImportItem,
-                            override val progress: ImportProgress) : ImportFromProduct
+class TestImportFromProduct(
+  override val from: DialogImportItem,
+  override val to: DialogImportItem,
+  override val progress: ImportProgress, override val message: String? = "From ${from.item.name}") : ImportFromProduct
 
 class TestImportProgress(lifetime: Lifetime) : ImportProgress {
-  override val progressMessage = OptProperty<String>()
+  override val progressMessage = Property<String?>(null)
   override val progress = OptProperty<Int>()
   override val error = OptProperty<ImportError>()
 
@@ -273,8 +279,13 @@ class TestImportProgress(lifetime: Lifetime) : ImportProgress {
 
       launch(Dispatchers.Default) {
         while (true) {
-          index = if (index < list.size - 1) index + 1 else 0
-          progressMessage.set(list[index])
+          progressMessage.set(if (Math.random() < 0.5) {
+            index = if (index < list.size - 1) index + 1 else 0
+            list[index]
+          }
+                              else {
+            null
+          })
 
           delay(300L)
         }
