@@ -30,7 +30,7 @@ object CondaExecutablesLocator {
     val condaFile = LocalFileSystem.getInstance().findFileByPath(systemCondaExecutable)
     if (condaFile != null) {
       val condaDir = if (SystemInfo.isWindows) condaFile.parent.parent else condaFile.parent
-      val python = condaDir.findChild(pythonName)
+      val python = condaDir.findChild(getPythonName())
       if (python != null) {
         return python.path
       }
@@ -38,8 +38,7 @@ object CondaExecutablesLocator {
     return null
   }
 
-  private val pythonName: String
-    get() = if (SystemInfo.isWindows) PYTHON_EXE_NAME else PYTHON_UNIX_BINARY_NAME
+  private fun getPythonName(): String = if (SystemInfo.isWindows) PYTHON_EXE_NAME else PYTHON_UNIX_BINARY_NAME
 
   @JvmStatic
   fun findCondaExecutableRelativeToEnv(sdkPath: String): String? {
@@ -124,23 +123,22 @@ object CondaExecutablesLocator {
   }
 
   @JvmStatic
-  val systemCondaExecutable: String?
-    get() {
-      val condaName = if (SystemInfo.isWindows) CONDA_BAT_NAME else CONDA_BINARY_NAME
+  fun getSystemCondaExecutable(): String? {
+    val condaName = if (SystemInfo.isWindows) CONDA_BAT_NAME else CONDA_BINARY_NAME
 
-      val condaInPath = PathEnvironmentVariableUtil.findInPath(condaName)
-      if (condaInPath != null) {
-        LOG.info("Using $condaInPath as a conda executable (found in PATH)")
-        return condaInPath.path
-      }
-
-      val condaInRoots = getCondaExecutableByName(condaName)
-      if (condaInRoots != null) {
-        LOG.info("Using $condaInRoots as a conda executable (found by visiting possible conda roots)")
-        return condaInRoots
-      }
-
-      LOG.info("System conda executable is not found")
-      return null
+    val condaInPath = PathEnvironmentVariableUtil.findInPath(condaName)
+    if (condaInPath != null) {
+      LOG.info("Using $condaInPath as a conda executable (found in PATH)")
+      return condaInPath.path
     }
+
+    val condaInRoots = getCondaExecutableByName(condaName)
+    if (condaInRoots != null) {
+      LOG.info("Using $condaInRoots as a conda executable (found by visiting possible conda roots)")
+      return condaInRoots
+    }
+
+    LOG.info("System conda executable is not found")
+    return null
+  }
 }
