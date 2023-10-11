@@ -5,7 +5,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.feedback.GeneralFeedbackDialogs"
+    <applicationService serviceInterface="com.intellij.platform.ide.impl.feedback.GeneralFeedbackDialogs"
                         serviceImplementation="com.intellij.platform.feedback.general.GeneralFeedbackDialogsImpl"
                         overrides="true"/>
 

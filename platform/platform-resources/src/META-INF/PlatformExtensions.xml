@@ -392,7 +392,7 @@
     <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
                         serviceImplementation="com.intellij.platform.ide.impl.customization.LegacyExternalProductResourceUrls"/>
 
-    <applicationService serviceImplementation="com.intellij.feedback.GeneralFeedbackDialogs"/>
+    <applicationService serviceImplementation="com.intellij.platform.ide.impl.feedback.GeneralFeedbackDialogs"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"/>
 

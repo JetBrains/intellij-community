@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.feedback
+package com.intellij.platform.ide.impl.feedback
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -20,11 +20,11 @@ open class GeneralFeedbackDialogs {
     fun getInstance(): GeneralFeedbackDialogs = service()
   }
 
-  open fun getGeneralFeedbackDialog(project: Project?): DialogWrapper? {
+  open fun createGeneralFeedbackDialog(project: Project?): DialogWrapper? {
     return null
   }
 
-  open fun getEvaluationFeedbackDialog(project: Project?): DialogWrapper? {
+  open fun createEvaluationFeedbackDialog(project: Project?): DialogWrapper? {
     return null
   }
 }

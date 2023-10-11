@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.customization
 
-import com.intellij.feedback.GeneralFeedbackDialogs
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.customization.FeedbackReporter
+import com.intellij.platform.ide.impl.feedback.GeneralFeedbackDialogs
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -34,12 +34,12 @@ class JetBrainsFeedbackReporter(private val productName: String,
       val feedbackDialogs = GeneralFeedbackDialogs.getInstance()
 
       if (requestedForEvaluation) {
-        val evaluationFeedbackDialog = feedbackDialogs.getEvaluationFeedbackDialog(project) ?: return false
+        val evaluationFeedbackDialog = feedbackDialogs.createEvaluationFeedbackDialog(project) ?: return false
         evaluationFeedbackDialog.show()
         return true
       }
 
-      val generalFeedbackDialog = feedbackDialogs.getGeneralFeedbackDialog(project) ?: return false
+      val generalFeedbackDialog = feedbackDialogs.createGeneralFeedbackDialog(project) ?: return false
       generalFeedbackDialog.show()
       return true
     }
