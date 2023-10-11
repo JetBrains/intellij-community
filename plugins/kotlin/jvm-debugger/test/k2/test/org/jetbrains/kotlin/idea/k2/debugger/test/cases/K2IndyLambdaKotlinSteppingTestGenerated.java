@@ -1130,6 +1130,16 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/breakpointInCrossinlineLambdaJvmName.kt");
         }
 
+        @TestMetadata("breakpointInCrossinlineLambdaSeveralLambdasInMethod.kt")
+        public void testBreakpointInCrossinlineLambdaSeveralLambdasInMethod() throws Exception {
+            runTest("../testData/stepping/custom/breakpointInCrossinlineLambdaSeveralLambdasInMethod.kt");
+        }
+
+        @TestMetadata("breakpointInCrossinlineLambdaWithClashingName.kt")
+        public void testBreakpointInCrossinlineLambdaWithClashingName() throws Exception {
+            runTest("../testData/stepping/custom/breakpointInCrossinlineLambdaWithClashingName.kt");
+        }
+
         @TestMetadata("breakpointInCrossinlineLambdaWithImport.kt")
         public void testBreakpointInCrossinlineLambdaWithImport() throws Exception {
             runTest("../testData/stepping/custom/breakpointInCrossinlineLambdaWithImport.kt");
