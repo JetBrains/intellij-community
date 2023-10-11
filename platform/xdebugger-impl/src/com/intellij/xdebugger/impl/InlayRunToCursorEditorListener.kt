@@ -237,7 +237,8 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     toolbarImpl.setNeedCheckHoverOnLayout(true)
     toolbarImpl.setBorder(null)
     toolbarImpl.setOpaque(false)
-    val hoverColor = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
+    val hoverColor: Color = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
+                          ?: JBColor.PanelBackground
     val effectiveHoverColor = getEditorBackgroundColorForTheLineStart(editor, lineNumber)?.let {
       ColorUtil.alphaBlending(ColorUtil.withAlpha(hoverColor, HintRenderer.BACKGROUND_ALPHA.toDouble()), it)
     } ?: hoverColor
