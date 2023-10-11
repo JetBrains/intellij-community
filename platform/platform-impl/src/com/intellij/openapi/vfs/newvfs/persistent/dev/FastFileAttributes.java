@@ -32,7 +32,7 @@ public final class FastFileAttributes {
     throw new AssertionError("Not for instantiation");
   }
 
-  public static @NotNull Int4FileAttribute int3FileAttributes(@NotNull FSRecordsImpl vfs,
+  public static @NotNull Int4FileAttribute int4FileAttributes(@NotNull FSRecordsImpl vfs,
                                                               @NotNull String storageName,
                                                               int version) throws IOException {
     MappedFileStorageHelper helper = openHelperAndVerifyVersions(

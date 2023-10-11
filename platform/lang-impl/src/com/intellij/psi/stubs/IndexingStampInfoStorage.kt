@@ -35,7 +35,7 @@ internal class IndexingStampInfoStorageOverFastAttributes(private val attribute:
       attributeAccessor?.let { return@synchronized it }
 
       val fsRecordsImpl = FSRecords.getInstance()
-      val newAccessor = FastFileAttributes.int3FileAttributes(
+      val newAccessor = FastFileAttributes.int4FileAttributes(
         fsRecordsImpl,
         attribute.id,
         attribute.version
