@@ -4,10 +4,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.api.page.SequentialListLoader
+import com.intellij.collaboration.async.asResultFlow
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitRestDTO
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestIidDTO
@@ -86,22 +87,27 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
       reloadMergeRequest
         .filter { requestedId -> requestedId == iid }
         .withInitial(iid)
-        .mapScoped { mrId ->
-          runCatchingUser {
-            // TODO: create from cached details
-            val cs = this
-            val mrData = loadMergeRequest(mrId)
-            val commits =
-              if (mrData.commits == null)
-                api.rest.getMergeRequestCommits(projectMapping.repository, mrId).body() ?: listOf()
-              else listOf()
-
-            LoadedGitLabMergeRequest(project, cs, api, projectMapping, mrData, commits)
+        .map { mrId ->
+          // TODO: create from cached details
+          val mrData: GitLabMergeRequestDTO = loadMergeRequest(mrId)
+          val commits: List<GitLabCommitRestDTO> = if (mrData.commits == null) {
+            api.rest.getMergeRequestCommits(projectMapping.repository, mrId).body() ?: listOf()
           }
-        }.shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
+          else {
+            listOf()
+          }
+          MergeRequestData(mrData, commits)
+        }.mapScoped { (mrData, commits) ->
+          LoadedGitLabMergeRequest(project, this, api, projectMapping, mrData, commits)
+        }.asResultFlow().shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
       // this the model will only be alive while it's needed
     }
   }
+
+  private data class MergeRequestData(
+    val data: GitLabMergeRequestDTO,
+    val backupCommits: List<GitLabCommitRestDTO>
+  )
 
   override suspend fun findByBranch(branchName: String): Set<String> =
     withContext(Dispatchers.IO) {

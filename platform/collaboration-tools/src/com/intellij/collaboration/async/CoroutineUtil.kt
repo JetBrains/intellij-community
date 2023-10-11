@@ -110,7 +110,7 @@ fun <T, M> StateFlow<T>.mapState(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Experimental
-fun <T, R> Flow<T>.mapScoped(mapper: suspend CoroutineScope.(T) -> R): Flow<R> {
+fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> {
   return transformLatest { newValue ->
     coroutineScope {
       emit(mapper(newValue))
