@@ -95,7 +95,7 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
       if (escapeStart < 0) {
         break;
       }
-      if (escapeStart < offset - 4 || escapeStart < textLength - 1 && text.charAt(escapeStart + 1) == '\\') {
+      if (escapeStart < offset - 4 || escapeStart >= textLength - 1 || text.charAt(escapeStart + 1) == '\\') {
         continue;
       }
       boolean isEscape = true;
