@@ -15,6 +15,7 @@ import kotlin.io.path.isRegularFile
 
 internal class EnvironmentDependencyCollector : DependencyCollector {
   private val ALLOWED_EXECUTABLES: List<String> = listOf(
+    "az",
     "docker",
     "kubectl",
     "podman",
