@@ -57,7 +57,6 @@ import sun.awt.SunToolkit;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -680,7 +679,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       IdeaLogger.dropFrequentExceptionsCaches();
       if (restart && Restarter.isSupported()) {
         try {
-          Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), List.of(beforeRestart), List.of());
+          Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), beforeRestart);
         }
         catch (Throwable t) {
           getLogger().error("Restart failed", t);

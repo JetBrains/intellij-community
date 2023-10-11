@@ -24,8 +24,10 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 public final class Restarter {
-  private static final String DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY = "restarter.do.not.lock.install.folder";
   private static final String SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR = "IDEA_RESTART_VIA_EXIT_CODE";
+
+  private static volatile boolean copyRestarterFiles = false;
+  private static volatile List<String> mainAppArgs = List.of();
 
   private Restarter() { }
 
@@ -118,10 +120,10 @@ public final class Restarter {
   }
 
   @ApiStatus.Internal
-  public static void scheduleRestart(boolean elevate, @NotNull List<String> beforeRestart, @NotNull List<String> args) throws IOException {
+  public static void scheduleRestart(boolean elevate, String @NotNull ... beforeRestart) throws IOException {
     var exitCodeVariable = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
     if (exitCodeVariable != null) {
-      if (!beforeRestart.isEmpty()) {
+      if (beforeRestart.length > 0) {
         throw new IOException("Cannot restart application: specific exit code restart mode does not support executing additional commands");
       }
       try {
@@ -132,13 +134,13 @@ public final class Restarter {
       }
     }
     else if (SystemInfo.isWindows) {
-      restartOnWindows(elevate, beforeRestart, args);
+      restartOnWindows(elevate, List.of(beforeRestart), mainAppArgs);
     }
     else if (SystemInfo.isMac) {
-      restartOnMac(beforeRestart, args);
+      restartOnMac(List.of(beforeRestart), mainAppArgs);
     }
     else if (SystemInfo.isLinux) {
-      restartOnLinux(beforeRestart, args);
+      restartOnLinux(List.of(beforeRestart), mainAppArgs);
     }
     else {
       throw new IOException("Cannot restart application: not supported.");
@@ -187,8 +189,13 @@ public final class Restarter {
   }
 
   @ApiStatus.Internal
-  public static void doNotLockInstallFolderOnRestart() {
-    System.setProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, "true");
+  public static void setCopyRestarterFiles() {
+    copyRestarterFiles = true;
+  }
+
+  @ApiStatus.Internal
+  public static void setMainAppArgs(@NotNull List<String> args) {
+    mainAppArgs = new ArrayList<>(args);
   }
 
   private static List<String> prepareCommand(List<String> beforeRestart) throws IOException {
@@ -204,7 +211,7 @@ public final class Restarter {
   }
 
   private static Path copyWhenNeeded(Path binFile, List<String> args) throws IOException {
-    if (SystemProperties.getBooleanProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, false) || args.contains(UpdateInstaller.UPDATER_MAIN_CLASS)) {
+    if (copyRestarterFiles || args.contains(UpdateInstaller.UPDATER_MAIN_CLASS)) {
       var tempDir = Files.createDirectories(PathManager.getSystemDir().resolve("restart"));
       return Files.copy(binFile, tempDir.resolve(binFile.getFileName()), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
     }

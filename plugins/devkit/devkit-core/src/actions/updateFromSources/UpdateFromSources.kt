@@ -306,7 +306,7 @@ private fun restartWithCommand(command: Array<String>, deployDirPath: String, be
     updateNonBundledPlugin(newPluginNode, pluginsDir) { nonBundledPluginsPaths.value[it] }
   }
 
-  Restarter.doNotLockInstallFolderOnRestart()
+  Restarter.setCopyRestarterFiles()
   beforeRestart()
   (ApplicationManagerEx.getApplicationEx() as ApplicationImpl).restart(
     ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE,

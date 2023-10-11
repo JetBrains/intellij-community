@@ -278,7 +278,8 @@ public final class ConfigImportHelper {
   private static void restart(List<String> args) {
     if (Restarter.isSupported()) {
       try {
-        Restarter.scheduleRestart(false, List.of(), args);
+        Restarter.setMainAppArgs(args);
+        Restarter.scheduleRestart(false);
       }
       catch (IOException e) {
         StartupErrorReporter.showMessage(BootstrapBundle.message("restart.failed.title"), e);
