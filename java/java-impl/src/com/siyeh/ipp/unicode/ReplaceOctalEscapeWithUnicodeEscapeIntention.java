@@ -72,8 +72,8 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
     final int textLength = text.length();
     int length = 1;
     boolean zeroToThree = false;
-    while (escapeStart + length < textLength) {
-      final char c = text.charAt(escapeStart + length);
+    while (escapeStart + length <= textLength) {
+      final char c = escapeStart + length == textLength ? 0 : text.charAt(escapeStart + length);
       if (length == 1 && (c == '0' || c == '1' || c == '2' || c == '3')) {
         zeroToThree = true;
       }
