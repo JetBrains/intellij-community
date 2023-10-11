@@ -211,18 +211,21 @@ public class VFSInitializationTest {
         Path cachesDir = temporaryDirectory.createDir();
         PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(storageKind);
 
-        try (FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir)) {
-
-          //add something to VFS so it is not empty
-          int testFileId = fsRecords.createRecord();
-          fsRecords.setName(testFileId, "test", PersistentFSRecordsStorage.NULL_ID);
-          try (var stream = fsRecords.writeContent(testFileId, false)) {
-            stream.writeUTF("test");
-          }
-          try (var stream = fsRecords.writeAttribute(testFileId, TEST_FILE_ATTRIBUTE)) {
-            stream.writeInt(42);
-          }
-          vfsVersion = fsRecords.getVersion();
+        FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir);
+        try {
+            //add something to VFS so it is not empty
+            int testFileId = fsRecords.createRecord();
+            fsRecords.setName(testFileId, "test", PersistentFSRecordsStorage.NULL_ID);
+            try (var stream = fsRecords.writeContent(testFileId, false)) {
+              stream.writeUTF("test");
+            }
+            try (var stream = fsRecords.writeAttribute(testFileId, TEST_FILE_ATTRIBUTE)) {
+              stream.writeInt(42);
+            }
+            vfsVersion = fsRecords.getVersion();
+        }
+        finally {
+          StorageTestingUtils.bestEffortToCloseAndUnmap(fsRecords);
         }
 
         Path[] vfsFilesToTryDeleting = Files.list(cachesDir)
@@ -287,7 +290,8 @@ public class VFSInitializationTest {
 
         //reopen:
         PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(kindAfter);
-        try (FSRecordsImpl reopenedVfs = FSRecordsImpl.connect(cachesDir)) {
+        FSRecordsImpl reopenedVfs = FSRecordsImpl.connect(cachesDir);
+        try {
           long reopenedVfsCreationTimestamp = reopenedVfs.getCreationTimestamp();
 
 
@@ -305,6 +309,9 @@ public class VFSInitializationTest {
               reopenedVfsCreationTimestamp
             );
           }
+        }
+        finally {
+          StorageTestingUtils.bestEffortToCloseAndUnmap(reopenedVfs);
         }
       }
     }

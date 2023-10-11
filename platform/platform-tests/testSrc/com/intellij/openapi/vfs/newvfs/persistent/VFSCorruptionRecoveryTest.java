@@ -85,6 +85,8 @@ public class VFSCorruptionRecoveryTest {
       .filter(name -> !name.startsWith("content.dat"))
       //attributes_enum is plain text, has no way to recognize corruptions:
       .filter(name -> !name.startsWith("attributes_enums.dat"))
+      //fs-records has no magicWord, and hence not always recognize corruption in first 8 bytes:
+      .filter(name -> !name.startsWith("records.dat"))
       .toList();
 
     List<String> filesCorruptionsVFSCantOvercome = new ArrayList<>();
@@ -193,12 +195,13 @@ public class VFSCorruptionRecoveryTest {
     );
   }
 
+
   @Test
   public void VFS_init_WithoutRecoverers_Fails_If_NotClosedProperly() throws Exception {
     Path cachesDir = temporaryDirectory.createDir();
 
     setupVFSFillSomeDataAndClose(cachesDir);
-    fakeImproperClose(cachesDir);
+    emulateImproperClose(cachesDir);
 
     try {
       //try reopen:
@@ -328,12 +331,11 @@ public class VFSCorruptionRecoveryTest {
       }
     }
     finally {
-      fsRecords.close();
-      //TODO RC: StorageTestingUtils.bestEffortToCloseAndUnmap();
+      StorageTestingUtils.bestEffortToCloseAndUnmap(fsRecords);
     }
   }
 
-  private static void fakeImproperClose(Path cachesDir) throws IOException {
+  private static void emulateImproperClose(Path cachesDir) throws IOException {
     //RC: don't use StorageTestingUtils.emulateImproperClose(fsRecords) since JVM crash is quite
     //    likely: VFSFlusher still does its flushing even after memory buffers are unmapped, and
     //    .emulateImproperClose() doesn't stop the flusher, or not guaranteed to stop it early
