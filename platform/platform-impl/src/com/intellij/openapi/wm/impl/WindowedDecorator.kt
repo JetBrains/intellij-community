@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.FrameWrapper
@@ -12,6 +13,7 @@ import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ClientProperty
 import java.awt.Component
 import java.awt.Rectangle
+import java.awt.Window
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 
@@ -21,13 +23,17 @@ internal class WindowedDecorator(
   component: InternalDecoratorImpl,
 ) : FrameWrapper(project = project, title = title, component = component), ToolWindowExternalDecorator {
 
+  private val boundsHelper = ToolWindowExternalDecoratorBoundsHelper(this)
+
+  override val id = component.toolWindowId
+
   init {
     val frame = getFrame()
     frame.addComponentListener(object : ComponentAdapter() {
       override fun componentMoved(e: ComponentEvent?) {
         if (LOG.isTraceEnabled) {
           LOG.trace(
-            "Windowed tool window ${component.toolWindowId}" +
+            "Windowed tool window $id" +
             " moved to ${frame.bounds}," +
             " scheduling bounds update"
           )
@@ -38,6 +44,9 @@ internal class WindowedDecorator(
     })
     ClientProperty.put(frame, DECORATOR_PROPERTY, this)
   }
+
+  override val window: Window
+    get() = getFrame()
 
   override fun getToolWindowType() = ToolWindowType.WINDOWED
 
@@ -63,9 +72,11 @@ internal class WindowedDecorator(
   override var bounds: Rectangle
     get() = getFrame().bounds
     set(value) {
+      boundsHelper.bounds = value
       getFrame().bounds = value
     }
 
+  override fun log(): Logger = LOG
 }
 
 private val LOG = logger<WindowedDecorator>()

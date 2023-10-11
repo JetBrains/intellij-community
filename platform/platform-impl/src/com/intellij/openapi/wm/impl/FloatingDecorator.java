@@ -43,6 +43,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   private final MyUISettingsListener myUISettingsListener;
   private final @NotNull InternalDecoratorImpl myDecorator;
   private WindowInfo myInfo;
+  private final @NotNull ToolWindowExternalDecoratorBoundsHelper myBoundsHelper = new ToolWindowExternalDecoratorBoundsHelper(this);
 
   private final Disposable myDisposable = Disposer.newDisposable();
   private final Alarm myDelayAlarm; // Determines moment when tool window should become transparent
@@ -170,6 +171,24 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     }
 
     super.dispose();
+  }
+
+  @NotNull
+  @Override
+  public Window getWindow() {
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myDecorator.getToolWindowId();
+  }
+
+  @Override
+  public void setBounds(@NotNull Rectangle r) {
+    myBoundsHelper.setBounds(r);
+    super.setBounds(r);
   }
 
   @NotNull
@@ -466,5 +485,11 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
                               " bounds changed to " + x + ", " + y + ", " + width + ", " + height));
     }
     super.reshape(x, y, width, height);
+  }
+
+  @NotNull
+  @Override
+  public Logger log() {
+    return LOG;
   }
 }
