@@ -10,5 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.markdown.core" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
+    <orderEntry type="module" module-name="intellij.platform.localIde" />
   </component>
 </module>
