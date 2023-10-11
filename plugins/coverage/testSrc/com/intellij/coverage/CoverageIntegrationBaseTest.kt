@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths
 
@@ -35,11 +36,11 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
 
 
   @JvmOverloads
-  protected fun loadIJSuite(includeFilters: Array<String>? = null, path: String = SIMPLE_IJ_REPORT_PATH) =
+  protected fun loadIJSuite(includeFilters: Array<String>? = DEFAULT_FILTER, path: String = SIMPLE_IJ_REPORT_PATH) =
     loadCoverageSuite(JavaCoverageEngine::class.java, IDEACoverageRunner::class.java, path, includeFilters)
 
   @JvmOverloads
-  protected fun loadJaCoCoSuite(includeFilters: Array<String>? = null, path: String = SIMPLE_JACOCO_REPORT_PATH) =
+  protected fun loadJaCoCoSuite(includeFilters: Array<String>? = DEFAULT_FILTER, path: String = SIMPLE_JACOCO_REPORT_PATH) =
     loadCoverageSuite(JavaCoverageEngine::class.java, JaCoCoCoverageRunner::class.java, path, includeFilters)
 
   @JvmOverloads
@@ -79,6 +80,7 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
                                 includeFilters: Array<String>?): CoverageSuitesBundle {
     val runner = CoverageRunner.getInstance(coverageRunnerClass)
     val fileProvider: CoverageFileProvider = createCoverageFileProvider(coverageDataPath)
+    Assert.assertTrue(File(fileProvider.coverageDataFilePath).exists())
     val engine = CoverageEngine.EP_NAME.findExtensionOrFail(coverageEngineClass)
     val suite: CoverageSuite = engine.createCoverageSuite(
       runner, coverageDataPath, fileProvider, includeFilters,
@@ -87,8 +89,9 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
   }
 
   companion object {
-    const val SIMPLE_IJ_REPORT_PATH = "simple\$foo_in_simple.coverage"
-    const val SIMPLE_XML_REPORT_PATH = "simple\$foo_in_simple.coverage.xml"
-    const val SIMPLE_JACOCO_REPORT_PATH = "simple\$foo_in_simple.jacoco.coverage"
+    const val SIMPLE_IJ_REPORT_PATH = "simple\$foo_in_simple.ic"
+    const val SIMPLE_XML_REPORT_PATH = "simple\$foo_in_simple.xml"
+    const val SIMPLE_JACOCO_REPORT_PATH = "simple\$foo_in_simple.exec"
+    val DEFAULT_FILTER = arrayOf("foo.*")
   }
 }
