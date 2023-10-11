@@ -17,6 +17,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.IterationState
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -174,9 +175,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   @RequiresEdt
   private suspend fun scheduleInlayRunToCursorAsync(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
     val firstNonSpacePos = getFirstNonSpacePos(editor, lineNumber) ?: return
-    if (firstNonSpacePos.x < JBUI.scale(MINIMAL_TEXT_OFFSET)) {
-      return
-    }
+
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
 
     val group = DefaultActionGroup()
@@ -209,6 +208,13 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     if (rootPane == null) {
       return
     }
+
+    val editorGutterComponentEx = editor.gutter as? EditorGutterComponentEx ?: return
+
+    val needShowOnGutter = firstNonSpacePos.x < JBUI.scale(MINIMAL_TEXT_OFFSET)
+    val xPosition = JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) -
+                    (if (needShowOnGutter) JBUI.scale(ACTION_BUTTON_SIZE) else 0)
+
     val caretLine = editor.getCaretModel().logicalPosition.line
     val minimalOffsetBeforeText = MINIMAL_TEXT_OFFSET + (ACTION_BUTTON_GAP * 2 + ACTION_BUTTON_SIZE) * group.childrenCount
     if (editor.getSettings().isShowIntentionBulb() && caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(minimalOffsetBeforeText)) {
@@ -219,7 +225,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     val editorContentComponent = editor.contentComponent
     val position = SwingUtilities.convertPoint(
       editorContentComponent,
-      Point(0, lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE))/2),
+      Point(xPosition, lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE)) / 2),
       rootPane.layeredPane
     )
 
@@ -227,9 +233,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     currentHint.get()?.hide()
 
     // Check that there is no some floating tool window overlaying our editor
-    if (isOutOfVisibleEditor(rootPane, position.x, position.y, JBUI.scale(ACTION_BUTTON_SIZE), editorContentComponent)) return
-
-    position.x += JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT)
+    if (isOutOfVisibleEditor(rootPane, position.x, position.y, JBUI.scale(ACTION_BUTTON_SIZE), editorGutterComponentEx)) return
 
     val initIsCompleted = Mutex(true)
     val toolbarImpl = createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, editor.getComponent(), true) {
@@ -240,11 +244,16 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     toolbarImpl.setNeedCheckHoverOnLayout(true)
     toolbarImpl.setBorder(null)
     toolbarImpl.setOpaque(false)
-    val hoverColor: Color = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
-                          ?: JBColor.PanelBackground
-    val effectiveHoverColor = getEditorBackgroundColorForTheLineStart(editor, lineNumber)?.let {
-      ColorUtil.alphaBlending(ColorUtil.withAlpha(hoverColor, HintRenderer.BACKGROUND_ALPHA.toDouble()), it)
-    } ?: hoverColor
+    val effectiveHoverColor = if (needShowOnGutter) {
+      JBColor.PanelBackground
+    }
+    else {
+      val hoverColor: Color = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
+                              ?: JBColor.PanelBackground
+      getEditorBackgroundColorForTheLineStart(editor, lineNumber)?.let {
+        ColorUtil.alphaBlending(ColorUtil.withAlpha(hoverColor, HintRenderer.BACKGROUND_ALPHA.toDouble()), it)
+      } ?: hoverColor
+    }
     toolbarImpl.setCustomButtonLook(InlayPopupButtonLook(effectiveHoverColor))
     toolbarImpl.setAdditionalDataProvider { dataId: String? ->
       if (XDebuggerUtilImpl.LINE_NUMBER.`is`(dataId)) {
