@@ -202,7 +202,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     invokeNodeUpdate(() -> setMessageNodes(Collections.singletonList(MessageTreeNode.createInfoMessage(myTree, message, hyperlinkListener)), false));
   }
 
-  private void setTemporaryMessageNode(final MessageTreeNode messageNode) {
+  public void setTemporaryMessageNode(final MessageTreeNode messageNode) {
     setMessageNodes(Collections.singletonList(messageNode), true);
   }
 
