@@ -22,6 +22,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public class ConsoleExecuteAction extends DumbAwareAction {
   static final String CONSOLE_EXECUTE_ACTION_ID = "Console.Execute";
 
@@ -47,7 +49,15 @@ public class ConsoleExecuteAction extends DumbAwareAction {
                                @NotNull ConsoleExecuteActionHandler executeActionHandler,
                                @NotNull String emptyExecuteActionId,
                                @Nullable Condition<? super LanguageConsoleView> enabledCondition) {
-    super(AllIcons.Actions.Execute);
+    this(consoleView, executeActionHandler, emptyExecuteActionId, enabledCondition, AllIcons.Actions.Execute);
+  }
+
+  public ConsoleExecuteAction(@NotNull LanguageConsoleView consoleView,
+                              @NotNull ConsoleExecuteActionHandler executeActionHandler,
+                              @NotNull String emptyExecuteActionId,
+                              @Nullable Condition<? super LanguageConsoleView> enabledCondition,
+                              @NotNull Icon actionIcon) {
+    super(actionIcon);
 
     myConsoleView = consoleView;
     myExecuteActionHandler = executeActionHandler;
