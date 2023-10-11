@@ -127,9 +127,16 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   private val moveOrResizeAlarm = SingleAlarm(Runnable {
     val decorator = this@ToolWindowImpl.decorator
     if (decorator != null) {
+      if (toolWindowManager.log().isDebugEnabled) {
+        toolWindowManager.log().debug("Invoking scheduled tool window $id bounds update")
+      }
       toolWindowManager.movedOrResized(decorator)
     }
-    this@ToolWindowImpl.windowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
+    val updatedWindowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
+    this@ToolWindowImpl.windowInfo = updatedWindowInfo
+    if (toolWindowManager.log().isDebugEnabled) {
+      toolWindowManager.log().debug("Updated window info: $updatedWindowInfo")
+    }
   }, 100, disposable)
 
   init {
@@ -189,6 +196,9 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     decorator.applyWindowInfo(windowInfo)
     decorator.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
+        if (toolWindowManager.log().isTraceEnabled) {
+          toolWindowManager.log().trace("Tool window $id internal decorator resized to ${decorator.bounds}, scheduling bounds update")
+        }
         onMovedOrResized()
       }
     })
@@ -236,6 +246,12 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   internal fun applyWindowInfo(info: WindowInfo) {
+    if (toolWindowManager.log().isDebugEnabled) {
+      toolWindowManager.log().debug("Applying window info: $info")
+      if (windowInfo.contentUiType != info.contentUiType) {
+        toolWindowManager.log().debug("Content UI type changed: ${windowInfo.contentUiType} -> ${info.contentUiType}")
+      }
+    }
     windowInfo = info
     contentUi?.setType(info.contentUiType)
     val decorator = decorator

@@ -8,6 +8,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ThreeComponentsSplitter
@@ -79,6 +80,8 @@ class ToolWindowPane internal constructor(
       }
       return if (weight >= 1) 1 - WindowInfoImpl.DEFAULT_WEIGHT else weight
     }
+
+    internal fun log() = LOG
   }
 
   private var isLookAndFeelUpdated = false
@@ -259,17 +262,39 @@ class ToolWindowPane internal constructor(
     setAnchorWeightFutures.remove(anchor)?.cancel(false)
     val size = rootPane.size
     if (size.height == 0 && size.width == 0) {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Postponing setting the weight of the anchor $anchor because the root pane size is $size")
+      }
       setAnchorWeightFutures[anchor] = UIUtil.runOnceWhenResized(rootPane) {
+        if (LOG.isDebugEnabled) {
+          LOG.debug("Retrying to set the weight of the anchor $anchor on pane resize")
+        }
         setWeight(anchor, weight)
       }
       return
     }
+    val anchorSize = when (anchor) {
+      ToolWindowAnchor.TOP -> (size.getHeight() * weight).toInt()
+      ToolWindowAnchor.LEFT -> (size.getWidth() * weight).toInt()
+      ToolWindowAnchor.BOTTOM -> (size.getHeight() * weight).toInt()
+      ToolWindowAnchor.RIGHT -> (size.getWidth() * weight).toInt()
+      else -> {
+        LOG.error("unknown anchor: $anchor")
+        return
+      }
+    }
     when (anchor) {
-      ToolWindowAnchor.TOP -> verticalSplitter.firstSize = (size.getHeight() * weight).toInt()
-      ToolWindowAnchor.LEFT -> horizontalSplitter.firstSize = (size.getWidth() * weight).toInt()
-      ToolWindowAnchor.BOTTOM -> verticalSplitter.lastSize = (size.getHeight() * weight).toInt()
-      ToolWindowAnchor.RIGHT -> horizontalSplitter.lastSize = (size.getWidth() * weight).toInt()
-      else -> LOG.error("unknown anchor: $anchor")
+      ToolWindowAnchor.TOP -> verticalSplitter.firstSize = anchorSize
+      ToolWindowAnchor.LEFT -> horizontalSplitter.firstSize = anchorSize
+      ToolWindowAnchor.BOTTOM -> verticalSplitter.lastSize = anchorSize
+      ToolWindowAnchor.RIGHT -> horizontalSplitter.lastSize = anchorSize
+      else -> {
+        LOG.error("unknown anchor: $anchor")
+        return
+      }
+    }
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Set the size of the anchor $anchor to $anchorSize based on the root pane size $size and weight $weight")
     }
   }
 
@@ -281,10 +306,16 @@ class ToolWindowPane internal constructor(
     if (splitter !is Splitter) {
       return
     }
-    if (window.windowInfo.isSplit) {
-      splitter.proportion = normalizeWeight(1.0f - sideWeight)
+    val proportion = if (window.windowInfo.isSplit) {
+      normalizeWeight(1.0f - sideWeight)
     } else {
-      splitter.proportion = normalizeWeight(sideWeight)
+      normalizeWeight(sideWeight)
+    }
+    splitter.proportion = proportion
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Set the proportion of the size splitter ${window.anchor} to $proportion " +
+                "because ${window.id} is the ${if (window.windowInfo.isSplit) "last" else "first"} in the splitter " +
+                "and has side weight of $sideWeight")
     }
   }
 
@@ -587,6 +618,8 @@ class ToolWindowPane internal constructor(
       if (info.isSplit) {
         splitter.firstComponent = oldComponent
         splitter.secondComponent = newComponent
+        LOG.debug { "Determining the split proportion for ${oldInfo.id}+${info.id} " +
+                    "using oldInfo.sideWeight=${oldInfo.sideWeight}" }
         val proportion = state.getPreferredSplitProportion(
           id = oldInfo.id!!,
           defaultValue = normalizeWeight(oldInfo.sideWeight / (oldInfo.sideWeight + info.sideWeight)),
@@ -610,6 +643,9 @@ class ToolWindowPane internal constructor(
           normalizeWeight(info.weight)
         }
       }
+      LOG.debug { "Calculated splitter weight of $newWeight for ${oldInfo.id}+${info.id} " +
+                  "using isSplit=${info.isSplit}, isHorizontal=${anchor.isHorizontal}, isSplitVertically=${anchor.isSplitVertically}, " +
+                  "oldInfo.weight=${oldInfo.weight}, newInfo.weight=${info.weight}" }
     }
     else {
       newWeight = normalizeWeight(info.weight)

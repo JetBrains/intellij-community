@@ -5,6 +5,7 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.Queryable
@@ -419,6 +420,9 @@ class InternalDecoratorImpl internal constructor(
   fun applyWindowInfo(info: WindowInfo) {
     if (info.type == ToolWindowType.SLIDING) {
       val anchor = info.anchor
+      if (log().isDebugEnabled) {
+        log().debug("The sliding window ${info.id} anchor is now $anchor")
+      }
       val divider = initDivider()
       divider.invalidate()
       when (anchor) {
@@ -430,6 +434,9 @@ class InternalDecoratorImpl internal constructor(
       divider.preferredSize = Dimension(0, 0)
     }
     else if (divider != null) {
+      if (log().isDebugEnabled) {
+        log().debug("Removing divider of the non-sliding (${info.type}) window ${info.id}")
+      }
       // docked and floating windows don't have divider
       divider!!.parent?.remove(divider)
       divider = null
@@ -868,4 +875,6 @@ class InternalDecoratorImpl internal constructor(
       return AccessibilityUtils.GROUPED_ELEMENTS
     }
   }
+
+  private fun log(): Logger = toolWindow.toolWindowManager.log()
 }

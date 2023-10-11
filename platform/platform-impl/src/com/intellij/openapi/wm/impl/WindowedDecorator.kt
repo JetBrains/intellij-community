@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.util.NlsContexts
@@ -24,6 +25,13 @@ internal class WindowedDecorator(
     val frame = getFrame()
     frame.addComponentListener(object : ComponentAdapter() {
       override fun componentMoved(e: ComponentEvent?) {
+        if (LOG.isTraceEnabled) {
+          LOG.trace(
+            "Windowed tool window ${component.toolWindowId}" +
+            " moved to ${frame.bounds}," +
+            " scheduling bounds update"
+          )
+        }
         component.toolWindow.onMovedOrResized()
       }
       // resize is handled by the internal decorator
@@ -36,7 +44,15 @@ internal class WindowedDecorator(
   override fun apply(info: WindowInfo) {
     val bounds = info.floatingBounds
     if (bounds != null) {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Applying windowed tool window ${info.id} bounds $bounds")
+      }
       getFrame().bounds = bounds
+    }
+    else {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Windowed tool window ${info.id} info has no bounds, not applying anything")
+      }
     }
   }
 
@@ -51,3 +67,5 @@ internal class WindowedDecorator(
     }
 
 }
+
+private val LOG = logger<WindowedDecorator>()
