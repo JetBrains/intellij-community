@@ -38,6 +38,10 @@ class KotlinApplicatorBasedQuickFix<PSI : PsiElement, in INPUT : KotlinApplicato
     override fun getFamilyName(): String =
         applicator.getFamilyName()
 
+    override fun startInWriteAction(): Boolean {
+        return applicator.startInWriteAction()
+    }
+
     override fun getSubstitutedClass(): Class<*> =
         (applicator as? ReportingClassSubstitutor)?.substitutedClass ?: applicator.javaClass
 }

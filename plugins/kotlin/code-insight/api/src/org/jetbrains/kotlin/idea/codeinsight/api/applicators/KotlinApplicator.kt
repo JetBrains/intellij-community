@@ -50,6 +50,8 @@ sealed interface KotlinApplicator<in PSI : PsiElement, in INPUT : KotlinApplicat
     fun isApplicableByPsiImpl(psi: PSI): Boolean
     fun getActionNameImpl(psi: PSI, input: INPUT): @IntentionName String
     fun getFamilyNameImpl(): @IntentionFamilyName String
+
+    fun startInWriteAction(): Boolean = true
 }
 
 abstract class BaseKotlinApplicator<in PSI : PsiElement, in INPUT : KotlinApplicatorInput>: KotlinApplicator<PSI, INPUT> {
