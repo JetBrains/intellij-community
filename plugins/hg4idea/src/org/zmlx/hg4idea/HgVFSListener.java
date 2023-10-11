@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
@@ -27,7 +27,6 @@ import org.zmlx.hg4idea.util.HgUtil;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.RENAME_FAILED;
 
@@ -256,7 +255,7 @@ public final class HgVFSListener extends VcsVFSListener {
     Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots = HgUtil.groupFilePathsByHgRoots(myProject, filePaths);
     List<FilePath> ignored = groupFilePathsByHgRoots.entrySet().stream()
       .map(entry -> getIgnoreRepoHolder(entry.getKey()).removeIgnoredFiles(entry.getValue()))
-      .flatMap(Collection::stream).collect(Collectors.toList());
+      .flatMap(Collection::stream).toList();
     filePaths.removeAll(ignored);
   }
 
