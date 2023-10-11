@@ -1,102 +1,68 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.ui;
+package com.intellij.vcs.log.ui
 
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.navigation.History;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.util.VcsLogUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
+import com.intellij.ui.components.JBPanel
+import com.intellij.ui.navigation.History
+import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.util.VcsLogUtil
+import org.jetbrains.annotations.NonNls
+import java.awt.BorderLayout
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-
-import static com.intellij.vcs.log.VcsLogDataKeys.*;
-
-public class VcsLogPanel extends JBPanel implements DataProvider {
-  private final @NotNull VcsLogManager myManager;
-  private final @NotNull VcsLogUiEx myUi;
-
-  public VcsLogPanel(@NotNull VcsLogManager manager, @NotNull VcsLogUiEx logUi) {
-    super(new BorderLayout());
-    myManager = manager;
-    myUi = logUi;
-    add(myUi.getMainComponent(), BorderLayout.CENTER);
+class VcsLogPanel(private val manager: VcsLogManager, val vcsLogUi: VcsLogUiEx) : JBPanel<VcsLogPanel>(BorderLayout()), DataProvider {
+  init {
+    add(vcsLogUi.getMainComponent(), BorderLayout.CENTER)
   }
 
-  public @NotNull VcsLogUiEx getUi() {
-    return myUi;
+  override fun getData(dataId: @NonNls String): Any? {
+    if (VcsLogInternalDataKeys.LOG_MANAGER.`is`(dataId)) return manager
+    else if (VcsLogDataKeys.VCS_LOG.`is`(dataId)) return vcsLogUi.getVcsLog()
+    else if (VcsLogDataKeys.VCS_LOG_UI.`is`(dataId)) return vcsLogUi
+    else if (VcsLogDataKeys.VCS_LOG_DATA_PROVIDER.`is`(dataId) || VcsLogInternalDataKeys.LOG_DATA.`is`(dataId)) return manager.dataManager
+    else if (VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION.`is`(dataId)) return vcsLogUi.getTable().selection
+    else if (VcsDataKeys.VCS_REVISION_NUMBER.`is`(dataId)) {
+      val hashes = vcsLogUi.getTable().selection.commits
+      if (hashes.isEmpty()) return null
+      return VcsLogUtil.convertToRevisionNumber(hashes.first().hash)
+    }
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS.`is`(dataId)) {
+      val hashes = vcsLogUi.getTable().selection.commits
+      if (hashes.size > VcsLogUtil.MAX_SELECTED_COMMITS) return null
+      return hashes.map { VcsLogUtil.convertToRevisionNumber(it.hash) }.toTypedArray<VcsRevisionNumber>()
+    }
+    else if (VcsDataKeys.VCS_COMMIT_SUBJECTS.`is`(dataId)) {
+      val metadata = vcsLogUi.getTable().selection.cachedMetadata
+      if (metadata.size > VcsLogUtil.MAX_SELECTED_COMMITS) return null
+      return metadata.map { it.getSubject() }.toTypedArray()
+    }
+    else if (PlatformCoreDataKeys.HELP_ID.`is`(dataId)) return vcsLogUi.getHelpId()
+    else if (History.KEY.`is`(dataId)) return vcsLogUi.getNavigationHistory()
+    return null
   }
 
-  @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    if (VcsLogInternalDataKeys.LOG_MANAGER.is(dataId)) {
-      return myManager;
-    }
-    else if (VCS_LOG.is(dataId)) {
-      return myUi.getVcsLog();
-    }
-    else if (VCS_LOG_UI.is(dataId)) {
-      return myUi;
-    }
-    else if (VCS_LOG_DATA_PROVIDER.is(dataId) || VcsLogInternalDataKeys.LOG_DATA.is(dataId)) {
-      return myManager.getDataManager();
-    }
-    else if (VCS_LOG_COMMIT_SELECTION.is(dataId)) {
-      return myUi.getTable().getSelection();
-    }
-    else if (VcsDataKeys.VCS_REVISION_NUMBER.is(dataId)) {
-      List<CommitId> hashes = myUi.getTable().getSelection().getCommits();
-      if (hashes.isEmpty()) return null;
-      return VcsLogUtil.convertToRevisionNumber(Objects.requireNonNull(ContainerUtil.getFirstItem(hashes)).getHash());
-    }
-    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
-      List<CommitId> hashes = myUi.getTable().getSelection().getCommits();
-      if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ContainerUtil.map(hashes,
-                               commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
-    }
-    else if (VcsDataKeys.VCS_COMMIT_SUBJECTS.is(dataId)) {
-      List<VcsCommitMetadata> metadata = myUi.getTable().getSelection().getCachedMetadata();
-      if (metadata.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ContainerUtil.map2Array(metadata, String.class, data -> data.getSubject());
-    }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return myUi.getHelpId();
-    }
-    else if (History.KEY.is(dataId)) {
-      return myUi.getNavigationHistory();
-    }
-    return null;
-  }
+  companion object {
+    @JvmStatic
+    fun getLogUis(c: JComponent): List<VcsLogUiEx> {
+      val panels = mutableSetOf<VcsLogPanel>()
+      collectLogPanelInstances(c, panels)
 
-  public static @NotNull List<VcsLogUiEx> getLogUis(@NotNull JComponent c) {
-    Set<VcsLogPanel> panels = new HashSet<>();
-    collectLogPanelInstances(c, panels);
-
-    return ContainerUtil.map(panels, VcsLogPanel::getUi);
-  }
-
-  private static void collectLogPanelInstances(@NotNull JComponent component, @NotNull Set<? super VcsLogPanel> result) {
-    if (component instanceof VcsLogPanel) {
-      result.add((VcsLogPanel)component);
-      return;
+      return panels.map { it.vcsLogUi }
     }
-    for (Component childComponent : component.getComponents()) {
-      if (childComponent instanceof JComponent) {
-        collectLogPanelInstances((JComponent)childComponent, result);
+
+    private fun collectLogPanelInstances(component: JComponent, result: MutableSet<in VcsLogPanel>) {
+      if (component is VcsLogPanel) {
+        result.add(component)
+        return
+      }
+      for (childComponent in component.components) {
+        if (childComponent is JComponent) {
+          collectLogPanelInstances(childComponent, result)
+        }
       }
     }
   }
