@@ -106,7 +106,7 @@ internal val PresentationAssistantState.alignmentIfNoDelta: PresentationAssistan
 internal fun PresentationAssistantState.mainKeymapKind() = KeymapKind.from(mainKeymap)
 internal fun PresentationAssistantState.alternativeKeymapKind() = alternativeKeymap.takeIf { showAlternativeKeymap }?.let { KeymapKind.from(it) }
 
-@State(name = "PresentationAssistant", storages = [Storage("presentation-assistant-ij.xml")])
+@State(name = "PresentationAssistantIJ", storages = [Storage("presentation-assistant-ij.xml")])
 class PresentationAssistant : PersistentStateComponent<PresentationAssistantState>, Disposable {
   internal val configuration = PresentationAssistantState()
   private var warningAboutMacKeymapWasShown = false
@@ -165,7 +165,7 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
   }
 
   companion object {
-    val INSTANCE = service<PresentationAssistant>()
+    val INSTANCE get() = service<PresentationAssistant>()
   }
 }
 
