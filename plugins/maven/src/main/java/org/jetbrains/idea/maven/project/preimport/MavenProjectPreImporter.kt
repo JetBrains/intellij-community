@@ -223,7 +223,6 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     val id = MavenId(MavenJDOMUtil.findChildValueByPath(rootModel, "groupId", parent.mavenId.groupId),
                      MavenJDOMUtil.findChildValueByPath(rootModel, "artifactId", null),
                      MavenJDOMUtil.findChildValueByPath(rootModel, "version", parent.mavenId.version))
-    mavenModel.packaging = rootModel.getChildText("packaging")
     mavenModel.mavenId = id
     mavenModel.name = file.parent.name
     mavenModel.build.finalName = file.parent.name
@@ -288,8 +287,9 @@ class ProjectTree {
   suspend fun addRoot(root: MavenProjectData) {
     mutex.withLock {
       allProjects[root.file] = root
+      fullMavenIds[root.mavenId] = root
+      managedMavenIds[trimVersion(root.mavenId)] = root
     }
-
   }
 
   suspend fun addChild(aggregator: MavenProjectData, child: MavenProjectData) {

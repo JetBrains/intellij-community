@@ -1609,6 +1609,7 @@ public final class MavenProjectsTree {
     public Updater setRootProject(MavenProject root) {
       myRootProjects.clear();
       myRootProjects.add(root);
+      myVirtualFileToProjectMapping.put(root.getFile(), root);
       return this;
     }
 
