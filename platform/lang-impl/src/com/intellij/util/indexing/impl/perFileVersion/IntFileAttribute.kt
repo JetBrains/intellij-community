@@ -32,15 +32,16 @@ sealed interface IntFileAttribute {
 }
 
 class IntFileAttributeOverFastMappedStorage(private val attribute: FileAttribute) : IntFileAttribute {
-  private val attributeAccessor: IntFileAttributeAccessor = SpecializedFileAttributes.specializeAsFastInt(FSRecords.getInstance(),
-                                                                                                          attribute)
+  private val attributeAccessor = AutoRefreshingOnVfsCloseRef<IntFileAttributeAccessor> { fsRecords ->
+    SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute)
+  }
 
   override fun readInt(fileId: Int): Int {
-    return attributeAccessor.read(fileId, 0)
+    return attributeAccessor().read(fileId, 0)
   }
 
   override fun writeInt(fileId: Int, value: Int) {
-    attributeAccessor.write(fileId, value)
+    attributeAccessor().write(fileId, value)
   }
 }
 
