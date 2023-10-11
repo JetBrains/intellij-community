@@ -27,7 +27,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabBundle
 class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineScope) {
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val mergeRequestReviewVmState: StateFlow<GitLabMergeRequestEditorReviewViewModel?> by lazy {
+  internal val mergeRequestReviewVmState: StateFlow<GitLabMergeRequestEditorReviewViewModel?> by lazy {
     val toolWindowVm = project.service<GitLabToolWindowViewModel>()
     toolWindowVm.projectVm.flatMapLatest {
       it?.currentMergeRequestReviewVm ?: flowOf(null)

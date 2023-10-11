@@ -5,13 +5,13 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.awt.RelativePoint
+import java.awt.Component
 import java.awt.Point
-import javax.swing.JComponent
 
-fun JBPopup.showAbove(component: JComponent): Unit = VcsUIUtil.showPopupAbove(this, component)
+fun JBPopup.showAbove(component: Component): Unit = VcsUIUtil.showPopupAbove(this, component)
 
 object VcsUIUtil {
-  fun showPopupAbove(popup: JBPopup, component: JComponent) {
+  fun showPopupAbove(popup: JBPopup, component: Component) {
     val northWest = RelativePoint(component, Point())
 
     popup.addListener(object : JBPopupListener {

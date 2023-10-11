@@ -13,6 +13,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.InstallButton
 import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -32,6 +33,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import java.awt.Component
 import java.awt.Font
 import java.awt.event.ActionListener
 import javax.swing.JButton
@@ -41,28 +43,38 @@ import javax.swing.JPanel
 import kotlin.coroutines.resume
 
 internal object GitLabMergeRequestSubmitReviewPopup {
-  suspend fun show(vm: GitLabMergeRequestSubmitReviewViewModel, parentComponent: JComponent, above: Boolean = false) {
+  suspend fun show(vm: GitLabMergeRequestSubmitReviewViewModel, parentComponent: Component, above: Boolean = false) {
     withContext(Dispatchers.Main) {
-      coroutineScope {
-        val container = createPopupComponent(vm)
-        val popup = JBPopupFactory.getInstance()
-          // popup requires a properly focusable component, will not look under a panel
-          .createComponentPopupBuilder(container.component, container.preferredFocusableComponent)
-          .setFocusable(true)
-          .setRequestFocus(true)
-          .setResizable(true)
-          .createPopup()
+      val container = createPopupComponent(vm)
+      val popup = createPopup(container)
 
-        if (above) {
-          popup.showAbove(parentComponent)
-        }
-        else {
-          popup.showUnderneathOf(parentComponent)
-        }
-        popup.awaitClose()
+      if (above) {
+        popup.showAbove(parentComponent)
       }
+      else {
+        popup.showUnderneathOf(parentComponent)
+      }
+      popup.awaitClose()
     }
   }
+
+  suspend fun show(vm: GitLabMergeRequestSubmitReviewViewModel, project: Project) {
+    withContext(Dispatchers.Main) {
+      val container = createPopupComponent(vm)
+      val popup = createPopup(container)
+
+      popup.showCenteredInCurrentWindow(project)
+      popup.awaitClose()
+    }
+  }
+
+  private fun createPopup(container: ComponentContainer): JBPopup = JBPopupFactory.getInstance()
+    // popup requires a properly focusable component, will not look under a panel
+    .createComponentPopupBuilder(container.component, container.preferredFocusableComponent)
+    .setFocusable(true)
+    .setRequestFocus(true)
+    .setResizable(true)
+    .createPopup()
 
   private fun CoroutineScope.createPopupComponent(vm: GitLabMergeRequestSubmitReviewViewModel): ComponentContainer {
     val cs = this

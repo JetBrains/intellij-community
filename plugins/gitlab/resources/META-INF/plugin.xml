@@ -190,12 +190,9 @@
                     anchor="before"/>
     </group>
     <action id="GitLab.MergeRequest.Review.Submit"
-            class="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestDiffSubmitReviewAction"/>
-
-    <group id="GitLab.MergeRequest.Review.Editor.Header">
-      <reference id="GitLab.MergeRequest.Review.Submit"/>
-      <reference id="GitLab.Merge.Request.Diff.Discussions.View.Options"/>
-    </group>
+            class="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestDiffSubmitReviewAction">
+      <add-to-group group-id="Git.Branches.List" anchor="after" relative-to-action="GitLab.Show.In.Toolwindow"/>
+    </action>
 
     <group id="GitLab.Open.In.Browser" class="org.jetbrains.plugins.gitlab.ui.action.GitLabOpenInBrowserActionGroup"
            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
