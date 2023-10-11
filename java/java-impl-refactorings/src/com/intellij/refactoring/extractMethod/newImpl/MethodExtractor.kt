@@ -3,7 +3,6 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.Nullability
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
@@ -31,7 +30,10 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replac
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.findAllOptionsToExtract
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
-import com.intellij.refactoring.extractMethod.newImpl.inplace.*
+import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodPopupProvider
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceMethodExtractor
+import com.intellij.refactoring.extractMethod.newImpl.inplace.extractInDialog
 import com.intellij.refactoring.extractMethod.newImpl.parameterObject.ResultObjectExtractor
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -82,7 +84,7 @@ class MethodExtractor {
     )
   }
 
-  private fun prepareDescriptorsForAllTargetPlaces(editor: Editor, file: PsiFile, range: TextRange): List<ExtractOptions> {
+  fun prepareDescriptorsForAllTargetPlaces(editor: Editor, file: PsiFile, range: TextRange): List<ExtractOptions> {
     try {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return emptyList()
       val elements = ExtractSelector().suggestElementsToExtract(file, range)

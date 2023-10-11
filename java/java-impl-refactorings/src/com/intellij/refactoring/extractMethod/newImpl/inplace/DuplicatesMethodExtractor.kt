@@ -76,7 +76,7 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     return ExtractedElements(replacedCalls, replacedMethod)
   }
 
-  fun replaceDuplicates(editor: Editor, method: PsiMethod) {
+  fun replaceDuplicates(editor: Editor, method: PsiMethod, beforeDuplicateReplaced: (candidate: List<PsiElement>) -> Unit = {}) {
     val prepareTimeStart = System.currentTimeMillis()
     val project = editor.project ?: return
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
@@ -156,6 +156,7 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     }
 
     duplicates.zip(duplicatesExtractOptions).forEach { (duplicate, extractOptions) ->
+      beforeDuplicateReplaced(duplicate.candidate)
       val callElements = CallBuilder(extractOptions.elements.first()).createCall(replacedMethod, extractOptions)
       runWriteAction {
         replacePsiRange(duplicate.candidate, callElements)
