@@ -47,7 +47,7 @@
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.JavaTextBlockIndentPassFactory"/>
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
-    <lang.inspectionSuppressor language="JAVA" implementationClass="com.intellij.codeInspection.SuppressManagerImpl"/>
+    <lang.inspectionSuppressor language="JAVA" implementationClass="com.intellij.codeInspection.JavaInspectionSuppressor"/>
     <projectService serviceImplementation="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"/>
     <generatedSourcesFilter implementation="com.intellij.openapi.roots.JavaGeneratedSourcesFilter"/>
     <!--suppress PluginXmlCapitalization -->
