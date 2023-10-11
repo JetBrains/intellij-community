@@ -10,7 +10,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
@@ -71,9 +70,12 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
       }
     }
     catch (e: CancellationException) {
-      logger.debug { "Actions embedding indexing was cancelled" }
+      logger.debug("Actions embedding indexing was cancelled")
+      throw e
     }
-    backgroundable.onFinish(cs)
+    finally {
+      backgroundable.onFinish(cs)
+    }
   }
 
   @RequiresBackgroundThread

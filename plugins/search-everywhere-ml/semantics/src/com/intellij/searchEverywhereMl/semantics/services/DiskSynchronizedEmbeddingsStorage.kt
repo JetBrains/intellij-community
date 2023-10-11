@@ -121,8 +121,11 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
         }
         catch (e: CancellationException) {
           logger.debug { "${this.javaClass.simpleName} indexing was cancelled" }
+          throw e
         }
-        storageSetupTask.onFinish(cs)
+        finally {
+          storageSetupTask.onFinish(cs)
+        }
         logger.debug { "Finished indexing for ${this@DiskSynchronizedEmbeddingsStorage.javaClass.simpleName}" }
       }
     }
