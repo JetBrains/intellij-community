@@ -159,7 +159,7 @@ public final class OptimizeImportsAction extends AnAction {
 
     Presentation presentation = event.getPresentation();
     boolean available = isActionAvailable(event);
-    if (event.isFromContextMenu()) {
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
       presentation.setEnabledAndVisible(available);
     }
     else {

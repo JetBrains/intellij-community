@@ -36,9 +36,7 @@ public class ShowReformatFileDialog extends AnAction implements DumbAware {
       return;
     }
 
-    if (LanguageFormatting.INSTANCE.forContext(file) != null) {
-      presentation.setEnabled(true);
-    }
+    presentation.setEnabled(LanguageFormatting.INSTANCE.forContext(file) != null);
   }
 
   @Override
