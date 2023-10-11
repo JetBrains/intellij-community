@@ -33,7 +33,7 @@ jobs:
       matrix:
         supported-ij-version:
           - 232
-    #          - 233
+          - 233
 
     steps:
       - uses: actions/checkout@v3

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.ui.DirProvider
 import org.jetbrains.jewel.ClassLoaderProvider
 import org.jetbrains.jewel.IntelliJThemeIconData
+import org.jetbrains.jewel.InternalJewelApi
 
 internal object BridgeIconMapper : IconMapper {
 
@@ -12,6 +13,7 @@ internal object BridgeIconMapper : IconMapper {
 
     private val dirProvider = DirProvider()
 
+    @OptIn(InternalJewelApi::class)
     override fun mapPath(
         originalPath: String,
         iconData: IntelliJThemeIconData,
@@ -26,23 +28,7 @@ internal object BridgeIconMapper : IconMapper {
             return originalPath
         }
 
-        // TODO #116 replace with public API access once it's made available (IJP 233?)
-        val clazz = Class.forName("com.intellij.ui.icons.CachedImageIconKt")
-        val patchIconPath = clazz.getMethod("patchIconPath", String::class.java, ClassLoader::class.java)
-        patchIconPath.isAccessible = true
-
-        // For all provided classloaders, we try to get the patched path, both using
-        // the original path, and an "abridged" path that has gotten the icon path prefix
-        // removed (the classloader is set up differently in prod IDEs and when running
-        // from Gradle, and the icon could be in either place depending on the environment)
-        val fallbackPath = originalPath.removePrefix(dirProvider.dir())
-        val patchedPath = classLoaders.firstNotNullOfOrNull { classLoader ->
-            val patchedPathAndClassLoader =
-                patchIconPath.invoke(null, originalPath.removePrefix("/"), classLoader)
-                    ?: patchIconPath.invoke(null, fallbackPath, classLoader)
-            patchedPathAndClassLoader as? Pair<*, *>
-        }?.first as? String
-
+        val patchedPath = getPatchedIconPath(dirProvider, originalPath, classLoaders)
         val path = if (patchedPath != null) {
             logger.info("Found icon mapping: '$originalPath' -> '$patchedPath'")
             patchedPath

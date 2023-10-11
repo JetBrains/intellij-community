@@ -71,9 +71,9 @@ object StandalonePaletteMapperFactory : PaletteMapperFactory() {
             isDark = isDark,
         )
 
-    private fun Map<String, Color>.asColorStringsMap() =
+    private fun Map<String, Color>.asColorStringsMap(): Map<String, Int> =
         mapValues { (_, color) ->
-            "#${color.toArgb().toString(16).padStart(6, '0')}"
+            color.toArgb()
         }
 
     override fun logInfo(message: String) {

@@ -122,5 +122,5 @@ data class IntellijThemeDescriptor(
     val colors: Map<String, String> = emptyMap(),
     val ui: Map<String, JsonElement> = emptyMap(),
     val icons: Map<String, JsonElement> = emptyMap(),
-    val iconColorsOnSelection: Map<String, String> = emptyMap(),
+    val iconColorsOnSelection: Map<String, Int> = emptyMap(),
 )

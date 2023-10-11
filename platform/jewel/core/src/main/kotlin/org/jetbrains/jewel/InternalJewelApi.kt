@@ -8,5 +8,6 @@ package org.jetbrains.jewel
     AnnotationTarget.CLASS,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.CONSTRUCTOR,
+    AnnotationTarget.PROPERTY,
 )
 annotation class InternalJewelApi

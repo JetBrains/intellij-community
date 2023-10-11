@@ -7,13 +7,13 @@ import androidx.compose.ui.graphics.Color
 interface IntelliJThemeIconData {
 
     val iconOverrides: Map<String, String>
-    val colorPalette: Map<String, String>
-    val selectionColorPalette: Map<String, String>
+    val colorPalette: Map<String, String?>
+    val selectionColorPalette: Map<String, Int>
 
     fun selectionColorMapping() =
         selectionColorPalette.mapNotNull { (key, value) ->
             val keyColor = key.toColorOrNull() ?: return@mapNotNull null
-            val valueColor = value.toColorOrNull() ?: return@mapNotNull null
+            val valueColor = Color(value)
             keyColor to valueColor
         }.toMap()
 }
@@ -41,7 +41,7 @@ object EmptyThemeIconData : IntelliJThemeIconData {
 
     override val colorPalette: Map<String, String> = emptyMap()
 
-    override val selectionColorPalette: Map<String, String> = emptyMap()
+    override val selectionColorPalette: Map<String, Int> = emptyMap()
 
     override fun toString() =
         "EmptyThemeIconData(iconOverrides=[], colorPalette=[], selectionColorPalette=[])"

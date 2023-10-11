@@ -3,12 +3,14 @@ package org.jetbrains.jewel.bridge
 import androidx.compose.runtime.Immutable
 import com.intellij.ide.ui.UITheme
 import org.jetbrains.jewel.IntelliJThemeIconData
+import org.jetbrains.jewel.InternalJewelApi
 
 @Immutable
-internal class BridgeIconData(
+@InternalJewelApi
+class BridgeIconData(
     override val iconOverrides: Map<String, String>,
-    override val colorPalette: Map<String, String>,
-    override val selectionColorPalette: Map<String, String>,
+    override val colorPalette: Map<String, String?>,
+    override val selectionColorPalette: Map<String, Int>,
 ) : IntelliJThemeIconData {
 
     override fun equals(other: Any?): Boolean {
@@ -37,10 +39,12 @@ internal class BridgeIconData(
 
     companion object {
 
+        @Suppress("UnstableApiUsage")
         fun readFromLaF(): BridgeIconData {
             val uiTheme = currentUiThemeOrNull()
-            val iconMap = uiTheme?.icons.orEmpty()
-            val selectedIconColorPalette = uiTheme?.selectedIconColorPalette.orEmpty()
+            val bean = uiTheme?.describe()
+            val iconMap = bean?.icons.orEmpty()
+            val selectedIconColorPalette = bean?.iconColorsOnSelection.orEmpty()
 
             val colorPalette = UITheme.getColorPalette()
             return BridgeIconData(iconMap, colorPalette, selectedIconColorPalette)

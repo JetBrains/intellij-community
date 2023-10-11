@@ -175,7 +175,12 @@ internal object IntUiThemeDescriptorReader {
             }
 
             addProperty(createOverrideStringMapProperty("iconOverrides", iconOverrides))
-            addProperty(createOverrideStringMapProperty("selectionColorPalette", theme.iconColorsOnSelection))
+            addProperty(
+                createOverrideStringMapProperty(
+                    "selectionColorPalette",
+                    theme.iconColorsOnSelection
+                )
+            )
         }.build())
 
         addProperty(
@@ -185,11 +190,11 @@ internal object IntUiThemeDescriptorReader {
         )
     }
 
-    private fun createOverrideStringMapProperty(name: String, values: Map<String, String>) =
+    private inline fun <reified K, reified V> createOverrideStringMapProperty(name: String, values: Map<K, V>) =
         PropertySpec.builder(
             name = name,
             type = Map::class.asTypeName()
-                .parameterizedBy(String::class.asTypeName(), String::class.asTypeName()),
+                .parameterizedBy(K::class.asTypeName(), V::class.asTypeName()),
             KModifier.OVERRIDE
         )
             .initializer(
