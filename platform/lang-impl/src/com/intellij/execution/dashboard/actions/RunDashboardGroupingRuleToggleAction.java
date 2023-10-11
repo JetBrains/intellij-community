@@ -50,7 +50,7 @@ abstract class RunDashboardGroupingRuleToggleAction extends ToggleAction impleme
     Project project = e.getProject();
     if (project == null) return false;
 
-    return PropertiesComponent.getInstance(project).getBoolean(getRuleName(), true);
+    return PropertiesComponent.getInstance(project).getBoolean(getRuleName(), isEnabledByDefault());
   }
 
   @Override
@@ -58,10 +58,14 @@ abstract class RunDashboardGroupingRuleToggleAction extends ToggleAction impleme
     Project project = e.getProject();
     if (project == null) return;
 
-    PropertiesComponent.getInstance(project).setValue(getRuleName(), state, true);
+    PropertiesComponent.getInstance(project).setValue(getRuleName(), state, isEnabledByDefault());
     project.getMessageBus().syncPublisher(ServiceEventListener.TOPIC).handle(
       ServiceEventListener.ServiceEvent.createResetEvent(RunDashboardServiceViewContributor.class));
   }
 
   protected abstract @NotNull String getRuleName();
+
+  protected boolean isEnabledByDefault() {
+    return true;
+  }
 }

@@ -28,7 +28,7 @@ public final class StatusDashboardGroupingRule implements RunDashboardGroupingRu
   @Override
   public RunDashboardGroup getGroup(AbstractTreeNode<?> node) {
     Project project = node.getProject();
-    if (project != null && !PropertiesComponent.getInstance(project).getBoolean(getName(), true)) {
+    if (project != null && !PropertiesComponent.getInstance(project).getBoolean(getName(), false)) {
       return null;
     }
     if (node instanceof RunDashboardRunConfigurationNode runConfigurationNode) {
