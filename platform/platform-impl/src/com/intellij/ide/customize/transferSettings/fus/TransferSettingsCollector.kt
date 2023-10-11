@@ -18,7 +18,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
 
   private val logger = logger<TransferSettingsCollector>()
 
-  private val GROUP = EventLogGroup("wizard.transfer.settings", 2)
+  private val GROUP = EventLogGroup("wizard.transfer.settings", 3)
   override fun getGroup(): EventLogGroup = GROUP
 
   private val ideField = EventFields.Enum<TransferableIdeId>("ide")
