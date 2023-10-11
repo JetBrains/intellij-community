@@ -19,7 +19,7 @@ jobs:
         run: chmod +x gradlew
       - name: Run Gradle
         # supported.ij.version is needed here for project configuration and won't be used during publishing
-        run: ./gradlew publishMainPublicationsToSpaceRepository -Psupported.ij.version=232
+        run: ./gradlew publishMainPublicationToSpaceRepository -Psupported.ij.version=232
         env:
           MAVEN_SPACE_USERNAME: ${{secrets.MAVEN_SPACE_USERNAME}}
           MAVEN_SPACE_PASSWORD: ${{secrets.MAVEN_SPACE_PASSWORD}}
@@ -44,7 +44,7 @@ jobs:
       - name: Setup Gradle
         run: chmod +x gradlew
       - name: Run Gradle
-        run: ./gradlew publishIdeMainPublicationsToSpaceRepository -Psupported.ij.version=${{ matrix.supported-ij-version }}
+        run: ./gradlew publishIdeMainPublicationToSpaceRepository -Psupported.ij.version=${{ matrix.supported-ij-version }}
         env:
           MAVEN_SPACE_USERNAME: ${{secrets.MAVEN_SPACE_USERNAME}}
           MAVEN_SPACE_PASSWORD: ${{secrets.MAVEN_SPACE_PASSWORD}}
