@@ -52,7 +52,7 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
   }
 
   private fun addStateNotificationListener(project: Project, progressManager: ExternalSystemProgressNotificationManager) {
-    val notificationListener = GradleWarmupConfigurator.StateNotificationListener(project)
+    val notificationListener = GradleWarmupConfigurator.StateNotificationListener(project, scope)
     progressManager.addNotificationListener(notificationListener)
     scope.launch {
       awaitCancellationAndInvoke {
