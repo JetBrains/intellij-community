@@ -202,13 +202,13 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     AtomicReference<RunContentDescriptor> result = new AtomicReference<>();
-    ApplicationManager.getApplication().invokeAndWait(ClientId.decorateRunnable(() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       RunContentBuilder contentBuilder = new RunContentBuilder(executionResult, env);
       if (!(state instanceof JavaCommandLineState) || ((JavaCommandLineState)state).shouldAddJavaProgramRunnerActions()) {
         addDefaultActions(contentBuilder, executionResult, state instanceof JavaCommandLine);
       }
       result.set(contentBuilder.showRunContent(env.getContentToReuse()));
-    }));
+    });
     return result.get();
   }
 
