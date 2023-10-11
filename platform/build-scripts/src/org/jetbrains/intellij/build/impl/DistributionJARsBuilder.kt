@@ -189,7 +189,7 @@ suspend fun buildBundledPlugins(state: DistributionBuilderState,
     .setAttribute("count", plugins.size.toLong())
     .useWithScope2 { span ->
       val pluginsToBundle = ArrayList<PluginLayout>(plugins.size)
-      plugins.filterTo(pluginsToBundle) { satisfiesBundlingRequirements(it, osFamily = null, arch = null, withEphemeral = false, context) }
+      plugins.filterTo(pluginsToBundle) { satisfiesBundlingRequirements(it, osFamily = null, arch = null, context) }
       span.setAttribute("satisfiableCount", pluginsToBundle.size.toLong())
 
       // doesn't make sense to require passing here a list with a stable order (unnecessary complication, sorting by main module is enough)
@@ -221,9 +221,7 @@ private suspend fun buildOsSpecificBundledPlugins(state: DistributionBuilderStat
             return@mapNotNull null
           }
 
-          val osSpecificPlugins = plugins.filter {
-            satisfiesBundlingRequirements(it, os, arch, withEphemeral = false, context)
-          }
+          val osSpecificPlugins = plugins.filter { satisfiesBundlingRequirements(it, os, arch, context) }
           if (osSpecificPlugins.isEmpty()) {
             return@mapNotNull null
           }
@@ -386,7 +384,7 @@ internal suspend fun generateProjectStructureMapping(context: BuildContext, plat
                                                       productLayout = context.productProperties.productLayout)
     val entries = ArrayList<DistributionFileEntry>()
     for (plugin in allPlugins) {
-      if (satisfiesBundlingRequirements(plugin, osFamily = null, arch = null, withEphemeral = true, context)) {
+      if (satisfiesBundlingRequirements(plugin, osFamily = null, arch = null, context)) {
         val targetDirectory = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(plugin.directoryName)
         entries.addAll(layoutDistribution(layout = plugin,
                                           platformLayout = platformLayout,
@@ -742,11 +740,7 @@ private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: List<Dis
   }
 }
 
-fun satisfiesBundlingRequirements(plugin: PluginLayout,
-                                  osFamily: OsFamily?,
-                                  arch: JvmArchitecture?,
-                                  withEphemeral: Boolean,
-                                  context: BuildContext): Boolean {
+fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFamily?, arch: JvmArchitecture?, context: BuildContext): Boolean {
   if (plugin.directoryName in context.options.bundledPluginDirectoriesToSkip) {
     return false
   }
@@ -765,10 +759,6 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
     if (!distributionCondition) {
       return false
     }
-  }
-
-  if (bundlingRestrictions == PluginBundlingRestrictions.EPHEMERAL) {
-    return if (withEphemeral) osFamily == null && arch == null else false
   }
 
   if (bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE) {

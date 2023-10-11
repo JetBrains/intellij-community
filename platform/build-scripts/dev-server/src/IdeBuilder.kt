@@ -230,16 +230,8 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
     return true
   }
 
-  return satisfiesBundlingRequirements(plugin = plugin,
-                                       osFamily = OsFamily.currentOs,
-                                       arch = JvmArchitecture.currentJvmArch,
-                                       withEphemeral = false,
-                                       context = context) ||
-         satisfiesBundlingRequirements(plugin = plugin,
-                                       osFamily = null,
-                                       arch = JvmArchitecture.currentJvmArch,
-                                       withEphemeral = false,
-                                       context = context)
+  return satisfiesBundlingRequirements(plugin, OsFamily.currentOs, JvmArchitecture.currentJvmArch, context) ||
+         satisfiesBundlingRequirements(plugin, osFamily = null, JvmArchitecture.currentJvmArch, context)
 }
 
 private suspend fun createProductProperties(productConfiguration: ProductConfiguration, request: BuildRequest): ProductProperties {

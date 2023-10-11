@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import java.util.Objects
 
 /**
  * Allows to exclude a plugin from some distributions.
@@ -35,13 +36,6 @@ class PluginBundlingRestrictions private constructor(
   companion object {
     @JvmField
     val NONE = PluginBundlingRestrictions(OsFamily.ALL, JvmArchitecture.ALL, PluginDistribution.ALL)
-
-    /**
-     * Use if the plugin should be included anywhere, just used to calculate searchable options index, provided module list.
-     * Must be used with conjunction of other PluginLayout's which do have actual restrictions.
-     */
-    @JvmField
-    val EPHEMERAL = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), PluginDistribution.ALL)
 
     /**
      * Use for the plugin version which is uploaded to the Marketplace, since the latter does not support per-OS/ARCH plugins.
@@ -91,19 +85,9 @@ class PluginBundlingRestrictions private constructor(
      */
     var includeInDistribution: PluginDistribution = PluginDistribution.ALL
 
-    var ephemeral: Boolean = false
-
     var marketplace: Boolean = false
 
     internal fun build(): PluginBundlingRestrictions {
-      if (ephemeral) {
-        check(supportedOs == OsFamily.ALL)
-        check(supportedArch == JvmArchitecture.ALL)
-        check(includeInDistribution == PluginDistribution.ALL)
-        check(!includeInEapOnly)
-        check(!includeInNightlyOnly)
-        return EPHEMERAL
-      }
       if (marketplace) {
         check(supportedOs == OsFamily.ALL)
         check(supportedArch == JvmArchitecture.ALL)
@@ -125,36 +109,23 @@ class PluginBundlingRestrictions private constructor(
     }
   }
 
-  override fun toString(): String {
-    if (this === EPHEMERAL) return "ephemeral"
-    if (this === MARKETPLACE) return "marketplace"
-    if (this == NONE) return "unrestricted"
+  override fun toString(): String =
+    if (this === MARKETPLACE) "marketplace"
+    else if (this == NONE) "unrestricted"
+    else "os: ${if (supportedOs == OsFamily.ALL) "unrestricted" else supportedOs.joinToString(",")}, " +
+         "arch: ${if (supportedArch == JvmArchitecture.ALL) "unrestricted" else supportedArch.joinToString(",")}, " +
+         "includeInDistribution=$includeInDistribution)"
 
-    return "os: ${if (supportedOs == OsFamily.ALL) "unrestricted" else supportedOs.joinToString(",")}, " +
-           "arch: ${if (supportedArch == JvmArchitecture.ALL) "unrestricted" else supportedArch.joinToString(",")}, " +
-           "includeInDistribution=$includeInDistribution)"
-  }
-
-  override fun hashCode(): Int {
-    if (this === EPHEMERAL) return -1
-    if (this === MARKETPLACE) return -2
-
-    var result = supportedOs.hashCode()
-    result = 31 * result + supportedArch.hashCode()
-    result = 31 * result + includeInDistribution.hashCode()
-    return result
-  }
+  override fun hashCode(): Int =
+    if (this === MARKETPLACE) -1
+    else Objects.hash(supportedOs, supportedArch, includeInDistribution)
 
   @Suppress("RedundantIf")
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as PluginBundlingRestrictions
-
-    if (this === EPHEMERAL) return false
     if (this === MARKETPLACE) return false
-
+    if (javaClass != other?.javaClass) return false
+    other as PluginBundlingRestrictions
     if (supportedOs != other.supportedOs) return false
     if (supportedArch != other.supportedArch) return false
     if (includeInDistribution != other.includeInDistribution) return false
