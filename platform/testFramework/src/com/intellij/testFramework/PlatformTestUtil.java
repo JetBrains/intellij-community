@@ -792,8 +792,8 @@ public final class PlatformTestUtil {
         assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
       }
       else if (!StringUtil.equals(expected, actual)) {
-        // `expectedFilePath` is passed as null because FileComparisonFailure can not handle virtual files, we might do not have it locally
-        throw new FileComparisonFailure("Text mismatch in the file " + fileExpected.getName(), expected, actual, null);
+        throw new FileComparisonFailure("Text mismatch in the file " + fileExpected.getName(), expected, actual,
+                                        fileActual.getUserData(VfsTestUtil.TEST_DATA_FILE_PATH));
       }
     }
   }
