@@ -78,6 +78,12 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
       state.maxVisibleCompletionItemsCount = value
     }
 
+  var autoShowDocumentationPopup: Boolean
+    get() = state.autoShowDocumentationPopup
+    set(value) {
+      state.autoShowDocumentationPopup = value
+    }
+
   private fun fireFontChanged() {
     for (panel in terminalPanels) {
       panel.fontChanged()
@@ -134,6 +140,7 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
   class State {
     var cursorShape: CursorShape = CursorShape.BLOCK
     var maxVisibleCompletionItemsCount: Int = 6
+    var autoShowDocumentationPopup: Boolean = true
   }
 
   override fun getState(): State = state

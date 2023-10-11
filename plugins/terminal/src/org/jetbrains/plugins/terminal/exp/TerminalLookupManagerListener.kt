@@ -8,6 +8,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
+import org.jetbrains.plugins.terminal.exp.documentation.TerminalDocumentationManager
 import kotlin.math.max
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -17,7 +18,8 @@ class TerminalLookupManagerListener : LookupManagerListener {
     if (newLookup?.editor?.isPromptEditor != true) {
       return
     }
-    (newLookup as? LookupEx)?.presentation = LookupPresentation.Builder()
+    val lookup = newLookup as? LookupImpl ?: return
+    lookup.presentation = LookupPresentation.Builder()
       .withPositionStrategy(LookupPositionStrategy.ONLY_ABOVE)
       .withMostRelevantOnTop(false)
       .withMaxVisibleItemsCount(object : ReadWriteProperty<LookupPresentation, Int> {
@@ -30,7 +32,8 @@ class TerminalLookupManagerListener : LookupManagerListener {
         }
       })
       .build()
-    newLookup.addLookupListener(TerminalCompletionLookupListener())
+    lookup.addLookupListener(TerminalCompletionLookupListener())
+    TerminalDocumentationManager.getInstance(lookup.project).autoShowDocumentationOnItemChange(lookup, parentDisposable = lookup)
   }
 
   /**

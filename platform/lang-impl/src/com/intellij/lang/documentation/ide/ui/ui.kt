@@ -56,7 +56,7 @@ internal fun actionButton(actions: ActionGroup, contextComponent: JComponent): J
   return button
 }
 
-internal fun scrollPaneWithCorner(parent: Disposable, scrollPane: JScrollPane, corner: JComponent): JComponent {
+fun scrollPaneWithCorner(parent: Disposable, scrollPane: JScrollPane, corner: JComponent): JComponent {
   val defaultLayout = scrollPane.layout
   scrollPane.layout = CornerAwareScrollPaneLayout(corner)
   Disposer.register(parent) {
