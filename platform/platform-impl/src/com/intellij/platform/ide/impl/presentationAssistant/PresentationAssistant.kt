@@ -94,7 +94,7 @@ class PresentationAssistantState {
 internal fun PresentationAssistantState.mainKeymapKind() = KeymapKind.from(mainKeymap)
 internal fun PresentationAssistantState.alternativeKeymapKind() = alternativeKeymap.takeIf { showAlternativeKeymap }?.let { KeymapKind.from(it) }
 
-@State(name = "PresentationAssistant", storages = [Storage("presentation-assistant.xml")])
+@State(name = "PresentationAssistant", storages = [Storage("presentation-assistant-ij.xml")])
 class PresentationAssistant : PersistentStateComponent<PresentationAssistantState>, Disposable {
   internal val configuration = PresentationAssistantState()
   private var warningAboutMacKeymapWasShown = false
