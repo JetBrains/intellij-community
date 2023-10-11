@@ -180,9 +180,10 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
     if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
-    final Map<Configuration, Matcher> compiledPatterns = checkOutCompiledPatterns(configurations, project);
+    Set<SmartPsiElementPointer<?>> duplicates = ContainerUtil.newConcurrentSet();
+    final Map<Configuration, Matcher> compiledPatterns = checkOutCompiledPatterns(configurations, project, holder, duplicates);
     session.putUserData(COMPILED_PATTERNS, compiledPatterns);
-    return new SSBasedVisitor(compiledPatterns, holder);
+    return new SSBasedVisitor(compiledPatterns, holder, duplicates);
   }
 
   public static void register(@NotNull Configuration configuration) {
@@ -336,21 +337,15 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   private final class InspectionResultSink extends DefaultMatchResultSink {
-    private Configuration myConfiguration;
-    private ProblemsHolder myHolder;
+    private final Configuration myConfiguration;
+    private final ProblemsHolder myHolder;
 
-    private final Set<SmartPsiElementPointer<?>> duplicates = new HashSet<>();
+    private final Set<? super SmartPsiElementPointer<?>> duplicates;
 
-    InspectionResultSink() {}
-
-    void setConfigurationAndHolder(@NotNull Configuration configuration, @NotNull ProblemsHolder holder) {
+    InspectionResultSink(@NotNull Configuration configuration, @NotNull ProblemsHolder holder, @NotNull Set<? super SmartPsiElementPointer<?>> duplicates) {
       myConfiguration = configuration;
       myHolder = holder;
-    }
-
-    void resetConfigurationAndHolder() {
-      myConfiguration = null;
-      myHolder = null;
+      this.duplicates = duplicates;
     }
 
     @Override
@@ -361,7 +356,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       registerProblem(result, myConfiguration, myHolder);
     }
 
-    private void registerProblem(MatchResult matchResult, Configuration configuration, ProblemsHolder holder) {
+    private void registerProblem(@NotNull MatchResult matchResult, @NotNull Configuration configuration, @NotNull ProblemsHolder holder) {
       final PsiElement element = matchResult.getMatch();
       PsiFile containingFile = element.getContainingFile();
       PsiFile templateFile = PsiUtilCore.getTemplateLanguageFile(containingFile);
@@ -384,8 +379,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
   }
 
-  private Map<Configuration, Matcher> checkOutCompiledPatterns(@NotNull List<? extends Configuration> configurations,
-                                                               @NotNull Project project) {
+  private @NotNull Map<Configuration, Matcher> checkOutCompiledPatterns(@NotNull List<? extends Configuration> configurations,
+                                                                        @NotNull Project project, @NotNull ProblemsHolder holder,
+                                                                        @NotNull Set<? super SmartPsiElementPointer<?>> duplicates) {
     final Map<Configuration, Matcher> result = new HashMap<>();
     for (Configuration configuration : configurations) {
       Matcher matcher = myCompiledPatterns.popValue(configuration);
@@ -402,7 +398,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       }
       if (matcher != null) {
         MatchContext context = matcher.getMatchContext();
-        context.setSink(new InspectionResultSink());
+        context.setSink(new InspectionResultSink(configuration, holder, duplicates));
         // ssr should never match recursively because this is handled by the inspection visitor
         context.setShouldRecursivelyMatch(false);
       }
@@ -410,7 +406,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return result;
   }
 
-  private static Matcher buildCompiledConfiguration(Configuration configuration, @NotNull Project project) {
+  private static Matcher buildCompiledConfiguration(@NotNull Configuration configuration, @NotNull Project project) {
     try {
       final MatchOptions matchOptions = configuration.getMatchOptions();
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, true);
@@ -445,7 +441,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       return new ConcurrentLinkedDeque<>();
     }
 
-    public V popValue(K k) {
+    V popValue(K k) {
       final Deque<V> vs = (Deque<V>)myMap.get(k);
       return vs == null ? null : vs.pollLast();
     }
@@ -456,33 +452,37 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     private final Map<Configuration, Matcher> myCompiledOptions;
 
     private @NotNull final ProblemsHolder myHolder;
+    private final Set<? super SmartPsiElementPointer<?>> myDuplicates;
 
-    SSBasedVisitor(Map<Configuration, Matcher> compiledOptions, @NotNull ProblemsHolder holder) {
+    SSBasedVisitor(Map<Configuration, Matcher> compiledOptions, @NotNull ProblemsHolder holder,
+                   @NotNull Set<? super SmartPsiElementPointer<?>> duplicates) {
       myCompiledOptions = compiledOptions;
       myHolder = holder;
+      myDuplicates = duplicates;
     }
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
       if (LexicalNodesFilter.getInstance().accepts(element)) return;
       for (Map.Entry<Configuration, Matcher> entry : myCompiledOptions.entrySet()) {
-        final Matcher matcher = entry.getValue();
+        Matcher matcher = entry.getValue();
         if (matcher == null) continue;
         MatchingStrategy strategy = matcher.getMatchContext().getPattern().getStrategy();
         if (!strategy.continueMatching(element)) continue;
 
-        processElement(element, entry.getKey(), matcher);
+        matcher = new Matcher(matcher); // make safe copy to avoid data races from the other Matcher from myCompiledOptions executing in parallel
+        Configuration configuration = entry.getKey();
+        matcher.getMatchContext().setSink(new InspectionResultSink(configuration, myHolder, myDuplicates));
+        processElement(element, configuration, matcher);
       }
     }
 
-    private void processElement(PsiElement element, Configuration configuration, Matcher matcher) {
+    private void processElement(@Nullable PsiElement element, @NotNull Configuration configuration, @NotNull Matcher matcher) {
       final NodeIterator matchedNodes = SsrFilteringNodeIterator.create(element);
       if (!matcher.checkIfShouldAttemptToMatch(matchedNodes)) {
         return;
       }
       final MatchContext matchContext = matcher.getMatchContext();
-      final InspectionResultSink sink = (InspectionResultSink)matchContext.getSink();
-      sink.setConfigurationAndHolder(configuration, myHolder);
       final int nodeCount = matchContext.getPattern().getNodeCount();
       try {
         matcher.processMatchesInElement(new CountingNodeIterator(nodeCount, matchedNodes));
@@ -498,7 +498,6 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
         }
       }
       finally {
-        sink.resetConfigurationAndHolder();
         matchedNodes.reset();
       }
     }
