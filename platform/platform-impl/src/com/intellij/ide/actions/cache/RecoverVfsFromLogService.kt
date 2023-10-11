@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils
@@ -33,6 +34,7 @@ import com.intellij.platform.ide.bootstrap.hideSplash
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.progressReporter
 import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.util.asSafely
 import com.intellij.util.io.delete
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -209,7 +211,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
 
       try {
         // TODO FileBasedIndexTumbler disable indexing while recovery is in progress
-        val vfsLogEx = serviceIfCreated<PersistentFS>()?.vfsLog as? VfsLogEx
+        val vfsLogEx = serviceIfCreated<ManagingFS>().asSafely<PersistentFS>()?.vfsLog as? VfsLogEx
         vfsLogEx?.awaitPendingWrites()
         vfsLogEx?.flush()
       } catch (ignored: Throwable) {}
