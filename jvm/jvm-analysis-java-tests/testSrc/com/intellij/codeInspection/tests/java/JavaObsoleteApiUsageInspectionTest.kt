@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.jvm.analysis.shared.testFramework.ObsoleteApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.ObsoleteApiUsageInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaObsoleteApiUsageInspectionTest : ObsoleteApiUsageInspectionTestBase() {

@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
-import com.intellij.jvm.analysis.shared.testFramework.MissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.MissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTestBase
 import com.intellij.testFramework.TestDataPath
 
 private const val inspectionPath = "/codeInspection/missingDeprecatedAnnotationOnScheduledForRemovalApi"

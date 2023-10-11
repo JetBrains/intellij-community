@@ -2,7 +2,7 @@ package com.intellij.codeInspection.tests.kotlin.sourceToSink
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
-import com.intellij.jvm.analysis.shared.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.testFramework.TestDataPath
 
 private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow"

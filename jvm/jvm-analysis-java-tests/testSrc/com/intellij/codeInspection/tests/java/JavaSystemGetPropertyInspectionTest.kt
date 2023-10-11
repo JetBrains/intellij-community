@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.jvm.analysis.shared.testFramework.SystemGetPropertyInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.SystemGetPropertyInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase() {

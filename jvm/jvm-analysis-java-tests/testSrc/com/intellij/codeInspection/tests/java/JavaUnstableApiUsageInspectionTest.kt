@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.jvm.analysis.shared.testFramework.UnstableApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.UnstableApiUsageInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() {

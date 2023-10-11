@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.java.performance
 
-import com.intellij.jvm.analysis.shared.testFramework.performance.UrlHashCodeInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.performance.UrlHashCodeInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {

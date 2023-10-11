@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.jvm.analysis.shared.testFramework.test.TestOnlyInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.TestOnlyInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaTestOnlyInspectionTest : TestOnlyInspectionTestBase() {

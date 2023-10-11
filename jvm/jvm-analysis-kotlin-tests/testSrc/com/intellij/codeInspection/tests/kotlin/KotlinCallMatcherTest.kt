@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.jvm.analysis.shared.testFramework.CallMatcherTestBase
+import com.intellij.jvm.analysis.internal.testFramework.CallMatcherTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.siyeh.ig.callMatcher.CallMatcher
 

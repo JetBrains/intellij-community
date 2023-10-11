@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.jvm.analysis.shared.testFramework.SystemGetPropertyInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.SystemGetPropertyInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase() {

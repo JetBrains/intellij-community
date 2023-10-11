@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.jvm.analysis.shared.testFramework.DependencyInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.DependencyInspectionTestBase
 
 class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
   fun `test illegal imported dependency Java API`() = dependencyViolationTest(javaFooFile, "ImportClientJava.java", """

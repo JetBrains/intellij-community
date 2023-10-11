@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.jvm.analysis.shared.testFramework.MigrationTestBase
+import com.intellij.jvm.analysis.internal.testFramework.MigrationTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.refactoring.migration.MigrationMapEntry
 

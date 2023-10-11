@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
-import com.intellij.jvm.analysis.shared.testFramework.JavaApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageInspectionTestBase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel

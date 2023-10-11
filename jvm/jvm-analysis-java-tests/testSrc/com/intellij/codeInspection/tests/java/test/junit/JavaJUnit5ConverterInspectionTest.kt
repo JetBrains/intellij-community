@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.jvm.analysis.shared.testFramework.test.junit.JUnit5ConverterInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnit5ConverterInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {

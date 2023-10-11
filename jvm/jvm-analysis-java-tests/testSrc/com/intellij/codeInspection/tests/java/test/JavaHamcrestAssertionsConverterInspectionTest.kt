@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.jvm.analysis.shared.testFramework.test.HamcrestAssertionsConverterInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.HamcrestAssertionsConverterInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverterInspectionTestBase() {

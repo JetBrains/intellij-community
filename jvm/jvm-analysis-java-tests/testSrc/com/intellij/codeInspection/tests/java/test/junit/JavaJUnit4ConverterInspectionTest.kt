@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.jvm.analysis.shared.testFramework.test.junit.JUnit4ConverterInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnit4ConverterInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.refactoring.BaseRefactoringProcessor
 
