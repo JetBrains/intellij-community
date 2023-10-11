@@ -19,6 +19,7 @@ import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
@@ -70,7 +71,23 @@ data class ClientId(val value: String) {
       return absenceBehaviorValueCached
     }
 
-    val fakeLocalIds = ConcurrentHashMap<String, Unit>().keySet(Unit)
+    // This set used to avoid leaking frontend session client ids to global world,
+    // because it can cause bugs with mixing frontend and remote sessions
+    //
+    // We originally planned to have multiple local sessions (one for each rider backend process),
+    // but this doesn't work because many places use ClientId.Local or try to guess the local identifier (e.g. com.intellij.codeInsight.actions.ReaderModeSettingsImpl is registered as local)
+    // and this prevents the rider from opening multiple projects.
+    // So for now we have this hack and when Rider can open each project in a separate process (or fix all the problems with multiple local sessions)
+    // we will be able to get rid of this hack and mark frontend sessions as local
+    private val fakeLocalIds = ConcurrentHashMap<String, Unit>().keySet(Unit)
+
+    @ApiStatus.Internal
+    // This api will be removed in the future
+    fun isFakeLocalId(clientId: ClientId) = fakeLocalIds.contains(clientId.value)
+
+    @ApiStatus.Internal
+    // This api will be removed in the future
+    fun isFakeLocalId(clientId: String) = fakeLocalIds.contains(clientId)
 
     private val absenceBehaviorValueCached: AbsenceBehavior by lazy {
       val selectedOption = Registry.get("clientid.absence.behavior").selectedOption ?: return@lazy AbsenceBehavior.RETURN_LOCAL
@@ -204,7 +221,7 @@ data class ClientId(val value: String) {
       val service = getCachedService() ?: return action()
 
       val newClientIdValue = if (clientId == null || service.isValid(clientId)) {
-        if (clientId != null && fakeLocalIds.contains(clientId.value))
+        if (clientId != null && isFakeLocalId(clientId))
           localId.value
         else
           clientId?.value
@@ -368,7 +385,12 @@ fun isOnGuest(): Boolean {
   return ClientId.localId != ClientId.defaultLocalId
 }
 
-fun ClientId.asContextElement(): CoroutineContext.Element = ClientIdElement(this)
+fun ClientId.asContextElement(): CoroutineContext.Element {
+  if (ClientId.isFakeLocalId(this))
+    return ClientIdElement(ClientId.localId)
+
+  return ClientIdElement(this)
+}
 
 private object ClientIdElementKey : CoroutineContext.Key<ClientIdElement>
 
@@ -401,7 +423,12 @@ var currentClientIdString: String?
   set(value) = threadLocalClientIdString.set(value)
 
 @ApiStatus.Internal
-fun ClientId.asContextElement2(): CoroutineContext.Element = ClientIdElement2(this)
+fun ClientId.asContextElement2(): CoroutineContext.Element {
+  if (ClientId.isFakeLocalId(this))
+    return ClientIdElement2(ClientId.localId)
+
+  return ClientIdElement2(this)
+}
 
 @ApiStatus.Internal
 fun CoroutineContext.clientId(): ClientId? = this[ClientIdElement2.Key]?.clientId
