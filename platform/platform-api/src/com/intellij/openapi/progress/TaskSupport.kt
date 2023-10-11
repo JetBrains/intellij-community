@@ -3,16 +3,13 @@ package com.intellij.openapi.progress
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.platform.ide.progress.TaskCancellation
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 
 @Internal
 interface TaskSupport {
-
-  fun taskCancellationNonCancellableInternal(): TaskCancellation.NonCancellable
-
-  fun taskCancellationCancellableInternal(): TaskCancellation.Cancellable
 
   fun modalTaskOwner(project: Project): ModalTaskOwner
 

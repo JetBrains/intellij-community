@@ -71,10 +71,6 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     return finiteFlow
   }
 
-  override fun taskCancellationNonCancellableInternal(): TaskCancellation.NonCancellable = NonCancellableTaskCancellation
-
-  override fun taskCancellationCancellableInternal(): TaskCancellation.Cancellable = defaultCancellable
-
   override fun modalTaskOwner(component: Component): ModalTaskOwner = ComponentModalTaskOwner(component)
 
   override fun modalTaskOwner(project: Project): ModalTaskOwner = ProjectModalTaskOwner(project)
