@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.dev.FastFileAttributes
 import com.intellij.util.BitUtil
+import com.intellij.util.indexing.impl.perFileVersion.AutoRefreshingOnVfsCloseRef
 import com.intellij.util.io.DataInputOutputUtil
 import java.io.IOException
 
@@ -23,31 +24,12 @@ internal sealed interface IndexingStampInfoStorage {
 
 
 internal class IndexingStampInfoStorageOverFastAttributes(private val attribute: FileAttribute) : IndexingStampInfoStorage {
-  @Volatile
-  private var attributeAccessor: FastFileAttributes.Int4FileAttribute? = null
-
-  private fun attributeAccessor(): FastFileAttributes.Int4FileAttribute {
-    // we need synchronized to make sure that we don't create too many int3FileAttributes instances from different threads.
-    // attributeAccessor itself is volatile, and will be `null`-ed without synchronized (because attributeAccessor can become invalid
-    // immediately after synchronized block finished, so there must be another way to make sure that initialization and shutdown
-    // are not running in parallel)
-    return attributeAccessor ?: synchronized(attribute) {
-      attributeAccessor?.let { return@synchronized it }
-
-      val fsRecordsImpl = FSRecords.getInstance()
-      val newAccessor = FastFileAttributes.int4FileAttributes(
-        fsRecordsImpl,
-        attribute.id,
-        attribute.version
-      )
-
-      attributeAccessor = newAccessor
-      fsRecordsImpl.addCloseable {
-        attributeAccessor = null
-      }
-
-      return@synchronized newAccessor
-    }
+  private val attributeAccessor = AutoRefreshingOnVfsCloseRef{ fsRecordsImpl->
+    FastFileAttributes.int4FileAttributes(
+      fsRecordsImpl,
+      attribute.id,
+      attribute.version
+    )
   }
 
   override fun readStampInfo(fileId: Int): IndexingStampInfo? {
