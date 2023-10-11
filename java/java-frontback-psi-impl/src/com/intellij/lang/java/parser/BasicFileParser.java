@@ -96,7 +96,7 @@ public class BasicFileParser {
       impListInfo.first.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getPrecedingCommentBinder(), null);  // pass comments behind fake import list
       firstDeclaration.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getSpecialPrecedingCommentBinder(), null);
     }
-    if (isUnnamedClass && firstDeclaration != null) {
+    if (isUnnamedClass) {
       PsiBuilder.Marker beforeFirst = firstDeclaration.precede();
       done(beforeFirst, myJavaElementTypeContainer.UNNAMED_CLASS, myWhiteSpaceAndCommentSetHolder);
     }
