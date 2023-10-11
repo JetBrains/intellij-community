@@ -12,8 +12,8 @@ sealed interface IntFileAttribute {
   companion object {
     @JvmStatic
     fun create(id: String, version: Int, fast: Boolean): IntFileAttribute {
-      val adjustedVersion = version * 2 + if (fast) 1 else 0
-      val attribute = FileAttribute(id, adjustedVersion, true)
+      val suffix = if (fast) ".fast" else ""
+      val attribute = FileAttribute(id + suffix, version, true)
       return if (fast) overFastAttribute(attribute) else overRegularAttribute(attribute)
     }
 
