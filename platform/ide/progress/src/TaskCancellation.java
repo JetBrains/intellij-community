@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.progress;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ide.progress;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
@@ -30,7 +29,7 @@ public interface TaskCancellation {
   /**
    * The returned instance can optionally be customized with button text and/or tooltip text.
    * If {@link Cancellable#withButtonText the button text} is not specified,
-   * then {@link CommonBundle#getCancelButtonText the default text} is used.
+   * then {@link com.intellij.CommonBundle#getCancelButtonText the default text} is used.
    *
    * @return a cancellation instance, which means that the cancel button should be displayed in the UI
    */
