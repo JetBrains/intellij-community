@@ -10,6 +10,7 @@ import org.jetbrains.skia.RuntimeShaderBuilder
 
 @Language("GLSL") // Technically, SkSL
 private const val FOIL_SHADER_CODE = """
+const float SCALE = 1.8; // Effect scale (> 1 means smaller rainbow)
 const float SATURATION = 0.9; // Color saturation (0.0 = grayscale, 1.0 = full color)
 const float LIGHTNESS = 0.65; // Color lightness (0.0 = black, 1.0 = white)
  
@@ -21,18 +22,6 @@ uniform float intensity; // 0.0 = no effect, 1.0 = full effect
 // From https://www.ryanjuckett.com/photoshop-blend-modes-in-hlsl/
 vec3 BlendMode_Screen(vec3 base, vec3 blend) {
 	return base + blend - base * blend;
-}
-
-float BlendMode_Overlay(float base, float blend)
-{
-	return (base <= 0.5) ? 2*base*blend : 1 - 2*(1-base)*(1-blend);
-}
-
-float3 BlendMode_Overlay(float3 base, float3 blend)
-{
-	return float3(  BlendMode_Overlay(base.r, blend.r), 
-					BlendMode_Overlay(base.g, blend.g), 
-					BlendMode_Overlay(base.b, blend.b) );
 }
 
 vec4 rainbowEffect(vec2 uv, vec2 coord, vec2 offset) {
@@ -68,7 +57,7 @@ vec4 rainbowEffect(vec2 uv, vec2 coord, vec2 offset) {
 }
 
 vec4 chromaticAberration(vec2 coord, vec2 offset) {
-    vec2 uv = coord / resolution;
+    vec2 uv = coord / (resolution / SCALE);
     vec4 srcColor = rainbowEffect(uv, coord, offset);
     vec2 shift = offset * vec2(3.0, 5.0) / 1000.0;
     vec4 leftColor = rainbowEffect(uv - shift, coord, offset);
