@@ -635,9 +635,7 @@
 
           <group id="UIToggleActions">
             <separator/>
-            <action id="TogglePresentationAssistantAction" class="com.intellij.platform.ide.impl.presentationAssistant.TogglePresentationAssistantAction">
-              <keyboard-shortcut first-keystroke="alt shift d" keymap="$default"/>
-            </action>
+            <action id="TogglePresentationAssistantAction" class="com.intellij.platform.ide.impl.presentationAssistant.TogglePresentationAssistantAction"/>
             <separator/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
             <action id="MainMenuAsSeparateToolbarAction" class="com.intellij.ide.actions.MainMenuAsSeparateToolbarAction"/>
