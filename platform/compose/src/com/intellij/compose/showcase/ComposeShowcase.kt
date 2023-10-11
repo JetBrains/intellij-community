@@ -1,14 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.showcase
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.jetbrains.jewel.*
 
 @Composable
@@ -17,23 +17,31 @@ internal fun ComposeShowcase() {
     verticalArrangement = Arrangement.spacedBy(15.dp),
     modifier = Modifier.padding(10.dp)
   ) {
+    Title()
     CheckBox()
     RadioButton()
     Button()
     Label()
+    SelectableText()
     Tabs()
     LinkLabels()
     TextField()
   }
 }
 
+@Composable
+private fun Title() {
+  Text("Showcase of Jewel components", fontSize = 15.sp)
+  Divider(orientation = Orientation.Horizontal, modifier = Modifier.fillMaxWidth())
+}
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun CheckBox() {
   var checkedState by remember { mutableStateOf(false) }
   Row(
-    horizontalArrangement = Arrangement.spacedBy(5.dp)
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(5.dp),
   ) {
     Text("Checkbox:")
     CheckboxRow(
@@ -47,13 +55,15 @@ private fun CheckBox() {
   }
 }
 
+
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun RadioButton() {
   var selectedRadioButton by remember { mutableStateOf(1) }
   val resourceLoader = LocalResourceLoader.current
   Row(
-    horizontalArrangement = Arrangement.spacedBy(5.dp)
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(5.dp),
   ) {
     Text("radioButton")
     RadioButtonRow(
@@ -78,10 +88,23 @@ private fun RadioButton() {
 @Composable
 private fun Label() {
   Row(
+    verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(5.dp)
   ) {
     Text("label:")
     Text("Some label")
+  }
+}
+
+@Composable
+private fun SelectableText() {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(5.dp)
+  ) {
+    SelectionContainer {
+      Text("Selectable text")
+    }
   }
 }
 
@@ -117,7 +140,8 @@ private fun Tabs() {
 @Composable
 private fun LinkLabels() {
   Row(
-    horizontalArrangement = Arrangement.spacedBy(5.dp)
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(5.dp),
   ) {
     val resourceLoader = LocalResourceLoader.current
 
@@ -132,7 +156,8 @@ private fun LinkLabels() {
 private fun TextField() {
   var textFieldState by remember { mutableStateOf("") }
   Row(
-    horizontalArrangement = Arrangement.spacedBy(5.dp)
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(5.dp),
   ) {
     Text("Text field:")
     TextField(textFieldState, onValueChange = {
