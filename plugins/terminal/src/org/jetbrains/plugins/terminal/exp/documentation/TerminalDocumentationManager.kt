@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.documentation.ide.actions.AdjustFontSizeAction
 import com.intellij.lang.documentation.ide.documentationComponent
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import org.jetbrains.terminal.completion.BaseSuggestion
+import java.awt.Component
 import java.awt.Dimension
 import java.lang.ref.WeakReference
 import javax.swing.JComponent
@@ -148,8 +150,8 @@ internal class TerminalDocumentationManager(private val project: Project, privat
       add(TerminalToggleAutoShowDocumentationAction())
       add(AdjustFontSizeAction())
     }
-    val moreButton = actionButton(actions)
     val scrollPane = docComponent.getComponent() as? JScrollPane ?: error("JScrollPane expected")
+    val moreButton = actionButton(actions, scrollPane.viewport.view)
     return scrollPaneWithCorner(parentDisposable, scrollPane, moreButton)
   }
 
@@ -166,14 +168,16 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     return builder.createPopup() as AbstractPopup
   }
 
-  private fun actionButton(actions: ActionGroup): JComponent {
+  private fun actionButton(actions: ActionGroup, contextComponent: Component): JComponent {
     val presentation = Presentation().also {
       it.icon = AllIcons.Actions.More
       it.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     }
-    return ActionButton(actions, presentation, ActionPlaces.UNKNOWN, Dimension(20, 20)).also {
-      it.setNoIconsInPopup(true)
+    val button = object : ActionButton(actions, presentation, ActionPlaces.UNKNOWN, Dimension(20, 20)) {
+      override fun getDataContext(): DataContext = DataManager.getInstance().getDataContext(contextComponent)
     }
+    button.setNoIconsInPopup(true)
+    return button
   }
 
   private fun LookupElement.toDocRequest(): DocumentationRequest? {
