@@ -134,7 +134,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   val initLafJob = scheduleInitUi(initAwtToolkitJob, isHeadless)
   if (!isHeadless) {
     scheduleShowSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
-    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
+    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred)
     launch {
       patchHtmlStyle(initLafJob)
     }

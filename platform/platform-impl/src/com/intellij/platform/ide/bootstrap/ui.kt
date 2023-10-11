@@ -14,6 +14,7 @@ import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.StartupErrorReporter
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.logger
@@ -223,7 +224,7 @@ fun checkHiDPISettings() {
 }
 
 // must happen after initUi
-internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred: Job) {
+internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfoEx>) {
   launch {
     initUiDeferred.join()
 
@@ -250,10 +251,11 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
       }
     }
 
-    launch(CoroutineName("update window icon")) {
-      // `updateWindowIcon` should be called after `initUiJob`, because it uses computed system font data for scale context
-      if (!isWindowIconAlreadyExternallySet() && !PluginManagerCore.isRunningFromSources()) {
-        // most of the time is consumed by loading SVG and can be done in parallel
+    // `updateWindowIcon` should be called after `initUiJob`, because it uses computed system font data for scale context
+    if (!isWindowIconAlreadyExternallySet() && !PluginManagerCore.isRunningFromSources()) {
+      appInfoDeferred.await()
+      // most of the time is consumed by loading SVG and can be done in parallel
+      launch(CoroutineName("update window icon")) {
         updateAppWindowIcon(JOptionPane.getRootFrame())
       }
     }
