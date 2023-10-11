@@ -1,13 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.navigation.DomGotoRelatedItem;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
-import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -129,31 +128,29 @@ final class LineMarkerInfoHelper {
         //noinspection unchecked
         return getDomElementName((T)domElement, namer);
       })
-      .setCellRenderer(new Computable<>() {
+      .setTargetRenderer(() -> new PsiTargetPresentationRenderer<>() {
+        @Nls
+        @NotNull
         @Override
-        public PsiElementListCellRenderer<?> compute() {
-          return new PsiElementListCellRenderer<>() {
+        public String getElementText(@NotNull PsiElement element) {
+          DomElement domElement = DomUtil.getDomElement(element);
+          //noinspection unchecked
+          return getDomElementName((T)domElement, namer);
+        }
 
-            @Override
-            protected Icon getIcon(PsiElement element) {
-              DomElement domElement = DomUtil.getDomElement(element);
-              assert domElement != null;
-              return ObjectUtils.chooseNotNull(domElement.getPresentation().getIcon(), element.getIcon(getIconFlags()));
-            }
+        @Nls
+        @Override
+        public String getContainerText(@NotNull PsiElement element) {
+          return UniqueVFilePathBuilder.getInstance()
+            .getUniqueVirtualFilePath(element.getProject(), element.getContainingFile().getVirtualFile());
+        }
 
-            @Override
-            public String getElementText(PsiElement element) {
-              DomElement domElement = DomUtil.getDomElement(element);
-              //noinspection unchecked
-              return getDomElementName((T)domElement, namer);
-            }
-
-            @Override
-            protected String getContainerText(PsiElement element, String name) {
-              return UniqueVFilePathBuilder.getInstance()
-                .getUniqueVirtualFilePath(element.getProject(), element.getContainingFile().getVirtualFile());
-            }
-          };
+        @Nullable
+        @Override
+        protected Icon getIcon(@NotNull PsiElement element) {
+          DomElement domElement = DomUtil.getDomElement(element);
+          assert domElement != null;
+          return ObjectUtils.chooseNotNull(domElement.getPresentation().getIcon(), element.getIcon(0));
         }
       })
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
@@ -164,5 +161,4 @@ final class LineMarkerInfoHelper {
   private static <T extends DomElement> String getDomElementName(T domElement, NullableFunction<T, @NlsSafe String> namer) {
     return StringUtil.defaultIfEmpty(namer.fun(domElement), "?");
   }
-
 }
