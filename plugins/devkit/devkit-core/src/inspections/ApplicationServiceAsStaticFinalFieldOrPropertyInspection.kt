@@ -16,7 +16,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 
-class ApplicationServiceAsStaticFinalFieldOrPropertyInspection : DevKitUastInspectionBase() {
+internal class ApplicationServiceAsStaticFinalFieldOrPropertyInspection : DevKitUastInspectionBase() {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     // Can't easily visit all Kotlin properties via UAST (since some of them are UField,
