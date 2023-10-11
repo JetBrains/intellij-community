@@ -2,12 +2,11 @@
 package com.jetbrains.python.ui
 
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.progress.withModalProgress
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 
 /**

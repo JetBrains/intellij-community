@@ -13,7 +13,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.progress.withModalProgress
 import com.intellij.openapi.project.Project
@@ -31,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContextEx
 import com.intellij.platform.ide.bootstrap.hideSplash
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.progressReporter
 import com.intellij.platform.util.progress.rawProgressReporter

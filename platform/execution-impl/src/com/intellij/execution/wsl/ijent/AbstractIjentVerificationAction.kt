@@ -12,10 +12,10 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.withModalProgress
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentMissingBinary
 import com.intellij.platform.ijent.fs.nio.asNioFileSystem

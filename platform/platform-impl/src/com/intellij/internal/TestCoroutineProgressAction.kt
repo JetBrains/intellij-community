@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.util.progress.filterWithProgress
 import com.intellij.platform.util.progress.forEachWithProgress
 import com.intellij.platform.util.progress.indeterminateStep
