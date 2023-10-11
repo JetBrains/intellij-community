@@ -3,15 +3,13 @@ package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.Closeable;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -128,7 +126,9 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   private static IntFileAttribute getFileAttribute(String name, int version) {
     synchronized (ourAttributes) {
       return ourAttributes.computeIfAbsent(new Pair<>(name, version), __ -> {
-        return IntFileAttribute.create(name + ".index.version", version, false);
+        boolean shouldUseFastAttributes = Registry.is("scanning.stamps.over.fast.attributes", true)
+                                          || Registry.is("scanning.trust.indexing.flag", true);
+        return IntFileAttribute.create(name + ".index.version", version, shouldUseFastAttributes);
       });
     }
   }
