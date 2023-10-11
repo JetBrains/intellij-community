@@ -126,9 +126,7 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   private static IntFileAttribute getFileAttribute(String name, int version) {
     synchronized (ourAttributes) {
       return ourAttributes.computeIfAbsent(new Pair<>(name, version), __ -> {
-        boolean shouldUseFastAttributes = Registry.is("scanning.stamps.over.fast.attributes", true)
-                                          || Registry.is("scanning.trust.indexing.flag", true);
-        return IntFileAttribute.create(name + ".index.version", version, shouldUseFastAttributes);
+        return IntFileAttribute.create(name + ".index.version", version);
       });
     }
   }

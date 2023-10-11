@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Contract;
@@ -78,7 +79,7 @@ public final class IndexingStamp {
   private static final ReadWriteLock flushLock = new ReentrantReadWriteLock();
 
   private static IndexingStampStorage createStorage() {
-    if (Registry.is("scanning.stamps.over.fast.attributes", true) || Registry.is("scanning.trust.indexing.flag", true)) {
+    if (IntFileAttribute.shouldUseFastAttributes()) {
       return new IndexingStampStorageOverFastAttributes();
     }
     else {

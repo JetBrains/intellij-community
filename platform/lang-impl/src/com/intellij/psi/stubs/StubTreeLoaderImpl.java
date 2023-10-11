@@ -37,9 +37,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   private final IndexingStampInfoStorage indexingStampInfoStorage = createStorage();
 
   private static IndexingStampInfoStorage createStorage() {
-    boolean shouldUseFastAttributes = Registry.is("scanning.stamps.over.fast.attributes", true)
-                                      || Registry.is("scanning.trust.indexing.flag", true);
-    return IndexingStampInfoStorage.create("stubIndexStamp", 3, shouldUseFastAttributes);
+    return IndexingStampInfoStorage.create("stubIndexStamp", 3);
   }
 
   @Override
