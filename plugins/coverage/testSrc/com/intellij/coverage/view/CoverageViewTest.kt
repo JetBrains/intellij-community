@@ -1,18 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view
 
+import com.intellij.coverage.CoverageDataManager
 import com.intellij.coverage.CoverageEditorAnnotatorImpl
 import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.FillingLineMarkerRenderer
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.rt.coverage.data.LineCoverage.*
 import com.intellij.testFramework.utils.vfs.getPsiFile
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.delay
@@ -69,9 +74,9 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
     openSuiteAndWait(suite)
 
     delay(500)
-    assertGutterHighlightLines("foo.bar.BarClass", listOf(3, 5, 9, 13))
-    assertGutterHighlightLines("foo.bar.UncoveredClass", listOf(3, 5, 8, 11, 14))
-    assertGutterHighlightLines("foo.FooClass", listOf(3, 5, 9))
+    assertGutterHighlightLines("foo.bar.BarClass", mapOf(3 to FULL, 5  to FULL, 9  to NONE, 13  to NONE))
+    assertGutterHighlightLines("foo.bar.UncoveredClass", mapOf(3 to NONE, 5 to NONE, 8 to NONE, 11 to NONE, 14 to NONE))
+    assertGutterHighlightLines("foo.FooClass", mapOf(3 to FULL, 5 to FULL, 9 to PARTIAL))
     closeSuite()
     assertNoCoverage()
   }
@@ -83,9 +88,9 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
   }
 
   private suspend fun assertCoveredFiles() {
-    assertGutterHighlightLines("foo.bar.BarClass", listOf(5, 9, 13))
-    assertGutterHighlightLines("foo.bar.UncoveredClass", listOf(5, 8, 11, 14))
-    assertGutterHighlightLines("foo.FooClass", listOf(5, 9))
+    assertGutterHighlightLines("foo.bar.BarClass", mapOf(5 to FULL, 9 to NONE, 13 to NONE))
+    assertGutterHighlightLines("foo.bar.UncoveredClass", mapOf(5 to NONE, 8 to NONE, 11 to NONE, 14 to NONE))
+    assertGutterHighlightLines("foo.FooClass", mapOf(5 to FULL, 9 to PARTIAL))
   }
 
   private suspend fun openFiles() {
@@ -94,12 +99,20 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
     openClass("foo.FooClass")
   }
 
-  private suspend fun assertGutterHighlightLines(className: String, expectedLines: List<Int>?) {
+  private suspend fun assertGutterHighlightLines(className: String, expected: Map<Int, Byte>?) {
     val editor = findEditor(className)
     val highlighters = editor.getUserData(CoverageEditorAnnotatorImpl.COVERAGE_HIGHLIGHTERS)
-    val lines = highlighters?.map { it.document.getLineNumber(it.startOffset) + 1 }
-    Assert.assertEquals(expectedLines, lines)
+    val lines = highlighters?.associate { it.document.getLineNumber(it.startOffset) + 1 to getCoverage(it) }
+    Assert.assertEquals(expected, lines)
   }
+
+  private fun getCoverage(it: RangeHighlighter) = when ((it.lineMarkerRenderer as FillingLineMarkerRenderer).getTextAttributesKey()) {
+    CodeInsightColors.LINE_FULL_COVERAGE -> FULL
+    CodeInsightColors.LINE_PARTIAL_COVERAGE -> PARTIAL
+    CodeInsightColors.LINE_NONE_COVERAGE -> NONE
+    else -> error("Unexpected gutter highlighting")
+  }
+
 
   private suspend fun findEditor(className: String): EditorImpl {
     val psiClass = getPsiClass(className)

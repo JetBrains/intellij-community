@@ -51,18 +51,19 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null)
   }
 
-  protected suspend fun openSuiteAndWait(bundle: CoverageSuitesBundle) {
+  protected suspend fun openSuiteAndWait(bundle: CoverageSuitesBundle) = waitSuiteProcessing {
+    CoverageDataManager.getInstance(myProject).chooseSuitesBundle(bundle)
+  }
+
+  protected suspend fun waitSuiteProcessing(action: () -> Unit) {
     var dataCollected = false
-    val disposable = object : Disposable.Default {}
-    val listener = object : CoverageSuiteListener {
+    val disposable = Disposer.newDisposable()
+    CoverageDataManager.getInstance(myProject).addSuiteListener(object : CoverageSuiteListener {
       override fun coverageDataCalculated() {
         dataCollected = true
       }
-    }
-    CoverageDataManager.getInstance(myProject).run {
-      addSuiteListener(listener, disposable)
-      chooseSuitesBundle(bundle)
-    }
+    }, disposable)
+    action()
 
     // wait until data collected
     while (!dataCollected) delay(1)
@@ -84,7 +85,7 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     val engine = CoverageEngine.EP_NAME.findExtensionOrFail(coverageEngineClass)
     val suite: CoverageSuite = engine.createCoverageSuite(
       runner, coverageDataPath, fileProvider, includeFilters,
-      -1, null, false, false, false, myProject)!!
+      -1, null, true, true, false, myProject)!!
     return CoverageSuitesBundle(suite)
   }
 

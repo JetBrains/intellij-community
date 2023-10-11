@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.testFramework.JavaModuleTestCase
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
@@ -127,23 +126,30 @@ private class PackageAnnotationConsumer : Annotator {
 }
 
 private fun assertHits(consumer: PackageAnnotationConsumer, ignoreConstructor: Boolean = true, ignoreBranches: Boolean = false) {
-  JavaModuleTestCase.assertEquals(3, consumer.myClassCoverageInfo.size)
-  JavaModuleTestCase.assertEquals(2, consumer.myFlatPackageCoverage.size)
-  JavaModuleTestCase.assertEquals(3, consumer.myPackageCoverage.size)
-
   val barTotalMethods = if (ignoreConstructor) 3 else 4
   val barCoveredMethods = if (ignoreConstructor) 1 else 2
   val barHits = intArrayOf(1, 1, barTotalMethods, barCoveredMethods, 4, 2, 0, 0)
-  assertHits(consumer.myClassCoverageInfo["foo.bar.BarClass"], barHits, ignoreBranches)
-
   val uncoveredTotalMethods = if (ignoreConstructor) 4 else 5
   val uncoveredTotalLines = if (ignoreConstructor) 4 else 5
   val uncoveredHits = intArrayOf(1, 0, uncoveredTotalMethods, 0, uncoveredTotalLines, 0, 0, 0)
-  assertHits(consumer.myClassCoverageInfo["foo.bar.UncoveredClass"], uncoveredHits, ignoreBranches)
-
   val fooTotalMethods = if (ignoreConstructor) 2 else 3
   val fooCoveredMethods = if (ignoreConstructor) 2 else 3
   val fooClassHits = intArrayOf(1, 1, fooTotalMethods, fooCoveredMethods, 3, 3, 2, 1)
+
+  assertHits(consumer, barHits, uncoveredHits, fooClassHits, ignoreBranches)
+}
+
+private fun assertHits(consumer: PackageAnnotationConsumer,
+                       barHits: IntArray,
+                       uncoveredHits: IntArray,
+                       fooClassHits: IntArray,
+                       ignoreBranches: Boolean = false) {
+  assertEquals(3, consumer.myClassCoverageInfo.size)
+  assertEquals(2, consumer.myFlatPackageCoverage.size)
+  assertEquals(3, consumer.myPackageCoverage.size)
+
+  assertHits(consumer.myClassCoverageInfo["foo.bar.BarClass"], barHits, ignoreBranches)
+  assertHits(consumer.myClassCoverageInfo["foo.bar.UncoveredClass"], uncoveredHits, ignoreBranches)
   assertHits(consumer.myClassCoverageInfo["foo.FooClass"], fooClassHits, ignoreBranches)
 
   val fooBarHits = sumArrays(barHits, uncoveredHits)
@@ -157,8 +163,8 @@ private fun assertHits(consumer: PackageAnnotationConsumer, ignoreConstructor: B
 }
 
 private fun assertHits(info: SummaryCoverageInfo?, hits: IntArray, ignoreBranches: Boolean = false) {
-  assertNotNull(info)
-  assertEquals(hits[0], info!!.totalClassCount)
+  requireNotNull(info)
+  assertEquals(hits[0], info.totalClassCount)
   assertEquals(hits[1], info.coveredClassCount)
   assertEquals(hits[2], info.totalMethodCount)
   assertEquals(hits[3], info.coveredMethodCount)
