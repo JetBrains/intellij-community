@@ -37,7 +37,7 @@ internal class InlineCompletionDocumentListener(private val editor: Editor) : Bu
     }
 
     if (handler != null) {
-      if (event.isNewLine()) {
+      if (event.isBlankAppended() && InlineCompletionNewLineTracker.isNewLineInsertion(editor)) {
         val range = TextRange.from(event.offset, event.newLength)
         handler.allowTyping(TypingEvent.NewLine(event.newFragment.toString(), range))
       }
@@ -45,25 +45,8 @@ internal class InlineCompletionDocumentListener(private val editor: Editor) : Bu
     }
   }
 
-  /**
-   * Returns `true` only if:
-   * * [DocumentEvent.getOldLength] is equal to 0.
-   * * [DocumentEvent.getNewFragment] contains either only of `\n`, or starts with some `\n` and the rest is the whole blank line
-   * before the ending offset.
-   */
-  private fun DocumentEvent.isNewLine(): Boolean {
-    if (oldLength > 0 || newLength == 0 || newFragment.isNotBlank()) {
-      return false
-    }
-    val fragment = newFragment.toString()
-    val lineSeparatorsNumber = fragment.takeWhile { it == '\n' }.length
-    if (lineSeparatorsNumber == fragment.length) {
-      return true
-    }
-    val lineNumber = document.getLineNumber(offset + newLength)
-    val startOffset = document.getLineStartOffset(lineNumber)
-    val endOffset = document.getLineEndOffset(lineNumber)
-    return startOffset == offset + lineSeparatorsNumber && endOffset == offset + newLength
+  private fun DocumentEvent.isBlankAppended(): Boolean {
+    return oldLength == 0 && newLength > 0 && newFragment.isBlank()
   }
 
   fun isEnabled(event: DocumentEvent): Boolean {
@@ -187,7 +170,7 @@ internal class InlineCompletionAnActionListener : AnActionListener {
     val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return
     val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
     val offset = editor.caretModel.offset
-    handler.allowTyping(TypingEvent.Simple(c, offset))
+    handler.allowTyping(TypingEvent.OneSymbol(c, offset))
   }
 }
 
