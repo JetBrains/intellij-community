@@ -339,13 +339,13 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
           @NotNull
           @Override
           public String getText() {
-            return null;
+            return "?";
           }
 
           @NotNull
           @Override
           public String getFamilyName() {
-            return null;
+            return "";
           }
 
           @Override
@@ -371,7 +371,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
           @NotNull
           @Override
           public String getFamilyName() {
-            return null;
+            return "stub";
           }
 
           @Override
@@ -397,14 +397,14 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
           @NotNull
           @Override
           public String getText() {
-            return null;
+            return "?";
           }
 
           @Nls(capitalization = Nls.Capitalization.Sentence)
           @NotNull
           @Override
           public String getFamilyName() {
-            return null;
+            return getText();
           }
 
           @Override
