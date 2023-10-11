@@ -223,7 +223,10 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       rootPane.layeredPane
     )
 
-    // so  some floating tool window is likely overlay our editor
+    // Make sure that the previous popup before will be hidden before we check for overlay
+    currentHint.get()?.hide()
+
+    // Check that there is no some floating tool window overlaying our editor
     if (isOutOfVisibleEditor(rootPane, position.x, position.y, JBUI.scale(ACTION_BUTTON_SIZE), editorContentComponent)) return
 
     position.x += JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT)
