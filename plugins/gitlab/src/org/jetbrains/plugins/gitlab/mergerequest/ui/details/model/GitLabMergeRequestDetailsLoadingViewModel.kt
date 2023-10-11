@@ -52,7 +52,7 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
       send(LoadingState.Loading)
       coroutineScope {
         val result = try {
-          val detailsVm = GitLabMergeRequestDetailsViewModelImpl(project, scope, currentUser, projectData, mrResult.getOrThrow())
+          val detailsVm = GitLabMergeRequestDetailsViewModelImpl(project, this, currentUser, projectData, mrResult.getOrThrow())
           LoadingState.Result(detailsVm)
         }
         catch (ce: CancellationException) {
