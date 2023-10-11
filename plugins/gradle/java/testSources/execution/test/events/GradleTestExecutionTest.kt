@@ -78,12 +78,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
                 }
               }
             }
-            if (!isTestLauncherUsed()) {
-              assertNode("There were failing tests. See the report at: .*".toRegex())
-            }
-          }
-          if (isTestLauncherUsed()) {
-            assertNode("Test failed.")
+            // IDEA-334636 this node should have the same indention as the 'additionalTest' node
+            assertNode("There were failing tests. See the report at: .*".toRegex())
           }
         }
       }
