@@ -46,6 +46,9 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
 
         //If contentStorage is OK -> try to re-create contentHashesEnumerator, and re-fill it by contentsStorage data:
         tryRebuildHashesStorageByContentStorage(loader);
+
+        //MAYBE IDEA-334517: re-check contentHashStorage: is it really 'fixed'?
+
         loader.problemsWereRecovered(contentStoragesProblems);
         LOG.info("ContentHashesEnumerator was successfully rebuild, ContentStorage was verified along the way");
       }

@@ -407,6 +407,8 @@ public final class FSRecordsImpl implements Closeable {
         stackTraceEx.addSuppressed(e);
       }
 
+      //Assign at the end so all .addSuppressed() are visible.
+      // Downside: it could be .closed=true but .closedStackTrace=null because not assigned yet.
       closedStackTrace = stackTraceEx;
     }
   }

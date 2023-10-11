@@ -450,7 +450,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
     pageCache.tryToReclaimAll(pages);
 
     final Future<?> future = closeAsync();
-    try {
+    try {//MAYBE pageCache.wakeupHousekeeper()?
       future.get();
     }
     catch (ExecutionException e) {
