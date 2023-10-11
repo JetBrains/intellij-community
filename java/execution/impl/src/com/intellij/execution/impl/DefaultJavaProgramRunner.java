@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.attach.JavaDebuggerAttachUtil;
@@ -201,13 +202,13 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     AtomicReference<RunContentDescriptor> result = new AtomicReference<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
+    ApplicationManager.getApplication().invokeAndWait(ClientId.decorateRunnable(() -> {
       RunContentBuilder contentBuilder = new RunContentBuilder(executionResult, env);
       if (!(state instanceof JavaCommandLineState) || ((JavaCommandLineState)state).shouldAddJavaProgramRunnerActions()) {
         addDefaultActions(contentBuilder, executionResult, state instanceof JavaCommandLine);
       }
       result.set(contentBuilder.showRunContent(env.getContentToReuse()));
-    });
+    }));
     return result.get();
   }
 
