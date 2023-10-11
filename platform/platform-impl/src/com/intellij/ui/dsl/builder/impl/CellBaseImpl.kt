@@ -36,11 +36,7 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
   }
 
   override fun visibleIf(property: ObservableProperty<Boolean>): CellBase<T> {
-    visible(property.get())
-    property.whenPropertyChanged {
-      visible(it)
-    }
-    return this
+    return visibleIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   override fun enabledIf(predicate: ComponentPredicate): CellBase<T> {
@@ -50,11 +46,7 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
   }
 
   override fun enabledIf(property: ObservableProperty<Boolean>): CellBase<T> {
-    enabled(property.get())
-    property.whenPropertyChanged {
-      enabled(it)
-    }
-    return this
+    return enabledIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")

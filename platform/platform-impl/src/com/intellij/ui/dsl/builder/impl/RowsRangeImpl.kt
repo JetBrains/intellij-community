@@ -28,11 +28,7 @@ internal open class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : R
   }
 
   override fun visibleIf(property: ObservableProperty<Boolean>): RowsRange {
-    visible(property.get())
-    property.whenPropertyChanged {
-      visible(it)
-    }
-    return this
+    return visibleIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   override fun enabled(isEnabled: Boolean): RowsRange {
@@ -48,10 +44,6 @@ internal open class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : R
   }
 
   override fun enabledIf(property: ObservableProperty<Boolean>): RowsRange {
-    enabled(property.get())
-    property.whenPropertyChanged {
-      enabled(it)
-    }
-    return this
+    return enabledIf(ComponentPredicate.fromObservableProperty(property))
   }
 }

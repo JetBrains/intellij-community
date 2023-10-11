@@ -132,11 +132,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun enabledIf(property: ObservableProperty<Boolean>): RowImpl {
-    enabled(property.get())
-    property.whenPropertyChanged {
-      enabled(it)
-    }
-    return this
+    return enabledIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   override fun visible(isVisible: Boolean): RowImpl {
@@ -147,18 +143,14 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun visibleIf(predicate: ComponentPredicate): Row {
+  override fun visibleIf(predicate: ComponentPredicate): RowImpl {
     visible(predicate())
     predicate.addListener { visible(it) }
     return this
   }
 
   override fun visibleIf(property: ObservableProperty<Boolean>): RowImpl {
-    visible(property.get())
-    property.whenPropertyChanged {
-      visible(it)
-    }
-    return this
+    return visibleIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   fun visibleFromParent(parentVisible: Boolean): RowImpl {
