@@ -31,12 +31,12 @@ import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.io.File
 import java.util.function.BiConsumer
-import javax.swing.JCheckBox
 import javax.swing.JTextField
 
 internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
-  private lateinit var saveImagesCheckbox: JCheckBox
-  private lateinit var resourceDirField: TextFieldWithHistoryWithBrowseButton
+  private data class DialogState(val saveImages: Boolean = true, val resourcesDir: String = "")
+
+  private var state = DialogState()
 
   override val formatDescription: MarkdownFileActionFormat
     get() = format
@@ -72,29 +72,33 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
   }
 
   override fun Panel.createSettingsComponent(project: Project, suggestedTargetFile: File): RowsRange {
-    createResourceDirField(project, suggestedTargetFile)
+    val resourceDirField = createResourceDirField(project, suggestedTargetFile)
 
     return rowsRange {
       row {
-        saveImagesCheckbox = checkBox(MarkdownBundle.message("markdown.export.to.html.save.images.checkbox"))
-          .onChanged { saveSettings(project) }
+        val saveImagesCheckbox = checkBox(MarkdownBundle.message("markdown.export.to.html.save.images.checkbox"))
+          .onChanged {
+            state = state.copy(saveImages = it.isEnabled)
+            saveSettings(project)
+          }
           .gap(RightGap.SMALL)
           .applyToComponent {
             toolTipText = MarkdownBundle.message("markdown.export.dialog.checkbox.tooltip")
             isSelected = service<MarkdownHtmlExportSettings>().getResourceSavingSettings().isSaved
           }.component
         cell(resourceDirField)
+          .onChanged { state = state.copy(resourcesDir = it.text) }
           .align(AlignX.FILL)
           .validationOnApply { validateTargetDir(it) }
           .focused()
           .enabledIf(saveImagesCheckbox.selected)
-        addSettingsListeners(project)
+        addSettingsListeners(project, resourceDirField)
       }
     }
   }
 
-  private fun createResourceDirField(project: Project, suggestedTargetFile: File) {
-    resourceDirField = TextFieldWithHistoryWithBrowseButton().apply {
+  private fun createResourceDirField(project: Project, suggestedTargetFile: File): TextFieldWithHistoryWithBrowseButton {
+    return TextFieldWithHistoryWithBrowseButton().apply {
       setTextFieldPreferredWidth(MarkdownFileActionsBaseDialog.MAX_PATH_LENGTH)
 
       val resDirRecent = RecentsManager.getInstance(project).getRecentEntries(IMAGE_DIR_RESENT_KEYS)
@@ -102,7 +106,13 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
         childComponent.history = resDirRecent
       }
 
-      childComponent.text = FileUtil.join(suggestedTargetFile.parent, suggestedTargetFile.nameWithoutExtension)
+      val suggestedDir = FileUtil.join(suggestedTargetFile.parent, suggestedTargetFile.nameWithoutExtension)
+      if (resDirRecent == null && childComponent.history.isEmpty()) {
+        childComponent.history = listOf(suggestedDir)
+      }
+      childComponent.text = suggestedDir
+
+      state = state.copy(resourcesDir = suggestedDir)
 
       addBrowseFolderListener(
         MarkdownBundle.message("markdown.import.export.dialog.target.directory"),
@@ -114,14 +124,14 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
     }
   }
 
-  private fun addSettingsListeners(project: Project) {
+  private fun addSettingsListeners(project: Project, resourceDirField: TextFieldWithHistoryWithBrowseButton) {
     resourceDirField.childComponent.textEditor.addFocusListener(SaveSettingsListener(project))
   }
 
   private fun saveSettings(project: Project) {
-    val imageDir = resourceDirField.childComponent.text
+    val imageDir = state.resourcesDir
     val exportSettings = service<MarkdownHtmlExportSettings>()
-    exportSettings.saveResources = saveImagesCheckbox.isSelected
+    exportSettings.saveResources = state.saveImages
     exportSettings.resourceDirectory = imageDir
     RecentsManager.getInstance(project).registerRecentEntry(IMAGE_DIR_RESENT_KEYS, imageDir)
   }
@@ -147,7 +157,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
 
     override fun focusLost(e: FocusEvent?) {
       val textEditor = e?.component as JTextField
-      if (saveImagesCheckbox.isSelected && textEditor.text.isNotEmpty()) {
+      if (state.saveImages && textEditor.text.isNotEmpty()) {
         saveSettings(project)
       }
     }
