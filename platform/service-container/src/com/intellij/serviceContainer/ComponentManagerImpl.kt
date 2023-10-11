@@ -156,7 +156,7 @@ abstract class ComponentManagerImpl(
 
   private val scopeHolder = ScopeHolder(
     parentScope,
-    additionalContext,
+    additionalContext + this.asContextElement(),
     containerName = debugString(true),
   )
 
@@ -211,6 +211,10 @@ abstract class ComponentManagerImpl(
 
   @Volatile
   private var isServicePreloadingCancelled = false
+
+  internal fun debugString(): String {
+    return debugString(short = true)
+  }
 
   protected open fun debugString(short: Boolean = false): String {
     return "${if (short) javaClass.simpleName else javaClass.name}@${System.identityHashCode(this)}"
