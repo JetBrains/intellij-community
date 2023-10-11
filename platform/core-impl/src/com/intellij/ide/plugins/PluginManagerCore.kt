@@ -127,7 +127,7 @@ object PluginManagerCore {
   private var ourBuildNumber: BuildNumber? = null
 
   /**
-   * Returns list of all available plugin descriptors (bundled and custom, including disabled ones).
+   * Returns a list of all available plugin descriptors (bundled and custom, including disabled ones).
    * Use [loadedPlugins] if you need to get loaded plugins only.
    *
    * Do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by PluginClassLoader.
@@ -231,7 +231,7 @@ object PluginManagerCore {
       return null
     }
 
-    // return if the found plugin is not `core`, or the package is obviously "core"
+    // return if the found plugin is not `core`, or the package is unambiguously "core"
     if (CORE_ID != result.getPluginId() ||
         className.startsWith("com.jetbrains.") || className.startsWith("org.jetbrains.") ||
         className.startsWith("com.intellij.") || className.startsWith("org.intellij.") ||
@@ -299,7 +299,7 @@ object PluginManagerCore {
       return emptyList()
     }
 
-    // a log includes all messages, not only those which need to be reported to the user
+    // the log includes all messages, not only those which need to be reported to the user
     val loadingErrors = pluginLoadingErrors.entries
       .asSequence()
       .sortedBy { it.key }
@@ -406,7 +406,7 @@ object PluginManagerCore {
             try {
               ApplicationInfoImpl.getShadowInstance().getApiVersionAsNumber()
             }
-            catch (ignore: RuntimeException) {
+            catch (_: RuntimeException) {
               // no need to log error - ApplicationInfo is required in production in any case, so, will be logged if really needed
               BuildNumber.currentVersion()
             }
@@ -987,7 +987,7 @@ private fun readPluginIdsFromFile(path: Path): Set<PluginId> {
         .toSet()
     }
   }
-  catch (ignored: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
     return emptySet()
   }
 }
