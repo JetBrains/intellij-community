@@ -19,10 +19,8 @@ import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.ui.*
-import com.intellij.ui.icons.CachedImageIcon
-import com.intellij.ui.icons.CopyableIcon
-import com.intellij.ui.icons.TextIcon
-import com.intellij.ui.icons.copyIcon
+import com.intellij.ui.RowIcon
+import com.intellij.ui.icons.*
 import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.ScaleContext
@@ -491,7 +489,9 @@ object IconUtil {
   @JvmOverloads
   @JvmStatic
   fun colorize(source: Icon, color: Color, keepGray: Boolean = false): Icon {
-    return filterIcon(icon = source, filterSupplier = { ColorFilter(color, keepGray) })
+    return filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
+      override fun getFilter() = ColorFilter(color, keepGray)
+    })
   }
 
   @JvmOverloads
@@ -502,14 +502,20 @@ object IconUtil {
 
   @JvmStatic
   fun desaturate(source: Icon): Icon {
-    return filterIcon(icon = source, filterSupplier = { DesaturationFilter() })
+    return filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
+      override fun getFilter(): RGBImageFilter = DesaturationFilter()
+    })
   }
 
   @JvmStatic
-  fun brighter(source: Icon, tones: Int): Icon = filterIcon(icon = source, filterSupplier = { BrighterFilter(tones) })
+  fun brighter(source: Icon, tones: Int): Icon = filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
+    override fun getFilter() = BrighterFilter(tones)
+  })
 
   @JvmStatic
-  fun darker(source: Icon, tones: Int): Icon = filterIcon(icon = source, filterSupplier = { DarkerFilter(tones) })
+  fun darker(source: Icon, tones: Int): Icon = filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
+    override fun getFilter() = DarkerFilter(tones)
+  })
 
   @Internal
   fun mainColor(source: Icon): Color {
@@ -551,7 +557,9 @@ object IconUtil {
   @JvmStatic
   @Deprecated("Please use `IconLoader.filterIcon` instead", replaceWith = ReplaceWith("IconLoader.filterIcon", "com.intellij.openapi.util.IconLoader"))
   fun filterIcon(icon: Icon, filterSupplier: Supplier<out RGBImageFilter>, @Suppress("UNUSED_PARAMETER") ancestor: Component?): Icon {
-    return filterIcon(icon = icon, filterSupplier = filterSupplier::get)
+    return filterIcon(icon = icon, filterSupplier = object : RgbImageFilterSupplier {
+      override fun getFilter() = filterSupplier.get()
+    })
   }
 
   /**

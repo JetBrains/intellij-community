@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.openapi.wm.impl.headertoolbar.isDarkHeader
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.CachedImageIcon
+import com.intellij.ui.icons.RgbImageFilterSupplier
 import com.intellij.ui.icons.getDisabledIcon
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.GrayFilter
@@ -19,13 +20,16 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Rectangle
-import java.awt.image.RGBImageFilter
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.UIManager
 
 @ApiStatus.Internal
-val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter = { GrayFilter(0, 0, 30) }
+val lightThemeDarkHeaderDisableFilter: RgbImageFilterSupplier = object : RgbImageFilterSupplier {
+  private val filter = GrayFilter(0, 0, 30)
+
+  override fun getFilter() = filter
+}
 
 fun getHeaderBackgroundColor(component: JComponent, state: Int): Color? {
   if (ProjectWindowCustomizerService.getInstance().isActive()) {

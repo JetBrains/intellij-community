@@ -10,6 +10,8 @@ import com.intellij.ui.svg.newSvgPatcher
 import com.intellij.ui.svg.replaceCachedImageIcons
 import com.intellij.util.SVGLoader
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import java.awt.Color
 import javax.swing.Icon
 import kotlin.time.Duration.Companion.minutes
@@ -58,6 +60,7 @@ internal class IconAndColorCacheKey(@JvmField val icon: Icon, @JvmField val colo
 
 private val strokeIconCache = Caffeine.newBuilder()
   .maximumSize(64)
+  .executor(Dispatchers.Default.asExecutor())
   .expireAfterAccess(30.minutes.toJavaDuration())
   .build<IconAndColorCacheKey, Icon> { computeStrokeIcon(original = it.icon, resultColor = it.color) }
   .also {

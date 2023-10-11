@@ -26,7 +26,6 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
-import java.awt.image.RGBImageFilter
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
@@ -248,7 +247,7 @@ object IconLoader {
   /**
    * Creates a new icon with the filter applied.
    */
-  fun filterIcon(icon: Icon, filterSupplier: () -> RGBImageFilter): Icon {
+  fun filterIcon(icon: Icon, filterSupplier: RgbImageFilterSupplier): Icon {
     val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
     if (!checkIconSize(effectiveIcon)) {
       return EMPTY_ICON

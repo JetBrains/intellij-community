@@ -27,43 +27,34 @@ import javax.swing.Icon
 private const val SCALED_ICON_CACHE_LIMIT = 8
 
 internal class ScaledIconCache {
-  private val cache = Long2ObjectLinkedOpenHashMap<SoftReference<Icon>>(SCALED_ICON_CACHE_LIMIT)
+  private val cache = Long2ObjectLinkedOpenHashMap<SoftReference<Icon>>(SCALED_ICON_CACHE_LIMIT + 1)
 
   @Synchronized
-  fun getCachedIcon(host: CachedImageIcon, gc: GraphicsConfiguration?): Icon? {
+  fun getCachedIcon(host: CachedImageIcon, gc: GraphicsConfiguration?, attributes: IconAttributes): Icon {
     val sysScale = JBUIScale.sysScale(gc)
-    val pixScale = if (JreHiDpiUtil.isJreHiDPIEnabled()) {
-      sysScale * JBUIScale.scale(1f)
-    }
-    else {
-      JBUIScale.scale(1f)
-    }
-
-    val isDark = host.isDark
-
-    val cacheKey = getCacheKey(pixScale, isDark)
+    val pixScale = if (JreHiDpiUtil.isJreHiDPIEnabled()) sysScale * JBUIScale.scale(1f) else JBUIScale.scale(1f)
+    val cacheKey = getCacheKey(pixScale, attributes)
     cache.getAndMoveToFirst(cacheKey)?.get()?.let {
       return it
     }
 
     val scaleContext = ScaleContext.create(ScaleType.SYS_SCALE.of(sysScale))
-    return loadIcon(host = host, scaleContext = scaleContext, cacheKey = cacheKey, isDark = isDark)
+    return loadIcon(host = host, scaleContext = scaleContext, cacheKey = cacheKey, attributes = attributes)
   }
 
   @Synchronized
-  fun getOrScaleIcon(host: CachedImageIcon, scaleContext: ScaleContext): Icon? {
-    val isDark = host.isDark
-    val cacheKey = getCacheKey(pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat(), isDark = isDark)
+  fun getOrScaleIcon(host: CachedImageIcon, scaleContext: ScaleContext, attributes: IconAttributes): Icon {
+    val cacheKey = getCacheKey(pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat(), attributes)
     // don't worry that empty ref in the map, we compute and put a new icon by the same key, so no need to remove invalid entry
     cache.getAndMoveToFirst(cacheKey)?.get()?.let {
       return it
     }
-    return loadIcon(host = host, scaleContext = scaleContext, cacheKey = cacheKey, isDark = isDark)
+    return loadIcon(host = host, scaleContext = scaleContext, cacheKey = cacheKey, attributes = attributes)
   }
 
-  private fun loadIcon(host: CachedImageIcon, scaleContext: ScaleContext, cacheKey: Long, isDark: Boolean): Icon? {
+  private fun loadIcon(host: CachedImageIcon, scaleContext: ScaleContext, cacheKey: Long, attributes: IconAttributes): Icon {
     val image = try {
-      host.loadImage(scaleContext = scaleContext, isDark = isDark) ?: return null
+      host.loadImage(scaleContext = scaleContext, attributes = attributes) ?: return EMPTY_ICON
     }
     catch (e: CancellationException) {
       throw e
@@ -125,4 +116,6 @@ internal class ScaledResultIcon(@JvmField internal val image: Image,
   override fun toString(): String = "ScaledResultIcon for $original"
 }
 
-private fun getCacheKey(pixScale: Float, isDark: Boolean): Long = packTwoIntToLong(pixScale.toRawBits(), if (isDark) 1 else 0)
+private fun getCacheKey(pixScale: Float, cacheFlags: IconAttributes): Long {
+  return packTwoIntToLong(pixScale.toRawBits(), cacheFlags.flags)
+}

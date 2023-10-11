@@ -12,20 +12,19 @@ import com.intellij.ui.scale.ScaleContextSupport
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.RetinaImage
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.GraphicsConfiguration
+import java.awt.Toolkit
 import java.awt.image.BufferedImage
-import java.awt.image.RGBImageFilter
-import java.util.function.Supplier
+import java.awt.image.FilteredImageSource
 import javax.swing.Icon
 
 @Internal
-class FilteredIcon(private val baseIcon: Icon, private val filterSupplier: Supplier<RGBImageFilter?>) : ReplaceableIcon {
+class FilteredIcon(private val baseIcon: Icon, private val filterSupplier: RgbImageFilterSupplier) : ReplaceableIcon {
   private var modificationCount: Long = -1
 
   // IconLoader.CachedImageIcon uses ScaledIconCache to support several scales simultaneously. Not sure, it is needed here.
@@ -135,7 +134,7 @@ private fun getScaleToRenderIcon(icon: Icon, ancestor: Component?): Float {
 
 private fun renderFilteredIcon(icon: Icon,
                                scale: Double,
-                               filterSupplier: Supplier<out RGBImageFilter?>,
+                               filterSupplier: RgbImageFilterSupplier,
                                ancestor: Component?): JBImageIcon {
   @Suppress("UndesirableClassUsage")
   val image = BufferedImage((scale * icon.iconWidth).toInt(), (scale * icon.iconHeight).toInt(), BufferedImage.TYPE_INT_ARGB)
@@ -148,7 +147,8 @@ private fun renderFilteredIcon(icon: Icon,
   // Also, it may be significant if the icon contains updatable icon (e.g., DeferredIcon), and it will schedule incorrect repaint
   icon.paintIcon(fakeComponent, graphics, 0, 0)
   graphics.dispose()
-  var img = ImageUtil.filter(image, filterSupplier.get())
+
+  var img = Toolkit.getDefaultToolkit().createImage(FilteredImageSource(image.source, filterSupplier.getFilter()))
   if (StartupUiUtil.isJreHiDPI(ancestor)) {
     img = RetinaImage.createFrom(img!!, scale, null)
   }

@@ -1,11 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment")
+
 package com.intellij.ui.icons
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.IconLoader.filterIcon
 import com.intellij.openapi.util.LazyIcon
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.scale.*
@@ -20,6 +24,8 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
@@ -37,12 +43,13 @@ import java.net.URL
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.imageio.ImageIO
 import javax.imageio.stream.MemoryCacheImageInputStream
 import javax.swing.Icon
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.toJavaDuration
 
 private val LOG: Logger
   get() = logger<ImageUtil>()
@@ -57,7 +64,6 @@ internal fun clearCacheOnUpdateTransform() {
   for (cleaner in cleaners) {
     cleaner()
   }
-  iconToDisabledIcon.clear()
   // iconCache is not cleared because it contains an original icon (instance that will delegate to)
 }
 
@@ -344,19 +350,66 @@ internal fun checkIconSize(icon: Icon): Boolean {
   return true
 }
 
+private val standardDisablingFilter = object : RgbImageFilterSupplier {
+  override fun getFilter() = UIUtil.getGrayFilter()
+}
+
 // contains mapping between icons and disabled icons
-private val iconToDisabledIcon = ConcurrentHashMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
-private val standardDisablingFilter: () -> RGBImageFilter = { UIUtil.getGrayFilter() }
+private val iconToDisabledIcon: LoadingCache<Icon, Icon> = Caffeine.newBuilder()
+  .maximumSize(1024)
+  .executor(Dispatchers.Default.asExecutor())
+  .expireAfterAccess(10.minutes.toJavaDuration())
+  .build<Icon, Icon>(CacheLoader { icon ->
+    if (icon is CachedImageIcon) {
+      icon.createWithFilter(standardDisablingFilter)
+    }
+    else {
+      FilteredIcon(baseIcon = icon, filterSupplier = standardDisablingFilter)
+    }
+  })
+  .also {
+    registerIconCacheCleaner(it::invalidateAll)
+  }
+
+// contains mapping between icons and disabled icons
+private val iconToIconWithCustomFilter = CollectionFactory.createSoftMap<RgbImageFilterSupplier, Cache<Icon, Icon>>()
+  .also {
+    registerIconCacheCleaner(it::clear)
+  }
+
+// used as a map key - lambda cannot be used
+@Internal
+interface RgbImageFilterSupplier {
+  fun getFilter(): RGBImageFilter
+}
 
 @Internal
-fun getDisabledIcon(icon: Icon, disableFilter: (() -> RGBImageFilter)?): Icon {
+fun getDisabledIcon(icon: Icon, disableFilter: RgbImageFilterSupplier?): Icon {
   if (!isIconActivated || icon is EmptyIcon) {
     return icon
   }
 
   val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
-  val filter = disableFilter ?: standardDisablingFilter /* returns laf-aware instance */
-  return iconToDisabledIcon
-    .computeIfAbsent(filter) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
-    .computeIfAbsent(effectiveIcon) { filterIcon(icon = it, filterSupplier = filter) }
+
+  if (disableFilter == null) {
+    return iconToDisabledIcon.get(effectiveIcon)
+  }
+
+  val filter = disableFilter /* returns laf-aware instance */
+
+  return iconToIconWithCustomFilter.computeIfAbsent(filter) {
+    Caffeine.newBuilder()
+      .maximumSize(512)
+      .executor(Dispatchers.Default.asExecutor())
+      .expireAfterAccess(10.minutes.toJavaDuration())
+      .build()
+  }
+    .get(effectiveIcon) { baseIcon ->
+      if (baseIcon is CachedImageIcon) {
+        baseIcon.createWithFilter(filter)
+      }
+      else {
+        FilteredIcon(baseIcon = baseIcon, filterSupplier = filter)
+      }
+    }
 }

@@ -24,6 +24,8 @@ import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.xml.dom.createXmlStreamReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Graphics
@@ -331,6 +333,7 @@ fun colorPatchedIcon(icon: Icon, colorPatcher: SVGLoader.SvgElementColorPatcherP
     .computeIfAbsent(colorPatcher) {
       Caffeine.newBuilder()
         .maximumSize(64)
+        .executor(Dispatchers.Default.asExecutor())
         .expireAfterAccess(10.minutes.toJavaDuration())
         .build {
           patchIconsWithColorPatcher(icon = it, colorPatcher = colorPatcher)
