@@ -3,14 +3,12 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.diff.util.Side
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.childScope
 import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -21,20 +19,20 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class GitLabMergeRequestEditorReviewViewModel internal constructor(
+internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   private val project: Project,
   parentCs: CoroutineScope,
   private val projectMapping: GitLabProjectMapping,
-  private val mergeRequest: GitLabMergeRequest,
+  mergeRequest: GitLabMergeRequest,
   private val projectVm: GitLabToolWindowProjectViewModel,
-  private val currentUser: GitLabUserDTO,
+  currentUser: GitLabUserDTO,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
-) {
-  private val cs = parentCs.childScope()
+) : GitLabMergeRequestReviewViewModelBase(parentCs, currentUser, mergeRequest) {
 
   val mergeRequestIid: String = mergeRequest.iid
 
@@ -100,7 +98,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
     }.mapScoped {
       it?.let { patch ->
         GitLabMergeRequestChangeViewModelImpl(project, this, currentUser, mergeRequest, patch, avatarIconsProvider,
-                                              MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY), Side.RIGHT)
+                                              discussionsViewOption, Side.RIGHT)
       }
     }
   }
