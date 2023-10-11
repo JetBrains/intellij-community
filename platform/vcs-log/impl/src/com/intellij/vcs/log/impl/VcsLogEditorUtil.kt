@@ -12,12 +12,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.ui.VcsLogUiHolder
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object VcsLogEditorUtil {
   internal fun getLogIds(editor: FileEditor): Set<String> {
-    return VcsLogPanel.getLogUis(editor.component).mapTo(mutableSetOf(), VcsLogUiEx::getId)
+    return VcsLogUiHolder.getLogUis(editor.component).mapTo(mutableSetOf(), VcsLogUiEx::getId)
   }
 
   internal fun findSelectedLogIds(project: Project): Set<String> {
@@ -26,7 +27,7 @@ object VcsLogEditorUtil {
 
   @JvmStatic
   fun <T : VcsLogUiEx> findVcsLogUi(editors: Array<FileEditor>, clazz: Class<T>): T? {
-    return editors.asSequence().flatMap { VcsLogPanel.getLogUis(it.component) }.filterIsInstance(clazz).firstOrNull()
+    return editors.asSequence().flatMap { VcsLogUiHolder.getLogUis(it.component) }.filterIsInstance(clazz).firstOrNull()
   }
 
   internal fun selectLogUi(project: Project, ui: VcsLogUi): Boolean {
@@ -64,7 +65,7 @@ object VcsLogEditorUtil {
   }
 
   internal fun FileEditor.disposeLogUis(): List<String> {
-    val logUis = VcsLogPanel.getLogUis(component)
+    val logUis = VcsLogUiHolder.getLogUis(component)
     val disposedIds = logUis.map { it.id }
     if (logUis.isNotEmpty()) {
       component.removeAll()

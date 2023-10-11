@@ -14,7 +14,33 @@ import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
-class VcsLogPanel(private val manager: VcsLogManager, val vcsLogUi: VcsLogUiEx) : JBPanel<VcsLogPanel>(BorderLayout()), DataProvider {
+interface VcsLogUiHolder {
+  val vcsLogUi: VcsLogUiEx
+
+  companion object {
+    @JvmStatic
+    fun getLogUis(c: JComponent): List<VcsLogUiEx> {
+      val panels = mutableSetOf<VcsLogUiHolder>()
+      collectLogPanelInstances(c, panels)
+      return panels.map { it.vcsLogUi }
+    }
+
+    private fun collectLogPanelInstances(component: JComponent, result: MutableSet<in VcsLogUiHolder>) {
+      if (component is VcsLogUiHolder) {
+        result.add(component)
+        return
+      }
+      for (childComponent in component.components) {
+        if (childComponent is JComponent) {
+          collectLogPanelInstances(childComponent, result)
+        }
+      }
+    }
+  }
+}
+
+class VcsLogPanel(private val manager: VcsLogManager, override val vcsLogUi: VcsLogUiEx) : JBPanel<VcsLogPanel>(BorderLayout()),
+                                                                                           VcsLogUiHolder, DataProvider {
   init {
     add(vcsLogUi.getMainComponent(), BorderLayout.CENTER)
   }
@@ -43,27 +69,5 @@ class VcsLogPanel(private val manager: VcsLogManager, val vcsLogUi: VcsLogUiEx) 
     else if (PlatformCoreDataKeys.HELP_ID.`is`(dataId)) return vcsLogUi.getHelpId()
     else if (History.KEY.`is`(dataId)) return vcsLogUi.getNavigationHistory()
     return null
-  }
-
-  companion object {
-    @JvmStatic
-    fun getLogUis(c: JComponent): List<VcsLogUiEx> {
-      val panels = mutableSetOf<VcsLogPanel>()
-      collectLogPanelInstances(c, panels)
-
-      return panels.map { it.vcsLogUi }
-    }
-
-    private fun collectLogPanelInstances(component: JComponent, result: MutableSet<in VcsLogPanel>) {
-      if (component is VcsLogPanel) {
-        result.add(component)
-        return
-      }
-      for (childComponent in component.components) {
-        if (childComponent is JComponent) {
-          collectLogPanelInstances(childComponent, result)
-        }
-      }
-    }
   }
 }
