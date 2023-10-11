@@ -7,14 +7,14 @@ import com.intellij.codeInspection.ReplaceInefficientStreamCountInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_10;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_9;
 
-public class ReplaceInefficientStreamCountInspection10Test extends LightQuickFixParameterizedTestCase {
+public class ReplaceInefficientStreamCountInspection9Test extends LightQuickFixParameterizedTestCase {
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_10;
+    return JAVA_9;
   }
 
   @Override
@@ -24,6 +24,6 @@ public class ReplaceInefficientStreamCountInspection10Test extends LightQuickFix
 
   @Override
   protected String getBasePath() {
-    return "/inspection/inefficientStreamCount10";
+    return "/inspection/inefficientStreamCount9";
   }
 }
