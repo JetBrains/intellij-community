@@ -180,7 +180,7 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     LOG.info("Benchmarking actions update for component: " + component.getClass().getName());
 
     long startContext = System.nanoTime();
-    DataContext wrappedContext = Utils.wrapToAsyncDataContext(rawContext);
+    DataContext wrappedContext = Utils.createAsyncDataContext(rawContext);
     LOG.info(TimeoutUtil.getDurationMillis(startContext) + " ms to create data-context");
 
     long startPrecache = System.nanoTime();

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-import static com.intellij.openapi.actionSystem.impl.Utils.wrapToAsyncDataContext;
+import static com.intellij.openapi.actionSystem.impl.Utils.createAsyncDataContext;
 import static com.intellij.platform.ide.documentation.ActionsKt.DOCUMENTATION_TARGETS;
 
 public final class DocumentationTest extends LightJavaCodeInsightTestCase {
@@ -28,7 +28,7 @@ public final class DocumentationTest extends LightJavaCodeInsightTestCase {
 
   public void testDocumentationTargetsCanBeObtainedFromPreCachedContext2() {
     configureFromFileText("A.java", "class <caret>A {}");
-    DataContext dc = wrapToAsyncDataContext(new EdtDataContext(getContextComponent()));
+    DataContext dc = createAsyncDataContext(new EdtDataContext(getContextComponent()));
     List<DocumentationTarget> targets = dc.getData(DOCUMENTATION_TARGETS);
     assertInstanceOf(assertOneElement(targets), PsiElementDocumentationTarget.class);
   }

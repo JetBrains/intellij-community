@@ -75,7 +75,7 @@ private fun getDataContext(frame: JFrame): DataContext {
   if (PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null) {
     context = dataManager.getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(frame))
   }
-  return Utils.wrapDataContext(context)
+  return context
 }
 
 

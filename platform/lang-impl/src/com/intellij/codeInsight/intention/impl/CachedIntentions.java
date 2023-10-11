@@ -12,7 +12,10 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ReadAction;
@@ -170,11 +173,10 @@ public final class CachedIntentions implements IntentionContainer {
     Predicate<IntentionAction> filter = action -> ContainerUtil.and(
       IntentionActionFilter.EXTENSION_POINT_NAME.getExtensionList(), f -> f.accept(action, myFile));
 
-    DataContext dataContext = Utils.wrapDataContext(EditorUtil.getEditorDataContext(myEditor));
     PresentationFactory presentationFactory = new PresentationFactory();
     List<AnAction> actions = Utils.expandActionGroup(
       new DefaultActionGroup(myGuttersRaw), presentationFactory,
-      dataContext, ActionPlaces.INTENTION_MENU);
+      EditorUtil.getEditorDataContext(myEditor), ActionPlaces.INTENTION_MENU);
     List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<>();
     int order = 0;
     for (AnAction action : actions) {

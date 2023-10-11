@@ -2,7 +2,6 @@
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.internal.inspector.UiInspectorUtil;
@@ -57,7 +56,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class PopupFactoryImpl extends JBPopupFactory {
 
@@ -276,12 +274,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                                    @Nullable String actionPlace,
                                                                    @Nullable PresentationFactory presentationFactory,
                                                                    boolean autoSelection) {
-      final Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-
+      DataContext asyncDataContext = Utils.createAsyncDataContext(dataContext);
       List<ActionItem> items = ActionPopupStep.createActionItems(
-          actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
-
-      return new ActionPopupStep(items, title, getComponentContextSupplier(dataContext, component), actionPlace, showNumbers || honorActionMnemonics && anyMnemonicsIn(items),
+        actionGroup, asyncDataContext, showNumbers, useAlphaAsNumbers,
+        showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
+      return new ActionPopupStep(items, title, () -> asyncDataContext, actionPlace,
+                                 showNumbers || honorActionMnemonics && anyMnemonicsIn(items),
                                  preselectActionCondition, autoSelection, showDisabledActions, presentationFactory);
     }
 
@@ -359,14 +357,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
   }
 
-  private static @NotNull Supplier<DataContext> getComponentContextSupplier(@NotNull DataContext parentDataContext,
-                                                                            @Nullable Component component) {
-    if (component == null) return () -> parentDataContext;
-    DataContext dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(component));
-    if (Utils.isAsyncDataContext(dataContext)) return () -> dataContext;
-    return () -> DataManager.getInstance().getDataContext(component);
-  }
-
   @Override
   public @NotNull ListPopup createActionGroupPopup(@PopupTitle @Nullable String title,
                                                    @NotNull ActionGroup actionGroup,
@@ -415,10 +405,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                               boolean honorActionMnemonics,
                                                               int defaultOptionIndex,
                                                               boolean autoSelectionEnabled) {
+    DataContext asyncDataContext = Utils.createAsyncDataContext(dataContext);
     return ActionPopupStep.createActionsStep(
-      actionGroup, dataContext, showNumbers, true, showDisabledActions,
+      actionGroup, asyncDataContext, showNumbers, true, showDisabledActions,
       title, honorActionMnemonics, autoSelectionEnabled,
-      getComponentContextSupplier(dataContext, component),
+      () -> asyncDataContext,
       actionPlace, null, defaultOptionIndex, null);
   }
 

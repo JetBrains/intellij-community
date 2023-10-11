@@ -197,7 +197,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
       }
     }
     else {
-      val asyncDataContext = Utils.wrapDataContext(dataContext)
+      val asyncDataContext = Utils.createAsyncDataContext(dataContext)
       ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext) }
         .coalesceBy(this, owner)
         .finishOnUiThread(ModalityState.defaultModalityState()) { file: VirtualFile? ->

@@ -89,7 +89,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor) {
     myProject = project;
     myEditor = new WeakReference<>(editor);
-    myDataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(component));
+    myDataContext = Utils.createAsyncDataContext(DataManager.getInstance().getDataContext(component));
     myUpdateSession = newUpdateSession();
   }
 

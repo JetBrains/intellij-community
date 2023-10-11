@@ -96,7 +96,7 @@ internal class DocumentationToolWindowUpdater(
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown({
       @Suppress("DEPRECATION")
       val dataContextFromFocusedComponent = DataManager.getInstance().dataContext
-      val uiSnapshot = Utils.wrapToAsyncDataContext(dataContextFromFocusedComponent)
+      val uiSnapshot = Utils.createAsyncDataContext(dataContextFromFocusedComponent)
       val asyncDataContext = AnActionEvent.getInjectedDataContext(uiSnapshot)
       it.resume(asyncDataContext)
     }, ModalityState.any())
