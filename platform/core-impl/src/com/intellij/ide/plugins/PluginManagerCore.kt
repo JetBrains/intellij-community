@@ -435,10 +435,10 @@ object PluginManagerCore {
       for (id in set) {
         val descriptor = idMap[id] ?: continue
         selectedPlugins.add(descriptor)
-        processAllNonOptionalDependencies(rootDescriptor = descriptor, pluginIdMap = idMap, consumer = { dependency ->
+        processAllNonOptionalDependencies(descriptor, idMap) { dependency ->
           if (dependency != null) selectedPlugins.add(dependency)
           FileVisitResult.CONTINUE
-        })
+        }
       }
       selectedPlugins
     }
