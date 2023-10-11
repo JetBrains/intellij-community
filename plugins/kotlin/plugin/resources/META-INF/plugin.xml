@@ -1,16 +1,15 @@
-<idea-plugin package="org.jetbrains.kotlin" xmlns:xi="http://www.w3.org/2001/XInclude" version="2" url="https://kotlinlang.org" allow-bundled-update="true">
+<idea-plugin package="org.jetbrains.kotlin" xmlns:xi="http://www.w3.org/2001/XInclude"
+             allow-bundled-update="true">
   <id>org.jetbrains.kotlin</id>
-
   <name>Kotlin</name>
   <category>Languages</category>
   <description><![CDATA[
-The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
-<br>
-<a href="https://kotlinlang.org/docs/tutorials/getting-started.html">Getting Started in IntelliJ IDEA</a><br>
-<a href="https://kotlinlang.org/docs/tutorials/kotlin-android.html">Getting Started in Android Studio</a><br>
-<a href="https://slack.kotlinlang.org/">Public Slack</a><br>
-<a href="https://youtrack.jetbrains.com/issues/KT">Issue tracker</a><br>
-]]></description>
+    Provides language support for Kotlin, a modern programming language designed to make developers happier.
+    <br><br>
+    <a href="https://kotlinlang.org/docs/tutorials/getting-started.html">Getting Started</a><br>
+    <a href="https://slack.kotlinlang.org/">Public Slack</a><br>
+    <a href="https://youtrack.jetbrains.com/issues/KTIJ">Issue tracker</a><br>
+  ]]></description>
   <!--suppress PluginXmlValidity -->
   <version>@snapshot@</version>
 
