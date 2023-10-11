@@ -5,9 +5,10 @@ on:
   push:
     branches: [ main ]
 jobs:
-  publish:
-    name: Publish
+  publish-core:
+    name: Publish Jewel Core
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
@@ -17,7 +18,33 @@ jobs:
       - name: Setup Gradle
         run: chmod +x gradlew
       - name: Run Gradle
-        run: ./gradlew publishAllPublicationsToSpaceRepository
+        # supported.ij.version is needed here for project configuration and won't be used during publishing
+        run: ./gradlew publishMainPublicationsToSpaceRepository -Psupported.ij.version=232
+        env:
+          MAVEN_SPACE_USERNAME: ${{secrets.MAVEN_SPACE_USERNAME}}
+          MAVEN_SPACE_PASSWORD: ${{secrets.MAVEN_SPACE_PASSWORD}}
+
+  publish-ide:
+    name: Publish Jewel IDE part
+    needs: publish-core
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        supported-ij-version:
+          - 232
+    #          - 233
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Setup Gradle
+        run: chmod +x gradlew
+      - name: Run Gradle
+        run: ./gradlew publishIdeMainPublicationsToSpaceRepository -Psupported.ij.version=${{ matrix.supported-ij-version }}
         env:
           MAVEN_SPACE_USERNAME: ${{secrets.MAVEN_SPACE_USERNAME}}
           MAVEN_SPACE_PASSWORD: ${{secrets.MAVEN_SPACE_PASSWORD}}

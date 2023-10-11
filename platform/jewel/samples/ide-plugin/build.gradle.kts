@@ -1,3 +1,5 @@
+import SupportedIJVersion.*
+
 plugins {
     jewel
     alias(libs.plugins.composeDesktop)
@@ -8,7 +10,11 @@ plugins {
 intellij {
     pluginName.set("Jewel Demo")
     plugins.set(listOf("org.jetbrains.kotlin"))
-    version.set("2023.2.1")
+    val versionRaw = when (supportedIJVersion()) {
+        IJ_232 -> libs.versions.idea232.get()
+        IJ_233 -> libs.versions.idea233.get()
+    }
+    version.set(versionRaw)
 }
 
 // TODO remove this once the IJ Gradle plugin fixes their repositories bug

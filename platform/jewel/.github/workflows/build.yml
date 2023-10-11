@@ -8,6 +8,12 @@ jobs:
   assemble:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        supported-ij-version:
+          - 232
+#          - 233
+
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 17
@@ -20,10 +26,16 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Run :assemble task
-        run: ./gradlew assemble
+        run: ./gradlew assemble -Psupported.ij.version=${{ matrix.supported-ij-version }}
 
   checks:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        supported-ij-version:
+          - 232
+#          - 233
 
     steps:
       - uses: actions/checkout@v3
@@ -39,11 +51,11 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run :check task
-        run: ./gradlew check --continue
+        run: ./gradlew check -Psupported.ij.version=${{ matrix.supported-ij-version }} --continue
 
       - name: Merge SARIF reports
         # Necessary because upload-sarif only takes up to 15 SARIF files and we have more
-        run: ./gradlew :mergeSarifReports
+        run: ./gradlew :mergeSarifReports -Psupported.ij.version=${{ matrix.supported-ij-version }}
         if: ${{ always() }}
 
       - uses: github/codeql-action/upload-sarif@v2
