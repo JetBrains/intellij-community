@@ -26,7 +26,9 @@ interface IjentExecFileProvider {
   }
 
   enum class SupportedPlatform {
+    AARCH64__DARWIN,
     AARCH64__LINUX,
+    X86_64__DARWIN,
     X86_64__LINUX,
     X86_64__WINDOWS,
   }
@@ -41,7 +43,9 @@ class IjentMissingBinary : Exception("Failed to get an IJent binary") {
 
 val IjentExecFileProvider.SupportedPlatform.executableName: String
   get() = when (this) {
+    IjentExecFileProvider.SupportedPlatform.AARCH64__DARWIN -> "ijent-aarch64-apple-darwin-release"
     IjentExecFileProvider.SupportedPlatform.AARCH64__LINUX -> "ijent-aarch64-unknown-linux-musl-release"
+    IjentExecFileProvider.SupportedPlatform.X86_64__DARWIN -> "ijent-x86_64-apple-darwin-release"
     IjentExecFileProvider.SupportedPlatform.X86_64__LINUX -> "ijent-x86_64-unknown-linux-musl-release"
     IjentExecFileProvider.SupportedPlatform.X86_64__WINDOWS -> "ijent-x86_64-pc-windows-gnu-release.exe"
   }
