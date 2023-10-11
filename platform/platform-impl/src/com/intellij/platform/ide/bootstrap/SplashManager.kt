@@ -130,12 +130,9 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferr
       }
       catch (ignore: CancellationException) {
         SPLASH_WINDOW = null
-        withContext(NonCancellable) {
-          splash.isVisible = false
-          splash.dispose()
-
-          StartUpMeasurer.addInstantEvent("splash hidden")
-        }
+        splash.isVisible = false
+        splash.dispose()
+        StartUpMeasurer.addInstantEvent("splash hidden")
       }
 
       SPLASH_WINDOW = null
