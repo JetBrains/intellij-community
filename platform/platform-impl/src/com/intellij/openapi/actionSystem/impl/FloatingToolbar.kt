@@ -99,7 +99,7 @@ abstract class FloatingToolbar(
   @RequiresEdt
   private suspend fun showIfHidden() {
     hintWasShownForSelection = true
-    if (isShown()) {
+    if (isShown() || !isEnabled()) {
       return
     }
     val canBeShownAtCurrentSelection = readAction { canBeShownAtCurrentSelection() }
@@ -194,7 +194,6 @@ abstract class FloatingToolbar(
 
   @RequiresReadLock
   fun canBeShownAtCurrentSelection(): Boolean {
-    if (!isEnabled()) return false
     val selectionModel = editor.selectionModel
     if (!selectionModel.hasSelection()) return false
     val file = PsiEditorUtil.getPsiFile(editor)
@@ -218,7 +217,7 @@ abstract class FloatingToolbar(
 
   protected open fun shouldSurviveDocumentChange(): Boolean = true
 
-  protected open fun isEnabled(): Boolean {
+  open fun isEnabled(): Boolean {
     return true
   }
 
