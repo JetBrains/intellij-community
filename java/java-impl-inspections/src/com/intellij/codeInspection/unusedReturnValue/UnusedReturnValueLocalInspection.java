@@ -16,6 +16,8 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 @SuppressWarnings("InspectionDescriptionNotFoundInspection") // via UnusedReturnValue
 public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   private final UnusedReturnValue myGlobal;
@@ -43,7 +45,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (method.isConstructor() ||
         PsiTypes.voidType().equals(method.getReturnType()) ||
-        AccessModifier.fromModifierList(method.getModifierList()).compareTo(myGlobal.highestModifier) < 0 ||
+        AccessModifier.fromModifierList(method.getModifierList()).compareTo(myGlobal.getHighestModifier()) < 0 ||
         (myGlobal.IGNORE_BUILDER_PATTERN && (PropertyUtilBase.isSimplePropertySetter(method) || MethodUtils.isChainable(method))) ||
         method.hasModifierProperty(PsiModifier.NATIVE) ||
         MethodUtils.hasSuper(method) ||
