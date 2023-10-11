@@ -1,16 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.feedback.evaluation.dialog
+package com.intellij.platform.feedback.general.evaluation
 
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
-import com.intellij.platform.feedback.evaluation.bundle.EvaluationFeedbackBundle
-import com.intellij.platform.feedback.evaluation.statistics.EvaluationFeedbackCountCollector.Companion.logEvaluationFeedbackDialogCanceled
-import com.intellij.platform.feedback.evaluation.statistics.EvaluationFeedbackCountCollector.Companion.logEvaluationFeedbackDialogShown
-import com.intellij.platform.feedback.evaluation.statistics.EvaluationFeedbackCountCollector.Companion.logEvaluationFeedbackSent
-import com.intellij.platform.feedback.general.dialog.BaseGeneralFeedbackDialog
+import com.intellij.platform.feedback.general.BaseGeneralFeedbackDialog
+import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.Companion.logEvaluationFeedbackDialogCanceled
+import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.Companion.logEvaluationFeedbackDialogShown
+import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.Companion.logEvaluationFeedbackSent
 
-class EvaluationFeedbackDialog(project: Project?,
+internal class EvaluationFeedbackDialog(project: Project?,
                                forTest: Boolean
 ) : BaseGeneralFeedbackDialog(
   EvaluationFeedbackBundle.message("evaluation.dialog.description"), project, forTest

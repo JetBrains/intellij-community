@@ -5,11 +5,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.feedback.InIdeGeneralFeedbackProvider"
-                        serviceImplementation="com.intellij.platform.feedback.general.InIdeGeneralFeedbackProviderImpl"
-                        overrides="true"/>
-    <applicationService serviceInterface="com.intellij.feedback.InIdeEvaluationFeedbackProvider"
-                        serviceImplementation="com.intellij.platform.feedback.evaluation.InIdeEvaluationFeedbackProviderImpl"
+    <applicationService serviceInterface="com.intellij.feedback.GeneralFeedbackDialogs"
+                        serviceImplementation="com.intellij.platform.feedback.general.GeneralFeedbackDialogsImpl"
                         overrides="true"/>
 
     <applicationService serviceImplementation="com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService"/>
@@ -34,9 +31,9 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector"/>
     <statistics.counterUsagesCollector
-      implementationClass="com.intellij.platform.feedback.evaluation.statistics.EvaluationFeedbackCountCollector"/>
+      implementationClass="com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector"/>
     <statistics.counterUsagesCollector
-      implementationClass="com.intellij.platform.feedback.general.statistics.GeneralFeedbackCountCollector"/>
+      implementationClass="com.intellij.platform.feedback.general.general.GeneralFeedbackCountCollector"/>
 
 
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey"/>

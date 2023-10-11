@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.feedback.general.statistics
+package com.intellij.platform.feedback.general.evaluation
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-class GeneralFeedbackCountCollector : CounterUsagesCollector() {
+internal class EvaluationFeedbackCountCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("general.feedback", 1)
+    private val GROUP = EventLogGroup("evaluation.feedback", 2)
 
     private val INTERFACE_RATING_FIELD = EventFields.Int("interface_rating")
     private val PRICE_RATING_FIELD = EventFields.Int("price_rating")
@@ -15,21 +15,21 @@ class GeneralFeedbackCountCollector : CounterUsagesCollector() {
     private val FEATURE_SET_RATING_FIELD = EventFields.Int("feature_set_rating")
     private val PERFORMANCE_RATING_FIELD = EventFields.Int("performance_rating")
 
-    private val EVALUATION_FEEDBACK_SENT = GROUP.registerVarargEvent("general.feedback.sent",
+    private val EVALUATION_FEEDBACK_SENT = GROUP.registerVarargEvent("evaluation.feedback.sent",
                                                                      EventFields.Int("interface_rating"),
                                                                      EventFields.Int("price_rating"),
                                                                      EventFields.Int("stability_rating"),
                                                                      EventFields.Int("feature_set_rating"),
                                                                      EventFields.Int("performance_rating"))
 
-    private val EVALUATION_FEEDBACK_DIALOG_SHOWN = GROUP.registerVarargEvent("general.feedback.shown")
-    private val EVALUATION_FEEDBACK_DIALOG_CANCELED = GROUP.registerVarargEvent("general.feedback.cancelled")
+    private val EVALUATION_FEEDBACK_DIALOG_SHOWN = GROUP.registerVarargEvent("evaluation.feedback.shown")
+    private val EVALUATION_FEEDBACK_DIALOG_CANCELED = GROUP.registerVarargEvent("evaluation.feedback.cancelled")
 
-    fun logGeneralFeedbackSent(interfaceRating: Int,
-                               priceRating: Int,
-                               stabilityRating: Int,
-                               featureSetRating: Int,
-                               performanceRating: Int) {
+    fun logEvaluationFeedbackSent(interfaceRating: Int,
+                                  priceRating: Int,
+                                  stabilityRating: Int,
+                                  featureSetRating: Int,
+                                  performanceRating: Int) {
 
       EVALUATION_FEEDBACK_SENT.log(
         INTERFACE_RATING_FIELD.with(interfaceRating),
@@ -40,11 +40,11 @@ class GeneralFeedbackCountCollector : CounterUsagesCollector() {
       )
     }
 
-    fun logGeneralFeedbackDialogShown() {
+    fun logEvaluationFeedbackDialogShown() {
       EVALUATION_FEEDBACK_DIALOG_SHOWN.log()
     }
 
-    fun logGeneralFeedbackDialogCanceled() {
+    fun logEvaluationFeedbackDialogCanceled() {
       EVALUATION_FEEDBACK_DIALOG_CANCELED.log()
     }
   }

@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.feedback.general.dialog
+package com.intellij.platform.feedback.general
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
@@ -8,11 +8,10 @@ import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
-import com.intellij.platform.feedback.general.bundle.BaseGeneralFeedbackBundle
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import javax.swing.Action
 
-abstract class BaseGeneralFeedbackDialog(@NlsContexts.Label descriptionBlockMessage: String?,
+internal abstract class BaseGeneralFeedbackDialog(@NlsContexts.Label descriptionBlockMessage: String?,
                                          project: Project?,
                                          forTest: Boolean
 ) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemData>(project, forTest) {

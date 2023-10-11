@@ -1,13 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.feedback.general.dialog
+package com.intellij.platform.feedback.general.general
 
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
-import com.intellij.platform.feedback.general.bundle.GeneralFeedbackBundle
-import com.intellij.platform.feedback.general.statistics.GeneralFeedbackCountCollector
+import com.intellij.platform.feedback.general.BaseGeneralFeedbackDialog
 
-class GeneralFeedbackDialog(project: Project?,
+internal class GeneralFeedbackDialog(project: Project?,
                             forTest: Boolean
 ) : BaseGeneralFeedbackDialog(null, project, forTest) {
 

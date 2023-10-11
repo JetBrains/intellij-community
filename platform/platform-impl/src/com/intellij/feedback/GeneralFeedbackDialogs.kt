@@ -6,21 +6,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 
 /**
- * This class provides feedback dialogs for general feedback (Help -> Submit feedback...).
+ * This class provides feedback dialogs.
  *
  * This class acts like an interface and overridden in `intellij.platform.feedback` module.
  * It helps to get around the problem of circular dependency between current module and `intellij.platform.feedback` module.
  *
- * @see com.intellij.platform.feedback.general.InIdeGeneralFeedbackProviderImpl
+ * @see com.intellij.platform.feedback.evaluation.GeneralFeedbackDialogsImpl
  */
-open class InIdeGeneralFeedbackProvider {
+open class GeneralFeedbackDialogs {
 
   companion object {
     @JvmStatic
-    fun getInstance(): InIdeGeneralFeedbackProvider = service()
+    fun getInstance(): GeneralFeedbackDialogs = service()
   }
 
   open fun getGeneralFeedbackDialog(project: Project?): DialogWrapper? {
+    return null
+  }
+
+  open fun getEvaluationFeedbackDialog(project: Project?): DialogWrapper? {
     return null
   }
 }
