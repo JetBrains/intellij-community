@@ -70,7 +70,7 @@ private constructor(parentCs: CoroutineScope,
     .weakValues()
     .build<String, SharedFlow<Result<GitLabMergeRequestDiffViewModel>>>()
 
-  val filesController: GitLabMergeRequestsFilesController = GitLabMergeRequestsFilesControllerImpl(project, connection)
+  private val filesController: GitLabMergeRequestsFilesController = GitLabMergeRequestsFilesControllerImpl(project, connection)
 
   val avatarIconProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(AsyncImageIconsProvider(cs, connection.imageLoader))
 
@@ -148,6 +148,10 @@ private constructor(parentCs: CoroutineScope,
         }
       }
     }
+  }
+
+  fun showTimeline(mrIid: String, focus: Boolean) {
+    filesController.openTimeline(mrIid, focus)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)

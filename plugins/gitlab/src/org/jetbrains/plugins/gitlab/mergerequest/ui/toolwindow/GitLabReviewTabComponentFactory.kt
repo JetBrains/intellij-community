@@ -8,7 +8,6 @@ import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.URIUtil
-import com.intellij.ide.DataManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -22,7 +21,6 @@ import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
-import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabReviewTabViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
@@ -46,15 +44,7 @@ internal class GitLabReviewTabComponentFactory(
     projectVm: GitLabToolWindowProjectViewModel
   ): JComponent {
     GitLabStatistics.logMrListOpened(project)
-    return GitLabMergeRequestsPanelFactory()
-      .create(cs, projectVm.accountVm, projectVm.listVm).also { panel ->
-        DataManager.registerDataProvider(panel) { dataId ->
-          when {
-            GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectVm.filesController
-            else -> null
-          }
-        }
-      }
+    return GitLabMergeRequestsPanelFactory().create(cs, projectVm.accountVm, projectVm.listVm)
   }
 
   override fun createTabComponent(cs: CoroutineScope,
@@ -86,14 +76,7 @@ internal class GitLabReviewTabComponentFactory(
     val avatarIconsProvider = projectVm.avatarIconProvider
     return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(
       project, cs, reviewDetailsVm, projectVm.accountVm, avatarIconsProvider
-    ).also {
-      DataManager.registerDataProvider(it) { dataId ->
-        when {
-          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectVm.filesController
-          else -> null
-        }
-      }
-    }
+    )
   }
 
   private fun createSelectorsComponent(cs: CoroutineScope): JComponent {
