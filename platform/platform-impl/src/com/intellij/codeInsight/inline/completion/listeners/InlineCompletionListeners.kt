@@ -3,10 +3,11 @@ package com.intellij.codeInsight.inline.completion.listeners
 
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
-import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 import com.intellij.codeInsight.inline.completion.SimpleTypingEvent
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.isCurrent
@@ -29,7 +30,7 @@ import java.awt.event.KeyEvent
 @ApiStatus.Experimental
 class InlineCompletionDocumentListener(private val editor: Editor) : BulkAwareDocumentListener {
   override fun documentChangedNonBulk(event: DocumentEvent) {
-    val handler = InlineCompletionHandler.getOrNull(editor)
+    val handler = InlineCompletion.getHandlerOrNull(editor)
 
     if (!(ClientEditorManager.getClientId(editor) ?: ClientId.localId).isCurrent()) {
       hideInlineCompletion(editor, handler)
@@ -149,7 +150,7 @@ class InlineCompletionTypedHandlerDelegate : TypedHandlerDelegate() {
   }
 
   private fun allowDocumentChange(editor: Editor, typed: String) {
-    val handler = InlineCompletionHandler.getOrNull(editor)
+    val handler = InlineCompletion.getHandlerOrNull(editor)
     handler?.allowDocumentChange(SimpleTypingEvent(typed, false))
   }
 }
@@ -158,17 +159,17 @@ class InlineCompletionTypedHandlerDelegate : TypedHandlerDelegate() {
 class InlineCompletionAnActionListener : AnActionListener {
   override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
     val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return
-    val handler = InlineCompletionHandler.getOrNull(editor) ?: return
+    val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
     handler.allowDocumentChange(SimpleTypingEvent(c.toString(), true))
   }
 }
 
 private fun hideInlineCompletion(editor: Editor) {
   val context = InlineCompletionContext.getOrNull(editor) ?: return
-  InlineCompletionHandler.getOrNull(editor)?.hide(editor, false, context)
+  InlineCompletion.getHandlerOrNull(editor)?.hide(false, context)
 }
 
 private fun hideInlineCompletion(editor: Editor, handler: InlineCompletionHandler?) {
   if (handler == null) return
-  InlineCompletionContext.getOrNull(editor)?.let { handler.hide(editor, false, it) }
+  InlineCompletionContext.getOrNull(editor)?.let { handler.hide(false, it) }
 }

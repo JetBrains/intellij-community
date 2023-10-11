@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class InsertInlineCompletionHandler : EditorWriteActionHandler() {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
-      InlineCompletionHandler.getOrNull(editor)?.insert(editor)
+      InlineCompletion.getHandlerOrNull(editor)?.insert()
     }
 
     override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
@@ -33,7 +33,7 @@ class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : 
       }
       return
     }
-    InlineCompletionHandler.getOrNull(editor)?.hide(editor, false, context)
+    InlineCompletion.getHandlerOrNull(editor)?.hide(false, context)
 
     if (originalHandler.isEnabled(editor, caret, dataContext)) {
       originalHandler.execute(editor, caret, dataContext)
@@ -55,7 +55,7 @@ class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), 
     override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
       val curCaret = caret ?: editor.caretModel.currentCaret
 
-      val listener = editor.getUserData(InlineCompletionHandler.KEY) ?: return
+      val listener = InlineCompletion.getHandlerOrNull(editor) ?: return
       listener.invoke(InlineCompletionEvent.DirectCall(editor, curCaret, dataContext))
     }
   }

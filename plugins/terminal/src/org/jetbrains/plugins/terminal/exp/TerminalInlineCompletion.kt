@@ -73,7 +73,7 @@ class TerminalInsertInlineCompletionAction : EditorAction(Handler()), ActionProm
 
   private class Handler : EditorWriteActionHandler() {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-      InlineCompletionHandler.getOrNull(editor)?.insert(editor)
+      InlineCompletion.getHandlerOrNull(editor)?.insert()
     }
 
     override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
