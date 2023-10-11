@@ -34,18 +34,17 @@ data class BuildRequest(
   @JvmField val additionalModules: List<String>,
   @JvmField val isIdeProfileAware: Boolean = false,
   @JvmField val homePath: Path,
-  @JvmField val productionClassOutput: Path = Path.of(System.getenv("CLASSES_DIR")
-                                                      ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
+  @JvmField val productionClassOutput: Path =
+    Path.of(System.getenv("CLASSES_DIR") ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
   @JvmField val keepHttpClient: Boolean = true,
   @JvmField val platformClassPathConsumer: ((classPath: Set<Path>, runDir: Path) -> Unit)? = null,
 ) {
-  override fun toString(): String {
-    return "BuildRequest(platformPrefix='$platformPrefix', " +
-           "additionalModules=$additionalModules, " +
-           "isIdeProfileAware=$isIdeProfileAware, homePath=$homePath, " +
-           "productionClassOutput=$productionClassOutput, " +
-           "keepHttpClient=$keepHttpClient"
-  }
+  override fun toString(): String =
+    "BuildRequest(platformPrefix='$platformPrefix', " +
+    "additionalModules=$additionalModules, " +
+    "isIdeProfileAware=$isIdeProfileAware, homePath=$homePath, " +
+    "productionClassOutput=$productionClassOutput, " +
+    "keepHttpClient=$keepHttpClient"
 }
 
 internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest): Path {
@@ -245,7 +244,7 @@ private suspend fun createProductProperties(productConfiguration: ProductConfigu
     val productPropertiesClass = try {
       classLoader.loadClass(productConfiguration.className)
     }
-    catch (e: ClassNotFoundException) {
+    catch (_: ClassNotFoundException) {
       val classPathString = classPathFiles.joinToString(separator = "\n") { file ->
         "$file (" + (if (Files.isDirectory(file)) "dir" else if (Files.exists(file)) "exists" else "doesn't exist") + ")"
       }
@@ -256,7 +255,7 @@ private suspend fun createProductProperties(productConfiguration: ProductConfigu
     try {
       lookup.findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE)).invoke()
     }
-    catch (e: NoSuchMethodException) {
+    catch (_: NoSuchMethodException) {
       lookup
         .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
         .invoke(if (request.platformPrefix == "Idea") getCommunityHomePath(request.homePath).communityRoot else request.homePath)
@@ -290,9 +289,8 @@ private fun checkBuildModulesModificationAndMark(productConfiguration: ProductCo
   return isApplicable
 }
 
-private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> {
-  return sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
-}
+private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> =
+  sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
 
 private suspend fun layoutPlatform(runDir: Path, platformLayout: PlatformLayout, context: BuildContext): Set<Path> {
   val projectStructureMapping = layoutPlatformDistribution(moduleOutputPatcher = ModuleOutputPatcher(),
@@ -309,26 +307,15 @@ private suspend fun layoutPlatform(runDir: Path, platformLayout: PlatformLayout,
   return classPath
 }
 
-private fun getBundledMainModuleNames(productProperties: ProductProperties, additionalModules: List<String>): Set<String> {
-  val bundledPlugins = LinkedHashSet(productProperties.productLayout.bundledPluginModules)
-  bundledPlugins.addAll(additionalModules)
-  return bundledPlugins
-}
+private fun getBundledMainModuleNames(productProperties: ProductProperties, additionalModules: List<String>): Set<String> =
+  LinkedHashSet(productProperties.productLayout.bundledPluginModules) + additionalModules
 
-fun getAdditionalModules(): Sequence<String>? {
-  return (System.getProperty("additional.modules") ?: return null)
-    .splitToSequence(',')
-    .map(String::trim)
-    .filter { it.isNotEmpty() }
-}
+fun getAdditionalModules(): Sequence<String>? =
+  System.getProperty("additional.modules")?.splitToSequence(',')?.map(String::trim)?.filter { it.isNotEmpty() }
 
-fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
-  if (additionalModules.isEmpty()) {
-    return ""
-  }
-  return BigInteger(1, sha3_256().digest(additionalModules.sorted().joinToString(separator = ",").toByteArray()))
-    .toString(Character.MAX_RADIX)
-}
+fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String =
+  if (additionalModules.isEmpty()) ""
+  else BigInteger(1, sha3_256().digest(additionalModules.sorted().joinToString(separator = ",").toByteArray())).toString(Character.MAX_RADIX)
 
 private fun CoroutineScope.prepareExistingRunDirForProduct(runDir: Path, usePluginCache: Boolean) {
   launch {
@@ -358,8 +345,7 @@ private fun CoroutineScope.prepareExistingRunDirForProduct(runDir: Path, usePlug
       try {
         Files.move(pluginDir, pluginCacheDir)
       }
-      catch (ignore: NoSuchFileException) {
-      }
+      catch (_: NoSuchFileException) { }
     }
     else {
       NioFiles.deleteRecursively(pluginDir)

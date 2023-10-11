@@ -6,13 +6,13 @@ import kotlinx.collections.immutable.persistentListOf
 import java.util.Objects
 
 /**
- * Allows to exclude a plugin from some distributions.
+ * Allows excluding a plugin from some distributions.
  *
  * @see org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#getBundlingRestrictions()
  */
 class PluginBundlingRestrictions private constructor(
   /**
-   * Change this value if the plugin works in some OS only and therefore don't need to be bundled with distributions for other OS.
+   * Change this value if the plugin works on some OS only and therefore don't need to be bundled with distributions for other OS.
    */
   @JvmField
   val supportedOs: PersistentList<OsFamily>,
@@ -49,7 +49,7 @@ class PluginBundlingRestrictions private constructor(
 
   class Builder {
     /**
-     * Change this value if the plugin works in some OS only and therefore don't need to be bundled with distributions for other OS.
+     * Change this value if the plugin works on some OS only and therefore don't need to be bundled with distributions for other OS.
      */
     var supportedOs: PersistentList<OsFamily> = OsFamily.ALL
 
@@ -61,18 +61,14 @@ class PluginBundlingRestrictions private constructor(
 
     @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_RELEASE"))
     var includeInEapOnly: Boolean
-      get() {
-        return includeInDistribution == PluginDistribution.NOT_FOR_RELEASE
-      }
+      get() = includeInDistribution == PluginDistribution.NOT_FOR_RELEASE
       set(_) {
         includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
       }
 
     @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS"))
     var includeInNightlyOnly: Boolean
-      get() {
-        return includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS
-      }
+      get() = includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS
       set(_) {
         includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
       }
@@ -92,7 +88,9 @@ class PluginBundlingRestrictions private constructor(
         check(supportedOs == OsFamily.ALL)
         check(supportedArch == JvmArchitecture.ALL)
         check(includeInDistribution == PluginDistribution.ALL)
+        @Suppress("DEPRECATION")
         check(!includeInEapOnly)
+        @Suppress("DEPRECATION")
         check(!includeInNightlyOnly)
         return MARKETPLACE
       }
