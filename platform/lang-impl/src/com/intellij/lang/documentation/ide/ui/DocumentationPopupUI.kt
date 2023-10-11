@@ -25,7 +25,6 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.addPropertyChangeListener
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -51,16 +50,12 @@ internal class DocumentationPopupUI(
   val preferableFocusComponent: JComponent get() = ui.editorPane
 
   val coroutineScope: CoroutineScope = CoroutineScope(Job())
-  private val popupUpdateFlow = MutableSharedFlow<Any?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val popupUpdateFlow = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private lateinit var myPopup: AbstractPopup
 
   init {
     val editorPane = ui.editorPane
-
-    editorPane.addPropertyChangeListener(this, "font") {
-      popupUpdateFlow.tryEmit("font change")
-    }
 
     val primaryActions: List<AnAction> = primaryActions()
     val secondaryActions = ArrayList<AnAction>()
@@ -96,7 +91,7 @@ internal class DocumentationPopupUI(
     showToolbar(Registry.get("documentation.show.toolbar").asBoolean())
 
     coroutineScope.launch {
-      popupUpdateFlow.emitAll(ui.contentUpdates)
+      popupUpdateFlow.emitAll(ui.contentSizeUpdates)
     }
   }
 

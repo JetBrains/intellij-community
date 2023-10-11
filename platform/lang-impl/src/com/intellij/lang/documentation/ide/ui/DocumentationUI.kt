@@ -55,6 +55,8 @@ internal class DocumentationUI(
   private val cs = CoroutineScope(Dispatchers.EDT)
   private val myContentUpdates = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   val contentUpdates: SharedFlow<Unit> = myContentUpdates.asSharedFlow()
+  private val myContentSizeUpdates = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  val contentSizeUpdates: SharedFlow<String> = myContentSizeUpdates.asSharedFlow()
 
   init {
     scrollPane = DocumentationScrollPane()
@@ -92,6 +94,12 @@ internal class DocumentationUI(
     cs.launch(CoroutineName("DocumentationUI font size update"), start = CoroutineStart.UNDISPATCHED) {
       fontSize.updates.collect {
         editorPane.applyFontProps(it)
+        myContentSizeUpdates.emit("font change")
+      }
+    }
+    cs.launch(CoroutineName("DocumentationUI content size update emission"), start = CoroutineStart.UNDISPATCHED) {
+      myContentUpdates.collect {
+        myContentSizeUpdates.emit("content change")
       }
     }
   }

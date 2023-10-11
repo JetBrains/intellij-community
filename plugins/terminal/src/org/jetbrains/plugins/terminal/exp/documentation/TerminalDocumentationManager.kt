@@ -106,6 +106,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     val docComponent = documentationComponent(project, request.targetPointer, request.presentation, parentDisposable)
     val popupComponent = createDocPopupComponent(docComponent, parentDisposable)
     val popup = createDocPopup(lookup.project, popupComponent)
+    val boundsHandler = AdjusterPopupBoundsHandler(lookup.component)
 
     val docRequestFlow: Flow<DocumentationRequest?> = lookup.elementFlow().map { it.toDocRequest() }
     popupScope.launch(Dispatchers.Default) {
@@ -113,11 +114,15 @@ internal class TerminalDocumentationManager(private val project: Project, privat
         handleDocRequest(docComponent, it)
       }
     }
+    popupScope.launch(Dispatchers.EDT) {
+      docComponent.contentSizeUpdates.collectLatest {
+        boundsHandler.updatePopup(popup, false)
+      }
+    }
     Disposer.register(parentDisposable) {
       cancelPopup()
     }
 
-    val boundsHandler = AdjusterPopupBoundsHandler(lookup.component)
     boundsHandler.showPopup(popup)
     return popup
   }
