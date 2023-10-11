@@ -24,10 +24,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.DataEnumeratorEx;
-import com.intellij.util.io.ScannableDataEnumeratorEx;
-import com.intellij.util.io.SimpleStringPersistentEnumerator;
-import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.*;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingContentStorage;
@@ -67,7 +64,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class PersistentFSConnection {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnection.class);
 
-  static final int RESERVED_ATTR_ID = DataEnumeratorEx.NULL_ID;
+  static final int RESERVED_ATTR_ID = DataEnumerator.NULL_ID;
   static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
 
   private static final boolean USE_GENTLE_FLUSHER = getBooleanProperty("vfs.flushing.use-gentle-flusher", true);
@@ -102,6 +99,7 @@ public final class PersistentFSConnection {
   private final @Nullable VfsLogEx vfsLog;
 
   private volatile boolean dirty;
+  private volatile boolean closed = false;
 
   private final @Nullable Closeable flushingTask;
 
@@ -256,7 +254,11 @@ public final class PersistentFSConnection {
   }
 
   public boolean isDirty() {
-    return dirty || ((Forceable)namesEnumerator).isDirty() || attributesStorage.isDirty() || contentStorage.isDirty() || records.isDirty() ||
+    return dirty ||
+           ((Forceable)namesEnumerator).isDirty() ||
+           attributesStorage.isDirty() ||
+           contentStorage.isDirty() ||
+           records.isDirty() ||
            contentHashesEnumerator != null && contentHashesEnumerator.isDirty();
   }
 
@@ -264,7 +266,11 @@ public final class PersistentFSConnection {
     return corruptionsDetected.get();
   }
 
-  void close() throws IOException {
+  synchronized void close() throws IOException {
+    if (closed) {
+      return;
+    }
+    
     if (flushingTask != null) {
       flushingTask.close();
     }
@@ -283,6 +289,7 @@ public final class PersistentFSConnection {
                   contentHashesEnumerator,
                   contentStorage,
                   vfsLog);
+    closed = true;
   }
 
 
