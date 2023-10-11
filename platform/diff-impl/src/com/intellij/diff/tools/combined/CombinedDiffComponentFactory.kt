@@ -26,7 +26,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
   private val mainUi: CombinedDiffMainUI
 
-  private var combinedViewer: CombinedDiffViewer
+  private var combinedViewer: CombinedDiffViewer?
 
   init {
     if (model.haveParentDisposable) { // diff preview scenario?
@@ -52,10 +52,11 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     }
   }
 
-  private fun createCombinedViewer(initialFocusRequest: Boolean): CombinedDiffViewer {
+  private fun createCombinedViewer(initialFocusRequest: Boolean): CombinedDiffViewer? {
     val context = model.context
     val blocks = model.requests.keys.toList()
     val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
+    if (blocks.isEmpty()) return null
 
     return CombinedDiffViewer(context, blocks, blockToSelect, MyBlockListener()).also { viewer ->
       Disposer.register(ourDisposable, viewer)
@@ -69,7 +70,9 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
   private inner class ModelListener : CombinedDiffModelListener {
     override fun onModelReset() {
-      Disposer.dispose(combinedViewer)
+      combinedViewer?.let {
+        Disposer.dispose(it)
+      }
       model.context.putUserData(COMBINED_DIFF_VIEWER_KEY, null)
 
       combinedViewer = createCombinedViewer(false)
@@ -77,19 +80,22 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
     @RequiresEdt
     override fun onRequestsLoaded(blockId: CombinedBlockId, request: DiffRequest) {
+      val viewer = combinedViewer ?: return
       buildBlockContent(mainUi, model.context, request, blockId)?.let { newContent ->
         mainUi.countDifferences(blockId, newContent.viewer)
-        combinedViewer.updateBlockContent(newContent)
+        viewer.updateBlockContent(newContent)
         request.onAssigned(true)
       }
 
-      combinedViewer.contentChanged()
+      viewer.contentChanged()
     }
 
     @RequiresEdt
     override fun onRequestContentsUnloaded(requests: Map<CombinedBlockId, DiffRequest>) {
+      val viewer = combinedViewer ?: return
+
       for ((blockId, request) in requests) {
-        combinedViewer.replaceBlockWithPlaceholder(blockId)
+        viewer.replaceBlockWithPlaceholder(blockId)
         request.onAssigned(false)
       }
     }
