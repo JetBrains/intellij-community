@@ -56,13 +56,16 @@ internal class PresentationAssistantQuickSettingsPosition(val position: Presenta
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun isSelected(e: AnActionEvent): Boolean =
-    configuration.verticalAlignment == position.y &&
-    configuration.horizontalAlignment == position.x
+    configuration.alignmentIfNoDelta?.let {
+      it.y == position.y && it.x == position.x
+    } ?: false
+
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {
       configuration.verticalAlignment = position.y
       configuration.horizontalAlignment = position.x
+      configuration.resetDelta()
       PresentationAssistant.INSTANCE.updatePresenter()
     }
   }

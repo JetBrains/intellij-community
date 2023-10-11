@@ -40,11 +40,12 @@ class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
           }
           row(IdeBundle.message("presentation.assistant.configurable.popup.position")) {
             comboBox(CollectionComboBoxModel(PresentationAssistantPopupAlignment.entries,
-                                             PresentationAssistantPopupAlignment.from(configuration.horizontalAlignment, configuration.verticalAlignment)),
+                                             configuration.alignmentIfNoDelta),
                      textListCellRenderer { it?.displayName })
-              .bindItem({ PresentationAssistantPopupAlignment.from(configuration.horizontalAlignment, configuration.verticalAlignment) }) {
+              .bindItem({ configuration.alignmentIfNoDelta }) {
                 configuration.horizontalAlignment = it?.x ?: PresentationAssistantPopupAlignment.defaultAlignment.x
                 configuration.verticalAlignment = it?.y ?: PresentationAssistantPopupAlignment.defaultAlignment.y
+                configuration.resetDelta()
               }
           }
         }

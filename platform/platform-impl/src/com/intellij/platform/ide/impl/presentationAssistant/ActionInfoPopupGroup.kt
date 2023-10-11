@@ -13,13 +13,16 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.ui.Animator
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import java.awt.*
+import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 
 internal class ActionInfoPopupGroup(val project: Project, textFragments: List<TextData>, showAnimated: Boolean) : Disposable {
@@ -119,6 +122,16 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
       override fun mouseExited(component: Component) { isPopupHovered = false }
     })
 
+    val moveListener = object : WindowMoveListener(panel) {
+      override fun mouseDragged(event: MouseEvent?) {
+        super.mouseDragged(event)
+        val actionInfoPanel = event?.component as? ActionInfoPanel?: return
+        saveLocationDelta(project, actionInfoPanel)
+        updatePopupsBounds(project, actionInfoPanel)
+      }
+    }.installTo(panel)
+    Disposer.register(this) { moveListener.uninstallFrom(panel) }
+
     return popup
   }
 
@@ -133,8 +146,10 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     resetHideAlarm()
   }
 
-  private fun updatePopupsBounds(project: Project) {
+  private fun updatePopupsBounds(project: Project, ignoredPanel: ActionInfoPanel? = null) {
     actionBlocks.mapIndexed { index, actionBlock ->
+      if (actionBlock.panel == ignoredPanel) return@mapIndexed
+
       actionBlock.popup.content.let {
         it.validate()
         it.repaint()
@@ -147,6 +162,18 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     settingsButton.hidePopup()
     settingsButton.updatePreferredSize()
     showFinalAnimationFrame()
+  }
+
+  private fun saveLocationDelta(project: Project, panel: ActionInfoPanel?) {
+    panel ?: return
+    val index = actionBlocks.indexOfFirst { it.panel == panel }
+    if (index < 0) return
+
+    val window = getPopupWindow(actionBlocks[index].popup) ?: return
+    val originalLocation = computeLocation(project, index, true).screenPoint
+
+    configuration.deltaX = JBUI.unscale(window.x - originalLocation.x)
+    configuration.deltaY = JBUI.unscale(window.y - originalLocation.y)
   }
 
   fun close() {
@@ -167,10 +194,14 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
   fun canBeReused(size: Int): Boolean = size == actionBlocks.size && (phase == Phase.FADING_IN || phase == Phase.SHOWN)
 
   private fun getPopupWindows(): List<Window> = actionBlocks.mapNotNull { actionBlock ->
-    if (actionBlock.isDisposed) return@mapNotNull null
-    val window = SwingUtilities.windowForComponent(actionBlock.popup.content)
-    if (window != null && window.isShowing) return@mapNotNull window
-    return@mapNotNull null
+    getPopupWindow(actionBlock.popup)
+  }
+
+  private fun getPopupWindow(popup: JBPopup): Window? {
+    if (popup.isDisposed) return null
+    val window = SwingUtilities.windowForComponent(popup.content)
+    if (window != null && window.isShowing) return window
+    return null
   }
 
   private fun setAlpha(alpha: Float) {
@@ -201,7 +232,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     forcedToBeShown = isPopupHovered || isSettingsButtonForcedToBeShown
   }
 
-  private fun computeLocation(project: Project, index: Int?): RelativePoint {
+  private fun computeLocation(project: Project, index: Int?, ignoreDelta: Boolean = false): RelativePoint {
     val preferredSizes = actionBlocks.map { it.panel.preferredSize }
     val gap = JBUIScale.scale(appearance.spaceBetweenPopups)
     val popupGroupSize: Dimension = if (actionBlocks.isNotEmpty()) {
@@ -213,6 +244,8 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     val ideFrame = WindowManager.getInstance().getIdeFrame(project)!!
     val visibleRect = ideFrame.component.visibleRect
     val margin = JBUIScale.scale(60)
+    val deltaX = if (ignoreDelta) 0 else configuration.deltaX?.let { JBUIScale.scale(it) } ?: 0
+    val deltaY = if (ignoreDelta) 0 else configuration.deltaY?.let { JBUIScale.scale(it) } ?: 0
 
     val x = when (configuration.horizontalAlignment) {
       0 -> visibleRect.x + margin
@@ -225,12 +258,12 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
       (0..<index).map { preferredSizes[it].width }.reduce { total, width ->
         total + width
       } + gap * index
-    } ?: 0)
+    } ?: 0) + deltaX
 
     val y = when (configuration.verticalAlignment) {
       0 -> visibleRect.y + margin
       else -> visibleRect.y + visibleRect.height - popupGroupSize.height - margin
-    }
+    } + deltaY
 
     return RelativePoint(ideFrame.component, Point(x, y))
   }

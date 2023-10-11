@@ -89,7 +89,19 @@ class PresentationAssistantState {
   var showAlternativeKeymap = false
   var alternativeKeymap: String = defaultKeymapForOS().getAlternativeKind().value
   var alternativeKeymapLabel: String = defaultKeymapForOS().getAlternativeKind().defaultLabel
+
+  var deltaX: Int? = null
+  var deltaY: Int? = null
 }
+
+internal fun PresentationAssistantState.resetDelta() {
+  deltaX = null
+  deltaY = null
+}
+
+internal val PresentationAssistantState.alignmentIfNoDelta: PresentationAssistantPopupAlignment? get() =
+  if (deltaX == null || deltaY == null) PresentationAssistantPopupAlignment.from(horizontalAlignment, verticalAlignment)
+  else null
 
 internal fun PresentationAssistantState.mainKeymapKind() = KeymapKind.from(mainKeymap)
 internal fun PresentationAssistantState.alternativeKeymapKind() = alternativeKeymap.takeIf { showAlternativeKeymap }?.let { KeymapKind.from(it) }
