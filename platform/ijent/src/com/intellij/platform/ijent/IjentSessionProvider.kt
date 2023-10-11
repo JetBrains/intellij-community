@@ -34,6 +34,7 @@ interface IjentSessionProvider {
   suspend fun connect(
     id: IjentId,
     communicationCoroutineScope: CoroutineScope,
+    platform: IjentExecFileProvider.SupportedPlatform,
     inputStream: InputStream,
     outputStream: OutputStream,
   ): IjentApi
@@ -48,7 +49,11 @@ interface IjentSessionProvider {
      * * [inputStream] is closed.
      */
     @OptIn(DelicateCoroutinesApi::class)
-    suspend fun connect(communicationCoroutineScope: CoroutineScope, process: Process): IjentApi {
+    suspend fun connect(
+      communicationCoroutineScope: CoroutineScope,
+      platform: IjentExecFileProvider.SupportedPlatform,
+      process: Process,
+    ): IjentApi {
       val provider = serviceAsync<IjentSessionProvider>()
       val ijentsRegistry = IjentSessionRegistry.instanceAsync()
       val ijentId = ijentsRegistry.makeNewId()
@@ -125,7 +130,7 @@ interface IjentSessionProvider {
         }
       }
 
-      val result = provider.connect(ijentId, childScope, process.inputStream, process.outputStream)
+      val result = provider.connect(ijentId, childScope, platform, process.inputStream, process.outputStream)
       ijentsRegistry.ijentsInternal[ijentId] = result
       return result
     }
@@ -135,6 +140,8 @@ interface IjentSessionProvider {
 interface IjentApi : AutoCloseable {
   val id: IjentId
 
+  val platform: IjentExecFileProvider.SupportedPlatform
+
   /**
    * Every [IjentId] must have its own child scope. Cancellation of this scope doesn't directly lead to cancellation of any coroutine
    * from the parent job.
@@ -142,11 +149,6 @@ interface IjentApi : AutoCloseable {
    * Cancellation of this scope must lead to termination of the IJent process on the other side.
    */
   val coroutineScope: CoroutineScope
-
-  /**
-   * Contains some generic info which doesn't change during the lifetime of an IJent process.
-   */
-  val systemInfo: IjentSystemInfo
 
   override fun close() {
     coroutineScope.cancel(CancellationException("Closed via Closeable interface"))
@@ -217,13 +219,4 @@ interface IjentChildProcess {
   val exitCode: Deferred<Int>
 
   suspend fun sendSignal(signal: Int)  // TODO Use a separate class for signals.
-}
-
-data class IjentSystemInfo(
-  val osKind: OsKind,
-  val ijentVersion: String,
-) {
-  enum class OsKind {
-    WINDOWS, UNIX,
-  }
 }
