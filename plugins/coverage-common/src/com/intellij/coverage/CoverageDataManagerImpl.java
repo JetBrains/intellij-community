@@ -36,7 +36,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -271,7 +270,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         final boolean canMergeSuites = myCurrentSuitesBundle.getCoverageEngine() == suite.getCoverageEngine();
         final boolean shouldAsk = replaceOption == CoverageOptionsProvider.ASK_ON_NEW_SUITE ||
                                   replaceOption == CoverageOptionsProvider.ADD_SUITE && !canMergeSuites;
-        coverageGathered(suite, shouldAsk ? askMergeOption(suite, canMergeSuites) : replaceOption);
+        int actualOption = shouldAsk ? askMergeOption(suite, canMergeSuites) : replaceOption;
+        switch (actualOption) {
+          case CoverageOptionsProvider.REPLACE_SUITE -> chooseSuitesBundle(new CoverageSuitesBundle(suite));
+          case CoverageOptionsProvider.ADD_SUITE ->
+            chooseSuitesBundle(new CoverageSuitesBundle(ArrayUtil.append(myCurrentSuitesBundle.getSuites(), suite)));
+        }
       }
       else {
         chooseSuitesBundle(new CoverageSuitesBundle(suite));
@@ -307,37 +311,19 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     String message = CoverageBundle.message("display.coverage.prompt", suite.getPresentableName());
     if (canMergeSuites) {
       int result = MessageDialogBuilder.yesNoCancel(title, message)
-        .yesText(getSuiteReplaceOption(CoverageOptionsProvider.REPLACE_SUITE))
-        .noText(getSuiteReplaceOption(CoverageOptionsProvider.ADD_SUITE))
-        .cancelText(getSuiteReplaceOption(CoverageOptionsProvider.IGNORE_SUITE))
+        .yesText(CoverageBundle.message("coverage.replace.active.suites"))
+        .noText(CoverageBundle.message("coverage.add.to.active.suites"))
+        .cancelText(CoverageBundle.message("coverage.do.not.apply.collected.coverage"))
         .doNotAsk(doNotAskOption)
         .show(suite.getProject());
       return mapCode.apply(result);
     }
     else {
       return MessageDialogBuilder.yesNo(title, message)
-               .yesText(getSuiteReplaceOption(CoverageOptionsProvider.REPLACE_SUITE))
-               .noText(getSuiteReplaceOption(CoverageOptionsProvider.IGNORE_SUITE))
+               .yesText(CoverageBundle.message("coverage.replace.active.suites"))
+               .noText(CoverageBundle.message("coverage.do.not.apply.collected.coverage"))
                .doNotAsk(doNotAskOption)
                .ask(suite.getProject()) ? CoverageOptionsProvider.REPLACE_SUITE : CoverageOptionsProvider.IGNORE_SUITE;
-    }
-  }
-
-  @Nls
-  private static String getSuiteReplaceOption(int optionCode) {
-    return switch (optionCode) {
-      case CoverageOptionsProvider.REPLACE_SUITE -> CoverageBundle.message("coverage.replace.active.suites");
-      case CoverageOptionsProvider.ADD_SUITE -> CoverageBundle.message("coverage.add.to.active.suites");
-      case CoverageOptionsProvider.IGNORE_SUITE -> CoverageBundle.message("coverage.do.not.apply.collected.coverage");
-      default -> throw new IllegalStateException("Unexpected value: " + optionCode);
-    };
-  }
-
-  private void coverageGathered(@NotNull final CoverageSuite suite, int replaceOption) {
-    switch (replaceOption) {
-      case CoverageOptionsProvider.REPLACE_SUITE -> chooseSuitesBundle(new CoverageSuitesBundle(suite));
-      case CoverageOptionsProvider.ADD_SUITE ->
-        chooseSuitesBundle(new CoverageSuitesBundle(ArrayUtil.append(myCurrentSuitesBundle.getSuites(), suite)));
     }
   }
 
