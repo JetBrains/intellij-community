@@ -7,7 +7,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.DistractionFreeModeController
-import com.intellij.ide.plugins.PluginManagerCore.isVendorJetBrains
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.*
 import com.intellij.ide.util.PropertiesComponent
@@ -328,14 +328,8 @@ private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): Ico
       }
 
       if (patchedPath != null && patchedPath.startsWith(iconPathPrefix)) {
-        val useReflective = if (classLoader is PluginAwareClassLoader) {
-          val descriptor = classLoader.getPluginDescriptor()
-          descriptor.isBundled && isVendorJetBrains(descriptor.vendor ?: "")
-        }
-        else {
-          true
-        }
-
+        // isRunningFromSources - don't care about broken "run from sources", dev mode should be used instead
+        val useReflective = classLoader !is PluginAwareClassLoader && !PluginManagerCore.isRunningFromSources()
         if (useReflective) {
           val builder = StringBuilder(reflectivePathPrefix.length + patchedPath.length)
           builder.append(reflectivePathPrefix)
@@ -344,7 +338,7 @@ private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): Ico
         }
       }
 
-        return patchedPath
+      return patchedPath
     }
 
     private fun toReflectivePath(name: StringBuilder): StringBuilder {
