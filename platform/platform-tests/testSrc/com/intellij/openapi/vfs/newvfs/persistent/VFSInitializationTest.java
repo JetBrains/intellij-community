@@ -72,7 +72,7 @@ public class VFSInitializationTest {
 
 
   @Test
-  public void connection_ReopenedWithSameVersion_HasTimestampFromPreviousTurn() throws IOException, InterruptedException {
+  public void connection_ReopenedWithSameVersion_HasTimestampFromPreviousTurn() throws Exception {
     final Path cachesDir = temporaryDirectory.createDir();
     final int version = 1;
 
@@ -91,7 +91,7 @@ public class VFSInitializationTest {
       fsRecordsCreationTimestampBeforeDisconnect = records.getTimestamp();
     }
     finally {
-      PersistentFSConnector.disconnect(connection);
+      disconnect(connection);
     }
 
     Thread.sleep(1000);
@@ -105,12 +105,12 @@ public class VFSInitializationTest {
       );
     }
     finally {
-      PersistentFSConnector.disconnect(reopenedConnection);
+      disconnect(reopenedConnection);
     }
   }
 
   @Test
-  public void connection_ReopenedWithDifferentVersion_Fails() throws IOException {
+  public void connection_ReopenedWithDifferentVersion_Fails() throws Exception {
     final Path cachesDir = temporaryDirectory.createDir();
     final int version = 1;
     final PersistentFSConnection connection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
@@ -119,12 +119,13 @@ public class VFSInitializationTest {
       version,
       connection.getRecords().getVersion()
     );
-    PersistentFSConnector.disconnect(connection);
+    disconnect(connection);
 
 
     final int differentVersion = version + 1;
     try {
-      tryInit(cachesDir, differentVersion, PersistentFSConnector.RECOVERERS);
+      PersistentFSConnection reConnection = tryInit(cachesDir, differentVersion, PersistentFSConnector.RECOVERERS);
+      disconnect(reConnection);
       fail(
         "VFS opening must fail, since the supplied 'current' version is different from that was used to initialize on-disk structures before");
     }
@@ -138,7 +139,7 @@ public class VFSInitializationTest {
   }
 
   @Test
-  public void connection_corruptionMarkerFileIsCreatedOnAsk_AndContainCorruptionReasonAndCauseExceptionTrace() throws IOException {
+  public void connection_corruptionMarkerFileIsCreatedOnAsk_AndContainCorruptionReasonAndCauseExceptionTrace() throws Exception {
     Path cachesDir = temporaryDirectory.createDir();
 
     final String corruptionReason = "VFS corrupted because I said so";
@@ -157,7 +158,7 @@ public class VFSInitializationTest {
       );
     }
     finally {
-      PersistentFSConnector.disconnect(connection);
+      disconnect(connection);
     }
 
     assertTrue(
@@ -447,9 +448,19 @@ public class VFSInitializationTest {
     return connection;
   }
 
+  private static void disconnect(PersistentFSConnection connection) throws Exception {
+    PersistentFSConnector.disconnect(connection);
+    StorageTestingUtils.bestEffortToCloseAndUnmap(connection);
+  }
+
   @After
   public void tearDown() throws Exception {
     PersistentFSRecordsStorageFactory.resetRecordsStorageImplementation();
+
+    for (PersistentFSConnection connection : connectionsOpened) {
+      PersistentFSConnector.disconnect(connection);
+      StorageTestingUtils.bestEffortToCloseAndUnmap(connection);
+    }
     for (PersistentFSConnection connection : connectionsOpened) {
       StorageTestingUtils.bestEffortToCloseAndClean(connection);
     }

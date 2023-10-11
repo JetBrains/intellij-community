@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
 import com.intellij.util.io.CleanableStorage;
+import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
@@ -18,6 +19,7 @@ import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -177,14 +179,83 @@ public final class StorageTestingUtils {
   }
 
 
+  public static void bestEffortToCloseAndUnmap(@NotNull Object storage) throws Exception {
+    bestEffortToCloseAndUnmap("", storage, new HashSet<>(), 0);
+  }
+
+  private static void bestEffortToCloseAndUnmap(@NotNull String fieldName,
+                                                @NotNull Object value,
+                                                @NotNull Set<Object> alreadyProcessed,
+                                                int depth) throws Exception {
+    if (isUntouchable(value)) {
+      return;
+    }
+    if (alreadyProcessed.contains(value)) {
+      return;
+    }
+    alreadyProcessed.add(value);
+
+    if (value instanceof Unmappable) {
+      log(depth, fieldName, "closeAndUnmap()");
+      ((Unmappable)value).closeAndUnsafelyUnmap();
+      return;
+    }
+
+    if (value instanceof Iterable<?>) {
+      log(depth, fieldName, "iterate and dive deeper...");
+      int i = 0;
+      for (Object nested : (Iterable<?>)value) {
+        bestEffortToCloseAndUnmap("[" + i + "]", nested, alreadyProcessed, depth + 1);
+        i++;
+      }
+      return;
+    }
+    //MAYBE RC: iterate Object[] also?
+
+    //Assume everything else is 'compound' storage that _may_ hold 'raw' underlying storage(s)
+    // somewhere deeper:
+    if (value instanceof AutoCloseable) {
+      log(depth, fieldName, "close() and dive deeper...");
+      ((AutoCloseable)value).close();
+    }
+    else if (value instanceof Disposable) {
+      log(depth, fieldName, "dispose() and dive deeper...");
+      Disposer.dispose((Disposable)value);
+    }
+    else {
+      log(depth, fieldName, "just dive deeper...");
+    }
+
+    Field[] fields = collectAllFields(value);
+    for (Field field : fields) {
+
+      if (Modifier.isStatic(field.getModifiers())
+          || field.isSynthetic()
+          || field.getType().isPrimitive()) {
+        //log(depth + 1, field, "ignore");
+        continue;
+      }
+
+      field.setAccessible(true);
+      Object fieldValue = field.get(value);
+      if (fieldValue == null) {
+        //log(depth + 1, field, "ignore null");
+        continue;
+      }
+
+      bestEffortToCloseAndUnmap(field.getName(), fieldValue, alreadyProcessed, depth + 1);
+    }
+  }
+
+
   private static Field[] collectAllFields(@NotNull Object value) {
     //RC: collect through all the hierarchy seems too dangerous
     //return ReflectionUtil.collectFields(value.getClass()).toArray(Field[]::new);
     return value.getClass().getDeclaredFields();
   }
 
-  //TODO bestEffortToCloseAndUnmap(@NotNull Object storage)
 
+  /** There are nodes we definitely don't want to dive into */
   private static boolean isUntouchable(@Nullable Object value) {
     if (value == null) {
       return true;
@@ -198,12 +269,19 @@ public final class StorageTestingUtils {
       return true;
     }
 
+    if (value instanceof FilePageCacheLockFree) {
+      //don't close app-global cache
+      return true;
+    }
+
     //just a few most frequently met types that 100% not worth to dive into
     if (value instanceof Number
         || value instanceof Path
         || value instanceof File
+        || value instanceof Map
         || value instanceof Lock
         || value instanceof ReadWriteLock
+        || value instanceof Executor
         || value instanceof Condition) {
 
       return true;
@@ -212,6 +290,7 @@ public final class StorageTestingUtils {
     if (value.getClass().equals(Object.class)) {//no harm, but useless
       return true;
     }
+
     return false;
   }
 
