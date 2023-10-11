@@ -35,6 +35,10 @@ class AssignShortcutAction(val project: Project?, val value: MatchedValue) :
              )
            },
            null) {
+
+    init {
+      shortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)
+    }
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
