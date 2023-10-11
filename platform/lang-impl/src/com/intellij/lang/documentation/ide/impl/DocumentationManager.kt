@@ -2,6 +2,7 @@
 
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction.Companion.CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE
 import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction.Companion.CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE
 import com.intellij.codeInsight.lookup.LookupElement
@@ -13,7 +14,6 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.propComponentProperty
-import com.intellij.lang.documentation.ide.DocumentationCustomization
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -100,8 +100,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     // so we create pointer and presentation right in the UI thread.
     val request = target.documentationRequest()
     val popupContext = secondaryPopupContext ?: DefaultPopupContext(project, editor)
-    val customization = editor?.let { DocumentationCustomization.getForEditor(it) } ?: DefaultDocumentationCustomization
-    showDocumentation(request, popupContext, customization, popupDependencies)
+    showDocumentation(request, popupContext, popupDependencies)
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
@@ -138,10 +137,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     popupDependencies?.let { Disposer.register(popup, it) }
   }
 
-  private fun showDocumentation(request: DocumentationRequest,
-                                popupContext: PopupContext,
-                                customization: DocumentationCustomization,
-                                popupDependencies: Disposable? = null) {
+  private fun showDocumentation(request: DocumentationRequest, popupContext: PopupContext, popupDependencies: Disposable? = null) {
     if (skipPopup) {
       toolWindowManager.showInToolWindow(request)
       return
@@ -155,17 +151,18 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     }
     popupScope.coroutineContext.job.cancelChildren()
     popupScope.launch(context = Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
-      val popup = showDocumentationPopup(project, request, popupContext, customization)
+      val popup = showDocumentationPopup(project, request, popupContext)
       setPopup(popup, popupDependencies)
     }
   }
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {
-    val customization = DocumentationCustomization.getForEditor(lookup.editor)
-    if (!customization.isAutoShowOnLookupItemChange) {
+    val settings = CodeInsightSettings.getInstance()
+    if (!settings.AUTO_POPUP_JAVADOC_INFO) {
       return
     }
-    val showDocJob = autoShowDocumentationOnItemChange(lookup, customization)
+    val delay = settings.JAVADOC_INFO_DELAY.toLong()
+    val showDocJob = autoShowDocumentationOnItemChange(lookup, delay)
     lookup.addLookupListener(object : LookupListener {
       override fun itemSelected(event: LookupEvent): Unit = lookupClosed()
       override fun lookupCanceled(event: LookupEvent): Unit = lookupClosed()
@@ -176,12 +173,12 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     })
   }
 
-  private fun autoShowDocumentationOnItemChange(lookup: LookupEx, customization: DocumentationCustomization): Job {
+  private fun autoShowDocumentationOnItemChange(lookup: LookupEx, delay: Long): Job {
     val elements: Flow<LookupElement> = lookup.elementFlow()
     val mapper = lookupElementToRequestMapper(lookup)
     return cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
       elements.collectLatest {
-        handleElementChange(lookup, it, customization, mapper)
+        handleElementChange(lookup, it, delay, mapper)
       }
     }
   }
@@ -189,7 +186,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
   private suspend fun handleElementChange(
     lookup: LookupEx,
     lookupElement: LookupElement,
-    customization: DocumentationCustomization,
+    delay: Long,
     mapper: suspend (LookupElement) -> DocumentationRequest?
   ) {
     if (getPopup() != null) {
@@ -198,7 +195,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     if (!LookupManagerImpl.isAutoPopupJavadocSupportedBy(lookupElement)) {
       return
     }
-    delay(customization.autoShowDelayMillis)
+    delay(delay)
     if (getPopup() != null) {
       // the user might've explicitly invoked the action during the delay
       return // return here to not compute the request unnecessarily
@@ -212,7 +209,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     if (request == null) {
       return
     }
-    showDocumentation(request, LookupPopupContext(lookup), customization)
+    showDocumentation(request, LookupPopupContext(lookup))
   }
 
   fun navigateInlineLink(
@@ -264,8 +261,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
         browseAbsolute(project, url)
       }
       else {
-        val customization = DocumentationCustomization.getForEditor(editor)
-        showDocumentation(result.value, InlinePopupContext(project, editor, popupPosition), customization)
+        showDocumentation(result.value, InlinePopupContext(project, editor, popupPosition))
         true
       }
     }
