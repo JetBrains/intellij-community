@@ -279,6 +279,12 @@ fun <T> Flow<T>.asResultFlow(): Flow<Result<T>> =
   map { Result.success(it) }.catch { emit(Result.failure(it)) }
 
 /**
+ * Maps a flow or results to a flow of a mapped result
+ */
+fun <T, R> Flow<Result<T>>.mapCatching(mapper: suspend (T) -> R): Flow<Result<R>> =
+  map { it.mapCatching { value -> mapper(value) } }
+
+/**
  * Maps a flow or results to a flow of values from successful results. Failure results are re-thrown as exceptions.
  */
 fun <T> Flow<Result<T>>.throwFailure(): Flow<T> =

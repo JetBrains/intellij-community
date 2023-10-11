@@ -57,7 +57,6 @@ internal class GitLabReviewTabComponentFactory(
         GitLabStatistics.logMrDetailsOpened(project)
         createReviewDetailsComponent(cs, projectVm, tabVm.detailsVm).also {
           tabVm.detailsVm.apply {
-            requestLoad()
             refreshData()
           }
         }

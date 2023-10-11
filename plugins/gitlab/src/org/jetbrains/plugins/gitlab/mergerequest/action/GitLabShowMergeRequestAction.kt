@@ -27,6 +27,6 @@ class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer
     val selection: GitLabMergeRequestDetails = e.getRequiredData(GitLabMergeRequestsActionKeys.SELECTED)
 
     projectVm.showTab(GitLabReviewTab.ReviewSelected(selection.iid))
-    projectVm.showTimeline(selection.iid, false)
+    projectVm.filesController.openTimeline(selection.iid, false)
   }
 }
