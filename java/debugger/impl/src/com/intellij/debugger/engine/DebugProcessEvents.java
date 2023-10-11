@@ -14,6 +14,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.statistics.BreakpointVisitStatistic;
+import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
@@ -562,10 +563,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
         getSuspendManager().voteSuspend(suspendContext);
         if (hint != null) {
           final MethodFilter methodFilter = hint.getMethodFilter();
-          if (methodFilter instanceof NamedMethodFilter && !hint.wasStepTargetMethodMatched()) {
-            final String message =
-              JavaDebuggerBundle.message("notification.method.has.not.been.called", ((NamedMethodFilter)methodFilter).getMethodName());
+          if (methodFilter instanceof NamedMethodFilter namedMethodFilter && !hint.wasStepTargetMethodMatched()) {
+            String methodName = namedMethodFilter.getMethodName();
+            String message = JavaDebuggerBundle.message("notification.method.has.not.been.called", methodName);
             XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.INFO).notify(project);
+            DebuggerStatistics.logMethodSkippedDuringStepping(this, StatisticsStorage.getSteppingStatisticOrNull(commandToken));
           }
           if (hint.wasStepTargetMethodMatched()) {
             suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);

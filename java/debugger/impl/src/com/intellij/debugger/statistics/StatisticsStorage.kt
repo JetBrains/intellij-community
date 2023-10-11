@@ -43,8 +43,7 @@ class StatisticsStorage {
     }
 
     @JvmStatic
-    @Synchronized
-    fun createSteppingToken(action: SteppingAction, engine: Engine) = SteppingStatistic(action, engine)
+    fun createSteppingToken(action: SteppingAction, engine: Engine): Any = SteppingStatistic(action, engine)
 
 
     @JvmStatic
@@ -55,6 +54,9 @@ class StatisticsStorage {
       storage.data.clear()
       return result
     }
+
+    @JvmStatic
+    fun getSteppingStatisticOrNull(token: Any?): SteppingStatistic? = token as? SteppingStatistic
   }
 }
 
