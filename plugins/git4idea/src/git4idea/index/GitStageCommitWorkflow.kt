@@ -47,7 +47,7 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
     assert(sessionInfo.isVcsCommit) { "Custom commit sessions are not supported with staging area: ${sessionInfo.executor.toString()}" }
     LOG.debug("Do actual commit")
 
-    commitContext.isCleanupCommitMessage = project.service<GitCommitTemplateTracker>().exists()
+    commitContext.isCleanupCommitMessage = GitCommitTemplateTracker.getInstance(project).exists()
 
     val committer = GitStageCommitter(project, commitState, getPathsToStage(), commitContext)
     addCommonResultHandlers(sessionInfo, committer)

@@ -41,7 +41,7 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
 
     val taskScope = CoroutineScope(Dispatchers.Default + Job())
     try {
-      val pauseReason = project.service<UnindexedFilesScannerExecutor>().getPauseReason()
+      val pauseReason = UnindexedFilesScannerExecutor.getInstance(project).getPauseReason()
       val taskIndicator = CheckCancelOnlyProgressIndicator(indicator, taskScope, pauseReason)
       launchIndexingProgressUIReporter(taskScope, project, shouldShowProgress, progressReporter,
                                        IndexingBundle.message("progress.indexing.scanning"),

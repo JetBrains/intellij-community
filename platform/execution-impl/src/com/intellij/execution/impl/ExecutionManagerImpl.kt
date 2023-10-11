@@ -112,7 +112,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
     @JvmStatic
     fun getInstance(project: Project): ExecutionManagerImpl {
-      return project.service<ExecutionManager>() as ExecutionManagerImpl
+      return ExecutionManager.getInstance(project) as ExecutionManagerImpl
     }
 
     @JvmStatic

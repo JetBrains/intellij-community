@@ -635,12 +635,12 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       new DumbModeTask() {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-          myProject.getService(UnindexedFilesScannerExecutor.class).submitTask(UnindexedFilesScanner.this);
+          UnindexedFilesScannerExecutor.getInstance(myProject).submitTask(UnindexedFilesScanner.this);
         }
       }.queue(myProject);
     }
     else {
-      myProject.getService(UnindexedFilesScannerExecutor.class).submitTask(this);
+      UnindexedFilesScannerExecutor.getInstance(myProject).submitTask(this);
     }
   }
 

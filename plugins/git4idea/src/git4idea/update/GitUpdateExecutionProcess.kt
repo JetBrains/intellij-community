@@ -31,9 +31,9 @@ internal class GitUpdateExecutionProcess(private val project: Project,
 
   fun execute() {
     if (updateConfig.isEmpty()) {
-      project.service<VcsNotifier>().notifyMinorWarning(UPDATE_NOTHING_TO_UPDATE,
-                                                        "",
-                                                        GitBundle.message("update.process.nothing.to.update"))
+      VcsNotifier.getInstance(project).notifyMinorWarning(UPDATE_NOTHING_TO_UPDATE,
+                                                          "",
+                                                          GitBundle.message("update.process.nothing.to.update"))
       return
     }
 

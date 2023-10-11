@@ -83,7 +83,7 @@ class GitStageRootInclusionModel(private val project: Project,
     }
 
     private fun Collection<VirtualFile>.asRepositories(project: Project): Set<GitRepository> {
-      return mapNotNullTo(mutableSetOf()) { project.service<GitRepositoryManager>().getRepositoryForRootQuick(it) }
+      return mapNotNullTo(mutableSetOf()) { GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(it) }
     }
   }
 }

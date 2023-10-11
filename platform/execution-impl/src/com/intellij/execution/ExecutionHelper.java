@@ -213,7 +213,7 @@ public final class ExecutionHelper {
                                        final @NotNull @NlsContexts.TabTitle String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
-      final MessageView messageView = myProject.getService(MessageView.class);
+      final MessageView messageView = MessageView.getInstance(myProject);
       final Content content = ContentFactory.getInstance().createContent(errorTreeView, tabDisplayName, true);
       messageView.getContentManager().addContent(content);
       Disposer.register(content, errorTreeView);

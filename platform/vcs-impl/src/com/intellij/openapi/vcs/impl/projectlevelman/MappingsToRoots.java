@@ -28,7 +28,7 @@ public final class MappingsToRoots {
       result.sort(FilePathComparator.getInstance());
 
       ApplicationManager.getApplication().runReadAction(() -> {
-        final FileIndexFacade facade = project.getService(FileIndexFacade.class);
+        final FileIndexFacade facade = FileIndexFacade.getInstance(project);
         int i = 1;
         while (i < result.size()) {
           final VirtualFile previous = result.get(i - 1);
@@ -65,7 +65,7 @@ public final class MappingsToRoots {
     });
 
     List<VirtualFile> modulesToAdd = ApplicationManager.getApplication().runReadAction((Computable<List<VirtualFile>>)() -> {
-      final FileIndexFacade facade = project.getService(FileIndexFacade.class);
+      final FileIndexFacade facade = FileIndexFacade.getInstance(project);
       return ContainerUtil.filter(modulesUnderVcs,
                                   module -> ContainerUtil.or(roots, root -> facade.isValidAncestor(root, module)));
     });

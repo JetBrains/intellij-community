@@ -44,7 +44,7 @@ internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCall>(
   override fun getExpectedParameters(): List<ExpectedParameter> {
     val argumentTypes = getArgumentTypes() ?: return emptyList()
 
-    val codeStyleManager: JavaCodeStyleManager = project.service()
+    val codeStyleManager = JavaCodeStyleManager.getInstance(project)
 
     val names = argumentTypes.map { (type, _) -> type to codeStyleManager.suggestNames(emptyList(), PARAMETER, type).names.toList() }
 

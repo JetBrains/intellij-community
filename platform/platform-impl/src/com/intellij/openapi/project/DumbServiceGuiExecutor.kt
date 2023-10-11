@@ -30,14 +30,14 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
     var taskCompletedNormally = false
     return try {
       if (visibleIndicator is ProgressIndicatorEx) DumbServiceAppIconProgress.registerForProgress(project, visibleIndicator)
-      project.service<DumbModeProgressTitle>().attachDumbModeProgress(visibleIndicator)
+      DumbModeProgressTitle.getInstance(project).attachDumbModeProgress(visibleIndicator)
       super.processTasksWithProgress(suspender, visibleIndicator, childActivity).also {
         taskCompletedNormally = true
       }
     }
     finally {
       logProcessFinished(childActivity, if (taskCompletedNormally) IndexingFinishType.FINISHED else IndexingFinishType.TERMINATED)
-      project.service<DumbModeProgressTitle>().removeDumbModeProgress(visibleIndicator)
+      DumbModeProgressTitle.getInstance(project).removeDumbModeProgress(visibleIndicator)
     }
   }
 

@@ -40,7 +40,7 @@ abstract class ProjectManagerEx : ProjectManager() {
     const val PER_PROJECT_SUFFIX: String = "INTERNAL_perProject"
 
     @JvmStatic
-    fun getInstanceEx(): ProjectManagerEx = ApplicationManager.getApplication().getService(ProjectManager::class.java) as ProjectManagerEx
+    fun getInstanceEx(): ProjectManagerEx = getInstance() as ProjectManagerEx
 
     @JvmStatic
     fun getInstanceExIfCreated(): ProjectManagerEx? = getInstanceIfCreated() as ProjectManagerEx?

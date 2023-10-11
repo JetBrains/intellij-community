@@ -53,7 +53,7 @@ public class HintManagerImpl extends HintManager {
   }
 
   public static HintManagerImpl getInstanceImpl() {
-    return (HintManagerImpl)ApplicationManager.getApplication().getService(HintManager.class);
+    return (HintManagerImpl)HintManager.getInstance();
   }
 
   public HintManagerImpl() {

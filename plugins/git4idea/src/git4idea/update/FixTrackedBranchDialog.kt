@@ -7,7 +7,6 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
@@ -48,8 +47,6 @@ import javax.swing.JPanel
 import javax.swing.JRadioButton
 
 internal class FixTrackedBranchDialog(private val project: Project) : DialogWrapper(project) {
-
-  private val vcsNotifier = project.service<VcsNotifier>()
 
   private val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
 
@@ -94,8 +91,8 @@ internal class FixTrackedBranchDialog(private val project: Project) : DialogWrap
         .append(HtmlChunk.br())
         .append(reposNotOnBranch)
         .toString()
-      vcsNotifier.notifyImportantWarning(FIX_TRACKED_NOT_ON_BRANCH,
-                                         GitBundle.message("tracked.branch.fix.dialog.not.on.branch.title"), message)
+      VcsNotifier.getInstance(project).notifyImportantWarning(FIX_TRACKED_NOT_ON_BRANCH,
+                                                              GitBundle.message("tracked.branch.fix.dialog.not.on.branch.title"), message)
     }
 
     for (repository in repositories) {

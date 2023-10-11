@@ -45,8 +45,7 @@ internal object CoroutineBlockingCallInspectionUtils {
     fun isKotlinxOnClasspath(ktElement: KtElement): Boolean {
         val module = ModuleUtilCore.findModuleForPsiElement(ktElement) ?: return false
         val searchScope = GlobalSearchScope.moduleWithLibrariesScope(module)
-        return module.project
-            .service<JavaPsiFacade>()
+        return JavaPsiFacade.getInstance(module.project)
             .findClass(DISPATCHERS_FQN, searchScope) != null
     }
 

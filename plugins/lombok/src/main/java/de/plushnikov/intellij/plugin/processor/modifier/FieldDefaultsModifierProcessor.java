@@ -25,7 +25,7 @@ import java.util.Set;
 public class FieldDefaultsModifierProcessor implements ModifierProcessor {
 
   private static ConfigDiscovery getConfigDiscovery() {
-    return ApplicationManager.getApplication().getService(ConfigDiscovery.class);
+    return ConfigDiscovery.getInstance();
   }
 
   @Override

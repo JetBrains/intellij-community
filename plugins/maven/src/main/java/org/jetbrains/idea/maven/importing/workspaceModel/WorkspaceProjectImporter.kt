@@ -143,7 +143,7 @@ internal class WorkspaceProjectImporter(
 
   private fun migrateToExternalStorageIfNeeded(): Boolean {
     var migratedToExternalStorage = false
-    val externalStorageManager = myProject.getService(ExternalStorageConfigurationManager::class.java)
+    val externalStorageManager = ExternalStorageConfigurationManager.getInstance(myProject)
     if (!externalStorageManager.isEnabled) {
       ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true)
       migratedToExternalStorage = true

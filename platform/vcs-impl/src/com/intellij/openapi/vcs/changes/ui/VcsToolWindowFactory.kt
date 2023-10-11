@@ -48,7 +48,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     })
     ChangesViewContentEP.EP_NAME.addExtensionPointListener(window.project, ExtensionListener(window), window.disposable)
 
-    val vcsManager = window.project.getService(ProjectLevelVcsManager::class.java)
+    val vcsManager = ProjectLevelVcsManager.getInstance(window.project)
     if (vcsManager != null && vcsManager.areVcsesActivated()) {
       // already is activated - we missed the event, so, call explicitly
       // must be executed later, because we set toolWindow.isAvailable (cannot be called in the init directly)

@@ -102,7 +102,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
   }
 
   public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
-    return (ExternalProjectsManagerImpl)project.getService(ExternalProjectsManager.class);
+    return (ExternalProjectsManagerImpl)ExternalProjectsManager.getInstance(project);
   }
 
   public static @Nullable Project setupCreatedProject(@Nullable Project project) {

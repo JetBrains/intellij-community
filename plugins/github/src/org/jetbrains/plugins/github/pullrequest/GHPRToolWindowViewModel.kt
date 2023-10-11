@@ -32,7 +32,8 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
   private val accountManager: GHAccountManager get() = service()
   private val repositoriesManager: GHHostedRepositoriesManager get() = project.service()
   private val connectionManager: GHRepositoryConnectionManager get() = project.service()
-  private val settings: GithubPullRequestsProjectUISettings get() = project.service()
+  private val settings: GithubPullRequestsProjectUISettings
+    get() = GithubPullRequestsProjectUISettings.getInstance(project)
 
   //TODO: switch to Default dispatcher
   private val cs = parentCs.childScope(Dispatchers.Main)

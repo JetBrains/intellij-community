@@ -30,7 +30,7 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
     new Topic<>(VcsActivationListener.class, Topic.BroadcastDirection.NONE);
 
   public static ProjectLevelVcsManagerEx getInstanceEx(Project project) {
-    return (ProjectLevelVcsManagerEx)project.getService(ProjectLevelVcsManager.class);
+    return (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
   }
 
   @Nullable

@@ -34,7 +34,7 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
   override fun getExpectedParameters(): List<ExpectedParameter> {
     val argumentList = call.argumentList ?: return emptyList()
     val scope = call.resolveScope
-    val codeStyleManager: JavaCodeStyleManager = project.service()
+    val codeStyleManager = JavaCodeStyleManager.getInstance(project)
     return argumentList.expressions.map { expression ->
       val argType: PsiType? = CommonJavaRefactoringUtil.getTypeByExpression(expression)
       val type = CreateFromUsageUtils.getParameterTypeByArgumentType(argType, psiManager, scope)

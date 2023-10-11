@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -37,7 +36,8 @@ open class EditorTrackerImpl(@JvmField protected val project: Project) : EditorT
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): EditorTrackerImpl = project.service<EditorTracker>() as EditorTrackerImpl
+    fun getInstance(project: Project): EditorTrackerImpl =
+      EditorTracker.getInstance(project) as EditorTrackerImpl
 
     private val LOG = logger<EditorTracker>()
 

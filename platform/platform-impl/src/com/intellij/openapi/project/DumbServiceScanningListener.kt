@@ -13,7 +13,7 @@ import org.jetbrains.annotations.TestOnly
 @Service(Service.Level.PROJECT)
 class DumbServiceScanningListener(private val project: Project, private val cs: CoroutineScope) {
   fun subscribe() {
-    subscribe(project.service<UnindexedFilesScannerExecutor>().isRunning)
+    subscribe(UnindexedFilesScannerExecutor.getInstance(project).isRunning)
   }
 
   private fun subscribe(scanningState: StateFlow<Boolean>) {
@@ -21,7 +21,7 @@ class DumbServiceScanningListener(private val project: Project, private val cs: 
       while (true) {
         scanningState.first { it }
 
-        project.service<DumbService>().suspendIndexingAndRun(IndexingBundle.message("progress.indexing.scanning")) {
+        DumbService.getInstance(project).suspendIndexingAndRun(IndexingBundle.message("progress.indexing.scanning")) {
           scanningState.first { !it }
         }
       }

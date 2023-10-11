@@ -54,7 +54,7 @@ internal fun findUsages(project: Project, target: SearchTarget, allOptions: AllS
     tabText = UsageViewBundle.message("search.title.0.in.1", searchString, scopeText)
     isOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView || !canReuseTab(project)
   }
-  project.service<UsageViewManager>().searchAndShowUsages(
+  UsageViewManager.getInstance(project).searchAndShowUsages(
     arrayOf(SearchTarget2UsageTarget(project, target, allOptions)),
     factory,
     false,

@@ -17,7 +17,7 @@ import org.jetbrains.concurrency.isPending
 internal class GitTemplateCommitMessageProvider : DelayedCommitMessageProvider {
   companion object {
     internal fun getCommitMessage(project: Project): String? {
-      return project.service<GitCommitTemplateTracker>().getTemplateContent()
+      return GitCommitTemplateTracker.getInstance(project).getTemplateContent()
     }
   }
 

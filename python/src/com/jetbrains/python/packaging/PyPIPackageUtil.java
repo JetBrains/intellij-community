@@ -155,7 +155,7 @@ public class PyPIPackageUtil {
       }
     }
     if (!failedToConnect.isEmpty()) {
-      PyPackageService packageService = ApplicationManager.getApplication().getService(PyPackageService.class);
+      PyPackageService packageService = PyPackageService.getInstance();
       failedToConnect.forEach(repo -> packageService.removeRepository(repo));
     }
   }

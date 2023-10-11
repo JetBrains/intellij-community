@@ -418,7 +418,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     for (DataNode<?> node : nodes) {
       node.visit(dataNode -> dataNode.setIgnored(ignored));
     }
-    ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectDataNode, myProject);
+    ProjectDataManager.getInstance().importData(projectDataNode, myProject);
   }
 
   protected void importProject(@NonNls String config, Boolean skipIndexing) throws IOException {
@@ -458,7 +458,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
             return;
           }
           try {
-            ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject);
+            ProjectDataManager.getInstance().importData(externalProject, myProject);
           } catch (Throwable ex) {
             ex.printStackTrace(System.err);
             error.set(Couple.of("Exception occurred in `ProjectDataManager.importData` (see output for the details)", null));
@@ -474,7 +474,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     }
 
     ExternalSystemProgressNotificationManager notificationManager =
-      ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
+      ExternalSystemProgressNotificationManager.getInstance();
     ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {

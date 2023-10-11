@@ -133,7 +133,7 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
     }
 
     var disposable = RemoteRepositoriesConfiguration.getInstance(project);
-    LibrarySynchronizationQueue synchronizationQueue = project.getService(LibrarySynchronizationQueue.class);
+    LibrarySynchronizationQueue synchronizationQueue = LibrarySynchronizationQueue.getInstance(project);
     ChangedRepositoryLibrarySynchronizer synchronizer = new ChangedRepositoryLibrarySynchronizer(project, synchronizationQueue);
     GlobalChangedRepositoryLibrarySynchronizer globalLibSynchronizer = new GlobalChangedRepositoryLibrarySynchronizer(synchronizationQueue, disposable);
     for (LibraryTable libraryTable : GlobalChangedRepositoryLibrarySynchronizer.getGlobalAndCustomLibraryTables()) {

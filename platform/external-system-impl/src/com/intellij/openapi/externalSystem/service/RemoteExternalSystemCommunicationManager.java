@@ -77,7 +77,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
   @NotNull private final RemoteProcessSupport<Object, RemoteExternalSystemFacade, String> mySupport;
 
   public RemoteExternalSystemCommunicationManager() {
-    myProgressManager = (ExternalSystemProgressNotificationManagerImpl)ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
+    myProgressManager = (ExternalSystemProgressNotificationManagerImpl)ExternalSystemProgressNotificationManager.getInstance();
     mySupport = new RemoteProcessSupport<>(RemoteExternalSystemFacade.class) {
       @Override
       protected void fireModificationCountChanged() {

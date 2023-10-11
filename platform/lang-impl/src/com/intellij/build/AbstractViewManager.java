@@ -59,7 +59,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
 
   public AbstractViewManager(Project project) {
     myProject = project;
-    myBuildContentManager = project.getService(BuildContentManager.class);
+    myBuildContentManager = BuildContentManager.getInstance(project);
     myBuildsViewValue = new SynchronizedClearableLazy<>(() -> {
       MultipleBuildsView buildsView = new MultipleBuildsView(myProject, myBuildContentManager, this);
       Disposer.register(this, buildsView);
