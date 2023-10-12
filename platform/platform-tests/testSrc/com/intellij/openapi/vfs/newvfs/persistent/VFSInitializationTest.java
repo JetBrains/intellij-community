@@ -283,8 +283,12 @@ public class VFSInitializationTest {
         Path cachesDir = temporaryDirectory.createDir();
         PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(kindBefore);
         long firstVfsCreationTimestamp;
-        try (FSRecordsImpl vfs = FSRecordsImpl.connect(cachesDir)) {
+        FSRecordsImpl vfs = FSRecordsImpl.connect(cachesDir);
+        try {
           firstVfsCreationTimestamp = vfs.getCreationTimestamp();
+        }
+        finally {
+          StorageTestingUtils.bestEffortToCloseAndUnmap(vfs);
         }
         Thread.sleep(500);//ensure system clock is moving
 
