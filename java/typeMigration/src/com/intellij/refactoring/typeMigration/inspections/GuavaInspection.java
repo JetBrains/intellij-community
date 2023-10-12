@@ -114,12 +114,8 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
         checkPredicatesUtilityMethod(expression);
       }
 
-      private void checkPredicatesUtilityMethod(PsiMethodCallExpression expression) {
-        if (GuavaPredicateConversionRule.isPredicates(expression) && (
-          isReceiverOfEnclosingCallAFluentIterable(expression) ||
-          GuavaPredicateConversionRule.isEnclosingCallPredicate(expression) ||
-          GuavaPredicateConversionRule.isPredicateConvertibleInsideEnclosingMethod(expression)
-        )) {
+      private void checkPredicatesUtilityMethod(@NotNull PsiMethodCallExpression expression) {
+        if (GuavaPredicateConversionRule.isPredicates(expression) && isPossibleToConvertPredicate(expression)) {
           final PsiClassType initialType = (PsiClassType)expression.getType();
           if (initialType == null) return;
           PsiClassType targetType = createTargetType(initialType);
@@ -130,6 +126,16 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
                                  TypeMigrationBundle.message("guava.functional.primitives.can.be.replaced.by.java.api.problem.description"),
                                  new MigrateGuavaTypeFix(expression, targetType));
         }
+      }
+
+      private static boolean isPossibleToConvertPredicate(@NotNull PsiMethodCallExpression expression) {
+        PsiMethodCallExpression enclosingMethodCallExpression =
+          PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
+
+        return enclosingMethodCallExpression == null ||
+               isReceiverOfEnclosingCallAFluentIterable(enclosingMethodCallExpression) ||
+               GuavaPredicateConversionRule.isEnclosingCallAPredicate(enclosingMethodCallExpression) ||
+               GuavaPredicateConversionRule.isPredicateConvertibleInsideEnclosingMethod(expression, enclosingMethodCallExpression);
       }
 
       private void checkFluentIterableGenerationMethod(PsiMethodCallExpression expression) {
@@ -191,10 +197,7 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
         return result;
       }
 
-      public static boolean isReceiverOfEnclosingCallAFluentIterable(PsiMethodCallExpression expression) {
-        PsiMethodCallExpression enclosingMethodCallExpression =
-          PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
-        if (enclosingMethodCallExpression == null) return false;
+      public static boolean isReceiverOfEnclosingCallAFluentIterable(@NotNull PsiMethodCallExpression enclosingMethodCallExpression) {
         PsiMethod method = enclosingMethodCallExpression.resolveMethod();
         if (method == null) return false;
         return isFluentIterable(method.getContainingClass());

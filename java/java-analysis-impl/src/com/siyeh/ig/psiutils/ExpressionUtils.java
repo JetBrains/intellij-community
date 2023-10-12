@@ -91,17 +91,6 @@ public final class ExpressionUtils {
   public static PsiExpression getFirstExpressionInList(@Nullable PsiExpressionList expressionList) {
     return PsiTreeUtil.getChildOfType(expressionList, PsiExpression.class);
   }
-
-  public static int getExpressionPosition(PsiExpressionList expressionList, PsiExpression expression) {
-    var expressions = expressionList.getExpressions();
-    for (int i = 0; i < expressions.length; ++i) {
-      if (expressions[i].equals(expression)) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
   @Nullable
   public static PsiExpression getOnlyExpressionInList(@Nullable PsiExpressionList expressionList) {
     return ControlFlowUtils.getOnlyChildOfType(expressionList, PsiExpression.class);
