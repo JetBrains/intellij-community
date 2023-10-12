@@ -164,12 +164,18 @@ public final class PackageAnnotator {
 
   @Nullable
   private PackageAnnotator.ClassCoverageInfo collectClassCoverageInformation(@Nullable File classFile,
-                                                                            @Nullable PsiClass psiClass,
-                                                                            String className) {
+                                                                             @Nullable PsiClass psiClass,
+                                                                             String className) {
     ClassData classData = myProjectData.getClassData(className);
     final boolean classExists = classData != null && classData.getLines() != null;
     if (classFile != null && (!classExists || !classData.isFullyAnalysed())) {
-      classData = collectNonCoveredClassInfo(classFile, className, classExists ? myProjectData : getUnloadedClassesProjectData());
+      ClassData fullClassData = collectNonCoveredClassInfo(classFile, className, getUnloadedClassesProjectData());
+      if (classData == null) {
+        classData = fullClassData;
+      }
+      else {
+        classData.merge(fullClassData);
+      }
     }
 
     return getSummaryInfo(psiClass, classData, myIgnoreImplicitConstructor);
