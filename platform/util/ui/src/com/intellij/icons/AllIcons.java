@@ -1013,6 +1013,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon DB2 = load("providers/DB2.svg", 883096325, 2);
     /** 16x16 */ public static final @NotNull Icon DocumentDB = load("providers/documentDB.svg", -1286984491, 2);
     /** 16x16 */ public static final @NotNull Icon DuckDB = load("providers/duckDB.svg", -590062592, 2);
+    /** 16x16 */ public static final @NotNull Icon DynamoDB = load("providers/dynamoDB.svg", 820880886, 0);
     /** 16x16 */ public static final @NotNull Icon Eclipse = load("providers/eclipse.svg", -1100391544, 2);
     /** 16x16 */ public static final @NotNull Icon Elasticsearch = load("providers/elasticsearch.svg", 880260028, 0);
     /** 16x16 */ public static final @NotNull Icon Exasol = load("providers/exasol.svg", -512503006, 2);
