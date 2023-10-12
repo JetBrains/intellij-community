@@ -19,8 +19,8 @@ enum class PrintFailuresMode {
 
 
 /** @return T - if successful; null - otherwise */
-suspend fun <T> withRetryAsync(retries: Long = 3,
-                               messageOnFailure: String = "",
+suspend fun <T> withRetryAsync(messageOnFailure: String,
+                               retries: Long = 3,
                                printFailuresMode: PrintFailuresMode = PrintFailuresMode.ALL,
                                delay: Duration = 10.seconds,
                                retryAction: suspend () -> T): T? {
@@ -65,15 +65,15 @@ open class NoRetryException(message: String, cause: Throwable?) : IllegalStateEx
 /** @return T - if successful; null - otherwise */
 @Suppress("RAW_RUN_BLOCKING")
 fun <T> withRetry(
+  messageOnFailure: String,
   retries: Long = 3,
-  messageOnFailure: String = "",
   printFailuresMode: PrintFailuresMode = PrintFailuresMode.ALL,
   delay: Duration = 10.seconds,
   retryAction: () -> T
 ): T? = runBlocking(Dispatchers.IO) {
   withRetryAsync(
-    retries = retries,
     messageOnFailure = messageOnFailure,
+    retries = retries,
     printFailuresMode = printFailuresMode,
     delay = delay
   ) { retryAction() }

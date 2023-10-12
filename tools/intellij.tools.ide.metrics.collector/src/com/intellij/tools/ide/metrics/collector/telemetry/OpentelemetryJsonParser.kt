@@ -10,7 +10,10 @@ import kotlin.time.Duration.Companion.milliseconds
 class OpentelemetryJsonParser(private val spanFilter: SpanFilter) {
 
   private fun getSpans(file: File): JsonNode {
-    val spanData: JsonNode? = withRetry(retries = 5, printFailuresMode = PrintFailuresMode.LAST, delay = 300.milliseconds) {
+    val spanData: JsonNode? = withRetry(messageOnFailure = "Failure during spans extraction from OpenTelemetry json file",
+                                        retries = 5,
+                                        printFailuresMode = PrintFailuresMode.LAST,
+                                        delay = 300.milliseconds) {
       val json = file.readText()
       //TODO workaround for non valid intermediate json
       val root = jacksonObjectMapper().readTree(if (json.endsWith(",")) json else "$json]}]}")
