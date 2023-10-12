@@ -394,7 +394,7 @@ object PluginManagerCore {
     get() {
       var result = ourBuildNumber
       if (result == null) {
-        result = BuildNumber.fromPluginsCompatibleBuild()
+        result = BuildNumber.fromPluginCompatibleBuild()
         if (logger.isDebugEnabled()) {
           logger.debug("getBuildNumber: fromPluginsCompatibleBuild=" + (result?.asString() ?: "null"))
         }

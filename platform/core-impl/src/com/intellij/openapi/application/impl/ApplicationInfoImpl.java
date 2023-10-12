@@ -601,7 +601,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   public @NotNull BuildNumber getPluginsCompatibleBuildAsNumber() {
-    BuildNumber compatibleBuild = BuildNumber.fromPluginsCompatibleBuild();
+    BuildNumber compatibleBuild = BuildNumber.fromPluginCompatibleBuild();
     if (LOG.isDebugEnabled()) {
       LOG.debug("getPluginsCompatibleBuildAsNumber: compatibleBuild=" + (compatibleBuild == null ? "null" : compatibleBuild.asString()));
     }
