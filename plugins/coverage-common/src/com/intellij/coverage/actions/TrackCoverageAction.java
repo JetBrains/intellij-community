@@ -16,7 +16,7 @@ import com.intellij.execution.testframework.ToggleModelAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
@@ -33,12 +33,12 @@ public class TrackCoverageAction extends ToggleModelAction {
   private final TestConsoleProperties myProperties;
   private TestFrameworkRunningModel myModel;
   private TreeSelectionListener myTreeSelectionListener;
+  private Alarm myUpdateCoverageAlarm;
 
   public TrackCoverageAction(TestConsoleProperties properties) {
     super(CoverageBundle.message("show.coverage.per.test.action.text"), CoverageBundle.message("show.coverage.per.test.action.description"), AllIcons.RunConfigurations.TrackCoverage, properties,
           TestConsoleProperties.TRACK_CODE_COVERAGE);
     myProperties = properties;
-
   }
 
   @Override
@@ -46,8 +46,9 @@ public class TrackCoverageAction extends ToggleModelAction {
     super.setSelected(e, state);
     if (!TestConsoleProperties.TRACK_CODE_COVERAGE.value(myProperties)) {
       restoreMergedCoverage();
-    } else {
-      selectSubCoverage();
+    }
+    else {
+      selectSubCoverageAsync();
     }
   }
 
@@ -72,6 +73,7 @@ public class TrackCoverageAction extends ToggleModelAction {
     myModel = model;
     if (model != null) {
       myTreeSelectionListener = new MyTreeSelectionListener();
+      myUpdateCoverageAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myModel);
       model.getTreeView().addTreeSelectionListener(myTreeSelectionListener);
       Disposer.register(model, new Disposable() {
         @Override
@@ -116,6 +118,12 @@ public class TrackCoverageAction extends ToggleModelAction {
     return null;
   }
 
+  private void selectSubCoverageAsync() {
+    if (myUpdateCoverageAlarm == null || myUpdateCoverageAlarm.isDisposed()) return;
+    myUpdateCoverageAlarm.cancelAllRequests();
+    myUpdateCoverageAlarm.addRequest(() -> selectSubCoverage(), 300);
+  }
+
   private void selectSubCoverage() {
     final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(myProperties.getProject());
     final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
@@ -125,10 +133,10 @@ public class TrackCoverageAction extends ToggleModelAction {
       if (test != null && !test.isInProgress()) {
         final List<? extends AbstractTestProxy> list = test.getAllTests();
         for (AbstractTestProxy proxy : list) {
-          final Location location = proxy.getLocation(myProperties.getProject(), myProperties.getScope());
+          final Location<?> location = ReadAction.compute(() -> proxy.getLocation(myProperties.getProject(), myProperties.getScope()));
           if (location != null) {
             final PsiElement element = location.getPsiElement();
-            final String name = currentSuite.getCoverageEngine().getTestMethodName(element, proxy);
+            final String name = ReadAction.compute(() -> currentSuite.getCoverageEngine().getTestMethodName(element, proxy));
             if (name != null) {
               testMethods.add(name);
             }
@@ -140,26 +148,15 @@ public class TrackCoverageAction extends ToggleModelAction {
   }
 
   private class MyTreeSelectionListener implements TreeSelectionListener {
-    private final Alarm myUpdateCoverageAlarm;
-
-    MyTreeSelectionListener() {
-      myUpdateCoverageAlarm = new Alarm(myModel);
-    }
 
     @Override
     public void valueChanged(final TreeSelectionEvent e) {
-      if (myUpdateCoverageAlarm.isDisposed()) return;
       if (!TestConsoleProperties.TRACK_CODE_COVERAGE.value(myModel.getProperties()) || !isEnabled()) return;
-      myUpdateCoverageAlarm.cancelAllRequests();
       final Project project = myModel.getProperties().getProject();
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
       final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
       if (currentSuite != null) {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          myUpdateCoverageAlarm.addRequest(() -> selectSubCoverage(), 300);
-        } else {
-          if (coverageDataManager.isSubCoverageActive()) coverageDataManager.restoreMergedCoverage(currentSuite);
-        }
+        selectSubCoverageAsync();
       }
     }
   }
