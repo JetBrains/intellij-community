@@ -4,7 +4,7 @@ package com.intellij.coverage
 import com.intellij.codeEditor.printing.ExportToHTMLSettings
 import com.intellij.coverage.analysis.Annotator
 import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator
-import com.intellij.coverage.analysis.JavaCoverageReportEnumerator.collectSummaryInReport
+import com.intellij.coverage.analysis.JavaCoverageReportEnumerator
 import com.intellij.coverage.analysis.PackageAnnotator.*
 import com.intellij.coverage.xml.XMLReportAnnotator.Companion.getInstance
 import com.intellij.idea.ExcludeFromTestDiscovery
@@ -18,13 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 @ExcludeFromTestDiscovery
 class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
-  fun testIJSuite() {
-    val bundle = loadIJSuite()
-    val consumer = PackageAnnotationConsumer()
-    JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite()
-    assertHits(consumer)
-    assertEquals(2, consumer.myDirectoryCoverage.size)
-  }
+  fun testIJSuite() = assertHits(loadIJSuite())
 
   fun testXMLSuite() {
     val bundle = loadXMLSuite()
@@ -44,11 +38,13 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     assertEquals(1, consumer.myFlatPackageCoverage.size)
     assertEquals(3, consumer.myPackageCoverage.size)
     assertEquals(1, consumer.myDirectoryCoverage.size)
-    assertHits(consumer.myClassCoverageInfo["foo.bar.BarClass"], intArrayOf(1, 1, 3, 1, 4, 2, 0, 0))
-    assertHits(consumer.myFlatPackageCoverage["foo.bar"], intArrayOf(1, 1, 3, 1, 4, 2, 0, 0))
-    assertHits(consumer.myPackageCoverage["foo.bar"], intArrayOf(1, 1, 3, 1, 4, 2, 0, 0))
-    assertHits(consumer.myPackageCoverage["foo"], intArrayOf(1, 1, 3, 1, 4, 2, 0, 0))
-    assertHits(consumer.myPackageCoverage[""], intArrayOf(1, 1, 3, 1, 4, 2, 0, 0))
+
+    val hits = barHits()
+    assertHits(consumer.myClassCoverageInfo["foo.bar.BarClass"], hits)
+    assertHits(consumer.myFlatPackageCoverage["foo.bar"], hits)
+    assertHits(consumer.myPackageCoverage["foo.bar"], hits)
+    assertHits(consumer.myPackageCoverage["foo"], hits)
+    assertHits(consumer.myPackageCoverage[""], hits)
   }
 
   fun testJaCoCoProjectData() {
@@ -58,17 +54,12 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     assertEquals(LineCoverage.PARTIAL.toInt(), classData.getStatus("method1()I"))
   }
 
-  fun testJaCoCo() {
-    val bundle = loadJaCoCoSuite()
-    val consumer = PackageAnnotationConsumer()
-    JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite()
-    assertHits(consumer)
-  }
+  fun testJaCoCo() = assertHits(loadJaCoCoSuite())
 
   fun testJaCoCoWithoutUnloaded() {
     val bundle = loadJaCoCoSuite()
     val consumer = PackageAnnotationConsumer()
-    collectSummaryInReport(bundle, myProject, consumer)
+    JavaCoverageReportEnumerator.collectSummaryInReport(bundle, myProject, consumer)
     assertHits(consumer)
     assertEquals(3, consumer.myDirectoryCoverage.size)
   }
@@ -78,13 +69,10 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     val jacocoSuite = loadJaCoCoSuite().suites[0]
 
     val bundle = CoverageSuitesBundle(arrayOf(ijSuite, jacocoSuite))
-    val consumer = PackageAnnotationConsumer()
-    JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite()
     // When reading Jacoco report, we cannot distinguish jump and switches, so all branches are stored as switches.
     // While in IJ coverage we store jumps and switches separately.
     // Because of this, we cannot implement stable merge of IJ and jacoco reports
-    assertHits(consumer, ignoreBranches = true)
-    assertEquals(2, consumer.myDirectoryCoverage.size)
+    assertHits(bundle, ignoreBranches = true)
   }
 
   fun testHTMLReport() {
@@ -126,17 +114,7 @@ private class PackageAnnotationConsumer : Annotator {
 }
 
 private fun assertHits(consumer: PackageAnnotationConsumer, ignoreConstructor: Boolean = true, ignoreBranches: Boolean = false) {
-  val barTotalMethods = if (ignoreConstructor) 3 else 4
-  val barCoveredMethods = if (ignoreConstructor) 1 else 2
-  val barHits = intArrayOf(1, 1, barTotalMethods, barCoveredMethods, 4, 2, 0, 0)
-  val uncoveredTotalMethods = if (ignoreConstructor) 4 else 5
-  val uncoveredTotalLines = if (ignoreConstructor) 4 else 5
-  val uncoveredHits = intArrayOf(1, 0, uncoveredTotalMethods, 0, uncoveredTotalLines, 0, 0, 0)
-  val fooTotalMethods = if (ignoreConstructor) 2 else 3
-  val fooCoveredMethods = if (ignoreConstructor) 2 else 3
-  val fooClassHits = intArrayOf(1, 1, fooTotalMethods, fooCoveredMethods, 3, 3, 2, 1)
-
-  assertHits(consumer, barHits, uncoveredHits, fooClassHits, ignoreBranches)
+  assertHits(consumer, barHits(ignoreConstructor), uncoveredHits(ignoreConstructor), fooHits(ignoreConstructor), ignoreBranches)
 }
 
 private fun assertHits(consumer: PackageAnnotationConsumer,
@@ -183,4 +161,20 @@ private fun sumArrays(a: IntArray, b: IntArray): IntArray {
     c[i] += b[i]
   }
   return c
+}
+
+private fun barHits(ignoreConstructor: Boolean = true): IntArray {
+  val total = if (ignoreConstructor) 3 else 4
+  val covered = if (ignoreConstructor) 1 else 2
+  return intArrayOf(1, 1, total, covered, total, covered, 0, 0)
+}
+
+private fun uncoveredHits(ignoreConstructor: Boolean = true): IntArray {
+  val lines = if (ignoreConstructor) 4 else 5
+  return intArrayOf(1, 0, lines, 0, lines, 0, 0, 0)
+}
+
+private fun fooHits(ignoreConstructor: Boolean = true): IntArray {
+  val lines = if (ignoreConstructor) 2 else 3
+  return intArrayOf(1, 1, lines, lines, lines, lines, 2, 1)
 }

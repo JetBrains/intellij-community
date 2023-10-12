@@ -46,7 +46,7 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
     val suite = loadIJSuite()
     openSuiteAndWait(suite)
 
-    delay(500)
+    waitAnnotations()
     assertCoveredFiles()
     closeSuite()
     assertNoCoverage()
@@ -60,7 +60,7 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
 
     openFiles()
 
-    delay(500)
+    waitAnnotations()
     assertCoveredFiles()
     closeSuite()
     assertNoCoverage()
@@ -73,7 +73,7 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
     val suite = loadXMLSuite()
     openSuiteAndWait(suite)
 
-    delay(500)
+    waitAnnotations()
     assertGutterHighlightLines("foo.bar.BarClass", mapOf(3 to FULL, 5  to FULL, 9  to NONE, 13  to NONE))
     assertGutterHighlightLines("foo.bar.UncoveredClass", mapOf(3 to NONE, 5 to NONE, 8 to NONE, 11 to NONE, 14 to NONE))
     assertGutterHighlightLines("foo.FooClass", mapOf(3 to FULL, 5 to FULL, 9 to PARTIAL))
@@ -98,6 +98,8 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
     openClass("foo.bar.UncoveredClass")
     openClass("foo.FooClass")
   }
+
+  private suspend fun waitAnnotations() = delay(500)
 
   private suspend fun assertGutterHighlightLines(className: String, expected: Map<Int, Byte>?) {
     val editor = findEditor(className)

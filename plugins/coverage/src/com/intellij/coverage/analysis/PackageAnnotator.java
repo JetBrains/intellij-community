@@ -196,16 +196,15 @@ public final class PackageAnnotator {
     final Object[] lines = classData.getLines();
     for (Object l : lines) {
       if (l instanceof LineData lineData) {
-        if (lineData.getStatus() == LineCoverage.FULL) {
+        if (isDefaultConstructorGenerated &&
+            isDefaultConstructor(lineData.getMethodSignature())) {
+          continue;
+        }
+        else if (lineData.getStatus() == LineCoverage.FULL) {
           info.fullyCoveredLineCount++;
         }
         else if (lineData.getStatus() == LineCoverage.PARTIAL) {
           info.partiallyCoveredLineCount++;
-        }
-        else if (ignoreImplicitConstructor &&
-                 isDefaultConstructorGenerated &&
-                 isDefaultConstructor(lineData.getMethodSignature())) {
-          continue;
         }
         info.totalLineCount++;
         BranchData branchData = lineData.getBranchData();
