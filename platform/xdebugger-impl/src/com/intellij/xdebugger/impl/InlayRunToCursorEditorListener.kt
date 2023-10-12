@@ -53,9 +53,7 @@ private const val ACTION_BUTTON_GAP = 2
 class InlayRunToCursorEditorListener(private val project: Project, private val coroutineScope: CoroutineScope) : EditorMouseMotionListener, EditorMouseListener {
   companion object {
     @JvmStatic
-    val isInlayRunToCursorEnabled: Boolean get() =
-      Registry.`is`("debugger.inlayRunToCursor") ||
-      AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor") && (PlatformUtils.isIntelliJ())
+    val isInlayRunToCursorEnabled: Boolean get() = AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor")
   }
 
   private var currentJob: Job? = null
