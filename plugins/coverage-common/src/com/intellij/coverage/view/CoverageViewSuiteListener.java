@@ -33,7 +33,7 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
     CoverageViewManager viewManager = CoverageViewManager.getInstance(myProject);
     final CoverageSuitesBundle suitesBundle = myDataManager.getCurrentSuitesBundle();
     if (suitesBundle != null) {
-      viewManager.closeView(CoverageViewManager.getDisplayName(suitesBundle));
+      viewManager.closeView(suitesBundle);
     }
   }
 
@@ -43,7 +43,7 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
     if (suitesBundle == null) return;
     final CoverageViewManager viewManager = CoverageViewManager.getInstance(myProject);
     if (suitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, suitesBundle, viewManager.getStateBean()) != null) {
-      viewManager.createToolWindow(CoverageViewManager.getDisplayName(suitesBundle), shouldActivate(suitesBundle));
+      viewManager.createToolWindow(suitesBundle, shouldActivate(suitesBundle));
     }
   }
 
