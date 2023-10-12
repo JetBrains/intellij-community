@@ -54,7 +54,7 @@ public final class TextMateLexer {
     myText = text;
     myCurrentOffset = startOffset;
 
-    myStates = FList.<TextMateLexerState>emptyList().prepend(myLanguageInitialState);
+    myStates = FList.singleton(myLanguageInitialState);
     myCurrentScope = new TextMateScope(myLanguageScopeName, null);
   }
 

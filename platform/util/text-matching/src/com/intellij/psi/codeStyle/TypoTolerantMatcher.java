@@ -343,7 +343,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
           patternIndex - 2, errorState)))) {
           int spaceIndex = myName.indexOf(' ', nameIndex);
           if (spaceIndex >= 0) {
-            return FList.<TextRange>emptyList().prepend(new Range(spaceIndex, spaceIndex + 1, 0));
+            return FList.singleton(new Range(spaceIndex, spaceIndex + 1, 0));
           }
           return null;
         }
@@ -546,7 +546,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       if (patternIndex + fragmentLength >= patternLength(errorState)) {
         int errors = errorState.countErrors(patternIndex, patternIndex + fragmentLength);
         if (errors == fragmentLength) return null;
-        return FList.<TextRange>emptyList().prepend(new Range(nameIndex, nameIndex + fragmentLength, errors));
+        return FList.singleton(new Range(nameIndex, nameIndex + fragmentLength, errors));
       }
 
       // try to match the remainder of pattern with the remainder of name
