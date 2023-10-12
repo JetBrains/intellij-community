@@ -6,9 +6,22 @@ import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+enum class PrintFailuresMode {
+  /** Print all exceptions */
+  ALL,
+
+  /** Print only first exception */
+  FIRST,
+
+  /** Print only the last exception */
+  LAST;
+}
+
+
 /** @return T - if successful; null - otherwise */
 suspend fun <T> withRetryAsync(retries: Long = 3,
                                messageOnFailure: String = "",
+                               printFailuresMode: PrintFailuresMode = PrintFailuresMode.ALL,
                                delay: Duration = 10.seconds,
                                retryAction: suspend () -> T): T? {
 
@@ -20,10 +33,19 @@ suspend fun <T> withRetryAsync(retries: Long = 3,
       throw e
     }
     catch (t: Throwable) {
-      if (messageOnFailure.isNotBlank())
-        logError(messageOnFailure)
+      if (messageOnFailure.isNotBlank()) logError(messageOnFailure)
 
-      t.printStackTrace()
+      when (printFailuresMode) {
+        PrintFailuresMode.ALL -> t.printStackTrace()
+        PrintFailuresMode.FIRST -> if (failureCount == 1L) {
+          logError("First failure:")
+          t.printStackTrace()
+        }
+        PrintFailuresMode.LAST -> if (failureCount == retries) {
+          logError("Last failure:")
+          t.printStackTrace()
+        }
+      }
 
       if (failureCount < retries) {
         logError("Retrying in ${delay} ...")
@@ -38,22 +60,29 @@ suspend fun <T> withRetryAsync(retries: Long = 3,
 /**
  * Do not retry if code fails with this exception or its inheritors
  */
-open class NoRetryException(message: String, cause: Throwable?): IllegalStateException(message, cause)
+open class NoRetryException(message: String, cause: Throwable?) : IllegalStateException(message, cause)
 
 /** @return T - if successful; null - otherwise */
+@Suppress("RAW_RUN_BLOCKING")
 fun <T> withRetry(
   retries: Long = 3,
   messageOnFailure: String = "",
+  printFailuresMode: PrintFailuresMode = PrintFailuresMode.ALL,
   delay: Duration = 10.seconds,
   retryAction: () -> T
 ): T? = runBlocking(Dispatchers.IO) {
-  withRetryAsync(retries, messageOnFailure, delay) { retryAction() }
+  withRetryAsync(
+    retries = retries,
+    messageOnFailure = messageOnFailure,
+    printFailuresMode = printFailuresMode,
+    delay = delay
+  ) { retryAction() }
 }
 
- fun <T> executeWithRetry(retries: Int = 3, exception: Class<*>,
-                                                               errorMsg: String = "Fail to execute action $retries attempts",
-                                                               delay: Duration,
-                                                               call: () -> T): T {
+fun <T> executeWithRetry(retries: Int = 3, exception: Class<*>,
+                         errorMsg: String = "Fail to execute action $retries attempts",
+                         delay: Duration,
+                         call: () -> T): T {
   for (i in 0..retries) {
     try {
       return call()
