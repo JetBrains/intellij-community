@@ -70,7 +70,7 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: 
                                 range: Range,
                                 mousePosition: Point?,
                                 disposable: Disposable): LineStatusMarkerPopupPanel {
-    val vcsContent = model.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2))
+    val vcsContent = model.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2))?.removeSuffix("\n")
 
     val preferences = project?.service<GitLabMergeRequestsPreferences>()
 
@@ -213,7 +213,7 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: 
     : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, IdeActions.ACTION_COPY), LightEditCompatible {
     override fun isEnabled(editor: Editor, range: Range): Boolean = range.hasVcsLines()
     override fun actionPerformed(editor: Editor, range: Range) {
-      val content = model.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2)) + "\n"
+      val content = model.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2))
       CopyPasteManager.getInstance().setContents(StringSelection(content))
     }
   }
