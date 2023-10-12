@@ -54,7 +54,7 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     val bundledGradleVersion = GradleVersion.current()
     assertEquals("4.10.3", suggestGradleVersion(6))
     assertEquals("4.10.3", suggestGradleVersion(7))
-    assertEquals("8.2", bundledGradleVersion.version)
+    assertEquals("8.4", bundledGradleVersion.version)
     assertEquals(bundledGradleVersion.version, suggestGradleVersion(8))
     assertEquals(bundledGradleVersion.version, suggestGradleVersion(11))
     assertEquals(bundledGradleVersion.version, suggestGradleVersion(17))

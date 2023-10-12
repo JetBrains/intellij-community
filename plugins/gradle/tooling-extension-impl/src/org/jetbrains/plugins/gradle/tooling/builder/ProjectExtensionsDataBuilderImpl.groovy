@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.plugins.ExtensionsSchema
@@ -28,6 +29,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
   }
 
   @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
   Object buildAll(String modelName, Project project) {
     DefaultGradleExtensions result = new DefaultGradleExtensions()
     result.parentProjectPath = project.parent?.path
