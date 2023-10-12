@@ -491,6 +491,10 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                                                    rootAndFiles.getFirst(), scanningRequest);
             var rootIterator = new SingleProviderIterator(project, indicator, provider, finder,
                                                           scanningStatistics, perProviderSink);
+            if (!rootIterator.mayBeUsed()) {
+              LOG.warn("Iterator based on " + provider + " can't be used.");
+              continue;
+            }
             rootAndFiles.getSecond().forEach(it -> rootIterator.processFile(it));
           }
           scanningStatistics.tryFinishFilesChecking();
