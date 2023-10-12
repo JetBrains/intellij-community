@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public final class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
-                                                               AutoCompletionContributor, PossibleSlowContributor,
+                                                               AutoCompletionContributor, PossibleSlowContributor, EssentialContributor,
                                                                SearchEverywhereExtendedInfoProvider {
   private final AbstractGotoSEContributor myDelegate;
 
@@ -49,6 +49,11 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   @Override
   public boolean isSlow() {
     return PossibleSlowContributor.checkSlow(myDelegate);
+  }
+
+  @Override
+  public boolean isEssential() {
+    return EssentialContributor.checkEssential(myDelegate);
   }
 
   public static WeightedSearchEverywhereContributor<Object> wrapIfNecessary(AbstractGotoSEContributor delegate) {

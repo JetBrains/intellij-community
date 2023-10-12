@@ -150,7 +150,7 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
     cancelAllFlushTasks();
     buffer.clearBuffer();
     Map<? extends SearchEverywhereContributor<?>, Boolean> map = contributors.stream()
-      .filter(c -> !PossibleSlowContributor.checkSlow(c))
+      .filter(EssentialContributor::checkEssential)
       .collect(Collectors.toMap(Function.identity(), c -> false));
     contributorsMap.clear();
     contributorsMap.putAll(map);
