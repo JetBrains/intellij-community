@@ -1,9 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
 import com.intellij.util.SystemProperties
@@ -37,7 +34,9 @@ interface VfsLog {
     private val LOG_VFS_OPERATIONS_ENABLED: Boolean =
       SystemProperties.getBooleanProperty(
         "idea.vfs.log-vfs-operations.enabled",
-        try {
+        // recovery via VfsLog does not work, because indexing has migrated to fast attributes, which are not yet tracked
+        false
+        /*try {
           ApplicationManager.getApplication().isEAP &&
           !ApplicationManager.getApplication().isUnitTestMode &&
           !ApplicationManagerEx.isInStressTest() &&
@@ -46,7 +45,7 @@ interface VfsLog {
         catch (e: NullPointerException) { // ApplicationManager may be not initialized in some tests
           logger<VfsLog>().info("ApplicationManager is not available", e)
           false
-        }
+        }*/
       )
 
     @JvmStatic
