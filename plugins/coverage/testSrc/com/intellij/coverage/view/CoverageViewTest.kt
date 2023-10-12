@@ -81,6 +81,41 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
     assertNoCoverage()
   }
 
+  fun `test gutter sub coverage`() : Unit = runBlocking {
+    ThreadingAssertions.assertBackgroundThread()
+    openFiles()
+
+    val suite = loadIJSuite()
+    openSuiteAndWait(suite)
+
+    waitSuiteProcessing {
+      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.bar.BarTest,testMethod3"))
+    }
+    waitAnnotations()
+    assertGutterHighlightLines("foo.bar.BarClass", mapOf(5  to FULL, 9  to NONE, 13  to NONE))
+    assertGutterHighlightLines("foo.bar.UncoveredClass", mapOf())
+    assertGutterHighlightLines("foo.FooClass", mapOf())
+
+    waitSuiteProcessing {
+      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.FooTest,testMethod1"))
+    }
+    waitAnnotations()
+    assertGutterHighlightLines("foo.bar.BarClass", mapOf())
+    assertGutterHighlightLines("foo.bar.UncoveredClass", mapOf())
+    assertGutterHighlightLines("foo.FooClass", mapOf(5 to FULL, 9 to NONE))
+
+    waitSuiteProcessing {
+      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.FooTest,testMethod2"))
+    }
+    waitAnnotations()
+    assertGutterHighlightLines("foo.bar.BarClass", mapOf())
+    assertGutterHighlightLines("foo.bar.UncoveredClass", mapOf())
+    assertGutterHighlightLines("foo.FooClass", mapOf(5 to NONE, 9 to FULL))
+
+    closeSuite()
+    assertNoCoverage()
+  }
+
   private suspend fun assertNoCoverage() {
     assertGutterHighlightLines("foo.bar.BarClass", null)
     assertGutterHighlightLines("foo.bar.UncoveredClass", null)

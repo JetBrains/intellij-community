@@ -10,7 +10,8 @@ import com.intellij.coverage.xml.XMLReportAnnotator.Companion.getInstance
 import com.intellij.idea.ExcludeFromTestDiscovery
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.rt.coverage.data.LineCoverage
-import com.intellij.testFramework.JavaModuleTestCase
+import com.intellij.util.concurrency.ThreadingAssertions
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import java.io.File
 import java.nio.file.Files
@@ -87,6 +88,57 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     finally {
       htmlDir.delete()
     }
+  }
+
+  fun `test sub coverage`(): Unit = runBlocking {
+    ThreadingAssertions.assertBackgroundThread()
+
+    val suite = loadIJSuite()
+    openSuiteAndWait(suite)
+
+    waitSuiteProcessing {
+      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.bar.BarTest,testMethod3"))
+    }
+    run {
+      val consumer = PackageAnnotationConsumer()
+      JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
+      assertHits(consumer, barHits(), uncoveredHits(), fooHits().toUncovered())
+      assertEquals(2, consumer.myDirectoryCoverage.size)
+    }
+
+    val fooPartCoverage = intArrayOf(1, 1, 2, 1, 2, 1, 2, 0)
+    waitSuiteProcessing {
+      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.FooTest,testMethod1"))
+    }
+    run {
+      val consumer = PackageAnnotationConsumer()
+      JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
+      assertHits(consumer, barHits().toUncovered(), uncoveredHits(), fooPartCoverage)
+      assertEquals(2, consumer.myDirectoryCoverage.size)
+    }
+
+    waitSuiteProcessing {
+      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.FooTest,testMethod2"))
+    }
+    run {
+      val consumer = PackageAnnotationConsumer()
+      JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
+      assertHits(consumer, barHits().toUncovered(), uncoveredHits(), fooPartCoverage)
+      assertEquals(2, consumer.myDirectoryCoverage.size)
+    }
+
+    waitSuiteProcessing {
+      CoverageDataManager.getInstance(myProject).restoreMergedCoverage(suite)
+    }
+    assertHits(suite)
+    closeSuite()
+  }
+
+  private fun assertHits(suite: CoverageSuitesBundle, ignoreBranches: Boolean = false) {
+    val consumer = PackageAnnotationConsumer()
+    JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
+    assertHits(consumer, ignoreBranches = ignoreBranches)
+    assertEquals(2, consumer.myDirectoryCoverage.size)
   }
 }
 
@@ -178,3 +230,5 @@ private fun fooHits(ignoreConstructor: Boolean = true): IntArray {
   val lines = if (ignoreConstructor) 2 else 3
   return intArrayOf(1, 1, lines, lines, lines, lines, 2, 1)
 }
+
+private fun IntArray.toUncovered() = mapIndexed { i, h -> if (i % 2 == 0) h else 0 }.toIntArray()

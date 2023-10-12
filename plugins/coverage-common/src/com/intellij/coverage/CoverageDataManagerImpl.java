@@ -407,42 +407,38 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       suite.getCoverageEngine().collectTestLines(testNames, coverageSuite, executionTrace);
     }
     final ProjectData projectData = new ProjectData();
-    for (String className : executionTrace.keySet()) {
-      ClassData loadedClassData = projectData.getClassData(className);
-      if (loadedClassData == null) {
-        loadedClassData = projectData.getOrCreateClassData(className);
-      }
-      final Set<Integer> lineNumbers = executionTrace.get(className);
-      final ClassData oldData = data.getClassData(className);
+    for (Map.Entry<String, Set<Integer>> entry : executionTrace.entrySet()) {
+      String className = entry.getKey();
+      Set<Integer> lineNumbers = entry.getValue();
+
+      ClassData classData = projectData.getOrCreateClassData(className);
+      ClassData oldData = data.getClassData(className);
       LOG.assertTrue(oldData != null, "missed className: \"" + className + "\"");
       final Object[] oldLines = oldData.getLines();
       LOG.assertTrue(oldLines != null);
-      int maxNumber = oldLines.length;
-      for (Integer lineNumber : lineNumbers) {
-        if (lineNumber >= maxNumber) {
-          maxNumber = lineNumber + 1;
-        }
-      }
-      final LineData[] lines = new LineData[maxNumber];
-      for (Integer line : lineNumbers) {
-        final int lineIdx = line.intValue() - 1;
+      int newLength = Math.max(oldLines.length, 1 + lineNumbers.stream().mapToInt(Integer::intValue).max().orElse(-1));
+      LineData[] lines = new LineData[newLength];
+      for (int line : lineNumbers) {
         String methodSig = null;
-        if (lineIdx < oldData.getLines().length) {
-          final LineData oldLineData = oldData.getLineData(lineIdx);
+        if (line < oldLines.length) {
+          final LineData oldLineData = oldData.getLineData(line);
           if (oldLineData != null) {
             methodSig = oldLineData.getMethodSignature();
           }
         }
-        final LineData lineData = new LineData(lineIdx, methodSig);
+        final LineData lineData = new LineData(line, methodSig);
         if (methodSig != null) {
-          loadedClassData.registerMethodSignature(lineData);
+          classData.registerMethodSignature(lineData);
         }
         lineData.setStatus(LineCoverage.FULL);
-        lines[lineIdx] = lineData;
+        lines[line] = lineData;
       }
-      loadedClassData.setLines(lines);
+      classData.setLines(lines);
+      classData.setFullyAnalysed(false);
     }
     suite.setCoverageData(projectData);
+    CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
+    myCurrentSuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
     renewCoverageData(suite);
   }
 
@@ -450,6 +446,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   public void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite) {
     mySubCoverageIsActive = false;
     suite.restoreCoverageData();
+    CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
+    myCurrentSuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
     renewCoverageData(suite);
   }
 
