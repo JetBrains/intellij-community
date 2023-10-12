@@ -14,6 +14,7 @@ import com.intellij.lang.documentation.ide.impl.AdjusterPopupBoundsHandler
 import com.intellij.lang.documentation.ide.impl.elementFlow
 import com.intellij.lang.documentation.ide.ui.DocumentationComponent
 import com.intellij.lang.documentation.ide.ui.scrollPaneWithCorner
+import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -25,7 +26,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.backend.documentation.DocumentationResult
+import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.childScope
@@ -34,6 +38,7 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import org.jetbrains.terminal.completion.BaseSuggestion
 import java.awt.Component
@@ -87,7 +92,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     val lookupElementFlow = lookup.elementFlow()
     val showDocJob = scope.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
       lookupElementFlow.collectLatest {
-        showDocumentationForItem(lookup, it, parentDisposable)
+        showDocumentationForItem(lookup, it, allowEmpty = false, parentDisposable)
       }
     }
     Disposer.register(parentDisposable) {
@@ -95,12 +100,14 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     }
   }
 
+  /** @param [allowEmpty] whether to show "No documentation" popup when documentation is not found for initial [element] */
   @RequiresEdt
-  fun showDocumentationForItem(lookup: LookupEx, element: LookupElement, parentDisposable: Disposable) {
+  fun showDocumentationForItem(lookup: LookupEx, element: LookupElement, allowEmpty: Boolean, parentDisposable: Disposable) {
     if (getCurrentPopup() != null) {
       return
     }
-    val docRequest = element.toDocRequest() ?: return
+    val docRequest = element.toDocRequest()
+                     ?: if (allowEmpty) EmptyDocTarget.request else return
     popupScope.coroutineContext.job.cancelChildren()
     val popup = showDocumentationPopup(docRequest, lookup, parentDisposable)
     setCurrentPopup(popup)
@@ -112,7 +119,8 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     val popup = createDocPopup(lookup.project, popupComponent)
     val boundsHandler = AdjusterPopupBoundsHandler(lookup.component)
 
-    val docRequestFlow: Flow<DocumentationRequest?> = lookup.elementFlow().map { it.toDocRequest() }
+    // drop the current lookup element, because documentation for it will be shown initially
+    val docRequestFlow: Flow<DocumentationRequest?> = lookup.elementFlow().drop(1).map { it.toDocRequest() }
     popupScope.launch(Dispatchers.Default) {
       docRequestFlow.collectLatest {
         handleDocRequest(docComponent, it)
@@ -190,6 +198,20 @@ internal class TerminalDocumentationManager(private val project: Project, privat
 
   override fun dispose() {
     scope.cancel()
+  }
+
+  private object EmptyDocTarget : DocumentationTarget {
+    val request: DocumentationRequest = DocumentationRequest(createPointer(), computePresentation())
+
+    override fun createPointer(): Pointer<out DocumentationTarget> {
+      return Pointer.hardPointer(this)
+    }
+
+    override fun computePresentation(): TargetPresentation {
+      return TargetPresentation.builder("").presentation()
+    }
+
+    override fun computeDocumentation(): DocumentationResult? = null  // return null here to treat the request as "empty"
   }
 
   companion object {
