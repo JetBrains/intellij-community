@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ThreadingSupport
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.ide.bootstrap.isImplicitReadOnEDTDisabled
 import org.jetbrains.annotations.ApiStatus
@@ -77,6 +78,17 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
     }
     finally {
       lock.setAllowImplicitRead(oldVal)
+    }
+  }
+
+  override fun <T, E : Throwable?> runReadAction(computation: ThrowableComputable<T, E>): T {
+    val permit = lock.startRead()
+    try {
+      return computation.compute()
+    } finally {
+      if (permit != null) {
+        lock.endRead(permit)
+      }
     }
   }
 }
