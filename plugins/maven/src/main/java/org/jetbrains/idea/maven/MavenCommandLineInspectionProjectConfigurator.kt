@@ -43,6 +43,7 @@ import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.resolved
+import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -62,7 +63,6 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
   override fun getDescription(): String = MavenProjectBundle.message("maven.commandline.description")
 
   override fun configureEnvironment(context: ConfiguratorContext) = context.run {
-    System.setProperty(DISABLE_EXTERNAL_SYSTEM_AUTO_IMPORT, true.toString())
     System.setProperty(MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY, false.toString())
     Unit
   }
@@ -100,7 +100,9 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
         FileDocumentManager.getInstance().saveAllDocuments()
         MavenUtil.setupProjectSdk(project)
       }
-      mavenProjectAware.linkAndLoadProjectAsync(project, basePath)
+
+      // GradleWarmupConfigurator sets "external.system.auto.import.disabled" to true, but we have to import the project nevertheless
+      MavenOpenProjectProvider().forceLinkToExistingProjectAsync(basePath, project)
     }
     MavenLog.LOG.warn("linked finished for ${project.name}")
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
