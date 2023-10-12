@@ -28,7 +28,7 @@ class UnnamedClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     doTest()
   }
 
-  fun testMainWithNonStandardSignature() {
+  fun `testIncorrect unnamed class name with spaces`() {
     doTest()
   }
 
