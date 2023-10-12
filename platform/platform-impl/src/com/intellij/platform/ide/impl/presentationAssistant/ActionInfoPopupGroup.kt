@@ -23,6 +23,8 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.event.MouseEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import javax.swing.SwingUtilities
 
 internal class ActionInfoPopupGroup(val project: Project, textFragments: List<TextData>, showAnimated: Boolean) : Disposable {
@@ -82,6 +84,12 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     val connect = ApplicationManager.getApplication().getMessageBus().connect(this)
     connect.subscribe<LafManagerListener>(LafManagerListener.TOPIC, LafManagerListener { updatePopupsBounds(project) })
 
+    addWindowListener(project, object : WindowAdapter() {
+      override fun windowDeactivated(ev: WindowEvent) {
+        if (ev.oppositeWindow == null) close()
+      }
+    })
+
     animator = FadeInOutAnimator(true, showAnimated)
     actionBlocks.mapIndexed { index, block ->
       block.popup.show(computeLocation(project, index))
@@ -95,6 +103,14 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     }
 
     resetHideAlarm()
+  }
+
+  private fun addWindowListener(project: Project, listener: WindowAdapter) {
+    val frame = WindowManager.getInstance().getFrame(project)!!
+    frame.addWindowListener(listener)
+    Disposer.register(this) {
+      frame.removeWindowListener(listener)
+    }
   }
 
   private fun createPopup(panel: ActionInfoPanel, hiddenInitially: Boolean): JBPopup {
