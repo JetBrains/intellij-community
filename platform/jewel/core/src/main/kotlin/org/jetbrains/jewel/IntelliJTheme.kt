@@ -14,6 +14,7 @@ import org.jetbrains.jewel.styling.DividerStyle
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.GroupHeaderStyle
 import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
+import org.jetbrains.jewel.styling.IconButtonStyle
 import org.jetbrains.jewel.styling.LabelledTextFieldStyle
 import org.jetbrains.jewel.styling.LazyTreeStyle
 import org.jetbrains.jewel.styling.LinkStyle
@@ -27,6 +28,7 @@ import org.jetbrains.jewel.styling.LocalDropdownStyle
 import org.jetbrains.jewel.styling.LocalEditorTabStyle
 import org.jetbrains.jewel.styling.LocalGroupHeaderStyle
 import org.jetbrains.jewel.styling.LocalHorizontalProgressBarStyle
+import org.jetbrains.jewel.styling.LocalIconButtonStyle
 import org.jetbrains.jewel.styling.LocalLabelledTextFieldStyle
 import org.jetbrains.jewel.styling.LocalLazyTreeStyle
 import org.jetbrains.jewel.styling.LocalLinkStyle
@@ -196,6 +198,10 @@ interface IntelliJTheme {
             @Composable
             @ReadOnlyComposable
             get() = LocalTooltipStyle.current
+        val iconButtonStyle: IconButtonStyle
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalIconButtonStyle.current
     }
 }
 

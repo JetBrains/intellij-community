@@ -9,6 +9,7 @@ import org.jetbrains.jewel.styling.DividerStyle
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.GroupHeaderStyle
 import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
+import org.jetbrains.jewel.styling.IconButtonStyle
 import org.jetbrains.jewel.styling.LabelledTextFieldStyle
 import org.jetbrains.jewel.styling.LazyTreeStyle
 import org.jetbrains.jewel.styling.LinkStyle
@@ -42,6 +43,7 @@ class IntelliJComponentStyling(
     val textFieldStyle: TextFieldStyle,
     val circularProgressStyle: CircularProgressStyle,
     val tooltipStyle: TooltipStyle,
+    val iconButtonStyle: IconButtonStyle,
 ) {
 
     override fun equals(other: Any?): Boolean {
@@ -70,6 +72,7 @@ class IntelliJComponentStyling(
         if (textFieldStyle != other.textFieldStyle) return false
         if (circularProgressStyle != other.circularProgressStyle) return false
         if (tooltipStyle != other.tooltipStyle) return false
+        if (iconButtonStyle != other.iconButtonStyle) return false
 
         return true
     }
@@ -95,6 +98,7 @@ class IntelliJComponentStyling(
         result = 31 * result + textFieldStyle.hashCode()
         result = 31 * result + circularProgressStyle.hashCode()
         result = 31 * result + tooltipStyle.hashCode()
+        result = 31 * result + iconButtonStyle.hashCode()
         return result
     }
 
@@ -106,5 +110,5 @@ class IntelliJComponentStyling(
             "labelledTextFieldStyle=$labelledTextFieldStyle, lazyTreeStyle=$lazyTreeStyle, linkStyle=$linkStyle, " +
             "menuStyle=$menuStyle, outlinedButtonStyle=$outlinedButtonStyle, radioButtonStyle=$radioButtonStyle, " +
             "scrollbarStyle=$scrollbarStyle, textAreaStyle=$textAreaStyle, textFieldStyle=$textFieldStyle, " +
-            "circularProgressStyle=$circularProgressStyle, tooltipStyle=$tooltipStyle)"
+            "circularProgressStyle=$circularProgressStyle, tooltipStyle=$tooltipStyle, iconButtonStyle=$iconButtonStyle)"
 }

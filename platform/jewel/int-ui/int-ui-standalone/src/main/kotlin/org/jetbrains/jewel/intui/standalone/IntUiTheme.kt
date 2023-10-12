@@ -40,6 +40,7 @@ import org.jetbrains.jewel.intui.standalone.styling.IntUiDividerStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiGroupHeaderStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiHorizontalProgressBarStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiLabelledTextFieldStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiLazyTreeStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiLinkStyle
@@ -58,6 +59,7 @@ import org.jetbrains.jewel.styling.DividerStyle
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.GroupHeaderStyle
 import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
+import org.jetbrains.jewel.styling.IconButtonStyle
 import org.jetbrains.jewel.styling.LabelledTextFieldStyle
 import org.jetbrains.jewel.styling.LazyTreeStyle
 import org.jetbrains.jewel.styling.LinkStyle
@@ -136,6 +138,7 @@ object IntUiTheme : BaseIntUiTheme {
         editorTabStyle: TabStyle = IntUiTabStyle.Editor.dark(svgLoader),
         circularProgressStyle: CircularProgressStyle = IntUiCircularProgressStyle.dark(),
         tooltipStyle: IntUiTooltipStyle = IntUiTooltipStyle.dark(),
+        iconButtonStyle: IconButtonStyle = IntUiIconButtonStyle.dark(),
     ) =
         IntelliJComponentStyling(
             checkboxStyle = checkboxStyle,
@@ -158,6 +161,7 @@ object IntUiTheme : BaseIntUiTheme {
             textFieldStyle = textFieldStyle,
             circularProgressStyle = circularProgressStyle,
             tooltipStyle = tooltipStyle,
+            iconButtonStyle = iconButtonStyle,
         )
 
     @Composable
@@ -183,6 +187,7 @@ object IntUiTheme : BaseIntUiTheme {
         editorTabStyle: TabStyle = IntUiTabStyle.Editor.light(svgLoader),
         circularProgressStyle: CircularProgressStyle = IntUiCircularProgressStyle.light(),
         tooltipStyle: IntUiTooltipStyle = IntUiTooltipStyle.light(),
+        iconButtonStyle: IconButtonStyle = IntUiIconButtonStyle.light(),
     ) = IntelliJComponentStyling(
         checkboxStyle = checkboxStyle,
         chipStyle = chipStyle,
@@ -204,6 +209,7 @@ object IntUiTheme : BaseIntUiTheme {
         textFieldStyle = textFieldStyle,
         circularProgressStyle = circularProgressStyle,
         tooltipStyle = tooltipStyle,
+        iconButtonStyle = iconButtonStyle,
     )
 }
 

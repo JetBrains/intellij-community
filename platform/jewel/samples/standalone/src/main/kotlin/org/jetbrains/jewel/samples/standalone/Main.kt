@@ -100,7 +100,7 @@ private fun ComponentShowcase(svgLoader: JewelSvgLoader, resourceLoader: Resourc
             horizontalAlignment = Alignment.Start,
         ) {
             Borders()
-            Buttons()
+            Buttons(svgLoader, resourceLoader)
             Dropdowns()
             Checkboxes()
             RadioButtons()

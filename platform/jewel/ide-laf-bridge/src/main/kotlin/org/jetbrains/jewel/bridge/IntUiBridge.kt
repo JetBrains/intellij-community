@@ -50,6 +50,9 @@ import org.jetbrains.jewel.intui.standalone.styling.IntUiGroupHeaderStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiHorizontalProgressBarColors
 import org.jetbrains.jewel.intui.standalone.styling.IntUiHorizontalProgressBarMetrics
 import org.jetbrains.jewel.intui.standalone.styling.IntUiHorizontalProgressBarStyle
+import org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonColors
+import org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonMetrics
+import org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiLabelledTextFieldColors
 import org.jetbrains.jewel.intui.standalone.styling.IntUiLabelledTextFieldMetrics
 import org.jetbrains.jewel.intui.standalone.styling.IntUiLabelledTextFieldStyle
@@ -172,6 +175,7 @@ internal fun createSwingIntUiComponentStyling(
         circularProgressStyle = readCircularProgressStyle(theme.isDark),
         tooltipStyle = readTooltipStyle(),
         textFieldStyle = textFieldStyle,
+        iconButtonStyle = readIconButtonStyle(),
     )
 }
 
@@ -915,7 +919,23 @@ private fun readTooltipStyle(): IntUiTooltipStyle {
             content = retrieveColorOrUnspecified("ToolTip.foreground"),
             background = retrieveColorOrUnspecified("ToolTip.background"),
             border = retrieveColorOrUnspecified("ToolTip.borderColor"),
-            shadow = Color.Black.copy(alpha = .6f),
+            shadow = retrieveColorOrUnspecified("Notification.Shadow.bottom1Color"),
         ),
     )
 }
+
+private fun readIconButtonStyle(): IntUiIconButtonStyle = IntUiIconButtonStyle(
+    metrics = IntUiIconButtonMetrics(CornerSize(DarculaUIUtil.BUTTON_ARC.dp / 2)),
+    colors = IntUiIconButtonColors(
+        background = Color.Unspecified,
+        backgroundDisabled = Color.Unspecified,
+        backgroundFocused = Color.Unspecified,
+        backgroundPressed = retrieveColorOrUnspecified("ActionButton.pressedBackground"),
+        backgroundHovered = retrieveColorOrUnspecified("ActionButton.hoverBackground"),
+        border = Color.Unspecified,
+        borderDisabled = Color.Unspecified,
+        borderFocused = retrieveColorOrUnspecified("ActionButton.focusedBorderColor"),
+        borderPressed = retrieveColorOrUnspecified("ActionButton.pressedBorderColor"),
+        borderHovered = retrieveColorOrUnspecified("ActionButton.hoverBorderColor"),
+    ),
+)
