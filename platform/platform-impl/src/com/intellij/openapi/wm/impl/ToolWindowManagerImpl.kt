@@ -1244,8 +1244,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           frame.revalidate()
         }
 
-        val bounds = getRootBounds(frame)
-        info.floatingBounds = bounds
+        info.floatingBounds = frame.bounds
         info.isMaximized = maximized
       }
       return
@@ -2229,7 +2228,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       if (frame == null || !frame.isShowing) {
         return
       }
-      info.floatingBounds = getRootBounds(frame as JFrame)
+      info.floatingBounds = (frame as JFrame).bounds
       info.isMaximized = frame.extendedState == Frame.MAXIMIZED_BOTH
       if (LOG.isDebugEnabled) {
         LOG.debug("Windowed tool window ${toolWindow.id} bounds updated: ${info.floatingBounds}, maximized=${info.isMaximized}")
@@ -2451,19 +2450,6 @@ private fun getActivateToolWindowVKsMask(): Int {
 
 private val isStackEnabled: Boolean
   get() = Registry.`is`("ide.enable.toolwindow.stack")
-
-private fun getRootBounds(frame: JFrame): Rectangle {
-  val rootPane = frame.rootPane
-  val bounds = rootPane.bounds
-  bounds.setLocation(frame.x + rootPane.x, frame.y + rootPane.y)
-  if (LOG.isDebugEnabled) {
-    LOG.debug("Calculated root pane bounds from frame bounds ${frame.bounds} " +
-              "and relative root pane bounds ${rootPane.bounds}, " +
-              "the result is $bounds"
-    )
-  }
-  return bounds
-}
 
 private fun getToolWindowIdForComponent(component: Component?): String? {
   var c = component
