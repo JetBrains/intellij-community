@@ -25,7 +25,7 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,9 +55,17 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
    */
   @Override
   public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, DataContext dataContext) {
+    List<SmartPsiElementPointer<PsiElement>> smartElements = new ArrayList<>();
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
+    for (PsiElement psiElement : elements) {
+      if (psiElement == null) {
+        continue;
+      }
+      smartElements.add(smartPointerManager.createSmartPsiElementPointer(psiElement));
+    }
     ReadAction.nonBlocking(() -> {
         PsiClass aClass = null;
-        Runnable callback = null;
+        Runnable callback;
         final HashSet<PsiField> preselectedFields = new HashSet<>();
         if (elements.length == 1) {
           if (elements[0] instanceof PsiClass) {
@@ -118,7 +126,7 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
           };
           return callback;
         }
-        EncapsulateFieldsDialog.EncapsulateFieldsContainer container = prepare( aClass, preselectedFields);
+        EncapsulateFieldsDialog.EncapsulateFieldsContainer container = prepare(aClass, preselectedFields);
         PsiClass finalAClass = aClass;
         callback = () -> {
           EncapsulateFieldsDialog dialog = getDialog(project, container);
@@ -132,9 +140,20 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
           callback.run();
         }
       })
-      .expireWhen(() -> Arrays.stream(elements)
-        .map(t -> t instanceof PsiField field ? field.getContainingClass() : t)
-        .anyMatch(t -> t != null && !t.isValid()))
+      .expireWhen(() -> {
+        if (project.isDisposed()) {
+          return true;
+        }
+        for (SmartPsiElementPointer<PsiElement> smartElement : smartElements) {
+          PsiElement element = smartElement.getElement();
+          if (element == null) {
+            return true;
+          }
+          PsiElement targetElement = element instanceof PsiField field ? field.getContainingClass() : element;
+          return targetElement != null && !targetElement.isValid();
+        }
+        return false;
+      })
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
