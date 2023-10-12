@@ -118,6 +118,8 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private static int ourShowPopupAfterFirstItemGroupingTime = 100;
 
   private volatile int myCount;
+  private volatile boolean myPostponeAppearance = false;
+  private volatile boolean myShowLookupImmediately = false;
   private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
   private final PropertyChangeListener myLookupManagerListener;
@@ -373,6 +375,23 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     return myLookup;
   }
 
+  /**
+   * Set this flag to postpone the appearance of the lookup window.
+   */
+  public void setPostponeAppearance(boolean postponeAppearance) {
+    myPostponeAppearance = postponeAppearance;
+  }
+
+  /**
+   * Use this function to show the lookup window as soon as possible.
+   * Right now or after, at least one element will be added to the lookup.
+   */
+  public void showLookupAsSoonAsPossible() {
+    setPostponeAppearance(false);
+    myShowLookupImmediately = true;
+    ApplicationManager.getApplication().invokeLater(this::updateLookup);
+  }
+
   void withSingleUpdate(Runnable action) {
     myArranger.batchUpdate(action);
   }
@@ -414,6 +433,9 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   private boolean shouldShowLookup() {
+    if (myPostponeAppearance) {
+      return false;
+    }
     if (isAutopopupCompletion()) {
       if (myCount == 0) {
         return false;
@@ -476,12 +498,18 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     myCount++; // invoked from a single thread
 
     if (myCount == myUnfreezeAfterNItems) {
+      showLookupAsSoonAsPossible();
+    }
+
+    if (myShowLookupImmediately && myLookup.getShownTimestampMillis() == 0L) {
       AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, 0, TimeUnit.MILLISECONDS);
+      ApplicationManager.getApplication().invokeLater(this::updateLookup);
+    } else  {
+      if (myCount == 1) {
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, ourInsertSingleItemTimeSpan, TimeUnit.MILLISECONDS);
+      }
+      myQueue.queue(myUpdate);
     }
-    else if (myCount == 1) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, ourInsertSingleItemTimeSpan, TimeUnit.MILLISECONDS);
-    }
-    myQueue.queue(myUpdate);
   }
 
   /**
