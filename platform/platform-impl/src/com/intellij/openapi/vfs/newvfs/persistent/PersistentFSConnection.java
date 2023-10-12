@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
@@ -101,8 +100,6 @@ public final class PersistentFSConnection {
   private volatile boolean dirty;
   private volatile boolean closed = false;
 
-  private final @Nullable Closeable flushingTask;
-
   /** How many errors were detected (during the use) that are likely caused by VFS corruptions -- i.e. broken internal invariants */
   private final AtomicInteger corruptionsDetected = new AtomicInteger();
 
@@ -136,17 +133,6 @@ public final class PersistentFSConnection {
     this.freeRecords = freeRecords;
     this.enumeratedAttributes = enumeratedAttributes;
     recoveryInfo = info;
-
-    if (FSRecords.BACKGROUND_VFS_FLUSH) {
-      //MAYBE RC: move the flushing up, to FSRecordsImpl?
-      final ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
-      flushingTask = USE_GENTLE_FLUSHER ?
-                     new GentleVFSFlusher(scheduler) :
-                     new ClassicVFSFlusher(scheduler);
-    }
-    else {
-      flushingTask = null;
-    }
   }
 
   private static RefCountingContentStorage wrapContents(RefCountingContentStorage contents, List<ConnectionInterceptor> interceptors) {
@@ -254,12 +240,12 @@ public final class PersistentFSConnection {
   }
 
   public boolean isDirty() {
-    return dirty ||
-           ((Forceable)namesEnumerator).isDirty() ||
-           attributesStorage.isDirty() ||
-           contentStorage.isDirty() ||
-           records.isDirty() ||
-           contentHashesEnumerator != null && contentHashesEnumerator.isDirty();
+    return dirty
+           || ((Forceable)namesEnumerator).isDirty()
+           || attributesStorage.isDirty()
+           || contentStorage.isDirty()
+           || records.isDirty()
+           || (contentHashesEnumerator != null && contentHashesEnumerator.isDirty());
   }
 
   int corruptionsDetected() {
@@ -269,10 +255,6 @@ public final class PersistentFSConnection {
   synchronized void close() throws IOException {
     if (closed) {
       return;
-    }
-    
-    if (flushingTask != null) {
-      flushingTask.close();
     }
 
     doForce();
@@ -472,37 +454,46 @@ public final class PersistentFSConnection {
     }
   }
 
+  static @NotNull Closeable startFlusher(@NotNull ScheduledExecutorService scheduler,
+                                         @NotNull PersistentFSConnection connection) {
+    return USE_GENTLE_FLUSHER ?
+           new GentleVFSFlusher(connection, scheduler) :
+           new ClassicVFSFlusher(connection, scheduler);
+  }
+
   /**
    * Legacy flushing implementation: do some basic precautions against contention, i.e. wait for a period without modifications
    */
-  private final class ClassicVFSFlusher implements Runnable, Closeable {
+  private static class ClassicVFSFlusher implements Runnable, Closeable {
 
     /** How often, on average, flush each index to the disk */
     public static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
+    private final PersistentFSConnection connection;
 
     private int lastModCount;
     private final Future<?> scheduledFuture;
 
 
-    private ClassicVFSFlusher(final @NotNull ScheduledExecutorService scheduler) {
+    private ClassicVFSFlusher(@NotNull PersistentFSConnection connection,
+                              @NotNull ScheduledExecutorService scheduler) {
       this.scheduledFuture = scheduler.scheduleWithFixedDelay(this, FLUSHING_PERIOD_MS, FLUSHING_PERIOD_MS, MILLISECONDS);
+      this.connection = connection;
     }
 
     @Override
     public void run() {
-      if (lastModCount == records.getGlobalModCount()) {
-        if (isDirty() && !HeavyProcessLatch.INSTANCE.isRunning()) {
+      if (lastModCount == connection.records.getGlobalModCount()) {
+        if (connection.isDirty() && !HeavyProcessLatch.INSTANCE.isRunning()) {
           try {
-            doForce();
+            connection.doForce();
           }
           catch (IOException e) {
-
-            markAsCorruptedAndScheduleRebuild(e);
+            connection.markAsCorruptedAndScheduleRebuild(e);
             ExceptionUtil.rethrow(e);
           }
         }
       }
-      lastModCount = records.getGlobalModCount();
+      lastModCount = connection.records.getGlobalModCount();
     }
 
     @Override
@@ -513,10 +504,12 @@ public final class PersistentFSConnection {
 
   /**
    * Gentle flusher impl: uses storage lock .getQueueLength() to determine potential contention and limit it.
+   * TODO RC: actually with most of the storages in VFS is memory-mapped-file-based now, this Flusher becomes
+   *          almost equivalent to ClassicVFSFlusher -- but way more complex.
    * <p>
    * More details in a {@link GentleFlusherBase} javadocs
    */
-  private final class GentleVFSFlusher extends GentleFlusherBase {
+  private static class GentleVFSFlusher extends GentleFlusherBase {
     /** How often, on average, flush each index to the disk */
     private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
 
@@ -525,17 +518,20 @@ public final class PersistentFSConnection {
     private static final int INITIAL_CONTENTION_QUOTA = 16;
     private static final int MAX_CONTENTION_QUOTA = 32;
 
+    private final PersistentFSConnection connection;
 
     private int lastModCount;
 
     private long lastSuccessfulFlushTimestampMs = 0;
 
-    private GentleVFSFlusher(final @NotNull ScheduledExecutorService scheduler) {
+    private GentleVFSFlusher(@NotNull PersistentFSConnection connection,
+                             @NotNull ScheduledExecutorService scheduler) {
       super("VFSFlusher",
             scheduler, FLUSHING_PERIOD_MS,
             MIN_CONTENTION_QUOTA, MAX_CONTENTION_QUOTA, INITIAL_CONTENTION_QUOTA,
             TelemetryManager.getInstance().getMeter(Indexes)
       );
+      this.connection = connection;
     }
 
     @Override
@@ -545,7 +541,7 @@ public final class PersistentFSConnection {
       //    them -- and (regular) flush is less important than e.g. a current UI task. So we
       //    attempt to flush only if there were _no updates_ in VFS since the last invocation
       //    of this method:
-      final int currentModCount = records.getGlobalModCount();
+      int currentModCount = connection.records.getGlobalModCount();
       if (lastModCount != currentModCount) {
         lastModCount = currentModCount;
         return true;
@@ -555,7 +551,7 @@ public final class PersistentFSConnection {
 
     @Override
     protected FlushResult flushAsMuchAsPossibleWithinQuota(final /*InOut*/ IntRef contentionQuota) throws IOException {
-      if (!isDirty()) {
+      if (!connection.isDirty()) {
         return FlushResult.NOTHING_TO_FLUSH_NOW;
       }
 
@@ -572,8 +568,8 @@ public final class PersistentFSConnection {
 
         //RC: code below is a copy of doFlush() method, but interleaved with contention quota checking:
 
-        if (namesEnumerator instanceof Forceable) {
-          ((Forceable)namesEnumerator).force();
+        if (connection.namesEnumerator instanceof Forceable) {
+          ((Forceable)connection.namesEnumerator).force();
 
           unspentContentionQuota -= competingThreads();
           if (unspentContentionQuota < 0) {
@@ -581,22 +577,22 @@ public final class PersistentFSConnection {
           }
         }
 
-        attributesStorage.force();
+        connection.attributesStorage.force();
 
         unspentContentionQuota -= competingThreads();
         if (unspentContentionQuota < 0) {
           return FlushResult.HAS_MORE_TO_FLUSH;
         }
 
-        contentStorage.force();
+        connection.contentStorage.force();
 
         unspentContentionQuota -= competingThreads();
         if (unspentContentionQuota < 0) {
           return FlushResult.HAS_MORE_TO_FLUSH;
         }
 
-        if (contentHashesEnumerator != null) {
-          contentHashesEnumerator.force();
+        if (connection.contentHashesEnumerator != null) {
+          connection.contentHashesEnumerator.force();
 
           unspentContentionQuota -= competingThreads();
           if (unspentContentionQuota < 0) {
@@ -604,8 +600,8 @@ public final class PersistentFSConnection {
           }
         }
 
-        writeConnectionState();
-        records.force();
+        connection.writeConnectionState();
+        connection.records.force();
 
         unspentContentionQuota -= competingThreads();
 
@@ -619,23 +615,22 @@ public final class PersistentFSConnection {
 
     @Override
     public boolean hasSomethingToFlush() {
-      return isDirty();
+      return connection.isDirty();
     }
 
     private static int competingThreads() {
-      //TODO RC: this is a bit of a hack -- I rely on the implicit knowledge that now all storages use
-      //         PagedFileStorage under the hood, and PFS uses StorageLockContext default instance. This
-      //         is not true for other implementations of underlying storages: i.e. FilePageCacheLockFree,
-      //         and/or memory-mapped file based. Hence, this estimation will gradually lose applicability
-      //         as we will transition to those new storages implementation.
+      //FIXME RC: this is totally incorrect now: code relies on implicit knowledge that all storages use
+      //          PagedFileStorage under the hood, and PFS uses StorageLockContext default instance. This
+      //          is not true anymore, since VFS uses either FilePageCacheLockFree or mmapped-file based
+      //          storages now:
 
-      final ReentrantReadWriteLock storageLock = StorageLockContext.defaultContextLock();
+      ReentrantReadWriteLock storageLock = StorageLockContext.defaultContextLock();
 
       if (storageLock.isWriteLocked()) {
         return storageLock.getQueueLength() + 1;
       }
       else {
-        final int readers = storageLock.getReadLockCount();
+        int readers = storageLock.getReadLockCount();
         return storageLock.getQueueLength() + readers;
       }
     }

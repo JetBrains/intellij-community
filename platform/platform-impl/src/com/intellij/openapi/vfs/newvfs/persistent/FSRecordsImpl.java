@@ -51,6 +51,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
@@ -161,6 +162,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+
   private final @NotNull PersistentFSConnection connection;
   private final @NotNull PersistentFSContentAccessor contentAccessor;
   private final @NotNull PersistentFSAttributeAccessor attributeAccessor;
@@ -180,6 +182,8 @@ public final class FSRecordsImpl implements Closeable {
    */
   private final @NotNull NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy;
   private final AtomicLong invertedNameIndexModCount = new AtomicLong();
+
+  private final @Nullable Closeable flushingTask;
 
   /**
    * Caching wrapper around {@link PersistentFSConnection#namesEnumerator}
@@ -367,6 +371,14 @@ public final class FSRecordsImpl implements Closeable {
     else {
       this.fileNamesEnumerator = connection.getNames();
     }
+
+    if (FSRecords.BACKGROUND_VFS_FLUSH) {
+      final ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
+      flushingTask = PersistentFSConnection.startFlusher(scheduler, connection);
+    }
+    else {
+      flushingTask = null;
+    }
   }
 
   //========== lifecycle: ========================================
@@ -374,8 +386,22 @@ public final class FSRecordsImpl implements Closeable {
   @Override
   public synchronized void close() {
     if (!closed) {
-      closed = true;
       Exception stackTraceEx = new Exception("FSRecordsImpl close stacktrace");
+
+      if (flushingTask != null) {
+        //Stop flushing _before_ assigning .close=true: otherwise there could be 'already closed' exceptions
+        //  in Flusher -- mostly harmless, but annoying.
+        try {
+          flushingTask.close();
+        }
+        catch (Exception stoppingEx) {
+          LOG.warn("Can't close VFS flushing task", stoppingEx);
+          stackTraceEx.addSuppressed(stoppingEx);
+        }
+      }
+
+      closed = true;
+
 
       try {
         //ensure async scanning is finished -- until that records file is still in use,
