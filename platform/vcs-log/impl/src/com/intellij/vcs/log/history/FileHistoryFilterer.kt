@@ -33,6 +33,7 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.history.FileHistoryPaths.fileHistory
 import com.intellij.vcs.log.history.FileHistoryPaths.withFileHistory
+import com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -131,15 +132,19 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                sortType: PermanentGraph.SortType,
                filters: VcsLogFilterCollection,
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
-      val vcsName = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(root)?.vcs?.name.orEmpty()
       val start = System.currentTimeMillis()
       TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.Computing.name).useWithScope { scope ->
         val isInitial = commitCount == CommitCountStage.INITIAL
 
-        val indexDataGetter = index.dataGetter
+        val vcsName = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(root)?.vcs?.keyInstanceMethod?.let {
+          VcsLogRepoSizeCollector.getVcsKeySafe(it)
+        }.orEmpty()
+
         scope.setAttribute("filePath", filePath.toString())
         scope.setAttribute(VcsTelemetrySpanAttribute.IS_INITIAL_HISTORY_COMPUTING.key, isInitial)
         scope.setAttribute(VcsTelemetrySpanAttribute.HISTORY_COMPUTING_VCS_NAME.key, vcsName)
+
+        val indexDataGetter = index.dataGetter
         if (indexDataGetter != null && index.isIndexed(root) && dataPack.isFull && Registry.`is`("vcs.history.use.index")) {
           cancelLastTask(false)
           val visiblePack = filterWithIndex(indexDataGetter, dataPack, oldVisiblePack, sortType, filters, isInitial)

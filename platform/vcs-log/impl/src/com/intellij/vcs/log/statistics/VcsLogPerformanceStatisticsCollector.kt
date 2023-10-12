@@ -20,7 +20,7 @@ object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("vcs.log.performance", 3)
 
   val FILE_HISTORY_COMPUTING = GROUP.registerEvent("file.history.computed",
-                                                   EventFields.String("vcs", listOf("Git", "hg4idea", "Perforce")),
+                                                   VcsLogRepoSizeCollector.VCS_FIELD,
                                                    EventFields.Boolean("with_index"),
                                                    EventFields.DurationMs)
   val FILE_HISTORY_COLLECTING_RENAMES = GROUP.registerEvent("file.history.collected.renames", EventFields.DurationMs)
