@@ -77,6 +77,7 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
                                                                     false,
                                                                     { releaseShownStateRequest() },
                                                                     Int.MAX_VALUE)
+    popup.isShowSubmenuOnHover = true
 
     popup.showInBestPositionFor(SimpleDataContext
                                   .builder()
