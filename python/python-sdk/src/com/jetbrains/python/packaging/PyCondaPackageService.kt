@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.SystemDependent
+import java.nio.file.Path
 
 @State(name = "PyCondaPackageService", storages = [Storage(value = "conda_packages.xml", roamingType = RoamingType.DISABLED)])
 class PyCondaPackageService : PersistentStateComponent<PyCondaPackageService> {
@@ -27,10 +28,10 @@ class PyCondaPackageService : PersistentStateComponent<PyCondaPackageService> {
     @JvmStatic
     fun getCondaExecutable(sdkPath: String?): @SystemDependent String? {
       if (sdkPath != null) {
-        val condaPath = findCondaExecutableRelativeToEnv(sdkPath)
+        val condaPath = findCondaExecutableRelativeToEnv(Path.of(sdkPath))
         if (condaPath != null) {
           LOG.info("Using $condaPath as a conda executable for $sdkPath (found as a relative to the env)")
-          return condaPath
+          return condaPath.toString()
         }
       }
 
@@ -41,7 +42,7 @@ class PyCondaPackageService : PersistentStateComponent<PyCondaPackageService> {
         return preferredCondaPath
       }
 
-      return getSystemCondaExecutable()
+      return getSystemCondaExecutable()?.toString()
     }
 
     fun onCondaEnvCreated(condaExecutable: @SystemDependent String) {
