@@ -250,7 +250,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
         }
 
         try {
-          smallDataPack = optimize ? buildSmallDataPack() : DataPack.EMPTY;
+          smallDataPack = optimize && SMALL_DATA_PACK_COMMITS_COUNT >= 0 ? buildSmallDataPack() : DataPack.EMPTY;
 
           if (smallDataPack != DataPack.EMPTY) {
             myDataPackUpdateHandler.accept(smallDataPack);
