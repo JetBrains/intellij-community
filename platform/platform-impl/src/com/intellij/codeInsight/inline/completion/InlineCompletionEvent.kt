@@ -34,7 +34,7 @@ sealed interface TypingEvent {
 
   val range: TextRange
 
-  class Simple internal constructor(symbol: Char, offset: Int) : TypingEvent {
+  class OneSymbol internal constructor(symbol: Char, offset: Int) : TypingEvent {
     override val typed: String = symbol.toString()
 
     override val range: TextRange = TextRange(offset, offset + 1)

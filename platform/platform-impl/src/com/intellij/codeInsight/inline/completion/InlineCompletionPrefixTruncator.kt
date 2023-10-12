@@ -42,7 +42,7 @@ interface InlineCompletionPrefixTruncator {
 
 
 /**
- * Standard variant of [InlineCompletionPrefixTruncator] that takes into account only [TypingEvent.Simple].
+ * Default variant of [InlineCompletionPrefixTruncator] that takes into account only [TypingEvent.OneSymbol].
  *
  * If a new typed symbol matches the first rendered symbol in the current [InlineCompletionContext],
  * then the first non-empty element is truncated by one character using [InlineCompletionElement.withTruncatedPrefix].
@@ -50,9 +50,9 @@ interface InlineCompletionPrefixTruncator {
  *
  * Note: all empty elements ([InlineCompletionElement.text] is empty) at the start are truncated as well.
  */
-open class StandardInlineCompletionPrefixTruncator : InlineCompletionPrefixTruncator {
+open class DefaultInlineCompletionPrefixTruncator : InlineCompletionPrefixTruncator {
   override fun truncate(context: InlineCompletionContext, typing: TypingEvent): UpdatedElements? {
-    if (typing !is TypingEvent.Simple) {
+    if (typing !is TypingEvent.OneSymbol) {
       return null
     }
     val fragment = typing.typed

@@ -51,7 +51,7 @@ interface InlineCompletionProvider {
     get() = DefaultInlineCompletionInsertHandler.INSTANCE
 
   val prefixTruncator: InlineCompletionPrefixTruncator
-    get() = StandardInlineCompletionPrefixTruncator()
+    get() = DefaultInlineCompletionPrefixTruncator()
 
   companion object {
     val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")
