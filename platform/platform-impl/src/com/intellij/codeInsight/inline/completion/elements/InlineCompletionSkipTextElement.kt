@@ -5,9 +5,6 @@ import com.intellij.openapi.editor.Editor
 import java.awt.Rectangle
 
 class InlineCompletionSkipTextElement(override val text: String) : InlineCompletionElement {
-  override fun withTruncatedPrefix(length: Int): InlineCompletionElement? {
-    return if (text.length > length) InlineCompletionSkipTextElement(text.drop(length)) else null
-  }
 
   override fun toPresentable(): InlineCompletionElement.Presentable = Presentable(this)
 

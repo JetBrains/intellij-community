@@ -8,15 +8,6 @@ import java.awt.Rectangle
 interface InlineCompletionElement {
   val text: String
 
-  /**
-   * Returns a new [InlineCompletionElement] instance with content identical to this [text], but with a shortened prefix of [length].
-   * If there is no content after truncating, then `null` is returned.
-   *
-   * It is guaranteed that [text] length is at least [length].
-   */
-  @Deprecated("will be removed")
-  fun withTruncatedPrefix(length: Int): InlineCompletionElement?
-
   fun toPresentable(): Presentable
 
   interface Presentable : Disposable {
