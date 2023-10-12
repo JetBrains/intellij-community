@@ -111,6 +111,7 @@
   <technology name="groovy" root="groovy.lang"/>
   <technology name="grpc" root="io.grpc"/>
   <technology name="gson" root="com.google.gson"/>
+  <technology name="guava" root="com.google.common.base"/>
   <technology name="guice" root="com.google.inject"/>
   <technology name="gwt" root="com.google.gwt"/>
   <technology name="h2" root="org.h2"/>
