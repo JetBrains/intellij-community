@@ -1,14 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.editor.images
+package org.intellij.plugins.markdown.images.editor.images
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
-import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.images.MarkdownImagesBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
-import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
-import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -34,7 +33,7 @@ class ConfigureMarkdownImageLineMarkerProvider : ConfigureImageLineMarkerProvide
     val image = obtainOuterElement(element) ?: return null
     return ConfigureImageDialog(
       image.project,
-      MarkdownBundle.message("markdown.configure.image.title.text"),
+      MarkdownImagesBundle.message("markdown.configure.image.title.text"),
       path = obtainPathText(element),
       linkTitle = image.collectLinkTitleText(),
       linkDescriptionText = image.collectLinkDescriptionText(),
@@ -43,14 +42,14 @@ class ConfigureMarkdownImageLineMarkerProvider : ConfigureImageLineMarkerProvide
   }
 
   private fun isInsideParagraph(element: PsiElement): Boolean {
-    return element.parents(withSelf = false).find { it.hasType(MarkdownElementTypes.PARAGRAPH) } != null
+    return element.parents(withSelf = false).find { it.elementType == MarkdownElementTypes.PARAGRAPH } != null
   }
 
   private fun createHtmlReplacement(element: PsiElement, imageData: MarkdownImageData): PsiElement {
     // Inside paragraphs HTML is always represented by plain HTML_TAG element
     return when {
-      isInsideParagraph(element) -> MarkdownPsiElementFactory.createHtmlImageTag(element.project, imageData)
-      else -> MarkdownPsiElementFactory.createHtmlBlockWithImage(element.project, imageData)
+      isInsideParagraph(element) -> ImagePsiElementFactory.createHtmlImageTag(element.project, imageData)
+      else -> ImagePsiElementFactory.createHtmlBlockWithImage(element.project, imageData)
     }
   }
 
@@ -59,7 +58,7 @@ class ConfigureMarkdownImageLineMarkerProvider : ConfigureImageLineMarkerProvide
     val project = outerElement.project
     val replacement = when {
       imageData.shouldConvertToHtml -> createHtmlReplacement(outerElement, imageData)
-      else -> MarkdownPsiElementFactory.createImage(
+      else -> ImagePsiElementFactory.createImage(
         project,
         imageData.description,
         imageData.path,
@@ -71,7 +70,7 @@ class ConfigureMarkdownImageLineMarkerProvider : ConfigureImageLineMarkerProvide
     }
     WriteCommandAction.runWriteCommandAction(
       project,
-      MarkdownBundle.message("markdown.configure.image.title.text"),
+      MarkdownImagesBundle.message("markdown.configure.image.title.text"),
       null,
       action
     )

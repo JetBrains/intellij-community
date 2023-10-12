@@ -2,8 +2,8 @@
 package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownTestingUtil
+import org.intellij.plugins.markdown.images.MarkdownImagesBundle
 
 class MarkdownConfigureImageIntentionTest: BasePlatformTestCase() {
   fun `test markdown image1`() = doTest()
@@ -77,7 +77,7 @@ class MarkdownConfigureImageIntentionTest: BasePlatformTestCase() {
   }
 
   private fun doActualTest(shouldHaveIntentions: Boolean) {
-    val intentions = myFixture.filterAvailableIntentions(MarkdownBundle.message("markdown.configure.image.text"))
+    val intentions = myFixture.filterAvailableIntentions(MarkdownImagesBundle.message("markdown.configure.image.text"))
     when {
       shouldHaveIntentions -> assertSize(1, intentions)
       else -> assertEmpty(intentions)

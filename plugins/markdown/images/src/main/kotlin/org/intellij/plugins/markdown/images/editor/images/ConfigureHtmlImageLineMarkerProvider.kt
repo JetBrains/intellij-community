@@ -1,20 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.editor.images
+package org.intellij.plugins.markdown.images.editor.images
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.html.HtmlTag
+import com.intellij.psi.util.elementType
 import com.intellij.psi.xml.XmlTokenType
-import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.images.MarkdownImagesBundle
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
-import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class ConfigureHtmlImageLineMarkerProvider : ConfigureImageLineMarkerProviderBase<HtmlTag>() {
   override fun getName(): String {
-    return MarkdownBundle.message("markdown.configure.html.image.line.marker.provider.name")
+    return MarkdownImagesBundle.message("markdown.configure.html.image.line.marker.provider.name")
   }
 
   override fun obtainLeafElement(element: PsiElement): PsiElement? {
@@ -39,7 +39,7 @@ class ConfigureHtmlImageLineMarkerProvider : ConfigureImageLineMarkerProviderBas
   override fun createDialog(element: HtmlTag): ConfigureImageDialog {
     return ConfigureImageDialog(
       element.project,
-      MarkdownBundle.message("markdown.configure.image.title.text"),
+      MarkdownImagesBundle.message("markdown.configure.image.title.text"),
       path = obtainPathText(element),
       width = element.getAttributeValue("width"),
       height = element.getAttributeValue("height"),
@@ -67,7 +67,7 @@ class ConfigureHtmlImageLineMarkerProvider : ConfigureImageLineMarkerProviderBas
     }
     WriteCommandAction.runWriteCommandAction(
       image.project,
-      MarkdownBundle.message("markdown.configure.image.line.marker.update.html.image.attributes.command.name"),
+      MarkdownImagesBundle.message("markdown.configure.image.line.marker.update.html.image.attributes.command.name"),
       null,
       action
     )
@@ -83,7 +83,7 @@ class ConfigureHtmlImageLineMarkerProvider : ConfigureImageLineMarkerProviderBas
     }
     WriteCommandAction.runWriteCommandAction(
       image.project,
-      MarkdownBundle.message("markdown.configure.image.line.marker.convert.html.to.markdown.command.name"),
+      MarkdownImagesBundle.message("markdown.configure.image.line.marker.convert.html.to.markdown.command.name"),
       null,
       action
     )
@@ -98,7 +98,7 @@ class ConfigureHtmlImageLineMarkerProvider : ConfigureImageLineMarkerProviderBas
 
   companion object {
     private fun isImgTagName(element: PsiElement): Boolean {
-      return element.hasType(XmlTokenType.XML_NAME) && element.text == "img"
+      return element.elementType == XmlTokenType.XML_NAME && element.text == "img"
     }
 
     fun getImageByNameElement(element: PsiElement): HtmlTag? {

@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.editor.images
+package org.intellij.plugins.markdown.images.editor.images
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
-import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownIcons
+import org.intellij.plugins.markdown.images.MarkdownImagesBundle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.net.URI
@@ -53,7 +53,7 @@ abstract class ConfigureImageLineMarkerProviderBase<T : PsiElement> : LineMarker
   }
 
   override fun getName(): String {
-    return MarkdownBundle.message("markdown.configure.markdown.image.line.marker.provider.name")
+    return MarkdownImagesBundle.message("markdown.configure.markdown.image.line.marker.provider.name")
   }
 
   private fun processFileName(filePath: String): String? {
@@ -71,8 +71,8 @@ abstract class ConfigureImageLineMarkerProviderBase<T : PsiElement> : LineMarker
   private fun getMarkerElementPresentation(element: PsiElement): @Nls String {
     val fileName = obtainPathText(element)?.let(::processFileName) ?: ""
     return when {
-      fileName.isEmpty() -> MarkdownBundle.message("markdown.configure.image.text")
-      else -> MarkdownBundle.message("markdown.configure.image.line.marker.presentation", fileName)
+      fileName.isEmpty() -> MarkdownImagesBundle.message("markdown.configure.image.text")
+      else -> MarkdownImagesBundle.message("markdown.configure.image.line.marker.presentation", fileName)
     }
   }
 
@@ -86,7 +86,7 @@ abstract class ConfigureImageLineMarkerProviderBase<T : PsiElement> : LineMarker
     ::getMarkerElementPresentation,
     { _, e -> performAction(e) },
     ALIGNMENT,
-    { MarkdownBundle.message("markdown.configure.image.text") }
+    { MarkdownImagesBundle.message("markdown.configure.image.text") }
   ) {
     override fun getElementPresentation(element: PsiElement): String {
       return getMarkerElementPresentation(element)

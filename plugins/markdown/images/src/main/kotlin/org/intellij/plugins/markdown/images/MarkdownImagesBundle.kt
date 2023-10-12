@@ -1,11 +1,13 @@
 package org.intellij.plugins.markdown.images
 
 import com.intellij.DynamicBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
 
-internal object MarkdownImagesBundle {
+@ApiStatus.Internal
+object MarkdownImagesBundle {
   private const val name = "messages.MarkdownImagesBundle"
   private val bundle = DynamicBundle(MarkdownImagesBundle::class.java, name)
 

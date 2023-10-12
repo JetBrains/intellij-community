@@ -1,23 +1,23 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.editor.images
+package org.intellij.plugins.markdown.images.editor.images
 
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.XmlElementFactory
+import com.intellij.psi.XmlElementFactoryImpl
+import com.intellij.psi.util.elementType
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.IncorrectOperationException
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object ImageUtils {
+internal object ImageUtils {
   @JvmStatic
   fun createMarkdownImageText(description: String = "", path: String, title: String = ""): String {
     val actualTitle = when {
-      title.isNotEmpty() -> " ${quoteValue(title)}"
+      title.isNotEmpty() -> " ${XmlElementFactoryImpl.quoteValue(title)}"
       else -> title
     }
     return "![$description]($path${actualTitle})"
@@ -44,7 +44,7 @@ object ImageUtils {
 
   @JvmStatic
   fun createImageTagFromText(element: PsiElement): XmlTag? {
-    if (!element.hasType(MarkdownTokenTypes.HTML_TAG)) {
+    if (element.elementType != MarkdownTokenTypes.HTML_TAG) {
       return null
     }
     try {
@@ -53,21 +53,5 @@ object ImageUtils {
     } catch (exception: IncorrectOperationException) {
       return null
     }
-  }
-
-  private fun quoteValue(value: String): String {
-    var value = value
-    val quoteChar: Char
-    if (!value.contains("\"")) {
-      quoteChar = '"'
-    }
-    else if (!value.contains("'")) {
-      quoteChar = '\''
-    }
-    else {
-      quoteChar = '"'
-      value = StringUtil.replace(value, "\"", "&quot;")
-    }
-    return quoteChar.toString() + value + quoteChar
   }
 }

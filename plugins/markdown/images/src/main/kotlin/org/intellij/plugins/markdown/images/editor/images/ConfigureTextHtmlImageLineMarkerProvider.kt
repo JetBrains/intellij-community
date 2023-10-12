@@ -1,12 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.editor.images
+package org.intellij.plugins.markdown.images.editor.images
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
-import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.images.MarkdownImagesBundle
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -31,7 +30,7 @@ class ConfigureTextHtmlImageLineMarkerProvider : ConfigureImageLineMarkerProvide
     val image = ImageUtils.createImageTagFromText(element) ?: return null
     return ConfigureImageDialog(
       image.project,
-      MarkdownBundle.message("markdown.configure.image.title.text"),
+      MarkdownImagesBundle.message("markdown.configure.image.title.text"),
       path = obtainPathText(element),
       width = image.getAttributeValue("width"),
       height = image.getAttributeValue("height"),
@@ -50,12 +49,12 @@ class ConfigureTextHtmlImageLineMarkerProvider : ConfigureImageLineMarkerProvide
 
   private fun updateAttributes(element: PsiElement, imageData: MarkdownImageData) {
     val action = Runnable {
-      val replacement = MarkdownPsiElementFactory.createHtmlImageTag(element.project, imageData)
+      val replacement = ImagePsiElementFactory.createHtmlImageTag(element.project, imageData)
       element.replace(replacement)
     }
     WriteCommandAction.runWriteCommandAction(
       element.project,
-      MarkdownBundle.message("markdown.configure.image.line.marker.update.html.image.attributes.command.name"),
+      MarkdownImagesBundle.message("markdown.configure.image.line.marker.update.html.image.attributes.command.name"),
       null,
       action
     )
@@ -63,7 +62,7 @@ class ConfigureTextHtmlImageLineMarkerProvider : ConfigureImageLineMarkerProvide
 
   private fun convertToMarkdown(element: PsiElement, imageData: MarkdownImageData) {
     val action = Runnable {
-      element.replace(MarkdownPsiElementFactory.createImage(
+      element.replace(ImagePsiElementFactory.createImage(
         element.project,
         imageData.description,
         imageData.path,
@@ -72,7 +71,7 @@ class ConfigureTextHtmlImageLineMarkerProvider : ConfigureImageLineMarkerProvide
     }
     WriteCommandAction.runWriteCommandAction(
       element.project,
-      MarkdownBundle.message("markdown.configure.image.line.marker.convert.html.to.markdown.command.name"),
+      MarkdownImagesBundle.message("markdown.configure.image.line.marker.convert.html.to.markdown.command.name"),
       null,
       action
     )

@@ -275,12 +275,6 @@
 
     <codeInsight.lineMarkerProvider language="Markdown"
                                     implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="Markdown"
-                                    implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureMarkdownImageLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="HTML"
-                                    implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureHtmlImageLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="Markdown"
-                                    implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
 
     <focusModeProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownFocusModeProvider"/>
 
@@ -290,12 +284,6 @@
     <intentionAction>
       <language>Markdown</language>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
-      <bundleName>messages.MarkdownBundle</bundleName>
-      <categoryKey>markdown.intention.category</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <language>Markdown</language>
-      <className>org.intellij.plugins.markdown.editor.images.MarkdownConfigureImageIntention</className>
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
@@ -557,11 +545,11 @@
       <action id="Markdown.InsertEmptyTable"
               class="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table"/>
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
-              icon="AllIcons.General.LayoutPreviewOnly">
-        <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
-      </action>
+      <!--<action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"-->
+      <!--        id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"-->
+      <!--        icon="AllIcons.General.LayoutPreviewOnly">-->
+      <!--  <keyboard-shortcut first-keystroke="control U" keymap="$default"/>-->
+      <!--</action>-->
       <action id="Markdown.GenerateTableOfContents"
               class="org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.BulletList"/>

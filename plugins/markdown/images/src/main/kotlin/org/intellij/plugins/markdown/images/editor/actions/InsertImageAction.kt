@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.ui.actions.styling
+package org.intellij.plugins.markdown.images.editor.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -10,17 +10,17 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.refactoring.RefactoringBundle
-import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.editor.images.ConfigureImageDialog
-import org.intellij.plugins.markdown.editor.images.ImageUtils
-import org.intellij.plugins.markdown.editor.images.MarkdownImageData
+import org.intellij.plugins.markdown.images.MarkdownImagesBundle
+import org.intellij.plugins.markdown.images.editor.images.ConfigureImageDialog
+import org.intellij.plugins.markdown.images.editor.images.ImageUtils
+import org.intellij.plugins.markdown.images.editor.images.MarkdownImageData
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 
-class InsertImageAction: DumbAwareAction() {
+internal class InsertImageAction: DumbAwareAction() {
   init {
     addTextOverride(MarkdownActionPlaces.INSERT_POPUP) {
-      MarkdownBundle.message("action.org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction.insert.popup.text")
+      MarkdownImagesBundle.message("action.org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction.insert.popup.text")
     }
   }
 
@@ -39,7 +39,7 @@ class InsertImageAction: DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val editor = MarkdownActionUtil.findRequiredMarkdownEditor(event)
     val project = editor.project
-    ConfigureImageDialog(project, MarkdownBundle.message("markdown.insert.image.dialog.title")).show { imageData ->
+    ConfigureImageDialog(project, MarkdownImagesBundle.message("markdown.insert.image.dialog.title")).show { imageData ->
       val document = editor.document
       val imageText = buildImageText(imageData)
       try {

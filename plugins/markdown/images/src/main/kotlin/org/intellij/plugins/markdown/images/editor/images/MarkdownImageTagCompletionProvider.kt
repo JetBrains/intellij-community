@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.editor.images
+package org.intellij.plugins.markdown.images.editor.images
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
@@ -12,7 +12,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.ProcessingContext
 import org.intellij.plugins.markdown.MarkdownIcons
 
-class MarkdownImageTagCompletionProvider: CompletionProvider<CompletionParameters>() {
+internal class MarkdownImageTagCompletionProvider: CompletionProvider<CompletionParameters>() {
   private fun shouldComplete(parameters: CompletionParameters): Boolean {
     val offset = parameters.offset - 1
     val startOffset = when {

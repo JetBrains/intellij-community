@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.ReadOnlyModificationException
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.images.ide.EditorImagePasteProvider
-import org.intellij.plugins.markdown.editor.images.ImageUtils
 import org.intellij.plugins.markdown.editor.runForEachCaret
+import org.intellij.plugins.markdown.images.editor.images.ImageUtils
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 
 internal class MarkdownImagePasteProvider: EditorImagePasteProvider() {

@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.editor.images
+package org.intellij.plugins.markdown.images.editor.images
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
-import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.images.MarkdownImagesBundle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
@@ -41,8 +41,8 @@ class ConfigureImageDialog(
   }
 
   override fun createCenterPanel(): JComponent = panel {
-    row(MarkdownBundle.message("markdown.configure.image.dialog.path.label")) {
-      textFieldWithBrowseButton(MarkdownBundle.message("markdown.configure.image.dialog.browse.image.title"),
+    row(MarkdownImagesBundle.message("markdown.configure.image.dialog.path.label")) {
+      textFieldWithBrowseButton(MarkdownImagesBundle.message("markdown.configure.image.dialog.browse.image.title"),
                                 project,
                                 FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
       ).align(AlignX.FILL)
@@ -50,16 +50,16 @@ class ConfigureImageDialog(
         .focused()
     }
     row {
-      val widthLabel = label(MarkdownBundle.message("markdown.configure.image.dialog.width.label"))
+      val widthLabel = label(MarkdownImagesBundle.message("markdown.configure.image.dialog.width.label"))
       val widthField = textField()
         .columns(8)
         .bindText(::widthFieldText)
-      val heightLabel = label(MarkdownBundle.message("markdown.configure.image.dialog.height.label"))
+      val heightLabel = label(MarkdownImagesBundle.message("markdown.configure.image.dialog.height.label"))
         .gap(RightGap.SMALL)
       val heightField = textField()
         .columns(8)
         .bindText(::heightFieldText)
-      checkBox(MarkdownBundle.message("markdown.configure.image.dialog.convert.to.html.label"))
+      checkBox(MarkdownImagesBundle.message("markdown.configure.image.dialog.convert.to.html.label"))
         .bindSelected(::shouldConvertToHtml)
         .apply {
           widthLabel.enabledIf(selected)
@@ -68,14 +68,14 @@ class ConfigureImageDialog(
           heightField.enabledIf(selected)
         }
     }.layout(RowLayout.LABEL_ALIGNED)
-    collapsibleGroup(MarkdownBundle.message("markdown.configure.image.dialog.screen.reader.text.panel.title")) {
-      row(MarkdownBundle.message("markdown.configure.image.dialog.title.label")) {
+    collapsibleGroup(MarkdownImagesBundle.message("markdown.configure.image.dialog.screen.reader.text.panel.title")) {
+      row(MarkdownImagesBundle.message("markdown.configure.image.dialog.title.label")) {
         textField()
           .align(AlignX.FILL)
           .bindText(::titleFieldText)
       }
       row {
-        label(MarkdownBundle.message("markdown.configure.image.dialog.description.label"))
+        label(MarkdownImagesBundle.message("markdown.configure.image.dialog.description.label"))
           .align(AlignY.TOP)
         textArea()
           .align(Align.FILL)

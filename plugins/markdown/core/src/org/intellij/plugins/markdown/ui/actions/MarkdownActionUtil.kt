@@ -21,7 +21,8 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.jetbrains.annotations.ApiStatus
 
-internal object MarkdownActionUtil {
+@ApiStatus.Internal
+object MarkdownActionUtil {
   @RequiresEdt
   @JvmStatic
   fun findSplitEditor(event: AnActionEvent): MarkdownEditorWithPreview? {
