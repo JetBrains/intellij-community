@@ -110,6 +110,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private LinkPanel myHomePage;
   private LinkPanel myForumUrl;
   private LinkPanel myLicenseUrl;
+  private VendorInfoPanel myVendorInfoPanel;
   private LinkPanel myBugtrackerUrl;
   private LinkPanel myDocumentationUrl;
   private LinkPanel mySourceCodeUrl;
@@ -695,6 +696,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     mySourceCodeUrl = new LinkPanel(infoPanel, false);
     myLicenseUrl = new LinkPanel(infoPanel, false);
 
+    infoPanel.add(myVendorInfoPanel = new VendorInfoPanel());
     infoPanel.add(myRating = new JLabel());
     infoPanel.add(myDownloads = new JLabel());
     infoPanel.add(myVersion2 = new JLabel());
@@ -1151,6 +1153,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       updateUrlComponent(myBugtrackerUrl, "plugins.configurable.bugtracker.url", pluginNode.getBugtrackerUrl());
       updateUrlComponent(myDocumentationUrl, "plugins.configurable.documentation.url", pluginNode.getDocumentationUrl());
       updateUrlComponent(mySourceCodeUrl, "plugins.configurable.source.code", pluginNode.getSourceCodeUrl());
+
+      myVendorInfoPanel.show(pluginNode);
 
       requiredPluginNames = pluginNode.getDependencyNames() != null ? pluginNode.getDependencyNames() : emptyList();
     }
