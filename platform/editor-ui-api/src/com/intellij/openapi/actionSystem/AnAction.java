@@ -371,8 +371,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Returns {@code true} if the action has an internal, not user-customized icon.
-   *
    * @return {@code true} if the icon is internal, {@code false} if the user customizes the icon.
    */
   public boolean isDefaultIcon() {
