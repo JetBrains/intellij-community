@@ -69,8 +69,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
     val hash = getHash(filters)
     val fileHistoryHandler = logProviders[root]?.fileHistoryHandler
     if (root != null && !filePath.isDirectory && fileHistoryHandler != null) {
-      val result = MyWorker(fileHistoryHandler, root, filePath, hash).filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
-      if (result != null) return result
+      return MyWorker(fileHistoryHandler, root, filePath, hash).filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
     }
     return vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
   }
@@ -131,7 +130,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                oldVisiblePack: VisiblePack,
                sortType: PermanentGraph.SortType,
                filters: VcsLogFilterCollection,
-               commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
+               commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
       val vcsName = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(root)?.vcs?.name.orEmpty()
       val start = System.currentTimeMillis()
       TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.Computing.name).useWithScope { scope ->
