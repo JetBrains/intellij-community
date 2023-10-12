@@ -568,6 +568,8 @@
                  description="Run git process for WSL executables without wrapping into a shell command."/>
     <registryKey key="git.wsl.exe.executable.login.shell" defaultValue="false"
                  description="Run git process for WSL executables using login shell command."/>
+    <registryKey key="git.wsl.exe.executable.detect.lang.by.env" defaultValue="true"
+                 description="Run git process for WSL executables using LANG detected from ENV."/>
     <registryKey key="git.use.no.optional.locks" defaultValue="true"
                  description="Use 'GIT_OPTIONAL_LOCKS' env variable to avoid taking unnecessary locks in git. Ex: to avoid 'git status' to interfere with 'git rebase' process in terminal."/>
     <registryKey key="git.merge.conflicts.toolwindow" defaultValue="false"

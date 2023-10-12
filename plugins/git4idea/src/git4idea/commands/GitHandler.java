@@ -495,7 +495,7 @@ public abstract class GitHandler {
     if (myExecutable.isLocal()) {
       executionEnvironment.putAll(EnvironmentUtil.getEnvironmentMap());
     }
-    executionEnvironment.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
+    executionEnvironment.putAll(myExecutable.getLocaleEnv());
     executionEnvironment.putAll(myCustomEnv);
     executionEnvironment.put(GitCommand.IJ_HANDLER_MARKER_ENV, "true");
 
