@@ -457,12 +457,6 @@
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
-  <xs:simpleType name="whatsNewEligibilityType">
-    <xs:restriction base="xs:string">
-      <xs:enumeration value="embed"/>
-      <xs:enumeration value="auto"/>
-    </xs:restriction>
-  </xs:simpleType>
   <xs:complexType name="pluginsType">
     <xs:attribute type="xs:anyURI" name="url">
       <xs:annotation>
