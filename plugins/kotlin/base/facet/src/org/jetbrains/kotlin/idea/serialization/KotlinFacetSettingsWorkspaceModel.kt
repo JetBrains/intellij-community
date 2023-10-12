@@ -3,9 +3,14 @@ package org.jetbrains.kotlin.idea.serialization
 
 import org.jetbrains.kotlin.build.serializeToPlainText
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.copyOf
+import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinModuleSettingsSerializer
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
+import org.jetbrains.kotlin.idea.workspaceModel.toCompilerSettingsData
+import org.jetbrains.kotlin.idea.workspaceModel.toCompilerSettings
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -28,7 +33,19 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
         }
 
     override fun updateMergedArguments() {
-        TODO("Not yet implemented")
+        //_mergedCompilerArguments = computeMergedArguments()
+    }
+
+    private fun computeMergedArguments(): CommonCompilerArguments? {
+        val compilerArguments = compilerArguments
+        val compilerSettings = compilerSettings
+
+        return compilerArguments?.copyOf()?.apply {
+            if (compilerSettings != null) {
+                parseCommandLineArguments(compilerSettings.additionalArgumentsAsList, this)
+            }
+            if (this is K2JVMCompilerArguments) this.classpath = ""
+        }
     }
 
     private var _additionalVisibleModuleNames: Set<String> = entity.additionalVisibleModuleNames
@@ -43,23 +60,30 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
         if (entity.compilerArguments == "") null else KotlinModuleSettingsSerializer.serializeFromString(entity.compilerArguments) as? CommonCompilerArguments
         set(value) {
             field = value
+            updateMergedArguments()
         }
 
-    override var mergedCompilerArguments: CommonCompilerArguments? = null
+    override val mergedCompilerArguments: CommonCompilerArguments?
+        get() {
+            return computeMergedArguments()
+        }
 
     override var apiLevel: LanguageVersion?
         get() = compilerArguments?.apiVersion?.let { LanguageVersion.fromFullVersionString(it) }
         set(value) {
-
             compilerArguments?.updateCompilerArguments {
                 apiVersion = value?.versionString
             }
         }
 
+    private var _compilerSettings: CompilerSettings? = entity.compilerSettings.toCompilerSettings()
     override var compilerSettings: CompilerSettings?
-        get() = TODO("Not yet implemented")
-        set(value) {}
-
+        get() = _compilerSettings
+        set(value) {
+            entity.compilerSettings = value.toCompilerSettingsData()
+            _compilerSettings = value
+            updateMergedArguments()
+        }
 
     private var _dependsOnModuleNames: List<String> = entity.dependsOnModuleNames
     override var dependsOnModuleNames: List<String>

@@ -52,20 +52,27 @@ import org.jetbrains.kotlin.idea.notification.catchNotifications
 import org.jetbrains.kotlin.idea.test.resetCodeStyle
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.waitIndexingComplete
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import org.junit.Assert.assertNotEquals
+import org.junit.Assume
 import org.junit.Test
 import java.io.File
 
 abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolders: Boolean = true) : KotlinMavenImportingTestCase() {
     protected val kotlinVersion = "1.1.3"
 
+    private annotation class MppGoal
+
     override fun setUp() {
         super.setUp()
+        if(KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled) {
+            Assume.assumeFalse("Disable MPP import tests because Workspace model does not support it yet", this.javaClass.isAnnotationPresent(MppGoal::class.java))
+        }
         if (createStdProjectFolders) createStdProjectFolders()
     }
 
@@ -809,6 +816,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class JsFacetConfiguration : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJsFacetConfiguration() {
@@ -896,6 +904,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class JsCustomOutputPaths : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJsCustomOutputPaths() {
@@ -1112,6 +1121,9 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
          */
         @Test
         fun testFacetGetsExternalSource() {
+            // Disable test since we don't store this info anymore
+            if (KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled) return
+
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
 
 
@@ -1344,6 +1356,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class JsDetectionByGoalWithJsStdlib : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJsDetectionByGoalWithJsStdlib() {
@@ -1404,6 +1417,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class JsDetectionByGoalWithCommonStdlib15 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJsDetectionByGoalWithCommonStdlib() {
@@ -1464,6 +1478,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class JsAndCommonStdlibKinds : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJsAndCommonStdlibKinds() {
@@ -1532,6 +1547,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class CommonDetectionByGoalWithJvmStdlib1164 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testCommonDetectionByGoalWithJvmStdlib() {
@@ -1586,6 +1602,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class CommonDetectionByGoalWithCommonStdlib : AbstractKotlinMavenImporterTest() {
         @Test
         fun testCommonDetectionByGoalWithCommonStdlib() {
@@ -1644,6 +1661,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class JvmDetectionByConflictingGoalsAndJvmStdlib : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJvmDetectionByConflictingGoalsAndJvmStdlib() {
@@ -1702,6 +1720,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class JsDetectionByConflictingGoalsAndJsStdlib : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJsDetectionByConflictingGoalsAndJsStdlib() {
@@ -1760,6 +1779,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class CommonDetectionByConflictingGoalsAndCommonStdlib : AbstractKotlinMavenImporterTest() {
         @Test
         fun testCommonDetectionByConflictingGoalsAndCommonStdlib() {
@@ -1847,8 +1867,9 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                         <executions>
                             <execution>
                                 <id>compile</id>
+                                <phase>compile</phase>
                                 <goals>
-                                    <goal>js</goal>
+                                    <goal>compile</goal>
                                 </goals>
                             </execution>
                         </executions>
@@ -2354,17 +2375,12 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         private fun doUnsupportedVersionTest(version: String, expectedFallbackVersion: String = KotlinJpsPluginSettings.rawBundledVersion) {
             createProjectSubDirs("src/main/kotlin")
 
-            val mainPom = createProjectPom(
+            importProject(
                 """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1.0.0</version>
-                    <packaging>pom</packaging>
 
-                    <modules>
-                        <module>module1</module>
-                        <module>module2</module>
-                    </modules>
 
                     <build>
                         <sourceDirectory>src/main/kotlin</sourceDirectory>
@@ -2379,8 +2395,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                     </build>
                 """
             )
-
-            importProjects(mainPom)
 
             assertModules("project")
             assertImporterStatePresent()
@@ -2408,6 +2422,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal //TODO: write multimodule test for JVM only?
     class MultiModuleImport : AbstractKotlinMavenImporterTest() {
         @Test
         fun testMultiModuleImport() {
@@ -3179,6 +3194,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class JsDetectionByGoalWithJvmStdlib : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJsDetectionByGoalWithJvmStdlib() {
@@ -3239,6 +3255,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class CommonDetectionByGoalWithJsStdlib24 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testCommonDetectionByGoalWithJsStdlib() {
@@ -3322,8 +3339,9 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                         <executions>
                             <execution>
                                 <id>compile</id>
+                                <phase>compile</phase>
                                 <goals>
-                                    <goal>js</goal>
+                                    <goal>compile</goal>
                                 </goals>
                             </execution>
                         </executions>
@@ -3438,6 +3456,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @MppGoal
     class StableModuleNameWhileUsngMavenJS : AbstractKotlinMavenImporterTest() {
         @Test
         fun testStableModuleNameWhileUsngMaven_JS() {

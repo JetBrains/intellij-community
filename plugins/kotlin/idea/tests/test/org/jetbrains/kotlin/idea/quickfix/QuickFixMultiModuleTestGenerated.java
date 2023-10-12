@@ -129,9 +129,24 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualFakeOverride/");
         }
 
+        @TestMetadata("copyNotSuggestedWhenActualHasDefaultEmptyConstructor")
+        public void testCopyNotSuggestedWhenActualHasDefaultEmptyConstructor() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualHasDefaultEmptyConstructor/");
+        }
+
+        @TestMetadata("copyNotSuggestedWhenActualHasDefaultGetter")
+        public void testCopyNotSuggestedWhenActualHasDefaultGetter() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualHasDefaultGetter/");
+        }
+
         @TestMetadata("copyNotSuggestedWhenActualTypealias")
         public void testCopyNotSuggestedWhenActualTypealias() throws Exception {
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualTypealias/");
+        }
+
+        @TestMetadata("copyNotSuggestedWhenExpectWithUseSiteTarget")
+        public void testCopyNotSuggestedWhenExpectWithUseSiteTarget() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenExpectWithUseSiteTarget/");
         }
 
         @TestMetadata("copyToActualConstExpression")
@@ -187,6 +202,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         @TestMetadata("removeFromExpectSuggestedWhenActualFakeOverride")
         public void testRemoveFromExpectSuggestedWhenActualFakeOverride() throws Exception {
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualFakeOverride/");
+        }
+
+        @TestMetadata("removeFromExpectSuggestedWhenActualHasDefaultEmptyConstructor")
+        public void testRemoveFromExpectSuggestedWhenActualHasDefaultEmptyConstructor() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualHasDefaultEmptyConstructor/");
         }
 
         @TestMetadata("removeFromExpectSuggestedWhenActualHasNoSource")
