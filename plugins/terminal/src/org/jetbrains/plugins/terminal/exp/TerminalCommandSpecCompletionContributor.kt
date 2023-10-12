@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.DumbAware
 import com.intellij.terminal.completion.CommandSpecCompletion
 import org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager
 import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
@@ -14,7 +15,7 @@ import org.jetbrains.terminal.completion.ShellArgument
 import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellOption
 
-class TerminalCommandSpecCompletionContributor : CompletionContributor() {
+class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(TerminalSession.KEY)
     if (session == null || parameters.completionType != CompletionType.BASIC) {
