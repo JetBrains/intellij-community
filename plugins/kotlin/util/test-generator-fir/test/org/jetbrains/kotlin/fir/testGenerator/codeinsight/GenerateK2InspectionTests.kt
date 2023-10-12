@@ -73,6 +73,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         testClass<AbstractK2QuickFixTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
             model("${idea}/quickfix/redundantIf", pattern = pattern)
+            model("${idea}/quickfix/changeSignature", pattern = pattern)
             model("${idea}/quickfix/redundantModalityModifier", pattern = pattern)
             model("${idea}/quickfix/removeToStringInStringTemplate", pattern = pattern)
             model("${idea}/quickfix/suppress", pattern = pattern)

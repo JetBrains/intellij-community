@@ -6,3 +6,4 @@ fun test() {
     foo(1, <caret>"", 3, 4, 5)
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix
+// IGNORE_K2

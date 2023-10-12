@@ -6,3 +6,4 @@ fun f(x: Int, y: Int, z : () -> Int) {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeFunctionLiteralSignatureFix
+// IGNORE_K2

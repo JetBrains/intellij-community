@@ -9,3 +9,4 @@ fun foo(x: Int, i: Double) {
     foo(2, 3, sdsd);
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix
+// IGNORE_K2

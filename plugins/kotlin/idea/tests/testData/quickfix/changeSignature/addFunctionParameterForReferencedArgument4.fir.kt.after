@@ -1,12 +1,12 @@
 // "Add parameter to function 'foo'" "true"
 // DISABLE-ERRORS
-fun foo() {}
+fun foo(string: String) {}
 
 fun bar(f: (String) -> Unit) {}
 
 fun test() {
     bar {
-        foo(it<caret>)
+        foo(it)
     }
 }
 

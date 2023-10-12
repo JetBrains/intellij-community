@@ -4,7 +4,7 @@ sealed class Foo {
     class Sub2Foo : Foo()
 }
 
-fun fooFun(): Int = 1
+fun fooFun(subFoo1: Foo.SubFoo): Int = 1
 
 val subFoo: Foo = Foo.SubFoo()
 val bar = when(subFoo){
