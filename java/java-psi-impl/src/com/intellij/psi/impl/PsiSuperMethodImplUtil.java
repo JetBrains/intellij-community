@@ -228,7 +228,7 @@ public final class PsiSuperMethodImplUtil {
                                @NotNull Map<MethodSignature, HierarchicalMethodSignatureImpl> map,
                                @NotNull HierarchicalMethodSignature hierarchicalMethodSignature,
                                @NotNull MethodSignature signature) {
-    if (!isInterfaceStaticMethod(hierarchicalMethodSignature, aClass)) {
+    if (isInheritedInterfaceStaticMethod(hierarchicalMethodSignature, aClass)) {
       return;
     }
     HierarchicalMethodSignatureImpl existing = map.get(signature);
@@ -261,7 +261,7 @@ public final class PsiSuperMethodImplUtil {
     }
   }
 
-  private static boolean isInterfaceStaticMethod(@NotNull HierarchicalMethodSignature signature, @NotNull PsiClass aClass) {
+  private static boolean isInheritedInterfaceStaticMethod(@NotNull HierarchicalMethodSignature signature, @NotNull PsiClass aClass) {
     //static methods from interfaces are not inheritable
     //jls 8, 8.4.8. and 9.4.1., so we need to skip them
     PsiMethod method = signature.getMethod();
@@ -269,9 +269,9 @@ public final class PsiSuperMethodImplUtil {
     if (containingClass != null &&
         !aClass.getManager().areElementsEquivalent(aClass, containingClass) &&
         containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }
 
   private static boolean isReturnTypeIsMoreSpecificThan(@NotNull HierarchicalMethodSignature thisSig, @NotNull HierarchicalMethodSignature thatSig) {
@@ -328,9 +328,9 @@ public final class PsiSuperMethodImplUtil {
   /**
    *
    * @return
-   * - MERGE_SUPER if {@code superSignatureHierarchical} can be used as super method of {@code hierarchicalMethodSignature} regarding its return types
-   * - NOT_MERGE_SUPER if it can be used as a super method mostly to pass this method next to highlight it
-   * - FORCE_MERGE if this method must be applied as a super method not taking into account its return types
+   * - MERGE_SUPER if {@code superSignatureHierarchical} can be used as super method of {@code hierarchicalMethodSignature} regarding its return type
+   * - NOT_MERGE_SUPER if it cannot be used as a super method. See  {@link PsiSuperMethodImplUtil#putInMap(PsiClass, Map, Map, HierarchicalMethodSignature, MethodSignature)}
+   * - FORCE_MERGE if this method must be applied as a super method not taking into account its return type
    */
   @NotNull
   private static MergeSuperType solveMergeSuperType(@NotNull PsiClass aClass,
