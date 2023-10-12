@@ -4,11 +4,13 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -57,18 +59,22 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     return findUsages(myChangeInfo);
   }
 
-  public static void collectConflictsFromExtensions(@NotNull Ref<UsageInfo[]> refUsages,
-                                                    MultiMap<PsiElement, @DialogMessage String> conflictDescriptions,
-                                                    ChangeInfo changeInfo) {
-    for (ChangeSignatureUsageProcessor usageProcessor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
-      final MultiMap<PsiElement, @DialogMessage String> conflicts = usageProcessor.findConflicts(changeInfo, refUsages);
-      for (PsiElement key : conflicts.keySet()) {
-        Collection<String> collection = conflictDescriptions.get(key);
-        if (collection.isEmpty()) collection = new HashSet<>();
-        collection.addAll(conflicts.get(key));
-        conflictDescriptions.put(key, collection);
+  public static void collectConflictsFromExtensions(@NotNull final Ref<UsageInfo[]> refUsages,
+                                                    final MultiMap<PsiElement, @DialogMessage String> conflictDescriptions,
+                                                    final ChangeInfo changeInfo) {
+    Computable<Boolean> computable = () -> {
+      for (ChangeSignatureUsageProcessor usageProcessor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
+        final MultiMap<PsiElement, @DialogMessage String> conflicts = usageProcessor.findConflicts(changeInfo, refUsages);
+        for (PsiElement key : conflicts.keySet()) {
+          Collection<String> collection = conflictDescriptions.get(key);
+          if (collection.isEmpty()) collection = new HashSet<>();
+          collection.addAll(conflicts.get(key));
+          conflictDescriptions.put(key, collection);
+        }
       }
-    }
+      return true;
+    };
+    ActionUtil.underModalProgress(changeInfo.getMethod().getProject(), RefactoringBundle.message("detecting.possible.conflicts"), computable);
   }
 
   public static UsageInfo @NotNull [] findUsages(ChangeInfo changeInfo) {
