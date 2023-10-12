@@ -28,7 +28,7 @@ abstract class AbstractToolbarCombo : JComponent(), UiInspectorContextProvider, 
 
   protected fun fireUpdateEvents(prop: KProperty<*>, oldValue: Any?, newValue: Any?) {
     firePropertyChange(prop.name, oldValue, newValue)
-    invalidate()
+    revalidate()
     repaint()
   }
 
