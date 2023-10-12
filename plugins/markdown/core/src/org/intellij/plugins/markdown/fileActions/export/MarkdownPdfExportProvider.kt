@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.fileActions.export
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.cef.misc.CefPdfPrintSettings
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -26,7 +27,10 @@ internal class MarkdownPdfExportProvider : MarkdownExportProvider {
     if (htmlPanel is MarkdownJCEFHtmlPanel) {
       htmlPanel.savePdf(outputFile, project) { path, ok ->
         if (ok) {
-          notifyAndRefreshIfExportSuccess(File(path), project)
+          val file = VfsUtil.findFileByIoFile(File(path), false)
+          if (file != null) {
+            notifyAndRefreshIfExportSuccess(file, project)
+          }
         }
         else {
           MarkdownNotifications.showError(
@@ -49,8 +53,10 @@ internal class MarkdownPdfExportProvider : MarkdownExportProvider {
 
   private fun MarkdownJCEFHtmlPanel.savePdf(path: String, project: Project, resultCallback: BiConsumer<String, Boolean>) {
     cefBrowser.printToPDF(path, CefPdfPrintSettings()) { _, ok ->
-      val dirToExport = File(path).parent
-      MarkdownImportExportUtils.refreshProjectDirectory(project, dirToExport)
+      val dirToExport = VfsUtil.findFileByIoFile(File(path), false)?.parent
+      if (dirToExport != null) {
+        MarkdownImportExportUtils.refreshProjectDirectory(project, dirToExport.path)
+      }
 
       resultCallback.accept(path, ok)
     }

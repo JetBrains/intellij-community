@@ -93,7 +93,10 @@ internal abstract class MarkdownFileActionsBaseDialog(
       writeFile(fileUrl, targetDirPath)
     }
 
-    FileChooserUtil.setLastOpenedFile(project, srcDirectory.virtualFile.toNioPath())
+    val path = srcDirectory.virtualFile.fileSystem.getNioPath(srcDirectory.virtualFile)
+    if (path != null) {
+      FileChooserUtil.setLastOpenedFile(project, path)
+    }
     RecentsManager.getInstance(project).registerRecentEntry(RECENT_KEYS, targetDirPath)
     super.doOKAction()
   }

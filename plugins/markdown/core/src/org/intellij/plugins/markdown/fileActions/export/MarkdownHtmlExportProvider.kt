@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextComponentAccessors
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.RecentsManager
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
@@ -50,7 +51,10 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
     if (htmlPanel is MarkdownJCEFHtmlPanel) {
       htmlPanel.saveHtml(outputFile, service<MarkdownHtmlExportSettings>().getResourceSavingSettings(), project) { path, ok ->
         if (ok) {
-          notifyAndRefreshIfExportSuccess(File(path), project)
+          val file = VfsUtil.findFileByIoFile(File(path), false)
+          if (file != null) {
+            notifyAndRefreshIfExportSuccess(file, project)
+          }
         }
         else {
           MarkdownNotifications.showError(
@@ -71,7 +75,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
     return null
   }
 
-  override fun Panel.createSettingsComponent(project: Project, suggestedTargetFile: File): RowsRange {
+  override fun Panel.createSettingsComponent(project: Project, suggestedTargetFile: VirtualFile): RowsRange {
     val resourceDirField = createResourceDirField(project, suggestedTargetFile)
 
     return rowsRange {
@@ -97,7 +101,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
     }
   }
 
-  private fun createResourceDirField(project: Project, suggestedTargetFile: File): TextFieldWithHistoryWithBrowseButton {
+  private fun createResourceDirField(project: Project, suggestedTargetFile: VirtualFile): TextFieldWithHistoryWithBrowseButton {
     return TextFieldWithHistoryWithBrowseButton().apply {
       setTextFieldPreferredWidth(MarkdownFileActionsBaseDialog.MAX_PATH_LENGTH)
 
@@ -106,7 +110,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
         childComponent.history = resDirRecent
       }
 
-      val suggestedDir = FileUtil.join(suggestedTargetFile.parent, suggestedTargetFile.nameWithoutExtension)
+      val suggestedDir = FileUtil.join(suggestedTargetFile.parent.path, suggestedTargetFile.nameWithoutExtension)
       if (resDirRecent == null && childComponent.history.isEmpty()) {
         childComponent.history = listOf(suggestedDir)
       }
