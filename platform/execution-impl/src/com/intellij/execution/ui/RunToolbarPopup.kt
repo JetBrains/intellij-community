@@ -43,6 +43,7 @@ import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupModel
+import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.Attribute
@@ -568,6 +569,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
       }
     }.toMutableSet()
     _state = State(_state.history, newPinned, _state.allConfigurationsExpanded)
+    project.messageBus.syncPublisher(TOPIC).togglePin(setting)
   }
 
   fun reorderItems(from: Int, where: Int) {
@@ -581,6 +583,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     _state = State(_state.history.take(max(5, _state.pinned.size + recentLimit*2)).toMutableList().apply {
       add(0, Element(setting.uniqueID))
     }.toMutableSet(), _state.pinned, _state.allConfigurationsExpanded)
+    project.messageBus.syncPublisher(TOPIC).register(setting)
   }
 
   private var _state = State()
@@ -591,9 +594,16 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     _state = state
   }
 
+  interface Listener {
+    fun togglePin(setting: RunnerAndConfigurationSettings) {}
+    fun register(setting: RunnerAndConfigurationSettings) {}
+  }
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): RunConfigurationStartHistory = project.service()
+
+    val TOPIC = Topic("RunConfigurationStartHistory events", Listener::class.java)
   }
 }
 
