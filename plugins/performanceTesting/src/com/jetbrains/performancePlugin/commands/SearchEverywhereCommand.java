@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.commands;
 
+import com.intellij.find.impl.TextSearchContributor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.*;
@@ -72,6 +73,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
 
     Ref<String> tabId = new Ref<>();
     switch (tab) {
+      case "text" -> tabId.set(TextSearchContributor.class.getSimpleName());
       case "file" -> tabId.set(FileSearchEverywhereContributor.class.getSimpleName());
       case "class" -> tabId.set(ClassSearchEverywhereContributor.class.getSimpleName());
       case "action" -> tabId.set(ActionSearchEverywhereContributor.class.getSimpleName());
