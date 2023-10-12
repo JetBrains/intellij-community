@@ -3,7 +3,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -55,7 +54,14 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public boolean isSnapshot() {
-    return ArrayUtil.indexOf(myComponents, SNAPSHOT_VALUE) != -1;
+    int result = -1;
+    for (int i = 0; i < myComponents.length; i++) {
+      if (myComponents[i] == SNAPSHOT_VALUE) {
+        result = i;
+        break;
+      }
+    }
+    return result != -1;
   }
 
   @Contract(pure = true)
@@ -127,7 +133,10 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static @Nullable BuildNumber fromString(@NotNull String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
-    if (version.isEmpty()) return null;
+    if (version.isEmpty()) {
+      return null;
+    }
+
     String code = version;
     int productSeparator = code.indexOf('-');
     String productCode;
@@ -136,7 +145,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
       code = code.substring(productSeparator + 1);
     }
     else {
-      productCode = productCodeIfAbsentInVersion != null ? productCodeIfAbsentInVersion : "";
+      productCode = productCodeIfAbsentInVersion == null ? "" : productCodeIfAbsentInVersion;
     }
 
     if (SNAPSHOT.equals(code) || isPlaceholder(code)) {
@@ -152,17 +161,17 @@ public final class BuildNumber implements Comparable<BuildNumber> {
       }
 
       String[] stringComponents = code.split("\\.");
-      int[] intComponentsList = new int[stringComponents.length];
+      int[] intComponentList = new int[stringComponents.length];
       for (int i = 0, n = stringComponents.length; i < n; i++) {
         String stringComponent = stringComponents[i];
-        int comp = parseBuildNumber(version, stringComponent, pluginName);
-        intComponentsList[i] = comp;
-        if (comp == SNAPSHOT_VALUE && (i + 1) != n) {
-          intComponentsList = Arrays.copyOf(intComponentsList, i + 1);
+        int component = parseBuildNumber(version, stringComponent, pluginName);
+        intComponentList[i] = component;
+        if (component == SNAPSHOT_VALUE && (i + 1) != n) {
+          intComponentList = Arrays.copyOf(intComponentList, i + 1);
           break;
         }
       }
-      return new BuildNumber(productCode, intComponentsList);
+      return new BuildNumber(productCode, intComponentList);
     }
     else {
       int buildNumber = parseBuildNumber(version, code, pluginName);
