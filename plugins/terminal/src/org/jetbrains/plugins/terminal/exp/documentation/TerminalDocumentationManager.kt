@@ -75,6 +75,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     Disposer.register(popup) {
       EDT.assertIsEdt()
       currentPopup = null
+      popupScope.coroutineContext.job.cancelChildren()
     }
   }
 
@@ -86,7 +87,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     val lookupElementFlow = lookup.elementFlow()
     val showDocJob = scope.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
       lookupElementFlow.collectLatest {
-        handleLookupElementChange(lookup, it, parentDisposable)
+        showDocumentationForItem(lookup, it, parentDisposable)
       }
     }
     Disposer.register(parentDisposable) {
@@ -94,7 +95,8 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     }
   }
 
-  private fun handleLookupElementChange(lookup: LookupEx, element: LookupElement, parentDisposable: Disposable) {
+  @RequiresEdt
+  fun showDocumentationForItem(lookup: LookupEx, element: LookupElement, parentDisposable: Disposable) {
     if (getCurrentPopup() != null) {
       return
     }
@@ -141,7 +143,6 @@ internal class TerminalDocumentationManager(private val project: Project, privat
   private fun cancelPopup() {
     EDT.assertIsEdt()
     getCurrentPopup()?.cancel()
-    popupScope.coroutineContext.job.cancelChildren()
   }
 
   private fun createDocPopupComponent(docComponent: DocumentationComponent, parentDisposable: Disposable): JComponent {
