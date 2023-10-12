@@ -344,21 +344,12 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/vigna/fastutil")
       .apache("https://github.com/vigna/fastutil/blob/master/LICENSE-2.0")
       .suppliedByPersons("Sebastiano Vigna"),
-    LibraryLicense(name = "ffmpeg", libraryName = "ffmpeg",
-                   url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco",
-                   license = "LGPL v2.1+",
-                   licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
-    LibraryLicense(name = "ffmpeg-javacpp", libraryName = "ffmpeg-javacpp",
-                   url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco",
-                   license = "LGPL v2.1+",
-                   licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
-    LibraryLicense(name = "ffmpeg-platform", libraryName = "ffmpeg-platform",
-                   url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco",
-                   license = "LGPL v2.1+",
-                   licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.1.1/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
+    ffmpegLibraryLicense("ffmpeg"),
+    ffmpegLibraryLicense("ffmpeg-javacpp"),
+    ffmpegLibraryLicense("ffmpeg-linux-x64"),
+    ffmpegLibraryLicense("ffmpeg-macos-aarch64"),
+    ffmpegLibraryLicense("ffmpeg-macos-x64"),
+    ffmpegLibraryLicense("ffmpeg-windows-x64"),
     LibraryLicense(name = "FiraCode", attachedTo = "intellij.platform.resources", version = "1.206", license = "OFL",
                    url = "https://github.com/tonsky/FiraCode", licenseUrl = "https://github.com/tonsky/FiraCode/blob/master/LICENSE"),
     // for flatbuffers-java module library in android.sdktools.mlkit-common
@@ -572,6 +563,10 @@ object CommunityLibraryLicenses {
                    license = "CDDL 1.1 / GPL 2.0 + Classpath",
                    licenseUrl = "https://github.com/javaee/activation/blob/master/LICENSE.txt")
       .suppliedByPersons("Bill Shannon"),
+    ffmpegLibraryLicense("javacpp-linux-x64"),
+    ffmpegLibraryLicense("javacpp-macos-aarch64"),
+    ffmpegLibraryLicense("javacpp-macos-x64"),
+    ffmpegLibraryLicense("javacpp-windows-x64"),
     LibraryLicense(name = "javaslang", libraryName = "javaslang", url = "https://javaslang.io/").apache()
       .suppliedByPersons("Daniel Dietrich"),
     LibraryLicense(name = "javawriter", attachedTo = "intellij.android.core",
@@ -1285,6 +1280,16 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("tips-pycharm-community"),
     jetbrainsLibrary("workspace-model-codegen"),
   )
+
+  private fun ffmpegLibraryLicense(libraryName: String): LibraryLicense {
+    return LibraryLicense(
+      name = libraryName,
+      libraryName = libraryName,
+      url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.3.1-beta2/common/m2/repository/org/bytedeco",
+      license = "LGPL v2.1+",
+      licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.3.1-beta2/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md"
+    ).suppliedByOrganizations(Suppliers.GOOGLE)
+  }
 
   private fun androidDependency(name: String, libraryName: String = name, version: String? = null) =
     LibraryLicense(name = name, libraryName = libraryName, version = version,
