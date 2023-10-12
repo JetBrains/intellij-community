@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 
 interface ThreadingSupport {
@@ -51,6 +53,7 @@ interface ThreadingSupport {
 
   /**
    * Runs specified action with disabled implicit read lock if this feature is enabled with system property.
+   *
    * @see com.intellij.idea.StartupUtil.isImplicitReadOnEDTDisabled
    * @param runnable action to run with disabled implicit read lock.
    */
@@ -59,9 +62,60 @@ interface ThreadingSupport {
 
   /**
    * Runs specified action with enabled implicit read lock if this feature is enabled with system property.
+   *
    * @see com.intellij.idea.StartupUtil.isImplicitReadOnEDTDisabled
    * @param runnable action to run with enabled implicit read lock.
    */
   @ApiStatus.Internal
   fun runWithImplicitRead(runnable: Runnable)
+
+  /**
+   * Runs the specified read action. Can be called from any thread. The action is executed immediately
+   * if no write action is currently running, or blocked until the currently running write action completes.
+   *
+   * See also [ReadAction.run] for a more lambda-friendly version.
+   *
+   * @param action the action to run.
+   * @see CoroutinesKt.readAction
+   *
+   * @see CoroutinesKt.readActionBlocking
+   */
+  @RequiresBlockingContext
+  fun runReadAction(action: Runnable) {
+    runReadAction(ThrowableComputable  { action.run() })
+  }
+
+  /**
+   * Runs the specified computation in a read action. Can be called from any thread. The action is executed
+   * immediately if no write action is currently running, or blocked until the currently running write action
+   * completes.
+   *
+   * See also [ReadAction.compute] for a more lambda-friendly version.
+   *
+   * @param computation the computation to perform.
+   * @return the result returned by the computation.
+   * @see CoroutinesKt.readAction
+   * @see CoroutinesKt.readActionBlocking
+   */
+  @RequiresBlockingContext
+  fun <T> runReadAction(computation: Computable<T>): T {
+    return runReadAction(ThrowableComputable { computation.compute() })
+  }
+
+  /**
+   * Runs the specified computation in a read action. Can be called from any thread. The action is executed
+   * immediately if no write action is currently running, or blocked until the currently running write action
+   * completes.
+   *
+   * See also [ReadAction.compute] for a more lambda-friendly version.
+   *
+   * @param computation the computation to perform.
+   * @return the result returned by the computation.
+   * @throws E re-frown from ThrowableComputable
+   * @see CoroutinesKt.readAction
+   * @see CoroutinesKt.readActionBlocking
+   */
+  @RequiresBlockingContext
+  // @Throws(E::class)
+  fun <T, E : Throwable?> runReadAction(computation: ThrowableComputable<T, E>): T
 }
