@@ -37,6 +37,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
            Objects.equals(myGroupName, template.myGroupName) &&
            Objects.equals(myKey, template.myKey) &&
            string().equals(template.string()) &&
+           getValue(Property.USE_STATIC_IMPORT_IF_POSSIBLE) == template.getValue(Property.USE_STATIC_IMPORT_IF_POSSIBLE) &&
            (templateText() != null ? templateText().equals(template.templateText()) : template.templateText() == null) &&
            new HashSet<>(myVariables).equals(new HashSet<>(template.myVariables)) && isDeactivated == template.isDeactivated;
   }
