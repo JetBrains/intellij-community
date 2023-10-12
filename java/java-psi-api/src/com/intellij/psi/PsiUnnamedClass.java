@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * but have at least one member to be considered an unnamed class)
  */
 @ApiStatus.Experimental
-public interface PsiUnnamedClass extends PsiClass {
+public interface PsiUnnamedClass extends PsiClass, SyntheticElement {
   @Contract("-> null")
   @Override
   @Nullable String getQualifiedName();

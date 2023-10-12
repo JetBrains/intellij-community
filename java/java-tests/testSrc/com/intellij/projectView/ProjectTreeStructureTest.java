@@ -48,7 +48,6 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
         Class2
         Class3
        Class4.java
-        PsiUnnamedClass
        Form1
        Form1.form
        Form2.form
