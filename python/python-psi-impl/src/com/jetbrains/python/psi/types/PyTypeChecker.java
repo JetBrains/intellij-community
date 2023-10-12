@@ -1184,12 +1184,20 @@ public final class PyTypeChecker {
   public static GenericSubstitutions unifyGenericCall(@Nullable PyExpression receiver,
                                                       @NotNull Map<PyExpression, PyCallableParameter> arguments,
                                                       @NotNull TypeEvalContext context) {
+    // UnifyReceiver retains the information about type parameters of ancestor generic classes,
+    // which might be necessary if a method being called is defined in one them, not in the actual
+    // class of the receiver. In theory, it could be replaced by matching the type of self parameter
+    // with the receiver uniformly with the rest of the arguments.
     final var substitutions = unifyReceiver(receiver, context);
     for (Map.Entry<PyExpression, PyCallableParameter> entry : getRegularMappedParameters(arguments).entrySet()) {
       final PyCallableParameter paramWrapper = entry.getValue();
       final PyType expectedType = paramWrapper.getArgumentType(context);
       final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(entry.getKey(), expectedType, context, substitutions);
       var actualType = promotedToLiteral != null ? promotedToLiteral : context.getType(entry.getKey());
+      // Matching with the type of "self" is necessary in particular for choosing the most specific overloads, e.g.
+      // LiteralString-specific methods of str, or for instantiating the type parameters of the containing class
+      // when it's not possible to infer them by other means, e.g. as in the following overload of dict[_KT, _VT].__init__:
+      // def __init__(self: dict[str, _VT], **kwargs: _VT) -> None: ...
       if (paramWrapper.isSelf()) {
         // TODO find out a better way to pass the corresponding function inside
         final PyParameter param = paramWrapper.getParameter();
