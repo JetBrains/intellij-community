@@ -16,7 +16,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
     return (ApplicationInfoEx)getInstance();
   }
 
-  public abstract Calendar getMajorReleaseBuildDate();
+  public abstract @NotNull Calendar getMajorReleaseBuildDate();
 
   /**
    * Returns a path to an SVG icon of the product.

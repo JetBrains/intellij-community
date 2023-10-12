@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 /**
@@ -60,8 +62,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySmallSvgEapIconUrl;
   private String myWelcomeScreenLogoUrl;
 
-  private Calendar myBuildDate;
-  private Calendar myMajorReleaseBuildDate;
+  private ZonedDateTime buildDate;
+  private ZonedDateTime majorReleaseBuildDate;
   private String myProductUrl;
   private UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
@@ -313,30 +315,27 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   public static @NotNull String orFromPluginsCompatibleBuild(@Nullable BuildNumber buildNumber) {
-    BuildNumber number = buildNumber != null ? buildNumber : getShadowInstanceImpl().getPluginsCompatibleBuildAsNumber();
+    BuildNumber number = buildNumber == null ? getShadowInstanceImpl().getPluginsCompatibleBuildAsNumber() : buildNumber;
     return number.asString();
   }
 
   @Override
   public Calendar getBuildDate() {
-    if (myBuildDate == null) {
-      myBuildDate = Calendar.getInstance();
-    }
-    return myBuildDate;
-  }
-
-  @Override
-  public long getBuildUnixTimeInMillis() {
-    Calendar buildDate = myBuildDate;
     if (buildDate == null) {
-      return 0;
+      buildDate = ZonedDateTime.now();
     }
-    return buildDate.getTimeInMillis();
+    return GregorianCalendar.from(buildDate);
   }
 
   @Override
-  public Calendar getMajorReleaseBuildDate() {
-    return myMajorReleaseBuildDate != null ? myMajorReleaseBuildDate : myBuildDate;
+  public long getBuildUnixTime() {
+    ZonedDateTime buildDate = this.buildDate;
+    return buildDate == null ? 0 : buildDate.toEpochSecond();
+  }
+
+  @Override
+  public @NotNull Calendar getMajorReleaseBuildDate() {
+    return majorReleaseBuildDate == null ? getBuildDate() : GregorianCalendar.from(majorReleaseBuildDate);
   }
 
   @Override
@@ -624,12 +623,12 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     String dateString = element.getAttributeValue("date");
     if (dateString != null && !dateString.equals("__BUILD_DATE__")) {
-      myBuildDate = parseDate(dateString);
+      buildDate = parseDate(dateString);
     }
 
     String majorReleaseDateString = element.getAttributeValue("majorReleaseDate");
     if (majorReleaseDateString != null) {
-      myMajorReleaseBuildDate = parseDate(majorReleaseDateString);
+      majorReleaseBuildDate = parseDate(majorReleaseDateString);
     }
   }
 
@@ -689,23 +688,27 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return name;
   }
 
-  private static GregorianCalendar parseDate(String dateString) {
-    GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+  private static @Nullable ZonedDateTime parseDate(@NotNull String dateString) {
     try {
-      calendar.set(Calendar.YEAR, Integer.parseInt(dateString.substring(0, 4)));
-      calendar.set(Calendar.MONTH, Integer.parseInt(dateString.substring(4, 6)) - 1);
-      calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(dateString.substring(6, 8)));
+      int year = Integer.parseInt(dateString.substring(0, 4));
+      // 0-based for old GregorianCalendar and 1-based for ZonedDateTime
+      int month = Integer.parseInt(dateString.substring(4, 6));
+      int dayOfMonth = Integer.parseInt(dateString.substring(6, 8));
+      int hour;
+      int minute;
       if (dateString.length() > 8) {
-        calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(dateString.substring(8, 10)));
-        calendar.set(Calendar.MINUTE, Integer.parseInt(dateString.substring(10, 12)));
+        hour = Integer.parseInt(dateString.substring(8, 10));
+        minute = Integer.parseInt(dateString.substring(10, 12));
       }
       else {
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
+        hour = 0;
+        minute = 0;
       }
+      return ZonedDateTime.of(year, month, dayOfMonth, hour, minute, 0, 0, ZoneOffset.UTC);
     }
-    catch (Exception ignore) { }
-    return calendar;
+    catch (Exception ignore) {
+      return null;
+    }
   }
 
   @ReviseWhenPortedToJDK("9")

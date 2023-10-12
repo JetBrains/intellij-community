@@ -314,7 +314,7 @@ private fun loadImageFromCache(file: Path, scale: Float, isJreHiDPIEnabled: Bool
 }
 
 private fun getCacheFile(scale: Float, appInfo: ApplicationInfo, path: String): Path {
-  val buildTime = appInfo.buildUnixTimeInMillis
+  val buildTime = appInfo.buildUnixTime
   if (buildTime == 0L) {
     val hasher = Hashing.komihash5_0().hashStream()
     val appInfoData = ApplicationNamesInfo.getAppInfoData()
