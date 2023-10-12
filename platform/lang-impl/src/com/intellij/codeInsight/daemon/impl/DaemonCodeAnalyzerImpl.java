@@ -281,6 +281,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       }
     }
     infos.removeAll(infosToRemove);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("cleanFileLevelHighlights infosToRemove:" + infosToRemove);
+    }
   }
 
   @Override
@@ -318,6 +321,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                                                                   psiFile, ((TextEditor)fileEditor).getEditor(), info.getToolTip());
           fileEditorManager.addTopComponent(fileEditor, component);
           info.addFileLeverComponent(fileEditor, component);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("addFileLevelHighlight [" + info + "]: fileLevelInfos:" + fileLevelInfos);
+          }
         }
       }
     }
