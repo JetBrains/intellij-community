@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
+import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.DiffUtil
@@ -12,7 +13,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diff.DefaultFlagsProvider
-import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -31,7 +31,6 @@ import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions
 import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
 import com.intellij.openapi.vcs.ex.Range
-import com.intellij.ui.ColorUtil
 import com.intellij.ui.EditorTextField
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -47,23 +46,16 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: 
                                                              private val editor: Editor,
                                                              disposable: Disposable)
   : LineStatusMarkerRendererWithPopup(editor.project, editor.document, model, disposable, { it === editor }) {
-  private val colorScheme = object : LineStatusMarkerColorScheme() {
-    // TODO: extract color
-    private val reviewChangesColor = ColorUtil.fromHex("#A177F4")
-
-    override fun getColor(editor: Editor, type: Byte): Color = reviewChangesColor
-    override fun getIgnoredBorderColor(editor: Editor, type: Byte): Color = reviewChangesColor
-    override fun getErrorStripeColor(type: Byte): Color = reviewChangesColor
-  }
 
   override fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {
-    LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, DefaultFlagsProvider.DEFAULT, colorScheme, 0)
+    LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, DefaultFlagsProvider.DEFAULT,
+                                          ReviewInEditorUtil.REVIEW_STATUS_MARKER_COLOR_SCHEME, 0)
   }
 
-  override fun createErrorStripeTextAttributes(diffType: Byte): TextAttributes = ReviewChangesTextAttributes(diffType)
+  override fun createErrorStripeTextAttributes(diffType: Byte): TextAttributes = ReviewChangesTextAttributes()
 
-  private inner class ReviewChangesTextAttributes(private val diffType: Byte) : TextAttributes() {
-    override fun getErrorStripeColor(): Color = colorScheme.getErrorStripeColor(diffType)
+  private inner class ReviewChangesTextAttributes : TextAttributes() {
+    override fun getErrorStripeColor(): Color = ReviewInEditorUtil.REVIEW_CHANGES_STATUS_COLOR
   }
 
   override fun createPopupPanel(editor: Editor,
