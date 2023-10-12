@@ -22,7 +22,7 @@ import org.jetbrains.uast.UParameter;
 
 import java.util.List;
 
-public class UnsafeReturnStatementVisitorInspection extends DevKitUastInspectionBase {
+public final class UnsafeReturnStatementVisitorInspection extends DevKitUastInspectionBase {
 
   private static final @NonNls String BASE_WALKING_VISITOR_NAME = JavaRecursiveElementWalkingVisitor.class.getName();
   private static final @NonNls String BASE_VISITOR_NAME = JavaRecursiveElementVisitor.class.getName();

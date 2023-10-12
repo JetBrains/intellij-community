@@ -17,7 +17,7 @@ import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-class IncorrectParentDisposableInspection : DevKitUastInspectionBase() {
+internal class IncorrectParentDisposableInspection : DevKitUastInspectionBase() {
 
   override fun isAllowed(holder: ProblemsHolder): Boolean = DevKitInspectionUtil.isAllowedInPluginsOnly(holder.file)
 

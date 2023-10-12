@@ -25,10 +25,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class UseGrayInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
+public final class UseGrayInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
 
   private static final String AWT_COLOR_CLASS_NAME = Color.class.getName();
   private static final String GRAY_CLASS_NAME = Gray.class.getName();

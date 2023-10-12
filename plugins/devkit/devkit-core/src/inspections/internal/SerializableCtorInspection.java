@@ -27,11 +27,11 @@ import java.util.Objects;
 
 import static com.intellij.lang.jvm.actions.AnnotationRequestsKt.annotationRequest;
 
-public class SerializableCtorInspection extends DevKitUastInspectionBase {
+final class SerializableCtorInspection extends DevKitUastInspectionBase {
 
   private static final String PROPERTY_MAPPING_ANNOTATION = "com.intellij.serialization.PropertyMapping";
 
-  public SerializableCtorInspection() {
+  SerializableCtorInspection() {
     super(UClass.class);
   }
 

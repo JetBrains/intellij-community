@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
+public final class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
 
   @NonNls
   private static final Map<String, String> CLASSES = Map.of(

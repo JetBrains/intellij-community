@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -47,7 +47,7 @@ import java.util.Objects;
 
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 
-public final class MessageBundleReferenceContributor extends PsiReferenceContributor {
+final class MessageBundleReferenceContributor extends PsiReferenceContributor {
   @NonNls private static final String ACTION = "action.";
   @NonNls private static final String GROUP = "group.";
   @NonNls private static final String TEXT = ".text";
@@ -368,7 +368,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
   }
 
 
-  public static class ImplicitUsageProvider implements ImplicitPropertyUsageProvider {
+  final static class ImplicitUsageProvider implements ImplicitPropertyUsageProvider {
 
     @NonNls private static final String ICON_TOOLTIP_PREFIX = "icon.";
     @NonNls private static final String ICON_TOOLTIP_SUFFIX = ".tooltip";

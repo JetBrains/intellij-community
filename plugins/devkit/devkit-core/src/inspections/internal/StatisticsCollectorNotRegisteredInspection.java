@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.lang.jvm.DefaultJvmElementVisitor;
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.processExtensionDeclarations;
 
-public class StatisticsCollectorNotRegisteredInspection extends DevKitJvmInspection {
+public final class StatisticsCollectorNotRegisteredInspection extends DevKitJvmInspection {
   public static final String FEATURE_USAGES_COLLECTOR = "com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector";
 
   @Nullable

@@ -9,7 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
 
-class IntelliJModuleRepositoryBuildScopeProvider : BuildTargetScopeProvider() {
+internal class IntelliJModuleRepositoryBuildScopeProvider : BuildTargetScopeProvider() {
   override fun getBuildTargetScopes(baseScope: CompileScope,
                                     project: Project,
                                     forceBuild: Boolean): List<TargetTypeBuildScope> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.icons.AllIcons;
@@ -8,9 +8,9 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import javax.swing.*;
 
-public class PluginDescriptorDomFileDescription extends DomFileDescription<IdeaPlugin> {
+final class PluginDescriptorDomFileDescription extends DomFileDescription<IdeaPlugin> {
 
-  public PluginDescriptorDomFileDescription() {
+  PluginDescriptorDomFileDescription() {
     super(IdeaPlugin.class, IdeaPlugin.TAG_NAME);
   }
 

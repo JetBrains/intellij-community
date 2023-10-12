@@ -29,7 +29,7 @@ import java.util.*
 
 private const val serviceBeanFqn = "com.intellij.openapi.components.ServiceDescriptor"
 
-class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.java) {
+internal class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.java) {
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
     // Groovy from test data - ignore it

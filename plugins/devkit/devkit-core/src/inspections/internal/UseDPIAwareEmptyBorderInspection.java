@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -10,7 +10,7 @@ import org.jetbrains.uast.UCallExpression;
 
 import javax.swing.border.EmptyBorder;
 
-public class UseDPIAwareEmptyBorderInspection extends AbstractUseDPIAwareBorderInspection {
+final class UseDPIAwareEmptyBorderInspection extends AbstractUseDPIAwareBorderInspection {
   private static final String SWING_EMPTY_BORDER_CLASS_NAME = EmptyBorder.class.getName();
   private static final String JB_UI_CLASS_NAME = JBUI.class.getName();
   private static final String JB_UI_BORDERS_CLASS_NAME = JB_UI_CLASS_NAME + ".Borders";

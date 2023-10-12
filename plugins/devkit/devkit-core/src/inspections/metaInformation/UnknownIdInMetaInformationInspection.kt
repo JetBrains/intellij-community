@@ -17,8 +17,7 @@ import org.jetbrains.idea.devkit.util.DevKitDomUtil
 import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import java.util.concurrent.atomic.AtomicBoolean
 
-
-class UnknownIdInMetaInformationInspection : LocalInspectionTool() {
+internal class UnknownIdInMetaInformationInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (!isAllowed(holder)) return PsiElementVisitor.EMPTY_VISITOR
     return object : JsonElementVisitor() {

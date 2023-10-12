@@ -17,7 +17,7 @@ import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 private val SKIPPED_ERROR_TYPES: Set<MessageFormatErrorType> = setOf(MessageFormatErrorType.INDEX_NEGATIVE,
                                                                      MessageFormatErrorType.UNPARSED_INDEX)
 
-class DevKitPropertiesMessageValidationInspection : PropertiesInspectionBase() {
+internal class DevKitPropertiesMessageValidationInspection : PropertiesInspectionBase() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (!DevKitInspectionUtil.isAllowed(holder.file)) {
       return PsiElementVisitor.EMPTY_VISITOR

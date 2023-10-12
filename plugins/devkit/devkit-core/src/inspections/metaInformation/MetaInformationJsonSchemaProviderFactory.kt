@@ -8,7 +8,7 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
 import com.jetbrains.jsonSchema.extension.SchemaType
 import org.jetbrains.idea.devkit.DevKitBundle
 
-class MetaInformationJsonSchemaProviderFactory : JsonSchemaProviderFactory {
+internal class MetaInformationJsonSchemaProviderFactory : JsonSchemaProviderFactory {
   override fun getProviders(project: Project): List<JsonSchemaFileProvider> {
     return listOf(MetaInformationJsonSchemaProvider(project))
   }
