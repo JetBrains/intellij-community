@@ -57,7 +57,7 @@ class BuildContextImpl(
   override val generateRuntimeModuleRepository: Boolean
     get() = useModularLoader || isEmbeddedJetBrainsClientEnabled && options.generateRuntimeModuleRepository
   
-  override val applicationInfo = ApplicationInfoPropertiesImpl(this)
+  override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(context = this)
   private var builtinModulesData: BuiltinModulesFileData? = null
 
   internal val jarCacheManager: JarCacheManager by lazy {
@@ -310,30 +310,29 @@ private fun createBuildOutputRootEvaluator(projectHome: Path,
                                            productProperties: ProductProperties,
                                            buildOptions: BuildOptions): (JpsProject) -> Path {
   return { project ->
-    val appInfo = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions)
+    val appInfo = ApplicationInfoPropertiesImpl(project = project, productProperties = productProperties, buildOptions = buildOptions)
     projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
   }
 }
 
 private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, String>> {
   return module.sourceRoots.asSequence()
-    .filter { root: JpsModuleSourceRoot ->
-      JavaModuleSourceRootTypes.PRODUCTION.contains(root.rootType)
-    }
+    .filter { JavaModuleSourceRootTypes.PRODUCTION.contains(it.rootType) }
     .map { moduleSourceRoot: JpsModuleSourceRoot ->
       val properties = moduleSourceRoot.properties
       var prefix = if (properties is JavaSourceRootProperties) {
-        properties.packagePrefix.replace(".", "/")
+        properties.packagePrefix.replace('.', '/')
       }
       else {
         (properties as JavaResourceRootProperties).relativeOutputPath
       }
-      if (!prefix.endsWith("/")) {
+      if (!prefix.endsWith('/')) {
         prefix += "/"
       }
       Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
     }
 }
 
-internal fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String =
-  Files.readString(communityHome.communityRoot.resolve("build.txt")).trim { it <= ' ' }
+internal fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {
+  return Files.readString(communityHome.communityRoot.resolve("build.txt")).trim()
+}

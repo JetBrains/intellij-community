@@ -22,11 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.*;
 
-import static java.util.Objects.requireNonNull;
-
 /**
- * Provides access to content of *ApplicationInfo.xml file. Scheme for *ApplicationInfo.xml files is defined
- * in platform/platform-resources/src/idea/ApplicationInfo.xsd,
+ * Provides access to content of *ApplicationInfo.xml file.
+ * The scheme for *ApplicationInfo.xml files is defined in platform/platform-resources/src/idea/ApplicationInfo.xsd,
  * so you need to update it when adding or removing support for some XML elements in this class.
  */
 @ApiStatus.Internal
@@ -271,8 +269,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       readPluginInfo(null);
     }
     
-    requireNonNull(mySvgIconUrl, "Missing attribute: //icon@svg");
-    requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
+    Objects.requireNonNull(mySvgIconUrl, "Missing attribute: //icon@svg");
+    Objects.requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
 
     overrideFromProperties();
 
@@ -343,7 +341,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @NotNull BuildNumber getBuild() {
-    return requireNonNull(BuildNumber.fromString(myBuildNumber));
+    return Objects.requireNonNull(BuildNumber.fromString(myBuildNumber));
   }
 
   @Override
@@ -612,7 +610,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       LOG.debug("getPluginsCompatibleBuildAsNumber: version=" + version.asString());
     }
     BuildNumber buildNumber = BuildNumber.fromStringWithProductCode(version.asString(), getBuild().getProductCode());
-    return requireNonNull(buildNumber);
+    return Objects.requireNonNull(buildNumber);
   }
 
   private static @Nullable String getAttributeValue(XmlElement element, String name) {
