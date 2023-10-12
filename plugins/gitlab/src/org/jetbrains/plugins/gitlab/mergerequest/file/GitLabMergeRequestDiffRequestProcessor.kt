@@ -112,7 +112,7 @@ private suspend fun handleChanges(project: Project,
   }
 }
 
-private suspend fun loadRevisionsAndParseChanges(changes: GitLabMergeRequestChanges): GitBranchComparisonResult =
+internal suspend fun loadRevisionsAndParseChanges(changes: GitLabMergeRequestChanges): GitBranchComparisonResult =
   coroutineScope {
     launch {
       changes.ensureAllRevisionsFetched()
@@ -120,7 +120,7 @@ private suspend fun loadRevisionsAndParseChanges(changes: GitLabMergeRequestChan
     changes.getParsedChanges()
   }
 
-private fun createData(
+internal fun createData(
   parsedChanges: GitBranchComparisonResult,
   change: Change,
   location: DiffLineLocation?
