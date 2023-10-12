@@ -27,14 +27,4 @@ abstract class AbstractAdditionalKDocResolutionProviderTest : AbstractFirReferen
         ApplicationManager.getApplication().extensionArea.getExtensionPoint(AdditionalKDocResolutionProvider.EP_NAME)
             .registerExtension(AdditionalKDocResolutionProviderForTest, testRootDisposable)
     }
-
-    override fun tearDown() {
-        runAll(
-            {
-                ApplicationManager.getApplication().extensionArea.getExtensionPoint(AdditionalKDocResolutionProvider.EP_NAME)
-                    .unregisterExtension(AdditionalKDocResolutionProviderForTest::class.java)
-            },
-            ThrowableRunnable { super.tearDown() }
-        )
-    }
 }
