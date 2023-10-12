@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.refactoring.move
+package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.ide.util.DirectoryChooser
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -17,6 +17,7 @@ import com.intellij.ui.dsl.builder.RowLayout
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinFileChooserDialog
 import org.jetbrains.kotlin.psi.KtFile
@@ -24,20 +25,24 @@ import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 import java.nio.file.Paths
 import javax.swing.JComponent
 
-sealed interface K2MoveTarget {
+sealed interface K2MoveTargetModel {
     val directory: PsiDirectory
 
     val pkg: PsiPackage
 
+    fun toDescriptor(): K2MoveTargetDescriptor
+
     context(Panel)
     fun buildPanel(onError: (String?, JComponent) -> Unit)
 
-    open class SourceDirectory(pkg: PsiPackage, private val initialDirectory: PsiDirectory) : K2MoveTarget {
+    open class SourceDirectory(pkg: PsiPackage, private val initialDirectory: PsiDirectory) : K2MoveTargetModel {
         final override var pkg: PsiPackage = pkg
             private set
 
         final override var directory: PsiDirectory = initialDirectory
             private set
+
+        override fun toDescriptor(): K2MoveTargetDescriptor.SourceDirectory = K2MoveTargetDescriptor.SourceDirectory(pkg, directory)
 
         context(Panel)
         override fun buildPanel(onError: (String?, JComponent) -> Unit) {
@@ -47,7 +52,7 @@ sealed interface K2MoveTarget {
             row {
                 label(KotlinBundle.message("label.text.package")).align(AlignX.LEFT)
                 pkgChooser = cell(
-                     PackageNameReferenceEditorCombo(
+                    PackageNameReferenceEditorCombo(
                         "",
                         project,
                         RECENT_PACKAGE_KEY,
@@ -84,6 +89,8 @@ sealed interface K2MoveTarget {
     class File(file: KtFile, pkg: PsiPackage, directory: PsiDirectory) : SourceDirectory(pkg, directory) {
         var file: KtFile = file
             private set
+
+        override fun toDescriptor(): K2MoveTargetDescriptor.File = K2MoveTargetDescriptor.File(file, pkg, directory)
 
         context(Panel)
         override fun buildPanel(onError: (String?, JComponent) -> Unit) {

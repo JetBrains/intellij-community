@@ -10,6 +10,9 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.allDeclarationsToUpdate
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.findUsages
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.retargetUsagesAfterMove
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
@@ -27,14 +30,14 @@ class K2MoveFilesHandler : MoveFileHandler() {
         require(psiFile is KtFile) { "Can only find usages from Kotlin files" }
         return if (psiFile.requiresPackageUpdate) {
             val newPkgName = JavaDirectoryService.getInstance().getPackage(newParent)?.kotlinFqName ?: return emptyList()
-            K2MoveSource.FileSource(psiFile).findusages(searchInComments, searchInNonJavaFiles, newPkgName)
+            psiFile.findUsages(searchInComments, searchInNonJavaFiles, newPkgName)
         } else emptyList() // don't need to update usages when package doesn't change
     }
 
     override fun prepareMovedFile(file: PsiFile, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
         require(file is KtFile) { "Can only prepare Kotlin files" }
         if (file.requiresPackageUpdate) file.updatePackageDirective(moveDestination)
-        val declarations = file.declarationsForUsageSearch
+        val declarations = file.allDeclarationsToUpdate
         declarations.forEach { oldToNewMap[it] = it } // to pass files that are moved through MoveFileHandler API
     }
 

@@ -9,6 +9,10 @@ import com.intellij.psi.PsiReference
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandlerDelegate
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
+import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveDialog
+import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveSourceModel
+import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveTargetModel
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -24,9 +28,9 @@ class K2MoveHandler : MoveHandlerDelegate() {
         if (targetContainer == null) return
 
         val type = if (targetContainer is PsiDirectory) {
-            val source = K2MoveSource.FileSource(elements.map { it.correctForProjectView() }.filterIsInstance<KtFile>().toSet())
-            val target = K2MoveTarget.SourceDirectory(targetContainer)
-            K2MoveDescriptor.Files(source, target)
+            val source = K2MoveSourceModel.FileSource(elements.map { it.correctForProjectView() }.filterIsInstance<KtFile>().toSet())
+            val target = K2MoveTargetModel.SourceDirectory(targetContainer)
+            K2MoveModel.Files(source, target)
         } else {
             val elementsToSearch = elements.flatMap {
                 when (it) {
@@ -35,9 +39,9 @@ class K2MoveHandler : MoveHandlerDelegate() {
                     else -> emptyList()
                 }
             }.toSet()
-            val source = K2MoveSource.ElementSource(elementsToSearch)
-            val target = K2MoveTarget.File(targetContainer.correctForProjectView() as KtFile)
-            K2MoveDescriptor.Members(source, target)
+            val source = K2MoveSourceModel.ElementSource(elementsToSearch)
+            val target = K2MoveTargetModel.File(targetContainer.correctForProjectView() as KtFile)
+            K2MoveModel.Members(source, target)
         }
 
         K2MoveDialog(project, type).show()

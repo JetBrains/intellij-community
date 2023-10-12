@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.refactoring.move
+package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.platform.backend.presentation.TargetPresentation
@@ -11,41 +11,26 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.list.createTargetPresentationRenderer
-import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
 import javax.swing.JComponent
 
-sealed interface K2MoveSource<T : KtElement> {
+sealed interface K2MoveSourceModel<T : KtElement> {
     val elements: Set<T>
 
-    fun findusages(searchInCommentsAndStrings: Boolean, searchForText: Boolean, pkgName: FqName): List<UsageInfo> {
-        return findReferenceUsages() + findNonCodeUsages(searchForText, searchForText, pkgName)
-    }
-
-    fun findReferenceUsages(): List<UsageInfo>
-
-    fun findNonCodeUsages(searchInCommentsAndStrings: Boolean, searchForText: Boolean, pkgName: FqName): List<UsageInfo>
+    fun toDescriptor(): K2MoveSourceDescriptor<T>
 
     context(Panel)
     fun buildPanel(onError: (String?, JComponent) -> Unit)
 
-    class FileSource(files: Set<KtFile>) : K2MoveSource<KtFile> {
+    class FileSource(files: Set<KtFile>) : K2MoveSourceModel<KtFile> {
         override var elements: Set<KtFile> = files
-            private set
+            internal set
 
-        override fun findReferenceUsages(): List<UsageInfo> {
-            return elements.flatMap { file -> file.declarationsForUsageSearch.flatMap(K2MoveRenameUsageInfo::find) }
-        }
-
-        override fun findNonCodeUsages(searchInCommentsAndStrings: Boolean, searchForText: Boolean, pkgName: FqName): List<UsageInfo> {
-            return elements.flatMap { file ->
-                file.declarationsForUsageSearch.findNonCodeUsages(searchInCommentsAndStrings, searchForText, pkgName)
-            }
-        }
+        override fun toDescriptor(): K2MoveSourceDescriptor.FileSource = K2MoveSourceDescriptor.FileSource(elements)
 
         context(Panel)
         override fun buildPanel(onError: (String?, JComponent) -> Unit) {
@@ -70,23 +55,17 @@ sealed interface K2MoveSource<T : KtElement> {
                     cell(list).resizableColumn()
                 }
                 onApply {
-                    elements = (list.model as  CollectionListModel).items.map { it.file }.toSet()
+                    elements = (list.model as CollectionListModel).items.map { it.file }.toSet()
                 }
             }.topGap(TopGap.NONE).bottomGap(BottomGap.NONE).resizableRow()
         }
     }
 
-    class ElementSource(declarations: Set<KtNamedDeclaration>) : K2MoveSource<KtNamedDeclaration> {
+    class ElementSource(declarations: Set<KtNamedDeclaration>) : K2MoveSourceModel<KtNamedDeclaration> {
         override var elements: Set<KtNamedDeclaration> = declarations
             private set
 
-        override fun findReferenceUsages(): List<UsageInfo> {
-            return elements.flatMap(K2MoveRenameUsageInfo::find)
-        }
-
-        override fun findNonCodeUsages(searchInCommentsAndStrings: Boolean, searchForText: Boolean, pkgName: FqName): List<UsageInfo> {
-            return elements.findNonCodeUsages(searchInCommentsAndStrings, searchForText, pkgName)
-        }
+        override fun toDescriptor(): K2MoveSourceDescriptor.ElementSource = K2MoveSourceDescriptor.ElementSource(elements)
 
         context(Panel)
         override fun buildPanel(onError: (String?, JComponent) -> Unit) {
@@ -123,9 +102,5 @@ sealed interface K2MoveSource<T : KtElement> {
                 elements = memberSelectionPanel.table.selectedMemberInfos.map { it.member }.toSet()
             }
         }
-    }
-
-    companion object {
-        fun FileSource(file: KtFile): FileSource = FileSource(setOf(file))
     }
 }
