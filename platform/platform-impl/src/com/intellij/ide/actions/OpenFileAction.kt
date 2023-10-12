@@ -23,7 +23,6 @@ import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser
-import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -34,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

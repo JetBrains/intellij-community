@@ -19,6 +19,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl

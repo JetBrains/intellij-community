@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
-import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
@@ -48,6 +47,7 @@ import com.intellij.platform.ide.bootstrap.callAppInitialized
 import com.intellij.platform.ide.bootstrap.getAppInitializedListeners
 import com.intellij.platform.ide.bootstrap.initConfigurationStore
 import com.intellij.platform.ide.bootstrap.preloadCriticalServices
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread
