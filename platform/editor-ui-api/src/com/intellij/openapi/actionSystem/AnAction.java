@@ -47,6 +47,7 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * }
  * </pre>
  *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/basic-action-system.html">Actions (IntelliJ Platform Docs)</a>
  * @see AnActionEvent
  * @see Presentation
  * @see ActionPlaces
@@ -109,7 +110,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   /**
    * Creates a new action with the given text, description and icon.
    *
-   * @param dynamicText serves as a tooltip when the presentation is a button,
+   * @param text        serves as a tooltip when the presentation is a button,
    *                    and the name of the menu item when the presentation is a menu item (with mnemonic)
    * @param description describes the current action,
    *                    this description will appear on the status bar when the presentation has the focus
@@ -257,14 +258,14 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Override with true returned if your action has to display its text along with the icon when placed in the toolbar.
+   * Return {@code true} if the action has to display its text along with the icon when placed in the toolbar.
    */
   public boolean displayTextInToolbar() {
     return false;
   }
 
   /**
-   * Override with true returned if your action displays text in a smaller font (same as toolbar combobox font) when placed in the toolbar.
+   * Return {@code true} if the action displays text in a smaller font (same as toolbar combobox font) when placed in the toolbar.
    */
   public boolean useSmallerFontForTextInToolbar() {
     return false;
@@ -289,7 +290,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * <p>
    * If the action is added to a toolbar, its {@code update} method can be called twice a second,
    * but only if there was any user activity or a focus transfer.
-   * If your action's availability is independent from these events,
+   * If your action's availability is independent of these events,
    * call {@code ActivityTracker.getInstance().inc()}
    * to notify the action subsystem to update all toolbar actions
    * when your subsystem's determines that its actions' visibility might be affected.
@@ -363,16 +364,16 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   /**
    * Sets the flag indicating whether the action has an internal or a user-customized icon.
    *
-   * @param isDefaultIconSet true if the icon is internal, false if the user customizes the icon
+   * @param isDefaultIconSet {@code true} if the icon is internal, {@code false} if the user customizes the icon
    */
   public void setDefaultIcon(boolean isDefaultIconSet) {
     myIsDefaultIcon = isDefaultIconSet;
   }
 
   /**
-   * Returns true if the action has an internal, not user-customized icon.
+   * Returns {@code true} if the action has an internal, not user-customized icon.
    *
-   * @return true if the icon is internal, false if the user customizes the icon.
+   * @return {@code true} if the icon is internal, {@code false} if the user customizes the icon.
    */
   public boolean isDefaultIcon() {
     return myIsDefaultIcon;
@@ -380,7 +381,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   /**
    * Enables automatic detection of injected fragments in the editor.
-   * Values that are passed to the action in its DataContext, like EDITOR or PSI_FILE,
+   * Values that are passed to the action in its {@code DataContext}, like EDITOR or PSI_FILE,
    * will refer to an injected fragment if the caret is currently positioned on it.
    */
   public void setInjectedContext(boolean worksInInjected) {
