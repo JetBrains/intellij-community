@@ -172,10 +172,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   }
 
   private void copyTypeMap() {
-    Set<UserFileType<?>> modifiedUserTypes = myOriginalToEditedMap.keySet();
-    for (UserFileType<?> oldType : modifiedUserTypes) {
+    for (Map.Entry<UserFileType<?>, UserFileType<?>> entry : myOriginalToEditedMap.entrySet()) {
       //noinspection unchecked,rawtypes
-      oldType.copyFrom((UserFileType)myOriginalToEditedMap.get(oldType));
+      entry.getKey().copyFrom((UserFileType)entry.getValue());
     }
     myOriginalToEditedMap.clear();
   }

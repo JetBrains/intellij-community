@@ -85,8 +85,8 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   public void copyFrom(@NotNull UserFileType<AbstractFileType> newType) {
     super.copyFrom(newType);
 
-    if (newType instanceof AbstractFileType) {
-      mySyntaxTable = ((CustomSyntaxTableFileType)newType).getSyntaxTable();
+    if (newType instanceof AbstractFileType aft) {
+      mySyntaxTable = aft.getSyntaxTable();
     }
   }
 

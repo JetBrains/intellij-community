@@ -31,7 +31,7 @@ public class AntHighlightingPerformanceTest extends DaemonAnalyzerTestCase {
   }
 
   @Override
-  protected void doCheckResult(@NotNull ExpectedHighlightingData data, Collection<HighlightInfo> infos, String text) {
+  protected void doCheckResult(@NotNull ExpectedHighlightingData data, @NotNull Collection<? extends HighlightInfo> infos, @NotNull String text) {
     // ignore warnings
   }
 }

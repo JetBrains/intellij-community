@@ -59,7 +59,7 @@ abstract class GradleDaemonAnalyzerTestCase(
     //   expected test data
     // - no API to sanitize error descriptions (in particular, we have to remove endlines in diagnostic messages,
     //   otherwise parser in testdata goes completely insane)
-    override fun doCheckResult(data: ExpectedHighlightingData, infos: MutableCollection<HighlightInfo>, text: String) {
+    override fun doCheckResult(data: ExpectedHighlightingData, infos: Collection<HighlightInfo>, text: String) {
         performGenericHighlightingAndLineMarkersChecks(infos, text)
         performAdditionalChecksAfterHighlighting(editor)
     }
