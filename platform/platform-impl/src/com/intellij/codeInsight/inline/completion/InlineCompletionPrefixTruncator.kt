@@ -10,8 +10,16 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 /**
  * Responsible for updating currently rendered [InlineCompletionElement] when a user types a new fragment.
  *
- * Note, that your [InlineCompletionPrefixTruncator] will be called only for elements your provider generated.
+ * Note that your [InlineCompletionPrefixTruncator] will be called only for elements your provider generated.
  * You may rely on the fact, that you will not receive [InlineCompletionElement] of other providers.
+ *
+ * Cycle of updating currently rendered elements:
+ * * [truncate] is called for the current context and 'new elements' are returned.
+ * * **All current elements are disposed**.
+ * * 'New elements' are rendered.
+ *
+ * So, make sure that your custom [InlineCompletionElement] are ready to be re-used after disposing,
+ * or make sure that you copy them before re-rendering. See [DefaultInlineCompletionPrefixTruncator.copyBlock].
  *
  * @see TypingEvent
  * @see InlineCompletionProvider.prefixTruncator
@@ -26,7 +34,7 @@ interface InlineCompletionPrefixTruncator {
    *
    * If there is no elements after truncation, this method should return `null`.
    *
-   * **Note**. Do not return any provided elements. Before returning, copy them using [InlineCompletionElement.withSameContent].
+   * Note that before rendering new elements, all current elements from [context] are disposed.
    */
   @RequiresEdt
   @RequiresBlockingContext
@@ -46,7 +54,12 @@ interface InlineCompletionPrefixTruncator {
  *
  * If a new typed symbol matches the first rendered symbol in the current [InlineCompletionContext],
  * then the first non-empty element is truncated by one character using [InlineCompletionElement.withTruncatedPrefix].
- * Subsequent elements are copied using [InlineCompletionElement.withSameContent].
+ * Subsequent elements are copied using [copyBlock] and rendered.
+ *
+ * If your custom elements are not supposed to be re-used after disposing, override [copyBlock] and return new instances.
+ *
+ * The default implementation of [copyBlock] just returns the same [InlineCompletionElement], which works properly with the default
+ * implementations of [InlineCompletionElement].
  *
  * Note: all empty elements ([InlineCompletionElement.text] is empty) at the start are truncated as well.
  */
@@ -65,6 +78,19 @@ open class DefaultInlineCompletionPrefixTruncator : InlineCompletionPrefixTrunca
   }
 
   /**
+   * Returns an instance of [InlineCompletionElement] that has the same content as [block].
+   * It is used to re-render old non-changed elements when updating currently rendered elements.
+   *
+   * It might be useful to override this method, if your [InlineCompletionElement]-implementation doesn't allow re-usage after disposing.
+   * All default implementations of [InlineCompletionElement] support re-usage, so this method returns [block] by default.
+   *
+   * @see InlineCompletionPrefixTruncator
+   */
+  protected open fun copyBlock(block: InlineCompletionElement): InlineCompletionElement {
+    return block
+  }
+
+  /**
    * This is a safe implementation that truncates the first symbol.
    * It takes into account that some elements at the start can have an empty text (as the result, they are truncated).
    */
@@ -72,6 +98,6 @@ open class DefaultInlineCompletionPrefixTruncator : InlineCompletionPrefixTrunca
     val newFirstElementIndex = elements.indexOfFirst { it.text.isNotEmpty() }
     check(newFirstElementIndex >= 0)
     val newFirstElement = elements[newFirstElementIndex].withTruncatedPrefix(1)
-    return listOfNotNull(newFirstElement) + elements.drop(newFirstElementIndex + 1).map { it.withSameContent() }
+    return listOfNotNull(newFirstElement) + elements.drop(newFirstElementIndex + 1).map { copyBlock(it) }
   }
 }

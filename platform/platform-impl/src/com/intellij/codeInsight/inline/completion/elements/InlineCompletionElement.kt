@@ -9,13 +9,6 @@ interface InlineCompletionElement {
   val text: String
 
   /**
-   * Returns a new [InlineCompletionElement] instance that has the same content as this one.
-   * It should copy all the content, but should not copy any render information.
-   */
-  @Deprecated("will be removed")
-  fun withSameContent(): InlineCompletionElement
-
-  /**
    * Returns a new [InlineCompletionElement] instance with content identical to this [text], but with a shortened prefix of [length].
    * If there is no content after truncating, then `null` is returned.
    *

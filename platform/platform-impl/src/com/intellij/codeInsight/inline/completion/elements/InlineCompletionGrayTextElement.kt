@@ -18,7 +18,6 @@ data class InlineCompletionGrayTextElement(override val text: String) : InlineCo
 
   override fun toPresentable(): InlineCompletionElement.Presentable = Presentable(this)
 
-  override fun withSameContent(): InlineCompletionElement = InlineCompletionGrayTextElement(text)
   override fun withTruncatedPrefix(length: Int): InlineCompletionElement? {
     return if (text.length > length) InlineCompletionGrayTextElement(text.drop(length)) else null
   }
