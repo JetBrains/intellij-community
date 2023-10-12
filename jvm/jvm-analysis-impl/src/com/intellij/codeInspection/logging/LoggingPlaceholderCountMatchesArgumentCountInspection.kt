@@ -339,7 +339,9 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
         return false
       }
       val lastParameterType = lastParameter.type.let { if (it is PsiEllipsisType) it.componentType else it }
-
+      if (!lastParameterType.isValid) {
+        return false
+      }
       if (!(InheritanceUtil.isInheritor(lastParameterType, CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER) || InheritanceUtil.isInheritor(
           lastParameterType, "org.apache.logging.log4j.util.Supplier"))) {
         return false
@@ -366,6 +368,9 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
 
     private fun hasThrowableType(lastArgument: UExpression): Boolean {
       val type = lastArgument.getExpressionType()
+      if (type?.isValid != true) {
+        return false
+      }
       if (type is PsiDisjunctionType) {
         return type.disjunctions.all { InheritanceUtil.isInheritor(it, CommonClassNames.JAVA_LANG_THROWABLE) }
       }
