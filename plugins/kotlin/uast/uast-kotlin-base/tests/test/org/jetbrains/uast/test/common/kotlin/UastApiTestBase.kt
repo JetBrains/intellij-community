@@ -623,7 +623,7 @@ interface UastApiTestBase : UastPluginSelection {
         )
     }
 
-    fun checkCallbackForSAM(uFilePath: String, uFile: UFile) {
+    fun checkCallbackForSAM(uFilePath: String, uFile: UFile, t: String, v: String) {
         TestCase.assertNull(uFile.findElementByText<ULambdaExpression>("{ /* Not SAM */ }").functionalInterfaceType)
         TestCase.assertEquals(
             "java.lang.Runnable",
@@ -671,11 +671,11 @@ interface UastApiTestBase : UastPluginSelection {
             (call.classReference?.resolve() as? PsiClass)?.qualifiedName
         )
         TestCase.assertEquals(
-            "java.util.function.Supplier<T>",
+            "java.util.function.Supplier<$t>",
             uFile.findElementByText<ULambdaExpression>("{ \"Supplier\" }").functionalInterfaceType?.canonicalText
         )
         TestCase.assertEquals(
-            "java.util.concurrent.Callable<V>",
+            "java.util.concurrent.Callable<$v>",
             uFile.findElementByText<ULambdaExpression>("{ \"Callable\" }").functionalInterfaceType?.canonicalText
         )
     }

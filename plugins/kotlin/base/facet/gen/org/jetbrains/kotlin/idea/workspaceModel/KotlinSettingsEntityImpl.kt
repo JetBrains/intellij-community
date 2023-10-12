@@ -15,12 +15,19 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
-import com.intellij.platform.workspace.storage.impl.*
+import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.impl.EntityLink
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.SoftLinkable
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.util.descriptors.ConfigFileItem
 import org.jetbrains.kotlin.config.KotlinModuleKind
@@ -91,7 +98,7 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
     override val compilerArguments: String
         get() = dataSource.compilerArguments
 
-    override val compilerSettings: CompilerSettings
+    override val compilerSettings: CompilerSettingsData
         get() = dataSource.compilerSettings
 
     override val targetPlatform: String
@@ -552,7 +559,7 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
                 changedProperty.add("compilerArguments")
             }
 
-        override var compilerSettings: CompilerSettings
+        override var compilerSettings: CompilerSettingsData
             get() = getEntityData().compilerSettings
             set(value) {
                 checkModificationAllowed()
@@ -592,7 +599,7 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
     lateinit var kind: KotlinModuleKind
     lateinit var mergedCompilerArguments: String
     lateinit var compilerArguments: String
-    lateinit var compilerSettings: CompilerSettings
+    lateinit var compilerSettings: CompilerSettingsData
     lateinit var targetPlatform: String
 
     internal fun isNameInitialized(): Boolean = ::name.isInitialized
@@ -685,8 +692,7 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         val moduleId_data = if (moduleId == oldLink) {
             changed = true
             newLink as ModuleId
-        }
-        else {
+        } else {
             null
         }
         if (moduleId_data != null) {

@@ -549,7 +549,7 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertEquals("kotlin.jvm.functions.Function1<java.lang.Integer,java.lang.Integer>", sum?.type?.canonicalText)
     }
 
-    fun checkUpperBoundForRecursiveTypeParameter(myFixture: JavaCodeInsightTestFixture, isK2: Boolean = false) {
+    fun checkUpperBoundForRecursiveTypeParameter(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
                 interface Alarm {
@@ -585,8 +585,7 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertEquals(2, builder.javaPsi.typeParameters.size)
         val self = builder.javaPsi.typeParameters[0]
         TestCase.assertEquals(
-            // TODO(KT-61459): should match
-            if (isK2) "" else "AbstractAlarm.Builder<Self,Built>",
+            "AbstractAlarm.Builder<Self,Built>",
             self.bounds.joinToString { (it as? PsiType)?.canonicalText ?: "??" }
         )
         val built = builder.javaPsi.typeParameters[1]

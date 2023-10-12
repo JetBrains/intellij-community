@@ -73,7 +73,7 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
 
     return when (containingSymbol) {
       is KtClassOrObjectSymbol -> {
-        containingSymbol.getDeclaredMemberScope().findSiblingsByName()
+        containingSymbol.getCombinedDeclaredMemberScope().findSiblingsByName()
       }
 
       is KtPackageSymbol -> {
@@ -186,7 +186,7 @@ private fun checkAccidentalPropertyOverrides(
         object : DFS.AbstractNodeHandler<KtClassOrObjectSymbol, Unit>() {
             override fun beforeChildren(current: KtClassOrObjectSymbol): Boolean {
                 if (current == initialClassSymbol) return true
-                current.getDeclaredMemberScope().getCallableSymbols(newName)
+                current.getCombinedDeclaredMemberScope().getCallableSymbols(newName)
                     .filterIsInstance<KtPropertySymbol>()
                     .forEach { superPropertySymbol ->
                         (superPropertySymbol.psi as? PsiNamedElement)?.let { reportAccidentalOverride(it) }
