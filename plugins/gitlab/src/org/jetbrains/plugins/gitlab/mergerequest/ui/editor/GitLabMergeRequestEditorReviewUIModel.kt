@@ -176,7 +176,7 @@ private fun List<LstRange>.getUnchangedLineRanges(document: Document): List<Line
  */
 private class ForwardingLineStatusTrackerListener(
   private val lineStatusTracker: LineStatusTrackerI<*>,
-  private val onRangesChanged: (List<com.intellij.openapi.vcs.ex.Range>) -> Unit
+  private val onRangesChanged: (List<LstRange>) -> Unit
 ) : LineStatusTrackerListener {
   init {
     val ranges = lineStatusTracker.getRanges()
