@@ -78,6 +78,12 @@ public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTe
     assertDoesntContain(lookup, "case A");
     assertContainsElements(lookup, "case B");
   }
+  @NeedsIndex.Full
+  public void testCompletionAnonymousAndLocalNotShow() {
+    List<String> lookup = doTestAndGetLookup();
+    assertNotNull(lookup);
+    assertContainsElements(lookup, "case C1");
+  }
 
   @NeedsIndex.Full
   public void testCompletionSmartCase() {
