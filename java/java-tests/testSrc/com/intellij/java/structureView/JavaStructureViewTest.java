@@ -363,8 +363,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
 
       """
         -Test.java
-         -PsiUnnamedClass
-          foo(): void"""
+         foo(): void"""
     );
   }
 
