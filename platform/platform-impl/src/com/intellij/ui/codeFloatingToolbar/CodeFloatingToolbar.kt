@@ -45,10 +45,22 @@ class CodeFloatingToolbar(
 
   companion object {
     private val FLOATING_TOOLBAR = Key<CodeFloatingToolbar>("floating.codeToolbar")
-    
+
+    private var TEMPORARILY_DISABLED = false
+
     @JvmStatic
     fun getToolbar(editor: Editor?): CodeFloatingToolbar? {
       return editor?.getUserData(FLOATING_TOOLBAR)
+    }
+
+    @JvmStatic
+    fun temporarilyDisable(disable: Boolean = true) {
+      TEMPORARILY_DISABLED = disable
+    }
+
+    @JvmStatic
+    fun isTemporarilyDisabled(): Boolean {
+      return TEMPORARILY_DISABLED
     }
   }
 
@@ -66,7 +78,7 @@ class CodeFloatingToolbar(
     if (!selection.hasSelection()) return false
     val range = editor.calculateVisibleRange()
     if (selection.selectionStart !in range && selection.selectionEnd !in range) return false
-    return editor.document.isWritable && !AdvancedSettings.getBoolean("floating.codeToolbar.hide")
+    return editor.document.isWritable && !AdvancedSettings.getBoolean("floating.codeToolbar.hide") && !TEMPORARILY_DISABLED
   }
 
   override fun disableForDoubleClickSelection(): Boolean = true
