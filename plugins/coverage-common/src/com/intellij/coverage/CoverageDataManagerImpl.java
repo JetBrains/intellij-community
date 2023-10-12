@@ -28,10 +28,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.*;
-import com.intellij.rt.coverage.data.ClassData;
-import com.intellij.rt.coverage.data.LineCoverage;
-import com.intellij.rt.coverage.data.LineData;
-import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -54,7 +50,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   private CoverageSuitesBundle myCurrentSuitesBundle;
 
   private boolean myIsProjectClosing = false;
-  private boolean mySubCoverageIsActive;
 
   private Set<LocalFileSystem.WatchRequest> myWatchRequests;
   private List<String> myCurrentSuiteRoots;
@@ -212,6 +207,34 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   // ==== Suites storage ====
 
+  // ==== Sub coverage   ====
+
+  @Override
+  public boolean isSubCoverageActive() {
+    return SubCoverageManager.getInstance(myProject).isSubCoverageActive();
+  }
+
+  @Override
+  public void selectSubCoverage(@NotNull CoverageSuitesBundle suite, List<String> testNames) {
+    SubCoverageManager.getInstance(myProject).selectSubCoverage(suite, testNames);
+    reloadSuite(suite);
+  }
+
+  @Override
+  public void restoreMergedCoverage(@NotNull CoverageSuitesBundle suite) {
+    SubCoverageManager.getInstance(myProject).restoreMergedCoverage(suite);
+    reloadSuite(suite);
+  }
+
+  private void reloadSuite(@NotNull CoverageSuitesBundle suite) {
+    fireBeforeSuiteChosen();
+    CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
+    myCurrentSuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
+    renewCoverageData(suite);
+  }
+
+  // ==== Sub coverage   ====
+
   @Override
   public void chooseSuitesBundle(final CoverageSuitesBundle suite) {
     if (myCurrentSuitesBundle == suite && suite == null) {
@@ -234,8 +257,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
     fireBeforeSuiteChosen();
 
-    mySubCoverageIsActive = false;
     if (myCurrentSuitesBundle != null) {
+      SubCoverageManager.getInstance(myProject).restoreMergedCoverage(myCurrentSuitesBundle);
       myCurrentSuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
     }
 
@@ -397,63 +420,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Override
-  public void selectSubCoverage(@NotNull final CoverageSuitesBundle suite, final List<String> testNames) {
-    suite.restoreCoverageData();
-    final ProjectData data = suite.getCoverageData();
-    if (data == null) return;
-    mySubCoverageIsActive = true;
-    final Map<String, Set<Integer>> executionTrace = new HashMap<>();
-    for (CoverageSuite coverageSuite : suite.getSuites()) {
-      suite.getCoverageEngine().collectTestLines(testNames, coverageSuite, executionTrace);
-    }
-    final ProjectData projectData = new ProjectData();
-    for (Map.Entry<String, Set<Integer>> entry : executionTrace.entrySet()) {
-      String className = entry.getKey();
-      Set<Integer> lineNumbers = entry.getValue();
-
-      ClassData classData = projectData.getOrCreateClassData(className);
-      ClassData oldData = data.getClassData(className);
-      LOG.assertTrue(oldData != null, "missed className: \"" + className + "\"");
-      final Object[] oldLines = oldData.getLines();
-      LOG.assertTrue(oldLines != null);
-      int newLength = Math.max(oldLines.length, 1 + lineNumbers.stream().mapToInt(Integer::intValue).max().orElse(-1));
-      LineData[] lines = new LineData[newLength];
-      for (int line : lineNumbers) {
-        String methodSig = null;
-        if (line < oldLines.length) {
-          final LineData oldLineData = oldData.getLineData(line);
-          if (oldLineData != null) {
-            methodSig = oldLineData.getMethodSignature();
-          }
-        }
-        final LineData lineData = new LineData(line, methodSig);
-        if (methodSig != null) {
-          classData.registerMethodSignature(lineData);
-        }
-        lineData.setStatus(LineCoverage.FULL);
-        lines[line] = lineData;
-      }
-      classData.setLines(lines);
-      classData.setFullyAnalysed(false);
-    }
-    suite.setCoverageData(projectData);
-    fireBeforeSuiteChosen();
-    CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
-    myCurrentSuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
-    renewCoverageData(suite);
-  }
-
-  @Override
-  public void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite) {
-    mySubCoverageIsActive = false;
-    suite.restoreCoverageData();
-    fireBeforeSuiteChosen();
-    CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
-    myCurrentSuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
-    renewCoverageData(suite);
-  }
-
-  @Override
   public void addSuiteListener(@NotNull final CoverageSuiteListener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
     Disposer.register(parentDisposable, new Disposable() {
@@ -491,11 +457,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   @Override
   public void coverageDataCalculated() {
     fireCoverageDataCalculated();
-  }
-
-  @Override
-  public boolean isSubCoverageActive() {
-    return mySubCoverageIsActive;
   }
 
   public static class CoverageProjectManagerListener implements ProjectCloseListener {
