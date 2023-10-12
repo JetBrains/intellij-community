@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.JBColor
+import com.intellij.ui.JBColor.marker
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
@@ -49,21 +50,15 @@ fun java.awt.Color.toComposeColor() = Color(
 
 fun java.awt.Color?.toComposeColorOrUnspecified() = this?.toComposeColor() ?: Color.Unspecified
 
-@Suppress("JavaIoSerializableObjectMustHaveReadResolve")
-private object FallbackMarker : JBColor(0x00001, 0x00001) {
-
-    override fun toString() = "%%%%%%COLOR_NOT_FOUND_MARKER%%%%%%"
-
-    override fun equals(other: Any?) = other === this
-
-    override fun hashCode() = toString().hashCode()
-}
-
-@Suppress("UnstableApiUsage")
 fun retrieveColorOrNull(key: String): Color? =
-    JBColor.namedColor(key, FallbackMarker)
-        .takeUnless { it.name == "NAMED_COLOR_FALLBACK_MARKER" || FallbackMarker == it }
-        ?.toComposeColor()
+    try {
+        JBColor.namedColor(key, marker("JEWEL_JBCOLOR_MARKER")).toComposeColor()
+    } catch (_: AssertionError) {
+        // JBColor.marker will throw AssertionError on getRGB/any other color
+        // for now there is no way to handle non-existing key.
+        // The way should be introduced in platform
+        null
+    }
 
 fun retrieveColorOrUnspecified(key: String): Color {
     val color = retrieveColorOrNull(key)
