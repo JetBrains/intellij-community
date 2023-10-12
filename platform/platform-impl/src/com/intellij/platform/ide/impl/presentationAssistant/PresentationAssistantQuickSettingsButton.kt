@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -19,6 +20,7 @@ import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
+import javax.swing.SwingConstants
 
 internal class PresentationAssistantQuickSettingsButton(private val project: Project,
                                                         private val appearance: ActionInfoPopupGroup.Appearance,
@@ -78,6 +80,7 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
                                                                     { releaseShownStateRequest() },
                                                                     Int.MAX_VALUE)
     popup.isShowSubmenuOnHover = true
+    popup.setAdText(IdeBundle.message("presentation.assistant.quick.settings.ad").asHtml, SwingConstants.LEFT)
 
     popup.showInBestPositionFor(SimpleDataContext
                                   .builder()
@@ -85,6 +88,8 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
                                   .add(PlatformDataKeys.CONTEXT_MENU_POINT, Point(0, height + appearance.spaceBetweenPopups))
                                   .build())
   }
+
+  private val String.asHtml: String get() = "<html>" + replace("\n", "<br>") + "</html>"
 
   fun acquireShownStateRequest(point: RelativePoint) {
     shownStateRequestCount++
