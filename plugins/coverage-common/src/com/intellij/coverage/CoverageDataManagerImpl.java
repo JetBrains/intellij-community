@@ -437,6 +437,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       classData.setFullyAnalysed(false);
     }
     suite.setCoverageData(projectData);
+    fireBeforeSuiteChosen();
     CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
     myCurrentSuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
     renewCoverageData(suite);
@@ -446,6 +447,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   public void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite) {
     mySubCoverageIsActive = false;
     suite.restoreCoverageData();
+    fireBeforeSuiteChosen();
     CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
     myCurrentSuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
     renewCoverageData(suite);
