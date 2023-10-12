@@ -104,7 +104,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     final CoverageSuitesBundle bundle = suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[0]));
     CoverageLogger.logSuiteImport(myProject, bundle);
     myCoverageManager.chooseSuitesBundle(bundle);
-    ((CoverageDataManagerImpl)myCoverageManager).addRootsToWatch(suites);
+    ExternalCoverageWatchManager.getInstance(myProject).addRootsToWatch(suites);
     super.doOKAction();
   }
 

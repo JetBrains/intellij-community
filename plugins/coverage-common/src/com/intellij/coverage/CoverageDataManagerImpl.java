@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.MessageConstants;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -50,21 +49,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   private CoverageSuitesBundle myCurrentSuitesBundle;
 
   private boolean myIsProjectClosing = false;
-
-  private Set<LocalFileSystem.WatchRequest> myWatchRequests;
-  private List<String> myCurrentSuiteRoots;
-  private final VirtualFileContentsChangedAdapter myContentListener = new VirtualFileContentsChangedAdapter() {
-    @Override
-    protected void onFileChange(@NotNull VirtualFile fileOrDirectory) {
-      if (myCurrentSuiteRoots != null && VfsUtilCore.isUnder(fileOrDirectory.getPath(), myCurrentSuiteRoots)) {
-        myCurrentSuitesBundle.restoreCoverageData();
-        updateCoverageData(myCurrentSuitesBundle);
-      }
-    }
-
-    @Override
-    protected void onBeforeFileChange(@NotNull VirtualFile fileOrDirectory) { }
-  };
 
 
 
@@ -241,18 +225,11 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       return;
     }
 
-    if (myWatchRequests != null) {
-      LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
-      VirtualFileManager.getInstance().removeVirtualFileListener(myContentListener);
-
-      myWatchRequests = null;
-      myCurrentSuiteRoots = null;
-    }
-
+    ExternalCoverageWatchManager.getInstance(myProject).clearWatches();
     updateCoverageData(suite);
   }
 
-  private void updateCoverageData(CoverageSuitesBundle suite) {
+  void updateCoverageData(CoverageSuitesBundle suite) {
     LOG.assertTrue(!myProject.isDefault());
 
     fireBeforeSuiteChosen();
@@ -377,17 +354,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     if (runnerSettings instanceof CoverageRunnerData) {
       processGatheredCoverage(configuration);
     }
-  }
-
-  /**
-   * Called from EDT, on external coverage suite choosing
-   */
-  public void addRootsToWatch(List<? extends CoverageSuite> suites) {
-    myCurrentSuiteRoots = ContainerUtil.map(suites, suite -> suite.getCoverageDataFileName());
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-    myCurrentSuiteRoots.forEach(path -> fileSystem.refreshAndFindFileByPath(path));
-    myWatchRequests = fileSystem.addRootsToWatch(myCurrentSuiteRoots, true);
-    VirtualFileManager.getInstance().addVirtualFileListener(myContentListener);
   }
 
   @Override
