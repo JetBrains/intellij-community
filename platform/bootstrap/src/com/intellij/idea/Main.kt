@@ -94,7 +94,7 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
 
     if (AppMode.isRemoteDevHost()) {
       span("cwm host init") {
-        initRemoteDev()
+        initRemoteDev(args)
       }
     }
 
@@ -182,11 +182,14 @@ internal fun isConfigImportNeeded(configPath: Path): Boolean {
          customTargetDirectoryToImportConfig != null
 }
 
-private fun initRemoteDev() {
+private fun initRemoteDev(args: List<String>) {
   if (!JBR.isGraphicsUtilsSupported()) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
+  if (args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND) {
+    System.setProperty("idea.initially.ask.config", "never")
+  }
   initRemoteDevGraphicsEnvironment()
   initLux()
 }
