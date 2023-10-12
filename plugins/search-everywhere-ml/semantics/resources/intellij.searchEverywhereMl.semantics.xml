@@ -6,8 +6,8 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhereMlContributorReplacementService
-      implementation="com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereMlContributorReplacementServiceImpl"/>
+    <searchEverywhereMlContributorReplacement
+      implementation="com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereMlContributorReplacementImpl"/>
 
     <searchEverywhereReorderingService
       implementation="com.intellij.searchEverywhereMl.semantics.reordering.SearchEverywhereReorderingServiceImpl"/>

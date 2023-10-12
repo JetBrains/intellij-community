@@ -7,16 +7,16 @@ import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 
 @ApiStatus.Internal
-interface SearchEverywhereMlContributorReplacementService {
+interface SearchEverywhereMlContributorReplacement {
   companion object {
-    val EP_NAME: ExtensionPointName<SearchEverywhereMlContributorReplacementService> = ExtensionPointName.create(
-      "com.intellij.searchEverywhereMlContributorReplacementService")
+    val EP_NAME: ExtensionPointName<SearchEverywhereMlContributorReplacement> = ExtensionPointName.create(
+      "com.intellij.searchEverywhereMlContributorReplacement")
 
     var initEvent = WeakReference<AnActionEvent>(null)
       private set
 
     @JvmStatic
-    fun getInstance(): SearchEverywhereMlContributorReplacementService? {
+    fun getFirstExtension(): SearchEverywhereMlContributorReplacement? {
       return EP_NAME.extensions.firstOrNull()
     }
 

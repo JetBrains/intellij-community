@@ -7,11 +7,11 @@ import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-class SearchEverywhereMlContributorReplacementServiceImpl : SearchEverywhereMlContributorReplacementService {
+class SearchEverywhereMlContributorReplacementImpl : SearchEverywhereMlContributorReplacement {
   override fun replaceInSeparateTab(contributor: SearchEverywhereContributor<*>): SearchEverywhereContributor<*> {
     if (contributor is SemanticSearchEverywhereContributor) return contributor
     val settings = SemanticSearchSettings.getInstance()
-    val initEvent = SearchEverywhereMlContributorReplacementService.initEvent.get() ?: return contributor
+    val initEvent = SearchEverywhereMlContributorReplacement.initEvent.get() ?: return contributor
     val searchProviderId = contributor.searchProviderId
     return if (isActionsContributor(searchProviderId) && settings.enabledInActionsTab) {
       configureContributor(SemanticActionSearchEverywhereContributor(contributor as ActionSearchEverywhereContributor), contributor)
