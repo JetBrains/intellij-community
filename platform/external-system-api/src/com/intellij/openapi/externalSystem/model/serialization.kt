@@ -16,6 +16,7 @@ private class DataClassResolver(private val log: Logger) {
   private val projectDataManager = ProjectDataManager.getInstance()
 
   private val managerClassLoaders = ExternalSystemManager.EP_NAME.lazySequence()
+    .flatMap { it.extensionPointsForResolver.flatMap { it.lazySequence() } + it }
     .map { it.javaClass.classLoader }
     .toSet()
 
