@@ -72,8 +72,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myFeedbackUrl;
   private String myPluginManagerUrl;
   private String myPluginsListUrl;
-  private String myChannelsListUrl;
-  private String myPluginsDownloadUrl;
+  private String channelListUrl;
+  private String pluginDownloadUrl;
   private String myBuiltinPluginsUrl;
   private String myWhatsNewUrl;
   private boolean myShowWhatsNewOnUpdate;
@@ -83,7 +83,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
-  private final List<PluginId> essentialPluginsIds = new ArrayList<>();
+  private final List<PluginId> essentialPluginIds = new ArrayList<>();
   private String myJetBrainsTvUrl;
 
   private String mySubscriptionFormId;
@@ -224,7 +224,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         case "essential-plugin": {
           String id = child.content;
           if (id != null && !id.isEmpty()) {
-            essentialPluginsIds.add(PluginId.getId(id));
+            essentialPluginIds.add(PluginId.getId(id));
           }
         }
         break;
@@ -276,7 +276,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     overrideFromProperties();
 
-    essentialPluginsIds.sort(null);
+    essentialPluginIds.sort(null);
   }
 
   private void overrideFromProperties() {
@@ -314,8 +314,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return result;
   }
 
-  public static @NotNull String orFromPluginsCompatibleBuild(@Nullable BuildNumber buildNumber) {
-    BuildNumber number = buildNumber == null ? getShadowInstanceImpl().getPluginsCompatibleBuildAsNumber() : buildNumber;
+  public static @NotNull String orFromPluginCompatibleBuild(@Nullable BuildNumber buildNumber) {
+    BuildNumber number = buildNumber == null ? getShadowInstanceImpl().getPluginCompatibleBuildAsNumber() : buildNumber;
     return number.asString();
   }
 
@@ -521,13 +521,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getChannelsListUrl() {
-    return myChannelsListUrl;
+  public String getChannelListUrl() {
+    return channelListUrl;
   }
 
   @Override
-  public @NotNull String getPluginsDownloadUrl() {
-    return myPluginsDownloadUrl;
+  public @NotNull String getPluginDownloadUrl() {
+    return pluginDownloadUrl;
   }
 
   @Override
@@ -595,16 +595,16 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return mySubscriptionTipsAvailable;
   }
 
-  public @NotNull @NlsSafe String getPluginsCompatibleBuild() {
-    return getPluginsCompatibleBuildAsNumber().asString();
+  public @NotNull @NlsSafe String getPluginCompatibleBuild() {
+    return getPluginCompatibleBuildAsNumber().asString();
   }
 
-  public @NotNull BuildNumber getPluginsCompatibleBuildAsNumber() {
+  public @NotNull BuildNumber getPluginCompatibleBuildAsNumber() {
     BuildNumber compatibleBuild = BuildNumber.fromPluginCompatibleBuild();
     if (LOG.isDebugEnabled()) {
       LOG.debug("getPluginsCompatibleBuildAsNumber: compatibleBuild=" + (compatibleBuild == null ? "null" : compatibleBuild.asString()));
     }
-    BuildNumber version = compatibleBuild != null ? compatibleBuild : getApiVersionAsNumber();
+    BuildNumber version = compatibleBuild == null ? getApiVersionAsNumber() : compatibleBuild;
     if (LOG.isDebugEnabled()) {
       LOG.debug("getPluginsCompatibleBuildAsNumber: version=" + version.asString());
     }
@@ -634,9 +634,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   private void readPluginInfo(@Nullable XmlElement element) {
     String pluginManagerUrl = DEFAULT_PLUGINS_HOST;
-    String pluginsListUrl = null;
-    myChannelsListUrl = null;
-    myPluginsDownloadUrl = null;
+    String pluginListUrl = null;
+    channelListUrl = null;
+    pluginDownloadUrl = null;
     if (element != null) {
       String url = element.getAttributeValue("url");
       if (url != null) {
@@ -645,17 +645,17 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
       String listUrl = element.getAttributeValue("list-url");
       if (listUrl != null) {
-        pluginsListUrl = listUrl;
+        pluginListUrl = listUrl;
       }
 
       String channelListUrl = element.getAttributeValue("channel-list-url");
       if (channelListUrl != null) {
-        myChannelsListUrl = channelListUrl;
+        this.channelListUrl = channelListUrl;
       }
 
       String downloadUrl = element.getAttributeValue("download-url");
       if (downloadUrl != null) {
-        myPluginsDownloadUrl = downloadUrl;
+        pluginDownloadUrl = downloadUrl;
       }
 
       String builtinPluginsUrl = element.getAttributeValue("builtin-url");
@@ -667,16 +667,16 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     String pluginHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
     if (pluginHost != null) {
       pluginManagerUrl = pluginHost.endsWith("/") ? pluginHost.substring(0, pluginHost.length() - 1) : pluginHost;
-      pluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
+      pluginListUrl = channelListUrl = pluginDownloadUrl = null;
     }
 
     myPluginManagerUrl = pluginManagerUrl;
-    myPluginsListUrl = pluginsListUrl == null ? (pluginManagerUrl + "/plugins/list/") : pluginsListUrl;
-    if (myChannelsListUrl == null) {
-      myChannelsListUrl = pluginManagerUrl + "/channels/list/";
+    myPluginsListUrl = pluginListUrl == null ? (pluginManagerUrl + "/plugins/list/") : pluginListUrl;
+    if (channelListUrl == null) {
+      channelListUrl = pluginManagerUrl + "/channels/list/";
     }
-    if (myPluginsDownloadUrl == null) {
-      myPluginsDownloadUrl = pluginManagerUrl + "/pluginManager/";
+    if (pluginDownloadUrl == null) {
+      pluginDownloadUrl = pluginManagerUrl + "/pluginManager/";
     }
   }
 
@@ -723,12 +723,12 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public boolean isEssentialPlugin(@NotNull PluginId pluginId) {
-    return PluginManagerCore.CORE_ID.equals(pluginId) || Collections.binarySearch(essentialPluginsIds, pluginId) >= 0;
+    return PluginManagerCore.CORE_ID.equals(pluginId) || Collections.binarySearch(essentialPluginIds, pluginId) >= 0;
   }
 
   @Override
-  public @NotNull List<PluginId> getEssentialPluginsIds() {
-    return essentialPluginsIds;
+  public @NotNull List<PluginId> getEssentialPluginIds() {
+    return essentialPluginIds;
   }
 
   @Override

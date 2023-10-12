@@ -45,8 +45,8 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun getPluginManagerUrl(): String = delegate.pluginManagerUrl
   override fun usesJetBrainsPluginRepository(): Boolean = delegate.usesJetBrainsPluginRepository()
   override fun getPluginsListUrl(): String = delegate.pluginsListUrl
-  override fun getChannelsListUrl(): String? = delegate.channelsListUrl
-  override fun getPluginsDownloadUrl(): String = delegate.pluginsDownloadUrl
+  override fun getChannelListUrl(): String? = delegate.channelListUrl
+  override fun getPluginDownloadUrl(): String = delegate.pluginDownloadUrl
   override fun getBuiltinPluginsUrl(): String? = delegate.builtinPluginsUrl
   override fun getWebHelpUrl(): String? = delegate.webHelpUrl
   override fun getWhatsNewUrl(): String? = delegate.whatsNewUrl
@@ -58,7 +58,7 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun getSubscriptionFormId(): String? = delegate.subscriptionFormId
   override fun areSubscriptionTipsAvailable(): Boolean = delegate.areSubscriptionTipsAvailable()
   override fun getApiVersionAsNumber(): BuildNumber = delegate.apiVersionAsNumber
-  override fun getEssentialPluginsIds(): List<PluginId> = delegate.essentialPluginsIds
+  override fun getEssentialPluginIds(): List<PluginId> = delegate.essentialPluginIds
   override fun getDefaultLightLaf(): String? = delegate.defaultLightLaf
   override fun getDefaultClassicLightLaf(): String? = delegate.defaultClassicLightLaf
   override fun getDefaultDarkLaf(): String? = delegate.defaultDarkLaf
