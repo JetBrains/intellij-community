@@ -95,6 +95,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private final Map<String, ToolDescriptors> myInitialToolDescriptors = new HashMap<>();
   private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group(InspectionsBundle.message("inspection.root.node.title"));
+  private List<InspectionTreeAdvertiser.CustomGroup> myCustomGroups = new ArrayList<>();
   private final Alarm myAlarm = new Alarm();
   private final ProjectInspectionProfileManager myProjectProfileManager;
   @NotNull
@@ -126,6 +127,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     super(new BorderLayout());
     myProjectProfileManager = projectProfileManager;
     myProfile = profile;
+
+    for (InspectionTreeAdvertiser advertiser : InspectionTreeAdvertiser.EP_NAME.getExtensionList()) {
+      myCustomGroups.addAll(advertiser.getCustomGroups());
+    }
   }
 
   public boolean differsFromDefault() {
@@ -571,7 +576,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myTreeTable.setRootVisible(false);
 
     myCreateInspectionActions = new DefaultActionGroup();
-    for (EmptyInspectionTreeActionProvider provider : EmptyInspectionTreeActionProvider.EP_NAME.getExtensionList()) {
+    for (InspectionTreeAdvertiser provider : InspectionTreeAdvertiser.EP_NAME.getExtensionList()) {
       myCreateInspectionActions.addAll(provider.getActions(this));
     }
     updateEmptyText();
@@ -692,6 +697,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     final Set<String> quoted = new HashSet<>();
     if (filter != null && !filter.isEmpty()) {
       keySetList.addAll(SearchUtil.findKeys(filter, quoted));
+    } else {
+      // No filter -> add always visible groups
+      myCustomGroups.forEach(group -> getGroupNode(myRoot, group.path()));
     }
     Project project = getProject();
     final boolean emptyFilter = myInspectionsFilter.isEmptyFilter();
@@ -744,6 +752,7 @@ public class SingleInspectionProfilePanel extends JPanel {
                                        myProfile.getToolDefaultState(singleNode.getDefaultDescriptor().getKey().toString(), project) : null;
       boolean showDefaultConfigurationOptions = toolState == null || toolState.getTool().getTool().showDefaultConfigurationOptions();
       if (singleNode != null) {
+        // Inspection tool node selected
         final Descriptor descriptor = singleNode.getDefaultDescriptor();
         if (descriptor.loadDescription() != null) {
           // need this in order to correctly load plugin-supplied descriptions
@@ -763,14 +772,14 @@ public class SingleInspectionProfilePanel extends JPanel {
                       "; description: " +
                       description, t);
           }
-
         }
         else {
           DescriptionEditorPaneKt.readHTML(myDescription, AnalysisBundle.message("inspections.settings.no.description.warning"));
         }
       }
       else {
-        DescriptionEditorPaneKt.readHTML(myDescription, AnalysisBundle.message("inspections.settings.multiple.inspections.warning"));
+        // Inspection group node selected
+        showDescriptionForSelection();
       }
 
       myOptionsPanel.removeAll();
@@ -982,8 +991,31 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     else {
       initOptionsAndDescriptionPanel();
+      final TreePath[] selectedPaths = myTreeTable.getTree().getSelectionPaths();
+      if (selectedPaths != null && selectedPaths.length > 0) {
+        showDescriptionForSelection();
+      }
     }
     myOptionsPanel.repaint();
+  }
+
+  private void showDescriptionForSelection() {
+    var group = myTreeTable.getStrictlySelectedGroupNode();
+    InspectionTreeAdvertiser.CustomGroup customGroup = null;
+    if (group != null) {
+      customGroup = ContainerUtil.find(
+        myCustomGroups,
+        g -> Arrays.equals(
+          g.path(),
+          Arrays.stream(group.getPath()).skip(1).map(node -> ((InspectionConfigTreeNode)node).getText()).toArray()
+        )
+      );
+    }
+    if (customGroup != null) {
+      DescriptionEditorPaneKt.readHTML(myDescription, customGroup.description());
+    } else {
+      DescriptionEditorPaneKt.readHTML(myDescription, AnalysisBundle.message("inspections.settings.multiple.inspections.warning"));
+    }
   }
 
   private static void updateHighlightingChooser(Collection<? extends InspectionConfigTreeNode.Tool> nodes,
