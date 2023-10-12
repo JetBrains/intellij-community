@@ -196,6 +196,8 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     fun addResolutionStrategy(pluginId: String)
 
     fun addFoojayPlugin(changedFiles: ChangedConfiguratorFiles)
+
+    fun addFoojayPlugin(settingsFile: PsiFile)
 }
 
 fun GradleBuildScriptManipulator<*>.usesNewMultiplatform(): Boolean {

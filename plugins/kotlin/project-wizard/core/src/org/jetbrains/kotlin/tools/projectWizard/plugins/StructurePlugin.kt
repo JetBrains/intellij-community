@@ -94,6 +94,15 @@ class StructurePlugin(context: Context) : Plugin(context) {
             defaultValue = value(false)
         }
 
+        // True when creating a new project, or when creating a submodule without parent of the same build system
+        // (e.g. a new Gradle module inside a JPS project)
+        val isCreatingNewProjectHierarchy by booleanSetting(
+            "<IS_CREATING_NEW_PROJECT_HIERARCHY>",
+            GenerationPhase.FIRST_STEP,
+        ) {
+            defaultValue = value(false)
+        }
+
         val createProjectDir by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             withAction {
                 service<FileSystemWizardService>().createDirectory(StructurePlugin.projectPath.settingValue)
@@ -109,7 +118,8 @@ class StructurePlugin(context: Context) : Plugin(context) {
             artifactId,
             version,
             renderPomIR,
-            useCompactProjectStructure
+            useCompactProjectStructure,
+            isCreatingNewProjectHierarchy
         )
     override val pipelineTasks: List<PipelineTask> =
         listOf(createProjectDir)

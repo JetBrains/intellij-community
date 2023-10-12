@@ -13,6 +13,7 @@ internal val DEFAULT_KOTLIN_WIZARD_VERSIONS = KotlinWizardVersionState(
     kotlinForComposeVersion = "1.7.20",
     composeCompilerExtension = "1.4.3",
     minGradleFoojayVersion = "7.6",
+    minKotlinFoojayVersion = "1.5.30",
     foojayVersion = "0.5.0",
     failsafeVersion = "2.22.2",
     surefireVersion = "2.22.2",

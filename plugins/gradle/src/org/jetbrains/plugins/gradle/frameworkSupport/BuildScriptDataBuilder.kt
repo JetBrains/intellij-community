@@ -108,12 +108,15 @@ class BuildScriptDataBuilder(
   override fun withJavaLibraryPlugin() = apply { backend.withJavaLibraryPlugin() }
   override fun withIdeaPlugin() = apply { backend.withIdeaPlugin() }
   override fun withKotlinJvmPlugin() = apply { backend.withKotlinJvmPlugin() }
+  override fun withKotlinJvmPlugin(version: String?): BuildScriptDataBuilder = apply { backend.withKotlinJvmPlugin(version) }
   override fun withKotlinJsPlugin() = apply { backend.withKotlinJsPlugin() }
   override fun withKotlinMultiplatformPlugin() = apply { backend.withKotlinMultiplatformPlugin() }
+  override fun withKotlinJvmToolchain(jvmTarget: Int): BuildScriptDataBuilder = apply { backend.withKotlinJvmToolchain(jvmTarget) }
   override fun withGroovyPlugin() = apply { backend.withGroovyPlugin() }
   override fun withGroovyPlugin(version: String) = apply { backend.withGroovyPlugin(version) }
   override fun withApplicationPlugin(mainClass: String?, mainModule: String?, executableDir: String?, defaultJvmArgs: List<String>?) =
     apply { backend.withApplicationPlugin(mainClass, mainModule, executableDir, defaultJvmArgs) }
+  override fun withKotlinTest(): BuildScriptDataBuilder = apply { backend.withKotlinTest() }
   override fun withJUnit() = apply { backend.withJUnit() }
   override fun withJUnit4() = apply { backend.withJUnit4() }
   override fun withJUnit5() = apply { backend.withJUnit5() }

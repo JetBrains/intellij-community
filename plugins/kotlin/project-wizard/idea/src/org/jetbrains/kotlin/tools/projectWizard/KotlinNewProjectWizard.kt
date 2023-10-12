@@ -5,7 +5,6 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
-import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -64,6 +63,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                         StructurePlugin.name.reference.setValue(projectName)
                         StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
                         StructurePlugin.useCompactProjectStructure.reference.setValue(useCompactProjectStructure)
+                        StructurePlugin.isCreatingNewProjectHierarchy.reference.setValue(isProject)
                         KotlinPlugin.createResourceDirectories.reference.setValue(createResourceDirectories)
 
                         // If a local gradle installation was selected, we want to use the local gradle installation's
