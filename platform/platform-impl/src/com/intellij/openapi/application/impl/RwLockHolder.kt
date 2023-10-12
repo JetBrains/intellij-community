@@ -1,17 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.ide.bootstrap.isImplicitReadOnEDTDisabled
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class RwLockHolder(writeThread: Thread) {
+class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   @JvmField
   internal val lock: ReadMostlyRWLock = ReadMostlyRWLock(writeThread)
 
   // @Throws(E::class)
-  fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
+  override fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
     val writeIntentLock = acquireWriteIntentLock(computation.javaClass.getName())
     try {
       return computation.compute()
@@ -23,7 +24,7 @@ class RwLockHolder(writeThread: Thread) {
     }
   }
 
-  fun acquireWriteIntentLock(ignored: String?): Boolean {
+  override fun acquireWriteIntentLock(ignored: String?): Boolean {
     if (lock.isWriteThread && (lock.isWriteIntentLocked || lock.isWriteAcquired)) {
       return false
     }
@@ -31,15 +32,15 @@ class RwLockHolder(writeThread: Thread) {
     return true
   }
 
-  fun releaseWriteIntentLock() {
+  override fun releaseWriteIntentLock() {
     lock.writeIntentUnlock()
   }
 
-  fun isWriteIntentLocked(): Boolean {
+  override fun isWriteIntentLocked(): Boolean {
     return lock.isWriteThread && (lock.isWriteIntentLocked || lock.isWriteAcquired)
   }
 
-  fun runWithoutImplicitRead(runnable: Runnable) {
+  override fun runWithoutImplicitRead(runnable: Runnable) {
     if (isImplicitReadOnEDTDisabled) {
       runnable.run()
       return
@@ -59,7 +60,7 @@ class RwLockHolder(writeThread: Thread) {
     }
   }
 
-  fun runWithImplicitRead(runnable: Runnable) {
+  override fun runWithImplicitRead(runnable: Runnable) {
     if (!isImplicitReadOnEDTDisabled) {
       runnable.run()
       return
