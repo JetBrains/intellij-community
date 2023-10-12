@@ -6,14 +6,9 @@ import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.TaskCancellation
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.Component
 
 @Internal
 interface TaskSupport {
-
-  fun modalTaskOwner(project: Project): ModalTaskOwner
-
-  fun modalTaskOwner(component: Component): ModalTaskOwner
 
   suspend fun <T> withBackgroundProgressInternal(
     project: Project,

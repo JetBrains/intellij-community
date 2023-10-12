@@ -25,8 +25,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
-import com.intellij.platform.ide.progress.CancellableTaskCancellation
-import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.*
 import com.intellij.platform.util.progress.asContextElement
 import com.intellij.platform.util.progress.impl.ProgressState
 import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
@@ -72,10 +71,6 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     }.takeWhile { it != null }.map { it!! }
     return finiteFlow
   }
-
-  override fun modalTaskOwner(component: Component): ModalTaskOwner = ComponentModalTaskOwner(component)
-
-  override fun modalTaskOwner(project: Project): ModalTaskOwner = ProjectModalTaskOwner(project)
 
   override suspend fun <T> withBackgroundProgressInternal(
     project: Project,
@@ -173,7 +168,7 @@ private class JobProviderWithOwnerContext(val modalJob: Job, val owner: ModalTas
     return when (owner) {
       is ComponentModalTaskOwner -> ProgressWindow.calcParentWindow(owner.component, null) === frame
       is ProjectModalTaskOwner -> owner.project === project
-      else -> ProgressWindow.calcParentWindow(null, null) === frame
+      is GuessModalTaskOwner -> ProgressWindow.calcParentWindow(null, null) === frame
     }
   }
 
