@@ -42,6 +42,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             project: Project,
             projectPath: String,
             projectName: String,
+            isProject: Boolean = true, // false stands for module
             sdk: Sdk?,
             buildSystemType: BuildSystemType,
             projectGroupId: String? = suggestGroupId(),
@@ -58,6 +59,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                 .apply {
                     wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
                     wizard.jdk = sdk
+                    wizard.isCreatingNewProject = isProject
                     wizard.context.writeSettings {
                         StructurePlugin.name.reference.setValue(projectName)
                         StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
@@ -99,7 +101,8 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         }
     }
 
-    override fun isEnabled(context: WizardContext): Boolean = context.isCreatingNewProject
+    // Uncommenting this line disables new Kotlin modules
+    //override fun isEnabled(context: WizardContext): Boolean = context.isCreatingNewProject
 
     override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 

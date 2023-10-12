@@ -68,6 +68,7 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
                 project = project,
                 projectPath = "$path/$name",
                 projectName = name,
+                isProject = context.isCreatingNewProject,
                 sdk = sdk,
                 buildSystemType = BuildSystemType.Maven,
                 projectGroupId = groupId,

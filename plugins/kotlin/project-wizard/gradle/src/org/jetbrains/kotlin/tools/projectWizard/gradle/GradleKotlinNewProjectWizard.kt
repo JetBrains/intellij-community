@@ -104,6 +104,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 project = project,
                 projectPath = parentStep.path + "/" + parentStep.name,
                 projectName = parentStep.name,
+                isProject = context.isCreatingNewProject,
                 sdk = sdk,
                 buildSystemType = when (gradleDsl) {
                     GradleDsl.KOTLIN -> GradleKotlinDsl
