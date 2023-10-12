@@ -46,7 +46,7 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
   override fun getVisitor(holder: ProblemsHolder): PsiElementVisitor {
     return object : KtVisitorVoid() {
       override fun visitProperty(property: KtProperty) {
-        if (property.isVar || !property.isStatic()) return
+        if (property.isVar || !property.isStatic() || !property.hasBackingField()) return
 
         @OptIn(KtAllowAnalysisOnEdt::class)
         val typeClassElement = allowAnalysisOnEdt {
@@ -83,15 +83,13 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
           return
         }
 
-        if (property.hasBackingField()) {
-          holder.registerProblem(
-            anchor,
-            DevKitKotlinBundle.message("inspections.application.service.as.static.immutable.property.with.backing.field.message"),
-            ProblemHighlightType.WARNING,
-            IntentionWrapper(ConvertPropertyToFunctionIntention()),
-            KtWrapInSupplierQuickFix(property),
-          )
-        }
+        holder.registerProblem(
+          anchor,
+          DevKitKotlinBundle.message("inspections.application.service.as.static.immutable.property.with.backing.field.message"),
+          ProblemHighlightType.WARNING,
+          IntentionWrapper(ConvertPropertyToFunctionIntention()),
+          KtWrapInSupplierQuickFix(property),
+        )
       }
     }
   }
