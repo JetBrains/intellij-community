@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public final class SingleTargetRequestResultProcessor extends RequestResultProcessor {
-  private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final PsiElement myTarget;
+
 
   public SingleTargetRequestResultProcessor(@NotNull PsiElement target) {
     super(target);
@@ -26,8 +26,9 @@ public final class SingleTargetRequestResultProcessor extends RequestResultProce
       return false;
     }
 
-    final List<PsiReference> references = ourReferenceService.getReferences(element,
-                                                                            new PsiReferenceService.Hints(myTarget, offsetInElement));
+    final List<PsiReference> references = PsiReferenceService.getService().getReferences(element,
+                                                                                         new PsiReferenceService.Hints(myTarget,
+                                                                                                                       offsetInElement));
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < references.size(); i++) {
       PsiReference ref = references.get(i);

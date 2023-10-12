@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutterActionProvider {
-  private static final GitVcsApplicationSettings SETTINGS = GitVcsApplicationSettings.getInstance();
 
   @Override
   public @NotNull AnAction createAction(final @NotNull FileAnnotation annotation) {
@@ -102,12 +101,12 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return SETTINGS.isIgnoreWhitespaces();
+      return GitVcsApplicationSettings.getInstance().isIgnoreWhitespaces();
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
-      SETTINGS.setIgnoreWhitespaces(enabled);
+      GitVcsApplicationSettings.getInstance().setIgnoreWhitespaces(enabled);
       resetAllAnnotations(myProject, true);
     }
   }
@@ -127,18 +126,15 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return SETTINGS.getAnnotateDetectMovementsOption() == AnnotateDetectMovementsOption.INNER ||
-             SETTINGS.getAnnotateDetectMovementsOption() == AnnotateDetectMovementsOption.OUTER;
+      AnnotateDetectMovementsOption movementsOption = GitVcsApplicationSettings.getInstance().getAnnotateDetectMovementsOption();
+      return movementsOption == AnnotateDetectMovementsOption.INNER ||
+             movementsOption == AnnotateDetectMovementsOption.OUTER;
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
-      if (enabled) {
-        SETTINGS.setAnnotateDetectMovementsOption(AnnotateDetectMovementsOption.INNER);
-      }
-      else {
-        SETTINGS.setAnnotateDetectMovementsOption(AnnotateDetectMovementsOption.NONE);
-      }
+      GitVcsApplicationSettings.getInstance()
+        .setAnnotateDetectMovementsOption(enabled ? AnnotateDetectMovementsOption.INNER : AnnotateDetectMovementsOption.NONE);
       resetAllAnnotations(myProject, true);
     }
   }
@@ -158,17 +154,14 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return SETTINGS.getAnnotateDetectMovementsOption() == AnnotateDetectMovementsOption.OUTER;
+      return GitVcsApplicationSettings.getInstance()
+               .getAnnotateDetectMovementsOption() == AnnotateDetectMovementsOption.OUTER;
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
-      if (enabled) {
-        SETTINGS.setAnnotateDetectMovementsOption(AnnotateDetectMovementsOption.OUTER);
-      }
-      else {
-        SETTINGS.setAnnotateDetectMovementsOption(AnnotateDetectMovementsOption.INNER);
-      }
+      GitVcsApplicationSettings.getInstance()
+        .setAnnotateDetectMovementsOption(enabled ? AnnotateDetectMovementsOption.OUTER : AnnotateDetectMovementsOption.INNER);
       resetAllAnnotations(myProject, true);
     }
   }
