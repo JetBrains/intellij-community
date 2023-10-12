@@ -197,10 +197,4 @@ public class MatchContext {
     }
     getSink().newMatch(result);
   }
-  void copyFrom(@NotNull MatchContext other) {
-    pattern = other.pattern;
-    shouldRecursivelyMatch = other.shouldRecursivelyMatch;
-    options = other.options;
-  }
-
 }

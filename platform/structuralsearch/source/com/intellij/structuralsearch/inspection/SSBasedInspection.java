@@ -389,7 +389,6 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
         continue;
       }
       if (matcher != null) {
-        matcher = new Matcher(matcher); // safe copy
         result.put(configuration, matcher);
       }
       else {
@@ -469,10 +468,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
         if (matcher == null) continue;
         MatchingStrategy strategy = matcher.getMatchContext().getPattern().getStrategy();
         if (!strategy.continueMatching(element)) continue;
-
-        matcher = new Matcher(matcher); // make safe copy to avoid data races from the other Matcher from myCompiledOptions executing in parallel
         Configuration configuration = entry.getKey();
-        matcher.getMatchContext().setSink(new InspectionResultSink(configuration, myHolder, myDuplicates));
         processElement(element, configuration, matcher);
       }
     }
