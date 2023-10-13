@@ -154,7 +154,7 @@ public final class JavaBuilderUtil {
         //}
       }
 
-      for (Key<?> key : Arrays.asList(GRAPH_DELTA_CALLBACK_KEY, FILES_TO_COMPILE_KEY, COMPILED_WITH_ERRORS_KEY, SUCCESSFULLY_COMPILED_FILES_KEY)) {
+      for (Key<?> key : List.of(GRAPH_DELTA_CALLBACK_KEY, FILES_TO_COMPILE_KEY, COMPILED_WITH_ERRORS_KEY, SUCCESSFULLY_COMPILED_FILES_KEY)) {
         key.set(context, null);
       }
       if (delta == null) {

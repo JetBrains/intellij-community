@@ -14,7 +14,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 public final class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
-  private final List<DifferentiateStrategy> myDifferentiateStrategies = List.of(
+  private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(
     new JavaDifferentiateStrategy()
   );
 
@@ -122,7 +122,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     };
 
     boolean incremental = true;
-    for (DifferentiateStrategy diffStrategy : myDifferentiateStrategies) {
+    for (DifferentiateStrategy diffStrategy : ourDifferentiateStrategies) {
       if (!diffStrategy.differentiate(diffContext, nodesBefore, nodesAfter)) {
         incremental = false;
         break;
@@ -149,7 +149,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
           for (var depNode : getNodes(depSrc)) {
             if (diffContext.isNodeAffected(depNode)) {
               affectSource = true;
-              for (DifferentiateStrategy strategy : myDifferentiateStrategies) {
+              for (DifferentiateStrategy strategy : ourDifferentiateStrategies) {
                 if (!strategy.isIncremental(diffContext, depNode)) {
                   return DifferentiateResult.createNonIncremental(delta, deletedNodes);
                 }

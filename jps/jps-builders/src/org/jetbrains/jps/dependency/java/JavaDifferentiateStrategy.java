@@ -3,7 +3,6 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
-import org.jetbrains.jps.dependency.impl.NodeDependenciesIndex;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.lang.annotation.RetentionPolicy;
@@ -95,24 +94,22 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
 
       if (extendsChanged) {
         TypeRepr.ClassType exClass = new TypeRepr.ClassType(changedClass.getName());
-        for (ReferenceID dep : context.getGraph().getIndex(NodeDependenciesIndex.NAME).getDependencies(changedClass.getReferenceID())) {
-          for (JvmClass depClass : present.getNodes(dep, JvmClass.class)) {
-            for (JvmMethod method : depClass.getMethods()) {
-              if (method.getExceptions().contains(exClass)) {
-                context.affectUsage(method.createUsage(depClass.getName()));
-                debug("Affecting usages of methods throwing " + exClass.getJvmName() + " exception; class " + depClass.getName());
-              }
+        for (JvmClass depClass : Iterators.flat(Iterators.map(context.getGraph().getDependingNodes(changedClass.getReferenceID()), dep -> present.getNodes(dep, JvmClass.class)))) {
+          for (JvmMethod method : depClass.getMethods()) {
+            if (method.getExceptions().contains(exClass)) {
+              context.affectUsage(method.createUsage(depClass.getName()));
+              debug("Affecting usages of methods throwing " + exClass.getJvmName() + " exception; class " + depClass.getName());
             }
           }
         }
       }
 
       if (!changedClass.isAnonymous()) {
-        Set<String> parents = present.collectAllSupertypes(changedClass.getName(), new HashSet<>());
-        parents.removeAll(future.collectAllSupertypes(changedClass.getName(), new HashSet<>()));
-        for (String parent : parents) {
+        Set<JvmNodeReferenceID> parents = Iterators.collect(present.allSupertypes(changedClass.getReferenceID()), new HashSet<>());
+        parents.removeAll(Iterators.collect(future.allSupertypes(changedClass.getReferenceID()), new HashSet<>()));
+        for (JvmNodeReferenceID parent : parents) {
           debug("Affecting usages in generic type parameter bounds of class: " + parent);
-          context.affectUsage(new ClassAsGenericBoundUsage(parent)); // todo: need support of usage constraint?
+          context.affectUsage(new ClassAsGenericBoundUsage(parent.getNodeName())); // todo: need support of usage constraint?
         }
       }
     }
@@ -203,8 +200,6 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
             break;
           }
         }
-
-
       }
       debug("End of annotation-specific analysis");
     }
@@ -224,14 +219,28 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     JvmClass changedClass = classChange.getPast();
     Difference.Specifier<JvmMethod, JvmMethod.Diff> methodsDiff = classChange.getDiff().methods();
 
-    debug("Processing added methods: ");
     if (changedClass.isAnnotation()) {
       debug("Class is annotation, skipping method analysis");
       return true;
     }
     
+    debug("Processing added methods: ");
     for (JvmMethod addedMethod : methodsDiff.added()) {
+      if (!addedMethod.isPrivate() && (changedClass.isInterface() || changedClass.isAbstract() || addedMethod.isAbstract())) {
+        debug("Method: " + addedMethod.getName());
+        debug("Class is abstract, or is interface, or added non-private method is abstract => affecting all subclasses");
+        affectSubclasses(context, future, changedClass.getReferenceID(), false);
+        break;
+      }
+    }
 
+    if (changedClass.isInterface()) {
+      for (JvmMethod addedMethod : methodsDiff.added()) {
+        if (!addedMethod.isPrivate() && addedMethod.isAbstract()) {
+          debug("Added non-private abstract method: " + addedMethod.getName());
+          affectLambdaInstantiations(context, present, changedClass.getReferenceID());
+        }
+      }
     }
 
     for (JvmMethod removedMethod : methodsDiff.removed()) {
@@ -267,19 +276,31 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     debug("Affecting subclasses of class: " + fromClass + "; with usages affection: " + affectUsages);
     
     Graph graph = context.getGraph();
-    utils.traverseSubclasses(fromClass, cl -> {
+    for (ReferenceID cl : utils.withAllSubclasses(fromClass)) {
       for (NodeSource source : graph.getSources(cl)) {
         if (!context.isCompiled(source)) {
           context.affectNodeSource(source);
         }
-        if (affectUsages) {
-          for (JvmClass node : Iterators.filter(graph.getNodes(source, JvmClass.class), n -> cl.equals(n.getReferenceID()))) {
-            context.affectUsage(new ClassUsage(node.getName()));
-            break;
-          }
+      }
+      if (affectUsages) {
+        String nodeName = utils.getNodeName(cl);
+        if (nodeName != null) {
+          context.affectUsage(new ClassUsage(nodeName));
         }
       }
-    });
+    }
+  }
+
+  private void affectLambdaInstantiations(DifferentiateContext context, Utils utils, ReferenceID fromClass) {
+    for (ReferenceID id : utils.withAllSubclasses(fromClass)) {
+      if (utils.isLambdaTarget(id)) {
+        String clsName = utils.getNodeName(id);
+        if (clsName != null) {
+          debug("The interface could be not a SAM interface anymore or lambda target method name has changed => affecting lambda instantiations for " + clsName);
+          context.affectUsage(new ClassNewUsage(clsName));
+        }
+      }
+    }
   }
 
   private void debug(String message) {

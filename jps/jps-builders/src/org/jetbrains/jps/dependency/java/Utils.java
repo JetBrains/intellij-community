@@ -9,7 +9,6 @@ import org.jetbrains.jps.javac.Iterators;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -36,6 +35,46 @@ public final class Utils {
     return getNodes(new JvmNodeReferenceID(name), JvmModule.class);
   }
 
+  @Nullable
+  public String getNodeName(ReferenceID id) {
+    if (id instanceof JvmNodeReferenceID) {
+      return ((JvmNodeReferenceID)id).getNodeName();
+    }
+    Iterable<JVMClassNode> nodes = getNodes(id, JVMClassNode.class);
+    for (var node : nodes) {
+      return node.getName();
+    }
+    return null;
+  }
+
+  // test if a ClassRepr is a SAM interface
+  public boolean isLambdaTarget(ReferenceID classId) {
+    for (JvmClass cls : getNodes(classId, JvmClass.class)) {
+      if (cls.isInterface()) {
+        int amFound = 0;
+        for (JvmMethod method : allMethodsRecursively(cls)) {
+          if (method.isAbstract() && ++amFound > 1) {
+            break;
+          }
+        }
+        if (amFound == 1) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // return all methods of this class including all inherited methods recursively
+  public Iterable<JvmMethod> allMethodsRecursively(JvmClass cls) {
+    return Iterators.flat(collectRecursively(cls, c -> c.getMethods()));
+  }
+
+  private <T> Iterable<T> collectRecursively(JvmClass cls, Function<? super JvmClass, ? extends T> mapper) {
+    return Iterators.map(Iterators.recurse(cls, c -> Iterators.flat(Iterators.map(c.getSuperTypes(), st -> getClassesByName(st))), true), mapper::apply);
+  }
+
+
   /**
    * @param id a node reference ID
    * @return all nodes with the given ReferenceID. Nodes in the returned collection will have the same ReferenceID, but may be associated with different sources
@@ -52,13 +91,6 @@ public final class Utils {
       allNodes = Iterators.flat(Iterators.map(myGraph.getSources(id), src -> myGraph.getNodes(src, selector)));
     }
     return Iterators.unique(Iterators.filter(allNodes, n -> id.equals(n.getReferenceID())));
-  }
-
-  public void traverseSubclasses(ReferenceID from, Consumer<? super ReferenceID> acc) {
-    traverseSubclasses(from, id -> {
-      acc.accept(from);
-      return Boolean.TRUE;
-    });
   }
 
   public void traverseSubclasses(ReferenceID from, Function<? super ReferenceID, Boolean> f) {
@@ -78,17 +110,18 @@ public final class Utils {
     }.traverse(from, f);
   }
 
-  public Iterable<String> allDirectSupertypes(String className) {
-    return Iterators.unique(Iterators.flat(Iterators.map(getClassesByName(className), cl -> cl.getSuperTypes())));
+  public Iterable<JvmNodeReferenceID> allDirectSupertypes(JvmNodeReferenceID classId) {
+    return Iterators.unique(Iterators.flat(Iterators.map(getNodes(classId, JvmClass.class), cl -> Iterators.map(cl.getSuperTypes(), st -> new JvmNodeReferenceID(st)))));
   }
 
-  public Set<String> collectAllSupertypes(String className, Set<String> acc) {
-    for (String st : allDirectSupertypes(className)) {
-      if (acc.add(st)) {
-        collectAllSupertypes(st, acc);
-      }
-    }
-    return acc;
+  public Iterable<JvmNodeReferenceID> allSupertypes(JvmNodeReferenceID classId) {
+    //return Iterators.recurseDepth(className, s -> allDirectSupertypes(s), false);
+    return Iterators.recurse(classId, s -> allDirectSupertypes(s), false);
+  }
+
+  @NotNull
+  public Iterable<ReferenceID> withAllSubclasses(ReferenceID from) {
+    return Iterators.recurse(from, myDirectSubclasses::getDependencies, true);
   }
 
   public Set<ReferenceID> collectSubclassesWithoutField(String className, String fieldName) {
@@ -140,11 +173,11 @@ public final class Utils {
       else {
         propagated = new HashSet<>();
         JvmNodeReferenceID ownerID = owner.getReferenceID();
-        traverseSubclasses(ownerID, id -> {
+        for (ReferenceID id : withAllSubclasses(ownerID)) {
           if (id instanceof JvmNodeReferenceID && !id.equals(ownerID)) {
             propagated.add(id);
           }
-        });
+        }
       }
       Iterators.collect(Iterators.flat(Iterators.map(propagated, id -> myGraph.getSources(id))), toRecompile);
     }
