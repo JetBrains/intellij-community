@@ -99,8 +99,6 @@ class TestJbService : JbService {
         IconProductSize.LARGE -> AllIcons.General.SuccessLogin
       }
     }
-
-
   }
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
@@ -260,7 +258,6 @@ class TestImportFromProduct(
 class TestImportProgress(lifetime: Lifetime) : ImportProgress {
   override val progressMessage = Property<String?>(null)
   override val progress = OptProperty<Int>()
-  override val error = OptProperty<ImportError>()
 
   private var value: Int = 0
   private val list = listOf("Plugins: Docker", "Connect to WebApp", "Connect", "Show configuration on toolbar")

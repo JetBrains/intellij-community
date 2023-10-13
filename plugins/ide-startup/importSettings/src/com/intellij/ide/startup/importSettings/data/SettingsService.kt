@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.SystemProperties
 import com.jetbrains.rd.util.reactive.IOptPropertyView
 import com.jetbrains.rd.util.reactive.IPropertyView
+import com.jetbrains.rd.util.reactive.ISignal
+import com.jetbrains.rd.util.reactive.Signal
 import java.util.*
 import javax.swing.Icon
 
@@ -19,6 +21,8 @@ interface SettingsService {
   fun getExternalService(): ExternalService
 
   fun skipImport()
+
+  val error: ISignal<NotificationData>
 }
 
 class SettingsServiceImpl : SettingsService {
@@ -34,6 +38,8 @@ class SettingsServiceImpl : SettingsService {
   override fun getExternalService() = TestExternalService()
 
   override fun skipImport() = thisLogger().info("$IMPORT_SERVICE skipImport")
+
+  override val error = Signal<NotificationData>()
 }
 
 
@@ -148,14 +154,8 @@ interface DialogImportData {
 interface ImportProgress {
   val progressMessage: IPropertyView<String?>
   val progress: IOptPropertyView<Int>
-  val error : IOptPropertyView<ImportError>
 }
 
-interface ImportError {
-  val message: String
-  fun skip()
-  fun tryAgain()
-}
 
 data class DialogImportItem(val item: SettingsContributor, val icon: Icon)
 

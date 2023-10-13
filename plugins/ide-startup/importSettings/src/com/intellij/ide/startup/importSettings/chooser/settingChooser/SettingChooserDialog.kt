@@ -7,7 +7,10 @@ import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.IconProductSize
 import com.intellij.ide.startup.importSettings.data.SettingsContributor
 import com.intellij.ui.JBColor
+import com.intellij.ui.SeparatorComponent
+import com.intellij.ui.SeparatorOrientation
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -34,7 +37,7 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
       row {
         text("Import<br>Settings From").apply {
           this.component.font = JBFont.h1()
-        }.align(AlignY.TOP).customize(UnscaledGaps(20, 0, 17, 0))
+        }.align(AlignY.TOP).customize(UnscaledGaps(0, 0, 17, 0))
       }
       panel {
         provider.getProductIcon(product.id, IconProductSize.MIDDLE)?.let { icn ->
@@ -57,7 +60,7 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
       }.align(AlignY.TOP)
     }.apply {
       preferredWidth = JBUI.scale(200)
-      border = JBUI.Borders.emptyLeft(5)
+      border = JBUI.Borders.empty(20, 20, 0, 0)
     }, BorderLayout.WEST)
 
     val productService = provider.productService
@@ -88,7 +91,12 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
   }
 
   override fun createContent(): JComponent? {
-    return pane
+    return JPanel(VerticalLayout(0)).apply {
+      isOpaque = false
+      add(SeparatorComponent(JBColor.namedColor("Borders.color", JBColor.BLACK), SeparatorOrientation.HORIZONTAL))
+      add(pane)
+      border = JBUI.Borders.empty()
+    }
   }
 
   protected fun getBackAction(): Action {
@@ -96,14 +104,7 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
 
       override fun doAction(e: ActionEvent?) {
         val dialog = ProductChooserDialog()
-        parentDialog?.let {
-          it.showPage(dialog)
-        } ?: run {
-          dialog.isModal = false
-          dialog.isResizable = false
-          dialog.show()
-        }
-        doAction(CANCEL_EXIT_CODE)
+        nextStep(dialog, CANCEL_EXIT_CODE)
       }
     }
   }

@@ -2,10 +2,13 @@
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.chooser.ui.BannerOverlay
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
+import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.rd.createLifetime
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
@@ -24,19 +27,11 @@ class ProductChooserDialog : PageProvider() {
     })
   }
 
-  private val callback: (PageProvider)-> Unit = {
-    parentDialog?.showPage(it) ?: run {
-      close(OK_EXIT_CODE)
-
-      it.isModal = false
-      it.isResizable = false
-      it.show()
-
-      SwingUtilities.invokeLater{
-        it.pack()
-      }
-    }
+  private val callback: (PageProvider) -> Unit = {
+    nextStep(it, OK_EXIT_CODE)
   }
+
+  private  val overlay = BannerOverlay()
 
   init {
     val group = DefaultActionGroup()
@@ -47,6 +42,11 @@ class ProductChooserDialog : PageProvider() {
     group.add(JbChooserAction(callback))
     group.add(ExpChooserAction(callback))
     group.add(SkipImportAction())
+
+    val settService = SettingsService.getInstance()
+    settService.error.advise(disposable.createLifetime()) {
+      overlay.showError(it)
+    }
 
     val act = ActionManager.getInstance().createActionToolbar(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, false).apply {
       if (this is ActionToolbarImpl) {
@@ -63,20 +63,21 @@ class ProductChooserDialog : PageProvider() {
   }
 
   private fun createActionToolbar(group: ActionGroup, horizontal: Boolean): ActionToolbar {
-    return object : ActionToolbarImpl(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, horizontal){
+    return object : ActionToolbarImpl(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, horizontal) {
 
       override fun getPreferredSize(): Dimension {
         val dm = super.getPreferredSize()
-        if(horizontal) {
+        if (horizontal) {
           dm.width -= 10
-        } else dm.height -= 10
-          return dm
+        }
+        else dm.height -= 10
+        return dm
       }
     }
   }
 
   override fun createContent(): JComponent {
-    return JPanel(GridBagLayout()).apply {
+    val comp = JPanel(GridBagLayout()).apply {
       preferredSize = JBDimension(640, 410)
       val gbc = GridBagConstraints()
       gbc.gridx = 0
@@ -86,6 +87,8 @@ class ProductChooserDialog : PageProvider() {
       gbc.fill = GridBagConstraints.NONE
       add(pane, gbc)
     }
+
+    return overlay.wrapComponent(comp)
   }
 
   override fun createActions(): Array<Action> {

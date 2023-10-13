@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.sync
 
-import com.intellij.configurationStore.saveSettings
+/*import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.ImportError
 import com.intellij.ide.startup.importSettings.data.ImportProgress
@@ -11,15 +11,17 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.rd.util.withBackgroundContext
 import com.intellij.openapi.rd.util.withSyncIOBackgroundContext
-import com.intellij.openapi.rd.util.withUiContext
+import com.intellij.openapi.rd.util.withUiContext*/
 //import com.intellij.settingsSync.SettingsSnapshot
 //import com.intellij.settingsSync.SettingsSyncMain
 //import com.intellij.settingsSync.SettingsSyncRemoteCommunicator
 //import com.intellij.settingsSync.UpdateResult
+/*
 import com.intellij.util.text.nullize
 import com.jetbrains.rd.util.reactive.OptProperty
 import kotlinx.coroutines.*
 import kotlin.time.Duration.Companion.seconds
+*/
 
 //internal class SettingsSyncProgress : ImportProgress {
 //  override val progressMessage = OptProperty<String>()
