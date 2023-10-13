@@ -35,6 +35,7 @@ object Launcher {
       paths.javaExecutable.canonicalPath,
       "-ea",
       "-Dfus.internal.test.mode=true",
+      "-Didea.updates.url=http://127.0.0.1", // we should not spoil jetstat, which relies on update requests
       "-Djb.privacy.policy.text=\"<!--999.999-->\"",
       "-Djb.consents.confirmation.enabled=false",
       "-Didea.suppress.statistics.report=true",
