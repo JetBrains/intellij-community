@@ -177,7 +177,12 @@ object CommunityLibraryLicenses {
       .apache("https://gitbox.apache.org/repos/asf?p=commons-io.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
     LibraryLicense(name = "Apache Commons Lang", libraryName = "commons-lang3",
                    url = "https://commons.apache.org/proper/commons-lang/")
-      .apache("https://gitbox.apache.org/repos/asf?p=commons-lang.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
+      .apache("https://gitbox.apache.org/repos/asf?p=commons-lang.git;a=blob_plain;f=LICENSE.txt;hb=HEAD")
+      .suppliedByPersons(
+        "Daniel Rall", "Robert Burrell Donkin", "James Carman", "Benedikt Ritter", "Rob Tompkins", "Stephen Colebourne",
+        "Henri Yandell", "Steven Caswell", "Gary D. Gregory", "Fredrik Westermarck", "Niall Pemberton", "Matt Benson", "Joerg Schaible",
+        "Oliver Heger", "Paul Benedict", "Duncan Jones", "Loic Guibert"
+      ),
     LibraryLicense(name = "Apache Commons Logging", libraryName = "commons-logging",
                    url = "https://commons.apache.org/proper/commons-logging/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-logging.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
