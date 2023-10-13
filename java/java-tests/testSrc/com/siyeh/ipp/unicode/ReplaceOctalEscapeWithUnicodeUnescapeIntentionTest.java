@@ -26,6 +26,7 @@ public class ReplaceOctalEscapeWithUnicodeUnescapeIntentionTest extends IPPTestC
   public void testSimple() { doTest(); }
   public void testSelection() { doTest(); }
   public void testSelectionSingleSlash() { assertIntentionNotAvailable(); }
+  public void testSelectionIncomplete() { doTest(); }
   public void testSelection2() { doTest(); }
   public void testOtherEscape() { assertIntentionNotAvailable(); }
 
