@@ -21,6 +21,16 @@ import java.util.Arrays;
  */
 public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEnumerator, CleanableStorage {
 
+  //TODO RC: current implementation is hacky, it relies on knowledge of append-only-log record format
+  //          (header size/alignment: HASH_RECORD_LENGTH). Something more abstract is needed
+
+  //TODO RC: move DurableEnumerator to the module reachable from platform-indexing,
+  //         We need to create DurableEnumerator here, with KeyDescriptorEx, 'cos it is all ContentHashEnumerator-specific
+
+
+  /** Length of hash record in DurableEnumerator: hash.length + 4 bytes of append-only-log's record header */
+  private static final int HASH_RECORD_LENGTH = (SIGNATURE_LENGTH + 4);
+
   private final DurableEnumerator<byte[]> enumerator;
 
   public static ContentHashEnumeratorOverDurableEnumerator open(@NotNull Path storagePath) throws IOException {
@@ -35,35 +45,19 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
     this.enumerator = enumerator;
   }
 
-  //FIXME RC: current implementation is hacky, it relies on knowledge of append-only-log
-  //          record format (header size/alignment). Something more abstract is needed
-
-  //FIXME RC: move DurableEnumerator to the module reachable from platform-indexing,
-  //          WE need to create DurableEnumerator here, with KeyDescriptorEx, 'cos it is all ContentHashEnumerator-specific
-
   @Override
   public int enumerate(byte @NotNull [] hash) throws IOException {
+    checkValidHash(hash);
+
     int id = enumerator.enumerate(hash);
     return enumeratorIdToHashId(id);
   }
 
-  private static int enumeratorIdToHashId(int enumeratorId) {
-    if (enumeratorId == NULL_ID) {
-      return NULL_ID;
-    }
-    return (enumeratorId - 1) / (SIGNATURE_LENGTH + 4) + 1;
-  }
-
-  private static int hashIdToEnumeratorId(int hashId) {
-    if (hashId == NULL_ID) {
-      return NULL_ID;
-    }
-    return (hashId - 1) * (SIGNATURE_LENGTH + 4) + 1;
-  }
-
   @Override
-  public int tryEnumerate(byte @Nullable [] value) throws IOException {
-    int id = enumerator.tryEnumerate(value);
+  public int tryEnumerate(byte @Nullable [] hash) throws IOException {
+    checkValidHash(hash);
+
+    int id = enumerator.tryEnumerate(hash);
     if (id == NULL_ID) {
       return id;
     }
@@ -114,6 +108,31 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
   @Override
   public void closeAndClean() throws IOException {
     enumerator.closeAndClean();
+  }
+
+  private static int enumeratorIdToHashId(int enumeratorId) {
+    if (enumeratorId == NULL_ID) {
+      return NULL_ID;
+    }
+    if (((enumeratorId - 1) % HASH_RECORD_LENGTH) != 0) {
+      throw new IllegalArgumentException("enumeratorId(=" + enumeratorId + ") must be (n * " + HASH_RECORD_LENGTH + " + 1)");
+    }
+    return (enumeratorId - 1) / HASH_RECORD_LENGTH + 1;
+  }
+
+  private static int hashIdToEnumeratorId(int hashId) {
+    if (hashId == NULL_ID) {
+      return NULL_ID;
+    }
+    return (hashId - 1) * HASH_RECORD_LENGTH + 1;
+  }
+
+  private static void checkValidHash(byte[] hash) {
+    if (hash != null) {
+      if (hash.length != SIGNATURE_LENGTH) {
+        throw new IllegalArgumentException("hash.length(=" + hash.length + ") must be " + SIGNATURE_LENGTH);
+      }
+    }
   }
 
   /** Content hash (cryptographic hash of file content, byte[]) descriptor. */
