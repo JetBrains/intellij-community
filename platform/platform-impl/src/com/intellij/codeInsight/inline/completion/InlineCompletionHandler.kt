@@ -88,15 +88,15 @@ class InlineCompletionHandler internal constructor(
       guardCaretModifications(request)
     }
 
-    providerManager.getCache(provider::class)?.let { cached ->
-      println("CACHE" to provider to event)
+    //providerManager.getCache(provider::class)?.let { cached ->
+    //  println("CACHE" to provider to event)
       // TODO: add event logging)
       //cached.forEach { newSession.context.renderElement(it, request.endOffset) }
       //return
-    }
+    //}
 
     executor.switchJobSafely(newSession::assignJob) {
-      invokeRequest(provider::class, request, newSession)
+      invokeRequest(provider.id, request, newSession)
     }
   }
 
@@ -156,7 +156,7 @@ class InlineCompletionHandler internal constructor(
   }
 
   private suspend fun invokeRequest(
-    provider: KClass<out InlineCompletionProvider>,
+    providerId: InlineCompletionProviderID,
     request: InlineCompletionRequest,
     session: InlineCompletionSession,
   ) {
@@ -185,7 +185,7 @@ class InlineCompletionHandler internal constructor(
         }
         .onCompletion {
           val isActive = currentCoroutineContext().isActive
-          coroutineToIndicator { complete(isActive, editor, it, context, provider, suggestion) }
+          coroutineToIndicator { complete(isActive, editor, it, context, providerId, suggestion) }
           it?.let(LOG::errorIfNotMessage)
         }
         .collectIndexed { index, it ->
@@ -202,7 +202,7 @@ class InlineCompletionHandler internal constructor(
     editor: Editor,
     cause: Throwable?,
     context: InlineCompletionContext,
-    provider: KClass<out InlineCompletionProvider>,
+    providerId: InlineCompletionProviderID,
     suggestion: InlineCompletionSuggestion,
   ) {
     trace(InlineCompletionEventType.Completion(cause, isActive))
@@ -215,7 +215,7 @@ class InlineCompletionHandler internal constructor(
       return
     }
     if (suggestion.useCache) {
-      providerManager.cacheSuggestion(provider, context.state.elements)
+      providerManager.cacheSuggestion(providerId, context.state.elements)
     }
   }
 

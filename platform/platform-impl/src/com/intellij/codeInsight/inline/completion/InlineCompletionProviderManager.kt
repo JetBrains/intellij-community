@@ -7,7 +7,6 @@ import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.errorIfNotMessage
-import kotlin.reflect.KClass
 
 @ApiStatus.Experimental
 class InlineCompletionProviderManager {
@@ -20,24 +19,24 @@ class InlineCompletionProviderManager {
    *
    *  Temporary works for one provider only due to API limitations //TODO: add task
    */
-  private val suggestions = mutableMapOf<KClass<out InlineCompletionProvider>, MutableList<List<InlineCompletionElement.Presentable>>>()
-  private var currentIndexes = mutableMapOf<KClass<out InlineCompletionProvider>, Int>()
+  private val suggestions = mutableMapOf<InlineCompletionProviderID, MutableList<List<InlineCompletionElement.Presentable>>>()
+  private var currentIndexes = mutableMapOf<InlineCompletionProviderID, Int>()
 
   private var providerIndex: Int = 0
 
-  internal fun cacheSuggestion(providerCls: KClass<out InlineCompletionProvider>, elements: List<InlineCompletionElement.Presentable>) {
-    if (suggestions.containsKey(providerCls)) {
-      val cachesPerProvider = suggestions.getValue(providerCls)
+  internal fun cacheSuggestion(providerId: InlineCompletionProviderID, elements: List<InlineCompletionElement.Presentable>) {
+    if (suggestions.containsKey(providerId)) {
+      val cachesPerProvider = suggestions.getValue(providerId)
       cachesPerProvider.add(elements)
-      currentIndexes[providerCls] = cachesPerProvider.size - 1
+      currentIndexes[providerId] = cachesPerProvider.size - 1
     }
     else {
-      suggestions[providerCls] = mutableListOf(elements)
-      currentIndexes[providerCls] = 0
+      suggestions[providerId] = mutableListOf(elements)
+      currentIndexes[providerId] = 0
     }
   }
 
-  internal fun getCache(providerCls: KClass<out InlineCompletionProvider>): List<InlineCompletionElement.Presentable>? {
+  internal fun getCache(providerCls: InlineCompletionProviderID): List<InlineCompletionElement.Presentable>? {
     val index = currentIndexes[providerCls] ?: return null
     val suggestion = suggestions[providerCls] ?: return null
     return suggestion.getOrNull(index)

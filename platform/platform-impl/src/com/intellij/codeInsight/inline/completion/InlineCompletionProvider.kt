@@ -26,6 +26,17 @@ import kotlinx.coroutines.flow.debounce
  * @see InlineCompletionEvent
  */
 interface InlineCompletionProvider {
+  /**
+   * Provider identifier, must match extension `id` in `plugin.xml`. Used to identify provider.
+   *
+   * - Prefer to use class qualified name as id to avoid duplicates
+   *
+   * ```
+   * <inline.completion.provider id="<id_here>" .../>
+   * ```
+   */
+  val id: InlineCompletionProviderID
+
   suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion
 
   fun isEnabled(event: InlineCompletionEvent): Boolean
@@ -38,8 +49,11 @@ interface InlineCompletionProvider {
   }
 
   object DUMMY : InlineCompletionProvider {
+    override val id = InlineCompletionProviderID("DUMMY")
     override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion = InlineCompletionSuggestion.EMPTY
     override fun isEnabled(event: InlineCompletionEvent): Boolean = false
   }
 }
 
+@JvmInline
+value class InlineCompletionProviderID(val id: String)

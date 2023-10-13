@@ -36,6 +36,7 @@ class TerminalInlineCompletion(private val scope: CoroutineScope) {
 }
 
 class TerminalInlineCompletionProvider : InlineCompletionProvider {
+  override val id: InlineCompletionProviderID = InlineCompletionProviderID("TerminalInlineCompletionProvider")
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
     val suggestion = flow {
       withContext(Dispatchers.EDT) {
