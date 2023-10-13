@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model
 
 import com.intellij.diagnostic.PluginException
@@ -12,12 +12,14 @@ import com.intellij.serialization.WriteConfiguration
 // do not use SkipNullAndEmptySerializationFilter for now because can lead to issues
 fun createCacheWriteConfiguration(): WriteConfiguration = WriteConfiguration(allowAnySubTypes = true)
 
-private fun createDataClassResolver(log: Logger): (name: String, hostObject: DataNode<*>?) -> Class<*>? {
-  val projectDataManager = ProjectDataManager.getInstance()
-  val managerClassLoaders = ExternalSystemManager.EP_NAME.lazySequence()
+private class DataClassResolver(private val log: Logger) {
+  private val projectDataManager = ProjectDataManager.getInstance()
+
+  private val managerClassLoaders = ExternalSystemManager.EP_NAME.lazySequence()
     .map { it.javaClass.classLoader }
     .toSet()
-  return fun(name: String, hostObject: DataNode<*>?): Class<*>? {
+
+  fun resolve(name: String, hostObject: DataNode<*>?): Class<*>? {
     var classLoadersToSearch = managerClassLoaders
     val services = if (hostObject == null) emptyList() else projectDataManager!!.findService(hostObject.key)
     if (!services.isNullOrEmpty()) {
@@ -47,7 +49,7 @@ private fun createDataClassResolver(log: Logger): (name: String, hostObject: Dat
 
 @JvmOverloads
 fun createCacheReadConfiguration(log: Logger, testOnlyClassLoader: ClassLoader? = null): ReadConfiguration {
-  val dataNodeResolver = if (testOnlyClassLoader == null) createDataClassResolver(log) else null
+  val dataNodeResolver = if (testOnlyClassLoader == null) DataClassResolver(log) else null
   return createDataNodeReadConfiguration(fun(name: String, hostObject: Any): Class<*>? {
     return when {
       hostObject !is DataNode<*> -> {
@@ -58,11 +60,11 @@ fun createCacheReadConfiguration(log: Logger, testOnlyClassLoader: ClassLoader? 
         catch (e: ClassNotFoundException) {
           log.debug("cannot find class $name using class loader of class ${hostObjectClass.name} (classLoader=${hostObjectClass.classLoader})", e)
           // let's try system manager class loaders
-          dataNodeResolver?.invoke(name, null) ?: throw e
+          dataNodeResolver?.resolve(name, null) ?: throw e
         }
       }
       dataNodeResolver == null -> testOnlyClassLoader!!.loadClass(name)
-      else -> dataNodeResolver(name, hostObject)
+      else -> dataNodeResolver.resolve(name, hostObject)
     }
   })
 }
