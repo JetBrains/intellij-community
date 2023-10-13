@@ -159,6 +159,10 @@ private fun loadTip(tip: TipAndTrickBean?, isStrict: Boolean): Trinity<String, C
   return Trinity.create(getCantReadText(tip), null, null)
 }
 
+private val productCodeTipMap = mapOf(Pair("iu", "ij"),
+                                      Pair("pc", "py_ce"),
+                                      Pair("ds", "py_ds"))
+
 private fun getTipRetrievers(tip: TipAndTrickBean): List<TipRetriever> {
   val fallbackLoader = TipUtils::class.java.classLoader
   val pluginDescriptor = tip.pluginDescriptor
@@ -177,11 +181,12 @@ private fun getTipRetrievers(tip: TipAndTrickBean): List<TipRetriever> {
   var ideCode = ApplicationInfoEx.getInstanceEx().apiVersionAsNumber.productCode.lowercase()
   //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
   if (ideCode.contains("ic")) ideCode = "iu"
+  //If there's a mapping that overrides ide code, it will pick it up, otherwise it's just the same as it was.
+  val fallbackIdeCode = productCodeTipMap.getOrDefault(ideCode, ideCode)
   //So the primary loader is determined. Now we're constructing retrievers that use a pair of path/loaders to try to get the tips.
   val retrievers: MutableList<TipRetriever> = ArrayList()
-  retrievers.add(TipRetriever(tipLoader, "tips", ideCode))
-  retrievers.add(TipRetriever(tipLoader, "tips", "misc"))
-  retrievers.add(TipRetriever(tipLoader, "tips", ""))
+  listOf(ideCode, fallbackIdeCode, "db_pl", "bdt", "misc", "").forEach { retrievers.add(TipRetriever(tipLoader, "tips", it)) }
+
   retrievers.add(TipRetriever(fallbackLoader, "tips", ""))
   return retrievers
 }
