@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.reporter
 
+import com.intellij.diagnostic.IdeaReportingEvent
 import com.intellij.diagnostic.ReportMessages
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.PluginUpdateStatus
@@ -16,8 +17,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.Consumer
 import com.intellij.util.ThreeState
+import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinPluginUpdater
+import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
@@ -41,6 +44,8 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         private const val ENABLED_VALUE = "enabled"
 
         private const val KOTLIN_PLUGIN_RELEASE_DATE = "kotlin.plugin.releaseDate"
+
+        private const val KOTLIN_K2_MESSAGE = "This report is from the K2 Kotlin plugin."
 
         private val LOG = Logger.getInstance(KotlinReportSubmitter::class.java)
 
@@ -208,9 +213,14 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         parentComponent: Component?,
         consumer: Consumer<in SubmittedReportInfo>
     ): Boolean {
+        val effectiveEvents = when {
+            isK2Plugin() -> events.map2Array(::markEventForK2)
+            else -> events
+        }
+
         if (hasUpdate) {
             if (isApplicationInternalMode()) {
-                return super.submitCompat(events, additionalInfo, parentComponent, consumer)
+                return super.submitCompat(effectiveEvents, additionalInfo, parentComponent, consumer)
             }
 
             // TODO: What happens here? User clicks report but no report is send?
@@ -218,7 +228,7 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         }
 
         if (hasLatestVersion) {
-            return super.submitCompat(events, additionalInfo, parentComponent, consumer)
+            return super.submitCompat(effectiveEvents, additionalInfo, parentComponent, consumer)
         }
 
         val project: Project? = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
@@ -235,7 +245,7 @@ class KotlinReportSubmitter : ITNReporterCompat() {
                 hasUpdate = true
 
                 if (isApplicationInternalMode()) {
-                    super.submitCompat(events, additionalInfo, parentComponent, consumer)
+                    super.submitCompat(effectiveEvents, additionalInfo, parentComponent, consumer)
                 }
 
                 val rc = showDialog(
@@ -255,12 +265,29 @@ class KotlinReportSubmitter : ITNReporterCompat() {
                 }
             } else {
                 hasLatestVersion = true
-                super.submitCompat(events, additionalInfo, parentComponent, consumer)
+                super.submitCompat(effectiveEvents, additionalInfo, parentComponent, consumer)
             }
             false
         }
 
         return true
+    }
+
+    private fun markEventForK2(event: IdeaLoggingEvent): IdeaLoggingEvent {
+        fun patchMessage(message: String): String {
+            return if (message.isBlank()) KOTLIN_K2_MESSAGE else "$message\n$KOTLIN_K2_MESSAGE"
+        }
+
+        if (event is IdeaReportingEvent) {
+            return IdeaReportingEvent(event.data, patchMessage(event.message ?: ""), event.throwableText, event.plugin)
+        }
+
+        if (event.javaClass == IdeaLoggingEvent::class.java) {
+            return IdeaLoggingEvent(patchMessage(event.message ?: ""), event.throwable, event.data)
+        }
+
+        // Leave foreign event as is (Android Studio, etc.)
+        return event
     }
 
     fun showDialog(parent: Component?, @Nls message: String, @Nls title: String, options: Array<String>, defaultOptionIndex: Int, icon: Icon?): Int {
