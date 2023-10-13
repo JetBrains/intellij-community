@@ -5,7 +5,6 @@ import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiPackage
-import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveTargetModel
 import org.jetbrains.kotlin.psi.KtFile
 
 sealed interface K2MoveTargetDescriptor {

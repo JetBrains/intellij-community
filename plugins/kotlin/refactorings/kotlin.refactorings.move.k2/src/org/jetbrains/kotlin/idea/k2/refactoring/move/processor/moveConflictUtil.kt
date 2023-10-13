@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 
 /**
  * Find all conflicts when moving elements as described by [descriptor].

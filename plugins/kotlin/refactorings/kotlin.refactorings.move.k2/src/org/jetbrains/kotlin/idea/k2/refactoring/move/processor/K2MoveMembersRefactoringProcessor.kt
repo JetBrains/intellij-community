@@ -11,7 +11,6 @@ import com.intellij.usageView.UsageViewDescriptor
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.deleteSingle
-import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 
