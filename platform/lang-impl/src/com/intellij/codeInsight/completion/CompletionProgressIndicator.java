@@ -389,7 +389,12 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   public void showLookupAsSoonAsPossible() {
     setPostponeAppearance(false);
     myShowLookupImmediately = true;
-    ApplicationManager.getApplication().invokeLater(this::updateLookup);
+    openLookupLater();
+  }
+
+  private void openLookupLater() {
+    ApplicationManager.getApplication()
+      .invokeLater(this::showLookup, obj -> myLookup.getShownTimestampMillis() != 0L || myLookup.isLookupDisposed());
   }
 
   void withSingleUpdate(Runnable action) {
@@ -503,7 +508,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
     if (myShowLookupImmediately && myLookup.getShownTimestampMillis() == 0L) {
       AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, 0, TimeUnit.MILLISECONDS);
-      ApplicationManager.getApplication().invokeLater(this::updateLookup);
+      openLookupLater();
     } else  {
       if (myCount == 1) {
         AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, ourInsertSingleItemTimeSpan, TimeUnit.MILLISECONDS);
