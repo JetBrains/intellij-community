@@ -4,7 +4,7 @@ package com.intellij.codeInsight.inline.completion.session
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 internal abstract class InlineCompletionSessionManager {
@@ -56,7 +56,7 @@ internal abstract class InlineCompletionSessionManager {
     if (session == null) {
       return false
     }
-    if (session.provider.requiresInvalidation(request.event)) {
+    if (session.provider.invalidate(request.event)) {
       invalidate(session)
       return false
     }
@@ -105,7 +105,7 @@ internal abstract class InlineCompletionSessionManager {
     return UpdateSessionResult.Changed(newElements, truncateTyping, reason)
   }
 
-  private fun truncateElementsPrefix(elements: List<InlineCompletionBlock>, length: Int): List<InlineCompletionBlock> {
+  private fun truncateElementsPrefix(elements: List<InlineCompletionElement>, length: Int): List<InlineCompletionElement> {
     var currentLength = length
     val newFirstElementIndex = elements.indexOfFirst {
       currentLength -= it.text.length
@@ -119,7 +119,7 @@ internal abstract class InlineCompletionSessionManager {
 
   protected sealed interface UpdateSessionResult {
     class Changed(
-      val newElements: List<InlineCompletionBlock>,
+      val newElements: List<InlineCompletionElement>,
       val truncateTyping: Int,
       val reason: InlineCompletionRequest
     ) : UpdateSessionResult

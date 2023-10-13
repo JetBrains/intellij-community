@@ -5,9 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 class InlineCompletionContext internal constructor(val editor: Editor) : Disposable {
 
   /**
@@ -28,15 +26,15 @@ class InlineCompletionContext internal constructor(val editor: Editor) : Disposa
 
   val isCurrentlyDisplayingInlays: Boolean
     @RequiresEdt
-    get() = state.elements.any { !it.isEmpty }
+    get() = state.elements.any { it.isVisible() }
 
   val startOffset: Int?
     @RequiresEdt
-    get() = state.firstElement?.startOffset
+    get() = state.firstElement?.startOffset()
 
   val endOffset: Int?
     @RequiresEdt
-    get() = state.lastElement?.endOffset
+    get() = state.lastElement?.endOffset()
 
   val lineToInsert: String
     @RequiresEdt
@@ -68,21 +66,5 @@ class InlineCompletionContext internal constructor(val editor: Editor) : Disposa
 
     @RequiresEdt
     fun getOrNull(editor: Editor): InlineCompletionContext? = InlineCompletionSession.getOrNull(editor)?.context
-
-    @Deprecated(
-      "Resetting completion context is unsafe now. Use direct get/reset/remove~InlineCompletionContext instead",
-      ReplaceWith("getInlineCompletionContextOrNull()"), DeprecationLevel.ERROR
-    )
-    @RequiresEdt
-    fun Editor.initOrGetInlineCompletionContext(): InlineCompletionContext {
-      return getOrNull(this)!!
-    }
-
-    @Deprecated(
-      "Use direct InlineCompletionContext.getOrNull instead",
-      ReplaceWith("InlineCompletionContext.getOrNull(this)"), DeprecationLevel.ERROR
-    )
-    @RequiresEdt
-    fun Editor.getInlineCompletionContextOrNull(): InlineCompletionContext? = getOrNull(this)
   }
 }

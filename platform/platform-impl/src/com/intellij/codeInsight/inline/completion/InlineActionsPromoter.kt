@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 
 private class InlineActionsPromoter : ActionPromoter {
-  override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction?> {
+  override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
     val editor = CommonDataKeys.EDITOR.getData(context) ?: return emptyList()
 
     if (InlineCompletionContext.getOrNull(editor) == null) {

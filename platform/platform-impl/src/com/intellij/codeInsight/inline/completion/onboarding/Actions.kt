@@ -14,24 +14,19 @@ import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.util.asSafely
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 private class ResetICOnboardingAtFirstShowAction : AResetICOnboardingAction(
   { editor, caret, context -> InlineCompletionTooltipBuilder.atFirstShow(editor, caret) }
 )
 
-@ApiStatus.Experimental
 private class ResetICOnboardingAtFirstAcceptAction : AResetICOnboardingAction(
   { editor, caret, context -> InlineCompletionTooltipBuilder.atFirstAccept(editor, caret, context) }
 )
 
-@ApiStatus.Experimental
 private class ResetICOnboardingShowSettingsAction : AResetICOnboardingAction(
   { editor, caret, context -> InlineCompletionTooltipBuilder.showSettings(editor) }
 )
 
-@ApiStatus.Experimental
 private abstract class AResetICOnboardingAction(
   act: (editor: EditorImpl, caret: Caret, dataContext: DataContext?) -> Unit
 ) : EditorAction(CallInlineCompletionHandler(act)), HintManagerImpl.ActionToIgnore {

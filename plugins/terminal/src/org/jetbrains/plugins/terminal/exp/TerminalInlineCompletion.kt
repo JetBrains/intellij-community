@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.codeInsight.inline.completion.*
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.actionSystem.ActionPromoter
@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
@@ -37,8 +36,8 @@ class TerminalInlineCompletion(private val scope: CoroutineScope) {
 }
 
 class TerminalInlineCompletionProvider : InlineCompletionProvider {
-  override suspend fun getProposals(request: InlineCompletionRequest): Flow<InlineCompletionBlock> {
-    return flow {
+  override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
+    val suggestion = flow {
       withContext(Dispatchers.EDT) {
         val lookup = LookupManager.getActiveLookup(request.editor) ?: return@withContext null
         val item = lookup.currentItem ?: return@withContext null
@@ -49,13 +48,14 @@ class TerminalInlineCompletionProvider : InlineCompletionProvider {
         emit(it)
       }
     }
+    return InlineCompletionSuggestion(suggestion)
   }
 
   override fun isEnabled(event: InlineCompletionEvent): Boolean {
     return event.toRequest()?.editor?.isPromptEditor == true
   }
 
-  override fun requiresInvalidation(event: InlineCompletionEvent): Boolean {
+  override fun invalidate(event: InlineCompletionEvent): Boolean {
     return event is InlineCompletionEvent.InlineLookupEvent
   }
 }

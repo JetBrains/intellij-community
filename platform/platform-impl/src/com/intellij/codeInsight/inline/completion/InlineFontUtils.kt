@@ -4,11 +4,10 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.BLOCK_COMMENT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorFontType
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Font
 
-@ApiStatus.Experimental
+// TODO: replace with it's own color attribute
 object InlineFontUtils {
   fun font(editor: Editor): Font {
     return editor.colorsScheme.getFont(EditorFontType.ITALIC)

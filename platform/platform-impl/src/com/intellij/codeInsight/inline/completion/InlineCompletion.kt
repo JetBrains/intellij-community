@@ -12,9 +12,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.application
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 object InlineCompletion {
 
   private val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")

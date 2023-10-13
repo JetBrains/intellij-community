@@ -22,12 +22,10 @@ import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
 import java.awt.event.FocusEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
-@ApiStatus.Experimental
 class InlineCompletionDocumentListener(private val editor: Editor) : BulkAwareDocumentListener {
   override fun documentChangedNonBulk(event: DocumentEvent) {
     val handler = InlineCompletion.getHandlerOrNull(editor)
@@ -45,7 +43,6 @@ class InlineCompletionDocumentListener(private val editor: Editor) : BulkAwareDo
   }
 }
 
-@ApiStatus.Experimental
 open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter() {
 
   override fun keyReleased(event: KeyEvent) {
@@ -85,7 +82,6 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
 }
 
 // ML-1086
-@ApiStatus.Experimental
 class InlineEditorMouseListener : EditorMouseListener {
   override fun mousePressed(event: EditorMouseEvent) {
     LOG.trace("Valuable mouse pressed event $event")
@@ -136,7 +132,6 @@ class InlineSessionWiseCaretListener(
   }
 }
 
-@ApiStatus.Experimental
 class InlineCompletionTypedHandlerDelegate : TypedHandlerDelegate() {
 
   override fun beforeClosingParenInserted(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
@@ -155,7 +150,6 @@ class InlineCompletionTypedHandlerDelegate : TypedHandlerDelegate() {
   }
 }
 
-@ApiStatus.Experimental
 class InlineCompletionAnActionListener : AnActionListener {
   override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
     val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return

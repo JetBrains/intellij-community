@@ -16,11 +16,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import org.jetbrains.annotations.ApiStatus
 
 private typealias EditorCaret = Caret
 
-@ApiStatus.Experimental
 data class InlineCompletionRequest(
   val event: InlineCompletionEvent,
 
@@ -35,7 +33,6 @@ data class InlineCompletionRequest(
 /**
  * Be aware that creating your own event is unsafe for a while and might face compatibility issues
  */
-@ApiStatus.Experimental
 interface InlineCompletionEvent {
 
   @RequiresBlockingContext
@@ -44,7 +41,6 @@ interface InlineCompletionEvent {
   /**
    * A class representing a direct call in the code editor by [InsertInlineCompletionAction].
    */
-  @ApiStatus.Experimental
   data class DirectCall(
     val editor: Editor,
     val caret: EditorCaret,
@@ -61,7 +57,6 @@ interface InlineCompletionEvent {
   /**
    * Represents a non-dummy not empty document event call in the editor.
    */
-  @ApiStatus.Experimental
   data class DocumentChange(val event: DocumentEvent, val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val project = editor.project ?: return null
@@ -81,7 +76,6 @@ interface InlineCompletionEvent {
    *
    * @param event The lookup event.
    */
-  @ApiStatus.Experimental
   data class LookupChange(override val event: LookupEvent) : InlineLookupEvent {
     override fun toRequest(): InlineCompletionRequest? {
       return super.toRequest()?.takeIf { it.lookupElement != null }

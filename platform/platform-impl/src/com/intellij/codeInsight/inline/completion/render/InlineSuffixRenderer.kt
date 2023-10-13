@@ -6,18 +6,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 
-@ApiStatus.Experimental
-class InlineSuffixRenderer(private val editor: Editor, val suffix: String) : EditorCustomElementRenderer, InlineCompletionElementRenderer {
+class InlineSuffixRenderer(private val editor: Editor, val suffix: String) : EditorCustomElementRenderer {
   private val width = editor.contentComponent.getFontMetrics(InlineFontUtils.font(editor)).stringWidth(suffix)
 
-  override fun calcWidthInPixels(inlay: Inlay<*>): Int {
-    return width
-  }
-
+  override fun calcWidthInPixels(inlay: Inlay<*>): Int = width
   override fun calcHeightInPixels(inlay: Inlay<*>): Int {
     return editor.contentComponent.getFontMetrics(InlineFontUtils.font(editor)).height
   }

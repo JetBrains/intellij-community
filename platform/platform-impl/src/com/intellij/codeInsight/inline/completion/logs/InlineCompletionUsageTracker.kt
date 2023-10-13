@@ -3,7 +3,7 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.render.InlineCompletionInsertPolicy
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -20,13 +20,11 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.application
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.random.Random
 
-@ApiStatus.Experimental
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("inline.completion", 9)
 
@@ -215,7 +213,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     private var lines = 0
     private var typingDuringShow = 0
 
-    fun firstShown(element: InlineCompletionBlock) {
+    fun firstShown(element: InlineCompletionElement) {
       if (firstShown) {
         error("Already first shown")
       }
@@ -230,7 +228,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       assert(!shownLogSent)
     }
 
-    fun nextShown(element: InlineCompletionBlock) {
+    fun nextShown(element: InlineCompletionElement) {
       assert(firstShown) {
         "Call firstShown firstly"
       }
@@ -239,7 +237,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       if (suggestionLength == 0 && element.text.isNotEmpty()) {
         lines++ // first line
       }
-      when (val insertPolicy = element.insertPolicy) {
+      when (val insertPolicy = element.insertPolicy()) {
         is InlineCompletionInsertPolicy.Append -> suggestionAppendedLength += insertPolicy.caretShift
         is InlineCompletionInsertPolicy.Skip -> suggestionSkippedLength += insertPolicy.caretShift
       }

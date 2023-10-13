@@ -9,9 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class InsertInlineCompletionHandler : EditorWriteActionHandler() {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
@@ -24,7 +22,6 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
   }
 }
 
-@ApiStatus.Experimental
 class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
   public override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val context = InlineCompletionContext.getOrNull(editor) ?: run {
@@ -49,7 +46,6 @@ class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : 
   }
 }
 
-@ApiStatus.Experimental
 class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class CallInlineCompletionHandler : EditorWriteActionHandler() {
     override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
