@@ -4,8 +4,11 @@ package org.jetbrains.plugins.terminal.action
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.wm.ToolWindowManager
 import org.jetbrains.plugins.terminal.exp.CommandHistoryPresenter
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.blockTerminalController
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
@@ -13,6 +16,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEdito
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
 
 class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
@@ -21,6 +25,7 @@ class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionRemoteBeha
     CloseHistoryHandler(),
     SelectPromptHandler(),
     CloseSearchHandler(),
+    SelectEditorHandler(),
   )
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -77,6 +82,25 @@ class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionRemoteBeha
 
     override fun isEnabled(e: AnActionEvent): Boolean {
       return e.blockTerminalController?.searchSession != null
+    }
+  }
+
+  private class SelectEditorHandler : TerminalEscapeHandler {
+    override fun execute(e: AnActionEvent) {
+      ToolWindowManager.getInstance(e.project!!).activateEditorComponent()
+    }
+
+    override fun isEnabled(e: AnActionEvent): Boolean {
+      val terminalModel = e.terminalSession?.model ?: return false
+      return e.project != null
+             && LookupManager.getActiveLookup(e.editor) == null
+             // the terminal can be located in the Editor tab, so in this case we also should do nothing
+             && e.getData(PlatformDataKeys.TOOL_WINDOW) != null
+             && AdvancedSettings.getBoolean("terminal.escape.moves.focus.to.editor")
+             && (e.editor?.isPromptEditor == true
+                 // Or enable it in output, but only when command is running
+                 // In alternate mode, escape action should be sent to the terminal process, so disable the action in this case.
+                 || terminalModel.isCommandRunning && !terminalModel.useAlternateBuffer)
     }
   }
 }

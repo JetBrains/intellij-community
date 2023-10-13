@@ -188,6 +188,7 @@ class BlockTerminalView(
         SimpleTerminalController.KEY.name -> alternateBufferView?.controller
         BlockTerminalController.KEY.name -> controller
         TerminalSelectionController.KEY.name -> selectionController
+        TerminalSession.DATA_KEY.name -> session
         else -> null
       }
     }
