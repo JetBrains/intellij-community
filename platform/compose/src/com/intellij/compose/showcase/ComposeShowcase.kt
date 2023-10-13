@@ -2,7 +2,10 @@
 package com.intellij.compose.showcase
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -18,14 +21,25 @@ internal fun ComposeShowcase() {
     modifier = Modifier.padding(10.dp)
   ) {
     Title()
-    CheckBox()
-    RadioButton()
-    Button()
-    Label()
-    SelectableText()
-    Tabs()
-    LinkLabels()
-    TextField()
+    Row {
+      val scrollState = rememberScrollState()
+      Column(
+        verticalArrangement = Arrangement.spacedBy(15.dp),
+        modifier = Modifier.weight(1f).verticalScroll(scrollState)
+      ) {
+        CheckBox()
+        RadioButton()
+        Button()
+        Label()
+        SelectableText()
+        Tabs()
+        LinkLabels()
+        TextField()
+      }
+
+      val adapter = rememberScrollbarAdapter(scrollState)
+      androidx.compose.foundation.VerticalScrollbar(adapter)
+    }
   }
 }
 
