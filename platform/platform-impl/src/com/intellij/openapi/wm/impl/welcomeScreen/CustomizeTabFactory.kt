@@ -29,6 +29,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.wm.WelcomeScreen
+import com.intellij.openapi.wm.WelcomeScreenTab
 import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen.DefaultWelcomeScreenTab
 import com.intellij.ui.SimpleListCellRenderer
@@ -59,8 +61,10 @@ private val laf: LafManager
 private val keymapManager: KeymapManagerImpl
   get() = KeymapManager.getInstance() as KeymapManagerImpl
 
-private class CustomizeTabFactory : WelcomeTabFactory {
-  override fun createWelcomeTab(parentDisposable: Disposable): CustomizeTab = CustomizeTab(parentDisposable)
+class CustomizeTabFactory : WelcomeTabFactory {
+  override fun createWelcomeTabs(ws: WelcomeScreen, parentDisposable: Disposable): MutableList<WelcomeScreenTab> {
+    return mutableListOf(CustomizeTab(parentDisposable))
+  }
 }
 
 private fun getIdeFontSize(): Float {
