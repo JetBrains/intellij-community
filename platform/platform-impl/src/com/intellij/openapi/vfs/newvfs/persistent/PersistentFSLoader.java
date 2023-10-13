@@ -457,12 +457,16 @@ public final class PersistentFSLoader {
     //Faster to look only for the first error of each kind:
     boolean nameStorageHasErrors = false;
     boolean contentHashesStorageHasErrors = false;
+    boolean attributesStorageHasErrors = false;
 
-    //Try to resolve few nameId/contentId against apt enumerators -- which is quite likely fails
-    //if enumerators' files are corrupted anyhow, hence serves as a self-check heuristic.
-    //Check every file is quite slow, but it is definitely worth checking _some_.
-    // A tradeoff: if there were no signs of corruption -- check only fileId=2, 4, 8...
-    // -- always < 32 checks, given fileId is int32.
+    //Try to resolve few nameId/contentId/attributeRefId against apt enumerators/storages -- which is quite
+    // likely fails if storages/enumerators' files are corrupted anyhow, hence serves as a self-check heuristic.
+    //Check _every_ fileId is quite slow, but it is definitely worth checking _some_.
+    // So a tradeoff:
+    // If there were _no_ signs of corruption -- check only fileId(=)2, 4, 8...) -> always < 32 checks, given fileId
+    // is int32.
+    // If _any_ signs of corruption arises during quick-scan (or even before it) -> fallback to full scan, check
+    // _every_ fileId.
     if (problemsDuringLoad.isEmpty()) {
       for (int fileId = FSRecords.MIN_REGULAR_FILE_ID; fileId <= maxAllocatedID; fileId *= 2) {
         if (!nameStorageHasErrors) {
@@ -476,11 +480,16 @@ public final class PersistentFSLoader {
             contentHashesStorageHasErrors = true;
           }
         }
+        if (!attributesStorageHasErrors) {
+          if (!attributeRecordIsValid(fileId)) {
+            attributesStorageHasErrors = true;
+          }
+        }
       }
     }
 
     //...If there are some errors, or other signs of possible corruption
-    // -> switch to full scan
+    // -> fallback to a full scan:
     if (!problemsDuringLoad.isEmpty()) {
       for (int fileId = FSRecords.MIN_REGULAR_FILE_ID; fileId <= maxAllocatedID; fileId++) {
         if (!nameStorageHasErrors) {
@@ -492,6 +501,11 @@ public final class PersistentFSLoader {
         if (!contentHashesStorageHasErrors) {
           if (!contentResolvedSuccessfully(fileId)) {
             contentHashesStorageHasErrors = true;
+          }
+        }
+        if (!attributesStorageHasErrors) {
+          if (!attributeRecordIsValid(fileId)) {
+            attributesStorageHasErrors = true;
           }
         }
       }
@@ -565,6 +579,24 @@ public final class PersistentFSLoader {
       return false;
     }
     return true;
+  }
+
+  private boolean attributeRecordIsValid(int fileId) throws IOException {
+    int attributeRecordId = recordsStorage.getAttributeRecordId(fileId);
+    if (attributeRecordId == AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID) {
+      return true;
+    }
+
+    try {
+      attributesStorage.checkAttributeRecordSanity(fileId, attributeRecordId);
+      return true;
+    }
+    catch (Throwable t) {
+      addProblem(ATTRIBUTES_STORAGE_CORRUPTED,
+                 "file[#" + fileId + "].attributeRefId(=" + attributeRecordId + "): attributesStorage read failed", t
+      );
+      return false;
+    }
   }
 
   private void addProblem(@NotNull VFSInitException.ErrorCategory type,

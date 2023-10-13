@@ -27,7 +27,7 @@ import java.lang.Enum;
 public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 14);
+  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 15);
 
 
   /* ================== EVENT_INITIAL_REFRESH: ====================================================== */
@@ -36,7 +36,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   private static final EventId1<Long> EVENT_INITIAL_REFRESH = GROUP_VFS.registerEvent(
     "initial_refresh",
-    EventFields.DurationMs
+    DurationMs
   );
 
   /* ================== EVENT_REFRESH_SESSION: ====================================================== */
@@ -51,7 +51,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final VarargEventId EVENT_REFRESH_SESSION = GROUP_VFS.registerVarargEvent(
     "refresh_session",
     FIELD_REFRESH_RECURSIVE, FIELD_REFRESH_LOCAL_ROOTS, FIELD_REFRESH_ARCHIVE_ROOTS, FIELD_REFRESH_OTHER_ROOTS,
-    FIELD_REFRESH_CANCELLED, FIELD_WAIT_MS, EventFields.DurationMs, FIELD_REFRESH_TRIES
+    FIELD_REFRESH_CANCELLED, FIELD_WAIT_MS, DurationMs, FIELD_REFRESH_TRIES
   );
 
   /* ================== EVENT_REFRESH_SCAN: ====================================================== */
@@ -64,7 +64,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   private static final VarargEventId EVENT_REFRESH_SCAN = GROUP_VFS.registerVarargEvent(
     "refresh_scan",
-    FIELD_REFRESH_FULL_SCANS, FIELD_REFRESH_PARTIAL_SCANS, FIELD_REFRESH_RETRIES, EventFields.DurationMs, FIELD_REFRESH_VFS_TIME_MS,
+    FIELD_REFRESH_FULL_SCANS, FIELD_REFRESH_PARTIAL_SCANS, FIELD_REFRESH_RETRIES, DurationMs, FIELD_REFRESH_VFS_TIME_MS,
     FIELD_REFRESH_IO_TIME_MS
   );
 
@@ -76,7 +76,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   private static final VarargEventId EVENT_EVENTS = GROUP_VFS.registerVarargEvent(
     "events",
-    FIELD_WAIT_MS, FIELD_EVENT_LISTENERS_MS, FIELD_EVENT_TRIES, EventFields.DurationMs, FIELD_EVENT_NUMBER
+    FIELD_WAIT_MS, FIELD_EVENT_LISTENERS_MS, FIELD_EVENT_TRIES, DurationMs, FIELD_EVENT_NUMBER
   );
 
   /* ================== EVENT_VFS_INITIALIZATION: ====================================================== */
@@ -122,6 +122,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_NULL = Int("file_records_name_null");
   /** Number of file-records there nameId can't be resolved against NamesEnumerator */
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE = Int("file_records_name_unresolvable");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_ATTRIBUTE_ID_UNRESOLVABLE = Int("file_records_attribute_unresolvable");
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL = Int("file_records_content_not_null");
   /** Number of file-records there contentId can't be resolved against NamesEnumerator */
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE = Int("file_records_content_unresolvable");
@@ -165,6 +166,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
     FIELD_HEALTH_CHECK_FILE_RECORDS_DELETED,
     FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_NULL,
     FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE,
+    FIELD_HEALTH_CHECK_FILE_RECORDS_ATTRIBUTE_ID_UNRESOLVABLE,
     FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL,
     FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE,
     FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS,
@@ -234,7 +236,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
         FIELD_REFRESH_OTHER_ROOTS.with(otherRoots),
         FIELD_REFRESH_CANCELLED.with(cancelled),
         FIELD_WAIT_MS.with(wait),
-        EventFields.DurationMs.with(duration),
+        DurationMs.with(duration),
         FIELD_REFRESH_TRIES.with(tries));
     }
   }
@@ -245,7 +247,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
         FIELD_REFRESH_FULL_SCANS.with(fullScans),
         FIELD_REFRESH_PARTIAL_SCANS.with(partialScans),
         FIELD_REFRESH_RETRIES.with(retries),
-        EventFields.DurationMs.with(duration),
+        DurationMs.with(duration),
         FIELD_REFRESH_VFS_TIME_MS.with(vfsTime),
         FIELD_REFRESH_IO_TIME_MS.with(ioTime));
     }
@@ -257,7 +259,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
         FIELD_WAIT_MS.with(wait),
         FIELD_EVENT_LISTENERS_MS.with(listenerTime),
         FIELD_EVENT_TRIES.with(listenerTries),
-        EventFields.DurationMs.with(edtTime),
+        DurationMs.with(edtTime),
         FIELD_EVENT_NUMBER.with(events));
     }
   }
@@ -314,7 +316,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
       FIELD_HEALTH_CHECK_FILE_RECORDS_DELETED.with(fileRecordsDeleted),
       FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_NULL.with(fileRecordsNameIdsNull),
       FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE.with(fileRecordsNameIdsUnresolvable),
-      //TODO FIELD_HEALTH_CHECK_FILE_RECORDS_ATTRIBUTE_ID_UNRESOLVABLE.with(fileRecordsAttributeIdUnresolvable),
+      FIELD_HEALTH_CHECK_FILE_RECORDS_ATTRIBUTE_ID_UNRESOLVABLE.with(fileRecordsAttributeIdUnresolvable),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL.with(fileRecordsContentIdsNotNull),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE.with(fileRecordsContentIdsUnresolvable),
       FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS.with(fileRecordsNullParents),
