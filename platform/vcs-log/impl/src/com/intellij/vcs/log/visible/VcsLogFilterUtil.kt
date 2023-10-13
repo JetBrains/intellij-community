@@ -55,8 +55,10 @@ private fun VcsLogFiltererImpl.filter(dataPack: DataPack,
   }
 
   val (visiblePack, _) = filter(dataPack, VisiblePack.EMPTY, PermanentGraph.SortType.Normal, filters, commitCount)
+
+  val maxCommits = visiblePack.visibleGraph.visibleCommitCount.applyIf(!commitCount.isAll()) { coerceAtMost(commitCount.count) }
   val result = IntOpenHashSet()
-  for (i in 0 until visiblePack.visibleGraph.visibleCommitCount) {
+  for (i in 0 until maxCommits) {
     result.add(visiblePack.visibleGraph.getRowInfo(i).commit)
   }
   return result
