@@ -4,6 +4,7 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments
 import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments.SemanticSearchFeature
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
@@ -14,6 +15,12 @@ class SemanticSearchInitializer : ProjectActivity {
    * Whether the state exists or not, we generate the missing embeddings:
    */
   override suspend fun execute(project: Project) {
+    VirtualFileManager.getInstance().addAsyncFileListener(SemanticSearchFileContentListener.getInstance(project),
+                                                          IndexingLifecycleTracker.getInstance(project))
+
+    VirtualFileManager.getInstance().addAsyncFileListener(SemanticSearchFileNameListener.getInstance(project),
+                                                          IndexingLifecycleTracker.getInstance(project))
+
     if (SemanticSearchSettings.getInstance().enabledInActionsTab) {
       ActionEmbeddingsStorage.getInstance().prepareForSearch(project)
     }

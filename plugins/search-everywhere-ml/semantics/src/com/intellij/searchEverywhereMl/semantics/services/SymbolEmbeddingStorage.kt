@@ -7,7 +7,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ml.embeddings.utils.splitIdentifierIntoTokens
 import com.intellij.psi.PsiFile
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
@@ -45,14 +44,10 @@ class SymbolEmbeddingStorage(project: Project, cs: CoroutineScope) : FileContent
   override val indexMemoryWeight: Int = 2
   override val indexStrongLimit = Registry.intValue("search.everywhere.ml.semantic.indexing.indexable.symbols.limit")
 
-  init {
-    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, SymbolsSemanticSearchFileChangeListener.getInstance(project))
-  }
-
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInSymbolsTab
 
   @RequiresBackgroundThread
-  override suspend fun getIndexableEntities() = collectEntities(SymbolsSemanticSearchFileChangeListener.getInstance(project))
+  override suspend fun getIndexableEntities() = collectEntities(SymbolsSemanticSearchFileListener.getInstance(project))
 
   override fun traversePsiFile(file: PsiFile) = FileIndexableEntitiesProvider.extractSymbols(file)
 

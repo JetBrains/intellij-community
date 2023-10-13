@@ -7,7 +7,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ml.embeddings.utils.splitIdentifierIntoTokens
 import com.intellij.psi.PsiFile
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
@@ -45,14 +44,10 @@ class ClassEmbeddingsStorage(project: Project, cs: CoroutineScope) : FileContent
   override val indexMemoryWeight: Int = 1
   override val indexStrongLimit = Registry.intValue("search.everywhere.ml.semantic.indexing.indexable.classes.limit")
 
-  init {
-    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, ClassesSemanticSearchFileChangeListener.getInstance(project))
-  }
-
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInClassesTab
 
   @RequiresBackgroundThread
-  override suspend fun getIndexableEntities() = collectEntities(ClassesSemanticSearchFileChangeListener.getInstance(project))
+  override suspend fun getIndexableEntities() = collectEntities(ClassesSemanticSearchFileListener.getInstance(project))
 
   override fun traversePsiFile(file: PsiFile) = FileIndexableEntitiesProvider.extractClasses(file)
 

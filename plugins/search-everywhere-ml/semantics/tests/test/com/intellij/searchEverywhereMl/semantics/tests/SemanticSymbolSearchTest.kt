@@ -76,7 +76,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
       myFixture.editor.document.saveToDisk() // This is how we trigger reindexing
     }
 
-    TimeoutUtil.sleep(1000) // wait for one second for index update
+    TimeoutUtil.sleep(2000) // wait for two seconds for index update
 
     assertEquals(5, storage.index.size)
 
@@ -101,7 +101,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
       myFixture.editor.virtualFile.deleteRecursively() // deletes the currently open file: java/IndexProjectAction.java
     }
 
-    TimeoutUtil.sleep(1000) // wait for one second for index update
+    TimeoutUtil.sleep(2000) // wait for two seconds for index update
 
     assertEquals(2, storage.index.size)
 

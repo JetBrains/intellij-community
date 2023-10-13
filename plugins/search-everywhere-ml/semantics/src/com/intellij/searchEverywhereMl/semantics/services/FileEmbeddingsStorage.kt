@@ -9,7 +9,6 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
@@ -48,10 +47,6 @@ class FileEmbeddingsStorage(project: Project, private val cs: CoroutineScope)
 
   override val indexMemoryWeight: Int = 1
   override val indexStrongLimit = Registry.intValue("search.everywhere.ml.semantic.indexing.indexable.files.limit")
-
-  init {
-    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, FilesSemanticSearchFileChangeListener(project))
-  }
 
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInFilesTab
 

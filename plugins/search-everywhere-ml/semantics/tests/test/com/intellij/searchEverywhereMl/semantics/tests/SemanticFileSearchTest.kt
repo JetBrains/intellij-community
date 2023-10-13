@@ -74,7 +74,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
       myFixture.editor.virtualFile.rename(this, "ScoresFileHandler.java")
     }
 
-    TimeoutUtil.sleep(1000) // wait for one second for index update
+    TimeoutUtil.sleep(2000) // wait for two seconds for index update
 
     assertEquals(3, storage.index.size)
 
@@ -99,7 +99,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
       myFixture.editor.virtualFile.deleteRecursively() // deletes the currently open file: java/IndexProjectAction.java
     }
 
-    TimeoutUtil.sleep(1000) // wait for one second for index update
+    TimeoutUtil.sleep(2000) // wait for two seconds for index update
 
     assertEquals(2, storage.index.size)
 
@@ -123,7 +123,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
     val fileStream = Path.of(testDataPath, "kotlin/ProjectIndexingTask.kt").inputStream()
     myFixture.configureByText("ProjectIndexingTask.kt", fileStream.bufferedReader().use(BufferedReader::readText))
 
-    TimeoutUtil.sleep(1000) // wait for one second for index update
+    TimeoutUtil.sleep(2000) // wait for two seconds for index update
 
     assertEquals(3, storage.index.size)
 
