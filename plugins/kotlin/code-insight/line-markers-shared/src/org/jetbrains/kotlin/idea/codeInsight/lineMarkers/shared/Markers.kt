@@ -216,7 +216,8 @@ internal fun KtDeclaration.findAllExpectForActual(searchScope: SearchScope = run
     }
     // top level functions
     val packageFqName = declaration.containingKtFile.packageFqName
-    val topLevelFqName = packageFqName.child(Name.identifier(declaration.name!!)).asString()
+    val name = declaration.name ?: return emptySequence()
+    val topLevelFqName = packageFqName.child(Name.identifier(name!!)).asString()
     return when (declaration) {
         is KtNamedFunction -> {
             KotlinTopLevelFunctionFqnNameIndex.getAllElements(topLevelFqName, project, scope) {

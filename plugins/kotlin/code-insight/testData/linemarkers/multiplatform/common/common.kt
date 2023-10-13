@@ -13,4 +13,6 @@ fun hello(): String = "Hello from ${Platform.name}"
 
 expect fun <!LINE_MARKER("descr='Has actuals in js, jvm modules'")!>foo<!>()
 
-expect annotation class <!LINE_MARKER("descr='Has actual in jvm module'")!>Preview<!>()
+expect annotation class <!LINE_MARKER("descr='Has actuals in js, jvm modules'")!>Preview<!>()
+
+expect object <!LINE_MARKER("descr='Has actuals in js, jvm modules'")!>SomeObject<!>()
