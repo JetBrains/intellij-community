@@ -17,7 +17,7 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
     }
 
     override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
-      return InlineCompletionContext.getOrNull(editor)?.startOffset == caret.offset
+      return InlineCompletionContext.getOrNull(editor)?.startOffset() == caret.offset
     }
   }
 }

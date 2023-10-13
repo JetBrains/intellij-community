@@ -8,7 +8,7 @@ import java.awt.Color
 import java.awt.Font
 
 // TODO: replace with it's own color attribute
-object InlineFontUtils {
+object InlineCompletionFontUtils {
   fun font(editor: Editor): Font {
     return editor.colorsScheme.getFont(EditorFontType.ITALIC)
   }

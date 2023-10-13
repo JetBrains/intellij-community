@@ -60,7 +60,7 @@ internal abstract class InlineCompletionSessionManager {
       invalidate(session)
       return false
     }
-    if (provider == null && !session.context.isCurrentlyDisplayingInlays) {
+    if (provider == null && !session.context.isCurrentlyDisplaying()) {
       return true // Fast fall to not slow down editor
     }
     if (provider != null && session.provider != provider) {
@@ -85,7 +85,7 @@ internal abstract class InlineCompletionSessionManager {
         applyPrefixAppend(context, fragment, request) ?: UpdateSessionResult.Invalidated
       }
       is InlineCompletionEvent.InlineLookupEvent -> {
-        if (context.isCurrentlyDisplayingInlays) UpdateSessionResult.Same else UpdateSessionResult.Invalidated
+        if (context.isCurrentlyDisplaying()) UpdateSessionResult.Same else UpdateSessionResult.Invalidated
       }
       else -> UpdateSessionResult.Invalidated
     }
@@ -97,7 +97,7 @@ internal abstract class InlineCompletionSessionManager {
     reason: InlineCompletionRequest
   ): UpdateSessionResult.Changed? {
     // only one symbol is permitted
-    if (fragment.length != 1 || !context.lineToInsert.startsWith(fragment) || context.lineToInsert == fragment) {
+    if (fragment.length != 1 || !context.textToInsert().startsWith(fragment) || context.textToInsert() == fragment) {
       return null
     }
     val truncateTyping = fragment.length

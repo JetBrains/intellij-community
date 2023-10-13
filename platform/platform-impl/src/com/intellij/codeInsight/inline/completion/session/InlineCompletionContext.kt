@@ -7,6 +7,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 class InlineCompletionContext internal constructor(val editor: Editor) : Disposable {
+  private val myState = InlineState().also {
+    Disposer.register(this, it)
+  }
 
   /**
    * @see dispose
@@ -16,29 +19,21 @@ class InlineCompletionContext internal constructor(val editor: Editor) : Disposa
     get
     private set
 
-  private val myState = InlineState().also {
-    Disposer.register(this, it)
-  }
-
   val state: InlineState
     @RequiresEdt
     get() = assureNotDisposed { myState }
 
-  val isCurrentlyDisplayingInlays: Boolean
-    @RequiresEdt
-    get() = state.elements.any { it.isVisible() }
+  @RequiresEdt
+  fun isCurrentlyDisplaying(): Boolean = state.elements.any { it.isVisible() }
 
-  val startOffset: Int?
-    @RequiresEdt
-    get() = state.firstElement?.startOffset()
+  @RequiresEdt
+  fun startOffset(): Int? = state.firstElement()?.startOffset()
 
-  val endOffset: Int?
-    @RequiresEdt
-    get() = state.lastElement?.endOffset()
+  @RequiresEdt
+  fun endOffset(): Int? = state.lastElement()?.endOffset()
 
-  val lineToInsert: String
-    @RequiresEdt
-    get() = state.elements.joinToString("") { it.text }
+  @RequiresEdt
+  fun textToInsert(): String = state.elements.joinToString("") { it.text }
 
   @RequiresEdt
   fun clear() {

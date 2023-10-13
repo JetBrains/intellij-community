@@ -98,7 +98,7 @@ class InlineCompletionHandler internal constructor(
   @RequiresBlockingContext
   fun insert() {
     val context = InlineCompletionContext.getOrNull(editor) ?: return
-    val offset = context.startOffset ?: return
+    val offset = context.startOffset() ?: return
     trace(InlineCompletionEventType.Insert)
 
     val insertions = context.state.elements.map { it.insertPolicy() }
@@ -123,7 +123,7 @@ class InlineCompletionHandler internal constructor(
   @RequiresBlockingContext
   fun hide(explicit: Boolean, context: InlineCompletionContext) {
     LOG.assertTrue(!context.isDisposed)
-    if (context.isCurrentlyDisplayingInlays) {
+    if (context.isCurrentlyDisplaying()) {
       trace(InlineCompletionEventType.Hide(explicit))
     }
 
@@ -231,7 +231,7 @@ class InlineCompletionHandler internal constructor(
   @RequiresEdt
   private fun InlineCompletionContext.renderElement(element: InlineCompletionElement, startOffset: Int) {
     val presentable = element.toPresentable()
-    presentable.render(editor, endOffset ?: startOffset)
+    presentable.render(editor, endOffset() ?: startOffset)
     state.addElement(presentable)
   }
 
@@ -244,7 +244,7 @@ class InlineCompletionHandler internal constructor(
             editor.inlayModel.execute(true) {
               context.clear()
               trace(InlineCompletionEventType.Change(result.truncateTyping))
-              result.newElements.forEach { context.renderElement(it, context.endOffset ?: result.reason.endOffset) }
+              result.newElements.forEach { context.renderElement(it, context.endOffset() ?: result.reason.endOffset) }
             }
           }
           UpdateSessionResult.Same -> Unit
@@ -260,7 +260,7 @@ class InlineCompletionHandler internal constructor(
   private fun InlineCompletionSession.guardCaretModifications(request: InlineCompletionRequest) {
     val expectedOffset = {
       // This caret listener might be disposed after context: ML-1438
-      if (!context.isDisposed) context.startOffset ?: request.endOffset else -1
+      if (!context.isDisposed) context.startOffset() ?: request.endOffset else -1
     }
     val cancel = {
       if (!context.isDisposed) hide(false, context)

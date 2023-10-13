@@ -7,36 +7,26 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
-data class InlineState internal constructor(
-  var lastStartOffset: Int = 0,
-  var lastModificationStamp: Long = 0,
-) : Disposable {
-
-  private val elementsDisposable = Disposer.newDisposable(this)
-
+class InlineState internal constructor() : Disposable {
   private val _elements: MutableList<InlineCompletionElement.Presentable> = LinkedList()
   val elements: List<InlineCompletionElement.Presentable>
     get() = _elements
 
-  val firstElement
-    get() = elements.firstOrNull()
+  private val elementsDisposable = Disposer.newDisposable(this)
 
-  val lastElement
-    get() = elements.lastOrNull()
+  fun firstElement(): InlineCompletionElement.Presentable? = elements.firstOrNull()
+  fun lastElement(): InlineCompletionElement.Presentable? = elements.lastOrNull()
 
-  @RequiresEdt
   internal fun addElement(element: InlineCompletionElement.Presentable) {
     Disposer.register(elementsDisposable, element)
     _elements.add(element)
   }
 
-  @RequiresEdt
   internal fun clear() {
     _elements.clear()
     Disposer.disposeChildren(elementsDisposable) { true }
   }
 
-  @RequiresEdt
   override fun dispose() {
     clear()
   }
