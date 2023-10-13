@@ -190,6 +190,7 @@ public final class PluginManagerConfigurable
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.marketplace"), null);
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.installed"), myCountIcon);
 
+    CustomPluginRepositoryService.getInstance().clearCache();
     myPluginUpdatesService = PluginUpdatesService.connectWithCounter(countValue -> {
       int count = countValue == null ? 0 : countValue;
       String text = Integer.toString(count);
