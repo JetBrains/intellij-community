@@ -118,8 +118,12 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private static int ourShowPopupAfterFirstItemGroupingTime = 100;
 
   private volatile int myCount;
-  private volatile boolean myPostponeAppearance = false;
-  private volatile boolean myShowLookupImmediately = false;
+  private enum LookupAppearancePolicy {
+    DEFAULT,
+    POSTPONED,
+    ON_FIRST_POSSIBILITY,
+  }
+  private volatile LookupAppearancePolicy myLookupAppearancePolicy = LookupAppearancePolicy.DEFAULT;
   private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
   private final PropertyChangeListener myLookupManagerListener;
@@ -376,10 +380,17 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   /**
-   * Set this flag to postpone the appearance of the lookup window.
+   * Set lookup appearance policy to default.
    */
-  public void setPostponeAppearance(boolean postponeAppearance) {
-    myPostponeAppearance = postponeAppearance;
+  public void defaultLookupAppearance() {
+    myLookupAppearancePolicy = LookupAppearancePolicy.DEFAULT;
+  }
+
+  /**
+   * Postpone lookup appearance.
+   */
+  public void postponeLookupAppearance() {
+    myLookupAppearancePolicy = LookupAppearancePolicy.POSTPONED;
   }
 
   /**
@@ -387,8 +398,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
    * Right now or after, when at least one element will be added to the lookup.
    */
   public void showLookupAsSoonAsPossible() {
-    setPostponeAppearance(false);
-    myShowLookupImmediately = true;
+    myLookupAppearancePolicy = LookupAppearancePolicy.ON_FIRST_POSSIBILITY;
     openLookupLater();
   }
 
@@ -438,7 +448,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   private boolean shouldShowLookup() {
-    if (myPostponeAppearance) {
+    if (myLookupAppearancePolicy == LookupAppearancePolicy.POSTPONED) {
       return false;
     }
     if (isAutopopupCompletion()) {
@@ -506,7 +516,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
       showLookupAsSoonAsPossible();
     }
 
-    if (myShowLookupImmediately && myLookup.getShownTimestampMillis() == 0L) {
+    if (myLookupAppearancePolicy == LookupAppearancePolicy.ON_FIRST_POSSIBILITY && myLookup.getShownTimestampMillis() == 0L) {
       AppExecutorUtil.getAppScheduledExecutorService().schedule(myFreezeSemaphore::up, 0, TimeUnit.MILLISECONDS);
       openLookupLater();
     } else  {
