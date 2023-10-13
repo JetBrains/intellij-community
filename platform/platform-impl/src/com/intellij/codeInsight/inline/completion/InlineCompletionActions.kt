@@ -69,7 +69,7 @@ private class InlineNavigationHandler(
   val navigationEvent: (InlineCompletionEvent) -> InlineCompletionEvent.Navigation
 ) : EditorWriteActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    val handler = InlineCompletionHandler.getOrNull(editor) ?: return
+    val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
     val eventSource = handler.eventSource() ?: return
     val event = navigationEvent(eventSource)
 

@@ -305,8 +305,5 @@ class InlineCompletionHandler(
 
   companion object {
     private val LOG = thisLogger()
-    val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
-
-    fun getOrNull(editor: Editor) = editor.getUserData(KEY)
   }
 }
