@@ -32,6 +32,8 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
 
   var numberOfFilesFullyIndexedByExtensions: Int = 0
 
+  var numberOfNothingToWriteFiles: Int = 0
+
   var numberOfTooLargeForIndexingFiles: Int = 0
 
   val statsPerIndexer: HashMap<String, StatsPerIndexer> = hashMapOf()
@@ -44,7 +46,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
 
   var allSeparateApplicationTimeInAllThreads: TimeNano = 0
 
-  data class IndexedFile(val portableFilePath: PortableFilePath, val wasFullyIndexedByExtensions: Boolean)
+  data class IndexedFile(val portableFilePath: PortableFilePath, val indexesEvaluated: IndexesEvaluated)
 
   data class StatsPerIndexer(
     var evaluateIndexValueChangerTime: TimeNano,
@@ -78,11 +80,14 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     separateApplicationTime: TimeNano
   ) {
     numberOfIndexedFiles++
-    if (fileStatistics.wasFullyIndexedByExtensions) {
+    if (fileStatistics.indexesEvaluated == IndexesEvaluated.BY_EXTENSIONS) {
       numberOfFilesFullyIndexedByExtensions++
       if (IndexDiagnosticDumper.shouldDumpPathsOfFilesIndexedByInfrastructureExtensions) {
         listOfFilesFullyIndexedByExtensions.add(file.toString())
       }
+    }
+    if (fileStatistics.indexesEvaluated == IndexesEvaluated.NOTHING_TO_WRITE) {
+      numberOfNothingToWriteFiles++
     }
     processingTimeInAllThreads += processingTime
     contentLoadingTimeInAllThreads += contentLoadingTime
@@ -111,7 +116,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     stats.totalBytes += fileSize
     stats.numberOfFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.wasFullyIndexedByExtensions)
+      indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.indexesEvaluated)
     }
     if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS * 1_000_000) {
       slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime, evaluationOfIndexValueChangerTime, contentLoadingTime))
@@ -123,7 +128,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     numberOfIndexedFiles++
     numberOfTooLargeForIndexingFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += IndexedFile(getIndexedFilePath(file), false)
+      indexedFiles += IndexedFile(getIndexedFilePath(file), IndexesEvaluated.NOTHING_TO_WRITE)
     }
   }
 
