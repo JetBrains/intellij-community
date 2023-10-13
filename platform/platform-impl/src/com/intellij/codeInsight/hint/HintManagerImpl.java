@@ -108,6 +108,10 @@ public class HintManagerImpl extends HintManager {
 
     int xOffset = location.x - oldRectangle.x;
     int yOffset = location.y - oldRectangle.y;
+    if (oldRectangle.y == newRectangle.y && oldRectangle.height < newRectangle.height) {
+      yOffset += newRectangle.height - oldRectangle.height;
+    }
+
     location = new Point(newRectangle.x + xOffset, newRectangle.y + yOffset);
 
     Rectangle newBounds = new Rectangle(location.x, location.y, size.width, size.height);
