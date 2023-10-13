@@ -78,7 +78,7 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
 
   fun replaceDuplicates(editor: Editor, method: PsiMethod, beforeDuplicateReplaced: (candidate: List<PsiElement>) -> Unit = {}) {
     val prepareTimeStart = System.currentTimeMillis()
-    val project = editor.project ?: return
+    val project = method.project
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
     val calls = callsToReplace?.map { it.element!! } ?: return
     val parameterExpressions = extractOptions.inputParameters.flatMap { parameter -> parameter.references }.toSet()
@@ -110,10 +110,11 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     val prepareTimeEnd = System.currentTimeMillis()
     InplaceExtractMethodCollector.duplicatesSearched.log(prepareTimeEnd - prepareTimeStart)
 
-    val shouldChangeSignature = askToChangeSignature(calls, parametrizedExtraction, project, method, exactDuplicates, duplicates, updatedParameters)
+    val extractExtractElements = ExtractedElements(calls, method)
+    val shouldChangeSignature = askToChangeSignature(extractExtractElements, parametrizedExtraction, exactDuplicates, duplicates)
     duplicates = if (shouldChangeSignature) duplicatesWithUnifiedParameters else exactDuplicates
     val parameters = if (shouldChangeSignature) updatedParameters else extractOptions.inputParameters
-    val extractedElements = if (shouldChangeSignature) parametrizedExtraction else ExtractedElements(calls, method)
+    val extractedElements = if (shouldChangeSignature) parametrizedExtraction else extractExtractElements
 
     duplicates = when (replaceDuplicatesDefault) {
       null -> confirmDuplicates (project, editor, duplicates)
@@ -143,30 +144,26 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     }
   }
 
-  private fun askToChangeSignature(calls: List<PsiElement>,
-                parametrizedExtraction: ExtractedElements,
-                project: Project,
-                method: PsiMethod,
-                exactDuplicates: List<Duplicate>,
-                duplicates: List<Duplicate>,
-                updatedParameters: List<InputParameter>): Boolean {
-    val oldMethodCall = findMethodCallInside(calls.firstOrNull())
-    val newMethodCall = findMethodCallInside(parametrizedExtraction.callElements.firstOrNull())
+  private fun askToChangeSignature(exactExtractElements: ExtractedElements,
+                                   parametrizedExtractElements: ExtractedElements,
+                                   exactDuplicates: List<Duplicate>,
+                                   parametrizedDuplicates: List<Duplicate>): Boolean {
+    val oldMethodCall = findMethodCallInside(exactExtractElements.callElements.firstOrNull())
+    val newMethodCall = findMethodCallInside(parametrizedExtractElements.callElements.firstOrNull())
     fun confirmChangeSignature(): Boolean {
       if (oldMethodCall == null || newMethodCall == null) return false
-      val manager = CodeStyleManager.getInstance(project)
-      val initialMethod = manager.reformat(method.copy()) as PsiMethod
-      val parametrizedMethod = manager.reformat(parametrizedExtraction.method) as PsiMethod
+      val manager = CodeStyleManager.getInstance(exactExtractElements.method.project)
+      val initialMethod = manager.reformat(exactExtractElements.method.copy()) as PsiMethod
+      val parametrizedMethod = manager.reformat(parametrizedExtractElements.method) as PsiMethod
       val dialog = SignatureSuggesterPreviewDialog(initialMethod, parametrizedMethod, oldMethodCall, newMethodCall,
-                                                   exactDuplicates.size, duplicates.size - exactDuplicates.size)
+                                                   exactDuplicates.size, parametrizedDuplicates.size - exactDuplicates.size)
       return dialog.showAndGet()
     }
 
     val confirmChange: () -> Boolean = changeSignatureDefault?.let { default -> { default } } ?: ::confirmChangeSignature
-    val isGoodSignatureChange = isGoodSignatureChange(extractOptions.elements, extractOptions.inputParameters,
-                                                      parametrizedExtraction.callElements, updatedParameters)
+    val isGoodSignatureChange = isGoodSignatureChange(exactExtractElements, parametrizedExtractElements)
 
-    val changeSignature = duplicates.size > exactDuplicates.size && isGoodSignatureChange && confirmChange()
+    val changeSignature = parametrizedDuplicates.size > exactDuplicates.size && isGoodSignatureChange && confirmChange()
     return changeSignature
   }
 
@@ -180,18 +177,19 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     return findExtractOptions(duplicate.candidate).copy(inputParameters = parameters.map(::getMappedParameter))
   }
 
-  private fun isGoodSignatureChange(callBefore: List<PsiElement>, initialParameters: List<InputParameter>,
-                                    callAfter: List<PsiElement>, updatedParameters: List<InputParameter>): Boolean {
-    val sizeAfter = callAfter.sumOf(::calculateCodeLeafs)
-    val sizeBefore = callBefore.sumOf(::calculateCodeLeafs)
-    val addedParameters = updatedParameters.size - initialParameters.size
+  private fun isGoodSignatureChange(exactExtractElements: ExtractedElements, parametrizedExtractElements: ExtractedElements): Boolean {
+    val parametersSizeBefore = exactExtractElements.method.parameterList.parameters.size
+    val parametersSizeAfter = parametrizedExtractElements.method.parameterList.parameters.size
+    val codeSizeBefore = extractOptions.elements.sumOf(::calculateCodeLeafs)
+    val callSizeAfter = parametrizedExtractElements.callElements.sumOf(::calculateCodeLeafs)
+    val addedParameters = parametersSizeAfter - parametersSizeBefore
     if (addedParameters <= 0) {
       // do not require reduce in call size if we just replace parameter
-      return sizeAfter <= sizeBefore
+      return callSizeAfter <= codeSizeBefore
     }
     else if (addedParameters <= 3) {
       // require significant reduce in call if we introduce new parameters
-      return 1.75 * sizeAfter < sizeBefore && updatedParameters.size <= 5
+      return 1.75 * callSizeAfter < codeSizeBefore && parametersSizeAfter <= 5
     }
     else {
       return false
