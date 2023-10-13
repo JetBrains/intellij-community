@@ -282,6 +282,8 @@ public final class StorageTestingUtils {
         || value instanceof Lock
         || value instanceof ReadWriteLock
         || value instanceof Executor
+        || value instanceof java.util.logging.Logger
+        || value instanceof com.intellij.openapi.diagnostic.Logger
         || value instanceof Condition) {
 
       return true;
