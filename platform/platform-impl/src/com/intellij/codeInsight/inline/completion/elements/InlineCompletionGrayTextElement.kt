@@ -22,7 +22,10 @@ import java.awt.Graphics
 import java.awt.Rectangle
 
 @ApiStatus.Experimental
-data class InlineCompletionGrayTextElement(override val text: String) : InlineCompletionBlock {
+data class InlineCompletionGrayTextElement(
+  override val text: String,
+  override val insertPolicy: InlineCompletionInsertPolicy = InlineCompletionInsertPolicy.Append(text)
+) : InlineCompletionBlock {
   private var suffixInlay: Inlay<*>? = null
   private var blockInlay: Inlay<*>? = null
 
@@ -34,9 +37,6 @@ data class InlineCompletionGrayTextElement(override val text: String) : InlineCo
 
   override val isEmpty: Boolean
     get() = suffixInlay == null && blockInlay == null
-
-  override val insertPolicy: InlineCompletionInsertPolicy
-    get() = InlineCompletionInsertPolicy.Append(text)
 
   override fun getBounds(): Rectangle? {
     val bounds = blockInlay?.bounds?.let { Rectangle(it) }
