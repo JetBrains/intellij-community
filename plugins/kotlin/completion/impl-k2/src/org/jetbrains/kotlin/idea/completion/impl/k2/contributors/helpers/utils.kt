@@ -49,7 +49,7 @@ internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
     sessionParameters: FirCompletionSessionParameters,
-    symbolFilter: (KtCallableSymbol) -> Boolean = { true }
+    symbolFilter: (KtCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> = sequence {
     val indexedImplicitReceivers = scopeContext.implicitReceivers.associateBy { it.scopeIndexInTower }
     val scopes = scopeContext.scopes.filter { it.kind is KtScopeKind.LocalScope || it.kind is KtScopeKind.TypeScope }
@@ -66,7 +66,7 @@ internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
                 scopeNameFilter,
                 sessionParameters,
                 implicitReceiver.scopeIndexInTower,
-                symbolFilter
+                symbolFilter,
             )
         } else {
             collectNonExtensionsFromScope(scopeWithKind.scope, visibilityChecker, scopeNameFilter, sessionParameters, symbolFilter).map {
@@ -83,7 +83,7 @@ internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
     sessionParameters: FirCompletionSessionParameters,
-    symbolFilter: (KtCallableSymbol) -> Boolean = { true },
+    symbolFilter: (KtCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> = scopeContext.scopes.asSequence()
     .filterNot { it.kind is KtScopeKind.LocalScope || it.kind is KtScopeKind.TypeScope }
     .flatMap { scopeWithKind ->
@@ -102,7 +102,7 @@ internal fun collectNonExtensionsForType(
     scopeNameFilter: KtScopeNameFilter,
     sessionParameters: FirCompletionSessionParameters,
     indexInTower: Int? = null,
-    symbolFilter: (KtCallableSymbol) -> Boolean = { true }
+    symbolFilter: (KtCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> {
     val typeScope = type.getTypeScope() ?: return emptySequence()
 
@@ -154,7 +154,7 @@ internal fun collectNonExtensionsFromScope(
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
     sessionParameters: FirCompletionSessionParameters,
-    symbolFilter: (KtCallableSymbol) -> Boolean = { true }
+    symbolFilter: (KtCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignature<*>> = scope.getCallableSymbols(scopeNameFilter.getAndSetAware())
     .map { it.asSignature() }
     .filterNonExtensions(visibilityChecker, symbolFilter)
@@ -163,7 +163,7 @@ internal fun collectNonExtensionsFromScope(
 context(KtAnalysisSession)
 private fun Sequence<KtCallableSignature<*>>.filterNonExtensions(
     visibilityChecker: CompletionVisibilityChecker,
-    symbolFilter: (KtCallableSymbol) -> Boolean = { true }
+    symbolFilter: (KtCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignature<*>> = this
     .filterNot { it.symbol.isExtension }
     .filter { symbolFilter(it.symbol) }

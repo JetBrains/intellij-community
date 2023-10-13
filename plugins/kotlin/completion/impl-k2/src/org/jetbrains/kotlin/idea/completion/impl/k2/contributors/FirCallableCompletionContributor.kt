@@ -418,7 +418,7 @@ internal open class FirCallableCompletionContributor(
             visibilityChecker,
             scopeNameFilter,
             sessionParameters,
-        )
+        ) { filter(it, sessionParameters) }
 
         return nonExtensions.map { member ->
             val options = CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(member))

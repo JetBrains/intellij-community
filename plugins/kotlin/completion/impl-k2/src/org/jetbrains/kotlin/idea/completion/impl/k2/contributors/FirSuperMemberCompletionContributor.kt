@@ -111,9 +111,8 @@ internal class FirSuperMemberCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableInfo> {
-        return collectNonExtensionsForType(receiverType, visibilityChecker, scopeNameFilter, sessionParameters).map {
-            CallableInfo(receiverType, it.signature, it.scopeKind)
-        }
+        return collectNonExtensionsForType(receiverType, visibilityChecker, scopeNameFilter, sessionParameters, symbolFilter = { true })
+            .map { CallableInfo(receiverType, it.signature, it.scopeKind) }
     }
 
     context(KtAnalysisSession)
