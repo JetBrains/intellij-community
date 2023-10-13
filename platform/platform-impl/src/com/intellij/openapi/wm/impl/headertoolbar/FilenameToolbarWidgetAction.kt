@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
 import com.intellij.openapi.project.DumbAwareAction
@@ -44,7 +44,9 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.project?.service<FilenameToolbarWidgetUpdateService>()?.updatePresentation(e.presentation)
+    val project = e.project ?: return
+    ApplicationManager.getApplication().service<FilenameToolbarWidgetAppUpdateService>()
+      .updatePresentation(project, FileEditorManager.getInstance(project).selectedFiles.firstOrNull(), e.presentation)
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JBLabel = JBLabel().apply {
@@ -69,21 +71,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
         return false
       }
     }.installOn(this)
-    // This is just a hack to avoid unnecessary subclassing, as JComponent's addNotify/removeNotify fires these events:
-    addPropertyChangeListener("ancestor") { event ->
-      val project = ProjectUtil.getProjectForComponent(this@apply)
-      if (project == null) {
-        LOG.warn("")
-        return@addPropertyChangeListener
-      }
-      val service = project.service<FilenameToolbarWidgetUpdateService>()
-      if (event.newValue != null) {
-        service.registerComponent(this@apply)
-      }
-      else {
-        service.deregisterComponent(this@apply)
-      }
-    }
+    ApplicationManager.getApplication().service<FilenameToolbarWidgetAppUpdateService>().registerComponent(this@apply)
   }
 
   private fun showRecentFilesPopup(component: JComponent) {
@@ -117,8 +105,6 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    ProjectUtil.getProjectForComponent(component)?.service<FilenameToolbarWidgetUpdateService>()?.updateComponent(component, presentation)
+    ApplicationManager.getApplication().service<FilenameToolbarWidgetAppUpdateService>().updateComponent(component, presentation)
   }
 }
-
-private val LOG = logger<FilenameToolbarWidgetAction>()
