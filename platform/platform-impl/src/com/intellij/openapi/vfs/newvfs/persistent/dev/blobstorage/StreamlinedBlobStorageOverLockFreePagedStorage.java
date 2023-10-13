@@ -559,7 +559,7 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
     try (final Page headerPage = pagedStorage.pageByIndex(0, /*forWrite: */ true)) {
       headerPage.lockPageForWrite();
       try {
-        putHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId);
+        putHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId());
         putHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET, recordsAllocated.get());
         putHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET, recordsRelocated.get());
         putHeaderInt(HeaderLayout.RECORDS_DELETED_OFFSET, recordsDeleted.get());

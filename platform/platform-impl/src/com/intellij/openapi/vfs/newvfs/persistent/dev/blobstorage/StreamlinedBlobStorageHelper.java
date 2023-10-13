@@ -118,8 +118,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     //Bytes [52..64] is reserved for the generations to come:
     static final int HEADER_SIZE                                 = 64;
 
-    //@formatter:off
-
+    //@formatter:on
   }
 
   /**
@@ -158,7 +157,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
   /** Field could be read as volatile, but writes are protected with this intrinsic lock */
   //@GuardedBy(this)
-  protected volatile int nextRecordId;
+  private volatile int nextRecordId;
 
 
   //==== monitoring fields: =======================================================================================
@@ -245,6 +244,12 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     FileUtil.delete(storagePath());
   }
 
+  @Override
+  public boolean isClosed() {
+    return closed.get();
+  }
+
+
 
   //monitoring:
 
@@ -276,7 +281,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "[" + storagePath() + "]{nextRecordId: " + nextRecordId + '}';
+    return getClass().getSimpleName() + "[" + storagePath() + "]{nextRecordId: " + nextRecordId() + '}';
   }
 
   //==================== implementation: ==========================================================================
@@ -325,14 +330,18 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     return Math.toIntExact(offsetInFile % pageSize);
   }
 
+  /** Field could be read as volatile, but writes are protected with this intrinsic lock */
+  protected int nextRecordId() {
+    return nextRecordId;
+  }
 
+  /** Must be called under 'this' lock */
+  //@GuardedBy(this)
   protected void updateNextRecordId(int nextRecordId) {
-    if( nextRecordId <= NULL_ID ){
-      throw new IllegalArgumentException("nextRecordId(="+nextRecordId+") must be >0");
+    if (nextRecordId <= NULL_ID) {
+      throw new IllegalArgumentException("nextRecordId(=" + nextRecordId + ") must be >0");
     }
-    synchronized (this) {
-      this.nextRecordId = nextRecordId;
-    }
+    this.nextRecordId = nextRecordId;
   }
 
   protected int allocateSlotForRecord(int pageSize,
@@ -344,7 +353,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     //MAYBE RC: all this could be implemented as CAS-loop, without lock
     synchronized (this) {// protect nextRecordId modifications:
       while (true) {     // [totalRecordSize <= pageSize] =implies=> [loop must finish in <=2 iterations]
-        int newRecordId = nextRecordId;
+        int newRecordId = nextRecordId();
         long recordStartOffset = idToOffset(newRecordId);
         int offsetOnPage = toOffsetOnPage(recordStartOffset);
         int recordSizeRoundedUp = roundSizeUpToBucket(offsetOnPage, pageSize, totalRecordSize);
@@ -356,7 +365,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
         long endPage = recordEndOffset / pageSize;
         if (startPage == endPage) {
           actualRecordSize.set(recordSizeRoundedUp);
-          nextRecordId = offsetToId(recordEndOffset + 1);
+          updateNextRecordId(offsetToId(recordEndOffset + 1));
           return newRecordId;
         }
 
@@ -370,9 +379,9 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
         //...move pointer to the next page, and re-try allocate record:
         long nextPageStartOffset = (startPage + 1) * pageSize;
-        nextRecordId = offsetToId(nextPageStartOffset);
-        assert idToOffset(nextRecordId) == nextPageStartOffset : "idToOffset(" + nextRecordId + ")=" + idToOffset(nextRecordId) +
-                                                                 " != nextPageStartOffset(" + nextPageStartOffset + ")";
+        updateNextRecordId(offsetToId(nextPageStartOffset));
+        assert idToOffset(nextRecordId()) == nextPageStartOffset : "idToOffset(" + nextRecordId() + ")=" + idToOffset(nextRecordId()) +
+                                                                   " != nextPageStartOffset(" + nextPageStartOffset + ")";
       }
     }
   }
@@ -381,10 +390,10 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
                                                int pageSize) throws IOException;
 
 
-  protected void checkRecordIdExists(final int recordId) throws IOException {
+  protected void checkRecordIdExists(int recordId) throws IOException {
     checkRecordIdValid(recordId);
     if (!isRecordIdAllocated(recordId)) {
-      throw new IllegalArgumentException("recordId(" + recordId + ") is not yet allocated: allocated ids are all < " + nextRecordId);
+      throw new IllegalArgumentException("recordId(" + recordId + ") is not yet allocated: allocated ids are all < " + nextRecordId());
     }
   }
 
@@ -393,7 +402,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
    * It doesn't mean the record is fully written, though -- we could be in the middle of record write.
    */
   protected boolean isRecordIdAllocated(int recordId) {
-    return recordId < nextRecordId;
+    return recordId < nextRecordId();
   }
 
   protected long nextRecordOffset(long recordOffset,
