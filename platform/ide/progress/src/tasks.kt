@@ -1,17 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Experimental
 
-package com.intellij.openapi.progress
+package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.TaskSupport
 import com.intellij.platform.util.progress.ProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CancellationException
@@ -163,7 +159,7 @@ fun <T> runWithModalProgressBlocking(
  *
  * @param owner in which frame the progress should be shown
  * @param cancellation controls the UI appearance, e.g. [TaskCancellation.nonCancellable] or [TaskCancellation.cancellable]
- * @throws ProcessCanceledException if the calling coroutine was cancelled,
+ * @throws com.intellij.openapi.progress.ProcessCanceledException if the calling coroutine was cancelled,
  * or if the indicator was cancelled by the user in the UI
  */
 @RequiresBlockingContext
@@ -178,157 +174,3 @@ fun <T> runWithModalProgressBlocking(
 }
 
 private fun taskSupport(): TaskSupport = ApplicationManager.getApplication().service()
-
-//<editor-fold desc="Deprecated stuff">
-@Deprecated(
-  message = "This function installs `RawProgressReporter` into action context. " +
-            "Migrate to `ProgressReporter` via `withBackgroundProgress`, " +
-            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
-  replaceWith = ReplaceWith("withBackgroundProgress(project, title) { withRawProgressReporter (action) }"),
-)
-suspend fun <T> withBackgroundProgressIndicator(
-  project: Project,
-  title: @ProgressTitle String,
-  action: suspend CoroutineScope.() -> T
-): T {
-  @Suppress("DEPRECATION")
-  return withBackgroundProgressIndicator(project, title, cancellable = true, action)
-}
-
-@Deprecated(
-  message = "This function installs `RawProgressReporter` into action context. " +
-            "Migrate to `ProgressReporter` via `withBackgroundProgress`, " +
-            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
-  replaceWith = ReplaceWith("withBackgroundProgress(project, title, cancellable) { withRawProgressReporter (action) }"),
-)
-suspend fun <T> withBackgroundProgressIndicator(
-  project: Project,
-  title: @ProgressTitle String,
-  cancellable: Boolean,
-  action: suspend CoroutineScope.() -> T
-): T {
-  val cancellation = if (cancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable()
-  @Suppress("DEPRECATION")
-  return withBackgroundProgressIndicator(project, title, cancellation, action)
-}
-
-@Deprecated(
-  message = "This function installs `RawProgressReporter` into action context. " +
-            "Migrate to `ProgressReporter` via `withBackgroundProgress`, " +
-            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
-  replaceWith = ReplaceWith("withBackgroundProgress(project, title, cancellation) { withRawProgressReporter (action) }"),
-)
-suspend fun <T> withBackgroundProgressIndicator(
-  project: Project,
-  title: @ProgressTitle String,
-  cancellation: TaskCancellation = TaskCancellation.cancellable(),
-  action: suspend CoroutineScope.() -> T
-): T {
-  return taskSupport().withBackgroundProgressInternal(project, title, cancellation) {
-    withRawProgressReporter(action)
-  }
-}
-
-@Deprecated(
-  message = "This function installs `RawProgressReporter` into action context. " +
-            "Migrate to `ProgressReporter` via `withModalProgress`, " +
-            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
-  replaceWith = ReplaceWith("withModalProgress(project, title) { withRawProgressReporter(action) }"),
-)
-suspend fun <T> withModalProgressIndicator(
-  project: Project,
-  title: @ProgressTitle String,
-  action: suspend CoroutineScope.() -> T,
-): T {
-  @Suppress("DEPRECATION")
-  return withModalProgressIndicator(owner = ModalTaskOwner.project(project), title = title, action = action)
-}
-
-@Deprecated(
-  message = "This function installs `RawProgressReporter` into action context. " +
-            "Migrate to `ProgressReporter` via `withModalProgress`, " +
-            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
-  replaceWith = ReplaceWith("withModalProgress(owner, title, cancellation) { withRawProgressReporter(action) }"),
-)
-suspend fun <T> withModalProgressIndicator(
-  owner: ModalTaskOwner,
-  title: @ProgressTitle String,
-  cancellation: TaskCancellation = TaskCancellation.cancellable(),
-  action: suspend CoroutineScope.() -> T,
-): T {
-  return taskSupport().withModalProgressInternal(owner, title, cancellation) {
-    withRawProgressReporter(action)
-  }
-}
-
-@Deprecated(
-  message = "This function installs `RawProgressReporter` into action context. " +
-            "Migrate to `ProgressReporter` via `runWithModalProgressBlocking`, " +
-            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
-  replaceWith = ReplaceWith("runWithModalProgressBlocking(project, title) { withRawProgressReporter(action) }"),
-)
-@RequiresBlockingContext
-@RequiresEdt
-fun <T> runBlockingModalWithRawProgressReporter(
-  project: Project,
-  title: @ProgressTitle String,
-  action: suspend CoroutineScope.() -> T,
-): T {
-  @Suppress("DEPRECATION")
-  return runBlockingModalWithRawProgressReporter(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
-}
-
-@Deprecated(
-  message = "This function installs `RawProgressReporter` into action context. " +
-            "Migrate to `ProgressReporter` via `runWithModalProgressBlocking`, " +
-            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
-  replaceWith = ReplaceWith("runWithModalProgressBlocking(owner, title, cancellation) { withRawProgressReporter(action) }"),
-)
-@RequiresBlockingContext
-@RequiresEdt
-fun <T> runBlockingModalWithRawProgressReporter(
-  owner: ModalTaskOwner,
-  title: @ProgressTitle String,
-  cancellation: TaskCancellation = TaskCancellation.cancellable(),
-  action: suspend CoroutineScope.() -> T,
-): T {
-  return taskSupport().runWithModalProgressBlockingInternal(owner, title, cancellation) {
-    withRawProgressReporter(action)
-  }
-}
-
-@Deprecated(
-  message = "Function was renamed to `runWithModalProgressBlocking`",
-  replaceWith = ReplaceWith(
-    "runWithModalProgressBlocking(project, title, action)",
-    "com.intellij.openapi.progress.runWithModalProgressBlocking",
-  ),
-)
-@RequiresBlockingContext
-@RequiresEdt
-fun <T> runBlockingModal(
-  project: Project,
-  title: @ProgressTitle String,
-  action: suspend CoroutineScope.() -> T,
-): T {
-  return runWithModalProgressBlocking(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
-}
-
-@Deprecated(
-  message = "Function was renamed to `runWithModalProgressBlocking`",
-  replaceWith = ReplaceWith(
-    "runWithModalProgressBlocking(owner, title, cancellation, action)",
-    "com.intellij.openapi.progress.runWithModalProgressBlocking",
-  ),
-)
-@RequiresBlockingContext
-@RequiresEdt
-fun <T> runBlockingModal(
-  owner: ModalTaskOwner,
-  title: @ProgressTitle String,
-  cancellation: TaskCancellation = TaskCancellation.cancellable(),
-  action: suspend CoroutineScope.() -> T,
-): T {
-  return runWithModalProgressBlocking(owner, title, cancellation, action)
-}
-//</editor-fold>
