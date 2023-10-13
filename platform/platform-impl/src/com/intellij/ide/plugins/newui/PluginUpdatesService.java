@@ -44,7 +44,7 @@ public class PluginUpdatesService {
 
       @Override
       public void uninstall(@NotNull IdeaPluginDescriptor descriptor) {
-        install(descriptor);
+        finishUpdate(descriptor);
       }
     });
   }
