@@ -6,7 +6,7 @@ import io.opentelemetry.api.common.AttributeKey
 object VcsTelemetrySpanAttribute {
   val IS_INITIAL_HISTORY_COMPUTING: AttributeKey<Boolean> = AttributeKey.booleanKey("isInitial")
   val TYPE_HISTORY_COMPUTING: AttributeKey<String> = AttributeKey.stringKey("type")
-  val HISTORY_COMPUTING_VCS_NAME: AttributeKey<String> = AttributeKey.stringKey("vcsName")
+  val VCS_NAME: AttributeKey<String> = AttributeKey.stringKey("vcsName")
   val VCS_LOG_FILTERS_LIST: AttributeKey<String> = AttributeKey.stringKey("filters")
   val VCS_LOG_SORT_TYPE: AttributeKey<String> = AttributeKey.stringKey("sortType")
   val VCS_LOG_VCS_LIST: AttributeKey<String> = AttributeKey.stringKey("vcsList")

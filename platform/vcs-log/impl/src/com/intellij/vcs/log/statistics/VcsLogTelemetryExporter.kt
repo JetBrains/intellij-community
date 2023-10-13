@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogFilter
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogHistory
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.HISTORY_COMPUTING_VCS_NAME
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_NAME
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.IS_INITIAL_HISTORY_COMPUTING
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.TYPE_HISTORY_COMPUTING
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_FILTERED_COMMIT_COUNT
@@ -43,15 +43,15 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
         LogHistory.entries
           .find { historySpan -> historySpan.name == span.name }
           ?.let { historySpan ->
+            val vcsName = span.attributes[VCS_NAME].orEmpty()
             when (historySpan) {
               LogHistory.Computing -> {
-                val vcsName = span.attributes[HISTORY_COMPUTING_VCS_NAME].orEmpty()
                 val indexComputing = "index" == span.attributes[TYPE_HISTORY_COMPUTING]
                 if (span.attributes[IS_INITIAL_HISTORY_COMPUTING] == true) {
                   FILE_HISTORY_COMPUTING.log(vcsName, indexComputing, span.valueInMillis)
                 }
               }
-              LogHistory.CollectingRenames -> FILE_HISTORY_COLLECTING_RENAMES.log(span.valueInMillis)
+              LogHistory.CollectingRenames -> FILE_HISTORY_COLLECTING_RENAMES.log(vcsName, span.valueInMillis)
             }
           }
       }

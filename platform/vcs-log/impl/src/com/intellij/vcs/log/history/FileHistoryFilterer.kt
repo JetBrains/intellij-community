@@ -68,9 +68,11 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
     val filePath = getFilePath(filters)
     val root = filePath?.let { VcsLogUtil.getActualRoot(project, filePath) }
     val hash = getHash(filters)
-    val fileHistoryHandler = logProviders[root]?.fileHistoryHandler
+    val logProvider = logProviders[root]
+    val fileHistoryHandler = logProvider?.fileHistoryHandler
     if (root != null && !filePath.isDirectory && fileHistoryHandler != null) {
-      return MyWorker(fileHistoryHandler, root, filePath, hash).filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
+      return MyWorker(logProvider.supportedVcs, fileHistoryHandler, root, filePath, hash).filter(dataPack, oldVisiblePack, sortType,
+                                                                                                 filters, commitCount)
     }
     return vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
   }
@@ -122,7 +124,8 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
     cancelLastTask(true)
   }
 
-  private inner class MyWorker(private val fileHistoryHandler: VcsLogFileHistoryHandler,
+  private inner class MyWorker(private val vcsKey: VcsKey,
+                               private val fileHistoryHandler: VcsLogFileHistoryHandler,
                                private val root: VirtualFile,
                                private val filePath: FilePath,
                                private val hash: Hash?) {
@@ -136,13 +139,9 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
       TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.Computing.name).useWithScope { scope ->
         val isInitial = commitCount == CommitCountStage.INITIAL
 
-        val vcsName = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(root)?.vcs?.keyInstanceMethod?.let {
-          VcsLogRepoSizeCollector.getVcsKeySafe(it)
-        }.orEmpty()
-
         scope.setAttribute("filePath", filePath.toString())
         scope.setAttribute(VcsTelemetrySpanAttribute.IS_INITIAL_HISTORY_COMPUTING.key, isInitial)
-        scope.setAttribute(VcsTelemetrySpanAttribute.HISTORY_COMPUTING_VCS_NAME.key, vcsName)
+        scope.setAttribute(VcsTelemetrySpanAttribute.VCS_NAME.key, VcsLogRepoSizeCollector.getVcsKeySafe(vcsKey))
 
         val indexDataGetter = index.dataGetter
         if (indexDataGetter != null && index.isIndexed(root) && dataPack.isFull && Registry.`is`("vcs.history.use.index")) {
@@ -290,7 +289,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
     private fun collectRenamesFromProvider(fileHistory: FileHistory): MultiMap<UnorderedPair<Int>, Rename> {
       if (fileHistory.unmatchedAdditionsDeletions.isEmpty()) return MultiMap.empty()
 
-      TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.CollectingRenames.name).useWithScope {
+      TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.CollectingRenames.name).useWithScope { span ->
         val renames = fileHistory.unmatchedAdditionsDeletions.mapNotNull { ad ->
           val parentHash = storage.getCommitId(ad.parent)!!.hash
           val childHash = storage.getCommitId(ad.child)!!.hash
@@ -300,8 +299,9 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
           Rename(r.filePath1, r.filePath2, storage.getCommitIndex(r.hash1, root), storage.getCommitIndex(r.hash2, root))
         }
 
-        it.setAttribute("renamesSize", renames.size.toLong())
-        it.setAttribute("numberOfAdditionDeletions", fileHistory.unmatchedAdditionsDeletions.size.toLong())
+        span.setAttribute("renamesSize", renames.size.toLong())
+        span.setAttribute("numberOfAdditionDeletions", fileHistory.unmatchedAdditionsDeletions.size.toLong())
+        span.setAttribute(VcsTelemetrySpanAttribute.VCS_NAME.key, VcsLogRepoSizeCollector.getVcsKeySafe(vcsKey))
 
         val result = MultiMap<UnorderedPair<Int>, Rename>()
         renames.forEach { rename -> result.putValue(rename.commits, rename) }
