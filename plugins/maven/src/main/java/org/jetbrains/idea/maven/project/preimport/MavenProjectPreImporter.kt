@@ -10,11 +10,11 @@ import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector.PREIMPORT_ACTIVITY
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.util.childScope
 import kotlinx.coroutines.*

@@ -2,8 +2,8 @@
 package com.intellij.testFramework
 
 import com.intellij.diagnostic.dumpCoroutines
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*

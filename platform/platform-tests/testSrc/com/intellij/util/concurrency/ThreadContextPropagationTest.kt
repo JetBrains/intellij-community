@@ -301,7 +301,7 @@ class ThreadContextPropagationTest {
   @Test
   fun `Task Modal receives newly entered modality state in the context`(): Unit = timeoutRunBlocking {
     val finished = CompletableDeferred<Unit>()
-    withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable()) {
+    com.intellij.platform.ide.progress.withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable()) {
       blockingContext {
         assertSame(currentThreadContextModality(), ModalityState.defaultModalityState())
         object : Task.Modal(null, "", true) {

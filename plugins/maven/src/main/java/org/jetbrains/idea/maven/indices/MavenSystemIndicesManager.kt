@@ -5,8 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtilRt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred

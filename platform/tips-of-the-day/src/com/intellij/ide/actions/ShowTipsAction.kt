@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.ide.progress.TaskCancellation
 import kotlinx.coroutines.CoroutineScope

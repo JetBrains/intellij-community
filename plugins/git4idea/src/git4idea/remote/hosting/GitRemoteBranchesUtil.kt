@@ -4,9 +4,9 @@ package git4idea.remote.hosting
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.withRawProgressReporter
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch

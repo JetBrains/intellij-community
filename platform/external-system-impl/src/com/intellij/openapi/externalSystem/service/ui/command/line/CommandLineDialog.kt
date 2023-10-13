@@ -5,13 +5,13 @@ import com.intellij.ide.IdeCoreBundle
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TableSpeedSearch

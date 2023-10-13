@@ -29,7 +29,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
-import com.intellij.openapi.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager

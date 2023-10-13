@@ -5,9 +5,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.runWithModalProgressBlocking
-import com.intellij.openapi.progress.withBackgroundProgress
-import com.intellij.openapi.progress.withModalProgress
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.platform.ide.progress.ModalTaskOwner

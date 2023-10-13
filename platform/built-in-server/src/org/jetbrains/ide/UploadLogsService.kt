@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -9,8 +9,8 @@ import com.intellij.ide.logsUploader.LogsPacker
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.ui.IoErrorText
 import io.netty.channel.ChannelHandlerContext

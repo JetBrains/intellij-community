@@ -11,6 +11,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.platform.util.progress.withRawProgressReporter

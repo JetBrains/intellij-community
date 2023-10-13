@@ -4,7 +4,7 @@ package com.intellij.util.indexing.internal
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.util.indexing.FileBasedIndexTumbler

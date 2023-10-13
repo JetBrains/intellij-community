@@ -22,10 +22,10 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.progressReporter
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ContainerUtil

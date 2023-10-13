@@ -225,7 +225,7 @@ class WithModalProgressTest : ModalCoroutineTest() {
 }
 
 private suspend fun <T> withModalProgress(action: suspend CoroutineScope.() -> T): T {
-  return withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable(), action)
+  return com.intellij.platform.ide.progress.withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable(), action)
 }
 
 private suspend fun launchModalCoroutineAndWait(cs: CoroutineScope): Job {

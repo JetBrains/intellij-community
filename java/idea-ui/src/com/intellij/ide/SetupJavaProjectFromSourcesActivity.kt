@@ -25,7 +25,6 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
@@ -37,6 +36,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isOpenedByPlatformProcessor
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.util.SystemProperties

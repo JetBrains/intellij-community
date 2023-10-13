@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
-import com.intellij.openapi.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.IntellijInternalApi
