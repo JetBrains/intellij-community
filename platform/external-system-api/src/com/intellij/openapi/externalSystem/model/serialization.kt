@@ -19,15 +19,20 @@ private class DataClassResolver(private val log: Logger) {
     .map { it.javaClass.classLoader }
     .toSet()
 
-  fun resolve(name: String, hostObject: DataNode<*>?): Class<*>? {
-    var classLoadersToSearch = managerClassLoaders
-    val services = if (hostObject == null) emptyList() else projectDataManager!!.findService(hostObject.key)
-    if (!services.isNullOrEmpty()) {
-      val set = LinkedHashSet<ClassLoader>(managerClassLoaders.size + services.size)
-      set.addAll(managerClassLoaders)
-      services.mapTo(set) { it.javaClass.classLoader }
-      classLoadersToSearch = set
+  private fun getClassLoadersToSearch(hostObject: DataNode<*>?): Set<ClassLoader> {
+    val services = hostObject?.let { projectDataManager!!.findService(hostObject.key) }
+    if (services.isNullOrEmpty()) {
+      return managerClassLoaders
     }
+
+    val set = LinkedHashSet<ClassLoader>(managerClassLoaders.size + services.size)
+    set.addAll(managerClassLoaders)
+    services.mapTo(set) { it.javaClass.classLoader }
+    return set
+  }
+
+  fun resolve(name: String, hostObject: DataNode<*>?): Class<*>? {
+    val classLoadersToSearch = getClassLoadersToSearch(hostObject)
 
     var pe: PluginException? = null
     for (classLoader in classLoadersToSearch) {
