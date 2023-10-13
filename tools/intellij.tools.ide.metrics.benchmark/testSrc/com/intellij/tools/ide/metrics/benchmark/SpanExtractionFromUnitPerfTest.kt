@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.testFramework
+package com.intellij.tools.ide.metrics.benchmark
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.platform.testFramework.diagnostic.MetricsExtractor
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestApplicationManager
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
 import org.junit.jupiter.api.Assertions

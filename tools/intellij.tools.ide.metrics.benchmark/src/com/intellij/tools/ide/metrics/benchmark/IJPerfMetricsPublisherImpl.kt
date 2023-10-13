@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.testFramework.impl.diagnostic
+package com.intellij.tools.ide.metrics.benchmark
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.testFramework.diagnostic.MetricsExtractor
 import com.intellij.platform.testFramework.diagnostic.MetricsPublisher
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.testFramework.UsefulTestCase
