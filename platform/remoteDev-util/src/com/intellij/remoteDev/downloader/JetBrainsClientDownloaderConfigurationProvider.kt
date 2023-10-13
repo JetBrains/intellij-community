@@ -145,15 +145,13 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
     val traceCategories = listOf("#com.jetbrains.rdserver.joinLinks", "#com.jetbrains.rd.platform.codeWithMe.network")
 
-    val debugOptions = run {
-      if (isDebugEnabled) {
-        val suspendOnStart = if (debugSuspendOnStart) "y" else "n"
+    val debugOptions = if (isDebugEnabled) {
+      val suspendOnStart = if (debugSuspendOnStart) "y" else "n"
 
-        // changed in Java 9, now we have to use *: to listen on all interfaces
-          "-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=$debugPort"
-      }
-      else ""
+      // changed in Java 9, now we have to use *: to listen on all interfaces
+      "-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=*:$debugPort"
     }
+    else ""
 
     val testVmOptions = listOf(
       "-Djb.consents.confirmation.enabled=false", // hz
