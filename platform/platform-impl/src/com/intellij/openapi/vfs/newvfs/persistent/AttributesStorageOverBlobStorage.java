@@ -191,21 +191,42 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   }
 
   @Override
-  public void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
-                                           final int fileId,
-                                           final @NotNull IntList usedAttributeRecordIds,
-                                           final @NotNull IntList validAttributeIds) throws IOException {
+  public void checkAttributeRecordSanity(int fileId,
+                                         int attributeRecordId) throws IOException {
+    if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+      return;
+    }
+
     lock.readLock().lock();
     try {
-      int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
-
-      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
-        return;
-      }
-
-      if (attributeRecordId > 0) {
-        checkAttributeRecordSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
-      }
+      storage.readRecord(attributeRecordId, buffer -> {
+        AttributesRecord attributesRecord = new AttributesRecord(buffer);
+        assert attributesRecord.backRefFileId == fileId : "record(" + attributeRecordId + ").fileId(" + fileId + ")" +
+                                                          " != backref fileId(" + attributesRecord.backRefFileId + ")";
+        int entryNo = 0;
+        for (AttributeEntry entry = attributesRecord.currentEntry();
+             entry.isValid();
+             entry.moveToNextEntry(), entryNo++) {
+          int attributeId = entry.attributeId();
+          if (entry.isValueInlined()) {
+            if (attributeId <= DataEnumerator.NULL_ID || attributeId > MAX_SUPPORTED_ATTRIBUTE_ID) {
+              String valueAsHex = IOUtil.toHexString(entry.inlinedValueAsSlice());
+              throw new IllegalStateException(
+                "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
+                "{attributeId: " + attributeId + ", value: " + valueAsHex + "} attributeId must be in [1.." + MAX_ATTRIBUTE_ID + "]");
+            }
+          }
+          else {
+            int dedicatedRecordId = entry.dedicatedValueRecordId();
+            if (!storage.hasRecord(dedicatedRecordId)) {
+              throw new IllegalStateException(
+                "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
+                "{attributeId: " + attributeId + ", dedicatedId: " + dedicatedRecordId + "} dedicatedId must be != 0");
+            }
+          }
+        }
+        return null;
+      });
     }
     finally {
       lock.readLock().unlock();

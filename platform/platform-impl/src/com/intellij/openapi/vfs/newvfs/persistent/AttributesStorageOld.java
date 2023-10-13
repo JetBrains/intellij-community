@@ -15,7 +15,6 @@ import com.intellij.util.io.RepresentableAsByteArraySequence;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.io.storage.Storage;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,9 +27,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.checkAttributeValueSize;
 
-/**
- *
- */
 public final class AttributesStorageOld implements AbstractAttributesStorage {
 
   /**
@@ -209,25 +205,13 @@ public final class AttributesStorageOld implements AbstractAttributesStorage {
     }
   }
 
-
   @Override
-  public void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
-                                           final int fileId,
-                                           final @NotNull IntList usedAttributeRecordIds,
-                                           final @NotNull IntList validAttributeIds) throws IOException {
-    lock.readLock().lock();
-    try {
-      int attributeRecordId = fileAttributeRecordId(connection, fileId);
-
-      assert attributeRecordId >= 0;
-      if (attributeRecordId > 0) {
-        checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
-      }
-    }
-    finally {
-      lock.readLock().unlock();
-    }
+  public void checkAttributeRecordSanity(int fileId,
+                                         int attributeRecordId) throws IOException {
+    //legacy class, soon-to-be-deleted -- not worth the effort
+    throw new UnsupportedOperationException("Method not implemented: doesn't worth it");
   }
+
 
   @Override
   public boolean isDirty() {
@@ -551,41 +535,5 @@ public final class AttributesStorageOld implements AbstractAttributesStorage {
                                            final int fileId,
                                            final int attributeRecordId) throws IOException {
     connection.getRecords().setAttributeRecordId(fileId, attributeRecordId);
-  }
-
-  private void checkAttributesSanity(final int attributeRecordId,
-                                     final @NotNull IntList usedAttributeRecordIds,
-                                     final @NotNull IntList validAttributeIds) throws IOException {
-    assert !usedAttributeRecordIds.contains(attributeRecordId);
-    usedAttributeRecordIds.add(attributeRecordId);
-
-    try (DataInputStream dataInputStream = attributesBlobStorage.readStream(attributeRecordId)) {
-      if (bulkAttrReadSupport) skipRecordHeader(dataInputStream, 0, 0);
-
-      while (dataInputStream.available() > 0) {
-        int attId = DataInputOutputUtil.readINT(dataInputStream);
-
-        if (!validAttributeIds.contains(attId)) {
-          //assert !getNames().valueOf(attId).isEmpty();
-          validAttributeIds.add(attId);
-        }
-
-        int attDataRecordIdOrSize = DataInputOutputUtil.readINT(dataInputStream);
-
-        if (inlineAttributes) {
-          if (attDataRecordIdOrSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
-            dataInputStream.skipBytes(attDataRecordIdOrSize);
-            continue;
-          }
-          else {
-            attDataRecordIdOrSize -= INLINE_ATTRIBUTE_SMALLER_THAN;
-          }
-        }
-        assert !usedAttributeRecordIds.contains(attDataRecordIdOrSize);
-        usedAttributeRecordIds.add(attDataRecordIdOrSize);
-
-        attributesBlobStorage.checkSanity(attDataRecordIdOrSize);
-      }
-    }
   }
 }
