@@ -40,15 +40,22 @@ private class DataClassResolver(private val log: Logger) {
         return classLoader.loadClass(name)
       }
       catch (e: PluginException) {
-        pe?.let(e::addSuppressed)
+        if (pe != null) {
+          e.addSuppressed(pe)
+        }
         pe = e
       }
       catch (_: ClassNotFoundException) {
       }
     }
 
-    log.warn("Cannot find class `$name`", pe)
-    throw pe ?: return null
+    log.warn("ExternalProjectsDataStorage deserialization: Cannot find class `$name`", pe)
+    if (pe != null) {
+      throw pe
+    }
+    else {
+      return null
+    }
   }
 }
 
