@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.refactoring.move
+package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
@@ -10,9 +10,6 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.allDeclarationsToUpdate
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.findUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.retargetUsagesAfterMove
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
@@ -22,10 +19,10 @@ class K2MoveFilesHandler : MoveFileHandler() {
     }
 
     override fun findUsages(
-        psiFile: PsiFile,
-        newParent: PsiDirectory,
-        searchInComments: Boolean,
-        searchInNonJavaFiles: Boolean
+      psiFile: PsiFile,
+      newParent: PsiDirectory,
+      searchInComments: Boolean,
+      searchInNonJavaFiles: Boolean
     ): List<UsageInfo> {
         require(psiFile is KtFile) { "Can only find usages from Kotlin files" }
         return if (psiFile.requiresPackageUpdate) {
@@ -61,6 +58,6 @@ class K2MoveFilesHandler : MoveFileHandler() {
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun retargetUsages(usageInfos: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>): Unit = allowAnalysisOnEdt {
-       retargetUsagesAfterMove(usageInfos, oldToNewMap)
+      retargetUsagesAfterMove(usageInfos, oldToNewMap)
     }
 }
