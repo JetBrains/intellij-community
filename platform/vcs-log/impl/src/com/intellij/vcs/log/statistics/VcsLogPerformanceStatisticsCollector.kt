@@ -31,7 +31,7 @@ object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
   val FILTERS_FIELD = EventFields.StringList("filters", VcsLogFilterCollection.STANDARD_KEYS.map { it.name })
   val SORT_TYPE_FIELD = EventFields.String("intelli_sort_type", PermanentGraph.SortType.entries.map { it.getName() })
   val FILTERED_COMMIT_COUNT_FIELD = object : StringEventField("filtered_commit_count") {
-    override val validationRule: List<String> get() = listOf("{regexp#integer}", "{enum:${CommitCountStage.ALL.name}}")
+    override val validationRule: List<String> get() = listOf("{regexp#integer}", "{enum:${CommitCountStage.ALL}}")
   }
   val REPOSITORY_COMMIT_COUNT_FIELD = NullableRoundedLongEventField("repository_commit_count")
   val FILTER_KIND_FIELD = EventFields.String("filter_kind", FilterKind.entries.map { it.name })
