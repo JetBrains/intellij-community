@@ -109,7 +109,6 @@ internal open class FirCallableCompletionContributor(
         private val _explicitReceiverTypeHint: KtType?,
         val options: CallableInsertionOptions,
         val symbolOrigin: CompletionSymbolOrigin,
-        val withExpectedType: Boolean,
     ) : KtLifetimeOwner {
         override val token: KtLifetimeToken
             get() = _signature.token
@@ -150,7 +149,6 @@ internal open class FirCallableCompletionContributor(
         } else null
 
         val receiver = explicitReceiver
-        val weighingContextWithoutExpectedType = weighingContext.withoutExpectedType()
 
         val callablesWithMetadata: Sequence<CallableWithMetadataForCompletion> = when {
             receiver != null -> collectDotCompletion(scopesContext, receiver, extensionChecker, visibilityChecker, sessionParameters)
@@ -161,9 +159,8 @@ internal open class FirCallableCompletionContributor(
             .filterOutUninitializedCallables(positionContext.position)
 
         for (callableWithMetadata in callablesWithMetadata) {
-            val context = if (callableWithMetadata.withExpectedType) weighingContext else weighingContextWithoutExpectedType
             addCallableSymbolToCompletion(
-                context,
+                weighingContext,
                 callableWithMetadata.signature,
                 callableWithMetadata.options,
                 callableWithMetadata.symbolOrigin,
@@ -514,10 +511,9 @@ internal open class FirCallableCompletionContributor(
         isImportDefinitelyNotRequired: Boolean = false,
         options: CallableInsertionOptions = getOptions(signature, isImportDefinitelyNotRequired),
         explicitReceiverTypeHint: KtType? = null,
-        withExpectedType: Boolean = true,
     ): CallableWithMetadataForCompletion {
         val symbolOrigin = CompletionSymbolOrigin.Scope(scopeKind)
-        return CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin, withExpectedType)
+        return CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin)
     }
 
     context(KtAnalysisSession)
@@ -526,8 +522,7 @@ internal open class FirCallableCompletionContributor(
         symbolOrigin: CompletionSymbolOrigin,
         options: CallableInsertionOptions = getOptions(signature),
         explicitReceiverTypeHint: KtType? = null,
-        withExpectedType: Boolean = true,
-    ) = CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin, withExpectedType)
+    ) = CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin)
 
     context(KtAnalysisSession)
     private fun Sequence<CallableWithMetadataForCompletion>.filterOutUninitializedCallables(
@@ -711,7 +706,6 @@ internal class FirCallableReferenceCompletionContributor(
                             it.signature,
                             it.scopeKind,
                             isImportDefinitelyNotRequired = true,
-                            withExpectedType = false
                         )
                     )
                 }
