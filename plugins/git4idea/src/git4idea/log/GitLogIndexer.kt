@@ -12,7 +12,7 @@ import com.intellij.vcs.log.impl.VcsLogIndexer
 import git4idea.GitVcs
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits
-import git4idea.history.GitCommitRequirements.DiffRenameLimit
+import git4idea.history.GitCommitRequirements.DiffRenames
 import git4idea.history.GitCompressedDetailsCollector
 import git4idea.history.GitLogUtil
 import git4idea.log.GitLogProvider.*
@@ -43,7 +43,7 @@ class GitLogIndexer(private val project: Project,
   }
 
   private fun getGitCommitRequirements(repository: GitRepository): GitCommitRequirements {
-    return GitCommitRequirements(shouldIncludeRootChanges(repository), DiffRenameLimit.Value(RENAME_LIMIT),
+    return GitCommitRequirements(shouldIncludeRootChanges(repository), DiffRenames.Limit.Value(RENAME_LIMIT),
                                  DiffInMergeCommits.DIFF_TO_PARENTS)
   }
 

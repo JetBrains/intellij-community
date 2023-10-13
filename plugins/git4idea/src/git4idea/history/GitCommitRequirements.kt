@@ -8,7 +8,7 @@ import git4idea.config.GitVersionSpecialty
  * Allows controlling how changes are reported when reading [git4idea.GitCommit] instances from `git log`.
  *
  * @property includeRootChanges whether to include changes for initial commits
- * @property diffRenameLimit    the number of files to consider in the exhaustive portion of copy/rename detection
+ * @property diffRenames        how to detect renames
  * @property diffInMergeCommits how to report changes for merge commits
  *
  * @see git4idea.GitCommit
@@ -16,16 +16,16 @@ import git4idea.config.GitVersionSpecialty
  * @see GitLogUtil.readFullDetailsForHashes
  */
 data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
-                                 val diffRenameLimit: DiffRenameLimit = DiffRenameLimit.GitConfig,
+                                 val diffRenames: DiffRenames = DiffRenames.Limit.Default,
                                  val diffInMergeCommits: DiffInMergeCommits = DiffInMergeCommits.COMBINED_DIFF) {
 
   fun configParameters(): List<String> {
     val result = mutableListOf<String>()
-    when (diffRenameLimit) {
-      DiffRenameLimit.Infinity -> result.add(renameLimit(0))
-      is DiffRenameLimit.Value -> result.add(renameLimit(diffRenameLimit.limit))
-      DiffRenameLimit.NoRenames -> result.add("diff.renames=false")
-      DiffRenameLimit.GitConfig -> {}
+    when (diffRenames) {
+      is DiffRenames.Limit -> {
+        diffRenames.limit?.let { limit -> result.add(renameLimit(limit)) }
+      }
+      DiffRenames.NoRenames -> result.add("diff.renames=false")
     }
 
     if (!includeRootChanges) {
@@ -36,8 +36,13 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
 
   fun commandParameters(project: Project): List<String> {
     val result = mutableListOf<String>()
-    if (diffRenameLimit != DiffRenameLimit.NoRenames) {
-      result.add("-M")
+    if (diffRenames != DiffRenames.NoRenames) {
+      if (diffRenames is DiffRenames.Limit && diffRenames.similarityIndexThreshold != null) {
+        result.add("-M${diffRenames.similarityIndexThreshold.coerceIn(0, 100)}%")
+      }
+      else {
+        result.add("-M")
+      }
     }
     result.addAll(diffInMergeCommits.commandParameters(project))
     return result
@@ -48,30 +53,44 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
   }
 
   /**
-   * The number of files to consider in the exhaustive portion of copy/rename detection
+   * Regulates how renames are detected
    *
    * @see <a href="https://git-scm.com/docs/git-config#Documentation/git-config.txt-diffrenameLimit">diff.renameLimit</a>
+   * @see <a href="https://book.git-scm.com/docs/git-diff/2.6.7#Documentation/git-diff.txt--Mltngt">git diff -M</a>
    */
-  sealed class DiffRenameLimit {
+  sealed class DiffRenames {
     /**
-     * Use zero value
+     * Enable renames detection
+     *
+     * @property limit                    the number of files to consider in the exhaustive portion of copy/rename detection
+     * @property similarityIndexThreshold threshold on the similarity index for rename detection (in percent)
      */
-    data object Infinity : DiffRenameLimit()
+    sealed class Limit(val limit: Int? = null, val similarityIndexThreshold: Int? = null) : DiffRenames() {
+      /**
+       * Use specified values for rename limit and similarity threshold
+       */
+      class Value(limit: Int?, similarity: Int? = null) : Limit(limit, similarity)
 
-    /**
-     * Use specified value
-     */
-    class Value(val limit: Int) : DiffRenameLimit()
+      /**
+       * Use zero value for the diff.renameLimit to always detect inexact renames
+       */
+      class Infinity(similarity: Int? = null) : Limit(0, similarity)
 
-    /**
-     * Use value set in users git.config
-     */
-    data object GitConfig : DiffRenameLimit()
+      /**
+       * Detect only exact renames
+       */
+      data object Exact : Limit(1, 100)
+
+      /**
+       * Use diff.renameLimit value set in users git.config and default similarity threshold value
+       */
+      data object Default : Limit()
+    }
 
     /**
      * Disable renames detection
      */
-    data object NoRenames : DiffRenameLimit()
+    data object NoRenames : DiffRenames()
   }
 
   /**
