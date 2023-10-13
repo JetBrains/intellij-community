@@ -504,10 +504,10 @@
 
     <group id="InlineCompletion" popup="true">
       <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction"/>
-      <action id="ShowNextInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.ShowNextInlineCompletionAction">
+      <action id="ShowNextInlineCompletionProviderAction" class="com.intellij.codeInsight.inline.completion.ShowNextInlineCompletionProviderAction">
         <keyboard-shortcut first-keystroke="shift alt CLOSE_BRACKET" keymap="$default"/>
       </action>
-      <action id="ShowPreviousInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.ShowPreviousInlineCompletionAction">
+      <action id="ShowPrevInlineCompletionProviderAction" class="com.intellij.codeInsight.inline.completion.ShowPrevInlineCompletionProviderAction">
         <keyboard-shortcut first-keystroke="shift alt OPEN_BRACKET" keymap="$default"/>
       </action>
       <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">

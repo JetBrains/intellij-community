@@ -6,7 +6,22 @@ import com.intellij.openapi.util.UserDataHolderBase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
-open class InlineCompletionSuggestion(val suggestionFlow: Flow<InlineCompletionElement>) : UserDataHolderBase() {
+interface InlineCompletionSuggestionI {
+  val suggestionFlow: Flow<InlineCompletionElement>
+}
+
+interface InlineCompletionSuggestionConfigurables {
+  val useCache: Boolean
+  val addLoadingIndicator: Boolean
+  // val renderInBatch: Boolean
+}
+
+// TODO: split with interface
+open class InlineCompletionSuggestion(override val suggestionFlow: Flow<InlineCompletionElement>)
+  : UserDataHolderBase(), InlineCompletionSuggestionI, InlineCompletionSuggestionConfigurables {
+  override val useCache: Boolean = true
+  override val addLoadingIndicator: Boolean = false
+
   fun handleInsert() {
     // TODO: add actual insertion here
   }
@@ -15,4 +30,3 @@ open class InlineCompletionSuggestion(val suggestionFlow: Flow<InlineCompletionE
     val EMPTY: InlineCompletionSuggestion = object : InlineCompletionSuggestion(emptyFlow()) {}
   }
 }
-

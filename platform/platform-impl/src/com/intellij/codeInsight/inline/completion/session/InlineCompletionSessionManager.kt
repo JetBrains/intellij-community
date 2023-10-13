@@ -5,6 +5,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.inlineCompletionNavigationKey
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 internal abstract class InlineCompletionSessionManager {
@@ -56,6 +57,10 @@ internal abstract class InlineCompletionSessionManager {
     if (session == null) {
       return false
     }
+    if (request.getUserData(inlineCompletionNavigationKey) != null) {
+      invalidateWithoutCache(session)
+      return false
+    }
     if (session.provider.invalidate(request.event)) {
       invalidate(session)
       return false
@@ -73,6 +78,7 @@ internal abstract class InlineCompletionSessionManager {
   }
 
   private fun invalidate(session: InlineCompletionSession) = onUpdate(session, UpdateSessionResult.Invalidated)
+  private fun invalidateWithoutCache(session: InlineCompletionSession) = onUpdate(session, UpdateSessionResult.InvalidatedWithoutCache)
 
   private fun updateContext(
     context: InlineCompletionContext,
@@ -127,5 +133,6 @@ internal abstract class InlineCompletionSessionManager {
     data object Same : UpdateSessionResult
 
     data object Invalidated : UpdateSessionResult
+    data object InvalidatedWithoutCache : UpdateSessionResult
   }
 }

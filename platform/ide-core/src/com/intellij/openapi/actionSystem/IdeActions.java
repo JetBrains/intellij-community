@@ -107,6 +107,8 @@ public interface IdeActions {
 
   String ACTION_INSERT_INLINE_COMPLETION = "InsertInlineCompletionAction";
   String ACTION_CALL_INLINE_COMPLETION = "CallInlineCompletionAction";
+  String ACTION_NEXT_INLINE_COMPLETION_PROVIDER = "ShowNextInlineCompletionProviderAction";
+  String ACTION_PREV_INLINE_COMPLETION_PROVIDER = "ShowPrevInlineCompletionProviderAction";
 
   String GROUP_EXTERNAL_TOOLS = "ExternalToolsGroup";
 

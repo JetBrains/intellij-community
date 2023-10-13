@@ -24,7 +24,9 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
    *
    * @return `true` if the inline completion need to be forced, `false` otherwise.
    */
-  abstract fun shouldBeForced(request: InlineCompletionRequest): Boolean
+  open fun shouldBeForced(request: InlineCompletionRequest): Boolean {
+    return request.event is InlineCompletionEvent.DirectCall
+  }
 
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
     if (ApplicationManager.getApplication().isUnitTestMode) {

@@ -4,9 +4,10 @@ package com.intellij.codeInsight.inline.completion.session
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
-class InlineCompletionContext internal constructor(val editor: Editor) : Disposable {
+class InlineCompletionContext internal constructor(val editor: Editor) : UserDataHolderBase(), Disposable {
   private val myState = InlineState().also {
     Disposer.register(this, it)
   }

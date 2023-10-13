@@ -8,21 +8,17 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 internal data class SimpleTypingEvent(val typed: String, val caretMoves: Boolean)
 
 internal class InlineCompletionRequestManager(@RequiresEdt private val invalidate: () -> Unit) {
-
   private var lastSimpleEvent: SimpleTypingEvent? = null
-  private var lastRequest: InlineCompletionRequest? = null
 
   @RequiresEdt
   fun getRequest(event: InlineCompletionEvent): InlineCompletionRequest? {
-    lastRequest = when (event) {
-      is InlineCompletionEvent.DocumentChange -> onDocumentChange(event)
-      is InlineCompletionEvent.InlineNavigationEvent -> lastRequest
-      else -> event.toRequest()
+    if (event is InlineCompletionEvent.DocumentChange) {
+      return onDocumentChange(event)
     }
-    return lastRequest
+
+    return event.toRequest()
   }
 
-  @RequiresEdt
   fun allowDocumentChange(event: SimpleTypingEvent) {
     lastSimpleEvent = event
   }

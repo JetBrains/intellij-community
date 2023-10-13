@@ -4,7 +4,6 @@ package com.intellij.codeInsight.inline.completion.session
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
 class InlineState internal constructor() : Disposable {

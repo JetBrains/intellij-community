@@ -30,7 +30,7 @@ class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : 
       }
       return
     }
-    InlineCompletion.getHandlerOrNull(editor)?.hide(true, context, true)
+    InlineCompletion.getHandlerOrNull(editor)?.hide(true, context)
 
     if (originalHandler.isEnabled(editor, caret, dataContext)) {
       originalHandler.execute(editor, caret, dataContext)
@@ -57,17 +57,26 @@ class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), 
   }
 }
 
-private class InlineNavigationHandler(val event: InlineCompletionEvent.InlineNavigationEvent) : EditorWriteActionHandler() {
+class ShowNextInlineCompletionProviderAction : EditorAction(
+  InlineNavigationHandler { InlineCompletionEvent.Navigation.NextProvider(it) }
+), HintManagerImpl.ActionToIgnore
+
+class ShowPrevInlineCompletionProviderAction : EditorAction(
+  InlineNavigationHandler { InlineCompletionEvent.Navigation.PrevProvider(it) }
+), HintManagerImpl.ActionToIgnore
+
+private class InlineNavigationHandler(
+  val navigationEvent: (InlineCompletionEvent) -> InlineCompletionEvent.Navigation
+) : EditorWriteActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    editor.getUserData(InlineCompletionHandler.KEY)?.invoke(event)
+    val handler = InlineCompletionHandler.getOrNull(editor) ?: return
+    val eventSource = handler.eventSource() ?: return
+    val event = navigationEvent(eventSource)
+
+    handler.invoke(event)
+  }
+
+  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+    return InlineCompletionContext.getOrNull(editor)?.startOffset() == caret.offset
   }
 }
-
-@ApiStatus.Experimental
-class ShowNextInlineCompletionAction : EditorAction(InlineNavigationHandler(InlineCompletionEvent.ShowNext)),
-                                       HintManagerImpl.ActionToIgnore
-
-@ApiStatus.Experimental
-class ShowPreviousInlineCompletionAction : EditorAction(InlineNavigationHandler(InlineCompletionEvent.ShowPrevious)),
-                                           HintManagerImpl.ActionToIgnore
-

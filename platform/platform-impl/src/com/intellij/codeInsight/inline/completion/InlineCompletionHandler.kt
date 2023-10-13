@@ -16,7 +16,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Disposer
@@ -33,6 +32,7 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEmpty
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.errorIfNotMessage
+import kotlin.reflect.KClass
 
 /**
  * Use [InlineCompletion] for acquiring, installing and uninstalling [InlineCompletionHandler].
@@ -46,20 +46,10 @@ class InlineCompletionHandler internal constructor(
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
   private val sessionManager = createSessionManager()
   private val requestManager = InlineCompletionRequestManager(sessionManager::invalidate)
-  private val proposalsManager = InlineProposalsManager()
+  private val providerManager = InlineCompletionProviderManager()
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
-  }
-
-  private fun getProvider(): InlineCompletionProvider? {
-    if (application.isUnitTestMode && testProvider != null) {
-      return testProvider
-    }
-
-    return proposalsManager.getProvider()?.also {
-      LOG.trace("Selected inline provider: $it")
-    }
   }
 
   fun addEventListener(listener: InlineCompletionEventListener) {
@@ -79,15 +69,14 @@ class InlineCompletionHandler internal constructor(
   fun invoke(event: InlineCompletionEvent.LookupChange) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.LookupCancelled) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
-  fun invoke(event: InlineCompletionEvent.InlineNavigationEvent) = invokeEvent(event)
+  fun invoke(event: InlineCompletionEvent.Navigation) = invokeEvent(event)
 
   @RequiresEdt
   fun invokeEvent(event: InlineCompletionEvent) {
     ThreadingAssertions.assertEventDispatchThread()
     LOG.trace("Start processing inline event $event")
 
-    proposalsManager.processEvent(event)
-    val provider = getProvider()
+    val provider = providerManager.getProvider(event)
     val request = requestManager.getRequest(event)
     if (request == null || sessionManager.updateSession(request, provider) || provider == null) {
       return
@@ -99,13 +88,14 @@ class InlineCompletionHandler internal constructor(
       guardCaretModifications(request)
     }
 
-    proposalsManager.getCachedProposal()?.run {
-      map { newSession.context.renderElement(it, request.endOffset) }
-      return
-    }
+    //providerManager.getCache(provider::class)?.let { cached ->
+    //  // TODO: add event logging)
+    //  cached.forEach { newSession.context.renderElement(it, request.endOffset) }
+    //  return
+    //}
 
     executor.switchJobSafely(newSession::assignJob) {
-      invokeRequest(request, newSession)
+      invokeRequest(provider::class, request, newSession)
     }
   }
 
@@ -136,10 +126,16 @@ class InlineCompletionHandler internal constructor(
 
   @RequiresEdt
   @RequiresBlockingContext
-  fun hide(explicit: Boolean, context: InlineCompletionContext, shouldClearCache: Boolean = false) {
+  fun hide(explicit: Boolean, context: InlineCompletionContext) {
+    hide(editor, explicit, context, true)
+  }
+
+  @RequiresEdt
+  @RequiresBlockingContext
+  internal fun hide(editor: Editor, explicit: Boolean, context: InlineCompletionContext, clearCache: Boolean) {
     LOG.assertTrue(!context.isDisposed)
-    if (shouldClearCache) {
-      proposalsManager.clear()
+    if (clearCache) {
+      providerManager.clear()
     }
     if (context.isCurrentlyDisplaying()) {
       trace(InlineCompletionEventType.Hide(explicit))
@@ -153,29 +149,16 @@ class InlineCompletionHandler internal constructor(
     executor.cancel()
     application.invokeAndWait {
       InlineCompletionContext.getOrNull(editor)?.let {
-        hide(false, it, true)
+        hide(false, it)
       }
     }
   }
 
-  @RequiresEdt
-  @RequiresBlockingContext
-  fun complete(isActive: Boolean, cause: Throwable?, context: InlineCompletionContext) {
-    trace(InlineCompletionEventType.Completion(cause, isActive))
-    if (cause == null) {
-      proposalsManager.cacheProposal(context.state.elements)
-    }
-    else if (!context.isDisposed) {
-      hide(false, context)
-    }
-  }
-
-  @RequiresEdt
-  internal fun allowDocumentChange(event: SimpleTypingEvent) {
-    requestManager.allowDocumentChange(event)
-  }
-
-  private suspend fun invokeRequest(request: InlineCompletionRequest, session: InlineCompletionSession) {
+  private suspend fun invokeRequest(
+    provider: KClass<out InlineCompletionProvider>,
+    request: InlineCompletionRequest,
+    session: InlineCompletionSession,
+  ) {
     currentCoroutineContext().ensureActive()
 
     val context = session.context
@@ -201,7 +184,7 @@ class InlineCompletionHandler internal constructor(
         }
         .onCompletion {
           val isActive = currentCoroutineContext().isActive
-          coroutineToIndicator { complete(isActive, editor, it, context) }
+          coroutineToIndicator { complete(isActive, editor, it, context, provider, suggestion) }
           it?.let(LOG::errorIfNotMessage)
         }
         .collectIndexed { index, it ->
@@ -211,6 +194,39 @@ class InlineCompletionHandler internal constructor(
     }
   }
 
+  @RequiresEdt
+  @RequiresBlockingContext
+  private fun complete(
+    isActive: Boolean,
+    editor: Editor,
+    cause: Throwable?,
+    context: InlineCompletionContext,
+    provider: KClass<out InlineCompletionProvider>,
+    suggestion: InlineCompletionSuggestion,
+  ) {
+    trace(InlineCompletionEventType.Completion(cause, isActive))
+    if (!suggestion.isUserDataEmpty) {
+      suggestion.copyUserDataTo(context)
+    }
+
+    if (cause != null && !context.isDisposed) {
+      hide(editor, false, context)
+      return
+    }
+    if (suggestion.useCache) {
+      providerManager.cacheSuggestion(provider, context.state.elements)
+    }
+  }
+
+  @RequiresEdt
+  internal fun allowDocumentChange(event: SimpleTypingEvent) {
+    requestManager.allowDocumentChange(event)
+  }
+
+  internal fun eventSource(): InlineCompletionEvent? {
+    return providerManager.source
+  }
+
   private suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): InlineCompletionSuggestion {
     withContext(Dispatchers.EDT) {
       coroutineToIndicator {
@@ -218,24 +234,6 @@ class InlineCompletionHandler internal constructor(
       }
     }
     return provider.getSuggestion(request)
-  }
-
-  private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
-    if (application.isUnitTestMode && testProvider != null) {
-      return testProvider
-    }
-
-    return InlineCompletionProvider.extensions().firstOrNull {
-      try {
-        it.isEnabled(event)
-      }
-      catch (e: Throwable) {
-        LOG.errorIfNotMessage(e)
-        false
-      }
-    }?.also {
-      LOG.trace("Selected inline provider: $it")
-    }
   }
 
   @RequiresEdt
@@ -272,6 +270,9 @@ class InlineCompletionHandler internal constructor(
           UpdateSessionResult.Invalidated -> {
             hide(false, session.context)
           }
+          UpdateSessionResult.InvalidatedWithoutCache -> {
+            hide(session.context.editor, false, session.context, false)
+          }
         }
       }
     }
@@ -284,7 +285,7 @@ class InlineCompletionHandler internal constructor(
       if (!context.isDisposed) context.startOffset() ?: request.endOffset else -1
     }
     val cancel = {
-      if (!context.isDisposed) hide(false, context, true)
+      if (!context.isDisposed) hide(false, context)
     }
     val listener = InlineSessionWiseCaretListener(expectedOffset, cancel)
     editor.caretModel.addCaretListener(listener)
@@ -304,17 +305,8 @@ class InlineCompletionHandler internal constructor(
 
   companion object {
     private val LOG = thisLogger()
+    val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
 
-    private var testProvider: InlineCompletionProvider? = null
-
-    @TestOnly
-    fun registerTestHandler(provider: InlineCompletionProvider) {
-      testProvider = provider
-    }
-
-    @TestOnly
-    fun unRegisterTestHandler() {
-      testProvider = null
-    }
+    fun getOrNull(editor: Editor) = editor.getUserData(KEY)
   }
 }
