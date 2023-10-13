@@ -238,9 +238,7 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
   @Override
   public int getRefCount(int record) throws IOException {
     waitForPendingWriteForRecord(record);
-    return withReadLock(() -> {
-      return ((RefCountingRecordsTableLF)recordsTable).getRefCount(record);
-    });
+    return withReadLock(() -> ((RefCountingRecordsTableLF)recordsTable).getRefCount(record));
   }
 
   @Override
