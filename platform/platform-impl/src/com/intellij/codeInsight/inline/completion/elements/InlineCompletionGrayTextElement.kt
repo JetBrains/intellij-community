@@ -18,7 +18,7 @@ data class InlineCompletionGrayTextElement(override val text: String) : InlineCo
 
   override fun toPresentable(): InlineCompletionElement.Presentable = Presentable(this)
 
-  class Presentable(override val element: InlineCompletionGrayTextElement) : InlineCompletionElement.Presentable {
+  class Presentable(override val element: InlineCompletionElement) : InlineCompletionElement.Presentable {
     private var suffixInlay: Inlay<*>? = null
     private var blockInlay: Inlay<*>? = null
 
