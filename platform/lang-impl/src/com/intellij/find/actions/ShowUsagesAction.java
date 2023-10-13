@@ -1380,6 +1380,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     }
 
     popup.setSize(rectangle.getSize());
+    popup.moveToFitScreen();
   }
 
   private static boolean isCodeWithMeClientInstance(@NotNull JBPopup popup) {
