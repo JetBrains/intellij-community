@@ -14,7 +14,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -22,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.quickfix.*;
@@ -37,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /**
  * User : catherine
@@ -428,25 +425,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
     super.visitPyYieldExpression(node);
-
-    Optional
-      .ofNullable(ScopeUtil.getScopeOwner(node))
-      .map(owner -> PyUtil.as(owner, PyFunction.class))
-      .filter(function -> function.isAsync() && function.isAsyncAllowed())
-      .ifPresent(
-        function -> {
-          if (!node.isDelegating() &&
-              registerForLanguageLevel(LanguageLevel.PYTHON35) &&
-              myVersionsToProcess.contains(LanguageLevel.PYTHON35)) {
-            registerProblem(node, PyPsiBundle.message("INSP.compatibility.py35.does.not.support.yield.inside.async.functions"));
-          }
-        }
-      );
-
     if (!node.isDelegating()) {
       return;
     }
-
     registerForAllMatchingVersions(level -> level.isPython2() && registerForLanguageLevel(level),
                                    PyPsiBundle.message("INSP.compatibility.feature.support.yield.from"),
                                    node);
@@ -664,32 +645,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
     super.visitPyComprehensionElement(node);
-
-    if (registerForLanguageLevel(LanguageLevel.PYTHON35) && myVersionsToProcess.contains(LanguageLevel.PYTHON35)) {
-      Arrays
-        .stream(node.getNode().getChildren(TokenSet.create(PyTokenTypes.ASYNC_KEYWORD)))
-        .filter(Objects::nonNull)
-        .map(ASTNode::getPsi)
-        .forEach(element -> registerProblem(element,
-                                            PyPsiBundle.message("INSP.compatibility.py35.does.not.support.async.inside.comprehensions.and.generator.expressions")));
-
-      final Stream<PyPrefixExpression> resultPrefixExpressions = PsiTreeUtil
-        .collectElementsOfType(node.getResultExpression(), PyPrefixExpression.class)
-        .stream();
-
-      final Stream<PyPrefixExpression> ifComponentsPrefixExpressions = node.getIfComponents()
-        .stream()
-        .map(ifComponent -> PsiTreeUtil.collectElementsOfType(ifComponent.getTest(), PyPrefixExpression.class))
-        .flatMap(Collection::stream);
-
-      Stream.concat(resultPrefixExpressions, ifComponentsPrefixExpressions)
-        .filter(expression -> expression.getOperator() == PyTokenTypes.AWAIT_KEYWORD && expression.getOperand() != null)
-        .map(expression -> expression.getNode().findChildByType(PyTokenTypes.AWAIT_KEYWORD))
-        .filter(Objects::nonNull)
-        .map(ASTNode::getPsi)
-        .forEach(element -> registerProblem(element,
-                                            PyPsiBundle.message("INSP.compatibility.py35.does.not.support.await.inside.comprehensions")));
-    }
   }
 
   @Override

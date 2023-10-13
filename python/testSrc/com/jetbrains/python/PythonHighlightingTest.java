@@ -233,34 +233,20 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testAsync() {
-    doTest(LanguageLevel.PYTHON35, true, true);
+    doTest(LanguageLevel.PYTHON36, true, true);
   }
 
   public void testAwait() {
-    doTest(LanguageLevel.PYTHON35, true, true);
-  }
-
-  // PY-19679
-  public void testAwaitInListPy35() {
-    doTest(LanguageLevel.PYTHON35, true, false);
+    doTest(LanguageLevel.PYTHON36, true, true);
   }
 
   public void testAwaitInTuple() {
-    doTest(LanguageLevel.PYTHON35, true, false);
+    doTest(LanguageLevel.PYTHON36, true, false);
   }
 
   public void testAwaitInGenerator() {
-    doTest(LanguageLevel.PYTHON35, true, false);
+    doTest(LanguageLevel.PYTHON36, true, false);
   }
-
-  public void testAwaitInSetPy35() {
-    doTest(LanguageLevel.PYTHON35, true, false);
-  }
-
-  public void testAwaitInDictPy35() {
-    doTest(LanguageLevel.PYTHON35, true, false);
-  }
-
   // PY-20770
   public void testAwaitInListPy36() {
     doTest(LanguageLevel.PYTHON36, true, false);
@@ -276,17 +262,13 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON36, true, false);
   }
 
-  public void testYieldInsideAsyncDefPy35() {
-    doTest(LanguageLevel.PYTHON35, false, false);
-  }
-
   // PY-20770
   public void testYieldInsideAsyncDefPy36() {
     doTest(LanguageLevel.PYTHON36, true, false);
   }
 
   public void testUnpackingStar() {
-    doTest(LanguageLevel.PYTHON35, false, false);
+    doTest(LanguageLevel.PYTHON36, false, false);
   }
 
   // PY-52930
@@ -336,7 +318,7 @@ public class PythonHighlightingTest extends PyTestCase {
 
   // PY-35961
   public void testUnpackingInNonParenthesizedTuplesInReturnAndYieldBefore38() {
-    doTest(LanguageLevel.PYTHON35, false, false);
+    doTest(LanguageLevel.PYTHON36, false, false);
   }
 
   // PY-35961
@@ -357,7 +339,7 @@ public class PythonHighlightingTest extends PyTestCase {
 
   // PY-19775
   public void testAsyncBuiltinMethods() {
-    doTest(LanguageLevel.PYTHON35, true, false);
+    doTest(LanguageLevel.PYTHON36, true, false);
   }
 
   // PY-28017
@@ -371,15 +353,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testImplicitOctLongInteger() {
-    doTest(LanguageLevel.PYTHON35, true, false);
-  }
-
-  public void testUnderscoresInNumericLiterals() {
-    doTest(LanguageLevel.PYTHON35, true, false);
-  }
-
-  public void testVariableAnnotations() {
-    doTest(LanguageLevel.PYTHON35, true, false);
+    doTest(LanguageLevel.PYTHON36, true, false);
   }
 
   public void testIllegalVariableAnnotationTarget() {
@@ -388,11 +362,6 @@ public class PythonHighlightingTest extends PyTestCase {
 
   public void testFStringLiterals() {
     doTest();
-  }
-
-  // PY-20770
-  public void testAsyncComprehensionsPy35() {
-    doTest(LanguageLevel.PYTHON35, true, false);
   }
 
   // PY-20770
@@ -623,12 +592,12 @@ public class PythonHighlightingTest extends PyTestCase {
 
   // PY-26491
   public void testMultiplePositionalContainers() {
-    doTest(LanguageLevel.PYTHON35, true, false);
+    doTest(LanguageLevel.PYTHON36, true, false);
   }
 
   // PY-26491
   public void testMultipleKeywordContainers() {
-    doTest(LanguageLevel.PYTHON35, true, false);
+    doTest(LanguageLevel.PYTHON36, true, false);
   }
 
   // PY-26510
