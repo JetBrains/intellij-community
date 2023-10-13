@@ -119,8 +119,24 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   private volatile int myCount;
   private enum LookupAppearancePolicy {
+    /**
+     * The default strategy for lookup appearance.
+     * After elements are added to the lookup, it will appear after a certain period of time,
+     * the duration of which depends on the platform's internal logic.
+     */
     DEFAULT,
+    /**
+     * In this strategy, elements can be added to the lookup, but the lookup itself will not appear.
+     * To eventually open the lookup, the state should transition either to DEFAULT or ON_FIRST_POSSIBILITY.
+     * Transitioning to DEFAULT, the lookup will appear after some time, based on platform's logic.
+     * Transitioning to ON_FIRST_POSSIBILITY, the lookup will attempt to appear as soon as possible.
+     */
     POSTPONED,
+    /**
+     * This strategy forces the lookup to appear as soon as possible.
+     * If there's at least one element in the lookup already, it will open nearly immediately.
+     * Otherwise, the lookup will open almost immediately following the addition of a new element.
+     */
     ON_FIRST_POSSIBILITY,
   }
   private volatile LookupAppearancePolicy myLookupAppearancePolicy = LookupAppearancePolicy.DEFAULT;
@@ -381,6 +397,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   /**
    * Set lookup appearance policy to default.
+   * @see LookupAppearancePolicy
    */
   public void defaultLookupAppearance() {
     myLookupAppearancePolicy = LookupAppearancePolicy.DEFAULT;
@@ -388,6 +405,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   /**
    * Postpone lookup appearance.
+   * @see LookupAppearancePolicy
    */
   public void postponeLookupAppearance() {
     myLookupAppearancePolicy = LookupAppearancePolicy.POSTPONED;
@@ -396,6 +414,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   /**
    * Use this function to show the lookup window as soon as possible.
    * Right now or after, when at least one element will be added to the lookup.
+   * @see LookupAppearancePolicy
    */
   public void showLookupAsSoonAsPossible() {
     myLookupAppearancePolicy = LookupAppearancePolicy.ON_FIRST_POSSIBILITY;
