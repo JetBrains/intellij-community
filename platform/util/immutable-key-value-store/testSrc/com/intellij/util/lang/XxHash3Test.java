@@ -32,19 +32,13 @@ import java.util.Random;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 public class XxHash3Test {
-  public static Collection<Object[]> data() {
+  @Test
+  public void xxh3WithoutSeeds() {
     int maxLen = XXH3Test_HASHES.HASHES_OF_LOOPING_BYTES_WITHOUT_SEED.length;
-    List<Object[]> data = new ArrayList<>();
     for (int len = 0; len < maxLen; len++) {
-      data.add(new Object[]{len});
+      System.out.println("Testing: len=" + len);
+      test(XXH3Test_HASHES.HASHES_OF_LOOPING_BYTES_WITHOUT_SEED, len);
     }
-    return data;
-  }
-
-  @ParameterizedTest
-  @MethodSource("data")
-  public void xxh3WithoutSeeds(int len) {
-    test(XXH3Test_HASHES.HASHES_OF_LOOPING_BYTES_WITHOUT_SEED, len);
   }
 
   @ParameterizedTest
