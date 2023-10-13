@@ -36,6 +36,7 @@
       "showReadAccess.svg": "actions/showReadAccess.svg",
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "split.svg": "modules/split.svg",
+      "startMemoryProfile.svg": "actions/startMemoryProfile.svg",
       "swapPanels.svg": "actions/swapPanels.svg",
       "synchronizeScrolling.svg": "actions/synchronizeScrolling.svg",
       "showImportStatements.svg": "actions/showImportStatements.svg",

@@ -53,6 +53,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ShowReadAccess = load("expui/actions/showReadAccess.svg", -659006968, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWriteAccess = load("expui/actions/showWriteAccess.svg", 48135364, 2);
     /** 16x16 */ public static final @NotNull Icon Split = load("expui/actions/split.svg", -2090554966, 2);
+    /** 16x16 */ public static final @NotNull Icon StartMemoryProfile = load("expui/actions/startMemoryProfile.svg", 1939692711, 2);
     /** 16x16 */ public static final @NotNull Icon SwapPanels = load("expui/actions/swapPanels.svg", 496326212, 2);
     /** 16x16 */ public static final @NotNull Icon SynchronizeScrolling = load("expui/actions/synchronizeScrolling.svg", 1854114394, 2);
     /** 16x16 */ public static final @NotNull Icon ToggleVisibility = load("expui/actions/toggleVisibility.svg", 943747548, 2);
