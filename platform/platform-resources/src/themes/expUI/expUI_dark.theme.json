@@ -898,11 +898,20 @@
       }
     },
     "PresentationAssistant": {
-      "Popup": {
-        "background": "Blue4",
-        "foreground": "Grey14"
+      "Default": {
+        "Popup": {
+          "background": "Blue4",
+          "foreground": "Grey14"
+        },
+        "keymapLabel": "Blue11"
       },
-      "keymapLabel": "Blue11"
+      "Alternative": {
+        "Popup": {
+          "background": "Grey3",
+          "foreground": "Grey14"
+        },
+        "keymapLabel": "Grey8"
+      }
     },
     "HelpBrowser": {
       "titleHighlightForeground": "Blue6",

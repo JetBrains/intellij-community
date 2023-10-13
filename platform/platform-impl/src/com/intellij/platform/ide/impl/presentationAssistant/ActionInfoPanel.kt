@@ -5,6 +5,7 @@
  */
 package com.intellij.platform.ide.impl.presentationAssistant
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.gridLayout.GridLayout
@@ -61,8 +62,18 @@ internal class ActionInfoPanel(textData: TextData, private val appearance: Actio
 
   companion object {
     val DEFAULT_FONT: Font get() = JBFont.label()
-    val BACKGROUND = JBColor.namedColor("PresentationAssistant.Popup.background", JBColor.PanelBackground)
-    private val TITLE_COLOR = JBColor.namedColor("PresentationAssistant.Popup.foreground", JBColor.foreground())
-    private val SUBTITLE_COLOR = JBColor.namedColor("PresentationAssistant.keymapLabel", JBColor.foreground())
+    private val isAlternativeColors: Boolean get() = Registry.`is`("ide.presentation.assistant.alternative.color.scheme", false)
+
+    val BACKGROUND: JBColor get() =
+      if (isAlternativeColors) JBColor.namedColor("PresentationAssistant.Alternative.Popup.background", JBColor.PanelBackground)
+      else JBColor.namedColor("PresentationAssistant.Default.Popup.background", JBColor.PanelBackground)
+
+    private val TITLE_COLOR: JBColor get() =
+      if (isAlternativeColors) JBColor.namedColor("PresentationAssistant.Alternative.Popup.foreground", JBColor.foreground())
+      else JBColor.namedColor("PresentationAssistant.Default.Popup.foreground", JBColor.foreground())
+
+    private val SUBTITLE_COLOR: JBColor get() =
+      if (isAlternativeColors) JBColor.namedColor("PresentationAssistant.Alternative.keymapLabel", JBColor.foreground())
+      else JBColor.namedColor("PresentationAssistant.Default.keymapLabel", JBColor.foreground())
   }
 }
