@@ -20,6 +20,16 @@ sealed class InlineCompletionEventType {
 }
 
 interface InlineCompletionEventListener : EventListener {
+  class Debug : InlineCompletionEventAdapter {
+    override fun onRequest(event: InlineCompletionEventType.Request) = println("onRequest")
+    override fun onShow(event: InlineCompletionEventType.Show) = println("onShow")
+    override fun onChange(event: InlineCompletionEventType.Change) = println("onChange")
+    override fun onInsert(event: InlineCompletionEventType.Insert) = println("onInsert")
+    override fun onHide(event: InlineCompletionEventType.Hide) = println("onHide")
+    override fun onCompletion(event: InlineCompletionEventType.Completion) = println("onCompletion")
+    override fun onEmpty(event: InlineCompletionEventType.Empty) = println("onEmpty")
+  }
+
   fun on(event: InlineCompletionEventType)
 }
 

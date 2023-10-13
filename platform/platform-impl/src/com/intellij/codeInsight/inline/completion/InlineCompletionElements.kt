@@ -20,8 +20,6 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 
 private typealias EditorCaret = Caret
 
-internal val inlineCompletionNavigationKey = Key.create<String>("inline.completion.event.navigation")
-
 data class InlineCompletionRequest(
   val event: InlineCompletionEvent,
 
@@ -110,20 +108,25 @@ interface InlineCompletionEvent {
     }
   }
 
-  sealed class Navigation(val source: InlineCompletionEvent, val type: String) : InlineCompletionEvent {
+  sealed class Navigation(val source: InlineCompletionEvent, val type: Type) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? = source.toRequest()?.also {
       it.putUserData(inlineCompletionNavigationKey, type)
     }
 
-    class NextProvider(origin: InlineCompletionEvent) : Navigation(origin, "provider")
-    class PrevProvider(origin: InlineCompletionEvent) : Navigation(origin, "provider")
+    class NextProvider(origin: InlineCompletionEvent) : Navigation(origin, Type.Provider)
+    class PrevProvider(origin: InlineCompletionEvent) : Navigation(origin, Type.Provider)
 
     // TODO: saved for later
     @Suppress("unused")
-    internal class NextSuggestion(origin: InlineCompletionEvent) : Navigation(origin, "suggestion")
+    internal class NextSuggestion(origin: InlineCompletionEvent) : Navigation(origin, Type.Suggestion)
 
     @Suppress("unused")
-    internal class PrevSuggestion(origin: InlineCompletionEvent) : Navigation(origin, "suggestion")
+    internal class PrevSuggestion(origin: InlineCompletionEvent) : Navigation(origin, Type.Suggestion)
+
+    @Suppress("unused")
+    enum class Type {
+      Provider, Suggestion
+    }
   }
 }
 
@@ -144,6 +147,8 @@ private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
     }
   }
 }
+
+internal val inlineCompletionNavigationKey = Key.create<InlineCompletionEvent.Navigation.Type>("inline.completion.event.navigation")
 
 private fun PsiFile.isLoadedInMemory(): Boolean {
   return (this as? PsiFileImpl)?.treeElement != null

@@ -8,7 +8,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 class InlineCompletionContext internal constructor(val editor: Editor) : UserDataHolderBase(), Disposable {
-  private val myState = InlineState().also {
+  private val myState = InlineCompletionState().also {
     Disposer.register(this, it)
   }
 
@@ -20,7 +20,7 @@ class InlineCompletionContext internal constructor(val editor: Editor) : UserDat
     get
     private set
 
-  val state: InlineState
+  val state: InlineCompletionState
     @RequiresEdt
     get() = assureNotDisposed { myState }
 
@@ -34,7 +34,7 @@ class InlineCompletionContext internal constructor(val editor: Editor) : UserDat
   fun endOffset(): Int? = state.lastElement()?.endOffset()
 
   @RequiresEdt
-  fun textToInsert(): String = state.elements.joinToString("") { it.text }
+  fun textToInsert(): String = state.elements.joinToString("") { it.element.text }
 
   @RequiresEdt
   fun clear() {

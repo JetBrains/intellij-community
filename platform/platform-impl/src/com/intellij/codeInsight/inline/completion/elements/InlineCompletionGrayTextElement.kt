@@ -28,7 +28,7 @@ data class InlineCompletionGrayTextElement(
     return if (text.length > length) InlineCompletionGrayTextElement(text.drop(length)) else null
   }
 
-  class Presentable(val element: InlineCompletionGrayTextElement) : InlineCompletionElement.Presentable, InlineCompletionElement by element {
+  class Presentable(override val element: InlineCompletionGrayTextElement) : InlineCompletionElement.Presentable {
     private var suffixInlay: Inlay<*>? = null
     private var blockInlay: Inlay<*>? = null
 

@@ -61,7 +61,7 @@ internal abstract class InlineCompletionSessionManager {
       invalidateWithoutCache(session)
       return false
     }
-    if (session.provider.invalidate(request.event)) {
+    if (session.provider.restartOn(request.event)) {
       invalidate(session)
       return false
     }
@@ -107,7 +107,7 @@ internal abstract class InlineCompletionSessionManager {
       return null
     }
     val truncateTyping = fragment.length
-    val newElements = truncateElementsPrefix(context.state.elements, truncateTyping)
+    val newElements = truncateElementsPrefix(context.state.elements.map { it.element }, truncateTyping)
     return UpdateSessionResult.Changed(newElements, truncateTyping, reason)
   }
 

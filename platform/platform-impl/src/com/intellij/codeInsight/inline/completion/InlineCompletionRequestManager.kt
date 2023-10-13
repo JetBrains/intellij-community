@@ -19,6 +19,7 @@ internal class InlineCompletionRequestManager(@RequiresEdt private val invalidat
     return event.toRequest()
   }
 
+  @RequiresEdt
   fun allowDocumentChange(event: SimpleTypingEvent) {
     lastSimpleEvent = event
   }

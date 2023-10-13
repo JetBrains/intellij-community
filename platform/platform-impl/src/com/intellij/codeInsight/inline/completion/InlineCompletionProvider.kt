@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.debounce
  *   otherwise, proposals will be generated/canceled on each typing.
  *   - Any inline completion request will be cancelled if inline is in rendering mode
  *   - In case a newer inline completion proposals are generated, previous call will be cancelled and hidden
- *   - If some event requires hiding of shown elements, implement [invalidate].
+ *   - If some event requires hiding of shown elements, implement [restartOn].
  *
  *
  * @see InlineCompletionElement
@@ -30,7 +30,7 @@ interface InlineCompletionProvider {
 
   fun isEnabled(event: InlineCompletionEvent): Boolean
 
-  fun invalidate(event: InlineCompletionEvent): Boolean = false
+  fun restartOn(event: InlineCompletionEvent): Boolean = false
 
   companion object {
     val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")

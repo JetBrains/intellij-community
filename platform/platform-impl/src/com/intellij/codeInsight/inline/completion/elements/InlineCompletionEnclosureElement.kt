@@ -15,7 +15,7 @@ class InlineCompletionEnclosureElement(val symbol: Char) : InlineCompletionEleme
 
   override fun toPresentable(): InlineCompletionElement.Presentable = Presentable(this)
 
-  class Presentable(val element: InlineCompletionEnclosureElement) : InlineCompletionElement.Presentable, InlineCompletionElement by element {
+  class Presentable(override val element: InlineCompletionEnclosureElement) : InlineCompletionElement.Presentable {
     private var startOffset: Int? = null
     private var endOffset: Int? = null
     private var isRendered = false

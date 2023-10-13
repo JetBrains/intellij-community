@@ -48,14 +48,14 @@ class TerminalInlineCompletionProvider : InlineCompletionProvider {
         emit(it)
       }
     }
-    return InlineCompletionSuggestion(suggestion)
+    return InlineCompletionSuggestionFlow(suggestion)
   }
 
   override fun isEnabled(event: InlineCompletionEvent): Boolean {
     return event.toRequest()?.editor?.isPromptEditor == true
   }
 
-  override fun invalidate(event: InlineCompletionEvent): Boolean {
+  override fun restartOn(event: InlineCompletionEvent): Boolean {
     return event is InlineCompletionEvent.InlineLookupEvent
   }
 }

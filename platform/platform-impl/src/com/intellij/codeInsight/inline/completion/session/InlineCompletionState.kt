@@ -4,9 +4,10 @@ package com.intellij.codeInsight.inline.completion.session
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
-class InlineState internal constructor() : Disposable {
+class InlineCompletionState internal constructor() : Disposable {
   private val _elements: MutableList<InlineCompletionElement.Presentable> = LinkedList()
   val elements: List<InlineCompletionElement.Presentable>
     get() = _elements
@@ -21,6 +22,7 @@ class InlineState internal constructor() : Disposable {
     _elements.add(element)
   }
 
+  @RequiresEdt
   internal fun clear() {
     _elements.clear()
     Disposer.disposeChildren(elementsDisposable) { true }

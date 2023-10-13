@@ -7,12 +7,10 @@ import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.errorIfNotMessage
-import java.util.*
 import kotlin.reflect.KClass
 
 @ApiStatus.Experimental
 class InlineCompletionProviderManager {
-  @Volatile
   internal var source: InlineCompletionEvent? = null
 
   /**
@@ -22,14 +20,9 @@ class InlineCompletionProviderManager {
    *
    *  Temporary works for one provider only due to API limitations //TODO: add task
    */
-  private val suggestions = Collections.synchronizedMap(
-    mutableMapOf<KClass<out InlineCompletionProvider>, MutableList<List<InlineCompletionElement.Presentable>>>()
-  )
-  private var currentIndexes = Collections.synchronizedMap(
-    mutableMapOf<KClass<out InlineCompletionProvider>, Int>()
-  )
+  private val suggestions = mutableMapOf<KClass<out InlineCompletionProvider>, MutableList<List<InlineCompletionElement.Presentable>>>()
+  private var currentIndexes = mutableMapOf<KClass<out InlineCompletionProvider>, Int>()
 
-  @Volatile
   private var providerIndex: Int = 0
 
   internal fun cacheSuggestion(providerCls: KClass<out InlineCompletionProvider>, elements: List<InlineCompletionElement.Presentable>) {

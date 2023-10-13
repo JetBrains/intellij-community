@@ -88,11 +88,12 @@ class InlineCompletionHandler internal constructor(
       guardCaretModifications(request)
     }
 
-    //providerManager.getCache(provider::class)?.let { cached ->
-    //  // TODO: add event logging)
-    //  cached.forEach { newSession.context.renderElement(it, request.endOffset) }
-    //  return
-    //}
+    providerManager.getCache(provider::class)?.let { cached ->
+      println("CACHE" to provider to event)
+      // TODO: add event logging)
+      //cached.forEach { newSession.context.renderElement(it, request.endOffset) }
+      //return
+    }
 
     executor.switchJobSafely(newSession::assignJob) {
       invokeRequest(provider::class, request, newSession)
@@ -106,7 +107,7 @@ class InlineCompletionHandler internal constructor(
     val offset = context.startOffset() ?: return
     trace(InlineCompletionEventType.Insert)
 
-    val insertions = context.state.elements.map { it.insertPolicy() }
+    val insertions = context.state.elements.map { it.element.insertPolicy() }
     hide(false, context)
 
     var offsetDelta = 0
