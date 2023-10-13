@@ -52,7 +52,7 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
     /**
      * Use zero value
      */
-    object Infinity : DiffRenameLimit()
+    data object Infinity : DiffRenameLimit()
 
     /**
      * Use specified value
@@ -62,12 +62,12 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
     /**
      * Use value set in users git.config
      */
-    object GitConfig : DiffRenameLimit()
+    data object GitConfig : DiffRenameLimit()
 
     /**
      * Disable renames detection
      */
-    object NoRenames : DiffRenameLimit()
+    data object NoRenames : DiffRenameLimit()
   }
 
   /**
