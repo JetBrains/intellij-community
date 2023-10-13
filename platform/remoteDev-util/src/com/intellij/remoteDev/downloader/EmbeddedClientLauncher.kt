@@ -113,6 +113,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "pty4j.preferred.native.folder", 
       "jna.nosys", 
       "jna.noclasspath", 
+      "idea.is.internal",
     )
     propertiesToPass.forEach { 
       vmParametersList.defineProperty(it, System.getProperty(it))
