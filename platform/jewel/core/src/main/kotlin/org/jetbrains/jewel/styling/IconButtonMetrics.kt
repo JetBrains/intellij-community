@@ -49,9 +49,9 @@ interface IconButtonColors {
     fun borderFor(state: ButtonState) = rememberUpdatedState(
         when {
             !state.isEnabled -> borderDisabled
+            state.isFocused -> borderFocused
             state.isPressed -> borderPressed
             state.isHovered -> borderHovered
-            state.isFocused -> borderFocused
             else -> border
         },
     )

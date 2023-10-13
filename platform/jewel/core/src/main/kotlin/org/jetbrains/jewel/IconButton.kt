@@ -20,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import org.jetbrains.jewel.styling.IconButtonStyle
 
@@ -70,10 +69,9 @@ fun IconButton(
                 interactionSource = interactionSource,
                 indication = NoIndication,
             )
-            .clip(shape)
             .padding(style.metrics.padding)
-            .background(background)
-            .border(style.metrics.borderWidth, border),
+            .background(background, shape)
+            .border(style.metrics.borderWidth, border, shape),
         contentAlignment = Alignment.Center,
         content = {
             content(buttonState)
