@@ -37,12 +37,6 @@
                          id="terminalUp" order="first"/>
     <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCaretDownHandler"
                          id="terminalDown" order="first"/>
-    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCloseHistoryHandler"
-                         id="terminalCloseHistory" order="first"/>
-    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalSelectPromptHandler"
-                         id="terminalSelectPrompt" order="first, after terminalCloseHistory"/>
-    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCloseSearchHandler"
-                         id="terminalCloseSearch" order="first, after terminalSelectPrompt"/>
     <editorActionHandler action="Find" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindHandler"
                          id="terminalFind" order="first"/>
     <editorActionHandler action="FindNext" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindNextHandler"

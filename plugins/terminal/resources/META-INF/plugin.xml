@@ -123,6 +123,8 @@
     </action>
     <action id="Terminal.ShowDocumentation" class="org.jetbrains.plugins.terminal.action.TerminalShowDocAction"
             use-shortcut-of="QuickJavaDoc"/>
+    <action id="Terminal.Escape" class="org.jetbrains.plugins.terminal.action.TerminalEscapeAction"
+            use-shortcut-of="EditorEscape"/>
     <action id="Terminal.Copy" class="org.jetbrains.plugins.terminal.action.TerminalCopyAction"
             use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
 
