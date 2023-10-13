@@ -2,6 +2,7 @@
 package git4idea.log
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.changes.Change
@@ -43,8 +44,8 @@ class GitLogIndexer(private val project: Project,
   }
 
   private fun getGitCommitRequirements(repository: GitRepository): GitCommitRequirements {
-    return GitCommitRequirements(shouldIncludeRootChanges(repository), DiffRenames.Limit.Value(RENAME_LIMIT),
-                                 DiffInMergeCommits.DIFF_TO_PARENTS)
+    val diffRenames = if (Registry.`is`("git.log.index.inexact.renames")) DiffRenames.Limit.Value(RENAME_LIMIT) else DiffRenames.Limit.Exact
+    return GitCommitRequirements(shouldIncludeRootChanges(repository), diffRenames, DiffInMergeCommits.DIFF_TO_PARENTS)
   }
 
   override fun getSupportedVcs(): VcsKey {
