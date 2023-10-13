@@ -23,10 +23,10 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.reviewState
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel.SubmittableReview
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModelImpl
-import org.jetbrains.plugins.gitlab.mergerequest.ui.getSubmittableReview
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewViewModel.SubmittableReview
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.getSubmittableReview
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabReviewerDTO> {

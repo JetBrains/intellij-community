@@ -8,9 +8,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewViewModelImpl
-import org.jetbrains.plugins.gitlab.mergerequest.ui.getSubmittableReview
 
 interface GitLabMergeRequestReviewViewModel {
   val discussionsViewOption: StateFlow<DiscussionsViewOption>

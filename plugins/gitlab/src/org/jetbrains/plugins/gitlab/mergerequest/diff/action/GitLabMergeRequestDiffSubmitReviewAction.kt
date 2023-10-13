@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.util.ui.JButtonAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewPopup
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewPopup
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import javax.swing.JComponent
 
