@@ -29,7 +29,7 @@ internal fun ComposeShowcase() {
       ) {
         CheckBox()
         RadioButton()
-        Button()
+        Buttons()
         Label()
         SelectableText()
         Tabs()
@@ -123,11 +123,23 @@ private fun SelectableText() {
 }
 
 @Composable
-private fun Button() {
-  OutlinedButton(onClick = {
-    // no nothing
-  }) {
-    Text("button")
+private fun Buttons() {
+  Row(
+    horizontalArrangement = Arrangement.spacedBy(20.dp)
+  ) {
+    var state1 by remember { mutableStateOf(0) }
+    OutlinedButton(onClick = {
+      state1++
+    }) {
+      Text("Click me #$state1")
+    }
+
+    var state2 by remember { mutableStateOf(0) }
+    DefaultButton(onClick = {
+      state2++
+    }) {
+      Text("Click me #$state2")
+    }
   }
 }
 
@@ -174,8 +186,12 @@ private fun TextField() {
     horizontalArrangement = Arrangement.spacedBy(5.dp),
   ) {
     Text("Text field:")
-    TextField(textFieldState, onValueChange = {
-      textFieldState = it
-    })
+    TextField(
+      textFieldState,
+      onValueChange = {
+        textFieldState = it
+      },
+      modifier = Modifier.padding(5.dp)
+    )
   }
 }
