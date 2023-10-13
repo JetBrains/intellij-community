@@ -311,6 +311,11 @@ public final class ListPluginComponent extends JPanel {
                  myEnableDisableButton.getPreferredSize() :
                  super.getPreferredSize();
         }
+
+        @Override
+        public boolean isFocusable() {
+          return false;
+        }
       });
       myAlignButton.setOpaque(false);
     }
