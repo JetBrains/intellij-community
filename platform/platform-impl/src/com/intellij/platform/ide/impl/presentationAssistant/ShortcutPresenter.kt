@@ -45,12 +45,16 @@ class ShortcutPresenter : Disposable {
   private fun enable() {
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(AnActionListener.TOPIC, object : AnActionListener {
       override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-        val actionId = ActionManager.getInstance().getId(action) ?: return
+        // Show popups a bit later after action is called, to avoid too many UI processes get triggered.
+        // Otherwise, popups may be presented with visible blinks.
+        ApplicationManager.getApplication().invokeLater {
+          val actionId = ActionManager.getInstance().getId(action) ?: return@invokeLater
 
-        if (!movingActions.contains(actionId) && !typingActions.contains(actionId)) {
-          val project = event.project
-          val text = event.presentation.text
-          showActionInfo(ActionData(actionId, project, text))
+          if (!movingActions.contains(actionId) && !typingActions.contains(actionId)) {
+            val project = event.project
+            val text = event.presentation.text
+            showActionInfo(ActionData(actionId, project, text))
+          }
         }
       }
     })
