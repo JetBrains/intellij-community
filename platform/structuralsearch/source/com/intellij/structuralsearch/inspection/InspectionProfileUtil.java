@@ -3,11 +3,13 @@ package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.regexp.inspection.custom.CustomRegExpInspection;
 import org.jetbrains.annotations.NonNls;
@@ -41,6 +43,10 @@ public final class InspectionProfileUtil {
     final SingleInspectionProfilePanel panel = UIUtil.uiParents(c, true).filter(SingleInspectionProfilePanel.class).first();
     if (panel == null) return null;
     return panel.getProfile();
+  }
+
+  public static String[] getGroup() {
+    return new String[] {InspectionsBundle.message("group.names.user.defined"), SSRBundle.message("structural.search.group.name")};
   }
 
   public static void fireProfileChanged(@NotNull InspectionProfileImpl profile) {

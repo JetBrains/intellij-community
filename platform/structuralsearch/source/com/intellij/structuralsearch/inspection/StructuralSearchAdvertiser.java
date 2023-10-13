@@ -2,7 +2,7 @@
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.profile.codeInspection.ui.EmptyInspectionTreeActionProvider;
+import com.intellij.profile.codeInspection.ui.InspectionTreeAdvertiser;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider.AddInspectionAction;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class InspectionTreeAdvertiser extends EmptyInspectionTreeActionProvider {
+public class StructuralSearchAdvertiser extends InspectionTreeAdvertiser {
 
   @Override
   @NotNull
@@ -18,6 +18,13 @@ public class InspectionTreeAdvertiser extends EmptyInspectionTreeActionProvider 
     return List.of(
       new AddInspectionAction(panel, SSRBundle.message("inspection.tree.create.inspection.search.template"), false),
       new AddInspectionAction(panel, SSRBundle.message("inspection.tree.create.inspection.replace.template"), true)
+    );
+  }
+
+  @Override
+  public List<CustomGroup> getCustomGroups() {
+    return List.of(
+      new CustomGroup(InspectionProfileUtil.getGroup(), SSRBundle.message("inspection.tree.group.description"))
     );
   }
 }
