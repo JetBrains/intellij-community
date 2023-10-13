@@ -1,4 +1,4 @@
-package com.intellij.tools.ide.common
+package com.intellij.tools.ide.util.common
 
 /**
  * [a, b, c] | [a, c, d] => [b, d]

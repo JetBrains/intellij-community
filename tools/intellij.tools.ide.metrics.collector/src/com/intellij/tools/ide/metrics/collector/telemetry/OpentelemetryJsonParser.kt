@@ -2,8 +2,8 @@ package com.intellij.tools.ide.metrics.collector.telemetry
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.intellij.tools.ide.common.PrintFailuresMode
-import com.intellij.tools.ide.common.withRetry
+import com.intellij.tools.ide.util.common.PrintFailuresMode
+import com.intellij.tools.ide.util.common.withRetry
 import java.io.File
 import kotlin.time.Duration.Companion.milliseconds
 

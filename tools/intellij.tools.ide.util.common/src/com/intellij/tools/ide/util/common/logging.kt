@@ -1,4 +1,4 @@
-package com.intellij.tools.ide.common
+package com.intellij.tools.ide.util.common
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
