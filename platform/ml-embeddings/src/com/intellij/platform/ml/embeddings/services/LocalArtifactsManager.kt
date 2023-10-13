@@ -19,8 +19,6 @@ import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.delete
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -28,6 +26,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 /* Service that manages the artifacts for local semantic models */
+@OptIn(ExperimentalCoroutinesApi::class)
 @Service
 class LocalArtifactsManager {
   private val root = File(PathManager.getSystemPath())
@@ -36,7 +35,8 @@ class LocalArtifactsManager {
     .also { Files.createDirectories(it.toPath()) }
 
   private val modelArtifactsRoot = root.resolve(MODEL_ARTIFACTS_DIR)
-  private val mutex = Mutex()
+
+  private val downloadContext = Dispatchers.IO.limitedParallelism(1)
   private var failNotificationShown = false
   private var downloadCanceled = false
 
@@ -48,29 +48,27 @@ class LocalArtifactsManager {
 
   @RequiresBackgroundThread
   suspend fun downloadArtifactsIfNecessary(project: Project? = null,
-                                           retryIfCanceled: Boolean = true) = withContext(Dispatchers.IO) {
-    mutex.withLock {
-      if (!checkArtifactsPresent() && (retryIfCanceled || !downloadCanceled)) {
-        logger.debug("Semantic search artifacts are not present, starting the download...")
-        if (project != null) {
-          withBackgroundProgress(project, ARTIFACTS_DOWNLOAD_TASK_NAME) {
-            withRawProgressReporter {
-              try {
-                coroutineToIndicator { // platform code relies on the existence of indicator
-                  downloadArtifacts()
-                }
+                                           retryIfCanceled: Boolean = true) = withContext(downloadContext) {
+    if (!checkArtifactsPresent() && (retryIfCanceled || !downloadCanceled)) {
+      logger.debug("Semantic search artifacts are not present, starting the download...")
+      if (project != null) {
+        withBackgroundProgress(project, ARTIFACTS_DOWNLOAD_TASK_NAME) {
+          withRawProgressReporter {
+            try {
+              coroutineToIndicator { // platform code relies on the existence of indicator
+                downloadArtifacts()
               }
-              catch (e: CancellationException) {
-                logger.debug("Artifacts downloading was canceled")
-                downloadCanceled = true
-                throw e
-              }
+            }
+            catch (e: CancellationException) {
+              logger.debug("Artifacts downloading was canceled")
+              downloadCanceled = true
+              throw e
             }
           }
         }
-        else {
-          downloadArtifacts()
-        }
+      }
+      else {
+        downloadArtifacts()
       }
     }
   }
