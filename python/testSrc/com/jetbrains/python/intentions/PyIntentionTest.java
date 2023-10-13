@@ -224,22 +224,37 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   // PY-30798
+  public void testConvertingRawFStringQuotesBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double")));
+  }
+
+  // PY-59594
   public void testConvertingRawFStringQuotes() {
     doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
 
   // PY-30798
-  public void testConvertingQuotesNotSuggestedForStringInsideFStringWithOppositeQuotes() {
-    doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  public void testConvertingQuotesNotSuggestedForStringInsideFStringWithOppositeQuotesBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double")));
+  }
+
+  // PY-59594
+  public void testConvertingQuotesOfStringInsideFStringWithOppositeQuotes() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
 
   // PY-30798
-  public void testConvertingQuotesNotSuggestedForStringInsideFStringThatWouldRequireEscapingInsideFragment() {
-    doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  public void testConvertingQuotesNotSuggestedForStringContainingQuotesOfParentFStringBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double")));
+  }
+
+  // PY-59594
+  public void testConvertingQuotesOfStringContainingQuotesOfParentFString() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
 
   // PY-30798
-  public void testConvertingQuotesNotSuggestedForFStringContainingStringWithInconvertibleQuotes() {
+  public void testConvertingQuotesNotSuggestedForFStringContainingTripleQuotedString() {
     doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
 
@@ -249,6 +264,11 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   // PY-30798
+  public void testConvertingQuotesOfFStringContainingOtherStringsBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single")));
+  }
+
+  // PY-59594
   public void testConvertingQuotesOfFStringContainingOtherStrings() {
     doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single"));
   }
@@ -259,6 +279,11 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   // PY-30798
+  public void testConvertingQuotesOfGluedFStringContainingOtherStringsBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double")));
+  }
+
+  // PY-59594
   public void testConvertingQuotesOfGluedFStringContainingOtherStrings() {
     doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }

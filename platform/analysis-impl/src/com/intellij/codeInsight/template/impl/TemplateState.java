@@ -27,6 +27,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint;
+import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbService;
@@ -1150,6 +1152,9 @@ public final class TemplateState extends TemplateStateBase implements Disposable
           clone.setBackgroundColor(scheme.getDefaultBackground());
           segmentHighlighter.setTextAttributes(clone);
         }
+        EditorActionAvailabilityHintKt.addActionAvailabilityHint(segmentHighlighter,
+                                                                 new EditorActionAvailabilityHint("NextTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                 new EditorActionAvailabilityHint("PreviousTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
         segmentHighlighter.putUserData(TEMPLATE_RANGE_HIGHLIGHTER_KEY, mightStop);
       });
   }

@@ -54,7 +54,7 @@ abstract class GitHttpAuthService : ExternalProcessHandlerService<GitAskPassAppH
   }
 
   private class AuthAppHandler(private val authenticator: GitHttpAuthenticator) : GitAskPassAppHandler {
-    override fun handleInput(arg: String): String {
+    override fun handleInput(arg: String): String? {
       val usernameNeeded = StringUtilRt.startsWithIgnoreCase(arg, "username") //NON-NLS
       val split = arg.split(" ")
       val url = if (split.size > 2) parseUrl(split[2]) else ""
@@ -62,7 +62,7 @@ abstract class GitHttpAuthService : ExternalProcessHandlerService<GitAskPassAppH
         return if (usernameNeeded) authenticator.askUsername(url) else authenticator.askPassword(url)
       }
       catch (e: ProcessCanceledException) {
-        return ""
+        return null
       }
     }
 

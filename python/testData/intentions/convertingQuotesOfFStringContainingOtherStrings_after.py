@@ -1,1 +1,1 @@
-s = f'<caret>foo{"bar"}baz'
+s = f'foo{'bar'}baz'

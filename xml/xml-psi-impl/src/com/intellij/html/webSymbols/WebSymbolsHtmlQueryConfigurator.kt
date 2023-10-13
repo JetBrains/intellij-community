@@ -80,34 +80,25 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
         is HtmlElementDescriptorImpl -> tagDescriptor
         is WebSymbolElementDescriptor, is AnyXmlElementDescriptor -> {
           getStandardHtmlElementDescriptor(tag)
+          ?: getStandardHtmlElementDescriptor(tag, "div")
         }
         else -> null
       }
 
     private fun getStandardHtmlElementDescriptor(tag: XmlTag, name: String = tag.localName): HtmlElementDescriptorImpl? {
       val parentTag = tag.parentTag
-      return if (parentTag != null) {
-        parentTag.getNSDescriptor(tag.namespace, false)
+      if (parentTag != null) {
+        parentTag.getNSDescriptor(parentTag.namespace, false)
           .asSafely<HtmlNSDescriptorImpl>()
-          ?.let { nsDescriptor ->
-            sequenceOf(parentTag.localName.adjustCase(tag), "div", "span")
-              .firstNotNullOfOrNull { nsDescriptor.getElementDescriptorByName(it) }
-          }
+          ?.getElementDescriptorByName(parentTag.localName.adjustCase(tag))
           ?.asSafely<HtmlElementDescriptorImpl>()
-          ?.let { descriptor ->
-            sequenceOf(name.adjustCase(tag), "div", "span")
-              .firstNotNullOfOrNull { descriptor.getElementDescriptor(it, parentTag) }
-          }
+          ?.getElementDescriptor(name.adjustCase(tag), parentTag)
           ?.asSafely<HtmlElementDescriptorImpl>()
+          ?.let { return it }
       }
-      else {
-        getHtmlNSDescriptor(tag.project)
-          ?.let { nsDescriptor ->
-            sequenceOf(name.adjustCase(tag), "div", "span")
-              .firstNotNullOfOrNull { nsDescriptor.getElementDescriptorByName(it) }
-          }
-          ?.asSafely<HtmlElementDescriptorImpl>()
-      }
+      return getHtmlNSDescriptor(tag.project)
+        ?.getElementDescriptorByName(name.adjustCase(tag))
+        ?.asSafely<HtmlElementDescriptorImpl>()
     }
 
     private fun String.adjustCase(tag: XmlTag) =

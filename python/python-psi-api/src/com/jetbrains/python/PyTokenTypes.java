@@ -44,6 +44,7 @@ public final class PyTokenTypes {
   public static final PyElementType IS_KEYWORD = new PyElementType("IS_KEYWORD");
   public static final PyElementType LAMBDA_KEYWORD = new PyElementType("LAMBDA_KEYWORD");
   public static final PyElementType MATCH_KEYWORD = new PyElementType("MATCH_KEYWORD");
+  public static final PyElementType TYPE_KEYWORD = new PyElementType("TYPE_KEYWORD");
   public static final PyElementType NOT_KEYWORD = new PyElementType("NOT_KEYWORD");
   public static final PyElementType OR_KEYWORD = new PyElementType("OR_KEYWORD");
   public static final PyElementType PASS_KEYWORD = new PyElementType("PASS_KEYWORD");

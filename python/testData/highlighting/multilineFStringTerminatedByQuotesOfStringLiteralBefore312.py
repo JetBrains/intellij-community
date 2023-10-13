@@ -1,0 +1,3 @@
+s = f'''{
+    <error descr="Python version 3.11 does not allow nesting of string literals with the same quote type inside f-strings">'''</error>'''
+}'''

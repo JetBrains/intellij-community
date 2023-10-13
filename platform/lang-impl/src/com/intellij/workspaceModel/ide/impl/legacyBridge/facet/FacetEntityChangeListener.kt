@@ -26,6 +26,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
 import com.intellij.platform.workspace.storage.orderToRemoveReplaceAdd
 import io.opentelemetry.api.metrics.Meter
@@ -221,8 +222,9 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
                        ?: error("Unavailable XML serializer for ${rootEntity.getEntityInterface()}")
       val rootElement = serializer.serializeIntoXml(rootEntity)
 
+      val moduleEntity = event.storageAfter.resolve(ModuleId(facet.module.name))!!
       val facetConfigurationElement = if (facet is FacetBridge<*>)
-        serializer.serializeIntoXml(facet.config.getEntity())
+        serializer.serializeIntoXml(facet.config.getEntity(moduleEntity))
       else
         FacetUtil.saveFacetConfiguration(facet)
       val facetConfigurationXml = facetConfigurationElement?.let { JDOMUtil.write(it) }

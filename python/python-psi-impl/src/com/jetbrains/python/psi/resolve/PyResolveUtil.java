@@ -87,7 +87,7 @@ public final class PyResolveUtil {
   public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @Nullable ScopeOwner scopeOwner,
                                   @Nullable ScopeOwner originalScopeOwner, @Nullable String name, @Nullable PsiElement roof) {
     while (scopeOwner != null) {
-      if (!(scopeOwner instanceof PyClass) || scopeOwner == originalScopeOwner) {
+      if (!(scopeOwner instanceof PyClass) || scopeOwner == originalScopeOwner || ((PyClass)scopeOwner).getTypeParameterList() != null) {
         final Scope scope = ControlFlowCache.getScope(scopeOwner);
         if (name != null) {
           final boolean includeNestedGlobals = scopeOwner instanceof PyFile;

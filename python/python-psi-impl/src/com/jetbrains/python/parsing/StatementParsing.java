@@ -127,6 +127,11 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       parseAsyncStatement(false);
       return;
     }
+    if (atToken(PyTokenTypes.IDENTIFIER, TOK_TYPE)) {
+      if (parseTypeAliasStatement()) {
+        return;
+      }
+    }
 
     if (atToken(PyTokenTypes.IDENTIFIER, TOK_ASYNC)) {
       if (parseAsyncStatement(true)) {
@@ -140,6 +145,24 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
 
     parseSimpleStatement();
+  }
+
+  private boolean parseTypeAliasStatement() {
+    assert atToken(PyTokenTypes.IDENTIFIER, TOK_TYPE);
+    SyntaxTreeBuilder.Marker mark = myBuilder.mark();
+    myBuilder.remapCurrentToken(PyTokenTypes.TYPE_KEYWORD);
+    nextToken();
+    if (!atToken(PyTokenTypes.IDENTIFIER)) {
+      mark.rollbackTo();
+      myBuilder.remapCurrentToken(PyTokenTypes.IDENTIFIER);
+      return false;
+    }
+    parseIdentifierOrSkip(PyTokenTypes.LBRACKET, PyTokenTypes.EQ);
+    parseTypeParameterList();
+    checkMatches(PyTokenTypes.EQ, PyPsiBundle.message("PARSE.eq.expected"));
+    myContext.getExpressionParser().parseExpression();
+    mark.done(PyElementTypes.TYPE_ALIAS_STATEMENT);
+    return true;
   }
 
   private boolean parseMatchStatement() {
@@ -913,7 +936,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   public void parseClassDeclaration(SyntaxTreeBuilder.Marker classMarker) {
     assertCurrentToken(PyTokenTypes.CLASS_KEYWORD);
     myBuilder.advanceLexer();
-    parseIdentifierOrSkip(PyTokenTypes.LPAR, PyTokenTypes.COLON);
+    parseIdentifierOrSkip(PyTokenTypes.LPAR, PyTokenTypes.LBRACKET, PyTokenTypes.COLON);
+    parseTypeParameterList();
     if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
       getExpressionParser().parseArgumentList();
     }
@@ -1015,6 +1039,52 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         endMarker.done(elType);
       }
     }
+  }
+
+  public void parseTypeParameterList() {
+    if (atToken(PyTokenTypes.LBRACKET)) {
+      final SyntaxTreeBuilder.Marker typeParamList = myBuilder.mark();
+      nextToken();
+      do {
+        if (!parseTypeParameter()) {
+          myBuilder.error(PyPsiBundle.message("PARSE.expected.type.parameter"));
+        }
+
+        if (atToken(PyTokenTypes.COMMA)) {
+          nextToken();
+        }
+        else if (!atToken(PyTokenTypes.RBRACKET)) {
+          break;
+        }
+      }
+      while (!atToken(PyTokenTypes.RBRACKET));
+      checkMatches(PyTokenTypes.RBRACKET, PyPsiBundle.message("PARSE.expected.symbols", ",", "]"));
+      typeParamList.done(PyElementTypes.TYPE_PARAMETER_LIST);
+    }
+  }
+
+  private boolean parseTypeParameter() {
+    if (isIdentifier(myBuilder) || atToken(PyTokenTypes.MULT) || atToken(PyTokenTypes.EXP)) {
+      SyntaxTreeBuilder.Marker typeParamMarker = myBuilder.mark();
+
+      if (atAnyOfTokens(PyTokenTypes.MULT, PyTokenTypes.EXP)) {
+        nextToken();
+      }
+
+      if (!parseIdentifierOrSkip(PyTokenTypes.RBRACKET, PyTokenTypes.COMMA, PyTokenTypes.COLON)) {
+        typeParamMarker.drop();
+        return false;
+      }
+
+      if (matchToken(PyTokenTypes.COLON)) {
+        if (!myContext.getExpressionParser().parseSingleExpression(false)) {
+          myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
+        }
+      }
+      typeParamMarker.done(PyElementTypes.TYPE_PARAMETER);
+      return true;
+    }
+    return false;
   }
 
   @Override

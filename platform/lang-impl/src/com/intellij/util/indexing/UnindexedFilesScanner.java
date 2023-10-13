@@ -10,16 +10,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
-import com.intellij.openapi.project.DumbModeProgressTitle;
-import com.intellij.openapi.project.FilesScanningTask;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
@@ -533,7 +531,23 @@ public class UnindexedFilesScanner implements FilesScanningTask {
   }
 
   void queue(@NotNull Project project) {
-    project.getService(UnindexedFilesScannerExecutor.class).submitTask(this);
+    // Delay scanning tasks until after all the scheduled dumb tasks are finished.
+    // For example, PythonLanguageLevelPusher.initExtra is invoked from RequiredForSmartModeActivity and may submit additional dumb tasks.
+    // We want scanning start after all these "extra" dumb tasks are finished.
+    // Note that project may become dumb/smart immediately after the check
+    // If project becomes smart, in the worst case we'll trigger additional short dumb mode
+    // If project becomes dumb, not a problem at all - we'll schedule scanning task out of dumb mode either way.
+    if (DumbService.isDumb(project) && Registry.is("scanning.waits.for.non.dumb.mode", false)) {
+      new DumbModeTask() {
+        @Override
+        public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+          project.getService(UnindexedFilesScannerExecutor.class).submitTask(UnindexedFilesScanner.this);
+        }
+      }.queue(project);
+    }
+    else {
+      project.getService(UnindexedFilesScannerExecutor.class).submitTask(this);
+    }
   }
 
   @Nullable

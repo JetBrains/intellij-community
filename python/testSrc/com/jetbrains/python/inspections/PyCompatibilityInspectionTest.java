@@ -270,6 +270,17 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON311);
   }
 
+  // PY-60767
+  public void testTypeAliasStatements() {
+    doTest(LanguageLevel.PYTHON311);
+  }
+
+  // PY-60767
+  public void testTypeParameterLists() {
+    doTest(LanguageLevel.PYTHON311);
+  }
+
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }

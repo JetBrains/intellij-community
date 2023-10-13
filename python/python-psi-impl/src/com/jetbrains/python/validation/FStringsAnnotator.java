@@ -39,11 +39,6 @@ public class FStringsAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyFStringFragment(@NotNull PyFStringFragment node) {
-    final List<PyFStringFragment> enclosingFragments = PsiTreeUtil.collectParents(node, PyFStringFragment.class, false,
-                                                                                  PyStringLiteralExpression.class::isInstance);
-    if (enclosingFragments.size() > 1) {
-      report(node, PyPsiBundle.message("ANN.fstrings.expression.fragment.inside.fstring.nested.too.deeply"));
-    }
     final PsiElement typeConversion = node.getTypeConversion();
     if (typeConversion != null) {
       final String conversionChar = typeConversion.getText().substring(1);
@@ -52,24 +47,6 @@ public class FStringsAnnotator extends PyAnnotator {
       }
       else if (conversionChar.length() > 1 || "sra".indexOf(conversionChar.charAt(0)) < 0) {
         report(typeConversion, PyPsiBundle.message("ANN.fstrings.illegal.conversion.character", conversionChar));
-      }
-    }
-
-    final boolean topLevel = PsiTreeUtil.getParentOfType(node, PyFStringFragment.class, true) == null;
-    if (topLevel) {
-      final List<PyFStringFragment> fragments = Lists.newArrayList(node);
-      final PyFStringFragmentFormatPart formatPart = node.getFormatPart();
-      if (formatPart != null) {
-        fragments.addAll(formatPart.getFragments());
-      }
-      for (PyFStringFragment fragment : fragments) {
-        final String wholeNodeText = fragment.getText();
-        final TextRange range = fragment.getExpressionContentRange();
-        for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
-          if (wholeNodeText.charAt(i) == '\\') {
-            reportCharacter(fragment, i, PyPsiBundle.message("ANN.fstrings.expression.fragments.cannot.include.backslashes"));
-          }
-        }
       }
     }
   }
@@ -104,14 +81,6 @@ public class FStringsAnnotator extends PyAnnotator {
       return rightBraceOffset < 0 ? endOffset : rightBraceOffset + 1;
     }
     return offset;
-  }
-
-  @Override
-  public void visitComment(@NotNull PsiComment comment) {
-    final boolean insideFragment = PsiTreeUtil.getParentOfType(comment, PyFStringFragment.class) != null;
-    if (insideFragment) {
-      report(comment, PyPsiBundle.message("ANN.fstrings.expression.fragments.cannot.include.line.comments"));
-    }
   }
 
   public void reportCharacter(@NotNull PsiElement element, int offset, @NotNull @InspectionMessage String message) {

@@ -46,6 +46,9 @@ public interface PyElementTypes {
   PyStubElementType<PyImportStatementStub, PyImportStatement> IMPORT_STATEMENT = PyStubElementTypes.IMPORT_STATEMENT;
 
   PyStubElementType<PyTargetExpressionStub, PyTargetExpression> TARGET_EXPRESSION = PyStubElementTypes.TARGET_EXPRESSION;
+  PyStubElementType<PyTypeParameterStub, PyTypeParameter> TYPE_PARAMETER = PyStubElementTypes.TYPE_PARAMETER;
+  PyStubElementType<PyTypeParameterListStub, PyTypeParameterList> TYPE_PARAMETER_LIST = PyStubElementTypes.TYPE_PARAMETER_LIST;
+  PyStubElementType<PyTypeAliasStatementStub, PyTypeAliasStatement> TYPE_ALIAS_STATEMENT = PyStubElementTypes.TYPE_ALIAS_STATEMENT;
 
   TokenSet PARAMETER_LIST_SET = TokenSet.create(PARAMETER_LIST);
 
