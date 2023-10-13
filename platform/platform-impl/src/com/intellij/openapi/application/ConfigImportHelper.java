@@ -120,6 +120,7 @@ public final class ConfigImportHelper {
     }
 
     ConfigImportSettings settings = findCustomConfigImportSettings();
+    log.info("Custom ConfigImportSettings instance: " + settings);
 
     List<String> otherProductPrefixes = settings != null ? settings.getProductsToImportFrom(args) : List.of();
     ConfigDirsSearchResult guessedOldConfigDirs = findConfigDirectories(newConfigDir, settings, otherProductPrefixes);
