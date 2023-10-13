@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.util.progress.asContextElement
 import com.intellij.platform.util.progress.impl.ProgressState
 import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
@@ -181,6 +182,8 @@ private class JobProviderWithOwnerContext(val modalJob: Job, val owner: ModalTas
   override fun getJob(): Job = modalJob
 }
 
+val tracer = getInstance().getTracer(ProgressManagerScope)
+
 private fun CoroutineScope.showIndicator(
   project: Project,
   taskJob: Job,
@@ -190,6 +193,7 @@ private fun CoroutineScope.showIndicator(
   return launch(Dispatchers.Default) {
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
     val indicator = coroutineCancellingIndicator(taskJob) // cancel taskJob from UI
+    val span = tracer.spanBuilder("Progress: ${taskInfo.title}").startSpan()
     indicator.start()
     try {
       val indicatorAdded = withContext(Dispatchers.EDT) {
@@ -202,6 +206,7 @@ private fun CoroutineScope.showIndicator(
     finally {
       indicator.stop()
       indicator.finish(taskInfo)
+      span.end()
     }
   }
 }
