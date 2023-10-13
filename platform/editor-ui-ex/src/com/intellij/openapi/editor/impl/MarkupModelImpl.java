@@ -253,6 +253,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   void fireBeforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+    myCachedHighlighters = null;
     for (MarkupModelListener listener : myListeners) {
       listener.beforeRemoved(highlighter);
     }
