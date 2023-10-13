@@ -68,8 +68,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.junit",
   "intellij.testng",
   "intellij.xpath",
-  "intellij.android.plugin",
-  "intellij.android.design-plugin",
   "intellij.java.i18n",
   "intellij.ant",
   "intellij.java.guiForms.designer",

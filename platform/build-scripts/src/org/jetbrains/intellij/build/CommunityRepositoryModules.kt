@@ -356,8 +356,9 @@ object CommunityRepositoryModules {
 
   fun androidPlugin(additionalModulesToJars: Map<String, String> = emptyMap(),
                     mainModuleName: String = "intellij.android.plugin",
-                    addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    return createAndroidPluginLayout(mainModuleName, additionalModulesToJars, addition)
+                    allPlatforms: Boolean = false,
+                    addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null,): PluginLayout {
+    return createAndroidPluginLayout(mainModuleName, additionalModulesToJars, allPlatforms, addition)
   }
 
   private val supportedFfmpegPresets: PersistentList<SupportedDistribution> = persistentListOf(
@@ -369,6 +370,7 @@ object CommunityRepositoryModules {
 
   private fun createAndroidPluginLayout(mainModuleName: String,
                                         additionalModulesToJars: Map<String, String> = emptyMap(),
+                                        allPlatforms: Boolean,
                                         addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?): PluginLayout =
     plugin(mainModuleName) { spec ->
       spec.directoryName = "android"
@@ -638,9 +640,12 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("baksmali")
       spec.withProjectLibrary("emulator-proto")
 
+      val ffmpegVersion = "5.1.2-1.5.8"
+      val javacppVersion = "1.5.8"
+
       // Add ffmpeg and javacpp
-      spec.withModuleLibrary("ffmpeg", "intellij.android.streaming",  "ffmpeg-5.1.2-1.5.8.jar")
-      spec.withModuleLibrary("ffmpeg-javacpp", "intellij.android.streaming", "javacpp-1.5.8.jar")
+      spec.withModuleLibrary("ffmpeg", "intellij.android.streaming",  "ffmpeg-$ffmpegVersion.jar")
+      spec.withModuleLibrary("ffmpeg-javacpp", "intellij.android.streaming", "javacpp-$javacppVersion.jar")
 
       // include only required as platform-dependent binaries
       for ((supportedOs, supportedArch) in supportedFfmpegPresets) {
@@ -648,18 +653,25 @@ object CommunityRepositoryModules {
         val ffmpegLibraryName = "ffmpeg-$osName-$supportedArch"
         val javacppLibraryName = "javacpp-$osName-$supportedArch"
 
-        spec.withGeneratedPlatformResources(supportedOs, supportedArch) { targetDir, context ->
-          val streamingModule = context.projectModel.project.modules.find { it.name == "intellij.android.streaming" }!!
-          val ffmpegLibrary = streamingModule.libraryCollection.findLibrary(ffmpegLibraryName)!!
-          val javacppLibrary = streamingModule.libraryCollection.findLibrary(javacppLibraryName)!!
-          val libDir = targetDir.resolve("lib")
-
-          copyFileToDir(ffmpegLibrary.getFiles(JpsOrderRootType.COMPILED)[0].toPath(), libDir)
-          copyFileToDir(javacppLibrary.getFiles(JpsOrderRootType.COMPILED)[0].toPath(), libDir)
+        if (allPlatforms) {
+          // for the Marketplace we include all binaries
+          spec.withModuleLibrary(ffmpegLibraryName, "intellij.android.streaming", "${ffmpegLibraryName}-$ffmpegVersion.jar")
+          spec.withModuleLibrary(javacppLibraryName, "intellij.android.streaming", "${javacppLibraryName}-$javacppVersion.jar")
         }
+        else {
+          spec.withGeneratedPlatformResources(supportedOs, supportedArch) { targetDir, context ->
+            val streamingModule = context.projectModel.project.modules.find { it.name == "intellij.android.streaming" }!!
+            val ffmpegLibrary = streamingModule.libraryCollection.findLibrary(ffmpegLibraryName)!!
+            val javacppLibrary = streamingModule.libraryCollection.findLibrary(javacppLibraryName)!!
+            val libDir = targetDir.resolve("lib")
 
-        spec.excludeModuleLibrary(ffmpegLibraryName, "intellij.android.streaming")
-        spec.excludeModuleLibrary(javacppLibraryName, "intellij.android.streaming")
+            copyFileToDir(ffmpegLibrary.getFiles(JpsOrderRootType.COMPILED)[0].toPath(), libDir)
+            copyFileToDir(javacppLibrary.getFiles(JpsOrderRootType.COMPILED)[0].toPath(), libDir)
+          }
+
+          spec.excludeModuleLibrary(ffmpegLibraryName, "intellij.android.streaming")
+          spec.excludeModuleLibrary(javacppLibraryName, "intellij.android.streaming")
+        }
       }
 
       spec.withModule("intellij.android.streaming")
