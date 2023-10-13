@@ -164,7 +164,7 @@ public abstract class FunctionHelper {
           } else if (returns.size() == 1 && ArrayUtil.getLastElement(block.getStatements()) == returns.get(0)) {
             PsiExpression trivialCall = JavaPsiFacade.getElementFactory(lambda.getProject())
               .createExpressionFromText("((" + type.getCanonicalText() + ")" + lambda.getText() + ")." +
-                                        interfaceMethod.getName() + "(" + String.join(",", parameters) + ")", null);
+                                        interfaceMethod.getName() + "(" + String.join(",", parameters) + ")", lambda);
             return new LambdaFunctionHelper(returnType, trivialCall, parameters);
           }
         }
