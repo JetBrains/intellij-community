@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
-import com.intellij.codeInsight.inline.completion.InlineCompletionPrefixTruncator.UpdatedElements
+import com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper.UpdatedElements
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
@@ -11,19 +11,19 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 /**
  * Responsible for updating currently rendered [InlineCompletionElement] when a user types a new fragment.
  *
- * Note that your [InlineCompletionPrefixTruncator] will be called only for elements your provider generated.
+ * Note that your [InlineCompletionOvertyper] will be called only for elements your provider generated.
  * You may rely on the fact, that you will not receive [InlineCompletionElement] of other providers.
  *
  * Cycle of updating currently rendered elements:
- * * [truncate] is called for the current context and 'new elements' are returned.
+ * * [overtype] is called for the current context and 'new elements' are returned.
  * * **All current elements are disposed**.
  * * If `new_elements` are `not null`, they are rendered.
  * * If `new_elements` are `null`, the provided event is used to start a new session.
  *
  * @see TypingEvent
- * @see InlineCompletionProvider.prefixTruncator
+ * @see InlineCompletionProvider.overtyper
  */
-interface InlineCompletionPrefixTruncator {
+interface InlineCompletionOvertyper {
 
   /**
    * Updates [context] with respect to new typing [typing]. If [context] can be updated,
@@ -31,24 +31,24 @@ interface InlineCompletionPrefixTruncator {
    * Otherwise, `null` is returned, as the result the current session will be invalidated
    * and [typing] will be considered as an event to start a new session.
    *
-   * If there is no elements after truncation, this method should return `null`.
+   * If there is no elements after over typing, this method should return `null`.
    *
    * Note that before rendering new elements, all current elements from [context] are disposed.
    */
   @RequiresEdt
   @RequiresBlockingContext
-  fun truncate(context: InlineCompletionContext, typing: TypingEvent): UpdatedElements?
+  fun overtype(context: InlineCompletionContext, typing: TypingEvent): UpdatedElements?
 
   /**
-   * @param elements represent elements that will be rendered after truncating.
-   * @param truncatedLength represents a number of symbols that were truncated during this update.
+   * @param elements represent elements that will be rendered after over typing.
+   * @param overtypedLength represents a number of symbols that were over typed during this update.
    * This number is for logs only, it does not influence on the execution.
    */
-  data class UpdatedElements(val elements: List<InlineCompletionElement>, val truncatedLength: Int)
+  data class UpdatedElements(val elements: List<InlineCompletionElement>, val overtypedLength: Int)
 
 
-  abstract class Adapter : InlineCompletionPrefixTruncator {
-    final override fun truncate(context: InlineCompletionContext, typing: TypingEvent): UpdatedElements? {
+  abstract class Adapter : InlineCompletionOvertyper {
+    final override fun overtype(context: InlineCompletionContext, typing: TypingEvent): UpdatedElements? {
       return when (typing) {
         is TypingEvent.OneSymbol -> onOneSymbol(context, typing)
         is TypingEvent.NewLine -> onNewLine(context, typing)
@@ -75,7 +75,7 @@ interface InlineCompletionPrefixTruncator {
 
 
 /**
- * Default variant of [InlineCompletionPrefixTruncator] that takes into account only [TypingEvent.OneSymbol].
+ * Default variant of [InlineCompletionOvertyper] that takes into account only [TypingEvent.OneSymbol].
  * Other typings cause clearing currently displayed elements and a new session is started.
  *
  * If a new typed symbol matches the first rendered symbol in the current [InlineCompletionContext],
@@ -89,7 +89,7 @@ interface InlineCompletionPrefixTruncator {
  *
  * @see InlineCompletionElementManipulator
  */
-open class DefaultInlineCompletionPrefixTruncator : InlineCompletionPrefixTruncator.Adapter() {
+open class DefaultInlineCompletionOvertyper : InlineCompletionOvertyper.Adapter() {
   final override fun onOneSymbol(context: InlineCompletionContext, typing: TypingEvent.OneSymbol): UpdatedElements? {
     val fragment = typing.typed
     check(fragment.length == 1)

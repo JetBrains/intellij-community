@@ -283,8 +283,8 @@ class InlineCompletionHandler(
       override fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult) {
         val context = session.context
         when (result) {
-          is UpdateSessionResult.PrefixTruncated -> {
-            trace(InlineCompletionEventType.Change(result.truncatedLength))
+          is UpdateSessionResult.Overtyped -> {
+            trace(InlineCompletionEventType.Change(result.overtypedLength))
             editor.inlayModel.execute(true) {
               context.clear()
               result.newElements.forEach { context.renderElement(it, context.endOffset() ?: result.newOffset) }

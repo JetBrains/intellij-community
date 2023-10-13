@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.inline.completion.session
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
-import com.intellij.codeInsight.inline.completion.InlineCompletionPrefixTruncator
+import com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
@@ -49,10 +49,10 @@ internal abstract class InlineCompletionSessionManager {
    * After that, it results in one of [UpdateSessionResult], and calls [onUpdate] with this result.
    *
    * @return `false` if session does not exist.
-   * Otherwise, whether [onUpdate] was called with either [UpdateSessionResult.Same] or [UpdateSessionResult.PrefixTruncated], meaning that
+   * Otherwise, whether [onUpdate] was called with either [UpdateSessionResult.Same] or [UpdateSessionResult.Overtyped], meaning that
    * the update succeeded.
    *
-   * @see InlineCompletionPrefixTruncator
+   * @see InlineCompletionOvertyper
    */
   @RequiresEdt
   @RequiresBlockingContext
@@ -72,7 +72,7 @@ internal abstract class InlineCompletionSessionManager {
       invalidate(session)
       return false
     }
-    val result = updateContext(session.context, session.provider.prefixTruncator, request)
+    val result = updateContext(session.context, session.provider.overtyper, request)
     onUpdate(session, result)
     return result !is UpdateSessionResult.Invalidated
   }
@@ -81,13 +81,13 @@ internal abstract class InlineCompletionSessionManager {
 
   private fun updateContext(
     context: InlineCompletionContext,
-    prefixTruncator: InlineCompletionPrefixTruncator,
+    overtyper: InlineCompletionOvertyper,
     request: InlineCompletionRequest
   ): UpdateSessionResult {
     return when (request.event) {
       is InlineCompletionEvent.DocumentChange -> {
-        val updatedResult = prefixTruncator.truncate(context, request.event.typing)?.let { truncated ->
-          UpdateSessionResult.PrefixTruncated(truncated.elements, truncated.truncatedLength, request.endOffset)
+        val updatedResult = overtyper.overtype(context, request.event.typing)?.let { overtyped ->
+          UpdateSessionResult.Overtyped(overtyped.elements, overtyped.overtypedLength, request.endOffset)
         }
         updatedResult ?: UpdateSessionResult.Invalidated
       }
@@ -99,9 +99,9 @@ internal abstract class InlineCompletionSessionManager {
   }
 
   protected sealed interface UpdateSessionResult {
-    class PrefixTruncated(
+    class Overtyped(
       val newElements: List<InlineCompletionElement>,
-      val truncatedLength: Int,
+      val overtypedLength: Int,
       val newOffset: Int
     ) : UpdateSessionResult
 

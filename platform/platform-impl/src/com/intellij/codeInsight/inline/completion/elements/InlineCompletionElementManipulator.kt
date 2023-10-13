@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.elements
 
-import com.intellij.codeInsight.inline.completion.InlineCompletionPrefixTruncator
+import com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator.Companion.getApplicable
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
@@ -9,11 +9,11 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Allows to customize behaviour of manipulating over [InlineCompletionElement].
  *
- * * If you want to support symbols truncating while a user types, implement [truncateFirstSymbol].
+ * * If you want to support symbols over typing while a user types, implement [truncateFirstSymbol].
  * * ... to be continued.
  *
  * @see getApplicable
- * @see InlineCompletionPrefixTruncator
+ * @see InlineCompletionOvertyper
  */
 @ApiStatus.Experimental
 interface InlineCompletionElementManipulator {
@@ -31,7 +31,7 @@ interface InlineCompletionElementManipulator {
    *
    * This method is called only if [isApplicable] returns `true` for [element].
    *
-   * @see InlineCompletionPrefixTruncator
+   * @see InlineCompletionOvertyper
    */
   fun truncateFirstSymbol(element: InlineCompletionElement): InlineCompletionElement?
 

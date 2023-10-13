@@ -12,7 +12,7 @@ sealed class InlineCompletionEventType {
                      val provider: Class<out InlineCompletionProvider>) : InlineCompletionEventType()
 
   data class Show(val element: InlineCompletionElement, val i: Int) : InlineCompletionEventType()
-  data class Change(val truncateTyping: Int) : InlineCompletionEventType()
+  data class Change(val overtypedLength: Int) : InlineCompletionEventType()
   data object Empty : InlineCompletionEventType()
   data class Completion(val cause: Throwable?, val isActive: Boolean) : InlineCompletionEventType()
   data object Insert : InlineCompletionEventType()

@@ -61,7 +61,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onChange(event: InlineCompletionEventType.Change) {
-      showTracker!!.truncateTyping(event.truncateTyping)
+      showTracker!!.truncateTyping(event.overtypedLength)
     }
 
     override fun onInsert(event: InlineCompletionEventType.Insert): Unit = lock.withLock {
