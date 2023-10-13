@@ -194,8 +194,6 @@ private fun initRemoteDev(args: List<String>) {
   initLux()
 }
 
-private fun isLuxEnabled() = System.getProperty("lux.enabled", "true").toBoolean()
-
 private fun initRemoteDevGraphicsEnvironment() {
   JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider { IdeGraphicsEnvironment.instance }
 }
@@ -210,10 +208,6 @@ private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any)
 }
 
 private fun initLux() {
-  if (!isLuxEnabled()) {
-    return
-  }
-
   System.setProperty("java.awt.headless", false.toString())
   System.setProperty("swing.volatileImageBufferEnabled", false.toString())
   System.setProperty("keymap.current.os.only", false.toString())
