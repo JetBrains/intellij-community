@@ -145,6 +145,14 @@ public class MavenUtil {
 
   private static volatile Map<String, String> ourPropertiesFromMvnOpts;
 
+  public static boolean enablePreimport() {
+    return Registry.is("maven.preimport.project");
+  }
+
+  public static boolean enablePreimportOnly() {
+    return Registry.is("maven.preimport.only");
+  }
+
   public static Map<String, String> getPropertiesFromMavenOpts() {
     Map<String, String> res = ourPropertiesFromMvnOpts;
     if (res == null) {

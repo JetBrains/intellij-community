@@ -306,7 +306,7 @@ class MavenImportingManager(val project: Project) {
                               activityKlass: Class<*>,
                               init: () -> Result): Result where Result : MavenImportContext = withStructuredIdeActivity(parentActivity,
                                                                                                                         activityKlass) {
-    return@withStructuredIdeActivity console.runTask(message, init).also { ctx -> currentContext = ctx }
+    return@withStructuredIdeActivity console.runTaskSync(message, init).also { ctx -> currentContext = ctx }
   }
 
 
