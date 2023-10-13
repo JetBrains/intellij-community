@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemSourceAttachCollector;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -130,8 +131,14 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
             String originalText = panel.getText();
             panel.setText(action.getBusyText());
 
-            action.perform(entries).doWhenProcessed(() -> {
+            final long started = System.currentTimeMillis();
+            final ActionCallback callback = action.perform(entries);
+            callback.doWhenProcessed(() -> {
               panel.setText(originalText);
+              if (psiFile != null) {
+                ExternalSystemSourceAttachCollector.onSourcesAttached(project, action.getClass(), psiFile.getLanguage(), callback.isDone(),
+                                                                      System.currentTimeMillis() - started);
+              }
             });
           });
         });
