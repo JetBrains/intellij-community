@@ -7,6 +7,10 @@ import git4idea.config.GitVersionSpecialty
 /**
  * Allows controlling how changes are reported when reading [git4idea.GitCommit] instances from `git log`.
  *
+ * @property includeRootChanges whether to include changes for initial commits
+ * @property diffRenameLimit    the number of files to consider in the exhaustive portion of copy/rename detection
+ * @property diffInMergeCommits how to report changes for merge commits
+ *
  * @see git4idea.GitCommit
  * @see GitDetailsCollector
  * @see GitLogUtil.readFullDetailsForHashes
@@ -44,7 +48,7 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
   }
 
   /**
-   * Regulates how renames are detected
+   * The number of files to consider in the exhaustive portion of copy/rename detection
    *
    * @see <a href="https://git-scm.com/docs/git-config#Documentation/git-config.txt-diffrenameLimit">diff.renameLimit</a>
    */
