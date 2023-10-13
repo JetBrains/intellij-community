@@ -4,6 +4,7 @@ import androidx.compose.ui.res.ResourceLoader
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.ui.DirProvider
 import org.jetbrains.jewel.ClassLoaderProvider
+import org.jetbrains.jewel.IconMapper
 import org.jetbrains.jewel.IntelliJThemeIconData
 import org.jetbrains.jewel.InternalJewelApi
 

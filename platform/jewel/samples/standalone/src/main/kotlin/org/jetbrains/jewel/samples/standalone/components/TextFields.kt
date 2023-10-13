@@ -15,11 +15,12 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.Icon
 import org.jetbrains.jewel.LabelledTextField
+import org.jetbrains.jewel.LocalIconData
 import org.jetbrains.jewel.Outline
 import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.TextField
-import org.jetbrains.jewel.styling.ResourcePainterProvider
+import org.jetbrains.jewel.styling.rememberStatelessPainterProvider
 
 @Composable
 fun TextFields(svgLoader: SvgLoader, resourceLoader: ResourceLoader) {
@@ -71,9 +72,11 @@ fun TextFields(svgLoader: SvgLoader, resourceLoader: ResourceLoader) {
     ) {
         var text by remember { mutableStateOf("With leading icon") }
         TextField(text, { text = it }, enabled = true, leadingIcon = {
-            val searchIcon by remember { ResourcePainterProvider.stateless("icons/search.svg", svgLoader) }.getPainter(
-                resourceLoader,
-            )
+            val iconData = LocalIconData.current
+            val searchIcon by rememberStatelessPainterProvider("icons/search.svg", svgLoader, iconData)
+                .getPainter(
+                    resourceLoader,
+                )
             Icon(searchIcon, "SearchIcon", Modifier.size(16.dp))
         })
     }

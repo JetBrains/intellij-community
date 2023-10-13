@@ -6,5 +6,8 @@ import androidx.compose.ui.res.ResourceLoader
 interface ResourcePathPatcher<T> {
 
     @Composable
-    fun patchPath(basePath: String, resourceLoader: ResourceLoader, extraData: T?): String
+    fun patchVariant(basePath: String, resourceLoader: ResourceLoader, extraData: T?): String
+
+    @Composable
+    fun patchTheme(basePath: String, resourceLoader: ResourceLoader): String
 }

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
@@ -17,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.Icon
 import org.jetbrains.jewel.SvgLoader
-import org.jetbrains.jewel.styling.ResourcePainterProvider
+import org.jetbrains.jewel.styling.rememberStatelessPainterProvider
 
 @Composable
 internal fun Icons(svgLoader: SvgLoader, resourceLoader: ResourceLoader) {
@@ -27,7 +26,7 @@ internal fun Icons(svgLoader: SvgLoader, resourceLoader: ResourceLoader) {
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        val jewelLogoProvider = remember { ResourcePainterProvider.stateless("icons/jewel-logo.svg", svgLoader) }
+        val jewelLogoProvider = rememberStatelessPainterProvider("icons/jewel-logo.svg", svgLoader)
         val jewelLogo by jewelLogoProvider.getPainter(resourceLoader)
 
         Icon(jewelLogo, "Jewel Logo", Modifier.size(16.dp))

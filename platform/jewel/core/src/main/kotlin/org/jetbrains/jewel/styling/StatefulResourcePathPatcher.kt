@@ -12,7 +12,7 @@ class StatefulResourcePathPatcher<T : InteractiveComponentState>(
 ) : SimpleResourcePathPatcher<T>() {
 
     @Composable
-    override fun injectAdditionalTokens(extraData: T?): String = buildString {
+    override fun injectVariantTokens(extraData: T?): String = buildString {
         if (extraData == null) return@buildString
 
         append(prefixTokensProvider(extraData))

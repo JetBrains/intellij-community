@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.LinkState
+import org.jetbrains.jewel.LocalIconData
 import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
@@ -118,16 +119,16 @@ data class IntUiLinkIcons(
         @Composable
         fun dropdownChevron(
             svgLoader: SvgLoader,
-            basePath: String = "icons/intui/chevronDown.svg",
+            basePath: String = "expui/general/chevronDown.svg",
         ): PainterProvider<LinkState> =
-            ResourcePainterProvider.stateful(basePath, svgLoader)
+            ResourcePainterProvider.stateful(basePath, svgLoader, LocalIconData.current)
 
         @Composable
         fun externalLink(
             svgLoader: SvgLoader,
-            basePath: String = "icons/intui/externalLink.svg",
+            basePath: String = "expui/ide/externalLink.svg",
         ): PainterProvider<LinkState> =
-            ResourcePainterProvider.stateful(basePath, svgLoader)
+            ResourcePainterProvider.stateful(basePath, svgLoader, LocalIconData.current)
     }
 }
 
