@@ -32,12 +32,11 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEmpty
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.errorIfNotMessage
-import kotlin.reflect.KClass
 
 /**
  * Use [InlineCompletion] for acquiring, installing and uninstalling [InlineCompletionHandler].
  */
-class InlineCompletionHandler internal constructor(
+class InlineCompletionHandler(
   scope: CoroutineScope,
   val editor: Editor,
   private val parentDisposable: Disposable
@@ -90,9 +89,9 @@ class InlineCompletionHandler internal constructor(
 
     //providerManager.getCache(provider::class)?.let { cached ->
     //  println("CACHE" to provider to event)
-      // TODO: add event logging)
-      //cached.forEach { newSession.context.renderElement(it, request.endOffset) }
-      //return
+    // TODO: add event logging)
+    //cached.forEach { newSession.context.renderElement(it, request.endOffset) }
+    //return
     //}
 
     executor.switchJobSafely(newSession::assignJob) {
@@ -128,12 +127,12 @@ class InlineCompletionHandler internal constructor(
   @RequiresEdt
   @RequiresBlockingContext
   fun hide(explicit: Boolean, context: InlineCompletionContext) {
-    hide(editor, explicit, context, true)
+    hide(explicit, context, true)
   }
 
   @RequiresEdt
   @RequiresBlockingContext
-  internal fun hide(editor: Editor, explicit: Boolean, context: InlineCompletionContext, clearCache: Boolean) {
+  internal fun hide(explicit: Boolean, context: InlineCompletionContext, clearCache: Boolean) {
     LOG.assertTrue(!context.isDisposed)
     if (clearCache) {
       providerManager.clear()
@@ -180,7 +179,7 @@ class InlineCompletionHandler internal constructor(
         .onEmpty {
           coroutineToIndicator {
             trace(InlineCompletionEventType.Empty)
-            hide(editor, false, context)
+            hide(false, context)
           }
         }
         .onCompletion {
@@ -211,7 +210,7 @@ class InlineCompletionHandler internal constructor(
     }
 
     if (cause != null && !context.isDisposed) {
-      hide(editor, false, context)
+      hide(false, context)
       return
     }
     if (suggestion.useCache) {
@@ -272,7 +271,7 @@ class InlineCompletionHandler internal constructor(
             hide(false, session.context)
           }
           UpdateSessionResult.InvalidatedWithoutCache -> {
-            hide(session.context.editor, false, session.context, false)
+            hide(false, session.context, false)
           }
         }
       }

@@ -4,10 +4,7 @@ package com.intellij.codeInsight.inline.completion.render
 sealed interface InlineCompletionInsertPolicy {
   val caretShift: Int
 
-  data class Append(val text: String) : InlineCompletionInsertPolicy {
-    override val caretShift: Int
-      get() = text.length
-  }
+  data class Append(val text: String, override val caretShift: Int = text.length) : InlineCompletionInsertPolicy
 
   data class Skip(val length: Int) : InlineCompletionInsertPolicy {
     override val caretShift: Int
