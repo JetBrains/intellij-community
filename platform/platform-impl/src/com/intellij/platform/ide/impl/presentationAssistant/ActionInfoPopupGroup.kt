@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.awt.RelativePoint
@@ -86,7 +87,9 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
     addWindowListener(project, object : WindowAdapter() {
       override fun windowDeactivated(ev: WindowEvent) {
-        if (ev.oppositeWindow == null) close()
+        // Hide popup on switching to another non-IDE window. Otherwise, the popup stays on top of another application
+        // The issue reproduces only on macOS
+        if (ev.oppositeWindow == null && SystemInfo.isMac) close()
       }
     })
 
