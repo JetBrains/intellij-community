@@ -384,7 +384,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   /**
    * Use this function to show the lookup window as soon as possible.
-   * Right now or after, at least one element will be added to the lookup.
+   * Right now or after, when at least one element will be added to the lookup.
    */
   public void showLookupAsSoonAsPossible() {
     setPostponeAppearance(false);
