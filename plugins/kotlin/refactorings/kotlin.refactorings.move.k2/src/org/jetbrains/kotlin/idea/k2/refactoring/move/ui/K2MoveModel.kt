@@ -7,8 +7,6 @@ import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.bindSelected
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import kotlin.reflect.KMutableProperty0
 
