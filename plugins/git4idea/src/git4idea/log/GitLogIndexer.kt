@@ -16,6 +16,7 @@ import git4idea.history.GitCommitRequirements.DiffRenameLimit
 import git4idea.history.GitCompressedDetailsCollector
 import git4idea.history.GitLogUtil
 import git4idea.log.GitLogProvider.*
+import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import it.unimi.dsi.fastutil.ints.Int2IntMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
@@ -26,8 +27,7 @@ class GitLogIndexer(private val project: Project,
   override fun readAllFullDetails(root: VirtualFile, encoder: VcsLogIndexer.PathsEncoder,
                                   commitConsumer: com.intellij.util.Consumer<in VcsLogIndexer.CompressedDetails>) {
     val repository = getRepository(repositoryManager, root) ?: return
-    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repository), DiffRenameLimit.Value(RENAME_LIMIT),
-                                             DiffInMergeCommits.DIFF_TO_PARENTS)
+    val requirements = getGitCommitRequirements(repository)
     GitCompressedDetailsCollector(project, root, encoder).readFullDetails(commitConsumer::consume, requirements, true,
                                                                           *ArrayUtil.toStringArray(GitLogUtil.LOG_ALL))
   }
@@ -38,9 +38,13 @@ class GitLogIndexer(private val project: Project,
                                encoder: VcsLogIndexer.PathsEncoder,
                                commitConsumer: com.intellij.util.Consumer<in VcsLogIndexer.CompressedDetails>) {
     val repository = getRepository(repositoryManager, root) ?: return
-    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repository), DiffRenameLimit.Value(RENAME_LIMIT),
-                                             DiffInMergeCommits.DIFF_TO_PARENTS)
+    val requirements = getGitCommitRequirements(repository)
     GitCompressedDetailsCollector(project, root, encoder).readFullDetailsForHashes(hashes, requirements, true, commitConsumer::consume)
+  }
+
+  private fun getGitCommitRequirements(repository: GitRepository): GitCommitRequirements {
+    return GitCommitRequirements(shouldIncludeRootChanges(repository), DiffRenameLimit.Value(RENAME_LIMIT),
+                                 DiffInMergeCommits.DIFF_TO_PARENTS)
   }
 
   override fun getSupportedVcs(): VcsKey {
