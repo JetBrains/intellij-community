@@ -276,7 +276,7 @@ internal open class FirCallableCompletionContributor(
         }
     }
 
-    private val KtNamedClassOrObjectSymbol.hasImportantStaticMemberScope: Boolean
+    protected val KtNamedClassOrObjectSymbol.hasImportantStaticMemberScope: Boolean
         get() = classKind == KtClassKind.ENUM_CLASS ||
                 origin == KtSymbolOrigin.JAVA
 
@@ -404,7 +404,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KtAnalysisSession)
-    private fun collectDotCompletionFromStaticScope(
+    protected fun collectDotCompletionFromStaticScope(
         symbol: KtNamedClassOrObjectSymbol,
         withCompanionScope: Boolean,
         visibilityChecker: CompletionVisibilityChecker,
@@ -684,6 +684,9 @@ internal class FirCallableReferenceCompletionContributor(
         return when (val symbol = explicitReceiver.reference()?.resolveToExpandedSymbol()) {
             is KtPackageSymbol -> emptySequence()
             is KtNamedClassOrObjectSymbol -> sequence {
+                if (symbol.hasImportantStaticMemberScope) {
+                    yieldAll(collectDotCompletionFromStaticScope(symbol, withCompanionScope = false, visibilityChecker, sessionParameters))
+                }
                 val type = symbol.buildSelfClassType()
                 val nonExtensionMembers = collectNonExtensionsForType(
                     type,
@@ -694,7 +697,7 @@ internal class FirCallableReferenceCompletionContributor(
 
                 val staticScopeKind = KtScopeKind.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
                 val staticMembers = collectNonExtensionsFromScope(
-                    symbol.staticScope(),
+                    listOfNotNull(symbol.companionObject?.getMemberScope()).asCompositeScope(),
                     visibilityChecker,
                     scopeNameFilter,
                     sessionParameters,

@@ -495,6 +495,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/callableReference/EmptyQualifierInExtensionFun.kt");
             }
 
+            @TestMetadata("EnumStaticMembers.kt")
+            public void testEnumStaticMembers() throws Exception {
+                runTest("../testData/basic/common/callableReference/EnumStaticMembers.kt");
+            }
+
             @TestMetadata("ExpressionQualifier.kt")
             public void testExpressionQualifier() throws Exception {
                 runTest("../testData/basic/common/callableReference/ExpressionQualifier.kt");
