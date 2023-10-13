@@ -107,26 +107,13 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     val exactDuplicates = duplicates.filter { duplicate ->
       duplicate.parametrizedExpressions.all { changedExpression -> changedExpression.pattern in initialParameters }
     }
-    val oldMethodCall = findMethodCallInside(calls.firstOrNull())
-    val newMethodCall = findMethodCallInside(parametrizedExtraction.callElements.firstOrNull())
-    fun confirmChangeSignature(): Boolean {
-      if (oldMethodCall == null || newMethodCall == null) return false
-      val manager = CodeStyleManager.getInstance(project)
-      val initialMethod = manager.reformat(method.copy()) as PsiMethod
-      val parametrizedMethod = manager.reformat(parametrizedExtraction.method) as PsiMethod
-      val dialog = SignatureSuggesterPreviewDialog(initialMethod, parametrizedMethod, oldMethodCall, newMethodCall,
-                                                   exactDuplicates.size, duplicates.size - exactDuplicates.size)
-      return dialog.showAndGet()
-    }
-    val confirmChange: () -> Boolean = changeSignatureDefault?.let { default -> {default} } ?: ::confirmChangeSignature
-    val isGoodSignatureChange = isGoodSignatureChange(extractOptions.elements, extractOptions.inputParameters,
-                                                      parametrizedExtraction.callElements, updatedParameters)
     val prepareTimeEnd = System.currentTimeMillis()
     InplaceExtractMethodCollector.duplicatesSearched.log(prepareTimeEnd - prepareTimeStart)
-    val changeSignature = duplicates.size > exactDuplicates.size && isGoodSignatureChange && confirmChange()
-    duplicates = if (changeSignature) duplicatesWithUnifiedParameters else exactDuplicates
-    val parameters = if (changeSignature) updatedParameters else extractOptions.inputParameters
-    val extractedElements = if (changeSignature) parametrizedExtraction else ExtractedElements(calls, method)
+
+    val shouldChangeSignature = askToChangeSignature(calls, parametrizedExtraction, project, method, exactDuplicates, duplicates, updatedParameters)
+    duplicates = if (shouldChangeSignature) duplicatesWithUnifiedParameters else exactDuplicates
+    val parameters = if (shouldChangeSignature) updatedParameters else extractOptions.inputParameters
+    val extractedElements = if (shouldChangeSignature) parametrizedExtraction else ExtractedElements(calls, method)
 
     duplicates = when (replaceDuplicatesDefault) {
       null -> confirmDuplicates (project, editor, duplicates)
@@ -154,6 +141,33 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
         replacePsiRange(duplicate.candidate, callElements)
       }
     }
+  }
+
+  private fun askToChangeSignature(calls: List<PsiElement>,
+                parametrizedExtraction: ExtractedElements,
+                project: Project,
+                method: PsiMethod,
+                exactDuplicates: List<Duplicate>,
+                duplicates: List<Duplicate>,
+                updatedParameters: List<InputParameter>): Boolean {
+    val oldMethodCall = findMethodCallInside(calls.firstOrNull())
+    val newMethodCall = findMethodCallInside(parametrizedExtraction.callElements.firstOrNull())
+    fun confirmChangeSignature(): Boolean {
+      if (oldMethodCall == null || newMethodCall == null) return false
+      val manager = CodeStyleManager.getInstance(project)
+      val initialMethod = manager.reformat(method.copy()) as PsiMethod
+      val parametrizedMethod = manager.reformat(parametrizedExtraction.method) as PsiMethod
+      val dialog = SignatureSuggesterPreviewDialog(initialMethod, parametrizedMethod, oldMethodCall, newMethodCall,
+                                                   exactDuplicates.size, duplicates.size - exactDuplicates.size)
+      return dialog.showAndGet()
+    }
+
+    val confirmChange: () -> Boolean = changeSignatureDefault?.let { default -> { default } } ?: ::confirmChangeSignature
+    val isGoodSignatureChange = isGoodSignatureChange(extractOptions.elements, extractOptions.inputParameters,
+                                                      parametrizedExtraction.callElements, updatedParameters)
+
+    val changeSignature = duplicates.size > exactDuplicates.size && isGoodSignatureChange && confirmChange()
+    return changeSignature
   }
 
   private fun createExtractDescriptor(duplicate: Duplicate, parameters: List<InputParameter>): ExtractOptions {
