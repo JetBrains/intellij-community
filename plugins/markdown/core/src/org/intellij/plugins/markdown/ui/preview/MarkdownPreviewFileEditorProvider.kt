@@ -7,7 +7,6 @@ import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.hasMarkdownType
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 
@@ -23,8 +22,8 @@ internal class MarkdownPreviewFileEditorProvider: WeighedFileEditorProvider() {
     if (!ScratchUtil.isScratch(file)) {
       return false
     }
-    val language = LanguageUtil.getLanguageForPsi(project, file, MarkdownFileType.INSTANCE)
-    return language?.isMarkdownLanguage() == true
+    val language = LanguageUtil.getLanguageForPsi(project, file) ?: return false
+    return language.isMarkdownLanguage()
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
