@@ -41,7 +41,7 @@ public final class FormattingServiceUtil {
   public static @NotNull FormattingService findImportsOptimizingService(@NotNull PsiFile file) {
     FormattingService importsOptimizer = ContainerUtil.find(
       FormattingService.EP_NAME.getExtensionList(),
-      s -> s.canFormat(file) && s.getFeatures().contains(FormattingService.Feature.OPTIMIZE_IMPORTS)
+      s -> s.getFeatures().contains(FormattingService.Feature.OPTIMIZE_IMPORTS) && s.canFormat(file)
     );
     LOG.assertTrue(importsOptimizer != null,
                    "At least 1 formatting service which can optimize imports in PsiFile " + file.getName() + " should be registered.");
