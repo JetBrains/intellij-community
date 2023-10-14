@@ -15,6 +15,7 @@ import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -88,35 +89,36 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   //    b) implement something like BlobStorageHousekeeper, which runs in dedicated thread, with some precautions to not
   //       interrupt frontend work.
 
-  protected static final class HeaderLayout {
+  @VisibleForTesting
+  public static final class HeaderLayout {
     //@formatter:off
 
     /** Encodes storage (file) type */
-    static final int MAGIC_WORD_OFFSET                           = 0;   //int32
+    public static final int MAGIC_WORD_OFFSET                           = 0;   //int32
 
     /** Version of this storage persistent format */
-    static final int STORAGE_VERSION_OFFSET                      = 4;   //int32
+    public static final int STORAGE_VERSION_OFFSET                      = 4;   //int32
     /** pageSize is a part of binary layout: records are page-aligned */
-    static final int PAGE_SIZE_OFFSET                            = 8;   //int32
-    static final int FILE_STATUS_OFFSET                          = 12;  //int32
+    public static final int PAGE_SIZE_OFFSET                            = 8;   //int32
+    public static final int FILE_STATUS_OFFSET                          = 12;  //int32
 
-    static final int NEXT_RECORD_ID_OFFSET                       = 16;  //int32
+    public static final int NEXT_RECORD_ID_OFFSET                       = 16;  //int32
 
-    static final int RECORDS_ALLOCATED_OFFSET                    = 20;  //int32
-    static final int RECORDS_RELOCATED_OFFSET                    = 24;  //int32
-    static final int RECORDS_DELETED_OFFSET                      = 28;  //int32
+    public static final int RECORDS_ALLOCATED_OFFSET                    = 20;  //int32
+    public static final int RECORDS_RELOCATED_OFFSET                    = 24;  //int32
+    public static final int RECORDS_DELETED_OFFSET                      = 28;  //int32
 
-    static final int RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET      = 32;  //int64
-    static final int RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET     = 40;  //int64
+    public static final int RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET      = 32;  //int64
+    public static final int RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET     = 40;  //int64
 
     /** Version of data, stored in a blobs, managed by client code */
-    static final int DATA_FORMAT_VERSION_OFFSET                  = 48;  //int32
+    public static final int DATA_FORMAT_VERSION_OFFSET                  = 48;  //int32
 
 
-    static final int FIRST_UNUSED_FIELD_OFFSET                   = 52;
+    public static final int FIRST_UNUSED_FIELD_OFFSET                   = 52;
 
     //Bytes [52..64] is reserved for the generations to come:
-    static final int HEADER_SIZE                                 = 64;
+    public static final int HEADER_SIZE                                 = 64;
 
     //@formatter:on
   }
