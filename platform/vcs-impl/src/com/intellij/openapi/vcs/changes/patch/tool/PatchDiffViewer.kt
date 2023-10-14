@@ -1,163 +1,130 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes.patch.tool;
+package com.intellij.openapi.vcs.changes.patch.tool
 
-import com.intellij.diff.DiffContext;
-import com.intellij.diff.EditorDiffViewer;
-import com.intellij.diff.FrameDiffTool;
-import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.tools.util.PrevNextDifferenceIterableBase;
-import com.intellij.diff.tools.util.SimpleDiffPanel;
-import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.LineRange;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.components.panels.Wrapper;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.DiffContext
+import com.intellij.diff.EditorDiffViewer
+import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.FrameDiffTool.DiffViewer
+import com.intellij.diff.tools.util.DiffDataKeys
+import com.intellij.diff.tools.util.PrevNextDifferenceIterableBase
+import com.intellij.diff.tools.util.SimpleDiffPanel
+import com.intellij.diff.util.DiffDrawUtil
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.LineRange
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.LineNumberConverterAdapter
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder.Companion.computeInnerDifferences
+import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder.Hunk
+import com.intellij.ui.components.panels.Wrapper
+import it.unimi.dsi.fastutil.ints.IntConsumer
+import org.jetbrains.annotations.NonNls
+import java.awt.BorderLayout
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+internal class PatchDiffViewer(private val diffContext: DiffContext,
+                               private val diffRequest: PatchDiffRequest) : DiffViewer, DataProvider, EditorDiffViewer {
+  private val project: Project? = diffContext.getProject()
 
-class PatchDiffViewer implements FrameDiffTool.DiffViewer, DataProvider, EditorDiffViewer {
-  private final Project myProject;
-  private final SimpleDiffPanel myPanel;
-  private final EditorEx myEditor;
-  private final DiffContext myContext;
-  private final PatchDiffRequest myRequest;
-  private final MyPrevNextDifferenceIterable myPrevNextDifferenceIterable;
-  private final List<PatchChangeBuilder.Hunk> myHunks = new ArrayList<>();
+  private val panel: SimpleDiffPanel
+  private val editor: EditorEx
 
-  PatchDiffViewer(DiffContext context, PatchDiffRequest request) {
-    myProject = context.getProject();
-    myContext = context;
-    myRequest = request;
-    Document document = EditorFactory.getInstance().createDocument("");
-    myEditor = DiffUtil.createEditor(document, myProject, true, true);
-    myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
+  private val prevNextDifferenceIterable: MyPrevNextDifferenceIterable
 
-    Wrapper editorPanel = new Wrapper(new BorderLayout(0, DiffUtil.TITLE_GAP.get()), myEditor.getComponent());
-    String panelTitle = request.getPanelTitle();
+  private val hunks: MutableList<Hunk> = ArrayList()
+
+  init {
+    val document = EditorFactory.getInstance().createDocument("")
+    editor = DiffUtil.createEditor(document, project, true, true)
+
+    val editorPanel = Wrapper(BorderLayout(0, DiffUtil.TITLE_GAP.get()), editor.getComponent())
+    val panelTitle = diffRequest.panelTitle
     if (panelTitle != null) {
-      editorPanel.add(DiffUtil.createTitle(panelTitle), BorderLayout.NORTH);
+      editorPanel.add(DiffUtil.createTitle(panelTitle), BorderLayout.NORTH)
     }
-    myPanel = new SimpleDiffPanel(editorPanel, this, context);
+    panel = SimpleDiffPanel(editorPanel, this, diffContext)
+
+    prevNextDifferenceIterable = MyPrevNextDifferenceIterable()
   }
 
-  @NotNull
-  @Override
-  public JComponent getComponent() {
-    return myPanel;
+  override fun getComponent(): JComponent = panel
+
+  override fun getPreferredFocusedComponent(): JComponent = editor.getContentComponent()
+
+  override fun getEditors(): List<Editor?> = listOf(editor)
+
+  override fun init(): FrameDiffTool.ToolbarComponents {
+    panel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, diffContext, diffRequest))
+    onInit()
+    return FrameDiffTool.ToolbarComponents()
   }
 
-  @Nullable
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myEditor.getContentComponent();
+  override fun dispose() {
+    EditorFactory.getInstance().releaseEditor(editor)
   }
 
-  @Override
-  public @NotNull List<? extends Editor> getEditors() {
-    return Collections.singletonList(myEditor);
-  }
+  private fun onInit() {
+    val state = PatchChangeBuilder().build(diffRequest.patch.hunks)
+    hunks.addAll(state.hunks)
 
-  @NotNull
-  @Override
-  public FrameDiffTool.ToolbarComponents init() {
-    myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
-    onInit();
-    return new FrameDiffTool.ToolbarComponents();
-  }
+    val patchDocument: Document = editor.getDocument()
+    runWriteAction { patchDocument.setText(state.patchContent.toString()) }
 
-  @Override
-  public void dispose() {
-    EditorFactory.getInstance().releaseEditor(myEditor);
-  }
+    editor.getGutter().setLineNumberConverter(
+      LineNumberConverterAdapter(state.lineConvertor1.createConvertor()),
+      LineNumberConverterAdapter(state.lineConvertor2.createConvertor())
+    )
 
-  private void onInit() {
-    PatchChangeBuilder.PatchState state = new PatchChangeBuilder().build(myRequest.getPatch().getHunks());
-    myHunks.addAll(state.getHunks());
+    state.separatorLines.forEach(IntConsumer { line: Int ->
+      val offset = patchDocument.getLineStartOffset(line)
+      DiffDrawUtil.createLineSeparatorHighlighter(editor, offset, offset)
+    })
 
-    Document patchDocument = myEditor.getDocument();
-    WriteAction.run(() -> patchDocument.setText(state.getPatchContent().toString()));
-
-    myEditor.getGutter().setLineNumberConverter(
-      new LineNumberConverterAdapter(state.getLineConvertor1().createConvertor()),
-      new LineNumberConverterAdapter(state.getLineConvertor2().createConvertor())
-    );
-
-    state.getSeparatorLines().forEach(line -> {
-      int offset = patchDocument.getLineStartOffset(line);
-      DiffDrawUtil.createLineSeparatorHighlighter(myEditor, offset, offset);
-    });
-
-    // highlighting
-    for (PatchChangeBuilder.Hunk hunk : myHunks) {
-      List<DiffFragment> innerFragments = PatchChangeBuilder.computeInnerDifferences(patchDocument, hunk);
-      DiffDrawUtil.createUnifiedChunkHighlighters(myEditor, hunk.getPatchDeletionRange(), hunk.getPatchInsertionRange(), innerFragments);
+    for (hunk in hunks) {
+      val innerFragments = computeInnerDifferences(patchDocument, hunk)
+      DiffDrawUtil.createUnifiedChunkHighlighters(editor, hunk.patchDeletionRange, hunk.patchInsertionRange, innerFragments)
     }
-
-    myEditor.getGutterComponentEx().revalidateMarkup();
+    editor.getGutterComponentEx().revalidateMarkup()
   }
 
-  @Nullable
-  @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
-    if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) return myPrevNextDifferenceIterable;
-    if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) return myEditor;
-    if (DiffDataKeys.CURRENT_CHANGE_RANGE.is(dataId)) {
-      return myPrevNextDifferenceIterable.getHunkRangeByLine(myEditor.getCaretModel().getLogicalPosition().line);
+  override fun getData(dataId: @NonNls String): Any? {
+    if (CommonDataKeys.PROJECT.`is`(dataId)) return project
+    if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.`is`(dataId)) return prevNextDifferenceIterable
+    if (DiffDataKeys.CURRENT_EDITOR.`is`(dataId)) return editor
+    if (DiffDataKeys.CURRENT_CHANGE_RANGE.`is`(dataId)) {
+      return prevNextDifferenceIterable.getHunkRangeByLine(editor.getCaretModel().logicalPosition.line)
     }
-    return null;
+    return null
   }
 
-  private class MyPrevNextDifferenceIterable extends PrevNextDifferenceIterableBase<PatchChangeBuilder.Hunk> {
-    @NotNull
-    @Override
-    protected List<PatchChangeBuilder.Hunk> getChanges() {
-      return myHunks;
+  private inner class MyPrevNextDifferenceIterable : PrevNextDifferenceIterableBase<Hunk>() {
+    override fun getChanges(): List<Hunk> = hunks
+    override fun getEditor(): EditorEx = this@PatchDiffViewer.editor
+
+    override fun getStartLine(change: Hunk): Int {
+      return change.patchDeletionRange.start
     }
 
-    @NotNull
-    @Override
-    protected EditorEx getEditor() {
-      return myEditor;
+    override fun getEndLine(change: Hunk): Int {
+      return change.patchInsertionRange.end
     }
 
-    @Override
-    protected int getStartLine(@NotNull PatchChangeBuilder.Hunk change) {
-      return change.getPatchDeletionRange().start;
-    }
-
-    @Override
-    protected int getEndLine(@NotNull PatchChangeBuilder.Hunk change) {
-      return change.getPatchInsertionRange().end;
-    }
-
-    @Nullable
-    LineRange getHunkRangeByLine(int line) {
-      for (PatchChangeBuilder.Hunk hunk : getChanges()) {
-        int start = hunk.getPatchDeletionRange().start;
-        int end = hunk.getPatchInsertionRange().end;
+    fun getHunkRangeByLine(line: Int): LineRange? {
+      for (hunk in changes) {
+        val start = getStartLine(hunk)
+        val end = getEndLine(hunk)
         if (start <= line && end > line) {
-          return new LineRange(start, end);
+          return LineRange(start, end)
         }
-        if (start > line) return null;
+        if (start > line) return null
       }
-      return null;
+      return null
     }
   }
 }
