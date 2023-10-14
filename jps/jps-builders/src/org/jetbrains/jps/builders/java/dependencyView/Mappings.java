@@ -6,9 +6,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -392,29 +394,20 @@ public final class Mappings {
       }
       final IntSet _visitedClasses = visitedClasses;
       subClasses.forEach(subClassName -> {
-        Iterable<ClassRepr> reprs = reprsByName(subClassName, ClassRepr.class);
+        Iterable<ClassRepr> reprs = Iterators.collect(reprsByName(subClassName, ClassRepr.class), new SmartList<>());
         if (!Iterators.isEmpty(reprs)) {
-          Iterable<Pair<MethodRepr, ClassRepr>> overriding = Iterators.filter(Iterators.map(reprs, r -> {
-            for (MethodRepr mm : r.findMethods(predicate)) {
-              if (isVisibleIn(fromClass, m, r)) {
-                return Pair.create(mm, r);
-              }
-            }
-            return null;
-          }), Iterators.notNullFilter());
+          Iterable<Pair<MethodRepr, ClassRepr>> overriding = Iterators.flat(Iterators.map(
+            reprs,
+            r -> Iterators.filter(Iterators.map(r.findMethods(predicate), mm -> isVisibleIn(fromClass, m, r)? Pair.create(mm, r) : null), Iterators.notNullFilter()))
+          );
 
+          Set<ClassRepr> found = new SmartHashSet<>();
           for (Pair<MethodRepr, ClassRepr> pair : overriding) {
             container.add(pair);
+            found.add(pair.getSecond());
           }
 
-          for (ClassRepr r : Iterators.filter(reprs, r -> {
-            for (Pair<MethodRepr, ClassRepr> pair : overriding) {
-              if (pair.getSecond() == r) {
-                return false;
-              }
-            }
-            return true;
-          })) {
+          for (ClassRepr r : Iterators.filter(reprs, r -> !found.contains(r))) {
             // continue with reprs, for those no overriding members were found
             addOverridingMethods(m, r, predicate, container, _visitedClasses);
           }
@@ -425,7 +418,7 @@ public final class Mappings {
     private Collection<Pair<MethodRepr, ClassRepr>> findAllMethodsBySpecificity(final MethodRepr m, final ClassRepr c) {
       final Predicate<MethodRepr> predicate = lessSpecific(m);
       final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<>();
-      addOverridenMethods(c, predicate, result, null);
+      addOverriddenMethods(c, predicate, result, null);
       addOverridingMethods(m, c, predicate, result, null);
       return result;
     }
@@ -435,7 +428,7 @@ public final class Mappings {
         return Collections.emptySet(); // overriding is not defined for constructors
       }
       final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<>();
-      addOverridenMethods(c, MethodRepr.equalByJavaRules(m), result, null);
+      addOverriddenMethods(c, MethodRepr.equalByJavaRules(m), result, null);
       return result;
     }
 
@@ -471,12 +464,12 @@ public final class Mappings {
         if (!visitedClasses.add(superName.className) || superName.className == myObjectClassName) {
           continue;
         }
-        Iterable<ClassRepr> superClasses = reprsByName(superName.className, ClassRepr.class);
-        if (Iterators.isEmpty(superClasses)) {
+        Iterator<ClassRepr> superClasses = reprsByName(superName.className, ClassRepr.class).iterator();
+        if (!superClasses.hasNext()) {
           return true;
         }
-        for (ClassRepr superClass : superClasses) {
-          if (extendsLibraryClass(superClass, visitedClasses)) {
+        while (superClasses.hasNext()) {
+          if (extendsLibraryClass(superClasses.next(), visitedClasses)) {
             return true;
           }
         }
@@ -484,7 +477,7 @@ public final class Mappings {
       return false;
     }
 
-    private void addOverridenMethods(final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, IntSet visitedClasses) {
+    private void addOverriddenMethods(final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, IntSet visitedClasses) {
       if (visitedClasses == null) {
         visitedClasses = new IntOpenHashSet();
         visitedClasses.add(fromClass.name);
@@ -493,31 +486,22 @@ public final class Mappings {
         if (!visitedClasses.add(superName.className) || superName.className == myObjectClassName) {
           continue;  // prevent SOE
         }
-        Iterable<ClassRepr> superClasses = reprsByName(superName.className, ClassRepr.class);
+        Iterable<ClassRepr> superClasses = Iterators.collect(reprsByName(superName.className, ClassRepr.class), new SmartList<>());
         if (!Iterators.isEmpty(superClasses)) {
-          Iterable<Pair<MethodRepr, ClassRepr>> pairs = Iterators.filter(Iterators.map(superClasses, superClass -> {
-            for (MethodRepr mm : superClass.findMethods(predicate)) {
-              if (isVisibleIn(superClass, mm, fromClass)) {
-                return Pair.create(mm, superClass);
-              }
-            }
-            return null;
-          }), Iterators.notNullFilter());
+          Iterable<Pair<MethodRepr, ClassRepr>> pairs = Iterators.flat(Iterators.map(
+            superClasses,
+            superClass -> Iterators.filter(Iterators.map(superClass.findMethods(predicate), mm -> isVisibleIn(superClass, mm, fromClass)? Pair.create(mm, superClass) : null), Iterators.notNullFilter()))
+          );
 
+          Set<ClassRepr> found = new SmartHashSet<>();
           for (Pair<MethodRepr, ClassRepr> pair : pairs) {
             container.add(pair);
+            found.add(pair.getSecond());
           }
 
-          for (ClassRepr superClass : Iterators.filter(superClasses, superClass -> {
-            for (Pair<MethodRepr, ClassRepr> pair : pairs) {
-              if (pair.getSecond() == superClass) {
-                return false;
-              }
-            }
-            return true;
-          })) {
+          for (ClassRepr superClass : Iterators.filter(superClasses, superClass -> !found.contains(superClass))) {
             // continue with those, for whom the matching method was not found
-            addOverridenMethods(superClass, predicate, container, visitedClasses);
+            addOverriddenMethods(superClass, predicate, container, visitedClasses);
           }
         }
         else {
@@ -682,11 +666,12 @@ public final class Mappings {
     }
 
     boolean isFieldVisible(final int className, final FieldRepr field) {
-      final Iterable<ClassRepr> reprs = reprsByName(className, ClassRepr.class);
-      if (Iterators.isEmpty(reprs)) {
+      final Iterator<ClassRepr> reprs = reprsByName(className, ClassRepr.class).iterator();
+      if (!reprs.hasNext()) {
         return true;
       }
-      for (ClassRepr r : reprs) {
+      while (reprs.hasNext()) {
+        ClassRepr r = reprs.next();
         if (r.getFields().contains(field)) {
           return true;
         }
@@ -968,7 +953,7 @@ public final class Mappings {
 
   private static boolean isVisibleIn(final ClassRepr c, final ProtoMember m, final ClassRepr scope) {
     final boolean privacy = m.isPrivate() && c.name != scope.name;
-    final boolean packageLocality = m.isPackageLocal() && !c.getPackageName().equals(scope.getPackageName());
+    final boolean packageLocality = m.isPackageLocal() && !Objects.equals(c.getPackageName(), scope.getPackageName());
     return !privacy && !packageLocality;
   }
 
@@ -1299,7 +1284,7 @@ public final class Mappings {
           }
 
           getAllSubclasses(it.name).forEach(subClass -> {
-            Iterable<ClassRepr> reprs = myFuture.reprsByName(subClass, ClassRepr.class);
+            Iterable<ClassRepr> reprs = Iterators.collect(myFuture.reprsByName(subClass, ClassRepr.class), new SmartList<>());
             if (Iterators.isEmpty(reprs)) {
               return;
             }
@@ -1682,7 +1667,7 @@ public final class Mappings {
 
         if (!f.isPrivate()) {
           getAllSubclasses(classRepr.name).forEach(subClass -> {
-            final Iterable<ClassRepr> reprs = myFuture.reprsByName(subClass, ClassRepr.class);
+            final Iterable<ClassRepr> reprs = Iterators.collect(myFuture.reprsByName(subClass, ClassRepr.class), new SmartList<>());
             if (!Iterators.isEmpty(reprs)) {
               final Iterable<File> sourceFileNames = classToSourceFileGet(subClass);
               if (sourceFileNames != null && !containsAll(myCompiledFiles, sourceFileNames)) {
