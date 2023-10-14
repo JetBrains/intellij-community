@@ -2,26 +2,53 @@
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.DiffToolType;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 
-final class PatchDiffTool implements FrameDiffTool {
-  @NotNull
-  @Override
-  public String getName() {
-    return VcsBundle.message("patch.content.viewer.name");
+final class PatchDiffTool {
+  static class Unified implements FrameDiffTool {
+    @NotNull
+    @Override
+    public String getName() {
+      return VcsBundle.message("patch.content.viewer.name");
+    }
+
+    @Override
+    public boolean canShow(@NotNull DiffContext context, @NotNull DiffRequest request) {
+      return request instanceof PatchDiffRequest;
+    }
+
+    @NotNull
+    @Override
+    public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
+      return new PatchDiffViewer(context, (PatchDiffRequest)request);
+    }
+
+    @Override
+    public @NotNull DiffToolType getToolType() {
+      return DiffToolType.Unified.INSTANCE;
+    }
   }
 
-  @Override
-  public boolean canShow(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return request instanceof PatchDiffRequest;
-  }
+  static class SideBySide implements FrameDiffTool {
+    @NotNull
+    @Override
+    public String getName() {
+      return VcsBundle.message("patch.content.viewer.side.by.side.name");
+    }
 
-  @NotNull
-  @Override
-  public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return new PatchDiffViewer(context, (PatchDiffRequest)request);
+    @Override
+    public boolean canShow(@NotNull DiffContext context, @NotNull DiffRequest request) {
+      return request instanceof PatchDiffRequest;
+    }
+
+    @NotNull
+    @Override
+    public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
+      return new SideBySidePatchDiffViewer(context, (PatchDiffRequest)request);
+    }
   }
 }

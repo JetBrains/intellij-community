@@ -1292,6 +1292,13 @@ public final class DiffUtil {
   }
 
   @NotNull
+  public static TextDiffType getDiffType(@NotNull Range range) {
+    boolean left = range.start1 != range.end1;
+    boolean right = range.start2 != range.end2;
+    return getDiffType(left, right);
+  }
+
+  @NotNull
   public static TextDiffType getDiffType(boolean hasDeleted, boolean hasInserted) {
     if (hasDeleted && hasInserted) {
       return TextDiffType.MODIFIED;
