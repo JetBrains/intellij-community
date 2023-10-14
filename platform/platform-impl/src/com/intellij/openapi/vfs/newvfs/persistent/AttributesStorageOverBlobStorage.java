@@ -201,8 +201,12 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     try {
       storage.readRecord(attributeRecordId, buffer -> {
         AttributesRecord attributesRecord = new AttributesRecord(buffer);
-        assert attributesRecord.backRefFileId == fileId : "record(" + attributeRecordId + ").fileId(" + fileId + ")" +
-                                                          " != backref fileId(" + attributesRecord.backRefFileId + ")";
+        if (attributesRecord.backRefFileId != fileId) {
+          throw new IllegalStateException(
+            "record(" + attributeRecordId + ").fileId(" + fileId + ") != backref fileId(" + attributesRecord.backRefFileId + ")" +
+            attributesRecord
+          );
+        }
         int entryNo = 0;
         for (AttributeEntry entry = attributesRecord.currentEntry();
              entry.isValid();
