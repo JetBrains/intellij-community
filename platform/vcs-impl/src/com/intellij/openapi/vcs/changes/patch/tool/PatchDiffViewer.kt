@@ -97,9 +97,7 @@ internal class PatchDiffViewer(private val diffContext: DiffContext,
     if (CommonDataKeys.PROJECT.`is`(dataId)) return project
     if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.`is`(dataId)) return prevNextDifferenceIterable
     if (DiffDataKeys.CURRENT_EDITOR.`is`(dataId)) return editor
-    if (DiffDataKeys.CURRENT_CHANGE_RANGE.`is`(dataId)) {
-      return prevNextDifferenceIterable.getHunkRangeByLine(editor.getCaretModel().logicalPosition.line)
-    }
+    if (DiffDataKeys.CURRENT_CHANGE_RANGE.`is`(dataId)) return prevNextDifferenceIterable.currentLineRange
     return null
   }
 
@@ -113,18 +111,6 @@ internal class PatchDiffViewer(private val diffContext: DiffContext,
 
     override fun getEndLine(change: Hunk): Int {
       return change.patchInsertionRange.end
-    }
-
-    fun getHunkRangeByLine(line: Int): LineRange? {
-      for (hunk in changes) {
-        val start = getStartLine(hunk)
-        val end = getEndLine(hunk)
-        if (start <= line && end > line) {
-          return LineRange(start, end)
-        }
-        if (start > line) return null
-      }
-      return null
     }
   }
 }
