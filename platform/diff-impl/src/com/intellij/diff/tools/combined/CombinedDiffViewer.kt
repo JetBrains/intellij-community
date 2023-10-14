@@ -450,7 +450,7 @@ class CombinedDiffViewer(
 
   private fun getCurrentDataProvider(): DataProvider? {
     val currentDiffViewer = getCurrentDiffViewer()
-    if (currentDiffViewer is DiffViewerBase) {
+    if (currentDiffViewer is DataProvider) {
       return currentDiffViewer
     }
 

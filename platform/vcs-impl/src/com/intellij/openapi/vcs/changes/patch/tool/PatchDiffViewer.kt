@@ -5,12 +5,14 @@ import com.intellij.diff.DiffContext
 import com.intellij.diff.EditorDiffViewer
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
+import com.intellij.diff.tools.holders.EditorHolder
+import com.intellij.diff.tools.holders.TextEditorHolder
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.PrevNextDifferenceIterableBase
 import com.intellij.diff.tools.util.SimpleDiffPanel
+import com.intellij.diff.tools.util.side.OnesideContentPanel
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
-import com.intellij.diff.util.LineRange
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.runWriteAction
@@ -20,12 +22,11 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder.Companion.computeInnerDifferences
 import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder.Hunk
-import com.intellij.ui.components.panels.Wrapper
 import it.unimi.dsi.fastutil.ints.IntConsumer
 import org.jetbrains.annotations.NonNls
-import java.awt.BorderLayout
 import javax.swing.JComponent
 
 internal class PatchDiffViewer(private val diffContext: DiffContext,
@@ -34,21 +35,23 @@ internal class PatchDiffViewer(private val diffContext: DiffContext,
 
   private val panel: SimpleDiffPanel
   private val editor: EditorEx
+  private val editorHolder: EditorHolder
 
   private val prevNextDifferenceIterable: MyPrevNextDifferenceIterable
 
-  private val hunks: MutableList<Hunk> = ArrayList()
+  private var hunks: List<Hunk> = mutableListOf()
 
   init {
     val document = EditorFactory.getInstance().createDocument("")
     editor = DiffUtil.createEditor(document, project, true, true)
+    DiffUtil.setEditorCodeStyle(project, editor, null)
 
-    val editorPanel = Wrapper(BorderLayout(0, DiffUtil.TITLE_GAP.get()), editor.getComponent())
+    editorHolder = TextEditorHolder(project, editor)
+
     val panelTitle = diffRequest.panelTitle
-    if (panelTitle != null) {
-      editorPanel.add(DiffUtil.createTitle(panelTitle), BorderLayout.NORTH)
-    }
-    panel = SimpleDiffPanel(editorPanel, this, diffContext)
+    val contentPanel = OnesideContentPanel.createFromHolder(editorHolder)
+    contentPanel.setTitle(DiffUtil.createTitle(panelTitle))
+    panel = SimpleDiffPanel(contentPanel, this, diffContext)
 
     prevNextDifferenceIterable = MyPrevNextDifferenceIterable()
   }
@@ -66,12 +69,12 @@ internal class PatchDiffViewer(private val diffContext: DiffContext,
   }
 
   override fun dispose() {
-    EditorFactory.getInstance().releaseEditor(editor)
+    Disposer.dispose(editorHolder)
   }
 
   private fun onInit() {
     val state = PatchChangeBuilder().build(diffRequest.patch.hunks)
-    hunks.addAll(state.hunks)
+    hunks = state.hunks
 
     val patchDocument: Document = editor.getDocument()
     runWriteAction { patchDocument.setText(state.patchContent.toString()) }
