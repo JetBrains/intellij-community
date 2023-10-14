@@ -201,33 +201,56 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     try {
       storage.readRecord(attributeRecordId, buffer -> {
         AttributesRecord attributesRecord = new AttributesRecord(buffer);
-        if (attributesRecord.backRefFileId != fileId) {
+        if (!attributesRecord.isValid()) {
           throw new IllegalStateException(
-            "record(" + attributeRecordId + ").fileId(" + fileId + ") != backref fileId(" + attributesRecord.backRefFileId + ")" +
-            attributesRecord
+            "record(" + attributeRecordId + ") is invalid: " + attributesRecord
           );
         }
-        int entryNo = 0;
-        for (AttributeEntry entry = attributesRecord.currentEntry();
-             entry.isValid();
-             entry.moveToNextEntry(), entryNo++) {
-          int attributeId = entry.attributeId();
-          if (entry.isValueInlined()) {
-            if (attributeId <= DataEnumerator.NULL_ID || attributeId > MAX_SUPPORTED_ATTRIBUTE_ID) {
-              String valueAsHex = IOUtil.toHexString(entry.inlinedValueAsSlice());
-              throw new IllegalStateException(
-                "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
-                "{attributeId: " + attributeId + ", value: " + valueAsHex + "} attributeId must be in [1.." + MAX_ATTRIBUTE_ID + "]");
+        if (attributesRecord.fileId() != fileId) {
+          throw new IllegalStateException(
+            "record(" + attributeRecordId + ").fileId(" + fileId + ") != backref fileId(" + attributesRecord.fileId() + ")" +
+            ": " + attributesRecord
+          );
+        }
+
+        if (attributesRecord.hasDirectory()) {
+          int entryNo = 0;
+          for (AttributeEntry entry = attributesRecord.currentEntry();
+               entry.isValid();
+               entry.moveToNextEntry(), entryNo++) {
+            int attributeId = entry.attributeId();
+            if (entry.isValueInlined()) {
+              if (attributeId <= DataEnumerator.NULL_ID || attributeId > MAX_SUPPORTED_ATTRIBUTE_ID) {
+                String valueAsHex = IOUtil.toHexString(entry.inlinedValueAsSlice());
+                throw new IllegalStateException(
+                  "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
+                  "{attributeId: " + attributeId + ", value: " + valueAsHex + "} attributeId must be in [1.." + MAX_ATTRIBUTE_ID + "]");
+              }
+            }
+            else {
+              int dedicatedRecordId = entry.dedicatedValueRecordId();
+              if (!storage.hasRecord(dedicatedRecordId)) {
+                throw new IllegalStateException(
+                  "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
+                  "{attributeId: " + attributeId + ", dedicatedId: " + dedicatedRecordId + "} dedicatedId must be != 0");
+              }
             }
           }
-          else {
-            int dedicatedRecordId = entry.dedicatedValueRecordId();
-            if (!storage.hasRecord(dedicatedRecordId)) {
-              throw new IllegalStateException(
-                "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
-                "{attributeId: " + attributeId + ", dedicatedId: " + dedicatedRecordId + "} dedicatedId must be != 0");
-            }
-          }
+        }
+        else if (attributesRecord.hasDedicatedAttribute()) {
+          int attributeId = attributesRecord.dedicatedRecordAttributeId();
+          throw new IllegalStateException(
+            "attributeRecord[id:" + attributeRecordId + "]{attributeId: " + attributeId + "} " +
+            "is dedicated record, but must be a directory record" +
+            ": " + attributesRecord
+          );
+        }
+        else {//AssertionError because it must be covered by !isValid() branch above
+          throw new AssertionError(
+            "attributeRecord[id:" + attributeRecordId + "] " +
+            "is of unknown type (!directory & !dedicated) record" +
+            ": " + attributesRecord
+          );
         }
         return null;
       });
@@ -382,7 +405,15 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
       }
     }
 
-    int fileId() {
+    /**
+     * @return true if the record is one of valid types: either directory or dedicated.
+     * false otherwise: if it is empty (length=0), or some kind of broken/corrupted record
+     */
+    public boolean isValid() {
+      return hasDirectory() || hasDedicatedAttribute();
+    }
+
+    public int fileId() {
       return backRefFileId;
     }
 
