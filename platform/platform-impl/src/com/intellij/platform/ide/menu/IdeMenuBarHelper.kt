@@ -17,12 +17,17 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import java.awt.Dialog
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
@@ -54,6 +59,8 @@ internal interface IdeMenuFlavor {
   fun suspendAnimator() {}
 }
 
+private val LOG = logger<IdeMenuBarHelper>()
+
 internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
                                        @JvmField val menuBar: MenuBarImpl) : ActionAwareIdeMenuBar {
   protected abstract fun isUpdateForbidden(): Boolean
@@ -80,45 +87,47 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
   init {
     val app = ApplicationManager.getApplication()
     val coroutineScope = menuBar.coroutineScope
-    @Suppress("IfThenToSafeAccess")
     if (app != null) {
       app.messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener {
-        check(updateRequests.tryEmit(true))
+        updateMenuActions(true)
       })
     }
-
-    coroutineScope.launch(ModalityState.any().asContextElement()) {
-      withContext(if (StartUpMeasurer.isEnabled()) (rootTask() + CoroutineName("ide menu bar actions init")) else EmptyCoroutineContext) {
-        val actions = expandMainActionGroup(true)
-        doUpdateVisibleActions(actions, false)
-        postInitActions(actions)
+    val initJob = coroutineScope.launch(
+      (if (StartUpMeasurer.isEnabled()) (rootTask() + CoroutineName("ide menu bar actions init"))
+      else EmptyCoroutineContext) + Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val actions = expandMainActionGroup(true)
+      doUpdateVisibleActions(actions, false)
+      postInitActions(actions)
+    }
+    initJob.invokeOnCompletion { error ->
+      if (error != null) {
+        LOG.info("First menu bar update failed with $error")
       }
-
-      val actionManager = serviceAsync<ActionManager>()
-      if (actionManager is ActionManagerEx) {
-        coroutineScope.launch {
-          actionManager.timerEvents.collect {
-            updateOnTimer()
-          }
+    }
+    coroutineScope.launch {
+      initJob.join()
+      val timerEvents = (serviceAsync<ActionManager>() as? ActionManagerEx)?.timerEvents ?: emptyFlow()
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        timerEvents.collect {
+          runCatching {
+            updateMenuActions(false)
+          }.getOrLogException(LOG, true)
         }
       }
-
-      val lastUpdate = AtomicLong(System.currentTimeMillis())
-      updateRequests
-        .collect { forceRebuild ->
-          // as ActionManagerImpl TIMER_DELAY
-          if ((System.currentTimeMillis() - lastUpdate.get()) < 500) {
-            return@collect
-          }
-
-          if (!withContext(Dispatchers.EDT) { filterUpdate() }) {
-            return@collect
-          }
-
-          presentationFactory.reset()
-          doUpdateVisibleActions(expandMainActionGroup(false), forceRebuild)
-          lastUpdate.set(System.currentTimeMillis())
+    }
+    coroutineScope.launch {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val lastUpdate = AtomicLong(System.nanoTime())
+        updateRequests.collect { forceRebuild ->
+          runCatching {
+            if (TimeoutUtil.getDurationMillis(lastUpdate.get()) > 500 && canUpdate()) {
+              presentationFactory.reset()
+              doUpdateVisibleActions(expandMainActionGroup(false), forceRebuild)
+              lastUpdate.set(System.nanoTime())
+            }
+          }.getOrLogException(LOG, true)
         }
+      }
     }
   }
 
@@ -127,7 +136,8 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     return expandMainActionGroup(mainActionGroup, menuBar.component, menuBar.frame, presentationFactory, isFirstUpdate)
   }
 
-  private fun filterUpdate(): Boolean {
+  private fun canUpdate(): Boolean {
+    ThreadingAssertions.assertEventDispatchThread()
     if (!menuBar.frame.isShowing || !menuBar.frame.isActive) {
       return false
     }
@@ -143,28 +153,22 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     return window !is Dialog || !window.isModal
   }
 
-  private suspend fun updateOnTimer() {
-    withContext(Dispatchers.EDT) {
-      // don't update the toolbar if there is currently active modal dialog
-      val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
-      if (window !is Dialog || !window.isModal) {
-        updateRequests.emit(false)
-      }
-    }
-  }
-
+  @RequiresEdt
   final override fun updateMenuActions(forceRebuild: Boolean) {
+    if (forceRebuild && LOG.isDebugEnabled) {
+      LOG.debug(Throwable("Force rebuild menu bar"))
+    }
     check(updateRequests.tryEmit(forceRebuild))
   }
 
+  @RequiresEdt
   protected open suspend fun postInitActions(actions: List<ActionGroup>) {
-    withContext(Dispatchers.EDT) {
-      for (action in actions) {
-        PopupMenuPreloader.install(menuBar.component, ActionPlaces.MAIN_MENU, null) { action }
-      }
+    for (action in actions) {
+      PopupMenuPreloader.install(menuBar.component, ActionPlaces.MAIN_MENU, null) { action }
     }
   }
 
+  @RequiresEdt
   abstract suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean)
 }
 
@@ -173,21 +177,14 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                           frame: JFrame,
                                           presentationFactory: PresentationFactory,
                                           isFirstUpdate: Boolean): List<ActionGroup> {
-  try {
+  ThreadingAssertions.assertEventDispatchThread()
+  return withContext(CoroutineName("expandMainActionGroup")) {
     val windowManager = serviceAsync<WindowManager>()
-    return withContext(Dispatchers.EDT + CoroutineName("expandMainActionGroup")) {
-      val targetComponent = windowManager.getFocusedComponent(frame) ?: menuBar
-      val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
-      Utils.expandActionGroupSuspend(mainActionGroup, presentationFactory, dataContext,
-                                     ActionPlaces.MAIN_MENU, false, isFirstUpdate)
-    }.filterIsInstance<ActionGroup>()
-  }
-  catch (e: CancellationException) {
-    if (isFirstUpdate) {
-      logger<IdeMenuBarHelper>().warn("Cannot expand menu action group the first time")
-    }
-    throw e
-  }
+    val targetComponent = windowManager.getFocusedComponent(frame) ?: menuBar
+    val dataContext = DataManager.getInstance().getDataContext(targetComponent)
+    Utils.expandActionGroupSuspend(mainActionGroup, presentationFactory, dataContext,
+                                   ActionPlaces.MAIN_MENU, false, isFirstUpdate)
+  }.filterIsInstance<ActionGroup>()
 }
 
 internal suspend fun getAndWrapMainMenuActionGroup(): ActionGroup? {
