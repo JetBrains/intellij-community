@@ -3,7 +3,9 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageHelper;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.NotClosedProperlyRecoverer;
 import com.intellij.testFramework.TemporaryDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -59,6 +61,8 @@ public class VFSCorruptionRecoveryTest {
       .map(path -> path.getFileName().toString())
       .toList();
   }
+
+  //================ Generic corruptions/inconsistency detection:
 
   @Test
   public void VFS_init_WithDefaultRecoverers_Fails_If_FileHeaderCorrupted() throws Exception {
@@ -196,6 +200,77 @@ public class VFSCorruptionRecoveryTest {
   }
 
 
+  //================ Attributes corruption:
+
+  @Test
+  public void VFS_init_WithDefaultRecoverers_Fails_If_AttributeStorageRecordHeaderCorrupted() throws Exception {
+
+    List<String> filesCorruptionsVFSCantOvercome = new ArrayList<>();
+    List<String> filesCorruptionsVFSCantDetect = new ArrayList<>();
+
+    Path cachesDir = temporaryDirectory.createDir();
+
+    setupVFSFillSomeDataAndClose(cachesDir);
+
+    Path fileToCorrupt = Files.list(cachesDir)
+      .filter(path -> Files.isRegularFile(path))
+      .filter(path -> path.getFileName().toString().equals("attributes.dat"))
+      .findFirst().orElse(null);
+    if (fileToCorrupt == null) {
+      fail("Can't corrupt[attributes.dat] -- there is no such file amongst \n" + Files.list(cachesDir).toList());
+    }
+
+    corruptAttributeRecord(fileToCorrupt);
+
+    try {
+      //try reopen:
+      FSRecordsImpl vfs = FSRecordsImpl.connect(cachesDir);
+      boolean noRecovery = vfs.connection().recoveryInfo().recoveredErrors.isEmpty();
+      boolean notCreatedAnew = !vfs.initializationResult().vfsCreatedAnew;
+      boolean noFailedAttempts = vfs.initializationResult().attemptsFailures.isEmpty();
+      if (noFailedAttempts && noRecovery && notCreatedAnew) {
+        System.out.println(fileToCorrupt.getFileName() + " corrupted, but VFS init-ed as-if not");
+        filesCorruptionsVFSCantDetect.add(fileToCorrupt.getFileName().toString());
+      }
+      vfs.close();
+    }
+    catch (Throwable t) {
+      System.out.println(fileToCorrupt.getFileName() + " corrupted -> " + t);
+      t.printStackTrace();
+      filesCorruptionsVFSCantOvercome.add(fileToCorrupt.getFileName().toString());
+    }
+
+    assertTrue(
+      "VFS init must NOT fail if any of " + filesCorruptionsVFSCantOvercome + " is corrupted",
+      filesCorruptionsVFSCantOvercome.isEmpty()
+    );
+
+    assertTrue(
+      "VFS must detect if any of " + filesCorruptionsVFSCantDetect + " is corrupted",
+      filesCorruptionsVFSCantDetect.isEmpty()
+    );
+  }
+
+  private void corruptAttributeRecord(@NotNull Path attributeStoragePath) throws IOException {
+    ByteBuffer buffer = ByteBuffer.allocate(8);
+    try (SeekableByteChannel channel = Files.newByteChannel(attributeStoragePath, WRITE, READ)) {
+      channel.position(StreamlinedBlobStorageHelper.HeaderLayout.HEADER_SIZE);
+      channel.read(buffer);
+      buffer.putInt(0, buffer.getInt(0) + 1);//field: fileId (backref)
+
+      buffer.rewind();
+
+      channel.position(StreamlinedBlobStorageHelper.HeaderLayout.HEADER_SIZE);
+      channel.write(buffer);
+    }
+    //TODO RC: corrupt attribute record _header_ and check VFS able to detect and recover it
+    //PersistentFSLoader.
+    //new StreamlinedBlobStorageOverMMappedFile()
+  }
+
+
+  //================ NOT_CLOSED_PROPERLY:
+
   @Test
   public void VFS_init_WithoutRecoverers_Fails_If_NotClosedProperly() throws Exception {
     Path cachesDir = temporaryDirectory.createDir();
@@ -223,6 +298,27 @@ public class VFSCorruptionRecoveryTest {
       );
     }
   }
+
+  @Test
+  public void VFS_init_WithNotCloseRecoverer_Succeed_If_NotClosedProperly_AndNoOtherSignsOfErrors() throws Exception {
+    Path cachesDir = temporaryDirectory.createDir();
+
+    setupVFSFillSomeDataAndClose(cachesDir);
+    emulateImproperClose(cachesDir);
+
+    //try reopen with NotClosedProperlyRecoverer():
+    PersistentFSConnection connection = PersistentFSConnector.tryInit(
+      cachesDir,
+      FSRecordsImpl.currentImplementationVersion(),
+      false,
+      Collections.emptyList(),
+      Collections.singletonList(new NotClosedProperlyRecoverer())
+    );
+    PersistentFSConnector.disconnect(connection);
+  }
+
+
+  //================ Content/content hashes inconsistency detection:
 
   @Test
   public void VFS_init_WithContentStoragesRecoverer_DoesntFail_If_ContentHashesStorageFilesRemoved() throws Exception {
