@@ -59,19 +59,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
-import static com.intellij.util.SystemProperties.getBooleanProperty;
-
 @SuppressWarnings("NonDefaultConstructor")
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
-
-
-  /**
-   * Eager VFS saving causes a lot of issues with dispose ordering. So far disable it by default -- until we'll
-   * be able to sort that out.
-   */
-  private static final boolean SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN = getBooleanProperty("PersistentFSImpl.SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN", false);
-  private static final boolean SAVE_VFS_REGULARLY_ON_UNEXPECTED_SHUTDOWN = getBooleanProperty("PersistentFSImpl.SAVE_VFS_REGULARLY_ON_UNEXPECTED_SHUTDOWN", true);
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
@@ -126,23 +116,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     // external signal (i.e. OS demands termination because of reboot), it is worth disposing VFS early, and
     // not waiting for all other services disposed first -- because OS could be impatient, and just kill the
     // app if the termination request not satisfied in 100-200-500ms, and we don't want to leave VFS in inconsistent
-    // state because of that.
-    //
-    //Such an eager closing makes sense for a real application, but in tests it makes more harm than good:
-    // if a test is killed (e.g. by timeout), and VFS is closed _eagerly_ by ShutDownTracker -- there will be
-    // lots of 'Already disposed' exception afterward, because other services are still disposing, and some of
-    // them use VFS on dispose. Such 'Already disposed' exception shadows the real reason of test failure,
-    // and it is painfully confusing and frustrating for people, and confused people blame VFS for nothing,
-    // which is painfully unfair for the VFS team.
-    // To reduce overall pain, suffering and frustration in the world, in tests we shut down VFS with regular
-    // priority, not with eager ('cache') priority.
-
-    if (SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN && !app.isUnitTestMode()) {
-      ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
-    }
-    else if(SAVE_VFS_REGULARLY_ON_UNEXPECTED_SHUTDOWN){
-      ShutDownTracker.getInstance().registerShutdownTask(this::disconnect);
-    }
+    // state because of that. It's absolutely important to shutdown VFS after Indexes eagerly otherwise data might be lost.
+    // Services might throw `AlreadyDisposedException`-s after and we have to suppress those exceptions or wrap with PCE-s.
+    ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
   }
 
   @ApiStatus.Internal
