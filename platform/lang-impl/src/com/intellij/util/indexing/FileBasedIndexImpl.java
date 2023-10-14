@@ -600,6 +600,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         getChangedFilesCollector().clearFilesToUpdate();
         vfsCreationStamp = 0;
 
+        // TODO-ank: Should we catch and ignore CancellationException here to allow other lines to execute?
         IndexingStamp.flushCaches();
         IndexingFlag.unlockAllFiles();
 

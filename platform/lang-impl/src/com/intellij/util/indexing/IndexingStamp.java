@@ -2,12 +2,12 @@
 package com.intellij.util.indexing;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.indexing.impl.perFileVersion.AutoRefreshingOnVfsCloseRef;
 import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -72,13 +72,14 @@ public final class IndexingStamp {
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
 
-  private static volatile IndexingStampStorage storage = createStorage();
+  private static final AutoRefreshingOnVfsCloseRef<IndexingStampStorage> storage =
+    new AutoRefreshingOnVfsCloseRef<>(IndexingStamp::createStorage);
 
   // Read lock is used to flush caches. Write lock is to wait until all threads have finished flushing.
   // This is kind of abuse of RW lock. The goal ot to allow concurrent execution of flushCache(int finishedFile) from different threads.
   private static final ReadWriteLock flushLock = new ReentrantReadWriteLock();
 
-  private static IndexingStampStorage createStorage() {
+  private static IndexingStampStorage createStorage(FSRecordsImpl unused) {
     if (IntFileAttribute.shouldUseFastAttributes()) {
       return new IndexingStampStorageOverFastAttributes();
     }
@@ -103,7 +104,7 @@ public final class IndexingStamp {
   @TestOnly
   public static void dropIndexingTimeStamps(int fileId) throws IOException {
     ourTimestampsCache.remove(fileId);
-    storage.writeTimestamps(fileId, TimestampsImmutable.EMPTY);
+    storage.invoke().writeTimestamps(fileId, TimestampsImmutable.EMPTY);
   }
 
   @NotNull
@@ -116,7 +117,7 @@ public final class IndexingStamp {
     assert id > 0;
     Timestamps timestamps = ourTimestampsCache.get(id);
     if (timestamps == null) {
-      TimestampsImmutable immutable = storage.readTimestamps(id);
+      TimestampsImmutable immutable = storage.invoke().readTimestamps(id);
       if (immutable == null) {
         if (createIfNoneSaved) {
           timestamps = new Timestamps();
@@ -224,7 +225,7 @@ public final class IndexingStamp {
                 //RC: now I don't see the benefits of implementing timestamps write via raw attribute bytebuffer access
                 //    doFlush() is mostly outside the critical path, while implementing timestamps.writeToBuffer(buffer)
                 //    is complicated with all those variable-sized numbers used.
-                storage.writeTimestamps(fileId, timestamp.toImmutable());
+                storage.invoke().writeTimestamps(fileId, timestamp.toImmutable());
               }
               return null;
             }
@@ -248,11 +249,4 @@ public final class IndexingStamp {
   }
 
   private static final StripedLock ourLock = new StripedLock();
-
-  public static void reloadAttributes() {
-    if (storage instanceof IndexingStampStorageOverFastAttributes fastStorage) {
-      Logger.getInstance(IndexingStamp.class).assertTrue(fastStorage.isClosed());
-    }
-    storage = createStorage();
-  }
 }
