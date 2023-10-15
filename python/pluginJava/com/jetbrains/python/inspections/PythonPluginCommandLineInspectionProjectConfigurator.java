@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.facet.FacetManager;
@@ -117,10 +117,6 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
       return;
     }
 
-    configurePythonSdkForAllPythonModules(project, null, logger);
-  }
-
-  static void configurePythonSdkForAllPythonModules(@NotNull Project project, @Nullable Sdk sdk, @Nullable CommandLineInspectionProgressReporter logger) {
     final PythonFacetType facetType = PythonFacetType.getInstance();
     int skippedModules = 0;
     for (Module m : ModuleManager.getInstance(project).getModules()) {
@@ -133,33 +129,24 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
 
       final var facet = facetManager.getFacetByType(facetType.getId());
       if (facet == null) {
-        if (logger != null) {
-          logger.reportMessage(3, "Setting Python facet for: " + m.getName());
-        }
+        logger.reportMessage(3, "Setting Python facet for: " + m.getName());
 
         invokeLaterOnWriteThreadUnderLock(
           () -> {
             final PythonFacet addedFacet = facetManager.addFacet(facetType, facetType.getPresentableName(), null);
-            if (sdk != null) {
-              addedFacet.getConfiguration().setSdk(sdk);
-            }
             PySdkExtKt.excludeInnerVirtualEnv(m, addedFacet.getConfiguration().getSdk());
           }
         );
       }
       else {
-        if (logger != null) {
-          logger.reportMessage(3, "Python facet already here: " + m.getName());
-        }
+        logger.reportMessage(3, "Python facet already here: " + m.getName());
       }
     }
 
-    if (logger != null) {
-      logger.reportMessage(
-        3,
-        "Skipped Python interpreter configuration for " + skippedModules + " module(s) because they don't contain any Python files"
-      );
-    }
+    logger.reportMessage(
+      3,
+      "Skipped Python interpreter configuration for " + skippedModules + " module(s) because they don't contain any Python files"
+    );
   }
 
   private static void invokeLaterOnWriteThreadUnderLock(@NotNull Runnable runnable) {
