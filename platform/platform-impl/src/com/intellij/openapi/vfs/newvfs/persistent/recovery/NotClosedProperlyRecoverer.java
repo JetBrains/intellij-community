@@ -18,9 +18,12 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.FREE
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
 
 /**
- * Knows how to recover {@link ErrorCategory#NOT_CLOSED_PROPERLY} error category
- * If VFS storages weren't closed properly -- they only sensible way to 'fix' it is to scan whole VFS
- * storages and check all consistency invariants.
+ * Knows how to recover {@link ErrorCategory#NOT_CLOSED_PROPERLY} error category:
+ * if VFS storages weren't closed properly -- they only sensible way to 'fix' it is to scan whole VFS
+ * storages and check as many consistency invariants as possible.
+ * This is what the class is doing: scans all file records, and checks the (name, attribute, content)
+ * references are successfully resolved. If they do -- {@link ErrorCategory#NOT_CLOSED_PROPERLY}
+ * is 'fixed', otherwise appropriate errors are escalated.
  */
 public class NotClosedProperlyRecoverer implements VFSRecoverer {
   private final static Logger LOG = Logger.getInstance(NotClosedProperlyRecoverer.class);
@@ -45,11 +48,12 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
                                       accumulatedErrors + " errors accumulated in previous session -- too dangerous to recover");
       }
 
-      int notFixedNamesEnumeratorErrors = 0;
-      int notFixedContentEnumeratorErrors = 0;
-
+      int namesEnumeratorErrors = 0;
+      int attributesStorageErrors = 0;
+      int contentEnumeratorErrors = 0;
       int maxAllocatedID = records.maxAllocatedID();
-      //Very similar to VFSHealthChecker checks, but with fixes, if possible:
+
+      //Subset of VFSHealthChecker checks:
       for (int fileId = FSRecords.MIN_REGULAR_FILE_ID; fileId <= maxAllocatedID; fileId++) {
         int flags = records.getFlags(fileId);
         if (PersistentFSRecordAccessor.hasDeletedFlag(flags)) {
@@ -62,57 +66,64 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
         int attributeRecordId = records.getAttributeRecordId(fileId);
 
         if (nameId == DataEnumerator.NULL_ID) {
+          LOG.warn("[fileId: #" + fileId + "]: nameId=NULL -> remove the file record and schedule file refresh");
           //remove file & schedule its invalidation, schedule parent for refresh:
           records.setFlags(fileId, flags | FREE_RECORD_FLAG);
           loader.postponeFileInvalidation(fileId);
           loader.postponeDirectoryRefresh(parentId);
         }
         else if (!nameResolvedSuccessfully(fileId, nameId, namesEnumerator)) {
-          notFixedNamesEnumeratorErrors++;
+          namesEnumeratorErrors++;
         }
-
-        try {
-          attributesStorage.checkAttributeRecordSanity(fileId, attributeRecordId);
-        }
-        catch (Throwable t) {
-          LOG.warn("[fileId: #" + fileId + "]: failing to read attributes -> postpone file refresh", t);
-          //Clean broken attributes record: ideally we need to delete broken record first, but it is
-          // not always possible (i.e. if record _header_ is corrupted -- we just don't know ).
-          // So we just clean the attributeRefId, and schedule file refresh
-          records.setAttributeRecordId(fileId, AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID);
-
-          loader.postponeFileInvalidation(fileId);
-          loader.postponeDirectoryRefresh(parentId);
+        if (!attributeRecordIsValid(fileId, attributeRecordId, attributesStorage)) {
+          attributesStorageErrors++;
         }
 
         if (contentId != DataEnumerator.NULL_ID) {
           if (!contentResolvedSuccessfully(fileId, contentId, contentStorage, contentHashEnumerator)) {
-            notFixedContentEnumeratorErrors++;
+            contentEnumeratorErrors++;
           }
         }//else: it is OK for contentId to be NULL
       }
 
-      if (notFixedContentEnumeratorErrors == 0 && notFixedNamesEnumeratorErrors == 0) {
+      if (namesEnumeratorErrors == 0 && attributesStorageErrors == 0 && contentEnumeratorErrors == 0) {
         loader.problemsWereRecovered(notClosedProperlyErrors);
         return;
       }
 
-      if (notFixedContentEnumeratorErrors > 0) {
-        loader.problemsRecoveryFailed(notClosedProperlyErrors,
-                                      CONTENT_STORAGES_INCOMPLETE,
-                                      notFixedContentEnumeratorErrors + " contentIds are not resolved");
-      }
-      
-      if (notFixedNamesEnumeratorErrors > 0) {
+      if (namesEnumeratorErrors > 0) {
         loader.problemsRecoveryFailed(notClosedProperlyErrors,
                                       NAME_STORAGE_INCOMPLETE,
                                       namesEnumerator + " nameIds are not resolved");
+      }
+      if (attributesStorageErrors > 0) {
+        loader.problemsRecoveryFailed(notClosedProperlyErrors,
+                                      ATTRIBUTES_STORAGE_CORRUPTED,
+                                      attributesStorageErrors + " attributeRecordIds are unreadable");
+      }
+      if (contentEnumeratorErrors > 0) {
+        loader.problemsRecoveryFailed(notClosedProperlyErrors,
+                                      CONTENT_STORAGES_INCOMPLETE,
+                                      contentEnumeratorErrors + " contentIds are not resolved");
       }
     }
     catch (Throwable t) {
       loader.problemsRecoveryFailed(notClosedProperlyErrors,
                                     UNRECOGNIZED,
                                     "Unexpected error during VFS consistency scan", t);
+    }
+  }
+
+  private static boolean attributeRecordIsValid(int fileId,
+                                                int attributeRecordId,
+                                                @NotNull AbstractAttributesStorage attributesStorage) throws IOException {
+    try {
+      attributesStorage.checkAttributeRecordSanity(fileId, attributeRecordId);
+      return true;
+    }
+    catch (Throwable t) {
+      LOG.warn("[fileId: #" + fileId + "]: failing to read attributes. " + t.getMessage());
+      return false;
     }
   }
 
@@ -131,7 +142,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
       return true;
     }
     catch (IOException e) {
-      LOG.trace("file[#" + fileId + "]: contentId(=" + contentId + ") fails to resolve. " + e.getMessage());
+      LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") fails to resolve. " + e.getMessage());
       return false;
     }
   }
@@ -153,7 +164,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
       return true;
     }
     catch (IOException e) {
-      LOG.trace("file[#" + fileId + "]: nameId(=" + nameId + ") fails to resolve. " + e.getMessage());
+      LOG.warn("file[#" + fileId + "]: nameId(=" + nameId + ") fails to resolve. " + e.getMessage());
       return false;
     }
   }
