@@ -398,7 +398,7 @@ public final class Mappings {
         if (!Iterators.isEmpty(reprs)) {
           Iterable<Pair<MethodRepr, ClassRepr>> overriding = Iterators.flat(Iterators.map(
             reprs,
-            r -> Iterators.filter(Iterators.map(r.findMethods(predicate), mm -> isVisibleIn(fromClass, m, r)? Pair.create(mm, r) : null), Iterators.notNullFilter()))
+            r -> isVisibleIn(fromClass, m, r)? Iterators.map(r.findMethods(predicate), mm -> Pair.create(mm, r)) : Collections.emptyList())
           );
 
           Set<ClassRepr> found = new SmartHashSet<>();
