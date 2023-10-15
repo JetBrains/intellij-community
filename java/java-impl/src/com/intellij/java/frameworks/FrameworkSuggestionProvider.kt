@@ -51,7 +51,7 @@ internal class FrameworkSuggestionProvider : PluginSuggestionProvider {
 
 private class FrameworkPluginSuggestion(val project: Project, val framework: Framework) : Function<FileEditor, EditorNotificationPanel?> {
   override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
-    val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
+    val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Promo)
     panel.text = IdeBundle.message("plugins.advertiser.framework.supported.in.ultimate", framework.name, ideaUltimate.name)
 
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate", ideaUltimate.name)) {
@@ -78,7 +78,7 @@ private fun detectFramework(module: Module): Framework? {
   }
 }
 
-private const val FRAMEWORK_SUGGESTION_DISMISSED_PREFIX: String = "framework.suggestion.dismissed."
+private const val FRAMEWORK_SUGGESTION_DISMISSED_PREFIX: String = "promo.framework.suggestion.dismissed."
 
 private fun dismissPluginSuggestion(framework: Framework) {
   PropertiesComponent.getInstance().setValue(FRAMEWORK_SUGGESTION_DISMISSED_PREFIX + framework.key, true)

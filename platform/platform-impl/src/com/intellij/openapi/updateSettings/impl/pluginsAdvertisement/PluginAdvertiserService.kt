@@ -41,7 +41,7 @@ sealed interface PluginAdvertiserService {
     @JvmStatic
     fun getInstance(project: Project): PluginAdvertiserService = project.service()
 
-    internal fun isCommunityIde(): Boolean {
+    fun isCommunityIde(): Boolean {
       val thisProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
       return getSuggestedCommercialIdeCode(thisProductCode) != null
     }

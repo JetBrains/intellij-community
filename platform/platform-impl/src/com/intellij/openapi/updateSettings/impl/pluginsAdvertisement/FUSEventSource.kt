@@ -25,7 +25,7 @@ private val GROUP = EventLogGroup(
 private val SOURCE_FIELD = EventFields.Enum(
   "source",
   FUSEventSource::class.java,
-) { it.name.toLowerCase(ROOT) }
+) { it.name.lowercase(ROOT) }
 
 private val CONFIGURE_PLUGINS_EVENT = GROUP.registerEvent(
   "configure.plugins",

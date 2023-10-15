@@ -998,6 +998,11 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon Rec = load("profiler/rec.svg", 234446029, 2);
   }
 
+  public static final class Promo {
+    /** 16x16 */ public static final @NotNull Icon Lock = load("promo/lock.svg", 26662807, 2);
+    /** 16x16 */ public static final @NotNull Icon LockWhite = load("promo/lockWhite.svg", -1751542808, 0);
+  }
+
   public static final class Providers {
     /** 16x16 */ public static final @NotNull Icon Apache = load("providers/apache.svg", 506477099, 2);
     /** 16x16 */ public static final @NotNull Icon ApacheDerby = load("providers/apacheDerby.svg", -382238547, 2);

@@ -654,7 +654,8 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     Info(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, AllIcons.General.BalloonInformation),
     Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, AllIcons.Debugger.ThreadStates.Idle),
     Warning(JBUI.CurrentTheme.Banner.WARNING_BACKGROUND, JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, AllIcons.General.BalloonWarning),
-    Error(JBUI.CurrentTheme.Banner.ERROR_BACKGROUND, JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR, AllIcons.General.BalloonError);
+    Error(JBUI.CurrentTheme.Banner.ERROR_BACKGROUND, JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR, AllIcons.General.BalloonError),
+    Promo(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, AllIcons.Promo.Lock);
 
     final Color background;
     final Color border;
