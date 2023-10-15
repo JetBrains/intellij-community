@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import java.util.Locale.ROOT
 
 class PluginAdvertiserUsageCollector : CounterUsagesCollector() {
@@ -66,6 +65,7 @@ private val OPEN_DOWNLOAD_PAGE_EVENT = GROUP.registerEvent(
 private val LEARN_MORE_EVENT = GROUP.registerEvent(
   "learn.more",
   SOURCE_FIELD,
+  PLUGIN_FIELD
 )
 
 private val IGNORE_EXTENSIONS_EVENT = GROUP.registerEvent(
@@ -114,7 +114,13 @@ enum class FUSEventSource {
   @JvmOverloads
   fun learnMoreAndLog(project: Project? = null) {
     BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://www.jetbrains.com/products.html#type=ide"))
-    LEARN_MORE_EVENT.log(project, this)
+    LEARN_MORE_EVENT.log(project, this, null)
+  }
+
+  @JvmOverloads
+  fun learnMoreAndLog(project: Project? = null, url: String, pluginId: PluginId?) {
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
+    LEARN_MORE_EVENT.log(project, this, pluginId?.idString)
   }
 
   @JvmOverloads

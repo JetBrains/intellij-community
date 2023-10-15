@@ -5,7 +5,7 @@
     <applicationConfigurable id="promo.database"
                              groupId="tools"
                              provider="com.intellij.ide.ultimatepromo.PromoDatabaseConfigurableProvider"
-                             bundle="messages.JavaUiBundle"
+                             bundle="messages.FeaturePromoBundle"
                              key="promo.configurable.database"/>
   </extensions>
 

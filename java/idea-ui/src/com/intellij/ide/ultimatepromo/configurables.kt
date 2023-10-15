@@ -2,23 +2,49 @@
 package com.intellij.ide.ultimatepromo
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.JavaUiBundle
+import com.intellij.java.ui.icons.JavaUIIcons
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.ConfigurableWithId
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
 import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.JPanel
+
+internal class PromoDatabaseConfigurableProvider : ConfigurableProvider() {
+  override fun createConfigurable(): Configurable = PromoDatabaseConfigurable()
+}
 
 internal class PromoDatabaseConfigurable : ConfigurableWithId, Configurable.Promo {
   override fun getId(): String = "promo.database"
 
   override fun getDisplayName(): String {
-    return JavaUiBundle.message("promo.configurable.database")
+    return FeaturePromoBundle.message("promo.configurable.database")
   }
 
   override fun createComponent(): JComponent {
-    return JPanel()
+    return PromoPages.build(
+      PromoFeaturePage(
+        JavaUIIcons.IdeaUltimatePromo,
+        PluginAdvertiserService.ideaUltimate,
+        FeaturePromoBundle.message("feature.database.description.html"),
+        listOf(
+          PromoFeatureListItem(
+            AllIcons.Nodes.DataTables,
+            FeaturePromoBundle.message("feature.database.create.and.manage")
+          ),
+          PromoFeatureListItem(
+            AllIcons.Actions.Run_anything,
+            FeaturePromoBundle.message("feature.database.run")
+          ),
+          PromoFeatureListItem(
+            AllIcons.ToolbarDecorator.Import,
+            FeaturePromoBundle.message("feature.database.export")
+          )
+        ),
+        FeaturePromoBundle.message("free.trial.hint"),
+        "com.intellij.database"
+      )
+    )
   }
 
   override fun isModified(): Boolean = false
@@ -27,8 +53,4 @@ internal class PromoDatabaseConfigurable : ConfigurableWithId, Configurable.Prom
   }
 
   override fun getPromoIcon(): Icon = AllIcons.Promo.Lock
-}
-
-internal class PromoDatabaseConfigurableProvider : ConfigurableProvider() {
-  override fun createConfigurable(): Configurable = PromoDatabaseConfigurable()
 }

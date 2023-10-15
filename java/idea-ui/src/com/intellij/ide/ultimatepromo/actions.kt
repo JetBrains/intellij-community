@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ultimatepromo
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.PromoAction
+import com.intellij.java.ui.icons.JavaUIIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -13,7 +13,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import javax.swing.Icon
 
 internal abstract class UltimatePromoAction(private val pluginId: String): AnAction(), PromoAction {
-  override fun getPromotedProductIcon(): Icon = AllIcons.Nodes.EnterpriseProject
+  override fun getPromotedProductIcon(): Icon = JavaUIIcons.IdeaUltimatePromoSmall
   override fun getPromotedProductTitle(): String = PluginAdvertiserService.ideaUltimate.name
   override fun getCallToAction(): String = IdeBundle.message("plugin.advertiser.free.trial.action")
 
