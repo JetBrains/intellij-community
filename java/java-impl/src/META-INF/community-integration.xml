@@ -1,39 +1,45 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <pluginSuggestionProvider implementation="com.intellij.java.frameworks.FrameworkSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="com.intellij.ide.ultimatepromo.FrameworkSuggestionProvider"/>
+
+    <applicationConfigurable id="promo.database"
+                             groupId="tools"
+                             provider="com.intellij.ide.ultimatepromo.PromoDatabaseConfigurableProvider"
+                             bundle="messages.JavaUiBundle"
+                             key="promo.configurable.database"/>
   </extensions>
 
   <actions resource-bundle="messages.JavaUiBundle">
     <action id="PromoSpring"
-            class="com.intellij.java.frameworks.PromoSpringAction"
+            class="com.intellij.ide.ultimatepromo.PromoSpringAction"
             icon="AllIcons.Promo.Lock"/>
 
     <action id="PromoBeans"
-            class="com.intellij.java.frameworks.PromoBeansAction"
+            class="com.intellij.ide.ultimatepromo.PromoBeansAction"
             icon="AllIcons.Promo.Lock"/>
 
     <action id="PromoPersistence"
-            class="com.intellij.java.frameworks.PromoPersistenceAction"
+            class="com.intellij.ide.ultimatepromo.PromoPersistenceAction"
             icon="AllIcons.Promo.Lock"/>
 
     <action id="PromoEndpoints"
-            class="com.intellij.java.frameworks.PromoEndpointsAction"
+            class="com.intellij.ide.ultimatepromo.PromoEndpointsAction"
             icon="AllIcons.Promo.Lock"/>
 
     <action id="PromoDatabase"
-            class="com.intellij.java.frameworks.PromoDatabaseAction"
+            class="com.intellij.ide.ultimatepromo.PromoDatabaseAction"
             icon="AllIcons.Promo.Lock"/>
 
     <action id="PromoKubernetes"
-            class="com.intellij.java.frameworks.PromoKubernetesAction"
+            class="com.intellij.ide.ultimatepromo.PromoKubernetesAction"
             icon="AllIcons.Promo.Lock"/>
 
     <action id="PromoOpenAPI"
-            class="com.intellij.java.frameworks.PromoOpenAPIAction"
+            class="com.intellij.ide.ultimatepromo.PromoOpenAPIAction"
             icon="AllIcons.Promo.Lock"/>
 
     <action id="PromoProfiler"
-            class="com.intellij.java.frameworks.PromoProfilerAction"
+            class="com.intellij.ide.ultimatepromo.PromoProfilerAction"
             icon="AllIcons.Promo.Lock"/>
   </actions>
 </idea-plugin>

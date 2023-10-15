@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.frameworks
+package com.intellij.ide.ultimatepromo
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.java.library.JavaLibraryUtil.hasLibraryJar
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
@@ -11,7 +11,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
 import com.intellij.openapi.util.NlsSafe
@@ -70,10 +69,10 @@ private class FrameworkPluginSuggestion(val project: Project, val framework: Fra
 
 private fun detectFramework(module: Module): Framework? {
   return when {
-    JavaLibraryUtil.hasLibraryJar(module, SPRING_BOOT_MAVEN) -> Framework("spring.boot", "com.intellij.spring.boot", "Spring Boot")
-    JavaLibraryUtil.hasLibraryJar(module, MICRONAUT_MAVEN) -> Framework("micronaut", "com.intellij.micronaut", "Micronaut")
-    JavaLibraryUtil.hasLibraryJar(module, QUARKUS_MAVEN) -> Framework("quarkus", "com.intellij.quarkus", "Quarkus")
-    JavaLibraryUtil.hasLibraryJar(module, KTOR_MAVEN) -> Framework("ktor", "intellij.ktor", "Ktor")
+    hasLibraryJar(module, SPRING_BOOT_MAVEN) -> Framework("spring.boot", "com.intellij.spring.boot", "Spring Boot")
+    hasLibraryJar(module, MICRONAUT_MAVEN) -> Framework("micronaut", "com.intellij.micronaut", "Micronaut")
+    hasLibraryJar(module, QUARKUS_MAVEN) -> Framework("quarkus", "com.intellij.quarkus", "Quarkus")
+    hasLibraryJar(module, KTOR_MAVEN) -> Framework("ktor", "intellij.ktor", "Ktor")
     else -> null
   }
 }
