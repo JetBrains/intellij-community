@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.recovery;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.*;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
@@ -45,8 +46,8 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
                                       accumulatedErrors + " errors accumulated in previous session -- too dangerous to recover");
       }
 
-      int namesEnumeratorErrors = 0;
-      int contentEnumeratorErrors = 0;
+      int notFixedNamesEnumeratorErrors = 0;
+      int notFixedContentEnumeratorErrors = 0;
 
       int maxAllocatedID = records.maxAllocatedID();
       //Very similar to VFSHealthChecker checks, but with fixes, if possible:
@@ -68,7 +69,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
           loader.postponeDirectoryRefresh(parentId);
         }
         else if (!nameResolvedSuccessfully(fileId, nameId, namesEnumerator)) {
-          namesEnumeratorErrors++;
+          notFixedNamesEnumeratorErrors++;
         }
 
         try {
@@ -76,33 +77,37 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
         }
         catch (Throwable t) {
           LOG.warn("[fileId: #" + fileId + "]: failing to read attributes -> postpone file refresh", t);
-          //TODO RC: how to clean broken attributes record? -- but we don't need to clean it, we need
-          // to clean the attributeRefId, so new record will be allocated instead
+          //Clean broken attributes record: ideally we need to delete broken record first, but it is
+          // not always possible (i.e. if record _header_ is corrupted -- we just don't know ).
+          // So we just clean the attributeRefId, and schedule file refresh
+          records.setAttributeRecordId(fileId, AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID);
+
           loader.postponeFileInvalidation(fileId);
           loader.postponeDirectoryRefresh(parentId);
         }
 
         if (contentId != DataEnumerator.NULL_ID) {
           if (!contentResolvedSuccessfully(fileId, contentId, contentStorage, contentHashEnumerator)) {
-            contentEnumeratorErrors++;
+            notFixedContentEnumeratorErrors++;
           }
         }//else: it is OK for contentId to be NULL
       }
 
-      if (contentEnumeratorErrors == 0 && namesEnumeratorErrors == 0) {
+      if (notFixedContentEnumeratorErrors == 0 && notFixedNamesEnumeratorErrors == 0) {
         loader.problemsWereRecovered(notClosedProperlyErrors);
+        return;
       }
-      else {
-        if (contentEnumeratorErrors > 0) {
-          loader.problemsRecoveryFailed(notClosedProperlyErrors,
-                                        CONTENT_STORAGES_INCOMPLETE,
-                                        contentEnumeratorErrors + " contentIds are not resolved");
-        }
-        if (namesEnumeratorErrors > 0) {
-          loader.problemsRecoveryFailed(notClosedProperlyErrors,
-                                        NAME_STORAGE_INCOMPLETE,
-                                        namesEnumerator + " nameIds are not resolved");
-        }
+
+      if (notFixedContentEnumeratorErrors > 0) {
+        loader.problemsRecoveryFailed(notClosedProperlyErrors,
+                                      CONTENT_STORAGES_INCOMPLETE,
+                                      notFixedContentEnumeratorErrors + " contentIds are not resolved");
+      }
+      
+      if (notFixedNamesEnumeratorErrors > 0) {
+        loader.problemsRecoveryFailed(notClosedProperlyErrors,
+                                      NAME_STORAGE_INCOMPLETE,
+                                      namesEnumerator + " nameIds are not resolved");
       }
     }
     catch (Throwable t) {
