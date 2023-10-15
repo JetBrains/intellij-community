@@ -12,7 +12,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSou
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import javax.swing.Icon
 
-internal abstract class MinimalUltimatePromoAction: AnAction(), PromoAction {
+internal abstract class UltimatePromoAction(private val pluginId: String): AnAction(), PromoAction {
   override fun getPromotedProductIcon(): Icon = AllIcons.Nodes.EnterpriseProject
   override fun getPromotedProductTitle(): String = PluginAdvertiserService.ideaUltimate.name
   override fun getCallToAction(): String = IdeBundle.message("plugin.advertiser.free.trial.action")
@@ -26,8 +26,15 @@ internal abstract class MinimalUltimatePromoAction: AnAction(), PromoAction {
   override fun actionPerformed(e: AnActionEvent) {
     FUSEventSource.ACTIONS.openDownloadPageAndLog(e.project,
                                                   PluginAdvertiserService.ideaUltimate.downloadUrl,
-                                                  PluginId.getId("com.intellij.spring"))
+                                                  PluginId.getId(pluginId))
   }
 }
 
-internal class PromoSpringAction: MinimalUltimatePromoAction()
+internal class PromoSpringAction: UltimatePromoAction("com.intellij.spring")
+internal class PromoBeansAction: UltimatePromoAction("com.intellij.spring")
+internal class PromoPersistenceAction: UltimatePromoAction("com.intellij.javaee.jpa")
+internal class PromoEndpointsAction: UltimatePromoAction("com.intellij.microservices.ui")
+internal class PromoDatabaseAction: UltimatePromoAction("com.intellij.database")
+internal class PromoKubernetesAction: UltimatePromoAction("com.intellij.kubernetes")
+internal class PromoOpenAPIAction: UltimatePromoAction("com.intellij.swagger")
+internal class PromoProfilerAction: UltimatePromoAction("com.intellij.LineProfiler")

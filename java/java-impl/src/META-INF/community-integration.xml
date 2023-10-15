@@ -7,5 +7,33 @@
     <action id="PromoSpring"
             class="com.intellij.java.frameworks.PromoSpringAction"
             icon="AllIcons.Promo.Lock"/>
+
+    <action id="PromoBeans"
+            class="com.intellij.java.frameworks.PromoBeansAction"
+            icon="AllIcons.Promo.Lock"/>
+
+    <action id="PromoPersistence"
+            class="com.intellij.java.frameworks.PromoPersistenceAction"
+            icon="AllIcons.Promo.Lock"/>
+
+    <action id="PromoEndpoints"
+            class="com.intellij.java.frameworks.PromoEndpointsAction"
+            icon="AllIcons.Promo.Lock"/>
+
+    <action id="PromoDatabase"
+            class="com.intellij.java.frameworks.PromoDatabaseAction"
+            icon="AllIcons.Promo.Lock"/>
+
+    <action id="PromoKubernetes"
+            class="com.intellij.java.frameworks.PromoKubernetesAction"
+            icon="AllIcons.Promo.Lock"/>
+
+    <action id="PromoOpenAPI"
+            class="com.intellij.java.frameworks.PromoOpenAPIAction"
+            icon="AllIcons.Promo.Lock"/>
+
+    <action id="PromoProfiler"
+            class="com.intellij.java.frameworks.PromoProfilerAction"
+            icon="AllIcons.Promo.Lock"/>
   </actions>
 </idea-plugin>
