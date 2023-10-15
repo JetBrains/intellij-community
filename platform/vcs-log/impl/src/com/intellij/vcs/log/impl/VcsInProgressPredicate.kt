@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 
 class VcsInProgressPredicate : ActivityInProgressPredicate {
 
-  override val presentableName: String = "vcs"
+  override val presentableName: String = "vcs-log"
 
   override suspend fun isInProgress(project: Project): Boolean {
     return project.serviceAsync<VcsInProgressService>().isInProgress()
