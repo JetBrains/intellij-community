@@ -64,7 +64,7 @@ internal val LOG: Logger
 
 @Internal
 @JvmField
-val useInstanceContainer: Boolean = System.getProperty("ide.instance.container") == "true"
+val useInstanceContainer: Boolean = System.getProperty("ide.instance.container") != "false"
 
 private val methodLookup = MethodHandles.lookup()
 
