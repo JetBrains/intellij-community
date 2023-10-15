@@ -105,6 +105,7 @@ internal suspend fun suggestCondaPath(targetCommandExecutor: TargetCommandExecut
       "/opt/miniconda3/condabin/conda",
       "/opt/conda/bin/conda",
       "/opt/anaconda3/condabin/conda",
+      "/opt/homebrew/anaconda3/bin/conda",
     )
     Platform.WINDOWS -> arrayOf(
       "%ALLUSERSPROFILE%\\Anaconda3\\condabin\\conda.bat",
