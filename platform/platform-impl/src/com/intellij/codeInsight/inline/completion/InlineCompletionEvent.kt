@@ -18,8 +18,6 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 
-private typealias EditorCaret = Caret
-
 data class InlineCompletionRequest(
   val event: InlineCompletionEvent,
 
@@ -44,7 +42,7 @@ interface InlineCompletionEvent {
    */
   data class DirectCall(
     val editor: Editor,
-    val caret: EditorCaret,
+    val caret: Caret,
     val context: DataContext? = null,
   ) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
@@ -118,12 +116,11 @@ interface InlineCompletionEvent {
 
     // TODO: saved for later
     @Suppress("unused")
-    internal class NextSuggestion(origin: InlineCompletionEvent) : Navigation(origin, Type.Suggestion)
+    internal class NextSuggestion internal constructor(origin: InlineCompletionEvent) : Navigation(origin, Type.Suggestion)
 
     @Suppress("unused")
-    internal class PrevSuggestion(origin: InlineCompletionEvent) : Navigation(origin, Type.Suggestion)
+    internal class PrevSuggestion internal constructor(origin: InlineCompletionEvent) : Navigation(origin, Type.Suggestion)
 
-    @Suppress("unused")
     enum class Type {
       Provider, Suggestion
     }

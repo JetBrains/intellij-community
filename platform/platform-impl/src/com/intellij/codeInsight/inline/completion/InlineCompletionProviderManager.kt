@@ -36,9 +36,9 @@ class InlineCompletionProviderManager {
     }
   }
 
-  internal fun getCache(providerCls: InlineCompletionProviderID): List<InlineCompletionElement.Presentable>? {
-    val index = currentIndexes[providerCls] ?: return null
-    val suggestion = suggestions[providerCls] ?: return null
+  internal fun getCache(providerId: InlineCompletionProviderID): List<InlineCompletionElement.Presentable>? {
+    val index = currentIndexes[providerId] ?: return null
+    val suggestion = suggestions[providerId] ?: return null
     return suggestion.getOrNull(index)
   }
 

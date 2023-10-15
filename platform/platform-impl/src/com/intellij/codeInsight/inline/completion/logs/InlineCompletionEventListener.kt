@@ -20,7 +20,7 @@ sealed class InlineCompletionEventType {
 }
 
 interface InlineCompletionEventListener : EventListener {
-  class Debug : InlineCompletionEventAdapter {
+  object Debug : InlineCompletionEventAdapter {
     override fun onRequest(event: InlineCompletionEventType.Request) = println("onRequest")
     override fun onShow(event: InlineCompletionEventType.Show) = println("onShow")
     override fun onChange(event: InlineCompletionEventType.Change) = println("onChange")

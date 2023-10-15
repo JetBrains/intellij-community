@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -49,6 +48,7 @@ class InlineCompletionHandler(
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
+    addEventListener(InlineCompletionEventListener.Debug)
   }
 
   fun addEventListener(listener: InlineCompletionEventListener) {
@@ -75,9 +75,14 @@ class InlineCompletionHandler(
     ThreadingAssertions.assertEventDispatchThread()
     LOG.trace("Start processing inline event $event")
 
+    val request = requestManager.getRequest(event) ?: return
+    if (editor != request.editor) {
+      LOG.warn("Request has an inappropriate editor. Another editor was expected. Will not be invoked.")
+      return
+    }
+
     val provider = providerManager.getProvider(event)
-    val request = requestManager.getRequest(event)
-    if (request == null || sessionManager.updateSession(request, provider) || provider == null) {
+    if (sessionManager.updateSession(request, provider) || provider == null) {
       return
     }
 
@@ -162,7 +167,6 @@ class InlineCompletionHandler(
     currentCoroutineContext().ensureActive()
 
     val context = session.context
-    val editor = request.editor
     val offset = request.endOffset
 
     val suggestion = try {
@@ -184,7 +188,7 @@ class InlineCompletionHandler(
         }
         .onCompletion {
           val isActive = currentCoroutineContext().isActive
-          coroutineToIndicator { complete(isActive, editor, it, context, providerId, suggestion) }
+          coroutineToIndicator { complete(isActive, it, context, providerId, suggestion) }
           it?.let(LOG::errorIfNotMessage)
         }
         .collectIndexed { index, it ->
@@ -198,7 +202,6 @@ class InlineCompletionHandler(
   @RequiresBlockingContext
   private fun complete(
     isActive: Boolean,
-    editor: Editor,
     cause: Throwable?,
     context: InlineCompletionContext,
     providerId: InlineCompletionProviderID,
@@ -266,12 +269,9 @@ class InlineCompletionHandler(
               result.newElements.forEach { context.renderElement(it, context.endOffset() ?: result.reason.endOffset) }
             }
           }
-          UpdateSessionResult.Same -> Unit
-          UpdateSessionResult.Invalidated -> {
-            hide(false, session.context)
-          }
-          UpdateSessionResult.InvalidatedWithoutCache -> {
-            hide(false, session.context, false)
+          is UpdateSessionResult.Same -> Unit
+          is UpdateSessionResult.Invalidated -> {
+            hide(explicit = false, session.context, clearCache = result.clearCaches)
           }
         }
       }
