@@ -61,7 +61,11 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   override val showEvents: StateFlow<Boolean> = _showEvents.asStateFlow()
 
   override val timelineItems: SharedFlow<Result<List<GitLabMergeRequestTimelineItemViewModel>>> =
-    mergeRequest.createTimelineItemsFlow(showEvents).mapToVms(mergeRequest).modelFlow(cs, LOG)
+    mergeRequest.createTimelineItemsFlow(showEvents)
+      .throwFailure()
+      .mapModelsToViewModels { createItemVm(mergeRequest, it) }
+      .asResultFlow()
+      .modelFlow(cs, LOG)
 
   @RequiresEdt
   override fun requestLoad() {
@@ -134,15 +138,6 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
         Result.success(timeline)
       }
     }
-
-  private fun Flow<Result<List<GitLabMergeRequestTimelineItem>>>.mapToVms(mr: GitLabMergeRequest)
-    : Flow<Result<List<GitLabMergeRequestTimelineItemViewModel>>> =
-    throwFailure()
-      .mapCaching(
-        GitLabMergeRequestTimelineItem::id,
-        { item -> createItemVm(mr, item) },
-        { if (this is GitLabMergeRequestTimelineItemViewModel.Discussion) destroy() }
-      ).asResultFlow()
 
   private fun CoroutineScope.createItemVm(mr: GitLabMergeRequest, item: GitLabMergeRequestTimelineItem)
     : GitLabMergeRequestTimelineItemViewModel =

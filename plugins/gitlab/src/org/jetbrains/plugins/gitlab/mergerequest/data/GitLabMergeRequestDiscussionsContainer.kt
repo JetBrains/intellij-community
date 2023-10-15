@@ -125,13 +125,12 @@ class GitLabMergeRequestDiscussionsContainerImpl(
     nonEmptyDiscussionsData
       .throwFailure()
       .mapFiltered { !it.notes.first().system }
-      .mapCaching(
+      .mapDataToModel(
         GitLabDiscussionDTO::id,
         { disc ->
           LoadedGitLabDiscussion(this, project, api, glProject, { discussionEvents.emit(it) }, mr, disc,
                                  getDiscussionDraftNotes(disc.id).throwFailure())
         },
-        LoadedGitLabDiscussion::destroy,
         LoadedGitLabDiscussion::update
       )
       .asResultFlow()
@@ -143,10 +142,10 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       // When one note in a discussion is a system note, all are, so we check the first.
       .mapFiltered { it.notes.first().system }
       .map { discussions -> discussions.map { it.notes.first() } }
-      .mapCaching(
+      .mapDataToModel(
         GitLabNoteDTO::id,
         { note -> GitLabSystemNote(note) },
-        {}
+        { } //constant
       )
       .asResultFlow()
       .modelFlow(cs, LOG)
@@ -229,10 +228,9 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>> =
     draftNotesData
       .throwFailure()
-      .mapCaching(
+      .mapDataToModel(
         { it.note.id },
         { (note, author) -> GitLabMergeRequestDraftNoteImpl(this, api, glProject, mr, draftNotesEvents::emit, note, author) },
-        GitLabMergeRequestDraftNoteImpl::destroy,
         { update(it.note) }
       )
       .asResultFlow()

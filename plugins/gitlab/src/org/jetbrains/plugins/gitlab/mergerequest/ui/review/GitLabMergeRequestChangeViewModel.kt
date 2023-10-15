@@ -24,9 +24,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.ui.comment.*
 
 private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiffDiscussionViewModel>>
@@ -70,29 +68,21 @@ internal class GitLabMergeRequestChangeViewModelImpl(
 
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .throwFailure()
-    .mapCaching(
-      GitLabDiscussion::id,
-      { disc ->
-        GitLabMergeRequestDiffDiscussionViewModelImpl(project, this, diffData, currentUser, disc, discussionsViewOption,
-                                                      mergeRequest.glProject, contextDiscussionMappingSide)
-      },
-      GitLabMergeRequestDiffDiscussionViewModelImpl::destroy
-    )
+    .mapModelsToViewModels {
+      GitLabMergeRequestDiffDiscussionViewModelImpl(project, this, diffData, currentUser, it,
+                                                    discussionsViewOption, mergeRequest.glProject,
+                                                    contextDiscussionMappingSide)
+    }
     .modelFlow(cs, LOG)
 
   override val draftDiscussions: DiscussionsFlow = mergeRequest.draftNotes
     .throwFailure()
     .mapFiltered { it.discussionId == null }
-    .mapCaching(
-      GitLabNote::id,
-      { note ->
-        GitLabMergeRequestDiffDraftDiscussionViewModel(project, this, diffData, note,
-                                                       mergeRequest.glProject, contextDiscussionMappingSide)
-      },
-      GitLabMergeRequestDiffDraftDiscussionViewModel::destroy
-    )
+    .mapModelsToViewModels {
+      GitLabMergeRequestDiffDraftDiscussionViewModel(project, this, diffData, it,
+                                                     mergeRequest.glProject, contextDiscussionMappingSide)
+    }
     .modelFlow(cs, LOG)
-
 
   private val _newDiscussions = MutableStateFlow<Map<DiffLineLocation, NewGitLabNoteViewModel>>(emptyMap())
   override val newDiscussions: NewDiscussionsFlow = _newDiscussions.asStateFlow()

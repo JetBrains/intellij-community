@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
-import com.intellij.collaboration.async.associateBy
+import com.intellij.collaboration.async.associateCachingBy
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
@@ -62,14 +62,14 @@ internal class GitLabMergeRequestDiffViewModelImpl(
     mergeRequest.changes
       .map(GitLabMergeRequestChanges::getParsedChanges)
       .map { it.patchesByChange.asIterable() }
-      .associateBy(
-        { (change, _) -> change },
+      .associateCachingBy(
+        { it.key },
+        CODE_REVIEW_CHANGE_HASHING_STRATEGY,
         { (_, diffData) ->
           GitLabMergeRequestChangeViewModelImpl(project, this, currentUser, mergeRequest, diffData, avatarIconsProvider,
                                                 discussionsViewOption)
         },
-        { destroy() },
-        customHashingStrategy = CODE_REVIEW_CHANGE_HASHING_STRATEGY
+        { destroy() }
       )
 
   override fun getViewModelFor(change: Change): Flow<GitLabMergeRequestChangeViewModel?> =

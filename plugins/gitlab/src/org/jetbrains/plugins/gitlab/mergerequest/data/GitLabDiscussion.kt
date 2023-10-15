@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
-import com.intellij.collaboration.async.mapCaching
+import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -102,10 +101,9 @@ class LoadedGitLabDiscussion(
 
   override val notes: Flow<List<GitLabMergeRequestNote>> =
     loadedNotes
-      .mapCaching(
+      .mapDataToModel(
         GitLabNoteDTO::id,
         { note -> MutableGitLabMergeRequestNote(this, project, api, glProject, mr, noteEvents::emit, note) },
-        MutableGitLabMergeRequestNote::destroy,
         MutableGitLabMergeRequestNote::update
       ).combine(draftNotes) { notes, draftNotes ->
         notes + draftNotes
@@ -150,8 +148,6 @@ class LoadedGitLabDiscussion(
   fun update(data: GitLabDiscussionDTO) {
     dataState.value = data
   }
-
-  suspend fun destroy() = cs.cancelAndJoinSilently()
 
   override fun toString(): String =
     "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt, canAddNotes=$canAddNotes, resolvable=$resolvable, canResolve=$canResolve)"

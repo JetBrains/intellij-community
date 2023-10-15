@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
-import com.intellij.collaboration.async.mapCaching
+import com.intellij.collaboration.async.mapModelsToViewModels
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
@@ -25,8 +24,6 @@ interface GitLabMergeRequestDiffDiscussionViewModel : DiffMapped {
 
   val resolveVm: GitLabDiscussionResolveViewModel?
   val replyVm: GitLabDiscussionReplyViewModel?
-
-  suspend fun destroy()
 
   sealed interface NoteItem {
     val id: Any
@@ -73,11 +70,9 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
     if (initialNotesSize == null) {
       initialNotesSize = it.size
     }
-  }.mapCaching(
-    GitLabNote::id,
-    { note -> GitLabNoteViewModelImpl(project, this, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, glProject) },
-    GitLabNoteViewModelImpl::destroy
-  ).combine(expandRequested) { notes, expanded ->
+  }.mapModelsToViewModels { note ->
+    GitLabNoteViewModelImpl(project, this, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, glProject)
+  }.combine(expandRequested) { notes, expanded ->
     if (initialNotesSize!! <= 3 || notes.size <= 3 || expanded) {
       notes.map { NoteItem.Note(it) }
     }
@@ -107,8 +102,6 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
 
   private fun GitLabMergeRequestDiscussion.firstNote(): Flow<GitLabMergeRequestNote?> =
     notes.map(List<GitLabMergeRequestNote>::firstOrNull).distinctUntilChangedBy { it?.id }
-
-  override suspend fun destroy() = cs.cancelAndJoinSilently()
 }
 
 class GitLabMergeRequestDiffDraftDiscussionViewModel(
@@ -137,6 +130,4 @@ class GitLabMergeRequestDiffDraftDiscussionViewModel(
 
   override val resolveVm: GitLabDiscussionResolveViewModel? = null
   override val replyVm: GitLabDiscussionReplyViewModel? = null
-
-  override suspend fun destroy() = cs.cancelAndJoinSilently()
 }
