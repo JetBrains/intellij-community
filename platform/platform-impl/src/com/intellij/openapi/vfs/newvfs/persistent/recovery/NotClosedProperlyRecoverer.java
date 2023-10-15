@@ -1,0 +1,156 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vfs.newvfs.persistent.recovery;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.newvfs.persistent.*;
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory;
+import com.intellij.util.hash.ContentHashEnumerator;
+import com.intellij.util.io.DataEnumerator;
+import com.intellij.util.io.ScannableDataEnumeratorEx;
+import com.intellij.util.io.storage.RefCountingContentStorage;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.util.List;
+
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.FREE_RECORD_FLAG;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
+
+/**
+ * Knows how to recover {@link ErrorCategory#NOT_CLOSED_PROPERLY} error category
+ * If VFS storages weren't closed properly -- they only sensible way to 'fix' it is to scan whole VFS
+ * storages and check all consistency invariants.
+ */
+public class NotClosedProperlyRecoverer implements VFSRecoverer {
+  private final static Logger LOG = Logger.getInstance(NotClosedProperlyRecoverer.class);
+
+  @Override
+  public void tryRecover(@NotNull PersistentFSLoader loader) {
+    List<VFSInitException> notClosedProperlyErrors = loader.problemsDuringLoad(NOT_CLOSED_PROPERLY);
+    if (notClosedProperlyErrors.isEmpty()) {
+      return;
+    }
+
+    PersistentFSRecordsStorage records = loader.recordsStorage();
+    ScannableDataEnumeratorEx<String> namesEnumerator = loader.namesStorage();
+    RefCountingContentStorage contentStorage = loader.contentsStorage();
+    ContentHashEnumerator contentHashEnumerator = loader.contentHashesEnumerator();
+    AbstractAttributesStorage attributesStorage = loader.attributesStorage();
+    try {
+      int accumulatedErrors = records.getErrorsAccumulated();
+      if (accumulatedErrors > 0) {
+        loader.problemsRecoveryFailed(notClosedProperlyErrors,
+                                      HAS_ERRORS_IN_PREVIOUS_SESSION,
+                                      accumulatedErrors + " errors accumulated in previous session -- too dangerous to recover");
+      }
+
+      int namesEnumeratorErrors = 0;
+      int contentEnumeratorErrors = 0;
+
+      int maxAllocatedID = records.maxAllocatedID();
+      //Very similar to VFSHealthChecker checks, but with fixes, if possible:
+      for (int fileId = FSRecords.MIN_REGULAR_FILE_ID; fileId <= maxAllocatedID; fileId++) {
+        int flags = records.getFlags(fileId);
+        if (PersistentFSRecordAccessor.hasDeletedFlag(flags)) {
+          continue;
+        }
+
+        int parentId = records.getParent(fileId);
+        int nameId = records.getNameId(fileId);
+        int contentId = records.getContentRecordId(fileId);
+        int attributeRecordId = records.getAttributeRecordId(fileId);
+
+        if (nameId == DataEnumerator.NULL_ID) {
+          //remove file & schedule its invalidation, schedule parent for refresh:
+          records.setFlags(fileId, flags | FREE_RECORD_FLAG);
+          loader.postponeFileInvalidation(fileId);
+          loader.postponeDirectoryRefresh(parentId);
+        }
+        else if (!nameResolvedSuccessfully(fileId, nameId, namesEnumerator)) {
+          namesEnumeratorErrors++;
+        }
+
+        try {
+          attributesStorage.checkAttributeRecordSanity(fileId, attributeRecordId);
+        }
+        catch (Throwable t) {
+          LOG.warn("[fileId: #" + fileId + "]: failing to read attributes -> postpone file refresh", t);
+          //TODO RC: how to clean broken attributes record? -- but we don't need to clean it, we need
+          // to clean the attributeRefId, so new record will be allocated instead
+          loader.postponeFileInvalidation(fileId);
+          loader.postponeDirectoryRefresh(parentId);
+        }
+
+        if (contentId != DataEnumerator.NULL_ID) {
+          if (!contentResolvedSuccessfully(fileId, contentId, contentStorage, contentHashEnumerator)) {
+            contentEnumeratorErrors++;
+          }
+        }//else: it is OK for contentId to be NULL
+      }
+
+      if (contentEnumeratorErrors == 0 && namesEnumeratorErrors == 0) {
+        loader.problemsWereRecovered(notClosedProperlyErrors);
+      }
+      else {
+        if (contentEnumeratorErrors > 0) {
+          loader.problemsRecoveryFailed(notClosedProperlyErrors,
+                                        CONTENT_STORAGES_INCOMPLETE,
+                                        contentEnumeratorErrors + " contentIds are not resolved");
+        }
+        if (namesEnumeratorErrors > 0) {
+          loader.problemsRecoveryFailed(notClosedProperlyErrors,
+                                        NAME_STORAGE_INCOMPLETE,
+                                        namesEnumerator + " nameIds are not resolved");
+        }
+      }
+    }
+    catch (Throwable t) {
+      loader.problemsRecoveryFailed(notClosedProperlyErrors,
+                                    UNRECOGNIZED,
+                                    "Unexpected error during VFS consistency scan", t);
+    }
+  }
+
+  private static boolean contentResolvedSuccessfully(int fileId,
+                                                     int contentId,
+                                                     @NotNull RefCountingContentStorage contentStorage,
+                                                     @NotNull ContentHashEnumerator contentHashEnumerator) {
+    try {
+      try (DataInputStream stream = contentStorage.readStream(contentId)) {
+        stream.readAllBytes();
+      }
+      byte[] hash = contentHashEnumerator.valueOf(contentId);
+      if (hash == null) {
+        return false;
+      }
+      return true;
+    }
+    catch (IOException e) {
+      LOG.trace("file[#" + fileId + "]: contentId(=" + contentId + ") fails to resolve. " + e.getMessage());
+      return false;
+    }
+  }
+
+  private static boolean nameResolvedSuccessfully(int fileId,
+                                                  int nameId,
+                                                  @NotNull ScannableDataEnumeratorEx<String> namesEnumerator) {
+    try {
+      String fileName = namesEnumerator.valueOf(nameId);
+      if (fileName == null) {
+        return false;
+      }
+      else {
+        int nameIdResolvedBack = namesEnumerator.tryEnumerate(fileName);
+        if (nameIdResolvedBack != nameId) {
+          return false;
+        }
+      }
+      return true;
+    }
+    catch (IOException e) {
+      LOG.trace("file[#" + fileId + "]: nameId(=" + nameId + ") fails to resolve. " + e.getMessage());
+      return false;
+    }
+  }
+}
