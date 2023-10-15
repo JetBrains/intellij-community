@@ -214,6 +214,10 @@
             icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
       <add-to-group group-id="Git.Branches.List"/>
     </action>
+    <action id="GitLab.Merge.Request.Review.Editor.Show.Diff"
+            class="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action.GitLabMergeRequestShowFileDiffAction">
+      <add-to-group group-id="EditorPopupMenu"/>
+    </action>
   </actions>
 
   <projectListeners>

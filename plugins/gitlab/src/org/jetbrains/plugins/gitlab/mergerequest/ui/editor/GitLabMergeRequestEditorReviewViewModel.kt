@@ -3,7 +3,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.withLocation
+import com.intellij.diff.util.Side
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.actions.VcsContextFactory
@@ -11,13 +15,11 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
 import git4idea.changes.GitBranchComparisonResult
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
@@ -30,6 +32,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
   private val projectMapping: GitLabProjectMapping,
   mergeRequest: GitLabMergeRequest,
+  private val diffBridge: GitLabMergeRequestDiffBridge,
   private val projectVm: GitLabToolWindowProjectViewModel,
   private val globalReviewVm: GitLabMergeRequestReviewViewModelBase,
   private val discussions: GitLabMergeRequestDiscussionsViewModels,
@@ -91,10 +94,20 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     val result = mutableMapOf<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>>()
     for (change in changes) {
       val file = change.afterRevision?.file ?: continue
+      val changeSelection = ChangesSelection.Precise(changes, change)
       val diffData = parsedChanges.patchesByChange[change]!!
 
       val vmFlow = channelFlow<GitLabMergeRequestEditorReviewFileViewModel> {
         val vm = GitLabMergeRequestEditorReviewFileViewModelImpl(diffData, discussions, discussionsViewOption, avatarIconsProvider)
+        launchNow {
+          vm.showDiffRequests.collect {
+            val selection = if (it != null) changeSelection.withLocation(DiffLineLocation(Side.RIGHT, it)) else changeSelection
+            diffBridge.setChanges(selection)
+            withContext(Dispatchers.Main) {
+              projectVm.filesController.openDiff(mergeRequestIid, true)
+            }
+          }
+        }
         send(vm)
       }.shareIn(vmsCs, SharingStarted.WhileSubscribed(0, 0), 1)
       result[file] = vmFlow

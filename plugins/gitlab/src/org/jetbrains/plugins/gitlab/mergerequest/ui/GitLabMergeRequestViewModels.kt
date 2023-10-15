@@ -70,8 +70,8 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
   }
 
   val editorReviewVm: GitLabMergeRequestEditorReviewViewModel by lazy {
-    GitLabMergeRequestEditorReviewViewModel(cs, projectData.projectMapping, mergeRequest, projectVm, globalReviewVm, discussionsVms,
-                                            projectVm.avatarIconProvider)
+    GitLabMergeRequestEditorReviewViewModel(cs, projectData.projectMapping, mergeRequest, diffBridge,
+                                            projectVm, globalReviewVm, discussionsVms, projectVm.avatarIconProvider)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)

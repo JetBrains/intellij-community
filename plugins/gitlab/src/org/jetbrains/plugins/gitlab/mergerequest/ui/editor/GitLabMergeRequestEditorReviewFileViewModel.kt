@@ -10,8 +10,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.withoutContext
 import git4idea.changes.GitTextFilePatchWithHistory
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
@@ -32,6 +31,8 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
 
   fun requestNewDiscussion(line: Int, focus: Boolean)
   fun cancelNewDiscussion(line: Int)
+
+  fun showDiff(line: Int?)
 }
 
 internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
@@ -98,5 +99,12 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
       GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition(it, Side.RIGHT)
     }
     discussionsContainer.cancelNewDiscussion(position)
+  }
+
+  private val _showDiffRequests = MutableSharedFlow<Int?>(extraBufferCapacity = 1)
+  val showDiffRequests: SharedFlow<Int?> = _showDiffRequests.asSharedFlow()
+
+  override fun showDiff(line: Int?) {
+    _showDiffRequests.tryEmit(line)
   }
 }

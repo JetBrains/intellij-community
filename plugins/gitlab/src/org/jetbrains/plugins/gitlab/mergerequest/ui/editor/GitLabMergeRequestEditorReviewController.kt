@@ -61,9 +61,13 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
                   reviewVm.isReviewModeEnabled.collectLatest {
                     if (it) supervisorScope {
                       val model = GitLabMergeRequestEditorReviewUIModel(this, fileVm, lst)
+                      editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, model)
                       showGutterMarkers(model, editor)
                       showGutterControls(model, editor)
                       showInlays(model, editor)
+                      awaitCancellationAndInvoke {
+                        editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, null)
+                      }
                     }
                   }
                 }

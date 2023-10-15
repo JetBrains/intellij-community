@@ -6,6 +6,7 @@ import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
@@ -77,6 +78,11 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     return fileVm.getOriginalContent(lines)
   }
 
+  fun showDiff(lineIdx: Int?) {
+    val originalLine = lineIdx?.let { transferLineFromAfter(localRanges.value, it, true) }?.takeIf { it >= 0 }
+    fileVm.showDiff(originalLine)
+  }
+
   private inner class ShiftedDiscussion(private val vm: GitLabMergeRequestEditorDiscussionViewModel)
     : GitLabMergeRequestEditorDiscussionViewModel by vm {
     override val isVisible: Flow<Boolean> = vm.isVisible
@@ -91,6 +97,10 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     override val line: Flow<Int?> = localRanges.combine(vm.line) { ranges, line ->
       line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
     }
+  }
+
+  companion object {
+    val KEY: Key<GitLabMergeRequestEditorReviewUIModel> = Key.create("GitLab.MergeRequest.Editor.Review.UIModel")
   }
 }
 
@@ -111,14 +121,14 @@ private fun transferLineToAfter(ranges: List<LstRange>, line: Int): Int {
   return result
 }
 
-private fun transferLineFromAfter(ranges: List<LstRange>, line: Int): Int? {
+private fun transferLineFromAfter(ranges: List<LstRange>, line: Int, approximate: Boolean = false): Int? {
   if (ranges.isEmpty()) return line
   var result = line
   for (range in ranges) {
     if (line < range.line1) return result
 
     if (line in range.line1 until range.line2) {
-      return null
+      return if (approximate) range.vcsLine2 else null
     }
 
     val length1 = range.vcsLine2 - range.vcsLine1
