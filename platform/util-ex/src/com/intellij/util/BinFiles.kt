@@ -42,7 +42,11 @@ object BinFiles {
 
   private val logger = thisLogger()
 
-  fun getBinFile(fileName: FileName): Path = synchronized(lock) {
+  /**
+   * Load [fileName] either from [BIN_FILES_DIR_NAME] or classpath of [clazz].
+   * Make sure file is accessible from [clazz] class loader
+   */
+  fun getBinFile(fileName: FileName, clazz: Class<*>): Path = synchronized(lock) {
     val devFile = devFilesDir.resolve(fileName.relativePath)
     if (devFile.exists()) {
       logger.info("Using dev $devFile")
@@ -54,7 +58,7 @@ object BinFiles {
       return@synchronized localCopyOfFile
     }
 
-    val resource = javaClass.classLoader.getResource(fileName.relativePath) ?: throw IllegalArgumentException("$fileName is not in the class path")
+    val resource = clazz.classLoader.getResource(fileName.relativePath) ?: throw IllegalArgumentException("$fileName is not in the class path")
     resource.openStream().use { input ->
       localCopyOfFile.outputStream().use { output ->
         input.copyTo(output)
