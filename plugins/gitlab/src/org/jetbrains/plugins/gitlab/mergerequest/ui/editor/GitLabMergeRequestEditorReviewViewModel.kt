@@ -2,8 +2,11 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
@@ -37,38 +40,66 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
 
   val mergeRequestIid: String = mergeRequest.iid
 
-  val actualChangesState: StateFlow<ChangesState>
+  private val _actualChangesState = MutableStateFlow<ChangesState>(ChangesState.NotLoaded)
   private val changesRequest = MutableSharedFlow<Unit>(replay = 1)
 
+  val actualChangesState: StateFlow<ChangesState> = _actualChangesState.asStateFlow()
+
+  /**
+   * Contains the state of filePath to shared file vm mapping
+   * Will only store paths which belong to the review
+   * VMs are stored as flows to allow for on-demand creation
+   */
+  private val filesVmsState: Flow<Map<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>>> by lazy {
+    changesRequest.tryEmit(Unit)
+    actualChangesState.mapScoped {
+      (it as? ChangesState.Loaded)?.changes?.let { createFilesVms(it) } ?: emptyMap()
+    }.shareIn(cs, SharingStarted.Eagerly, 1)
+  }
+
   init {
-    actualChangesState = MutableStateFlow<ChangesState>(ChangesState.NotLoaded)
     cs.launchNow {
       mergeRequest.changes.collectLatest { changes ->
         changes.localRepositorySynced.collectLatest {
           if(it) {
-            actualChangesState.value = ChangesState.NotLoaded
+            _actualChangesState.value = ChangesState.NotLoaded
             changesRequest.distinctUntilChanged().collectLatest {
               try {
                 val parsed = changes.getParsedChanges()
-                actualChangesState.value = ChangesState.Loaded(parsed)
+                _actualChangesState.value = ChangesState.Loaded(parsed)
               }
               catch (ce: CancellationException) {
                 throw ce
               }
               catch (e: Exception) {
-                actualChangesState.value = ChangesState.Error
+                _actualChangesState.value = ChangesState.Error
               }
             }
           } else {
-            actualChangesState.value = ChangesState.OutOfSync
+            _actualChangesState.value = ChangesState.OutOfSync
           }
         }
       }
     }
   }
 
-  private fun startLoadingChanges() {
-    changesRequest.tryEmit(Unit)
+  //TODO: do not recreate all VMs on changes change
+  private fun CoroutineScope.createFilesVms(parsedChanges: GitBranchComparisonResult)
+    : Map<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>> {
+    val vmsCs = this
+    val changes = parsedChanges.changes
+    val result = mutableMapOf<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>>()
+    for (change in changes) {
+      val file = change.afterRevision?.file ?: continue
+      val diffData = parsedChanges.patchesByChange[change]!!
+
+      val vmFlow = channelFlow<GitLabMergeRequestEditorReviewFileViewModel> {
+        val vm = GitLabMergeRequestEditorReviewFileViewModelImpl(diffData, discussions, discussionsViewOption, avatarIconsProvider)
+        send(vm)
+      }.shareIn(vmsCs, SharingStarted.WhileSubscribed(0, 0), 1)
+      result[file] = vmFlow
+    }
+    return result
   }
 
   private val _isReviewModeEnabled = MutableStateFlow(true)
@@ -86,19 +117,12 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
    * A view model for [virtualFile] review
    */
   fun getFileVm(virtualFile: VirtualFile): Flow<GitLabMergeRequestEditorReviewFileViewModel?> {
-    if (!VfsUtilCore.isAncestor(projectMapping.remote.repository.root, virtualFile, true)) {
+    if (!virtualFile.isValid || virtualFile.isDirectory ||
+        !VfsUtilCore.isAncestor(projectMapping.remote.repository.root, virtualFile, true)) {
       return flowOf(null)
     }
-
-    startLoadingChanges()
-
-    return actualChangesState.mapLatest { changesState ->
-      val parsedChanges = (changesState as? ChangesState.Loaded)?.changes ?: return@mapLatest null
-      val cumulativeChange = parsedChanges.changes.find { it.virtualFile == virtualFile } ?: return@mapLatest null
-      parsedChanges.patchesByChange[cumulativeChange]?.let { diffData ->
-        GitLabMergeRequestEditorReviewFileViewModelImpl(diffData, discussions, discussionsViewOption, avatarIconsProvider)
-      }
-    }
+    val filePath = VcsContextFactory.getInstance().createFilePathOn(virtualFile)
+    return filesVmsState.flatMapLatest { it[filePath] ?: flowOf(null) }
   }
 
   fun toggleReviewMode() {
