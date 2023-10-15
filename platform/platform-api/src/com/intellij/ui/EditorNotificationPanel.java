@@ -654,7 +654,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   @NotNull
   private static Icon getPromoIcon() {
     // todo it can be different in PyCharm Pro
-    return AllIcons.Promo.Lock;
+    return AllIcons.Ultimate.Lock;
   }
 
   public enum Status {

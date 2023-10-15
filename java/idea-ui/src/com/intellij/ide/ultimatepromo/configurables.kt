@@ -52,5 +52,5 @@ internal class PromoDatabaseConfigurable : ConfigurableWithId, Configurable.Prom
   override fun apply() {
   }
 
-  override fun getPromoIcon(): Icon = AllIcons.Promo.Lock
+  override fun getPromoIcon(): Icon = AllIcons.Ultimate.Lock
 }
