@@ -1,2 +1,2 @@
 root=true
-<error descr="Only one top-level declaration is allowed">root=true</error>
+root=true
