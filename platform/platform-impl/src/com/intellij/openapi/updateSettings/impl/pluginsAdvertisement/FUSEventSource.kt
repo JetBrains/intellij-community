@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import java.util.Locale.ROOT
 
 class PluginAdvertiserUsageCollector : CounterUsagesCollector() {
@@ -17,10 +18,7 @@ class PluginAdvertiserUsageCollector : CounterUsagesCollector() {
 
 private const val FUS_GROUP_ID = "plugins.advertiser"
 
-private val GROUP = EventLogGroup(
-  FUS_GROUP_ID,
-  6,
-)
+private val GROUP = EventLogGroup(FUS_GROUP_ID, 7)
 
 private val SOURCE_FIELD = EventFields.Enum(
   "source",
@@ -83,7 +81,8 @@ private val IGNORE_UNKNOWN_FEATURES_EVENT = GROUP.registerEvent(
 enum class FUSEventSource {
   EDITOR,
   NOTIFICATION,
-  SEARCH;
+  SEARCH,
+  ACTIONS;
 
   fun doIgnoreUltimateAndLog(project: Project? = null) {
     isIgnoreIdeSuggestion = true

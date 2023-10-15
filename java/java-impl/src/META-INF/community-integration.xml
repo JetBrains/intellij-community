@@ -1,0 +1,11 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <pluginSuggestionProvider implementation="com.intellij.java.frameworks.FrameworkSuggestionProvider"/>
+  </extensions>
+
+  <actions resource-bundle="messages.JavaUiBundle">
+    <action id="PromoSpring"
+            class="com.intellij.java.frameworks.PromoSpringAction"
+            icon="AllIcons.Promo.Lock"/>
+  </actions>
+</idea-plugin>
