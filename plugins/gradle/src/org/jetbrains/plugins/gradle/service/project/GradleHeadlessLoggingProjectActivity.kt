@@ -54,10 +54,8 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
   private fun addStateNotificationListener(project: Project, progressManager: ExternalSystemProgressNotificationManager) {
     val notificationListener = GradleWarmupConfigurator.StateNotificationListener(project, scope)
     progressManager.addNotificationListener(notificationListener)
-    scope.launch {
-      awaitCancellationAndInvoke {
-        progressManager.removeNotificationListener(notificationListener)
-      }
+    scope.awaitCancellationAndInvoke {
+      progressManager.removeNotificationListener(notificationListener)
     }
   }
 
@@ -66,10 +64,8 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
     val externalAnnotationsProgressListener = GradleWarmupConfigurator.StateExternalAnnotationNotificationListener()
 
     externalAnnotationsNotificationManager.addNotificationListener(externalAnnotationsProgressListener)
-    scope.launch {
-      awaitCancellationAndInvoke {
-        externalAnnotationsNotificationManager.removeNotificationListener(externalAnnotationsProgressListener)
-      }
+    scope.awaitCancellationAndInvoke {
+      externalAnnotationsNotificationManager.removeNotificationListener(externalAnnotationsProgressListener)
     }
   }
 }
