@@ -96,18 +96,21 @@ internal suspend fun suggestCondaPath(targetCommandExecutor: TargetCommandExecut
     targetCommandExecutor.targetPlatform.await()
   }
   var possiblePaths: Array<FullPathOnTarget> = when (targetPlatform.platform) {
-    Platform.UNIX -> arrayOf("~/anaconda3/bin/conda",
-                             "~/miniconda3/bin/conda",
-                             "/usr/local/bin/conda",
-                             "~/opt/miniconda3/condabin/conda",
-                             "~/opt/anaconda3/condabin/conda",
-                             "/opt/miniconda3/condabin/conda",
-                             "/opt/conda/bin/conda",
-                             "/opt/anaconda3/condabin/conda")
-    Platform.WINDOWS -> arrayOf("%ALLUSERSPROFILE%\\Anaconda3\\condabin\\conda.bat",
-                                "%ALLUSERSPROFILE%\\Miniconda3\\condabin\\conda.bat",
-                                "%USERPROFILE%\\Anaconda3\\condabin\\conda.bat",
-                                "%USERPROFILE%\\Miniconda3\\condabin\\conda.bat"
+    Platform.UNIX -> arrayOf(
+      "~/anaconda3/bin/conda",
+      "~/miniconda3/bin/conda",
+      "/usr/local/bin/conda",
+      "~/opt/miniconda3/condabin/conda",
+      "~/opt/anaconda3/condabin/conda",
+      "/opt/miniconda3/condabin/conda",
+      "/opt/conda/bin/conda",
+      "/opt/anaconda3/condabin/conda",
+    )
+    Platform.WINDOWS -> arrayOf(
+      "%ALLUSERSPROFILE%\\Anaconda3\\condabin\\conda.bat",
+      "%ALLUSERSPROFILE%\\Miniconda3\\condabin\\conda.bat",
+      "%USERPROFILE%\\Anaconda3\\condabin\\conda.bat",
+      "%USERPROFILE%\\Miniconda3\\condabin\\conda.bat",
     )
   }
   // If conda is local then store path
