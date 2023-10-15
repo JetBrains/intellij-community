@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.plugincomponents
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
@@ -17,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import kotlinx.coroutines.*
 import org.ec4j.core.EditorConfigLoader
 import org.ec4j.core.PropertyTypeRegistry
 import org.ec4j.core.Resource
@@ -31,10 +29,9 @@ import org.editorconfig.Utils
 import org.editorconfig.core.ec4jwrappers.EditorConfigLoadErrorHandler
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.PROJECT)
-class EditorConfigPropertiesService(private val project: Project, private val coroutineScope: CoroutineScope) : SimpleModificationTracker() {
+class EditorConfigPropertiesService(private val project: Project) : SimpleModificationTracker() {
   companion object {
     private val LOG = thisLogger()
 
@@ -120,38 +117,10 @@ class EditorConfigPropertiesService(private val project: Project, private val co
 
   fun getProperties(file: VirtualFile): ResourceProperties = mergeEditorConfigs(file.path, relevantEditorConfigsFor(file))
 
-  private fun doGetPropertiesAndEditorConfigs(file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
+  fun getPropertiesAndEditorConfigs(file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
     val editorConfigs = relevantEditorConfigsFor(file)
     val properties = mergeEditorConfigs(file.path, editorConfigs)
     return Pair(properties, editorConfigs.map(ValidEditorConfig::file))
-  }
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val processingDispatcher = Dispatchers.IO.limitedParallelism(PROCESSING_POOL_SIZE)
-
-  private val pendingJobs = ConcurrentHashMap<String, Lazy<Deferred<Pair<ResourceProperties, List<VirtualFile>>>>>()
-
-  suspend fun getPropertiesAndEditorConfigs(file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
-    val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
-      return doGetPropertiesAndEditorConfigs(file)
-    }
-    else {
-      val key = file.url
-      val lazyDeferred = pendingJobs.computeIfAbsent(key) {
-        lazy {
-          coroutineScope.async(CoroutineName("EditorConfig IO") + processingDispatcher) {
-            doGetPropertiesAndEditorConfigs(file)
-          }.apply {
-            invokeOnCompletion { pendingJobs.remove(key) } // cleanup
-          }
-        }
-      }
-      val deferred = lazyDeferred.value
-      return withTimeout(TIMEOUT.seconds) {
-        deferred.await()
-      }
-    }
   }
 
   internal fun clearCache() {
@@ -161,7 +130,6 @@ class EditorConfigPropertiesService(private val project: Project, private val co
 
 private const val TIMEOUT = 10 // Seconds
 private val EMPTY_PROPERTIES = ResourceProperties.builder().build()
-private const val PROCESSING_POOL_SIZE = 16
 
 private sealed interface LoadEditorConfigResult
 
