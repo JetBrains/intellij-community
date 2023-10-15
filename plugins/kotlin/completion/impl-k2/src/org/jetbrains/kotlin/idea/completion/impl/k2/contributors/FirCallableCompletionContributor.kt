@@ -314,7 +314,7 @@ internal open class FirCallableCompletionContributor(
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         val receiverType = explicitReceiver.getKtType().takeUnless { it is KtErrorType } ?: return@sequence
         val callablesWithMetadata = collectDotCompletionForCallableReceiver(
-            receiverType,
+            listOf(receiverType),
             visibilityChecker,
             scopeContext,
             extensionChecker,
@@ -326,7 +326,7 @@ internal open class FirCallableCompletionContributor(
         if (smartCastInfo?.isStable == false) {
             // Collect members available from unstable smartcast as well.
             val callablesWithMetadataFromUnstableSmartCast = collectDotCompletionForCallableReceiver(
-                smartCastInfo.smartCastType,
+                listOf(smartCastInfo.smartCastType),
                 visibilityChecker,
                 scopeContext,
                 extensionChecker,
@@ -339,26 +339,28 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KtAnalysisSession)
-    private fun collectDotCompletionForCallableReceiver(
-        typeOfPossibleReceiver: KtType,
+    protected fun collectDotCompletionForCallableReceiver(
+        typesOfPossibleReceiver: List<KtType>,
         visibilityChecker: CompletionVisibilityChecker,
         scopeContext: KtScopeContext,
         extensionChecker: ExtensionApplicabilityChecker?,
         sessionParameters: FirCompletionSessionParameters,
         explicitReceiverTypeHint: KtType? = null
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
-        val nonExtensionMembers = collectNonExtensionsForType(
-            typeOfPossibleReceiver,
-            visibilityChecker,
-            scopeNameFilter,
-            sessionParameters,
-        ) { filter(it, sessionParameters) }
+        val nonExtensionMembers = typesOfPossibleReceiver.flatMap { typeOfPossibleReceiver ->
+            collectNonExtensionsForType(
+                typeOfPossibleReceiver,
+                visibilityChecker,
+                scopeNameFilter,
+                sessionParameters,
+            ) { filter(it, sessionParameters) }
+        }
         val extensionNonMembers = collectSuitableExtensions(
             scopeContext,
             extensionChecker,
             visibilityChecker,
             sessionParameters,
-            typeOfPossibleReceiver
+            typesOfPossibleReceiver,
         )
 
         nonExtensionMembers.forEach { signatureWithScopeKind ->
@@ -386,7 +388,7 @@ internal open class FirCallableCompletionContributor(
         }
 
         collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
-            listOf(typeOfPossibleReceiver),
+            typesOfPossibleReceiver,
             extensionChecker,
             visibilityChecker,
             sessionParameters
@@ -453,9 +455,9 @@ internal open class FirCallableCompletionContributor(
         extensionChecker: ExtensionApplicabilityChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
-        explicitReceiverType: KtType? = null,
+        explicitReceiverTypes: List<KtType>? = null,
     ): Sequence<Pair<KtCallableSignatureWithContainingScopeKind, CallableInsertionOptions>> {
-        val receiversTypes = explicitReceiverType?.let { listOf(it) } ?: scopeContext.implicitReceivers.map { it.type }
+        val receiversTypes = explicitReceiverTypes ?: scopeContext.implicitReceivers.map { it.type }
 
         return scopeContext.scopes.asSequence().flatMap { scopeWithKind ->
             collectSuitableExtensions(scopeWithKind.scope, receiversTypes, extensionChecker, visibilityChecker, sessionParameters)
@@ -687,31 +689,16 @@ internal class FirCallableReferenceCompletionContributor(
                 if (symbol.hasImportantStaticMemberScope) {
                     yieldAll(collectDotCompletionFromStaticScope(symbol, withCompanionScope = false, visibilityChecker, sessionParameters))
                 }
-                val type = symbol.buildSelfClassType()
-                val nonExtensionMembers = collectNonExtensionsForType(
-                    type,
-                    visibilityChecker,
-                    scopeNameFilter,
-                    sessionParameters,
-                ) { filter(it, sessionParameters) }
-
-                val staticScopeKind = KtScopeKind.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
-                val staticMembers = collectNonExtensionsFromScope(
-                    listOfNotNull(symbol.companionObject?.getMemberScope()).asCompositeScope(),
-                    visibilityChecker,
-                    scopeNameFilter,
-                    sessionParameters,
-                ) { filter(it, sessionParameters) }.map { KtCallableSignatureWithContainingScopeKind(it, staticScopeKind) }
-
-                (nonExtensionMembers + staticMembers).forEach {
-                    yield(
-                        createCallableWithMetadata(
-                            it.signature,
-                            it.scopeKind,
-                            isImportDefinitelyNotRequired = true,
-                        )
+                val types = listOfNotNull(symbol, symbol.companionObject).map { it.buildSelfClassType() }
+                yieldAll(
+                    collectDotCompletionForCallableReceiver(
+                        types,
+                        visibilityChecker,
+                        scopeContext,
+                        extensionChecker,
+                        sessionParameters
                     )
-                }
+                )
             }
 
             else -> {
