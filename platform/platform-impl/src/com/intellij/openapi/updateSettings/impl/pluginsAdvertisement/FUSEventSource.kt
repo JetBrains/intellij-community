@@ -82,7 +82,8 @@ enum class FUSEventSource {
   EDITOR,
   NOTIFICATION,
   SEARCH,
-  ACTIONS;
+  ACTIONS,
+  SETTINGS;
 
   fun doIgnoreUltimateAndLog(project: Project? = null) {
     isIgnoreIdeSuggestion = true

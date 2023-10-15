@@ -182,6 +182,13 @@ public interface Configurable extends UnnamedConfigurable {
   }
 
   /**
+   * This marker interface tells the Settings dialog to show a lock icon for the configurable.
+   */
+  interface Promo {
+    @NotNull Icon getPromoIcon();
+  }
+
+  /**
    * This marker interface notifies the Settings dialog to not add an empty border to the Swing form.
    * Required when the Swing form is a tabbed pane.
    */
