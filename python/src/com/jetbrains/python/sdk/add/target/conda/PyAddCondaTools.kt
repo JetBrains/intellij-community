@@ -157,6 +157,7 @@ private suspend fun TargetCommandExecutor.getExpandedPathIfExecutable(file: Full
 interface TargetCommandExecutor {
   val targetPlatform: CompletableFuture<TargetPlatform>
   fun execute(command: List<String>): CompletableFuture<ProcessOutput>
+
   /**
    * Command will be executed on local machine
    */
