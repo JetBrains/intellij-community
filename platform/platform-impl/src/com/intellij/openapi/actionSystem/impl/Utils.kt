@@ -61,6 +61,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.asCancellablePromise
 import java.awt.*
@@ -885,7 +886,8 @@ suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataConte
       service<ActionUpdaterInterceptor>().rearrangeByPromoters(actions, frozenContext) {
         withContext(shortcutUpdateDispatcher) {
           readActionUndispatchedForActionExpand {
-            rearrangeByPromotersImpl(actions, frozenContext)
+            val promoters = ActionPromoter.EP_NAME.extensionList + actions.filterIsInstance<ActionPromoter>()
+            rearrangeByPromotersImpl(actions, frozenContext, promoters)
           }
         }
       }
@@ -900,21 +902,30 @@ suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataConte
   }
 }
 
-private fun rearrangeByPromotersImpl(readOnlyActions: List<AnAction>, dataContext: DataContext): List<AnAction> {
-  val promoters = ActionPromoter.EP_NAME.extensionList + readOnlyActions.filterIsInstance<ActionPromoter>()
-  val actions = ArrayList(readOnlyActions)
+@VisibleForTesting
+fun rearrangeByPromotersImpl(actions: List<AnAction>,
+                             dataContext: DataContext,
+                             promoters: List<ActionPromoter>): List<AnAction> {
+  if (promoters.isEmpty()) return actions
+  val result = ArrayList(actions)
+  val copy = ArrayList(actions)
+  var updateCopy = false
   for (promoter in promoters) {
-    val promoted = promoter.promote(Collections.unmodifiableList(actions), dataContext)
+    if (updateCopy) copy.run { clear(); addAll(result) }
+    val promoted = promoter.promote(Collections.unmodifiableList(copy), dataContext)
     if (!promoted.isNullOrEmpty()) {
-      actions.removeAll(promoted)
-      actions.addAll(0, promoted)
+      result.removeAll(promoted)
+      result.addAll(0, promoted)
+      updateCopy = true
     }
-    val suppressed = promoter.suppress(Collections.unmodifiableList(actions), dataContext)
+    val suppressed = promoter.suppress(Collections.unmodifiableList(copy), dataContext)
     if (!suppressed.isNullOrEmpty()) {
-      actions.removeAll(suppressed)
+      result.removeAll(suppressed)
+      updateCopy = true
     }
   }
-  return actions
+  result.remove(null)
+  return result
 }
 
 private fun getFastTrackMaxTime(useFastTrack: Boolean,
