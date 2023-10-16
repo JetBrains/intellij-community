@@ -63,6 +63,8 @@ import java.util.function.Function;
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
 
+  private static final boolean LOG_NON_CACHED_ROOTS_LIST = SystemProperties.getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
+
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
   private final VirtualDirectoryCache myIdToDirCache = new VirtualDirectoryCache();
@@ -1809,13 +1811,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           boolean fsRootsHasCurrentId = Arrays.stream(vfsPeer.listRoots())
             .anyMatch(rootId -> rootId == currentId);
 
-          StringBuilder sb = new StringBuilder();
-          vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
-            if (myIdToDirCache.getCachedDir(rootFileId) == null) {
-              String rootName = vfsPeer.getName(rootFileId);
-              sb.append("\t" + rootFileId + ": [name:'" + rootName + "'][url:'" + rootUrl + "']\n");
-            }
-          });
+          StringBuilder nonCachedRootsPerLine = new StringBuilder();
+          if(LOG_NON_CACHED_ROOTS_LIST) {
+            vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
+              if (myIdToDirCache.getCachedDir(rootFileId) == null) {
+                String rootName = vfsPeer.getName(rootFileId);
+                nonCachedRootsPerLine.append("\t" + rootFileId + ": [name:'" + rootName + "'][url:'" + rootUrl + "']\n");
+              }
+            });
+          }
 
           return
             "file[" + startingFileId + ", flags: " + startingFileFlags + "]: " +
@@ -1825,7 +1829,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             "pfs.roots.contains(" + currentId + ")=" + rootIds.contains(currentId) + ", " +
             "fs.roots.contains(" + currentId + ")=" + fsRootsHasCurrentId + ", " +
             "non-cached roots: " + nonCachedRoots.length + ", cached non-roots: " + cachedNonRoots.length + ", " +
-            "FS roots not PFS roots: " + fsRootsNonPFSRoots.length + ": \n" + sb;
+            "FS roots not PFS roots: " + fsRootsNonPFSRoots.length + ": \n" + nonCachedRootsPerLine;
         }
       );
     }
