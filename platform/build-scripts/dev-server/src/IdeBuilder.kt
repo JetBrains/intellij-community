@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import java.lang.invoke.MethodHandles
@@ -37,13 +38,20 @@ data class BuildRequest(
                                                       ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
   @JvmField val keepHttpClient: Boolean = true,
   @JvmField val platformClassPathConsumer: ((classPath: Set<Path>, runDir: Path) -> Unit)? = null,
+  /**
+   * If `true`, the dev build will include a [runtime module repository](psi_element://com.intellij.platform.runtime.repository). 
+   * It's currently used only to run an instance of JetBrains Client from IDE's installation, 
+   * and its generation makes build a little longer, so it should be enabled only if needed.
+   */
+  @JvmField val generateRuntimeModuleRepository: Boolean = false,
 ) {
   override fun toString(): String {
     return "BuildRequest(platformPrefix='$platformPrefix', " +
            "additionalModules=$additionalModules, " +
            "isIdeProfileAware=$isIdeProfileAware, homePath=$homePath, " +
            "productionClassOutput=$productionClassOutput, " +
-           "keepHttpClient=$keepHttpClient"
+           "keepHttpClient=$keepHttpClient, " +
+           "generateRuntimeModuleRepository=$generateRuntimeModuleRepository"
   }
 }
 
@@ -88,7 +96,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       createPlatformLayout(pluginsToPublish = emptySet(), context = context)
     }
 
-    launch {
+    val platformDistributionEntries = async {
       launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         val binDir = Files.createDirectories(runDir.resolve("bin"))
@@ -101,18 +109,19 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
         Files.writeString(ideaPropertyFile, createIdeaPropertyFile(context))
       }
 
-      val classPath = spanBuilder("compute lib classpath").useWithScope2 {
+      val (platformDistributionEntries, classPath) = spanBuilder("layout platform").useWithScope2 {
         layoutPlatform(runDir = runDir, platformLayout = platformLayout.await(), context = context)
       }
-
+      
       launch(Dispatchers.IO) {
         Files.writeString(runDir.resolve("core-classpath.txt"), classPath.joinToString(separator = "\n"))
       }
 
       request.platformClassPathConsumer?.invoke(classPath, runDir)
+      platformDistributionEntries
     }
 
-    launch {
+    val pluginDistributionEntries = async {
       val artifactTask = launch {
         val artifactOutDir = request.homePath.resolve("out/classes/artifacts").toString()
         for (artifact in JpsArtifactService.getInstance().getArtifacts(context.project)) {
@@ -152,11 +161,11 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       }
 
       artifactTask.join()
-      buildPlugins(pluginBuildDescriptors = pluginBuildDescriptors,
-                   outDir = request.productionClassOutput,
-                   platformLayout = platformLayout.await(),
-                   pluginCacheRootDir = pluginCacheRootDir,
-                   context = context)
+      val pluginEntries = buildPlugins(pluginBuildDescriptors = pluginBuildDescriptors,
+                                       outDir = request.productionClassOutput,
+                                       platformLayout = platformLayout.await(),
+                                       pluginCacheRootDir = pluginCacheRootDir,
+                                       context = context)
 
       val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
       if (additionalPluginPaths.isNotEmpty()) {
@@ -164,6 +173,16 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
           for (sourceDir in additionalPluginPaths) {
             copyDir(sourceDir, pluginRootDir.resolve(sourceDir.fileName))
           }
+        }
+      }
+      pluginEntries
+    }
+
+    if (context.generateRuntimeModuleRepository) {
+      launch(Dispatchers.IO) {
+        spanBuilder("generate runtime repository").useWithScope2 {
+          val allDistributionEntries = platformDistributionEntries.await() + pluginDistributionEntries.await().flatMap { it.await() }
+          generateRuntimeModuleRepositoryForDevBuild(allDistributionEntries, runDir, context)
         }
       }
     }
@@ -201,6 +220,7 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
         if (options.enableEmbeddedJetBrainsClient && System.getProperty("idea.dev.build.unpacked").toBoolean()) {
           options.enableEmbeddedJetBrainsClient = false
         }
+        options.generateRuntimeModuleRepository = options.generateRuntimeModuleRepository && request.generateRuntimeModuleRepository
 
         CompilationContextImpl.createCompilationContext(
           communityHome = getCommunityHomePath(request.homePath),
@@ -293,7 +313,7 @@ private fun checkBuildModulesModificationAndMark(productConfiguration: ProductCo
 private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> =
   sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
 
-private suspend fun layoutPlatform(runDir: Path, platformLayout: PlatformLayout, context: BuildContext): Set<Path> {
+private suspend fun layoutPlatform(runDir: Path, platformLayout: PlatformLayout, context: BuildContext): Pair<List<DistributionFileEntry>, Set<Path>> {
   val entries = layoutPlatformDistribution(moduleOutputPatcher = ModuleOutputPatcher(),
                                            targetDirectory = runDir,
                                            platform = platformLayout,
@@ -324,7 +344,7 @@ private suspend fun layoutPlatform(runDir: Path, platformLayout: PlatformLayout,
       Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
     }
   }
-  return sortedClassPath
+  return entries to sortedClassPath
 }
 
 private fun getBundledMainModuleNames(productProperties: ProductProperties, additionalModules: List<String>): Set<String> {

@@ -12,6 +12,7 @@ import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDe
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.exists
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationTasks
@@ -54,6 +55,25 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
                                         context, repositoryForCompiledModulesPath)
     }
   }
+}
+
+/**
+ * A variant of [generateRuntimeModuleRepository] which should be used for 'dev build', when all [entries] correspond to the current OS, 
+ * and distribution files are generated under [targetDirectory].
+ */
+@ApiStatus.Internal
+fun generateRuntimeModuleRepositoryForDevBuild(entries: List<DistributionFileEntry>, targetDirectory: Path, context: BuildContext) {
+  val (repositoryForCompiledModulesPath, compiledModulesDescriptors) = loadForCompiledModules(context)
+  val actualEntries = entries.mapNotNull { entry ->
+    if (targetDirectory.isAncestor(entry.path, false)) {
+      RuntimeModuleRepositoryEntry(null, targetDirectory.relativize(entry.path).pathString, entry)
+    }
+    else {
+      context.messages.warning("${entry.path} entry is not under $targetDirectory")
+      null
+    }
+  }
+  generateRepositoryForDistribution(targetDirectory, actualEntries, compiledModulesDescriptors, context, repositoryForCompiledModulesPath)
 }
 
 private fun loadForCompiledModules(context: BuildContext): Pair<Path, Map<RuntimeModuleId, RawRuntimeModuleDescriptor>> {

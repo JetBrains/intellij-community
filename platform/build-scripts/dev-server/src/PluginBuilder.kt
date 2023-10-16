@@ -5,15 +5,13 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.UNMODIFIED_MARK_FILE_NAME
 import org.jetbrains.intellij.build.createMarkFile
 import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.LongAdder
@@ -32,31 +30,32 @@ internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescri
                                   outDir: Path,
                                   pluginCacheRootDir: Path,
                                   platformLayout: PlatformLayout,
-                                  context: BuildContext) {
-  spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope2 { span ->
+                                  context: BuildContext): List<Deferred<List<DistributionFileEntry>>> {
+  return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope2 { span ->
     val counter = LongAdder()
-    coroutineScope {
-      for (plugin in pluginBuildDescriptors) {
-        launch {
-          if (buildPlugin(plugin = plugin,
-                          platformLayout = platformLayout,
-                          outDir = outDir,
-                          pluginCacheRootDir = pluginCacheRootDir,
-                          context = context)) {
-            counter.add(1)
-          }
+    val pluginEntries = coroutineScope {
+      pluginBuildDescriptors.map { plugin ->
+        async {
+          buildPluginIfNotCached(plugin = plugin,
+                                 platformLayout = platformLayout,
+                                 outDir = outDir,
+                                 pluginCacheRootDir = pluginCacheRootDir,
+                                 context = context,
+                                 reusedPluginsCounter = counter)        
         }
       }
     }
     span.setAttribute("reusedCount", counter.toLong())
+    pluginEntries
   }
 }
 
-internal suspend fun buildPlugin(plugin: PluginBuildDescriptor,
-                                 outDir: Path,
-                                 pluginCacheRootDir: Path,
-                                 platformLayout: PlatformLayout,
-                                 context: BuildContext): Boolean {
+internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
+                                            outDir: Path,
+                                            pluginCacheRootDir: Path,
+                                            platformLayout: PlatformLayout,
+                                            context: BuildContext,
+                                            reusedPluginsCounter: LongAdder): List<DistributionFileEntry> {
   val mainModule = plugin.layout.mainModule
 
   val reason = withContext(Dispatchers.IO) {
@@ -70,25 +69,41 @@ internal suspend fun buildPlugin(plugin: PluginBuildDescriptor,
                                  context = context)
     }
     reason
-  } ?: return true
+  }
+  if (reason == null) {
+    reusedPluginsCounter.add(1)
+    if (context.generateRuntimeModuleRepository) {
+      return buildPlugin(plugin, outDir, reason = "generate runtime module repository", platformLayout, context, copyFiles = false)
+    }
+    return emptyList()
+  }
 
+  return buildPlugin(plugin, outDir, reason, platformLayout, context, copyFiles = true)
+}
+
+private suspend fun buildPlugin(plugin: PluginBuildDescriptor,
+                                outDir: Path,
+                                reason: String,
+                                platformLayout: PlatformLayout,
+                                context: BuildContext,
+                                copyFiles: Boolean): List<DistributionFileEntry> {
   val moduleOutputPatcher = ModuleOutputPatcher()
   return spanBuilder("build plugin")
-    .setAttribute("mainModule", mainModule)
+    .setAttribute("mainModule", plugin.layout.mainModule)
     .setAttribute("dir", plugin.layout.directoryName)
     .setAttribute("reason", reason)
     .useWithScope2 {
-      layoutDistribution(layout = plugin.layout,
-                         platformLayout = platformLayout,
-                         targetDirectory = plugin.dir,
-                         moduleOutputPatcher = moduleOutputPatcher,
-                         includedModules = plugin.layout.includedModules,
-                         context = context)
+      val (pluginEntries, _) = layoutDistribution(layout = plugin.layout,
+                                                  platformLayout = platformLayout,targetDirectory = plugin.dir,
+                                                  
+                                                  moduleOutputPatcher = moduleOutputPatcher,
+                                                  includedModules = plugin.layout.includedModules,
+                                                  copyFiles = copyFiles,
+                                                  context = context)
       withContext(Dispatchers.IO) {
         plugin.markAsBuilt(outDir)
       }
-
-      false
+      pluginEntries
     }
 }
 
