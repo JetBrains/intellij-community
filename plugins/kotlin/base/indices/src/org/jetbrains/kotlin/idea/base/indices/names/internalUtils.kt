@@ -5,12 +5,16 @@ import com.intellij.util.indexing.FileContent
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
+import org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.metadata.ProtoBuf
+import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmNameResolver
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder.FileWithMetadata.Compatible as CompatibleMetadata
+import org.jetbrains.kotlin.load.kotlin.KotlinClassFinder
+import org.jetbrains.kotlin.name.FqName
 
 private val ALLOWED_METADATA_EXTENSIONS = listOf(
     JvmBuiltInsPackageFragmentProvider.DOT_BUILTINS_METADATA_FILE_EXTENSION,
@@ -52,3 +56,12 @@ internal fun readProtoPackageData(kotlinJvmBinaryClass: KotlinJvmBinaryClass): P
     val strings = header.strings ?: return null
     return JvmProtoBufUtil.readPackageDataFrom(data, strings)
 }
+
+internal fun FileContent.toKotlinJvmBinaryClass(): KotlinJvmBinaryClass? {
+    val result = KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, JvmMetadataVersion.INSTANCE, content) ?: return null
+    val kotlinClass = result as? KotlinClassFinder.Result.KotlinClass ?: return null
+    return kotlinClass.kotlinJvmBinaryClass
+}
+
+internal val KotlinJvmBinaryClass.packageName: FqName
+    get() = classHeader.packageName?.let(::FqName) ?: classId.packageFqName

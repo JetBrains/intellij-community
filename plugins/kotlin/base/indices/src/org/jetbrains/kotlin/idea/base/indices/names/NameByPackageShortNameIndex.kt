@@ -15,8 +15,6 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.vfilefinder.FqNameKeyDescriptor
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
-import org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache
-import org.jetbrains.kotlin.load.kotlin.KotlinClassFinder
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.name.FqName
@@ -75,13 +73,11 @@ abstract class NameByPackageShortNameIndex : FileBasedIndexExtension<FqName, Lis
     }
 
     private fun getPackageAndNamesFromMetadata(fileContent: FileContent): Map<FqName, List<Name>> {
-        val result = KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(fileContent.file, fileContent.content)
-            ?: return emptyMap()
-        val kotlinClass = result as? KotlinClassFinder.Result.KotlinClass ?: return emptyMap()
-        val binaryClass = kotlinClass.kotlinJvmBinaryClass
-        val packageName = binaryClass.classHeader.packageName?.let(::FqName) ?: binaryClass.classId.packageFqName
+        val binaryClass = fileContent.toKotlinJvmBinaryClass() ?: return emptyMap()
         if (binaryClass.classHeader.kind == KotlinClassHeader.Kind.SYNTHETIC_CLASS) return emptyMap()
         if (binaryClass.classId.isLocal) return emptyMap()
+
+        val packageName = binaryClass.packageName
         return mapOf(packageName to getDeclarationNamesByMetadata(binaryClass).distinct())
     }
 
