@@ -74,12 +74,18 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(newCondaEnvInfo: NewCon
 
   return error?.let { Result.failure(Exception(it)) }
          ?: Result.success(
-           createCondaSdkFromExistingEnv(PyCondaEnvIdentity.NamedEnv(newCondaEnvInfo.envName), existingSdks, project)).apply {
+           createCondaSdkFromExistingEnv(newCondaEnvInfo.toIdentity(), existingSdks, project)).apply {
            onSuccess {
              saveLocalPythonCondaPath(Path.of(this@createCondaSdkAlongWithNewEnv.fullCondaPathOnTarget))
            }
          }
 }
+
+private fun NewCondaEnvRequest.toIdentity(): PyCondaEnvIdentity =
+  when (this) {
+    is NewCondaEnvRequest.EmptyNamedEnv, is NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile -> PyCondaEnvIdentity.NamedEnv(envName)
+    is NewCondaEnvRequest.EmptyUnnamedEnv -> PyCondaEnvIdentity.UnnamedEnv(envPath = envName, isBase = false)
+  }
 
 /**
  * Detects conda binary in well-known locations on the local machine.
