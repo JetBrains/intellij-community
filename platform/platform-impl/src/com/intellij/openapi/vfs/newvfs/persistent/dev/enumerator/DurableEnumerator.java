@@ -36,12 +36,12 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
 
   private final @NotNull KeyDescriptorEx<V> valueDescriptor;
 
-  //MAYBE RC: durable map is not _required_ here. We could go with:
-  //          1) in-memory map, transient & re-populated from log on each start
-  //          2) swappable in-memory/on-disk map, there on-disk part is transient and
-  //             map is re-populated from log on each start
-  //          3) on-disk map, durable between restarts re-populated from log only on
-  //             corruption
+  //Durable map is not _required_ here. We could go with:
+  // 1) in-memory map, transient & re-populated from log on each start
+  // 2) swappable in-memory/on-disk map, there on-disk part is transient and
+  //    map is re-populated from log on each start
+  // 3) on-disk map, durable between restarts re-populated from log only on
+  //    corruption
 
   private final @NotNull DurableIntToMultiIntMap valueHashToId;
 
