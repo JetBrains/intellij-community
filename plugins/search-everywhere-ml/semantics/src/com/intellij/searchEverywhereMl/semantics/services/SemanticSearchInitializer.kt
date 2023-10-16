@@ -15,7 +15,7 @@ class SemanticSearchInitializer : ProjectActivity {
    */
   override suspend fun execute(project: Project) {
     if (SemanticSearchSettings.getInstance().enabledInActionsTab) {
-      ActionEmbeddingsStorage.getInstance().prepareForSearch(project).join()
+      ActionEmbeddingsStorage.getInstance().prepareForSearch(project)
     }
     else if ((ApplicationManager.getApplication().isInternal
               || (ApplicationManager.getApplication().isEAP &&
@@ -40,15 +40,15 @@ class SemanticSearchInitializer : ProjectActivity {
     }
 
     if (SemanticSearchSettings.getInstance().enabledInClassesTab) {
-      ClassEmbeddingsStorage.getInstance(project).prepareForSearch().join()
+      ClassEmbeddingsStorage.getInstance(project).prepareForSearch()
     }
 
     if (SemanticSearchSettings.getInstance().enabledInFilesTab) {
-      FileEmbeddingsStorage.getInstance(project).prepareForSearch().join()
+      FileEmbeddingsStorage.getInstance(project).prepareForSearch()
     }
 
     if (SemanticSearchSettings.getInstance().enabledInSymbolsTab) {
-      SymbolEmbeddingStorage.getInstance(project).prepareForSearch().join()
+      SymbolEmbeddingStorage.getInstance(project).prepareForSearch()
     }
   }
 }
