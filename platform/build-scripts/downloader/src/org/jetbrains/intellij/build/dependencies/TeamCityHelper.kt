@@ -49,7 +49,7 @@ object TeamCityHelper {
     val systemPropertiesEnvName = "TEAMCITY_BUILD_PROPERTIES_FILE"
     val systemPropertiesFile = System.getenv(systemPropertiesEnvName)
     if (systemPropertiesFile == null || systemPropertiesFile.isEmpty()) {
-      throw RuntimeException("TeamCity environment variable " + systemPropertiesEnvName + "was not found while running under TeamCity")
+      throw RuntimeException("TeamCity environment variable $systemPropertiesEnvName was not found while running under TeamCity")
     }
     val file = Path.of(systemPropertiesFile)
     if (!Files.exists(file)) {
