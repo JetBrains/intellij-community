@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
@@ -55,8 +56,11 @@ public abstract class AppIcon {
       else if (SystemInfoRt.isMac) {
         ourIcon = new MacAppIcon();
       }
-      else if (SystemInfoRt.isXWindow) {
+      else if (StartupUiUtil.isXToolkit()) {
         ourIcon = new XAppIcon();
+      }
+      else if (StartupUiUtil.isWaylandToolkit()) {
+        ourIcon = new WLAppIcon();
       }
       else if (SystemInfoRt.isWindows && JnaLoader.isLoaded()) {
         ourIcon = new Win7AppIcon();
@@ -718,6 +722,35 @@ public abstract class AppIcon {
     @Override
     public void requestFocus(Window window) {
       if (window != null) X11UiUtil.activate(window);
+    }
+  }
+
+  private static final class WLAppIcon extends BaseIcon {
+    @Override
+    public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+      return false;
+    }
+
+    @Override
+    public boolean _hideProgress(@Nullable JFrame frame, Object processId) {
+      return false;
+    }
+
+    @Override
+    public void _setTextBadge(@Nullable JFrame frame, String text) {}
+
+    @Override
+    public void _setOkBadge(@Nullable JFrame frame, boolean visible) {}
+
+    @Override
+    public void _requestAttention(@Nullable JFrame frame, boolean critical) {
+      // TODO: perhaps, use
+      // https://wayland.app/protocols/gtk-shell#gtk_surface1:request:request_focus
+    }
+
+    @Override
+    public void requestFocus(Window window) {
+      if (window != null) window.toFront();
     }
   }
 

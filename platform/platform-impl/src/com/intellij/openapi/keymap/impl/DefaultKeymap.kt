@@ -109,7 +109,7 @@ open class DefaultKeymap {
       SystemInfoRt.isMac -> KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP
       SystemInfo.isGNOME -> KeymapManager.GNOME_KEYMAP
       SystemInfo.isKDE -> KeymapManager.KDE_KEYMAP
-      SystemInfo.isXWindow -> KeymapManager.X_WINDOW_KEYMAP
+      SystemInfo.isUnix -> KeymapManager.X_WINDOW_KEYMAP
       else -> KeymapManager.DEFAULT_IDEA_KEYMAP
     }
 

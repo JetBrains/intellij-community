@@ -45,6 +45,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
+import java.awt.Toolkit
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.management.ManagementFactory
@@ -665,8 +666,9 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
     "JRE: ${System.getProperty("java.runtime.version", "-")}, ${System.getProperty("os.arch")} (${System.getProperty("java.vendor", "-")})")
   log.info("JVM: ${System.getProperty("java.vm.version", "-")} (${System.getProperty("java.vm.name", "-")})")
   log.info("PID: ${ProcessHandle.current().pid()}")
-  if (SystemInfoRt.isXWindow) {
+  if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
     log.info("desktop: ${System.getenv("XDG_CURRENT_DESKTOP")}")
+    log.info("toolkit: ${Toolkit.getDefaultToolkit().javaClass.name}")
   }
 
   try {

@@ -234,7 +234,7 @@ private fun CoroutineScope.postOpenUiTasks() {
       TouchbarSupport.onApplicationLoaded()
     }
   }
-  else if (SystemInfoRt.isXWindow && SystemInfo.isJetBrainsJvm) {
+  else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac && SystemInfo.isJetBrainsJvm) {
     launch(CoroutineName("input method disabling on Linux")) {
       disableInputMethodsIfPossible()
     }

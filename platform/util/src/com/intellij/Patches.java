@@ -10,7 +10,7 @@ public final class Patches {
    * See <a href="https://bugs.openjdk.org/browse/JDK-6322854">JDK-6322854</a>.
    * java.lang.NullPointerException: Failed to retrieve atom name.
    */
-  public static final boolean SUN_BUG_ID_6322854 = SystemInfoRt.isXWindow;
+  public static final boolean SUN_BUG_ID_6322854 = SystemInfoRt.isUnix && !SystemInfoRt.isMac;
 
   /**
    * IBM JVM 1.4.2 crashes if debugger uses ObjectReference.disableCollection() and ObjectReference.enableCollection().

@@ -1710,7 +1710,8 @@ public final class JBUI {
     public interface Window {
       static Border getBorder(boolean undecoratedWindow) {
         Border result = UIManager.getBorder("Window.border");
-        if (result == null && undecoratedWindow && SystemInfoRt.isXWindow && Registry.is("ide.linux.use.undecorated.border")) {
+        if (result == null && undecoratedWindow &&
+            SystemInfo.isUnix && !SystemInfo.isMac && Registry.is("ide.linux.use.undecorated.border")) {
           result = UIManager.getBorder("Window.undecorated.border");
         }
         return result;

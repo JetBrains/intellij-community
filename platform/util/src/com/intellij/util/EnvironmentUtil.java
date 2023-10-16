@@ -163,7 +163,7 @@ public final class EnvironmentUtil {
     if (SystemInfoRt.isWindows) {
       return Collections.unmodifiableMap(CollectionFactory.createCaseInsensitiveStringMap(System.getenv()));
     }
-    else if (SystemInfoRt.isXWindow) {
+    else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
       // DESKTOP_STARTUP_ID variable can be set by an application launcher in X Window environment.
       // It shouldn't be passed to child processes as per 'Startup notification protocol'
       // (https://specifications.freedesktop.org/startup-notification-spec/startup-notification-latest.txt).

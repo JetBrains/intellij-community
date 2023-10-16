@@ -47,6 +47,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -1017,7 +1018,7 @@ internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
 }
 
 private fun mapEvent(e: AWTEvent): AWTEvent {
-  return if (SystemInfoRt.isXWindow && e is MouseEvent && e.button > 3) mapXWindowMouseEvent(e) else e
+  return if (StartupUiUtil.isXToolkit() && e is MouseEvent && e.button > 3) mapXWindowMouseEvent(e) else e
 }
 
 private fun mapXWindowMouseEvent(src: MouseEvent): AWTEvent {

@@ -278,7 +278,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
 
     ComponentUtil.decorateWindowHeader(this)
 
-    if (SystemInfoRt.isXWindow) {
+    if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
       installLinuxBorder()
     }
     else {
@@ -330,21 +330,21 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
      */
     internal val isMenuButtonInToolbar: Boolean
       get() = ExperimentalUI.isNewUI() &&
-              (SystemInfoRt.isXWindow && !UISettings.shadowInstance.separateMainMenu && !hideNativeLinuxTitle
+              (SystemInfoRt.isUnix && !SystemInfoRt.isMac && !UISettings.shadowInstance.separateMainMenu && !hideNativeLinuxTitle
                || SystemInfo.isMac && !Menu.isJbScreenMenuEnabled())
 
     internal val hideNativeLinuxTitle: Boolean
       get() = hideNativeLinuxTitleAvailable && hideNativeLinuxTitleSupported && UISettings.shadowInstance.mergeMainMenuWithWindowTitle
 
     internal val hideNativeLinuxTitleSupported: Boolean
-      get() = SystemInfoRt.isXWindow
+      get() = SystemInfoRt.isUnix && !SystemInfoRt.isMac
               && ExperimentalUI.isNewUI()
               && JBR.isWindowMoveSupported()
-              && !X11UiUtil.isWSL()
-              && !X11UiUtil.isTileWM()
+              && ((StartupUiUtil.isXToolkit() && !X11UiUtil.isWSL() && !X11UiUtil.isTileWM())
+                  || StartupUiUtil.isWaylandToolkit())
 
     internal val hideNativeLinuxTitleAvailable: Boolean
-      get() = SystemInfoRt.isXWindow
+      get() = SystemInfoRt.isUnix && !SystemInfoRt.isMac
               && ExperimentalUI.isNewUI()
               && Registry.`is`("ide.linux.hide.native.title", false)
 
@@ -423,7 +423,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!
 
   private fun installLinuxBorder() {
-    if (SystemInfoRt.isXWindow) {
+    if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
       val maximized = frame.extendedState and Frame.MAXIMIZED_BOTH == Frame.MAXIMIZED_BOTH
       border = JBUI.CurrentTheme.Window.getBorder(!fullScreen && !maximized && hideNativeLinuxTitle)
     }
@@ -438,7 +438,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       })
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
     }
-    else if (SystemInfoRt.isXWindow) {
+    else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
       if (toolbar != null) {
         val isNewToolbar = ExperimentalUI.isNewUI()
         toolbar!!.isVisible = !fullScreen && ((!isCompactHeader {
