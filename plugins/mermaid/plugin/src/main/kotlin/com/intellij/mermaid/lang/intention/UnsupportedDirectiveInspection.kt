@@ -14,7 +14,7 @@ import com.intellij.psi.tree.TokenSet
 
 
 class UnsupportedDirectiveInspection : LocalInspectionTool(), CleanupLocalInspectionTool {
-  private val NEW_DIAGRAMS = TokenSet.create(
+  private val newDiagrams = TokenSet.create(
     MermaidTokens.ZenUML.ZEN_UML,
     MermaidTokens.Sankey.SANKEY
   )
@@ -22,7 +22,7 @@ class UnsupportedDirectiveInspection : LocalInspectionTool(), CleanupLocalInspec
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     if (file !is MermaidFile) return null
 
-    SyntaxTraverser.psiTraverser(file).firstOrNull { it.hasType(NEW_DIAGRAMS) } ?: return null
+    SyntaxTraverser.psiTraverser(file).firstOrNull { it.hasType(newDiagrams) } ?: return null
 
     val openDirective = file.children().firstOrNull { it.hasType(MermaidTokens.Directives.OPEN_DIRECTIVE) } ?: return null
     val closeDirective = file.children().firstOrNull { it.hasType(MermaidTokens.Directives.CLOSE_DIRECTIVE) } ?: return null

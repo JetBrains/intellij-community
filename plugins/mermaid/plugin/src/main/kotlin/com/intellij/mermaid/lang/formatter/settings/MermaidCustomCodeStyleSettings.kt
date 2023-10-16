@@ -4,6 +4,7 @@ import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
 
+@Suppress("PropertyName")
 class MermaidCustomCodeStyleSettings(settings: CodeStyleSettings) :
   CustomCodeStyleSettings(MermaidLanguage.id, settings) {
 
