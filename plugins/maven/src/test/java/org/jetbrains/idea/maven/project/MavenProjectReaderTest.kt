@@ -21,6 +21,8 @@ import org.junit.Assume
 import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import kotlin.io.path.pathString
 
 class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   fun testBasics() {
@@ -1767,6 +1769,57 @@ $value</value>
     assertActiveProfiles("project", "settings")
   }
 
+  fun `test custom source directories`() {
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>submodule</module>
+                       </modules>
+                       <build>
+                         <sourceDirectory>src</sourceDirectory>
+                         <testSourceDirectory>test</testSourceDirectory>
+                         <resources>
+                           <resource>
+                             <directory>resources</directory>
+                           </resource>
+                         </resources>
+                         <testResources>
+                           <testResource>
+                             <directory>testResources</directory>
+                           </testResource>
+                         </testResources>
+                       </build>
+                       """.trimIndent())
+
+    val submodulePom = createModulePom("submodule",
+                                       """
+                      <groupId>test</groupId>
+                      <artifactId>submodule</artifactId>
+                      <version>1</version>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>
+                      """.trimIndent())
+
+    val submoduleModelBuild = readProject(submodulePom).build
+
+    val submodulePath = submodulePom.parent.path
+    val srcPaths = listOf(Path.of(submodulePath, "src").pathString)
+    val testPaths = listOf(Path.of(submodulePath, "test").pathString)
+    val resourcePaths = listOf(Path.of(submodulePath, "resources").pathString)
+    val testResourcePaths = listOf(Path.of(submodulePath, "testResources").pathString)
+
+    assertEquals(srcPaths, submoduleModelBuild.sources)
+    assertEquals(testPaths, submoduleModelBuild.testSources)
+    assertEquals(resourcePaths, submoduleModelBuild.resources.map { it.directory })
+    assertEquals(testResourcePaths, submoduleModelBuild.testResources.map { it.directory })
+  }
+
   private fun assertActiveProfiles(vararg expected: String) {
     assertActiveProfiles(emptyList(), *expected)
   }
@@ -1777,28 +1830,26 @@ $value</value>
     assertUnorderedElementsAreEqual(result.activatedProfiles.enabledProfiles, *expected)
   }
 
-  companion object {
-    private fun assertParent(p: MavenModel,
-                             groupId: String,
-                             artifactId: String,
-                             version: String) {
-      val parent = p.parent.mavenId
-      assertEquals(groupId, parent.groupId)
-      assertEquals(artifactId, parent.artifactId)
-      assertEquals(version, parent.version)
-    }
+  private fun assertParent(p: MavenModel,
+                           groupId: String,
+                           artifactId: String,
+                           version: String) {
+    val parent = p.parent.mavenId
+    assertEquals(groupId, parent.groupId)
+    assertEquals(artifactId, parent.artifactId)
+    assertEquals(version, parent.version)
+  }
 
-    private fun assertResource(resource: MavenResource,
-                               dir: String,
-                               filtered: Boolean,
-                               targetPath: String?,
-                               includes: List<String>,
-                               excludes: List<String>) {
-      PlatformTestUtil.assertPathsEqual(dir, resource.directory)
-      assertEquals(filtered, resource.isFiltered)
-      PlatformTestUtil.assertPathsEqual(targetPath, resource.targetPath)
-      assertOrderedElementsAreEqual(resource.includes, includes)
-      assertOrderedElementsAreEqual(resource.excludes, excludes)
-    }
+  private fun assertResource(resource: MavenResource,
+                             dir: String,
+                             filtered: Boolean,
+                             targetPath: String?,
+                             includes: List<String>,
+                             excludes: List<String>) {
+    PlatformTestUtil.assertPathsEqual(dir, resource.directory)
+    assertEquals(filtered, resource.isFiltered)
+    PlatformTestUtil.assertPathsEqual(targetPath, resource.targetPath)
+    assertOrderedElementsAreEqual(resource.includes, includes)
+    assertOrderedElementsAreEqual(resource.excludes, excludes)
   }
 }
