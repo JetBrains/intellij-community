@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.psi.PsiElement
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
@@ -26,9 +27,9 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.calls.smartcasts.SmartCastManager
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
-import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.*
 import org.jetbrains.kotlin.resolve.scopes.receivers.ClassQualifier
+import org.jetbrains.kotlin.resolve.scopes.receivers.ThisClassReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.collectAllFromMeAndParent
 import org.jetbrains.kotlin.resolve.scopes.utils.collectDescriptorsFiltered
 import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsImportingScope
@@ -40,7 +41,6 @@ import org.jetbrains.kotlin.types.TypeConstructor
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.suppressedByNotPropertyList
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
@@ -317,17 +317,26 @@ class ReferenceVariantsHelper(
                     .flatMapTo(descriptors) { it.collectStaticMembers(resolutionFacade, kindFilter, nameFilter) }
             }
         } else {
-            val constructorFilter: (ClassDescriptor) -> Boolean = { true }
+            for (implicitReceiverParameterDescriptor in resolutionScope.getImplicitReceiversWithInstance()) {
+                // members of companion object and nested class constructors are available from class members
+                val withCompanionObjectMembersAndNestedClassConstructors = receiver is ThisClassReceiver
 
-            resolutionScope.ownerDescriptor.parentsWithSelf.firstIsInstanceOrNull<ClassDescriptor>()?.let { classDescriptor ->
-                // process instance members, class constructors and companion object
-                listOfNotNull(classDescriptor, classDescriptor.companionObjectDescriptor).forEach {
+                val implicitReceiver = implicitReceiverParameterDescriptor.value
+                val classDescriptor = implicitReceiver.type.constructor.declarationDescriptor as? ClassDescriptor ?: continue
+
+                val descriptorsToCollectMembersFrom = buildList {
+                    add(classDescriptor)
+                    if (withCompanionObjectMembersAndNestedClassConstructors) addIfNotNull(classDescriptor.companionObjectDescriptor)
+                }
+
+                // process instance members and class constructors
+                descriptorsToCollectMembersFrom.forEach {
                     descriptors.addNonExtensionMembers(
                         it.unsubstitutedMemberScope,
                         it.typeConstructor,
                         kindFilter,
                         nameFilter,
-                        constructorFilter
+                        constructorFilter = { withCompanionObjectMembersAndNestedClassConstructors || it.isInner },
                     )
                 }
             }
@@ -336,7 +345,7 @@ class ReferenceVariantsHelper(
                 resolutionScope,
                 kindFilter,
                 nameFilter,
-                constructorFilter = constructorFilter,
+                constructorFilter = { true },
                 classesOnly = false
             )
         }

@@ -16,9 +16,9 @@ fun C.foo() {
 }
 
 // IGNORE_K2
-// ABSENT: memberFun
-// ABSENT: memberVal
-// ABSENT: hashCode
+// EXIST: memberFun
+// EXIST: memberVal
+// EXIST: hashCode
 // ABSENT: companionObjectFun
 // ABSENT: NestedClass
-// ABSENT: InnerClass
+// EXIST: InnerClass
