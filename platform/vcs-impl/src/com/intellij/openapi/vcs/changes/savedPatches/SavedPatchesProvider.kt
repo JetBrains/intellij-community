@@ -5,10 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.Tag
+import org.jetbrains.annotations.Nls
 import java.awt.Graphics2D
 import java.util.concurrent.CompletableFuture
 import java.util.stream.Stream
@@ -48,6 +48,8 @@ interface SavedPatchesProvider<S> {
 
   sealed class LoadingResult {
     class Changes(val changes: Collection<ChangeObject>) : LoadingResult()
-    class Error(val error: VcsException) : LoadingResult()
+    class Error(val message: @Nls String) : LoadingResult() {
+      constructor(error: Throwable) : this(error.localizedMessage)
+    }
   }
 }

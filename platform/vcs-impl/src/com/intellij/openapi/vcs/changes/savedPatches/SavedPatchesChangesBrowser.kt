@@ -68,7 +68,7 @@ class SavedPatchesChangesBrowser(project: Project,
           setData(data.changes)
         }
         is SavedPatchesProvider.LoadingResult.Error -> {
-          setEmpty { statusText -> statusText.setText(data.error.localizedMessage, SimpleTextAttributes.ERROR_ATTRIBUTES) }
+          setEmpty { statusText -> statusText.setText(data.message, SimpleTextAttributes.ERROR_ATTRIBUTES) }
         }
         null -> {}
       }
