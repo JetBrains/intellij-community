@@ -6,13 +6,11 @@ import com.intellij.ui.DisableSvgCache;
 import com.intellij.ui.RestoreScaleExtension;
 import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.ui.icons.CachedImageIconKt;
-import com.intellij.ui.icons.ScaledIconCacheKt;
 import com.intellij.ui.scale.paint.ImageComparator;
 import com.intellij.ui.scale.paint.ImageComparator.AASmootherComparator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.net.MalformedURLException;
@@ -40,8 +38,8 @@ public class SvgIconScaleAndPaintTest {
     CachedImageIcon icon = CachedImageIconKt.createCachedIcon(Path.of(getSvgIconPath()),
                                                               ScaleContext.create(ScaleType.SYS_SCALE.of(SYSTEM_SCALE)));
 
-    Icon scaledIcon = icon.scale(OBJECT_SCALE);
-    Image realImage = ScaledIconCacheKt.getRealImage(scaledIcon);
+    CachedImageIcon scaledIcon = icon.scale(OBJECT_SCALE);
+    Image realImage = scaledIcon.getRealImage();
 
     //noinspection UndesirableClassUsage
     BufferedImage paintIconImage = new BufferedImage(realImage.getWidth(null), realImage.getHeight(null), BufferedImage.TYPE_INT_ARGB);

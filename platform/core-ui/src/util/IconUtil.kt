@@ -410,16 +410,15 @@ object IconUtil {
       return icon.scale(scale = scale, ancestor = ancestor)
     }
 
-    val ctx = if (ancestor == null && icon is ScaleContextAware) {
+    val scaleContext = if (ancestor == null && icon is ScaleContextAware) {
       // in this case, the icon's context should be preserved, except the OBJ_SCALE
-      val usrCtx = icon.scaleContext
-      ScaleContext.create(usrCtx)
+      ScaleContext.create(icon.scaleContext)
     }
     else {
       ScaleContext.create(ancestor)
     }
-    ctx.setScale(ScaleType.OBJ_SCALE.of(scale))
-    return scale(icon = icon, scaleContext = ctx)
+    scaleContext.setScale(ScaleType.OBJ_SCALE.of(scale))
+    return scale(icon = icon, scaleContext = scaleContext)
   }
 
   /**
@@ -473,31 +472,30 @@ object IconUtil {
   fun scaleByFont(icon: Icon, ancestor: Component?, fontSize: Float): Icon {
     var scale = getFontScale(fontSize)
     if (icon is ScaleContextAware) {
-      val ctxIcon = icon as ScaleContextAware
+      val scaleContext = if (ancestor == null) icon.scaleContext else ScaleContext.create(ancestor)
       // take into account the user scale of the icon
-      val usrScale = ctxIcon.scaleContext.getScale(ScaleType.USR_SCALE)
-      scale /= usrScale.toFloat()
+      scale /= scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
     }
     return scale(icon = icon, ancestor = ancestor, scale = scale)
   }
 
   @JvmStatic
   fun scaleByIconWidth(icon: Icon?, ancestor: Component?, defaultIcon: Icon): Icon {
-    return scaleByIcon(icon, ancestor, defaultIcon) { it.iconWidth }
+    return scaleByIcon(icon = icon, ancestor = ancestor, defaultIcon = defaultIcon) { it.iconWidth }
   }
 
   @JvmOverloads
   @JvmStatic
   fun colorize(source: Icon, color: Color, keepGray: Boolean = false): Icon {
     return filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
-      override fun getFilter() = ColorFilter(color, keepGray)
+      override fun getFilter() = ColorFilter(color = color, keepGray = keepGray)
     })
   }
 
   @JvmOverloads
   @JvmStatic
   fun colorize(g: Graphics2D?, source: Icon, color: Color, keepGray: Boolean = false): Icon {
-    return filterIcon(g = g, source = source, filter = ColorFilter(color, keepGray))
+    return filterIcon(g = g, source = source, filter = ColorFilter(color = color, keepGray = keepGray))
   }
 
   @JvmStatic

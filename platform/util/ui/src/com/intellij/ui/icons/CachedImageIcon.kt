@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.colorPatcherDigestShim
+import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.SVGLoader
 import com.intellij.util.ui.MultiResolutionImageProvider
 import org.jetbrains.annotations.ApiStatus
@@ -107,9 +108,6 @@ open class CachedImageIcon private constructor(
     val gc = c?.graphicsConfiguration ?: (g as? Graphics2D)?.deviceConfiguration
     synchronized(iconCache) {
       checkPathTransform()
-      if (colorPatcher.updateDigest()) {
-        iconCache.clear()
-      }
       iconCache.getCachedIcon(host = this, gc = gc, attributes = getEffectiveAttributes())
     }.paintIcon(c, g, x, y)
   }
@@ -124,7 +122,10 @@ open class CachedImageIcon private constructor(
   fun getRealIcon(): Icon = resolveActualIcon()
 
   @Internal
-  fun getRealImage(): Image? = (resolveActualIcon() as? ScaledResultIcon)?.image
+  fun getRealImage(): Image? {
+    val image = (resolveActualIcon() as? ScaledResultIcon)?.image
+    return (image as? JBHiDPIScaledImage)?.delegate ?: image
+  }
 
   internal fun resolveImage(scaleContext: ScaleContext?): Image? {
     val icon = if (scaleContext == null) resolveActualIcon() else resolveActualIcon(scaleContext)
@@ -153,7 +154,7 @@ open class CachedImageIcon private constructor(
       checkPathTransform()
 
       if (scaleContext == null) {
-        return iconCache.getOrScaleIcon(host = this, scaleContext = ScaleContext.create(), attributes = getEffectiveAttributes())
+        return iconCache.getCachedIcon(host = this, gc = null, attributes = getEffectiveAttributes())
       }
       else {
         scaleContext.update()
@@ -163,6 +164,10 @@ open class CachedImageIcon private constructor(
   }
 
   private fun checkPathTransform() {
+    if (colorPatcher.updateDigest()) {
+      iconCache.clear()
+    }
+
     if (pathTransformModCount == pathTransformGlobalModCount.get()) {
       return
     }
@@ -179,19 +184,11 @@ open class CachedImageIcon private constructor(
 
   override fun toString(): String = resolver?.toString() ?: (originalPath ?: "unknown path")
 
-  override fun scale(scale: Float): Icon {
+  override fun scale(scale: Float): CachedImageIcon {
     return when {
       scale == 1.0f -> this
-      scaleContext == null -> {
-        iconCache.getOrScaleIcon(host = this,
-                                 scaleContext = ScaleContext.create(ScaleType.OBJ_SCALE.of(scale)),
-                                 attributes = getEffectiveAttributes())
-      }
-      else -> {
-        iconCache.getOrScaleIcon(host = this,
-                                 scaleContext = scaleContext.copyWithScale(ScaleType.OBJ_SCALE.of(scale)),
-                                 attributes = getEffectiveAttributes())
-      }
+      scaleContext == null -> copy(scaleContext = ScaleContext.create(ScaleType.OBJ_SCALE.of(scale)))
+      else -> copy(scaleContext = scaleContext.copyWithScale(ScaleType.OBJ_SCALE.of(scale)))
     }
   }
 
@@ -204,9 +201,21 @@ open class CachedImageIcon private constructor(
       return this
     }
 
-    val scaleContext = if (ancestor == null && scaleContext != null) ScaleContext.create(scaleContext) else ScaleContext.create(ancestor)
-    scaleContext.setScale(ScaleType.OBJ_SCALE.of(scale))
-    return iconCache.getOrScaleIcon(host = this, scaleContext = scaleContext, attributes = getEffectiveAttributes())
+    val scaleContext = if (ancestor == null) {
+      @Suppress("IfThenToElvis")
+      if (scaleContext == null) {
+        ScaleContext.create(ScaleType.OBJ_SCALE.of(scale))
+      }
+      else {
+        scaleContext.copyWithScale(ScaleType.OBJ_SCALE.of(scale))
+      }
+    }
+    else {
+      ScaleContext.create(ancestor).also {
+        it.setScale(ScaleType.OBJ_SCALE.of(scale))
+      }
+    }
+    return copy(scaleContext = scaleContext)
   }
 
   override fun copy(): Icon = copy(attributes = attributes)
@@ -215,15 +224,17 @@ open class CachedImageIcon private constructor(
     attributes: IconAttributes = this.attributes,
     localFilterSupplier: RgbImageFilterSupplier? = this.localFilterSupplier,
     colorPatcher: ColorPatcherStrategy = this.colorPatcher,
+    scaleContext: ScaleContext? = this.scaleContext?.copy(),
   ): CachedImageIcon {
     val reuseIconCache = localFilterSupplier === this.localFilterSupplier && colorPatcher === this.colorPatcher
     val result = CachedImageIcon(
       resolver = resolver,
+      originalResolver = originalResolver,
       attributes = attributes,
       localFilterSupplier = localFilterSupplier,
       colorPatcher = colorPatcher,
       toolTip = toolTip,
-      scaleContext = scaleContext?.copy(),
+      scaleContext = scaleContext,
       iconCache = if (reuseIconCache) iconCache else ScaledIconCache(),
     )
     result.pathTransformModCount = pathTransformModCount
@@ -295,6 +306,7 @@ open class CachedImageIcon private constructor(
   internal fun loadImage(scaleContext: ScaleContext, attributes: IconAttributes): Image? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
     val resolver = resolver ?: return null
+
     val image = resolver.loadImage(parameters = LoadIconParameters(filters = getFilters(),
                                                                    isDark = attributes.isDark,
                                                                    colorPatcher = colorPatcher.colorPatcher,
@@ -349,11 +361,16 @@ private data object GlobalColorPatcherStrategy : ColorPatcherStrategy {
 }
 
 private class CustomColorPatcherStrategy(override val colorPatcher: SVGLoader.SvgElementColorPatcherProvider) : ColorPatcherStrategy {
-  private val lastDigest = AtomicReference(colorPatcherDigestShim(colorPatcher))
+  @Volatile
+  private var lastDigest = colorPatcherDigestShim(colorPatcher)
 
   override fun updateDigest(): Boolean {
     val digest = colorPatcher.digest()
-    return !lastDigest.getAndSet(digest).contentEquals(digest)
+    if (lastDigest.contentEquals(digest)) {
+      return false
+    }
+    lastDigest = digest
+    return true
   }
 }
 
