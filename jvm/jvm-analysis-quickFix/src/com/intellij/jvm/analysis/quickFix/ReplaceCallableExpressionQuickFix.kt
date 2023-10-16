@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection.fix
+package com.intellij.jvm.analysis.quickFix
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.CommonQuickFixBundle
+import com.intellij.jvm.analysis.refactoring.CallChainReplacementInfo
+import com.intellij.jvm.analysis.refactoring.replaceWithCallChain
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project

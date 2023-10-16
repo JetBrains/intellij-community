@@ -3,9 +3,9 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.fix.CallChainReplacementInfo
-import com.intellij.codeInspection.fix.CallReplacementInfo
-import com.intellij.codeInspection.fix.ReplaceCallableExpressionQuickFix
+import com.intellij.jvm.analysis.quickFix.ReplaceCallableExpressionQuickFix
+import com.intellij.jvm.analysis.refactoring.CallChainReplacementInfo
+import com.intellij.jvm.analysis.refactoring.CallReplacementInfo
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastHintedVisitorAdapter

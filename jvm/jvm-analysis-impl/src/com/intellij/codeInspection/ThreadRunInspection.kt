@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection
 
-import com.intellij.codeInspection.fix.CallChainReplacementInfo
-import com.intellij.codeInspection.fix.CallReplacementInfo
-import com.intellij.codeInspection.fix.ReplaceCallableExpressionQuickFix
+import com.intellij.jvm.analysis.quickFix.ReplaceCallableExpressionQuickFix
+import com.intellij.jvm.analysis.refactoring.CallChainReplacementInfo
+import com.intellij.jvm.analysis.refactoring.CallReplacementInfo
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.InspectionGadgetsBundle

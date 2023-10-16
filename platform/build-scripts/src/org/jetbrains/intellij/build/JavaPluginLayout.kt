@@ -63,6 +63,8 @@ object JavaPluginLayout {
         "intellij.uiDesigner",
         "intellij.java.analysis.impl",
         "intellij.jvm.analysis.impl",
+        "intellij.jvm.analysis.quickFix",
+        "intellij.jvm.analysis.refactoring",
         "intellij.java.indexing.impl",
         "intellij.java.frontback.psi.impl",
         "intellij.java.psi.impl",
