@@ -21,17 +21,17 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
-import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
 import java.awt.Dialog
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
-import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JComponent
 import javax.swing.JFrame
 import kotlin.coroutines.EmptyCoroutineContext
@@ -86,15 +86,16 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
   init {
     val app = ApplicationManager.getApplication()
-    val coroutineScope = menuBar.coroutineScope
+    val coroutineScope = menuBar.coroutineScope + CoroutineName("IdeMenuBarHelper")
     if (app != null) {
       app.messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener {
+        presentationFactory.reset()
         updateMenuActions(true)
       })
     }
     val initJob = coroutineScope.launch(
-      (if (StartUpMeasurer.isEnabled()) (rootTask() + CoroutineName("ide menu bar actions init"))
-      else EmptyCoroutineContext) + Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      (if (StartUpMeasurer.isEnabled()) rootTask() + CoroutineName("ide menu bar actions init") else EmptyCoroutineContext) +
+      Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val actions = expandMainActionGroup(true)
       doUpdateVisibleActions(actions, false)
       postInitActions(actions)
@@ -107,25 +108,18 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     coroutineScope.launch {
       initJob.join()
       val timerEvents = (serviceAsync<ActionManager>() as? ActionManagerEx)?.timerEvents ?: emptyFlow()
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        timerEvents.collect {
-          runCatching {
-            updateMenuActions(false)
-          }.getOrLogException(LOG, true)
-        }
+      timerEvents.collect {
+        updateRequests.tryEmit(false)
       }
     }
     coroutineScope.launch {
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        val lastUpdate = AtomicLong(System.nanoTime())
-        updateRequests.collect { forceRebuild ->
+        updateRequests.throttle(500).collectLatest { forceRebuild ->
           runCatching {
-            if (TimeoutUtil.getDurationMillis(lastUpdate.get()) > 500 && canUpdate()) {
-              presentationFactory.reset()
+            if (canUpdate()) {
               doUpdateVisibleActions(expandMainActionGroup(false), forceRebuild)
-              lastUpdate.set(System.nanoTime())
             }
-          }.getOrLogException(LOG, true)
+          }.getOrLogException(LOG)
         }
       }
     }
@@ -143,7 +137,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     }
 
     // do not update when a popup menu is shown
-    // (if a popup menu contains action which is also in the menu bar, it should not be enabled/disabled)
+    // (if a popup menu contains an action which is also in the menu bar, it should not be enabled/disabled)
     if (isUpdateForbidden()) {
       return false
     }

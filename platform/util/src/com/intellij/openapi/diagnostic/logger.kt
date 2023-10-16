@@ -28,10 +28,10 @@ inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
   }.getOrLogException(this)
 }
 
-fun <T> Result<T>.getOrLogException(logger: Logger, ignoreCancellation: Boolean = false): T? {
+fun <T> Result<T>.getOrLogException(logger: Logger): T? {
   return onFailure { e ->
     if (e is ProcessCanceledException || e is CancellationException) {
-      if (!ignoreCancellation) throw e
+      throw e
     }
     else {
       logger.error(e)
