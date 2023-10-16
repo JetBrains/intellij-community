@@ -128,7 +128,11 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
                         projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProjectWithHolder>) {
     val mavenId = result.mavenModel.mavenId
     val artifactId = mavenId.artifactId
-    val mavenProjects = artifactIdToMavenProjects[artifactId] ?: return
+    val mavenProjects = artifactIdToMavenProjects[artifactId]
+    if (mavenProjects == null) {
+      MavenLog.LOG.warn("Maven projects not found for $artifactId")
+      return
+    }
     var mavenProjectCandidate: MavenProject? = null
     for (mavenProject in mavenProjects) {
       if (mavenProject.mavenId == mavenId) {
@@ -139,7 +143,10 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
         mavenProjectCandidate = mavenProject
       }
     }
-    if (mavenProjectCandidate == null) return
+    if (mavenProjectCandidate == null) {
+      MavenLog.LOG.warn("Maven project not found for $artifactId")
+      return
+    }
     val snapshot = mavenProjectCandidate.snapshot
     val resetArtifacts = MavenUtil.shouldResetDependenciesAndFolders(result.readingProblems)
     mavenProjectCandidate.set(result, generalSettings, false, resetArtifacts, false)
@@ -148,6 +155,9 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
       for (eachImporter in MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
         eachImporter.resolve(myProject, mavenProjectCandidate, nativeMavenProject, embedder)
       }
+    }
+    else {
+      MavenLog.LOG.warn("Native maven project not found for $artifactId")
     }
     // project may be modified by MavenImporters, so we need to collect the changes after them:
     val changes = mavenProjectCandidate.getChangesSinceSnapshot(snapshot)
