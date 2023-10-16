@@ -106,6 +106,7 @@ import java.util.regex.Pattern;
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
 
 /**
+ * Replaced by {@link com.intellij.lang.documentation.ide.impl.DocumentationManager}
  * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
  */
 @Deprecated(forRemoval = true)
