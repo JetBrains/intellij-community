@@ -8,6 +8,7 @@ import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
+import com.intellij.platform.ijent.IjentApi;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
@@ -225,6 +227,31 @@ public class WSLDistribution implements AbstractWslDistribution {
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
+    if (Registry.is("wsl.use.remote.agent.for.launch.processes")) {
+      if (commandLine instanceof PtyCommandLine) {
+        commandLine.setProcessCreator((processBuilder) -> {
+          var ptyOptions = ((PtyCommandLine)commandLine).getPtyOptions();
+          var ijentPty = new IjentApi.Pty(ptyOptions.getInitialColumns(), ptyOptions.getInitialRows(), !ptyOptions.getConsoleMode());
+
+          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, options, ijentPty);
+        });
+      }
+      else {
+        commandLine.setProcessCreator((processBuilder) -> {
+          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, options, null);
+        });
+      }
+    }
+    else {
+      doPatchCommandLine(commandLine, project, options);
+    }
+
+    return commandLine;
+  }
+
+  final @NotNull <T extends GeneralCommandLine> T doPatchCommandLine(@NotNull T commandLine,
+                                                                     @Nullable Project project,
+                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
     logCommandLineBefore(commandLine, options);
     Path executable = getExecutablePath();
     boolean launchWithWslExe = options.isLaunchWithWslExe() || executable == null;
@@ -674,8 +701,8 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @throws ExecutionException IP can't be parsed
    */
   private @NotNull String executeAndParseOutput(@NlsContexts.DialogMessage @NotNull String ipType,
-                                       @NotNull Function<List<@NlsSafe String>, @Nullable String> parser,
-                                       @NotNull String @NotNull ... command)
+                                                @NotNull Function<List<@NlsSafe String>, @Nullable String> parser,
+                                                @NotNull String @NotNull ... command)
     throws ExecutionException {
     final ProcessOutput output;
     output = executeOnWsl(Arrays.asList(command), new WSLCommandLineOptions(), 10_000, null);
