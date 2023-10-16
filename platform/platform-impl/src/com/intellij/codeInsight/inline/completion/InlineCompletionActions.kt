@@ -56,27 +56,3 @@ class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), 
     }
   }
 }
-
-class ShowNextInlineCompletionProviderAction : EditorAction(
-  InlineNavigationHandler { InlineCompletionEvent.Navigation.NextProvider(it) }
-), HintManagerImpl.ActionToIgnore
-
-class ShowPrevInlineCompletionProviderAction : EditorAction(
-  InlineNavigationHandler { InlineCompletionEvent.Navigation.PrevProvider(it) }
-), HintManagerImpl.ActionToIgnore
-
-private class InlineNavigationHandler(
-  val navigationEvent: (InlineCompletionEvent) -> InlineCompletionEvent.Navigation
-) : EditorWriteActionHandler() {
-  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
-    val eventSource = handler.eventSource() ?: return
-    val event = navigationEvent(eventSource)
-
-    handler.invoke(event)
-  }
-
-  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
-    return InlineCompletionContext.getOrNull(editor)?.startOffset() == caret.offset
-  }
-}

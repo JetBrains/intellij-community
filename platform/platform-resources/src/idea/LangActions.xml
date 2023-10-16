@@ -504,12 +504,6 @@
 
     <group id="InlineCompletion" popup="true">
       <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction"/>
-      <action id="ShowNextInlineCompletionProviderAction" class="com.intellij.codeInsight.inline.completion.ShowNextInlineCompletionProviderAction">
-        <keyboard-shortcut first-keystroke="shift alt CLOSE_BRACKET" keymap="$default"/>
-      </action>
-      <action id="ShowPrevInlineCompletionProviderAction" class="com.intellij.codeInsight.inline.completion.ShowPrevInlineCompletionProviderAction">
-        <keyboard-shortcut first-keystroke="shift alt OPEN_BRACKET" keymap="$default"/>
-      </action>
       <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
         <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
       </action>

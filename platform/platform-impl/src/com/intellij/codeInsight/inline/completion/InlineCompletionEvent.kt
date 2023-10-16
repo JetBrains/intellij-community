@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -105,26 +104,6 @@ interface InlineCompletionEvent {
       return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, event.item)
     }
   }
-
-  sealed class Navigation(val source: InlineCompletionEvent, val type: Type) : InlineCompletionEvent {
-    override fun toRequest(): InlineCompletionRequest? = source.toRequest()?.also {
-      it.putUserData(inlineCompletionNavigationKey, type)
-    }
-
-    class NextProvider(origin: InlineCompletionEvent) : Navigation(origin, Type.Provider)
-    class PrevProvider(origin: InlineCompletionEvent) : Navigation(origin, Type.Provider)
-
-    // TODO: saved for later
-    @Suppress("unused")
-    internal class NextSuggestion internal constructor(origin: InlineCompletionEvent) : Navigation(origin, Type.Suggestion)
-
-    @Suppress("unused")
-    internal class PrevSuggestion internal constructor(origin: InlineCompletionEvent) : Navigation(origin, Type.Suggestion)
-
-    enum class Type {
-      Provider, Suggestion
-    }
-  }
 }
 
 @RequiresBlockingContext
@@ -144,8 +123,6 @@ private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
     }
   }
 }
-
-internal val inlineCompletionNavigationKey = Key.create<InlineCompletionEvent.Navigation.Type>("inline.completion.event.navigation")
 
 private fun PsiFile.isLoadedInMemory(): Boolean {
   return (this as? PsiFileImpl)?.treeElement != null

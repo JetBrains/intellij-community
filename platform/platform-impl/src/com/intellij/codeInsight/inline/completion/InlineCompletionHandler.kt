@@ -44,7 +44,6 @@ class InlineCompletionHandler(
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
   private val sessionManager = createSessionManager()
   private val requestManager = InlineCompletionRequestManager(sessionManager::invalidate)
-  private val providerManager = InlineCompletionProviderManager()
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
@@ -67,7 +66,6 @@ class InlineCompletionHandler(
   fun invoke(event: InlineCompletionEvent.LookupChange) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.LookupCancelled) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
-  fun invoke(event: InlineCompletionEvent.Navigation) = invokeEvent(event)
 
   @RequiresEdt
   fun invokeEvent(event: InlineCompletionEvent) {
@@ -80,7 +78,7 @@ class InlineCompletionHandler(
       return
     }
 
-    val provider = providerManager.getProvider(event)
+    val provider = getProvider(event)
     if (sessionManager.updateSession(request, provider) || provider == null) {
       return
     }
@@ -91,15 +89,8 @@ class InlineCompletionHandler(
       guardCaretModifications(request)
     }
 
-    //providerManager.getCache(provider::class)?.let { cached ->
-    //  println("CACHE" to provider to event)
-    // TODO: add event logging)
-    //cached.forEach { newSession.context.renderElement(it, request.endOffset) }
-    //return
-    //}
-
     executor.switchJobSafely(newSession::assignJob) {
-      invokeRequest(provider.id, request, newSession)
+      invokeRequest(request, newSession)
     }
   }
 
@@ -131,16 +122,7 @@ class InlineCompletionHandler(
   @RequiresEdt
   @RequiresBlockingContext
   fun hide(explicit: Boolean, context: InlineCompletionContext) {
-    hide(explicit, context, true)
-  }
-
-  @RequiresEdt
-  @RequiresBlockingContext
-  internal fun hide(explicit: Boolean, context: InlineCompletionContext, clearCache: Boolean) {
     LOG.assertTrue(!context.isDisposed)
-    if (clearCache) {
-      providerManager.clear()
-    }
     if (context.isCurrentlyDisplaying()) {
       trace(InlineCompletionEventType.Hide(explicit))
     }
@@ -159,7 +141,6 @@ class InlineCompletionHandler(
   }
 
   private suspend fun invokeRequest(
-    providerId: InlineCompletionProviderID,
     request: InlineCompletionRequest,
     session: InlineCompletionSession,
   ) {
@@ -187,7 +168,7 @@ class InlineCompletionHandler(
         }
         .onCompletion {
           val isActive = currentCoroutineContext().isActive
-          coroutineToIndicator { complete(isActive, it, context, providerId, suggestion) }
+          coroutineToIndicator { complete(isActive, it, context, suggestion) }
           it?.let(LOG::errorIfNotMessage)
         }
         .collectIndexed { index, it ->
@@ -203,7 +184,6 @@ class InlineCompletionHandler(
     isActive: Boolean,
     cause: Throwable?,
     context: InlineCompletionContext,
-    providerId: InlineCompletionProviderID,
     suggestion: InlineCompletionSuggestion,
   ) {
     trace(InlineCompletionEventType.Completion(cause, isActive))
@@ -215,18 +195,11 @@ class InlineCompletionHandler(
       hide(false, context)
       return
     }
-    if (suggestion.useCache) {
-      providerManager.cacheSuggestion(providerId, context.state.elements)
-    }
   }
 
   @RequiresEdt
   internal fun allowDocumentChange(event: SimpleTypingEvent) {
     requestManager.allowDocumentChange(event)
-  }
-
-  internal fun eventSource(): InlineCompletionEvent? {
-    return providerManager.source
   }
 
   private suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): InlineCompletionSuggestion {
@@ -236,6 +209,24 @@ class InlineCompletionHandler(
       }
     }
     return provider.getSuggestion(request)
+  }
+
+  private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
+    if (application.isUnitTestMode && testProvider != null) {
+      return testProvider
+    }
+
+    return InlineCompletionProvider.extensions().firstOrNull {
+      try {
+        it.isEnabled(event)
+      }
+      catch (e: Throwable) {
+        LOG.errorIfNotMessage(e)
+        false
+      }
+    }?.also {
+      LOG.trace("Selected inline provider: $it")
+    }
   }
 
   @RequiresEdt
@@ -269,8 +260,8 @@ class InlineCompletionHandler(
             }
           }
           is UpdateSessionResult.Same -> Unit
-          is UpdateSessionResult.Invalidated -> {
-            hide(explicit = false, session.context, clearCache = result.clearCaches)
+          UpdateSessionResult.Invalidated -> {
+            hide(false, session.context)
           }
         }
       }
@@ -304,5 +295,17 @@ class InlineCompletionHandler(
 
   companion object {
     private val LOG = thisLogger()
+
+    private var testProvider: InlineCompletionProvider? = null
+
+    @TestOnly
+    fun registerTestHandler(provider: InlineCompletionProvider) {
+      testProvider = provider
+    }
+
+    @TestOnly
+    fun unRegisterTestHandler() {
+      testProvider = null
+    }
   }
 }

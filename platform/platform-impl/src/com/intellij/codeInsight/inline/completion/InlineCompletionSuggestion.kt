@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.emptyFlow
 
 abstract class InlineCompletionSuggestion : UserDataHolderBase() {
   abstract val suggestionFlow: Flow<InlineCompletionElement>
-  val useCache: Boolean = true
 
   // TODO: implement indicator
   val addLoadingIndicator: Boolean

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
-import com.intellij.codeInsight.inline.completion.inlineCompletionNavigationKey
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 internal abstract class InlineCompletionSessionManager {
@@ -38,7 +37,7 @@ internal abstract class InlineCompletionSessionManager {
    */
   @RequiresEdt
   fun invalidate() {
-    currentSession?.let { session -> onUpdate(session, UpdateSessionResult.Invalidated()) }
+    currentSession?.let { session -> onUpdate(session, UpdateSessionResult.Invalidated) }
   }
 
   /**
@@ -57,10 +56,6 @@ internal abstract class InlineCompletionSessionManager {
     if (session == null) {
       return false
     }
-    if (request.getUserData(inlineCompletionNavigationKey) != null) {
-      invalidate(session, clearCaches = false)
-      return false
-    }
     if (session.provider.restartOn(request.event)) {
       invalidate(session)
       return false
@@ -77,9 +72,7 @@ internal abstract class InlineCompletionSessionManager {
     return result !is UpdateSessionResult.Invalidated
   }
 
-  private fun invalidate(session: InlineCompletionSession, clearCaches: Boolean = true) {
-    return onUpdate(session, UpdateSessionResult.Invalidated(clearCaches))
-  }
+  private fun invalidate(session: InlineCompletionSession) = onUpdate(session, UpdateSessionResult.Invalidated)
 
   private fun updateContext(
     context: InlineCompletionContext,
@@ -89,12 +82,12 @@ internal abstract class InlineCompletionSessionManager {
       is InlineCompletionEvent.DocumentChange -> {
         check(request.event.event.oldLength == 0) { "Unsupported document event: ${request.event.event}" }
         val fragment = request.event.event.newFragment.toString()
-        applyPrefixAppend(context, fragment, request) ?: UpdateSessionResult.Invalidated()
+        applyPrefixAppend(context, fragment, request) ?: UpdateSessionResult.Invalidated
       }
       is InlineCompletionEvent.InlineLookupEvent -> {
-        if (context.isCurrentlyDisplaying()) UpdateSessionResult.Same else UpdateSessionResult.Invalidated()
+        if (context.isCurrentlyDisplaying()) UpdateSessionResult.Same else UpdateSessionResult.Invalidated
       }
-      else -> UpdateSessionResult.Invalidated()
+      else -> UpdateSessionResult.Invalidated
     }
   }
 
@@ -133,6 +126,6 @@ internal abstract class InlineCompletionSessionManager {
 
     data object Same : UpdateSessionResult
 
-    data class Invalidated(val clearCaches: Boolean = true) : UpdateSessionResult
+    data object Invalidated : UpdateSessionResult
   }
 }
