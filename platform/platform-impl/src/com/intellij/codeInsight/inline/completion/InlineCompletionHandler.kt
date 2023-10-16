@@ -48,7 +48,6 @@ class InlineCompletionHandler(
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
-    addEventListener(InlineCompletionEventListener.Debug)
   }
 
   fun addEventListener(listener: InlineCompletionEventListener) {

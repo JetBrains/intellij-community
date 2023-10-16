@@ -13,23 +13,13 @@ sealed class InlineCompletionEventType {
 
   data class Show(val element: InlineCompletionElement, val i: Int) : InlineCompletionEventType()
   data class Change(val truncateTyping: Int) : InlineCompletionEventType()
-  object Empty : InlineCompletionEventType()
+  data object Empty : InlineCompletionEventType()
   data class Completion(val cause: Throwable?, val isActive: Boolean) : InlineCompletionEventType()
-  object Insert : InlineCompletionEventType()
+  data object Insert : InlineCompletionEventType()
   open class Hide(val explicit: Boolean) : InlineCompletionEventType()
 }
 
 interface InlineCompletionEventListener : EventListener {
-  object Debug : InlineCompletionEventAdapter {
-    override fun onRequest(event: InlineCompletionEventType.Request) = println("onRequest")
-    override fun onShow(event: InlineCompletionEventType.Show) = println("onShow")
-    override fun onChange(event: InlineCompletionEventType.Change) = println("onChange")
-    override fun onInsert(event: InlineCompletionEventType.Insert) = println("onInsert")
-    override fun onHide(event: InlineCompletionEventType.Hide) = println("onHide")
-    override fun onCompletion(event: InlineCompletionEventType.Completion) = println("onCompletion")
-    override fun onEmpty(event: InlineCompletionEventType.Empty) = println("onEmpty")
-  }
-
   fun on(event: InlineCompletionEventType)
 }
 

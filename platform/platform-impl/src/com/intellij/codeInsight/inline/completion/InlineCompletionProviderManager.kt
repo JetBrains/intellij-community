@@ -19,7 +19,7 @@ class InlineCompletionProviderManager {
    *
    *  Temporary works for one provider only due to API limitations //TODO: add task
    */
-  private val suggestions = mutableMapOf<InlineCompletionProviderID, MutableList<List<InlineCompletionElement.Presentable>>>()
+  private val suggestions = mutableMapOf<InlineCompletionProviderID, MutableList<List<InlineCompletionElement>>>()
   private var currentIndexes = mutableMapOf<InlineCompletionProviderID, Int>()
 
   private var providerIndex: Int = 0
@@ -27,11 +27,11 @@ class InlineCompletionProviderManager {
   internal fun cacheSuggestion(providerId: InlineCompletionProviderID, elements: List<InlineCompletionElement.Presentable>) {
     if (suggestions.containsKey(providerId)) {
       val cachesPerProvider = suggestions.getValue(providerId)
-      cachesPerProvider.add(elements)
+      cachesPerProvider.add(elements.map { it.element.withSameContent() })
       currentIndexes[providerId] = cachesPerProvider.size - 1
     }
     else {
-      suggestions[providerId] = mutableListOf(elements)
+      suggestions[providerId] = mutableListOf(elements.map { it.element.withSameContent() })
       currentIndexes[providerId] = 0
     }
   }
@@ -39,7 +39,7 @@ class InlineCompletionProviderManager {
   internal fun getCache(providerId: InlineCompletionProviderID): List<InlineCompletionElement.Presentable>? {
     val index = currentIndexes[providerId] ?: return null
     val suggestion = suggestions[providerId] ?: return null
-    return suggestion.getOrNull(index)
+    return suggestion.getOrNull(index)?.map { it.toPresentable() }
   }
 
   internal fun clear() {
