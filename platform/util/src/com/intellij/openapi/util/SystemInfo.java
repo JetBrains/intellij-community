@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.File;
 import java.util.List;
 import java.util.function.Supplier;
@@ -84,6 +85,11 @@ public final class SystemInfo {
     else {
       isWayland = isGNOME = isKDE = isXfce = isI3 = false;
     }
+  }
+
+  public static boolean isWaylandToolkit() {
+    Toolkit tk = Toolkit.getDefaultToolkit();
+    return "sun.awt.wl.WLToolkit".equals(tk.getClass().getName());
   }
 
   public static final boolean isJBSystemMenu = isMac && Boolean.getBoolean("jbScreenMenuBar.enabled");

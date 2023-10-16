@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.FrameBoundsConverter
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -52,9 +53,19 @@ private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "
 
 private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
 
+internal fun splashScreenNeeded(args: List<String>): Boolean {
+  return !AppMode.isLightEdit()
+         && CommandLineArgs.isSplashNeeded(args)
+
+         // Wayland doesn't have the concept of splash screens at all, so they may not appear centered.
+         // Avoid showing the splash screen at all in this case up until this is solved (as, for example,
+         // in java.awt.SplashScreen that works around the issue using some tricks and the native API).
+         && !SystemInfo.isWaylandToolkit()
+}
+
 internal fun CoroutineScope.scheduleShowSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
   launch(CoroutineName("showSplashIfNeeded")) {
-    if (!AppMode.isLightEdit() && CommandLineArgs.isSplashNeeded(args)) {
+    if (splashScreenNeeded(args)) {
       try {
         showSplashIfNeeded(initUiDeferred = initUiDeferred, appInfoDeferred = appInfoDeferred)
       }
