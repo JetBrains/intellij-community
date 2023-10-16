@@ -14,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 /**
  * Inline completion will be shown only if at least one [InlineCompletionProvider] is enabled and returns at least one proposal
  */
-class InlineCompletionEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
+internal class InlineCompletionEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
     if (editor.project == null || editor !is EditorImpl || !editorTypeSupported(editor) || editor.project?.isDisposed != false) {

@@ -14,6 +14,7 @@ import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.util.asSafely
+import org.jetbrains.annotations.ApiStatus
 
 private class ResetICOnboardingAtFirstShowAction : AResetICOnboardingAction(
   { editor, caret, context -> InlineCompletionTooltipBuilder.atFirstShow(editor, caret) }
@@ -60,6 +61,7 @@ private class ChangeToCustomInlineCompletionAction : AnAction("Custom..."), Dumb
   }
 }
 
+@ApiStatus.Internal
 fun addInlineCompletionBehaviourActions(group: DefaultActionGroup) {
   // Do not add actions if inline completion does not exist
   if (InlineCompletionProvider.extensions().isEmpty()) {
