@@ -170,7 +170,6 @@ internal class TerminalDocumentationManager(private val project: Project, privat
       .setProject(project)
       .setResizable(true)
       .setMovable(true)
-      .setFocusable(true)
       .setModalContext(false)
       .setRequestFocus(false) // otherwise, it won't be possible to continue interacting with lookup/SE
       .setCancelOnClickOutside(false) // to not close the popup when selecting lookup elements by mouse
