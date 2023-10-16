@@ -1820,6 +1820,59 @@ $value</value>
     assertEquals(testResourcePaths, submoduleModelBuild.testResources.map { it.directory })
   }
 
+  fun `test custom source directories with maven wrapper`() {
+    createProjectSubDirs(".mvn")
+
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>submodule</module>
+                       </modules>
+                       <build>
+                         <sourceDirectory>src</sourceDirectory>
+                         <testSourceDirectory>test</testSourceDirectory>
+                         <resources>
+                           <resource>
+                             <directory>resources</directory>
+                           </resource>
+                         </resources>
+                         <testResources>
+                           <testResource>
+                             <directory>testResources</directory>
+                           </testResource>
+                         </testResources>
+                       </build>
+                       """.trimIndent())
+
+    val submodulePom = createModulePom("submodule",
+                                       """
+                      <groupId>test</groupId>
+                      <artifactId>submodule</artifactId>
+                      <version>1</version>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>
+                      """.trimIndent())
+
+    val submoduleModelBuild = readProject(submodulePom).build
+
+    val submodulePath = submodulePom.parent.path
+    val srcPaths = listOf(Path.of(submodulePath, "src").pathString)
+    val testPaths = listOf(Path.of(submodulePath, "test").pathString)
+    val resourcePaths = listOf(Path.of(submodulePath, "resources").pathString)
+    val testResourcePaths = listOf(Path.of(submodulePath, "testResources").pathString)
+
+    assertEquals(srcPaths, submoduleModelBuild.sources)
+    assertEquals(testPaths, submoduleModelBuild.testSources)
+    assertEquals(resourcePaths, submoduleModelBuild.resources.map { it.directory })
+    assertEquals(testResourcePaths, submoduleModelBuild.testResources.map { it.directory })
+  }
+
   private fun assertActiveProfiles(vararg expected: String) {
     assertActiveProfiles(emptyList(), *expected)
   }
