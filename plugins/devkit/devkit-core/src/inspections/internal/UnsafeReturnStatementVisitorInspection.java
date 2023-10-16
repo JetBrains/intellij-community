@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
@@ -22,6 +23,7 @@ import org.jetbrains.uast.UParameter;
 
 import java.util.List;
 
+@VisibleForTesting
 public final class UnsafeReturnStatementVisitorInspection extends DevKitUastInspectionBase {
 
   private static final @NonNls String BASE_WALKING_VISITOR_NAME = JavaRecursiveElementWalkingVisitor.class.getName();

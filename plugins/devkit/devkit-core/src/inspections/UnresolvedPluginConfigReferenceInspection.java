@@ -9,6 +9,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.references.PluginConfigReference;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.ULiteralExpression;
@@ -18,6 +19,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 /**
  * Highlights all unresolved {@link PluginConfigReference}s in code.
  */
+@VisibleForTesting
 public final class UnresolvedPluginConfigReferenceInspection extends LocalInspectionTool {
 
   @SuppressWarnings("unchecked")

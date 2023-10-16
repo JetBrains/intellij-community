@@ -9,8 +9,10 @@ import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
+@VisibleForTesting
 public final class InspectionDescriptionNotFoundInspection extends DescriptionNotFoundInspectionBase {
   @NonNls private static final String INSPECTION_PROFILE_ENTRY = DescriptionType.INSPECTION.getClassName();
 

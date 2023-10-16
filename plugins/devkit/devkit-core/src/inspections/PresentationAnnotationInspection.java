@@ -11,8 +11,10 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.uast.*;
 
+@VisibleForTesting
 public final class PresentationAnnotationInspection extends DevKitUastInspectionBase {
 
   public PresentationAnnotationInspection() {

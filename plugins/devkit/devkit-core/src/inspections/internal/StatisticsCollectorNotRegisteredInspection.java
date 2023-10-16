@@ -16,6 +16,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.inspections.DevKitJvmInspection;
@@ -29,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.processExtensionDeclarations;
 
+@VisibleForTesting
 public final class StatisticsCollectorNotRegisteredInspection extends DevKitJvmInspection {
   public static final String FEATURE_USAGES_COLLECTOR = "com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector";
 

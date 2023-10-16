@@ -16,8 +16,10 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
+@VisibleForTesting
 public final class MissingActionUpdateThread extends DevKitJvmInspection {
 
   @Override
