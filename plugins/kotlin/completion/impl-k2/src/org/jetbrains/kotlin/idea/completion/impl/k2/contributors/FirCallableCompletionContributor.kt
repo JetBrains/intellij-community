@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionInsertionHelper
+import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext

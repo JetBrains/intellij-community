@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierPr
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScopes
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.psi.KtElement

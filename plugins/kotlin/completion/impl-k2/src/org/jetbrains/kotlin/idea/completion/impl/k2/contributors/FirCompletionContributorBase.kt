@@ -31,10 +31,9 @@ import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWei
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.Variance
 
 internal class FirCompletionContributorOptions(
@@ -165,11 +164,6 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
             else -> this
         }
-    }
-
-    protected fun KtElement.reference() = when (this) {
-        is KtDotQualifiedExpression -> selectorExpression?.mainReference
-        else -> mainReference
     }
 }
 

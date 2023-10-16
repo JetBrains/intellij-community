@@ -243,6 +243,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/JavaCallableReference/");
     }
 
+    @TestMetadata("JavaClassQualifierWithTypeArguments")
+    public void testJavaClassQualifierWithTypeArguments() throws Exception {
+        runTest("../testData/basic/multifile/JavaClassQualifierWithTypeArguments/");
+    }
+
     @TestMetadata("JavaEnum")
     public void testJavaEnum() throws Exception {
         runTest("../testData/basic/multifile/JavaEnum/");

@@ -12,6 +12,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -212,6 +213,12 @@ fun isPositionSuitableForNull(position: PsiElement): Boolean = when {
     position.context?.parent is KtValueArgument -> true
     else -> position.context?.getPrevSiblingIgnoringWhitespaceAndComments() is KtOperationReferenceExpression
             || position.context?.getNextSiblingIgnoringWhitespaceAndComments() is KtOperationReferenceExpression
+}
+
+fun KtElement.reference() = when (this) {
+    is KtCallExpression -> calleeExpression?.mainReference
+    is KtDotQualifiedExpression -> selectorExpression?.mainReference
+    else -> mainReference
 }
 
 val KDocLink.qualifier: List<String> get() = getLinkText().split('.').dropLast(1)
