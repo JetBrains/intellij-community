@@ -25,6 +25,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.Stack
+import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.lang.Deprecated
@@ -76,6 +77,10 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
 
   override fun isWriteIntentLocked(): Boolean {
     return lock.isWriteThread && (lock.isWriteIntentLocked || lock.isWriteAcquired)
+  }
+
+  override fun isReadAccessAllowed(): Boolean {
+    return lock.isReadAllowed
   }
 
   override fun runWithoutImplicitRead(runnable: Runnable) {
@@ -182,6 +187,30 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
     }
   }
 
+  override fun tryRunReadAction(action: Runnable): Boolean {
+    fireBeforeReadActionStart(action)
+    val permit = lock.startTryRead()
+    if (permit != null && !permit.readRequested) {
+      return false
+    }
+    try {
+      fireReadActionStarted(action)
+      action.run()
+      fireReadActionFinished(action)
+    }
+    finally {
+      if (permit != null) {
+        lock.endRead(permit)
+        fireAfterReadActionFinished(action)
+      }
+    }
+    return true
+  }
+
+  override fun isReadLockedByThisThread(): Boolean {
+    return lock.isReadLockedByThisThread
+  }
+
   @Deprecated
   override fun addWriteActionListener(listener: WriteActionListener) {
     myWriteActionDispatcher.addListener(listener)
@@ -258,6 +287,14 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
 
   override fun isWriteActionInProgress(): Boolean {
     return lock.isWriteAcquired
+  }
+
+  override fun isWriteActionPending(): Boolean {
+    return myWriteActionPending
+  }
+
+  override fun isWriteAccessAllowed(): Boolean {
+    return lock.isWriteThread && lock.isWriteAcquired
   }
 
   @ApiStatus.Experimental
@@ -357,6 +394,19 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   override fun acquireWriteActionLock(marker: Class<*>): AccessToken {
     PluginException.reportDeprecatedUsage("ThreadingSupport.acquireWriteActionLock", "Use `runWriteAction()` instead")
     return WriteAccessToken(marker)
+  }
+
+  override fun executeByImpatientReader(runnable: Runnable) {
+    if (EDT.isCurrentThreadEdt()) {
+      runnable.run()
+    }
+    else {
+      lock.executeByImpatientReader(runnable)
+    }
+  }
+
+  override fun isInImpatientReader(): Boolean {
+    return lock.isInImpatientReader
   }
 
   private fun endWrite(clazz: Class<*>) {

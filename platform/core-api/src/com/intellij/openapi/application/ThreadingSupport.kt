@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
 import java.lang.Deprecated
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -151,6 +152,27 @@ interface ThreadingSupport {
   fun <T, E : Throwable?> runReadAction(computation: ThrowableComputable<T, E>): T
 
   /**
+   * Tries to acquire the read lock and run the `action`.
+   *
+   * @return true if action was run while holding the lock, false if was unable to get the lock and action was not run
+   */
+  fun tryRunReadAction(action: Runnable): Boolean
+
+  /**
+   * Check, if read lock is acquired by current thread already.
+   *
+   * @return `true` if read lock has been acquired, `false` otherwise.
+   */
+  fun isReadLockedByThisThread(): Boolean
+
+  /**
+   * Check, if read access is allowed for current thread.
+   *
+   * @return `true` if read is allowed, `false` otherwise.
+   */
+  fun isReadAccessAllowed(): Boolean
+
+  /**
    * Adds a [WriteActionListener].
    *
    * Please, use [addWriteActionListener] with [Disposable] second argument.
@@ -240,6 +262,23 @@ interface ThreadingSupport {
    */
   fun isWriteActionInProgress(): Boolean
 
+  /**
+   * @return true if the EDT started to acquire write action but has not acquired it yet.
+   * @see runWriteAction
+   */
+  fun isWriteActionPending(): Boolean
+
+  /**
+   * Checks if the write access is currently allowed.
+   *
+   * @return `true` if the write access is currently allowed, `false` otherwise.
+   * @see .assertWriteAccessAllowed
+   * @see .runWriteAction
+   */
+  @Contract(pure = true)
+  fun isWriteAccessAllowed(): Boolean
+
+
   @ApiStatus.Experimental
   fun runWriteActionWithCancellableProgressInDispatchThread(title: @NlsContexts.ProgressTitle String,
                                                             project: Project?,
@@ -264,4 +303,17 @@ interface ThreadingSupport {
    */
   @Deprecated
   fun acquireWriteActionLock(marker: Class<*>): AccessToken
+
+  /**
+   * DO NOT USE
+   */
+  @ApiStatus.Internal
+  // @Throws(CannotRunReadActionException::class)
+  fun executeByImpatientReader(runnable: Runnable)
+
+  /**
+   * DO NOT USE
+   */
+  @ApiStatus.Internal
+  fun isInImpatientReader(): Boolean
 }

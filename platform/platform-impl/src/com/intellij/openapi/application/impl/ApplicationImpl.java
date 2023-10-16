@@ -141,8 +141,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     ApplicationManager.setApplication(this, myLastDisposable);
   }
 
-  private volatile boolean myWriteActionPending;
-
   public ApplicationImpl(@NotNull CoroutineScope parentScope, boolean isInternal) {
     super(parentScope);
 
@@ -180,17 +178,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
    */
   @Override
   public void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
-    if (isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      myLock.executeByImpatientReader(runnable);
-    }
+    IdeEventQueue.getInstance().getRwLockHolder().executeByImpatientReader(runnable);
   }
 
   @Override
   public boolean isInImpatientReader() {
-    return myLock != null && myLock.isInImpatientReader();
+    return IdeEventQueue.getInstance().getRwLockHolder().isInImpatientReader();
   }
 
   @TestOnly
@@ -205,7 +198,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean holdsReadLock() {
-    return myLock.isReadLockedByThisThread();
+    return IdeEventQueue.getInstance().getRwLockHolder().isReadLockedByThisThread();
   }
 
   @Override
@@ -308,9 +301,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean isWriteIntentLockAcquired() {
-    // Write lock is good too
-    ReadMostlyRWLock lock = myLock;
-    return lock == null || lock.isWriteThread() && (lock.isWriteIntentLocked() || lock.isWriteAcquired());
+    return IdeEventQueue.getInstance().getRwLockHolder().isWriteIntentLocked();
   }
 
   @Deprecated
@@ -954,8 +945,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean isReadAccessAllowed() {
-    ReadMostlyRWLock lock = myLock;
-    return lock == null || myLock.isReadAllowed();
+    return IdeEventQueue.getInstance().getRwLockHolder().isReadAccessAllowed();
   }
 
   @Override
@@ -1000,23 +990,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean tryRunReadAction(@NotNull Runnable action) {
-    //if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    ReadMostlyRWLock lock = myLock;
-    ReadMostlyRWLock.Reader status = lock.startTryRead();
-    if (status != null && !status.readRequested) {
-      return false;
-    }
-    try {
-      action.run();
-    }
-    finally {
-      myReadActionCacheImpl.clear();
-      if (status != null) {
-        lock.endRead(status);
-      }
-      otelMonitor.get().readActionExecuted();
-    }
-    return true;
+    return IdeEventQueue.getInstance().getRwLockHolder().tryRunReadAction(action);
   }
 
   @Override
@@ -1045,13 +1019,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean isWriteActionPending() {
-    return myWriteActionPending;
+    return IdeEventQueue.getInstance().getRwLockHolder().isWriteActionPending();
   }
 
   @Override
   public boolean isWriteAccessAllowed() {
-    ReadMostlyRWLock lock = myLock;
-    return lock == null || lock.isWriteThread() && lock.isWriteAcquired();
+    return IdeEventQueue.getInstance().getRwLockHolder().isWriteAccessAllowed();
   }
 
   @Override
