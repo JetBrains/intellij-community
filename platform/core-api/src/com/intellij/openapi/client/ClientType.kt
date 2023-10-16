@@ -14,7 +14,12 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 enum class ClientType {
   LOCAL,
+
+  @ApiStatus.Internal
+  @Deprecated("This api will be removed")
+  // This api will be removed as soon as Rider is able to run separate projects in different processes. Ask Rider Team
   FRONTEND,
+
   CONTROLLER,
   GUEST;
 

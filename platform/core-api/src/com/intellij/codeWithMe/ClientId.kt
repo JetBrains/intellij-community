@@ -82,11 +82,13 @@ data class ClientId(val value: String) {
     private val fakeLocalIds = ConcurrentHashMap<String, Unit>().keySet(Unit)
 
     @ApiStatus.Internal
-    // This api will be removed in the future
+    @Deprecated("This api will be removed")
+    // This api will be removed as soon as Rider is able to run separate projects in different processes. Ask Rider Team
     fun isFakeLocalId(clientId: ClientId) = fakeLocalIds.contains(clientId.value)
 
     @ApiStatus.Internal
-    // This api will be removed in the future
+    @Deprecated("This api will be removed")
+    // This api will be removed as soon as Rider is able to run separate projects in different processes. Ask Rider Team
     fun isFakeLocalId(clientId: String) = fakeLocalIds.contains(clientId)
 
     private val absenceBehaviorValueCached: AbsenceBehavior by lazy {
@@ -195,6 +197,9 @@ data class ClientId(val value: String) {
       localId = newId
     }
 
+    @ApiStatus.Internal
+    @Deprecated("This api will be removed")
+    // This api will be removed as soon as Rider is able to run separate projects in different processes. Ask Rider Team
     fun addFakeLocalId(id: ClientId, parentDisposable: Disposable) {
       fakeLocalIds.add(id.value)
 
