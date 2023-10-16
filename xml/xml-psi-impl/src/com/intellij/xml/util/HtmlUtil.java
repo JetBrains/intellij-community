@@ -540,10 +540,11 @@ public final class HtmlUtil {
     if (startsWithTag(line)) {
       int tagStart = line.indexOf("<");
       if (tagStart >= 0) {
-        tagStart ++;
+        tagStart++;
         for (int i = tagStart; i < line.length(); i ++) {
-          if (!Character.isAlphabetic(line.charAt(i))) {
-            return line.substring(tagStart,i);
+          char ch = line.charAt(i);
+          if (!Character.isAlphabetic(ch) && !Character.isDigit(ch)) {
+            return line.substring(tagStart, i);
           }
         }
       }
