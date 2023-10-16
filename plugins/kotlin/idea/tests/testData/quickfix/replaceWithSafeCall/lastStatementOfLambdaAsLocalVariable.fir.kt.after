@@ -1,9 +1,9 @@
 // "Replace with safe (?.) call" "true"
-class Test(private val foo: Foo?) {
+fun test(foo: Foo?) {
     val baz = {
         bar("")
         bar("")
-        foo?.s ?: <caret>
+        foo<caret>?.s
     }
 }
 
