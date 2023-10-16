@@ -48,7 +48,7 @@ public class ClassSerializer {
   public static @Nullable Field getPreparedField(Field field) {
     field.setAccessible(true);
     Class<?> type = field.getType();
-    if ((field.getModifiers() & Modifier.STATIC) != 0) {
+    if ((field.getModifiers() & (Modifier.STATIC | Modifier.FINAL)) != 0) {
       return null;
     }
     if (type != int.class && type != boolean.class) {
