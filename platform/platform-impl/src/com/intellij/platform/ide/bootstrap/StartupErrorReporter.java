@@ -102,6 +102,12 @@ public final class StartupErrorReporter {
     }
 
     try {
+      SplashManagerKt.hideSplash();
+    }
+    catch (Throwable ignore) {
+    }
+
+    try {
       var textPane = new JTextPane();
       textPane.setEditable(false);
       textPane.setText(message.replaceAll("\t", "    "));
