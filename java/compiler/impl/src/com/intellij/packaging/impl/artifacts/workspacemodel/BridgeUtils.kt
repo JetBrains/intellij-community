@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
+import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.compiler.JavaCompilerBundle
@@ -22,6 +23,7 @@ import com.intellij.packaging.impl.elements.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 internal fun addBridgesToDiff(newBridges: List<ArtifactBridge>, builder: MutableEntityStorage) {
@@ -126,4 +128,26 @@ internal fun ArtifactProperties<*>.propertiesTag(): String? {
     JDOMUtil.write(element)
   }
   else null
+}
+
+@ApiStatus.Internal
+fun getArtifactProperties(artifactEntity: ArtifactEntity, artifactType: ArtifactType, propertiesProvider: ArtifactPropertiesProvider): ArtifactProperties<*>? {
+  val providerId = propertiesProvider.id
+  val customProperty = artifactEntity.customProperties.find { it.providerType == providerId }
+                       ?: return if (propertiesProvider.isAvailableFor(artifactType)) {
+                         propertiesProvider.createProperties(artifactType)
+                       }
+                       else null
+
+  @Suppress("UNCHECKED_CAST")
+  val createdProperties: ArtifactProperties<Any> = propertiesProvider.createProperties(artifactType) as ArtifactProperties<Any>
+  val state = createdProperties.state!!
+
+  customProperty.propertiesXmlTag?.let {
+    JDOMUtil.load(it).deserializeInto(state)
+  }
+
+  createdProperties.loadState(state)
+
+  return createdProperties
 }

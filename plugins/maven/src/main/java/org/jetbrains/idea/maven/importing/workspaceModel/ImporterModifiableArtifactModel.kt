@@ -2,10 +2,7 @@
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.configurationStore.serialize
-import com.intellij.java.workspace.entities.ArtifactEntity
-import com.intellij.java.workspace.entities.ArtifactPropertiesEntity
-import com.intellij.java.workspace.entities.CompositePackagingElementEntity
-import com.intellij.java.workspace.entities.modifyEntity
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
@@ -14,7 +11,9 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.impl.artifacts.ArtifactUtil
+import com.intellij.packaging.impl.artifacts.workspacemodel.getArtifactProperties
 import com.intellij.packaging.impl.elements.ArchivePackagingElement
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -77,7 +76,14 @@ internal class ImporterModifiableArtifact(private val project: Project,
     val providerId = propertiesProvider.id
     if (!artifactProperties.containsKey(providerId)) {
       if (propertiesProvider.isAvailableFor(this.artifactType)) {
-        artifactProperties[providerId] = propertiesProvider.createProperties(this.artifactType)
+        val existingArtifact = WorkspaceModel.getInstance(project).currentSnapshot.resolve(ArtifactId(name))
+
+        val existingProperties =
+          if (null != existingArtifact) getArtifactProperties(existingArtifact, artifactType, propertiesProvider) else null
+
+        val properties = existingProperties ?: propertiesProvider.createProperties(artifactType)
+
+        artifactProperties[providerId] = properties
       }
     }
     return artifactProperties[providerId]
