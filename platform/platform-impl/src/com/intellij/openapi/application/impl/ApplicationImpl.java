@@ -4,7 +4,10 @@ package com.intellij.openapi.application.impl;
 import com.intellij.CommonBundle;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.diagnostic.*;
+import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.ContainerDescriptor;
@@ -19,11 +22,13 @@ import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.client.ClientAwareComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressResult;
 import com.intellij.openapi.progress.impl.ProgressRunner;
-import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -32,7 +37,6 @@ import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
@@ -45,7 +49,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.*;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
@@ -178,12 +181,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
    */
   @Override
   public void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
-    IdeEventQueue.getInstance().getRwLockHolder().executeByImpatientReader(runnable);
+    getThreadingSupport().executeByImpatientReader(runnable);
   }
 
   @Override
   public boolean isInImpatientReader() {
-    return IdeEventQueue.getInstance().getRwLockHolder().isInImpatientReader();
+    return getThreadingSupport().isInImpatientReader();
   }
 
   @TestOnly
@@ -198,7 +201,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean holdsReadLock() {
-    return IdeEventQueue.getInstance().getRwLockHolder().isReadLockedByThisThread();
+    return getThreadingSupport().isReadLockedByThisThread();
   }
 
   @Override
@@ -301,7 +304,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean isWriteIntentLockAcquired() {
-    return IdeEventQueue.getInstance().getRwLockHolder().isWriteIntentLocked();
+    return getThreadingSupport().isWriteIntentLocked();
   }
 
   @Deprecated
@@ -867,27 +870,27 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void runReadAction(@NotNull Runnable action) {
-    IdeEventQueue.getInstance().getRwLockHolder().runReadAction(action);
+    getThreadingSupport().runReadAction(action);
   }
 
   @Override
   public <T> T runReadAction(@NotNull Computable<T> computation) {
-    return IdeEventQueue.getInstance().getRwLockHolder().runReadAction(computation);
+    return getThreadingSupport().runReadAction(computation);
   }
 
   @Override
   public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    return IdeEventQueue.getInstance().getRwLockHolder().runReadAction(computation);
+    return getThreadingSupport().runReadAction(computation);
   }
 
   @Override
   public boolean acquireWriteIntentLock(@Nullable String ignored) {
-    return IdeEventQueue.getInstance().getRwLockHolder().acquireWriteIntentLock(ignored);
+    return getThreadingSupport().acquireWriteIntentLock(ignored);
   }
 
   @Override
   public void releaseWriteIntentLock() {
-    IdeEventQueue.getInstance().getRwLockHolder().releaseWriteIntentLock();
+    getThreadingSupport().releaseWriteIntentLock();
   }
 
   @Override
@@ -896,7 +899,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
                                                                           @Nullable Project project,
                                                                           @Nullable JComponent parentComponent,
                                                                           @NotNull Consumer<? super ProgressIndicator> action) {
-    return IdeEventQueue.getInstance().getRwLockHolder().runWriteActionWithNonCancellableProgressInDispatchThread(title, project, parentComponent, action);
+    return getThreadingSupport().runWriteActionWithNonCancellableProgressInDispatchThread(title, project, parentComponent, action);
   }
 
   @Override
@@ -905,32 +908,32 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
                                                                        @Nullable Project project,
                                                                        @Nullable JComponent parentComponent,
                                                                        @NotNull java.util.function.Consumer<? super ProgressIndicator> action) {
-    return IdeEventQueue.getInstance().getRwLockHolder().runWriteActionWithNonCancellableProgressInDispatchThread(title, project, parentComponent, action);
+    return getThreadingSupport().runWriteActionWithNonCancellableProgressInDispatchThread(title, project, parentComponent, action);
   }
 
   @Override
   public void runWriteAction(@NotNull Runnable action) {
-    IdeEventQueue.getInstance().getRwLockHolder().runWriteAction(action);
+    getThreadingSupport().runWriteAction(action);
   }
 
   @Override
   public <T> T runWriteAction(@NotNull Computable<T> computation) {
-    return IdeEventQueue.getInstance().getRwLockHolder().runWriteAction(computation);
+    return getThreadingSupport().runWriteAction(computation);
   }
 
   @Override
   public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    return IdeEventQueue.getInstance().getRwLockHolder().runWriteAction(computation);
+    return getThreadingSupport().runWriteAction(computation);
   }
 
   @Override
   public boolean hasWriteAction(@NotNull Class<?> actionClass) {
-    return IdeEventQueue.getInstance().getRwLockHolder().hasWriteAction(actionClass);
+    return getThreadingSupport().hasWriteAction(actionClass);
   }
 
   @Override
   public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) {
-    return IdeEventQueue.getInstance().getRwLockHolder().runWriteIntentReadAction(computation);
+    return getThreadingSupport().runWriteIntentReadAction(computation);
   }
 
   @Override
@@ -945,7 +948,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean isReadAccessAllowed() {
-    return IdeEventQueue.getInstance().getRwLockHolder().isReadAccessAllowed();
+    return getThreadingSupport().isReadAccessAllowed();
   }
 
   @Override
@@ -990,7 +993,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean tryRunReadAction(@NotNull Runnable action) {
-    return IdeEventQueue.getInstance().getRwLockHolder().tryRunReadAction(action);
+    return getThreadingSupport().tryRunReadAction(action);
   }
 
   @Override
@@ -1014,23 +1017,23 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @Override
   public @NotNull AccessToken acquireReadActionLock() {
     PluginException.reportDeprecatedUsage("Application.acquireReadActionLock", "Use `runReadAction()` instead");
-    return IdeEventQueue.getInstance().getRwLockHolder().acquireReadActionLock();
+    return getThreadingSupport().acquireReadActionLock();
   }
 
   @Override
   public boolean isWriteActionPending() {
-    return IdeEventQueue.getInstance().getRwLockHolder().isWriteActionPending();
+    return getThreadingSupport().isWriteActionPending();
   }
 
   @Override
   public boolean isWriteAccessAllowed() {
-    return IdeEventQueue.getInstance().getRwLockHolder().isWriteAccessAllowed();
+    return getThreadingSupport().isWriteAccessAllowed();
   }
 
   @Override
   public @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> clazz) {
     PluginException.reportDeprecatedUsage("Application#acquireWriteActionLock", "Use `runWriteAction()` instead");
-    return IdeEventQueue.getInstance().getRwLockHolder().acquireWriteActionLock(clazz);
+    return getThreadingSupport().acquireWriteActionLock(clazz);
   }
 
   @Override
@@ -1047,12 +1050,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public void executeSuspendingWriteAction(@Nullable Project project,
                                            @NotNull @NlsContexts.DialogTitle String title,
                                            @NotNull Runnable runnable) {
-    IdeEventQueue.getInstance().getRwLockHolder().executeSuspendingWriteAction(project, title, runnable);
+    getThreadingSupport().executeSuspendingWriteAction(project, title, runnable);
   }
 
   @Override
   public boolean isWriteActionInProgress() {
-    return IdeEventQueue.getInstance().getRwLockHolder().isWriteActionInProgress();
+    return getThreadingSupport().isWriteActionInProgress();
   }
 
   @Override
@@ -1179,12 +1182,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void runWithoutImplicitRead(@NotNull Runnable runnable) {
-    IdeEventQueue.getInstance().getRwLockHolder().runWithoutImplicitRead(runnable);
+    getThreadingSupport().runWithoutImplicitRead(runnable);
   }
 
   @Override
   public void runWithImplicitRead(@NotNull Runnable runnable) {
-    IdeEventQueue.getInstance().getRwLockHolder().runWithImplicitRead(runnable);
+    getThreadingSupport().runWithImplicitRead(runnable);
   }
 
   @ApiStatus.Internal
@@ -1198,7 +1201,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       return true;
     }, app.getCoroutineScope());
 
-    IdeEventQueue.getInstance().getRwLockHolder().addReadActionListener(app, app);
+    getThreadingSupport().addReadActionListener(app, app);
     getThreadingSupport().addWriteActionListener(app, app);
 
     app.addApplicationListener(new ApplicationListener() {
@@ -1240,5 +1243,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public void afterWriteActionFinished(@NotNull Class<?> action) {
     fireAfterWriteActionFinished(action);
     otelMonitor.get().writeActionExecuted();
+  }
+
+  @NotNull
+  private static ThreadingSupport getThreadingSupport() {
+    return IdeEventQueue.getInstance().getRwLockHolder();
   }
 }
