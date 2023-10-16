@@ -2,6 +2,7 @@
 package git4idea.history
 
 import com.intellij.openapi.project.Project
+import git4idea.config.GitExecutable
 import git4idea.config.GitVersionSpecialty
 
 /**
@@ -34,7 +35,7 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
     return result
   }
 
-  fun commandParameters(project: Project): List<String> {
+  fun commandParameters(project: Project, executable: GitExecutable): List<String> {
     val result = mutableListOf<String>()
     if (diffRenames != DiffRenames.NoRenames) {
       if (diffRenames is DiffRenames.Limit && diffRenames.similarityIndexThreshold != null) {
@@ -44,7 +45,7 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
         result.add("-M")
       }
     }
-    result.addAll(diffInMergeCommits.commandParameters(project))
+    result.addAll(diffInMergeCommits.commandParameters(project, executable))
     return result
   }
 
@@ -103,22 +104,22 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
      * Do not report changes for merge commits
      */
     NO_DIFF {
-      override fun commandParameters(project: Project): List<String> = emptyList()
+      override fun commandParameters(project: Project, executable: GitExecutable): List<String> = emptyList()
     },
 
     /**
      * Report combined changes (same as `git log -c`)
      */
     COMBINED_DIFF {
-      override fun commandParameters(project: Project): List<String> = listOf("-c")
+      override fun commandParameters(project: Project, executable: GitExecutable): List<String> = listOf("-c")
     },
 
     /**
      * Report changes to each parent (same as `git log --diff-merges=separate` or `git log -m` in older git versions)
      */
     DIFF_TO_PARENTS {
-      override fun commandParameters(project: Project): List<String> {
-        return if (GitVersionSpecialty.DIFF_MERGES_M_USES_DEFAULT_SETTING.existsIn(project)) {
+      override fun commandParameters(project: Project, executable: GitExecutable): List<String> {
+        return if (GitVersionSpecialty.DIFF_MERGES_M_USES_DEFAULT_SETTING.existsIn(project, executable)) {
           listOf("--diff-merges=separate")
         }
         else {
@@ -132,18 +133,18 @@ data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
      * Works only since git 2.31.0.
      */
     FIRST_PARENT {
-      override fun commandParameters(project: Project): List<String> {
-        if (GitVersionSpecialty.DIFF_MERGES_SUPPORTS_FIRST_PARENT.existsIn(project)) {
+      override fun commandParameters(project: Project, executable: GitExecutable): List<String> {
+        if (GitVersionSpecialty.DIFF_MERGES_SUPPORTS_FIRST_PARENT.existsIn(project, executable)) {
           return listOf("--diff-merges=first-parent")
         }
         else {
           // if the required option does not exist in this git version, get changes to each parent
-          return DIFF_TO_PARENTS.commandParameters(project)
+          return DIFF_TO_PARENTS.commandParameters(project, executable)
         }
       }
     };
 
-    abstract fun commandParameters(project: Project): List<String>
+    abstract fun commandParameters(project: Project, executable: GitExecutable): List<String>
   }
 
   companion object {
