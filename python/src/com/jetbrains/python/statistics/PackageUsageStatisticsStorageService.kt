@@ -57,9 +57,9 @@ class PyPackageUsageStatistics : PersistentStateComponent<PyPackageUsageStatisti
 }
 
 data class PackageUsage(
-  var name: String,
-  var version: String,
-  var interpreterTypeValue: String,
-  var targetTypeValue: String,
-  var hasSdk: Boolean
+  var name: String? = null,
+  var version: String? = null,
+  var interpreterTypeValue: String? = null,
+  var targetTypeValue: String? = null,
+  var hasSdk: Boolean? = null,
 )

@@ -15,7 +15,7 @@ class PyPackageInEditorUsageCollector : ProjectUsagesCollector() {
                                        PACKAGE_VERSION_FIELD.with(packageUsage.name),
                                        INTERPRETER_TYPE.with(packageUsage.interpreterTypeValue),
                                        EXECUTION_TYPE.with(packageUsage.targetTypeValue),
-                                       HAS_SDK.with(packageUsage.hasSdk)
+                                       HAS_SDK.with(packageUsage.hasSdk!!)
                                        )
 
     }.toSet()
