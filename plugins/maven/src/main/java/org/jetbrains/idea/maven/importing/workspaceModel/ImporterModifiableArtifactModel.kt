@@ -35,6 +35,13 @@ internal class ImporterModifiableArtifact(private val project: Project,
   private var includeInProjectBuild = false
   private val contextData = UserDataHolderBase()
 
+  init {
+    val existingArtifact = WorkspaceModel.getInstance(project).currentSnapshot.resolve(ArtifactId(name))
+    if (null != existingArtifact) {
+      includeInProjectBuild = existingArtifact.includeInProjectBuild
+    }
+  }
+
   override fun <T : Any?> getUserData(key: Key<T>): T? = contextData.getUserData(key)
   override fun <T : Any?> putUserData(key: Key<T>, value: T?) = contextData.putUserData(key, value)
   override fun getExternalSource() = externalSource
@@ -170,6 +177,7 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
       val artifactEntity = storage addEntity ArtifactEntity(artifact.name, artifact.artifactType.id, false, source) {
         this.outputUrl = artifact.getOutputUrl()
         this.rootElement = rootElementEntity
+        this.includeInProjectBuild = artifact.isBuildOnMake
       }
 
       for (provider in artifact.propertiesProviders) {
