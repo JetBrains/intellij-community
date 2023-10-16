@@ -2,9 +2,6 @@
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
-import com.intellij.collaboration.ui.codereview.diff.viewer.DiffMapped
 import com.intellij.collaboration.ui.codereview.diff.viewer.controlInlaysIn
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
@@ -29,14 +26,14 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffDiscussionViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestDiscussionInlayRenderer
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestNewDiscussionInlayRenderer
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestReviewControlsGutterRenderer
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 class GitLabMergeRequestDiffExtension : DiffExtension() {
@@ -70,25 +67,22 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 
           coroutineScope {
             viewer.controlInlaysIn(this, changeVm.discussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
-              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, reviewVm.avatarIconsProvider)
+              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider)
             }
 
             viewer.controlInlaysIn(this, changeVm.draftDiscussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
-              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, reviewVm.avatarIconsProvider)
+              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider)
             }
 
-            val newDiscussions = changeVm.newDiscussions.map {
-              it.map { (location, vm) ->
-                NewNoteDiffInlayViewModel(changeVm, location, vm)
+            viewer.controlInlaysIn(this, changeVm.newDiscussions, { "NEW_${it.originalLocation}" }) {
+              GitLabMergeRequestNewDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider) {
+                changeVm.cancelNewDiscussion(it.originalLocation)
               }
-            }
-            viewer.controlInlaysIn(this, newDiscussions, NewNoteDiffInlayViewModel::id) {
-              GitLabMergeRequestNewDiscussionInlayRenderer(this, project, it.editVm, reviewVm.avatarIconsProvider, it::cancel)
             }
 
             launch {
-              changeVm.discussionsViewOption.collectLatest { discussionsViewOption ->
-                if (discussionsViewOption != DiscussionsViewOption.DONT_SHOW) {
+              changeVm.canComment.collectLatest {
+                if (it) {
                   coroutineScope {
                     viewer.controlAddCommentActionsIn(this, changeVm)
                     awaitCancellation()
@@ -105,19 +99,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
   }
 }
 
-private class NewNoteDiffInlayViewModel(private val changeVm: GitLabMergeRequestChangeViewModel,
-                                        private val newLocation: DiffLineLocation,
-                                        val editVm: NewGitLabNoteViewModel) : DiffMapped {
-  val id: String = "NEW_AT_$newLocation"
-  override val location: Flow<DiffLineLocation> = flowOf(newLocation)
-  override val isVisible: Flow<Boolean> = flowOf(true)
-
-  fun cancel() {
-    changeVm.cancelNewDiscussion(newLocation)
-  }
-}
-
-private fun DiffViewerBase.controlAddCommentActionsIn(cs: CoroutineScope, vm: GitLabMergeRequestChangeViewModel) {
+private fun DiffViewerBase.controlAddCommentActionsIn(cs: CoroutineScope, vm: GitLabMergeRequestDiffReviewViewModel) {
   when (this) {
     is SimpleOnesideDiffViewer -> {
       GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, editor.allLinesFlow(), editor) {

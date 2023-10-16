@@ -25,6 +25,9 @@ import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffView
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModelsImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
@@ -54,14 +57,21 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
     }
   }
 
+  private val globalReviewVm: GitLabMergeRequestReviewViewModelBase by lazy {
+    GitLabMergeRequestReviewViewModelBase(cs, currentUser, mergeRequest)
+  }
+
+  private val discussionsVms: GitLabMergeRequestDiscussionsViewModels by lazy {
+    GitLabMergeRequestDiscussionsViewModelsImpl(project, cs, currentUser, mergeRequest)
+  }
+
   val diffVm: GitLabMergeRequestDiffViewModel by lazy {
-    GitLabMergeRequestDiffViewModelImpl(project, cs, currentUser, mergeRequest, diffBridge, projectVm.avatarIconProvider)
+    GitLabMergeRequestDiffViewModelImpl(cs, mergeRequest, diffBridge, globalReviewVm, discussionsVms, projectVm.avatarIconProvider)
   }
 
   val editorReviewVm: GitLabMergeRequestEditorReviewViewModel by lazy {
-    GitLabMergeRequestEditorReviewViewModel(project, cs, projectData.projectMapping,
-                                            mergeRequest, projectVm,
-                                            currentUser, projectVm.avatarIconProvider)
+    GitLabMergeRequestEditorReviewViewModel(cs, projectData.projectMapping, mergeRequest, projectVm, globalReviewVm, discussionsVms,
+                                            projectVm.avatarIconProvider)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)

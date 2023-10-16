@@ -3,27 +3,24 @@ package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.async.mapModelsToViewModels
 import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
-import com.intellij.collaboration.ui.codereview.diff.viewer.DiffMapped
-import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
-import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel.NoteItem
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
 
-interface GitLabMergeRequestDiffDiscussionViewModel : DiffMapped {
+interface GitLabMergeRequestDiscussionViewModel {
   val id: String
   val notes: Flow<List<NoteItem>>
 
   val resolveVm: GitLabDiscussionResolveViewModel?
   val replyVm: GitLabDiscussionReplyViewModel?
+
+  val position: Flow<GitLabNotePosition?>
 
   sealed interface NoteItem {
     val id: Any
@@ -38,18 +35,15 @@ interface GitLabMergeRequestDiffDiscussionViewModel : DiffMapped {
   }
 }
 
-private val LOG = logger<GitLabMergeRequestDiffDiscussionViewModel>()
+private val LOG = logger<GitLabMergeRequestDiscussionViewModel>()
 
-class GitLabMergeRequestDiffDiscussionViewModelImpl(
+internal class GitLabMergeRequestDiscussionViewModelBase(
   project: Project,
   parentCs: CoroutineScope,
-  diffData: GitTextFilePatchWithHistory,
   currentUser: GitLabUserDTO,
   discussion: GitLabMergeRequestDiscussion,
-  discussionsViewOption: Flow<DiscussionsViewOption>,
-  glProject: GitLabProjectCoordinates,
-  contextMappingSide: Side = Side.LEFT
-) : GitLabMergeRequestDiffDiscussionViewModel {
+  glProject: GitLabProjectCoordinates
+) : GitLabMergeRequestDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
@@ -86,32 +80,20 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
   }.modelFlow(cs, LOG)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override val location: Flow<DiffLineLocation?> = discussion.firstNote().flatMapLatest {
+  override val position: Flow<GitLabNotePosition?> = discussion.firstNote().flatMapLatest {
     it?.position ?: flowOf(null)
-  }.distinctUntilChanged().map {
-    it?.mapToLocation(diffData, contextMappingSide)
-  }.modelFlow(cs, LOG)
-
-  override val isVisible: Flow<Boolean> = combine(resolveVm?.resolved ?: flowOf(false), discussionsViewOption) { isResolved, viewOption ->
-    return@combine when (viewOption) {
-      DiscussionsViewOption.ALL -> true
-      DiscussionsViewOption.UNRESOLVED_ONLY -> !isResolved
-      DiscussionsViewOption.DONT_SHOW -> false
-    }
-  }
+  }.distinctUntilChanged().modelFlow(cs, LOG)
 
   private fun GitLabMergeRequestDiscussion.firstNote(): Flow<GitLabMergeRequestNote?> =
     notes.map(List<GitLabMergeRequestNote>::firstOrNull).distinctUntilChangedBy { it?.id }
 }
 
-class GitLabMergeRequestDiffDraftDiscussionViewModel(
+class GitLabMergeRequestDraftDiscussionViewModelBase(
   project: Project,
   parentCs: CoroutineScope,
-  diffData: GitTextFilePatchWithHistory,
   note: GitLabMergeRequestDraftNote,
-  glProject: GitLabProjectCoordinates,
-  contextMappingSide: Side = Side.LEFT
-) : GitLabMergeRequestDiffDiscussionViewModel {
+  glProject: GitLabProjectCoordinates
+) : GitLabMergeRequestDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
@@ -121,12 +103,7 @@ class GitLabMergeRequestDiffDraftDiscussionViewModel(
     listOf(NoteItem.Note(GitLabNoteViewModelImpl(project, cs, note, flowOf(true), glProject)))
   )
 
-  override val location: Flow<DiffLineLocation?> = note.position.map {
-    if (it == null) return@map null
-    it.mapToLocation(diffData, contextMappingSide)
-  }
-
-  override val isVisible: Flow<Boolean> = flowOf(true)
+  override val position: Flow<GitLabNotePosition?> = note.position
 
   override val resolveVm: GitLabDiscussionResolveViewModel? = null
   override val replyVm: GitLabDiscussionReplyViewModel? = null

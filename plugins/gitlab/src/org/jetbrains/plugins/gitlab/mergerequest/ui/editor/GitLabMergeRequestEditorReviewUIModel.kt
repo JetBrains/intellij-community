@@ -1,29 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.editor.EditorMapped
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
-import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 
 /**
- * A wrapper over [GitLabMergeRequestChangeViewModel] to encapsulate LST integration
+ * A wrapper over [GitLabMergeRequestEditorReviewFileViewModel] to encapsulate LST integration
  */
 internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   cs: CoroutineScope,
-  private val fileVm: GitLabMergeRequestChangeViewModel,
+  private val fileVm: GitLabMergeRequestEditorReviewFileViewModel,
   private val lst: LocalLineStatusTracker<*>
 ) : LineStatusMarkerRangesSource<LstRange> {
 
@@ -38,14 +32,14 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private val _commentableRanges = MutableStateFlow<List<LineRange>>(emptyList())
   val commentableRanges: StateFlow<List<LineRange>> get() = _commentableRanges
 
-  val newDiscussions: Flow<List<MappedNewDiscussion>> = fileVm.newDiscussions.map {
-    it.map { (location, vm) -> MappedNewDiscussion(location, vm) }
+  val newDiscussions: Flow<List<GitLabMergeRequestEditorNewDiscussionViewModel>> = fileVm.newDiscussions.map {
+    it.map(::ShiftedNewDiscussion)
   }
-  val draftDiscussions: Flow<List<MappedDiscussion>> = fileVm.draftDiscussions.map {
-    it.map(::MappedDiscussion)
+  val draftDiscussions: Flow<List<GitLabMergeRequestEditorDiscussionViewModel>> = fileVm.draftDiscussions.map {
+    it.map(::ShiftedDiscussion)
   }
-  val discussions: Flow<List<MappedDiscussion>> = fileVm.discussions.map {
-    it.map(::MappedDiscussion)
+  val discussions: Flow<List<GitLabMergeRequestEditorDiscussionViewModel>> = fileVm.discussions.map {
+    it.map(::ShiftedDiscussion)
   }
 
   init {
@@ -70,36 +64,34 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   }
 
   fun requestNewDiscussion(lineIdx: Int, focus: Boolean) {
-    val location = mapLine(localRanges.value, lineIdx) ?: return
-    fileVm.requestNewDiscussion(location, focus)
+    val originalLine = transferLineFromAfter(localRanges.value, lineIdx)?.takeIf { it >= 0 } ?: return
+    fileVm.requestNewDiscussion(originalLine, focus)
   }
 
-  fun cancelNewDiscussion(location: DiffLineLocation) {
-    fileVm.cancelNewDiscussion(location)
+  fun cancelNewDiscussion(lineIdx: Int) {
+    val originalLine = transferLineFromAfter(localRanges.value, lineIdx)?.takeIf { it >= 0 } ?: return
+    fileVm.cancelNewDiscussion(originalLine)
   }
 
   fun getOriginalContent(lines: LineRange): String? {
     return fileVm.getOriginalContent(lines)
   }
 
-  inner class MappedDiscussion(val vm: GitLabMergeRequestDiffDiscussionViewModel) : EditorMapped {
+  private inner class ShiftedDiscussion(private val vm: GitLabMergeRequestEditorDiscussionViewModel)
+    : GitLabMergeRequestEditorDiscussionViewModel by vm {
     override val isVisible: Flow<Boolean> = vm.isVisible
-    override val line: Flow<Int?> = localRanges.combine(vm.location) { ranges, location ->
-      location?.let {
-        mapLocation(ranges, it)
-      }
+    override val line: Flow<Int?> = localRanges.combine(vm.line) { ranges, line ->
+      line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
     }
   }
 
-  inner class MappedNewDiscussion(val location: DiffLineLocation, val vm: NewGitLabNoteViewModel) : EditorMapped {
+  private inner class ShiftedNewDiscussion(private val vm: GitLabMergeRequestEditorNewDiscussionViewModel)
+    : GitLabMergeRequestEditorNewDiscussionViewModel by vm {
     override val isVisible: Flow<Boolean> = flowOf(true)
-    override val line: Flow<Int?> = localRanges.map { ranges -> mapLocation(ranges, location) }
+    override val line: Flow<Int?> = localRanges.combine(vm.line) { ranges, line ->
+      line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
+    }
   }
-}
-
-private fun mapLocation(ranges: List<LstRange>, location: DiffLineLocation): Int? {
-  val (side, line) = location
-  return if (side == Side.RIGHT) transferLineToAfter(ranges, line).takeIf { it >= 0 } else null
 }
 
 private fun transferLineToAfter(ranges: List<LstRange>, line: Int): Int {
@@ -117,11 +109,6 @@ private fun transferLineToAfter(ranges: List<LstRange>, line: Int): Int {
     result += length2 - length1
   }
   return result
-}
-
-private fun mapLine(ranges: List<LstRange>, lineIdx: Int): DiffLineLocation? {
-  val oldLine = transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return null
-  return Side.RIGHT to oldLine
 }
 
 private fun transferLineFromAfter(ranges: List<LstRange>, line: Int): Int? {

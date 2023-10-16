@@ -20,7 +20,7 @@ object GitLabMergeRequestDiffInlayComponentsFactory {
   fun createDiscussion(project: Project,
                        cs: CoroutineScope,
                        avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                       vm: GitLabMergeRequestDiffDiscussionViewModel): JComponent =
+                       vm: GitLabMergeRequestDiscussionViewModel): JComponent =
     GitLabDiscussionComponentFactory.create(project, cs, avatarIconsProvider, vm).apply {
       border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
     }.let {

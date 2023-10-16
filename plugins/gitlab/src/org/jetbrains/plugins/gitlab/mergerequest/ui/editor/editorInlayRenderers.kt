@@ -8,13 +8,13 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffInlayComponentsFactory
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 
 @ApiStatus.Internal
 class GitLabMergeRequestDiscussionInlayRenderer(cs: CoroutineScope,
                                                 project: Project,
-                                                vm: GitLabMergeRequestDiffDiscussionViewModel,
+                                                vm: GitLabMergeRequestDiscussionViewModel,
                                                 avatarIconsProvider: IconsProvider<GitLabUserDTO>)
   : CodeReviewComponentInlayRenderer(
   GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(project, cs, avatarIconsProvider, vm)

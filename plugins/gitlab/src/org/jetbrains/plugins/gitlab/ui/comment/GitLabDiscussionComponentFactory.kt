@@ -22,7 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel.NoteItem
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
 import javax.swing.Action
 import javax.swing.JComponent
 
@@ -31,7 +31,7 @@ object GitLabDiscussionComponentFactory {
   fun create(project: Project,
              cs: CoroutineScope,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-             vm: GitLabMergeRequestDiffDiscussionViewModel): JComponent {
+             vm: GitLabMergeRequestDiscussionViewModel): JComponent {
     val notesPanel = ComponentListPanelFactory.createVertical(cs, vm.notes, NoteItem::id) { itemCs, item ->
       when (item) {
         is NoteItem.Expander -> TimelineThreadCommentsPanel.createUnfoldComponent(item.collapsedCount) {

@@ -121,6 +121,26 @@ fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> {
   }
 }
 
+/**
+ * Performs mapping only if the source value is not null
+ */
+@ApiStatus.Experimental
+fun <T, R> Flow<T?>.mapNullable(mapper: (T) -> R): Flow<R?> = map { it?.let(mapper) }
+
+@OptIn(ExperimentalCoroutinesApi::class)
+@ApiStatus.Experimental
+fun <T, R> Flow<T?>.mapNullableScoped(mapper: CoroutineScope.(T) -> R): Flow<R?> {
+  return transformLatest { newValue ->
+    if (newValue == null) {
+      emit(null)
+    }
+    else coroutineScope {
+      emit(mapper(newValue))
+      awaitCancellation()
+    }
+  }
+}
+
 @ApiStatus.Experimental
 suspend fun <T> StateFlow<T>.collectScoped(collector: (CoroutineScope, T) -> Unit) {
   collectLatest { state ->

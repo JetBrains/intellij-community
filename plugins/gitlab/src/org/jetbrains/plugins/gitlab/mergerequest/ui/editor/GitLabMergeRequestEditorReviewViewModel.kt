@@ -2,37 +2,38 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.diff.util.Side
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.childScope
 import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
-  private val project: Project,
   parentCs: CoroutineScope,
   private val projectMapping: GitLabProjectMapping,
   mergeRequest: GitLabMergeRequest,
   private val projectVm: GitLabToolWindowProjectViewModel,
-  currentUser: GitLabUserDTO,
+  private val globalReviewVm: GitLabMergeRequestReviewViewModelBase,
+  private val discussions: GitLabMergeRequestDiscussionsViewModels,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
-) : GitLabMergeRequestReviewViewModelBase(parentCs, currentUser, mergeRequest) {
+) : GitLabMergeRequestReviewViewModel by globalReviewVm {
+
+  private val cs = parentCs.childScope(CoroutineName("GitLab Merge Request Editor Review VM"))
 
   val mergeRequestIid: String = mergeRequest.iid
 
@@ -45,7 +46,8 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
       mergeRequest.changes.collectLatest { changes ->
         changes.localRepositorySynced.collectLatest {
           if(it) {
-            changesRequest.collectLatest {
+            actualChangesState.value = ChangesState.NotLoaded
+            changesRequest.distinctUntilChanged().collectLatest {
               try {
                 val parsed = changes.getParsedChanges()
                 actualChangesState.value = ChangesState.Loaded(parsed)
@@ -83,7 +85,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   /**
    * A view model for [virtualFile] review
    */
-  fun getFileVm(virtualFile: VirtualFile): Flow<GitLabMergeRequestChangeViewModel?> {
+  fun getFileVm(virtualFile: VirtualFile): Flow<GitLabMergeRequestEditorReviewFileViewModel?> {
     if (!VfsUtilCore.isAncestor(projectMapping.remote.repository.root, virtualFile, true)) {
       return flowOf(null)
     }
@@ -91,14 +93,10 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     startLoadingChanges()
 
     return actualChangesState.mapLatest { changesState ->
-      val parsedChanges = (changesState as? ChangesState.Loaded)?.changes
-      parsedChanges?.changes?.find { it.virtualFile == virtualFile }?.let {
-        parsedChanges.patchesByChange[it]!!
-      }
-    }.mapScoped {
-      it?.let { patch ->
-        GitLabMergeRequestChangeViewModelImpl(project, this, currentUser, mergeRequest, patch, avatarIconsProvider,
-                                              discussionsViewOption, Side.RIGHT)
+      val parsedChanges = (changesState as? ChangesState.Loaded)?.changes ?: return@mapLatest null
+      val cumulativeChange = parsedChanges.changes.find { it.virtualFile == virtualFile } ?: return@mapLatest null
+      parsedChanges.patchesByChange[cumulativeChange]?.let { diffData ->
+        GitLabMergeRequestEditorReviewFileViewModelImpl(diffData, discussions, discussionsViewOption, avatarIconsProvider)
       }
     }
   }
