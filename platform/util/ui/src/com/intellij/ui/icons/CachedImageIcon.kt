@@ -8,6 +8,7 @@ import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.svg.colorPatcherDigestShim
 import com.intellij.util.SVGLoader
 import com.intellij.util.ui.MultiResolutionImageProvider
 import org.jetbrains.annotations.ApiStatus
@@ -348,7 +349,7 @@ private data object GlobalColorPatcherStrategy : ColorPatcherStrategy {
 }
 
 private class CustomColorPatcherStrategy(override val colorPatcher: SVGLoader.SvgElementColorPatcherProvider) : ColorPatcherStrategy {
-  private val lastDigest = AtomicReference(colorPatcher.digest())
+  private val lastDigest = AtomicReference(colorPatcherDigestShim(colorPatcher))
 
   override fun updateDigest(): Boolean {
     val digest = colorPatcher.digest()

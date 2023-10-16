@@ -3,10 +3,12 @@
 
 package com.intellij.ui.icons
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IconLayerProvider
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -218,6 +220,16 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
 
       override fun attributeForPath(path: String) = this
     })
+  }
+
+  override fun hashClass(aClass: Class<*>): Long {
+    val hasher = Hashing.komihash5_0().hashStream()
+    hasher.putString(aClass.name)
+
+    val pluginDescriptor = (aClass.classLoader as? PluginAwareClassLoader)?.pluginDescriptor ?: return hasher.asLong
+    hasher.putString(pluginDescriptor.pluginId.idString)
+    hasher.putString(pluginDescriptor.version)
+    return hasher.asLong
   }
 }
 

@@ -95,6 +95,9 @@ interface IconManager {
 
   @ApiStatus.Experimental
   fun colorizedIcon(baseIcon: Icon, colorProvider: () -> Color): Icon = baseIcon
+
+  @ApiStatus.Internal
+  fun hashClass(aClass: Class<*>): Long = aClass.hashCode().toLong()
 }
 
 private object DummyIconManager : IconManager {

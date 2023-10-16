@@ -3,7 +3,6 @@
 
 package com.intellij.ui.svg
 
-import com.dynatrace.hash4j.hashing.Hashing
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.diagnostic.StartUpMeasurer
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.LazyIcon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.IconManager
 import com.intellij.ui.icons.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
@@ -81,13 +81,12 @@ internal fun colorPatcherDigestShim(colorPatcherProvider: SVGLoader.SvgElementCo
   if (colorPatcherProvider == null) {
     return ArrayUtilRt.EMPTY_LONG_ARRAY
   }
-  else {
-    try {
-      return colorPatcherProvider.digest()
-    }
-    catch (e: AbstractMethodError) {
-      return longArrayOf(Hashing.komihash5_0().hashCharsToLong(colorPatcherProvider::class.java.name))
-    }
+
+  try {
+    return colorPatcherProvider.digest()
+  }
+  catch (e: AbstractMethodError) {
+    return longArrayOf(IconManager.getInstance().hashClass(colorPatcherProvider::class.java))
   }
 }
 
