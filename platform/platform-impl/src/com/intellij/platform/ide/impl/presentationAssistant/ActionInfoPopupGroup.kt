@@ -143,8 +143,23 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     })
 
     val moveListener = object : WindowMoveListener(panel) {
+      private var isDragging = false
+
       override fun mouseDragged(event: MouseEvent?) {
         super.mouseDragged(event)
+        updateDelta(event)
+        isDragging = true
+      }
+
+      override fun mouseReleased(event: MouseEvent?) {
+        super.mouseReleased(event)
+        if (isDragging) {
+          updateDelta(event)
+        }
+        isDragging = false
+      }
+
+      private fun updateDelta(event: MouseEvent?) {
         val actionInfoPanel = event?.component as? ActionInfoPanel?: return
         saveLocationDelta(project, actionInfoPanel)
         updatePopupsBounds(project, actionInfoPanel)
