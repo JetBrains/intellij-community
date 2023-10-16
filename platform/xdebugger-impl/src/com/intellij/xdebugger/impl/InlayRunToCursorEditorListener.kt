@@ -217,6 +217,11 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     val xPosition = JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) -
                     (if (needShowOnGutter) JBUI.scale(ACTION_BUTTON_SIZE) else 0)
 
+    val gutterRenderer = editorGutterComponentEx.getGutterRenderer(Point(editorGutterComponentEx.width + xPosition, lineY))
+    if (gutterRenderer != null) {
+      return
+    }
+
     val caretLine = editor.getCaretModel().logicalPosition.line
     val minimalOffsetBeforeText = MINIMAL_TEXT_OFFSET + (ACTION_BUTTON_GAP * 2 + ACTION_BUTTON_SIZE) * group.childrenCount
     if (editor.getSettings().isShowIntentionBulb() && caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(minimalOffsetBeforeText)) {
