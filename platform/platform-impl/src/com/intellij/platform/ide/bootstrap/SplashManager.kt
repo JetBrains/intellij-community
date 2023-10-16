@@ -63,7 +63,9 @@ internal fun splashScreenNeeded(args: List<String>): Boolean {
          && !SystemInfo.isWaylandToolkit()
 }
 
-internal fun CoroutineScope.scheduleShowSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
+internal fun CoroutineScope.scheduleShowSplashIfNeeded(initUiDeferred: Job,
+                                                       appInfoDeferred: Deferred<ApplicationInfo>,
+                                                       args: List<String>) {
   launch(CoroutineName("showSplashIfNeeded")) {
     if (splashScreenNeeded(args)) {
       try {
@@ -325,23 +327,16 @@ private fun loadImageFromCache(file: Path, scale: Float, isJreHiDPIEnabled: Bool
 }
 
 private fun getCacheFile(scale: Float, appInfo: ApplicationInfo, path: String): Path {
-  val buildTime = appInfo.buildUnixTime
-  if (buildTime == 0L) {
+  val appInfoData = ApplicationNamesInfo.getAppInfoData()
+  if (appInfoData.isEmpty()) {
     val hasher = Hashing.komihash5_0().hashStream()
-    val appInfoData = ApplicationNamesInfo.getAppInfoData()
-    if (appInfoData.isEmpty()) {
-      try {
-        hasher.putInt(Splash::class.java.classLoader.getResourceAsStream(path)?.use { it.available() } ?: 0)
-        hasher.putString("")
-      }
-      catch (e: Throwable) {
-        logger<Splash>().warn("Failed to read splash image", e)
-      }
+    try {
+      hasher.putInt(Splash::class.java.classLoader.getResourceAsStream(path)?.use { it.available() } ?: 0)
     }
-    else {
-      hasher.putInt(0)
-      hasher.putChars(appInfoData)
+    catch (e: Throwable) {
+      logger<Splash>().warn("Failed to read splash image", e)
     }
+
     hasher.putChars(path)
 
     val fileName = java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX) +
@@ -350,7 +345,7 @@ private fun getCacheFile(scale: Float, appInfo: ApplicationInfo, path: String): 
     return Path.of(PathManager.getSystemPath(), "splash", fileName)
   }
   else {
-    val fileName = java.lang.Long.toUnsignedString(buildTime, Character.MAX_RADIX) +
+    val fileName = java.lang.Long.toUnsignedString(appInfo.buildTime.toEpochSecond(), Character.MAX_RADIX) +
                    "-" +
                    Integer.toUnsignedString(path.hashCode(), Character.MAX_RADIX) +
                    "-" +

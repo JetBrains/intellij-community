@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 
 /**
@@ -28,7 +29,7 @@ public abstract class ApplicationInfo {
    */
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public abstract long getBuildUnixTime();
+  public abstract @NotNull ZonedDateTime getBuildTime();
 
   public abstract @NotNull BuildNumber getBuild();
 

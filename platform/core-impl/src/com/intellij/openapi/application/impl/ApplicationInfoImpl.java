@@ -63,7 +63,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myWelcomeScreenLogoUrl;
 
   private ZonedDateTime buildTime;
-  private long buildUnixTime;
   private ZonedDateTime majorReleaseBuildDate;
   private String myProductUrl;
   private UpdateUrls myUpdateUrls;
@@ -322,15 +321,15 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public Calendar getBuildDate() {
-    if (buildTime == null) {
-      buildTime = ZonedDateTime.now();
-    }
-    return GregorianCalendar.from(buildTime);
+    return GregorianCalendar.from(getBuildTime());
   }
 
   @Override
-  public long getBuildUnixTime() {
-    return buildUnixTime;
+  public @NotNull ZonedDateTime getBuildTime() {
+    if (buildTime == null) {
+      buildTime = ZonedDateTime.now();
+    }
+    return buildTime;
   }
 
   @Override
@@ -624,9 +623,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     String dateString = element.getAttributeValue("date");
     if (dateString != null && !dateString.equals("__BUILD_DATE__")) {
       buildTime = parseDate(dateString);
-      if (buildTime != null) {
-        buildUnixTime = buildTime.toEpochSecond();
-      }
     }
 
     String majorReleaseDateString = element.getAttributeValue("majorReleaseDate");

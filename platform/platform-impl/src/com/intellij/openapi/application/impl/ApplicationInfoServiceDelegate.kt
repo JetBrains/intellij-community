@@ -11,7 +11,7 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   private val delegate = ApplicationInfoImpl.getShadowInstance()
 
   override fun getBuildDate(): Calendar? = delegate.buildDate
-  override fun getBuildUnixTime(): Long = delegate.buildUnixTime
+  override fun getBuildTime() = delegate.buildTime
 
   override fun getBuild(): BuildNumber = delegate.build
   override fun getApiVersion(): String = delegate.apiVersion

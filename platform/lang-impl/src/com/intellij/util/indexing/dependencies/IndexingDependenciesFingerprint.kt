@@ -68,7 +68,7 @@ class IndexingDependenciesFingerprint {
     val hasher = Hashing.komihash5_0().hashStream()
 
     val appInfo = ApplicationInfoImpl.getShadowInstance()
-    hasher.putLong(appInfo.buildUnixTime)
+    hasher.putLong(appInfo.buildTime.toEpochSecond())
     hasher.putString(appInfo.build.asString())
 
     // loadedPlugins list is sorted
@@ -94,7 +94,7 @@ class IndexingDependenciesFingerprint {
     val durationMs = System.currentTimeMillis() - startTime
     val fingerprintString = java.lang.Long.toUnsignedString(fingerprint, Character.MAX_RADIX)
     thisLogger().info("Calculated dependencies fingerprint in ${durationMs} ms " +
-                      "(hash=$fingerprintString, buildTime=${appInfo.buildUnixTime}, appVersion=${appInfo.build.asString()})")
+                      "(hash=$fingerprintString, buildTime=${appInfo.buildTime.toEpochSecond()}, appVersion=${appInfo.build.asString()})")
 
     //println(fingerprintString)
     //println(hasher.getDebugInfo())

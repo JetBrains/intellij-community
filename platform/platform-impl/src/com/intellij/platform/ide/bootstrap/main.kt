@@ -54,8 +54,6 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.time.Instant
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.*
@@ -634,13 +632,7 @@ private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob:
 }
 
 fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<String>) {
-  val buildUnixTime = appInfo.buildUnixTime
-  val buildTimeString = if (buildUnixTime == 0L) {
-    "dev"
-  }
-  else {
-    DateTimeFormatter.RFC_1123_DATE_TIME.format(Instant.ofEpochSecond(buildUnixTime).atZone(ZoneId.systemDefault()))
-  }
+  val buildTimeString = DateTimeFormatter.RFC_1123_DATE_TIME.format(appInfo.buildTime)
   log.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${appInfo.build.asString()}, $buildTimeString)")
   log.info("OS: ${SystemInfoRt.OS_NAME} (${SystemInfoRt.OS_VERSION})")
   log.info(

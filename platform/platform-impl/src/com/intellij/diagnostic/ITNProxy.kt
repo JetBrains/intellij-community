@@ -76,8 +76,8 @@ internal object ITNProxy {
     template["app.build"] = appInfo.apiVersion
     template["app.version.major"] = appInfo.majorVersion
     template["app.version.minor"] = appInfo.minorVersion
-    template["app.build.date"] = (appInfo.buildUnixTime * 1000).toString()
-    template["app.build.date.release"] = appInfo.majorReleaseBuildDate?.time?.time?.toString()
+    template["app.build.date"] = (appInfo.buildTime.toInstant().toEpochMilli()).toString()
+    template["app.build.date.release"] = appInfo.majorReleaseBuildDate.time.time.toString()
     template["app.product.code"] = build.productCode
     template["app.build.number"] = buildNumberWithAllDetails
     template
