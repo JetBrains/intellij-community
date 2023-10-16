@@ -7,7 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowManager
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowFactory
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 

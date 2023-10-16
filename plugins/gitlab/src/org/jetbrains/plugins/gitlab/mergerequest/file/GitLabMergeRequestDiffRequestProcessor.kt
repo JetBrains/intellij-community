@@ -28,7 +28,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 import com.intellij.collaboration.util.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import com.intellij.collaboration.util.equalChanges
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowProjectViewModel
 
 internal fun createMergeRequestDiffRequestProcessor(project: Project,
                                                     projectVm: GitLabToolWindowProjectViewModel,
