@@ -1,0 +1,28 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Mermaid Default" />
+    <inspection_tool class="CustomRegExpInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myConfigurations">
+        <list>
+          <RegExpInspectionConfiguration>
+            <option name="description" value="Links to the YouTrack issues should not contain the auto generated issue abstract part.&#10;Incorrect: &lt;code&gt;https://youtrack.jetbrains.com/issue/BOE-286/Mini-carrots&lt;/code&gt;.&#10;Correct: &lt;code&gt;https://youtrack.jetbrains.com/issue/BOE-286&lt;/code&gt;.&#10;&#10;" />
+            <option name="name" value="YouTrack issue links with issue abstract in the URL" />
+            <option name="problemDescriptor" value="YouTrack issue links should not contain issue abstract in the URL" />
+            <option name="uuid" value="823c8821-4414-391a-9a95-c3a53af002be" />
+            <option name="patterns">
+              <list>
+                <InspectionPattern>
+                  <option name="regExp" value="(youtrack\.jetbrains\.com\/issue\/\b[A-Z]+\-\d+\b)\/[a-zA-Z0-9-]+" />
+                  <option name="_fileType" value="Markdown" />
+                  <option name="searchContext" value="ANY" />
+                  <option name="replacement" value="$1" />
+                </InspectionPattern>
+              </list>
+            </option>
+          </RegExpInspectionConfiguration>
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="Eslint" enabled="true" level="WARNING" enabled_by_default="true" />
+  </profile>
+</component>
