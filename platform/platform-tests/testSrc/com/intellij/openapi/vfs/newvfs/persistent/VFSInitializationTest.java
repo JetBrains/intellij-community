@@ -6,13 +6,10 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.util.io.PageCacheUtils;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -390,55 +387,6 @@ public class VFSInitializationTest {
     finally {
       connection.close();
     }
-  }
-
-
-  //================ kind-of benchmarks ============================================================
-  @Test
-  public void benchmarkVfsInitializationTime_CreateVfsFromScratch() throws Exception {
-    PlatformTestUtil.startPerformanceTest(
-        "create VFS from scratch", 1000,
-        () -> {
-          Path cachesDir = temporaryDirectory.createDir();
-          int version = 1;
-
-          VFSInitializationResult initializationResult = PersistentFSConnector.connectWithoutVfsLog(
-            cachesDir,
-            version
-          );
-          PersistentFSConnector.disconnect(initializationResult.connection);
-          //System.out.println(initResult.totalInitializationDurationNs / 1000_000);
-        })
-      .ioBound()
-      .warmupIterations(1)
-      .attempts(4)
-      .assertTiming();
-  }
-
-  @Test
-  public void benchmarkVfsInitializationTime_OpenExistingVfs() throws Exception {
-    Path cachesDir = temporaryDirectory.createDir();
-    int version = 1;
-    VFSInitializationResult result = PersistentFSConnector.connectWithoutVfsLog(
-      cachesDir,
-      version
-    );
-    PersistentFSConnector.disconnect(result.connection);
-
-    PlatformTestUtil.startPerformanceTest(
-        "open existing VFS files", 500,
-        () -> {
-          VFSInitializationResult initResult = PersistentFSConnector.connectWithoutVfsLog(
-            cachesDir,
-            version
-          );
-          assertFalse("Must open existing", initResult.vfsCreatedAnew);
-          PersistentFSConnector.disconnect(initResult.connection);
-        })
-      .ioBound()
-      //.warmupIterations(1)
-      .attempts(4)
-      .assertTiming();
   }
 
   //================ infrastructure: ================================================================
