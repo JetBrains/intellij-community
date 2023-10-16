@@ -8,6 +8,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.NewProjectOnboardingTips
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.OnboardingTipsInstallationInfo
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getDelegateChainRootAction
@@ -17,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileEditor
@@ -25,7 +25,6 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -76,29 +75,30 @@ internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
                                       IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)
 
 // The presence of this data means that we need to install onboarding tips on the first editor in the new created project
-private val sampleTextAfterRestoreKey = Key<String>("sampleTextAfterRestore")
+private val onboardingTipsInstallationInfoKey = Key<OnboardingTipsInstallationInfo>("onboardingTipsInstallationInfo")
 
 private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
   @RequiresEdt
-  override fun installTips(project: Project, simpleSampleText: String) {
-    project.putUserData(sampleTextAfterRestoreKey, simpleSampleText)
+  override fun installTips(project: Project, info: OnboardingTipsInstallationInfo) {
+    project.putUserData(onboardingTipsInstallationInfoKey, info)
   }
 }
 
-private fun installTipsInFirstEditor(editor: Editor, project: Project, simpleSampleText: String) {
+private fun installTipsInFirstEditor(editor: Editor, project: Project, info: OnboardingTipsInstallationInfo) {
   OnboardingTipsStatistics.logOnboardingTipsInstalled(project, onboardingGenerationNumber)
 
   // Set this option explicitly, because its default depends on the number of empty projects.
   PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, true)
 
-  val document = editor.document
-  // need to generalize this code in the future
-  val offset = document.charsSequence.indexOf("System.out.println").takeIf { it >= 0 } ?: return
-
   val file = editor.virtualFile ?: return
-  val position = XDebuggerUtil.getInstance().createPositionByOffset(file, offset) ?: return
 
-  XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, true)
+  val offset = info.offsetForBreakpoint(editor.document.charsSequence)
+
+  if (offset != null) {
+    val position = XDebuggerUtil.getInstance().createPositionByOffset(file, offset) ?: return
+
+    XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, true)
+  }
 
   val pathToRunningFile = file.path
   project.filePathWithOnboardingTips = pathToRunningFile
@@ -107,7 +107,7 @@ private fun installTipsInFirstEditor(editor: Editor, project: Project, simpleSam
 
   val number = onboardingGenerationNumber
   if (number != 0 && onboardingGenerationShowDisableMessage) {
-    RESET_TOOLTIP_SAMPLE_TEXT.set(file, simpleSampleText)
+    RESET_TOOLTIP_SAMPLE_TEXT.set(file, info.simpleSampleText)
   }
   onboardingGenerationNumber = number + 1
 }
@@ -123,11 +123,11 @@ private class InstallOnboardingTipsEditorListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val project = event.editor.project ?: return
 
-    val sampleTextAfterRestore = sampleTextAfterRestoreKey.get(project)
+    val info = onboardingTipsInstallationInfoKey.get(project)
 
-    if (sampleTextAfterRestore != null) {
-      project.putUserData(sampleTextAfterRestoreKey, null)
-      installTipsInFirstEditor(event.editor, project, sampleTextAfterRestore)
+    if (info != null) {
+      project.putUserData(onboardingTipsInstallationInfoKey, null)
+      installTipsInFirstEditor(event.editor, project, info)
     } else {
       val pathToRunningFile = project.filePathWithOnboardingTips ?: return
       if (event.editor.virtualFile?.path != pathToRunningFile) return
