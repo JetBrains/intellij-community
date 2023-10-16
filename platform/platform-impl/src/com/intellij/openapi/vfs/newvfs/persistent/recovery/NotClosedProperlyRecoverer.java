@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.recovery;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.*;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
@@ -28,6 +29,8 @@ import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorC
 public class NotClosedProperlyRecoverer implements VFSRecoverer {
   private final static Logger LOG = Logger.getInstance(NotClosedProperlyRecoverer.class);
 
+  private static final int MAX_ERRORS_TO_REPORT = SystemProperties.getIntProperty("NotClosedProperlyRecoverer.MAX_ERRORS_TO_REPORT", 64);
+
   @Override
   public void tryRecover(@NotNull PersistentFSLoader loader) {
     List<VFSInitException> notClosedProperlyErrors = loader.problemsDuringLoad(NOT_CLOSED_PROPERLY);
@@ -51,6 +54,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
       int namesEnumeratorErrors = 0;
       int attributesStorageErrors = 0;
       int contentEnumeratorErrors = 0;
+      int totalErrors = 0;
       int maxAllocatedID = records.maxAllocatedID();
 
       //Subset of VFSHealthChecker checks:
@@ -74,22 +78,35 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
         }
         else if (!nameResolvedSuccessfully(fileId, nameId, namesEnumerator)) {
           namesEnumeratorErrors++;
+          totalErrors++;
         }
+
         if (!attributeRecordIsValid(fileId, attributeRecordId, attributesStorage)) {
           attributesStorageErrors++;
+          totalErrors++;
         }
 
         if (contentId != DataEnumerator.NULL_ID) {
           if (!contentResolvedSuccessfully(fileId, contentId, contentStorage, contentHashEnumerator)) {
             contentEnumeratorErrors++;
+            totalErrors++;
           }
         }//else: it is OK for contentId to be NULL
+
+        if (totalErrors > MAX_ERRORS_TO_REPORT) {
+          LOG.warn(totalErrors + " errors already detected -- no reason to continue, VFS needs rebuild anyway");
+          break;
+        }
       }
 
       if (namesEnumeratorErrors == 0 && attributesStorageErrors == 0 && contentEnumeratorErrors == 0) {
         loader.problemsWereRecovered(notClosedProperlyErrors);
         return;
       }
+
+      //Fail-safe: if following recovery procedures fail to rebuild VFS -- on restart, we'll short-circuit
+      // the detailing checks
+      records.setErrorsAccumulated(accumulatedErrors + totalErrors);
 
       if (namesEnumeratorErrors > 0) {
         loader.problemsRecoveryFailed(notClosedProperlyErrors,
@@ -116,7 +133,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
 
   private static boolean attributeRecordIsValid(int fileId,
                                                 int attributeRecordId,
-                                                @NotNull AbstractAttributesStorage attributesStorage) throws IOException {
+                                                @NotNull AbstractAttributesStorage attributesStorage) {
     try {
       attributesStorage.checkAttributeRecordSanity(fileId, attributeRecordId);
       return true;
@@ -131,20 +148,26 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
                                                      int contentId,
                                                      @NotNull RefCountingContentStorage contentStorage,
                                                      @NotNull ContentHashEnumerator contentHashEnumerator) {
-    try {
-      try (DataInputStream stream = contentStorage.readStream(contentId)) {
-        stream.readAllBytes();
-      }
-      byte[] hash = contentHashEnumerator.valueOf(contentId);
-      if (hash == null) {
-        return false;
-      }
-      return true;
+    try (DataInputStream stream = contentStorage.readStream(contentId)) {
+      stream.readAllBytes();
     }
     catch (IOException e) {
-      LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") fails to resolve. " + e.getMessage());
+      LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content fails to resolve. " + e.getMessage());
       return false;
     }
+    try {
+      byte[] hash = contentHashEnumerator.valueOf(contentId);
+      if (hash == null) {
+        LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content hash fails to resolve (null)");
+        return false;
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content hash fails to resolve. " + e.getMessage());
+      return false;
+    }
+
+    return true;
   }
 
   private static boolean nameResolvedSuccessfully(int fileId,
