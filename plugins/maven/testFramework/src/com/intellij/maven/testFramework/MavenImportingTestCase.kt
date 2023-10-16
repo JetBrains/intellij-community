@@ -457,7 +457,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected fun importViaNewFlow(files: List<VirtualFile>?, failOnReadingError: Boolean,
-                                 disabledProfiles: List<String?>?, vararg profiles: String?) {
+                                 disabledProfiles: List<String>, vararg profiles: String) {
     projectsManager.initForTests()
     projectsManager.getProjectsTree().setExplicitProfiles(MavenExplicitProfiles(listOf(*profiles), disabledProfiles))
     val importingManager = MavenImportingManager.getInstance(myProject)
