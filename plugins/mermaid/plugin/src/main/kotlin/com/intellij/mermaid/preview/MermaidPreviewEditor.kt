@@ -87,7 +87,7 @@ internal class MermaidPreviewEditor(
     return component
   }
 
-  override fun getPreferredFocusedComponent(): JComponent? {
+  override fun getPreferredFocusedComponent(): JComponent {
     return component
   }
 
