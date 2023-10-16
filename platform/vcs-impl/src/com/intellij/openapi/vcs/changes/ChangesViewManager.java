@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectInitialActivitiesNotifier;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
@@ -855,8 +856,12 @@ public class ChangesViewManager implements ChangesViewEx,
         List<LocalChangeList> changeLists = changeListManager.getChangeLists();
         List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
 
+        boolean shouldShowUntrackedLoading = unversionedFiles.isEmpty() &&
+                                             !myProject.getService(ProjectInitialActivitiesNotifier.class).isInitialVfsRefreshFinished() &&
+                                             changeListManager.isUnversionedInUpdateMode();
+
         boolean skipSingleDefaultChangeList = Registry.is("vcs.skip.single.default.changelist") ||
-                                              !ChangeListManager.getInstance(myProject).areChangeListsEnabled();
+                                              !changeListManager.areChangeListsEnabled();
         TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
           .setChangeLists(changeLists, skipSingleDefaultChangeList, getChangeDecoratorProvider())
           .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
@@ -867,7 +872,11 @@ public class ChangesViewManager implements ChangesViewEx,
           .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
           .setUnversioned(unversionedFiles);
         if (myChangesViewManager.myState.myShowIgnored) {
-          treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths());
+          List<FilePath> ignoredFilePaths = changeListManager.getIgnoredFilePaths();
+          treeModelBuilder.setIgnored(ignoredFilePaths);
+        }
+        if (shouldShowUntrackedLoading) {
+          treeModelBuilder.insertSubtreeRoot(new ChangesBrowserUnversionedLoadingPendingNode());
         }
 
         for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
