@@ -142,7 +142,7 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
     if (mavenProjectCandidate == null) return
     val snapshot = mavenProjectCandidate.snapshot
     val resetArtifacts = MavenUtil.shouldResetDependenciesAndFolders(result.readingProblems)
-    mavenProjectCandidate[result, generalSettings, false, resetArtifacts] = false
+    mavenProjectCandidate.set(result, generalSettings, false, resetArtifacts, false)
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {
       for (eachImporter in MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
