@@ -415,14 +415,6 @@ public final class Mappings {
       });
     }
 
-    private Collection<Pair<MethodRepr, ClassRepr>> findAllMethodsBySpecificity(final MethodRepr m, final ClassRepr c) {
-      final Predicate<MethodRepr> predicate = lessSpecific(m);
-      final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<>();
-      addOverriddenMethods(c, predicate, result, null);
-      addOverridingMethods(m, c, predicate, result, null);
-      return result;
-    }
-
     private Collection<Pair<MethodRepr, ClassRepr>> findOverriddenMethods(final MethodRepr m, final ClassRepr c) {
       if (m.name == myInitName) {
         return Collections.emptySet(); // overriding is not defined for constructors
@@ -1230,32 +1222,48 @@ public final class Mappings {
             myFuture.affectStaticMemberOnDemandUsages(it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
           }
 
+          Predicate<MethodRepr> lessSpecificCond = myFuture.lessSpecific(addedMethod);
+          
           final Collection<MethodRepr> removed = diff.methods().removed();
-          for (final MethodRepr lessSpecific : it.findMethods(myFuture.lessSpecific(addedMethod))) {
+          for (final MethodRepr lessSpecific : it.findMethods(lessSpecificCond)) {
             if (!lessSpecific.equals(addedMethod) && !removed.contains(lessSpecific))  {
               debug("Found less specific method, affecting method usages");
               myFuture.affectMethodUsages(lessSpecific, propagated.get(), lessSpecific.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
             }
           }
 
-          debug("Processing affected by specificity methods");
-          final Collection<Pair<MethodRepr, ClassRepr>> affectedMethods = myFuture.findAllMethodsBySpecificity(addedMethod, it);
-          final Predicate<MethodRepr> overrides = MethodRepr.equalByJavaRules(addedMethod);
+          debug("Processing overridden by specificity methods");
 
-          for (final Pair<MethodRepr, ClassRepr> pair : affectedMethods) {
+          final Collection<Pair<MethodRepr, ClassRepr>> overridden = new HashSet<>();
+          myFuture.addOverriddenMethods(it, lessSpecificCond, overridden, null);
+          for (final Pair<MethodRepr, ClassRepr> pair : overridden) {
             final MethodRepr method = pair.first;
             final ClassRepr methodClass = pair.second;
 
             if (methodClass == MOCK_CLASS) {
               continue;
             }
-            final boolean isInheritor = Boolean.TRUE.equals(myPresent.isInheritorOf(methodClass.name, it.name, null));
+
+            debug("Method: ", method.name);
+            debug("Class : ", methodClass.name);
+            debug("Affecting method usages for that found");
+            myFuture.affectMethodUsages(method, myPresent.propagateMethodAccess(method, it.name), method.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+          }
+
+          debug("Processing overriding by specificity methods");
+
+          final Predicate<MethodRepr> overrides = MethodRepr.equalByJavaRules(addedMethod);
+          final Collection<Pair<MethodRepr, ClassRepr>> overriding = new HashSet<>();
+          myFuture.addOverridingMethods(addedMethod, it, lessSpecificCond, overriding, null);
+          for (final Pair<MethodRepr, ClassRepr> pair : overriding) {
+            final MethodRepr method = pair.first;
+            final ClassRepr methodClass = pair.second;
 
             debug("Method: ", method.name);
             debug("Class : ", methodClass.name);
 
-            if (overrides.test(method) && isInheritor) {
-              debug("Current method overrides that found");
+            if (overrides.test(method)) {
+              debug("Current method overrides the added method");
 
               final Iterable<File> files = classToSourceFileGet(methodClass.name);
               if (files != null) {
@@ -1269,17 +1277,11 @@ public final class Mappings {
 
             }
             else {
-              debug("Current method does not override that found");
+              debug("Current method does not override the added method");
+              debug("Affecting method usages for the method");
 
-              final IntSet yetPropagated = myPresent.propagateMethodAccess(method, it.name);
-
-              if (isInheritor) {
-                myPresent.appendDependents(methodClass, state.myDependants);
-                myFuture.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, methodClass.name), state.myAffectedUsages, state.myDependants);
-              }
-
-              debug("Affecting method usages for that found");
-              myFuture.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+              myPresent.appendDependents(methodClass, state.myDependants);
+              myFuture.affectMethodUsages(method, myPresent.propagateMethodAccess(method, methodClass.name), method.createUsage(myContext, methodClass.name), state.myAffectedUsages, state.myDependants);
             }
           }
 
