@@ -34,7 +34,8 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
   }
 
   private val configuration = PresentationAssistant.INSTANCE.configuration
-  private val appearance = appearanceFromSize(PresentationAssistantPopupSize.from(configuration.popupSize))
+  private val appearance = appearanceFromSize(PresentationAssistantPopupSize.from(configuration.popupSize),
+                                              PresentationAssistantTheme.fromValueOrDefault(configuration.theme))
   private val actionBlocks = textFragments.map { fragment ->
     val panel = ActionInfoPanel(fragment, appearance)
     val popup = createPopup(panel, showAnimated)
@@ -126,7 +127,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
       createPopup()
     }
 
-    popup.content.background = ActionInfoPanel.BACKGROUND
+    popup.content.background = PresentationAssistantTheme.fromValueOrDefault(configuration.theme).background
 
     popup.addListener(object : JBPopupListener {
       override fun beforeShown(lightweightWindowEvent: LightweightWindowEvent) {}
@@ -310,17 +311,20 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
                                  val subtitleInsets: JBInsets,
                                  val spaceBetweenPopups: Int,
                                  val titleSubtitleGap: Int,
-                                 val settingsButtonWidth: Int)
+                                 val settingsButtonWidth: Int,
+                                 val theme: PresentationAssistantTheme)
 
   companion object {
-    private fun appearanceFromSize(popupSize: PresentationAssistantPopupSize): Appearance = when(popupSize) {
+    private fun appearanceFromSize(popupSize: PresentationAssistantPopupSize,
+                                   theme: PresentationAssistantTheme): Appearance = when(popupSize) {
       PresentationAssistantPopupSize.SMALL -> Appearance(22f,
                                                          12f,
                                                          JBInsets(6, 12, 0, 12),
                                                          JBInsets(0, 14, 6, 14),
                                                          8,
                                                          1,
-                                                         25)
+                                                         25,
+                                                         theme)
 
       PresentationAssistantPopupSize.MEDIUM -> Appearance(32f,
                                                           13f,
@@ -328,7 +332,8 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
                                                           JBInsets(0, 18, 8, 18),
                                                           12,
                                                           -2,
-                                                          30)
+                                                          30,
+                                                          theme)
 
       PresentationAssistantPopupSize.LARGE -> Appearance(40f,
                                                          14f,
@@ -336,7 +341,8 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
                                                          JBInsets(0, 18, 8, 18),
                                                          12,
                                                          -2,
-                                                         34)
+                                                         34,
+                                                         theme)
     }
   }
 }

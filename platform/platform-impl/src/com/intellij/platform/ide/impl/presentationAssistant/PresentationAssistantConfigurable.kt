@@ -29,13 +29,28 @@ class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
 
       indent {
         panel {
+          val comboGroup = "presentations_assistant_top_combo"
+
+          if (PresentationAssistant.isThemeEnabled) {
+            row(IdeBundle.message("presentation.assistant.configurable.theme")) {
+              comboBox(CollectionComboBoxModel(PresentationAssistantTheme.entries, PresentationAssistantTheme.fromValueOrDefault(configuration.theme)),
+                       textListCellRenderer { it?.displayName })
+                .widthGroup(comboGroup)
+                .bindItem({ PresentationAssistantTheme.fromValueOrDefault(configuration.theme) }) {
+                  configuration.theme = it?.value
+                }
+            }
+          }
+
           row(IdeBundle.message("presentation.assistant.configurable.popup.size")) {
             comboBox(CollectionComboBoxModel(PresentationAssistantPopupSize.entries, PresentationAssistantPopupSize.from(configuration.popupSize)),
                      textListCellRenderer { it?.displayName })
+              .widthGroup(comboGroup)
               .bindItem({ PresentationAssistantPopupSize.from(configuration.popupSize) }) {
                 configuration.popupSize = it?.value ?: PresentationAssistantPopupSize.MEDIUM.value
               }
           }
+
           row(IdeBundle.message("presentation.assistant.configurable.duration")) {
             intTextField().bindIntText({ configuration.popupDuration / 1000 }) { configuration.popupDuration = it * 1000 }.gap(RightGap.SMALL)
             text(IdeBundle.message("presentation.assistant.configurable.duration.seconds"))

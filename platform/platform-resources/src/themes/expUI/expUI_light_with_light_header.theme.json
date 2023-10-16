@@ -199,14 +199,14 @@
     },
 
     "PresentationAssistant": {
-      "Default": {
+      "Pale": {
         "Popup": {
           "background": "Grey14",
           "foreground": "Grey2"
         },
         "keymapLabel": "Grey7"
       },
-      "Alternative": {
+      "Bright": {
         "Popup": {
           "background": "Grey2",
           "foreground": "Grey14"

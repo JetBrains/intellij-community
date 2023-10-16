@@ -898,14 +898,14 @@
       }
     },
     "PresentationAssistant": {
-      "Default": {
+      "Bright": {
         "Popup": {
           "background": "Blue4",
           "foreground": "Grey14"
         },
         "keymapLabel": "Blue11"
       },
-      "Alternative": {
+      "Pale": {
         "Popup": {
           "background": "Grey3",
           "foreground": "Grey14"

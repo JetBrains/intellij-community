@@ -9,6 +9,7 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -17,8 +18,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 
 enum class PresentationAssistantPopupSize(val value: Int, @Nls val displayName: String) {
   SMALL(0, IdeBundle.message("presentation.assistant.configurable.size.small")),
@@ -60,6 +65,35 @@ enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val 
   }
 }
 
+enum class PresentationAssistantTheme(val value: Int, val displayName: String, val foreground: Color, val background: Color, val keymapLabel: Color) {
+  BRIGHT(0,
+         IdeBundle.message("presentation.assistant.configurable.theme.bright"),
+         JBColor.namedColor("PresentationAssistant.Bright.Popup.foreground", JBColor.foreground()),
+         JBColor.namedColor("PresentationAssistant.Bright.Popup.background", JBColor.PanelBackground),
+         JBColor.namedColor("PresentationAssistant.Bright.keymapLabel", JBColor.foreground())),
+
+  PALE(1,
+       IdeBundle.message("presentation.assistant.configurable.theme.pale"),
+       JBColor.namedColor("PresentationAssistant.Pale.Popup.foreground", JBColor.foreground()),
+       JBColor.namedColor("PresentationAssistant.Pale.Popup.background", JBColor.PanelBackground),
+       JBColor.namedColor("PresentationAssistant.Pale.keymapLabel", JBColor.foreground()));
+
+  companion object {
+    fun fromValueOrDefault(value: Int?) = value.takeIf {
+      PresentationAssistant.isThemeEnabled
+    }.let {
+      when(it) {
+        BRIGHT.value-> BRIGHT
+        PALE.value -> PALE
+        else -> DEFAULT
+      }
+    }
+
+    val DEFAULT: PresentationAssistantTheme get() =
+      if (LafManager.getInstance().currentUIThemeLookAndFeel.name == "Light with Light Header") PALE else BRIGHT
+  }
+}
+
 class PresentationAssistantState {
   var showActionDescriptions = false
   var popupSize: Int = 1
@@ -93,6 +127,8 @@ class PresentationAssistantState {
 
   var deltaX: Int? = null
   var deltaY: Int? = null
+
+  var theme: Int? = null
 }
 
 internal fun PresentationAssistantState.resetDelta() {
@@ -166,6 +202,9 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
 
   companion object {
     val INSTANCE get() = service<PresentationAssistant>()
+
+    val isThemeEnabled: Boolean get() = ExperimentalUI.isNewUI()
+                                        && Registry.`is`("ide.presentation.assistant.theme.enabled", false)
   }
 }
 

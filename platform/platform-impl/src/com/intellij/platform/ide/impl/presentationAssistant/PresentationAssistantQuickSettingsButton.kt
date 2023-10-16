@@ -42,7 +42,7 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
     }
 
   init {
-    background = ActionInfoPanel.BACKGROUND
+    background = appearance.theme.background
     isOpaque = true
     updatePreferredSize()
 

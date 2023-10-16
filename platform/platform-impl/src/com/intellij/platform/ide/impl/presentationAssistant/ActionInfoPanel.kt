@@ -5,8 +5,6 @@
  */
 package com.intellij.platform.ide.impl.presentationAssistant
 
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -29,7 +27,7 @@ internal class ActionInfoPanel(textData: TextData, private val appearance: Actio
     }
 
   init {
-    background = BACKGROUND
+    background = appearance.theme.background
 
     layout = GridLayout()
     val titleSubtitleIntersection = if (appearance.titleSubtitleGap < 0) UnscaledGaps(bottom = -appearance.titleSubtitleGap) else UnscaledGaps.EMPTY
@@ -39,12 +37,12 @@ internal class ActionInfoPanel(textData: TextData, private val appearance: Actio
       .row(resizable = true).cell(component = subtitleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
 
     titleLabel.border = JBEmptyBorder(appearance.titleInsets.unscaled)
-    titleLabel.foreground = TITLE_COLOR
+    titleLabel.foreground = appearance.theme.foreground
 
     subtitleLabel.border = JBEmptyBorder(appearance.subtitleInsets.unscaled.apply {
       if (appearance.titleSubtitleGap > 0) top += appearance.titleSubtitleGap
     })
-    subtitleLabel.foreground = SUBTITLE_COLOR
+    subtitleLabel.foreground = appearance.theme.keymapLabel
     subtitleLabel.font = DEFAULT_FONT.deriveFont(JBUIScale.scale(appearance.subtitleFontSize))
 
     updateLabels()
@@ -62,18 +60,5 @@ internal class ActionInfoPanel(textData: TextData, private val appearance: Actio
 
   companion object {
     val DEFAULT_FONT: Font get() = JBFont.label()
-    private val isAlternativeColors: Boolean get() = Registry.`is`("ide.presentation.assistant.alternative.color.scheme", false)
-
-    val BACKGROUND: JBColor get() =
-      if (isAlternativeColors) JBColor.namedColor("PresentationAssistant.Alternative.Popup.background", JBColor.PanelBackground)
-      else JBColor.namedColor("PresentationAssistant.Default.Popup.background", JBColor.PanelBackground)
-
-    private val TITLE_COLOR: JBColor get() =
-      if (isAlternativeColors) JBColor.namedColor("PresentationAssistant.Alternative.Popup.foreground", JBColor.foreground())
-      else JBColor.namedColor("PresentationAssistant.Default.Popup.foreground", JBColor.foreground())
-
-    private val SUBTITLE_COLOR: JBColor get() =
-      if (isAlternativeColors) JBColor.namedColor("PresentationAssistant.Alternative.keymapLabel", JBColor.foreground())
-      else JBColor.namedColor("PresentationAssistant.Default.keymapLabel", JBColor.foreground())
   }
 }

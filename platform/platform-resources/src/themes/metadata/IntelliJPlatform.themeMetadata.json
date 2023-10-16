@@ -202,33 +202,33 @@
       "since": "2022.2"
     },
     {
-      "key": "PresentationAssistant.Default.Popup.foreground",
-      "description": "Presentation Assistant popup foreground (experimental UI only)",
+      "key": "PresentationAssistant.Bright.Popup.foreground",
+      "description": "Presentation Assistant popup bright foreground (experimental UI only)",
       "since": "2023.3"
     },
     {
-      "key": "PresentationAssistant.Default.Popup.background",
-      "description": "Presentation Assistant popup background (experimental UI only)",
+      "key": "PresentationAssistant.Bright.Popup.background",
+      "description": "Presentation Assistant popup bright background (experimental UI only)",
       "since": "2023.3"
     },
     {
-      "key": "PresentationAssistant.Default.keymapLabel",
-      "description": "Presentation Assistant keymap label text color (experimental UI only)",
+      "key": "PresentationAssistant.Bright.keymapLabel",
+      "description": "Presentation Assistant keymap label bright text color (experimental UI only)",
       "since": "2023.3"
     },
     {
-      "key": "PresentationAssistant.Alternative.Popup.foreground",
-      "description": "Presentation Assistant popup alternative foreground (experimental UI only)",
+      "key": "PresentationAssistant.Pale.Popup.foreground",
+      "description": "Presentation Assistant popup pale foreground (experimental UI only)",
       "since": "2023.3"
     },
     {
-      "key": "PresentationAssistant.Alternative.Popup.background",
-      "description": "Presentation Assistant popup alternative background (experimental UI only)",
+      "key": "PresentationAssistant.Pale.Popup.background",
+      "description": "Presentation Assistant popup pale background (experimental UI only)",
       "since": "2023.3"
     },
     {
-      "key": "PresentationAssistant.Alternative.keymapLabel",
-      "description": "Presentation Assistant keymap label alternative text color (experimental UI only)",
+      "key": "PresentationAssistant.Pale.keymapLabel",
+      "description": "Presentation Assistant keymap label pale text color (experimental UI only)",
       "since": "2023.3"
     },
     {
