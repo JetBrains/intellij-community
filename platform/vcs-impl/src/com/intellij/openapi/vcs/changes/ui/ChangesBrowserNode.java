@@ -25,6 +25,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.*;
 
@@ -390,7 +391,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   @Nullable
   private static VirtualFile getScopeVirtualFileFor(@NotNull FilePath filePath) {
     if (filePath.isNonLocal()) return null;
-    return ChangesUtil.findValidParentAccurately(filePath);
+    return VcsImplUtil.findValidParentAccurately(filePath);
   }
 
   public boolean shouldExpandByDefault() {

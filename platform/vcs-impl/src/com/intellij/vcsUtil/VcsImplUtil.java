@@ -2,6 +2,7 @@
 package com.intellij.vcsUtil;
 
 import com.intellij.diff.DiffContentFactoryImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -9,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -20,6 +22,8 @@ import com.intellij.openapi.vcs.changes.IgnoredFileGenerator;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +106,9 @@ public final class VcsImplUtil {
     ignoredFileGenerator.generateFile(ignoreFileRoot, vcs, notify);
   }
 
-  private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManager changeListManager, @NotNull String filePath) {
+  private static boolean isFileSharedInVcs(@NotNull Project project,
+                                           @NotNull ChangeListManager changeListManager,
+                                           @NotNull String filePath) {
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
     if (file == null) return false;
     FileStatus fileStatus = changeListManager.getStatus(file);
@@ -124,5 +130,20 @@ public final class VcsImplUtil {
   public static String loadTextFromBytes(@Nullable Project project, byte @NotNull [] bytes, @NotNull FilePath filePath) {
     Charset charset = DiffContentFactoryImpl.guessCharset(project, bytes, filePath);
     return CharsetToolkit.decodeString(bytes, charset);
+  }
+
+  @Nullable
+  public static VirtualFile findValidParentAccurately(@NotNull FilePath filePath) {
+    VirtualFile result = filePath.getVirtualFile();
+    if (result != null) return result;
+
+    String path = filePath.getPath();
+    if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+      result = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      if (result != null) return result;
+    }
+
+    Pair<NewVirtualFile, NewVirtualFile> pair = VfsImplUtil.findCachedFileByPath(LocalFileSystem.getInstance(), path);
+    return pair.first != null ? pair.first : pair.second;
   }
 }
