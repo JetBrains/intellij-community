@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.toolwindow.ReviewTabViewModel
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.selectedChange
@@ -99,6 +100,7 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
     parentCs: CoroutineScope,
     projectsManager: GitLabProjectsManager,
     projectData: GitLabProject,
+    avatarIconProvider: IconsProvider<GitLabUserDTO>,
     openReviewTabAction: suspend (mrIid: String) -> Unit
   ) : GitLabReviewTabViewModel {
     private val cs = parentCs.childScope()
@@ -106,7 +108,7 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
     private val projectPath = projectData.projectMapping.repository.projectPath.fullPath()
     override val displayName: String = GitLabBundle.message("merge.request.create.tab.title", projectPath)
 
-    val createVm = GitLabMergeRequestCreateViewModelImpl(project, cs, projectsManager, projectData, openReviewTabAction)
+    val createVm = GitLabMergeRequestCreateViewModelImpl(project, cs, projectsManager, projectData, avatarIconProvider, openReviewTabAction)
 
     override suspend fun destroy() = cs.cancelAndJoinSilently()
   }

@@ -10,14 +10,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabGraphQLMutationException
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.mergeRequestSetReviewers
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 private val LOG = logger<GitLabProject>()
@@ -32,6 +31,7 @@ interface GitLabProject {
   val defaultBranch: Deferred<String>
 
   suspend fun createMergeRequest(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO
+  suspend fun adjustReviewers(mrIid: String, reviewers: List<GitLabUserDTO>): GitLabMergeRequestDTO
 }
 
 class GitLabLazyProject(
@@ -74,6 +74,19 @@ class GitLabLazyProject(
   override suspend fun createMergeRequest(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO {
     return withContext(cs.coroutineContext + Dispatchers.IO) {
       api.graphQL.createMergeRequest(projectCoordinates, sourceBranch, targetBranch, title).getResultOrThrow()
+    }
+  }
+
+  @Throws(GitLabGraphQLMutationException::class, IllegalStateException::class)
+  override suspend fun adjustReviewers(mrIid: String, reviewers: List<GitLabUserDTO>): GitLabMergeRequestDTO {
+    return withContext(cs.coroutineContext + Dispatchers.IO) {
+      if (GitLabVersion(15, 3) <= api.getMetadata().version) {
+        api.graphQL.mergeRequestSetReviewers(projectCoordinates, mrIid, reviewers).getResultOrThrow()
+      }
+      else {
+        api.rest.mergeRequestSetReviewers(projectCoordinates, mrIid, reviewers).body()
+        api.graphQL.loadMergeRequest(projectCoordinates, mrIid).body() ?: error("Merge request could not be loaded")
+      }
     }
   }
 }

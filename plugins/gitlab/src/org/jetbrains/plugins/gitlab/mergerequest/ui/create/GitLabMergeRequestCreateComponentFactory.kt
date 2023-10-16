@@ -50,6 +50,7 @@ internal object GitLabMergeRequestCreateComponentFactory {
         override fun changedUpdate(e: DocumentEvent?) = updateText()
       })
     }
+    val reviewersPanel = GitLabMergeRequestCreateReviewersComponentFactory.create(cs, createVm)
     val statusPanel = GitLabMergeRequestCreateStatusComponentFactory.create(cs, createVm)
     val actionsPanel = GitLabMergeRequestCreateActionsComponentFactory.create(project, cs, createVm)
 
@@ -58,6 +59,8 @@ internal object GitLabMergeRequestCreateComponentFactory {
       .addComponent(commitsLoadingPanel, CC().growX().pushX().growY(0.5f).pushY(0.5f), true)
       .addSeparator()
       .addComponent(titleField, CC().growX().pushX().minWidth("0"))
+      .addSeparator()
+      .addComponent(reviewersPanel, CC().growX().pushX().minWidth("0").pushX().growY(0.3f).pushY(0.3f))
       .addSeparator()
       .addComponent(statusPanel, CC().growX().pushX())
       .addComponent(actionsPanel, CC().growX().pushX(), withListBackground = false)
