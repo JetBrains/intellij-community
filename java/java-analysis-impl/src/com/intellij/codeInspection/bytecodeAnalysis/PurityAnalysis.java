@@ -6,6 +6,7 @@ import com.intellij.codeInspection.bytecodeAnalysis.asm.LiteAnalyzer;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.util.ArrayUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -286,8 +287,8 @@ abstract class EffectQuantum {
   };
 
   static final class FieldReadQuantum extends EffectQuantum {
-    final EKey key;
-    FieldReadQuantum(EKey key) {
+    final @NotNull EKey key;
+    FieldReadQuantum(@NotNull EKey key) {
       super(key.hashCode());
       this.key = key;
     }
@@ -305,7 +306,7 @@ abstract class EffectQuantum {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      return o != null && getClass() == o.getClass() && key == ((FieldReadQuantum)o).key;
+      return o != null && getClass() == o.getClass() && key.equals(((FieldReadQuantum)o).key);
     }
 
     @Override
@@ -315,8 +316,8 @@ abstract class EffectQuantum {
   }
 
   static final class ReturnChangeQuantum extends EffectQuantum {
-    final EKey key;
-    ReturnChangeQuantum(EKey key) {
+    final @NotNull EKey key;
+    ReturnChangeQuantum(@NotNull EKey key) {
       super(key.hashCode());
       this.key = key;
     }
@@ -334,7 +335,7 @@ abstract class EffectQuantum {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      return o != null && getClass() == o.getClass() && key == ((ReturnChangeQuantum)o).key;
+      return o != null && getClass() == o.getClass() && key.equals(((ReturnChangeQuantum)o).key);
     }
 
     @Override
