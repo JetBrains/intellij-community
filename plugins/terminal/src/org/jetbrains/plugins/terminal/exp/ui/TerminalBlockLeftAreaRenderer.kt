@@ -19,12 +19,14 @@ class TerminalBlockLeftAreaRenderer(private val background: Color,
                                     private val strokeWidth: Int = 0) : LineMarkerRenderer {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     val topIns = toFloatAndScale(TerminalUi.blockTopInset)
-    val bottomIns = toFloatAndScale(TerminalUi.blockBottomInset)
+    val blocksGap = toFloatAndScale(TerminalUi.blocksGap)
     val width = toFloatAndScale(TerminalUi.blockLeftInset)
     val arc = toFloatAndScale(TerminalUi.blockArc)
 
     val gutterWidth = (editor as EditorEx).gutterComponentEx.width
-    val rect = Rectangle2D.Float(gutterWidth - width, r.y - topIns, width, r.height + topIns + bottomIns)
+    // r.height includes the height of the block text and the height of the inlays below the last line
+    // so, to get the full block height, we need to add top inset and remove the gap between blocks
+    val rect = Rectangle2D.Float(gutterWidth - width, r.y - topIns, width, r.height + topIns - blocksGap)
 
     // from right bottom corner to the right top corner
     val outerPath = Path2D.Float(Path2D.WIND_EVEN_ODD).apply {
