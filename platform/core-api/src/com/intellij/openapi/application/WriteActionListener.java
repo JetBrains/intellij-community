@@ -12,24 +12,24 @@ public interface WriteActionListener extends EventListener {
   /**
    * Is called before the {@code action} is started, when the write-lock is not acquired yet.
    */
-  default void beforeWriteActionStart(@NotNull Object action) {
+  default void beforeWriteActionStart(@NotNull Class<?> action) {
   }
 
   /**
    * Is called before the {@code action} is started, when the write-lock is acquired.
    */
-  default void writeActionStarted(@NotNull Object action) {
+  default void writeActionStarted(@NotNull Class<?> action) {
   }
 
   /**
    * Is called after the {@code action} executed, while the write-lock is still acquired.
    */
-  default void writeActionFinished(@NotNull Object action) {
+  default void writeActionFinished(@NotNull Class<?> action) {
   }
 
   /**
    * Is called after {@code action} is finished and the write-lock is released.
    */
-  default void afterWriteActionFinished(@NotNull Object action) {
+  default void afterWriteActionFinished(@NotNull Class<?> action) {
   }
 }

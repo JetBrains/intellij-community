@@ -2,11 +2,16 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import java.lang.Deprecated
+import java.util.function.Consumer
+import javax.swing.JComponent
 
 interface ThreadingSupport {
   /**
@@ -144,4 +149,119 @@ interface ThreadingSupport {
   @RequiresBlockingContext
   // @Throws(E::class)
   fun <T, E : Throwable?> runReadAction(computation: ThrowableComputable<T, E>): T
+
+  /**
+   * Adds a [WriteActionListener].
+   *
+   * Please, use [addWriteActionListener] with [Disposable] second argument.
+   *
+   * @param listener the listener to add
+   */
+  @Deprecated
+  fun addWriteActionListener(listener: WriteActionListener)
+
+  /**
+   * Adds a [WriteActionListener].
+   *
+   * @param listener the listener to add
+   * @param parent   the parent disposable, whose disposal will trigger this listener's removal
+   */
+  fun addWriteActionListener(listener: WriteActionListener, parent: Disposable)
+
+  /**
+   * Removes a [WriteActionListener].
+   *
+   * Please, use [addWriteActionListener] with [Disposable] second argument and [Disposable.dispose].
+   *
+   * @param listener the listener to remove
+   */
+  @Deprecated
+  fun removeWriteActionListener(listener: WriteActionListener)
+
+  /**
+   * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
+   * immediately if no read actions are currently running, or blocked until all read actions complete.
+   *
+   * See also [WriteAction.run] for a more lambda-friendly version.
+   *
+   * @param action the action to run
+   * @see WriteAction
+   */
+  @RequiresBlockingContext
+  fun runWriteAction(action: Runnable)
+
+  /**
+   * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
+   * immediately if no read actions are currently running, or blocked until all read actions complete.
+   *
+   * See also [WriteAction.run] for a more lambda-friendly version.
+   *
+   * @param computation the action to run
+   * @return the result returned by the computation.
+   * @see WriteAction
+   */
+  @RequiresBlockingContext
+  fun <T> runWriteAction(computation: Computable<T>): T
+
+  /**
+   * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
+   * immediately if no read actions are currently running, or blocked until all read actions complete.
+   *
+   * See also [WriteAction.run] for a more lambda-friendly version.
+   *
+   * @param computation the action to run
+   * @return the result returned by the computation.
+   * @see WriteAction
+   */
+  @RequiresBlockingContext
+  // @Throws(E::class)
+  fun <T, E : Throwable?> runWriteAction(computation: ThrowableComputable<T, E>): T
+
+  /**
+   * If called inside a write-action, executes the given code under modal progress with write-lock released (e.g., to allow for read-action
+   * parallelization).
+   * It's the caller's responsibility to invoke this method only when the model is in an internally consistent state,
+   * so that background threads with read actions don't see half-baked PSI/VFS/etc. The runnable may perform write-actions itself;
+   * callers should be ready for those.
+   */
+  fun executeSuspendingWriteAction(project: Project?, title: @NlsContexts.DialogTitle String, runnable: Runnable)
+
+  /**
+   * Returns `true` if there is currently executing write action of the specified class.
+   *
+   * @param actionClass the class of the write action to return.
+   * @return `true` if the action is running, or `false` if no action of the specified class is currently executing.
+   */
+  fun hasWriteAction(actionClass: Class<*>): Boolean
+
+  /**
+   * @return true if some thread is performing write action right now.
+   * @see runWriteAction
+   */
+  fun isWriteActionInProgress(): Boolean
+
+  @ApiStatus.Experimental
+  fun runWriteActionWithCancellableProgressInDispatchThread(title: @NlsContexts.ProgressTitle String,
+                                                            project: Project?,
+                                                            parentComponent: JComponent?,
+                                                            action: Consumer<in ProgressIndicator?>): Boolean
+
+  @ApiStatus.Experimental
+  fun runWriteActionWithNonCancellableProgressInDispatchThread(title: @NlsContexts.ProgressTitle String,
+                                                               project: Project?,
+                                                               parentComponent: JComponent?,
+                                                               action: Consumer<in ProgressIndicator?>): Boolean
+
+  /**
+   * Use [runReadAction] instead
+   */
+  @Deprecated
+  fun acquireReadActionLock(): AccessToken
+
+
+  /**
+   * Use [runWriteAction], [WriteAction.run], or [WriteAction.compute] instead
+   */
+  @Deprecated
+  fun acquireWriteActionLock(marker: Class<*>): AccessToken
 }
