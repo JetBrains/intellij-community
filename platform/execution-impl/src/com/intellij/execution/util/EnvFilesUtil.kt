@@ -7,9 +7,12 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.execution.envFile.parseEnvFile
 import com.intellij.execution.util.ProgramParametersConfigurator.ParametersConfiguratorException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.withPushPop
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.EnvReader
+import com.intellij.util.PathUtilRt
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File
 import java.io.FileNotFoundException
@@ -38,7 +41,11 @@ fun configureEnvsFromFiles(configuration: EnvFilesOptions, parse: Boolean = true
       val extension = FileUtilRt.getExtension(path).lowercase()
       if (extension == "sh" || extension == "bat") {
         if (parse) {
-          result.putAll(launchScript(path, extension))
+          val indicator = ProgressManager.getGlobalProgressIndicator()
+          indicator.withPushPop {
+            indicator.text = ExecutionBundle.message("progress.title.script.running", PathUtilRt.getFileName(path))
+            result.putAll(launchScript(path, extension))
+          }
         }
       }
       else {
