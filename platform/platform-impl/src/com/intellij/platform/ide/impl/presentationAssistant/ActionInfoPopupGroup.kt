@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.hover.HoverListener
@@ -50,7 +51,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
       if (oldValue != isPopupHovered) {
         if (isPopupHovered) {
-          settingsButton.acquireShownStateRequest(computeLocation(project, actionBlocks.size))
+          settingsButton.acquireShownStateRequest(computeLocation(project, actionBlocks.size).popupLocation)
         }
         else {
           settingsButton.releaseShownStateRequest()
@@ -96,7 +97,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
     animator = FadeInOutAnimator(true, showAnimated)
     actionBlocks.mapIndexed { index, block ->
-      block.popup.show(computeLocation(project, index))
+      block.popup.show(computeLocation(project, index).popupLocation)
     }
 
     if (showAnimated) {
@@ -147,22 +148,29 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
       override fun mouseDragged(event: MouseEvent?) {
         super.mouseDragged(event)
-        updateDelta(event)
+        updateDelta(event, false)
         isDragging = true
       }
 
       override fun mouseReleased(event: MouseEvent?) {
         super.mouseReleased(event)
         if (isDragging) {
-          updateDelta(event)
+          updateDelta(event, true)
         }
         isDragging = false
       }
 
-      private fun updateDelta(event: MouseEvent?) {
+      private fun updateDelta(event: MouseEvent?, isFinal: Boolean) {
         val actionInfoPanel = event?.component as? ActionInfoPanel?: return
         saveLocationDelta(project, actionInfoPanel)
-        updatePopupsBounds(project, actionInfoPanel)
+
+        if (isFinal) {
+          validateAndFixLocationDelta(project)
+          updatePopupsBounds(project, null)
+        }
+        else {
+          updatePopupsBounds(project, actionInfoPanel)
+        }
       }
     }.installTo(panel)
     Disposer.register(this) { moveListener.uninstallFrom(panel) }
@@ -190,7 +198,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
         it.repaint()
       }
 
-      val newBounds = Rectangle(computeLocation(project, index).screenPoint, actionBlock.panel.preferredSize)
+      val newBounds = Rectangle(computeLocation(project, index).popupLocation.screenPoint, actionBlock.panel.preferredSize)
       actionBlock.popup.setBounds(newBounds)
     }
 
@@ -210,15 +218,33 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     configuration.horizontalAlignment = newAlignment.x
     configuration.verticalAlignment = newAlignment.y
 
-    val originalLocation = computeLocation(project, index, true).screenPoint
+    val originalLocation = computeLocation(project, index, true).popupLocation.screenPoint
+    applyDeltaToConfiguration(originalLocation, window.location)
+  }
 
-    configuration.deltaX = JBUI.unscale(window.x - originalLocation.x)
-    configuration.deltaY = JBUI.unscale(window.y - originalLocation.y)
+  private fun validateAndFixLocationDelta(project: Project) {
+    val newGroupBounds = computeLocation(project, null).let {
+      Rectangle(it.popupLocation.screenPoint, it.groupSize)
+    }
+    val validatedGroupBounds = newGroupBounds.clone() as Rectangle
+
+    val ideFrameBounds = ideFrameScreenBounds(project)
+    ScreenUtil.moveToFit(validatedGroupBounds, ideFrameBounds, JBInsets.emptyInsets())
+
+    if (newGroupBounds != validatedGroupBounds) {
+      val originalGroupLocation = computeLocation(project, null, true).popupLocation.screenPoint
+      applyDeltaToConfiguration(originalGroupLocation, validatedGroupBounds.location)
+    }
+  }
+
+  private fun applyDeltaToConfiguration(original: Point, new: Point) {
+    configuration.deltaX = JBUI.unscale(new.x - original.x)
+    configuration.deltaY = JBUI.unscale(new.y - original.y)
   }
 
   private fun calculateNewAlignmentAfterDrag(popupWindow: Window): PresentationAssistantPopupAlignment {
     val popupBounds = popupWindow.bounds
-    val ideBounds = SwingUtilities.windowForComponent(WindowManager.getInstance().getIdeFrame(project)!!.component).bounds
+    val ideBounds = ideFrameScreenBounds(project)
     popupBounds.x -= ideBounds.x
     popupBounds.y -= ideBounds.y
     ideBounds.x = 0
@@ -232,6 +258,15 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
       if (popupBounds.y < ideBounds.height / 2) PresentationAssistantPopupAlignment.TOP_RIGHT
       else PresentationAssistantPopupAlignment.BOTTOM_RIGHT
     }
+  }
+
+  private fun ideFrameScreenBounds(project: Project): Rectangle {
+    val ideFrame = WindowManager.getInstance().getIdeFrame(project)!!
+    val ideFrameBounds = ideFrame.component.visibleRect
+    val ideFrameScreenLocation = RelativePoint(ideFrame.component, ideFrameBounds.location).screenPoint
+    ideFrameBounds.location = ideFrameScreenLocation
+
+    return ideFrameBounds
   }
 
   fun close() {
@@ -290,7 +325,9 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     forcedToBeShown = isPopupHovered || isSettingsButtonForcedToBeShown
   }
 
-  private fun computeLocation(project: Project, index: Int?, ignoreDelta: Boolean = false): RelativePoint {
+  private data class PopupLocationInfo(val popupLocation: RelativePoint, val groupSize: Dimension)
+
+  private fun computeLocation(project: Project, index: Int?, ignoreDelta: Boolean = false): PopupLocationInfo {
     val preferredSizes = actionBlocks.map { it.panel.preferredSize }
     val gap = JBUIScale.scale(appearance.spaceBetweenPopups)
     val popupGroupSize: Dimension = if (actionBlocks.isNotEmpty()) {
@@ -323,7 +360,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
       else -> visibleRect.y + visibleRect.height - popupGroupSize.height - margin
     } + deltaY
 
-    return RelativePoint(ideFrame.component, Point(x, y))
+    return PopupLocationInfo(RelativePoint(ideFrame.component, Point(x, y)), popupGroupSize)
   }
 
   inner class FadeInOutAnimator(private val forward: Boolean, animated: Boolean) : Animator("Action Hint Fade In/Out", 8, if (animated) 100 else 0, false, forward) {
