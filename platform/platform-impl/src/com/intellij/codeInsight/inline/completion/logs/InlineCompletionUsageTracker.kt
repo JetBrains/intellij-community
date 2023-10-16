@@ -28,7 +28,7 @@ import kotlin.random.Random
 
 @ApiStatus.Experimental
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 8)
+  private val GROUP = EventLogGroup("inline.completion", 9)
 
   override fun getGroup() = GROUP
 
@@ -66,7 +66,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onHide(event: InlineCompletionEventType.Hide): Unit = lock.withLock {
-      showTracker?.canceled()
+      showTracker?.canceled(event.explicit)
     }
 
     override fun onEmpty(event: InlineCompletionEventType.Empty): Unit = lock.withLock {
@@ -256,8 +256,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       finish(ShownEvents.FinishType.SELECTED)
     }
 
-    fun canceled() {
-      finish(ShownEvents.FinishType.CANCELED)
+    fun canceled(explicit: Boolean) {
+      finish(if (explicit) ShownEvents.FinishType.EXPLICITLY_CANCELED else ShownEvents.FinishType.IMPLICITLY_CANCELED)
     }
 
     private fun finish(finishType: ShownEvents.FinishType) {
@@ -287,7 +287,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val SHOWING_TIME = Long("showing_time")
     val FINISH_TYPE = Enum<FinishType>("finish_type")
 
-    enum class FinishType { SELECTED, CANCELED }
+    enum class FinishType { SELECTED, IMPLICITLY_CANCELED, EXPLICITLY_CANCELED }
   }
 
   private val ShownEvent: VarargEventId = GROUP.registerVarargEvent(

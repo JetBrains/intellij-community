@@ -33,7 +33,7 @@ class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : 
       }
       return
     }
-    InlineCompletion.getHandlerOrNull(editor)?.hide(false, context)
+    InlineCompletion.getHandlerOrNull(editor)?.hide(true, context)
 
     if (originalHandler.isEnabled(editor, caret, dataContext)) {
       originalHandler.execute(editor, caret, dataContext)
