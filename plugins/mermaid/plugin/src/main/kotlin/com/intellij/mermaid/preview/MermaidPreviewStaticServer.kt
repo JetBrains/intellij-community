@@ -84,7 +84,10 @@ internal class MermaidPreviewStaticServer : HttpRequestHandler() {
   }
 
   companion object {
+    @Suppress("ConstPropertyName")
     private const val endpointPrefix = "mermaidPreview"
+
+    @Suppress("ConstPropertyName")
     private const val prefixPath = "/$endpointPrefix"
 
     @JvmStatic

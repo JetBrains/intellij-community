@@ -39,6 +39,7 @@ class DirectiveJsonSchemaFileProvider(private val project: Project) : JsonSchema
   }
 
   companion object {
+    @Suppress("ConstPropertyName")
     private const val schemaFileName = "directive_schema.json"
   }
 }
