@@ -31,7 +31,8 @@ interface DocumentationComponent {
 
   /**
    * Emitted when component size is need to be updated, because content preferred size is changed.
-   * The value is a human-readable description of the update reason.
+   * For now the value is a [String] with human-readable description of the update reason, useful for debugging.
+   * The actual value might change at any time.
    */
-  val contentSizeUpdates: Flow<String>
+  val contentSizeUpdates: Flow<Any>
 }

@@ -66,5 +66,5 @@ private class DocumentationComponentImpl(
     browser.resetBrowser(DocumentationRequest(targetPointer, targetPresentation))
   }
 
-  override val contentSizeUpdates: Flow<String> = ui.contentSizeUpdates
+  override val contentSizeUpdates: Flow<Any> = ui.contentSizeUpdates
 }
