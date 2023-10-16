@@ -109,3 +109,7 @@ internal class ScaledResultIcon(@JvmField internal val image: Image,
 private fun getCacheKey(pixScale: Float, cacheFlags: IconAttributes): Long {
   return packTwoIntToLong(pixScale.toRawBits(), cacheFlags.flags)
 }
+
+private fun packTwoIntToLong(v1: Int, v2: Int): Long {
+  return (v1.toLong() shl 32) or (v2.toLong() and 0xffffffffL)
+}

@@ -2,9 +2,9 @@
 package com.intellij.ui.icons
 
 import com.dynatrace.hash4j.hashing.HashFunnel
+import com.dynatrace.hash4j.hashing.Hashing
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.hasher
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.newSvgPatcher
 import com.intellij.ui.svg.replaceCachedImageIcons
@@ -39,7 +39,7 @@ private val strokeColors = pairWithDigest(listOf(
 private val strokeColorsForReplacer = pairWithDigest(listOf("white", "#ffffff"))
 
 private fun pairWithDigest(list: List<String>): Pair<List<String>, Long> {
-  return list to hasher.hashStream().putOrderedIterable(list, HashFunnel.forString()).asLong
+  return list to Hashing.komihash5_0().hashStream().putOrderedIterable(list, HashFunnel.forString()).asLong
 }
 
 internal class IconAndColorCacheKey(@JvmField val icon: Icon, @JvmField val color: Color) {
@@ -93,11 +93,11 @@ private fun replaceCachedImageIcon(icon: CachedImageIcon,
       return icon.createStrokeIcon()
     }
     else {
-      return icon.createWithPatcher(strokeReplacer, useStroke = true, isDark = false)
+      return icon.createWithPatcher(colorPatcher = strokeReplacer, useStroke = true, isDark = false)
     }
   }
   else {
-    return icon.createWithPatcher(palettePatcher, isDark = false)
+    return icon.createWithPatcher(colorPatcher = palettePatcher, isDark = false)
   }
 }
 
@@ -115,7 +115,7 @@ private fun getStrokePatcher(resultColor: Color,
   val digest = longArrayOf(
     strokeColors.second,
     backgroundColors?.second ?: 0,
-    packTwoIntToLong(resultColor.rgb, resultColor.alpha),
+    resultColor.rgb.toLong(),
   )
   return object : SVGLoader.SvgElementColorPatcherProvider {
     override fun digest() = digest
@@ -126,14 +126,9 @@ private fun getStrokePatcher(resultColor: Color,
         return null
       }
 
-      return newSvgPatcher(newPalette = newPalette,
-                           alphaProvider = { color ->
+      return newSvgPatcher(newPalette = newPalette, alphaProvider = { color ->
                              alpha.getInt(color).takeIf { it != Int.MIN_VALUE }
                            })
     }
   }
-}
-
-fun packTwoIntToLong(v1: Int, v2: Int): Long {
-  return (v1.toLong() shl 32) or (v2.toLong() and 0xffffffffL)
 }
