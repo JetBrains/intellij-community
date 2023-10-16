@@ -151,7 +151,12 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
       }
       return BackgroundTaskUtil.submitTask(executor, this@ShelfProvider, Computable {
         try {
-          data.loadChangesIfNeededOrThrow(project)
+          data.loadChangesIfNeeded(project)
+
+          val changesLoadingError = data.changesLoadingError
+          if (changesLoadingError != null) {
+            return@Computable SavedPatchesProvider.LoadingResult.Error(changesLoadingError)
+          }
           return@Computable SavedPatchesProvider.LoadingResult.Changes(data.getChangeObjects()!!)
         }
         catch (throwable: Throwable) {

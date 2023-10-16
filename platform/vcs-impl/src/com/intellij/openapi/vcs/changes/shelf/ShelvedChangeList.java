@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -12,7 +11,6 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -21,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -142,7 +139,10 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
 
   public void loadChangesIfNeeded(@NotNull Project project) {
     try {
-      loadChangesIfNeededOrThrow(project);
+      if (myChanges == null) {
+        List<? extends FilePatch> list = ShelveChangesManager.loadPatchesWithoutContent(project, path, null);
+        myChanges = createShelvedChangesFromFilePatches(project, path, list);
+      }
     }
     catch (Exception e) {
       LOG.warn("Failed to parse the file patch: [" + path + "]", e);
@@ -151,21 +151,6 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
     }
   }
 
-  public void loadChangesIfNeededOrThrow(@NotNull Project project) throws VcsException {
-    if (myChanges == null) {
-      myChanges = loadChanges(project);
-    }
-  }
-
-  private @NotNull List<ShelvedChange> loadChanges(@NotNull Project project) throws VcsException {
-    try {
-      List<? extends FilePatch> list = ShelveChangesManager.loadPatchesWithoutContent(project, path, null);
-      return createShelvedChangesFromFilePatches(project, path, list);
-    }
-    catch (IOException | PatchSyntaxException e) {
-      throw new VcsException(e);
-    }
-  }
 
   @Nullable
   public List<ShelvedChange> getChanges() {
