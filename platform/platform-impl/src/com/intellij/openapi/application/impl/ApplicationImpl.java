@@ -72,7 +72,7 @@ import static com.intellij.serviceContainer.ComponentManagerImplKt.useInstanceCo
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 @ApiStatus.Internal
-public final class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx {
+public final class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx, ReadActionListener {
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(ApplicationImpl.class);
   }
@@ -142,6 +142,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
   }
+
   private volatile boolean myWriteActionPending;
 
   public ApplicationImpl(@NotNull CoroutineScope parentScope, boolean isInternal) {
@@ -466,7 +467,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       throw new IllegalStateException("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
-    Runnable r = myTransactionGuard.wrapLaterInvocation(AppScheduledExecutorService.capturePropagationAndCancellationContext(runnable), modalityState);
+    Runnable r =
+      myTransactionGuard.wrapLaterInvocation(AppScheduledExecutorService.capturePropagationAndCancellationContext(runnable), modalityState);
     LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(r));
   }
 
@@ -684,7 +686,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         catch (Throwable t) {
           getLogger().error("Restart failed", t);
           StartupErrorReporter.showMessage(BootstrapBundle.message("restart.failed.title"), t);
-          if(exitCode == 0) {
+          if (exitCode == 0) {
             exitCode = AppExitCodes.RESTART_FAILED;
           }
         }
@@ -886,46 +888,17 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void runReadAction(@NotNull Runnable action) {
-    IdeEventQueue.getInstance().getRwLockHolder().runReadAction(() -> {
-      try {
-        action.run();
-      } finally {
-        myReadActionCacheImpl.clear();
-      }
-    });
-    otelMonitor.get().readActionExecuted();
+    IdeEventQueue.getInstance().getRwLockHolder().runReadAction(action);
   }
 
   @Override
   public <T> T runReadAction(@NotNull Computable<T> computation) {
-    try {
-      return IdeEventQueue.getInstance().getRwLockHolder().runReadAction(() -> {
-        try {
-          return computation.compute();
-        }
-        finally {
-          myReadActionCacheImpl.clear();
-        }
-      });
-    } finally {
-      otelMonitor.get().readActionExecuted();
-    }
+    return IdeEventQueue.getInstance().getRwLockHolder().runReadAction(computation);
   }
 
   @Override
   public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    try {
-      return IdeEventQueue.getInstance().getRwLockHolder().runReadAction(() -> {
-        try {
-          return computation.compute();
-        }
-        finally {
-          myReadActionCacheImpl.clear();
-        }
-      });
-    } finally {
-      otelMonitor.get().readActionExecuted();
-    }
+    return IdeEventQueue.getInstance().getRwLockHolder().runReadAction(computation);
   }
 
   @Override
@@ -968,7 +941,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     });
   }
 
-  private <T, E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable) throws E {
+  private <T, E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable)
+    throws E {
     startWrite(clazz);
     try {
       return computable.compute();
@@ -1380,12 +1354,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
            + (isHeadlessEnvironment() ? " (headless)" : "")
            + (isCommandLine() ? " (command line)" : "")
            + (hasLock ?
-               (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" +
-                                                                                    (writeActionPending ? " pending" : "") +
-                                                                                    (writeActionInProgress ? " inProgress" : "") +
-                                                                                    (writeAccessAllowed ? " allowed" : "") +
-                                                                                    ")" : "")
-               : " (lock is not ready)"
+              (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" +
+                                                                                   (writeActionPending ? " pending" : "") +
+                                                                                   (writeActionInProgress ? " inProgress" : "") +
+                                                                                   (writeAccessAllowed ? " allowed" : "") +
+                                                                                   ")" : "")
+                      : " (lock is not ready)"
            )
            + (isReadAccessAllowed() ? " (RA allowed)" : "")
            + (StartupUtil.isImplicitReadOnEDTDisabled() ? " (IR on EDT disabled)" : "")
@@ -1452,6 +1426,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       return true;
     }, app.getCoroutineScope());
 
+    IdeEventQueue.getInstance().getRwLockHolder().addReadActionListener(app, app);
+
     app.addApplicationListener(new ApplicationListener() {
       @Override
       public void afterWriteActionFinished(@NotNull Object action) {
@@ -1463,5 +1439,15 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @Override
   public void flushNativeEventQueue() {
     SunToolkit.flushPendingEvents();
+  }
+
+  @Override
+  public void readActionFinished(@NotNull Object action) {
+    myReadActionCacheImpl.clear();
+  }
+
+  @Override
+  public void afterReadActionFinished(@NotNull Object action) {
+    otelMonitor.get().readActionExecuted();
   }
 }

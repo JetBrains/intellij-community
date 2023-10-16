@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
+import java.lang.Deprecated
 
 interface ThreadingSupport {
   /**
@@ -70,6 +72,34 @@ interface ThreadingSupport {
   fun runWithImplicitRead(runnable: Runnable)
 
   /**
+   * Adds a [ReadActionListener].
+   *
+   * Please, use [addReadActionListener] with [Disposable] second argument.
+   *
+   * @param listener the listener to add
+   */
+  @Deprecated
+  fun addReadActionListener(listener: ReadActionListener)
+
+  /**
+   * Adds a [ReadActionListener].
+   *
+   * @param listener the listener to add
+   * @param parent   the parent disposable, whose disposal will trigger this listener's removal
+   */
+  fun addReadActionListener(listener: ReadActionListener, parent: Disposable)
+
+  /**
+   * Removes a [ReadActionListener].
+   *
+   * Please, use [addReadActionListener] with [Disposable] second argument and [Disposable.dispose].
+   *
+   * @param listener the listener to remove
+   */
+  @Deprecated
+  fun removeReadActionListener(listener: ReadActionListener)
+
+  /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately
    * if no write action is currently running, or blocked until the currently running write action completes.
    *
@@ -81,9 +111,7 @@ interface ThreadingSupport {
    * @see CoroutinesKt.readActionBlocking
    */
   @RequiresBlockingContext
-  fun runReadAction(action: Runnable) {
-    runReadAction(ThrowableComputable  { action.run() })
-  }
+  fun runReadAction(action: Runnable)
 
   /**
    * Runs the specified computation in a read action. Can be called from any thread. The action is executed
@@ -98,9 +126,7 @@ interface ThreadingSupport {
    * @see CoroutinesKt.readActionBlocking
    */
   @RequiresBlockingContext
-  fun <T> runReadAction(computation: Computable<T>): T {
-    return runReadAction(ThrowableComputable { computation.compute() })
-  }
+  fun <T> runReadAction(computation: Computable<T>): T
 
   /**
    * Runs the specified computation in a read action. Can be called from any thread. The action is executed
