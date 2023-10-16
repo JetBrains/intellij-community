@@ -13,6 +13,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileChooser.FileChooser
@@ -39,7 +40,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 
-open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible {
+open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
   companion object {
     @JvmStatic
     fun openFile(filePath: String, project: Project) {
