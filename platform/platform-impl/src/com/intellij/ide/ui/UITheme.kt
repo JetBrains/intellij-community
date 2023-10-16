@@ -327,9 +327,7 @@ private fun configureIcons(theme: UIThemeBean,
       val fillTransparency = v.alpha
       val colorHex = "#" + ColorUtil.toHex(v, false)
       scope.newPalette.put(key, colorHex)
-      if (fillTransparency != 255) {
-        scope.alphas.put(colorHex, fillTransparency)
-      }
+      scope.alphas.put(colorHex, fillTransparency)
     }
   }
 

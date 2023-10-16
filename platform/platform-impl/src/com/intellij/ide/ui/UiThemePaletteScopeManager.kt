@@ -44,7 +44,7 @@ internal class UiThemePaletteScopeManager {
 
   fun computeDigest(builder: InsecureHashBuilder): InsecureHashBuilder {
     // id and version of this class implementation
-    builder.putLong(415157024440190408)
+    builder.putLong(418570217844437204)
     ui.updateHash(builder)
     checkBoxes.updateHash(builder)
     radioButtons.updateHash(builder)

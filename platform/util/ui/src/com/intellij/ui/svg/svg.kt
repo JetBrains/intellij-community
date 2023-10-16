@@ -100,7 +100,8 @@ fun newSvgPatcher(newPalette: Map<String, String>, alphaProvider: (String) -> In
 
     private fun patchColorAttribute(attributes: MutableMap<String, String>, attributeName: String) {
       val color = attributes.get(attributeName) ?: return
-      val opacity = attributes.get("$attributeName-opacity")
+      val opacityAttributeName = "$attributeName-opacity"
+      val opacity = attributes.get(opacityAttributeName)
       var alpha = 255
       if (!opacity.isNullOrEmpty()) {
         try {
@@ -121,7 +122,12 @@ fun newSvgPatcher(newPalette: Map<String, String>, alphaProvider: (String) -> In
       if (newColor != null) {
         attributes.put(attributeName, newColor)
         alphaProvider(newColor)?.let {
-          attributes.put("$attributeName-opacity", (it.toFloat() / 255f).toString())
+          if (it == 255) {
+            attributes.remove(opacityAttributeName)
+          }
+          else {
+            attributes.put(opacityAttributeName, (it.toFloat() / 255f).toString())
+          }
         }
       }
     }
