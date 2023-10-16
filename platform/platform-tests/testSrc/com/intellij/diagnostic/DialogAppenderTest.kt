@@ -15,8 +15,7 @@ class DialogAppenderTest : BareTestFixtureTestCase() {
     val appender = DialogAppender()
     val event = IdeaLoggingEvent("message", Throwable())
     val logger = MyErrorLogger(true)
-    appender.appendToLoggers(event, arrayOf<ErrorLogger>(logger))
-    processEvents(appender)
+    appender.appendToLoggers(event, arrayOf<ErrorLogger>(logger)).get()
     assertNotNull(logger.handled)
     assertEquals(event.message, logger.handled?.message)
     assertSame(event.throwable, logger.handled?.throwable)
@@ -28,16 +27,10 @@ class DialogAppenderTest : BareTestFixtureTestCase() {
     val logger1 = MyErrorLogger(true)
     val logger2 = MyErrorLogger(true)
     val logger3 = MyErrorLogger(false)
-    appender.appendToLoggers(event, arrayOf<ErrorLogger>(logger1, logger2))
-    processEvents(appender)
+    appender.appendToLoggers(event, arrayOf<ErrorLogger>(logger1, logger2)).get()
     assertNull(logger3.handled)
     assertNotNull(logger2.handled)
     assertNull("loggers should be called in a reverse order", logger1.handled)
-  }
-
-  private fun processEvents(appender: DialogAppender) {
-    @Suppress("ControlFlowWithEmptyBody")
-    while (appender.dialogRunnable != null);
   }
 
   private class MyErrorLogger(private val canHandle: Boolean) : ErrorLogger {

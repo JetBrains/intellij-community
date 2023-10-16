@@ -17,9 +17,8 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
 public final class DefaultIdeaErrorLogger implements ErrorLogger {
-  private static boolean ourOomOccurred = false;
-  private static boolean ourLoggerBroken = false;
-  private static boolean ourMappingFailedNotificationPosted = false;
+  private static volatile boolean ourOomOccurred;
+  private static volatile boolean ourLoggerBroken;
 
   private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
   private static final String DISABLED_VALUE = "disabled";
@@ -30,8 +29,8 @@ public final class DefaultIdeaErrorLogger implements ErrorLogger {
     if (ourLoggerBroken) return false;
 
     try {
-      final Application app = ApplicationManager.getApplication();
-      if (app.isDisposed()) {
+      Application app = ApplicationManager.getApplication();
+      if (app == null || app.isDisposed()) {
         return false;
       }
 

@@ -6,10 +6,11 @@ import com.intellij.openapi.diagnostic.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -24,7 +25,7 @@ public final class DialogAppender extends Handler {
 
   private final Queue<IdeaLoggingEvent> myEarlyEvents = new ArrayDeque<>();
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
-  private volatile Runnable myDialogRunnable;
+  private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("DialogAppender", 1);
 
   //TODO android update checker accesses project jdk, fix it and remove
   public static void delayPublishingForcibly() {
@@ -70,40 +71,20 @@ public final class DialogAppender extends Handler {
       myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase
     }
     else {
-      // Note, we MUST avoid SYNCHRONOUS invokeAndWait to prevent deadlocks
-      SwingUtilities.invokeLater(() -> {
-        try {
-          appendToLoggers(event, LOGGERS);
-        }
-        finally {
-          myPendingAppendCounts.decrementAndGet();
-        }
-      });
+      appendToLoggers(event, LOGGERS);
     }
   }
 
-  void appendToLoggers(@NotNull IdeaLoggingEvent event, ErrorLogger @NotNull [] errorLoggers) {
-    if (myDialogRunnable != null) {
-      return;
-    }
-
+  @VisibleForTesting
+  Future<?> appendToLoggers(@NotNull IdeaLoggingEvent event, ErrorLogger @NotNull [] errorLoggers) {
     for (int i = errorLoggers.length - 1; i >= 0; i--) {
       ErrorLogger logger = errorLoggers[i];
       if (!logger.canHandle(event)) {
         continue;
       }
-      //noinspection NonAtomicOperationOnVolatileField
-      myDialogRunnable = () -> {
-        try {
-          logger.handle(event);
-        }
-        finally {
-          myDialogRunnable = null;
-        }
-      };
-      AppExecutorUtil.getAppExecutorService().execute(myDialogRunnable);
-      break;
+      return myExecutor.submit(() -> logger.handle(event));
     }
+    return null;
   }
 
   private static IdeaLoggingEvent extractLoggingEvent(Object messageObject, Throwable throwable) {
@@ -125,11 +106,6 @@ public final class DialogAppender extends Handler {
       }
       return LogMessage.eventOf(throwable, message, list);
     }
-  }
-
-  @TestOnly
-  Runnable getDialogRunnable() {
-    return myDialogRunnable;
   }
 
   @Override
