@@ -3,9 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
-import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.util.awaitCancellationAndInvoke
@@ -30,8 +28,8 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private val _shiftedReviewRanges = MutableStateFlow<List<LstRange>>(emptyList())
   val shiftedReviewRanges: StateFlow<List<LstRange>> get() = _shiftedReviewRanges
 
-  private val _commentableRanges = MutableStateFlow<List<LineRange>>(emptyList())
-  val commentableRanges: StateFlow<List<LineRange>> get() = _commentableRanges
+  private val _nonCommentableRanges = MutableStateFlow<List<LineRange>>(emptyList())
+  val nonCommentableRanges: StateFlow<List<LineRange>> get() = _nonCommentableRanges
 
   val newDiscussions: Flow<List<GitLabMergeRequestEditorNewDiscussionViewModel>> = fileVm.newDiscussions.map {
     it.map(::ShiftedNewDiscussion)
@@ -47,7 +45,9 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     val lstListener = ForwardingLineStatusTrackerListener(lst) { lstRanges ->
       localRanges.value = lstRanges
       _shiftedReviewRanges.value = ExcludingApproximateChangedRangesShifter.shift(reviewRanges, lstRanges)
-      _commentableRanges.value = lstRanges.getUnchangedLineRanges(lst.document)
+      _nonCommentableRanges.value = lstRanges.map {
+        LineRange(it.line1, it.line2)
+      }
     }
     lst.addListener(lstListener)
     cs.awaitCancellationAndInvoke {
@@ -134,36 +134,6 @@ private fun transferLineFromAfter(ranges: List<LstRange>, line: Int, approximate
     val length1 = range.vcsLine2 - range.vcsLine1
     val length2 = range.line2 - range.line1
     result -= length2 - length1
-  }
-  return result
-}
-
-private fun List<LstRange>.getUnchangedLineRanges(document: Document): List<LineRange> {
-  val lineCount = DiffUtil.getLineCount(document)
-  if (isEmpty()) return listOf(LineRange(0, lineCount))
-  val result = mutableListOf<LineRange>()
-  var lastChangeEnd: Int? = null
-
-  forEach {
-    val lastEnd = lastChangeEnd
-    if (lastEnd == null) {
-      if (it.line1 != 0) {
-        result.add(LineRange(0, it.line1))
-      }
-      lastChangeEnd = it.line2
-    }
-    else if (it.line1 == lastEnd) {
-      lastChangeEnd = it.line2
-    }
-    else {
-      result.add(LineRange(lastEnd, it.line1))
-      lastChangeEnd = it.line2
-    }
-  }
-
-  val lastEnd = lastChangeEnd!!
-  if (lastEnd != lineCount) {
-    result.add(LineRange(lastEnd, lineCount))
   }
   return result
 }

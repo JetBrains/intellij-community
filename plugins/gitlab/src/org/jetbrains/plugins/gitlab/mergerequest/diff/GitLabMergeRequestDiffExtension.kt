@@ -12,13 +12,11 @@ import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.DiffUserDataKeys
-import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diff.impl.GenericDataProvider
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
@@ -102,27 +100,25 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 private fun DiffViewerBase.controlAddCommentActionsIn(cs: CoroutineScope, vm: GitLabMergeRequestDiffReviewViewModel) {
   when (this) {
     is SimpleOnesideDiffViewer -> {
-      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, editor.allLinesFlow(), editor) {
+      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, MutableStateFlow(emptyList()), editor) {
         vm.requestNewDiscussion(side to it, true)
       }
     }
     is UnifiedDiffViewer -> {
-      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, editor.allLinesFlow(), editor) {
+      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, MutableStateFlow(emptyList()), editor) {
         val (indices, side) = transferLineFromOneside(it)
         val loc = side.select(indices).takeIf { it >= 0 }?.let { side to it } ?: return@setupIn
         vm.requestNewDiscussion(loc, true)
       }
     }
     is TwosideTextDiffViewer -> {
-      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, editor1.allLinesFlow(), editor1) {
+      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, MutableStateFlow(emptyList()), editor1) {
         vm.requestNewDiscussion(Side.LEFT to it, true)
       }
-      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, editor2.allLinesFlow(), editor2) {
+      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, MutableStateFlow(emptyList()), editor2) {
         vm.requestNewDiscussion(Side.RIGHT to it, true)
       }
     }
     else -> return
   }
 }
-
-private fun Editor.allLinesFlow() = MutableStateFlow(listOf(LineRange(0, document.lineCount)))

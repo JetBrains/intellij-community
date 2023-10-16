@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.DiffDrawUtil
+import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.Editor
@@ -34,7 +34,7 @@ import kotlin.properties.Delegates.observable
  */
 internal class GitLabMergeRequestReviewControlsGutterRenderer
 private constructor(cs: CoroutineScope,
-                    commentableRanges: StateFlow<List<LineRange>>,
+                    nonCommentableRanges: StateFlow<List<LineRange>>,
                     private val editor: EditorEx,
                     private val requestNewDiscussion: (lineIdx: Int) -> Unit)
   : LineMarkerRenderer, LineMarkerRendererEx, ActiveGutterRenderer {
@@ -48,8 +48,8 @@ private constructor(cs: CoroutineScope,
     editor.addEditorMouseMotionListener(hoverHandler)
 
     cs.launchNow {
-      commentableRanges.collect {
-        hoverHandler.commentableRanges = it
+      nonCommentableRanges.collect {
+        hoverHandler.nonCommentableRanges = it
       }
     }
     cs.awaitCancellationAndInvoke {
@@ -158,7 +158,7 @@ private constructor(cs: CoroutineScope,
     private const val ICON_AREA_WIDTH = 16
 
     private class LogicalLineData(
-      editor: EditorEx, commentableRanges: List<LineRange>, val logicalLine: Int, val columnHovered: Boolean
+      editor: EditorEx, nonCommentableRanges: List<LineRange>, val logicalLine: Int, val columnHovered: Boolean
     ) {
       private val lineStartOffset = editor.document.getLineStartOffset(logicalLine)
       private val lineEndOffset = editor.document.getLineEndOffset(logicalLine)
@@ -194,7 +194,7 @@ private constructor(cs: CoroutineScope,
       val hasComments: Boolean by lazy(discussionRenderers::isNotEmpty)
 
       val commentable: Boolean by lazy {
-        val inCommentableRange = commentableRanges.any { logicalLine in it.start until it.end }
+        val inCommentableRange = nonCommentableRanges.none { logicalLine in it.start until it.end }
         inCommentableRange && foldedRegion == null
       }
     }
@@ -207,7 +207,7 @@ private constructor(cs: CoroutineScope,
       private var hoveredLogicalLine: Int? = null
       private var columnHovered: Boolean = false
 
-      var commentableRanges: List<LineRange> by observable(emptyList()) { _, _, _ ->
+      var nonCommentableRanges: List<LineRange> by observable(emptyList()) { _, _, _ ->
         hoveredLogicalLine = null
         columnHovered = false
         repaintColumn()
@@ -215,7 +215,7 @@ private constructor(cs: CoroutineScope,
 
       fun calcHoveredLineData(): LogicalLineData? {
         val logicalLine = hoveredLogicalLine ?: return null
-        return LogicalLineData(editor, commentableRanges, logicalLine, columnHovered)
+        return LogicalLineData(editor, nonCommentableRanges, logicalLine, columnHovered)
       }
 
       override fun mouseMoved(e: EditorMouseEvent) {
@@ -271,10 +271,10 @@ private constructor(cs: CoroutineScope,
     }
 
     fun setupIn(cs: CoroutineScope,
-                commentableRanges: StateFlow<List<LineRange>>,
+                nonCommentableRanges: StateFlow<List<LineRange>>,
                 editor: EditorEx,
                 requestNewDiscussion: (lineIdx: Int) -> Unit) {
-      val renderer = GitLabMergeRequestReviewControlsGutterRenderer(cs, commentableRanges, editor, requestNewDiscussion)
+      val renderer = GitLabMergeRequestReviewControlsGutterRenderer(cs, nonCommentableRanges, editor, requestNewDiscussion)
       val highlighter = editor.markupModel.addRangeHighlighter(null, 0, editor.document.textLength,
                                                                DiffDrawUtil.LST_LINE_MARKER_LAYER,
                                                                HighlighterTargetArea.LINES_IN_RANGE).apply {

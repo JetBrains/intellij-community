@@ -123,7 +123,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     val cs = this
     editor as EditorEx
 
-    GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, model.commentableRanges, editor) {
+    GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, model.nonCommentableRanges, editor) {
       model.requestNewDiscussion(it, true)
     }
   }
