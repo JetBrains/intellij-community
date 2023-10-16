@@ -16,6 +16,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.annotations.Nls
 
@@ -83,12 +84,12 @@ class PresentationAssistantState {
    */
   var verticalAlignment = 2
 
-  var mainKeymap = defaultKeymapForOS().value
-  var mainKeymapLabel: String = defaultKeymapForOS().defaultLabel
+  var mainKeymapName = KeymapKind.defaultForOS().value
+  var mainKeymapLabel: String = KeymapKind.defaultForOS().defaultLabel
 
   var showAlternativeKeymap = false
-  var alternativeKeymap: String = defaultKeymapForOS().getAlternativeKind().value
-  var alternativeKeymapLabel: String = defaultKeymapForOS().getAlternativeKind().defaultLabel
+  var alternativeKeymapName: String = KeymapKind.defaultForOS().getAlternativeKind().value
+  var alternativeKeymapLabel: String = KeymapKind.defaultForOS().getAlternativeKind().defaultLabel
 
   var deltaX: Int? = null
   var deltaY: Int? = null
@@ -103,8 +104,8 @@ internal val PresentationAssistantState.alignmentIfNoDelta: PresentationAssistan
   if (deltaX == null || deltaY == null) PresentationAssistantPopupAlignment.from(horizontalAlignment, verticalAlignment)
   else null
 
-internal fun PresentationAssistantState.mainKeymapKind() = KeymapKind.from(mainKeymap)
-internal fun PresentationAssistantState.alternativeKeymapKind() = alternativeKeymap.takeIf { showAlternativeKeymap }?.let { KeymapKind.from(it) }
+internal fun PresentationAssistantState.mainKeymapKind() = KeymapKind.from(mainKeymapName)
+internal fun PresentationAssistantState.alternativeKeymapKind() = alternativeKeymapName.takeIf { showAlternativeKeymap }?.let { KeymapKind.from(it) }
 
 @State(name = "PresentationAssistantIJ", storages = [Storage("presentation-assistant-ij.xml")])
 class PresentationAssistant : PersistentStateComponent<PresentationAssistantState>, Disposable {
@@ -149,12 +150,11 @@ class PresentationAssistant : PersistentStateComponent<PresentationAssistantStat
 
   internal fun checkIfMacKeymapIsAvailable() {
     val alternativeKeymap = configuration.alternativeKeymapKind()
-    if (warningAboutMacKeymapWasShown || defaultKeymapForOS() == KeymapKind.MAC || alternativeKeymap == null) {
-      return
-    }
-    if (alternativeKeymap != KeymapKind.MAC || alternativeKeymap.keymap != null) {
-      return
-    }
+    if (warningAboutMacKeymapWasShown
+        || SystemInfo.isMac
+        || alternativeKeymap == null
+        || !alternativeKeymap.isMac
+        || alternativeKeymap.keymap != null) return
 
     val pluginId = PluginId.getId("com.intellij.plugins.macoskeymap")
     val plugin = PluginManagerCore.getPlugin(pluginId)

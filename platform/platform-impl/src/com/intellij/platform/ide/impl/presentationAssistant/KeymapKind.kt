@@ -7,33 +7,41 @@ package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.keymap.ex.KeymapManagerEx
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.Nls
 
-internal enum class KeymapKind(val value: String, @Nls val displayName: String, @Nls val defaultLabel: String) {
-  MAC(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP,
-      IdeBundle.message("presentation.assistant.configurable.keymap.mac"),
-      IdeBundle.message("presentation.assistant.configurable.keymap.mac.label")),
-  WIN(KeymapManager.DEFAULT_IDEA_KEYMAP,
-      IdeBundle.message("presentation.assistant.configurable.keymap.win"),
-      IdeBundle.message("presentation.assistant.configurable.keymap.win.label"));
-
+internal class KeymapKind(val value: String, @Nls val displayName: String, @Nls val defaultLabel: String) {
   val keymap = KeymapManager.getInstance().getKeymap(value)
+  val isMac = value.containsMacOS
 
-  fun getAlternativeKind() = when (this) {
-    WIN -> MAC
-    MAC -> WIN
-  }
+  fun getAlternativeKind() = if (isMac) WIN else MAC
 
   companion object {
-    fun from(value: String): KeymapKind = when(value) {
+    val MAC = KeymapKind(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP,
+                         IdeBundle.message("presentation.assistant.configurable.keymap.mac"),
+                         IdeBundle.message("presentation.assistant.configurable.keymap.mac.label"))
+
+    val WIN = KeymapKind(KeymapManager.DEFAULT_IDEA_KEYMAP,
+                         IdeBundle.message("presentation.assistant.configurable.keymap.win"),
+                         IdeBundle.message("presentation.assistant.configurable.keymap.win.label"));
+
+    fun from(@NlsSafe value: String): KeymapKind = when(value) {
       KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> MAC
+      KeymapManager.DEFAULT_IDEA_KEYMAP -> WIN
+      else -> KeymapManagerEx.getInstanceEx().getKeymap(value)?.let {
+        KeymapKind(value, it.presentableName,
+                   if (it.name.containsMacOS) IdeBundle.message("presentation.assistant.configurable.keymap.mac.label")
+                   else it.presentableName)
+      } ?: KeymapKind(value, value, value)
+    }
+
+    fun defaultForOS() = when {
+      SystemInfo.isMac -> MAC
       else -> WIN
     }
   }
 }
 
-internal fun defaultKeymapForOS() = when {
-  SystemInfo.isMac -> KeymapKind.MAC
-  else -> KeymapKind.WIN
-}
+private val String.containsMacOS: Boolean get() = contains("macOS") || contains("Mac OS") || contains("OSX")

@@ -2,6 +2,8 @@
 package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.DslConfigurableBase
@@ -52,18 +54,20 @@ class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
 
         group(IdeBundle.message("presentation.assistant.configurable.keymap.group")) {
           row {
-            val comboBox = comboBox(CollectionComboBoxModel(KeymapKind.entries,
-                                             KeymapKind.from(configuration.mainKeymap)),
-                                    textListCellRenderer { it?.displayName }).label(IdeBundle.message("presentation.assistant.configurable.keymap.main"))
-              .bindItem({ KeymapKind.from(configuration.mainKeymap) }) { configuration.mainKeymap = it?.value ?: defaultKeymapForOS().value }
+            val comboBox = comboBox(CollectionComboBoxModel(KeymapManagerEx.getInstanceEx().allKeymaps.toList(),
+                                                            configuration.mainKeymapName.toKeymap()),
+                                    textListCellRenderer { it?.presentableName }).label(IdeBundle.message("presentation.assistant.configurable.keymap.main"))
+              .bindItem({ configuration.mainKeymapName.toKeymap() }) {
+                configuration.mainKeymapName = it?.name ?: KeymapKind.defaultForOS().value
+              }
 
             val label = textField()
               .label(IdeBundle.message("presentation.assistant.configurable.keymap.label"))
               .bindText(configuration::mainKeymapLabel) { configuration.mainKeymapLabel =  it }
 
             comboBox.onChanged {
-              (it.selectedItem as? KeymapKind)?.let { kind ->
-                label.component.text = kind.defaultLabel
+              (it.selectedItem as? Keymap)?.let { keymap ->
+                label.component.text = KeymapKind.from(keymap.name).defaultLabel
               }
             }
           }
@@ -78,11 +82,11 @@ class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
                 configuration.showAlternativeKeymap = it
               }
 
-            val comboBox = comboBox(CollectionComboBoxModel(KeymapKind.entries,
-                                             KeymapKind.from(configuration.alternativeKeymap)),
-                                    textListCellRenderer { it?.displayName })
-              .bindItem({ KeymapKind.from(configuration.alternativeKeymap) }) {
-                configuration.alternativeKeymap = it?.value ?: defaultKeymapForOS().getAlternativeKind().value
+            val comboBox = comboBox(CollectionComboBoxModel(KeymapManagerEx.getInstanceEx().allKeymaps.toList(),
+                                                            configuration.alternativeKeymapName.toKeymap()),
+                                    textListCellRenderer { it?.presentableName })
+              .bindItem({ configuration.alternativeKeymapName.toKeymap() }) {
+                configuration.alternativeKeymapName = it?.name ?: KeymapKind.defaultForOS().getAlternativeKind().value
               }.enabledIf(showAlternativeProperty)
 
             val label = textField()
@@ -91,8 +95,8 @@ class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
               .enabledIf(showAlternativeProperty)
 
             comboBox.onChanged {
-              (it.selectedItem as? KeymapKind)?.let { kind ->
-                label.component.text = kind.defaultLabel
+              (it.selectedItem as? Keymap)?.let { keymap ->
+                label.component.text = KeymapKind.from(keymap.name).defaultLabel
               }
             }
           }
@@ -111,3 +115,5 @@ class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
     PresentationAssistant.INSTANCE.updatePresenter()
   }
 }
+
+private fun String.toKeymap(): Keymap = KeymapManagerEx.getInstanceEx().let { it.getKeymap(this) ?: it.allKeymaps.first() }
