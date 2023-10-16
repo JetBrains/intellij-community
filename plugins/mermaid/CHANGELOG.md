@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## 0.0.16
+- [MERMAID-140](https://youtrack.jetbrains.com/issue/MERMAID-140) Updated Mermaid.js version to `10.5.0`
+- [MERMAID-141](https://youtrack.jetbrains.com/issue/MERMAID-141) Fixed incorrect parsing of generics with leading and nested tilde characters in class diagrams
+- [MERMAID-142](https://youtrack.jetbrains.com/issue/MERMAID-142) Fixed parsing of leading underscore characters in ER diagrams
+- [MERMAID-143](https://youtrack.jetbrains.com/issue/MERMAID-143) Added support for entity alias in ER diagram
+- [MERMAID-144](https://youtrack.jetbrains.com/issue/MERMAID-144) Fixed parsing of trailing semicolons in flowchart header and quadrant chart statements
+
 ## 0.0.15
 - [MERMAID-116](https://youtrack.jetbrains.com/issue/MERMAID-116) Updated Mermaid.js version to `10.4.0`
 - [MERMAID-117](https://youtrack.jetbrains.com/issue/MERMAID-117) Added support for defining configuration in front matter header
