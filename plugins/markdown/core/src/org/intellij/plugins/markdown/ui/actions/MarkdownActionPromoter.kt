@@ -2,7 +2,7 @@
 package org.intellij.plugins.markdown.ui.actions
 
 import com.intellij.openapi.actionSystem.*
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.hasMarkdownType
+import org.intellij.plugins.markdown.lang.hasMarkdownType
 
 internal class MarkdownActionPromoter: ActionPromoter {
   companion object {

@@ -9,7 +9,7 @@ import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.util.PsiUtilCore
 import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
+import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

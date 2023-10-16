@@ -7,8 +7,8 @@ import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.hasMarkdownType
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.hasMarkdownType
+import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 
 internal class MarkdownPreviewFileEditorProvider: WeighedFileEditorProvider() {
   override fun accept(project: Project, file: VirtualFile): Boolean {

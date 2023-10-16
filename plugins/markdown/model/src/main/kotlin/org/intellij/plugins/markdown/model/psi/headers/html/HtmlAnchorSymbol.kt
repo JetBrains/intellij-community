@@ -13,7 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownIcons
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbolInsideInjection
 import org.intellij.plugins.markdown.model.psi.headers.MarkdownHeaderSymbol
 import org.intellij.plugins.markdown.model.psi.withLocationIn

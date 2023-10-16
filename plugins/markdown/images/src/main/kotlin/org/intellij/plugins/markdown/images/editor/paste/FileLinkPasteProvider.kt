@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.actions.PasteAction
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.util.PsiEditorUtil
 import org.intellij.plugins.markdown.editor.runForEachCaret
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
+import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import java.awt.datatransfer.DataFlavor
 
