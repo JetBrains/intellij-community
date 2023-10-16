@@ -205,10 +205,33 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     if (index < 0) return
 
     val window = getPopupWindow(actionBlocks[index].popup) ?: return
+
+    val newAlignment = calculateNewAlignmentAfterDrag(window)
+    configuration.horizontalAlignment = newAlignment.x
+    configuration.verticalAlignment = newAlignment.y
+
     val originalLocation = computeLocation(project, index, true).screenPoint
 
     configuration.deltaX = JBUI.unscale(window.x - originalLocation.x)
     configuration.deltaY = JBUI.unscale(window.y - originalLocation.y)
+  }
+
+  private fun calculateNewAlignmentAfterDrag(popupWindow: Window): PresentationAssistantPopupAlignment {
+    val popupBounds = popupWindow.bounds
+    val ideBounds = SwingUtilities.windowForComponent(WindowManager.getInstance().getIdeFrame(project)!!.component).bounds
+    popupBounds.x -= ideBounds.x
+    popupBounds.y -= ideBounds.y
+    ideBounds.x = 0
+    ideBounds.y = 0
+
+    return if (popupBounds.x < ideBounds.width / 2) {
+      if (popupBounds.y < ideBounds.height / 2) PresentationAssistantPopupAlignment.TOP_LEFT
+      else PresentationAssistantPopupAlignment.BOTTOM_LEFT
+    }
+    else {
+      if (popupBounds.y < ideBounds.height / 2) PresentationAssistantPopupAlignment.TOP_RIGHT
+      else PresentationAssistantPopupAlignment.BOTTOM_RIGHT
+    }
   }
 
   fun close() {
