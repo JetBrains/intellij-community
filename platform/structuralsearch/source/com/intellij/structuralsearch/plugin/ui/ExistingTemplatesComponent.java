@@ -21,7 +21,6 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
@@ -53,9 +52,6 @@ public final class ExistingTemplatesComponent {
   private final DefaultTreeModel patternTreeModel;
   private final JComponent panel;
   private Supplier<? extends Configuration> myConfigurationProducer;
-  private Supplier<? extends EditorTextField> mySearchEditorProducer;
-  private Runnable myExportRunnable;
-  private Runnable myImportRunnable;
   private final DefaultMutableTreeNode myDraftTemplateNode;
   private final DefaultMutableTreeNode myRecentNode;
   private final DefaultMutableTreeNode myUserTemplatesNode;
@@ -63,7 +59,7 @@ public final class ExistingTemplatesComponent {
   private boolean myTemplateChanged = false;
   private boolean myDraftTemplateAutoselect = false;
 
-  ExistingTemplatesComponent(Project project, JComponent keyboardShortcutRoot) {
+  ExistingTemplatesComponent(Project project, JComponent keyboardShortcutRoot, AnAction importAction, AnAction exportAction) {
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     myDraftTemplateNode = new DefaultMutableTreeNode(SSRBundle.message("draft.template.node")); // 'New Template' node
     myRecentNode = new DefaultMutableTreeNode(SSRBundle.message("recent.category")); // 'Recent' node
@@ -137,35 +133,6 @@ public final class ExistingTemplatesComponent {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeTemplate(project);
-      }
-    };
-
-    final DumbAwareAction exportAction = new DumbAwareAction(SSRBundle.messagePointer("export.template.action"), AllIcons.ToolbarDecorator.Export) {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        if (mySearchEditorProducer != null) {
-          e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchEditorProducer.get().getText()));
-        }
-      }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (myExportRunnable != null) {
-          myExportRunnable.run();
-        }
-      }
-    };
-    final DumbAwareAction importAction = new DumbAwareAction(SSRBundle.messagePointer("import.template.action"), AllIcons.ToolbarDecorator.Import) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (myImportRunnable != null) {
-          myImportRunnable.run();
-        }
       }
     };
 
@@ -448,18 +415,6 @@ public final class ExistingTemplatesComponent {
 
   public void setConfigurationProducer(Supplier<? extends Configuration> configurationProducer) {
     myConfigurationProducer = configurationProducer;
-  }
-
-  public void setSearchEditorProducer(Supplier<? extends EditorTextField> editorProducer) {
-    mySearchEditorProducer = editorProducer;
-  }
-
-  public void setExportRunnable(Runnable exportRunnable) {
-    myExportRunnable = exportRunnable;
-  }
-
-  public void setImportRunnable(Runnable importRunnable) {
-    myImportRunnable = importRunnable;
   }
 
   public void updateColors() {

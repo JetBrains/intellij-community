@@ -427,12 +427,10 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     centerPanel.add(myReplacePanel, centerConstraint.nextLine());
     centerPanel.add(myScopePanel, centerConstraint.nextLine().weighty(0.0));
 
-    myExistingTemplatesComponent = new ExistingTemplatesComponent(myProject, getContentPanel());
+    myExistingTemplatesComponent =
+      new ExistingTemplatesComponent(myProject, getContentPanel(), new ImportConfigurationAction(), new ExportConfigurationAction());
     myExistingTemplatesComponent.onConfigurationSelected(this::loadConfiguration);
     myExistingTemplatesComponent.setConfigurationProducer(() -> getConfiguration());
-    myExistingTemplatesComponent.setSearchEditorProducer(() -> mySearchCriteriaEdit);
-    myExistingTemplatesComponent.setExportRunnable(() -> exportToClipboard());
-    myExistingTemplatesComponent.setImportRunnable(() -> importFromClipboard());
     myMainSplitter = new OnePixelSplitter(false, 0.2f);
     myMainSplitter.setFirstComponent(myExistingTemplatesComponent.getTemplatesPanel());
     myMainSplitter.setSecondComponent(centerPanel);
@@ -1045,7 +1043,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       securityCheck();
     }
     catch (JDOMException e) {
-      reportMessage(SSRBundle.message("import.template.script.corrupted") + '\n' + e.getMessage(), false, myOptionsToolbar);
+      reportMessage(SSRBundle.message("import.template.script.corrupted") + '\n' + e.getMessage(), false, mySearchCriteriaEdit);
     }
     return true;
   }
@@ -1237,7 +1235,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   private void importFromClipboard() {
     final String contents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     if (!loadConfiguration(contents)) {
-      reportMessage(SSRBundle.message("no.template.found.warning"), false, myOptionsToolbar);
+      reportMessage(SSRBundle.message("no.template.found.warning"), false, mySearchCriteriaEdit);
     }
   }
 
@@ -1313,6 +1311,40 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
+    }
+  }
+
+  private class ExportConfigurationAction extends AnAction implements DumbAware {
+
+    ExportConfigurationAction() {
+      super(SSRBundle.messagePointer("export.template.action"), AllIcons.ToolbarDecorator.Export);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchCriteriaEdit.getText()));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      exportToClipboard();
+    }
+  }
+
+  private class ImportConfigurationAction extends AnAction implements DumbAware {
+
+    ImportConfigurationAction() {
+      super(SSRBundle.messagePointer("import.template.action"), AllIcons.ToolbarDecorator.Import);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      importFromClipboard();
     }
   }
 
