@@ -74,6 +74,10 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     ApplicationManager.getApplication().service<FilenameToolbarWidgetAppUpdateService>().registerComponent(this@apply)
   }
 
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    ApplicationManager.getApplication().service<FilenameToolbarWidgetAppUpdateService>().updateComponent(component, presentation)
+  }
+
   private fun showRecentFilesPopup(component: JComponent) {
     val project = ProjectUtil.getProjectForComponent(component)
     if (project != null) {
@@ -85,6 +89,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
       }
     }
   }
+
   class RecentFilesListPopupStep(val project: Project, files: List<VirtualFile>) : BaseListPopupStep<VirtualFile>(null, files) {
     override fun getIconFor(value: VirtualFile?): Icon? {
       if (value == null) return null
@@ -102,9 +107,5 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
       if (selectedValue != null && finalChoice) FileEditorManager.getInstance(project).openFile(selectedValue, true)
       return null
     }
-  }
-
-  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    ApplicationManager.getApplication().service<FilenameToolbarWidgetAppUpdateService>().updateComponent(component, presentation)
   }
 }
