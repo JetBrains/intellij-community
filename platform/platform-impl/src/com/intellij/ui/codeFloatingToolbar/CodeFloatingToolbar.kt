@@ -30,6 +30,8 @@ import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -168,8 +170,10 @@ class CodeFloatingToolbar(
     val buttons = UIUtil.findComponentsOfType(hint.component, ActionButton::class.java)
     buttons.filter { button -> button.presentation.isPopupGroup }.forEach { button ->
       button.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
-      button.addMouseEnteredListener {
-        button.click()
+      button.addMouseEnteredListener(300) {
+        ApplicationManager.getApplication().invokeLater {
+          button.click()
+        }
       }
     }
     return hint
@@ -232,15 +236,24 @@ class CodeFloatingToolbar(
     popup.setLocation(point)
   }
 
-  private fun JComponent.addMouseEnteredListener(listener: (e: MouseEvent?) -> Unit) {
+  private fun JComponent.addMouseEnteredListener(delayMs: Long, listener: (e: MouseEvent?) -> Unit) {
+    var mouseWasOutsideOfComponent: Boolean
     addMouseListener(object : java.awt.event.MouseListener{
       override fun mouseEntered(e: MouseEvent?) {
-        listener.invoke(e)
+        coroutineScope.launch {
+          mouseWasOutsideOfComponent = false
+          delay(delayMs)
+          if (!mouseWasOutsideOfComponent) {
+            listener.invoke(e)
+          }
+        }
       }
       override fun mouseClicked(e: MouseEvent?) { }
       override fun mousePressed(e: MouseEvent?) { }
       override fun mouseReleased(e: MouseEvent?) { }
-      override fun mouseExited(e: MouseEvent?) { }
+      override fun mouseExited(e: MouseEvent?) {
+        mouseWasOutsideOfComponent = true
+      }
     })
   }
 }
