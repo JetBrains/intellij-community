@@ -290,17 +290,24 @@ open class ProjectRootManagerImpl(val project: Project,
   }
 
   override fun loadState(element: Element) {
+    var stateChanged = false;
     for (extension in EP_NAME.getExtensions(project)) {
-      extension.readExternal(element)
+      stateChanged = stateChanged or extension.readExternal(element)
     }
 
+    val oldSdkName = projectSdkName
+    val oldSdkType = projectSdkType
     projectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR)
     projectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR)
+    if (oldSdkName != projectSdkName) stateChanged = true
+    if (oldSdkType != projectSdkType) stateChanged = true
     val app = ApplicationManager.getApplication()
     if (app != null) {
       val isStateLoaded = isStateLoaded
-      coroutineScope.launch(ModalityState.nonModal().asContextElement()) {
-        applyState(isStateLoaded)
+      if (stateChanged) {
+        coroutineScope.launch(ModalityState.nonModal().asContextElement()) {
+          applyState(isStateLoaded)
+        }
       }
     }
     isStateLoaded = true

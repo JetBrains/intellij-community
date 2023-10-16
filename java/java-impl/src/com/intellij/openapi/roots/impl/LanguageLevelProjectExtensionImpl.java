@@ -56,8 +56,12 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     return (LanguageLevelProjectExtensionImpl)getInstance(project);
   }
 
-  private void readExternal(final Element element) {
+  /**
+   * Returns true if the state was changed after read
+   */
+  private boolean readExternal(final Element element) {
     String level = element.getAttributeValue(LANGUAGE_LEVEL);
+    LanguageLevel languageLevelOldValue = myLanguageLevel;
     if (level == null) {
       myLanguageLevel = null;
     }
@@ -65,9 +69,11 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       myLanguageLevel = readLanguageLevel(level);
     }
     String aDefault = element.getAttributeValue(DEFAULT_ATTRIBUTE);
+    Boolean defaultOldValue = getDefault();
     if (aDefault != null) {
       setDefault(Boolean.parseBoolean(aDefault));
     }
+    return defaultOldValue != getDefault() || languageLevelOldValue != myLanguageLevel;
   }
 
   private static LanguageLevel readLanguageLevel(String level) {
@@ -152,8 +158,8 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     }
 
     @Override
-    public void readExternal(@NotNull Element element) {
-      myInstance.readExternal(element);
+    public boolean readExternal(@NotNull Element element) {
+      return myInstance.readExternal(element);
     }
 
     @Override
