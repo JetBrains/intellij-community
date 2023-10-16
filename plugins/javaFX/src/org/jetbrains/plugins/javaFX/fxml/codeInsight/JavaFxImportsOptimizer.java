@@ -8,7 +8,6 @@ import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -43,12 +42,12 @@ public final class JavaFxImportsOptimizer implements ImportOptimizer {
     if (vFile == null || !ProjectRootManager.getInstance(project).getFileIndex().isInSourceContent(vFile)) {
       return EmptyRunnable.INSTANCE;
     }
-    final List<Pair<String, Boolean>> names = new ArrayList<>();
+    final @NotNull List<ImportHelper.Import> names = new ArrayList<>();
     final Set<String> demandedForNested = new HashSet<>();
     collectNamesToImport(names, demandedForNested, (XmlFile)file);
-    names.sort((o1, o2) -> StringUtil.compare(o1.first, o2.first, true));
+    names.sort((o1, o2) -> StringUtil.compare(o1.name(), o2.name(), true));
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(file);
-    final List<Pair<String, Boolean>> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
+    final @NotNull List<ImportHelper.Import> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
     final Map<String, Boolean> onDemand = new HashMap<>();
     ImportHelper.collectOnDemandImports(sortedNames, settings, onDemand);
     for (String s : demandedForNested) {
@@ -56,8 +55,8 @@ public final class JavaFxImportsOptimizer implements ImportOptimizer {
     }
     final Set<String> imported = new HashSet<>();
     final List<String> imports = new ArrayList<>();
-    for (Pair<String, Boolean> pair : sortedNames) {
-      final String qName = pair.first;
+    for (ImportHelper.Import anImport : sortedNames) {
+      final String qName = anImport.name();
       final String packageName = StringUtil.getPackageName(qName);
       if (imported.contains(packageName) || imported.contains(qName)) {
         continue;
@@ -95,13 +94,13 @@ public final class JavaFxImportsOptimizer implements ImportOptimizer {
     };
   }
 
-  private static void collectNamesToImport(final @NotNull Collection<Pair<String, Boolean>> names,
+  private static void collectNamesToImport(final @NotNull List<ImportHelper.Import> names,
                                            final @NotNull Collection<String> demandedForNested,
                                            @NotNull XmlFile file) {
     file.accept(new JavaFxUsedClassesVisitor() {
       @Override
       protected void appendClassName(String fqn) {
-        names.add(Pair.create(fqn, false));
+        names.add(new ImportHelper.Import(fqn, false));
       }
 
       @Override
