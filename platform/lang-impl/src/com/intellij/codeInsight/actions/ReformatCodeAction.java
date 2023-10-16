@@ -284,7 +284,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
         return false;
       }
 
-      return LanguageFormatting.INSTANCE.forContext(file) != null;
+      if (LanguageFormatting.INSTANCE.forContext(file) != null) {
+        return true;
+      }
     }
     else if (files != null && containsOnlyFiles(files)) {
       boolean anyFormatters = false;
