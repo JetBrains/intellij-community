@@ -1,135 +1,126 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.java.codeInsight.folding
+package com.intellij.java.codeInsight.folding;
 
-import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder
-import com.intellij.openapi.editor.impl.FoldingModelImpl
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.LightProjectDescriptor
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
-import org.junit.Assume
+import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.impl.FoldingModelImpl;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Assume;
 
-@CompileStatic
-class JavaFolding8Test extends JavaFoldingTestCase {
+import java.util.List;
+
+public class JavaFolding8Test extends JavaFoldingTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8
+    return JAVA_8;
   }
 
-  void "test no plain lambda folding where anonymous class can be real lambda but fold otherwise"() {
-    myFixture.addClass('interface Runnable2 { void run(); }')
-    myFixture.addClass('abstract class MyAction { public void run(); public void update() {} }')
-    def text = """\
-class Test {
-  void test() {
-    Runnable r = new Runnable2() {
-      public void run() {
-        System.out.println();
+  public void test_no_plain_lambda_folding_where_anonymous_class_can_be_real_lambda_but_fold_otherwise() {
+    myFixture.addClass("interface Runnable2 { void run(); }");
+    myFixture.addClass("abstract class MyAction { public void run(); public void update() {} }");
+    String text = """
+      class Test {
+        void test() {
+          Runnable r = new Runnable2() {
+            public void run() {
+              System.out.println();
+            }
+          };
+          MyAction action = new MyAction() {
+            public void run() {
+              System.out.println();
+            }
+          }
+        }
       }
-    };
-    MyAction action = new MyAction() {
-      public void run() {
-        System.out.println();
+      """;
+    configure(text);
+    FoldingModelImpl foldingModel = (FoldingModelImpl)myFixture.getEditor().getFoldingModel();
+
+    assertEquals("run() " + JavaFoldingBuilder.getRightArrow() + " { ",
+                 foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction(")).getPlaceholderText());
+    assertNull(foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2(")));
+  }
+
+  public void test_closure_folding_when_implementing_a_single_abstract_method_in_a_class() {
+    myFixture.addClass("abstract class MyAction { public abstract void run(); }");
+    String text = """
+      class Test {
+        void test() {
+          MyAction action = new MyAction() {
+            public void run() {
+              System.out.println();
+            }
+          }
+        }
       }
-    }
-  }
-}
-"""
-    configure text
-    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+      """;
+    configure(text);
+    FoldingModelImpl foldingModel = (FoldingModelImpl)myFixture.getEditor().getFoldingModel();
 
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction(")).placeholderText == 'run() ' + JavaFoldingBuilder.rightArrow + ' { '
-    assert !foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2("))
+    final FoldRegion offset = foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction("));
+    assertEquals("() " + JavaFoldingBuilder.getRightArrow() + " { ", offset.getPlaceholderText());
   }
 
-  void "test closure folding when implementing a single abstract method in a class"() {
-    myFixture.addClass('abstract class MyAction { public abstract void run(); }')
-    def text = """\
-class Test {
-  void test() {
-    MyAction action = new MyAction() {
-      public void run() {
-        System.out.println();
+  public void test_folding_lambda_with_block_body() {
+    myFoldingSettings.setCollapseAnonymousClasses(true);
+    String text = """
+      class Test {
+        void test() {
+          Runnable action = () -> {
+              System.out.println();
+              };
+          }
       }
-    }
-  }
-}
-"""
-    configure text
-    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+      """;
+    configure(text);
+    FoldingModelImpl foldingModel = (FoldingModelImpl)myFixture.getEditor().getFoldingModel();
 
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction("))?.placeholderText == '() ' + JavaFoldingBuilder.rightArrow + ' { '
+    final FoldRegion offset = foldingModel.getCollapsedRegionAtOffset(text.indexOf("System.out.println"));
+    assertEquals("{...}", offset.getPlaceholderText());
   }
 
-  void "test folding lambda with block body"() {
-    myFoldingSettings.collapseAnonymousClasses = true
-    def text = """\
-class Test {
-  void test() {
-    Runnable action = () -> {
-        System.out.println();
-        };
-    }
-}
-"""
-    configure text
-    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+  public void test_folding_code_blocks() {
+    Assume.assumeTrue(Registry.is("java.folding.icons.for.control.flow"));
+    String text = """
+      class Test {
+        void test(boolean b) {
+           if (b) {
+              System.out.println();
+           }
+        }
+      }
+      """;
+    configure(text);
+    FoldingModelImpl foldingModel = (FoldingModelImpl)myFixture.getEditor().getFoldingModel();
 
-    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("System.out.println"))?.placeholderText == '{...}'
+    final int indexOf = text.indexOf("System.out.println");
+    assertEquals(List.of("FoldRegion -(36:92), placeholder='{...}'", "FoldRegion -(50:88), placeholder='{...}'"),
+                 StreamEx.of(foldingModel.getAllFoldRegions())
+                   .filter(region -> region.getStartOffset() < indexOf && indexOf < region.getEndOffset())
+                   .map(FoldRegion::toString)
+                   .toList());
   }
-  
-  void "test folding code blocks"() {
-    Assume.assumeTrue(Registry.is("java.folding.icons.for.control.flow"))
-    def text = """\
-class Test {
-  void test(boolean b) {
-     if (b) {
-        System.out.println();
-     }
-  }
-}
-"""
-    configure text
-    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
 
-    def indexOf = text.indexOf("System.out.println")
-    assert foldingModel.allFoldRegions.findAll {it -> it.startOffset < indexOf && indexOf < it.endOffset }.toString() == 
-      '[FoldRegion -(36:92), placeholder=\'{...}\', ' +
-      'FoldRegion -(50:88), placeholder=\'{...}\']'
-  }
-  
-  void "test parameter annotations"() {
-    configure """\
-class Some {
-    void m(@Anno("hello " +
-                 "world") int a,
-           @Anno("goodbye " +
-                 "world") int b) {}
-}
+  public void test_parameter_annotations() {
+    configure("""
+                class Some {
+                    void m(@Anno("hello " +
+                                 "world") int a,
+                           @Anno("goodbye " +
+                                 "world") int b) {}
+                }
 
-@interface Anno { 
-    String value();
-}
-"""
-    assert myFixture.editor.foldingModel.allFoldRegions.toString() == 
-           '[FoldRegion -(11:141), placeholder=\'{...}\', ' +
-           'FoldRegion -(24:66), placeholder=\'@{...}\', ' +
-           'FoldRegion -(85:129), placeholder=\'@{...}\', ' +
-           'FoldRegion -(159:183), placeholder=\'{...}\']'
+                @interface Anno {\s
+                    String value();
+                }
+                """);
+    assertEquals(List.of("FoldRegion -(11:141), placeholder='{...}'", "FoldRegion -(24:66), placeholder='@{...}'",
+                         "FoldRegion -(85:129), placeholder='@{...}'", "FoldRegion -(159:183), placeholder='{...}'"),
+                 ContainerUtil.map(myFixture.getEditor().getFoldingModel().getAllFoldRegions(), FoldRegion::toString));
   }
 }
