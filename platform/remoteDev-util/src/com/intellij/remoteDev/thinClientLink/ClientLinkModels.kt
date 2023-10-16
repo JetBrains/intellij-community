@@ -39,6 +39,12 @@ sealed class GtwToClientMessage {
   /** @since 2022.3 */
   @Serializable
   object RequestWindowFocus: GtwToClientMessage()
+
+  /** @since 2023.3
+   * Fields may be added with default values in future versions
+   */
+  @Serializable
+  data class GatewayCapabilities(val clientSelfRestartAware: Boolean): GtwToClientMessage()
 }
 
 
@@ -70,5 +76,15 @@ sealed class ClientToGtwMessage {
   /** @since 2021.3 */
   @Serializable
   object Ping : ClientToGtwMessage()
+
+  /** @since 2023.3 */
+  @Serializable
+  data object ClientSelfRestart : ClientToGtwMessage()
+
+  /** @since 2023.3
+   * Fields may be added with default values in future versions
+   */
+  @Serializable
+  data class ClientCapabilities(val canSelfRestart: Boolean): ClientToGtwMessage()
 }
 
