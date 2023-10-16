@@ -16,7 +16,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.*
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabETagUpdatableListLoader
@@ -311,7 +310,7 @@ internal class LoadedGitLabMergeRequest(
 
   override suspend fun addNote(body: String) = discussionsContainer.addNote(body)
 
-  override suspend fun addNote(position: GitLabDiffPositionInput, body: String) = discussionsContainer.addNote(position, body)
+  override suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String) = discussionsContainer.addNote(position, body)
 
   override suspend fun submitDraftNotes() = discussionsContainer.submitDraftNotes()
 

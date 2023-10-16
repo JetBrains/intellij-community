@@ -188,3 +188,6 @@ object PatchHunkUtil {
     }
   }
 }
+
+fun Collection<PatchHunk>.withoutContext(): Sequence<Range> =
+  asSequence().map { PatchHunkUtil.getChangeOnlyRanges(it) }.flatten()

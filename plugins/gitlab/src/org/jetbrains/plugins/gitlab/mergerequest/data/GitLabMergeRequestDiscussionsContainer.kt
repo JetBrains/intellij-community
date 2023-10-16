@@ -32,8 +32,7 @@ interface GitLabMergeRequestDiscussionsContainer {
 
   suspend fun addNote(body: String)
 
-  // not a great idea to pass a dto, but otherwise it's a pain in the neck to calc positions
-  suspend fun addNote(position: GitLabDiffPositionInput, body: String)
+  suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String)
 
   @SinceGitLab("15.11")
   suspend fun submitDraftNotes()
@@ -262,10 +261,10 @@ class GitLabMergeRequestDiscussionsContainerImpl(
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_NOTE)
   }
 
-  override suspend fun addNote(position: GitLabDiffPositionInput, body: String) {
+  override suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.graphQL.addDiffNote(mr.gid, position, body).getResultOrThrow()
+        api.graphQL.addDiffNote(mr.gid, GitLabDiffPositionInput.from(position), body).getResultOrThrow()
       }.also {
         withContext(NonCancellable) {
           discussionEvents.emit(GitLabDiscussionEvent.Added(it))

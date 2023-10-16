@@ -22,9 +22,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInput
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.ui.comment.*
 
 private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiffDiscussionViewModel>>
@@ -111,30 +110,8 @@ internal class GitLabMergeRequestChangeViewModelImpl(
   }
 
   private suspend fun createDiscussion(location: DiffLineLocation, body: String) {
-    val patch = diffData.patch
-    val startSha = patch.beforeVersionId!!
-    val headSha = patch.afterVersionId!!
-    val baseSha = if (diffData.isCumulative) diffData.fileHistory.findStartCommit()!! else startSha
-
-    // Due to https://gitlab.com/gitlab-org/gitlab/-/issues/325161 we need line index for both sides for context lines
-    val otherSide = transferToOtherSide(patch, location)
-    val lineBefore = if (location.first == Side.LEFT) location.second else otherSide
-    val lineAfter = if (location.first == Side.RIGHT) location.second else otherSide
-
-    val pathBefore = patch.beforeName
-    val pathAfter = patch.afterName
-
-    // Due to https://gitlab.com/gitlab-org/gitlab/-/issues/296829 we need base ref here
-    val positionInput = GitLabDiffPositionInput(
-      baseSha,
-      startSha,
-      lineBefore?.inc(),
-      headSha,
-      lineAfter?.inc(),
-      DiffPathsInput(pathBefore, pathAfter)
-    )
-
-    mergeRequest.addNote(positionInput, body)
+    val position = GitLabMergeRequestNewDiscussionPosition.calcFor(diffData, location)
+    mergeRequest.addNote(position, body)
   }
 
   override fun cancelNewDiscussion(location: DiffLineLocation) {
