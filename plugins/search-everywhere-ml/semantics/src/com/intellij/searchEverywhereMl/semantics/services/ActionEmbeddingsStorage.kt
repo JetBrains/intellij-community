@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.File
+import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -46,11 +47,11 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
   private val setupTitle
     get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.actions.generation.label")
 
-  fun prepareForSearch(project: Project) = cs.launch {
-    project.waitForSmartMode() // project may become dumb again, but we don't interfere initial indexing
-    LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
+  fun prepareForSearch(project: WeakReference<Project>) = cs.launch {
+    project.get()?.waitForSmartMode() // project may become dumb again, but we don't interfere initial indexing
+    LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project.get(), retryIfCanceled = false)
     index.loadFromDisk()
-    generateEmbeddingsIfNecessary(project)
+    generateEmbeddingsIfNecessary(project.get() ?: return@launch)
   }
 
   fun tryStopGeneratingEmbeddings() = indexSetupJob.getAndSet(null)?.cancel()
