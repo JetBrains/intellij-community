@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.javac.Iterators;
@@ -9,6 +10,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
 
@@ -239,18 +241,121 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         if (!addedMethod.isPrivate() && addedMethod.isAbstract()) {
           debug("Added non-private abstract method: " + addedMethod.getName());
           affectLambdaInstantiations(context, present, changedClass.getReferenceID());
+          break;
         }
       }
     }
 
+    for (JvmMethod addedMethod : methodsDiff.added()) {
+      debug("Method: " + addedMethod.getName());
+
+      if (addedMethod.isPrivate()) {
+        continue;
+      }
+      
+      Iterable<JvmNodeReferenceID> propagated = Iterators.lazy(() -> future.collectSubclassesWithoutMethod(changedClass.getName(), addedMethod));
+
+      if (!Iterators.isEmpty(addedMethod.getArgTypes()) && !present.hasOverriddenMethods(changedClass, addedMethod)) {
+        debug("Conservative case on overriding methods, affecting method usages");
+        context.affectUsage(addedMethod.createUsageQuery(changedClass.getName()));
+        if (!addedMethod.isConstructor()) { // do not propagate constructors access, since constructors are always concrete and not accessible via references to subclasses
+          for (JvmNodeReferenceID id : propagated) {
+            context.affectUsage(new AffectionScopeMetaUsage(id));
+            context.affectUsage(addedMethod.createUsageQuery(id.getNodeName()));
+          }
+        }
+      }
+
+      if (addedMethod.isStatic()) {
+        affectStaticMemberOnDemandUsages(context, changedClass.getReferenceID(), propagated);
+      }
+
+      Predicate<JvmMethod> lessSpecificCond = future.lessSpecific(addedMethod);
+      for (JvmMethod lessSpecific : Iterators.filter(changedClass.getMethods(), m -> !Iterators.contains(methodsDiff.removed(), m) && lessSpecificCond.test(m))) {
+        debug("Found less specific method, affecting method usages; " + lessSpecific.getName() + lessSpecific.getDescriptor());
+        context.affectUsage(lessSpecific.createUsage(changedClass.getName()));
+        for (JvmNodeReferenceID id : propagated) {
+          context.affectUsage(lessSpecific.createUsage(id.getNodeName()));
+        }
+      }
+
+      debug("Processing affected by specificity methods");
+
+      for (Pair<JvmClass, JvmMethod> pair : future.getOverriddenMethods(changedClass, lessSpecificCond)) {
+        JvmClass cls = pair.getFirst();
+        JvmMethod overriddenMethod = pair.getSecond();
+        // isInheritor(cls, changedClass) == false
+
+        debug("Method: " + overriddenMethod.getName());
+        debug("Class : " + cls.getName());
+        debug("Affecting method usages for that found");
+        context.affectUsage(overriddenMethod.createUsage(changedClass.getName()));
+        for (JvmNodeReferenceID propagatedId : present.collectSubclassesWithoutMethod(changedClass.getName(), overriddenMethod)) {
+          context.affectUsage(overriddenMethod.createUsage(propagatedId.getNodeName()));
+        }
+      }
+
+      for (Pair<JvmClass, JvmMethod> pair : future.getOverridingMethods(changedClass, addedMethod, lessSpecificCond)) {
+        JvmClass cls = pair.getFirst();
+        JvmMethod overridingMethod = pair.getSecond();
+        // isInheritor(cls, changedClass) == true
+
+        debug("Method: " + overridingMethod.getName());
+        debug("Class : " + cls.getName());
+
+        if (overridingMethod.isSame(addedMethod)) {
+          debug("Current method overrides the added method");
+          for (NodeSource source : context.getGraph().getSources(cls.getReferenceID())) {
+            if (!context.isCompiled(source)) {
+              debug("Affecting source " + source.getPath());
+              context.affectNodeSource(source);
+            }
+          }
+        }
+        else {
+          debug("Current method does not override the added method");
+          debug("Affecting method usages for the method");
+          context.affectUsage(overridingMethod.createUsage(cls.getName()));
+          for (JvmNodeReferenceID propagatedId : present.collectSubclassesWithoutMethod(cls.getName(), overridingMethod)) {
+            context.affectUsage(overridingMethod.createUsage(propagatedId.getNodeName()));
+          }
+        }
+      }
+
+      for (ReferenceID subClassId : future.allSubclasses(changedClass.getReferenceID())) {
+        Iterable<NodeSource> sources = context.getGraph().getSources(subClassId);
+        if (!Iterators.isEmpty(Iterators.filter(sources, s -> !context.isCompiled(s)))) { // has non-compiled sources
+          for (JvmClass outerClass : Iterators.flat(Iterators.map(future.getNodes(subClassId, JvmClass.class), cl -> future.getNodes(new JvmNodeReferenceID(cl.getOuterFqName()), JvmClass.class)))) {
+            if (future.isMethodVisible(outerClass, addedMethod)  || future.inheritsFromLibraryClass(outerClass)) {
+              for (NodeSource source : sources) {
+                debug("Affecting file due to local overriding: " + source.getPath());
+                context.affectNodeSource(source);
+              }
+            }
+          }
+        }
+      }
+
+    }
+    debug("End of added methods processing");
+
+    debug("Processing removed methods: ");
     for (JvmMethod removedMethod : methodsDiff.removed()) {
 
     }
 
+    debug("Processing changed methods: ");
     for (Difference.Change<JvmMethod, JvmMethod.Diff> methodChange : methodsDiff.changed()) {
       JvmMethod changedMethod = methodChange.getPast();
     }
     return true;
+  }
+
+  private void affectStaticMemberOnDemandUsages(DifferentiateContext context, JvmNodeReferenceID clsId, Iterable<JvmNodeReferenceID> propagated) {
+    for (JvmNodeReferenceID id : Iterators.flat(Iterators.asIterable(clsId), propagated)) {
+      debug("Affect static member on-demand import usage referenced of class " + id.getNodeName());
+      context.affectUsage(new ImportStaticOnDemandUsage(id.getNodeName()));
+    }
   }
 
   private boolean processFieldChanges(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> classChange, Utils future, Utils present) {
