@@ -73,6 +73,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/tests/testData/declaration/if.kt");
     }
 
+    @TestMetadata("implicitItOfLambdaOverEnumEntries.kt")
+    public void testImplicitItOfLambdaOverEnumEntries() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/implicitItOfLambdaOverEnumEntries.kt");
+    }
+
     @TestMetadata("importOnDemand.kt")
     public void testImportOnDemand() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/importOnDemand.kt");

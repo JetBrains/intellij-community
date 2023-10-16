@@ -73,6 +73,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/if.kt");
     }
 
+    @TestMetadata("implicitItOfLambdaOverEnumEntries.kt")
+    public void testImplicitItOfLambdaOverEnumEntries() throws Exception {
+        runTest("testData/declaration/implicitItOfLambdaOverEnumEntries.kt");
+    }
+
     @TestMetadata("importOnDemand.kt")
     public void testImportOnDemand() throws Exception {
         runTest("testData/declaration/importOnDemand.kt");
