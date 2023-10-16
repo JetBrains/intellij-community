@@ -19,6 +19,7 @@ val SelectableLazyListState.visibleItemsRange
     get() = firstVisibleItemIndex..firstVisibleItemIndex + layoutInfo.visibleItemsInfo.size
 
 interface SelectableScope {
+
     var selectedKeys: List<Any>
 }
 
@@ -41,16 +42,14 @@ class SelectableLazyListState(
      * @param itemIndex The index of the item to focus on.
      * @param animateScroll Whether to animate the scroll to the focused item.
      * @param scrollOffset The scroll offset for the focused item.
-     * @param skipScroll Whether to skip the scroll to the focused item.
      */
     suspend fun scrollToItem(
         itemIndex: Int,
         animateScroll: Boolean = false,
         scrollOffset: Int = 0,
-        skipScroll: Boolean = false,
     ) {
         val visibleRange = visibleItemsRange.drop(2).dropLast(4)
-        if (!skipScroll && itemIndex !in visibleRange && visibleRange.isNotEmpty()) {
+        if (itemIndex !in visibleRange && visibleRange.isNotEmpty()) {
             when {
                 itemIndex < visibleRange.first() -> lazyListState.scrollToItem(
                     max(0, itemIndex - 2),
@@ -59,7 +58,7 @@ class SelectableLazyListState(
                 )
 
                 itemIndex > visibleRange.last() -> {
-                    lazyListState.scrollToItem(max(itemIndex - (visibleRange.size + 1), 0), animateScroll, 0)
+                    lazyListState.scrollToItem(max(itemIndex - (visibleRange.size + 2), 0), animateScroll, 0)
                 }
             }
         }

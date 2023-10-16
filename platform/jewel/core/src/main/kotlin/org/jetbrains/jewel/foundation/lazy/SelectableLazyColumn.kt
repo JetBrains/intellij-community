@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +23,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListScopeContainer.Entry
 import org.jetbrains.jewel.foundation.tree.DefaultSelectableLazyColumnEventAction
 import org.jetbrains.jewel.foundation.tree.DefaultSelectableLazyColumnKeyActions
@@ -48,6 +50,7 @@ fun SelectableLazyColumn(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: SelectableLazyListScope.() -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
     val container = SelectableLazyListScopeContainer()
         .apply(content)
 
@@ -74,7 +77,16 @@ fun SelectableLazyColumn(
             .focusable(interactionSource = interactionSource)
             .onPreviewKeyEvent { event ->
                 if (state.lastActiveItemIndex != null) {
-                    keyActions.handleOnKeyEvent(event, keys, state, selectionMode).invoke(event)
+                    val actionHandled = keyActions
+                        .handleOnKeyEvent(event, keys, state, selectionMode)
+                        .invoke(event)
+                    if (actionHandled) {
+                        scope.launch {
+                            state.lastActiveItemIndex?.let {
+                                state.scrollToItem(it)
+                            }
+                        }
+                    }
                 }
                 true
             },
