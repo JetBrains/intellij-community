@@ -129,7 +129,6 @@ private constructor(parentCs: CoroutineScope,
                                                                           getDiffBridge(tab.mrIid), filesController)
     GitLabReviewTab.NewMergeRequest -> GitLabReviewTabViewModel.CreateMergeRequest(
       project, cs, projectsManager, connection.projectData,
-      mergeRequestOnCurrentBranch = mergeRequestOnCurrentBranch,
       openReviewTabAction = { mrIid ->
         closeTabAsync(GitLabReviewTab.NewMergeRequest)
         showTab(GitLabReviewTab.ReviewSelected(mrIid))

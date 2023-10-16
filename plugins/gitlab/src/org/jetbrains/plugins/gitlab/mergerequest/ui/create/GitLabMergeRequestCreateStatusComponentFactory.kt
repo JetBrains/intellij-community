@@ -72,14 +72,14 @@ internal object GitLabMergeRequestCreateStatusComponentFactory {
     }
     val linkLabel = ActionLink(GitLabBundle.message("merge.request.create.status.already.exists.view")) {
       cs.launch {
-        val mrIid = createVm.mergeRequestOnCurrentBranch.first() ?: error("Merge Request on current branch was not found")
+        val mrIid = createVm.existingMergeRequest.first() ?: error("Merge Request on current branch was not found")
         createVm.openReviewTabAction(mrIid)
       }
     }
 
     return HorizontalListPanel(gap = 4).apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      bindVisibilityIn(cs, createVm.mergeRequestOnCurrentBranch.map { it != null })
+      bindVisibilityIn(cs, createVm.existingMergeRequest.map { it != null })
       add(iconLabel)
       add(linkLabel)
     }

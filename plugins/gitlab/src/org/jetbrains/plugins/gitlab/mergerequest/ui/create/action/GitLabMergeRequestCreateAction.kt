@@ -18,7 +18,7 @@ internal class GitLabMergeRequestCreateAction(
     cs.launch {
       combineAndCollect(
         createVm.isBusy,
-        createVm.mergeRequestOnCurrentBranch.map { it != null },
+        createVm.existingMergeRequest.map { it != null },
         createVm.reviewRequirementsErrorState.map { it != null }
       ) { isBusy, isReviewAlreadyExists, errors ->
         isEnabled = !isBusy && !isReviewAlreadyExists && !errors

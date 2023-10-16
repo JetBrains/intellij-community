@@ -51,7 +51,7 @@ interface GitLabProjectMergeRequestsStore {
   /**
    * Find merge requests on a remote branch with name [branchName]
    */
-  suspend fun findByBranch(branchName: String): Set<String>
+  suspend fun findByBranch(sourceBranchName: String, targetBranchName: String? = null): Set<String>
 }
 
 class CachingGitLabProjectMergeRequestsStore(private val project: Project,
@@ -109,9 +109,9 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
     val backupCommits: List<GitLabCommitRestDTO>
   )
 
-  override suspend fun findByBranch(branchName: String): Set<String> =
+  override suspend fun findByBranch(sourceBranchName: String, targetBranchName: String?): Set<String> =
     withContext(Dispatchers.IO) {
-      api.graphQL.findMergeRequestsByBranch(projectMapping.repository, branchName).body()!!.nodes
+      api.graphQL.findMergeRequestsByBranch(projectMapping.repository, sourceBranchName, targetBranchName).body()!!.nodes
         .mapTo(mutableSetOf(), GitLabMergeRequestIidDTO::iid)
     }
 

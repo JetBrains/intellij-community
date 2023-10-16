@@ -33,7 +33,7 @@ internal interface GitLabMergeRequestCreateViewModel {
 
   val branchState: Flow<BranchState?>
 
-  val mergeRequestOnCurrentBranch: Flow<String?>
+  val existingMergeRequest: Flow<String?>
   val creatingProgressText: Flow<String?>
   val commits: SharedFlow<Result<List<VcsCommitMetadata>>?>
 
@@ -54,7 +54,6 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   parentCs: CoroutineScope,
   override val projectsManager: GitLabProjectsManager,
   override val projectData: GitLabProject,
-  override val mergeRequestOnCurrentBranch: Flow<String?>,
   override val openReviewTabAction: suspend (mrIid: String) -> Unit
 ) : GitLabMergeRequestCreateViewModel {
   private val cs: CoroutineScope = parentCs.childScope()
@@ -75,6 +74,14 @@ internal class GitLabMergeRequestCreateViewModelImpl(
 
   private val _branchState: MutableStateFlow<BranchState?> = MutableStateFlow(null)
   override val branchState: Flow<BranchState?> = _branchState.asSharedFlow()
+
+  override val existingMergeRequest: Flow<String?> = branchState.map { state ->
+    state ?: return@map null
+    val sourceBranch = state.headBranch.name
+    val targetBranch = state.baseBranch.nameForRemoteOperations
+
+    return@map projectData.mergeRequests.findByBranch(sourceBranch, targetBranch).firstOrNull()
+  }
 
   override val commits: SharedFlow<Result<List<VcsCommitMetadata>>?> = branchState.transformLatest { model ->
     if (model == null) {
