@@ -8,9 +8,12 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -265,6 +268,40 @@ fun <D> JPanel.bindChildIn(scope: CoroutineScope, dataFlow: Flow<D>,
       }
     }
   }
+}
+
+fun JCheckBox.bindSelectedIn(scope: CoroutineScope, flow: MutableStateFlow<Boolean>) {
+  val listener = { _: Any -> flow.value = model.isSelected }
+  model.addChangeListener(listener)
+
+  scope.launchNow {
+    flow.collect {
+      model.isSelected = it
+    }
+  }
+
+  scope.awaitCancellationAndInvoke {
+    model.removeChangeListener(listener)
+  }
+}
+
+fun Cell<JCheckBox>.bindSelectedIn(scope: CoroutineScope, flow: MutableStateFlow<Boolean>) = applyToComponent {
+  bindSelectedIn(scope, flow)
+}
+
+fun <T> ComboBoxModel<T>.bindSelectedItemIn(scope: CoroutineScope, flow: MutableStateFlow<T?>) {
+  @Suppress("UNCHECKED_CAST")
+  addSelectionChangeListenerIn(scope) { flow.value = (selectedItem as T?) }
+
+  scope.launchNow {
+    flow.collect {
+      selectedItem = it
+    }
+  }
+}
+
+fun <T> Cell<ComboBox<T>>.bindSelectedItemIn(scope: CoroutineScope, flow: MutableStateFlow<T?>) = applyToComponent {
+  model.bindSelectedItemIn(scope, flow)
 }
 
 private typealias Block = CoroutineScope.() -> Unit
