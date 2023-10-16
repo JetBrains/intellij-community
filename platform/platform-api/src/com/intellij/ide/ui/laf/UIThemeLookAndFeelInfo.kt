@@ -10,8 +10,10 @@ import javax.swing.UIDefaults
 @Internal
 interface UIThemeLookAndFeelInfo  {
   val id: String
+
   @get:NlsSafe
   val name: String
+
   val isDark: Boolean
 
   val editorSchemeId: String?
