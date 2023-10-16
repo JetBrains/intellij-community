@@ -409,7 +409,7 @@
     <localInspection language="UAST" groupPathKey="inspections.group.path"
                      projectType="INTELLIJ_PLUGIN"
                      key="inspections.listener.implementation.must.not.be.disposable.name" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="ERROR"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ListenerImplementationMustNotBeDisposableInspection"/>
 
 

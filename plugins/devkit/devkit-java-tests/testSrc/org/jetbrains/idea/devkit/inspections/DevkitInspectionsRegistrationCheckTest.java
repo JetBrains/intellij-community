@@ -32,7 +32,6 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
             "CallingMethodShouldBeRequiresBlockingContext",
             "IncorrectProcessCanceledExceptionHandling",
             "StaticInitializationInExtensions",
-            "ListenerImplementationMustNotBeDisposable",
             "UsePlatformProcessAwaitExit");
 
   /**
