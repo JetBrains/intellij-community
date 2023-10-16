@@ -46,6 +46,7 @@ public final class VcsRepositoryManager implements Disposable {
   /**
    * VCS repository mapping updated. Project level.
    */
+  @Topic.ProjectLevel
   public static final Topic<VcsRepositoryMappingListener> VCS_REPOSITORY_MAPPING_UPDATED =
     new Topic<>(VcsRepositoryMappingListener.class, Topic.BroadcastDirection.NONE);
 

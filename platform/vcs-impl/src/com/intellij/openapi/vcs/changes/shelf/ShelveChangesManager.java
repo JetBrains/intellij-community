@@ -166,6 +166,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   private final Project myProject;
 
+  @Topic.ProjectLevel
   public static final Topic<ShelveChangesManagerListener> SHELF_TOPIC = new Topic<>("shelf updates", ShelveChangesManagerListener.class);
 
   public ShelveChangesManager(@NotNull Project project) {
