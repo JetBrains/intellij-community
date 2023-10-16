@@ -9,6 +9,8 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector.PREIMPORT_ACTIVITY
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findFile
@@ -71,19 +73,21 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
 
       val modelsProvider = optionalModelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(project)
       // MavenProjectsManager.getInstance(project).projectsTree = projectTree
+      return withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
+        blockingContext {
+          val importer = MavenProjectImporter.createImporter(project, projectTree,
+                                                             allProjects.associateWith { MavenProjectChanges.ALL },
+                                                             modelsProvider,
+                                                             importingSettings,
+                                                             null,
+                                                             parentActivity)
 
+          importer.importProject()
+          statisticsData.add(forest, allProjects)
+          return@blockingContext importer.createdModules()
 
-      val importer = MavenProjectImporter.createImporter(project, projectTree,
-                                                         allProjects.associateWith { MavenProjectChanges.ALL },
-                                                         modelsProvider,
-                                                         importingSettings,
-                                                         null,
-                                                         parentActivity)
-
-      importer.importProject()
-
-      statisticsData.add(forest, allProjects)
-      return importer.createdModules()
+        }
+      }
     }
     catch (e: Throwable) {
       MavenLog.LOG.error(e)
@@ -110,7 +114,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       val rootModel = MavenJDOMUtil.read(rootProjectFile, null) ?: return@async null
 
       // reading
-      val rootProjectData = readProject(rootModel, rootProjectFile)
+      val rootProjectData = readProject(rootModel, rootProjectFile);
       tree.addRoot(rootProjectData)
 
       val readPomsJob = launch {
@@ -135,7 +139,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
         }
       }
       meditationJob.join()
-      return@async tree
+      return@async tree;
     }
     catch (e: Exception) {
       MavenLog.LOG.warn(e)
@@ -213,7 +217,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
       else if (version.startsWith("$")) {
         val versionResolved = project.properties[version.substring(2, version.length - 1)]
         if (versionResolved != null) {
-          project.resolvedDependencies.add(MavenId(it.groupId, it.artifactId, versionResolved))
+          project.resolvedDependencies.add(MavenId(it.groupId, it.artifactId, versionResolved));
         }
       }
       else {
@@ -282,7 +286,7 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
     mavenModel.build.sources = listOf(parentFolder.resolve("src/main/java").toString(), parentFolder.resolve("src/main/kotlin").toString())
     mavenModel.build.testSources = listOf(parentFolder.resolve("src/test/java").toString(),
-                                          parentFolder.resolve("src/test/kotlin").toString())
+                                          parentFolder.resolve("src/test/kotlin").toString());
     mavenModel.modules = rootModel.getChildrenText("modules", "module")
     mavenModel.packaging = rootModel.getChildTextTrim("packaging") ?: "jar"
 
@@ -314,8 +318,8 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     modelMap.put("build.directory", mavenModel.build.directory)
 
     val result = MavenProjectReaderResult(mavenModel, modelMap, MavenExplicitProfiles.NONE, null, emptyList(), emptySet())
-    mavenProject.set(result, MavenProjectsManager.getInstance(project).generalSettings, true, true, true)
-    return mavenProjectData
+    mavenProject.set(result, MavenProjectsManager.getInstance(project).generalSettings, true, true, true);
+    return mavenProjectData;
 
   }
 
