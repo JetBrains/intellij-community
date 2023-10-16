@@ -5,17 +5,16 @@ import com.intellij.codeInsight.inline.completion.render.InlineCompletionInsertP
 import com.intellij.openapi.editor.Editor
 import java.awt.Rectangle
 
-class InlineCompletionEnclosureElement(val symbol: Char) : InlineCompletionElement {
-  override val text: String = symbol.toString()
-  override fun insertPolicy(): InlineCompletionInsertPolicy = InlineCompletionInsertPolicy.Skip(1)
-  override fun withSameContent(): InlineCompletionElement = InlineCompletionEnclosureElement(symbol)
+class InlineCompletionSkipTextElement(override val text: String) : InlineCompletionElement {
+  override fun insertPolicy(): InlineCompletionInsertPolicy = InlineCompletionInsertPolicy.Skip(text.length)
+  override fun withSameContent(): InlineCompletionElement = InlineCompletionSkipTextElement(text)
   override fun withTruncatedPrefix(length: Int): InlineCompletionElement? {
-    return if (length > 0) null else withSameContent()
+    return if (text.length > length) InlineCompletionSkipTextElement(text.drop(length)) else null
   }
 
   override fun toPresentable(): InlineCompletionElement.Presentable = Presentable(this)
 
-  class Presentable(override val element: InlineCompletionEnclosureElement) : InlineCompletionElement.Presentable {
+  class Presentable(override val element: InlineCompletionSkipTextElement) : InlineCompletionElement.Presentable {
     private var startOffset: Int? = null
     private var endOffset: Int? = null
     private var isRendered = false
