@@ -29,22 +29,8 @@ import kotlin.io.path.pathString
  * resources should be included in the distribution, instead of taking this information from the project model.  
  */
 internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry>, context: BuildContext) {
-  //maybe it makes sense to produce the repository along with compiled classes and reuse it 
-  CompilationTasks.create(context).generateRuntimeModuleRepository()
-  
-  val repositoryForCompiledModulesPath = context.classesOutputDirectory.resolve(JAR_REPOSITORY_FILE_NAME)
-  if (!repositoryForCompiledModulesPath.exists()) {
-    context.messages.error("Runtime module repository wasn't generated during compilation: $repositoryForCompiledModulesPath doesn't exist")
-  }
-  val compiledModulesDescriptors: Map<RuntimeModuleId, RawRuntimeModuleDescriptor>
-  try {
-    compiledModulesDescriptors = RuntimeModuleRepositorySerialization.loadFromJar(repositoryForCompiledModulesPath).mapKeys { RuntimeModuleId.raw(it.key) }
-  }
-  catch (e: MalformedRepositoryException) {
-    context.messages.error("Failed to load runtime module repository: ${e.message}", e)
-    return
-  }
-  
+  val (repositoryForCompiledModulesPath, compiledModulesDescriptors) = loadForCompiledModules(context)
+
   val repositoryEntries = ArrayList<RuntimeModuleRepositoryEntry>()
   val osSpecificDistPaths = listOf(null to context.paths.distAllDir) +
                             SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(it.os, it.arch, context) }
@@ -68,6 +54,24 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
                                         context, repositoryForCompiledModulesPath)
     }
   }
+}
+
+private fun loadForCompiledModules(context: BuildContext): Pair<Path, Map<RuntimeModuleId, RawRuntimeModuleDescriptor>> {
+  //maybe it makes sense to produce the repository along with compiled classes and reuse it 
+  CompilationTasks.create(context).generateRuntimeModuleRepository()
+
+  val repositoryForCompiledModulesPath = context.classesOutputDirectory.resolve(JAR_REPOSITORY_FILE_NAME)
+  if (!repositoryForCompiledModulesPath.exists()) {
+    context.messages.error("Runtime module repository wasn't generated during compilation: $repositoryForCompiledModulesPath doesn't exist")
+  }
+  val compiledModulesDescriptors = try {
+    RuntimeModuleRepositorySerialization.loadFromJar(repositoryForCompiledModulesPath).mapKeys { RuntimeModuleId.raw(it.key) }
+  }
+  catch (e: MalformedRepositoryException) {
+    context.messages.error("Failed to load runtime module repository: ${e.message}", e)
+    emptyMap<RuntimeModuleId, RawRuntimeModuleDescriptor>()
+  }
+  return repositoryForCompiledModulesPath to compiledModulesDescriptors
 }
 
 private data class RuntimeModuleRepositoryEntry(val distribution: SupportedDistribution?, val relativePath: String, val origin: DistributionFileEntry)
