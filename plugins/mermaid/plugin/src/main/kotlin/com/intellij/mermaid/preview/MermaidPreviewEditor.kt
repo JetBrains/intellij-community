@@ -29,7 +29,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(FlowPreview::class)
 internal class MermaidPreviewEditor(
   private val project: Project,
-  private val file: VirtualFile
+  file: VirtualFile
 ): FileEditor, UserDataHolder by UserDataHolderBase() {
   private val pluginScope
     get() = MermaidPlugin.coroutineScope(project)
