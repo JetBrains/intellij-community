@@ -19,10 +19,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
-import kotlin.io.path.bufferedWriter
-import kotlin.io.path.copyTo
-import kotlin.io.path.moveTo
-import kotlin.io.path.notExists
+import kotlin.io.path.*
 
 // https://github.com/jaegertracing/jaeger-ui/issues/381
 @ApiStatus.Internal
@@ -32,7 +29,7 @@ class JaegerJsonSpanExporter(
   serviceVersion: String? = null,
   serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
-  private val tempTelemetryFile = file.parent.resolve("telemetry.temp")
+  private val tempTelemetryFile = file.parent.createDirectories().resolve("telemetry.temp")
   private val writer = JsonFactory().createGenerator(Files.newBufferedWriter(tempTelemetryFile))
     .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
 
