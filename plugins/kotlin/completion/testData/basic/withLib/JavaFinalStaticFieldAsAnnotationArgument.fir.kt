@@ -6,7 +6,7 @@ annotation class A(val n: Int)
 class B
 
 // EXIST: field
-// EXIST: stringField
+// ABSENT: stringField
 // ABSENT: nonPrimitivefield
 // ABSENT: nonFinalField
 // ABSENT: arrayField
