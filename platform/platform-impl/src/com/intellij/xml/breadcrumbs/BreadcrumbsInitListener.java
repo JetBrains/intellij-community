@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public interface BreadcrumbsInitListener {
+
+  @Topic.ProjectLevel
   Topic<BreadcrumbsInitListener> TOPIC = new Topic<>(BreadcrumbsInitListener.class);
 
   default void breadcrumbsInitialized(@NotNull BreadcrumbsPanel wrapper, @NotNull FileEditor fileEditor, @NotNull FileEditorManager manager) {}

@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.application.options.CodeStyle#getSettings(PsiFile)
  */
 public interface CodeStyleSettingsListener {
+
+  @Topic.ProjectLevel
   Topic<CodeStyleSettingsListener> TOPIC = new Topic<>(CodeStyleSettingsListener.class, Topic.BroadcastDirection.NONE, true);
 
   /**

@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class EditorColorsManager {
+
+  @Topic.AppLevel
   public static final Topic<EditorColorsListener> TOPIC = new Topic<>(EditorColorsListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   public static final @NonNls String DEFAULT_SCHEME_NAME = "Default";

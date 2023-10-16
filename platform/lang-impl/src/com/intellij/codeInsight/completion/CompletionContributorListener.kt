@@ -9,7 +9,8 @@ interface CompletionContributorListener {
   fun beforeCompletionContributorThreadStarted(indicator: CompletionProgressIndicator,
                                                initContext: CompletionInitializationContextImpl)
 
-  companion object{
+  companion object {
+    @Topic.AppLevel
     val TOPIC = Topic("CompletionContributorListener", CompletionContributorListener::class.java)
   }
 }

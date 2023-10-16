@@ -11,6 +11,7 @@ public interface EditorHintListener {
   /**
    * Notification about showing editor hints.
    */
+  @Topic.AppLevel
   Topic<EditorHintListener> TOPIC = new Topic<>(EditorHintListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   default void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {

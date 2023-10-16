@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -44,6 +44,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
+
+  @Topic.ProjectLevel
   public static final Topic<InspectListener> INSPECT_TOPIC = new Topic<>(InspectListener.class, Topic.BroadcastDirection.NONE);
 
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextEx.class);

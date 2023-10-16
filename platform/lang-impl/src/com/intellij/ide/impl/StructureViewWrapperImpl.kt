@@ -503,6 +503,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
 
   companion object {
     @JvmField
+    @Topic.AppLevel
     val STRUCTURE_CHANGED: Topic<Runnable> = Topic("structure view changed", Runnable::class.java,
                                                    Topic.BroadcastDirection.NONE)
 

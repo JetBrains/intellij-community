@@ -35,6 +35,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
    */
   static final int SHOWN_SEVERITIES_OFFSET = 2;
 
+  @Topic.AppLevel
   private static final Topic<Runnable> STANDARD_SEVERITIES_CHANGED_TOPIC = new Topic<>("standard severities changed", Runnable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   private static final @NonNls String INFO_TAG = "info";

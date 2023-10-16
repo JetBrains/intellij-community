@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -60,8 +60,10 @@ public final class FileTypeIndex {
   }
 
   @ApiStatus.Experimental
+  @Topic.AppLevel
   public static final Topic<IndexChangeListener> INDEX_CHANGE_TOPIC =
     new Topic<>(IndexChangeListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
+
   @ApiStatus.Experimental
   public interface IndexChangeListener {
     /**

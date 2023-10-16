@@ -92,6 +92,8 @@ public final class ScopeEditorPanel implements Disposable {
   private final MyAction myExcludeRec = new MyAction("button.exclude.recursively", this::excludeSelected);
 
   interface SettingsChangedListener {
+
+    @Topic.ProjectLevel
     Topic<SettingsChangedListener> TOPIC = new Topic<>(SettingsChangedListener.class, Topic.BroadcastDirection.TO_CHILDREN);
     void settingsChanged();
   }

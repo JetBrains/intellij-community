@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.messages.Topic;
 
 public final class PowerSaveMode {
+
+  @Topic.AppLevel
   public static final Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   private static final String POWER_SAVE_MODE = "power.save.mode";
