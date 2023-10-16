@@ -14,8 +14,8 @@ import com.intellij.ide.MnemonicUsageCollector.logMnemonicUsed
 import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDManagerImpl
-import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.ui.UISettings
+import com.intellij.idea.StartupErrorReporter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
@@ -494,7 +494,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       // 'bare' ControlFlowException-s are not reported
       t = RuntimeException(t)
     }
-    StartupAbortedException.processException(t)
+    StartupErrorReporter.processException(t)
   }
 
   /**

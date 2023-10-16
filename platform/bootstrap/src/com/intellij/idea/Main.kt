@@ -8,7 +8,6 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
-import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ConfigImportHelper
@@ -301,7 +300,7 @@ private fun installPluginUpdates() {
 // separate class for nicer presentation in dumps
 private class StartupAbortedExceptionHandler : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
   override fun handleException(context: CoroutineContext, exception: Throwable) {
-    StartupAbortedException.processException(exception)
+    StartupErrorReporter.processException(exception)
   }
 
   override fun toString() = "StartupAbortedExceptionHandler"
