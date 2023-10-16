@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpdatedToolbar
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.*
@@ -24,14 +25,13 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.Computable
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HintHint
 import com.intellij.ui.JBColor
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.icons.toStrokeIcon
-import com.intellij.util.PlatformUtils
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
@@ -246,24 +246,11 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     toolbarImpl.setNeedCheckHoverOnLayout(true)
     toolbarImpl.setBorder(null)
     toolbarImpl.setOpaque(false)
-    val (effectiveHoverColor, strokeColor) = if (needShowOnGutter) {
-      JBColor.PanelBackground to null
-    }
-    else {
-      val hoverColor: Color = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
-                              ?: JBColor.PanelBackground
-      val textAttributesForLineStart = getEditorTextAttributesForTheLineStart(editor, lineNumber)
-      val backgroundColor = textAttributesForLineStart?.backgroundColor
-      if (backgroundColor != null) {
-        val resultBackground = ColorUtil.alphaBlending(
-          ColorUtil.withAlpha(hoverColor, HintRenderer.BACKGROUND_ALPHA.toDouble()), backgroundColor)
-        resultBackground to textAttributesForLineStart.foregroundColor
-      }
-      else {
-        hoverColor to null
-      }
-    }
-    toolbarImpl.setCustomButtonLook(InlayPopupButtonLook(effectiveHoverColor, strokeColor))
+    toolbarImpl.setCustomButtonLook(InlayPopupButtonLook {
+      ApplicationManager.getApplication().runReadAction(Computable {
+        calculateEffectiveHoverColorAndStroke(needShowOnGutter, editor, lineNumber)
+      })
+    })
     toolbarImpl.setAdditionalDataProvider { dataId: String? ->
       if (XDebuggerUtilImpl.LINE_NUMBER.`is`(dataId)) {
         return@setAdditionalDataProvider lineNumber
@@ -293,6 +280,26 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, flags, questionAction, HintManager.RIGHT)
   }
 
+  private fun calculateEffectiveHoverColorAndStroke(needShowOnGutter: Boolean, editor: Editor, lineNumber: Int): Pair<Color, Color?> {
+    return if (needShowOnGutter) {
+      JBColor.PanelBackground to null
+    }
+    else {
+      val hoverColor: Color = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
+                              ?: JBColor.PanelBackground
+      val textAttributesForLineStart = getEditorTextAttributesForTheLineStart(editor, lineNumber)
+      val backgroundColor = textAttributesForLineStart?.backgroundColor
+      if (backgroundColor != null) {
+        val resultBackground = ColorUtil.alphaBlending(
+          ColorUtil.withAlpha(hoverColor, HintRenderer.BACKGROUND_ALPHA.toDouble()), backgroundColor)
+        resultBackground to textAttributesForLineStart.foregroundColor
+      }
+      else {
+        hoverColor to null
+      }
+    }
+  }
+
   private fun isOutOfVisibleEditor(rootPane: JRootPane, x: Int, y: Int, h: Int, editorContentComponent: JComponent): Boolean {
     return SwingUtilities.getDeepestComponentAt(rootPane.layeredPane, x, y) != editorContentComponent ||
           SwingUtilities.getDeepestComponentAt(rootPane.layeredPane, x, y + h) != editorContentComponent
@@ -318,19 +325,19 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   }
 }
 
-private class InlayPopupButtonLook(val effectiveHoverColor: Color, val strokeColor: Color?) : IdeaActionButtonLook() {
-  val useStrokeVariants = strokeColor != null &&
-                          ColorUtil.getColorDistance(effectiveHoverColor, JBColor.PanelBackground) > 50
-                          && ColorUtil.getColorDistance(effectiveHoverColor, strokeColor) > 250
-
+private class InlayPopupButtonLook(val effectiveHoverColorAndStroke: () -> Pair<Color, Color?>) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent?, state: Int): Color? {
     if (state == ActionButtonComponent.POPPED) {
-      return effectiveHoverColor
+      return effectiveHoverColorAndStroke().first
     }
     return super.getStateBackground(component, state)
   }
 
   override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
+    val (effectiveHoverColor, strokeColor) = effectiveHoverColorAndStroke()
+    val useStrokeVariants = strokeColor != null &&
+                            ColorUtil.getColorDistance(effectiveHoverColor, JBColor.PanelBackground) > 50
+                            && ColorUtil.getColorDistance(effectiveHoverColor, strokeColor) > 250
     val resultIcon = if (useStrokeVariants) toStrokeIcon(icon, strokeColor!!) else icon
     super.paintIcon(g, actionButton, resultIcon, x, y)
   }
