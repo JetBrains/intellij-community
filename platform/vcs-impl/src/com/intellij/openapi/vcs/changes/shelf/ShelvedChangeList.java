@@ -11,6 +11,8 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -138,11 +140,24 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   }
 
   public void loadChangesIfNeeded(@NotNull Project project) {
+    if (myChanges != null) return;
     try {
-      if (myChanges == null) {
-        List<? extends FilePatch> list = ShelveChangesManager.loadPatchesWithoutContent(project, path, null);
-        myChanges = createShelvedChangesFromFilePatches(project, path, list);
+      myChangesLoadingError = null;
+
+      List<? extends FilePatch> list = ShelveChangesManager.loadPatchesWithoutContent(project, path, null);
+
+      List<ShelvedChange> changes = new ArrayList<>();
+      for (FilePatch patch : list) {
+        ShelvedChange change = createShelvedChange(project, path, patch);
+        if (change != null) {
+          changes.add(change);
+        }
+        else if (myChangesLoadingError == null) {
+          String patchName = ObjectUtils.coalesce(patch.getBeforeName(), patch.getAfterName(), path.toString());
+          myChangesLoadingError = VcsBundle.message("shelve.loading.patch.error", patchName);
+        }
       }
+      myChanges = changes;
     }
     catch (Exception e) {
       LOG.warn("Failed to parse the file patch: [" + path + "]", e);
@@ -150,7 +165,6 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
       myChangesLoadingError = VcsBundle.message("shelve.loading.patch.error", e.getMessage());
     }
   }
-
 
   @Nullable
   public List<ShelvedChange> getChanges() {
@@ -175,21 +189,30 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   static List<ShelvedChange> createShelvedChangesFromFilePatches(@NotNull Project project,
                                                                  @NotNull Path patchPath,
                                                                  @NotNull Collection<? extends FilePatch> filePatches) {
-    List<ShelvedChange> changes = new ArrayList<>();
-    for (FilePatch patch : filePatches) {
-      FileStatus status;
-      if (patch.isNewFile()) {
-        status = FileStatus.ADDED;
-      }
-      else if (patch.isDeletedFile()) {
-        status = FileStatus.DELETED;
-      }
-      else {
-        status = FileStatus.MODIFIED;
-      }
-      changes.add(ShelvedChange.create(project, patchPath, patch.getBeforeName(), patch.getAfterName(), status));
+    return ContainerUtil.mapNotNull(filePatches, patch -> createShelvedChange(project, patchPath, patch));
+  }
+
+  @Nullable
+  static ShelvedChange createShelvedChange(@NotNull Project project, @NotNull Path patchPath, @NotNull FilePatch patch) {
+    String beforeName = patch.getBeforeName();
+    String afterName = patch.getAfterName();
+    if (beforeName == null || afterName == null) {
+      LOG.warn("Failed to parse the file patch: [" + patchPath + "]:" + patch);
+      return null;
     }
-    return changes;
+
+    FileStatus status;
+    if (patch.isNewFile()) {
+      status = FileStatus.ADDED;
+    }
+    else if (patch.isDeletedFile()) {
+      status = FileStatus.DELETED;
+    }
+    else {
+      status = FileStatus.MODIFIED;
+    }
+
+    return ShelvedChange.create(project, patchPath, beforeName, afterName, status);
   }
 
   public List<ShelvedBinaryFile> getBinaryFiles() {
