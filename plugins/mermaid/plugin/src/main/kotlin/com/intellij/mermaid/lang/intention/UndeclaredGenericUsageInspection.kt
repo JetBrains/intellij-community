@@ -74,7 +74,7 @@ class UndeclaredGenericUsageInspection : LocalInspectionTool() {
     }
   }
 
-  class RemoveGenericToDeclarationQuickFix() : UndeclaredGenericLocalQuickFix() {
+  class RemoveGenericToDeclarationQuickFix: UndeclaredGenericLocalQuickFix() {
     override fun getFamilyName() = MermaidBundle.message("fix.remove.generic.to.declaration")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
@@ -83,7 +83,7 @@ class UndeclaredGenericUsageInspection : LocalInspectionTool() {
     }
   }
 
-  class AddGenericToDeclarationQuickFix() : UndeclaredGenericLocalQuickFix() {
+  class AddGenericToDeclarationQuickFix: UndeclaredGenericLocalQuickFix() {
     override fun getFamilyName() = MermaidBundle.message("fix.add.generic.to.declaration")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
@@ -91,7 +91,7 @@ class UndeclaredGenericUsageInspection : LocalInspectionTool() {
     }
   }
 
-  class RemoveGenericQuickFix() : UndeclaredGenericLocalQuickFix() {
+  class RemoveGenericQuickFix: UndeclaredGenericLocalQuickFix() {
     override fun getFamilyName() = MermaidBundle.message("fix.remove.generic")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
@@ -99,7 +99,7 @@ class UndeclaredGenericUsageInspection : LocalInspectionTool() {
     }
   }
 
-  abstract class UndeclaredGenericLocalQuickFix() : LocalQuickFix {
+  abstract class UndeclaredGenericLocalQuickFix: LocalQuickFix {
     protected fun deleteGenericElement(descriptor: ProblemDescriptor) {
       val genericTypeId = descriptor.psiElement
       val genericElement = genericTypeId.parentOfType<MermaidGeneric>() ?: return
