@@ -53,21 +53,11 @@ private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "
 
 private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
 
-internal fun splashScreenNeeded(args: List<String>): Boolean {
-  return !AppMode.isLightEdit()
-         && CommandLineArgs.isSplashNeeded(args)
-
-         // Wayland doesn't have the concept of splash screens at all, so they may not appear centered.
-         // Avoid showing the splash screen at all in this case up until this is solved (as, for example,
-         // in java.awt.SplashScreen that works around the issue using some tricks and the native API).
-         && !SystemInfo.isWaylandToolkit()
-}
-
 internal fun CoroutineScope.scheduleShowSplashIfNeeded(initUiDeferred: Job,
                                                        appInfoDeferred: Deferred<ApplicationInfo>,
                                                        args: List<String>) {
   launch(CoroutineName("showSplashIfNeeded")) {
-    if (splashScreenNeeded(args)) {
+    if (!AppMode.isLightEdit() && CommandLineArgs.isSplashNeeded(args)) {
       try {
         showSplashIfNeeded(initUiDeferred = initUiDeferred, appInfoDeferred = appInfoDeferred)
       }
@@ -96,6 +86,16 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferr
     // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
     // https://youtrack.jetbrains.com/issue/IDEA-286544
     initUiDeferred.join()
+
+    /*
+    Wayland doesn't have the concept of splash screens at all, so they may not appear centered.
+    Avoid showing the splash screen at all in this case up until this is solved (as, for example,
+    in java.awt.SplashScreen that works around the issue using some tricks and the native API).
+    We check only here as isWaylandToolkit calls `Toolkit.getDefaultToolkit()` - it should be done only when initUiDeferred is completed
+    */
+    if (SystemInfoRt.isLinux && SystemInfo.isWaylandToolkit()) {
+      return@launch
+    }
 
     val appInfo = appInfoDeferred.await()
     val image = span("splash preparation") {
