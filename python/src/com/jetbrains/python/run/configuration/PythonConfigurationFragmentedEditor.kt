@@ -38,7 +38,6 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
     scriptParametersFragment.actionHint = PyBundle.message("python.run.configuration.fragments.script.parameters.hint")
     fragments.add(scriptParametersFragment)
 
-
     val runWithConsole = SettingsEditorFragment.createTag<PythonRunConfiguration>(
       "py.run.with.python.console",
       PyBundle.message("python.run.configuration.fragments.run.with.python.console"),
@@ -67,19 +66,19 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
         "py.redirect.input",
         ExecutionBundle.message("redirect.input.from.name"),
         ExecutionBundle.message("group.operating.system"),
-        labeledComponent, SettingsEditorFragmentType.COMMAND_LINE,
-        { config: PythonRunConfiguration, component: LabeledComponent<TextFieldWithBrowseButton> ->
+        labeledComponent,
+        SettingsEditorFragmentType.EDITOR,
+        { config, component ->
           component.component.text = config.inputFile
         },
-        { config: PythonRunConfiguration, component: LabeledComponent<TextFieldWithBrowseButton> ->
+        { config, component ->
           val filePath = component.component.text
           config.isRedirectInput = component.isVisible && StringUtil.isNotEmpty(filePath)
           config.inputFile = filePath
         },
-        { config: PythonRunConfiguration -> config.isRedirectInput })
+        { config -> config.isRedirectInput })
     redirectInputFrom.actionHint = ExecutionBundle.message("read.input.from.the.specified.file")
-    redirectInputFrom.setHint(ExecutionBundle.message("read.input.from.the.specified.file"))
-    fragments.add(redirectInputFrom)
+    addToFragmentsBeforeEditors(fragments, redirectInputFrom)
 
     val editors = mutableListOf<SettingsEditorFragment<PythonRunConfiguration, *>>()
     editors.add(runWithConsole)

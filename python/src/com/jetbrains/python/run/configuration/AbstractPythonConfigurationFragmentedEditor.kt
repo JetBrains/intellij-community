@@ -46,11 +46,13 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
       "py.interpreter.options",
       PyBundle.message("python.run.configuration.fragments.interpreter.options"),
       PyBundle.message("python.run.configuration.fragments.python.group"),
-      interpreterOptionsField, SettingsEditorFragmentType.COMMAND_LINE,
+      interpreterOptionsField,
+      SettingsEditorFragmentType.COMMAND_LINE,
       { config: T, field: RawCommandLineEditor -> field.text = config.interpreterOptions },
       { config: T, field: RawCommandLineEditor -> config.interpreterOptions = field.text.trim() },
       { config: T -> !config.interpreterOptions.trim().isEmpty() })
     interpreterOptionsField.editorField.emptyText.setText(PyBundle.message("python.run.configuration.fragments.interpreter.options.placeholder"))
+    FragmentedSettingsUtil.setupPlaceholderVisibility(interpreterOptionsField.editorField)
     interpreterOptionsFragment.setHint(PyBundle.message("python.run.configuration.fragments.interpreter.options.hint"))
     interpreterOptionsFragment.actionHint = PyBundle.message("python.run.configuration.fragments.interpreter.options.hint")
     fragments.add(interpreterOptionsFragment)
@@ -89,6 +91,16 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
           }
         }
       })
+    }
+  }
+
+  fun addToFragmentsBeforeEditors(fragments: MutableList<SettingsEditorFragment<T, *>>, newFragment: SettingsEditorFragment<T, *>) {
+    // Q: not sure whether it makes sense to make it more generic, not only for EDITOR type
+    val index = fragments.indexOfFirst { it.isEditor }
+    if (index == -1) {
+      fragments.add(newFragment)
+    } else {
+      fragments.add(index, newFragment)
     }
   }
 
