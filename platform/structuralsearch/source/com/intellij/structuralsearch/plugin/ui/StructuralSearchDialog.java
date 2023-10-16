@@ -164,7 +164,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   private JCheckBox myOpenInNewTab;
 
   private JComponent myReplacePanel;
-  private SwitchAction mySwitchAction;
   private final ArrayList<JComponent> myComponentsWithEditorBackground = new ArrayList<>();
   private JComponent mySearchWrapper;
   private JBCheckBox myInjected;
@@ -570,11 +569,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         }
       };
 
-    // Switch action
-    mySwitchAction = new SwitchAction();
-
     final DefaultActionGroup optionsActionGroup =
-      new DefaultActionGroup(myFileTypeChooser, showTemplatesAction, filterAction, new Separator(), pinAction, mySwitchAction);
+      new DefaultActionGroup(myFileTypeChooser, showTemplatesAction, filterAction, new Separator(), pinAction, new SwitchAction());
     final ActionManager actionManager = ActionManager.getInstance();
     myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar("StructuralSearchDialog", optionsActionGroup, true);
     myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
@@ -1043,8 +1039,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         return false;
       }
       if (configuration instanceof ReplaceConfiguration && !myReplace) {
-        mySwitchAction.actionPerformed(
-          AnActionEvent.createFromAnAction(mySwitchAction, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
+        switchSearchReplace();
       }
       loadConfiguration(configuration);
       securityCheck();
@@ -1246,6 +1241,22 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     }
   }
 
+  private void switchSearchReplace() {
+    storeDimensions();
+    myReplace = !myReplace;
+    setTitle(getDefaultTitle());
+    myReplacePanel.setVisible(myReplace);
+    loadConfiguration(myConfiguration);
+    final Dimension size =
+      DimensionService.getInstance().getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, myProject);
+    if (size != null) {
+      setSize(size.width, size.height);
+    }
+    else {
+      pack();
+    }
+  }
+
   private static class ErrorBorder implements Border {
     private final Border myErrorBorder;
 
@@ -1279,28 +1290,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   private class SwitchAction extends AnAction implements DumbAware {
 
     SwitchAction() {
-      init();
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      storeDimensions();
-      myReplace = !myReplace;
-      setTitle(getDefaultTitle());
-      myReplacePanel.setVisible(myReplace);
-      loadConfiguration(myConfiguration);
-      final Dimension size =
-        DimensionService.getInstance().getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, e.getProject());
-      if (size != null) {
-        setSize(size.width, size.height);
-      }
-      else {
-        pack();
-      }
-      init();
-    }
-
-    private void init() {
       getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
       final ActionManager actionManager = ActionManager.getInstance();
       final ShortcutSet searchShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet();
@@ -1309,6 +1298,11 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
                                       ? new CompositeShortcutSet(searchShortcutSet, replaceShortcutSet)
                                       : new CompositeShortcutSet(replaceShortcutSet, searchShortcutSet);
       registerCustomShortcutSet(shortcutSet, getRootPane());
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      switchSearchReplace();
     }
 
     @Override
