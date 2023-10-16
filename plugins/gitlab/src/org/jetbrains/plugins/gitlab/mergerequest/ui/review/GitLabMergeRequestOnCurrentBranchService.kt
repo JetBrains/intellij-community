@@ -19,7 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.GitlabIcons
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 

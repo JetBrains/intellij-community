@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabMergeRequestDiffFile(override val connectionId: String,

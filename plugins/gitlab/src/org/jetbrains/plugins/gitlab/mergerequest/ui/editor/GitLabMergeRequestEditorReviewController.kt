@@ -25,7 +25,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.supervisorScope
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.PROJECT)

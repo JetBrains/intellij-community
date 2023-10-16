@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
+package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model
 
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapScoped
@@ -21,7 +21,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowProjectViewModel.Companion.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel.Companion.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 @Service(Service.Level.PROJECT)

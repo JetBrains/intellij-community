@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 

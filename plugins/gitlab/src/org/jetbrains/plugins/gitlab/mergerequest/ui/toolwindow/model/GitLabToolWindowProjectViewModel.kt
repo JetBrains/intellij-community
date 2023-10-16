@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
+package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.async.launchNow
@@ -41,6 +41,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsP
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 
 private val LOG = logger<GitLabToolWindowProjectViewModel>()
 
