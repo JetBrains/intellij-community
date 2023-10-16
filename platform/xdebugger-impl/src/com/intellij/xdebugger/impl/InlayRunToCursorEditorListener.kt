@@ -100,7 +100,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       return true
     }
 
-    if (editor.getEditorKind() != EditorKind.MAIN_EDITOR) {
+    if (editor.getEditorKind() != EditorKind.MAIN_EDITOR && e != null) {
       return true
     }
     val session = XDebuggerManager.getInstance(project).getCurrentSession() as XDebugSessionImpl?
@@ -109,7 +109,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       return true
     }
     IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = true
-    val lineNumber = if (e != null) XDebuggerManagerImpl.getLineNumber(e) else lineFromCurrentMouse(editor)
+    val lineNumber = if (e != null) XDebuggerManagerImpl.getLineNumber(e) else lineFromCurrentMouse(editor) ?: return false
     if (lineNumber < 0) {
       return true
     }
@@ -122,9 +122,14 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     return true
   }
 
-  private fun lineFromCurrentMouse(editor: Editor): Int {
+  private fun lineFromCurrentMouse(editor: Editor): Int? {
     val location = MouseInfo.getPointerInfo().location
     SwingUtilities.convertPointFromScreen(location, editor.getContentComponent())
+
+    val editorGutterComponentEx = editor.gutter as? EditorGutterComponentEx ?: return null
+    if (!editor.getContentComponent().bounds.contains(location) && !editorGutterComponentEx.bounds.contains(location)) {
+      return null
+    }
 
     val logicalPosition: LogicalPosition = editor.xyToLogicalPosition(location)
     if (logicalPosition.line >= editor.document.getLineCount()) {
