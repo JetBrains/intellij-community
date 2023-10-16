@@ -4,6 +4,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.LiteAnalyzer;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ArrayUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -672,6 +673,7 @@ final class PuritySolver {
         propagateEffects = new Effects[]{effects, new Effects(DataValue.UnknownDataValue1, Effects.TOP_EFFECTS)};
       }
       for (int i = 0; i < propagateKeys.length; i++) {
+        ProgressManager.checkCanceled();
         EKey pKey = propagateKeys[i];
         Effects pEffects = propagateEffects[i];
         Set<EKey> dKeys = dependencies.remove(pKey);
