@@ -224,15 +224,15 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
       val roundingTopGapPatch = cell.lcrCell.component.preferredSize.height % 2
       val gaps = UnscaledGaps(top = roundingTopGapPatch, left = if (builder.x == 0) 0 else getGapValue(cell.gap))
       val horizontalAlign = when (cell.align) {
-        LcrInitParams.Align.LEFT -> HorizontalAlign.LEFT
-        LcrInitParams.Align.FILL -> HorizontalAlign.FILL
+        null, LcrInitParams.Align.LEFT -> HorizontalAlign.LEFT
+        LcrInitParams.Align.CENTER -> HorizontalAlign.CENTER
         LcrInitParams.Align.RIGHT -> HorizontalAlign.RIGHT
       }
 
       builder.cell(cell.lcrCell.component, gaps = gaps,
                    horizontalAlign = horizontalAlign,
                    verticalAlign = VerticalAlign.CENTER,
-                   resizableColumn = cell.align != LcrInitParams.Align.LEFT,
+                   resizableColumn = cell.align != null,
                    baselineAlign = cell.baselineAlign)
     }
 
@@ -274,7 +274,7 @@ private data class ListCellRendererParams<T>(val list: JList<out T>,
                                              val selected: Boolean,
                                              val hasFocus: Boolean)
 
-private data class CellInfo(val lcrCell: LcrCellBaseImpl, val align: LcrInitParams.Align, val baselineAlign: Boolean, val gap: LcrRow.Gap)
+private data class CellInfo(val lcrCell: LcrCellBaseImpl, val align: LcrInitParams.Align?, val baselineAlign: Boolean, val gap: LcrRow.Gap)
 
 private class LcrCellCache {
 

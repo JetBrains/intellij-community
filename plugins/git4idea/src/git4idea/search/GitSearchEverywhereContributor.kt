@@ -132,7 +132,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
            is VcsCommitMetadata -> value.subject
            else -> ""
          }) {
-      align = LcrInitParams.Align.FILL
+      align = LcrInitParams.Align.LEFT
     }
 
     @NlsSafe
