@@ -129,8 +129,8 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
   }
 
   override fun icon(icon: Icon, init: (LcrIconInitParams.() -> Unit)?) {
-    val accessibleName = (icon as? Accessible)?.accessibleContext?.accessibleName
-    val initParams = LcrIconInitParamsImpl(accessibleName)
+    val initParams = LcrIconInitParams()
+    initParams.accessibleName = (icon as? Accessible)?.accessibleContext?.accessibleName
     if (init != null) {
       initParams.init()
     }
@@ -141,12 +141,13 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
   }
 
   override fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)?) {
-    val initParams = LcrTextInitParamsImpl(text, foreground)
+    val initParams = LcrTextInitParams(foreground)
+    initParams.accessibleName = text
     if (init != null) {
       initParams.init()
     }
 
-    val result = if (initParams.isSimpleText()) {
+    val result = if (initParams.attributes == null) {
       lcrCellCache.occupyText().apply {
         init(text, initParams, selected, foreground)
       }
@@ -240,7 +241,7 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
     return selectablePanel
   }
 
-  private fun add(lcrCell: LcrCellBaseImpl, initParams: LcrInitParamsImpl, baselineAlign: Boolean) {
+  private fun add(lcrCell: LcrCellBaseImpl, initParams: LcrInitParams, baselineAlign: Boolean) {
     cells.add(CellInfo(lcrCell, initParams.align, baselineAlign, gap))
     gap = LcrRow.Gap.DEFAULT
   }

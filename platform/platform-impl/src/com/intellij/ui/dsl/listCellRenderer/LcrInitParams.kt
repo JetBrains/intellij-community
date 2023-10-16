@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
 @LcrDslMarker
-interface LcrInitParams {
+sealed class LcrInitParams {
 
   enum class Align {
     LEFT,
@@ -22,10 +22,7 @@ interface LcrInitParams {
     RIGHT
   }
 
-  /**
-   * Default value is [Align.LEFT]
-   */
-  var align: Align
+  var align: Align = Align.LEFT
 
-  var accessibleName: @Nls String?
+  var accessibleName: @Nls String? = null
 }
