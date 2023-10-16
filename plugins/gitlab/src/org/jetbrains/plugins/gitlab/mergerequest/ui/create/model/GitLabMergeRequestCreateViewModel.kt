@@ -2,19 +2,22 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.create.model
 
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.ui.ListenableProgressIndicator
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.childScope
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitPushUtil
 import git4idea.GitRemoteBranch
+import git4idea.config.GitSharedSettings
 import git4idea.history.GitLogUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
@@ -30,7 +33,14 @@ internal interface GitLabMergeRequestCreateViewModel {
 
   val branchState: Flow<BranchState?>
 
+  val mergeRequestOnCurrentBranch: Flow<String?>
+  val creatingProgressText: Flow<String?>
   val commits: SharedFlow<Result<List<VcsCommitMetadata>>?>
+
+  val reviewRequirementsErrorState: Flow<MergeRequestRequirementsErrorType?>
+  val reviewCreatingError: Flow<Throwable?>
+
+  val openReviewTabAction: suspend (mrIid: String) -> Unit
 
   fun updateTitle(text: String)
   fun updateBranchState(state: BranchState?)
@@ -44,12 +54,24 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   parentCs: CoroutineScope,
   override val projectsManager: GitLabProjectsManager,
   override val projectData: GitLabProject,
-  private val onMergeRequestCreated: suspend (mrIid: String) -> Unit
+  override val mergeRequestOnCurrentBranch: Flow<String?>,
+  override val openReviewTabAction: suspend (mrIid: String) -> Unit
 ) : GitLabMergeRequestCreateViewModel {
   private val cs: CoroutineScope = parentCs.childScope()
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
+
+  private val listenableProgressIndicator = ListenableProgressIndicator()
+  override val creatingProgressText: Flow<String?> = callbackFlow {
+    val listenerDisposable = Disposer.newDisposable()
+    listenableProgressIndicator.addAndInvokeListener(listenerDisposable) {
+      trySend(listenableProgressIndicator.text)
+    }
+    awaitClose {
+      Disposer.dispose(listenerDisposable)
+    }
+  }
 
   private val _branchState: MutableStateFlow<BranchState?> = MutableStateFlow(null)
   override val branchState: Flow<BranchState?> = _branchState.asSharedFlow()
@@ -73,7 +95,18 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     emit(result)
   }.modelFlow(cs, thisLogger())
 
-  private val creatingError: MutableStateFlow<Throwable?> = MutableStateFlow(null)
+  override val reviewRequirementsErrorState: Flow<MergeRequestRequirementsErrorType?> =
+    combine(branchState, commits) { branchState, commits ->
+      branchState ?: return@combine null
+      commits ?: return@combine null
+
+      checkDirection(branchState)
+      ?: checkChanges(commits)
+      ?: checkProtectedBranch(branchState, project)
+    }
+
+  private val _reviewCreatingError: MutableStateFlow<Throwable?> = MutableStateFlow(null)
+  override val reviewCreatingError: StateFlow<Throwable?> = _reviewCreatingError.asStateFlow()
 
   private val title: MutableStateFlow<String> = MutableStateFlow("")
 
@@ -100,6 +133,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   override fun createMergeRequest() {
     taskLauncher.launch {
       val (_, baseBranch, headRepo, headBranch) = _branchState.value ?: return@launch
+      _reviewCreatingError.value = null
       try {
         val gitRemoteBranch = findGitRemoteBranch(headRepo, headBranch)
         val mergeRequest = projectData.createMergeRequest(
@@ -107,13 +141,13 @@ internal class GitLabMergeRequestCreateViewModelImpl(
           targetBranch = baseBranch.nameForRemoteOperations,
           title = title.value.ifBlank { gitRemoteBranch.nameForRemoteOperations }
         )
-        onMergeRequestCreated(mergeRequest.iid)
+        openReviewTabAction(mergeRequest.iid)
       }
       catch (e: CancellationException) {
         throw e
       }
       catch (e: Throwable) {
-        creatingError.value = e
+        _reviewCreatingError.value = e
       }
     }
   }
@@ -129,7 +163,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
             GitLabBundle.message("merge.request.create.branch.dialog.comment", headBranch.name, headRepo.gitRemote.name)
           )
           GitPushUtil.findOrPushRemoteBranch(
-            project, EmptyProgressIndicator(),
+            project, listenableProgressIndicator,
             headRepo.gitRepository, headRepo.gitRemote, headBranch,
             dialogMessages
           ).await()
@@ -156,4 +190,43 @@ internal data class BranchState(
       )
     }
   }
+}
+
+internal enum class MergeRequestRequirementsErrorType {
+  WRONG_DIRECTION,
+  NO_CHANGES,
+  PROTECTED_BRANCH
+}
+
+private fun checkDirection(branchState: BranchState): MergeRequestRequirementsErrorType? {
+  val headBranch = branchState.headBranch
+  val baseBranch = branchState.baseBranch
+  val baseRepo = branchState.baseRepo
+
+  val trackInfo = baseRepo.gitRepository.getBranchTrackInfo(baseBranch.nameForRemoteOperations) ?: return null
+  return if (trackInfo.localBranch == headBranch) MergeRequestRequirementsErrorType.WRONG_DIRECTION else null
+}
+
+private fun checkChanges(loadingCommits: Result<List<VcsCommitMetadata>>): MergeRequestRequirementsErrorType? {
+  return loadingCommits.fold(
+    onSuccess = { commits ->
+      if (commits.isNotEmpty()) return@fold null
+      MergeRequestRequirementsErrorType.NO_CHANGES
+    },
+    onFailure = {
+      null
+    }
+  )
+}
+
+private fun checkProtectedBranch(branchState: BranchState, project: Project): MergeRequestRequirementsErrorType? {
+  val settings = GitSharedSettings.getInstance(project)
+  val localBranchName = if (branchState.headBranch is GitRemoteBranch)
+    branchState.headBranch.nameForRemoteOperations
+  else
+    branchState.headBranch.name
+
+  if (!settings.isBranchProtected(localBranchName)) return null
+
+  return MergeRequestRequirementsErrorType.PROTECTED_BRANCH
 }

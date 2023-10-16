@@ -99,14 +99,17 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
     parentCs: CoroutineScope,
     projectsManager: GitLabProjectsManager,
     projectData: GitLabProject,
-    onMergeRequestCreated: suspend (mrIid: String) -> Unit
+    mergeRequestOnCurrentBranch: Flow<String?>,
+    openReviewTabAction: suspend (mrIid: String) -> Unit
   ) : GitLabReviewTabViewModel {
     private val cs = parentCs.childScope()
 
     private val projectPath = projectData.projectMapping.repository.projectPath.fullPath()
     override val displayName: String = GitLabBundle.message("merge.request.create.tab.title", projectPath)
 
-    val createVm = GitLabMergeRequestCreateViewModelImpl(project, cs, projectsManager, projectData, onMergeRequestCreated)
+    val createVm = GitLabMergeRequestCreateViewModelImpl(
+      project, cs, projectsManager, projectData, mergeRequestOnCurrentBranch, openReviewTabAction
+    )
 
     override suspend fun destroy() = cs.cancelAndJoinSilently()
   }
