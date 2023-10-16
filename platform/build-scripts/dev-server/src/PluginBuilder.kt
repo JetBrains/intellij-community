@@ -11,23 +11,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.UNMODIFIED_MARK_FILE_NAME
+import org.jetbrains.intellij.build.createMarkFile
 import org.jetbrains.intellij.build.impl.*
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
-import java.util.*
 import java.util.concurrent.atomic.LongAdder
-
-private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)
-
-internal fun createMarkFile(file: Path) {
-  try {
-    Files.newByteChannel(file, TOUCH_OPTIONS)
-  }
-  catch (ignore: NoSuchFileException) {
-  }
-}
 
 internal data class PluginBuildDescriptor(@JvmField val dir: Path,
                                           @JvmField val layout: PluginLayout,
@@ -72,10 +61,7 @@ internal suspend fun buildPlugin(plugin: PluginBuildDescriptor,
 
   val reason = withContext(Dispatchers.IO) {
     // check cache
-    val reason = checkCache(plugin = plugin, projectOutDir = outDir, pluginCacheRootDir = pluginCacheRootDir)
-    if (reason == null) {
-      return@withContext null
-    }
+    val reason = checkCache(plugin = plugin, projectOutDir = outDir, pluginCacheRootDir = pluginCacheRootDir) ?: return@withContext null
 
     if (mainModule != "intellij.platform.builtInHelp") {
       checkOutputOfPluginModules(mainPluginModule = mainModule,
@@ -93,8 +79,8 @@ internal suspend fun buildPlugin(plugin: PluginBuildDescriptor,
     .setAttribute("reason", reason)
     .useWithScope2 {
       layoutDistribution(layout = plugin.layout,
-                         targetDirectory = plugin.dir,
                          platformLayout = platformLayout,
+                         targetDirectory = plugin.dir,
                          moduleOutputPatcher = moduleOutputPatcher,
                          includedModules = plugin.layout.includedModules,
                          context = context)

@@ -7,7 +7,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
-import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
@@ -62,7 +61,7 @@ interface BuildContext : CompilationContext {
   /**
    * Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM classpath to start the IDE.
    */
-  var bootClassPathJarNames: PersistentList<String>
+  var bootClassPathJarNames: List<String>
 
   /**
    * Specifies name of Java class which should be used to start the IDE.
@@ -127,6 +126,8 @@ interface BuildContext : CompilationContext {
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
   fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
+
+  suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
 }
 
 @Obsolete

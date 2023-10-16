@@ -28,7 +28,7 @@ import kotlin.io.path.nameWithoutExtension
 
 class MacDistributionBuilder(override val context: BuildContext,
                              private val customizer: MacDistributionCustomizer,
-                             private val ideaProperties: Path?) : OsSpecificDistributionBuilder {
+                             private val ideaProperties: CharSequence?) : OsSpecificDistributionBuilder {
   internal companion object {
     const val NO_RUNTIME_SUFFIX = "-no-jdk"
   }
@@ -95,7 +95,7 @@ class MacDistributionBuilder(override val context: BuildContext,
     )
     customizer.getCustomIdeaProperties(context.applicationInfo).forEach(BiConsumer { k, v -> platformProperties.add("$k=$v") })
 
-    layoutMacApp(ideaPropertiesFile = ideaProperties!!,
+    layoutMacApp(ideaPropertyContent = ideaProperties!!,
                  platformProperties = platformProperties,
                  docTypes = getDocTypes(),
                  macDistDir = macDistDir,
@@ -103,7 +103,7 @@ class MacDistributionBuilder(override val context: BuildContext,
 
     generateBuildTxt(context, macDistDir.resolve("Resources"))
 
-    // if copyDistFiles false, it means that we will copy dist files directly without stage dir
+    // if copyDistFiles false, it means that we will copy dist files directly without a stage dir
     if (copyDistFiles) {
       copyDistFiles(context = context, newDir = macDistDir, os = OsFamily.MACOS, arch = arch)
     }
@@ -207,14 +207,15 @@ class MacDistributionBuilder(override val context: BuildContext,
     return vmOptionsPath
   }
 
-  private suspend fun layoutMacApp(ideaPropertiesFile: Path,
+  private suspend fun layoutMacApp(ideaPropertyContent: CharSequence,
                                    platformProperties: List<String>,
                                    docTypes: String?,
                                    macDistDir: Path,
                                    arch: JvmArchitecture) {
     val macCustomizer = customizer
-    copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"), macDistDir.resolve("bin"), customizer.binFilesFilter)
-    copyFileToDir(NativeBinaryDownloader.downloadRestarter(context, OsFamily.MACOS, arch), macDistDir.resolve("bin"))
+    val macBinDir = macDistDir.resolve("bin")
+    copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"), macBinDir, customizer.binFilesFilter)
+    copyFileToDir(NativeBinaryDownloader.downloadRestarter(context, OsFamily.MACOS, arch), macBinDir)
     copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
     val executable = context.productProperties.baseFileName
@@ -256,14 +257,13 @@ class MacDistributionBuilder(override val context: BuildContext,
     val version = if (isNotRelease) "EAP ${context.fullBuildNumber}" else "${context.applicationInfo.majorVersion}.${minor}"
     val isEap = if (isNotRelease) "-EAP" else ""
 
-    val properties = Files.readAllLines(ideaPropertiesFile)
-    properties.addAll(platformProperties)
-    Files.write(macDistDir.resolve("bin/idea.properties"), properties)
+    Files.writeString(macBinDir.resolve(PROPERTIES_FILE_NAME),
+                      (ideaPropertyContent.lineSequence() + platformProperties).joinToString(separator = "\n"))
 
     val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
     val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
 
-    writeVmOptions(macDistDir.resolve("bin"))
+    writeVmOptions(macBinDir)
 
     val errorFilePath = "-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log"
     val heapDumpPath = "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"
@@ -328,8 +328,7 @@ class MacDistributionBuilder(override val context: BuildContext,
       )
     )
 
-    val distBinDir = macDistDir.resolve("bin")
-    Files.createDirectories(distBinDir)
+    Files.createDirectories(macBinDir)
 
     val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/scripts")
     Files.newDirectoryStream(sourceScriptDir).use { stream ->
@@ -347,7 +346,7 @@ class MacDistributionBuilder(override val context: BuildContext,
             // https://youtrack.jetbrains.com/issue/IJI-526/Force-git-to-use-LF-line-endings-in-working-copy-of-via-gitattri
             Files.writeString(sourceFileLf, Files.readString(file).replace("\r", ""))
 
-            val target = distBinDir.resolve(fileName)
+            val target = macBinDir.resolve(fileName)
             substituteTemplatePlaceholders(
               sourceFileLf,
               target,

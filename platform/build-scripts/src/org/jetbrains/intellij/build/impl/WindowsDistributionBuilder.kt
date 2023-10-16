@@ -22,7 +22,7 @@ import kotlin.io.path.extension
 internal class WindowsDistributionBuilder(
   override val context: BuildContext,
   private val customizer: WindowsDistributionCustomizer,
-  private val ideaProperties: Path?,
+  private val ideaProperties: CharSequence?,
 ) : OsSpecificDistributionBuilder {
   private val icoFile: Path?
 
@@ -54,8 +54,7 @@ internal class WindowsDistributionBuilder(
       generateBuildTxt(context, targetPath)
       copyDistFiles(context = context, newDir = targetPath, os = OsFamily.WINDOWS, arch = arch)
 
-      Files.writeString(distBinDir.resolve(ideaProperties!!.fileName),
-                        StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "\r\n"))
+      Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))
 
       if (icoFile != null) {
         Files.copy(icoFile, distBinDir.resolve("${context.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)

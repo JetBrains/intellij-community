@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtilRt
@@ -7,8 +7,6 @@ import java.nio.file.Path
 import java.util.function.BiConsumer
 
 object BuildUtils {
-  @JvmStatic
-  @JvmOverloads
   fun replaceAll(text: String, replacements: Map<String, String>, marker: String = "__"): String {
     var result = text
     replacements.forEach(BiConsumer { k, v ->
@@ -17,8 +15,6 @@ object BuildUtils {
     return result
   }
 
-  @JvmStatic
-  @JvmOverloads
   fun copyAndPatchFile(sourcePath: Path,
                        targetPath: Path,
                        replacements: Map<String, String>,
@@ -50,17 +46,6 @@ object BuildUtils {
   fun getPluginJars(pluginPath: Path): List<Path> {
     return Files.newDirectoryStream(pluginPath.resolve("lib"), "*.jar").use { it.toList() }
   }
-
-  val isUnderJpsBootstrap: Boolean
-    get() = System.getenv("JPS_BOOTSTRAP_COMMUNITY_HOME") != null
 }
 
-fun convertLineSeparators(file: Path, newLineSeparator: String) {
-  val data = Files.readString(file)
-  val convertedData = StringUtilRt.convertLineSeparators(data, newLineSeparator)
-  if (data != convertedData) {
-    Files.writeString(file, convertedData)
-  }
-}
-
-fun String.withTrailingSlash() = if (endsWith('/')) this else "${this}/"
+internal fun String.withTrailingSlash(): String = if (endsWith('/')) this else "${this}/"

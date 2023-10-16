@@ -109,7 +109,7 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
           error("majorReleaseDate may be omitted only for EAP")
         }
       }
-      formatMajorReleaseDate(majorReleaseDate, buildOptions.buildDateInSeconds)
+      formatMajorReleaseDate(majorReleaseDateRaw = majorReleaseDate, buildDateInSeconds = buildOptions.buildDateInSeconds)
     }
     productName = namesTag.getAttributeValue("fullname") ?: shortProductName
     edition = namesTag.getAttributeValue("edition")

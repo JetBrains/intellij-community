@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.devServer
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.util.PathUtilRt
@@ -21,12 +22,10 @@ import java.math.BigInteger
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import kotlin.io.path.copyTo
+import java.nio.file.StandardCopyOption
 import kotlin.io.path.exists
-import kotlin.io.path.moveTo
 import kotlin.time.Duration.Companion.seconds
 
-internal const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
 private const val PLUGIN_CACHE_DIR_NAME = "plugin-cache"
 
 data class BuildRequest(
@@ -34,17 +33,18 @@ data class BuildRequest(
   @JvmField val additionalModules: List<String>,
   @JvmField val isIdeProfileAware: Boolean = false,
   @JvmField val homePath: Path,
-  @JvmField val productionClassOutput: Path =
-    Path.of(System.getenv("CLASSES_DIR") ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
+  @JvmField val productionClassOutput: Path = Path.of(System.getenv("CLASSES_DIR")
+                                                      ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
   @JvmField val keepHttpClient: Boolean = true,
   @JvmField val platformClassPathConsumer: ((classPath: Set<Path>, runDir: Path) -> Unit)? = null,
 ) {
-  override fun toString(): String =
-    "BuildRequest(platformPrefix='$platformPrefix', " +
-    "additionalModules=$additionalModules, " +
-    "isIdeProfileAware=$isIdeProfileAware, homePath=$homePath, " +
-    "productionClassOutput=$productionClassOutput, " +
-    "keepHttpClient=$keepHttpClient"
+  override fun toString(): String {
+    return "BuildRequest(platformPrefix='$platformPrefix', " +
+           "additionalModules=$additionalModules, " +
+           "isIdeProfileAware=$isIdeProfileAware, homePath=$homePath, " +
+           "productionClassOutput=$productionClassOutput, " +
+           "keepHttpClient=$keepHttpClient"
+  }
 }
 
 internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest): Path {
@@ -91,14 +91,14 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     launch {
       launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
-        Files.createDirectories(runDir.resolve("bin")).also { distBinDir ->
-          getOsDistributionBuilder(os = OsFamily.currentOs, context = context)!!.writeVmOptions(distBinDir)
-            // copying outside the installation directory is necessary to specify system property "jb.vmOptionsFile"
-            .apply { this.copyTo(distBinDir.parent.parent.resolve(this.fileName), overwrite = true) }
+        val binDir = Files.createDirectories(runDir.resolve("bin"))
+        val osDistributionBuilder = getOsDistributionBuilder(os = OsFamily.currentOs, context = context)!!
+        val vmOptionsFile = osDistributionBuilder.writeVmOptions(binDir)
+        // copying outside the installation directory is necessary to specify system property "jb.vmOptionsFile"
+        Files.copy(vmOptionsFile, binDir.parent.parent.resolve(vmOptionsFile.fileName), StandardCopyOption.REPLACE_EXISTING)
 
-          patchIdeaPropertiesFile(context).apply { moveTo(distBinDir.resolve(this.fileName), overwrite = true) }
-        }
-        Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
+        val ideaPropertyFile = binDir.resolve(PathManager.PROPERTIES_FILE_NAME)
+        Files.writeString(ideaPropertyFile, createIdeaPropertyFile(context))
       }
 
       val classPath = spanBuilder("compute lib classpath").useWithScope2 {
@@ -197,6 +197,7 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
         options.outputRootPath = runDir
         options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
         options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
+        options.buildStepsToSkip.add(BuildOptions.FUS_METADATA_BUNDLE_STEP)
         if (options.enableEmbeddedJetBrainsClient && System.getProperty("idea.dev.build.unpacked").toBoolean()) {
           options.enableEmbeddedJetBrainsClient = false
         }
@@ -293,29 +294,57 @@ private fun getBuildModules(productConfiguration: ProductConfiguration): Sequenc
   sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
 
 private suspend fun layoutPlatform(runDir: Path, platformLayout: PlatformLayout, context: BuildContext): Set<Path> {
-  val projectStructureMapping = layoutPlatformDistribution(moduleOutputPatcher = ModuleOutputPatcher(),
-                                                           targetDirectory = runDir,
-                                                           platform = platformLayout,
-                                                           context = context,
-                                                           copyFiles = true)
-  // for some reason, maybe duplicated paths - use set
-  val classPath = LinkedHashSet<Path>()
-  projectStructureMapping.mapTo(classPath) { it.path }
+  val entries = layoutPlatformDistribution(moduleOutputPatcher = ModuleOutputPatcher(),
+                                           targetDirectory = runDir,
+                                           platform = platformLayout,
+                                           context = context,
+                                           copyFiles = true)
+  lateinit var sortedClassPath: Set<Path>
   withContext(Dispatchers.IO) {
-    copyDistFiles(context = context, newDir = runDir, os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch)
+    launch {
+      copyDistFiles(context = context, newDir = runDir, os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch)
+    }
+
+    launch {
+      val classPath = LinkedHashSet<Path>()
+      val libDir = runDir.resolve("lib")
+      for (entry in entries) {
+        val file = entry.path
+        // exclude files like ext/platform-main.jar - if file in lib, take only direct children in an account
+        if (file.startsWith(libDir) && libDir.relativize(file).nameCount != 1) {
+          continue
+        }
+
+        classPath.add(file)
+      }
+      sortedClassPath = computeAppClassPath(libDir = libDir, existing = classPath, homeDir = runDir)
+    }
+
+    launch {
+      Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
+    }
   }
-  return classPath
+  return sortedClassPath
 }
 
-private fun getBundledMainModuleNames(productProperties: ProductProperties, additionalModules: List<String>): Set<String> =
-  LinkedHashSet(productProperties.productLayout.bundledPluginModules) + additionalModules
+private fun getBundledMainModuleNames(productProperties: ProductProperties, additionalModules: List<String>): Set<String> {
+  return LinkedHashSet(productProperties.productLayout.bundledPluginModules) + additionalModules
+}
 
-fun getAdditionalModules(): Sequence<String>? =
-  System.getProperty("additional.modules")?.splitToSequence(',')?.map(String::trim)?.filter { it.isNotEmpty() }
+fun getAdditionalModules(): Sequence<String>? {
+  return System.getProperty("additional.modules")?.splitToSequence(',')?.map(String::trim)?.filter { it.isNotEmpty() }
+}
 
-fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String =
-  if (additionalModules.isEmpty()) ""
-  else BigInteger(1, sha3_256().digest(additionalModules.sorted().joinToString(separator = ",").toByteArray())).toString(Character.MAX_RADIX)
+fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
+  if (additionalModules.isEmpty()) {
+    return ""
+  }
+  else {
+    return BigInteger(1, sha3_256().digest(additionalModules.sorted()
+                                             .joinToString(separator = ",")
+                                             .toByteArray())).toString(Character.MAX_RADIX)
+  }
+}
 
 private fun CoroutineScope.prepareExistingRunDirForProduct(runDir: Path, usePluginCache: Boolean) {
   launch {
@@ -345,7 +374,8 @@ private fun CoroutineScope.prepareExistingRunDirForProduct(runDir: Path, usePlug
       try {
         Files.move(pluginDir, pluginCacheDir)
       }
-      catch (_: NoSuchFileException) { }
+      catch (_: NoSuchFileException) {
+      }
     }
     else {
       NioFiles.deleteRecursively(pluginDir)
