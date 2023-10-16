@@ -3,22 +3,25 @@ package com.intellij.execution.multilaunch.servicesView
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunManagerListener
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.multilaunch.servicesView.MultiLaunchServicesRefresher
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
 import com.intellij.execution.multilaunch.execution.ExecutionEngine
 import com.intellij.execution.multilaunch.execution.ExecutionModel
 import com.intellij.execution.multilaunch.execution.MultiLaunchExecutionModel
-import kotlinx.coroutines.CoroutineScope
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
 
-class MultiLaunchServicesRefreshActivity(private val scope: CoroutineScope) : ProjectActivity {
+class MultiLaunchServicesRefreshActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    val executionModel = ExecutionModel.getInstance(project)
-    val configurations = RunManager.getInstance(project).allConfigurationsList.filterIsInstance<MultiLaunchConfiguration>()
-    ExecutionEngine.getInstance(project).initialize()
-    executionModel.configurations.putAll(configurations.associateWith { MultiLaunchExecutionModel(it) })
-    project.messageBus.connect(scope).subscribe(RunManagerListener.TOPIC, MultiLaunchConfigurationsListener(project))
+    coroutineScope {
+      val executionModel = ExecutionModel.getInstance(project)
+      val configurations = RunManager.getInstance(project).allConfigurationsList.filterIsInstance<MultiLaunchConfiguration>()
+      ExecutionEngine.getInstance(project).initialize()
+      executionModel.configurations.putAll(configurations.associateWith { MultiLaunchExecutionModel(it) })
+      project.messageBus.connect(this).subscribe(RunManagerListener.TOPIC, MultiLaunchConfigurationsListener(project))
+      awaitCancellation()
+    }
   }
 
   inner class MultiLaunchConfigurationsListener(project: Project) : RunManagerListener {
