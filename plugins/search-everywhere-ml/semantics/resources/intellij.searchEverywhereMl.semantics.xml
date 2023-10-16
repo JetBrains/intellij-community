@@ -20,8 +20,7 @@
 
     <applicationService
       serviceInterface="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"
-      serviceImplementation="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsImpl"
-      testServiceImplementation="com.intellij.searchEverywhereMl.semantics.tests.MockSemanticSearchSettings"/>
+      serviceImplementation="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsImpl"/>
 
     <advancedSetting default="false" id="search.everywhere.ml.semantic.actions.enable"
                      groupKey="advanced.setting.search.everywhere.ml.name"
