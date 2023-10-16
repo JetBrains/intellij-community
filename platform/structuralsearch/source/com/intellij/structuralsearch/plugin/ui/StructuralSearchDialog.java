@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -1357,6 +1358,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       TextCompletionUtil.installCompletionHint(editor);
       editor.putUserData(STRUCTURAL_SEARCH_DIALOG, StructuralSearchDialog.this);
       editor.setEmbeddedIntoDialogWrapper(true);
+      editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);
       return editor;
     }
 
