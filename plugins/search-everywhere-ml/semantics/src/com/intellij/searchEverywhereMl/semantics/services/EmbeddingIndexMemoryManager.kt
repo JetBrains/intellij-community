@@ -47,7 +47,8 @@ class EmbeddingIndexMemoryManager {
   data class IndexMemoryInfo(val index: EmbeddingSearchIndex, val weight: Int, val strongLimit: Int?)
 
   companion object {
-    private val logger by lazy { Logger.getInstance(EmbeddingIndexMemoryManager::class.java) }
-    fun getInstance() = service<EmbeddingIndexMemoryManager>()
+    private val logger = Logger.getInstance(EmbeddingIndexMemoryManager::class.java)
+
+    fun getInstance(): EmbeddingIndexMemoryManager = service()
   }
 }

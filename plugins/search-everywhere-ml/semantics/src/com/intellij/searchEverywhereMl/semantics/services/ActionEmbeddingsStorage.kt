@@ -102,7 +102,7 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
 
     private val logger = Logger.getInstance(ActionEmbeddingsStorage::class.java)
 
-    fun getInstance() = service<ActionEmbeddingsStorage>()
+    fun getInstance(): ActionEmbeddingsStorage = service()
 
     private fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInActionsTab
 

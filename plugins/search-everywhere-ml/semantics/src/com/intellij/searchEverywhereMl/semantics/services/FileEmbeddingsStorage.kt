@@ -81,7 +81,7 @@ class FileEmbeddingsStorage(project: Project, private val cs: CoroutineScope)
   companion object {
     private const val INDEX_DIR = "files"
 
-    fun getInstance(project: Project) = project.service<FileEmbeddingsStorage>()
+    fun getInstance(project: Project): FileEmbeddingsStorage = project.service()
   }
 
   override fun dispose() = Unit

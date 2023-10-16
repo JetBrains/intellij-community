@@ -92,7 +92,7 @@ class LocalArtifactsManager {
       logger.debug { "Extracted model artifacts into the ${root.absoluteFile}" }
     }
     catch (e: IOException) {
-      logger.warn("Failed to download semantic search artifacts")
+      logger.warn("Failed to download semantic search artifacts: $e")
       if (!failNotificationShown) {
         showDownloadErrorNotification()
         failNotificationShown = true
@@ -108,11 +108,12 @@ class LocalArtifactsManager {
   companion object {
     const val SEMANTIC_SEARCH_RESOURCES_DIR = "semantic-search"
 
-    private val ARTIFACTS_DOWNLOAD_TASK_NAME = EmbeddingsBundle.getMessage("ml.embeddings.artifacts.download.name")
-
-    private val MODEL_VERSION = Registry.stringValue("search.everywhere.ml.semantic.model.version")
-    private val MAVEN_ROOT = "https://packages.jetbrains.team/maven/p/ml-search-everywhere/local-models/org/jetbrains/intellij/" +
-                             "searcheverywhereMl/semantics/semantic-text-search/$MODEL_VERSION/semantic-text-search-$MODEL_VERSION.jar"
+    private val ARTIFACTS_DOWNLOAD_TASK_NAME
+      get() = EmbeddingsBundle.getMessage("ml.embeddings.artifacts.download.name")
+    private val MODEL_VERSION
+      get() = Registry.stringValue("search.everywhere.ml.semantic.model.version")
+    private val MAVEN_ROOT
+      get() = Registry.stringValue("search.everywhere.ml.semantic.model.artifacts.link").replace("%MODEL_VERSION%", MODEL_VERSION)
 
     private const val MODEL_ARTIFACTS_DIR = "models"
     private const val ARCHIVE_NAME = "semantic-text-search.jar"
@@ -120,7 +121,7 @@ class LocalArtifactsManager {
 
     private val logger = Logger.getInstance(LocalArtifactsManager::class.java)
 
-    fun getInstance() = service<LocalArtifactsManager>()
+    fun getInstance(): LocalArtifactsManager = service()
 
     private fun showDownloadErrorNotification() {
       NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)

@@ -59,7 +59,7 @@ class ClassEmbeddingsStorage(project: Project, cs: CoroutineScope) : FileContent
   companion object {
     private const val INDEX_DIR = "classes"
 
-    fun getInstance(project: Project) = project.service<ClassEmbeddingsStorage>()
+    fun getInstance(project: Project): ClassEmbeddingsStorage = project.service()
   }
 }
 

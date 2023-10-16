@@ -117,7 +117,7 @@ class SemanticSearchSettingsImpl : SemanticSearchSettings, PersistentStateCompon
   override fun getActionsAPIToken(): String = Registry.stringValue("search.everywhere.ml.semantic.actions.server.token")
 
   companion object {
-    fun getInstance() = service<SemanticSearchSettings>()
+    fun getInstance(): SemanticSearchSettings = service()
   }
 }
 

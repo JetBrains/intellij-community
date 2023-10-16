@@ -59,7 +59,7 @@ class SymbolEmbeddingStorage(project: Project, cs: CoroutineScope) : FileContent
   companion object {
     private const val INDEX_DIR = "symbols"
 
-    fun getInstance(project: Project) = project.service<SymbolEmbeddingStorage>()
+    fun getInstance(project: Project): SymbolEmbeddingStorage = project.service()
   }
 }
 

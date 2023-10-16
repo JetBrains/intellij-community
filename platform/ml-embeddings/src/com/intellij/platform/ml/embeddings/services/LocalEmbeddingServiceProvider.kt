@@ -40,11 +40,13 @@ class LocalEmbeddingServiceProvider {
     }
   }
 
-  fun getServiceBlocking(downloadArtifacts: Boolean = false): LocalEmbeddingService? = runBlockingCancellable { getService(downloadArtifacts) }
+  fun getServiceBlocking(downloadArtifacts: Boolean = false): LocalEmbeddingService? = runBlockingCancellable {
+    getService(downloadArtifacts)
+  }
 
   companion object {
     private val logger = Logger.getInstance(LocalEmbeddingServiceProvider::class.java)
 
-    fun getInstance() = service<LocalEmbeddingServiceProvider>()
+    fun getInstance(): LocalEmbeddingServiceProvider = service()
   }
 }

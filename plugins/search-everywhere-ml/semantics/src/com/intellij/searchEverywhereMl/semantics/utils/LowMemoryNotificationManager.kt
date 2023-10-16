@@ -36,6 +36,6 @@ class LowMemoryNotificationManager {
   companion object {
     private const val NOTIFICATION_GROUP_ID = "Semantic search"
 
-    fun getInstance() = service<LowMemoryNotificationManager>()
+    fun getInstance(): LowMemoryNotificationManager = service()
   }
 }

@@ -20,6 +20,6 @@ class SymbolsSemanticSearchFileChangeListener(project: Project)
   }
 
   companion object {
-    fun getInstance(project: Project) = project.service<SymbolsSemanticSearchFileChangeListener>()
+    fun getInstance(project: Project): SymbolsSemanticSearchFileChangeListener = project.service()
   }
 }

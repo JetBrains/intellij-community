@@ -31,7 +31,7 @@ class IndexingLifecycleTracker {
   }
 
   companion object {
-    fun getInstance(project: Project) = project.service<IndexingLifecycleTracker>()
+    fun getInstance(project: Project): IndexingLifecycleTracker = project.service()
   }
 }
 
