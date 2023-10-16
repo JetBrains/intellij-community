@@ -9,17 +9,19 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
+import org.jetbrains.annotations.ApiStatus
 
-object LegacyToWorkspaceImportUtil {
-  // keep certain legacy import entities in workspace import
-  fun retainLegacyImportEntities(project: Project, legacyStorage: MutableEntityStorage, newStorage: MutableEntityStorage) {
-    retainPreviouslyExcludedFolders(project, legacyStorage, newStorage)
+object WorkspaceChangesRetentionUtil {
+  // retain certain changes during subsequent imports
+  // e.g., excluded folders
+  @ApiStatus.Internal
+  fun retainManualChanges(project: Project, currentStorage: MutableEntityStorage, newStorage: MutableEntityStorage) {
+    retainExcludedFolders(project, currentStorage, newStorage)
   }
 
-  // if a folder was excluded in legacy import, keep it excluded in workspace import as well
-  private fun retainPreviouslyExcludedFolders(project: Project, legacyStorage: MutableEntityStorage, newStorage: MutableEntityStorage) {
+  private fun retainExcludedFolders(project: Project, currentStorage: MutableEntityStorage, newStorage: MutableEntityStorage) {
     val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-    val previouslyExcludedUrls = legacyStorage.entities(ExcludeUrlEntity::class.java)
+    val previouslyExcludedUrls = currentStorage.entities(ExcludeUrlEntity::class.java)
     val newExcludedUrlMap = newStorage.entities(ExcludeUrlEntity::class.java).associateBy({ it.url }, { it })
     val newContentRootMap = newStorage.entities(ContentRootEntity::class.java).associateBy({ it.url }, { it })
     for (previouslyExcludedUrl in previouslyExcludedUrls) {

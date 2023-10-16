@@ -382,7 +382,7 @@ internal class WorkspaceProjectImporter(
       .filter { it.contentRoots.isEmpty() }
       .forEach { currentStorage.removeEntity(it) }
 
-    LegacyToWorkspaceImportUtil.retainLegacyImportEntities(myProject, currentStorage, newStorage)
+    WorkspaceChangesRetentionUtil.retainManualChanges(myProject, currentStorage, newStorage)
 
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
 
