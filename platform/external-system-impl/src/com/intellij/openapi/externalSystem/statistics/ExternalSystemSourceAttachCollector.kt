@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 
@@ -16,9 +17,10 @@ object ExternalSystemSourceAttachCollector : CounterUsagesCollector() {
 
   private val HANDLER_FIELD = EventFields.Class("handler")
   private val SUCCESS_FIELD = EventFields.Boolean("success")
+  private val EXPONENTIAL_DURATION_MS = EventFields.Long("exp_duration_ms")
 
   private val SOURCES_ATTACHED_EVENT = GROUP.registerVarargEvent("attached", HANDLER_FIELD, EventFields.Language, SUCCESS_FIELD,
-                                                                 EventFields.DurationMs)
+                                                                 EventFields.DurationMs, EXPONENTIAL_DURATION_MS)
 
   @JvmStatic
   fun onSourcesAttached(project: Project, handlerClass: Class<*>, language: Language, success: Boolean, durationMs: Long) {
@@ -26,7 +28,8 @@ object ExternalSystemSourceAttachCollector : CounterUsagesCollector() {
       HANDLER_FIELD.with(handlerClass),
       EventFields.Language.with(language),
       SUCCESS_FIELD.with(success),
-      EventFields.DurationMs.with(durationMs)
+      EventFields.DurationMs.with(durationMs),
+      EXPONENTIAL_DURATION_MS.with(StatisticsUtil.roundToPowerOfTwo(durationMs))
     )
     SOURCES_ATTACHED_EVENT.log(project, events)
   }
