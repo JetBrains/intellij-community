@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.idea;
+package com.intellij.platform.ide.bootstrap;
 
 import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.diagnostic.LoadingState;
@@ -9,6 +9,8 @@ import com.intellij.ide.plugins.EssentialPluginMissingException;
 import com.intellij.ide.plugins.PluginConflictReporter;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.StartupAbortedException;
+import com.intellij.idea.AppExitCodes;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;

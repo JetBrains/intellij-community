@@ -17,6 +17,7 @@ import com.intellij.platform.bootstrap.initMarketplace
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.AppStarter
+import com.intellij.platform.ide.bootstrap.StartupErrorReporter
 import com.intellij.platform.ide.bootstrap.startApplication
 import com.intellij.platform.impl.toolkit.IdeFontManager
 import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment

@@ -4,9 +4,9 @@ package com.intellij.platform.bootstrap
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.BytecodeTransformer
 import com.intellij.idea.AppMode
-import com.intellij.idea.StartupErrorReporter
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.ide.bootstrap.StartupErrorReporter
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.NonNls

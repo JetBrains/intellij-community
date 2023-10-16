@@ -20,7 +20,6 @@ import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppMode
 import com.intellij.idea.IdeStarter
-import com.intellij.idea.StartupErrorReporter
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
