@@ -16,7 +16,7 @@ object ParserUtils {
 
   @JvmStatic
   fun directiveParser(builder: PsiBuilder, level: Int): Boolean {
-    if (builder.eof()) return false;
+    if (builder.eof()) return false
     val mark = builder.mark()
     while (!builder.eof() && builder.tokenType != CLOSE_DIRECTIVE) {
       builder.advanceLexer()
@@ -27,7 +27,7 @@ object ParserUtils {
 
   @JvmStatic
   fun frontmatterParser(builder: PsiBuilder, level: Int): Boolean {
-    if (builder.eof()) return false;
+    if (builder.eof()) return false
     val mark = builder.mark()
     while (!builder.eof() && builder.tokenType != FRONTMATTER_END) {
       builder.advanceLexer()
