@@ -97,7 +97,7 @@ private class CompatibleMavenServerConnector(private val project: Project,
     throw RuntimeException("not implemented")
   }
 
-  override fun interpolateAndAlignModel(model: MavenModel?, basedir: Path?): MavenModel {
+  override fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
     throw RuntimeException("not implemented")
   }
 
@@ -162,7 +162,7 @@ private class StoppedMavenServerConnector : MavenServerConnector {
     throw RuntimeException("not implemented")
   }
 
-  override fun interpolateAndAlignModel(model: MavenModel?, basedir: Path?): MavenModel {
+  override fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
     throw ConnectException("Cannot reconnect")
   }
 

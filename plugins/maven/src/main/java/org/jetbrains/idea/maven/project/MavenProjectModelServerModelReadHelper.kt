@@ -11,8 +11,8 @@ class MavenProjectModelServerModelReadHelper(private val myProject: Project) : M
   override fun interpolate(basedir: Path,
                            file: VirtualFile,
                            model: MavenModel): MavenModel {
-    return MavenServerManager.getInstance().getConnector(myProject, basedir.toString())
-      .interpolateAndAlignModel(model, basedir)
+    val pomDir = file.parent.toNioPath()
+    return MavenServerManager.getInstance().getConnector(myProject, basedir.toString()).interpolateAndAlignModel(model, basedir, pomDir)
   }
 
   override fun assembleInheritance(projectPomDir: Path, parent: MavenModel?, model: MavenModel): MavenModel {

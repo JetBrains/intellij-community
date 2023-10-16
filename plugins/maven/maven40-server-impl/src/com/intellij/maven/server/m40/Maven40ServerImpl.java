@@ -38,10 +38,10 @@ public class Maven40ServerImpl extends MavenServerBase {
 
   @NotNull
   @Override
-  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) {
+  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven40ProfileUtil.interpolateAndAlignModel(model, basedir);
+      return Maven40ProfileUtil.interpolateAndAlignModel(model, basedir, pomDir);
     }
     catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);

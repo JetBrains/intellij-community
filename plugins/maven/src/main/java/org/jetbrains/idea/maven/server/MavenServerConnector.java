@@ -36,7 +36,7 @@ public interface MavenServerConnector extends Disposable {
 
   MavenServerIndexer createIndexer() throws RemoteException;
 
-  @NotNull MavenModel interpolateAndAlignModel(MavenModel model, Path basedir);
+  @NotNull MavenModel interpolateAndAlignModel(@NotNull MavenModel model, @NotNull Path basedir, @NotNull Path pomDir);
 
   MavenModel assembleInheritance(MavenModel model, MavenModel parentModel);
 
