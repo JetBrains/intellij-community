@@ -5,14 +5,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-interface ProjectInitialActivitiesNotifier {
-  val project: Project
-
-  fun isInitialVfsRefreshFinished(): Boolean
-  suspend fun awaitInitialVfsRefreshFinished()
-}
-
 @ApiStatus.Internal
 @ApiStatus.Experimental
 class ProjectInitialActivitiesNotifierImpl(override val project: Project) : ProjectInitialActivitiesNotifier {
