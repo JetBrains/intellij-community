@@ -1,12 +1,10 @@
 package org.intellij.plugins.markdown.ui.floating
 
-import com.intellij.ide.scratch.ScratchUtil
-import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
-import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.editor.isMarkdownScratchFile
 import org.intellij.plugins.markdown.lang.hasMarkdownType
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
 
@@ -28,6 +26,6 @@ private class AddFloatingToolbarTextEditorCustomizer: TextEditorCustomizer {
   private fun shouldAcceptScratchFile(editor: TextEditor): Boolean {
     val file = editor.file
     val project = editor.editor.project ?: return false
-    return ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file, file.fileType) == MarkdownLanguage.INSTANCE
+    return isMarkdownScratchFile(project, file)
   }
 }
