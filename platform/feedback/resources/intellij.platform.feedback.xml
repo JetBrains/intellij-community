@@ -63,6 +63,8 @@
               class="com.intellij.platform.feedback.kafka.TestShowKafkaConsumerFeedbackAction" internal="true"/>
       <action id="com.intellij.platform.feedback.kafka.TestShowKafkaProducerFeedbackAction"
               class="com.intellij.platform.feedback.kafka.TestShowKafkaProducerFeedbackAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction"
+              class="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
 

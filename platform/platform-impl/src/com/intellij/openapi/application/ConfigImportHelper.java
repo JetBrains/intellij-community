@@ -453,6 +453,12 @@ public final class ConfigImportHelper {
     }
   }
 
+  @ApiStatus.Internal
+  public static boolean hasPreviousVersionConfigDirs() {
+    ConfigDirsSearchResult directories = findConfigDirectories(PathManager.getConfigDir());
+    return directories.fromSameProduct && directories.directories.size() > 1;
+  }
+
   static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir) {
     return findConfigDirectories(newConfigDir, null, List.of());
   }
