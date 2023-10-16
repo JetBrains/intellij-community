@@ -497,7 +497,7 @@ private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job): Job {
 private suspend fun doCheckSystemDirs(configPath: Path, systemPath: Path): Boolean {
   if (configPath == systemPath) {
     StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.invalid.config.or.system.path"),
-                                                                                            BootstrapBundle.message("bootstrap.error.message.config.0.and.system.1.paths.must.be.different",
+                                     BootstrapBundle.message("bootstrap.error.message.config.0.and.system.1.paths.must.be.different",
                                                              PathManager.PROPERTY_CONFIG_PATH,
                                                              PathManager.PROPERTY_SYSTEM_PATH), true)
     return false
