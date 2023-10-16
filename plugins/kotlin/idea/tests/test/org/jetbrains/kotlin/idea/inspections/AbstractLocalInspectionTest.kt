@@ -144,7 +144,9 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         inspectionSettings: Element? = null
     ): Boolean {
         val problemExpected = expectedProblemString == null || expectedProblemString != "none"
-        myFixture.enableInspections(inspection)
+        // use Class instead of `inspection` as an argument to correctly calculate LocalInspectionToolWrapper.getID()
+        // (because "suppressID" can be hardcoded in plugin.xml the just created LocalInspectionTool knows nothing about)
+        myFixture.enableInspections(inspection::class.java)
 
         // Set default level to WARNING to make possible to test DO_NOT_SHOW
         val inspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)

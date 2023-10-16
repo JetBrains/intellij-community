@@ -17196,6 +17196,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/secondaryLocalClassConstructor.kt");
         }
 
+        @TestMetadata("suppressedClass.kt")
+        public void testSuppressedClass() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/suppressedClass.kt");
+        }
+
         @TestMetadata("typeAlias.kt")
         public void testTypeAlias() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/typeAlias.kt");
