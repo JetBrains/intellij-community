@@ -4,7 +4,6 @@ package com.intellij.platform.ml.embeddings.services
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingServiceLoader
