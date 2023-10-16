@@ -123,7 +123,7 @@ abstract class FloatingToolbar(
     }
   }
 
-  private suspend fun createHint(): LightweightHint {
+  protected open suspend fun createHint(): LightweightHint {
     val toolbar = createUpdatedActionToolbar(editor.contentComponent)
     val component = BorderLayoutPanel().apply {
       addToCenter(toolbar.component)
