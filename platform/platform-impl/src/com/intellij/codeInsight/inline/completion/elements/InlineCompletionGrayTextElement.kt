@@ -38,8 +38,8 @@ data class InlineCompletionGrayTextElement(override val text: String) : InlineCo
     }
 
     override fun getBounds(): Rectangle? {
-      val bounds = blockInlay?.bounds?.let { Rectangle(it) }
-      suffixInlay?.bounds?.let { bounds?.add(Rectangle(it)) }
+      val bounds = suffixInlay?.bounds?.let { Rectangle(it) }
+      blockInlay?.bounds?.let { bounds?.add(Rectangle(it)) }
       return bounds
     }
 
