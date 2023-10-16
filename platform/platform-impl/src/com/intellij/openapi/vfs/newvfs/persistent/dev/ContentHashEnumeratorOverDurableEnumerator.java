@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumeratorFactory;
 import com.intellij.util.hash.ContentHashEnumerator;
@@ -21,8 +22,17 @@ import java.util.Arrays;
  */
 public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEnumerator, CleanableStorage {
 
-  //TODO RC: current implementation is hacky, it relies on knowledge of append-only-log record format
-  //          (header size/alignment: HASH_RECORD_LENGTH). Something more abstract is needed
+  //TODO RC: current implementation relies on knowledge of append-only-log record format (header size/alignment:
+  //         HASH_RECORD_LENGTH). This is a) hacky, and b) not strictly correct: relation
+  //         [enumeratedId = recordNo * HASH_RECORD_LENGTH] breaks on page-border, because
+  //         [pageSize % HASH_RECORD_LENGTH != 0] -- so there is a padding record at the end of each page.
+  //         Right now I 'fixed' the issue by setting huge page size (128Mb) -- that postpones the issue
+  //         until >5M content hashes -- probably, enough for most use-cases.
+  //         But better solution is needed: basically, we need to return id=recordNo (1-based).
+  //         It is not a problem to return .recordsCount(), but to to map (id=recordNo) back to the record
+  //         offset in append-only log -- for that we need to re-assemble DurableEnumerator, i.e. implement
+  //         ContentHashEnumeratorOverDurableEnumerator not over out-of-box DurableEnumerator, but over
+  //         (append-only-log + multimap), with different id-assigning strategy
 
   //TODO RC: move DurableEnumerator to the module reachable from platform-indexing,
   //         We need to create DurableEnumerator here, with KeyDescriptorEx, 'cos it is all ContentHashEnumerator-specific
@@ -37,6 +47,8 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
     return new ContentHashEnumeratorOverDurableEnumerator(
       DurableEnumeratorFactory.defaultWithDurableMap(ContentHashKeyDescriptor.INSTANCE)
         .rebuildMapIfInconsistent(true)
+        //FIXME RC: 128Mb page ~= 5M records before page-borders issues arise (see TODO at the class level)
+        .valuesLogFactory(AppendOnlyLogFactory.withDefaults().pageSize(128 << 20))
         .open(storagePath)
     );
   }

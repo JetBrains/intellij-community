@@ -4,6 +4,7 @@ package com.intellij.util.hash;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,10 +13,13 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class ContentHashEnumeratorTestBase {
+
+  private static final int ENOUGH_HASHES = 1 << 20;
 
   private ContentHashEnumerator enumerator;
 
@@ -36,7 +40,7 @@ public abstract class ContentHashEnumeratorTestBase {
   @Test
   void enumeratorAssignsConsequentIds_ToUniqueHashes() throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd);
+    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd, ENOUGH_HASHES);
     for (int i = 0; i < uniqueHashes.length; i++) {
       ByteArraySequence hash = uniqueHashes[i];
       int id = enumerator.enumerate(hash.toBytes());
@@ -56,7 +60,7 @@ public abstract class ContentHashEnumeratorTestBase {
   @Test
   void enumerateEx_IsSameAsEnumerate_ForNewHashes() throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd);
+    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd, ENOUGH_HASHES);
     for (int i = 0; i < uniqueHashes.length; i++) {
       ByteArraySequence hash = uniqueHashes[i];
       int enumeratedExId = enumerator.enumerateEx(hash.toBytes());
@@ -72,7 +76,7 @@ public abstract class ContentHashEnumeratorTestBase {
   @Test
   void enumerateEx_ReturnsSameIdAsEnumerateButNegative_ForAlreadyKnownHashes() throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd);
+    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd, ENOUGH_HASHES);
     for (int i = 0; i < uniqueHashes.length; i++) {
       ByteArraySequence hash = uniqueHashes[i];
       int enumeratedId = enumerator.enumerate(hash.toBytes());
@@ -88,7 +92,7 @@ public abstract class ContentHashEnumeratorTestBase {
   @Test
   void tryEnumerate_ReturnsSameIdAsEnumerate_ForAlreadyKnownHashes() throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd);
+    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd, ENOUGH_HASHES);
     for (int i = 0; i < uniqueHashes.length; i++) {
       ByteArraySequence hash = uniqueHashes[i];
       assertEquals(
@@ -102,7 +106,7 @@ public abstract class ContentHashEnumeratorTestBase {
   @Test
   void allEnumeratedHashes_ListedWithForEach() throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd);
+    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd, ENOUGH_HASHES);
     int[] hashIds = new int[uniqueHashes.length];
     for (int i = 0; i < uniqueHashes.length; i++) {
       ByteArraySequence hash = uniqueHashes[i];
@@ -137,7 +141,7 @@ public abstract class ContentHashEnumeratorTestBase {
   @Test
   void allEnumeratedHashes_ListedWithForEach_AfterCloseAndReopen() throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd);
+    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd, ENOUGH_HASHES);
     int[] hashIds = new int[uniqueHashes.length];
     for (int i = 0; i < uniqueHashes.length; i++) {
       ByteArraySequence hash = uniqueHashes[i];
@@ -182,12 +186,19 @@ public abstract class ContentHashEnumeratorTestBase {
     }
   }
 
-  protected static ByteArraySequence[] generateUniqueHashes(ThreadLocalRandom rnd) {
+  protected static ByteArraySequence[] generateUniqueHashes(@NotNull ThreadLocalRandom rnd,
+                                                            int size) {
+    return uniqueHashesStream(rnd, size)
+      .toArray(ByteArraySequence[]::new);
+  }
+
+
+  private static @NotNull Stream<ByteArraySequence> uniqueHashesStream(@NotNull ThreadLocalRandom rnd,
+                                                                       int size) {
     return IntStream.iterate(0, i -> i + 1)
       .mapToObj(i -> randomHash(rnd))
       .distinct()
-      .limit(1024)
-      .toArray(ByteArraySequence[]::new);
+      .limit(size);
   }
 
   protected static ByteArraySequence randomHash(final Random rnd) {
