@@ -706,8 +706,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     val theme = currentTheme ?: return
-    val baseSchemeId = Scheme.getBaseName(scheme.name)
-    if (baseSchemeId == theme.editorSchemeId || baseSchemeId == EditorColorsScheme.DEFAULT_SCHEME_NAME) {
+    // Classic Light color scheme has id `EditorColorsScheme.DEFAULT_SCHEME_NAME` - save it as is
+    if (Scheme.getBaseName(scheme.name) == theme.editorSchemeId) {
       lafToPreviousScheme.remove(theme.id)
     }
     else {
