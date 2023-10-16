@@ -123,4 +123,18 @@ public class JavaFolding8Test extends JavaFoldingTestCase {
                          "FoldRegion -(85:129), placeholder='@{...}'", "FoldRegion -(159:183), placeholder='{...}'"),
                  ContainerUtil.map(myFixture.getEditor().getFoldingModel().getAllFoldRegions(), FoldRegion::toString));
   }
+
+  public void testCommentBeforePackageInfo() {
+    configure("package-info.java", """
+                // Copyright
+                // Shmopyright
+                /**
+                 * A cool package
+                 */
+                package com.example;
+                """);
+    assertEquals(List.of("FoldRegion +(0:27), placeholder='/.../'",
+                         "FoldRegion -(28:53), placeholder='/** A cool package */'"),
+                 ContainerUtil.map(myFixture.getEditor().getFoldingModel().getAllFoldRegions(), FoldRegion::toString));
+  }
 }

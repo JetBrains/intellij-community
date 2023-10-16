@@ -146,6 +146,10 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (first instanceof PsiWhiteSpace) first = first.getNextSibling();
     PsiElement element = first;
     while (element instanceof PsiComment) {
+      if (element instanceof PsiDocComment && PsiTreeUtil.skipWhitespacesForward(element) instanceof PsiPackageStatement &&
+          PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
+        break;
+      }
       element = element.getNextSibling();
       if (element instanceof PsiWhiteSpace) {
         element = element.getNextSibling();
