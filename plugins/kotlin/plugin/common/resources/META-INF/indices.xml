@@ -49,6 +49,7 @@
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinShortClassNameFileIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinBinaryRootToPackageIndex"/>
 
     <indexedRootsProvider implementation="org.jetbrains.kotlin.idea.base.indices.contributors.BuiltInsIndexableSetContributor"/>
 
