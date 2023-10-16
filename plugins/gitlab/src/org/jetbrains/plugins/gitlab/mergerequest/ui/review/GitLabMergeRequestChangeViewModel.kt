@@ -114,7 +114,7 @@ internal class GitLabMergeRequestChangeViewModelImpl(
     val patch = diffData.patch
     val startSha = patch.beforeVersionId!!
     val headSha = patch.afterVersionId!!
-    val baseSha = if (diffData.isCumulative) diffData.fileHistory.findStartCommit() else startSha
+    val baseSha = if (diffData.isCumulative) diffData.fileHistory.findStartCommit()!! else startSha
 
     // Due to https://gitlab.com/gitlab-org/gitlab/-/issues/325161 we need line index for both sides for context lines
     val otherSide = transferToOtherSide(patch, location)
