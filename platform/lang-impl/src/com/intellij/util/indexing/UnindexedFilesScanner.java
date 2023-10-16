@@ -23,7 +23,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
@@ -317,9 +316,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       Disposer.dispose(scanningLifetime);
     }
 
-    boolean skipInitialRefresh = skipInitialRefresh();
-    boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    if (myOnProjectOpen && !isUnitTestMode && !skipInitialRefresh) {
+    if (myOnProjectOpen) {
       // the full VFS refresh makes sense only after it's loaded, i.e., after scanning files to index is finished
       InitialRefreshKt.scheduleInitialVfsRefresh(myProject, LOG);
     }
@@ -542,7 +539,8 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
     try {
       performScanningAndIndexing(indicator, progressReporter);
-    } finally {
+    }
+    finally {
       myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
     }
   }
@@ -586,10 +584,6 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                          ? (", " + myPredefinedIndexableFilesIterators.size() + " iterators")
                          : "";
     return "UnindexedFilesScanner[" + myProject.getName() + partialInfo + "]";
-  }
-
-  private static boolean skipInitialRefresh() {
-    return SystemProperties.getBooleanProperty("ij.indexes.skip.initial.refresh", false);
   }
 
   public static void scanAndIndexProjectAfterOpen(@NotNull Project project,
