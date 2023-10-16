@@ -1,6 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
-import com.intellij.openapi.progress.*
+import com.intellij.platform.util.progress.forEachWithProgress
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
 import com.intellij.searchEverywhereMl.semantics.utils.LowMemoryNotificationManager
@@ -29,7 +29,8 @@ class DiskSynchronizedEmbeddingsStorageSetup<T : IndexableEntity>(
             val ids = batch.map { it.id.intern() }
             val texts = batch.map { it.indexableRepresentation }
             EmbeddingIndexingTask.Add(ids, texts).run(index)
-          } else {
+          }
+          else {
             LowMemoryNotificationManager.getInstance().showNotification()
           }
         }

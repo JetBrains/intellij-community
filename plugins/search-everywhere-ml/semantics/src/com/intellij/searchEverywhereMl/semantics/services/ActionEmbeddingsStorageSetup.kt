@@ -3,8 +3,8 @@ package com.intellij.searchEverywhereMl.semantics.services
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.progress.*
 import com.intellij.platform.ml.embeddings.utils.normalized
+import com.intellij.platform.util.progress.durationStep
 import com.intellij.searchEverywhereMl.semantics.indices.EmbeddingSearchIndex
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicReference
@@ -38,7 +38,7 @@ class ActionEmbeddingsStorageSetup(
           val actionIds = batch.map { (id, _) -> id }
           val texts = batch.map { (_, action) -> action!!.templateText!! }
 
-          durationStep(texts.size.toDouble() / (totalIndexableActionsCount - indexedActionsCount)) {
+          durationStep(texts.size.toDouble() / (totalIndexableActionsCount - indexedActionsCount), null) {
             val embeddings = embeddingService.embed(texts).map { it.normalized() }
             index.addEntries(actionIds zip embeddings)
           }

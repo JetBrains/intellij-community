@@ -10,10 +10,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.withBackgroundProgress
-import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.Decompressor
