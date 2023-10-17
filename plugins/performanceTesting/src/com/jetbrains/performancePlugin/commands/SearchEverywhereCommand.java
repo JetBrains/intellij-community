@@ -149,6 +149,15 @@ public class SearchEverywhereCommand extends AbstractCommand {
   private static void insertText(Project project, String insertText, Semaphore typingSemaphore) {
     SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
     Span insertSpan = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan();
+    Span firstBatchAddedSpan = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_first_elements_added").startSpan();
+    ui.addSearchListener(new SearchAdapter(){
+      @Override
+      public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
+        super.elementsAdded(list);
+        firstBatchAddedSpan.setAttribute("number", list.size());
+        firstBatchAddedSpan.end();
+      }
+    });
     //noinspection TestOnlyProblems
     Future<List<Object>> elements = ui.findElementsForPattern(insertText);
     ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap((Callable<Object>)() -> {
@@ -169,7 +178,14 @@ public class SearchEverywhereCommand extends AbstractCommand {
     ThreadPoolExecutor typing = ConcurrencyUtil.newSingleThreadExecutor("Performance plugin delayed type");
     Ref<Boolean> isTypingFinished = new Ref<>(false);
     Ref<Span> oneLetterSpan = new Ref<>();
+    Ref<Span> firstBatchAddedSpan = new Ref<>();
     ui.addSearchListener(new SearchAdapter() {
+      @Override
+      public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
+        firstBatchAddedSpan.get().setAttribute("number", list.size());
+        firstBatchAddedSpan.get().end();
+      }
+
       @Override
       public void searchFinished(@NotNull List<Object> items) {
         super.searchFinished(items);
@@ -197,6 +213,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
             oneLetterSpan.set(
               PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan()
                 .setAttribute("text", String.valueOf(currentChar)));
+            firstBatchAddedSpan.set(PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_first_elements_added").startSpan());
             document.insertString(document.getLength(), String.valueOf(currentChar), null);
             if (index == typingText.length() - 1) {
               isTypingFinished.set(true);
