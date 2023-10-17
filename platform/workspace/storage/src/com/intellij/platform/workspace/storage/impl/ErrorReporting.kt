@@ -111,31 +111,7 @@ internal fun ChangeLog.anonymize(): ChangeLog {
         newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
         ChangeEntry.AddEntity(newEntityData, value.clazz)
       }
-      is ChangeEntry.ChangeEntitySource -> {
-        val newEntityData = value.newData.clone()
-        newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
-        ChangeEntry.ChangeEntitySource(value.originalSource.anonymize(null), newEntityData)
-      }
       is ChangeEntry.RemoveEntity -> value
-      is ChangeEntry.ReplaceAndChangeSource -> {
-        val newEntityData = value.sourceChange.newData.clone()
-        newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
-        val sourceChange = ChangeEntry.ChangeEntitySource(value.sourceChange.originalSource.anonymize(null), newEntityData)
-
-        val dataChange = if (value.dataChange.data != null) {
-          @Suppress("UNCHECKED_CAST")
-          val changedData = value.dataChange.data.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
-          changedData.entitySource = changedData.entitySource.anonymize(null)
-          @Suppress("UNCHECKED_CAST")
-          val changedOldData = value.dataChange.data.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
-          changedOldData.entitySource = changedOldData.entitySource.anonymize(null)
-          ChangeEntry.ReplaceEntity(ChangeEntry.ReplaceEntity.Data(changedOldData, changedData), value.dataChange.references?.copy())
-        }
-        else {
-          ChangeEntry.ReplaceEntity(null, value.dataChange.references?.copy())
-        }
-        ChangeEntry.ReplaceAndChangeSource(dataChange, sourceChange)
-      }
       is ChangeEntry.ReplaceEntity -> {
         if (value.data != null) {
           @Suppress("UNCHECKED_CAST")
@@ -231,8 +207,6 @@ private fun EntityStorageSerializerImpl.serializeDiffLog(file: Path, log: Change
         is ChangeEntry.AddEntity -> it.entityData
         is ChangeEntry.RemoveEntity -> null
         is ChangeEntry.ReplaceEntity -> it.data?.newData
-        is ChangeEntry.ChangeEntitySource -> it.newData
-        is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.data?.newData
       }
     }.asSequence()
 

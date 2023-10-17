@@ -190,8 +190,6 @@ internal class StorageClassesRegistrar(
     kryo.register(ChangeEntry.AddEntity::class.java)
     kryo.register(ChangeEntry.RemoveEntity::class.java)
     kryo.register(ChangeEntry.ReplaceEntity::class.java)
-    kryo.register(ChangeEntry.ChangeEntitySource::class.java)
-    kryo.register(ChangeEntry.ReplaceAndChangeSource::class.java)
     kryo.register(ChangeEntry.ReplaceEntity.Data::class.java)
     kryo.register(ChangeEntry.ReplaceEntity.References::class.java)
   }
