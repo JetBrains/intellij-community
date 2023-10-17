@@ -57,9 +57,10 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
           val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
           else cachedDescriptors.filter { it.findPriority() == priority }.iterator()
 
-          for (descriptor in iterator) {
+          while (iterator.hasNext()) {
             checkCancelled()
-            if (descriptor.findPriority() != priority) {
+            val descriptor = iterator.next()
+            if (priority == DescriptorPriority.HIGH && descriptor.findPriority() != priority) {
               cachedDescriptors.add(descriptor)
               continue
             }
