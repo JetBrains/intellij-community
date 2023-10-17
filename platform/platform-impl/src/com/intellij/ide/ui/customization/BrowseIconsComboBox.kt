@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization
 
 import com.intellij.icons.AllIcons
@@ -47,7 +47,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
 
   init {
     iconsLoadedFuture = loadIconsAsync(withNoneItem)
-    isSwingPopup = false  // in this case speed search will filter the list of items
+    isSwingPopup = false  // in this case, speed search will filter the list of items
     setEditable(true)
     setEditor(createEditor())
     setRenderer(createRenderer())
@@ -57,7 +57,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
 
   private fun loadIconsAsync(withNoneItem: Boolean): CompletableFuture<Boolean> {
     val future = CompletableFuture<Boolean>()
-    ReadAction.nonBlocking(Callable { createIconsList(withNoneItem) })
+    ReadAction.nonBlocking(Callable { createIconList(withNoneItem) })
       .expireWith(parentDisposable)
       .finishOnUiThread(ModalityState.any(), Consumer { icons ->
         model = DefaultComboBoxModel(icons.toTypedArray())
@@ -67,7 +67,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
     return future
   }
 
-  private fun createIconsList(withNoneItem: Boolean): List<ActionIconInfo> {
+  private fun createIconList(withNoneItem: Boolean): List<ActionIconInfo> {
     val defaultIcons = getDefaultIcons()
     val customIcons = getCustomIcons(customActionsSchema)
       .asSequence()
@@ -161,7 +161,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
     ComponentValidator(parentDisposable).withValidator(Supplier {
       val path = (selectedItem as? ActionIconInfo)?.iconPath ?: return@Supplier null
       try {
-        CustomActionsSchema.loadCustomIcon(path)
+        loadCustomIcon(path)
         null
       }
       catch (ex: FileNotFoundException) {
@@ -204,7 +204,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
     val iconFile = FileChooser.chooseFile(descriptor, null, null)
     if (iconFile != null) {
       val icon = try {
-        CustomActionsSchema.loadCustomIcon(iconFile.path)
+        loadCustomIcon(iconFile.path)
       }
       catch (t: Throwable) {
         thisLogger().warn("Failed to load icon from disk, path: ${iconFile.path}", t)

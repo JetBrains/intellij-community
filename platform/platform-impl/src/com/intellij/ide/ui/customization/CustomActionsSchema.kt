@@ -4,7 +4,6 @@
 package com.intellij.ide.ui.customization
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.loadCustomIcon
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider.CustomizableActionGroupRegistrar
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -143,67 +142,6 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
         windowManager.getFrameHelper(project)?.updateView()
       }
       windowManager.getFrameHelper(null)?.updateView()
-    }
-
-    /**
-     * @param path absolute path to the icon file, url of the icon file or url of the icon file inside jar.
-     * Also, the path can contain '_dark', '@2x', '@2x_dark' suffixes, but the resulting icon will be taken
-     * according to current scale and UI theme.
-     */
-    @ApiStatus.Internal
-    @Throws(Throwable::class)
-    fun loadCustomIcon(path: String): Icon {
-      val independentPath = FileUtil.toSystemIndependentName(path)
-      val urlString = if (independentPath.startsWith("file:") || independentPath.startsWith("jar:")) {
-        independentPath
-      }
-      else {
-        "file:$independentPath"
-      }
-
-      val lastDotIndex = urlString.lastIndexOf('.')
-      val (rawUrl, ext) = if (lastDotIndex == -1) {
-        urlString to "svg"
-      }
-      else {
-        urlString.substring(0, lastDotIndex) to urlString.substring(lastDotIndex + 1)
-      }
-
-      val possibleSuffixes = listOf("@2x_dark", "_dark@2x", "_dark", "@2x")
-      val adjustedUrl = possibleSuffixes.find { rawUrl.endsWith(it) }?.let { rawUrl.removeSuffix(it) } ?: rawUrl
-      val fullAdjustedUrl = "$adjustedUrl.$ext"
-      try {
-        return doLoadCustomIcon(fullAdjustedUrl)
-      }
-      catch (t: Throwable) {
-        // In Light theme we do not fall back on dark icon, so if the original provided path ends with '_dark'
-        // and there is no icon file without '_dark' suffix, we will fail.
-        // And in this case, we just need to load the file chosen by the user.
-        if (urlString == fullAdjustedUrl) {
-          throw t
-        }
-        else {
-          return doLoadCustomIcon(urlString)
-        }
-      }
-    }
-
-    private fun doLoadCustomIcon(urlString: String): Icon {
-      val url = URL(null, urlString)
-      val icon = IconLoader.findIcon(url) ?: throw FileNotFoundException("Failed to find icon by URL: $url")
-      val w = icon.iconWidth
-      val h = icon.iconHeight
-      if (w <= 1 || h <= 1) {
-        throw FileNotFoundException("Failed to find icon by URL: $url")
-      }
-
-      if (w > EmptyIcon.ICON_18.iconWidth || h > EmptyIcon.ICON_18.iconHeight) {
-        val scale = EmptyIcon.ICON_18.iconWidth / w.coerceAtLeast(h).toFloat()
-        // ScaledResultIcon will be returned here, so we will be unable to scale it again or get the dark version,
-        // but we have nothing to do because the icon is too large
-        return IconUtil.scale(icon, scale = scale, ancestor = null)
-      }
-      return icon
     }
   }
 
@@ -561,6 +499,67 @@ private object ActionUrlComparator : Comparator<ActionUrl> {
       return u1.absolutePosition - u2.absolutePosition
     }
   }
+}
+
+/**
+ * @param path absolute path to the icon file, url of the icon file or url of the icon file inside jar.
+ * Also, the path can contain '_dark', '@2x', '@2x_dark' suffixes, but the resulting icon will be taken
+ * according to current scale and UI theme.
+ */
+@ApiStatus.Internal
+@Throws(Throwable::class)
+fun loadCustomIcon(path: String): Icon {
+  val independentPath = FileUtil.toSystemIndependentName(path)
+  val urlString = if (independentPath.startsWith("file:") || independentPath.startsWith("jar:")) {
+    independentPath
+  }
+  else {
+    "file:$independentPath"
+  }
+
+  val lastDotIndex = urlString.lastIndexOf('.')
+  val (rawUrl, ext) = if (lastDotIndex == -1) {
+    urlString to "svg"
+  }
+  else {
+    urlString.substring(0, lastDotIndex) to urlString.substring(lastDotIndex + 1)
+  }
+
+  val possibleSuffixes = listOf("@2x_dark", "_dark@2x", "_dark", "@2x")
+  val adjustedUrl = possibleSuffixes.find { rawUrl.endsWith(it) }?.let { rawUrl.removeSuffix(it) } ?: rawUrl
+  val fullAdjustedUrl = "$adjustedUrl.$ext"
+  try {
+    return doLoadCustomIcon(fullAdjustedUrl)
+  }
+  catch (t: Throwable) {
+    // In Light theme we do not fall back on dark icon, so if the original provided path ends with '_dark'
+    // and there is no icon file without '_dark' suffix, we will fail.
+    // And in this case, we just need to load the file chosen by the user.
+    if (urlString == fullAdjustedUrl) {
+      throw t
+    }
+    else {
+      return doLoadCustomIcon(urlString)
+    }
+  }
+}
+
+private fun doLoadCustomIcon(urlString: String): Icon {
+  val url = URL(null, urlString)
+  val icon = IconLoader.findIcon(url) ?: throw FileNotFoundException("Failed to find icon by URL: $url")
+  val w = icon.iconWidth
+  val h = icon.iconHeight
+  if (w <= 1 || h <= 1) {
+    throw FileNotFoundException("Failed to find icon by URL: $url")
+  }
+
+  if (w > EmptyIcon.ICON_18.iconWidth || h > EmptyIcon.ICON_18.iconHeight) {
+    val scale = EmptyIcon.ICON_18.iconWidth / w.coerceAtLeast(h).toFloat()
+    // ScaledResultIcon will be returned here, so we will be unable to scale it again or get the dark version,
+    // but we have nothing to do because the icon is too large
+    return IconUtil.scale(icon, scale = scale, ancestor = null)
+  }
+  return icon
 }
 
 internal fun getIconForPath(actionManager: ActionManager, iconPath: String): Icon? {

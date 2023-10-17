@@ -400,7 +400,7 @@ public class CustomizableActionsPanel {
     else {
       Icon icon;
       try {
-        icon = CustomActionsSchema.Companion.loadCustomIcon(path);
+        icon = CustomActionsSchemaKt.loadCustomIcon(path);
       }
       catch (Throwable t) {
         Logger.getInstance(CustomizableActionsPanel.class)
