@@ -174,7 +174,7 @@ private constructor(parentCs: CoroutineScope,
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val mergeRequestOnCurrentBranch: Flow<String?> = run {
+  val mergeRequestOnCurrentBranch: Flow<String?> = run {
     val remote = connection.repo.remote.remote
     val gitRepo = connection.repo.remote.repository
     gitRepo.changesSignalFlow().withInitial(Unit).map {

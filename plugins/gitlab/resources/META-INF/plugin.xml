@@ -75,6 +75,8 @@
       implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
+    <statistics.notificationIdsHolder
+      implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
 
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.gitlab.ui.action.GitLabAnnotationGutterActionProvider"/>
 
@@ -216,4 +218,12 @@
       <add-to-group group-id="Git.Branches.List"/>
     </action>
   </actions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.gitlab.notification.GitLabPushNotificationListener"
+              topic="git4idea.push.GitPushListener"
+              activeInHeadlessMode="false"
+              activeInTestMode="false"/>
+  </projectListeners>
+
 </idea-plugin>

@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.create.action
 
 import com.intellij.icons.AllIcons
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -9,6 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -33,8 +36,21 @@ internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.project!!.service<GitLabToolWindowViewModel>().activateAndAwaitProject {
-      createMergeRequest()
-    }
+    createMergeRequestAction(e)
+  }
+}
+
+// NOTE: no need to register in plugin.xml
+internal class GitLabMergeRequestOpenCreateTabNotificationAction : NotificationAction(
+  GitLabBundle.message("merge.request.create.notification.action.text")
+) {
+  override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+    createMergeRequestAction(e)
+  }
+}
+
+private fun createMergeRequestAction(event: AnActionEvent) {
+  event.project!!.service<GitLabToolWindowViewModel>().activateAndAwaitProject {
+    createMergeRequest()
   }
 }
