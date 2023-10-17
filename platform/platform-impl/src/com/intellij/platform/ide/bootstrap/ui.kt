@@ -10,6 +10,8 @@ import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
+import com.intellij.ide.ui.html.getGlobalStyleSheet
+import com.intellij.ide.ui.html.updateGlobalSwingStyleSheet
 import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.idea.AppExitCodes
@@ -71,12 +73,12 @@ internal suspend fun patchHtmlStyle(initLafJob: Job) {
     val uiDefaults = span("app-specific laf state initialization") { UIManager.getDefaults() }
     span("html style patching") {
       // create a separate copy for each case
-      val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
+      val globalStyleSheet = getGlobalStyleSheet()
       uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
       uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
 
       span("global styleSheet updating") {
-        GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
+        updateGlobalSwingStyleSheet()
       }
     }
   }

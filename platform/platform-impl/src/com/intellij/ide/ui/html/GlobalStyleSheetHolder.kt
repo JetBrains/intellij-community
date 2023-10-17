@@ -26,78 +26,83 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * Based on a default swing stylesheet at javax/swing/text/html/default.css
  */
+private val globalStyleSheet = StyleSheet()
+
+private var currentLafStyleSheet: StyleSheet? = null
+
+// used by Material Theme - cannot be internal
+@Suppress("unused")
 @Internal
 object GlobalStyleSheetHolder {
-  private val globalStyleSheet = StyleSheet()
-  private var currentLafStyleSheet: StyleSheet? = null
+  fun getGlobalStyleSheet(): StyleSheet = com.intellij.ide.ui.html.getGlobalStyleSheet()
+}
 
-  /**
-   * Returns a global style sheet that is dynamically updated when LAF changes
-   */
-  fun getGlobalStyleSheet(): StyleSheet {
-    val result = StyleSheet()
-    // return a linked sheet to avoid mutation of a global variable
-    result.addStyleSheet(globalStyleSheet)
-    return result
-  }
+/**
+ * Returns a global style sheet that is dynamically updated when LAF changes
+ */
+internal fun getGlobalStyleSheet(): StyleSheet {
+  val result = StyleSheet()
+  // return a linked sheet to avoid mutation of a global variable
+  result.addStyleSheet(globalStyleSheet)
+  return result
+}
 
-  internal fun updateGlobalSwingStyleSheet() {
-    // get the default JRE CSS and ...
-    val kit = HTMLEditorKit()
-    val defaultSheet = kit.styleSheet
-    globalStyleSheet.addStyleSheet(defaultSheet)
+internal fun updateGlobalSwingStyleSheet() {
+  // get the default JRE CSS and ...
+  val kit = HTMLEditorKit()
+  val defaultSheet = kit.styleSheet
+  globalStyleSheet.addStyleSheet(defaultSheet)
 
-    // ... set a new default sheet
-    kit.styleSheet = getGlobalStyleSheet()
-  }
+  // ... set a new default sheet
+  kit.styleSheet = getGlobalStyleSheet()
+}
 
-  /**
-   * Populate global stylesheet with LAF-based overrides
-   */
-  private suspend fun updateGlobalStyleSheet() {
-    val newStyle = StyleSheet()
-    newStyle.addRule(LafCssProvider.getCssForCurrentLaf())
-    newStyle.addRule(LafCssProvider.getCssForCurrentEditorScheme())
+/**
+ * Populate global stylesheet with LAF-based overrides
+ */
+private suspend fun updateGlobalStyleSheet() {
+  val newStyle = StyleSheet()
+  newStyle.addRule(getCssForCurrentLaf())
+  newStyle.addRule(getCssForCurrentEditorScheme())
 
-    withContext(RawSwingDispatcher + ModalityState.any().asContextElement()) {
-      currentLafStyleSheet?.let {
-        globalStyleSheet.removeStyleSheet(it)
-      }
-
-      currentLafStyleSheet = newStyle
-      globalStyleSheet.addStyleSheet(newStyle)
+  withContext(RawSwingDispatcher + ModalityState.any().asContextElement()) {
+    currentLafStyleSheet?.let {
+      globalStyleSheet.removeStyleSheet(it)
     }
+
+    currentLafStyleSheet = newStyle
+    globalStyleSheet.addStyleSheet(newStyle)
   }
+}
 
-  @Service(Service.Level.APP)
-  @OptIn(FlowPreview::class)
-  private class UpdateService(coroutineScope: CoroutineScope) {
-    private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+@Service(Service.Level.APP)
+@OptIn(FlowPreview::class)
+private class GlobalStyleSheetUpdateService(coroutineScope: CoroutineScope) {
+  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    init {
-      coroutineScope.launch {
-        updateRequests
-          .debounce(5.milliseconds)
-          .collectLatest {
-            withContext(CoroutineName("global styleSheet updating")) {
-              updateGlobalStyleSheet()
-            }
+  init {
+    coroutineScope.launch {
+      updateRequests
+        .debounce(5.milliseconds)
+        .collectLatest {
+          withContext(CoroutineName("global styleSheet updating")) {
+            updateGlobalStyleSheet()
           }
-      }
-    }
-
-    fun requestUpdate() {
-      check(updateRequests.tryEmit(Unit))
+        }
     }
   }
 
-  internal class UpdateListener : EditorColorsListener, LafManagerListener {
-    override fun lookAndFeelChanged(source: LafManager) {
-      service<UpdateService>().requestUpdate()
-    }
+  fun requestUpdate() {
+    check(updateRequests.tryEmit(Unit))
+  }
+}
 
-    override fun globalSchemeChange(scheme: EditorColorsScheme?) {
-      service<UpdateService>().requestUpdate()
-    }
+private class GlobalStyleSheetUpdateListener : EditorColorsListener, LafManagerListener {
+  override fun lookAndFeelChanged(source: LafManager) {
+    service<GlobalStyleSheetUpdateService>().requestUpdate()
+  }
+
+  override fun globalSchemeChange(scheme: EditorColorsScheme?) {
+    service<GlobalStyleSheetUpdateService>().requestUpdate()
   }
 }
