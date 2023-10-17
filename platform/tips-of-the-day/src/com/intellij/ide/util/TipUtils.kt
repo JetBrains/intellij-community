@@ -147,8 +147,9 @@ private fun loadTip(tip: TipAndTrickBean?, isStrict: Boolean): LoadedTipInfo {
       for (retriever in retrieversInfo.tipRetrievers) {
         val tipContent = retriever.getTipContent(tip.fileName)
         if (tipContent != null) {
-          val tipImagesLocation = "/${retriever.path}/${if (retriever.subPath.isNotEmpty()) "${retriever.subPath}/" else ""}"
-          return LoadedTipInfo(tipContent, tipImagesLocation, retriever.loader, retrieversInfo.mainClassLoader)
+          val imagesTipRetriever = retrieversInfo.imagesTipRetriever
+          val tipImagesLocation = "${imagesTipRetriever.path}/${if (imagesTipRetriever.subPath.isNotEmpty()) "${imagesTipRetriever.subPath}/" else ""}"
+          return LoadedTipInfo(tipContent, tipImagesLocation, retriever.loader, imagesTipRetriever.loader)
         }
       }
     }
@@ -162,7 +163,7 @@ private fun loadTip(tip: TipAndTrickBean?, isStrict: Boolean): LoadedTipInfo {
 
 //mainClassLoader will always point to the loader that was used to start IDE, and it will be able to retrieve
 //images from english tips of the day resources
-private data class TipRetrieversInfo(val mainClassLoader: ClassLoader,
+private data class TipRetrieversInfo(val imagesTipRetriever: TipRetriever,
                                      var tipRetrievers: List<TipRetriever>)
 
 private val productCodeTipMap = mapOf(Pair("iu", "ij"),
@@ -192,8 +193,9 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
   val retrievers: MutableList<TipRetriever> = ArrayList()
 
   listOf(ideCode, fallbackIdeCode, "db_pl", "bdt", "misc", "").forEach { retrievers.add(TipRetriever(tipLoader, "tips", it)) }
-  retrievers.add(TipRetriever(fallbackLoader, "tips", ""))
-  return TipRetrieversInfo(fallbackLoader, retrievers)
+  val fallbackRetriever = TipRetriever(fallbackLoader, "tips", "")
+  retrievers.add(fallbackRetriever)
+  return TipRetrieversInfo(fallbackRetriever, retrievers)
 }
 
 private fun loadImages(tipContent: Element,
@@ -235,7 +237,7 @@ private fun loadImages(tipContent: Element,
       }
     }
     else {
-      image = loadImageByClassLoader(path = "tips/$path", classLoader = loader, scaleContext = ScaleContext.create(contextComponent))
+      image = loadImageByClassLoader(path = "$tipsPath$path", classLoader = loader, scaleContext = ScaleContext.create(contextComponent))
     }
     if (image != null) {
       var icon: Icon = JBImageIcon(image)
