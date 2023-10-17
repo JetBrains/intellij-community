@@ -133,6 +133,26 @@ fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = 
 }
 
 /**
+ * This context is not supposed to be captured ever.
+ * Use case: pass modality state to service initialization;
+ * this modality state must not be captured in scheduled tasks and/or
+ * listeners which originate in service constructor or service's `loadState()`.
+ */
+private val tlTemporaryContext: ThreadLocal<CoroutineContext?> = ThreadLocal()
+
+@Internal
+fun currentTemporaryThreadContextOrNull(): CoroutineContext? {
+  return tlTemporaryContext.get()
+}
+
+@Internal
+fun installTemporaryThreadContext(coroutineContext: CoroutineContext): AccessToken {
+  return withThreadLocal(tlTemporaryContext) { _ ->
+    coroutineContext
+  }
+}
+
+/**
  * Updates given [variable] with a new value obtained by applying [update] to the current value.
  * Returns a token which must be [closed][AccessToken.close] to revert the [variable] to the previous value.
  * The token implementation ensures that nested updates and reverts are mirrored:

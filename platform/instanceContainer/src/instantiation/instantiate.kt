@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.instantiation
 
+import com.intellij.concurrency.installTemporaryThreadContext
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.platform.instanceContainer.internal.withCurrentlyInitializingHolder
 import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.toArray
 import com.intellij.util.lateinitVal
@@ -256,8 +256,8 @@ private suspend fun <T> instantiate(
             // A separate thread-local is required to track cyclic service initialization, because
             // we don't want it to be captured by lambdas scheduled in the constructor (= context propagation).
             // Only the context of the owner coroutine should be captured.
-            withCurrentlyInitializingHolder(initializerContext).use {
-              // TODO Put BlockingJob to bind all computations started in instance constructor to instance scope.
+            // TODO Put BlockingJob to bind all computations started in instance constructor to instance scope.
+            installTemporaryThreadContext(initializerContext).use {
               instantiate(args)
             }
           }

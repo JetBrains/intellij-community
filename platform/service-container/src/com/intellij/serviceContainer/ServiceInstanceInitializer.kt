@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
+import com.intellij.concurrency.installTemporaryThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -11,6 +13,7 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.instanceContainer.internal.InstanceInitializer
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 
 internal abstract class ServiceInstanceInitializer(
   val componentManager: ComponentManagerImpl,
@@ -34,7 +37,9 @@ internal abstract class ServiceInstanceInitializer(
     // which happens only on project/application shutdown, or on plugin unload.
     Cancellation.withNonCancelableSection().use {
       // loadState may invokeLater => don't capture the context
-      componentManager.initializeComponent(instance, serviceDescriptor, pluginId)
+      installTemporaryThreadContext(currentCoroutineContext()).use {
+        componentManager.initializeComponent(instance, serviceDescriptor, pluginId)
+      }
     }
     return instance
   }

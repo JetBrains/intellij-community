@@ -3,6 +3,7 @@
 
 package com.intellij.serviceContainer
 
+import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.LoadingState
@@ -24,10 +25,7 @@ import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.createExtensionPoints
-import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.progress.CeProcessCanceledException
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
@@ -180,7 +178,7 @@ abstract class ComponentManagerImpl(
             in requireReadAction -> readActionBlocking {
               holder.getOrCreateInstanceBlocking(debugString = instanceClassName, keyClass = null)
             }
-            else -> holder.getInstance(keyClass = null)
+            else -> holder.getInstanceInCallerContext(keyClass = null)
           }
         }
         catch (ce: CancellationException) {
@@ -636,7 +634,7 @@ abstract class ComponentManagerImpl(
     }
 
     if (useInstanceContainer) {
-      runNestedBlocking {
+      runBlockingInitialization {
         componentContainer.preloadAllInstances()
       }
     }
@@ -2301,16 +2299,8 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
       }
     }
   }
-  return runNestedBlocking {
-    val ctx = currentlyInitializingInstanceContext()
-    if (ctx == null) {
-      getInstanceInCallerContext(keyClass)
-    }
-    else {
-      withContext(ctx) {
-        getInstanceInCallerContext(keyClass)
-      }
-    }
+  return runBlockingInitialization {
+    getInstanceInCallerContext(keyClass)
   }
 }
 
@@ -2366,5 +2356,31 @@ private inline fun <X> rethrowCEasPCE(action: () -> X): X {
   }
   catch (ce: CancellationException) {
     throw CeProcessCanceledException(ce)
+  }
+}
+
+private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X): X {
+  return prepareThreadContext { ctx -> // reset thread context
+    try {
+      val contextForInitializer =
+        (ctx.contextModality()?.asContextElement() ?: EmptyCoroutineContext) + // leak modality state into initialization coroutine
+        (ctx[Job] ?: EmptyCoroutineContext) + // bind to caller Job
+        readActionContext() + // capture whether the caller holds the read lock
+        (currentTemporaryThreadContextOrNull() ?: EmptyCoroutineContext) + // propagate modality state/CurrentlyInitializingInstance
+        NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking(contextForInitializer, action)
+    }
+    catch (ce: CancellationException) {
+      throw CeProcessCanceledException(ce)
+    }
+  }
+}
+
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
+private class NestedBlockingEventLoop(override val thread: Thread) : EventLoopImplBase() {
+
+  override fun shouldBeProcessedFromContext(): Boolean {
+    return true
   }
 }

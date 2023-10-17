@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.internal
 
-import com.intellij.concurrency.withThreadLocal
-import com.intellij.openapi.application.AccessToken
 import com.intellij.platform.instanceContainer.CycleInitializationException
 import com.intellij.util.findCycle
 import kotlinx.collections.immutable.PersistentSet
@@ -123,17 +121,17 @@ internal abstract class LazyInstanceHolder(
       throw t
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    val dispatcherCtx = if (useCallerContext) {
-      // for example, inside runBlocking its event loop will be used for initialization
-      checkNotNull(currentCoroutineContext()[CoroutineDispatcher])
+    val callerCtx = if (useCallerContext) {
+      // for example, inside runBlocking its event loop will be used for initialization,
+      // and/or context modality state will be used
+      currentCoroutineContext().minusKey(Job)
     }
     else {
       EmptyCoroutineContext
     }
     val parentScope = state.parentScope
     parentScope.launch(
-      context = CoroutineName("${initializer.instanceClassName} init") + dispatcherCtx + CurrentlyInitializingInstance(this),
+      context = callerCtx + CurrentlyInitializingInstance(this) + CoroutineName("${initializer.instanceClassName} init"),
       start = CoroutineStart.UNDISPATCHED,
     ) {
       try {
@@ -255,24 +253,6 @@ internal abstract class LazyInstanceHolder(
 private class CurrentlyInitializingInstance(val holder: LazyInstanceHolder)
   : AbstractCoroutineContextElement(CurrentlyInitializingInstance) {
   companion object : CoroutineContext.Key<CurrentlyInitializingInstance>
-}
-
-private val currentlyInitializingInstance: ThreadLocal<CurrentlyInitializingInstance?> = ThreadLocal()
-
-/**
- * Puts context [CurrentlyInitializingInstance] to a special thread-local.
- */
-fun withCurrentlyInitializingHolder(initializerContext: CoroutineContext): AccessToken {
-  return withThreadLocal(currentlyInitializingInstance) {
-    initializerContext[CurrentlyInitializingInstance]
-  }
-}
-
-/**
- * Returns the [CurrentlyInitializingInstance] from thread local.
- */
-fun currentlyInitializingInstanceContext(): CoroutineContext? {
-  return currentlyInitializingInstance.get()
 }
 
 internal class StaticInstanceHolder(scope: CoroutineScope, initializer: InstanceInitializer)
