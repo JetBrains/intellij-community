@@ -55,8 +55,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.codeInsight.inline.completion.onboarding.ActionsKt.addInlineCompletionBehaviourActions;
-
 final class LookupUi {
   private static final Logger LOG = Logger.getInstance(LookupUi.class);
 
@@ -98,7 +96,6 @@ final class LookupUi {
     menuAction.add(new DelegatedAction(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_IMPLEMENTATIONS)));
     menuAction.addSeparator();
     menuAction.add(new ShowCompletionSettingsAction());
-    addInlineCompletionBehaviourActions(menuAction);
 
     Presentation presentation = new Presentation();
     presentation.setIcon(AllIcons.Actions.More);
