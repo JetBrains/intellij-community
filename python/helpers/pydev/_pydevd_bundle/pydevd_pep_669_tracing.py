@@ -18,7 +18,7 @@ from _pydevd_bundle.pydevd_constants import get_current_thread_id, PYDEVD_TOOL_N
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_frame import handle_breakpoint_condition, \
     handle_breakpoint_expression, DEBUG_START, DEBUG_START_PY3K, \
-    should_stop_on_exception, handle_exception
+    should_stop_on_exception, handle_exception, manage_return_values
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import NORM_PATHS_AND_BASE_CONTAINER, \
     get_abs_path_real_path_and_base_from_frame
@@ -520,6 +520,9 @@ class PyReturnCallback(PEP669CallbackBase):
         thread = self.thread
         info = self._get_additional_info(thread)
 
+        if self.py_db.show_return_values or self.py_db.remove_return_values_flag:
+            manage_return_values(self.py_db, frame, 'return', retval)
+
         step_cmd = info.pydev_step_cmd
 
         if step_cmd == CMD_STEP_OVER:
@@ -532,6 +535,7 @@ class PyReturnCallback(PEP669CallbackBase):
                         back = None
                     self.py_db.set_suspend(thread, step_cmd)
                     self.py_db.do_wait_suspend(thread, back, 'return', retval)
+                    PyLineCallback.start_monitoring(back.f_code)
 
     @staticmethod
     def start_monitoring(code):
