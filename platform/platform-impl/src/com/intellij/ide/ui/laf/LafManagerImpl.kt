@@ -55,7 +55,10 @@ import com.intellij.util.IJSwingUtilities
 import com.intellij.util.SVGLoader.colorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -562,11 +565,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     usedValuesOfUiOptions = computeValuesOfUsedUiOptions()
     if (isFirstSetup) {
       coroutineScope.launch {
-        val publisher = ApplicationManager.getApplication().messageBus.syncAndPreloadPublisher(LafManagerListener.TOPIC)
-        withContext(RawSwingDispatcher) {
-          val activity = StartUpMeasurer.startActivity("lookAndFeelChanged event processing")
-          publisher.lookAndFeelChanged(this@LafManagerImpl)
-          activity.end()
+        span("lookAndFeelChanged event processing") {
+          ApplicationManager.getApplication().messageBus.syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this@LafManagerImpl)
         }
       }
     }
