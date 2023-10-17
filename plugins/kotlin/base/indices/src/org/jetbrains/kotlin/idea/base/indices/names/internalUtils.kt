@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.indices.names
 
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.util.indexing.FileContent
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
@@ -58,7 +59,14 @@ internal fun readProtoPackageData(kotlinJvmBinaryClass: KotlinJvmBinaryClass): P
 }
 
 internal fun FileContent.toKotlinJvmBinaryClass(): KotlinJvmBinaryClass? {
-    val result = KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, JvmMetadataVersion.INSTANCE, content) ?: return null
+    val result = try {
+        KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, JvmMetadataVersion.INSTANCE, content) ?: return null
+    } catch (e: Exception) {
+        if (e is ControlFlowException) throw e
+
+        // If the class file cannot be read, e.g. when it is broken, we don't need to index it.
+        return null
+    }
     val kotlinClass = result as? KotlinClassFinder.Result.KotlinClass ?: return null
     return kotlinClass.kotlinJvmBinaryClass
 }
