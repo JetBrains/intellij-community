@@ -911,7 +911,7 @@ fun rearrangeByPromotersImpl(actions: List<AnAction>,
   val copy = ArrayList(actions)
   var updateCopy = false
   for (promoter in promoters) {
-    if (updateCopy) copy.run { clear(); addAll(result) }
+    if (updateCopy) copy.run { clear(); addAll(result); updateCopy = false }
     val promoted = promoter.promote(Collections.unmodifiableList(copy), dataContext)
     if (!promoted.isNullOrEmpty()) {
       result.removeAll(promoted)
