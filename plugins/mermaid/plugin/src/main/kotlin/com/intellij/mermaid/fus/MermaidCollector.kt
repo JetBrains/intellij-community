@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.fileTypes.FileType
 
+@Suppress("UnstableApiUsage")
 internal class MermaidCollector: CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup {
     return Companion.group

@@ -7,6 +7,7 @@ include(":examples:test-data")
 includeBuild("examples/extractor")
 
 dependencyResolutionManagement {
+  @Suppress("UnstableApiUsage")
   repositories {
     mavenCentral()
     maven("https://www.jetbrains.com/intellij-repository/snapshots")
