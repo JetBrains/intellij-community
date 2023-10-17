@@ -175,7 +175,7 @@ abstract class ComponentManagerImpl(
         try {
           when (val instanceClassName = holder.instanceClassName()) {
             in requireEdt -> withContext(Dispatchers.EDT) {
-              holder.getInstanceInCallerDispatcher(keyClass = null)
+              holder.getInstanceInCallerContext(keyClass = null)
             }
             in requireReadAction -> readActionBlocking {
               holder.getOrCreateInstanceBlocking(debugString = instanceClassName, keyClass = null)
@@ -2304,11 +2304,11 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
   return runNestedBlocking {
     val ctx = currentlyInitializingInstanceContext()
     if (ctx == null) {
-      getInstanceInCallerDispatcher(keyClass)
+      getInstanceInCallerContext(keyClass)
     }
     else {
       withContext(ctx) {
-        getInstanceInCallerDispatcher(keyClass)
+        getInstanceInCallerContext(keyClass)
       }
     }
   }

@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
-import com.intellij.platform.instanceContainer.internal.isStatic
 import com.intellij.platform.instanceContainer.instantiation.ArgumentSupplier
 import com.intellij.platform.instanceContainer.instantiation.DependencyResolver
+import com.intellij.platform.instanceContainer.internal.isStatic
 import java.lang.Deprecated
 import java.lang.reflect.Constructor
 import kotlin.Boolean
@@ -34,7 +34,7 @@ internal class ComponentManagerResolver(
       }
       ?.let { holder ->
         return ArgumentSupplier {
-          holder.getInstanceInCallerDispatcher(keyClass = parameterType)
+          holder.getInstanceInCallerContext(keyClass = parameterType)
         }
       }
 
@@ -46,7 +46,7 @@ internal class ComponentManagerResolver(
       //}
       componentManager.getHolderOfType(parameterType)?.let {
         return ArgumentSupplier {
-          it.getInstanceInCallerDispatcher(keyClass = null)
+          it.getInstanceInCallerContext(keyClass = null)
         }
       }
 

@@ -82,19 +82,19 @@ internal abstract class LazyInstanceHolder(
   }
 
   override suspend fun getInstance(keyClass: Class<*>?): Any {
-    return getInstance(keyClass, callerDispatcher = false)
+    return getInstance(keyClass, useCallerContext = false)
   }
 
-  override suspend fun getInstanceInCallerDispatcher(keyClass: Class<*>?): Any {
-    return getInstance(keyClass, callerDispatcher = true)
+  override suspend fun getInstanceInCallerContext(keyClass: Class<*>?): Any {
+    return getInstance(keyClass, useCallerContext = true)
   }
 
-  private suspend fun getInstance(keyClass: Class<*>?, callerDispatcher: Boolean): Any {
+  private suspend fun getInstance(keyClass: Class<*>?, useCallerContext: Boolean): Any {
     tryGetInstance()?.let {
       return it
     }
     return when (val state = state()) {
-      is Initial -> tryInitialize(state, keyClass, callerDispatcher)
+      is Initial -> tryInitialize(state, keyClass, useCallerContext)
       is InProgress -> tryAwait(state)
       is CannotLoadClass -> throw state.classLoadingError
       is CannotInitialize -> throw state.initializationError
@@ -102,7 +102,7 @@ internal abstract class LazyInstanceHolder(
     }
   }
 
-  private suspend fun tryInitialize(state: Initial, keyClass: Class<*>?, undispatched: Boolean): Any {
+  private suspend fun tryInitialize(state: Initial, keyClass: Class<*>?, useCallerContext: Boolean): Any {
     val initializer = state.initializer
     val newState = InProgress(initializer, persistentHashSetOf())
     val witness = stateHandle.compareAndExchange(this, state, newState)
@@ -124,7 +124,7 @@ internal abstract class LazyInstanceHolder(
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    val dispatcherCtx = if (undispatched) {
+    val dispatcherCtx = if (useCallerContext) {
       // for example, inside runBlocking its event loop will be used for initialization
       checkNotNull(currentCoroutineContext()[CoroutineDispatcher])
     }
