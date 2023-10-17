@@ -10,6 +10,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.MoveToTestRootFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -31,6 +32,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -345,6 +347,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return ThreeState.NO;
   }
 
+  @RequiresReadLock
   public static void importClass(@NotNull Module currentModule, @Nullable Editor editor, @Nullable PsiReference reference, @Nullable String className) {
     Project project = currentModule.getProject();
     if (editor != null && reference != null && className != null) {
@@ -352,7 +355,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
         GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
         PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
         if (aClass != null) {
-          new AddImportAction(project, reference, editor, aClass).execute();
+          ApplicationManager.getApplication().invokeLater(() -> new AddImportAction(project, reference, editor, aClass).execute());
         }
       });
     }

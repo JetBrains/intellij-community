@@ -107,14 +107,15 @@ class AddLibraryDependencyFix extends OrderEntryFix {
       .addDependency(myCurrentModule, library, myScope, myExported)
       .onSuccess(__ -> {
         ReadAction
-          .nonBlocking(() -> restoreReference())
-          .expireWhen(() -> editor == null || editor.isDisposed() || myCurrentModule.isDisposed())
-          .finishOnUiThread(modality, reference -> {
+          .nonBlocking(() -> {
+            PsiReference reference = restoreReference();
             String qName = myLibraries.get(library);
             if (!qName.isEmpty()) {
               importClass(myCurrentModule, editor, reference, qName);
             }
+            return null;
           })
+          .expireWhen(() -> editor == null || editor.isDisposed() || myCurrentModule.isDisposed())
           .submit(AppExecutorUtil.getAppExecutorService());
       });
   }
