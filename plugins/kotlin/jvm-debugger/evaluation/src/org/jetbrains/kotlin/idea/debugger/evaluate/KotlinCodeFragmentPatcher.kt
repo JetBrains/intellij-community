@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -21,24 +22,22 @@ private class KotlinCodeFragmentPatcher(val codeFragment: KtCodeFragment) {
         return this
     }
 
-    fun editCodeFragment(): Boolean {
-        val (expression, expressionText) = extractExpressionWithText() ?: return false
+    fun wrapFragmentExpressionIfNeeded() {
+        val (expression, expressionText) = extractExpressionWithText() ?: return
 
-        var expressionWasWrapped = false
-        var newExpressionText = expressionText
-        runReadAction {
+        val newExpressionText = ReadAction.nonBlocking<String> {
+            var newExpressionText = expressionText
             for (wrapper in expressionWrappers) {
                 if (wrapper.isApplicable(expression)) {
-                    expressionWasWrapped = true
                     newExpressionText = wrapper.createWrappedExpressionText(newExpressionText)
                 }
             }
-        }
+            newExpressionText
+        }.executeSynchronously()
 
-        if (expressionWasWrapped) {
+        if (newExpressionText != expressionText) {
             replaceExpression(expression, newExpressionText)
         }
-        return expressionWasWrapped
     }
 
     private fun replaceExpression(expression: KtExpression, newExpressionText: String) {
@@ -83,5 +82,5 @@ internal fun patchCodeFragment(context: ExecutionContext, codeFragment: KtCodeFr
                 codeFragment.context,
                 (context.frameProxy as? CoroutineStackFrameProxyImpl)?.isCoroutineScopeAvailable() ?: false
             )
-        ).editCodeFragment()
+        ).wrapFragmentExpressionIfNeeded()
 }
