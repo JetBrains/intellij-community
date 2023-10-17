@@ -931,9 +931,9 @@ public final class FindUtil {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, FindBundle.message("progress.title.updating.usage.view")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        UsageViewImpl impl = (UsageViewImpl)view;
+        UsageViewImpl impl = (view instanceof UsageViewImpl) ? (UsageViewImpl)view : null;
         for (T pointer : targets) {
-          if (impl.isDisposed()) break;
+          if (impl != null && impl.isDisposed()) break;
           ApplicationManager.getApplication().runReadAction(() -> {
             Usage usage = usageConverter.fun(pointer);
             if (usage != null) {
@@ -942,7 +942,7 @@ public final class FindUtil {
           });
         }
         UIUtil.invokeLaterIfNeeded(() -> {
-          if (!impl.isDisposed()) impl.expandRoot();
+          if (impl != null && !impl.isDisposed()) impl.expandRoot();
         });
       }
     });
