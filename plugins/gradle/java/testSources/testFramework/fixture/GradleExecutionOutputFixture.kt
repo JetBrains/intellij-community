@@ -48,12 +48,10 @@ class GradleExecutionOutputFixture(
   }
 
   fun <R> assertExecutionOutputIsReady(action: () -> R): R {
-    output = Output()
     return taskExecutionLeakTracker.withAllowedOperation(1, action)
   }
 
   suspend fun <R> assertExecutionOutputIsReadyAsync(action: suspend () -> R): R {
-    output = Output()
     return taskExecutionLeakTracker.withAllowedOperationAsync(1, action)
   }
 
@@ -77,6 +75,10 @@ class GradleExecutionOutputFixture(
 
   private fun installGradleEventsListener() {
     val listener = object : ExternalSystemTaskNotificationListenerAdapter() {
+
+      override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
+        output = Output()
+      }
 
       override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
         output.testDescriptors.addAll(
