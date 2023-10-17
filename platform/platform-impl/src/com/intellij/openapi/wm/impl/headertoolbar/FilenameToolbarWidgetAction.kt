@@ -118,6 +118,11 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
       icon = presentation.icon
       foreground = presentation.getClientProperty(FILE_COLOR)
       text = presentation.description
+      if (text.isNullOrEmpty()) {
+        // A trick to avoid flashing the "unknown" icon on the toolbar during initialization,
+        // as the action system goes out of its way to make the action visible until the first update.
+        isVisible = false
+      }
       if (path != null && isIDEA331002Fixed) {
         val htmlColor = ColorUtil.toHtmlColor(JBColor.namedColor("Component.infoForeground", foreground))
         @Suppress("HardCodedStringLiteral")
