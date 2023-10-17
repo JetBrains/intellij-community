@@ -15,6 +15,7 @@ import com.intellij.util.containers.MultiMap
 import com.siyeh.ig.psiutils.ClassUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.UastBinaryOperator.AssignOperator
+import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -762,15 +763,91 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     private fun getAllReturns(sourcePsi: PsiElement): MutableSet<UExpression> =
       CachedValuesManager.getManager(sourcePsi.project)
         .getCachedValue(sourcePsi, CachedValueProvider {
-          val method = sourcePsi.toUElement() as? UMethod
-          val visitor = object : AbstractUastVisitor() {
+          class ReturnFinder: AbstractUastVisitor() {
             val returns = mutableSetOf<UExpression>()
+            var stop = false
+            var onlyInSameLevel = true
+
+            override fun visitBreakExpression(node: UBreakExpression): Boolean {
+              onlyInSameLevel = false
+              return super.visitBreakExpression(node)
+            }
+
+            override fun visitYieldExpression(node: UYieldExpression): Boolean {
+              onlyInSameLevel = false
+              return super.visitYieldExpression(node)
+            }
+
+            override fun visitContinueExpression(node: UContinueExpression): Boolean {
+              onlyInSameLevel = false
+              return super.visitContinueExpression(node)
+            }
+
+            override fun visitClass(node: UClass): Boolean {
+              return true
+            }
+
+            override fun visitSwitchExpression(node: USwitchExpression): Boolean {
+              if (stop) {
+                return true
+              }
+              //simplification
+              onlyInSameLevel = false
+              return super.visitSwitchExpression(node)
+            }
+
+            override fun visitIfExpression(node: UIfExpression): Boolean {
+              val constant = getConstant(node.condition)
+              val returnFinder = ReturnFinder()
+              var nextExpression: UExpression? = null
+              if (constant == true) {
+                nextExpression = node.thenExpression
+              }
+              else if (constant == false) {
+                nextExpression = node.elseExpression
+              }
+              if (nextExpression != null) {
+                if (nextExpression is UBlockExpression) {
+                  nextExpression.expressions.acceptList(returnFinder)
+                }
+                else {
+                  nextExpression.accept(returnFinder)
+                }
+              }
+              returns.addAll(returnFinder.returns)
+              if (returnFinder.onlyInSameLevel && returnFinder.returns.isNotEmpty()) {
+                stop = true
+                return true
+              }
+              return false
+            }
+
+            override fun visitBlockExpression(node: UBlockExpression): Boolean {
+              if (stop) {
+                return true
+              }
+              val returnFinder = ReturnFinder()
+              node.expressions.acceptList(returnFinder)
+              returns.addAll(returnFinder.returns)
+              onlyInSameLevel = false
+              return true
+            }
+
+            override fun visitElement(node: UElement): Boolean {
+              return stop
+            }
+
             override fun visitReturnExpression(node: UReturnExpression): Boolean {
+              if (stop) {
+                return true
+              }
               val returnExpression = node.returnExpression ?: return super.visitReturnExpression(node)
               returns.add(returnExpression)
               return super.visitReturnExpression(node)
             }
           }
+          val method = sourcePsi.toUElement() as? UMethod
+          val visitor = ReturnFinder()
           method?.uastBody?.accept(visitor)
           return@CachedValueProvider CachedValueProvider.Result.create(visitor.returns, PsiModificationTracker.MODIFICATION_COUNT)
         })
