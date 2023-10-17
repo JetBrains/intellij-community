@@ -167,6 +167,7 @@ impl RemoteDevLaunchConfiguration {
         debug!("Parsing remote dev command-line arguments");
 
         if args.len() < 2 {
+            print_help();
             bail!("Starter command is not specified")
         }
 
