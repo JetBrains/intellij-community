@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.UNMODIFIED_MARK_FILE_NAME
-import org.jetbrains.intellij.build.createMarkFile
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import java.nio.file.Files
@@ -18,13 +17,7 @@ import java.util.concurrent.atomic.LongAdder
 
 internal data class PluginBuildDescriptor(@JvmField val dir: Path,
                                           @JvmField val layout: PluginLayout,
-                                          @JvmField val moduleNames: List<String>) {
-  fun markAsBuilt(outDir: Path) {
-    for (moduleName in moduleNames) {
-      createMarkFile(outDir.resolve(moduleName).resolve(UNMODIFIED_MARK_FILE_NAME))
-    }
-  }
-}
+                                          @JvmField val moduleNames: List<String>)
 
 internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescriptor>,
                                   outDir: Path,
@@ -112,9 +105,6 @@ private suspend fun buildPlugin(plugin: PluginBuildDescriptor,
                                                   // searchable options are not generated in dev mode
                                                   moduleWithSearchableOptions = emptySet(),
                                                   context = context)
-      withContext(Dispatchers.IO) {
-        plugin.markAsBuilt(outDir)
-      }
       pluginEntries
     }
 }
