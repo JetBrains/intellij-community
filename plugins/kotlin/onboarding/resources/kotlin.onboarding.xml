@@ -7,5 +7,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.KotlinNewUserTracker"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.FeedbackSurvey"/>
   </extensions>
 </idea-plugin>
