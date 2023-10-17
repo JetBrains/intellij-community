@@ -77,6 +77,7 @@ internal class LoadedGitLabMergeRequest(
   private val project: Project,
   parentCs: CoroutineScope,
   private val api: GitLabApi,
+  private val glMetadata: GitLabServerMetadata?,
   private val projectMapping: GitLabProjectMapping,
   mergeRequest: GitLabMergeRequestDTO,
   backupCommits: List<GitLabCommitRestDTO>
@@ -274,7 +275,7 @@ internal class LoadedGitLabMergeRequest(
 
   override suspend fun setReviewers(reviewers: List<GitLabUserDTO>) {
     withContext(cs.coroutineContext + Dispatchers.IO) {
-      val updatedMergeRequest = if (GitLabVersion(15, 3) <= api.getMetadata().version) {
+      val updatedMergeRequest = if (glMetadata != null && GitLabVersion(15, 3) <= glMetadata.version) {
         api.graphQL.mergeRequestSetReviewers(glProject, iid, reviewers).getResultOrThrow()
       }
       else {
@@ -301,7 +302,7 @@ internal class LoadedGitLabMergeRequest(
   }
 
   private val discussionsContainer =
-    GitLabMergeRequestDiscussionsContainerImpl(parentCs, project, api, projectMapping.repository, this)
+    GitLabMergeRequestDiscussionsContainerImpl(parentCs, project, api, glMetadata, projectMapping.repository, this)
 
   override val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>> = discussionsContainer.discussions
   override val systemNotes: Flow<Result<Collection<GitLabNote>>> = discussionsContainer.systemNotes

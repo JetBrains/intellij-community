@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitRestDTO
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
@@ -57,6 +58,7 @@ interface GitLabProjectMergeRequestsStore {
 class CachingGitLabProjectMergeRequestsStore(private val project: Project,
                                              parentCs: CoroutineScope,
                                              private val api: GitLabApi,
+                                             private val glMetadata: GitLabServerMetadata?,
                                              private val projectMapping: GitLabProjectMapping,
                                              private val tokenRefreshFlow: Flow<Unit>) : GitLabProjectMergeRequestsStore {
 
@@ -98,7 +100,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
           }
           MergeRequestData(mrData, commits)
         }.mapScoped { (mrData, commits) ->
-          LoadedGitLabMergeRequest(project, this, api, projectMapping, mrData, commits)
+          LoadedGitLabMergeRequest(project, this, api, glMetadata, projectMapping, mrData, commits)
         }.asResultFlow().shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
       // this the model will only be alive while it's needed
     }

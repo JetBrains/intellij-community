@@ -38,6 +38,7 @@ class GitLabLazyProject(
   private val project: Project,
   parentCs: CoroutineScope,
   private val api: GitLabApi,
+  private val glMetadata: GitLabServerMetadata?,
   override val projectMapping: GitLabProjectMapping,
   private val tokenRefreshFlow: Flow<Unit>
 ) : GitLabProject {
@@ -47,7 +48,7 @@ class GitLabLazyProject(
   private val projectCoordinates: GitLabProjectCoordinates = projectMapping.repository
 
   override val mergeRequests by lazy {
-    CachingGitLabProjectMergeRequestsStore(project, cs, api, projectMapping, tokenRefreshFlow)
+    CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, projectMapping, tokenRefreshFlow)
   }
 
   override val labels: Flow<Result<List<GitLabLabelDTO>>> =

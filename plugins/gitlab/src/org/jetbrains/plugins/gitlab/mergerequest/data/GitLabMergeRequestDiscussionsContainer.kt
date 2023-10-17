@@ -45,6 +45,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   parentCs: CoroutineScope,
   private val project: Project,
   private val api: GitLabApi,
+  private val glMetadata: GitLabServerMetadata?,
   private val glProject: GitLabProjectCoordinates,
   private val mr: GitLabMergeRequest
 ) : GitLabMergeRequestDiscussionsContainer {
@@ -127,8 +128,10 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       .mapDataToModel(
         GitLabDiscussionDTO::id,
         { disc ->
-          LoadedGitLabDiscussion(this, project, api, glProject, { discussionEvents.emit(it) }, mr, disc,
-                                 getDiscussionDraftNotes(disc.id).throwFailure())
+          LoadedGitLabDiscussion(this,
+                                 project, api, glMetadata, glProject,
+                                 { discussionEvents.emit(it) },
+                                 mr, disc, getDiscussionDraftNotes(disc.id).throwFailure())
         },
         LoadedGitLabDiscussion::update
       )
@@ -155,8 +158,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
 
   private suspend fun FlowCollector<List<DraftNoteWithAuthor>>.collectDraftNotes() {
     supervisorScope {
-      val metadata = api.getMetadataOrNull()
-      if (metadata == null || metadata.version < GitLabVersion(15, 9)) {
+      if (glMetadata == null || glMetadata.version < GitLabVersion(15, 9)) {
         emit(listOf())
         currentCoroutineContext().cancel()
       }
@@ -277,7 +279,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun submitDraftNotes() {
     withContext(cs.coroutineContext) {
       // Don't do anything if the endpoint is not implemented
-      if (api.getMetadata().version < GitLabVersion(15, 11)) {
+      if (glMetadata == null || glMetadata.version < GitLabVersion(15, 11)) {
         return@withContext
       }
 

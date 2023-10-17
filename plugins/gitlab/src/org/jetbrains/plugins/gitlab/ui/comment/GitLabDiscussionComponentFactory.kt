@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.async.inverted
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.ComponentListPanelFactory
@@ -19,7 +20,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
@@ -49,18 +52,21 @@ object GitLabDiscussionComponentFactory {
     return VerticalListPanel().apply {
       name = "GitLab Discussion Panel ${vm.id}"
       add(notesPanel)
-      val replyVm = vm.replyVm
-      if (replyVm != null) {
-        bindChildIn(cs, replyVm.newNoteVm) { newNoteVm ->
-          if (newNoteVm == null) {
-            createReplyActionsPanel(replyVm, vm.resolveVm).apply {
-              border = JBUI.Borders.empty(8, ComponentType.COMPACT.fullLeftShift)
+
+      cs.launchNow {
+        vm.replyVm.collectLatest { replyVm ->
+          if (replyVm == null) return@collectLatest
+
+          coroutineScope {
+            bindChildIn(this, replyVm.newNoteVm) { newNoteVm ->
+              newNoteVm?.let {
+                createReplyField(ComponentType.COMPACT, project, this, newNoteVm, vm.resolveVm, avatarIconsProvider, swingAction("") {
+                  replyVm.stopWriting()
+                })
+              } ?: createReplyActionsPanel(replyVm, vm.resolveVm).apply {
+                border = JBUI.Borders.empty(8, ComponentType.COMPACT.fullLeftShift)
+              }
             }
-          }
-          else {
-            createReplyField(ComponentType.COMPACT, project, this, newNoteVm, vm.resolveVm, avatarIconsProvider, swingAction("") {
-              replyVm.stopWriting()
-            })
           }
         }
       }

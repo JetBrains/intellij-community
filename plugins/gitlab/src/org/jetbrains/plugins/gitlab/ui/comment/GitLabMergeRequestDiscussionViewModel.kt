@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.async.mapModelsToViewModels
+import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -19,7 +20,7 @@ interface GitLabMergeRequestDiscussionViewModel {
   val notes: Flow<List<NoteItem>>
 
   val resolveVm: GitLabDiscussionResolveViewModel?
-  val replyVm: GitLabDiscussionReplyViewModel?
+  val replyVm: Flow<GitLabDiscussionReplyViewModel?>
 
   val position: Flow<GitLabNotePosition?>
 
@@ -55,8 +56,11 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
   override val resolveVm: GitLabDiscussionResolveViewModel? =
     if (discussion.resolvable) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
 
-  override val replyVm: GitLabDiscussionReplyViewModel? =
-    if (discussion.canAddNotes) GitLabDiscussionReplyViewModelImpl(cs, currentUser, discussion) else null
+  override val replyVm: Flow<GitLabDiscussionReplyViewModel?> =
+    discussion.canAddNotes.mapScoped { canAddNotes ->
+      if (canAddNotes) GitLabDiscussionReplyViewModelImpl(this, currentUser, discussion)
+      else null
+    }.modelFlow(cs, LOG)
 
   // this is NOT a good way to do this, but a proper implementation would be waaaay too convoluted
   @Volatile
@@ -107,5 +111,5 @@ class GitLabMergeRequestDraftDiscussionViewModelBase(
   override val position: Flow<GitLabNotePosition?> = note.position
 
   override val resolveVm: GitLabDiscussionResolveViewModel? = null
-  override val replyVm: GitLabDiscussionReplyViewModel? = null
+  override val replyVm: Flow<GitLabDiscussionReplyViewModel?> = flowOf(null)
 }

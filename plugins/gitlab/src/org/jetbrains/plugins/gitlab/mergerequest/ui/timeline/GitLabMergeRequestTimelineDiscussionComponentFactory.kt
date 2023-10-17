@@ -29,7 +29,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -62,18 +61,22 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       VerticalListPanel().apply {
         add(it)
 
-        val replyVm = vm.replyVm
-        if (replyVm != null) {
-          bindChildIn(cs, replyVm.newNoteVm) { newNoteVm ->
-            newNoteVm?.let {
-              GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, this, it, vm.resolveVm,
-                                                                avatarIconsProvider)
-            }
-          }
+        val combinedReplyVms = vm.replyVm
+          .flatMapLatest { replyVm -> replyVm?.newNoteVm?.map { replyVm to it } ?: flowOf(null to null) }
 
-          cs.launch(start = CoroutineStart.UNDISPATCHED) {
+        bindChildIn(cs, combinedReplyVms) { (replyVm, newNoteVm) ->
+          if (replyVm == null) return@bindChildIn null
+
+          newNoteVm?.let {
+            GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, this, it, vm.resolveVm,
+                                                              avatarIconsProvider)
+          }
+        }
+
+        cs.launch {
+          vm.replyVm.collectLatest { replyVm ->
             vm.repliesFolded.collect {
-              if (!it) replyVm.startWriting()
+              if (!it) replyVm?.startWriting()
             }
           }
         }
@@ -253,7 +256,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       })
     }
 
-    val hasRepliesOrCanCreateNewFlow = vm.replies.map { it.isNotEmpty() || vm.replyVm != null }
+    val hasRepliesOrCanCreateNewFlow = vm.replies
+      .flatMapConcat { replies -> vm.replyVm.map { replyVm -> replies.isNotEmpty() || replyVm != null } }
 
     val repliesLink = LinkLabel<Any>("", null, LinkListener { _, _ ->
       vm.setRepliesFolded(false)

@@ -23,10 +23,11 @@ interface GitLabDiscussion {
 
   val createdAt: Date
   val notes: Flow<List<GitLabNote>>
-  val canAddNotes: Boolean
+  val canAddDraftNotes: Boolean
 
   val resolvable: Boolean
   val canResolve: Boolean
+  val canAddNotes: Flow<Boolean>
   val resolved: Flow<Boolean>
 
   suspend fun changeResolvedState()
@@ -48,6 +49,7 @@ class LoadedGitLabDiscussion(
   parentCs: CoroutineScope,
   private val project: Project,
   private val api: GitLabApi,
+  glMetadata: GitLabServerMetadata?,
   private val glProject: GitLabProjectCoordinates,
   private val eventSink: suspend (GitLabDiscussionEvent) -> Unit,
   private val mr: GitLabMergeRequest,
@@ -107,7 +109,10 @@ class LoadedGitLabDiscussion(
       }
       .modelFlow(cs, LOG)
 
-  override val canAddNotes: Boolean = mr.details.value.userPermissions.createNote
+  override val canAddNotes: Flow<Boolean> = draftNotes.map { it.isEmpty() && mr.details.value.userPermissions.createNote }
+  override val canAddDraftNotes: Boolean =
+    mr.details.value.userPermissions.createNote &&
+    (glMetadata?.let { GitLabVersion(15, 10) <= it.version } ?: false)
 
   // a little cheat that greatly simplifies the implementation
   override val resolvable: Boolean = discussionData.notes.first().resolvable
