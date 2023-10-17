@@ -33,6 +33,7 @@ class ActionEmbeddingsStorageSetup(
         .asSequence()
         .filter { it !in index }
         .map { it to actionManager.getActionOrStub(it) }
+        .filter { (_, action) -> action != null && action.templateText != null }
         .chunked(BATCH_SIZE)
         .forEach { batch ->
           val actionIds = batch.map { (id, _) -> id }

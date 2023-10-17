@@ -25,7 +25,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.File
-import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
 
 /**
