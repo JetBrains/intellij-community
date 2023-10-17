@@ -76,10 +76,6 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
     finally {
       backgroundable.onFinish(cs)
     }
-    catch (e: CancellationException) {
-      logger.debug { "Actions embedding indexing was cancelled" }
-    }
-    backgroundable.onFinish(cs)
   }
 
   @RequiresBackgroundThread

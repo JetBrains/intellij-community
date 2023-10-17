@@ -15,6 +15,6 @@ class ClassesSemanticSearchFileListener(project: Project) : SemanticSearchFileCo
   override fun getEntity(id: String) = IndexableClass(id.intern())
 
   companion object {
-    fun getInstance(project: Project): ClassesSemanticSearchFileChangeListener = project.service()
+    fun getInstance(project: Project): ClassesSemanticSearchFileListener = project.service()
   }
 }
