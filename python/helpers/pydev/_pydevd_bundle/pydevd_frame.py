@@ -333,6 +333,43 @@ def handle_exception(args, frame, event, arg):
         thread = None
 
 
+def manage_return_values(main_debugger, frame, event, arg):
+
+    def get_func_name(frame):
+        code_obj = frame.f_code
+        func_name = code_obj.co_name
+        try:
+            cls_name = get_clsname_for_code(code_obj, frame)
+            if cls_name is not None:
+                return "%s.%s" % (cls_name, func_name)
+            else:
+                return func_name
+        except:
+            traceback.print_exc()
+            return func_name
+
+    try:
+        if main_debugger.show_return_values:
+            if event == "return" and hasattr(frame, "f_code") and hasattr(frame.f_code, "co_name"):
+                if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
+                    if RETURN_VALUES_DICT not in dict_keys(frame.f_back.f_locals):
+                        frame.f_back.f_locals[RETURN_VALUES_DICT] = {}
+                    name = get_func_name(frame)
+                    frame.f_back.f_locals[RETURN_VALUES_DICT][name] = arg
+        if main_debugger.remove_return_values_flag:
+            # Showing return values was turned off, we should remove them from locals dict.
+            # The values can be in the current frame or in the back one
+            if RETURN_VALUES_DICT in dict_keys(frame.f_locals):
+                frame.f_locals.pop(RETURN_VALUES_DICT)
+            if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
+                if RETURN_VALUES_DICT in dict_keys(frame.f_back.f_locals):
+                    frame.f_back.f_locals.pop(RETURN_VALUES_DICT)
+            main_debugger.remove_return_values_flag = False
+    except:
+        main_debugger.remove_return_values_flag = False
+        traceback.print_exc()
+
+
 #=======================================================================================================================
 # PyDBFrame
 #=======================================================================================================================
@@ -407,42 +444,6 @@ class PyDBFrame:
         except:
             traceback.print_exc()
             return func_name
-
-    def manage_return_values(self, main_debugger, frame, event, arg):
-
-        def get_func_name(frame):
-            code_obj = frame.f_code
-            func_name = code_obj.co_name
-            try:
-                cls_name = get_clsname_for_code(code_obj, frame)
-                if cls_name is not None:
-                    return "%s.%s" % (cls_name, func_name)
-                else:
-                    return func_name
-            except:
-                traceback.print_exc()
-                return func_name
-
-        try:
-            if main_debugger.show_return_values:
-                if event == "return" and hasattr(frame, "f_code") and hasattr(frame.f_code, "co_name"):
-                    if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
-                        if RETURN_VALUES_DICT not in dict_keys(frame.f_back.f_locals):
-                            frame.f_back.f_locals[RETURN_VALUES_DICT] = {}
-                        name = get_func_name(frame)
-                        frame.f_back.f_locals[RETURN_VALUES_DICT][name] = arg
-            if main_debugger.remove_return_values_flag:
-                # Showing return values was turned off, we should remove them from locals dict.
-                # The values can be in the current frame or in the back one
-                if RETURN_VALUES_DICT in dict_keys(frame.f_locals):
-                    frame.f_locals.pop(RETURN_VALUES_DICT)
-                if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
-                    if RETURN_VALUES_DICT in dict_keys(frame.f_back.f_locals):
-                        frame.f_back.f_locals.pop(RETURN_VALUES_DICT)
-                main_debugger.remove_return_values_flag = False
-        except:
-            main_debugger.remove_return_values_flag = False
-            traceback.print_exc()
 
     def clear_run_state(self, info):
         info.pydev_step_stop = None
@@ -735,7 +736,7 @@ class PyDBFrame:
                             return self.trace_dispatch
 
                 if main_debugger.show_return_values or main_debugger.remove_return_values_flag:
-                    self.manage_return_values(main_debugger, frame, event, arg)
+                    manage_return_values(main_debugger, frame, event, arg)
 
                 if stop:
                     self.set_suspend(
