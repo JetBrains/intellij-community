@@ -460,7 +460,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
             modelResult = getModel().computeModelResult();
         }
         catch (ConfigurationException e) {
-            setErrorText(e.getMessage());
+            setErrorHtml(e.getMessageHtml());
             return;
         }
 

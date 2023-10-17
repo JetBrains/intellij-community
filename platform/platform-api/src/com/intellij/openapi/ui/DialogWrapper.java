@@ -1989,10 +1989,25 @@ public abstract class DialogWrapper {
    * Use this method only in circumstances when the exact invalid component is hard to
    * detect or the valid status is based on several fields. In other cases use
    * <code>{@link #setErrorText(String, JComponent)}</code> method.
-   * @param text the error text to display
+   * @param text the error text (HTML) to display
    */
   protected void setErrorText(@NlsContexts.DialogMessage @Nullable String text) {
     setErrorText(text, null);
+  }
+
+  /**
+   * @param errorHtml HTML chunk to display as an error text, null if there's no error to display
+   */
+  protected final void setErrorHtml(@Nullable HtmlChunk errorHtml) {
+    setErrorInfoAll(errorHtml == null ? List.of() : List.of(new ValidationInfo(errorHtml, null)));
+  }
+
+  /**
+   * @param errorHtml HTML chunk to display as an error text, null if there's no error to display
+   * @param component the component the error belongs to 
+   */
+  protected final void setErrorHtml(@Nullable HtmlChunk errorHtml, @Nullable JComponent component) {
+    setErrorInfoAll(errorHtml == null ? List.of() : List.of(new ValidationInfo(errorHtml, component)));
   }
 
   protected void setErrorText(@NlsContexts.DialogMessage @Nullable String text, @Nullable JComponent component) {
