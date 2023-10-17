@@ -5,6 +5,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -12,6 +13,7 @@ import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandlerDelegate
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveDialog
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveSourceModel
@@ -25,7 +27,16 @@ class K2MoveHandler : MoveHandlerDelegate() {
     override fun supportsLanguage(language: Language): Boolean = language == KotlinLanguage.INSTANCE
 
     override fun canMove(elements: Array<out PsiElement>, targetContainer: PsiElement?, reference: PsiReference?): Boolean {
-        return elements.all { it is KtElement }
+        if (elements.any { it !is KtElement}) return false
+        if (targetContainer != null && !targetContainer.isValidTarget()) return false
+        return true
+    }
+
+    private fun PsiElement.isValidTarget(): Boolean {
+        return when (this) {
+            is PsiDirectory -> getPackage() != null
+            else -> true
+        }
     }
 
     override fun tryToMove(
