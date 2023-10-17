@@ -44,13 +44,14 @@ final class PersistentFSConnector {
   private static final int MAX_INITIALIZATION_ATTEMPTS = SystemProperties.getIntProperty("vfs.max-initialization-attempts", 3);
 
   public static final List<VFSRecoverer> RECOVERERS = List.of(
+    //order is important: wrap the set of problems -> try to solve them.
     new NotClosedProperlyRecoverer(),
     new ContentStoragesRecoverer()
   );
 
   public static @NotNull VFSInitializationResult connectWithoutVfsLog(@NotNull Path cachesDir,
-                                                                      int version){
-    return connect(cachesDir, version, false, Collections.emptyList());
+                                                                      int version) {
+    return connect(cachesDir, version, /*enableVfsLog: */ false, Collections.emptyList());
   }
 
   public static @NotNull VFSInitializationResult connect(@NotNull Path cachesDir,

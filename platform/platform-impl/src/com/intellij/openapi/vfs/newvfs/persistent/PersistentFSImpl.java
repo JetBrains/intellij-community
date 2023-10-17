@@ -3,10 +3,13 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -58,6 +61,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
+
+import static com.intellij.notification.NotificationType.INFORMATION;
 
 @SuppressWarnings("NonDefaultConstructor")
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
@@ -156,8 +161,23 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (myConnected.compareAndSet(false, true)) {
       Activity activity = StartUpMeasurer.startActivity("connect FSRecords");
       applyVfsLogPreferences();
-      vfsPeer = FSRecords.connect();
+      FSRecordsImpl _vfsPeer = FSRecords.connect();
+      vfsPeer = _vfsPeer;
       activity.end();
+
+      if (app != null && !app.isHeadlessEnvironment()) {
+        List<VFSInitException> recoveredErrors = _vfsPeer.connection().recoveryInfo().recoveredErrors;
+        if (!recoveredErrors.isEmpty()) {
+          NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches");
+          notificationGroup.createNotification(
+              CoreBundle.message("vfs.vfs-recovered.notification.title"),
+              CoreBundle.message("vfs.vfs-recovered.notification.text"),
+              INFORMATION
+            )
+            .setImportant(true)
+            .notify(null);
+        }
+      }
     }
   }
 
@@ -179,7 +199,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       catch (Throwable e) {
         LOG.error("failed to clear VfsLog storage", e);
       }
-    } else {
+    }
+    else {
       if (!vfsLogPath.toFile().exists()) {
         // existing vfs must be cleared if vfslog directory does not exist, otherwise, vfslog will lack crucial data for recovery
         Path corruptionMarker = fsRecordsPaths.getCorruptionMarkerFile();
@@ -1812,7 +1833,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             .anyMatch(rootId -> rootId == currentId);
 
           StringBuilder nonCachedRootsPerLine = new StringBuilder();
-          if(LOG_NON_CACHED_ROOTS_LIST) {
+          if (LOG_NON_CACHED_ROOTS_LIST) {
             vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
               if (myIdToDirCache.getCachedDir(rootFileId) == null) {
                 String rootName = vfsPeer.getName(rootFileId);
