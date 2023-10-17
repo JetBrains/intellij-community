@@ -1,6 +1,4 @@
-package com.intellij.tools.ide.metrics.collector.collector
-
-import com.intellij.tools.ide.metrics.collector.analysis.Conclusion
+package com.intellij.tools.ide.metrics.collector.analysis
 
 data class CompareSetting(
   val compareWithPrevResults: Boolean = false,

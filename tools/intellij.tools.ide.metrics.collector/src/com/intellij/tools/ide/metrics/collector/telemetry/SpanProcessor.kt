@@ -1,7 +1,6 @@
 package com.intellij.tools.ide.metrics.collector.telemetry
 
-import com.intellij.tools.ide.metrics.collector.collector.PerformanceMetrics
-import com.intellij.tools.ide.metrics.collector.metrics.MetricWithAttributes
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 
 interface SpanProcessor<T> {
 

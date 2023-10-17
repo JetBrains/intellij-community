@@ -1,6 +1,6 @@
 package com.intellij.tools.ide.metrics.collector.analysis
 
-import com.intellij.tools.ide.metrics.collector.collector.PerformanceMetrics
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 
 enum class Conclusion {
   UNKNOWN,

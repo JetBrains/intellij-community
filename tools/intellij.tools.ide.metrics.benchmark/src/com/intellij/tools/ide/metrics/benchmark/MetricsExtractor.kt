@@ -4,8 +4,8 @@ package com.intellij.tools.ide.metrics.benchmark
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.tool.withRetry
-import com.intellij.tools.ide.metrics.collector.collector.PerformanceMetrics
-import com.intellij.tools.ide.metrics.collector.metrics.getMetricsFromSpanAndChildren
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
+import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsFromSpanAndChildren
 import com.intellij.tools.ide.metrics.collector.metrics.medianValue
 import com.intellij.tools.ide.metrics.collector.metrics.toPerformanceMetricDuration
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter

@@ -1,10 +1,10 @@
 package com.intellij.tools.ide.metrics.collector
 
-import com.intellij.tools.ide.metrics.collector.collector.PerformanceMetrics.Metric
-import com.intellij.tools.ide.metrics.collector.collector.PerformanceMetrics.MetricId.Counter
-import com.intellij.tools.ide.metrics.collector.collector.PerformanceMetrics.MetricId.Duration
-import com.intellij.tools.ide.metrics.collector.metrics.getMetricsBasedOnDiffBetweenSpans
-import com.intellij.tools.ide.metrics.collector.metrics.getMetricsFromSpanAndChildren
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metric
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Counter
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Duration
+import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsBasedOnDiffBetweenSpans
+import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsFromSpanAndChildren
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder

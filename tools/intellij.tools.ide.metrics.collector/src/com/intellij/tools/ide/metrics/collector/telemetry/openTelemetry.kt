@@ -1,13 +1,9 @@
-package com.intellij.tools.ide.metrics.collector.metrics
+package com.intellij.tools.ide.metrics.collector.telemetry
 
-import com.intellij.tools.ide.metrics.collector.collector.PerformanceMetrics.Metric
-import com.intellij.tools.ide.metrics.collector.collector.PerformanceMetrics.MetricId.Counter
-import com.intellij.tools.ide.metrics.collector.collector.PerformanceMetrics.MetricId.Duration
-import com.intellij.tools.ide.metrics.collector.telemetry.MetricSpanProcessor
-import com.intellij.tools.ide.metrics.collector.telemetry.OpentelemetryJsonParser
-import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
-import com.intellij.tools.ide.metrics.collector.telemetry.SpanInfoProcessor
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metric
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Counter
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Duration
 import com.intellij.util.alsoIfNull
 import java.io.File
 import kotlin.math.pow

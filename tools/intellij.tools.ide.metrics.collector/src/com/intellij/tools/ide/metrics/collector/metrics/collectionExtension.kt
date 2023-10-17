@@ -1,7 +1,5 @@
 package com.intellij.tools.ide.metrics.collector.metrics
 
-import com.intellij.tools.ide.metrics.collector.collector.PerformanceMetrics
-
 /** Returns median (not average) value of a collection */
 fun Iterable<Long>.median(): Long {
   val size = this.count()

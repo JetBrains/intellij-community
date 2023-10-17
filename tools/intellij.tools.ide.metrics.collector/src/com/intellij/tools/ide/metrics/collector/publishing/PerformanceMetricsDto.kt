@@ -3,9 +3,9 @@ package com.intellij.tools.ide.metrics.collector.publishing
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.tools.ide.metrics.collector.collector.MetricGroup
-import com.intellij.tools.ide.metrics.collector.collector.PerformanceMetrics
-import com.intellij.tools.ide.metrics.collector.collector.toJson
+import com.intellij.tools.ide.metrics.collector.metrics.MetricGroup
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
+import com.intellij.tools.ide.metrics.collector.metrics.toJson
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 

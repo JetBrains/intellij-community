@@ -1,4 +1,4 @@
-package com.intellij.tools.ide.metrics.collector.collector
+package com.intellij.tools.ide.metrics.collector.metrics
 
 import java.util.*
 
