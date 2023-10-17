@@ -8,11 +8,10 @@ import com.intellij.util.asSafely
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.issues.IssuesUtil
@@ -20,7 +19,7 @@ import java.net.URL
 import java.util.*
 
 interface GitLabNoteViewModel {
-  val id: String
+  val id: GitLabId
   val author: GitLabUserDTO
   val createdAt: Date?
   val isDraft: Boolean
@@ -46,7 +45,7 @@ class GitLabNoteViewModelImpl(
 
   private val cs = parentCs.childScope(Dispatchers.Default)
 
-  override val id: String = note.id
+  override val id: GitLabId = note.id
   override val author: GitLabUserDTO = note.author
   override val createdAt: Date? = note.createdAt
   override val isDraft: Boolean = note is GitLabMergeRequestDraftNote

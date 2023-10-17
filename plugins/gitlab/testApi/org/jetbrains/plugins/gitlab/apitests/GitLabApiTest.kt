@@ -114,7 +114,7 @@ class GitLabApiTest : GitLabApiTestCase() {
       addNoteResult.assertNoErrors()
 
       val nextBody = "Changed comment! ID=$randomId"
-      val updateNoteResult = api.graphQL.updateNote(addNoteResult!!.value!!.notes[0].id, nextBody).body()
+      val updateNoteResult = api.graphQL.updateNote(addNoteResult!!.value!!.notes[0].id.gid, nextBody).body()
       updateNoteResult.assertNoErrors()
 
       // Check body changed
@@ -123,7 +123,7 @@ class GitLabApiTest : GitLabApiTestCase() {
         ?.nodes?.find { it.id == addNoteResult.value!!.id }
       assertEquals(nextBody, updatedNote!!.notes[0].body)
 
-      val deleteNoteResult = api.graphQL.deleteNote(addNoteResult.value!!.notes[0].id).body()
+      val deleteNoteResult = api.graphQL.deleteNote(addNoteResult.value!!.notes[0].id.gid).body()
       deleteNoteResult.assertNoErrors()
 
       // Check is deleted
@@ -148,7 +148,7 @@ class GitLabApiTest : GitLabApiTestCase() {
       ).body()
       addNoteResult.assertNoErrors()
 
-      val deleteNoteResult = api.graphQL.deleteNote(addNoteResult!!.value!!.notes[0].id).body()
+      val deleteNoteResult = api.graphQL.deleteNote(addNoteResult!!.value!!.notes[0].id.gid).body()
       deleteNoteResult.assertNoErrors()
     }
   }
@@ -169,7 +169,7 @@ class GitLabApiTest : GitLabApiTestCase() {
       val replyBody = "This is a reply! ID=$randomId"
       val addNoteResult2 = api.graphQL.createReplyNote(
         volatileProjectMr1Gid,
-        addNoteResult!!.value!!.id,
+        addNoteResult!!.value!!.id.gid,
         replyBody
       ).body()
       addNoteResult2.assertNoErrors()
@@ -179,9 +179,9 @@ class GitLabApiTest : GitLabApiTestCase() {
       val discussion = result?.nodes?.find { addNoteResult.value!!.notes[0].body.contains(randomId.toString()) }
       assertNotNull(discussion)
 
-      val deleteNoteResult1 = api.graphQL.deleteNote(discussion!!.notes[0].id).body()
+      val deleteNoteResult1 = api.graphQL.deleteNote(discussion!!.notes[0].id.gid).body()
       deleteNoteResult1.assertNoErrors()
-      val deleteNoteResult2 = api.graphQL.deleteNote(discussion.notes[1].id).body()
+      val deleteNoteResult2 = api.graphQL.deleteNote(discussion.notes[1].id.gid).body()
       deleteNoteResult2.assertNoErrors()
     }
   }
@@ -204,7 +204,7 @@ class GitLabApiTest : GitLabApiTestCase() {
       val replyBody = "This is a reply! ID=$randomId"
       val addNoteResult2 = api.graphQL.createReplyNote(
         volatileProjectMr1Gid,
-        addNoteResult!!.value!!.id,
+        addNoteResult!!.value!!.id.gid,
         replyBody
       ).body()
       addNoteResult2.assertNoErrors()
@@ -215,7 +215,7 @@ class GitLabApiTest : GitLabApiTestCase() {
       assertNotNull(discussion1)
       assertFalse(discussion1!!.notes[0].resolved)
 
-      val resolveNoteResult = api.graphQL.changeMergeRequestDiscussionResolve(discussion1.replyId, true).body()
+      val resolveNoteResult = api.graphQL.changeMergeRequestDiscussionResolve(discussion1.replyId.gid, true).body()
       resolveNoteResult.assertNoErrors()
 
       // Confirm is now resolved
@@ -224,9 +224,9 @@ class GitLabApiTest : GitLabApiTestCase() {
       assertNotNull(discussion2)
       assertTrue(discussion2!!.notes[0].resolved)
 
-      val deleteNoteResult1 = api.graphQL.deleteNote(discussion2.notes[0].id).body()
+      val deleteNoteResult1 = api.graphQL.deleteNote(discussion2.notes[0].id.gid).body()
       deleteNoteResult1.assertNoErrors()
-      val deleteNoteResult2 = api.graphQL.deleteNote(discussion2.notes[1].id).body()
+      val deleteNoteResult2 = api.graphQL.deleteNote(discussion2.notes[1].id.gid).body()
       deleteNoteResult2.assertNoErrors()
     }
   }

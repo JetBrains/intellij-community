@@ -8,13 +8,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
 
 interface GitLabMergeRequestDiscussionViewModel {
-  val id: String
+  val id: GitLabId
   val notes: Flow<List<NoteItem>>
 
   val resolveVm: GitLabDiscussionResolveViewModel?
@@ -47,7 +48,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
-  override val id: String = discussion.id
+  override val id: GitLabId = discussion.id
 
   private val expandRequested = MutableStateFlow(false)
 
@@ -97,7 +98,7 @@ class GitLabMergeRequestDraftDiscussionViewModelBase(
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
-  override val id: String = note.id
+  override val id: GitLabId = note.id
 
   override val notes: Flow<List<NoteItem>> = flowOf(
     listOf(NoteItem.Note(GitLabNoteViewModelImpl(project, cs, note, flowOf(true), glProject)))

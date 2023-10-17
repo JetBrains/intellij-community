@@ -25,7 +25,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     discussion: GitLabMergeRequestDiscussion
   ) : GitLabMergeRequestTimelineDiscussionViewModel
       by GitLabMergeRequestTimelineDiscussionViewModelImpl(project, parentCs, currentUser, mr, discussion) {
-    override val id: String = discussion.id
+    override val id: String = discussion.id.toString()
   }
 
   class DraftDiscussion(
@@ -36,6 +36,6 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     note: GitLabMergeRequestNote
   ) : GitLabMergeRequestTimelineDiscussionViewModel
       by GitLabMergeRequestTimelineDraftDiscussionViewModel(project, parentCs, currentUser, mr, note) {
-    override val id: String = note.id
+    override val id: String = note.id.toString()
   }
 }

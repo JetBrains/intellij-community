@@ -22,7 +22,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.util.*
 
 interface GitLabNote {
-  val id: String
+  val id: GitLabId
   val author: GitLabUserDTO
   val createdAt: Date?
 
@@ -48,7 +48,7 @@ interface GitLabMergeRequestNote : GitLabNote {
 }
 
 interface GitLabMergeRequestDraftNote : GitLabMergeRequestNote, MutableGitLabNote {
-  val discussionId: String?
+  val discussionId: GitLabId?
   override val createdAt: Date? get() = null
   override val canAdmin: Boolean get() = true
   override val resolved: StateFlow<Boolean> get() = MutableStateFlow(false)
@@ -63,14 +63,14 @@ class MutableGitLabMergeRequestNote(
   private val glProject: GitLabProjectCoordinates,
   mr: GitLabMergeRequest,
   private val eventSink: suspend (GitLabNoteEvent<GitLabNoteDTO>) -> Unit,
-  private val noteData: GitLabNoteDTO
+  noteData: GitLabNoteDTO
 ) : GitLabMergeRequestNote, MutableGitLabNote {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
   private val operationsGuard = Mutex()
 
-  override val id: String = noteData.id
+  override val id: GitLabGid = noteData.id
   override val author: GitLabUserDTO = noteData.author
   override val createdAt: Date = noteData.createdAt
   override val canAdmin: Boolean = noteData.userPermissions.adminNote
@@ -88,7 +88,7 @@ class MutableGitLabMergeRequestNote(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.graphQL.updateNote(noteData.id, newText).getResultOrThrow()
+          api.graphQL.updateNote(id.gid, newText).getResultOrThrow()
         }
       }
       data.update { it.copy(body = newText) }
@@ -100,10 +100,10 @@ class MutableGitLabMergeRequestNote(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.graphQL.deleteNote(noteData.id).getResultOrThrow()
+          api.graphQL.deleteNote(id.gid).getResultOrThrow()
         }
       }
-      eventSink(GitLabNoteEvent.Deleted(noteData.id))
+      eventSink(GitLabNoteEvent.Deleted(id))
     }
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.DELETE_NOTE)
   }
@@ -130,8 +130,8 @@ class GitLabMergeRequestDraftNoteImpl(
 
   private val operationsGuard = Mutex()
 
-  override val id: String = noteData.id.toString()
-  override val discussionId: String? = noteData.discussionId
+  override val id: GitLabRestId = noteData.id
+  override val discussionId: GitLabRestId? = noteData.discussionId
 
   private val data = MutableStateFlow(noteData)
   override val body: StateFlow<String> = data.mapState(cs, GitLabMergeRequestDraftNoteRestDTO::note)
@@ -148,7 +148,7 @@ class GitLabMergeRequestDraftNoteImpl(
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
           // Checked by canEdit
-          api.rest.updateDraftNote(project, mr.iid, noteData.id, newText)
+          api.rest.updateDraftNote(project, mr.iid, noteData.id.restId.toLong(), newText)
         }
       }
       data.update { it.copy(note = newText) }
@@ -161,10 +161,10 @@ class GitLabMergeRequestDraftNoteImpl(
         withContext(Dispatchers.IO) {
           // Shouldn't require extra check, delete and get draft notes was introduced in
           // the same update
-          api.rest.deleteDraftNote(project, mr.iid, noteData.id)
+          api.rest.deleteDraftNote(project, mr.iid, noteData.id.restId.toLong())
         }
       }
-      eventSink(GitLabNoteEvent.Deleted(noteData.id.toString()))
+      eventSink(GitLabNoteEvent.Deleted(id))
     }
   }
 
@@ -194,7 +194,7 @@ private fun Flow<GitLabNotePosition?>.mapPosition(mr: GitLabMergeRequest): Flow<
 
 class GitLabSystemNote(noteData: GitLabNoteDTO) : GitLabNote {
 
-  override val id: String = noteData.id
+  override val id: GitLabGid = noteData.id
   override val author: GitLabUserDTO = noteData.author
   override val createdAt: Date = noteData.createdAt
 

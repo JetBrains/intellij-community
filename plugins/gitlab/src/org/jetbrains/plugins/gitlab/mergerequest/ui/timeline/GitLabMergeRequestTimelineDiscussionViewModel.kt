@@ -56,7 +56,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .mapScoped { GitLabNoteViewModelImpl(project, this, it, flowOf(true), mr.glProject) }
     .modelFlow(cs, LOG)
 
-  override val id: String = discussion.id
+  override val id: String = discussion.id.toString()
   override val serverUrl: URL = mr.glProject.serverPath.toURL()
   override val author: Flow<GitLabUserDTO> = mainNote.map { it.author }
 
@@ -124,7 +124,7 @@ class GitLabMergeRequestTimelineDraftDiscussionViewModel(
   override val mainNote: Flow<GitLabNoteViewModel> =
     flowOf(GitLabNoteViewModelImpl(project, cs, draftNote, flowOf(true), mr.glProject))
 
-  override val id: String = draftNote.id
+  override val id: String = draftNote.id.toString()
   override val serverUrl: URL = mr.glProject.serverPath.toURL()
   override val author: Flow<GitLabUserDTO> = flowOf(currentUser)
 

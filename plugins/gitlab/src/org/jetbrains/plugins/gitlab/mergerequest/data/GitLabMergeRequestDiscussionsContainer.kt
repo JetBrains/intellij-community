@@ -64,7 +64,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
 
   private suspend fun FlowCollector<List<GitLabDiscussionDTO>>.collectNonEmptyDiscussions() {
     supervisorScope {
-      val discussions = LinkedHashMap<String, GitLabDiscussionDTO>()
+      val discussions = LinkedHashMap<GitLabId, GitLabDiscussionDTO>()
       val discussionsGuard = Mutex()
       var lastCursor: String? = null
       ApiPageUtil.createGQLPagesFlow {
@@ -165,7 +165,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       val currentUser = api.graphQL.getCurrentUser() ?: error("Unable to load current user")
 
       val notesGuard = Mutex()
-      val draftNotes = LinkedHashMap<String, GitLabMergeRequestDraftNoteRestDTO>()
+      val draftNotes = LinkedHashMap<GitLabId, GitLabMergeRequestDraftNoteRestDTO>()
 
       var lastETag: String? = null
       val uri = getMergeRequestDraftNotesUri(glProject, mr.iid)
@@ -177,7 +177,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         val newNotes = it.body() ?: error("Empty response")
         notesGuard.withLock {
           for (note in newNotes) {
-            draftNotes[note.id.toString()] = note
+            draftNotes[note.id] = note
           }
         }
         lastETag = it.headers().firstValue("ETag").orElse(null)
@@ -193,7 +193,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
             if (newNotes != null) {
               notesGuard.withLock {
                 for (note in newNotes) {
-                  draftNotes[note.id.toString()] = note
+                  draftNotes[note.id] = note
                 }
                 emit(draftNotes.values.map { DraftNoteWithAuthor(it, currentUser) })
               }
@@ -209,7 +209,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         draftNotesEvents.collect { e ->
           notesGuard.withLock {
             when (e) {
-              is GitLabNoteEvent.Added -> draftNotes[e.note.id.toString()] = e.note
+              is GitLabNoteEvent.Added -> draftNotes[e.note.id] = e.note
               is GitLabNoteEvent.Deleted -> draftNotes.remove(e.noteId)
               is GitLabNoteEvent.AllDeleted -> draftNotes.clear()
               else -> Unit
@@ -237,16 +237,16 @@ class GitLabMergeRequestDiscussionsContainerImpl(
 
   private data class DraftNoteWithAuthor(val note: GitLabMergeRequestDraftNoteRestDTO, val author: GitLabUserDTO)
 
-  private fun getDiscussionDraftNotes(discussionGid: String): Flow<Result<List<GitLabMergeRequestDraftNote>>> =
-    draftNotes
+  private fun getDiscussionDraftNotes(discussionId: GitLabId): Flow<Result<List<GitLabMergeRequestDraftNote>>> {
+    // Convert discussion ID down to REST ID as it's safer than converting from REST to GQL
+    val discussionRestId = discussionId.guessRestId()
+    return draftNotes
       .map { result ->
         result.map { notes ->
-          notes.filter {
-            val discussionId = it.discussionId
-            discussionId != null && discussionGid.endsWith(discussionId)
-          }
+          notes.filter { it.discussionId?.guessRestId() == discussionRestId }
         }
       }
+  }
 
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {

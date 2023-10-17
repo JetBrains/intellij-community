@@ -47,7 +47,7 @@ sealed interface GitLabMergeRequestTimelineItem {
   class SystemNote(
     note: GitLabNote
   ) : Immutable {
-    override val id: String = note.id
+    override val id: String = note.id.toString()
     override val actor: GitLabUserDTO = note.author
     override val date: Date? = note.createdAt
 
@@ -57,7 +57,7 @@ sealed interface GitLabMergeRequestTimelineItem {
   class DraftNote(
     val note: GitLabMergeRequestNote
   ) : GitLabMergeRequestTimelineItem {
-    override val id: String = note.id
+    override val id: String = note.id.toString()
     override val date: Date? = note.createdAt
   }
 
@@ -65,7 +65,7 @@ sealed interface GitLabMergeRequestTimelineItem {
     val discussion: GitLabMergeRequestDiscussion
   ) : GitLabMergeRequestTimelineItem {
 
-    override val id: String = discussion.id
+    override val id: String = discussion.id.toString()
     override val date: Date = discussion.createdAt
   }
 }

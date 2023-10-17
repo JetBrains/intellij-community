@@ -17,6 +17,7 @@ import com.intellij.util.containers.CollectionFactory
 import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -106,8 +107,8 @@ internal class GitLabMergeRequestChangesViewModelImpl(
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun createUnresolvedDiscussionsPositionsFlow(mergeRequest: GitLabMergeRequest) = channelFlow {
   withContext(CoroutineName("GitLab Merge Request discussions positions collector")) {
-    val discussionsCache = ConcurrentHashMap<String, GitLabNotePosition>()
-    val draftNotesCache = ConcurrentHashMap<String, GitLabNotePosition>()
+    val discussionsCache = ConcurrentHashMap<GitLabId, GitLabNotePosition>()
+    val draftNotesCache = ConcurrentHashMap<GitLabId, GitLabNotePosition>()
     mergeRequest.discussions.collectLatest { discussionsResult ->
       coroutineScope {
         discussionsCache.clear()
