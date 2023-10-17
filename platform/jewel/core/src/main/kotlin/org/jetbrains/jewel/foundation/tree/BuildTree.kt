@@ -9,25 +9,25 @@ fun <T> buildTree(builder: TreeBuilder<T>.() -> Unit): Tree<T> =
 class TreeBuilder<T> : TreeGeneratorScope<T> {
     sealed class Element<T> {
 
-        abstract val id: Any
+        abstract val id: Any?
 
-        data class Leaf<T>(val data: T, override val id: Any) : Element<T>()
+        data class Leaf<T>(val data: T, override val id: Any?) : Element<T>()
         data class Node<T>(
             val data: T,
-            override val id: Any,
+            override val id: Any?,
             val childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit,
         ) : Element<T>()
     }
 
     private val heads = mutableListOf<Element<T>>()
 
-    override fun addLeaf(data: T, id: Any) {
+    override fun addLeaf(data: T, id: Any?) {
         heads.add(Element.Leaf(data, id))
     }
 
     override fun addNode(
         data: T,
-        id: Any,
+        id: Any?,
         childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit,
     ) {
         heads.add(Element.Node(data, id, childrenGenerator))
@@ -49,7 +49,7 @@ class TreeBuilder<T> : TreeGeneratorScope<T> {
                     parent = null,
                     previous = previous,
                     next = null,
-                    id = elementBuilder.id,
+                    id = elementBuilder.id ?: "$index",
                 )
 
                 is Element.Node -> Tree.Element.Node(
@@ -60,7 +60,7 @@ class TreeBuilder<T> : TreeGeneratorScope<T> {
                     childrenGenerator = { parent -> generateElements(parent, elementBuilder) },
                     previous = previous,
                     next = null,
-                    id = elementBuilder.id,
+                    id = elementBuilder.id ?: "$index",
                 )
             }
             elements.add(current)
@@ -87,7 +87,7 @@ private fun <T> generateElements(
                 parent = parent,
                 previous = previous,
                 next = null,
-                id = elementBuilder.id,
+                id = elementBuilder.id ?: (parent.id.toString() + "." + index),
             )
 
             is TreeBuilder.Element.Node -> Tree.Element.Node(
@@ -98,7 +98,7 @@ private fun <T> generateElements(
                 childrenGenerator = { generateElements(it, elementBuilder) },
                 previous = previous,
                 next = null,
-                id = elementBuilder.id,
+                id = elementBuilder.id ?: (parent.id.toString() + "." + index),
             )
         }
         previous.next = current
@@ -119,11 +119,11 @@ interface TreeGeneratorScope<T> {
 
     fun addNode(
         data: T,
-        id: Any = data.hashCode(),
+        id: Any? = null,
         childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit = { },
     )
 
-    fun addLeaf(data: T, id: Any = data.hashCode())
+    fun addLeaf(data: T, id: Any? = null)
 
     fun add(element: TreeBuilder.Element<T>)
 }
@@ -136,13 +136,13 @@ class ChildrenGeneratorScope<T>(private val parentElement: Tree.Element.Node<T>)
 
     internal val elements = mutableListOf<TreeBuilder.Element<T>>()
 
-    override fun addLeaf(data: T, id: Any) {
+    override fun addLeaf(data: T, id: Any?) {
         elements.add(TreeBuilder.Element.Leaf(data, id))
     }
 
     override fun addNode(
         data: T,
-        id: Any,
+        id: Any?,
         childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit,
     ) {
         elements.add(TreeBuilder.Element.Node(data, id, childrenGenerator))
@@ -166,7 +166,7 @@ private fun ChildrenGeneratorScope<File>.generateFileNodes(isOpen: (File) -> Boo
     files.sortedBy { if (it.isDirectory) "a" else "b" }
         .forEach { file ->
             when {
-                file.isFile -> addLeaf(file)
+                file.isFile -> addLeaf(file, file.absolutePath)
                 else -> addNode(file, file.absolutePath) { generateFileNodes(isOpen) }
             }
         }
