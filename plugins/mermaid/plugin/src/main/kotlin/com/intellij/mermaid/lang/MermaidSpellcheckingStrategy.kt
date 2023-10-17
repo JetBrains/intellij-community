@@ -12,7 +12,6 @@ import com.intellij.mermaid.lang.lexer.MermaidTokens.STRING_VALUE
 import com.intellij.mermaid.lang.lexer.MermaidTokens.Sequence.MESSAGE
 import com.intellij.mermaid.lang.lexer.MermaidTokens.TASK_NAME
 import com.intellij.mermaid.lang.lexer.MermaidTokens.TITLE_VALUE
-import com.intellij.mermaid.lang.psi.hasType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
