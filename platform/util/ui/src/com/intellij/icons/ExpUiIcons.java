@@ -43,6 +43,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon PlayFirst = load("expui/actions/playFirst.svg", -1624411616, 2);
     /** 16x16 */ public static final @NotNull Icon PlayForward = load("expui/actions/playForward.svg", 929979108, 2);
     /** 16x16 */ public static final @NotNull Icon PlayLast = load("expui/actions/playLast.svg", 1279252835, 2);
+    /** 16x16 */ public static final @NotNull Icon Preview = load("expui/actions/preview.svg", 216908392, 2);
     /** 16x16 */ public static final @NotNull Icon ProfileCPU = load("expui/actions/profileCPU.svg", 251390405, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectDirectory = load("expui/actions/projectDirectory.svg", 910306733, 2);
     /** 16x16 */ public static final @NotNull Icon ReformatCode = load("expui/actions/reformatCode.svg", 1980487789, 2);
@@ -324,6 +325,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOff = load("expui/general/projectWideAnalysisOff.svg", 1505013057, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOn = load("expui/general/projectWideAnalysisOn.svg", 103110158, 2);
     /** 28x28 */ public static final @NotNull Icon QuestionDialog = load("expui/general/questionDialog.svg", 2033181276, 2);
+    /** 16x16 */ public static final @NotNull Icon ReaderMode = load("expui/general/readerMode.svg", 502859390, 2);
     /** 16x16 */ public static final @NotNull Icon Redo = load("expui/general/redo.svg", -765720439, 2);
     /** 16x16 */ public static final @NotNull Icon Refresh = load("expui/general/refresh.svg", 323445437, 2);
     /** 16x16 */ public static final @NotNull Icon Remove = load("expui/general/remove.svg", 288478484, 2);
