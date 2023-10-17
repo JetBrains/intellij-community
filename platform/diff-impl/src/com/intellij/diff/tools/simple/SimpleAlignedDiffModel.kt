@@ -48,8 +48,15 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     editor2.softWrapModel.addSoftWrapChangeListener(softWrapListener)
   }
 
-  fun alignChange(change: SimpleDiffChange) {
-    if (!viewer.needAlignChanges()) return
+  fun needAlignChanges(): Boolean {
+    val forcedValue: Boolean? = viewer.request.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF)
+    if (forcedValue != null) return forcedValue
+
+    return viewer.textSettings.isEnableAligningChangesMode
+  }
+
+  private fun alignChange(change: SimpleDiffChange) {
+    if (!needAlignChanges()) return
 
     when (change.diffType) {
       TextDiffType.INSERTED -> {
@@ -141,7 +148,7 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     return height
   }
 
-  private fun realignChanges() {
+  fun realignChanges() {
     if (viewer.editors.any { it.isDisposed || (it.foldingModel as FoldingModelImpl).isInBatchFoldingOperation }) return
 
     RecursionManager.doPreventingRecursion(this, true) {
@@ -187,7 +194,7 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
 
   private inner class MySoftWrapModelListener : SoftWrapChangeListener {
     override fun softWrapsChanged() {
-      if (!viewer.needAlignChanges()) return
+      if (!needAlignChanges()) return
 
       if (!viewer.textSettings.isUseSoftWraps) {
         // this would also be called in case if editor font size changed and provide more clean view for aligning inlays
@@ -196,7 +203,7 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     }
 
     override fun recalculationEnds() {
-      if (!viewer.needAlignChanges()) return
+      if (!needAlignChanges()) return
 
       realignChanges()
     }
@@ -217,7 +224,7 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
   private enum class ProcessType { ADDED, REMOVED, HEIGHT_UPDATED }
 
   private fun processInlay(inlay: Inlay<*>, processType: ProcessType) {
-    if (!viewer.needAlignChanges()) return
+    if (!needAlignChanges()) return
     if (inlay.renderer is BaseAlignDiffInlayPresentation) return //skip self
 
     val inlayLine = inlay.logicalLine
