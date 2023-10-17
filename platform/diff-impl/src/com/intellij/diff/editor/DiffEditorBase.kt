@@ -18,7 +18,7 @@ import javax.swing.JPanel
 
 @Suppress("LeakingThis")
 abstract class DiffEditorBase(
-  private val file: DiffVirtualFileBase,
+  private val file: VirtualFile,
   component: JComponent,
   private val contentDisposable: CheckedDisposable,
   private val context: DiffContext

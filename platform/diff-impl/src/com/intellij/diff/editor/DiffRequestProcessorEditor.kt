@@ -11,7 +11,7 @@ import javax.swing.JComponent
 
 @Suppress("LeakingThis")
 open class DiffRequestProcessorEditor(
-  private val file: DiffVirtualFile,
+  private val file: VirtualFile,
   val processor: DiffRequestProcessor
 ) : DiffEditorBase(file,
                    processor.component,
