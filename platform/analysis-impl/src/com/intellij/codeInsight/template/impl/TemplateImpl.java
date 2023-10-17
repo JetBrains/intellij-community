@@ -340,8 +340,12 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   }
 
   public void applyOptions(final Map<TemplateOptionalProcessor, Boolean> context) {
+    TemplateContext templateContext = getTemplateContext();
     for (Map.Entry<TemplateOptionalProcessor, Boolean> entry : context.entrySet()) {
-      entry.getKey().setEnabled(this, entry.getValue().booleanValue());
+      TemplateOptionalProcessor key = entry.getKey();
+      if (key.isVisible(this, templateContext)) {
+        key.setEnabled(this, entry.getValue().booleanValue());
+      }
     }
   }
 

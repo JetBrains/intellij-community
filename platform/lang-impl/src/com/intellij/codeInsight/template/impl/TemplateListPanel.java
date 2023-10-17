@@ -161,8 +161,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     for (TemplateGroup templateGroup : templateGroups) {
       for (TemplateImpl template : templateGroup.getElements()) {
-        template.applyOptions(getTemplateOptions(template));
         template.applyContext(getTemplateContext(template));
+        template.applyOptions(getTemplateOptions(template));
       }
     }
     TemplateSettings templateSettings = TemplateSettings.getInstance();
