@@ -11,6 +11,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.io.File
+import java.nio.charset.MalformedInputException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration
@@ -121,7 +122,12 @@ suspend fun runJava(mainClass: String,
 
 private fun checkOutput(outputFile: Path, span: Span, errorConsumer: (String) -> Unit) {
   val out = try {
-    Files.readString(outputFile)
+    try {
+      Files.readString(outputFile)
+    }
+    catch (_: MalformedInputException) {
+      Files.readString(outputFile, Charsets.ISO_8859_1)
+    }
   }
   catch (e: NoSuchFieldException) {
     span.setAttribute("output", "output file doesn't exist")
