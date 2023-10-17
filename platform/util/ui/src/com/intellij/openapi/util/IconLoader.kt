@@ -20,6 +20,8 @@ import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -40,6 +42,7 @@ private val LOG: Logger
 
 private val iconCache = Caffeine.newBuilder()
   .expireAfterAccess(30, TimeUnit.MINUTES)
+  .executor(Dispatchers.Default.asExecutor())
   .maximumSize(256)
   .build<Pair<String, ClassLoader?>, CachedImageIcon>()
 
