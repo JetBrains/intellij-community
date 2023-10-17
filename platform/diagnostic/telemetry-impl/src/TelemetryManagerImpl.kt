@@ -29,8 +29,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
-import kotlin.io.path.Path
-import kotlin.io.path.createDirectories
 
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
@@ -147,8 +145,6 @@ private class IntelliJTracerImpl(private val scope: Scope, private val otlpServi
 private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = false): List<AsyncSpanExporter> {
   val spanExporters = mutableListOf<AsyncSpanExporter>()
   System.getProperty("idea.diagnostic.opentelemetry.file")?.let { traceFile ->
-    Path(traceFile).parent.createDirectories()
-
     spanExporters.add(JaegerJsonSpanExporter(
       file = Path.of(traceFile),
       serviceName = resource.getAttribute(AttributeKey.stringKey("service.name"))!!,

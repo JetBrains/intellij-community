@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.BufferedWriter
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -19,7 +20,6 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
-import kotlin.io.path.*
 
 // https://github.com/jaegertracing/jaeger-ui/issues/381
 @ApiStatus.Internal
@@ -29,10 +29,12 @@ class JaegerJsonSpanExporter(
   serviceVersion: String? = null,
   serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
-  private val tempTelemetryFile: Path = if (file.parent != null) {
-    file.parent.createDirectories().resolve("telemetry.temp").toAbsolutePath()
+  private val tempTelemetryFile: Path = if (file.parent == null) {
+    Path.of("${file.toAbsolutePath()}.temp")
   }
-  else file.run { Path(this.absolutePathString().plus(".temp")) }
+  else {
+    Files.createDirectories(file.parent.toAbsolutePath()).resolve("telemetry.temp")
+  }
 
   private val writer = JsonFactory().createGenerator(Files.newBufferedWriter(tempTelemetryFile))
     .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
@@ -115,19 +117,23 @@ class JaegerJsonSpanExporter(
     lock.withLock {
       closeJsonFile(writer)
       // nothing was written to the file
-      if (tempTelemetryFile.notExists()) return
+      if (Files.notExists(tempTelemetryFile)) {
+        return
+      }
 
-      tempTelemetryFile.moveTo(file, overwrite = true)
+      Files.move(tempTelemetryFile, file, StandardCopyOption.REPLACE_EXISTING)
     }
   }
 
   override fun forceFlush() {
     lock.withLock {
       // if shutdown was already invoked OR nothing was written to the temp file
-      if (writer.isClosed || tempTelemetryFile.notExists()) return
+      if (writer.isClosed || Files.notExists(tempTelemetryFile)) {
+        return
+      }
 
-      tempTelemetryFile.copyTo(file, overwrite = true)
-      closeJsonFile(file.bufferedWriter(options = arrayOf(StandardOpenOption.APPEND)))
+      Files.copy(tempTelemetryFile, file, StandardCopyOption.REPLACE_EXISTING)
+      closeJsonFile(Files.newBufferedWriter(file, StandardOpenOption.APPEND))
     }
   }
 }
@@ -209,6 +215,6 @@ private fun closeJsonFile(jsonGenerator: JsonGenerator) {
 }
 
 private fun closeJsonFile(writer: BufferedWriter) {
-  // newly created JsonGenerator can't close unfinished json object
+  // newly created JsonGenerator can't close unfinished a json object
   writer.use { it.append("]}]}") }
 }
