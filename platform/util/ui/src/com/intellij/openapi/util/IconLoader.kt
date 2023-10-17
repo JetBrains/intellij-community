@@ -27,6 +27,7 @@ import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
 import java.net.URL
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -38,7 +39,7 @@ private val LOG: Logger
   get() = logger<IconLoader>()
 
 private val iconCache = Caffeine.newBuilder()
-  .expireAfterAccess(1, TimeUnit.HOURS)
+  .expireAfterAccess(30, TimeUnit.MINUTES)
   .maximumSize(256)
   .build<Pair<String, ClassLoader?>, CachedImageIcon>()
 
@@ -161,6 +162,11 @@ object IconLoader {
     else {
       return iconCache.getIfPresent(key) ?: CachedImageIcon(url = url, useCacheOnLoad = false)
     }
+  }
+
+  @Internal
+  fun findUserIconByPath(file: Path): com.intellij.ui.icons.CachedImageIcon {
+    return iconCache.get(Pair(file.toString(), null)) { CachedImageIcon(file = file) }
   }
 
   @JvmStatic

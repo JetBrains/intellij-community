@@ -39,6 +39,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.FileNotFoundException
 import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
@@ -510,41 +512,57 @@ private object ActionUrlComparator : Comparator<ActionUrl> {
 @Throws(Throwable::class)
 fun loadCustomIcon(path: String): Icon {
   val independentPath = FileUtil.toSystemIndependentName(path)
-  val urlString = if (independentPath.startsWith("file:") || independentPath.startsWith("jar:")) {
-    independentPath
-  }
-  else {
-    "file:$independentPath"
-  }
 
-  val lastDotIndex = urlString.lastIndexOf('.')
-  val (rawUrl, ext) = if (lastDotIndex == -1) {
-    urlString to "svg"
+  val lastDotIndex = independentPath.lastIndexOf('.')
+  val rawUrl: String
+  val ext: String
+  if (lastDotIndex == -1) {
+    rawUrl = independentPath
+    ext = "svg"
   }
   else {
-    urlString.substring(0, lastDotIndex) to urlString.substring(lastDotIndex + 1)
+    rawUrl = independentPath.substring(0, lastDotIndex)
+    ext = independentPath.substring(lastDotIndex + 1)
   }
 
   val possibleSuffixes = listOf("@2x_dark", "_dark@2x", "_dark", "@2x")
-  val adjustedUrl = possibleSuffixes.find { rawUrl.endsWith(it) }?.let { rawUrl.removeSuffix(it) } ?: rawUrl
-  val fullAdjustedUrl = "$adjustedUrl.$ext"
+  val adjustedUrl = possibleSuffixes.firstOrNull { rawUrl.endsWith(it) }?.let { rawUrl.removeSuffix(it) } ?: rawUrl
   try {
-    return doLoadCustomIcon(fullAdjustedUrl)
+    return doLoadCustomIcon("$adjustedUrl.$ext")
   }
   catch (t: Throwable) {
     // In Light theme we do not fall back on dark icon, so if the original provided path ends with '_dark'
     // and there is no icon file without '_dark' suffix, we will fail.
     // And in this case, we just need to load the file chosen by the user.
-    if (urlString == fullAdjustedUrl) {
+    if (rawUrl == adjustedUrl) {
       throw t
     }
     else {
-      return doLoadCustomIcon(urlString)
+      return doLoadCustomIcon("$rawUrl.$ext")
     }
   }
 }
 
 private fun doLoadCustomIcon(urlString: String): Icon {
+  if (!urlString.startsWith("file:") && !urlString.startsWith("jar:")) {
+    val file = Path.of(urlString)
+    if (Files.notExists(file)) {
+      throw FileNotFoundException("Failed to find icon by URL: $urlString")
+    }
+
+    val icon = IconLoader.findUserIconByPath(file)
+    val w = icon.iconWidth
+    val h = icon.iconHeight
+    if (w <= 1 || h <= 1) {
+      throw FileNotFoundException("Failed to find icon by URL: $urlString")
+    }
+
+    if (w > EmptyIcon.ICON_18.iconWidth || h > EmptyIcon.ICON_18.iconHeight) {
+      return icon.scale(scale = EmptyIcon.ICON_18.iconWidth / w.coerceAtLeast(h).toFloat())
+    }
+    return icon
+  }
+
   val url = URL(null, urlString)
   val icon = IconLoader.findIcon(url) ?: throw FileNotFoundException("Failed to find icon by URL: $url")
   val w = icon.iconWidth

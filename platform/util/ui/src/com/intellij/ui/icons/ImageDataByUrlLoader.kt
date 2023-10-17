@@ -141,7 +141,7 @@ internal class ImageDataByFilePathLoader(override val path: String) : PatchedIma
                      scaleContext = scaleContext)
   }
 
-  override fun toString(): String = "ImageDataByFilePathLoader(path=$path"
+  override fun toString(): String = "ImageDataByFilePathLoader(path=$path)"
 }
 
 private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?, originalPath: String, transform: IconTransform): ImageDataLoader? {

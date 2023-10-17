@@ -75,6 +75,8 @@ open class CachedImageIcon private constructor(
   internal constructor(file: Path, scaleContext: ScaleContext)
     : this(resolver = ImageDataByFilePathLoader(file.toUri().toString()), scaleContext = scaleContext)
 
+  internal constructor(file: Path) : this(resolver = ImageDataByFilePathLoader(file.toUri().toString()))
+
   constructor(url: URL, useCacheOnLoad: Boolean, scaleContext: ScaleContext? = null) :
     this(resolver = ImageDataByUrlLoader(url = url, useCacheOnLoad = useCacheOnLoad), scaleContext = scaleContext) {
 
