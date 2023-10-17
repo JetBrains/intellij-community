@@ -34,11 +34,6 @@ import javax.swing.JComponent
  */
 class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
 
-  companion object {
-    const val ID = "main.toolbar.Filename"
-    private val LOG = logger<FilenameToolbarWidgetAction>()
-  }
-
   override fun actionPerformed(e: AnActionEvent) {
   }
 
@@ -70,21 +65,6 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
         return false
       }
     }.installOn(this)
-    // This is just a hack to avoid unnecessary subclassing, as JComponent's addNotify/removeNotify fires these events:
-    addPropertyChangeListener("ancestor") { event ->
-      val project = ProjectUtil.getProjectForComponent(this@apply)
-      if (project == null) {
-        LOG.warn("")
-        return@addPropertyChangeListener
-      }
-      val service = project.service<FilenameToolbarWidgetUpdateService>()
-      if (event.newValue != null) {
-        service.registerComponent(this@apply)
-      }
-      else {
-        service.deregisterComponent(this@apply)
-      }
-    }
   }
 
   private fun showRecentFilesPopup(component: JComponent) {
