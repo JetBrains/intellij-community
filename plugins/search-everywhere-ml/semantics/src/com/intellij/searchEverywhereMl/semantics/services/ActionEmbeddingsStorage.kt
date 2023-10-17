@@ -47,11 +47,11 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
   private val setupTitle
     get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.actions.generation.label")
 
-  fun prepareForSearch(project: WeakReference<Project>) = cs.launch {
-    project.get()?.waitForSmartMode() // project may become dumb again, but we don't interfere initial indexing
-    LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project.get(), retryIfCanceled = false)
+  fun prepareForSearch(project: Project) = SemanticSearchCoroutineScope.getScope(project).launch {
+    project.waitForSmartMode() // project may become dumb again, but we don't interfere initial indexing
+    LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
     index.loadFromDisk()
-    generateEmbeddingsIfNecessary(project.get() ?: return@launch)
+    generateEmbeddingsIfNecessary(project)
   }
 
   fun tryStopGeneratingEmbeddings() = indexSetupJob.getAndSet(null)?.cancel()
