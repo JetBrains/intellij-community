@@ -65,7 +65,7 @@ enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val 
   }
 }
 
-enum class PresentationAssistantTheme(val value: Int, val displayName: String, val foreground: Color, val background: Color, val keymapLabel: Color) {
+enum class PresentationAssistantTheme(val value: Int, @Nls val displayName: String, val foreground: Color, val background: Color, val keymapLabel: Color) {
   BRIGHT(0,
          IdeBundle.message("presentation.assistant.configurable.theme.bright"),
          JBColor.namedColor("PresentationAssistant.Bright.Popup.foreground", JBColor.foreground()),
