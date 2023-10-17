@@ -45,7 +45,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
-    service<FilenameToolbarWidgetAppUpdateService>()
+    ApplicationManager.getApplication().service<FilenameToolbarWidgetAppUpdateService>()
       .updatePresentation(project, FileEditorManager.getInstance(project).selectedFiles.firstOrNull(), e.presentation)
   }
 
@@ -71,11 +71,11 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
         return false
       }
     }.installOn(this)
-    service<FilenameToolbarWidgetAppUpdateService>().registerComponent(this@apply)
+    ApplicationManager.getApplication().service<FilenameToolbarWidgetAppUpdateService>().registerComponent(this@apply)
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    service<FilenameToolbarWidgetAppUpdateService>().updateComponent(component, presentation)
+    ApplicationManager.getApplication().service<FilenameToolbarWidgetAppUpdateService>().updateComponent(component, presentation)
   }
 
   private fun showRecentFilesPopup(component: JComponent) {

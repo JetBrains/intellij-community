@@ -49,7 +49,7 @@ internal class FilenameToolbarWidgetProjectUpdateService(
   init {
     coroutineScope.launch {
       fileFlow.distinctUntilChanged().collectLatest { file ->
-        service<FilenameToolbarWidgetAppUpdateService>().update(project, file)
+        ApplicationManager.getApplication().service<FilenameToolbarWidgetAppUpdateService>().update(project, file)
       }
     }
   }
