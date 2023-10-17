@@ -73,12 +73,22 @@ internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
   if (reason == null) {
     reusedPluginsCounter.add(1)
     if (context.generateRuntimeModuleRepository) {
-      return buildPlugin(plugin, outDir, reason = "generate runtime module repository", platformLayout, context, copyFiles = false)
+      return buildPlugin(plugin = plugin,
+                         outDir = outDir,
+                         reason = "generate runtime module repository",
+                         platformLayout = platformLayout,
+                         context = context,
+                         copyFiles = false)
     }
     return emptyList()
   }
 
-  return buildPlugin(plugin, outDir, reason, platformLayout, context, copyFiles = true)
+  return buildPlugin(plugin = plugin,
+                     outDir = outDir,
+                     reason = reason,
+                     platformLayout = platformLayout,
+                     context = context,
+                     copyFiles = true)
 }
 
 private suspend fun buildPlugin(plugin: PluginBuildDescriptor,
@@ -94,11 +104,13 @@ private suspend fun buildPlugin(plugin: PluginBuildDescriptor,
     .setAttribute("reason", reason)
     .useWithScope2 {
       val (pluginEntries, _) = layoutDistribution(layout = plugin.layout,
-                                                  platformLayout = platformLayout,targetDirectory = plugin.dir,
-                                                  
+                                                  platformLayout = platformLayout, targetDirectory = plugin.dir,
+
                                                   moduleOutputPatcher = moduleOutputPatcher,
                                                   includedModules = plugin.layout.includedModules,
                                                   copyFiles = copyFiles,
+                                                  // searchable options are not generated in dev mode
+                                                  moduleWithSearchableOptions = emptySet(),
                                                   context = context)
       withContext(Dispatchers.IO) {
         plugin.markAsBuilt(outDir)

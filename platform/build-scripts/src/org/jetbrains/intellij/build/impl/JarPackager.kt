@@ -28,10 +28,8 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
-import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.FileSystems
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.util.*
@@ -134,9 +132,14 @@ class JarPackager private constructor(private val outputDir: Path,
                      platformLayout: PlatformLayout?,
                      moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
                      dryRun: Boolean = false,
+                     moduleWithSearchableOptions: Set<String> = emptySet(),
                      context: BuildContext): Collection<DistributionFileEntry> {
+
       val packager = JarPackager(outputDir = outputDir, platformLayout = platformLayout, isRootDir = isRootDir, context = context)
-      packager.computeModuleSources(includedModules = includedModules, moduleOutputPatcher = moduleOutputPatcher, layout = layout)
+      packager.computeModuleSources(includedModules = includedModules,
+                                    moduleOutputPatcher = moduleOutputPatcher,
+                                    moduleWithSearchableOptions = moduleWithSearchableOptions,
+                                    layout = layout)
 
       for (item in (layout?.includedModuleLibraries ?: emptyList())) {
         val library = context.findRequiredModule(item.moduleName).libraryCollection.libraries
@@ -237,23 +240,8 @@ class JarPackager private constructor(private val outputDir: Path,
 
   private suspend fun computeModuleSources(includedModules: Collection<ModuleItem>,
                                            moduleOutputPatcher: ModuleOutputPatcher,
-                                           layout: BaseLayout?) {
-    val moduleWithSearchableOptions = withContext(Dispatchers.IO) {
-      try {
-        val result = HashSet<String>()
-        val dir = context.paths.searchableOptionDir
-        Files.newDirectoryStream(dir).use { stream ->
-          for (file in stream) {
-            result.add(file.fileName.toString())
-          }
-        }
-        result
-      }
-      catch (e: IOException) {
-        emptySet()
-      }
-    }
-
+                                           layout: BaseLayout?,
+                                           moduleWithSearchableOptions: Set<String>) {
     for (item in includedModules) {
       computeSourcesForModule(item = item,
                               moduleOutputPatcher = moduleOutputPatcher,

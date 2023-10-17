@@ -32,6 +32,7 @@ import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement
 import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
@@ -189,7 +190,12 @@ suspend fun buildBundledPlugins(state: DistributionBuilderState,
       // doesn't make sense to require passing here a list with a stable order (unnecessary complication, sorting by main module is enough)
       pluginsToBundle.sortWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
       val targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
-      val entries = buildPlugins(ModuleOutputPatcher(), pluginsToBundle, targetDir, state, context, buildPlatformJob)
+      val entries = buildPlugins(moduleOutputPatcher = ModuleOutputPatcher(),
+                                 plugins = pluginsToBundle,
+                                 targetDir = targetDir,
+                                 state = state,
+                                 context = context,
+                                 buildPlatformJob = buildPlatformJob)
 
       buildPlatformSpecificPluginResources(
         pluginsToBundle.filter { it.platformResourceGenerators.isNotEmpty() },
@@ -396,6 +402,7 @@ internal suspend fun generateProjectStructureMapping(
                                           copyFiles = false,
                                           moduleOutputPatcher = moduleOutputPatcher,
                                           includedModules = plugin.includedModules,
+                                          moduleWithSearchableOptions = emptySet(),
                                           context = context).first)
       }
     }
@@ -417,6 +424,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
 
   val scrambleTasks = mutableListOf<ScrambleTask>()
 
+  val moduleWithSearchableOptions = getModuleWithSearchableOptions(context)
   val entries: List<DistributionFileEntry> = coroutineScope {
     plugins.map { plugin ->
       if (plugin.mainModule != "intellij.platform.builtInHelp") {
@@ -442,6 +450,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
                                                    copyFiles = true,
                                                    moduleOutputPatcher = moduleOutputPatcher,
                                                    includedModules = plugin.includedModules,
+                                                   moduleWithSearchableOptions = moduleWithSearchableOptions,
                                                    context = context)
           pluginBuilt?.invoke(plugin, file)
           entries
@@ -486,6 +495,24 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
     }
   }
   return entries
+}
+
+private suspend fun getModuleWithSearchableOptions(context: BuildContext): Set<String> {
+  return withContext(Dispatchers.IO) {
+    try {
+      val result = HashSet<String>()
+      val dir = context.paths.searchableOptionDir
+      Files.newDirectoryStream(dir).use { stream ->
+        for (file in stream) {
+          result.add(file.fileName.toString())
+        }
+      }
+      result
+    }
+    catch (e: IOException) {
+      emptySet()
+    }
+  }
 }
 
 private suspend fun buildPlatformSpecificPluginResources(plugins: Collection<PluginLayout>,
@@ -581,6 +608,7 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
                          copyFiles = copyFiles,
                          moduleOutputPatcher = moduleOutputPatcher,
                          includedModules = platform.includedModules,
+                         moduleWithSearchableOptions = if (copyFiles) getModuleWithSearchableOptions(context) else emptySet(),
                          context = context).first
     }
 }
@@ -844,6 +872,7 @@ suspend fun layoutDistribution(layout: BaseLayout,
                                copyFiles: Boolean = true,
                                moduleOutputPatcher: ModuleOutputPatcher,
                                includedModules: Collection<ModuleItem>,
+                               moduleWithSearchableOptions: Set<String>,
                                context: BuildContext): Pair<List<DistributionFileEntry>, Path> {
   if (copyFiles) {
     withContext(Dispatchers.IO) {
@@ -876,6 +905,7 @@ suspend fun layoutDistribution(layout: BaseLayout,
                          layout = layout,
                          platformLayout = platformLayout,
                          moduleOutputPatcher = moduleOutputPatcher,
+                         moduleWithSearchableOptions = moduleWithSearchableOptions,
                          dryRun = !copyFiles,
                          context = context)
       }
