@@ -428,9 +428,17 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     if (sourcePsi == null) return TaintValue.UNKNOWN
     val variableFlow = getVariableFlow(sourcePsi)
 
-    return variableFlow.process(this, initValue, uVariable, analyzeContext, usedReference, skipAfterReference).taintValue
+    return variableFlow.process(this, initValue, uVariable, analyzeContext, usedReference, skipAfterReference, myTaintValueFactory).taintValue
   }
 
+  private fun getVariableFlow(sourcePsi: PsiElement): VariableFlow =
+    CachedValuesManager.getManager(sourcePsi.project)
+      .getCachedValue(sourcePsi, CachedValueProvider {
+        val method = sourcePsi.toUElement() as? UMethod
+        val visitor = FlowVisitor()
+        method?.uastBody?.accept(visitor)
+        return@CachedValueProvider CachedValueProvider.Result.create(visitor.flow, PsiModificationTracker.MODIFICATION_COUNT)
+      })
 
   private fun fromParam(expression: UExpression, target: PsiElement?, analyzeContext: AnalyzeContext): TaintValue? {
     val psiParameter = (target as? PsiParameter) ?: return null
@@ -808,7 +816,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
               }
               if (nextExpression != null) {
                 if (nextExpression is UBlockExpression) {
-                  nextExpression.expressions.acceptList(returnFinder)
+                  processList(nextExpression.expressions, returnFinder)
                 }
                 else {
                   nextExpression.accept(returnFinder)
@@ -817,9 +825,12 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
               returns.addAll(returnFinder.returns)
               if (returnFinder.onlyInSameLevel && returnFinder.returns.isNotEmpty()) {
                 stop = true
-                return true
               }
-              return false
+              return true
+            }
+
+            private fun processList(expressions: List<UExpression>, returnFinder: ReturnFinder) {
+              expressions.acceptList(returnFinder)
             }
 
             override fun visitBlockExpression(node: UBlockExpression): Boolean {
@@ -827,7 +838,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
                 return true
               }
               val returnFinder = ReturnFinder()
-              node.expressions.acceptList(returnFinder)
+              processList(node.expressions, returnFinder)
               returns.addAll(returnFinder.returns)
               onlyInSameLevel = false
               return true
@@ -898,12 +909,14 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
 
       override fun afterVisitCallExpression(node: UCallExpression) {
         val javaPsi = node.resolveToUElementOfType<UMethod>()?.javaPsi
+        val receiver = node.receiver
         if (javaPsi != null && JavaMethodContractUtil.isPure(javaPsi)) {
+          flow.addCleaning(receiver, node)
           return
         }
-        val receiver = node.receiver
         if (receiver != null) {
           checkUsages(listOf(receiver), node.valueArguments)
+          flow.addCleaning(receiver, node)
         }
         if (javaPsi != null && HardcodedContracts.isKnownNoParameterLeak(javaPsi)) {
           return
@@ -930,15 +943,6 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         }
       }
     }
-
-    private fun getVariableFlow(sourcePsi: PsiElement): VariableFlow =
-      CachedValuesManager.getManager(sourcePsi.project)
-        .getCachedValue(sourcePsi, CachedValueProvider {
-          val method = sourcePsi.toUElement() as? UMethod
-          val visitor = FlowVisitor()
-          method?.uastBody?.accept(visitor)
-          return@CachedValueProvider CachedValueProvider.Result.create(visitor.flow, PsiModificationTracker.MODIFICATION_COUNT)
-        })
 
     private fun equalFiles(analyzeContext: AnalyzeContext, element: UElement): Boolean {
       val file = element.getContainingUFile()
@@ -1060,6 +1064,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   private class VariableFlow {
     private interface VariableStep
 
+    private class CleaningStep(val node: UCallExpression) : VariableStep
+
     private class DropLocalityStep(val dependsOn: List<UExpression?>?) : VariableStep
 
     private data class UsagesStep(val usages: MutableSet<PsiElement> = hashSetOf()) : VariableStep
@@ -1088,6 +1094,15 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       }
     }
 
+    fun addCleaning(uExpression: UExpression?, node: UCallExpression) {
+      if (uExpression == null) {
+        return
+      }
+      val currentVariable = (uExpression as? UResolvable)?.resolveToUElementOfType<UVariable>() ?: return
+      val psiElement = currentVariable.sourcePsi ?: return
+      variables.putValue(psiElement, CleaningStep(node))
+    }
+
     fun addAssign(currentVariable: UVariable, assign: UExpression) {
       val psiElement = currentVariable.sourcePsi ?: return
       variables.putValue(psiElement, AssignmentStep(assign))
@@ -1109,7 +1124,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
                 uVariable: UVariable,
                 analyzeContext: AnalyzeContext,
                 usedReference: UExpression?,
-                skipAfterReference: Boolean): FlowResult {
+                skipAfterReference: Boolean,
+                taintValueFactory: TaintValueFactory): FlowResult {
       val psiElement = uVariable.sourcePsi ?: return FlowResult(TaintValue.UNKNOWN, false)
       val variableSteps = variables[psiElement]
       if (variableSteps.isEmpty()) return FlowResult(initValue, false)
@@ -1155,7 +1171,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
               processValue = resultValue
             }
             val flowResults = variableStep.flows.map {
-              it.process(taintAnalyzer, resultValue, uVariable, analyzeContext, usedReference, skipAfterReference)
+              it.process(taintAnalyzer, resultValue, uVariable, analyzeContext, usedReference, skipAfterReference, taintValueFactory)
             }
             val fastExit = flowResults.firstOrNull { it.fast }
             if (fastExit != null) {
@@ -1174,6 +1190,11 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
           is AssignmentStep -> {
             val expression = variableStep.expression
             resultValue = taintAnalyzer.fromExpressionWithoutCollection(expression, analyzeContext)
+          }
+          is CleaningStep -> {
+            if (taintValueFactory.needToCleanQualifier(variableStep.node)) {
+              resultValue = TaintValue.UNTAINTED
+            }
           }
         }
       }
