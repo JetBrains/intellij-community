@@ -85,6 +85,6 @@ sealed class ClientToGtwMessage {
    * Fields may be added with default values in future versions
    */
   @Serializable
-  data class ClientCapabilities(val canSelfRestart: Boolean): ClientToGtwMessage()
+  data class ClientCapabilities(val canSelfRestart: Boolean, val clientPid: Long = -1): ClientToGtwMessage()
 }
 
