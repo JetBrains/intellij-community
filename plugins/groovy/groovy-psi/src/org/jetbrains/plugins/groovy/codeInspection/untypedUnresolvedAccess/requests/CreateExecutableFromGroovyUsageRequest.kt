@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requ
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.getTargetSubstitutor
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
-import com.intellij.openapi.components.service
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiType

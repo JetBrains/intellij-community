@@ -2,7 +2,6 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.util.indexing.IndexingBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow

@@ -50,7 +50,7 @@ public class ManifestParser implements PsiParser {
   private final HeaderParserRepository myRepository;
 
   public ManifestParser() {
-    myRepository = ApplicationManager.getApplication().getService(HeaderParserRepository.class);
+    myRepository = HeaderParserRepository.getInstance();
   }
 
   @NotNull

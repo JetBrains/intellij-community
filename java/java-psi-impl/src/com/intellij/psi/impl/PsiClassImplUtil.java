@@ -1119,8 +1119,8 @@ public final class PsiClassImplUtil {
       return true;
     }
 
-    FileIndexFacade fileIndex = file1.getProject().getService(FileIndexFacade.class);
-    FileIndexFacade fileIndex2 = file2.getProject().getService(FileIndexFacade.class);
+    FileIndexFacade fileIndex = FileIndexFacade.getInstance(file1.getProject());
+    FileIndexFacade fileIndex2 = FileIndexFacade.getInstance(file2.getProject());
     VirtualFile vfile1 = file1.getViewProvider().getVirtualFile();
     VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
     boolean lib1 = fileIndex.isInLibraryClasses(vfile1);

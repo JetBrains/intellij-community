@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Service(Service.Level.PROJECT)
 @Internal
 class MavenProjectPreImporter(val project: Project, val coroutineScope: CoroutineScope) {
-  private val localRepo = project.service<MavenProjectsManager>().localRepository
+  private val localRepo = MavenProjectsManager.getInstance(project).localRepository
 
   suspend fun preimport(rootProjectFiles: List<VirtualFile>,
                         optionalModelsProvider: IdeModifiableModelsProvider?,

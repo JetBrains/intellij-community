@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
@@ -113,7 +112,7 @@ public final class GradleManager
       GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(projectPath);
       String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : projectPath;
 
-      GradleInstallationManager gradleInstallationManager = ApplicationManager.getApplication().getService(GradleInstallationManager.class);
+      GradleInstallationManager gradleInstallationManager = GradleInstallationManager.getInstance();
       File gradleHome = gradleInstallationManager.getGradleHome(project, rootProjectPath);
       String localGradlePath = null;
       if (gradleHome != null) {
@@ -390,7 +389,7 @@ public final class GradleManager
                 }
                 configureExcludeOutDir(moduleDataNode, delegatedBuild);
               }
-              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, project);
+              ProjectDataManager.getInstance().importData(projectStructure, project);
             });
           }
         });

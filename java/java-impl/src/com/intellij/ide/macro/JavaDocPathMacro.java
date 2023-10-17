@@ -31,7 +31,7 @@ final class JavaDocPathMacro extends Macro {
       return null;
     }
 
-    JavadocGenerationManager manager = project.getService(JavadocGenerationManager.class);
+    JavadocGenerationManager manager = JavadocGenerationManager.getInstance(project);
     if (manager == null) {
       return null;
     }

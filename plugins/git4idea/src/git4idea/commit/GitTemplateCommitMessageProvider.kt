@@ -3,7 +3,6 @@ package git4idea.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.LocalChangeList
@@ -37,7 +36,7 @@ private class GitCommitTemplateMessageUpdater(private val project: Project,
                                               private val commitUi: CommitMessageUi) : GitCommitTemplateListener {
   private var previousTemplate: String? = null
 
-  private val templateTracker get() = project.service<GitCommitTemplateTracker>()
+  private val templateTracker get() = GitCommitTemplateTracker.getInstance(project)
   private val vcsConfiguration get() = VcsConfiguration.getInstance(project)
 
   init {

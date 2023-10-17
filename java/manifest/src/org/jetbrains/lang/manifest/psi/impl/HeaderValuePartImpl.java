@@ -26,16 +26,15 @@ package org.jetbrains.lang.manifest.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.lang.manifest.psi.ManifestTokenType;
 import org.jetbrains.lang.manifest.header.HeaderParserRepository;
 import org.jetbrains.lang.manifest.psi.HeaderValuePart;
 import org.jetbrains.lang.manifest.psi.ManifestToken;
+import org.jetbrains.lang.manifest.psi.ManifestTokenType;
 
 /**
  * @author Robert F. Beeger (robert@beeger.net)
@@ -47,7 +46,7 @@ public class HeaderValuePartImpl extends ASTWrapperPsiElement implements HeaderV
 
   public HeaderValuePartImpl(ASTNode node) {
     super(node);
-    myRepository = ApplicationManager.getApplication().getService(HeaderParserRepository.class);
+    myRepository = HeaderParserRepository.getInstance();
   }
 
   @Override

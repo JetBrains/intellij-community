@@ -127,8 +127,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   public void execute(ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     if (!compareAndSetState(ExternalSystemTaskState.NOT_STARTED, ExternalSystemTaskState.IN_PROGRESS)) return;
 
-    ExternalSystemProgressNotificationManager progressManager =
-      ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
+    ExternalSystemProgressNotificationManager progressManager = ExternalSystemProgressNotificationManager.getInstance();
     for (ExternalSystemTaskNotificationListener listener : listeners) {
       progressManager.addNotificationListener(getId(), listener);
     }
@@ -181,8 +180,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     ExternalSystemTaskState currentTaskState = getState();
     if (currentTaskState.isStopped()) return true;
 
-    ExternalSystemProgressNotificationManager progressManager =
-      ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
+    ExternalSystemProgressNotificationManager progressManager = ExternalSystemProgressNotificationManager.getInstance();
     for (ExternalSystemTaskNotificationListener listener : listeners) {
       progressManager.addNotificationListener(getId(), listener);
     }

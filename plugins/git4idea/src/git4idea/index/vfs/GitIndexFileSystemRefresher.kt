@@ -239,7 +239,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     private val LOG = Logger.getInstance(GitIndexFileSystemRefresher::class.java)
 
     @JvmStatic
-    fun getInstance(project: Project) = project.service<GitIndexFileSystemRefresher>()
+    fun getInstance(project: Project): GitIndexFileSystemRefresher = project.service<GitIndexFileSystemRefresher>()
 
     @JvmStatic
     fun refreshFilePaths(project: Project, paths: Collection<FilePath>) {

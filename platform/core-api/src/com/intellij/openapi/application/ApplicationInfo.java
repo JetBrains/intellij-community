@@ -17,7 +17,6 @@ import java.util.Calendar;
  * Provides product information.
  */
 public abstract class ApplicationInfo {
-  @SuppressWarnings("RetrievingService")
   public static ApplicationInfo getInstance() {
     return ApplicationManager.getApplication().getService(ApplicationInfo.class);
   }

@@ -3,11 +3,10 @@ package com.intellij.openapi.project
 
 import com.intellij.ide.IdeBundle
 import com.intellij.internal.statistic.StructuredIdeActivity
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressSuspender
-import com.intellij.openapi.project.DumbModeStatisticsCollector.logProcessFinished
 import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType
+import com.intellij.openapi.project.DumbModeStatisticsCollector.logProcessFinished
 import com.intellij.openapi.project.MergingTaskQueue.QueuedTask
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx

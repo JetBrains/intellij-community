@@ -81,8 +81,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   @Override
   protected void doExecute() throws Exception {
     ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
-      (ExternalSystemProgressNotificationManagerImpl)ExternalSystemProgressNotificationManager
-        .getInstance();
+      (ExternalSystemProgressNotificationManagerImpl)ExternalSystemProgressNotificationManager.getInstance();
     ExternalSystemTaskId id = getId();
     String projectPath = getExternalProjectPath();
 

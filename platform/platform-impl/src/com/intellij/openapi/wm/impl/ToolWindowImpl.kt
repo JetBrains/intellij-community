@@ -10,6 +10,7 @@ import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.actions.speedSearch.SpeedSearchAction
 import com.intellij.ide.impl.ContentManagerWatcher
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.Disposable
@@ -21,7 +22,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.ActionToolbarApp
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
@@ -234,7 +234,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   private fun updateToolbarsVisibility() {
-    ToggleToolbarAction.updateToolbarsVisibility(this, project.service())
+    ToggleToolbarAction.updateToolbarsVisibility(this, PropertiesComponent.getInstance(project))
   }
 
   fun onMovedOrResized() {

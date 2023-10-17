@@ -61,7 +61,7 @@ class MavenImportingManager(val project: Project) {
     }
 
   private val console by lazy {
-    project.getService(MavenProjectsManager::class.java).syncConsole
+    MavenProjectsManager.getInstance(project).syncConsole
   }
 
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Maven importing executor", 1)

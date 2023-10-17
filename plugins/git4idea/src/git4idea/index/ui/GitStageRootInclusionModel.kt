@@ -2,7 +2,6 @@
 package git4idea.index.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.BaseInclusionModel
 import com.intellij.openapi.vfs.VirtualFile
