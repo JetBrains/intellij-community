@@ -196,14 +196,33 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     private fun compileCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
         try {
-            patchCodeFragment(context, codeFragment)
             return if (isK2Plugin()) compiledCodeFragmentDataK2(context) else compiledCodeFragmentDataK1(context)
         } catch (e: ExecutionException) {
             throw e.cause ?: e
         }
     }
 
-    private fun compiledCodeFragmentDataK2(context: ExecutionContext) = ReadAction.nonBlocking<CompiledCodeFragmentData> {
+    private fun compiledCodeFragmentDataK2(context: ExecutionContext): CompiledCodeFragmentData {
+        val stats = CodeFragmentCompilationStats()
+        fun onFinish(status: StatisticsEvaluationResult) =
+            KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluator.K2, status, stats)
+        try {
+            patchCodeFragment(context, codeFragment, stats)
+
+            val result = stats.startAndMeasureAnalysisUnderReadAction {
+                compiledCodeFragmentDataK2Impl(context)
+            }
+            onFinish(StatisticsEvaluationResult.SUCCESS)
+            return result
+        } catch(e: ProcessCanceledException) {
+            throw e
+        } catch (e: Throwable) {
+            onFinish(StatisticsEvaluationResult.FAILURE)
+            throw e
+        }
+    }
+
+    private fun compiledCodeFragmentDataK2Impl(context: ExecutionContext): CompiledCodeFragmentData {
         val module = codeFragment.module
 
         val compilerConfiguration = CompilerConfiguration().apply {
@@ -215,7 +234,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             put(KtCompilerFacility.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
         }
 
-        analyze(codeFragment) {
+        return analyze(codeFragment) {
             try {
                 val compilerTarget = KtCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
                 val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
@@ -249,7 +268,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 throw EvaluateExceptionUtil.createEvaluateException(e)
             }
         }
-    }.executeSynchronously()
+    }
 
     private fun computeCodeFragmentParameterInfo(result: KtCompilationResult.Success): K2CodeFragmentParameterInfo {
         val parameters = ArrayList<CodeFragmentParameter.Dumb>(result.capturedValues.size)
@@ -305,6 +324,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         } else {
             OldCodeFragmentCompilingStrategy(codeFragment)
         }
+        patchCodeFragment(context, codeFragment, compilerStrategy.stats)
 
         compilerStrategy.beforeAnalyzingCodeFragment()
         val analysisResult = analyze(codeFragment, debugProcess)

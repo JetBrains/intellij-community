@@ -12,24 +12,26 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 
-    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 2)
+    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 3)
 
     // fields
     private val evaluatorField = EventFields.Enum<StatisticsEvaluator>("evaluator")
     private val evaluationResultField = EventFields.Enum<StatisticsEvaluationResult>("evaluation_result")
+    private val wrapTimeMsField = EventFields.Long("wrap_time_ms")
     private val analysisTimeMsField = EventFields.Long("analysis_time_ms")
     private val compilationTimeMsField = EventFields.Long("compilation_time_ms")
+    private val wholeTimeField = EventFields.Long("whole_time_field")
     private val interruptionsField = EventFields.Int("total_interruptions")
 
     // events
     private val evaluationResultEvent = GROUP.registerVarargEvent(
         "evaluation.result", evaluatorField, evaluationResultField,
-        analysisTimeMsField, compilationTimeMsField, interruptionsField
+        wrapTimeMsField, analysisTimeMsField, compilationTimeMsField, wholeTimeField, interruptionsField
     )
     private val fallbackToOldEvaluatorEvent = GROUP.registerEvent("fallback.to.old.evaluator")
 
     @JvmStatic
-    fun logEvaluationResult(
+    internal fun logEvaluationResult(
         project: Project?, evaluator: StatisticsEvaluator, evaluationResult: StatisticsEvaluationResult,
         stats: CodeFragmentCompilationStats
     ) {
@@ -37,8 +39,10 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
             project,
             EventPair(evaluatorField, evaluator),
             EventPair(evaluationResultField, evaluationResult),
+            EventPair(wrapTimeMsField, stats.wrapTimeMs),
             EventPair(analysisTimeMsField, stats.analysisTimeMs),
             EventPair(compilationTimeMsField, stats.compilationTimeMs),
+            EventPair(wholeTimeField, System.currentTimeMillis() - stats.startTimeMs),
             EventPair(interruptionsField, stats.interruptions)
         )
     }
@@ -50,7 +54,7 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 }
 
 enum class StatisticsEvaluator {
-    OLD, IR //, K2
+    OLD, IR, K2
 }
 
 enum class StatisticsEvaluationResult {

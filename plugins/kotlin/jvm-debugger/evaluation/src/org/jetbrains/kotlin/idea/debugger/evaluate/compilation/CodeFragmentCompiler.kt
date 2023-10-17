@@ -346,7 +346,11 @@ private fun computeInternalClassName(path: String): String {
     return path.dropLast(".class".length).replace('/', '.')
 }
 
-class CodeFragmentCompilationStats {
+internal class CodeFragmentCompilationStats {
+    val startTimeMs: Long = System.currentTimeMillis()
+
+    var wrapTimeMs: Long = -1L
+        private set
     var analysisTimeMs: Long = -1L
         private set
     var compilationTimeMs: Long = -1L
@@ -354,6 +358,7 @@ class CodeFragmentCompilationStats {
     var interruptions: Int = 0
         private set
 
+    fun <R> startAndMeasureWrapAnalysisUnderReadAction(block: () -> R): R = startAndMeasureUnderReadAction(block) { wrapTimeMs = it }
     fun <R> startAndMeasureAnalysisUnderReadAction(block: () -> R): R = startAndMeasureUnderReadAction(block) { analysisTimeMs = it }
     fun <R> startAndMeasureCompilationUnderReadAction(block: () -> R): R = startAndMeasureUnderReadAction(block) { compilationTimeMs = it }
 
