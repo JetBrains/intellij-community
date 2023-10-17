@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import java.awt.Component
@@ -29,7 +30,6 @@ import java.awt.event.ActionListener
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.io.FileNotFoundException
-import java.io.IOException
 import java.nio.file.NoSuchFileException
 import java.util.*
 import java.util.concurrent.Callable
@@ -70,8 +70,12 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
   private fun createIconsList(withNoneItem: Boolean): List<ActionIconInfo> {
     val defaultIcons = getDefaultIcons()
     val customIcons = getCustomIcons(customActionsSchema)
+      .asSequence()
+      .distinctBy { it.iconPath }
       .filter { info -> defaultIcons.find { it.iconPath == info.iconPath } == null }
     val availableIcons = getAvailableIcons()
+      .asSequence()
+      .distinctBy { IconWrapper(it.icon!!) }
       .filter { info -> defaultIcons.find { it.icon === info.icon } == null }
       .sortedWith(Comparator { a, b -> a.text.compareTo(b.text, ignoreCase = true) })
     val icons: MutableList<ActionIconInfo> = LinkedList()
@@ -81,6 +85,22 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
     icons.addAll(customIcons)
     icons.addAll(availableIcons)
     return icons
+  }
+
+  /** Icon wrapper with custom implementation for equals and hashcode */
+  private class IconWrapper(private val icon: Icon) {
+    override fun equals(other: Any?): Boolean {
+      if (this.javaClass != other?.javaClass) return false
+      return isSameIcons(this.icon, (other as IconWrapper).icon)
+    }
+
+    override fun hashCode(): Int {
+      val actualIcon = getActualIcon(icon)
+      return if (actualIcon is CachedImageIcon) {
+        Objects.hashCode(actualIcon.originalPath)
+      }
+      else actualIcon.hashCode()
+    }
   }
 
   private fun createEditor(): ComboBoxEditor = object : BasicComboBoxEditor() {
@@ -211,7 +231,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
       val customIconRef = customActionsSchema.getIconPath(actionId)
       if (StringUtil.isNotEmpty(customIconRef) && selectByCondition { info -> info.iconReference == customIconRef }
           || selectByCondition { info -> info.actionId == actionId }
-          || selectByCondition { info -> info.icon == icon }) {
+          || selectByCondition { info -> isSameIcons(info.icon, icon) }) {
         return
       }
     }
@@ -286,5 +306,24 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
         }
       }
     })
+  }
+
+  companion object {
+    private fun isSameIcons(icon1: Icon?, icon2: Icon?): Boolean {
+      if (icon1 === icon2) return true
+      if (icon1 == null || icon2 == null) return false
+      val actualIcon1 = getActualIcon(icon1)
+      val actualIcon2 = getActualIcon(icon2)
+      if (actualIcon1 === actualIcon2) return true
+      return (actualIcon1 as? CachedImageIcon)?.originalPath == (actualIcon2 as? CachedImageIcon)?.originalPath
+    }
+
+    private fun getActualIcon(icon: Icon): Icon {
+      var cur = icon
+      while (cur is RetrievableIcon) {
+        cur = cur.retrieveIcon()
+      }
+      return cur
+    }
   }
 }
