@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.headertoolbar
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -20,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
@@ -84,7 +82,7 @@ internal class FilenameToolbarWidgetUpdateService(
   }
 
   private suspend fun update(virtualFile: VirtualFile?) {
-    val action = components.firstNotNullOfOrNull { ClientProperty.get(it, CustomComponentAction.ACTION_KEY) } ?: return
+    val action = ActionManager.getInstance().getAction(FilenameToolbarWidgetAction.ID) ?: return
     val presentation = action.templatePresentation.clone()
     readAction {
       updatePresentationFromFile(project, virtualFile, presentation)
