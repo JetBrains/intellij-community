@@ -36,6 +36,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
 
   companion object {
     const val ID = "main.toolbar.Filename"
+    private val LOG = logger<FilenameToolbarWidgetAction>()
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -120,5 +121,3 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     ProjectUtil.getProjectForComponent(component)?.service<FilenameToolbarWidgetUpdateService>()?.updateComponent(component, presentation)
   }
 }
-
-private val LOG = logger<FilenameToolbarWidgetAction>()

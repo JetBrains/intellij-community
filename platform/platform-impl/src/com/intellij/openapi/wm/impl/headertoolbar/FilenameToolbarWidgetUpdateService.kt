@@ -42,6 +42,12 @@ internal class FilenameToolbarWidgetUpdateService(
   coroutineScope: CoroutineScope,
 ) {
 
+  companion object {
+    private val FILE_COLOR: Key<Color> = Key.create("FILENAME_WIDGET_FILE_COLOR")
+    private val FILE_FULL_PATH: Key<String?> = Key.create("FILENAME_WIDGET_FILE_PATH")
+    private const val isIDEA331002Fixed = false //todo[mikhail.sokolov]
+  }
+
   private val fileFlow = MutableSharedFlow<VirtualFile?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val components = WeakList<JComponent>()
 
@@ -157,7 +163,3 @@ internal class FilenameToolbarWidgetUpdateService(
   }
 
 }
-
-private val FILE_COLOR: Key<Color> = Key.create("FILENAME_WIDGET_FILE_COLOR")
-private val FILE_FULL_PATH: Key<String?> = Key.create("FILENAME_WIDGET_FILE_PATH")
-private const val isIDEA331002Fixed = false //todo[mikhail.sokolov]
