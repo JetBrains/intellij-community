@@ -129,7 +129,19 @@ internal abstract class LazyInstanceHolder(
     else {
       EmptyCoroutineContext
     }
-    val parentScope = state.parentScope
+    return suspendCancellableCoroutine { waiter ->
+      tryAwait(newState, waiter)
+      // publish waiter before `initialize()` because it's undispatched
+      initialize(state.parentScope, callerCtx, initializer, instanceClass)
+    }
+  }
+
+  private fun initialize(
+    parentScope: CoroutineScope,
+    callerCtx: CoroutineContext,
+    initializer: InstanceInitializer,
+    instanceClass: Class<*>,
+  ) {
     parentScope.launch(
       context = callerCtx + CurrentlyInitializingInstance(this) + CoroutineName("${initializer.instanceClassName} init"),
       start = CoroutineStart.UNDISPATCHED,
@@ -142,7 +154,6 @@ internal abstract class LazyInstanceHolder(
         complete(finalState = CannotInitialize(instanceClass = instanceClass, t))
       }
     }
-    return tryAwait(newState)
   }
 
   private fun complete(finalState: Any) {
