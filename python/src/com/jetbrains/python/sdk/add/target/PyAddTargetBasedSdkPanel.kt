@@ -29,14 +29,13 @@ import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.PreferredSdkComparator
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.CreateSdkInterrupted
+import com.jetbrains.python.sdk.add.PyAddSdkProvider
 import com.jetbrains.python.sdk.add.PyAddSdkView
 import com.jetbrains.python.sdk.add.PyAddSystemWideInterpreterPanel
 import com.jetbrains.python.sdk.add.showProcessExecutionErrorDialog
 import com.jetbrains.python.sdk.add.target.conda.PyAddCondaPanelModel
 import com.jetbrains.python.sdk.add.target.conda.PyAddCondaPanelView
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.pipenv.PyAddPipEnvPanel
-import com.jetbrains.python.sdk.poetry.createPoetryPanel
 import com.jetbrains.python.sdk.sdkSeemsValid
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.CardLayout
@@ -94,13 +93,13 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
     return when {
       isUnderLocalTarget -> {
         val newProjectPath = null
-        val pipEnvPanel = createPipEnvPanel(newProjectPath)
-        val poetryPanel = createPoetryPanel(project, module, existingSdks, newProjectPath, context)
+        val additionalPanels = PyAddSdkProvider.EP_NAME.extensions
+          .mapNotNull { it.createView(project, module, newProjectPath, existingSdks, context) }.toTypedArray()
         if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
-          listOf(condaPanel, venvPanel, systemWidePanel, pipEnvPanel, poetryPanel) to condaPanel
+          listOf(condaPanel, venvPanel, systemWidePanel, *additionalPanels) to condaPanel
         }
         else {
-          listOf(venvPanel, condaPanel, systemWidePanel, pipEnvPanel, poetryPanel) to venvPanel
+          listOf(venvPanel, condaPanel, systemWidePanel, *additionalPanels) to venvPanel
         }
       }
       targetEnvironmentConfiguration.isMutableTarget -> buildList {
@@ -160,8 +159,6 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
 
   private fun createAnacondaPanel(): PyAddSdkView =
     PyAddCondaPanelView(PyAddCondaPanelModel(targetEnvironmentConfiguration, existingSdks, project!!, introspectable = introspectable))
-
-  private fun createPipEnvPanel(newProjectPath: String?) = PyAddPipEnvPanel(project, module, existingSdks, newProjectPath, context)
 
   /**
    * Tries to create the SDK and closes the dialog if the creation succeeded.
