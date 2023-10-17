@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.Disposable;
@@ -48,6 +48,8 @@ import java.util.stream.Stream;
  * Get current index state, schedule update index list, check MavenId in index, add data to index.
  */
 public final class MavenIndicesManager implements Disposable {
+
+  @Topic.AppLevel
   public static final Topic<MavenIndexerListener> INDEXER_TOPIC =
     new Topic<>(MavenIndexerListener.class.getSimpleName(), MavenIndexerListener.class);
 

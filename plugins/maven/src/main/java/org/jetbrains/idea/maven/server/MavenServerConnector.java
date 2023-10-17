@@ -17,6 +17,8 @@ import java.util.Collection;
 import java.util.List;
 
 public interface MavenServerConnector extends Disposable {
+
+  @Topic.AppLevel
   Topic<MavenServerDownloadListener> DOWNLOAD_LISTENER_TOPIC =
     new Topic<>(MavenServerDownloadListener.class.getSimpleName(), MavenServerDownloadListener.class);
 
