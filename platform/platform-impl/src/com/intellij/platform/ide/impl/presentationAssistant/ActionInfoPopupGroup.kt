@@ -160,6 +160,14 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
         isDragging = false
       }
 
+      override fun mouseExited(e: MouseEvent?) {
+        super.mouseExited(e)
+        if (isDragging) {
+          updateDelta(e, true)
+        }
+        isDragging = false
+      }
+
       private fun updateDelta(event: MouseEvent?, isFinal: Boolean) {
         val actionInfoPanel = event?.component as? ActionInfoPanel?: return
         saveLocationDelta(project, actionInfoPanel)
