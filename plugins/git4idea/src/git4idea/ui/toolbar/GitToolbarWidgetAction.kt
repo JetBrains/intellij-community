@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.util.maximumWidth
 import git4idea.GitVcs
+import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
@@ -27,8 +28,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 
 private val REPOSITORY_KEY = Key.create<GitRepository>("git-widget-repository")
-private val HAS_INCOMING_KEY = Key.create<Boolean>("git-widget-changes-incoming")
-private val HAS_OUTGOING_KEY = Key.create<Boolean>("git-widget-changes-outgoing")
+private val SYNC_STATUS_KEY = Key.create<GitBranchSyncStatus>("git-widget-branch-sync-status")
 
 private val WIDGET_ICON: Icon = ExpUiIcons.General.Vcs
 
@@ -70,15 +70,17 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
 
     val rightIcons = mutableListOf<Icon>()
 
+    val syncStatus = presentation.getClientProperty(SYNC_STATUS_KEY)
+
     val showIncoming = !actionsWithIncomingOutgoingEnabled
                        || !groupContainsAction("MainToolbarNewUI", "main.toolbar.git.update.project", schema)
-    if (showIncoming && presentation.getClientProperty(HAS_INCOMING_KEY) == true) {
+    if (showIncoming && syncStatus?.incoming == true) {
       rightIcons.add(DvcsImplIcons.Incoming)
     }
 
     val showOutgoing = !actionsWithIncomingOutgoingEnabled
                        || !groupContainsAction("MainToolbarNewUI", "main.toolbar.git.push", schema)
-    if (showOutgoing && presentation.getClientProperty(HAS_OUTGOING_KEY) == true) {
+    if (showOutgoing && syncStatus?.outgoing == true) {
       rightIcons.add(DvcsImplIcons.Outgoing)
     }
 
@@ -125,8 +127,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
           icon = presentation.icon ?: WIDGET_ICON
           text = presentation.text.also { updatePlaceholder(project, it) }
           description = presentation.description
-          putClientProperty(HAS_INCOMING_KEY, presentation.hasIncomingChanges)
-          putClientProperty(HAS_OUTGOING_KEY, presentation.hasOutgoingChanges)
+          putClientProperty(SYNC_STATUS_KEY, presentation.syncStatus)
         }
       }
     }

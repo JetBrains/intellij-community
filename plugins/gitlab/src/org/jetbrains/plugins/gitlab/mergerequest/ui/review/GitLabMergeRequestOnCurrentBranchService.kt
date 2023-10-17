@@ -42,8 +42,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
       val currentBranchName = StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
         GitBranchPopupActions.truncateBranchName(branchName, repository.project)
       })
-      val changesState = vm.actualChangesState.value
-      return when (changesState) {
+      return when (val state = vm.actualChangesState.value) {
         GitLabMergeRequestEditorReviewViewModel.ChangesState.Error -> GitCurrentBranchPresenter.Presentation(
           GitlabIcons.GitLabLogo,
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
@@ -54,11 +53,11 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
           GitLabBundle.message("merge.request.on.branch.loading", vm.mergeRequestIid)
         )
-        GitLabMergeRequestEditorReviewViewModel.ChangesState.OutOfSync -> GitCurrentBranchPresenter.Presentation(
+        is GitLabMergeRequestEditorReviewViewModel.ChangesState.OutOfSync -> GitCurrentBranchPresenter.Presentation(
           GitlabIcons.GitLabLogo,
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
           GitLabBundle.message("merge.request.on.branch.out.of.sync", vm.mergeRequestIid, currentBranchName),
-          hasIncomingChanges = true, hasOutgoingChanges = true
+          state.status
         )
         GitLabMergeRequestEditorReviewViewModel.ChangesState.NotLoaded,
         is GitLabMergeRequestEditorReviewViewModel.ChangesState.Loaded -> GitCurrentBranchPresenter.Presentation(

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
+import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -38,24 +39,24 @@ interface GitCurrentBranchPresenter {
     val icon: Icon?,
     val text: @Nls String,
     val description: @Nls String?,
-    val hasIncomingChanges: Boolean = false,
-    val hasOutgoingChanges: Boolean= false
+    val syncStatus: GitBranchSyncStatus = GitBranchSyncStatus.SYNCED
   )
 }
 
 private fun getDefaultPresentation(repository: GitRepository): GitCurrentBranchPresenter.Presentation {
   val project = repository.project
-  val (incoming, outgoing) = repository.currentBranchName?.let { branch ->
+  val syncStatus = repository.currentBranchName?.let { branch ->
     val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
-    incomingOutgoingManager.hasIncomingFor(repository, branch) to incomingOutgoingManager.hasOutgoingFor(repository, branch)
-  } ?: (false to false)
+    val incoming = incomingOutgoingManager.hasIncomingFor(repository, branch)
+    val outgoing = incomingOutgoingManager.hasOutgoingFor(repository, branch)
+    GitBranchSyncStatus(incoming, outgoing)
+  } ?: GitBranchSyncStatus.SYNCED
 
   return GitCurrentBranchPresenter.Presentation(
     repository.calcIcon(),
     calcText(project, repository),
     repository.calcTooltip(),
-    incoming,
-    outgoing
+    syncStatus
   )
 }
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
+import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -64,7 +65,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     cs.launchNow {
       mergeRequest.changes.collectLatest { changes ->
         changes.localRepositorySynced.collectLatest {
-          if(it) {
+          if (it) {
             _actualChangesState.value = ChangesState.NotLoaded
             changesRequest.distinctUntilChanged().collectLatest {
               try {
@@ -78,8 +79,9 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
                 _actualChangesState.value = ChangesState.Error
               }
             }
-          } else {
-            _actualChangesState.value = ChangesState.OutOfSync
+          }
+          else {
+            _actualChangesState.value = ChangesState.OutOfSync(GitBranchSyncStatus(true, true))
           }
         }
       }
@@ -144,10 +146,10 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
 
   sealed interface ChangesState {
     object NotLoaded : ChangesState
-    object Loading: ChangesState
-    object Error: ChangesState
-    object OutOfSync: ChangesState
-    class Loaded(val changes: GitBranchComparisonResult): ChangesState
+    object Loading : ChangesState
+    object Error : ChangesState
+    class OutOfSync(val status: GitBranchSyncStatus) : ChangesState
+    class Loaded(val changes: GitBranchComparisonResult) : ChangesState
   }
 
   companion object {
