@@ -109,11 +109,14 @@ class GitFileHistory internal constructor(private val project: Project,
    */
   @Throws(VcsException::class)
   private fun getParentsAndPathsIfRename(commit: @NonNls String, filePath: FilePath): List<Pair<String, FilePath>> {
-    val h = GitLineHandler(project, root, GitCommand.SHOW)
+    val requirements = GitCommitRequirements(diffRenames = GitCommitRequirements.DiffRenames.Limit.Default,
+                                             diffInMergeCommits = GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS)
+    val h = GitLineHandler(project, root, GitCommand.SHOW, requirements.configParameters())
     val parser = GitLogParser.createDefaultParser(project, GitLogParser.NameStatus.STATUS, GitLogOption.HASH, GitLogOption.COMMIT_TIME,
                                                   GitLogOption.PARENTS)
     h.setStdoutSuppressed(true)
-    h.addParameters("-M", "-m", "--follow", "--name-status", parser.pretty, "--encoding=UTF-8", commit)
+    h.addParameters(requirements.commandParameters(project, h.executable))
+    h.addParameters("--follow", "--name-status", parser.pretty, "--encoding=UTF-8", commit)
     h.endOptions()
     h.addRelativePaths(filePath)
 
