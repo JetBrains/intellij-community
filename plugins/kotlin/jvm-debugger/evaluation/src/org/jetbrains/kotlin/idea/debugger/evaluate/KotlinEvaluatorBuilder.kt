@@ -203,7 +203,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
-    private fun compiledCodeFragmentDataK2(context: ExecutionContext): CompiledCodeFragmentData = runReadAction {
+    private fun compiledCodeFragmentDataK2(context: ExecutionContext) = ReadAction.nonBlocking<CompiledCodeFragmentData> {
         val module = codeFragment.module
 
         val compilerConfiguration = CompilerConfiguration().apply {
@@ -249,7 +249,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 throw EvaluateExceptionUtil.createEvaluateException(e)
             }
         }
-    }
+    }.executeSynchronously()
 
     private fun computeCodeFragmentParameterInfo(result: KtCompilationResult.Success): K2CodeFragmentParameterInfo {
         val parameters = ArrayList<CodeFragmentParameter.Dumb>(result.capturedValues.size)
