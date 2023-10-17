@@ -107,6 +107,7 @@ class CodeVisionPass(
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     val settings = CodeVisionSettings.instance()
+    if (!settings.codeVisionEnabled) return
     val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
       .filter {  settings.isProviderEnabled(it.groupId) }
     collect(progress, editor, myFile, providerIdToLenses, providers)
