@@ -16,6 +16,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
+import com.intellij.util.IconUtil
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -25,7 +26,7 @@ import javax.swing.SwingConstants
 internal class PresentationAssistantQuickSettingsButton(private val project: Project,
                                                         private val appearance: ActionInfoPopupGroup.Appearance,
                                                         private val shownStateRequestCountChanged: (Int) -> Unit):
-  JBLabel(AllIcons.Actions.PresentationAssistantSettings), Disposable, DataContext {
+  JBLabel(IconUtil.colorize(AllIcons.Actions.PresentationAssistantSettings, appearance.theme.keymapLabel)), Disposable, DataContext {
 
   private var popup: JBPopup? = null
   private var hideAlarm = Alarm()
