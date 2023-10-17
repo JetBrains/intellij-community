@@ -29,7 +29,11 @@ class JaegerJsonSpanExporter(
   serviceVersion: String? = null,
   serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
-  private val tempTelemetryFile = file.parent.createDirectories().resolve("telemetry.temp")
+  private val tempTelemetryFile: Path = if (file.parent != null) {
+    file.parent.createDirectories().resolve("telemetry.temp").toAbsolutePath()
+  }
+  else file.run { Path(this.absolutePathString().plus(".temp")) }
+
   private val writer = JsonFactory().createGenerator(Files.newBufferedWriter(tempTelemetryFile))
     .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
 
