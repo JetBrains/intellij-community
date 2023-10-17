@@ -22,7 +22,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.checkAttributeValueSize;
@@ -67,8 +66,6 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   //      data[...]: attribute value, size = record.length-header.size(8)
 
   private final @NotNull StreamlinedBlobStorage storage;
-
-  private final AtomicInteger modCount = new AtomicInteger();
 
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -180,10 +177,14 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   public void deleteAttributes(final @NotNull PersistentFSConnection connection,
                                final int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
+
+    PersistentFSRecordsStorage records = connection.getRecords();
     lock.writeLock().lock();
     try {
-      final int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
+      final int attributeRecordId = records.getAttributeRecordId(fileId);
       deleteAttributes(attributeRecordId, fileId);
+
+      records.setAttributeRecordId(fileId, NON_EXISTENT_ATTR_RECORD_ID);
     }
     finally {
       lock.writeLock().unlock();
@@ -258,11 +259,6 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     finally {
       lock.readLock().unlock();
     }
-  }
-
-  @Override
-  public int getLocalModificationCount() {
-    return modCount.get();
   }
 
   @Override
@@ -782,10 +778,11 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
       final int attributeValueSize = attributeValueHolder.size();
       checkAttributeValueSize(attribute, attributeValueSize);
 
+      PersistentFSRecordsStorage records = connection.getRecords();
       lock.writeLock().lock();
       try {
         final int encodedAttributeId = connection.getAttributeId(attribute.getId());
-        final int attributesRecordId = connection.getRecords().getAttributeRecordId(fileId);
+        final int attributesRecordId = records.getAttributeRecordId(fileId);
 
         final int updatedAttributesRecordId = updateAttribute(
           attributesRecordId,
@@ -793,10 +790,8 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
           attributeValueHolder.getInternalBuffer(), attributeValueSize
         );
 
-        if (updatedAttributesRecordId != attributesRecordId) {
-          connection.getRecords().setAttributeRecordId(fileId, updatedAttributesRecordId);
-        }
-        modCount.incrementAndGet();
+        //skip (updatedAttributesRecordId != attributesRecordId) check since we want to _always_ update file.modCount
+        records.setAttributeRecordId(fileId, updatedAttributesRecordId);
       }
       catch (Throwable t) {
         LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
@@ -1265,13 +1260,5 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
       throw new IllegalArgumentException(
         "attributeId(=" + attributeId + ") must be in [0.." + MAX_SUPPORTED_ATTRIBUTE_ID + "]");
     }
-  }
-
-  private void checkAttributeRecordSanity(int attributeRecordId,
-                                          @NotNull IntList usedAttributeRecordIds,
-                                          @NotNull IntList validAttributeIds) {
-    assert !usedAttributeRecordIds.contains(attributeRecordId);
-    usedAttributeRecordIds.add(attributeRecordId);
-    //FIXME RC: read all the entries in attributeRecordId
   }
 }

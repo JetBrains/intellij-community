@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -47,8 +46,6 @@ public final class AttributesStorageOld implements AbstractAttributesStorage {
   private final @NotNull Storage attributesBlobStorage;
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
-  private final AtomicInteger modCount = new AtomicInteger();
-
 
   AttributesStorageOld(final boolean bulkAttrReadSupport,
                        final boolean inlineAttributes,
@@ -191,11 +188,6 @@ public final class AttributesStorageOld implements AbstractAttributesStorage {
   }
 
   @Override
-  public int getLocalModificationCount() {
-    return modCount.get();
-  }
-
-  @Override
   public boolean isEmpty() throws IOException {
     lock.readLock().lock();
     try{
@@ -282,7 +274,6 @@ public final class AttributesStorageOld implements AbstractAttributesStorage {
             attributesBlobStorage.writeBytes(attributeRecordId, _out.toByteArraySequence(), attribute.isFixedSize());
           }
         }
-        modCount.incrementAndGet();
       }
       catch (Throwable t) {
         FSRecords.LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");

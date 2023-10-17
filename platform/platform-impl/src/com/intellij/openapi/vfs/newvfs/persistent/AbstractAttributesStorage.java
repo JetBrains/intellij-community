@@ -77,8 +77,6 @@ public interface AbstractAttributesStorage extends Forceable, Closeable {
   void deleteAttributes(final @NotNull PersistentFSConnection connection,
                         final int fileId) throws IOException;
 
-  int getLocalModificationCount();
-
   boolean isEmpty() throws IOException;
 
   void checkAttributeRecordSanity(int fileId,
