@@ -6,8 +6,25 @@ import com.intellij.webSymbols.query.impl.WebSymbolNameConversionRulesImpl
 
 interface WebSymbolNameConversionRules {
 
+  /**
+   * Used for storing and comparing symbols.
+   *
+   * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE]
+   */
   val canonicalNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+
+  /**
+   * Used for matching symbols.
+   *
+   * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.NAMES_QUERY]
+   */
   val matchNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+
+  /**
+   * Used for code completion.
+   *
+   * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS]
+   */
   val nameVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
 
   companion object {
@@ -15,15 +32,23 @@ interface WebSymbolNameConversionRules {
     @JvmStatic
     fun create(canonicalNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
                matchNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
-               nameVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap()) =
+               nameVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap()): WebSymbolNameConversionRules =
       WebSymbolNameConversionRulesImpl(canonicalNames, matchNames, nameVariants)
 
     @JvmStatic
-    fun empty() =
-      WebSymbolNameConversionRulesImpl.empty
+    fun create(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter): WebSymbolNameConversionRules =
+      WebSymbolNameConversionRulesBuilder().addRule(symbolKind, converter).build()
 
     @JvmStatic
-    fun builder() =
+    fun create(vararg rules: Pair<WebSymbolQualifiedKind, WebSymbolNameConverter>): WebSymbolNameConversionRules =
+      WebSymbolNameConversionRulesBuilder().apply { rules.forEach { rule -> addRule(rule.first, rule.second) } }.build()
+
+    @JvmStatic
+    fun empty(): WebSymbolNameConversionRules =
+      WebSymbolNameConversionRulesImpl.EMPTY
+
+    @JvmStatic
+    fun builder(): WebSymbolNameConversionRulesBuilder =
       WebSymbolNameConversionRulesBuilder()
 
   }

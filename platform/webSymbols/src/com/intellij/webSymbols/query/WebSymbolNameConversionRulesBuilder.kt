@@ -9,16 +9,22 @@ class WebSymbolNameConversionRulesBuilder internal constructor() {
   private val matchNames = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
   private val nameVariants = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
 
-  fun addCanonicalNamesRule(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter) {
+  fun addCanonicalNamesRule(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter) = apply {
     canonicalNames.putIfAbsent(symbolKind, converter)
   }
 
-  fun addMatchNamesRule(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter) {
+  fun addMatchNamesRule(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter) = apply {
     matchNames.putIfAbsent(symbolKind, converter)
   }
 
-  fun addNameVariantsRule(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter) {
+  fun addNameVariantsRule(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter) = apply {
     nameVariants.putIfAbsent(symbolKind, converter)
+  }
+
+  fun addRule(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter) = apply {
+    addCanonicalNamesRule(symbolKind, converter)
+    addMatchNamesRule(symbolKind, converter)
+    addNameVariantsRule(symbolKind, converter)
   }
 
   fun build(): WebSymbolNameConversionRules =
