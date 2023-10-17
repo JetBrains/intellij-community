@@ -2,11 +2,11 @@
 package com.intellij.platform.feedback.dialog
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.feedback.dialog.uiBlocks.EmailBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
 import com.intellij.platform.feedback.impl.DEFAULT_FEEDBACK_CONSENT_ID
 import com.intellij.platform.feedback.impl.FeedbackRequestDataWithDetailedAnswer
 import com.intellij.platform.feedback.impl.FeedbackRequestType
-import com.intellij.platform.feedback.dialog.uiBlocks.EmailBlock
-import com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
 import com.intellij.platform.feedback.impl.submitFeedback
 import com.intellij.ui.dsl.builder.Panel
 
@@ -31,7 +31,8 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
       collectDataToJsonObject()
     )
     submitFeedback(feedbackData,
-                   { }, { },
+                   { showThanksNotification() },
+                   { },
                    if (myForTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
   }
 

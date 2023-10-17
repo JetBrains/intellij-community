@@ -103,7 +103,7 @@ abstract class BlockBasedFeedbackDialog<T : SystemDataJsonSerializable>(
   protected open fun sendFeedbackData() {
     val feedbackData = FeedbackRequestData(myFeedbackReportId, collectDataToJsonObject())
     submitFeedback(feedbackData,
-                   { },
+                   { showThanksNotification() },
                    { },
                    if (myForTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
   }

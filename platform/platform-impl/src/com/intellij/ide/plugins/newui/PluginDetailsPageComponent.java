@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate;
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata;
@@ -18,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -290,14 +290,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       if (e.getDescription().equals("showFeedback")) {
         final String pluginIdString = myPlugin.getPluginId().getIdString();
         final String pluginName = myPlugin.getName();
-        final Project project;
-        final Project[] openedProjects = ProjectManager.getInstance().getOpenProjects();
-        if (openedProjects.length != 0) {
-          project = openedProjects[0];
-        }
-        else {
-          project = null;
-        }
+        final Component component = e.getInputEvent().getComponent();
+        final Project project = ProjectUtil.getProjectForComponent(component);
 
         final DialogWrapper feedbackDialog = createDialogWrapperFunction.fun(pluginIdString, pluginName, project);
         if (feedbackDialog == null) {
