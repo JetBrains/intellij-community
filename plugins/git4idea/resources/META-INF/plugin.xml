@@ -832,6 +832,9 @@
     <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyStagingAreaListener"
               topic="git4idea.status.GitStagingAreaHolder$StagingAreaListener"
               activeInHeadlessMode="false"/>
+    <listener class="git4idea.conflicts.MergeConflictResolveUtil$MyStagingAreaListener"
+              topic="git4idea.status.GitStagingAreaHolder.StagingAreaListener"
+              activeInHeadlessMode="false"/>
     <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyRepositoryListener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
               activeInHeadlessMode="false"/>
