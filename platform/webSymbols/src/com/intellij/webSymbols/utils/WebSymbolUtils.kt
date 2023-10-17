@@ -147,16 +147,22 @@ fun WebSymbol.toCodeCompletionItems(name: String,
     }
   }
   ?: params.queryExecutor.namesProvider
-    .getNames(namespace, kind, this.name, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+    .getNames(WebSymbolQualifiedName(namespace, kind, this.name), WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
     .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = this) }
 
 fun WebSymbol.nameMatches(name: String, queryExecutor: WebSymbolsQueryExecutor): Boolean {
-  val queryNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind,
-                                                        name, WebSymbolNamesProvider.Target.NAMES_QUERY)
-  val symbolNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind, this.name,
-                                                         WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
+  val queryNames = queryExecutor.namesProvider.getNames(
+    WebSymbolQualifiedName(this.namespace, this.kind, name), WebSymbolNamesProvider.Target.NAMES_QUERY)
+  val symbolNames = queryExecutor.namesProvider.getNames(
+    WebSymbolQualifiedName(this.namespace, this.kind, this.name), WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
   return queryNames.any { symbolNames.contains(it) }
 }
+
+val WebSymbol.qualifiedName: WebSymbolQualifiedName
+  get() = WebSymbolQualifiedName(namespace, kind, name)
+
+val WebSymbol.qualifiedKind: WebSymbolQualifiedKind
+  get() = WebSymbolQualifiedKind(namespace, kind)
 
 fun WebSymbolNameSegment.getProblemKind(): ProblemKind? =
   when (problem) {
@@ -339,18 +345,16 @@ fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWit
   }
 }
 
-fun WebSymbolsScope.getDefaultCodeCompletions(namespace: SymbolNamespace,
-                                              kind: SymbolKind,
-                                              name: String,
+fun WebSymbolsScope.getDefaultCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                               params: WebSymbolsCodeCompletionQueryParams,
                                               scope: Stack<WebSymbolsScope>) =
-  getSymbols(namespace, kind,
+  getSymbols(qualifiedName.qualifiedKind,
              WebSymbolsListSymbolsQueryParams(
                params.queryExecutor,
                expandPatterns = false,
                virtualSymbols = params.virtualSymbols
              ), scope)
-    .flatMap { (it as? WebSymbol)?.toCodeCompletionItems(name, params, scope) ?: emptyList() }
+    .flatMap { (it as? WebSymbol)?.toCodeCompletionItems(qualifiedName.name, params, scope) ?: emptyList() }
 
 internal val List<WebSymbolsScope>.lastWebSymbol: WebSymbol?
   get() = this.lastOrNull { it is WebSymbol } as? WebSymbol

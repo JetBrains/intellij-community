@@ -14,6 +14,7 @@ import com.intellij.webSymbols.PsiSourcedWebSymbolProvider
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.search.impl.WebSymbolPsiSourcedSymbolHostClassEP
+import com.intellij.webSymbols.utils.qualifiedName
 
 internal class PsiSourcedWebSymbolReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(true) {
 
@@ -27,7 +28,7 @@ internal class PsiSourcedWebSymbolReferenceSearcher : QueryExecutorBase<PsiRefer
       val queryExecutor = WebSymbolsQueryExecutorFactory.create(targetElement, true)
       val namesProvider = queryExecutor.namesProvider
       foundSymbols
-        .flatMap { namesProvider.getNames(it.namespace, it.kind, it.name, WebSymbolNamesProvider.Target.NAMES_QUERY) }
+        .flatMap { namesProvider.getNames(it.qualifiedName, WebSymbolNamesProvider.Target.NAMES_QUERY) }
         .distinct()
     }
     else {

@@ -7,4 +7,14 @@ data class WebSymbolQualifiedName(
   val namespace: @NlsSafe SymbolNamespace,
   val kind: @NlsSafe SymbolKind,
   val name: @NlsSafe String,
-)
+) {
+  val qualifiedKind = WebSymbolQualifiedKind(namespace, kind)
+
+  fun matches(expectedNamespace: SymbolNamespace, expectedKind: SymbolKind): Boolean {
+    return namespace == expectedNamespace && kind == expectedKind
+  }
+
+  fun matches(expectedNamespace: SymbolNamespace, expectedKinds: List<SymbolKind>): Boolean {
+    return namespace == expectedNamespace && expectedKinds.any { kind == it }
+  }
+}

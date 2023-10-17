@@ -25,6 +25,7 @@ import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.references.WebSymbolReference
+import com.intellij.webSymbols.utils.qualifiedName
 import java.util.*
 
 internal class WebSymbolsUsageSearcher : UsageSearcher {
@@ -43,8 +44,7 @@ object WebSymbolUsageQueries {
     (symbol.psiContext
        ?.let { WebSymbolsQueryExecutorFactory.create(it, true) }
        ?.namesProvider
-       ?.getNames(symbol.namespace, symbol.kind,
-                  symbol.name, WebSymbolNamesProvider.Target.NAMES_QUERY)?.asSequence()
+       ?.getNames(symbol.qualifiedName, WebSymbolNamesProvider.Target.NAMES_QUERY)?.asSequence()
      ?: sequenceOf(symbol.name))
       .map { it.lowercase(Locale.US) }
       .distinct()
