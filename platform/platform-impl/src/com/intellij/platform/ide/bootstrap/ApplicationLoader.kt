@@ -16,6 +16,7 @@ import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceRes
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.html.initGlobalStyleSheet
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppMode
@@ -237,27 +238,30 @@ private suspend fun preInitApp(app: ApplicationImpl,
     }
   }
 
-  euaTaskDeferred?.await()?.invoke()
-
   if (!app.isHeadlessEnvironment) {
-    asyncScope.launch {
-      // preload only when LafManager is ready - that's why out of coroutineScope
-
-      launch(CoroutineName("EditorColorsManager preloading")) {
+    val cssInit = asyncScope.launch {
+      span("EditorColorsManager preloading") {
+        // preload only when LafManager is ready - that's why out of coroutineScope
         app.serviceAsync<EditorColorsManager>()
       }
+      initGlobalStyleSheet()
+    }
+
+    euaTaskDeferred?.await()?.let {
+      cssInit.join()
+      it()
     }
   }
 }
 
 suspend fun initConfigurationStore(app: ApplicationImpl) {
-  val configPath = PathManager.getConfigDir()
+  val configDir = PathManager.getConfigDir()
 
   span("beforeApplicationLoaded") {
     for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
       launch {
         runCatching {
-          listener.beforeApplicationLoaded(app, configPath)
+          listener.beforeApplicationLoaded(app, configDir)
         }.getOrLogException(logger<AppStarter>())
       }
     }
@@ -265,7 +269,7 @@ suspend fun initConfigurationStore(app: ApplicationImpl) {
 
   span("init app store") {
     // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
-    app.stateStore.setPath(configPath)
+    app.stateStore.setPath(configDir)
     LoadingState.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   }
 }
@@ -309,7 +313,7 @@ private fun CoroutineScope.runPostAppInitTasks() {
   }
 
   if (!AppMode.isLightEdit()) {
-    // this functionality should be used only by plugin functionality that is used after start-up
+    // this functionality should be used only by plugin functionality used after start-up
     launch(CoroutineName("system properties setting")) {
       SystemPropertyBean.initSystemProperties()
     }

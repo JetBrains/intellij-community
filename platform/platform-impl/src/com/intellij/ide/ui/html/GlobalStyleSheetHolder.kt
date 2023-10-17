@@ -3,18 +3,21 @@ package com.intellij.ide.ui.html
 
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import kotlinx.coroutines.*
+import com.intellij.platform.diagnostic.telemetry.impl.span
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
@@ -38,7 +41,7 @@ object GlobalStyleSheetHolder {
 }
 
 /**
- * Returns a global style sheet that is dynamically updated when LAF changes
+ * Returns a global style sheet dynamically updated when LAF changes
  */
 internal fun getGlobalStyleSheet(): StyleSheet {
   val result = StyleSheet()
@@ -60,12 +63,12 @@ internal fun updateGlobalSwingStyleSheet() {
 /**
  * Populate global stylesheet with LAF-based overrides
  */
-private suspend fun updateGlobalStyleSheet() {
+internal suspend fun updateGlobalStyleSheet() {
   val newStyle = StyleSheet()
   newStyle.addRule(getCssForCurrentLaf())
   newStyle.addRule(getCssForCurrentEditorScheme())
 
-  withContext(RawSwingDispatcher + ModalityState.any().asContextElement()) {
+  withContext(RawSwingDispatcher) {
     currentLafStyleSheet?.let {
       globalStyleSheet.removeStyleSheet(it)
     }
@@ -75,34 +78,40 @@ private suspend fun updateGlobalStyleSheet() {
   }
 }
 
+internal suspend fun initGlobalStyleSheet() {
+  service<GlobalStyleSheetUpdateService>().doUpdateGlobalStyleSheet()
+}
+
 @Service(Service.Level.APP)
 @OptIn(FlowPreview::class)
-private class GlobalStyleSheetUpdateService(coroutineScope: CoroutineScope) {
+private class GlobalStyleSheetUpdateService(private val coroutineScope: CoroutineScope) {
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  init {
+  suspend fun doUpdateGlobalStyleSheet() {
+    span("global styleSheet updating") {
+      updateGlobalStyleSheet()
+    }
+
     coroutineScope.launch {
       updateRequests
         .debounce(5.milliseconds)
         .collectLatest {
-          withContext(CoroutineName("global styleSheet updating")) {
-            updateGlobalStyleSheet()
-          }
+          doUpdateGlobalStyleSheet()
         }
     }
   }
 
   fun requestUpdate() {
-    check(updateRequests.tryEmit(Unit))
+    updateRequests.tryEmit(Unit)
   }
 }
 
 private class GlobalStyleSheetUpdateListener : EditorColorsListener, LafManagerListener {
   override fun lookAndFeelChanged(source: LafManager) {
-    service<GlobalStyleSheetUpdateService>().requestUpdate()
+    serviceIfCreated<GlobalStyleSheetUpdateService>()?.requestUpdate()
   }
 
   override fun globalSchemeChange(scheme: EditorColorsScheme?) {
-    service<GlobalStyleSheetUpdateService>().requestUpdate()
+    serviceIfCreated<GlobalStyleSheetUpdateService>()?.requestUpdate()
   }
 }

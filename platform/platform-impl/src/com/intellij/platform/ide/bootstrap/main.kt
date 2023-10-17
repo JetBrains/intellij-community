@@ -131,13 +131,10 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val initAwtToolkitJob = scheduleInitAwtToolkit(lockSystemDirsJob, busyThread)
   val initEventQueueJob = scheduleInitIdeEventQueue(initAwtToolkitJob, isHeadless)
-  val initLafJob = scheduleInitUi(initAwtToolkitJob, isHeadless)
+  val initLafJob = launch { initUi(initAwtToolkitJob = initAwtToolkitJob, isHeadless = isHeadless) }
   if (!isHeadless) {
     scheduleShowSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
     scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred)
-    launch {
-      patchHtmlStyle(initLafJob)
-    }
   }
 
   val zipFilePoolDeferred = async(Dispatchers.IO) {

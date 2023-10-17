@@ -42,31 +42,34 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
   }
 
   suspend fun prepareAndExecuteInEdt(task: () -> Unit) {
-    updateCached.join()
-    withContext(RawSwingDispatcher) {
-      task()
+    span("eua showing") {
+      updateCached.join()
+      withContext(RawSwingDispatcher) {
+        task()
+      }
     }
   }
 
-  return span("eua showing") {
-    if (document != null) {
-      return@span {
-        prepareAndExecuteInEdt {
-          showEndUserAndDataSharingAgreements(document)
-        }
-        true
+  if (document != null) {
+    return {
+      prepareAndExecuteInEdt {
+        showEndUserAndDataSharingAgreements(document)
       }
+      true
     }
-    appInfoDeferred.await() //ConsentOptions uses ApplicationInfo inside, so we need to load it first
-    if (ConsentOptions.needToShowUsageStatsConsent()) {
-      updateCached.join()
-      return@span {
-        prepareAndExecuteInEdt {
-          showDataSharingAgreement()
-        }
-        false
+  }
+
+  // ConsentOptions uses ApplicationInfo inside, so we need to load it first
+  appInfoDeferred.await()
+  if (ConsentOptions.needToShowUsageStatsConsent()) {
+    return {
+      prepareAndExecuteInEdt {
+        showDataSharingAgreement()
       }
+      false
     }
-    else null
+  }
+  else {
+    return null
   }
 }
