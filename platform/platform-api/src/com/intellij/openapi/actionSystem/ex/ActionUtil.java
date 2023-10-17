@@ -33,10 +33,9 @@ import com.intellij.ui.ClientProperty;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import kotlin.coroutines.AbstractCoroutineContextElement;
-import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -370,7 +369,7 @@ public final class ActionUtil {
     }
     AnActionResult result = null;
     try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM);
-         AccessToken ignore2 = withActionThreadContext(actionId)) {
+         AccessToken ignore2 = withActionThreadContext(actionId, event.getPlace(), event.getInputEvent())) {
       performRunnable.run();
       result = AnActionResult.PERFORMED;
     }
@@ -654,24 +653,16 @@ public final class ActionUtil {
   }
 
   @ApiStatus.Internal
+  @RequiresBlockingContext
   public static @Nullable String getActionThreadContext() {
-    ActionContext context = currentThreadContext().get(ACTION_CONTEXT_KEY);
-    return context == null ? null : context.actionId;
+    ActionContextElement context = currentThreadContext().get(ActionContextElement.Companion);
+    return context == null ? null : context.getActionId();
   }
 
-  private static @NotNull AccessToken withActionThreadContext(@NotNull String actionId) {
-    return installThreadContext(currentThreadContext().plus(new ActionContext(actionId)), true);
-  }
-
-  private static final CoroutineContext.Key<ActionContext> ACTION_CONTEXT_KEY = new CoroutineContext.Key<>() {
-  };
-
-  private static class ActionContext extends AbstractCoroutineContextElement implements CoroutineContext.Element {
-    final String actionId;
-
-    ActionContext(@NotNull String actionId) {
-      super(ACTION_CONTEXT_KEY);
-      this.actionId = actionId;
-    }
+  private static @NotNull AccessToken withActionThreadContext(@NotNull String actionId,
+                                                              @NotNull String place,
+                                                              @Nullable InputEvent event) {
+    return installThreadContext(currentThreadContext().plus(
+      new ActionContextElement(actionId, place, event == null ? -1 : event.getID())), true);
   }
 }
