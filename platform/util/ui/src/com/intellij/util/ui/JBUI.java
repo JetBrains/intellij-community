@@ -1929,7 +1929,7 @@ public final class JBUI {
       }
 
       public static int fieldsSeparatorWidth() {
-        return getInt("NewClass.separatorWidth", JBUIScale.scale(10));
+        return getInt("NewClass.separatorWidth", 10);
       }
     }
 

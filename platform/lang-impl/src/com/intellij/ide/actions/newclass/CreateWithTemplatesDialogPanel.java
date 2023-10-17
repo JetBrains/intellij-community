@@ -95,20 +95,10 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
       JComponent delegate = (JComponent) delegateRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      delegate.setBorder(JBUI.Borders.empty(JBUIScale.scale(3), JBUIScale.scale(1)));
-      if (index == 0 && ExperimentalUI.isNewUI()) {
-        JPanel wrapper = new JPanel(new BorderLayout()) {
-          @Override
-          public AccessibleContext getAccessibleContext() {
-            return delegate.getAccessibleContext();
-          }
-        };
-        wrapper.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
-        //noinspection UseDPIAwareBorders
-        wrapper.setBorder(new EmptyBorder(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth(), 0, 0, 0));
-        wrapper.add(delegate, BorderLayout.CENTER);
-        return wrapper;
-      }
+      delegate.setBorder(JBUI.Borders.empty(JBUIScale.scale(3),
+                                            JBUIScale.scale(6),
+                                            JBUIScale.scale(3),
+                                            JBUIScale.scale(1)));
       return delegate;
     }
   }
