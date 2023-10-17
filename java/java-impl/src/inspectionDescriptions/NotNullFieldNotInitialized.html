@@ -12,7 +12,7 @@ Reports fields annotated as not-null that are not initialized in the constructor
   public @NotNull String getValue() {
     return value;
   }
-  }</code></pre>
+}</code></pre>
 <p>
   Such fields may violate the not-null constraint. In the example above, the <code>setValue</code> parameter is annotated as not-null, but
   <code>getValue</code> may return null if the setter was not called.
