@@ -190,7 +190,7 @@ private fun loadRasterized(path: String,
   val effectivePath: String
   val nonSvgScale: Float
   if (parameters.isStroke && (imageFlags and ImageDescriptor.HAS_STROKE) == ImageDescriptor.HAS_STROKE) {
-    effectivePath = "${name}_scale.$ext"
+    effectivePath = "${name}_stroke.$ext"
     nonSvgScale = 1f
   }
   else if (isRetina && parameters.isDark && (imageFlags and ImageDescriptor.HAS_DARK_2x) == ImageDescriptor.HAS_DARK_2x) {
