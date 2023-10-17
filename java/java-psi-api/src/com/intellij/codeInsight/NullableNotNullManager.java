@@ -319,12 +319,21 @@ public abstract class NullableNotNullManager {
 
       if (element instanceof PsiClassOwner) {
         String packageName = ((PsiClassOwner)element).getPackageName();
-        return findNullityDefaultOnPackage(placeTargetTypes, JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName),
-                                           place);
+        PsiPackage psiPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
+        NullabilityAnnotationInfo fromPackage = findNullityDefaultOnPackage(placeTargetTypes, psiPackage, place);
+        if (fromPackage != null) {
+          return fromPackage;
+        }
+        return findNullityDefaultOnModule(placeTargetTypes, element);
       }
 
       element = element.getContext();
     }
+    return null;
+  }
+
+  protected @Nullable NullabilityAnnotationInfo findNullityDefaultOnModule(PsiAnnotation.@NotNull TargetType @NotNull [] types,
+                                                                           @NotNull PsiElement element) {
     return null;
   }
 
@@ -432,7 +441,7 @@ public abstract class NullableNotNullManager {
     return result.get();
   }
 
-  interface NullabilityAnnotationDataHolder {
+  protected interface NullabilityAnnotationDataHolder {
     /**
      * @return qualified names of all recognized annotations
      */
