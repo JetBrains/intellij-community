@@ -4,7 +4,7 @@ import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 
-class MermaidBrowserExtension() : MarkdownBrowserPreviewExtension, ResourceProvider {
+class MermaidBrowserExtension: MarkdownBrowserPreviewExtension, ResourceProvider {
 
   override val scripts: List<String> = listOf(
     THEME_DEFINITION_FILENAME,
