@@ -5,6 +5,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 internal abstract class InlineCompletionSessionManager {
@@ -102,18 +103,23 @@ internal abstract class InlineCompletionSessionManager {
     }
     val truncateTyping = fragment.length
     val newElements = truncateElementsPrefix(context.state.elements.map { it.element }, truncateTyping)
-    return UpdateSessionResult.Changed(newElements, truncateTyping, reason)
+    return newElements?.let { UpdateSessionResult.Changed(it, truncateTyping, reason) }
   }
 
-  private fun truncateElementsPrefix(elements: List<InlineCompletionElement>, length: Int): List<InlineCompletionElement> {
+  private fun truncateElementsPrefix(elements: List<InlineCompletionElement>, length: Int): List<InlineCompletionElement>? {
     var currentLength = length
     val newFirstElementIndex = elements.indexOfFirst {
       currentLength -= it.text.length
-      currentLength < 0 // Searching for the element that exceeds [length]
+      currentLength <= 0 // Searching for the element that reaches [length]
     }
     check(newFirstElementIndex >= 0)
-    currentLength += elements[newFirstElementIndex].text.length
-    val newFirstElement = elements[newFirstElementIndex].withTruncatedPrefix(currentLength)
+    val firstElement = elements[newFirstElementIndex]
+    currentLength += firstElement.text.length
+    if (firstElement !is InlineCompletionGrayTextElement) {
+      // will be fixed when a prefix truncator appears
+      return null
+    }
+    val newFirstElement = firstElement.withTruncatedPrefix(currentLength)
     return listOfNotNull(newFirstElement) + elements.drop(newFirstElementIndex + 1).map { it.withSameContent() }
   }
 
