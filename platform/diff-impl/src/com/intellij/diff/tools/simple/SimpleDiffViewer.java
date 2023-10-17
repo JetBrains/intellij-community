@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -54,7 +55,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   @NotNull protected final StatusPanel myStatusPanel;
 
   @NotNull protected final SimpleDiffModel myModel = new SimpleDiffModel(this);
-  @NotNull private final SimpleAlignedDiffModel myAlignedDiffModel;
+  @NotNull private final AlignedDiffModel myAlignedDiffModel;
 
   @NotNull private final MyFoldingModel myFoldingModel;
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
@@ -87,6 +88,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter());
     myModifierProvider.init();
+  }
+
+  @Override
+  protected void onDispose() {
+    Disposer.dispose(myAlignedDiffModel);
+    super.onDispose();
   }
 
   @NotNull
