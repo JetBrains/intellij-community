@@ -3,12 +3,15 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -28,6 +31,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.IconUtil
+import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
@@ -93,6 +97,8 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
 
   private inner class FilenameToolbarWidget : JBLabel() {
 
+    private var messageBusConnection: SimpleMessageBusConnection? = null
+
     init {
       isOpaque = false
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
@@ -137,6 +143,21 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
       }
     }
 
+    override fun addNotify() {
+      check(messageBusConnection == null) { "addNotify() called twice without removeNotify()?!" }
+      val editorListener = object : FileEditorManagerListener {
+        override fun selectionChanged(event: FileEditorManagerEvent) {
+          ActionToolbar.findToolbarBy(this@FilenameToolbarWidget)?.updateActionsImmediately()
+        }
+      }
+      messageBusConnection = ProjectUtil.getProjectForComponent(this@FilenameToolbarWidget)?.messageBus?.simpleConnect()
+      messageBusConnection?.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener)
+    }
+
+    override fun removeNotify() {
+      messageBusConnection?.disconnect()
+      messageBusConnection = null
+    }
   }
 
   private fun showRecentFilesPopup(component: JComponent) {
