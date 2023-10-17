@@ -182,7 +182,7 @@ data class IntUiMenuMetrics(
     override val cornerSize: CornerSize = CornerSize(8.dp),
     override val menuMargin: PaddingValues = PaddingValues(vertical = 6.dp),
     override val contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
-    override val offset: DpOffset = DpOffset(0.dp, 2.dp),
+    override val offset: DpOffset = DpOffset((-6).dp, 2.dp),
     override val shadowSize: Dp = 12.dp,
     override val borderWidth: Dp = 1.dp,
     override val itemMetrics: MenuItemMetrics = IntUiMenuItemMetrics(),

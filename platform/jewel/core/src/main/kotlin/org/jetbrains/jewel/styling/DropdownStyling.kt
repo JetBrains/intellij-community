@@ -34,14 +34,14 @@ interface DropdownColors {
 
     @Composable
     fun backgroundFor(state: DropdownState) = rememberUpdatedState(
-        state.chooseValue(
-            normal = background,
-            disabled = backgroundDisabled,
-            focused = backgroundFocused,
-            pressed = backgroundPressed,
-            hovered = backgroundHovered,
-            active = background,
-        ),
+        when {
+            !state.isEnabled -> backgroundDisabled
+            state.isPressed -> backgroundPressed
+            state.isHovered -> backgroundHovered
+            state.isFocused -> backgroundFocused
+            state.isActive -> background
+            else -> background
+        },
     )
 
     val content: Color

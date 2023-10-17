@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import kotlin.time.Duration
 
 @Stable
@@ -32,6 +34,9 @@ interface TooltipMetrics {
     val cornerSize: CornerSize
     val borderWidth: Dp
     val shadowSize: Dp
+
+    val tooltipOffset: DpOffset
+    val tooltipAlignment: Alignment.Horizontal
 }
 
 val LocalTooltipStyle = staticCompositionLocalOf<TooltipStyle> {

@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
@@ -78,4 +80,6 @@ data class IntUiTooltipMetrics(
     override val cornerSize: CornerSize = CornerSize(5.dp),
     override val borderWidth: Dp = 1.dp,
     override val shadowSize: Dp = 12.dp,
+    override val tooltipOffset: DpOffset = DpOffset(0.dp, 20.dp),
+    override val tooltipAlignment: Alignment.Horizontal = Alignment.Start,
 ) : TooltipMetrics

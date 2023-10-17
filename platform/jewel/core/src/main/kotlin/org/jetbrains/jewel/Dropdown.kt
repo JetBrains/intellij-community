@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.platform.LocalDensity
@@ -60,91 +61,85 @@ fun Dropdown(
     menuContent: MenuScope.() -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    Box {
-        var expanded by remember { mutableStateOf(false) }
-        var skipNextClick by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
+    var skipNextClick by remember { mutableStateOf(false) }
 
-        var dropdownState by remember(interactionSource) {
-            mutableStateOf(DropdownState.of(enabled = enabled))
-        }
+    var dropdownState by remember(interactionSource) {
+        mutableStateOf(DropdownState.of(enabled = enabled))
+    }
 
-        remember(enabled) {
-            dropdownState = dropdownState.copy(enabled = enabled)
-        }
+    remember(enabled) {
+        dropdownState = dropdownState.copy(enabled = enabled)
+    }
 
-        LaunchedEffect(interactionSource) {
-            interactionSource.interactions.collect { interaction ->
-                when (interaction) {
-                    is PressInteraction.Press -> dropdownState = dropdownState.copy(pressed = true)
-                    is PressInteraction.Cancel, is PressInteraction.Release ->
-                        dropdownState =
-                            dropdownState.copy(pressed = false)
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is PressInteraction.Press -> dropdownState = dropdownState.copy(pressed = true)
+                is PressInteraction.Cancel, is PressInteraction.Release ->
+                    dropdownState =
+                        dropdownState.copy(pressed = false)
 
-                    is HoverInteraction.Enter -> dropdownState = dropdownState.copy(hovered = true)
-                    is HoverInteraction.Exit -> dropdownState = dropdownState.copy(hovered = false)
-                    is FocusInteraction.Focus -> dropdownState = dropdownState.copy(focused = true)
-                    is FocusInteraction.Unfocus -> dropdownState = dropdownState.copy(focused = false)
-                }
+                is HoverInteraction.Enter -> dropdownState = dropdownState.copy(hovered = true)
+                is HoverInteraction.Exit -> dropdownState = dropdownState.copy(hovered = false)
+                is FocusInteraction.Focus -> dropdownState = dropdownState.copy(focused = true)
+                is FocusInteraction.Unfocus -> dropdownState = dropdownState.copy(focused = false)
             }
         }
+    }
 
-        val colors = style.colors
-        val metrics = style.metrics
-        val shape = RoundedCornerShape(style.metrics.cornerSize)
-        val minSize = metrics.minSize
-        val arrowMinSize = style.metrics.arrowMinSize
-        val borderColor by colors.borderFor(dropdownState)
+    val colors = style.colors
+    val metrics = style.metrics
+    val shape = RoundedCornerShape(style.metrics.cornerSize)
+    val minSize = metrics.minSize
+    val arrowMinSize = style.metrics.arrowMinSize
+    val borderColor by colors.borderFor(dropdownState)
 
-        val outlineState = remember(dropdownState, expanded) {
-            dropdownState.copy(focused = dropdownState.isFocused || expanded)
-        }
-
-        Box(
-            modifier.clickable(
-                onClick = {
-                    // TODO: Trick to skip click event when close menu by click dropdown
-                    if (!skipNextClick) {
-                        expanded = !expanded
-                    }
-                    skipNextClick = false
-                },
-                enabled = enabled,
-                role = Role.Button,
-                interactionSource = interactionSource,
-                indication = null,
-            )
-                .background(colors.backgroundFor(dropdownState).value, shape)
-                .border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
-                .appendIf(outline == Outline.None) { focusOutline(outlineState, shape) }
-                .outline(outlineState, outline, shape)
-                .width(IntrinsicSize.Max)
-                .defaultMinSize(minSize.width, minSize.height.coerceAtLeast(arrowMinSize.height)),
-            contentAlignment = Alignment.CenterStart,
-        ) {
-            CompositionLocalProvider(
-                LocalContentColor provides colors.contentFor(dropdownState).value,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(style.metrics.contentPadding)
-                        .padding(end = minSize.height),
-                    contentAlignment = Alignment.CenterStart,
-                    content = content,
-                )
-
-                Box(
-                    modifier = Modifier.size(arrowMinSize)
-                        .align(Alignment.CenterEnd),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    val chevronIcon by style.icons.chevronDown.getPainter(resourceLoader, dropdownState)
-                    Icon(
-                        painter = chevronIcon,
-                        contentDescription = null,
-                        tint = colors.iconTintFor(dropdownState).value,
-                    )
+    Box(
+        modifier.clickable(
+            onClick = {
+                // TODO: Trick to skip click event when close menu by click dropdown
+                if (!skipNextClick) {
+                    expanded = !expanded
                 }
+                skipNextClick = false
+            },
+            enabled = enabled,
+            role = Role.Button,
+            interactionSource = interactionSource,
+            indication = null,
+        )
+            .background(colors.backgroundFor(dropdownState).value, shape)
+            .border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
+            .appendIf(outline == Outline.None) { focusOutline(dropdownState, shape) }
+            .outline(dropdownState, outline, shape)
+            .width(IntrinsicSize.Max)
+            .defaultMinSize(minSize.width, minSize.height.coerceAtLeast(arrowMinSize.height)),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        CompositionLocalProvider(
+            LocalContentColor provides colors.contentFor(dropdownState).value,
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(style.metrics.contentPadding)
+                    .padding(end = minSize.height),
+                contentAlignment = Alignment.CenterStart,
+                content = content,
+            )
+
+            Box(
+                modifier = Modifier.size(arrowMinSize)
+                    .align(Alignment.CenterEnd),
+                contentAlignment = Alignment.Center,
+            ) {
+                val chevronIcon by style.icons.chevronDown.getPainter(resourceLoader, dropdownState)
+                Icon(
+                    painter = chevronIcon,
+                    contentDescription = null,
+                    tint = colors.iconTintFor(dropdownState).value,
+                )
             }
         }
 
@@ -157,7 +152,7 @@ fun Dropdown(
                     }
                     true
                 },
-                modifier = menuModifier,
+                modifier = menuModifier.focusProperties { canFocus = true },
                 style = style.menuStyle,
                 horizontalAlignment = Alignment.Start,
                 content = menuContent,

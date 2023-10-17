@@ -93,8 +93,8 @@ fun PopupMenu(
         density = density,
     )
 
-    var focusManager: FocusManager? by mutableStateOf(null)
-    var inputModeManager: InputModeManager? by mutableStateOf(null)
+    var focusManager: FocusManager? by remember { mutableStateOf(null) }
+    var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
     val menuManager = remember(onDismissRequest) {
         MenuManager(onDismissRequest = onDismissRequest)
     }

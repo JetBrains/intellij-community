@@ -36,6 +36,16 @@ data class IntUiDropdownStyle(
     companion object {
 
         @Composable
+        fun undecorated(
+            svgLoader: SvgLoader,
+            colors: IntUiDropdownColors,
+            metrics: IntUiDropdownMetrics = IntUiDropdownMetrics(borderWidth = 0.dp),
+            icons: IntUiDropdownIcons = intUiDropdownIcons(svgLoader),
+            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
+            menuStyle: MenuStyle = IntUiMenuStyle.light(svgLoader),
+        ) = IntUiDropdownStyle(colors, metrics, icons, textStyle, menuStyle)
+
+        @Composable
         fun light(
             svgLoader: SvgLoader,
             colors: IntUiDropdownColors = IntUiDropdownColors.light(),
@@ -82,6 +92,37 @@ data class IntUiDropdownColors(
 ) : DropdownColors {
 
     companion object {
+
+        @Composable
+        fun undecorated(
+            backgroundPressed: Color,
+            backgroundHovered: Color = backgroundPressed,
+            content: Color,
+            contentDisabled: Color = content,
+            iconTint: Color,
+            iconTintDisabled: Color = iconTint,
+        ) = IntUiDropdownColors(
+            background = Color.Transparent,
+            backgroundDisabled = Color.Transparent,
+            backgroundFocused = Color.Transparent,
+            backgroundPressed = backgroundPressed,
+            backgroundHovered = backgroundHovered,
+            content = content,
+            contentDisabled = contentDisabled,
+            contentFocused = content,
+            contentPressed = content,
+            contentHovered = content,
+            border = Color.Transparent,
+            borderDisabled = Color.Transparent,
+            borderFocused = Color.Transparent,
+            borderPressed = Color.Transparent,
+            borderHovered = Color.Transparent,
+            iconTint = iconTint,
+            iconTintDisabled = iconTintDisabled,
+            iconTintFocused = iconTint,
+            iconTintPressed = iconTint,
+            iconTintHovered = iconTint,
+        )
 
         @Composable
         fun light(
@@ -141,7 +182,7 @@ data class IntUiDropdownColors(
             contentPressed: Color = content,
             contentHovered: Color = content,
             border: Color = IntUiDarkTheme.colors.grey(5),
-            borderDisabled: Color = IntUiDarkTheme.colors.grey(11),
+            borderDisabled: Color = IntUiDarkTheme.colors.grey(5),
             borderFocused: Color = IntUiDarkTheme.colors.blue(6),
             borderPressed: Color = border,
             borderHovered: Color = border,

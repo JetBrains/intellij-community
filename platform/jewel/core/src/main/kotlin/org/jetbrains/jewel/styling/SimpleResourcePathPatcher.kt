@@ -2,7 +2,7 @@ package org.jetbrains.jewel.styling
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.ResourceLoader
-import org.jetbrains.jewel.LocalIsDarkTheme
+import org.jetbrains.jewel.LocalOnDarkBackground
 
 open class SimpleResourcePathPatcher<T> : ResourcePathPatcher<T> {
 
@@ -28,7 +28,7 @@ open class SimpleResourcePathPatcher<T> : ResourcePathPatcher<T> {
         // TODO load HiDPI rasterized images ("@2x")
         // TODO load sized SVG images (e.g., "@20x20")
 
-        if (LocalIsDarkTheme.current) {
+        if (LocalOnDarkBackground.current) {
             append("_dark")
         }
 

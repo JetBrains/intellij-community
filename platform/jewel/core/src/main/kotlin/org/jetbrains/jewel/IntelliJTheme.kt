@@ -5,6 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.styling.ButtonStyle
 import org.jetbrains.jewel.styling.CheckboxStyle
@@ -46,6 +47,7 @@ import org.jetbrains.jewel.styling.TabStyle
 import org.jetbrains.jewel.styling.TextAreaStyle
 import org.jetbrains.jewel.styling.TextFieldStyle
 import org.jetbrains.jewel.styling.TooltipStyle
+import org.jetbrains.jewel.util.isDark
 
 interface IntelliJTheme {
 
@@ -220,16 +222,22 @@ fun IntelliJTheme(
 fun IntelliJTheme(theme: IntelliJThemeDefinition, content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalIsDarkTheme provides theme.isDark,
+        LocalOnDarkBackground provides theme.isDark,
         LocalContentColor provides theme.contentColor,
         LocalTextStyle provides theme.defaultTextStyle,
         LocalGlobalColors provides theme.globalColors,
         LocalGlobalMetrics provides theme.globalMetrics,
+        *theme.extensionStyles,
         content = content,
     )
 }
 
 internal val LocalIsDarkTheme = staticCompositionLocalOf<Boolean> {
     error("No InDarkTheme provided")
+}
+
+internal val LocalOnDarkBackground = staticCompositionLocalOf<Boolean> {
+    error("No OnDarkBackground provided")
 }
 
 internal val LocalSwingCompatMode = staticCompositionLocalOf {
@@ -243,4 +251,22 @@ val LocalColorPalette = staticCompositionLocalOf<IntelliJThemeColorPalette> {
 
 val LocalIconData = staticCompositionLocalOf<IntelliJThemeIconData> {
     EmptyThemeIconData
+}
+
+/**
+ * Sets the background color of the current area,
+ * which affects the style(light or dark) of the icon rendered above it,
+ * by calculating the luminance.
+ * If the color is not specified, the style will follow the current theme style.
+ * Transparent color will be ignored.
+ */
+@Composable
+fun onBackground(color: Color, content: @Composable () -> Unit) {
+    val locals = if (color.isSpecified && color.alpha > 0) {
+        arrayOf(LocalOnDarkBackground provides color.isDark())
+    } else {
+        emptyArray()
+    }
+
+    CompositionLocalProvider(values = locals, content)
 }

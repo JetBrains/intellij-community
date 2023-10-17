@@ -9,6 +9,7 @@ plugins {
 
 dependencies {
     implementation(projects.intUi.intUiStandalone)
+    implementation(projects.intUi.intUiDecoratedWindow)
     implementation(compose.desktop.currentOs) {
         exclude(group = "org.jetbrains.compose.material")
     }
