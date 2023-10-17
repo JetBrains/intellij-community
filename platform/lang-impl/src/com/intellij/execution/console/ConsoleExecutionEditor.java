@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.RemoteTransferUIManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
@@ -48,6 +49,7 @@ public final class ConsoleExecutionEditor implements Disposable {
     myConsoleEditor.getSettings().setVirtualSpace(false);
     myCurrentEditor = myConsoleEditor;
     myConsoleEditor.putUserData(SEARCH_DISABLED, true);
+    RemoteTransferUIManager.forbidBeControlizationInLux(myConsoleEditor, "language-console");
 
     myConsolePromptDecorator = new ConsolePromptDecorator(myConsoleEditor);
     myConsoleEditor.getGutter().registerTextAnnotation(myConsolePromptDecorator);
