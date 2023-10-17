@@ -100,7 +100,9 @@ class PatchChangeBuilder {
         val deletionRange = LineRange(deletion, insertion)
         val insertionRange = LineRange(insertion, hunkEnd)
 
-        hunks.add(Hunk(deletionRange, insertionRange))
+        if (!deletionRange.isEmpty || !insertionRange.isEmpty) {
+          hunks.add(Hunk(deletionRange, insertionRange))
+        }
       }
     }
 
