@@ -58,6 +58,22 @@ public abstract class ContentHashEnumeratorTestBase {
   }
 
   @Test
+  void valueOf_restoresValueEnumerated() throws IOException {
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd, ENOUGH_HASHES);
+    for (int i = 0; i < uniqueHashes.length; i++) {
+      ByteArraySequence hash = uniqueHashes[i];
+      int id = enumerator.enumerate(hash.toBytes());
+      byte[] restoredHash = enumerator.valueOf(id);
+      assertArrayEquals(
+        hash.toBytes(),
+        restoredHash,
+        "[" + i + "] .valueOf(enumerate(hash)) must return same hash"
+      );
+    }
+  }
+
+  @Test
   void enumerateEx_IsSameAsEnumerate_ForNewHashes() throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd, ENOUGH_HASHES);

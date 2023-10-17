@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumeratorFactory;
 import com.intellij.util.hash.ContentHashEnumerator;
@@ -22,17 +23,13 @@ import java.util.Arrays;
  */
 public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEnumerator, CleanableStorage {
 
-  //TODO RC: current implementation relies on knowledge of append-only-log record format (header size/alignment:
-  //         HASH_RECORD_LENGTH). This is a) hacky, and b) not strictly correct: relation
-  //         [enumeratedId = recordNo * HASH_RECORD_LENGTH] breaks on page-border, because
-  //         [pageSize % HASH_RECORD_LENGTH != 0] -- so there is a padding record at the end of each page.
-  //         Right now I 'fixed' the issue by setting huge page size (128Mb) -- that postpones the issue
-  //         until >5M content hashes -- probably, enough for most use-cases.
+  //TODO RC: current implementation relies on knowledge of append-only-log record format -- header size, page
+  //         alignment: see HASH_RECORD_LENGTH, .enumeratorIdToHashId(), .hashIdToEnumeratorId() methods --
+  //         which is hacky solution.
   //         But better solution is needed: basically, we need to return id=recordNo (1-based).
   //         It is not a problem to return .recordsCount(), but to to map (id=recordNo) back to the record
-  //         offset in append-only log -- for that we need to re-assemble DurableEnumerator, i.e. implement
-  //         ContentHashEnumeratorOverDurableEnumerator not over out-of-box DurableEnumerator, but over
-  //         (append-only-log + multimap), with different id-assigning strategy
+  //         offset in append-only log -- for that we need either to keep additional Map[int->int], or still use
+  //         details of append-only-log binary layout, but somehow legalise that usage.
 
   //TODO RC: move DurableEnumerator to the module reachable from platform-indexing,
   //         We need to create DurableEnumerator here, with KeyDescriptorEx, 'cos it is all ContentHashEnumerator-specific
@@ -42,19 +39,23 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
   private static final int HASH_RECORD_LENGTH = (SIGNATURE_LENGTH + 4);
 
   private final DurableEnumerator<byte[]> enumerator;
+  private final int pageSize;
 
   public static ContentHashEnumeratorOverDurableEnumerator open(@NotNull Path storagePath) throws IOException {
+    int pageSize = 1 << 20;
     return new ContentHashEnumeratorOverDurableEnumerator(
       DurableEnumeratorFactory.defaultWithDurableMap(ContentHashKeyDescriptor.INSTANCE)
         .rebuildMapIfInconsistent(true)
-        //FIXME RC: 128Mb page ~= 5M records before page-borders issues arise (see TODO at the class level)
-        .valuesLogFactory(AppendOnlyLogFactory.withDefaults().pageSize(128 << 20))
-        .open(storagePath)
+        .valuesLogFactory(AppendOnlyLogFactory.withDefaults().pageSize(pageSize))
+        .open(storagePath),
+      pageSize
     );
   }
 
-  public ContentHashEnumeratorOverDurableEnumerator(@NotNull DurableEnumerator<byte[]> enumerator) {
+  private ContentHashEnumeratorOverDurableEnumerator(@NotNull DurableEnumerator<byte[]> enumerator,
+                                                     int enumeratorPageSize) {
     this.enumerator = enumerator;
+    this.pageSize = enumeratorPageSize;
   }
 
   @Override
@@ -122,21 +123,49 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
     enumerator.closeAndClean();
   }
 
-  private static int enumeratorIdToHashId(int enumeratorId) {
+  /** hashId = (0, 1, 2 ... ) */
+  private int enumeratorIdToHashId(int enumeratorId) {
     if (enumeratorId == NULL_ID) {
       return NULL_ID;
     }
-    if (((enumeratorId - 1) % HASH_RECORD_LENGTH) != 0) {
-      throw new IllegalArgumentException("enumeratorId(=" + enumeratorId + ") must be (n * " + HASH_RECORD_LENGTH + " + 1)");
+
+    int logHeaderSize = AppendOnlyLogOverMMappedFile.HeaderLayout.HEADER_SIZE;
+    int offset = (enumeratorId - 1) + logHeaderSize;
+
+    int pageNo = offset / pageSize;
+    if (pageNo == 0) {
+      return (enumeratorId - 1) / HASH_RECORD_LENGTH + 1;
     }
-    return (enumeratorId - 1) / HASH_RECORD_LENGTH + 1;
+    else {
+      int offsetOnPage = offset % pageSize;
+      int recordsOnPage = pageSize / HASH_RECORD_LENGTH;
+      int recordsOnFirstPage = (pageSize - logHeaderSize) / HASH_RECORD_LENGTH;
+      return recordsOnPage * (pageNo - 1)
+             + recordsOnFirstPage
+             + offsetOnPage / HASH_RECORD_LENGTH
+             + 1;
+    }
   }
 
-  private static int hashIdToEnumeratorId(int hashId) {
+  private int hashIdToEnumeratorId(int hashId) {
     if (hashId == NULL_ID) {
       return NULL_ID;
     }
-    return (hashId - 1) * HASH_RECORD_LENGTH + 1;
+    int recordNo = hashId - 1;
+
+    int logHeaderSize = AppendOnlyLogOverMMappedFile.HeaderLayout.HEADER_SIZE;
+    int recordsOnPage = pageSize / HASH_RECORD_LENGTH;
+    int recordsOnFirstPage = (pageSize - logHeaderSize) / HASH_RECORD_LENGTH;
+
+    if (recordNo < recordsOnFirstPage) {
+      return recordNo * HASH_RECORD_LENGTH + 1;
+    }
+    else {
+      int pageNo = (recordNo - recordsOnFirstPage) / recordsOnPage + 1;
+      int recordOnPage = (recordNo - recordsOnFirstPage) % recordsOnPage;
+
+      return (pageNo * pageSize - logHeaderSize) + recordOnPage * HASH_RECORD_LENGTH + 1;
+    }
   }
 
   private static void checkValidHash(byte[] hash) {
