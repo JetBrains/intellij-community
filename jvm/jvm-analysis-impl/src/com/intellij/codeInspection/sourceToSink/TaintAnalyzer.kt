@@ -702,6 +702,22 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.expression, analyzeContext.withDecrementedParts()) }
       }
       is UIfExpression, is USwitchExpression, is UBlockExpression -> {
+        if (uExpression is UIfExpression) {
+          val condition = uExpression.condition
+          val value: Any? = getConstant(condition)
+          val thenExpression = uExpression.thenExpression
+          val elseExpression = uExpression.elseExpression
+          if (value == true && thenExpression != null) {
+            return withCache(thenExpression) {
+              fromExpressionWithoutCollection(thenExpression, analyzeContext.withDecrementedParts())
+            }
+          }
+          else if (value == false && elseExpression != null) {
+            return withCache(elseExpression) {
+              fromExpressionWithoutCollection(elseExpression, analyzeContext.withDecrementedParts())
+            }
+          }
+        }
         return withCache(uExpression) {
           val nonStructuralChildren = nonStructuralChildren(uExpression).toList()
           nonStructuralChildren
@@ -782,14 +798,6 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
           }
         }
         return true
-      }
-
-      private fun getConstant(condition: UExpression): Any? {
-        val sourcePsi = condition.sourcePsi
-        if (sourcePsi == null) return null
-        val sourceToSinkProvider = SourceToSinkProvider.sourceToSinkLanguageProvider.forLanguage(sourcePsi.getLanguage())
-        if(sourceToSinkProvider==null) return null
-        return sourceToSinkProvider.computeConstant(sourcePsi)
       }
 
       override fun visitSwitchExpression(node: USwitchExpression): Boolean {
@@ -1096,6 +1104,14 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       return FlowResult(resultValue, false)
     }
   }
+}
+
+private fun getConstant(condition: UExpression): Any? {
+  val sourcePsi = condition.sourcePsi
+  if (sourcePsi == null) return null
+  val sourceToSinkProvider = SourceToSinkProvider.sourceToSinkLanguageProvider.forLanguage(sourcePsi.getLanguage())
+  if(sourceToSinkProvider==null) return null
+  return sourceToSinkProvider.computeConstant(sourcePsi)
 }
 
 class DeepTaintAnalyzerException : RuntimeException()
