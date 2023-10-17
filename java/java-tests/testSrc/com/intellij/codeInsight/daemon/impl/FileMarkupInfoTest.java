@@ -39,7 +39,7 @@ final class FileMarkupInfoTest {
           HighlighterTargetArea.LINES_IN_RANGE,
           TextAttributesKey.find("CLASS_NAME_ATTRIBUTES"),
           null,
-          new CachedImageIcon(new URL("file:///example"), false, null)
+          new CachedImageIcon(new URL("file:///example"), null)
         ),
         new HighlighterState(
           40,

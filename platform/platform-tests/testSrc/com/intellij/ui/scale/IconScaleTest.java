@@ -97,7 +97,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
   }
 
   private static @NotNull CachedImageIcon createIcon() throws MalformedURLException {
-    return new CachedImageIcon(getIconPath().toUri().toURL(), false, null);
+    return new CachedImageIcon(getIconPath().toUri().toURL(), null);
   }
 
   private static void test(@NotNull Icon icon, @NotNull UserScaleContext iconUserContext) {

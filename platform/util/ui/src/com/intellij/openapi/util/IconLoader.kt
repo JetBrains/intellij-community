@@ -152,18 +152,27 @@ object IconLoader {
   }
 
   @JvmStatic
-  @JvmOverloads
-  fun findIcon(url: URL?, storeToCache: Boolean = true): Icon? {
+  fun findIcon(url: URL?): Icon? {
+    if (url == null) {
+      return null
+    }
+
+    val key = Pair<String, ClassLoader?>(url.toString(), null)
+    return iconCache.get(key) { CachedImageIcon(url = url) }
+  }
+
+  @JvmStatic
+  fun findIcon(url: URL?, storeToCache: Boolean): Icon? {
     if (url == null) {
       return null
     }
 
     val key = Pair<String, ClassLoader?>(url.toString(), null)
     if (storeToCache) {
-      return iconCache.get(key) { CachedImageIcon(url = url, useCacheOnLoad = true) }
+      return iconCache.get(key) { CachedImageIcon(url = url) }
     }
     else {
-      return iconCache.getIfPresent(key) ?: CachedImageIcon(url = url, useCacheOnLoad = false)
+      return iconCache.getIfPresent(key) ?: CachedImageIcon(url = url)
     }
   }
 

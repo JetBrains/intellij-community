@@ -77,8 +77,8 @@ open class CachedImageIcon private constructor(
 
   internal constructor(file: Path) : this(resolver = ImageDataByFilePathLoader(file.toUri().toString()))
 
-  constructor(url: URL, useCacheOnLoad: Boolean, scaleContext: ScaleContext? = null) :
-    this(resolver = ImageDataByUrlLoader(url = url, useCacheOnLoad = useCacheOnLoad), scaleContext = scaleContext) {
+  constructor(url: URL, scaleContext: ScaleContext? = null) :
+    this(resolver = ImageDataByUrlLoader(url = url), scaleContext = scaleContext) {
 
     // if url is explicitly specified, it means that path should be not transformed
     pathTransformModCount = pathTransformGlobalModCount.get()

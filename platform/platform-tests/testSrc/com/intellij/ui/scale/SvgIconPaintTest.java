@@ -45,7 +45,7 @@ public class SvgIconPaintTest {
     JBUIScale.setUserScaleFactor((float)2);
     overrideJreHiDPIEnabled(false);
 
-    var icon = new CachedImageIcon(new File(getSvgIconPath()).toURI().toURL(), false, ScaleContext.create(SYS_SCALE.of(1)));
+    var icon = new CachedImageIcon(new File(getSvgIconPath()).toURI().toURL(), ScaleContext.create(SYS_SCALE.of(1)));
     BufferedImage iconImage = ImageUtil.toBufferedImage(IconUtil.toImage(icon));
 
     //saveImage(iconImage, getGoldImagePath().toString()); // uncomment to save gold image
