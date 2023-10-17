@@ -24,7 +24,6 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
 private const val PLUGIN_CACHE_DIR_NAME = "plugin-cache"
@@ -171,7 +170,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       if (additionalPluginPaths.isNotEmpty()) {
         withContext(Dispatchers.IO) {
           for (sourceDir in additionalPluginPaths) {
-            copyDir(sourceDir, pluginRootDir.resolve(sourceDir.fileName))
+            copyDir(sourceDir = sourceDir, targetDir = pluginRootDir.resolve(sourceDir.fileName))
           }
         }
       }
@@ -181,8 +180,8 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     if (context.generateRuntimeModuleRepository) {
       launch(Dispatchers.IO) {
         spanBuilder("generate runtime repository").useWithScope2 {
-          val allDistributionEntries = platformDistributionEntries.await() + pluginDistributionEntries.await().flatMap { it.await() }
-          generateRuntimeModuleRepositoryForDevBuild(allDistributionEntries, runDir, context)
+          val allDistributionEntries = platformDistributionEntries.await() + pluginDistributionEntries.await().flatten()
+          generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
         }
       }
     }
@@ -310,10 +309,13 @@ private fun checkBuildModulesModificationAndMark(productConfiguration: ProductCo
   return isApplicable
 }
 
-private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> =
-  sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
+private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> {
+  return sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
+}
 
-private suspend fun layoutPlatform(runDir: Path, platformLayout: PlatformLayout, context: BuildContext): Pair<List<DistributionFileEntry>, Set<Path>> {
+private suspend fun layoutPlatform(runDir: Path,
+                                   platformLayout: PlatformLayout,
+                                   context: BuildContext): Pair<List<DistributionFileEntry>, Set<Path>> {
   val entries = layoutPlatformDistribution(moduleOutputPatcher = ModuleOutputPatcher(),
                                            targetDirectory = runDir,
                                            platform = platformLayout,
@@ -406,9 +408,9 @@ private fun CoroutineScope.prepareExistingRunDirForProduct(runDir: Path, usePlug
 private fun getCommunityHomePath(homePath: Path): BuildDependenciesCommunityRoot {
   var communityDotIdea = homePath.resolve("community/.idea")
   // Handle Rider repository layout
-  if (!communityDotIdea.exists()) {
+  if (Files.notExists(communityDotIdea)) {
     val riderSpecificCommunityDotIdea = homePath.parent.resolve("ultimate/community/.idea")
-    if (riderSpecificCommunityDotIdea.exists()) {
+    if (Files.exists(riderSpecificCommunityDotIdea)) {
       communityDotIdea = riderSpecificCommunityDotIdea
     }
   }

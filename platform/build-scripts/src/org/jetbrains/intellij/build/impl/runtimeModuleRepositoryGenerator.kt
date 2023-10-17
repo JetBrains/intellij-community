@@ -66,14 +66,20 @@ fun generateRuntimeModuleRepositoryForDevBuild(entries: List<DistributionFileEnt
   val (repositoryForCompiledModulesPath, compiledModulesDescriptors) = loadForCompiledModules(context)
   val actualEntries = entries.mapNotNull { entry ->
     if (targetDirectory.isAncestor(entry.path, false)) {
-      RuntimeModuleRepositoryEntry(null, targetDirectory.relativize(entry.path).pathString, entry)
+      RuntimeModuleRepositoryEntry(distribution = null,
+                                   relativePath = targetDirectory.relativize(entry.path).pathString,
+                                   origin = entry)
     }
     else {
       context.messages.warning("${entry.path} entry is not under $targetDirectory")
       null
     }
   }
-  generateRepositoryForDistribution(targetDirectory, actualEntries, compiledModulesDescriptors, context, repositoryForCompiledModulesPath)
+  generateRepositoryForDistribution(targetDirectory = targetDirectory,
+                                    entries = actualEntries,
+                                    compiledModulesDescriptors = compiledModulesDescriptors,
+                                    context = context,
+                                    repositoryForCompiledModulesPath = repositoryForCompiledModulesPath)
 }
 
 private fun loadForCompiledModules(context: BuildContext): Pair<Path, Map<RuntimeModuleId, RawRuntimeModuleDescriptor>> {

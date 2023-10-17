@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PrivatePropertyName", "LiftReturnOrAssignment")
+@file:OptIn(ExperimentalCoroutinesApi::class)
 
 package org.jetbrains.intellij.build.devServer
 
@@ -23,7 +24,7 @@ internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescri
                                   outDir: Path,
                                   pluginCacheRootDir: Path,
                                   platformLayout: PlatformLayout,
-                                  context: BuildContext): List<Deferred<List<DistributionFileEntry>>> {
+                                  context: BuildContext): List<List<DistributionFileEntry>> {
   return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope2 { span ->
     val counter = LongAdder()
     val pluginEntries = coroutineScope {
@@ -37,7 +38,7 @@ internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescri
                                  reusedPluginsCounter = counter)        
         }
       }
-    }
+    }.map { it.getCompleted() }
     span.setAttribute("reusedCount", counter.toLong())
     pluginEntries
   }
