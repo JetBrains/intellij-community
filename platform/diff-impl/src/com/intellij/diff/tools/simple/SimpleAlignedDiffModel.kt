@@ -107,16 +107,16 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     val editor = viewer.getEditor(side)
     val line = if (change.diffType === TextDiffType.MODIFIED) change.getEndLine(side) else change.getStartLine(side)
     val offset = DiffUtil.getOffset(editor.document, line, 0)
-    val inlayPresentation =
-      ChangeAlignDiffInlayPresentation(editor,
-        calculateHeight(side, change, linesToAdd, inlaySideSoftWraps), change.diffType)
+
+    val height = calculateHeight(side, change, linesToAdd, inlaySideSoftWraps)
+    val inlayPresentation = ChangeAlignDiffInlayPresentation(editor, height, change.diffType)
 
     return editor.inlayModel
       .addBlockElement(offset,
-        InlayProperties()
-          .showAbove(!isLastLineToAdd)
-          .priority(ALIGNED_CHANGE_INLAY_PRIORITY),
-        inlayPresentation)!!
+                       InlayProperties()
+                         .showAbove(!isLastLineToAdd)
+                         .priority(ALIGNED_CHANGE_INLAY_PRIORITY),
+                       inlayPresentation)!!
   }
 
   private fun calculateHeight(side: Side, change: SimpleDiffChange, linesToAdd: Int, inlaySideSoftWraps: Int): Int {
@@ -315,8 +315,10 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     val disposable = Disposable { emptyInlays.remove(inlayId)?.also(Disposer::dispose) }
 
     emptyInlays[inlayId] =
-      editor.inlayModel.addBlockElement(offset,
-        InlayProperties().showAbove(above).priority(priority), EmptyLineAlignDiffInlayPresentation(editor, height, color))!!
+      editor.inlayModel
+        .addBlockElement(offset,
+                         InlayProperties().showAbove(above).priority(priority),
+                         EmptyLineAlignDiffInlayPresentation(editor, height, color))!!
         .also { Disposer.register(parent, disposable) }
   }
 
@@ -356,8 +358,8 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
 
     override fun hashCode(): Int {
       return Objects.hash(side,
-        change.getStartLine(Side.LEFT), change.getEndLine(Side.LEFT),
-        change.getStartLine(Side.RIGHT), change.getEndLine(Side.RIGHT))
+                          change.getStartLine(Side.LEFT), change.getEndLine(Side.LEFT),
+                          change.getStartLine(Side.RIGHT), change.getEndLine(Side.RIGHT))
     }
   }
 
