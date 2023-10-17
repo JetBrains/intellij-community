@@ -2,21 +2,28 @@
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.KtCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.Name
@@ -98,33 +105,56 @@ fun filterCandidateByReceiverTypeAndVisibility(
 }
 
 /**
- * If there is no explicit receiver, returns implicit types for the position. If explicit receiver is present and can be resolved,
- * returns its type. Otherwise, returns empty list.
+ * If there is no explicit receiver, obtains scope context for [callElement] and returns implicit types from the context.
+ * If explicit receiver is present and can be resolved, returns its type. Otherwise, returns empty list.
  */
 context(KtAnalysisSession)
 fun collectReceiverTypesForElement(callElement: KtElement, explicitReceiver: KtExpression?): List<KtType> {
     return if (explicitReceiver != null) {
-        explicitReceiver.referenceExpression()?.mainReference?.let { receiverReference ->
-            val receiverSymbol = receiverReference.resolveToSymbol()
-            if (receiverSymbol == null || receiverSymbol is KtPackageSymbol) return emptyList()
-        }
-
-        val isSafeCall = explicitReceiver.parent is KtSafeQualifiedExpression
-
-        val explicitReceiverType = explicitReceiver.getKtType() ?: error("Receiver should have a KtType")
-        val adjustedType = if (isSafeCall) {
-            explicitReceiverType.withNullability(KtTypeNullability.NON_NULLABLE)
-        } else {
-            explicitReceiverType
-        }
-
-        listOf(adjustedType)
+        collectReceiverTypesForExplicitReceiverExpression(explicitReceiver)
     } else {
         val scopeContext = callElement.containingKtFile.getScopeContextForPosition(callElement)
-
         scopeContext.implicitReceivers.map { it.type }
     }
 }
+
+context(KtAnalysisSession)
+fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpression): List<KtType> {
+    explicitReceiver.referenceExpression()?.mainReference?.let { receiverReference ->
+        val receiverSymbol = receiverReference.resolveToExpandedSymbol()
+        if (receiverSymbol == null || receiverSymbol is KtPackageSymbol) return emptyList()
+
+        if (receiverSymbol is KtNamedClassOrObjectSymbol && explicitReceiver.parent is KtCallableReferenceExpression) {
+            val receiverSymbolType = receiverSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(explicitReceiver)
+            return listOfNotNull(receiverSymbolType, receiverSymbol.companionObject?.buildSelfClassType())
+        }
+    }
+
+    val isSafeCall = explicitReceiver.parent is KtSafeQualifiedExpression
+
+    val explicitReceiverType = explicitReceiver.getKtType() ?: error("Receiver should have a KtType")
+    val adjustedType = if (isSafeCall) {
+        explicitReceiverType.withNullability(KtTypeNullability.NON_NULLABLE)
+    } else {
+        explicitReceiverType
+    }
+    return listOf(adjustedType)
+}
+
+context(KtAnalysisSession)
+private fun KtNamedClassOrObjectSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KtType =
+    buildClassType(this) {
+        if (expression is KtCallExpression) {
+            val typeArgumentTypes = expression.typeArguments.map { it.typeReference?.getKtType() }
+            for (typeArgument in typeArgumentTypes) {
+                if (typeArgument != null) {
+                    argument(typeArgument)
+                } else {
+                    argument(KtStarTypeProjection(token))
+                }
+            }
+        }
+    }
 
 private val ARRAY_OF_FUNCTION_NAMES: Set<Name> = setOf(ArrayFqNames.ARRAY_OF_FUNCTION) +
         ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values +
@@ -146,4 +176,10 @@ fun getJvmName(symbol: KtAnnotatedSymbol): String? {
     val annotationValue = jvmNameAnnotation.arguments.singleOrNull()?.expression as? KtConstantAnnotationValue ?: return null
     val stringValue = annotationValue.constantValue as? KtConstantValue.KtStringConstantValue ?: return null
     return stringValue.value
+}
+
+context(KtAnalysisSession)
+fun KtReference.resolveToExpandedSymbol(): KtSymbol? = when (val symbol = resolveToSymbol()) {
+    is KtTypeAliasSymbol -> symbol.expandedType.expandedClassSymbol
+    else -> symbol
 }

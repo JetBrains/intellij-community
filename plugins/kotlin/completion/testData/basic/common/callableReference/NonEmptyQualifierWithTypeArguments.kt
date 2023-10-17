@@ -11,5 +11,5 @@ fun test() {
     val p = A<String>::func<caret>
 }
 
-// EXIST: { lookupString: "func", attributes: "bold"}
+// EXIST: { lookupString: "func", tailText: "(t: String)", typeText: "String", attributes: "bold"}
 // EXIST: { lookupString: "funcFromCompanion", tailText: "()", typeText: "Unit", attributes: "bold"}

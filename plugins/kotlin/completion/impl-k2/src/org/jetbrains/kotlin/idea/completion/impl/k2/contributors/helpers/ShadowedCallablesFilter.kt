@@ -154,6 +154,8 @@ internal class ShadowedCallablesFilter {
             extensions: Collection<ApplicableExtension>,
             receiversFromContext: List<KtType>
         ): Collection<ApplicableExtension> {
+            if (extensions.isEmpty()) return emptyList()
+
             val indexOfReceiverFromContext = mutableMapOf<ReceiverId, Int>()
             val indexInClassHierarchy = mutableMapOf<ReceiverId, Int>()
 

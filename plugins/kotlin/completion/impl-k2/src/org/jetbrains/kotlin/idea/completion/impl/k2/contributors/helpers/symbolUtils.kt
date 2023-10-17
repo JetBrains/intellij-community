@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.idea.references.KtReference
 
@@ -31,12 +30,6 @@ internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
             else -> null
         }
     }
-}
-
-context(KtAnalysisSession)
-internal fun KtReference.resolveToExpandedSymbol(): KtSymbol? = when (val symbol = resolveToSymbol()) {
-    is KtTypeAliasSymbol -> symbol.expandedType.expandedClassSymbol
-    else -> symbol
 }
 
 internal data class KtClassifierSymbolWithContainingScopeKind(
