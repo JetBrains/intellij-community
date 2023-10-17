@@ -85,32 +85,39 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
   @Suppress("UseJBColor")
   private fun isDarkToolbar() = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background", Color.WHITE))
 
-  override fun createCustomComponent(presentation: Presentation, place: String): JBLabel = JBLabel().apply {
-    isOpaque = false
-    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    object : ClickListener() {
-      override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-        if (UIUtil.isCloseClick(event, MouseEvent.MOUSE_RELEASED)) {
-          val project = ProjectUtil.getProjectForComponent(this@apply)
-          if (project != null) {
-            val files = FileEditorManager.getInstance(project).selectedFiles
-            if (files.isNotEmpty()) {
-              FileEditorManager.getInstance(project).closeFile(files[0])
-              return true
-            }
-          }
-        }
-        if (clickCount == 1) {
-          showRecentFilesPopup(this@apply)
-          return true
-        }
-        return false
-      }
-    }.installOn(this)
-  }
+  override fun createCustomComponent(presentation: Presentation, place: String): JBLabel = FilenameToolbarWidget()
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    (component as JBLabel).apply {
+    (component as FilenameToolbarWidget).update(presentation)
+  }
+
+  private inner class FilenameToolbarWidget : JBLabel() {
+
+    init {
+      isOpaque = false
+      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+      object : ClickListener() {
+        override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+          if (UIUtil.isCloseClick(event, MouseEvent.MOUSE_RELEASED)) {
+            val project = ProjectUtil.getProjectForComponent(this@FilenameToolbarWidget)
+            if (project != null) {
+              val files = FileEditorManager.getInstance(project).selectedFiles
+              if (files.isNotEmpty()) {
+                FileEditorManager.getInstance(project).closeFile(files[0])
+                return true
+              }
+            }
+          }
+          if (clickCount == 1) {
+            showRecentFilesPopup(this@FilenameToolbarWidget)
+            return true
+          }
+          return false
+        }
+      }.installOn(this)
+    }
+
+    fun update(presentation: Presentation) {
       @Suppress("HardCodedStringLiteral")
       val path = presentation.getClientProperty(FILE_FULL_PATH)
       isOpaque = false
@@ -129,6 +136,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
         text = "<html><body>$text <font color='$htmlColor'>[$path]</font></body></html>"
       }
     }
+
   }
 
   private fun showRecentFilesPopup(component: JComponent) {
