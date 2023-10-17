@@ -172,7 +172,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
       Object oldValue = event.getOldValue();
-      if (oldValue instanceof VirtualFile && shouldBeIgnored((VirtualFile)oldValue)) {
+      if (oldValue instanceof VirtualFile vf && shouldBeIgnored(vf)) {
         // ignore workspace.xml
         return;
       }
@@ -271,10 +271,10 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
   private static @Nullable PsiElement getChangeHighlightingScope(@NotNull PsiElement element) {
     DefaultChangeLocalityDetector defaultDetector = null;
     for (ChangeLocalityDetector detector : EP_NAME.getExtensionList()) {
-      if (detector instanceof DefaultChangeLocalityDetector) {
+      if (detector instanceof DefaultChangeLocalityDetector def) {
         // run default detector last
         assert defaultDetector == null : defaultDetector;
-        defaultDetector = (DefaultChangeLocalityDetector)detector;
+        defaultDetector = def;
         continue;
       }
       PsiElement scope = detector.getChangeHighlightingDirtyScopeFor(element);

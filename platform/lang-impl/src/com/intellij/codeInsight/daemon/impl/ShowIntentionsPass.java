@@ -86,7 +86,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   public static void markActionInvoked(@NotNull Project project,
                                        @NotNull Editor editor,
                                        @NotNull IntentionAction action) {
-    int offset = editor instanceof EditorEx ? ((EditorEx)editor).getExpectedCaretOffset() : editor.getCaretModel().getOffset();
+    int offset = editor instanceof EditorEx ex ? ex.getExpectedCaretOffset() : editor.getCaretModel().getOffset();
 
     List<HighlightInfo> infos = new ArrayList<>();
     DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,

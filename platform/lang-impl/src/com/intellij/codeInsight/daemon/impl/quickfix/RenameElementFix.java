@@ -70,8 +70,8 @@ public class RenameElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement element = PsiTreeUtil.findSameElementInCopy(getStartElement(), file);
-    if (!(element instanceof PsiNamedElement)) return IntentionPreviewInfo.EMPTY;
-    ((PsiNamedElement)element).setName(myNewName);
+    if (!(element instanceof PsiNamedElement named)) return IntentionPreviewInfo.EMPTY;
+    named.setName(myNewName);
     return IntentionPreviewInfo.DIFF;
   }
 

@@ -178,8 +178,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     // opened in some editor and hence will be highlighted automatically sometime later
     FileEditor[] selectedEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
     for (FileEditor editor : selectedEditors) {
-      if (!(editor instanceof TextEditor)) continue;
-      Document document = ((TextEditor)editor).getEditor().getDocument();
+      if (!(editor instanceof TextEditor textEditor)) continue;
+      Document document = textEditor.getEditor().getDocument();
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
       if (psiFile == null) continue;
       if (Comparing.equal(file, psiFile.getVirtualFile())) return true;

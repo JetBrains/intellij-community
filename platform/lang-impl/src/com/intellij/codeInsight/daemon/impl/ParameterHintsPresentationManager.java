@@ -55,7 +55,7 @@ public final class ParameterHintsPresentationManager implements Disposable {
 
   public String getHintText(@NotNull Inlay inlay) {
     EditorCustomElementRenderer renderer = inlay.getRenderer();
-    return renderer instanceof MyRenderer ? ((MyRenderer)renderer).getText() : null;
+    return renderer instanceof MyRenderer myRenderer ? myRenderer.getText() : null;
   }
 
   public Inlay addHint(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, @NotNull String hintText,
