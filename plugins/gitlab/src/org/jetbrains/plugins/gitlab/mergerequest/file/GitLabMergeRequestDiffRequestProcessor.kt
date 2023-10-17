@@ -4,7 +4,8 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
+import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.equalChanges
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
+import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import com.intellij.util.cancelOnDispose
 import git4idea.changes.GitBranchComparisonResult
@@ -25,9 +27,7 @@ import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
-import com.intellij.collaboration.util.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
-import com.intellij.collaboration.util.equalChanges
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 
 internal fun createMergeRequestDiffRequestProcessor(project: Project,

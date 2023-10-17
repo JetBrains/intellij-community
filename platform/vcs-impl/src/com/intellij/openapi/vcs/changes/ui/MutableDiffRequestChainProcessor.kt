@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.collaboration.ui.codereview.diff
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.diff.chains.AsyncDiffRequestChain
 import com.intellij.diff.chains.DiffRequestChain
@@ -9,7 +9,6 @@ import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
-import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
