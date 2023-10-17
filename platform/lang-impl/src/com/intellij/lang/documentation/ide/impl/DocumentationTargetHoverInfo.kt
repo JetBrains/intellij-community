@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.PopupBridge
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
@@ -33,25 +34,25 @@ import javax.swing.JComponent
 internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, hostOffset: Int): DocumentationHoverInfo? {
   ApplicationManager.getApplication().assertIsNonDispatchThread()
   return runBlockingCancellable {
-    val request = readAction {
+    val requests = readAction {
       val targets = injectedThenHost(
         project, hostEditor, hostOffset,
         IdeDocumentationTargetProvider.getInstance(project)::documentationTargets
       )
-      targets?.singleOrNull()?.documentationRequest()
+      targets?.map { it.documentationRequest() }
     }
-    if (request == null) {
+    if (requests.isNullOrEmpty()) {
       return@runBlockingCancellable null
     }
     if (!LightEdit.owns(project)) {
       val preview = withContext(Dispatchers.EDT) {
-        DocumentationToolWindowManager.instance(project).updateVisibleAutoUpdatingTab(request)
+        DocumentationToolWindowManager.instance(project).updateVisibleAutoUpdatingTab(requests.first())
       }
       if (preview) {
         return@runBlockingCancellable null
       }
     }
-    val browser = DocumentationBrowser.createBrowser(project, request)
+    val browser = DocumentationBrowser.createBrowser(project, requests.first())
     val hasContent: Boolean? = withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
       // to avoid flickering: wait a bit before showing the hover popup,
       // otherwise, the popup will be shown with "Fetching..." message,
@@ -65,7 +66,7 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
     // Other two possibilities:
     // - we don't know yet because DEFAULT_UI_RESPONSE_TIMEOUT wasn't enough to compute the doc, or
     // - we do know that there is something to show.
-    DocumentationTargetHoverInfo(browser)
+    DocumentationTargetHoverInfo(browser, requests)
   }
 }
 
@@ -94,13 +95,14 @@ private fun <X : Any> tryInjected(
 
 private class DocumentationTargetHoverInfo(
   private val browser: DocumentationBrowser,
+  private val requests: List<DocumentationRequest>,
 ) : DocumentationHoverInfo {
 
   override fun showInPopup(project: Project): Boolean = true
 
   override fun createQuickDocComponent(editor: Editor, jointPopup: Boolean, bridge: PopupBridge): JComponent {
     val project = editor.project!!
-    val documentationUI = DocumentationUI(project, browser)
+    val documentationUI = DocumentationUI(project, browser, requests)
     val popupUI = DocumentationPopupUI(project, documentationUI)
     if (jointPopup) {
       popupUI.jointHover()

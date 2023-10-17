@@ -9,6 +9,7 @@ import com.intellij.codeInsight.documentation.DocumentationLinkHandler
 import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
 import com.intellij.codeInsight.documentation.DocumentationManager.decorate
 import com.intellij.codeInsight.documentation.DocumentationScrollPane
+import com.intellij.codeInsight.hint.DefinitionSwitcher
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationImageResolver
 import com.intellij.lang.documentation.ide.actions.PRIMARY_GROUP_ID
@@ -22,6 +23,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
 import com.intellij.ui.PopupHandler
@@ -38,11 +40,13 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JScrollPane
 
 internal class DocumentationUI(
   project: Project,
   val browser: DocumentationBrowser,
+  private val requests: List<DocumentationRequest>
 ) : DataProvider, Disposable {
 
   val scrollPane: JScrollPane
@@ -257,6 +261,13 @@ internal class DocumentationUI(
       if (ScreenReader.isActive()) {
         editorPane.caretPosition = 0
       }
+    }
+  }
+
+  fun createSwitcherIfNeeded(component: JComponent): DefinitionSwitcher<DocumentationRequest>? {
+    if (requests.size < 2) return null
+    return DefinitionSwitcher(requests.toTypedArray(), component) {
+      browser.resetBrowser(it)
     }
   }
 }

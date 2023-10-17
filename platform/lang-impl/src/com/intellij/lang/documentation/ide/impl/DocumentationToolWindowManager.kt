@@ -141,17 +141,17 @@ internal class DocumentationToolWindowManager(
 
   /**
    * Creates a new reusable tab if no reusable tab exists,
-   * orders it to display [request],
+   * orders it to display [requests],
    * and makes it visible.
    */
-  fun showInToolWindow(request: DocumentationRequest) {
+  fun showInToolWindow(requests: List<DocumentationRequest>, initial: DocumentationRequest) {
     val reusableContent = getReusableContent()
     if (reusableContent == null) {
-      val browser = DocumentationBrowser.createBrowser(project, initialRequest = request)
-      showInNewTab(DocumentationUI(project, browser))
+      val browser = DocumentationBrowser.createBrowser(project, initial)
+      showInNewTab(DocumentationUI(project, browser, requests))
     }
     else {
-      reusableContent.toolWindowUI.browser.resetBrowser(request)
+      reusableContent.toolWindowUI.browser.resetBrowser(initial)
       makeVisible(reusableContent)
     }
   }

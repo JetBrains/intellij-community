@@ -20,10 +20,10 @@ import java.awt.Rectangle
 
 internal suspend fun showDocumentationPopup(
   project: Project,
-  request: DocumentationRequest,
+  requests: List<DocumentationRequest>,
   popupContext: PopupContext,
 ): AbstractPopup {
-  val browser = DocumentationBrowser.createBrowser(project, request)
+  val browser = DocumentationBrowser.createBrowser(project, requests.first())
   try {
     // to avoid flickering: show popup after there is anything to show
     // OR show popup after the timeout
@@ -35,7 +35,7 @@ internal suspend fun showDocumentationPopup(
     Disposer.dispose(browser)
     throw ce
   }
-  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
+  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser, requests))
   val popup = createDocumentationPopup(project, popupUI, popupContext)
   try {
     popupContext.setUpPopup(popup, popupUI)

@@ -64,7 +64,9 @@ internal class DocumentationToolWindowUI(
     content.putUserData(TW_UI_KEY, this)
     Disposer.register(content, this)
     Disposer.register(this, ui)
-
+    ui.createSwitcherIfNeeded(contentComponent)?.let {
+      contentComponent.add(it.createToolbar().component, BorderLayout.NORTH)
+    }
     reusable = cs.updateContentTab(browser, content, asterisk = true).also {
       Disposer.register(this, it)
     }
