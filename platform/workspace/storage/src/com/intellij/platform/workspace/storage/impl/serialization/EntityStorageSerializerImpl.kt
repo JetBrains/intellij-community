@@ -203,7 +203,9 @@ public class EntityStorageSerializerImpl(
         val builder = MutableEntityStorageImpl(storage)
 
         builder.entitiesByType.entityFamilies.forEach { family ->
-          family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }
+          family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData ->
+            builder.changeLog.addAddEvent(entityData.createEntityId(), entityData)
+          }
         }
 
         if (LOG.isTraceEnabled) {
