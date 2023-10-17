@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.ProjectRef
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.Timed
+import com.intellij.driver.client.screenshot.TakeScreenshot
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.ProductVersion
@@ -295,6 +296,10 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     sessionHolder.set(runAsSession)
     return try {
       this.code()
+    }
+    catch (t: Throwable) {
+      new(TakeScreenshot::class).takeScreenshot("beforeKill")
+      throw t
     }
     finally {
       if (currentValue != null) {
