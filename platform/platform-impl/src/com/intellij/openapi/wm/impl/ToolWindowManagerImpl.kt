@@ -1211,9 +1211,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
 
-    entry.floatingDecorator?.let {
+    entry.floatingDecorator?.let { floatingDecorator ->
       entry.floatingDecorator = null
-      it.dispose()
+      floatingDecorator.dispose()
+
+      // Detach internal decorator from the disposed window.
+      // This is important for RD/CWM case, when we might want to keep the content 'showing' by attaching it to ShowingContainer.
+      entry.toolWindow.decorator?.let { it.parent?.remove(it) }
+
       return
     }
   }
