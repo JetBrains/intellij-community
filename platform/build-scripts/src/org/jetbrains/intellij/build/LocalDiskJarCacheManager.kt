@@ -4,15 +4,15 @@
 package org.jetbrains.intellij.build
 
 import com.dynatrace.hash4j.hashing.Hashing
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.*
 import java.security.MessageDigest
 import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
 
-private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+// `CREATE_NEW`: Ensure that we don't create a new file in a location if one already exists.
+// This is important for the computation of distribution checksums,
+// as we take the last modified time of the file into account.
+private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
 const val UNMODIFIED_MARK_FILE_NAME: String = ".unmodified"
 
 fun createMarkFile(file: Path): Boolean {
@@ -23,6 +23,9 @@ fun createMarkFile(file: Path): Boolean {
   catch (ignore: NoSuchFileException) {
     return false
   }
+  catch (ignore: FileAlreadyExistsException) {
+    return true
+  }
 }
 
 internal fun createSourceAndCacheStrategyList(sources: List<Source>, classOutDirectory: Path): List<SourceAndCacheStrategy> {
@@ -32,7 +35,7 @@ internal fun createSourceAndCacheStrategyList(sources: List<Source>, classOutDir
         source is DirSource -> {
           val dir = source.dir
           if (dir.startsWith(classOutDirectory)) {
-            ModuleOutputSourceAndCacheStrategy(source, classOutDirectory.relativize(dir).toString())
+            ModuleOutputSourceAndCacheStrategy(source = source, path = classOutDirectory.relativize(dir).toString())
           }
           else {
             throw UnsupportedOperationException("$source is not supported")

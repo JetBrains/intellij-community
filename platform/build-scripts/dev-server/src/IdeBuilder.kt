@@ -75,7 +75,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     // on start, delete everything to avoid stale data
     if (Files.isDirectory(runDir)) {
       val usePluginCache = spanBuilder("check plugin cache applicability").useWithScope2 {
-        checkBuildModulesModificationAndMark(productConfiguration, request.productionClassOutput)
+        checkBuildModulesModificationAndMark(productConfiguration = productConfiguration, outDir = request.productionClassOutput)
       }
       prepareExistingRunDirForProduct(runDir = runDir, usePluginCache = usePluginCache)
     }
