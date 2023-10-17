@@ -38,21 +38,40 @@ public interface GitBrancher {
   /**
    * Creates new branch without checking it out.
    *
-   * @param name        name of the new branch.
-   * @param startPoints position (commit hash) where the branch should be created, for each repository.
-   *                    Such position can be indicated by any valid Git reference (commit hash, branch name, etc.)
+   * @param name           name of the new branch.
+   * @param startPoints    position (commit hash) where the branch should be created, for each repository.
    */
   void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints);
 
   /**
    * Creates new branch without checking it out.
    *
-   * @param name        name of the new branch.
-   * @param startPoints position (commit hash) where the branch should be created, for each repository.
-   *                    Such position can be indicated by any valid Git reference (commit hash, branch name, etc.)
-   * @param force       create and overwrite existing if needed
+   * @param name           name of the new branch.
+   * @param startPoints    position (commit hash) where the branch should be created, for each repository.
+   *                       Such position can be indicated by any valid Git reference (commit hash, branch name, etc.)
+   * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
+   */
+  void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, @Nullable Runnable callInAwtLater);
+
+  /**
+   * Creates new branch without checking it out.
+   *
+   * @param name           name of the new branch.
+   * @param startPoints    position (commit hash) where the branch should be created, for each repository.
+   *                       Such position can be indicated by any valid Git reference (commit hash, branch name, etc.)
+   * @param force          create and overwrite existing if needed
    */
   void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, boolean force);
+  /**
+   * Creates new branch without checking it out.
+   *
+   * @param name           name of the new branch.
+   * @param startPoints    position (commit hash) where the branch should be created, for each repository.
+   *                       Such position can be indicated by any valid Git reference (commit hash, branch name, etc.)
+   * @param force          create and overwrite existing if needed
+   * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
+   */
+  void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, boolean force, @Nullable Runnable callInAwtLater);
 
   /**
    * <p>Creates new tag on the selected reference.</p>

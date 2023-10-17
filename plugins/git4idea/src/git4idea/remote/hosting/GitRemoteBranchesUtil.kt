@@ -112,13 +112,17 @@ object GitRemoteBranchesUtil {
     }
   }
 
-  private fun checkoutRemoteBranch(repository: GitRepository, branch: GitRemoteBranch, newLocalBranchPrefix: String? = null) {
+  fun checkoutRemoteBranch(repository: GitRepository,
+                           branch: GitRemoteBranch,
+                           newLocalBranchPrefix: String? = null,
+                           callInAwtLater: Runnable? = null) {
     val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
     val suggestedName = existingLocalBranch?.name
                         ?: newLocalBranchPrefix?.let { "$it/${branch.nameForRemoteOperations}" }
                         ?: branch.nameForRemoteOperations
+
     GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
-      .checkoutRemoteBranch(repository.project, listOf(repository), branch.name, suggestedName)
+      .checkoutRemoteBranch(repository.project, listOf(repository), branch.name, suggestedName, callInAwtLater)
   }
 
   private fun notifyRemoteError(project: Project, remote: HostedGitRepositoryRemote) {
