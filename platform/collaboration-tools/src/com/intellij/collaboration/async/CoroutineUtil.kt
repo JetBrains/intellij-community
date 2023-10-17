@@ -217,13 +217,13 @@ fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
     for (item in items) {
       val itemKey = keyExtractor(item)
       val existing = prevResult[itemKey]
-      if (existing != null && update != null) {
-        existing.update(item)
-        result[itemKey] = existing
-      }
-      else {
+      if (existing == null) {
         result[itemKey] = valueExtractor(cs.childScope(), item)
         hasStructureChanges = true
+      }
+      else {
+        if (update != null) existing.update(item)
+        result[itemKey] = existing
       }
     }
 
