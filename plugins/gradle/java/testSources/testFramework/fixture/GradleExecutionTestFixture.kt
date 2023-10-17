@@ -36,6 +36,8 @@ interface GradleExecutionTestFixture : IdeaTestFixture {
 
   suspend fun <R> awaitAnyGradleTaskExecution(action: suspend () -> R): R
 
+  fun assertSyncViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit)
+
   fun assertBuildViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit)
 
   fun assertRunViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit)

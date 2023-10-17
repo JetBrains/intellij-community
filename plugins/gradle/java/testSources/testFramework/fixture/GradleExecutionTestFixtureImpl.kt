@@ -158,6 +158,10 @@ class GradleExecutionTestFixtureImpl(
     }
   }
 
+  override fun assertSyncViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+    buildViewFixture.assertSyncViewTree(assert)
+  }
+
   override fun assertBuildViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
     buildViewFixture.assertBuildViewTree(assert)
   }
