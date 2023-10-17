@@ -110,13 +110,13 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     assert project != null;
-    ListPopupImpl popup = createPopup(dataContext, null, true);
+    ListPopup popup = createPopup(dataContext, null, true);
     popup.showCenteredInCurrentWindow(project);
   }
 
-  private static ListPopupImpl createPopup(@NotNull DataContext dataContext,
-                                           @Nullable Runnable onDispose,
-                                           boolean withTitle) {
+  private static ListPopup createPopup(@NotNull DataContext dataContext,
+                                       @Nullable Runnable onDispose,
+                                       boolean withTitle) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
     List<TaskListItem> items = project == null ? Collections.emptyList() :
@@ -163,7 +163,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       }
     };
 
-    final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance().createListPopup(step);
+    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     if (onDispose != null) {
       Disposer.register(popup, new Disposable() {
         @Override
@@ -176,23 +176,26 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       return popup;
     }
 
-    popup.setAdText(TaskBundle.message("popup.advertisement.press.shift.to.merge.with.current.context"));
+    popup.setAdText(TaskBundle.message("popup.advertisement.press.shift.to.merge.with.current.context"), SwingConstants.LEFT);
 
-    popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
+    var popupImpl = (popup instanceof ListPopupImpl) ? (ListPopupImpl)popup : null;
+    if (popupImpl == null) return popup;
+    //todo: RDCT-627
+    popupImpl.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(true);
         popup.setCaption(TaskBundle.message("popup.title.merge.with.current.context"));
       }
     });
-    popup.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
+    popupImpl.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(false);
         popup.setCaption(TaskBundle.message("popup.title.switch.to.task"));
       }
     });
-    popup.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
+    popupImpl.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         popup.handleSelect(true);
