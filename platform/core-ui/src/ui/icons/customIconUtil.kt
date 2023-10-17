@@ -86,11 +86,8 @@ fun loadIconCustomVersionOrScale(icon: CachedImageIcon, size: Int, isDark: Boole
     return if (isDark == null) icon else icon.getDarkIcon(isDark)
   }
 
-  val version = loadIconCustomVersion(icon = icon, width = size, height = size, isDark = isDark)
-  if (version != null) {
-    return version
+  loadIconCustomVersion(icon = icon, width = size, height = size, isDark = isDark)?.let {
+    return it
   }
-
-  val scale = (JBUIScale.scale(1.0f) * size) / icon.iconWidth
-  return (if (isDark == null) icon else icon.getDarkIcon(isDark)).scale(scale)
+  return icon.scale(scale = (JBUIScale.scale(1.0f) * size) / icon.getRawIconWidth(), isDark = isDark)
 }

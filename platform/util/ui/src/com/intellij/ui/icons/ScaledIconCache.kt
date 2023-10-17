@@ -13,15 +13,15 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.drawImage
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.GraphicsConfiguration
-import java.awt.Image
+import java.awt.*
 import java.lang.ref.SoftReference
 import java.util.concurrent.CancellationException
 import javax.swing.Icon
 
 private const val SCALED_ICON_CACHE_LIMIT = 8
+
+@JvmField
+internal var isIconActivated: Boolean = !GraphicsEnvironment.isHeadless()
 
 internal class ScaledIconCache {
   private val cache = Long2ObjectLinkedOpenHashMap<SoftReference<Icon>>(SCALED_ICON_CACHE_LIMIT + 1)
@@ -33,6 +33,10 @@ internal class ScaledIconCache {
     val cacheKey = getCacheKey(pixScale, attributes)
     cache.getAndMoveToFirst(cacheKey)?.get()?.let {
       return it
+    }
+
+    if (!isIconActivated) {
+      return EMPTY_ICON
     }
 
     val scaleContext = ScaleContext.create(ScaleType.SYS_SCALE.of(sysScale))

@@ -15,7 +15,10 @@ import com.intellij.util.ui.MultiResolutionImageProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Image
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
 import java.net.URL
@@ -31,9 +34,6 @@ val EMPTY_ICON: ImageIcon by lazy {
     override fun toString(): String = "Empty icon ${super.toString()}"
   }
 }
-
-@JvmField
-internal var isIconActivated: Boolean = !GraphicsEnvironment.isHeadless()
 
 @JvmField
 internal val pathTransformGlobalModCount: AtomicInteger = AtomicInteger()
@@ -102,11 +102,6 @@ open class CachedImageIcon private constructor(
       return
     }
 
-    val resolver = resolver
-    if (resolver == null || !isIconActivated) {
-      return
-    }
-
     val gc = c?.graphicsConfiguration ?: (g as? Graphics2D)?.deviceConfiguration
     synchronized(iconCache) {
       checkPathTransform()
@@ -115,6 +110,13 @@ open class CachedImageIcon private constructor(
   }
 
   final override fun getIconWidth(): Int = resolveActualIcon().iconWidth
+
+  fun getRawIconWidth(): Int {
+    synchronized(iconCache) {
+      checkPathTransform()
+      return iconCache.getCachedIcon(host = this, gc = null, attributes = getEffectiveAttributes()).iconWidth
+    }
+  }
 
   final override fun getIconHeight(): Int = resolveActualIcon().iconHeight
 
@@ -135,11 +137,6 @@ open class CachedImageIcon private constructor(
   }
 
   private fun resolveActualIcon(scaleContext: ScaleContext): Icon {
-    val resolver = resolver
-    if (resolver == null || !isIconActivated) {
-      return EMPTY_ICON
-    }
-
     synchronized(iconCache) {
       checkPathTransform()
       return iconCache.getOrScaleIcon(host = this, scaleContext = scaleContext, attributes = getEffectiveAttributes())
@@ -147,11 +144,6 @@ open class CachedImageIcon private constructor(
   }
 
   private fun resolveActualIcon(): Icon {
-    val resolver = resolver
-    if (resolver == null || !isIconActivated) {
-      return EMPTY_ICON
-    }
-
     synchronized(iconCache) {
       checkPathTransform()
 
@@ -198,7 +190,7 @@ open class CachedImageIcon private constructor(
     return iconCache.getOrScaleIcon(host = this, scaleContext = scaleContext, attributes = getEffectiveAttributes())
   }
 
-  fun scale(scale: Float, ancestor: Component?): Icon {
+  fun scale(scale: Float, ancestor: Component? = null, isDark: Boolean? = null): CachedImageIcon {
     if (scale == 1.0f && ancestor == null) {
       return this
     }
@@ -217,7 +209,12 @@ open class CachedImageIcon private constructor(
         it.setScale(ScaleType.OBJ_SCALE.of(scale))
       }
     }
-    return copy(scaleContext = scaleContext)
+
+    var newAttributes = attributes
+    if (isDark != null) {
+      newAttributes = newAttributes.copy(isDark = isDark, isDarkSet = true)
+    }
+    return copy(scaleContext = scaleContext, attributes = newAttributes)
   }
 
   override fun copy(): Icon = copy(attributes = attributes)
@@ -260,7 +257,7 @@ open class CachedImageIcon private constructor(
       return this
     }
     else {
-      return copy(attributes = attributes.copy(isDark = true, isDarkSet = true))
+      return copy(attributes = attributes.copy(isDark = isDark, isDarkSet = true))
     }
   }
 
