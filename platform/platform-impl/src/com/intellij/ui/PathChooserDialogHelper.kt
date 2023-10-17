@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem
-import com.intellij.util.SmartList
 import java.io.File
 
 internal class PathChooserDialogHelper(private val descriptor: FileChooserDescriptor) {
@@ -32,7 +31,7 @@ internal class PathChooserDialogHelper(private val descriptor: FileChooserDescri
   }
 
   fun getChosenFiles(files: Array<File>): List<VirtualFile> {
-    val virtualFiles = files.mapNotNullTo(SmartList()) {
+    val virtualFiles = files.mapNotNull {
       val virtualFile = fileToVirtualFile(it)
       if (virtualFile != null && virtualFile.isValid) {
         virtualFile
@@ -49,12 +48,10 @@ internal class PathChooserDialogHelper(private val descriptor: FileChooserDescri
   }
 
   companion object {
-    @JvmStatic
     private fun fileToVirtualFile(fileSystem: VirtualFileSystem, file: File): VirtualFile? {
       return fileSystem.refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.absolutePath))
     }
 
-    @JvmStatic
     fun fileToCoreLocalVirtualFile(dir: File, name: String): VirtualFile? {
       return fileToVirtualFile(CoreLocalFileSystem(), File(dir, name))
     }

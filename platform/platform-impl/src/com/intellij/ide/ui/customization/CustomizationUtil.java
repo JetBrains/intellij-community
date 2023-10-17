@@ -64,38 +64,10 @@ public final class CustomizationUtil {
   private CustomizationUtil() {
   }
 
-  public static @Nullable Icon getOriginalIconFrom(@NotNull AnAction reuseFrom) {
-    Presentation presentation = reuseFrom.getTemplatePresentation();
-    Icon original = presentation.getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON);
-    if (original != null) return original;
-    return presentation.getIcon();
-  }
-
-  public static @Nullable Icon getIconForPath(@NotNull ActionManager actionManager, @Nullable String iconPath) {
-    if (iconPath == null) {
-      return null;
-    }
-    AnAction reuseFrom = actionManager.getAction(iconPath);
-    if (reuseFrom != null) {
-      return getOriginalIconFrom(reuseFrom);
-    }
-    else {
-      try {
-        return CustomActionsSchema.loadCustomIcon(iconPath);
-      }
-      catch (Throwable t) {
-        LOG.info(t.getMessage());
-        return null;
-      }
-    }
-  }
-
-
-
-  public static ActionGroup correctActionGroup(final ActionGroup group,
-                                               final CustomActionsSchema schema,
-                                               final String defaultGroupName,
-                                               final String rootGroupName,
+  public static ActionGroup correctActionGroup(ActionGroup group,
+                                               CustomActionsSchema schema,
+                                               String defaultGroupName,
+                                               String rootGroupName,
                                                boolean force) {
     if (!force && !schema.isCorrectActionGroup(group, defaultGroupName)) {
       return group;

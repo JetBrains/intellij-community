@@ -39,7 +39,7 @@ internal class ImageDataByUrlLoader internal constructor(
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
 
   override fun toString(): String {
-    return "UrlResolver(ownerClass=${ownerClass?.name}, classLoader=$classLoader, url=$url, useCacheOnLoad=$useCacheOnLoad)"
+    return "ImageDataByUrlLoader(ownerClass=${ownerClass?.name}, classLoader=$classLoader, url=$url, useCacheOnLoad=$useCacheOnLoad)"
   }
 }
 
@@ -81,7 +81,7 @@ internal class ImageDataByPathResourceLoader(
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
 
-  override fun toString(): String = "UrlResolver(ownerClass=${ownerClass?.name}, classLoader=$classLoader, path=$path)"
+  override fun toString(): String = "ImageDataByPathResourceLoader(ownerClass=${ownerClass?.name}, classLoader=$classLoader, path=$path)"
 }
 
 private fun resolveUrl(path: String?,

@@ -4,6 +4,7 @@
 package com.intellij.ide.ui.customization
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.loadCustomIcon
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider.CustomizableActionGroupRegistrar
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -151,33 +152,39 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
      */
     @ApiStatus.Internal
     @Throws(Throwable::class)
-    @JvmStatic
     fun loadCustomIcon(path: String): Icon {
       val independentPath = FileUtil.toSystemIndependentName(path)
       val urlString = if (independentPath.startsWith("file:") || independentPath.startsWith("jar:")) {
         independentPath
       }
-      else "file:$independentPath"
+      else {
+        "file:$independentPath"
+      }
 
       val lastDotIndex = urlString.lastIndexOf('.')
-      val (rawUrl, ext) = if (lastDotIndex != -1) {
+      val (rawUrl, ext) = if (lastDotIndex == -1) {
+        urlString to "svg"
+      }
+      else {
         urlString.substring(0, lastDotIndex) to urlString.substring(lastDotIndex + 1)
       }
-      else urlString to "svg"
+
       val possibleSuffixes = listOf("@2x_dark", "_dark@2x", "_dark", "@2x")
       val adjustedUrl = possibleSuffixes.find { rawUrl.endsWith(it) }?.let { rawUrl.removeSuffix(it) } ?: rawUrl
       val fullAdjustedUrl = "$adjustedUrl.$ext"
-      return try {
-        doLoadCustomIcon(fullAdjustedUrl)
+      try {
+        return doLoadCustomIcon(fullAdjustedUrl)
       }
       catch (t: Throwable) {
         // In Light theme we do not fall back on dark icon, so if the original provided path ends with '_dark'
         // and there is no icon file without '_dark' suffix, we will fail.
         // And in this case, we just need to load the file chosen by the user.
-        if (urlString != fullAdjustedUrl) {
-          doLoadCustomIcon(urlString)
+        if (urlString == fullAdjustedUrl) {
+          throw t
         }
-        else throw t
+        else {
+          return doLoadCustomIcon(urlString)
+        }
       }
     }
 
@@ -189,11 +196,12 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
       if (w <= 1 || h <= 1) {
         throw FileNotFoundException("Failed to find icon by URL: $url")
       }
+
       if (w > EmptyIcon.ICON_18.iconWidth || h > EmptyIcon.ICON_18.iconHeight) {
-        val s = EmptyIcon.ICON_18.iconWidth / w.coerceAtLeast(h).toFloat()
+        val scale = EmptyIcon.ICON_18.iconWidth / w.coerceAtLeast(h).toFloat()
         // ScaledResultIcon will be returned here, so we will be unable to scale it again or get the dark version,
         // but we have nothing to do because the icon is too large
-        return IconUtil.scale(icon, scale = s, ancestor = null)
+        return IconUtil.scale(icon, scale = scale, ancestor = null)
       }
       return icon
     }
@@ -498,7 +506,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
       presentation.putClientProperty(PROP_ORIGINAL_ICON, originalIcon)
     }
 
-    val icon = iconCustomizations.get(actionId)?.let { CustomizationUtil.getIconForPath(actionManager, it) }
+    val icon = iconCustomizations.get(actionId)?.let { getIconForPath(actionManager = actionManager, iconPath = it) }
                ?: presentation.getClientProperty(PROP_ORIGINAL_ICON)
     presentation.icon = icon
     presentation.disabledIcon = if (icon == null) null else getDisabledIcon(icon)
@@ -553,4 +561,25 @@ private object ActionUrlComparator : Comparator<ActionUrl> {
       return u1.absolutePosition - u2.absolutePosition
     }
   }
+}
+
+internal fun getIconForPath(actionManager: ActionManager, iconPath: String): Icon? {
+  val reuseFrom = actionManager.getAction(iconPath)
+  if (reuseFrom != null) {
+    return getOriginalIconFrom(reuseFrom)
+  }
+  else {
+    try {
+      return loadCustomIcon(iconPath)
+    }
+    catch (e: Throwable) {
+      LOG.info(e.message)
+      return null
+    }
+  }
+}
+
+internal fun getOriginalIconFrom(reuseFrom: AnAction): Icon? {
+  val presentation = reuseFrom.templatePresentation
+  return presentation.getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON) ?: presentation.icon
 }
