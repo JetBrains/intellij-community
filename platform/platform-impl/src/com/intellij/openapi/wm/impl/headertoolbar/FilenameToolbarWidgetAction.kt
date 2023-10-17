@@ -115,6 +115,23 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     }.installOn(this)
   }
 
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    (component as JBLabel).apply {
+      @Suppress("HardCodedStringLiteral")
+      val path = presentation.getClientProperty(FILE_FULL_PATH)
+      isOpaque = false
+      iconTextGap = JBUI.scale(4)
+      icon = presentation.icon
+      foreground = presentation.getClientProperty(FILE_COLOR)
+      text = presentation.description
+      if (path != null && isIDEA331002Fixed) {
+        val htmlColor = ColorUtil.toHtmlColor(JBColor.namedColor("Component.infoForeground", foreground))
+        @Suppress("HardCodedStringLiteral")
+        text = "<html><body>$text <font color='$htmlColor'>[$path]</font></body></html>"
+      }
+    }
+  }
+
   private fun showRecentFilesPopup(component: JComponent) {
     val project = ProjectUtil.getProjectForComponent(component)
     if (project != null) {
@@ -142,23 +159,6 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     override fun onChosen(selectedValue: VirtualFile?, finalChoice: Boolean): PopupStep<*>? {
       if (selectedValue != null && finalChoice) FileEditorManager.getInstance(project).openFile(selectedValue, true)
       return null
-    }
-  }
-
-  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    (component as JBLabel).apply {
-      @Suppress("HardCodedStringLiteral")
-      val path = presentation.getClientProperty(FILE_FULL_PATH)
-      isOpaque = false
-      iconTextGap = JBUI.scale(4)
-      icon = presentation.icon
-      foreground = presentation.getClientProperty(FILE_COLOR)
-      text = presentation.description
-      if (path != null && isIDEA331002Fixed) {
-        val htmlColor = ColorUtil.toHtmlColor(JBColor.namedColor("Component.infoForeground", foreground))
-        @Suppress("HardCodedStringLiteral")
-        text = "<html><body>$text <font color='$htmlColor'>[$path]</font></body></html>"
-      }
     }
   }
 }
