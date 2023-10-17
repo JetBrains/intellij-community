@@ -81,6 +81,7 @@
 		<module>_uuid</module>
 		<module>_weakrefset</module>
 		<module>_winapi</module>
+		<module>_wmi</module>
 		<module>_xxinterpchannels</module>
 		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
@@ -722,6 +723,7 @@
 		<module>sqlite3.test.test_userfunctions</module>
 		<module>statistics</module>
 		<module>sysconfig</module>
+		<module>sysconfig.__main__</module>
 		<module>tkinter</module>
 		<module>tkinter.__main__</module>
 		<module>tkinter.colorchooser</module>
@@ -957,6 +959,7 @@
 		<module>_typing</module>
 		<module>_uuid</module>
 		<module>_winapi</module>
+		<module>_wmi</module>
 		<module>_xxinterpchannels</module>
 		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
@@ -1230,6 +1233,7 @@
 		<module>sqlite3.test.test_types</module>
 		<module>sqlite3.test.test_userfunctions</module>
 		<module>statistics</module>
+		<module>sysconfig.__main__</module>
 		<module>tkinter</module>
 		<module>tkinter.__main__</module>
 		<module>tkinter.colorchooser</module>
@@ -1424,6 +1428,7 @@
 		<module>_testsinglephase</module>
 		<module>_tokenize</module>
 		<module>_typing</module>
+		<module>_wmi</module>
 		<module>_xxinterpchannels</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
@@ -1966,6 +1971,7 @@
 		<module>strop</module>
 		<module>sunaudio</module>
 		<module>symbol</module>
+		<module>sysconfig.__main__</module>
 		<module>thread</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
@@ -2062,6 +2068,7 @@
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testclinic_limited</module>
 		<module>_testsinglephase</module>
+		<module>_wmi</module>
 		<module>_xxinterpchannels</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
@@ -2595,6 +2602,7 @@
 		<module>strop</module>
 		<module>sunaudio</module>
 		<module>symbol</module>
+		<module>sysconfig.__main__</module>
 		<module>thread</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
@@ -2689,6 +2697,7 @@
 		<module>_testclinic_limited</module>
 		<module>_testconsole</module>
 		<module>_winapi</module>
+		<module>_wmi</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.test_utils</module>
@@ -3305,6 +3314,7 @@
 		<module>strop</module>
 		<module>sunaudio</module>
 		<module>symbol</module>
+		<module>sysconfig.__main__</module>
 		<module>thread</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
@@ -3437,22 +3447,15 @@
 		<module>_dummy_thread</module>
 		<module>_fileio</module>
 		<module>_gdbm</module>
-		<module>_hashlib</module>
 		<module>_hotshot</module>
-		<module>_lzma</module>
 		<module>_msi</module>
-		<module>_overlapped</module>
 		<module>_peg_parser</module>
 		<module>_sha256</module>
 		<module>_sha512</module>
-		<module>_ssl</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__darwin_darwin</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
-		<module>_testconsole</module>
-		<module>_tkinter</module>
-		<module>_winapi</module>
 		<module>aifc</module>
 		<module>anydbm</module>
 		<module>asynchat</module>
@@ -3897,7 +3900,6 @@
 		<module>msilib.schema</module>
 		<module>msilib.sequence</module>
 		<module>msilib.text</module>
-		<module>msvcrt</module>
 		<module>multifile</module>
 		<module>multiprocessing.forking</module>
 		<module>multiprocessing.semaphore_tracker</module>
@@ -3905,7 +3907,6 @@
 		<module>new</module>
 		<module>nis</module>
 		<module>nntplib</module>
-		<module>nt</module>
 		<module>os2emxpath</module>
 		<module>ossaudiodev</module>
 		<module>parser</module>
@@ -4320,13 +4321,10 @@
 		<module>user</module>
 		<module>uu</module>
 		<module>whichdb</module>
-		<module>winreg</module>
-		<module>winsound</module>
 		<module>xdrlib</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
 		<func>StandardError</func>
-		<func>WindowsError</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>buffer</func>
@@ -4417,6 +4415,7 @@
 		<module>_typing</module>
 		<module>_uuid</module>
 		<module>_winapi</module>
+		<module>_wmi</module>
 		<module>_xxinterpchannels</module>
 		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
@@ -5021,6 +5020,7 @@
 		<module>stringold</module>
 		<module>strop</module>
 		<module>sunaudio</module>
+		<module>sysconfig.__main__</module>
 		<module>thread</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
@@ -5160,6 +5160,7 @@
 		<module>_typing</module>
 		<module>_uuid</module>
 		<module>_winapi</module>
+		<module>_wmi</module>
 		<module>_xxinterpchannels</module>
 		<module>_xxsubinterpreters</module>
 		<module>_xxtestfuzz</module>
@@ -5731,6 +5732,7 @@
 		<module>stringold</module>
 		<module>strop</module>
 		<module>sunaudio</module>
+		<module>sysconfig.__main__</module>
 		<module>thread</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
@@ -5862,6 +5864,7 @@
 		<module>_tokenize</module>
 		<module>_typing</module>
 		<module>_winapi</module>
+		<module>_wmi</module>
 		<module>_xxinterpchannels</module>
 		<module>_xxsubinterpreters</module>
 		<module>_zoneinfo</module>
@@ -6425,6 +6428,7 @@
 		<module>stringold</module>
 		<module>strop</module>
 		<module>sunaudio</module>
+		<module>sysconfig.__main__</module>
 		<module>thread</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
@@ -6551,6 +6555,7 @@
 		<module>_tokenize</module>
 		<module>_typing</module>
 		<module>_winapi</module>
+		<module>_wmi</module>
 		<module>_xxinterpchannels</module>
 		<module>_zoneinfo</module>
 		<module>anydbm</module>
@@ -7113,6 +7118,7 @@
 		<module>stringold</module>
 		<module>strop</module>
 		<module>sunaudio</module>
+		<module>sysconfig.__main__</module>
 		<module>thread</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
@@ -7230,6 +7236,7 @@
 		<module>_testsinglephase</module>
 		<module>_tokenize</module>
 		<module>_typing</module>
+		<module>_wmi</module>
 		<module>_xxinterpchannels</module>
 		<module>anydbm</module>
 		<module>asyncio.compat</module>
@@ -7783,6 +7790,7 @@
 		<module>stringold</module>
 		<module>strop</module>
 		<module>sunaudio</module>
+		<module>sysconfig.__main__</module>
 		<module>thread</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
