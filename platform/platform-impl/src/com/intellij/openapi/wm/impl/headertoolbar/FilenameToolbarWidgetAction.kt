@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
@@ -60,7 +59,6 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     val project = e.project ?: return
     val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return
     updatePresentationFromFile(project, file, e.presentation)
-    project.service<FilenameToolbarWidgetUpdateService>() // Just make sure it's initialized, it'll keep doing its thing then.
   }
 
   private fun updatePresentationFromFile(project: Project, file: VirtualFile, presentation: Presentation) {
