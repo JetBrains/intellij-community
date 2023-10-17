@@ -643,6 +643,10 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
                     if (!(targetContainer is KtClassBody && (targetContainer.parent as? KtClass)?.isEnum() == true)) {
                         targetContainer.addAfter(emptyLines, anchor)
                     }
+                    val insertedDeclaration = this
+                    PostInsertDeclarationCallback.EP_NAME.forEachExtensionSafe { extension ->
+                        extension.declarationInserted(insertedDeclaration, targetContainer, psiFactory)
+                    }
                 }
             }
         }
