@@ -59,6 +59,15 @@ public class GradleSourceSetCache {
     }
   }
 
+  /**
+   * Marks that project source set model is loaded with errors.
+   * This mark means that error for {@code project} is already processed and reported.
+   */
+  public void markSourceSetModelAsError(@NotNull Project project) {
+    ProjectIdentifier projectIdentifier = GradleProjectUtil.getProjectIdentifier(project);
+    allSourceSetModels.put(projectIdentifier, new DefaultGradleSourceSetModel());
+  }
+
   private static final @NotNull ModelBuilderContext.DataProvider<GradleSourceSetCache> INSTANCE_PROVIDER = GradleSourceSetCache::new;
 
   public static @NotNull GradleSourceSetCache getInstance(@NotNull ModelBuilderContext context) {

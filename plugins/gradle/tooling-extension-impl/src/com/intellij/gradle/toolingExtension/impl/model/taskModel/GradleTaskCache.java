@@ -74,6 +74,15 @@ public final class GradleTaskCache {
     }
   }
 
+  /**
+   * Marks that project source set model is loaded with errors.
+   * This mark means that error for {@code project} is already processed and reported.
+   */
+  public void markTaskModelAsError(@NotNull Project project) {
+    ProjectIdentifier projectIdentifier = GradleProjectUtil.getProjectIdentifier(project);
+    allTasks.put(projectIdentifier, Collections.emptySet());
+  }
+
   private static final @NotNull DataProvider<GradleTaskCache> INSTANCE_PROVIDER = GradleTaskCache::new;
 
   public static @NotNull GradleTaskCache getInstance(@NotNull ModelBuilderContext context) {

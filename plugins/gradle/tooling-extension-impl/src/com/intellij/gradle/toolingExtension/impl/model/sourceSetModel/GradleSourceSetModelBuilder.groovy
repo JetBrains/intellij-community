@@ -74,6 +74,9 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     @NotNull ModelBuilderContext context,
     @NotNull Exception exception
   ) {
+    GradleSourceSetCache.getInstance(context)
+      .markSourceSetModelAsError(project)
+
     context.getMessageReporter().createMessage()
       .withGroup(Messages.SOURCE_SET_MODEL_GROUP)
       .withKind(Message.Kind.ERROR)
