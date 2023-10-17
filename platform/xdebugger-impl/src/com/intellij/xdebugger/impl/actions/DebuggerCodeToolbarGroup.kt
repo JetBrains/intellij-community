@@ -12,8 +12,8 @@ class DebuggerCodeToolbarGroup : DefaultActionGroup() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    if (Registry.`is`("code.toolbar.debugger.actions") && project != null) {
-      e.presentation.isEnabledAndVisible = XDebuggerManager.getInstance(project).getCurrentSession() != null
-    }
+    e.presentation.isEnabledAndVisible = project != null
+                                         && Registry.`is`("code.toolbar.debugger.actions")
+                                         && XDebuggerManager.getInstance(project).getCurrentSession() != null
   }
 }
