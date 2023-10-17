@@ -496,20 +496,20 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
           }
           scanningStatistics.tryFinishFilesChecking();
 
-          scanningRequest.markSuccessful();
           perProviderSink.commit();
         }
         catch (ProcessCanceledException pce) {
+          scanningRequest.markUnsuccessful();
           throw pce;
         }
         catch (Exception e) {
+          scanningRequest.markUnsuccessful();
           // CollectingIterator should skip failing files by itself. But if provider.iterateFiles cannot iterate files and throws exception,
           // we want to ignore the whole origin and let other origins complete normally.
           LOG.error("Error while scanning files of " + provider.getDebugName() + "\n" +
                     "To reindex files under this origin IDEA has to be restarted", e);
         }
         finally {
-          projectIndexingDependenciesService.completeToken(scanningRequest);
           scanningStatistics.tryFinishVfsIterationAndScanningApplication();
           scanningStatistics.tryFinishFilesChecking();
           scanningStatistics.setTotalOneThreadTimeWithPauses(System.nanoTime() - providerScanningStartTime);
@@ -529,6 +529,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     finally {
       synchronized (allTasksFinished) {
         allTasksFinished.set(true);
+        projectIndexingDependenciesService.completeToken(scanningRequest);
       }
     }
   }

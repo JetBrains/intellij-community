@@ -8,10 +8,10 @@ import org.jetbrains.annotations.VisibleForTesting
 
 abstract class ScanningRequestToken {
   @Volatile
-  private var successful = false
+  private var successful = true
   abstract fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp
-  fun markSuccessful() {
-    successful = true
+  fun markUnsuccessful() {
+    successful = false
   }
 
   fun isSuccessful() = successful
