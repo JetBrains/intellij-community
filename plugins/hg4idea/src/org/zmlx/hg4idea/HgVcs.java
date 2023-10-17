@@ -64,9 +64,16 @@ import static com.intellij.util.containers.ContainerUtil.exists;
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
 
 public class HgVcs extends AbstractVcs {
+
+  @Topic.ProjectLevel
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<>("hg4idea.remote", HgUpdater.class);
+
+  @Topic.ProjectLevel
   public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<>("hg4idea.status", HgUpdater.class);
+
+  @Topic.ProjectLevel
   public static final Topic<HgWidgetUpdater> INCOMING_OUTGOING_CHECK_TOPIC = new Topic<>("hg4idea.incomingcheck", HgWidgetUpdater.class);
+
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final @NonNls String VCS_NAME = "hg4idea";
