@@ -22,7 +22,7 @@ public class Topic<L> {
   /**
    * Indicates that messages of the annotated topic are published to an application level message bus.
    */
-  @Retention(RetentionPolicy.SOURCE)
+  @Retention(RetentionPolicy.CLASS)
   @Target(ElementType.FIELD)
   public @interface AppLevel {
   }
@@ -30,7 +30,7 @@ public class Topic<L> {
   /**
    * Indicates that messages of the annotated topic are published to a project level message bus.
    */
-  @Retention(RetentionPolicy.SOURCE)
+  @Retention(RetentionPolicy.CLASS)
   @Target(ElementType.FIELD)
   public @interface ProjectLevel {
   }
