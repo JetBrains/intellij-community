@@ -100,7 +100,7 @@ class LoadedGitLabDiscussion(
     loadedNotes
       .mapDataToModel(
         GitLabNoteDTO::id,
-        { note -> MutableGitLabMergeRequestNote(this, project, api, glProject, mr, noteEvents::emit, note) },
+        { note -> MutableGitLabMergeRequestNote(this, project, api, mr, noteEvents::emit, note) },
         MutableGitLabMergeRequestNote::update
       ).combine(draftNotes) { notes, draftNotes ->
         notes + draftNotes

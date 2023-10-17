@@ -60,7 +60,6 @@ class MutableGitLabMergeRequestNote(
   parentCs: CoroutineScope,
   private val project: Project,
   private val api: GitLabApi,
-  private val glProject: GitLabProjectCoordinates,
   mr: GitLabMergeRequest,
   private val eventSink: suspend (GitLabNoteEvent<GitLabNoteDTO>) -> Unit,
   noteData: GitLabNoteDTO
