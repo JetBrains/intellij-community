@@ -9,6 +9,7 @@ import com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingServiceLoader
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.nio.file.NoSuchFileException
 import java.lang.ref.SoftReference
 
 /**
@@ -32,7 +33,13 @@ class LocalEmbeddingServiceProvider {
           artifactsManager.downloadArtifactsIfNecessary()
         }
 
-        service = LocalEmbeddingServiceLoader().load(artifactsManager.getCustomRootDataLoader())
+        service = try {
+          LocalEmbeddingServiceLoader().load(artifactsManager.getCustomRootDataLoader())
+        }
+        catch (e: NoSuchFileException) {
+          logger.warn("Local embedding model artifacts not found: $e")
+          null
+        }
         localServiceRef = SoftReference(service)
       }
       service
