@@ -8,10 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch.Parameters;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.*;
 import com.intellij.util.PatternValuesIndex;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
@@ -58,7 +55,8 @@ public final class InjectionCache {
     Set<String> result = new HashSet<>();
     List<PsiClass> annoClasses = new ArrayList<>(List.of(JavaPsiFacade.getInstance(myProject).findClasses(annotationClassName, allScope)));
     for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
-      Parameters parameters = new Parameters(annoClasses.get(cursor), usageScope, true, PsiClass.class, PsiParameter.class, PsiMethod.class);
+      Parameters parameters = new Parameters(annoClasses.get(cursor), usageScope, true,
+                                             PsiClass.class, PsiParameter.class, PsiMethod.class, PsiRecordComponent.class);
       AnnotatedElementsSearch.searchElements(parameters).forEach(element -> {
         if (element instanceof PsiParameter) {
           final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
@@ -71,6 +69,12 @@ public final class InjectionCache {
         }
         else if (element instanceof PsiMethod) {
           ContainerUtil.addIfNotNull(result, ((PsiMember)element).getName());
+        }
+        else if (element instanceof PsiRecordComponent) {
+          final PsiClass record = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+          if (record != null) {
+            ContainerUtil.addIfNotNull(result, record.getName());
+          }
         }
         return true;
       });
