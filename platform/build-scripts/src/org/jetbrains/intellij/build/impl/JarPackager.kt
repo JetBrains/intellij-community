@@ -658,51 +658,10 @@ private suspend fun buildJars(descriptors: Collection<AssetDescriptor>,
     }
   }
 
-  @Suppress("GrazieInspection")
   val list = withContext(Dispatchers.IO) {
     descriptors.map { item ->
       async {
-        val nativeFileHandler = if (isCodesignEnabled) {
-          object : NativeFileHandler {
-            override val sourceToNativeFiles = HashMap<ZipSource, List<String>>()
-
-            @Suppress("SpellCheckingInspection", "GrazieInspection")
-            override suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path? {
-              if (!context.isMacCodeSignEnabled ||
-                  context.proprietaryBuildTools.signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
-                return null
-              }
-
-              // we allow to use .so for macOS binraries (binaries/macos/libasyncProfiler.so), but removing obvious linux binaries
-              // (binaries/linux-aarch64/libasyncProfiler.so) to avoid detecting by binary content
-              if (
-                name.endsWith(".dll") || name.endsWith(".exe") || name.contains("/linux/") || name.contains("/linux-") ||
-                name.contains("icudtl.dat")
-              ) {
-                return null
-              }
-
-              val data = dataSupplier()
-              data.mark()
-              val byteBufferChannel = ByteBufferChannel(data)
-              if (byteBufferChannel.DetectFileType().first != FileType.MachO) {
-                return null
-              }
-
-              data.reset()
-              if (isSigned(byteBufferChannel, name)) {
-                return null
-              }
-
-              data.reset()
-              return signData(data, context)
-            }
-          }
-        }
-        else {
-          null
-        }
-
+        val nativeFileHandler = if (isCodesignEnabled) NativeFileHandlerImpl(context) else null
         val sources = mutableListOf<Source>()
         sources.addAll(item.sources)
         for (moduleSources in item.includedModules.values) {
@@ -738,6 +697,42 @@ private suspend fun buildJars(descriptors: Collection<AssetDescriptor>,
   val result = TreeMap<ZipSource, List<String>>(compareBy { it.file.fileName.toString() })
   list.asSequence().map { it.getCompleted() }.forEach(result::putAll)
   return result
+}
+
+private class NativeFileHandlerImpl(private val context: BuildContext) : NativeFileHandler {
+  override val sourceToNativeFiles = HashMap<ZipSource, List<String>>()
+
+  @Suppress("SpellCheckingInspection", "GrazieInspection")
+  override suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path? {
+    if (!context.isMacCodeSignEnabled ||
+        context.proprietaryBuildTools.signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
+      return null
+    }
+
+    // we allow to use .so for macOS binraries (binaries/macos/libasyncProfiler.so), but removing obvious linux binaries
+    // (binaries/linux-aarch64/libasyncProfiler.so) to avoid detecting by binary content
+    if (
+      name.endsWith(".dll") || name.endsWith(".exe") || name.contains("/linux/") || name.contains("/linux-") ||
+      name.contains("icudtl.dat")
+    ) {
+      return null
+    }
+
+    val data = dataSupplier()
+    data.mark()
+    val byteBufferChannel = ByteBufferChannel(data)
+    if (byteBufferChannel.DetectFileType().first != FileType.MachO) {
+      return null
+    }
+
+    data.reset()
+    if (isSigned(byteBufferChannel, name)) {
+      return null
+    }
+
+    data.reset()
+    return signData(data, context)
+  }
 }
 
 suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: BuildContext, dryRun: Boolean = false) {
