@@ -5,18 +5,17 @@ import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author kir
  */
-@SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-public final class DefaultIdeaErrorLogger implements ErrorLogger {
+public final class DefaultIdeaErrorLogger {
   private static volatile boolean ourOomOccurred;
   private static volatile boolean ourLoggerBroken;
 
@@ -24,8 +23,7 @@ public final class DefaultIdeaErrorLogger implements ErrorLogger {
   private static final String DISABLED_VALUE = "disabled";
   private static final String ENABLED_VALUE = "enabled";
 
-  @Override
-  public boolean canHandle(IdeaLoggingEvent event) {
+  static boolean canHandle(@NotNull IdeaLoggingEvent event) {
     if (ourLoggerBroken) return false;
 
     try {
@@ -60,8 +58,7 @@ public final class DefaultIdeaErrorLogger implements ErrorLogger {
     }
   }
 
-  @Override
-  public void handle(IdeaLoggingEvent event) {
+  static void handle(@NotNull IdeaLoggingEvent event) {
     if (ourLoggerBroken) return;
 
     try {
@@ -85,7 +82,7 @@ public final class DefaultIdeaErrorLogger implements ErrorLogger {
     }
   }
 
-  public static @Nullable MemoryKind getOOMErrorKind(Throwable t) {
+  public static @Nullable MemoryKind getOOMErrorKind(@NotNull Throwable t) {
     String message = t.getMessage();
 
     if (t instanceof OutOfMemoryError) {

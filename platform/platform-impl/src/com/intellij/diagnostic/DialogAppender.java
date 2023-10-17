@@ -2,14 +2,14 @@
 package com.intellij.diagnostic;
 
 import com.intellij.idea.AppMode;
-import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Handler;
@@ -17,7 +17,6 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 public final class DialogAppender extends Handler {
-  private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
@@ -70,21 +69,9 @@ public final class DialogAppender extends Handler {
       // stop adding requests to the queue, or we can get OOME on pending logging requests (IDEA-95327)
       myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase
     }
-    else {
-      appendToLoggers(event, LOGGERS);
+    else if (DefaultIdeaErrorLogger.canHandle(event)) {
+      myExecutor.execute(() -> DefaultIdeaErrorLogger.handle(event));
     }
-  }
-
-  @VisibleForTesting
-  Future<?> appendToLoggers(@NotNull IdeaLoggingEvent event, ErrorLogger @NotNull [] errorLoggers) {
-    for (int i = errorLoggers.length - 1; i >= 0; i--) {
-      ErrorLogger logger = errorLoggers[i];
-      if (!logger.canHandle(event)) {
-        continue;
-      }
-      return myExecutor.submit(() -> logger.handle(event));
-    }
-    return null;
   }
 
   private static IdeaLoggingEvent extractLoggingEvent(Object messageObject, Throwable throwable) {
