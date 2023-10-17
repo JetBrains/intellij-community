@@ -25,15 +25,15 @@ interface WebSymbolNameConversionRules {
    *
    * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS]
    */
-  val nameVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+  val completionVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
 
   companion object {
 
     @JvmStatic
     fun create(canonicalNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
                matchNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
-               nameVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap()): WebSymbolNameConversionRules =
-      WebSymbolNameConversionRulesImpl(canonicalNames, matchNames, nameVariants)
+               completionVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap()): WebSymbolNameConversionRules =
+      WebSymbolNameConversionRulesImpl(canonicalNames, matchNames, completionVariants)
 
     @JvmStatic
     fun create(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter): WebSymbolNameConversionRules =

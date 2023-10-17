@@ -24,22 +24,22 @@ internal class WebSymbolNamesProviderImpl(
 
   private val matchNamesProviders: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
 
-  private val nameVariantsProviders: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+  private val completionVariantsProviders: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
 
   private val webSymbolsFramework get() = framework?.let { WebSymbolsFramework.get(it) }
 
   init {
     val canonicalNamesProviders = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
     val matchNamesProviders = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
-    val nameVariantsProviders = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
+    val completionVariantsProviders = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
     configuration.forEach { config ->
       config.canonicalNames.forEach { canonicalNamesProviders.putIfAbsent(it.key, it.value) }
       config.matchNames.forEach { matchNamesProviders.putIfAbsent(it.key, it.value) }
-      config.nameVariants.forEach { nameVariantsProviders.putIfAbsent(it.key, it.value) }
+      config.completionVariants.forEach { completionVariantsProviders.putIfAbsent(it.key, it.value) }
     }
     this.canonicalNamesProviders = canonicalNamesProviders
     this.matchNamesProviders = matchNamesProviders
-    this.nameVariantsProviders = nameVariantsProviders
+    this.completionVariantsProviders = completionVariantsProviders
   }
 
   override fun createPointer(): Pointer<WebSymbolNamesProvider> =
@@ -61,7 +61,7 @@ internal class WebSymbolNamesProviderImpl(
 
   override fun getNames(qualifiedName: WebSymbolQualifiedName, target: WebSymbolNamesProvider.Target): List<String> =
     when (target) {
-      CODE_COMPLETION_VARIANTS -> nameVariantsProviders[qualifiedName.qualifiedKind]
+      CODE_COMPLETION_VARIANTS -> completionVariantsProviders[qualifiedName.qualifiedKind]
       NAMES_MAP_STORAGE -> canonicalNamesProviders[qualifiedName.qualifiedKind]
       NAMES_QUERY -> matchNamesProviders[qualifiedName.qualifiedKind]
                      ?: canonicalNamesProviders[qualifiedName.qualifiedKind]

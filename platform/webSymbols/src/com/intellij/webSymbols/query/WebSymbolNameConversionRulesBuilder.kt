@@ -7,7 +7,7 @@ class WebSymbolNameConversionRulesBuilder internal constructor() {
 
   private val canonicalNames = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
   private val matchNames = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
-  private val nameVariants = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
+  private val completionVariants = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
 
   fun addCanonicalNamesRule(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter) = apply {
     canonicalNames.putIfAbsent(symbolKind, converter)
@@ -17,20 +17,20 @@ class WebSymbolNameConversionRulesBuilder internal constructor() {
     matchNames.putIfAbsent(symbolKind, converter)
   }
 
-  fun addNameVariantsRule(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter) = apply {
-    nameVariants.putIfAbsent(symbolKind, converter)
+  fun addCompletionVariantsRule(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter) = apply {
+    completionVariants.putIfAbsent(symbolKind, converter)
   }
 
   fun addRule(symbolKind: WebSymbolQualifiedKind, converter: WebSymbolNameConverter) = apply {
     addCanonicalNamesRule(symbolKind, converter)
     addMatchNamesRule(symbolKind, converter)
-    addNameVariantsRule(symbolKind, converter)
+    addCompletionVariantsRule(symbolKind, converter)
   }
 
   fun build(): WebSymbolNameConversionRules =
-    WebSymbolNameConversionRules.create(canonicalNames.toMap(), matchNames.toMap(), nameVariants.toMap())
+    WebSymbolNameConversionRules.create(canonicalNames.toMap(), matchNames.toMap(), completionVariants.toMap())
 
   fun isEmpty(): Boolean =
-    canonicalNames.isEmpty() && matchNames.isEmpty() && nameVariants.isEmpty()
+    canonicalNames.isEmpty() && matchNames.isEmpty() && completionVariants.isEmpty()
 
 }
