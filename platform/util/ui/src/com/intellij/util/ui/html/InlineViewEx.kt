@@ -16,12 +16,13 @@ import javax.swing.text.html.InlineView
 import javax.swing.text.html.StyleSheet
 
 /**
- * Supports paddings for inline elements, like `<span>`. Due to limitations of [HTMLDocument],
+ * Supports paddings and margins for inline elements, like `<span>`. Due to limitations of [HTMLDocument],
  * paddings for nested inline elements are not supported and will cause incorrect rendering.
  */
-class PaddedInlineView(elem: Element) : InlineView(elem) {
+class InlineViewEx(elem: Element) : InlineView(elem) {
 
-  private lateinit var insets: JBInsets
+  private lateinit var padding: JBInsets
+  private lateinit var margin: JBInsets
 
 
   override fun setPropertiesFromAttributes() {
@@ -32,20 +33,31 @@ class PaddedInlineView(elem: Element) : InlineView(elem) {
 
     // Heuristics to determine whether we are within the same inline (e.g. <span>) element with paddings.
     // Nested inline element insets are not supported, because hierarchy of inline elements is not preserved.
-    val prevSiblingInsets = if (index > 0) parent.getElement(index - 1).paddingInsets else null
-    val nextSiblingInsets = if (index < parent.elementCount - 1) parent.getElement(index + 1).paddingInsets else null
-    insets = element.paddingInsets
+    val prevSibling = if (index > 0) parent.getElement(index - 1) else null
+    val nextSibling = if (index < parent.elementCount - 1) parent.getElement(index + 1) else null
 
-    insets.set(
-      insets.top,
-      if (prevSiblingInsets == insets) 0 else insets.left,
-      insets.bottom,
-      if (nextSiblingInsets == insets) 0 else insets.right,
+    padding = element.padding
+    margin = element.margin
+
+    val startView = prevSibling?.padding != padding || prevSibling.margin != margin
+    val endView = nextSibling?.padding != padding || nextSibling.margin != margin
+
+    padding.set(
+      padding.top,
+      if (startView) padding.left else 0,
+      padding.bottom,
+      if (endView) padding.right else 0,
     )
 
+    margin.set(
+      margin.top,
+      if (startView) margin.left else 0,
+      margin.bottom,
+      if (endView) margin.right else 0,
+    )
   }
 
-  private val Element.paddingInsets: JBInsets
+  private val Element.padding: JBInsets
     get() {
       val styleSheet = getStyleSheet()
       return JBUI.insets(
@@ -56,13 +68,24 @@ class PaddedInlineView(elem: Element) : InlineView(elem) {
       )
     }
 
+  private val Element.margin: JBInsets
+    get() {
+      val styleSheet = getStyleSheet()
+      return JBUI.insets(
+        attributes.getLength(CSS.Attribute.MARGIN_TOP, styleSheet).toInt(),
+        attributes.getLength(CSS.Attribute.MARGIN_LEFT, styleSheet).toInt(),
+        attributes.getLength(CSS.Attribute.MARGIN_BOTTOM, styleSheet).toInt(),
+        attributes.getLength(CSS.Attribute.MARGIN_RIGHT, styleSheet).toInt(),
+      )
+    }
+
   private fun AttributeSet.getLength(attribute: CSS.Attribute, styleSheet: StyleSheet): Float =
     cssLength.invoke(css, this, attribute, styleSheet) as Float
 
   override fun getPartialSpan(p0: Int, p1: Int): Float {
     val offset = when {
-      p0 == startOffset -> insets.left
-      p1 == endOffset -> insets.right
+      p0 == startOffset -> padding.left + margin.left
+      p1 == endOffset -> padding.right + margin.right
       else -> 0
     }
     return offset + super.getPartialSpan(p0, p1)
@@ -70,27 +93,32 @@ class PaddedInlineView(elem: Element) : InlineView(elem) {
 
   override fun getPreferredSpan(axis: Int): Float =
     super.getPreferredSpan(axis) + when (axis) {
-      View.X_AXIS -> insets.width()
-      View.Y_AXIS -> insets.height()
+      View.X_AXIS -> padding.width() + margin.width()
+      View.Y_AXIS -> padding.height() + margin.height()
       else -> throw IllegalArgumentException("Invalid axis: $axis")
     }
 
   override fun getMinimumSpan(axis: Int): Float =
     if (axis == Y_AXIS)
-      super.getMinimumSpan(axis) + insets.height()
+      super.getMinimumSpan(axis) + padding.height() + margin.height()
     else
       super.getMinimumSpan(axis)
 
   override fun paint(g: Graphics, a: Shape) {
     val alloc = if (a is Rectangle) a else a.bounds
+    // Shrink by margin
+    alloc.setBounds(alloc.x + margin.left, alloc.y + margin.top,
+                    alloc.width - margin.width(),
+                    alloc.height - margin.height())
     val bg = getBackground()
     if (bg != null) {
       g.color = bg
       g.fillRect(alloc.x, alloc.y, alloc.width, alloc.height)
     }
-    alloc.setBounds(alloc.x + insets.left, alloc.y + insets.top,
-                    alloc.width - insets.width(),
-                    alloc.height - insets.height())
+    // Shrink by padding
+    alloc.setBounds(alloc.x + padding.left, alloc.y + padding.top,
+                    alloc.width - padding.width(),
+                    alloc.height - padding.height())
     super.paint(g, alloc)
   }
 
@@ -108,7 +136,7 @@ class PaddedInlineView(elem: Element) : InlineView(elem) {
         sub -> if (h > 0) (h - (d + a / 2)) / h else 0f
         else -> if (h > 0) (h - d) / h else 0f
       }
-      return (insets.top + (contentsAlign * h)) / (insets.height() + h)
+      return (padding.top + margin.top + (contentsAlign * h)) / (padding.height() + margin.height() + h)
     }
     return super.getAlignment(axis)
   }
