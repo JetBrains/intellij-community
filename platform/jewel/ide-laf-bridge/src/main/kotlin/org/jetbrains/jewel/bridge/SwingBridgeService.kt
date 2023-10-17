@@ -1,8 +1,5 @@
 package org.jetbrains.jewel.bridge
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.TextStyle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -19,14 +16,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.jewel.IntelliJComponentStyling
-import org.jetbrains.jewel.JewelSvgLoader
-import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.intui.core.IntUiThemeDefinition
-import org.jetbrains.jewel.intui.core.IntelliJSvgPatcher
 import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Level.APP)
-class SwingBridgeService : Disposable {
+internal class SwingBridgeService : Disposable {
 
     private val logger = thisLogger()
 
@@ -39,13 +33,6 @@ class SwingBridgeService : Disposable {
         IntelliJApplication.lookAndFeelChangedFlow(coroutineScope)
             .mapLatest { tryGettingThemeData() }
             .stateIn(coroutineScope, SharingStarted.Eagerly, BridgeThemeData.DEFAULT)
-
-    val svgLoader: SvgLoader
-        @Composable
-        get() {
-            val data by currentBridgeThemeData.collectAsState()
-            return data.svgLoader
-        }
 
     private suspend fun tryGettingThemeData(): BridgeThemeData {
         var counter = 0
@@ -66,11 +53,9 @@ class SwingBridgeService : Disposable {
         }
 
         val themeDefinition = createBridgeIntUiDefinition()
-        val svgLoader = createSvgLoader(themeDefinition)
         return BridgeThemeData(
             themeDefinition = createBridgeIntUiDefinition(),
-            svgLoader = svgLoader,
-            componentStyling = createSwingIntUiComponentStyling(themeDefinition, svgLoader),
+            componentStyling = createSwingIntUiComponentStyling(themeDefinition),
         )
     }
 
@@ -80,7 +65,6 @@ class SwingBridgeService : Disposable {
 
     internal data class BridgeThemeData(
         val themeDefinition: IntUiThemeDefinition,
-        val svgLoader: SvgLoader,
         val componentStyling: IntelliJComponentStyling,
     ) {
 
@@ -88,13 +72,10 @@ class SwingBridgeService : Disposable {
 
             val DEFAULT = run {
                 val themeDefinition = createBridgeIntUiDefinition(TextStyle.Default)
-                val svgLoader = createSvgLoader(themeDefinition)
                 BridgeThemeData(
                     themeDefinition = createBridgeIntUiDefinition(TextStyle.Default),
-                    svgLoader = createSvgLoader(themeDefinition),
                     componentStyling = createSwingIntUiComponentStyling(
                         theme = themeDefinition,
-                        svgLoader = svgLoader,
                         textAreaTextStyle = TextStyle.Default,
                         textFieldTextStyle = TextStyle.Default,
                         dropdownTextStyle = TextStyle.Default,
@@ -105,10 +86,4 @@ class SwingBridgeService : Disposable {
             }
         }
     }
-}
-
-private fun createSvgLoader(theme: IntUiThemeDefinition): SvgLoader {
-    val paletteMapper = BridgePaletteMapperFactory.create(theme.isDark)
-    val svgPatcher = IntelliJSvgPatcher(paletteMapper)
-    return JewelSvgLoader(svgPatcher)
 }

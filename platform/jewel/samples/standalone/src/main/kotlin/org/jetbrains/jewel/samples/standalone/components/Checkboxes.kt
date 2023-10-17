@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.GroupHeader
-import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.Outline
 import org.jetbrains.jewel.TriStateCheckboxRow
 
@@ -22,29 +21,28 @@ fun Checkboxes() {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val resourceLoader = LocalResourceLoader.current
         var checked by remember { mutableStateOf(ToggleableState.On) }
-        TriStateCheckboxRow("Checkbox", checked, resourceLoader, {
+        TriStateCheckboxRow("Checkbox", checked, {
             checked = when (checked) {
                 ToggleableState.On -> ToggleableState.Off
                 ToggleableState.Off -> ToggleableState.Indeterminate
                 ToggleableState.Indeterminate -> ToggleableState.On
             }
         })
-        TriStateCheckboxRow("Error", checked, resourceLoader, {
+        TriStateCheckboxRow("Error", checked, {
             checked = when (checked) {
                 ToggleableState.On -> ToggleableState.Off
                 ToggleableState.Off -> ToggleableState.Indeterminate
                 ToggleableState.Indeterminate -> ToggleableState.On
             }
         }, outline = Outline.Error)
-        TriStateCheckboxRow("Warning", checked, resourceLoader, {
+        TriStateCheckboxRow("Warning", checked, {
             checked = when (checked) {
                 ToggleableState.On -> ToggleableState.Off
                 ToggleableState.Off -> ToggleableState.Indeterminate
                 ToggleableState.Indeterminate -> ToggleableState.On
             }
         }, outline = Outline.Warning)
-        TriStateCheckboxRow("Disabled", checked, resourceLoader, {}, enabled = false)
+        TriStateCheckboxRow("Disabled", checked, {}, enabled = false)
     }
 }

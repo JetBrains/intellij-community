@@ -10,19 +10,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.DropdownState
-import org.jetbrains.jewel.LocalIconData
-import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
+import org.jetbrains.jewel.painter.PainterProvider
 import org.jetbrains.jewel.styling.DropdownColors
 import org.jetbrains.jewel.styling.DropdownIcons
 import org.jetbrains.jewel.styling.DropdownMetrics
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.MenuStyle
-import org.jetbrains.jewel.styling.PainterProvider
-import org.jetbrains.jewel.styling.ResourcePainterProvider
 
 @Stable
 data class IntUiDropdownStyle(
@@ -37,32 +34,29 @@ data class IntUiDropdownStyle(
 
         @Composable
         fun undecorated(
-            svgLoader: SvgLoader,
             colors: IntUiDropdownColors,
             metrics: IntUiDropdownMetrics = IntUiDropdownMetrics(borderWidth = 0.dp),
-            icons: IntUiDropdownIcons = intUiDropdownIcons(svgLoader),
+            icons: IntUiDropdownIcons = intUiDropdownIcons(),
             textStyle: TextStyle = IntUiTheme.defaultTextStyle,
-            menuStyle: MenuStyle = IntUiMenuStyle.light(svgLoader),
+            menuStyle: MenuStyle = IntUiMenuStyle.light(),
         ) = IntUiDropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 
         @Composable
         fun light(
-            svgLoader: SvgLoader,
             colors: IntUiDropdownColors = IntUiDropdownColors.light(),
             metrics: IntUiDropdownMetrics = IntUiDropdownMetrics(),
-            icons: IntUiDropdownIcons = intUiDropdownIcons(svgLoader),
+            icons: IntUiDropdownIcons = intUiDropdownIcons(),
             textStyle: TextStyle = IntUiTheme.defaultTextStyle,
-            menuStyle: MenuStyle = IntUiMenuStyle.light(svgLoader),
+            menuStyle: MenuStyle = IntUiMenuStyle.light(),
         ) = IntUiDropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 
         @Composable
         fun dark(
-            svgLoader: SvgLoader,
             colors: IntUiDropdownColors = IntUiDropdownColors.dark(),
             metrics: IntUiDropdownMetrics = IntUiDropdownMetrics(),
-            icons: IntUiDropdownIcons = intUiDropdownIcons(svgLoader),
+            icons: IntUiDropdownIcons = intUiDropdownIcons(),
             textStyle: TextStyle = IntUiTheme.defaultTextStyle,
-            menuStyle: MenuStyle = IntUiMenuStyle.dark(svgLoader),
+            menuStyle: MenuStyle = IntUiMenuStyle.dark(),
         ) = IntUiDropdownStyle(colors, metrics, icons, textStyle, menuStyle)
     }
 }
@@ -227,23 +221,20 @@ data class IntUiDropdownMetrics(
 
 @Immutable
 data class IntUiDropdownIcons(
-    override val chevronDown: PainterProvider<DropdownState>,
+    override val chevronDown: PainterProvider,
 ) : DropdownIcons {
 
     companion object {
 
         @Composable
         fun chevronDown(
-            svgLoader: SvgLoader,
             basePath: String = "expui/general/chevronDown.svg",
-        ): PainterProvider<DropdownState> =
-            ResourcePainterProvider.stateful(basePath, svgLoader, LocalIconData.current)
+        ): PainterProvider = standalonePainterProvider(basePath)
     }
 }
 
 @Composable
 fun intUiDropdownIcons(
-    svgLoader: SvgLoader,
-    chevronDown: PainterProvider<DropdownState> = IntUiDropdownIcons.chevronDown(svgLoader),
+    chevronDown: PainterProvider = IntUiDropdownIcons.chevronDown(),
 ) =
     IntUiDropdownIcons(chevronDown)

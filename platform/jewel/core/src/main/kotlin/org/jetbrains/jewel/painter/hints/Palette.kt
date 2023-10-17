@@ -1,66 +1,39 @@
-package org.jetbrains.jewel.intui.core
+package org.jetbrains.jewel.painter.hints
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
-import org.jetbrains.jewel.PaletteMapper
-import org.jetbrains.jewel.SvgPatcher
-import org.jetbrains.jewel.util.toHexString
-import org.w3c.dom.Document
+import org.jetbrains.jewel.painter.PainterHint
+import org.jetbrains.jewel.painter.PainterSvgPatchHint
+import org.jetbrains.jewel.util.toRgbaHexString
 import org.w3c.dom.Element
-import java.io.IOException
-import java.io.InputStream
-import java.io.StringWriter
-import javax.xml.XMLConstants
-import javax.xml.parsers.DocumentBuilderFactory
-import javax.xml.transform.OutputKeys
-import javax.xml.transform.Transformer
-import javax.xml.transform.TransformerException
-import javax.xml.transform.TransformerFactory
-import javax.xml.transform.dom.DOMSource
-import javax.xml.transform.stream.StreamResult
 import kotlin.math.roundToInt
 
 @Immutable
-class IntelliJSvgPatcher(private val mapper: PaletteMapper) : SvgPatcher {
+private class PaletteImpl(val map: Map<Color, Color>) : PainterSvgPatchHint {
 
-    private val documentBuilderFactory = DocumentBuilderFactory.newDefaultInstance()
-        .apply { setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true) }
+    override fun patch(element: Element) {
+        element.patchColorAttribute("fill", map)
+        element.patchColorAttribute("stroke", map)
 
-    override fun patchSvg(rawSvg: InputStream, path: String?): String {
-        val builder = documentBuilderFactory.newDocumentBuilder()
-        val document = builder.parse(rawSvg)
-
-        val scope = mapper.getScopeForPath(path)
-        if (scope != null) {
-            document.documentElement.patchColors(scope)
-        }
-
-        return document.writeToString()
-    }
-
-    private fun Element.patchColors(mapperScope: PaletteMapper.Scope) {
-        patchColorAttribute("fill", mapperScope)
-        patchColorAttribute("stroke", mapperScope)
-
-        val nodes = childNodes
+        val nodes = element.childNodes
         val length = nodes.length
         for (i in 0 until length) {
             val item = nodes.item(i)
             if (item is Element) {
-                item.patchColors(mapperScope)
+                patch(item)
             }
         }
     }
 
-    private fun Element.patchColorAttribute(attrName: String, mapperScope: PaletteMapper.Scope) {
+    private fun Element.patchColorAttribute(attrName: String, pattern: Map<Color, Color>) {
         val color = getAttribute(attrName)
         val opacity = getAttribute("$attrName-opacity")
 
         if (color.isNotEmpty()) {
             val alpha = opacity.toFloatOrNull() ?: 1.0f
             val originalColor = tryParseColor(color, alpha) ?: return
-            val newColor = mapperScope.mapColorOrNull(originalColor) ?: return
-            setAttribute(attrName, newColor.copy(alpha = alpha).toHexString())
+            val newColor = pattern[originalColor] ?: return
+            setAttribute(attrName, newColor.copy(alpha = alpha).toRgbaHexString())
         }
     }
 
@@ -110,34 +83,22 @@ class IntelliJSvgPatcher(private val mapper: PaletteMapper) : SvgPatcher {
         }
     }
 
-    private fun Document.writeToString(): String {
-        val tf = TransformerFactory.newInstance()
-        val transformer: Transformer
+    override fun toString(): String = "Palette(${map.hashCode()})"
 
-        try {
-            transformer = tf.newTransformer()
-            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
-
-            val writer = StringWriter()
-            transformer.transform(DOMSource(this), StreamResult(writer))
-            return writer.buffer.toString()
-        } catch (e: TransformerException) {
-            error("Unable to render XML document to string: ${e.message}")
-        } catch (e: IOException) {
-            error("Unable to render XML document to string: ${e.message}")
-        }
-    }
+    override fun hashCode(): Int = map.hashCode()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+        if (other !is PaletteImpl) return false
 
-        other as IntelliJSvgPatcher
+        if (map != other.map) return false
 
-        return mapper == other.mapper
+        return true
     }
+}
 
-    override fun hashCode(): Int = mapper.hashCode()
-
-    override fun toString(): String = "IntelliJSvgPatcher(mapper=$mapper)"
+fun Palette(map: Map<Color, Color>): PainterHint = if (map.isEmpty()) {
+    PainterHint.None
+} else {
+    PaletteImpl(map)
 }

@@ -10,6 +10,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.foundation.tree.TreeElementState
+import org.jetbrains.jewel.painter.PainterProvider
 
 @Stable
 interface LazyTreeStyle {
@@ -56,10 +57,10 @@ interface LazyTreeMetrics {
 @Immutable
 interface LazyTreeIcons {
 
-    val chevronCollapsed: PainterProvider<Unit>
-    val chevronExpanded: PainterProvider<Unit>
-    val chevronSelectedCollapsed: PainterProvider<Unit>
-    val chevronSelectedExpanded: PainterProvider<Unit>
+    val chevronCollapsed: PainterProvider
+    val chevronExpanded: PainterProvider
+    val chevronSelectedCollapsed: PainterProvider
+    val chevronSelectedExpanded: PainterProvider
 
     @Composable
     fun chevron(isExpanded: Boolean, isSelected: Boolean) =

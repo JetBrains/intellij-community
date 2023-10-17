@@ -1,16 +1,14 @@
 package org.jetbrains.jewel.intui.core
 
-import androidx.compose.foundation.LocalContextMenuRepresentation
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.GlobalColors
 import org.jetbrains.jewel.GlobalMetrics
-import org.jetbrains.jewel.IntelliJComponentStyling
-import org.jetbrains.jewel.IntelliJContextMenuRepresentation
 import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.IntelliJThemeIconData
 import org.jetbrains.jewel.LocalColorPalette
@@ -27,27 +25,6 @@ import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
 import org.jetbrains.jewel.styling.LabelledTextFieldStyle
 import org.jetbrains.jewel.styling.LazyTreeStyle
 import org.jetbrains.jewel.styling.LinkStyle
-import org.jetbrains.jewel.styling.LocalCheckboxStyle
-import org.jetbrains.jewel.styling.LocalChipStyle
-import org.jetbrains.jewel.styling.LocalCircularProgressStyle
-import org.jetbrains.jewel.styling.LocalDefaultButtonStyle
-import org.jetbrains.jewel.styling.LocalDefaultTabStyle
-import org.jetbrains.jewel.styling.LocalDividerStyle
-import org.jetbrains.jewel.styling.LocalDropdownStyle
-import org.jetbrains.jewel.styling.LocalEditorTabStyle
-import org.jetbrains.jewel.styling.LocalGroupHeaderStyle
-import org.jetbrains.jewel.styling.LocalHorizontalProgressBarStyle
-import org.jetbrains.jewel.styling.LocalIconButtonStyle
-import org.jetbrains.jewel.styling.LocalLabelledTextFieldStyle
-import org.jetbrains.jewel.styling.LocalLazyTreeStyle
-import org.jetbrains.jewel.styling.LocalLinkStyle
-import org.jetbrains.jewel.styling.LocalMenuStyle
-import org.jetbrains.jewel.styling.LocalOutlinedButtonStyle
-import org.jetbrains.jewel.styling.LocalRadioButtonStyle
-import org.jetbrains.jewel.styling.LocalScrollbarStyle
-import org.jetbrains.jewel.styling.LocalTextAreaStyle
-import org.jetbrains.jewel.styling.LocalTextFieldStyle
-import org.jetbrains.jewel.styling.LocalTooltipStyle
 import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.styling.RadioButtonStyle
 import org.jetbrains.jewel.styling.ScrollbarStyle
@@ -196,7 +173,7 @@ interface BaseIntUiTheme : IntelliJTheme {
 @Composable
 fun BaseIntUiTheme(
     theme: IntUiThemeDefinition,
-    componentStyling: IntelliJComponentStyling,
+    componentStyling: @Composable () -> Array<ProvidedValue<*>>,
     content: @Composable () -> Unit,
 ) {
     BaseIntUiTheme(theme, componentStyling, swingCompatMode = false, content)
@@ -205,37 +182,17 @@ fun BaseIntUiTheme(
 @Composable
 fun BaseIntUiTheme(
     theme: IntUiThemeDefinition,
-    componentStyling: IntelliJComponentStyling,
+    componentStyling: @Composable () -> Array<ProvidedValue<*>>,
     swingCompatMode: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    CompositionLocalProvider(
-        LocalColorPalette provides theme.colorPalette,
-        LocalIconData provides theme.iconData,
-        LocalCheckboxStyle provides componentStyling.checkboxStyle,
-        LocalChipStyle provides componentStyling.chipStyle,
-        LocalContextMenuRepresentation provides IntelliJContextMenuRepresentation,
-        LocalDefaultButtonStyle provides componentStyling.defaultButtonStyle,
-        LocalDividerStyle provides componentStyling.dividerStyle,
-        LocalDropdownStyle provides componentStyling.dropdownStyle,
-        LocalGroupHeaderStyle provides componentStyling.groupHeaderStyle,
-        LocalHorizontalProgressBarStyle provides componentStyling.horizontalProgressBarStyle,
-        LocalLabelledTextFieldStyle provides componentStyling.labelledTextFieldStyle,
-        LocalLazyTreeStyle provides componentStyling.lazyTreeStyle,
-        LocalLinkStyle provides componentStyling.linkStyle,
-        LocalMenuStyle provides componentStyling.menuStyle,
-        LocalOutlinedButtonStyle provides componentStyling.outlinedButtonStyle,
-        LocalRadioButtonStyle provides componentStyling.radioButtonStyle,
-        LocalScrollbarStyle provides componentStyling.scrollbarStyle,
-        LocalTextAreaStyle provides componentStyling.textAreaStyle,
-        LocalTextFieldStyle provides componentStyling.textFieldStyle,
-        LocalDefaultTabStyle provides componentStyling.defaultTabStyle,
-        LocalEditorTabStyle provides componentStyling.editorTabStyle,
-        LocalIndication provides NoIndication,
-        LocalCircularProgressStyle provides componentStyling.circularProgressStyle,
-        LocalTooltipStyle provides componentStyling.tooltipStyle,
-        LocalIconButtonStyle provides componentStyling.iconButtonStyle,
-    ) {
-        IntelliJTheme(theme, swingCompatMode, content)
+    IntelliJTheme(theme, swingCompatMode) {
+        CompositionLocalProvider(
+            LocalColorPalette provides theme.colorPalette,
+            LocalIconData provides theme.iconData,
+            LocalIndication provides NoIndication,
+        ) {
+            CompositionLocalProvider(values = componentStyling(), content = content)
+        }
     }
 }

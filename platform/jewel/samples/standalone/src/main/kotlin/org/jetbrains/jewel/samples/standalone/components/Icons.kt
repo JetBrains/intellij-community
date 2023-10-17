@@ -11,28 +11,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.Icon
-import org.jetbrains.jewel.SvgLoader
-import org.jetbrains.jewel.styling.rememberStatelessPainterProvider
+import org.jetbrains.jewel.painter.rememberResourcePainterProvider
+import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 
 @Composable
-internal fun Icons(svgLoader: SvgLoader, resourceLoader: ResourceLoader) {
+internal fun Icons() {
     GroupHeader("Icons")
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        val jewelLogoProvider = rememberStatelessPainterProvider("icons/jewel-logo.svg", svgLoader)
-        val jewelLogo by jewelLogoProvider.getPainter(resourceLoader)
+        val iconProvider = rememberResourcePainterProvider("icons/jewel-logo.svg", StandaloneSampleIcons::class.java)
+        val logo by iconProvider.getPainter()
 
-        Icon(jewelLogo, "Jewel Logo", Modifier.size(16.dp))
-        Icon(jewelLogo, "Jewel Logo", Modifier.size(32.dp))
-        Icon(jewelLogo, "Jewel Logo", Modifier.size(64.dp))
-        Icon(jewelLogo, "Jewel Logo", Modifier.size(128.dp))
-        Icon(jewelLogo, "Jewel Logo", ColorFilter.tint(Color.Magenta, BlendMode.Multiply), Modifier.size(128.dp))
+        Icon(logo, "Jewel Logo", Modifier.size(16.dp))
+        Icon(logo, "Jewel Logo", Modifier.size(32.dp))
+        Icon(logo, "Jewel Logo", Modifier.size(64.dp))
+        Icon(logo, "Jewel Logo", Modifier.size(128.dp))
+        Icon(
+            logo,
+            "Jewel Logo",
+            ColorFilter.tint(Color.Magenta, BlendMode.Multiply),
+            Modifier.size(128.dp),
+        )
     }
 }

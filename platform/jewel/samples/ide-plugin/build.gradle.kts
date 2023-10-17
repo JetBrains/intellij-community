@@ -43,4 +43,8 @@ tasks {
     buildSearchableOptions {
         enabled = false
     }
+
+    runIde {
+        this.systemProperties["org.jetbrains.jewel.debug"] = "true"
+    }
 }

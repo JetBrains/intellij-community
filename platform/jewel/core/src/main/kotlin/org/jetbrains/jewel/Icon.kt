@@ -6,6 +6,7 @@ package org.jetbrains.jewel
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -30,8 +31,47 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.painter.rememberResourcePainterProvider
 import org.xml.sax.InputSource
 import java.io.InputStream
+
+@Composable
+fun Icon(
+    resource: String,
+    contentDescription: String?,
+    iconClass: Class<*>,
+    colorFilter: ColorFilter?,
+    modifier: Modifier = Modifier,
+) {
+    val painterProvider = rememberResourcePainterProvider(resource, iconClass)
+    val painter by painterProvider.getPainter()
+
+    Icon(
+        painter = painter,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        colorFilter = colorFilter,
+    )
+}
+
+@Composable
+fun Icon(
+    resource: String,
+    contentDescription: String?,
+    iconClass: Class<*>,
+    modifier: Modifier = Modifier,
+    tint: Color = Color.Unspecified,
+) {
+    val painterProvider = rememberResourcePainterProvider(resource, iconClass)
+    val painter by painterProvider.getPainter()
+
+    Icon(
+        painter = painter,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        tint = tint,
+    )
+}
 
 /**
  * Icon component that draws [imageVector] using [tint], defaulting to
@@ -156,7 +196,7 @@ fun Icon(
 fun painterResource(
     resourcePath: String,
     loader: ResourceLoader,
-): Painter = when (resourcePath.substringAfterLast(".")) {
+): Painter = when (resourcePath.substringAfterLast(".").lowercase()) {
     "svg" -> rememberSvgResource(resourcePath, loader)
     "xml" -> rememberVectorXmlResource(resourcePath, loader)
     else -> rememberBitmapResource(resourcePath, loader)

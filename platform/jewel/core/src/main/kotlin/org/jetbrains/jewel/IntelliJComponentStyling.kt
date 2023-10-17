@@ -1,5 +1,8 @@
 package org.jetbrains.jewel
 
+import androidx.compose.foundation.LocalContextMenuRepresentation
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.Stable
 import org.jetbrains.jewel.styling.ButtonStyle
 import org.jetbrains.jewel.styling.CheckboxStyle
@@ -13,6 +16,27 @@ import org.jetbrains.jewel.styling.IconButtonStyle
 import org.jetbrains.jewel.styling.LabelledTextFieldStyle
 import org.jetbrains.jewel.styling.LazyTreeStyle
 import org.jetbrains.jewel.styling.LinkStyle
+import org.jetbrains.jewel.styling.LocalCheckboxStyle
+import org.jetbrains.jewel.styling.LocalChipStyle
+import org.jetbrains.jewel.styling.LocalCircularProgressStyle
+import org.jetbrains.jewel.styling.LocalDefaultButtonStyle
+import org.jetbrains.jewel.styling.LocalDefaultTabStyle
+import org.jetbrains.jewel.styling.LocalDividerStyle
+import org.jetbrains.jewel.styling.LocalDropdownStyle
+import org.jetbrains.jewel.styling.LocalEditorTabStyle
+import org.jetbrains.jewel.styling.LocalGroupHeaderStyle
+import org.jetbrains.jewel.styling.LocalHorizontalProgressBarStyle
+import org.jetbrains.jewel.styling.LocalIconButtonStyle
+import org.jetbrains.jewel.styling.LocalLabelledTextFieldStyle
+import org.jetbrains.jewel.styling.LocalLazyTreeStyle
+import org.jetbrains.jewel.styling.LocalLinkStyle
+import org.jetbrains.jewel.styling.LocalMenuStyle
+import org.jetbrains.jewel.styling.LocalOutlinedButtonStyle
+import org.jetbrains.jewel.styling.LocalRadioButtonStyle
+import org.jetbrains.jewel.styling.LocalScrollbarStyle
+import org.jetbrains.jewel.styling.LocalTextAreaStyle
+import org.jetbrains.jewel.styling.LocalTextFieldStyle
+import org.jetbrains.jewel.styling.LocalTooltipStyle
 import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.styling.RadioButtonStyle
 import org.jetbrains.jewel.styling.ScrollbarStyle
@@ -45,6 +69,32 @@ class IntelliJComponentStyling(
     val tooltipStyle: TooltipStyle,
     val iconButtonStyle: IconButtonStyle,
 ) {
+
+    @Composable
+    fun providedStyles(): Array<ProvidedValue<*>> = arrayOf(
+        LocalCheckboxStyle provides checkboxStyle,
+        LocalChipStyle provides chipStyle,
+        LocalContextMenuRepresentation provides IntelliJContextMenuRepresentation,
+        LocalDefaultButtonStyle provides defaultButtonStyle,
+        LocalDividerStyle provides dividerStyle,
+        LocalDropdownStyle provides dropdownStyle,
+        LocalGroupHeaderStyle provides groupHeaderStyle,
+        LocalHorizontalProgressBarStyle provides horizontalProgressBarStyle,
+        LocalLabelledTextFieldStyle provides labelledTextFieldStyle,
+        LocalLazyTreeStyle provides lazyTreeStyle,
+        LocalLinkStyle provides linkStyle,
+        LocalMenuStyle provides menuStyle,
+        LocalOutlinedButtonStyle provides outlinedButtonStyle,
+        LocalRadioButtonStyle provides radioButtonStyle,
+        LocalScrollbarStyle provides scrollbarStyle,
+        LocalTextAreaStyle provides textAreaStyle,
+        LocalTextFieldStyle provides textFieldStyle,
+        LocalDefaultTabStyle provides defaultTabStyle,
+        LocalEditorTabStyle provides editorTabStyle,
+        LocalCircularProgressStyle provides circularProgressStyle,
+        LocalTooltipStyle provides tooltipStyle,
+        LocalIconButtonStyle provides iconButtonStyle,
+    )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

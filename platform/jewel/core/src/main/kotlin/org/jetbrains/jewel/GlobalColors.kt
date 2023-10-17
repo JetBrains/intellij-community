@@ -12,6 +12,8 @@ interface GlobalColors {
     val outlines: OutlineColors
 
     val infoContent: Color
+
+    val paneBackground: Color
 }
 
 @Immutable

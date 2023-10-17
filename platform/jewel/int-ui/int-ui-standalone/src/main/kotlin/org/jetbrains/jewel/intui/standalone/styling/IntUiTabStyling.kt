@@ -6,13 +6,10 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.ButtonState
-import org.jetbrains.jewel.LocalIconData
-import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.styling.PainterProvider
-import org.jetbrains.jewel.styling.ResourcePainterProvider
+import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
+import org.jetbrains.jewel.painter.PainterProvider
 import org.jetbrains.jewel.styling.TabColors
 import org.jetbrains.jewel.styling.TabContentAlpha
 import org.jetbrains.jewel.styling.TabIcons
@@ -30,19 +27,17 @@ data class IntUiTabStyle(
 
         @Composable
         fun light(
-            svgLoader: SvgLoader,
             colors: TabColors = IntUiTabColors.Default.light(),
             metrics: TabMetrics = IntUiTabMetrics(),
-            icons: TabIcons = intUiTabIcons(svgLoader),
+            icons: TabIcons = intUiTabIcons(),
             contentAlpha: TabContentAlpha = IntUiTabContentAlpha.default(),
         ) = IntUiTabStyle(colors, metrics, icons, contentAlpha)
 
         @Composable
         fun dark(
-            svgLoader: SvgLoader,
             colors: TabColors = IntUiTabColors.Default.dark(),
             metrics: TabMetrics = IntUiTabMetrics(),
-            icons: TabIcons = intUiTabIcons(svgLoader),
+            icons: TabIcons = intUiTabIcons(),
             contentAlpha: TabContentAlpha = IntUiTabContentAlpha.default(),
         ) = IntUiTabStyle(colors, metrics, icons, contentAlpha)
     }
@@ -51,19 +46,17 @@ data class IntUiTabStyle(
 
         @Composable
         fun light(
-            svgLoader: SvgLoader,
             colors: TabColors = IntUiTabColors.Editor.light(),
             metrics: TabMetrics = IntUiTabMetrics(),
-            icons: TabIcons = intUiTabIcons(svgLoader),
+            icons: TabIcons = intUiTabIcons(),
             contentAlpha: TabContentAlpha = IntUiTabContentAlpha.editor(),
         ) = IntUiTabStyle(colors, metrics, icons, contentAlpha)
 
         @Composable
         fun dark(
-            svgLoader: SvgLoader,
             colors: TabColors = IntUiTabColors.Editor.dark(),
             metrics: TabMetrics = IntUiTabMetrics(),
-            icons: TabIcons = intUiTabIcons(svgLoader),
+            icons: TabIcons = intUiTabIcons(),
             contentAlpha: TabContentAlpha = IntUiTabContentAlpha.editor(),
         ) = IntUiTabStyle(colors, metrics, icons, contentAlpha)
     }
@@ -346,22 +339,19 @@ data class IntUiTabContentAlpha(
 }
 
 data class IntUiTabIcons(
-    override val close: PainterProvider<ButtonState>,
+    override val close: PainterProvider,
 ) : TabIcons {
 
     companion object {
 
         @Composable
         fun close(
-            svgLoader: SvgLoader,
             basePath: String = "expui/general/closeSmall.svg",
-        ): PainterProvider<ButtonState> =
-            ResourcePainterProvider.stateful(basePath, svgLoader, LocalIconData.current)
+        ): PainterProvider = standalonePainterProvider(basePath)
     }
 }
 
 @Composable
 fun intUiTabIcons(
-    svgLoader: SvgLoader,
-    close: PainterProvider<ButtonState> = IntUiTabIcons.close(svgLoader),
+    close: PainterProvider = IntUiTabIcons.close(),
 ) = IntUiTabIcons(close)

@@ -22,40 +22,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.Icon
 import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.NoIndication
-import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.TabData
 import org.jetbrains.jewel.TabStrip
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.intui.standalone.IntUiTheme
-import org.jetbrains.jewel.styling.rememberStatelessPainterProvider
+import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import kotlin.math.max
 
 @Composable
-fun Tabs(
-    svgLoader: SvgLoader,
-    resourceLoader: ResourceLoader,
-) {
+fun Tabs() {
     GroupHeader("Tabs")
     Text("Default tabs", Modifier.fillMaxWidth())
-    DefaultTabShowcase(svgLoader, resourceLoader)
+    DefaultTabShowcase()
 
     Spacer(Modifier.height(16.dp))
     Text("Editor tabs", Modifier.fillMaxWidth())
-    EditorTabShowcase(svgLoader, resourceLoader)
+    EditorTabShowcase()
 }
 
 @Composable
-private fun DefaultTabShowcase(
-    svgLoader: SvgLoader,
-    resourceLoader: ResourceLoader,
-) {
+private fun DefaultTabShowcase() {
     var selectedTabIndex by remember { mutableStateOf(0) }
 
     var tabIds by remember { mutableStateOf((1..12).toList()) }
@@ -79,7 +71,7 @@ private fun DefaultTabShowcase(
         }
     }
 
-    TabStripWithAddButton(tabs, svgLoader, resourceLoader) {
+    TabStripWithAddButton(tabs) {
         val insertionIndex = (selectedTabIndex + 1).coerceIn(0..tabIds.size)
         val nextTabId = maxId + 1
 
@@ -90,10 +82,7 @@ private fun DefaultTabShowcase(
 }
 
 @Composable
-private fun EditorTabShowcase(
-    svgLoader: SvgLoader,
-    resourceLoader: ResourceLoader,
-) {
+private fun EditorTabShowcase() {
     var selectedTabIndex by remember { mutableStateOf(0) }
 
     var tabIds by remember { mutableStateOf((1..12).toList()) }
@@ -117,7 +106,7 @@ private fun EditorTabShowcase(
         }
     }
 
-    TabStripWithAddButton(tabs, svgLoader, resourceLoader) {
+    TabStripWithAddButton(tabs) {
         val insertionIndex = (selectedTabIndex + 1).coerceIn(0..tabIds.size)
         val nextTabId = maxId + 1
 
@@ -130,8 +119,6 @@ private fun EditorTabShowcase(
 @Composable
 private fun TabStripWithAddButton(
     tabs: List<TabData>,
-    svgLoader: SvgLoader,
-    resourceLoader: ResourceLoader,
     onAddClick: () -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -170,10 +157,7 @@ private fun TabStripWithAddButton(
                 .background(backgroundColor),
             contentAlignment = Alignment.Center,
         ) {
-            val addIconProvider = rememberStatelessPainterProvider("expui/general/add.svg", svgLoader)
-            val addIcon by addIconProvider.getPainter(resourceLoader)
-
-            Icon(addIcon, contentDescription = "Add a tab")
+            Icon(resource = "expui/general/add.svg", contentDescription = "Add a tab", StandaloneSampleIcons::class.java)
         }
     }
 }

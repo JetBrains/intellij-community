@@ -10,73 +10,73 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.jetbrains.jewel.styling.CircularProgressStyle
-import org.jetbrains.jewel.util.toHexString
+import org.jetbrains.jewel.util.toRgbaHexString
 
 @Composable
 fun CircularProgressIndicator(
-    svgLoader: SvgLoader,
     modifier: Modifier = Modifier,
     style: CircularProgressStyle = IntelliJTheme.circularProgressStyle,
 ) {
     CircularProgressIndicatorImpl(
         modifier = modifier,
-        svgLoader = svgLoader,
         iconSize = DpSize(16.dp, 16.dp),
         style = style,
-        frameRetriever = { color -> SpinnerProgressIconGenerator.Small.generateSvgFrames(color.toHexString()) },
+        frameRetriever = { color -> SpinnerProgressIconGenerator.Small.generateSvgFrames(color.toRgbaHexString()) },
     )
 }
 
 @Composable
 fun CircularProgressIndicatorBig(
-    svgLoader: SvgLoader,
     modifier: Modifier = Modifier,
     style: CircularProgressStyle = IntelliJTheme.circularProgressStyle,
 ) {
     CircularProgressIndicatorImpl(
         modifier = modifier,
-        svgLoader = svgLoader,
         iconSize = DpSize(32.dp, 32.dp),
         style = style,
-        frameRetriever = { color -> SpinnerProgressIconGenerator.Big.generateSvgFrames(color.toHexString()) },
+        frameRetriever = { color -> SpinnerProgressIconGenerator.Big.generateSvgFrames(color.toRgbaHexString()) },
     )
 }
 
 @Composable
 private fun CircularProgressIndicatorImpl(
     modifier: Modifier = Modifier,
-    svgLoader: SvgLoader,
     iconSize: DpSize,
     style: CircularProgressStyle,
     frameRetriever: (Color) -> List<String>,
 ) {
     val defaultColor = if (IntelliJTheme.isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD)
     var isFrameReady by remember { mutableStateOf(false) }
-    var currentFrame: Pair<String, Int> by remember { mutableStateOf("" to 0) }
+    var currentFrame: Painter? by remember { mutableStateOf(null) }
+    val currentPainter = currentFrame
 
-    if (!isFrameReady) {
+    if (currentPainter == null) {
         Box(modifier.size(iconSize))
     } else {
         Icon(
             modifier = modifier.size(iconSize),
-            painter = svgLoader.loadRawSvg(
-                currentFrame.first,
-                "circularProgressIndicator_frame_${currentFrame.second}",
-            ),
+            painter = currentPainter,
             contentDescription = null,
         )
     }
 
-    LaunchedEffect(style.color) {
+    val density = LocalDensity.current
+    LaunchedEffect(density, style.color) {
         val frames = frameRetriever(style.color.takeOrElse { defaultColor })
+            .map {
+                loadSvgPainter(it.byteInputStream(), density)
+            }
         while (true) {
             for (i in frames.indices) {
-                currentFrame = frames[i] to i
+                currentFrame = frames[i]
                 isFrameReady = true
                 delay(style.frameTime.inWholeMilliseconds)
             }

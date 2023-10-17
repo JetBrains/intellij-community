@@ -1,7 +1,6 @@
 package org.jetbrains.jewel
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.ProvidedValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 
@@ -16,8 +15,4 @@ interface IntelliJThemeDefinition {
 
     val colorPalette: IntelliJThemeColorPalette
     val iconData: IntelliJThemeIconData
-
-    val extensionStyles: Array<ProvidedValue<*>>
-
-    fun withExtensions(vararg extensions: ProvidedValue<*>): IntelliJThemeDefinition
 }

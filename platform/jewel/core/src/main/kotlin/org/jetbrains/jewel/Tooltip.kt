@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
 import org.jetbrains.jewel.styling.TooltipStyle
+import org.jetbrains.jewel.util.isDark
 
 @Composable
 fun Tooltip(
@@ -63,7 +64,7 @@ fun Tooltip(
                         )
                         .padding(style.metrics.contentPadding),
                 ) {
-                    onBackground(style.colors.background) {
+                    OverrideDarkMode(style.colors.background.isDark()) {
                         tooltip()
                     }
                 }

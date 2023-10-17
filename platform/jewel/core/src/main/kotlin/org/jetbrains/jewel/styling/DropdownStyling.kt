@@ -12,6 +12,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.DropdownState
+import org.jetbrains.jewel.painter.PainterProvider
 
 @Stable
 interface DropdownStyle {
@@ -112,7 +113,7 @@ interface DropdownMetrics {
 @Immutable
 interface DropdownIcons {
 
-    val chevronDown: PainterProvider<DropdownState>
+    val chevronDown: PainterProvider
 }
 
 val LocalDropdownStyle = staticCompositionLocalOf<DropdownStyle> {

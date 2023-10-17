@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import org.jetbrains.jewel.MenuItemState
+import org.jetbrains.jewel.painter.PainterProvider
 
 @Stable
 interface MenuStyle {
@@ -121,7 +122,7 @@ interface MenuItemColors {
 @Immutable
 interface MenuIcons {
 
-    val submenuChevron: PainterProvider<MenuItemState>
+    val submenuChevron: PainterProvider
 }
 
 val LocalMenuStyle = staticCompositionLocalOf<MenuStyle> {

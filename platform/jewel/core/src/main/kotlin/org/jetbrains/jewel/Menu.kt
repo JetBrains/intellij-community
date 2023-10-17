@@ -54,7 +54,6 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
-import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
@@ -70,6 +69,7 @@ import org.jetbrains.jewel.CommonStateBitMask.Selected
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.foundation.onHover
+import org.jetbrains.jewel.painter.hints.Stateful
 import org.jetbrains.jewel.styling.LocalMenuStyle
 import org.jetbrains.jewel.styling.MenuItemColors
 import org.jetbrains.jewel.styling.MenuItemMetrics
@@ -79,7 +79,6 @@ import org.jetbrains.jewel.styling.MenuStyle
 fun PopupMenu(
     onDismissRequest: (InputMode) -> Boolean,
     horizontalAlignment: Alignment.Horizontal,
-    resourceLoader: ResourceLoader,
     modifier: Modifier = Modifier,
     style: MenuStyle = IntelliJTheme.menuStyle,
     content: MenuScope.() -> Unit,
@@ -120,7 +119,6 @@ fun PopupMenu(
             MenuContent(
                 modifier = modifier,
                 content = content,
-                resourceLoader = resourceLoader,
             )
         }
     }
@@ -128,7 +126,6 @@ fun PopupMenu(
 
 @Composable
 internal fun MenuContent(
-    resourceLoader: ResourceLoader,
     modifier: Modifier = Modifier,
     style: MenuStyle = IntelliJTheme.menuStyle,
     content: MenuScope.() -> Unit,
@@ -179,7 +176,6 @@ internal fun MenuContent(
                             enabled = it.isEnabled,
                             submenu = it.submenu,
                             content = it.content,
-                            resourceLoader = resourceLoader,
                         )
                     }
 
@@ -389,7 +385,6 @@ fun MenuItem(
 
 @Composable
 fun MenuSubmenuItem(
-    resourceLoader: ResourceLoader,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -463,7 +458,7 @@ fun MenuSubmenuItem(
                     content()
                 }
 
-                val chevronPainter by style.icons.submenuChevron.getPainter(resourceLoader, itemState)
+                val chevronPainter by style.icons.submenuChevron.getPainter(Stateful(itemState))
                 Icon(
                     painter = chevronPainter,
                     tint = itemColors.iconTintFor(itemState).value,
@@ -485,7 +480,6 @@ fun MenuSubmenuItem(
                 },
                 style = style,
                 content = submenu,
-                resourceLoader = resourceLoader,
             )
         }
     }
@@ -521,7 +515,6 @@ private fun Size.subtract(paddingValues: PaddingValues, density: Density, layout
 
 @Composable
 internal fun Submenu(
-    resourceLoader: ResourceLoader,
     onDismissRequest: (InputMode) -> Boolean,
     modifier: Modifier = Modifier,
     style: MenuStyle = IntelliJTheme.menuStyle,
@@ -563,7 +556,6 @@ internal fun Submenu(
             MenuContent(
                 modifier = modifier,
                 content = content,
-                resourceLoader = resourceLoader,
             )
         }
     }

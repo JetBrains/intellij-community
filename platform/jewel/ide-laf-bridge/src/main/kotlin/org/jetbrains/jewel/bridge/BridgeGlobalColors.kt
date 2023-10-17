@@ -11,6 +11,7 @@ internal class BridgeGlobalColors(
     override val borders: BorderColors,
     override val outlines: OutlineColors,
     @SwingLafKey("*.infoForeground") override val infoContent: Color,
+    @SwingLafKey("Panel.background") override val paneBackground: Color,
 ) : GlobalColors {
 
     override fun equals(other: Any?): Boolean {
@@ -22,6 +23,7 @@ internal class BridgeGlobalColors(
         if (borders != other.borders) return false
         if (outlines != other.outlines) return false
         if (infoContent != other.infoContent) return false
+        if (paneBackground != other.paneBackground) return false
 
         return true
     }
@@ -30,11 +32,12 @@ internal class BridgeGlobalColors(
         var result = borders.hashCode()
         result = 31 * result + outlines.hashCode()
         result = 31 * result + infoContent.hashCode()
+        result = 31 * result + paneBackground.hashCode()
         return result
     }
 
     override fun toString(): String =
-        "BridgeGlobalColors(borders=$borders, outlines=$outlines, infoContent=$infoContent)"
+        "BridgeGlobalColors(borders=$borders, outlines=$outlines, infoContent=$infoContent, paneBackground=$paneBackground)"
 
     companion object {
 
@@ -42,6 +45,7 @@ internal class BridgeGlobalColors(
             borders = BridgeBorderColors.readFromLaF(),
             outlines = BridgeOutlineColors.readFromLaF(),
             infoContent = retrieveColorOrUnspecified("*.infoForeground"),
+            paneBackground = retrieveColorOrUnspecified("Panel.background"),
         )
     }
 }

@@ -5,7 +5,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.takeOrElse
-import androidx.compose.ui.res.ResourceLoader
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.tree.BasicLazyTree
 import org.jetbrains.jewel.foundation.tree.DefaultTreeViewKeyActions
@@ -20,7 +19,6 @@ import org.jetbrains.jewel.styling.LazyTreeStyle
 @Composable
 fun <T> LazyTree(
     tree: Tree<T>,
-    resourceLoader: ResourceLoader,
     modifier: Modifier = Modifier,
     onElementClick: (Tree.Element<T>) -> Unit = {},
     treeState: TreeState = rememberTreeState(),
@@ -51,7 +49,7 @@ fun <T> LazyTree(
         keyActions = keyActions,
         chevronContent = { elementState ->
             val painterProvider = style.icons.chevron(elementState.isExpanded, elementState.isSelected)
-            val painter by painterProvider.getPainter(resourceLoader)
+            val painter by painterProvider.getPainter()
             Icon(painter = painter, contentDescription = null)
         },
     ) {

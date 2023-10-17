@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalLayoutDirection
 import org.jetbrains.jewel.foundation.onHover
 
@@ -93,7 +94,7 @@ sealed class TabData {
 
     abstract val selected: Boolean
     abstract val label: String
-    abstract val tabIconResource: String? // TODO use painters instead
+    abstract val icon: Painter?
     abstract val closable: Boolean
     abstract val onClose: () -> Unit
     abstract val onClick: () -> Unit
@@ -102,7 +103,7 @@ sealed class TabData {
     class Default(
         override val selected: Boolean,
         override val label: String,
-        override val tabIconResource: String? = null,
+        override val icon: Painter? = null,
         override val closable: Boolean = true,
         override val onClose: () -> Unit = {},
         override val onClick: () -> Unit = {},
@@ -116,7 +117,7 @@ sealed class TabData {
 
             if (selected != other.selected) return false
             if (label != other.label) return false
-            if (tabIconResource != other.tabIconResource) return false
+            if (icon != other.icon) return false
             if (closable != other.closable) return false
             if (onClose != other.onClose) return false
             if (onClick != other.onClick) return false
@@ -127,7 +128,7 @@ sealed class TabData {
         override fun hashCode(): Int {
             var result = selected.hashCode()
             result = 31 * result + label.hashCode()
-            result = 31 * result + (tabIconResource?.hashCode() ?: 0)
+            result = 31 * result + (icon?.hashCode() ?: 0)
             result = 31 * result + closable.hashCode()
             result = 31 * result + onClose.hashCode()
             result = 31 * result + onClick.hashCode()
@@ -139,7 +140,7 @@ sealed class TabData {
     class Editor(
         override val selected: Boolean,
         override val label: String,
-        override val tabIconResource: String? = null,
+        override val icon: Painter? = null,
         override val closable: Boolean = true,
         override val onClose: () -> Unit = {},
         override val onClick: () -> Unit = {},
@@ -153,7 +154,7 @@ sealed class TabData {
 
             if (selected != other.selected) return false
             if (label != other.label) return false
-            if (tabIconResource != other.tabIconResource) return false
+            if (icon != other.icon) return false
             if (closable != other.closable) return false
             if (onClose != other.onClose) return false
             if (onClick != other.onClick) return false
@@ -164,7 +165,7 @@ sealed class TabData {
         override fun hashCode(): Int {
             var result = selected.hashCode()
             result = 31 * result + label.hashCode()
-            result = 31 * result + (tabIconResource?.hashCode() ?: 0)
+            result = 31 * result + (icon?.hashCode() ?: 0)
             result = 31 * result + closable.hashCode()
             result = 31 * result + onClose.hashCode()
             result = 31 * result + onClick.hashCode()

@@ -22,9 +22,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.unit.dp
-import com.intellij.openapi.components.service
+import com.intellij.icons.AllIcons
 import com.intellij.ui.JBColor
 import org.jetbrains.jewel.CheckboxRow
 import org.jetbrains.jewel.CircularProgressIndicator
@@ -33,42 +32,32 @@ import org.jetbrains.jewel.DefaultButton
 import org.jetbrains.jewel.Icon
 import org.jetbrains.jewel.IconButton
 import org.jetbrains.jewel.LazyTree
-import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.OutlinedButton
 import org.jetbrains.jewel.RadioButtonRow
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.TextField
 import org.jetbrains.jewel.Tooltip
-import org.jetbrains.jewel.bridge.SwingBridgeService
 import org.jetbrains.jewel.bridge.SwingBridgeTheme
-import org.jetbrains.jewel.bridge.retrieveStatelessIcon
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.tree.buildTree
 import org.jetbrains.jewel.intui.standalone.IntUiTheme
 
-@Composable
-internal fun ComponentShowcaseTab() {
+@Composable internal fun ComponentShowcaseTab() {
     SwingBridgeTheme {
-        val resourceLoader = LocalResourceLoader.current
         val bgColor by remember(IntUiTheme.isDark) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
 
         val scrollState = rememberScrollState()
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(bgColor)
-                .verticalScroll(scrollState)
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize().background(bgColor).verticalScroll(scrollState).padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            ColumnOne(resourceLoader)
-            ColumnTwo(resourceLoader)
+            ColumnOne()
+            ColumnTwo()
         }
     }
 }
 
-@Composable
-private fun RowScope.ColumnOne(resourceLoader: ResourceLoader) {
+@Composable private fun RowScope.ColumnOne() {
     Column(
         Modifier.weight(1f),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -108,60 +97,55 @@ private fun RowScope.ColumnOne(resourceLoader: ResourceLoader) {
         CheckboxRow(
             checked = checked,
             onCheckedChange = { checked = it },
-            resourceLoader = resourceLoader,
         ) {
             Text("Hello, I am a themed checkbox")
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             var index by remember { mutableStateOf(0) }
-            RadioButtonRow(selected = index == 0, resourceLoader, onClick = { index = 0 }) {
+            RadioButtonRow(selected = index == 0, onClick = { index = 0 }) {
                 Text("I am number one")
             }
-            RadioButtonRow(selected = index == 1, resourceLoader, onClick = { index = 1 }) {
+            RadioButtonRow(selected = index == 1, onClick = { index = 1 }) {
                 Text("Sad second")
             }
         }
 
-        val svgLoader = service<SwingBridgeService>().svgLoader
         Row {
-            val painterProvider = retrieveStatelessIcon("actions/close.svg", svgLoader, IntUiTheme.iconData)
-            val painter by painterProvider.getPainter(resourceLoader)
-            Icon(painter = painter, modifier = Modifier.border(1.dp, Color.Magenta), contentDescription = "An icon")
+            Icon(
+                "actions/close.svg",
+                iconClass = AllIcons::class.java,
+                modifier = Modifier.border(1.dp, Color.Magenta),
+                contentDescription = "An icon",
+            )
         }
 
         Row {
             IconButton(onClick = { }) {
-                val painterProvider = retrieveStatelessIcon("actions/close.svg", svgLoader, IntUiTheme.iconData)
-                val painter by painterProvider.getPainter(resourceLoader)
-                Icon(painter = painter, contentDescription = "An icon")
+                Icon("actions/close.svg", contentDescription = "An icon", AllIcons::class.java)
             }
         }
 
         Row {
             Text("Circular progress small: ")
-            CircularProgressIndicator(svgLoader)
+            CircularProgressIndicator()
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Circular progress big: ")
-            CircularProgressIndicatorBig(svgLoader)
+            CircularProgressIndicatorBig()
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Tooltip(tooltip = {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val painterProvider =
-                        retrieveStatelessIcon("general/showInfos.svg", svgLoader, IntUiTheme.iconData)
-                    val painter by painterProvider.getPainter(resourceLoader)
-                    Icon(painter = painter, contentDescription = null)
+                    Icon("general/showInfos.svg", contentDescription = null, AllIcons::class.java)
 
                     Text("This is a tooltip")
                 }
             }) {
                 Text(
-                    modifier = Modifier.border(1.dp, IntUiTheme.globalColors.borders.normal)
-                        .padding(12.dp, 8.dp),
+                    modifier = Modifier.border(1.dp, IntUiTheme.globalColors.borders.normal).padding(12.dp, 8.dp),
                     text = "Hover Me!",
                 )
             }
@@ -169,8 +153,7 @@ private fun RowScope.ColumnOne(resourceLoader: ResourceLoader) {
     }
 }
 
-@Composable
-private fun RowScope.ColumnTwo(resourceLoader: ResourceLoader) {
+@Composable private fun RowScope.ColumnTwo() {
     Column(
         Modifier.weight(1f),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -196,7 +179,6 @@ private fun RowScope.ColumnTwo(resourceLoader: ResourceLoader) {
         }
         LazyTree(
             tree = tree,
-            resourceLoader = resourceLoader,
             modifier = Modifier.height(200.dp).fillMaxWidth(),
             onElementClick = {},
             onElementDoubleClick = {},

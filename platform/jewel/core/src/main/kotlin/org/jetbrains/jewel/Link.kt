@@ -26,7 +26,6 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalInputModeManager
-import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -42,18 +41,18 @@ import org.jetbrains.jewel.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.IntelliJTheme.Companion.isSwingCompatMode
 import org.jetbrains.jewel.foundation.onHover
+import org.jetbrains.jewel.painter.PainterProvider
+import org.jetbrains.jewel.painter.hints.Stateful
 import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LocalLinkStyle
 import org.jetbrains.jewel.styling.LocalMenuStyle
 import org.jetbrains.jewel.styling.MenuStyle
-import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.util.appendIf
 import java.awt.Cursor
 
 @Composable
 fun Link(
     text: String,
-    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -83,7 +82,6 @@ fun Link(
         lineHeight = lineHeight,
         interactionSource = interactionSource,
         style = style,
-        resourceLoader = resourceLoader,
         icon = null,
     )
 }
@@ -91,7 +89,6 @@ fun Link(
 @Composable
 fun ExternalLink(
     text: String,
-    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -121,7 +118,6 @@ fun ExternalLink(
         lineHeight = lineHeight,
         interactionSource = interactionSource,
         style = style,
-        resourceLoader = resourceLoader,
         icon = style.icons.externalLink,
     )
 }
@@ -129,7 +125,6 @@ fun ExternalLink(
 @Composable
 fun DropdownLink(
     text: String,
-    resourceLoader: ResourceLoader,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     fontSize: TextUnit = TextUnit.Unspecified,
@@ -172,7 +167,6 @@ fun DropdownLink(
             interactionSource = interactionSource,
             style = style,
             icon = style.icons.dropdownChevron,
-            resourceLoader = resourceLoader,
         )
 
         if (expanded) {
@@ -188,7 +182,6 @@ fun DropdownLink(
                 style = menuStyle,
                 horizontalAlignment = Alignment.Start,
                 content = menuContent,
-                resourceLoader = resourceLoader,
             )
         }
     }
@@ -198,7 +191,6 @@ fun DropdownLink(
 private fun LinkImpl(
     text: String,
     style: LinkStyle,
-    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
     modifier: Modifier,
     enabled: Boolean,
@@ -211,7 +203,7 @@ private fun LinkImpl(
     overflow: TextOverflow,
     lineHeight: TextUnit,
     interactionSource: MutableInteractionSource,
-    icon: PainterProvider<LinkState>?,
+    icon: PainterProvider?,
 ) {
     var linkState by remember(interactionSource, enabled) {
         mutableStateOf(LinkState.of(enabled = enabled))
@@ -285,7 +277,7 @@ private fun LinkImpl(
         )
 
         if (icon != null) {
-            val iconPainter by icon.getPainter(resourceLoader, linkState)
+            val iconPainter by icon.getPainter(Stateful(linkState))
             Icon(
                 iconPainter,
                 contentDescription = null,

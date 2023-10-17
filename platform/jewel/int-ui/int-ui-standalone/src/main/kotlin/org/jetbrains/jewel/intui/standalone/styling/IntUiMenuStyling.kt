@@ -9,19 +9,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.LocalIconData
-import org.jetbrains.jewel.MenuItemState
-import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
+import org.jetbrains.jewel.painter.PainterProvider
 import org.jetbrains.jewel.styling.MenuColors
 import org.jetbrains.jewel.styling.MenuIcons
 import org.jetbrains.jewel.styling.MenuItemColors
 import org.jetbrains.jewel.styling.MenuItemMetrics
 import org.jetbrains.jewel.styling.MenuMetrics
 import org.jetbrains.jewel.styling.MenuStyle
-import org.jetbrains.jewel.styling.PainterProvider
-import org.jetbrains.jewel.styling.ResourcePainterProvider
 import org.jetbrains.jewel.styling.SubmenuMetrics
 
 @Stable
@@ -35,18 +32,16 @@ data class IntUiMenuStyle(
 
         @Composable
         fun light(
-            svgLoader: SvgLoader,
             colors: IntUiMenuColors = IntUiMenuColors.light(),
             metrics: IntUiMenuMetrics = IntUiMenuMetrics(),
-            icons: IntUiMenuIcons = intUiMenuIcons(svgLoader),
+            icons: IntUiMenuIcons = intUiMenuIcons(),
         ) = IntUiMenuStyle(colors, metrics, icons)
 
         @Composable
         fun dark(
-            svgLoader: SvgLoader,
             colors: IntUiMenuColors = IntUiMenuColors.dark(),
             metrics: IntUiMenuMetrics = IntUiMenuMetrics(),
-            icons: IntUiMenuIcons = intUiMenuIcons(svgLoader),
+            icons: IntUiMenuIcons = intUiMenuIcons(),
         ) = IntUiMenuStyle(colors, metrics, icons)
     }
 }
@@ -205,23 +200,20 @@ data class IntUiSubmenuMetrics(
 
 @Immutable
 data class IntUiMenuIcons(
-    override val submenuChevron: PainterProvider<MenuItemState>,
+    override val submenuChevron: PainterProvider,
 ) : MenuIcons {
 
     companion object {
 
         @Composable
         fun submenuChevron(
-            svgLoader: SvgLoader,
             basePath: String = "expui/general/chevronRight.svg",
-        ): PainterProvider<MenuItemState> =
-            ResourcePainterProvider.stateful(basePath, svgLoader, LocalIconData.current)
+        ): PainterProvider = standalonePainterProvider(basePath)
     }
 }
 
 @Composable
 fun intUiMenuIcons(
-    svgLoader: SvgLoader,
-    submenuChevron: PainterProvider<MenuItemState> = IntUiMenuIcons.submenuChevron(svgLoader),
+    submenuChevron: PainterProvider = IntUiMenuIcons.submenuChevron(),
 ) =
     IntUiMenuIcons(submenuChevron)

@@ -36,16 +36,13 @@ import org.jetbrains.jewel.Divider
 import org.jetbrains.jewel.Dropdown
 import org.jetbrains.jewel.Icon
 import org.jetbrains.jewel.IconButton
-import org.jetbrains.jewel.JewelSvgLoader
-import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.Tooltip
 import org.jetbrains.jewel.VerticalScrollbar
 import org.jetbrains.jewel.intui.standalone.IntUiTheme
-import org.jetbrains.jewel.intui.standalone.rememberSvgLoader
+import org.jetbrains.jewel.intui.window.decoratedWindowComponentStyling
 import org.jetbrains.jewel.intui.window.styling.IntUiTitleBarStyle
-import org.jetbrains.jewel.intui.window.withDecoratedWindow
 import org.jetbrains.jewel.samples.standalone.components.Borders
 import org.jetbrains.jewel.samples.standalone.components.Buttons
 import org.jetbrains.jewel.samples.standalone.components.Checkboxes
@@ -60,7 +57,6 @@ import org.jetbrains.jewel.samples.standalone.components.TextAreas
 import org.jetbrains.jewel.samples.standalone.components.TextFields
 import org.jetbrains.jewel.samples.standalone.components.Tooltips
 import org.jetbrains.jewel.separator
-import org.jetbrains.jewel.styling.rememberStatelessPainterProvider
 import org.jetbrains.jewel.window.DecoratedWindow
 import org.jetbrains.jewel.window.TitleBar
 import org.jetbrains.jewel.window.newFullscreenControls
@@ -84,18 +80,18 @@ fun main() {
         )
 
         IntUiTheme(
-            theme.withDecoratedWindow(
-                titleBarStyle = when (intUiTheme) {
-                    IntUiThemes.Light -> IntUiTitleBarStyle.light()
-                    IntUiThemes.LightWithLightHeader -> IntUiTitleBarStyle.lightWithLightHeader()
-                    IntUiThemes.Dark -> IntUiTitleBarStyle.dark()
-                },
-            ),
+            theme,
+            {
+                theme.decoratedWindowComponentStyling(
+                    titleBarStyle = when (intUiTheme) {
+                        IntUiThemes.Light -> IntUiTitleBarStyle.light()
+                        IntUiThemes.LightWithLightHeader -> IntUiTitleBarStyle.lightWithLightHeader()
+                        IntUiThemes.Dark -> IntUiTitleBarStyle.dark()
+                    },
+                )
+            },
             swingCompat,
         ) {
-            val resourceLoader = LocalResourceLoader.current
-            val svgLoader by rememberSvgLoader()
-
             DecoratedWindow(
                 onCloseRequest = { exitApplication() },
                 title = "Jewel component catalog",
@@ -107,11 +103,8 @@ fun main() {
                     IntUiTheme.colorPalette.grey(14)
                 }
                 TitleBar(Modifier.newFullscreenControls(), gradientStartColor = projectColor) {
-                    val jewelLogoProvider = rememberStatelessPainterProvider("icons/jewel-logo.svg", svgLoader)
-                    val jewelLogo by jewelLogoProvider.getPainter(resourceLoader)
-
                     Row(Modifier.align(Alignment.Start)) {
-                        Dropdown(resourceLoader, Modifier.height(30.dp), menuContent = {
+                        Dropdown(Modifier.height(30.dp), menuContent = {
                             selectableItem(false, {
                             }) {
                                 Text("New Project...")
@@ -126,7 +119,12 @@ fun main() {
                                 horizontalArrangement = Arrangement.spacedBy(3.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Icon(jewelLogo, "Jewel Logo", Modifier.padding(horizontal = 4.dp).size(20.dp))
+                                Icon(
+                                    "icons/jewel-logo.svg",
+                                    "Jewel Logo",
+                                    StandaloneSampleIcons::class.java,
+                                    Modifier.padding(horizontal = 4.dp).size(20.dp),
+                                )
                                 Text("jewel")
                             }
                         }
@@ -141,8 +139,7 @@ fun main() {
                             IconButton({
                                 Desktop.getDesktop().browse(URI.create("https://github.com/JetBrains/jewel"))
                             }, Modifier.size(40.dp).padding(5.dp)) {
-                                val iconProvider = rememberStatelessPainterProvider("icons/github@20x20.svg", svgLoader)
-                                Icon(iconProvider.getPainter(resourceLoader).value, "Github")
+                                Icon("icons/github@20x20.svg", "Github", StandaloneSampleIcons::class.java)
                             }
                         }
 
@@ -160,13 +157,11 @@ fun main() {
                                     IntUiThemes.Dark -> IntUiThemes.Light
                                 }
                             }, Modifier.size(40.dp).padding(5.dp)) {
-                                val lightThemeIcon =
-                                    rememberStatelessPainterProvider("icons/lightTheme@20x20.svg", svgLoader)
-                                val darkThemeIcon =
-                                    rememberStatelessPainterProvider("icons/darkTheme@20x20.svg", svgLoader)
-
-                                val iconProvider = if (intUiTheme.isDark()) darkThemeIcon else lightThemeIcon
-                                Icon(iconProvider.getPainter(resourceLoader).value, "Themes")
+                                if (intUiTheme.isDark()) {
+                                    Icon("icons/darkTheme@20x20.svg", "Themes", StandaloneSampleIcons::class.java)
+                                } else {
+                                    Icon("icons/lightTheme@20x20.svg", "Themes", StandaloneSampleIcons::class.java)
+                                }
                             }
                         }
                     }
@@ -178,12 +173,12 @@ fun main() {
                         horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        CheckboxRow("Swing compat", swingCompat, resourceLoader, { swingCompat = it })
+                        CheckboxRow("Swing compat", swingCompat, { swingCompat = it })
                     }
 
                     Divider(Orientation.Horizontal, Modifier.fillMaxWidth())
 
-                    ComponentShowcase(svgLoader, resourceLoader)
+                    ComponentShowcase()
                 }
             }
         }
@@ -191,7 +186,7 @@ fun main() {
 }
 
 @Composable
-private fun ComponentShowcase(svgLoader: JewelSvgLoader, resourceLoader: ResourceLoader) {
+private fun ComponentShowcase() {
     val verticalScrollState = rememberScrollState()
     Box(Modifier.fillMaxSize()) {
         Column(
@@ -202,18 +197,18 @@ private fun ComponentShowcase(svgLoader: JewelSvgLoader, resourceLoader: Resourc
             horizontalAlignment = Alignment.Start,
         ) {
             Borders()
-            Buttons(svgLoader, resourceLoader)
+            Buttons()
             Dropdowns()
             Checkboxes()
             RadioButtons()
             Links()
             Tooltips()
-            TextFields(svgLoader, resourceLoader)
+            TextFields()
             TextAreas()
-            ProgressBar(svgLoader)
+            ProgressBar()
             ChipsAndTree()
-            Tabs(svgLoader, resourceLoader)
-            Icons(svgLoader, resourceLoader)
+            Tabs()
+            Icons()
         }
 
         VerticalScrollbar(

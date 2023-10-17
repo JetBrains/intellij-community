@@ -14,6 +14,7 @@ class IntUiGlobalColors(
     override val borders: BorderColors,
     override val outlines: OutlineColors,
     override val infoContent: Color,
+    override val paneBackground: Color,
 ) : GlobalColors {
 
     override fun equals(other: Any?): Boolean {
@@ -25,6 +26,7 @@ class IntUiGlobalColors(
         if (borders != other.borders) return false
         if (outlines != other.outlines) return false
         if (infoContent != other.infoContent) return false
+        if (paneBackground != other.paneBackground) return false
 
         return true
     }
@@ -33,11 +35,12 @@ class IntUiGlobalColors(
         var result = borders.hashCode()
         result = 31 * result + outlines.hashCode()
         result = 31 * result + infoContent.hashCode()
+        result = 31 * result + paneBackground.hashCode()
         return result
     }
 
     override fun toString(): String =
-        "IntUiGlobalColors(borders=$borders, outlines=$outlines, infoContent=$infoContent)"
+        "IntUiGlobalColors(borders=$borders, outlines=$outlines, infoContent=$infoContent, paneBackground=$paneBackground)"
 
     companion object {
 
@@ -45,22 +48,26 @@ class IntUiGlobalColors(
         fun light(
             borders: BorderColors = IntUiBorderColors.light(),
             outlines: OutlineColors = IntUiOutlineColors.light(),
-            infoContent: Color = IntUiTheme.colorPalette.grey(7),
+            infoContent: Color = IntUiLightTheme.colors.grey(7),
+            paneBackground: Color = IntUiLightTheme.colors.grey(13),
         ) = IntUiGlobalColors(
             borders = borders,
             outlines = outlines,
             infoContent = infoContent,
+            paneBackground = paneBackground,
         )
 
         @Composable
         fun dark(
             borders: BorderColors = IntUiBorderColors.dark(),
             outlines: OutlineColors = IntUiOutlineColors.dark(),
-            infoContent: Color = IntUiTheme.colorPalette.grey(7),
+            infoContent: Color = IntUiDarkTheme.colors.grey(7),
+            paneBackground: Color = IntUiDarkTheme.colors.grey(2),
         ) = IntUiGlobalColors(
             borders = borders,
             outlines = outlines,
             infoContent = infoContent,
+            paneBackground = paneBackground,
         )
     }
 }

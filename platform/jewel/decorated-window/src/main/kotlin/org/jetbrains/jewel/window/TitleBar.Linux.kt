@@ -17,9 +17,10 @@ import com.jetbrains.JBR
 import org.jetbrains.jewel.Icon
 import org.jetbrains.jewel.IconButton
 import org.jetbrains.jewel.IntelliJTheme
-import org.jetbrains.jewel.LocalResourceLoader
+import org.jetbrains.jewel.painter.PainterHint
+import org.jetbrains.jewel.painter.PainterProvider
+import org.jetbrains.jewel.painter.PainterSuffixHint
 import org.jetbrains.jewel.styling.IconButtonStyle
-import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 import java.awt.Frame
 import java.awt.event.MouseEvent
@@ -84,7 +85,7 @@ import java.awt.event.WindowEvent
 @Composable private fun TitleBarScope.ControlButton(
     onClick: () -> Unit,
     state: DecoratedWindowState,
-    painterProvider: PainterProvider<DecoratedWindowState>,
+    painterProvider: PainterProvider,
     description: String,
     style: TitleBarStyle = IntelliJTheme.defaultTitleBarStyle,
     iconButtonStyle: IconButtonStyle = style.paneButtonStyle,
@@ -96,6 +97,13 @@ import java.awt.event.WindowEvent
             .size(style.metrics.titlePaneButtonSize),
         style = iconButtonStyle,
     ) {
-        Icon(painterProvider.getPainter(LocalResourceLoader.current, state).value, description)
+        Icon(painterProvider.getPainter(if (state.isActive) PainterHint.None else Inactive).value, description)
     }
+}
+
+private object Inactive : PainterSuffixHint() {
+
+    override fun suffix(): String = "Inactive"
+
+    override fun toString(): String = "Inactive"
 }

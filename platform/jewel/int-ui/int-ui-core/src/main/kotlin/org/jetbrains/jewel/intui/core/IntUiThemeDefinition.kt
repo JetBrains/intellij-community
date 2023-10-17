@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.intui.core
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.ProvidedValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.GlobalColors
@@ -18,11 +17,7 @@ class IntUiThemeDefinition(
     override val globalMetrics: GlobalMetrics,
     override val defaultTextStyle: TextStyle,
     override val contentColor: Color,
-    override val extensionStyles: Array<ProvidedValue<*>> = emptyArray(),
 ) : IntelliJThemeDefinition {
-
-    override fun withExtensions(vararg extensions: ProvidedValue<*>): IntUiThemeDefinition =
-        copy(extensionStyles = extensionStyles + extensions)
 
     fun copy(
         isDark: Boolean = this.isDark,
@@ -32,7 +27,6 @@ class IntUiThemeDefinition(
         globalMetrics: GlobalMetrics = this.globalMetrics,
         defaultTextStyle: TextStyle = this.defaultTextStyle,
         contentColor: Color = this.contentColor,
-        extensionStyles: Array<ProvidedValue<*>> = this.extensionStyles,
     ): IntUiThemeDefinition = IntUiThemeDefinition(
         isDark = isDark,
         globalColors = globalColors,
@@ -41,7 +35,6 @@ class IntUiThemeDefinition(
         globalMetrics = globalMetrics,
         defaultTextStyle = defaultTextStyle,
         contentColor = contentColor,
-        extensionStyles = extensionStyles,
     )
 
     override fun equals(other: Any?): Boolean {
@@ -57,7 +50,6 @@ class IntUiThemeDefinition(
         if (globalMetrics != other.globalMetrics) return false
         if (defaultTextStyle != other.defaultTextStyle) return false
         if (contentColor != other.contentColor) return false
-        if (!extensionStyles.contentEquals(other.extensionStyles)) return false
 
         return true
     }
@@ -70,7 +62,6 @@ class IntUiThemeDefinition(
         result = 31 * result + globalMetrics.hashCode()
         result = 31 * result + defaultTextStyle.hashCode()
         result = 31 * result + contentColor.hashCode()
-        result = 31 * result + extensionStyles.contentHashCode()
         return result
     }
 }

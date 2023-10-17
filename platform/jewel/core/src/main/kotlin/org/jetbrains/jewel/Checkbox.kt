@@ -27,7 +27,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.takeOrElse
-import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
@@ -40,6 +39,10 @@ import org.jetbrains.jewel.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.CommonStateBitMask.Selected
 import org.jetbrains.jewel.ToggleableComponentState.Companion.readToggleableState
 import org.jetbrains.jewel.foundation.Stroke
+import org.jetbrains.jewel.painter.PainterHint
+import org.jetbrains.jewel.painter.PainterSuffixHint
+import org.jetbrains.jewel.painter.hints.Selected
+import org.jetbrains.jewel.painter.hints.Stateful
 import org.jetbrains.jewel.styling.CheckboxColors
 import org.jetbrains.jewel.styling.CheckboxIcons
 import org.jetbrains.jewel.styling.CheckboxMetrics
@@ -48,7 +51,6 @@ import org.jetbrains.jewel.styling.LocalCheckboxStyle
 @Composable
 fun Checkbox(
     checked: Boolean,
-    resourceLoader: ResourceLoader,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -71,7 +73,6 @@ fun Checkbox(
         metrics = metrics,
         icons = icons,
         textStyle = textStyle,
-        resourceLoader = resourceLoader,
         content = null,
     )
 }
@@ -79,7 +80,6 @@ fun Checkbox(
 @Composable
 fun TriStateCheckbox(
     state: ToggleableState,
-    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -101,7 +101,6 @@ fun TriStateCheckbox(
         metrics = metrics,
         icons = icons,
         textStyle = textStyle,
-        resourceLoader = resourceLoader,
         content = null,
     )
 }
@@ -110,7 +109,6 @@ fun TriStateCheckbox(
 fun TriStateCheckboxRow(
     text: String,
     state: ToggleableState,
-    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -131,7 +129,6 @@ fun TriStateCheckboxRow(
         colors = colors,
         metrics = metrics,
         icons = icons,
-        resourceLoader = resourceLoader,
         textStyle = textStyle,
     ) {
         Text(text)
@@ -142,7 +139,6 @@ fun TriStateCheckboxRow(
 fun CheckboxRow(
     text: String,
     checked: Boolean,
-    resourceLoader: ResourceLoader,
     onCheckedChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -165,7 +161,6 @@ fun CheckboxRow(
         colors = colors,
         metrics = metrics,
         icons = icons,
-        resourceLoader = resourceLoader,
         textStyle = textStyle,
     ) {
         Text(text)
@@ -175,7 +170,6 @@ fun CheckboxRow(
 @Composable
 fun CheckboxRow(
     checked: Boolean,
-    resourceLoader: ResourceLoader,
     onCheckedChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -199,7 +193,6 @@ fun CheckboxRow(
         colors = colors,
         metrics = metrics,
         icons = icons,
-        resourceLoader = resourceLoader,
         textStyle = textStyle,
         content = content,
     )
@@ -208,7 +201,6 @@ fun CheckboxRow(
 @Composable
 fun TriStateCheckboxRow(
     state: ToggleableState,
-    resourceLoader: ResourceLoader,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -230,7 +222,6 @@ fun TriStateCheckboxRow(
         colors = colors,
         metrics = metrics,
         icons = icons,
-        resourceLoader = resourceLoader,
         textStyle = textStyle,
         content = content,
     )
@@ -244,7 +235,6 @@ private fun CheckboxImpl(
     colors: CheckboxColors,
     metrics: CheckboxMetrics,
     icons: CheckboxIcons,
-    resourceLoader: ResourceLoader,
     modifier: Modifier,
     enabled: Boolean,
     outline: Outline,
@@ -268,11 +258,15 @@ private fun CheckboxImpl(
                         checkboxState.copy(pressed = false)
 
                 is HoverInteraction.Enter -> checkboxState = checkboxState.copy(hovered = true)
-                is HoverInteraction.Exit -> checkboxState = checkboxState.copy(hovered = true)
+                is HoverInteraction.Exit -> checkboxState = checkboxState.copy(hovered = false)
                 is FocusInteraction.Focus -> checkboxState = checkboxState.copy(focused = true)
                 is FocusInteraction.Unfocus -> checkboxState = checkboxState.copy(focused = false)
             }
         }
+    }
+
+    if (LocalSwingCompatMode.current) {
+        checkboxState = checkboxState.copy(hovered = false, pressed = false)
     }
 
     val wrapperModifier = modifier.triStateToggleable(
@@ -294,7 +288,15 @@ private fun CheckboxImpl(
             alignment = Stroke.Alignment.Center,
         )
 
-    val checkboxPainter by icons.checkbox.getPainter(resourceLoader, checkboxState)
+    val checkboxPainter by icons.checkbox.getPainter(
+        if (checkboxState.toggleableState == ToggleableState.Indeterminate) {
+            CheckBoxIndeterminate
+        } else {
+            PainterHint.None
+        },
+        Selected(checkboxState),
+        Stateful(checkboxState),
+    )
 
     if (content == null) {
         Box(contentAlignment = Alignment.TopStart) {
@@ -321,6 +323,11 @@ private fun CheckboxImpl(
             }
         }
     }
+}
+
+private object CheckBoxIndeterminate : PainterSuffixHint() {
+
+    override fun suffix(): String = "Indeterminate"
 }
 
 @Composable

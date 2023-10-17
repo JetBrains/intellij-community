@@ -19,6 +19,8 @@ compose.desktop {
     application {
         mainClass = "org.jetbrains.jewel.samples.standalone.MainKt"
 
+        jvmArgs("-Dorg.jetbrains.jewel.debug=true")
+
         nativeDistributions {
             targetFormats(TargetFormat.Dmg)
             packageName = "Jewel Sample"

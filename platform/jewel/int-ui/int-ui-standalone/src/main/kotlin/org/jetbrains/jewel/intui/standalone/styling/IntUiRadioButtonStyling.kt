@@ -6,17 +6,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.LocalIconData
-import org.jetbrains.jewel.RadioButtonState
-import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.styling.PainterProvider
+import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
+import org.jetbrains.jewel.painter.PainterProvider
 import org.jetbrains.jewel.styling.RadioButtonColors
 import org.jetbrains.jewel.styling.RadioButtonIcons
 import org.jetbrains.jewel.styling.RadioButtonMetrics
 import org.jetbrains.jewel.styling.RadioButtonStyle
-import org.jetbrains.jewel.styling.ResourcePainterProvider
 
 @Immutable
 data class IntUiRadioButtonStyle(
@@ -29,18 +26,16 @@ data class IntUiRadioButtonStyle(
 
         @Composable
         fun light(
-            svgLoader: SvgLoader,
             colors: IntUiRadioButtonColors = IntUiRadioButtonColors.light(),
             metrics: IntUiRadioButtonMetrics = IntUiRadioButtonMetrics(),
-            icons: IntUiRadioButtonIcons = IntUiRadioButtonIcons.light(svgLoader),
+            icons: IntUiRadioButtonIcons = IntUiRadioButtonIcons.light(),
         ) = IntUiRadioButtonStyle(colors, metrics, icons)
 
         @Composable
         fun dark(
-            svgLoader: SvgLoader,
             colors: IntUiRadioButtonColors = IntUiRadioButtonColors.dark(),
             metrics: IntUiRadioButtonMetrics = IntUiRadioButtonMetrics(),
-            icons: IntUiRadioButtonIcons = IntUiRadioButtonIcons.dark(svgLoader),
+            icons: IntUiRadioButtonIcons = IntUiRadioButtonIcons.dark(),
         ) = IntUiRadioButtonStyle(colors, metrics, icons)
     }
 }
@@ -101,34 +96,24 @@ data class IntUiRadioButtonMetrics(
 
 @Immutable
 data class IntUiRadioButtonIcons(
-    override val radioButton: PainterProvider<RadioButtonState>,
+    override val radioButton: PainterProvider,
 ) : RadioButtonIcons {
 
     companion object {
 
         @Composable
         fun radioButton(
-            svgLoader: SvgLoader,
             basePath: String = "com/intellij/ide/ui/laf/icons/intellij/radio.svg",
-        ): PainterProvider<RadioButtonState> =
-            ResourcePainterProvider.stateful(basePath, svgLoader, LocalIconData.current)
+        ): PainterProvider = standalonePainterProvider(basePath)
 
         @Composable
         fun light(
-            svgLoader: SvgLoader,
-            radioButton: PainterProvider<RadioButtonState> = radioButton(
-                svgLoader,
-                "com/intellij/ide/ui/laf/icons/intellij/radio.svg",
-            ),
+            radioButton: PainterProvider = radioButton("com/intellij/ide/ui/laf/icons/intellij/radio.svg"),
         ) = IntUiRadioButtonIcons(radioButton)
 
         @Composable
         fun dark(
-            svgLoader: SvgLoader,
-            radioButton: PainterProvider<RadioButtonState> = radioButton(
-                svgLoader,
-                "com/intellij/ide/ui/laf/icons/darcula/radio.svg",
-            ),
+            radioButton: PainterProvider = radioButton("com/intellij/ide/ui/laf/icons/darcula/radio.svg"),
         ) = IntUiRadioButtonIcons(radioButton)
     }
 }

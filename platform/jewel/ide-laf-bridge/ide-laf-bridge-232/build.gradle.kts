@@ -5,7 +5,7 @@ plugins {
 }
 
 dependencies {
-    api(projects.intUi.intUiStandalone)
+    api(projects.intUi.intUiCore)
     compileOnly(libs.bundles.idea232)
 }
 

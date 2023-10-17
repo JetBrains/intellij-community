@@ -10,6 +10,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.LinkState
+import org.jetbrains.jewel.painter.PainterProvider
 
 @Immutable
 interface LinkStyle {
@@ -55,8 +56,8 @@ interface LinkMetrics {
 @Immutable
 interface LinkIcons {
 
-    val dropdownChevron: PainterProvider<LinkState>
-    val externalLink: PainterProvider<LinkState>
+    val dropdownChevron: PainterProvider
+    val externalLink: PainterProvider
 }
 
 @Immutable

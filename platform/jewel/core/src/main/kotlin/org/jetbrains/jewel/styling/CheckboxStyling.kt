@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.CheckboxState
+import org.jetbrains.jewel.painter.PainterProvider
 
 @Immutable
 interface CheckboxStyle {
@@ -64,7 +65,7 @@ interface CheckboxMetrics {
 @Immutable
 interface CheckboxIcons {
 
-    val checkbox: PainterProvider<CheckboxState>
+    val checkbox: PainterProvider
 }
 
 val LocalCheckboxStyle = staticCompositionLocalOf<CheckboxStyle> {

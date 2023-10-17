@@ -9,19 +9,16 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.LinkState
-import org.jetbrains.jewel.LocalIconData
-import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
+import org.jetbrains.jewel.painter.PainterProvider
 import org.jetbrains.jewel.styling.LinkColors
 import org.jetbrains.jewel.styling.LinkIcons
 import org.jetbrains.jewel.styling.LinkMetrics
 import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LinkTextStyles
-import org.jetbrains.jewel.styling.PainterProvider
-import org.jetbrains.jewel.styling.ResourcePainterProvider
 
 @Immutable
 data class IntUiLinkStyle(
@@ -35,19 +32,17 @@ data class IntUiLinkStyle(
 
         @Composable
         fun light(
-            svgLoader: SvgLoader,
             colors: IntUiLinkColors = IntUiLinkColors.light(),
             metrics: IntUiLinkMetrics = IntUiLinkMetrics(),
-            icons: IntUiLinkIcons = intUiLinkIcons(svgLoader),
+            icons: IntUiLinkIcons = intUiLinkIcons(),
             textStyles: IntUiLinkTextStyles = IntUiLinkTextStyles.light(),
         ) = IntUiLinkStyle(colors, metrics, icons, textStyles)
 
         @Composable
         fun dark(
-            svgLoader: SvgLoader,
             colors: IntUiLinkColors = IntUiLinkColors.dark(),
             metrics: IntUiLinkMetrics = IntUiLinkMetrics(),
-            icons: IntUiLinkIcons = intUiLinkIcons(svgLoader),
+            icons: IntUiLinkIcons = intUiLinkIcons(),
             textStyles: IntUiLinkTextStyles = IntUiLinkTextStyles.dark(),
         ) = IntUiLinkStyle(colors, metrics, icons, textStyles)
     }
@@ -110,33 +105,28 @@ data class IntUiLinkMetrics(
 
 @Immutable
 data class IntUiLinkIcons(
-    override val dropdownChevron: PainterProvider<LinkState>,
-    override val externalLink: PainterProvider<LinkState>,
+    override val dropdownChevron: PainterProvider,
+    override val externalLink: PainterProvider,
 ) : LinkIcons {
 
     companion object {
 
         @Composable
         fun dropdownChevron(
-            svgLoader: SvgLoader,
             basePath: String = "expui/general/chevronDown.svg",
-        ): PainterProvider<LinkState> =
-            ResourcePainterProvider.stateful(basePath, svgLoader, LocalIconData.current)
+        ): PainterProvider = standalonePainterProvider(basePath)
 
         @Composable
         fun externalLink(
-            svgLoader: SvgLoader,
             basePath: String = "expui/ide/externalLink.svg",
-        ): PainterProvider<LinkState> =
-            ResourcePainterProvider.stateful(basePath, svgLoader, LocalIconData.current)
+        ): PainterProvider = standalonePainterProvider(basePath)
     }
 }
 
 @Composable
 fun intUiLinkIcons(
-    svgLoader: SvgLoader,
-    dropdownChevron: PainterProvider<LinkState> = IntUiLinkIcons.dropdownChevron(svgLoader),
-    externalLink: PainterProvider<LinkState> = IntUiLinkIcons.externalLink(svgLoader),
+    dropdownChevron: PainterProvider = IntUiLinkIcons.dropdownChevron(),
+    externalLink: PainterProvider = IntUiLinkIcons.externalLink(),
 ) = IntUiLinkIcons(dropdownChevron, externalLink)
 
 @Immutable

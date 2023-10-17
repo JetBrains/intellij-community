@@ -13,7 +13,6 @@ import org.jetbrains.jewel.DropdownLink
 import org.jetbrains.jewel.ExternalLink
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.Link
-import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.separator
 
@@ -21,14 +20,13 @@ import org.jetbrains.jewel.separator
 fun Links() {
     GroupHeader("Links")
 
-    val resourceLoader = LocalResourceLoader.current
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Link("Link", resourceLoader, {})
+        Link("Link", {})
 
-        ExternalLink("ExternalLink", resourceLoader, {})
+        ExternalLink("ExternalLink", {})
 
         val items = remember {
             listOf(
@@ -41,7 +39,7 @@ fun Links() {
             )
         }
         var selected by remember { mutableStateOf(items.first()) }
-        DropdownLink("DropdownLink", resourceLoader) {
+        DropdownLink("DropdownLink") {
             items.forEach {
                 if (it == "---") {
                     separator()
@@ -59,11 +57,11 @@ fun Links() {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Link("Link", resourceLoader, {}, enabled = false)
+        Link("Link", {}, enabled = false)
 
-        ExternalLink("ExternalLink", resourceLoader, {}, enabled = false)
+        ExternalLink("ExternalLink", {}, enabled = false)
 
-        DropdownLink("DropdownLink", resourceLoader, enabled = false) {
+        DropdownLink("DropdownLink", enabled = false) {
         }
     }
 }

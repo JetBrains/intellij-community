@@ -79,8 +79,8 @@ fun Text(
     style: TextStyle = IntelliJTheme.textStyle,
 ) {
     val textColor = color.takeOrElse {
-        style.color.takeOrElse {
-            LocalContentColor.current
+        LocalContentColor.current.takeOrElse {
+            style.color
         }
     }
 

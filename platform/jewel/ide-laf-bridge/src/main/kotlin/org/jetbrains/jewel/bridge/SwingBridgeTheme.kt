@@ -6,8 +6,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.intellij.openapi.components.service
 import org.jetbrains.jewel.ExperimentalJewelApi
-import org.jetbrains.jewel.LocalResourceLoader
-import org.jetbrains.jewel.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.core.BaseIntUiTheme
+import org.jetbrains.jewel.painter.LocalPainterHintsProvider
 
 private val bridgeService
     get() = service<SwingBridgeService>()
@@ -18,8 +18,10 @@ fun SwingBridgeTheme(content: @Composable () -> Unit) {
     val themeData by bridgeService.currentBridgeThemeData.collectAsState()
 
     // TODO handle non-Int UI themes, too
-    IntUiTheme(themeData.themeDefinition, themeData.componentStyling, swingCompatMode = true) {
-        CompositionLocalProvider(LocalResourceLoader provides BridgeResourceLoader) {
+    BaseIntUiTheme(themeData.themeDefinition, {
+        themeData.componentStyling.providedStyles()
+    }, swingCompatMode = true) {
+        CompositionLocalProvider(LocalPainterHintsProvider provides BridgePainterHintsProvider(themeData.themeDefinition.isDark)) {
             content()
         }
     }

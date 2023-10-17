@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.RadioButtonState
+import org.jetbrains.jewel.painter.PainterProvider
 
 @Immutable
 interface RadioButtonStyle {
@@ -50,7 +51,7 @@ interface RadioButtonMetrics {
 @Immutable
 interface RadioButtonIcons {
 
-    val radioButton: PainterProvider<RadioButtonState>
+    val radioButton: PainterProvider
 }
 
 val LocalRadioButtonStyle = staticCompositionLocalOf<RadioButtonStyle> {

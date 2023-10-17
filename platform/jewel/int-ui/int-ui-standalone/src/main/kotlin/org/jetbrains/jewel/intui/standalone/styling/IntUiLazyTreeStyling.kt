@@ -8,16 +8,14 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.LocalIconData
-import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
+import org.jetbrains.jewel.painter.PainterProvider
 import org.jetbrains.jewel.styling.LazyTreeColors
 import org.jetbrains.jewel.styling.LazyTreeIcons
 import org.jetbrains.jewel.styling.LazyTreeMetrics
 import org.jetbrains.jewel.styling.LazyTreeStyle
-import org.jetbrains.jewel.styling.PainterProvider
-import org.jetbrains.jewel.styling.ResourcePainterProvider
 
 @Stable
 data class IntUiLazyTreeStyle(
@@ -30,18 +28,16 @@ data class IntUiLazyTreeStyle(
 
         @Composable
         fun light(
-            svgLoader: SvgLoader,
             colors: IntUiLazyTreeColors = IntUiLazyTreeColors.light(),
             metrics: IntUiLazyTreeMetrics = IntUiLazyTreeMetrics(),
-            icons: IntUiLazyTreeIcons = intUiLazyTreeIcons(svgLoader),
+            icons: IntUiLazyTreeIcons = intUiLazyTreeIcons(),
         ) = IntUiLazyTreeStyle(colors, metrics, icons)
 
         @Composable
         fun dark(
-            svgLoader: SvgLoader,
             colors: IntUiLazyTreeColors = IntUiLazyTreeColors.dark(),
             metrics: IntUiLazyTreeMetrics = IntUiLazyTreeMetrics(),
-            icons: IntUiLazyTreeIcons = intUiLazyTreeIcons(svgLoader),
+            icons: IntUiLazyTreeIcons = intUiLazyTreeIcons(),
         ) = IntUiLazyTreeStyle(colors, metrics, icons)
     }
 }
@@ -111,39 +107,34 @@ data class IntUiLazyTreeMetrics(
 
 @Immutable
 data class IntUiLazyTreeIcons(
-    override val chevronCollapsed: PainterProvider<Unit>,
-    override val chevronExpanded: PainterProvider<Unit>,
-    override val chevronSelectedCollapsed: PainterProvider<Unit>,
-    override val chevronSelectedExpanded: PainterProvider<Unit>,
+    override val chevronCollapsed: PainterProvider,
+    override val chevronExpanded: PainterProvider,
+    override val chevronSelectedCollapsed: PainterProvider,
+    override val chevronSelectedExpanded: PainterProvider,
 ) : LazyTreeIcons {
 
     companion object {
 
         @Composable
         fun chevronCollapsed(
-            svgLoader: SvgLoader,
             basePath: String = "expui/general/chevronRight.svg",
-        ): PainterProvider<Unit> =
-            ResourcePainterProvider.stateless(basePath, svgLoader, LocalIconData.current)
+        ): PainterProvider = standalonePainterProvider(basePath)
 
         @Composable
         fun chevronExpanded(
-            svgLoader: SvgLoader,
             basePath: String = "expui/general/chevronDown.svg",
-        ): PainterProvider<Unit> =
-            ResourcePainterProvider.stateless(basePath, svgLoader, LocalIconData.current)
+        ): PainterProvider = standalonePainterProvider(basePath)
     }
 }
 
 @Composable
 fun intUiLazyTreeIcons(
-    svgLoader: SvgLoader,
-    chevronCollapsed: PainterProvider<Unit> =
-        IntUiLazyTreeIcons.chevronCollapsed(svgLoader),
-    chevronExpanded: PainterProvider<Unit> =
-        IntUiLazyTreeIcons.chevronExpanded(svgLoader),
-    chevronSelectedCollapsed: PainterProvider<Unit> =
-        IntUiLazyTreeIcons.chevronCollapsed(svgLoader),
-    chevronSelectedExpanded: PainterProvider<Unit> =
-        IntUiLazyTreeIcons.chevronExpanded(svgLoader),
+    chevronCollapsed: PainterProvider =
+        IntUiLazyTreeIcons.chevronCollapsed(),
+    chevronExpanded: PainterProvider =
+        IntUiLazyTreeIcons.chevronExpanded(),
+    chevronSelectedCollapsed: PainterProvider =
+        IntUiLazyTreeIcons.chevronCollapsed(),
+    chevronSelectedExpanded: PainterProvider =
+        IntUiLazyTreeIcons.chevronExpanded(),
 ) = IntUiLazyTreeIcons(chevronCollapsed, chevronExpanded, chevronSelectedCollapsed, chevronSelectedExpanded)

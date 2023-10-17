@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.Dropdown
 import org.jetbrains.jewel.GroupHeader
-import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.Outline
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.separator
@@ -34,18 +33,15 @@ fun Dropdowns() {
             )
         }
         var selected by remember { mutableStateOf(items.first()) }
-        val resourceLoader = LocalResourceLoader.current
 
         Dropdown(
             enabled = false,
-            resourceLoader = resourceLoader,
             menuContent = {
             },
         ) {
             Text("Disabled")
         }
         Dropdown(
-            resourceLoader = resourceLoader,
             menuContent = {
                 items.forEach {
                     if (it == "---") {
@@ -95,7 +91,6 @@ fun Dropdowns() {
             Text(selected)
         }
         Dropdown(
-            resourceLoader = resourceLoader,
             outline = Outline.Error,
             menuContent = {
                 items.forEach {

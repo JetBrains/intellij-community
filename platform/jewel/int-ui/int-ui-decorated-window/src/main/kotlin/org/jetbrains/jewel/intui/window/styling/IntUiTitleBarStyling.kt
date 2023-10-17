@@ -9,13 +9,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.IntelliJIconMapper
-import org.jetbrains.jewel.InternalJewelApi
-import org.jetbrains.jewel.LocalIconData
-import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.rememberSvgLoader
 import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownColors
 import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownMetrics
 import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownStyle
@@ -23,13 +18,11 @@ import org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonColors
 import org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonMetrics
 import org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonStyle
 import org.jetbrains.jewel.intui.standalone.styling.IntUiMenuStyle
+import org.jetbrains.jewel.intui.window.decoratedWindowPainterProvider
+import org.jetbrains.jewel.painter.PainterProvider
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.IconButtonStyle
 import org.jetbrains.jewel.styling.MenuStyle
-import org.jetbrains.jewel.styling.PainterProvider
-import org.jetbrains.jewel.styling.ResourcePainterProvider
-import org.jetbrains.jewel.styling.SimpleResourcePathPatcher
-import org.jetbrains.jewel.window.DecoratedWindowState
 import org.jetbrains.jewel.window.styling.TitleBarColors
 import org.jetbrains.jewel.window.styling.TitleBarIcons
 import org.jetbrains.jewel.window.styling.TitleBarMetrics
@@ -83,13 +76,11 @@ class IntUiTitleBarStyle(
 
         @Composable
         private fun titleBarDropdownStyle(
-            svgLoader: SvgLoader,
             content: Color,
             hoverBackground: Color,
             pressBackground: Color,
             menuStyle: MenuStyle,
         ) = IntUiDropdownStyle.undecorated(
-            svgLoader,
             IntUiDropdownColors.undecorated(
                 backgroundHovered = hoverBackground,
                 backgroundPressed = pressBackground,
@@ -129,20 +120,18 @@ class IntUiTitleBarStyle(
 
         @Composable
         fun light(
-            svgLoader: SvgLoader = rememberSvgLoader(false).value,
             colors: IntUiTitleBarColors = IntUiTitleBarColors.light(),
             metrics: IntUiTitleBarMetrics = IntUiTitleBarMetrics(),
-            icons: IntUiTitleBarIcons = intUiTitleBarIcons(svgLoader),
+            icons: IntUiTitleBarIcons = intUiTitleBarIcons(),
         ): IntUiTitleBarStyle = IntUiTitleBarStyle(
             colors = colors,
             metrics = metrics,
             icons = icons,
             dropdownStyle = titleBarDropdownStyle(
-                svgLoader,
                 colors.content,
                 colors.dropdownHoverBackground,
                 colors.dropdownPressBackground,
-                IntUiMenuStyle.light(svgLoader),
+                IntUiMenuStyle.light(),
             ),
             iconButtonStyle = titleBarIconButtonStyle(
                 colors.iconButtonHoverBackground,
@@ -163,20 +152,18 @@ class IntUiTitleBarStyle(
 
         @Composable
         fun lightWithLightHeader(
-            svgLoader: SvgLoader = rememberSvgLoader(false).value,
             colors: IntUiTitleBarColors = IntUiTitleBarColors.lightWithLightHeader(),
             metrics: IntUiTitleBarMetrics = IntUiTitleBarMetrics(),
-            icons: IntUiTitleBarIcons = intUiTitleBarIcons(svgLoader),
+            icons: IntUiTitleBarIcons = intUiTitleBarIcons(),
         ): IntUiTitleBarStyle = IntUiTitleBarStyle(
             colors = colors,
             metrics = metrics,
             icons = icons,
             dropdownStyle = titleBarDropdownStyle(
-                svgLoader,
                 colors.content,
                 colors.dropdownHoverBackground,
                 colors.dropdownPressBackground,
-                IntUiMenuStyle.light(svgLoader),
+                IntUiMenuStyle.light(),
             ),
             iconButtonStyle = titleBarIconButtonStyle(
                 colors.iconButtonHoverBackground,
@@ -197,20 +184,18 @@ class IntUiTitleBarStyle(
 
         @Composable
         fun dark(
-            svgLoader: SvgLoader = rememberSvgLoader(true).value,
             colors: IntUiTitleBarColors = IntUiTitleBarColors.dark(),
             metrics: IntUiTitleBarMetrics = IntUiTitleBarMetrics(),
-            icons: IntUiTitleBarIcons = intUiTitleBarIcons(svgLoader),
+            icons: IntUiTitleBarIcons = intUiTitleBarIcons(),
         ): IntUiTitleBarStyle = IntUiTitleBarStyle(
             colors = colors,
             metrics = metrics,
             icons = icons,
             dropdownStyle = titleBarDropdownStyle(
-                svgLoader,
                 colors.content,
                 colors.dropdownHoverBackground,
                 colors.dropdownPressBackground,
-                IntUiMenuStyle.dark(svgLoader),
+                IntUiMenuStyle.dark(),
             ),
             iconButtonStyle = titleBarIconButtonStyle(
                 colors.iconButtonHoverBackground,
@@ -450,10 +435,10 @@ class IntUiTitleBarMetrics(
 }
 
 class IntUiTitleBarIcons(
-    override val minimizeButton: PainterProvider<DecoratedWindowState>,
-    override val maximizeButton: PainterProvider<DecoratedWindowState>,
-    override val restoreButton: PainterProvider<DecoratedWindowState>,
-    override val closeButton: PainterProvider<DecoratedWindowState>,
+    override val minimizeButton: PainterProvider,
+    override val maximizeButton: PainterProvider,
+    override val restoreButton: PainterProvider,
+    override val closeButton: PainterProvider,
 ) : TitleBarIcons {
 
     override fun hashCode(): Int {
@@ -481,86 +466,34 @@ class IntUiTitleBarIcons(
         return true
     }
 
-    @OptIn(InternalJewelApi::class)
     companion object {
 
         @Composable
         fun minimize(
-            svgLoader: SvgLoader,
             basePath: String = "icons/intui/window/minimize.svg",
-        ): PainterProvider<DecoratedWindowState> = ResourcePainterProvider(
-            basePath,
-            svgLoader,
-            IntelliJIconMapper,
-            LocalIconData.current,
-            TitleBarResourcePathPatcher(),
-        )
+        ): PainterProvider = decoratedWindowPainterProvider(basePath)
 
         @Composable
         fun maximize(
-            svgLoader: SvgLoader,
             basePath: String = "icons/intui/window/maximize.svg",
-        ): PainterProvider<DecoratedWindowState> =
-            ResourcePainterProvider(
-                basePath,
-                svgLoader,
-                IntelliJIconMapper,
-                LocalIconData.current,
-                TitleBarResourcePathPatcher(),
-            )
+        ): PainterProvider = decoratedWindowPainterProvider(basePath)
 
         @Composable
         fun restore(
-            svgLoader: SvgLoader,
             basePath: String = "icons/intui/window/restore.svg",
-        ): PainterProvider<DecoratedWindowState> =
-            ResourcePainterProvider(
-                basePath,
-                svgLoader,
-                IntelliJIconMapper,
-                LocalIconData.current,
-                TitleBarResourcePathPatcher(),
-            )
+        ): PainterProvider = decoratedWindowPainterProvider(basePath)
 
         @Composable
         fun close(
-            svgLoader: SvgLoader,
             basePath: String = "icons/intui/window/close.svg",
-        ): PainterProvider<DecoratedWindowState> =
-            ResourcePainterProvider(
-                basePath,
-                svgLoader,
-                IntelliJIconMapper,
-                LocalIconData.current,
-                TitleBarResourcePathPatcher(),
-            )
+        ): PainterProvider = decoratedWindowPainterProvider(basePath)
     }
 }
 
 @Composable
 fun intUiTitleBarIcons(
-    svgLoader: SvgLoader,
-    minimize: PainterProvider<DecoratedWindowState> = IntUiTitleBarIcons.minimize(svgLoader),
-    maximize: PainterProvider<DecoratedWindowState> = IntUiTitleBarIcons.maximize(svgLoader),
-    restore: PainterProvider<DecoratedWindowState> = IntUiTitleBarIcons.restore(svgLoader),
-    close: PainterProvider<DecoratedWindowState> = IntUiTitleBarIcons.close(svgLoader),
+    minimize: PainterProvider = IntUiTitleBarIcons.minimize(),
+    maximize: PainterProvider = IntUiTitleBarIcons.maximize(),
+    restore: PainterProvider = IntUiTitleBarIcons.restore(),
+    close: PainterProvider = IntUiTitleBarIcons.close(),
 ) = IntUiTitleBarIcons(minimize, maximize, restore, close)
-
-private class TitleBarResourcePathPatcher(
-    private val prefixTokensProvider: (state: DecoratedWindowState) -> String = { "" },
-    private val suffixTokensProvider: (state: DecoratedWindowState) -> String = { "" },
-) : SimpleResourcePathPatcher<DecoratedWindowState>() {
-
-    @Composable
-    override fun injectVariantTokens(extraData: DecoratedWindowState?): String = buildString {
-        if (extraData == null) return@buildString
-
-        append(prefixTokensProvider(extraData))
-
-        if (!extraData.isActive) {
-            append("Inactive")
-        }
-
-        append(suffixTokensProvider(extraData))
-    }
-}

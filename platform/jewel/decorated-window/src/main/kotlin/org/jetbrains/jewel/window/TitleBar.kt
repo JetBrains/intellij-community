@@ -10,7 +10,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
@@ -41,9 +40,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
 import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.LocalContentColor
-import org.jetbrains.jewel.onBackground
+import org.jetbrains.jewel.OverrideDarkMode
 import org.jetbrains.jewel.styling.LocalDropdownStyle
 import org.jetbrains.jewel.styling.LocalIconButtonStyle
+import org.jetbrains.jewel.util.isDark
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 import org.jetbrains.jewel.window.utils.DesktopPlatform
 import org.jetbrains.jewel.window.utils.macos.MacUtil
@@ -106,7 +106,7 @@ internal const val TITLE_BAR_BORDER_LAYOUT_ID = "__TITLE_BAR_BORDER__"
                 LocalIconButtonStyle provides style.iconButtonStyle,
                 LocalDropdownStyle provides style.dropdownStyle,
             ) {
-                onBackground(background) {
+                OverrideDarkMode(background.isDark()) {
                     val scope = TitleBarScopeImpl(titleBarInfo.title, titleBarInfo.icon)
                     scope.content(state)
                 }

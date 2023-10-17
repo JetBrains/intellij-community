@@ -10,20 +10,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.Icon
 import org.jetbrains.jewel.LabelledTextField
-import org.jetbrains.jewel.LocalIconData
 import org.jetbrains.jewel.Outline
-import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.TextField
-import org.jetbrains.jewel.styling.rememberStatelessPainterProvider
+import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 
 @Composable
-fun TextFields(svgLoader: SvgLoader, resourceLoader: ResourceLoader) {
+fun TextFields() {
     GroupHeader("TextFields")
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -72,12 +69,7 @@ fun TextFields(svgLoader: SvgLoader, resourceLoader: ResourceLoader) {
     ) {
         var text by remember { mutableStateOf("With leading icon") }
         TextField(text, { text = it }, enabled = true, leadingIcon = {
-            val iconData = LocalIconData.current
-            val searchIcon by rememberStatelessPainterProvider("icons/search.svg", svgLoader, iconData)
-                .getPainter(
-                    resourceLoader,
-                )
-            Icon(searchIcon, "SearchIcon", Modifier.size(16.dp))
+            Icon("icons/search.svg", "SearchIcon", StandaloneSampleIcons::class.java, Modifier.size(16.dp))
         })
     }
 }

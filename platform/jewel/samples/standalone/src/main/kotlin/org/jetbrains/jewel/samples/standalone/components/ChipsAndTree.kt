@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.Chip
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.LazyTree
-import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.RadioButtonChip
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.ToggleableChip
@@ -171,7 +170,6 @@ fun TreeSample(modifier: Modifier = Modifier) {
         }
     }
 
-    val resourceLoader = LocalResourceLoader.current
     val borderColor =
         if (IntUiTheme.isDark) {
             IntUiTheme.colorPalette.grey(3)
@@ -182,7 +180,6 @@ fun TreeSample(modifier: Modifier = Modifier) {
     Box(modifier.border(1.dp, borderColor, RoundedCornerShape(2.dp))) {
         LazyTree(
             tree = tree,
-            resourceLoader = resourceLoader,
             modifier = Modifier.size(200.dp, 200.dp),
             onElementClick = {},
             onElementDoubleClick = {},
