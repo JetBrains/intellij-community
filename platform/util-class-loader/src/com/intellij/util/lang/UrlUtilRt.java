@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +14,7 @@ public final class UrlUtilRt {
    *
    * @return interned URL or null if URL was malformed
    */
-  @Nullable
-  public static URL internProtocol(@NotNull URL url) {
+  public static @Nullable URL internProtocol(@NotNull URL url) {
     String protocol = url.getProtocol();
     boolean interned = false;
     if ("file".equals(protocol) || "jar".equals(protocol)) {
@@ -40,8 +39,7 @@ public final class UrlUtilRt {
     }
   }
 
-  @NotNull
-  public static  CharSequence unescapePercentSequences(@NotNull CharSequence s, int from, int end) {
+  public static @NotNull CharSequence unescapePercentSequences(@NotNull CharSequence s, int from, int end) {
     int i = indexOf(s, from, end);
     if (i == -1) {
       return s.subSequence(from, end);
