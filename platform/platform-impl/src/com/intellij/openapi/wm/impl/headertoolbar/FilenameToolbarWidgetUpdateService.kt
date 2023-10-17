@@ -1,16 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
@@ -40,67 +39,76 @@ import java.awt.Color
 import javax.swing.JComponent
 
 @Service(Service.Level.PROJECT)
-internal class FilenameToolbarWidgetProjectUpdateService(
+internal class FilenameToolbarWidgetUpdateService(
   private val project: Project,
   coroutineScope: CoroutineScope,
 ) {
+
   private val fileFlow = MutableSharedFlow<VirtualFile?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-  init {
-    coroutineScope.launch {
-      fileFlow.distinctUntilChanged().collectLatest { file ->
-        ApplicationManager.getApplication().service<FilenameToolbarWidgetAppUpdateService>().update(project, file)
-      }
-    }
-  }
-
-  fun fileSelected(file: VirtualFile?) {
-    fileFlow.tryEmit(file)
-  }
-}
-
-@Service(Service.Level.APP)
-internal class FilenameToolbarWidgetAppUpdateService(
-  coroutineScope: CoroutineScope,
-) {
-
   private val components = WeakList<JComponent>()
 
   init {
-    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(
+    project.messageBus.connect(coroutineScope).subscribe(
       FileEditorManagerListener.FILE_EDITOR_MANAGER,
       object : FileEditorManagerListener {
+        override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+          update()
+        }
+
+        override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+          update()
+        }
+
         override fun selectionChanged(event: FileEditorManagerEvent) {
-          event.manager.project.service<FilenameToolbarWidgetProjectUpdateService>().fileSelected(event.newFile)
+          update()
         }
       }
     )
+    coroutineScope.launch {
+      fileFlow.distinctUntilChanged().collectLatest { file ->
+        update(file)
+      }
+    }
   }
 
   fun registerComponent(component: JBLabel) {
     components += component
   }
 
-  internal suspend fun update(project: Project, virtualFile: VirtualFile?) {
+  fun deregisterComponent(component: JBLabel) {
+    components -= component
+  }
+
+  private fun update() {
+    fileFlow.tryEmit(getCurrentFile())
+  }
+
+  private suspend fun update(virtualFile: VirtualFile?) {
     val action = components.firstNotNullOfOrNull { ClientProperty.get(it, CustomComponentAction.ACTION_KEY) } ?: return
     val presentation = action.templatePresentation.clone()
     readAction {
-      updatePresentation(project, virtualFile, presentation)
+      updatePresentationFromFile(project, virtualFile, presentation)
     }
     withContext(Dispatchers.EDT) {
       for (component in components) {
-        // Unfortunately, we can't update invisible components here, as we can't determine the project for those.
-        // So invisible components are handled by the action system only, skipping fast direct updates.
-        // That's only necessary for the component to initially show up when the first file is opened or the widget is enabled.
-        if (ProjectUtil.getProjectForComponent(component) == project) {
-          updateComponent(component, presentation)
-        }
+        updateComponent(component, presentation)
       }
     }
   }
 
-  fun updatePresentation(project: Project, file: VirtualFile?, presentation: Presentation) {
-    if (!isWidgetEnabled() || file?.isValid != true) {
+  fun updatePresentation(presentation: Presentation) {
+    updatePresentationFromFile(project, getCurrentFile(), presentation)
+  }
+
+  private fun getCurrentFile(): VirtualFile? {
+    val uiSettings = UISettings.getInstance()
+    if (uiSettings.editorTabPlacement != UISettings.TABS_NONE && !(uiSettings.fullPathsInWindowHeader && isIDEA331002Fixed)) return null
+    val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return null
+    return file
+  }
+
+  private fun updatePresentationFromFile(project: Project, file: VirtualFile?, presentation: Presentation) {
+    if (file?.isValid != true) {
       presentation.isEnabledAndVisible = false
       return
     }
@@ -130,18 +138,11 @@ internal class FilenameToolbarWidgetAppUpdateService(
     presentation.icon = icon
   }
 
-  private fun isWidgetEnabled(): Boolean {
-    val uiSettings = UISettings.getInstance()
-    return uiSettings.editorTabPlacement == UISettings.TABS_NONE || uiSettings.fullPathsInWindowHeader && isIDEA331002Fixed
-  }
-
   @Suppress("UseJBColor")
   private fun isDarkToolbar() = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background", Color.WHITE))
 
   fun updateComponent(component: JComponent, presentation: Presentation) {
     (component as JBLabel).apply {
-      isEnabled = presentation.isEnabled
-      isVisible = presentation.isVisible
       @Suppress("HardCodedStringLiteral")
       val path = presentation.getClientProperty(FILE_FULL_PATH)
       isOpaque = false
