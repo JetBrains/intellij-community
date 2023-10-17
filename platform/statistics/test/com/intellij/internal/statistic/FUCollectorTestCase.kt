@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import java.util.function.Consumer
 
 object FUCollectorTestCase {
   fun collectLogEvents(parentDisposable: Disposable,
@@ -32,10 +33,24 @@ object FUCollectorTestCase {
 
   fun collectLogEvents(recorder: String,
                        parentDisposable: Disposable,
+                       action: () -> Unit): List<LogEvent> = collectLogEvents(recorder, parentDisposable, null, action)
+
+  fun listenForEvents(recorder: String,
+                      parentDisposable: Disposable,
+                      listener: Consumer<LogEvent>,
+                      action: () -> Unit) {
+    collectLogEvents(recorder, parentDisposable, listener, action)
+    return
+  }
+
+  fun collectLogEvents(recorder: String,
+                       parentDisposable: Disposable,
+                       listener: Consumer<LogEvent>?,
                        action: () -> Unit): List<LogEvent> {
     val mockLoggerProvider = TestStatisticsEventLoggerProvider(recorder)
     (StatisticsEventLoggerProvider.EP_NAME.point as ExtensionPointImpl<StatisticsEventLoggerProvider>)
       .maskAll(listOf(mockLoggerProvider), parentDisposable, true)
+    mockLoggerProvider.logger.eventListener = listener
     action()
     return mockLoggerProvider.getLoggedEvents()
   }
