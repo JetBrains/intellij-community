@@ -140,39 +140,9 @@ class JarPackager private constructor(private val outputDir: Path,
                                     moduleOutputPatcher = moduleOutputPatcher,
                                     moduleWithSearchableOptions = moduleWithSearchableOptions,
                                     layout = layout)
-
-      for (item in (layout?.includedModuleLibraries ?: emptyList())) {
-        val library = context.findRequiredModule(item.moduleName).libraryCollection.libraries
-                        .find { getLibraryFileName(it) == item.libraryName }
-                      ?: throw IllegalArgumentException("Cannot find library ${item.libraryName} in \'${item.moduleName}\' module")
-        var fileName = nameToJarFileName(item.libraryName)
-        var relativePath = item.relativeOutputPath
-        var targetFile: Path? = null
-        if (relativePath.endsWith(".jar")) {
-          val index = relativePath.lastIndexOf('/')
-          if (index == -1) {
-            fileName = relativePath
-            relativePath = ""
-          }
-          else {
-            fileName = relativePath.substring(index + 1)
-            relativePath = relativePath.substring(0, index)
-          }
-        }
-        if (!relativePath.isEmpty()) {
-          targetFile = outputDir.resolve(relativePath).resolve(fileName)
-        }
-        if (targetFile == null) {
-          targetFile = outputDir.resolve(fileName)
-        }
-        packager.addLibrary(
-          library = library,
-          targetFile = targetFile!!,
-          files = getLibraryFiles(library = library, copiedFiles = packager.copiedFiles, isModuleLevel = true, targetFile = targetFile)
-        )
-      }
-
       if (layout != null) {
+        packager.computeModuleCustomLibrarySources(layout)
+
         val clientModuleFilter = context.jetBrainsClientModuleFilter
         val libraryToMerge = packager.packProjectLibraries(outputDir = outputDir,
                                                            layout = layout,
@@ -413,6 +383,39 @@ class JarPackager private constructor(private val outputDir: Path,
           }
         }))
       }
+    }
+  }
+
+  private fun computeModuleCustomLibrarySources(layout: BaseLayout) {
+    for (item in layout.includedModuleLibraries) {
+      val library = context.findRequiredModule(item.moduleName).libraryCollection.libraries
+                      .find { getLibraryFileName(it) == item.libraryName }
+                    ?: throw IllegalArgumentException("Cannot find library ${item.libraryName} in \'${item.moduleName}\' module")
+      var fileName = nameToJarFileName(item.libraryName)
+      var relativePath = item.relativeOutputPath
+      if (relativePath.endsWith(".jar")) {
+        val index = relativePath.lastIndexOf('/')
+        if (index == -1) {
+          fileName = relativePath
+          relativePath = ""
+        }
+        else {
+          fileName = relativePath.substring(index + 1)
+          relativePath = relativePath.substring(0, index)
+        }
+      }
+
+      val targetFile = if (relativePath.isEmpty()) {
+        outputDir.resolve(fileName)
+      }
+      else {
+        outputDir.resolve(relativePath).resolve(fileName)
+      }
+      addLibrary(
+        library = library,
+        targetFile = targetFile,
+        files = getLibraryFiles(library = library, copiedFiles = copiedFiles, isModuleLevel = true, targetFile = targetFile)
+      )
     }
   }
 
