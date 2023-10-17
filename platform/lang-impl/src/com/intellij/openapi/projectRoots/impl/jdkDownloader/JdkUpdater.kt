@@ -61,7 +61,7 @@ private class JdkUpdaterStartup : ProjectActivity {
 
 private val LOG = logger<JdkUpdatesCollector>()
 
-@Service // project
+@Service(Service.Level.PROJECT)
 private class JdkUpdatesCollectorQueue : UnknownSdkCollectorQueue(7_000)
 
 @Service(Service.Level.PROJECT)

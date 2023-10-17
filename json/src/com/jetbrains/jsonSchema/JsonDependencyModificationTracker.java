@@ -5,7 +5,7 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class JsonDependencyModificationTracker extends SimpleModificationTracker {
   public static JsonDependencyModificationTracker forProject(Project project) {
     return project.getService(JsonDependencyModificationTracker.class);

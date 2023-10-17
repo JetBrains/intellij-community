@@ -7,7 +7,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "ExportToHTMLSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ExportToHTMLSettings implements PersistentStateComponent<ExportToHTMLSettings> {
   public boolean PRINT_LINE_NUMBERS;

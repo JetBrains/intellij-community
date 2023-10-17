@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "CodeInsightWorkspaceSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class CodeInsightWorkspaceSettings extends SimpleModificationTracker implements PersistentStateComponent<CodeInsightWorkspaceSettings> {
   private boolean optimizeImportsOnTheFly;

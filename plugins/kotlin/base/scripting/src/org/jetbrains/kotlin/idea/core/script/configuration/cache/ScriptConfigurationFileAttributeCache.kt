@@ -16,7 +16,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper.FromCompilationConfiguration
-import java.io.*
+import java.io.DataInput
+import java.io.DataOutput
+import java.io.Serializable
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 import kotlin.script.experimental.api.*
@@ -103,7 +105,7 @@ internal class ScriptConfigurationSnapshotForFS(
     val configuration: ScriptCompilationConfiguration?
 ) : Serializable
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class ScriptConfigurationSnapshotFile : AbstractFileGistService<ScriptConfigurationSnapshotForFS>(
     name = "kotlin-script-dependencies",
     version = 5,

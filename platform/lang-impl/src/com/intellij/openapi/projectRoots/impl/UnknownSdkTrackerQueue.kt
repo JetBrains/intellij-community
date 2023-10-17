@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 
-@Service // project
+@Service(Service.Level.PROJECT)
 internal class UnknownSdkTrackerQueue : UnknownSdkCollectorQueue(700) {
   companion object {
     @JvmStatic
