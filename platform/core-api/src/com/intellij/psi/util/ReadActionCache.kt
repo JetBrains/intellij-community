@@ -43,6 +43,7 @@ interface ReadActionCache {
 
 
   companion object {
+    @Suppress("IncorrectServiceRetrieving") // registered as "fake service" in ApplicationImpl
     @JvmStatic
     fun getInstance(): ReadActionCache = ApplicationManager.getApplication().getService(ReadActionCache::class.java)
   }
