@@ -102,7 +102,7 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
     return digest.digest()
   }
 
-  companion object : BuildTargetType<RuntimeModuleRepositoryTarget?>(TARGET_TYPE_ID), ModuleInducedTargetType {
+  companion object : BuildTargetType<RuntimeModuleRepositoryTarget?>(RuntimeModuleRepositoryBuildConstants.TARGET_TYPE_ID), ModuleInducedTargetType {
     private val LOG = logger<RuntimeModuleRepositoryTarget>()
     
     override fun computeAllTargets(model: JpsModel): List<RuntimeModuleRepositoryTarget> {
@@ -128,8 +128,3 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
     }
   }
 }
-
-/**
- * Must be equal to [org.jetbrains.idea.devkit.build.IntelliJModuleRepositoryBuildScopeProvider.TARGET_TYPE_ID]
- */
-private const val TARGET_TYPE_ID = "intellij-runtime-module-repository"
