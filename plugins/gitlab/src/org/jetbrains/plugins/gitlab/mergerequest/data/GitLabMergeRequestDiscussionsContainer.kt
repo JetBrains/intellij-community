@@ -36,6 +36,13 @@ interface GitLabMergeRequestDiscussionsContainer {
 
   @SinceGitLab("15.11")
   suspend fun submitDraftNotes()
+
+  /**
+   * Sends a signal to reload data on all submitted discussions within the container.
+   * This should be used after a draft note is submitted, as there is no surefire way to turn a draft note
+   * into a fully featured discussion without this.
+   */
+  fun requestDiscussionsReload()
 }
 
 private val LOG = logger<GitLabMergeRequestDiscussionsContainer>()
@@ -231,7 +238,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       .throwFailure()
       .mapDataToModel(
         { it.note.id },
-        { (note, author) -> GitLabMergeRequestDraftNoteImpl(this, api, glProject, mr, draftNotesEvents::emit, note, author) },
+        { (note, author) -> GitLabMergeRequestDraftNoteImpl(this, api, glMetadata, glProject, mr, draftNotesEvents::emit, note, author) },
         { update(it.note) }
       )
       .asResultFlow()
@@ -294,7 +301,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SUBMIT_DRAFT_NOTES)
   }
 
-  fun requestReload() {
+  override fun requestDiscussionsReload() {
     cs.launch {
       reloadRequests.emit(Unit)
     }

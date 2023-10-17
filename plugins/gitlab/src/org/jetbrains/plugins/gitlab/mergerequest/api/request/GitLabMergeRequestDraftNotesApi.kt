@@ -52,3 +52,16 @@ suspend fun GitLabApi.Rest.submitDraftNotes(project: GitLabProjectCoordinates,
     sendAndAwaitCancellable(request)
   }
 }
+
+@SinceGitLab("15.10")
+suspend fun GitLabApi.Rest.submitSingleDraftNote(project: GitLabProjectCoordinates,
+                                                 mrIid: String,
+                                                 noteId: Long): HttpResponse<out Unit> {
+  val uri = getMergeRequestDraftNotesUri(project, mrIid)
+    .resolveRelative(noteId.toString())
+    .resolveRelative("publish")
+  val request = request(uri).PUT(BodyPublishers.noBody()).build()
+  return withErrorStats(GitLabApiRequestName.REST_SUBMIT_SINGLE_DRAFT_NOTE) {
+    sendAndAwaitCancellable(request)
+  }
+}

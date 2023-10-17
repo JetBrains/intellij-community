@@ -14,10 +14,7 @@ import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.deleteDraftNote
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.deleteNote
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.updateDraftNote
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.updateNote
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.util.*
 
@@ -36,10 +33,21 @@ interface MutableGitLabNote : GitLabNote {
   /**
    * Whether the note can be edited.
    */
-  suspend fun canEdit(): Boolean
+  fun canEdit(): Boolean
+
+  /**
+   * Whether the note can be submitted individually.
+   */
+  fun canSubmit(): Boolean
 
   suspend fun setBody(newText: String)
   suspend fun delete()
+
+  /**
+   * Individually submit the note if it's a draft. This means the draft note is published as a note
+   * shown to all users involed in the review, rather than just to the user that made the note.
+   */
+  suspend fun submit()
 }
 
 interface GitLabMergeRequestNote : GitLabNote {
@@ -81,7 +89,8 @@ class MutableGitLabMergeRequestNote(
     it.position?.let(GitLabNotePosition::from)
   }
   override val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?> = position.mapPosition(mr).modelFlow(cs, LOG)
-  override suspend fun canEdit(): Boolean = true
+  override fun canEdit(): Boolean = true
+  override fun canSubmit(): Boolean = false
 
   override suspend fun setBody(newText: String) {
     withContext(cs.coroutineContext) {
@@ -107,6 +116,10 @@ class MutableGitLabMergeRequestNote(
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.DELETE_NOTE)
   }
 
+  override suspend fun submit() {
+    error("Cannot submit an already submitted note")
+  }
+
   fun update(item: GitLabNoteDTO) {
     data.value = item
   }
@@ -118,6 +131,7 @@ class MutableGitLabMergeRequestNote(
 class GitLabMergeRequestDraftNoteImpl(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
+  private val glMetadata: GitLabServerMetadata?,
   private val project: GitLabProjectCoordinates,
   private val mr: GitLabMergeRequest,
   private val eventSink: suspend (GitLabNoteEvent<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
@@ -138,8 +152,10 @@ class GitLabMergeRequestDraftNoteImpl(
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) { it.position.let(GitLabNotePosition::from) }
   override val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?> = position.mapPosition(mr).modelFlow(cs, LOG)
 
-  override suspend fun canEdit(): Boolean =
-    GitLabVersion(15, 10) <= api.getMetadata().version
+  override fun canEdit(): Boolean =
+    glMetadata != null && GitLabVersion(15, 10) <= glMetadata.version
+  override fun canSubmit(): Boolean =
+    glMetadata != null && GitLabVersion(15, 10) <= glMetadata.version
 
   @SinceGitLab("15.10")
   override suspend fun setBody(newText: String) {
@@ -163,6 +179,21 @@ class GitLabMergeRequestDraftNoteImpl(
           api.rest.deleteDraftNote(project, mr.iid, noteData.id.restId.toLong())
         }
       }
+      eventSink(GitLabNoteEvent.Deleted(id))
+    }
+  }
+
+  override suspend fun submit() {
+    withContext(cs.coroutineContext) {
+      operationsGuard.withLock {
+        withContext(Dispatchers.IO) {
+          // Shouldn't require extra check, delete and get draft notes was introduced in
+          // the same update
+          api.rest.submitSingleDraftNote(project, mr.iid, noteData.id.restId.toLong())
+        }
+      }
+      // Order of following operations: first start reload so that there's minimal delay between removing and re-adding the note.
+      mr.requestDiscussionsReload()
       eventSink(GitLabNoteEvent.Deleted(id))
     }
   }

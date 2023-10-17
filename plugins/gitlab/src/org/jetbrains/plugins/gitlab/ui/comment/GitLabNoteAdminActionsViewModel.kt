@@ -16,7 +16,11 @@ interface GitLabNoteAdminActionsViewModel {
   /**
    * Whether the note can be edited.
    */
-  suspend fun canEdit(): Boolean
+  fun canEdit(): Boolean
+  /**
+   * Whether the note can be individually submitted when it is a draft note.
+   */
+  fun canSubmit(): Boolean
 
   fun startEditing()
   fun stopEditing()
@@ -53,8 +57,11 @@ class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val 
     }
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  override suspend fun canEdit(): Boolean =
+  override fun canEdit(): Boolean =
     note.canEdit()
+
+  override fun canSubmit(): Boolean =
+    note.canSubmit()
 
   override fun delete() {
     taskLauncher.launch {

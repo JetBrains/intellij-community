@@ -166,7 +166,11 @@ internal class LoadedGitLabMergeRequest(
       milestoneEventsLoader.checkForUpdates()
     }
     // TODO: make suspending
-    discussionsContainer.requestReload()
+    requestDiscussionsReload()
+  }
+
+  override fun requestDiscussionsReload() {
+    discussionsContainer.requestDiscussionsReload()
   }
 
   private suspend fun updateData() {

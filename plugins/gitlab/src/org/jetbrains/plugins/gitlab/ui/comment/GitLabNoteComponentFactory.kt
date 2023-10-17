@@ -78,6 +78,16 @@ object GitLabNoteComponentFactory {
           null
         }
       }
+
+      val actionsVm = vm.actionsVm
+      if (vm.isDraft && actionsVm != null) {
+        add(CodeReviewCommentUIUtil.createPostNowButton { _ -> actionsVm.submitDraft() }.apply {
+          isVisible = actionsVm.canSubmit()
+          if (actionsVm.canSubmit()) {
+            bindDisabledIn(cs, actionsVm.busy)
+          }
+        })
+      }
       if (vm.isDraft) {
         add(CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.pending.tag")))
       }
