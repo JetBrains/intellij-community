@@ -6,7 +6,6 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.feedback.PluginPageFeedbackDialogProvider;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate;
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata;
@@ -27,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -222,7 +222,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       AllIcons.General.Information,
       IdeBundle.message("plugins.configurable.plugin.unavailable.for.platform", SystemInfo.getOsName()));
 
-    final PluginPageFeedbackDialogProvider feedbackDialogProvider = PluginPageFeedbackDialogProvider.getInstance();
+    final PlatformFeedbackDialogs feedbackDialogProvider = PlatformFeedbackDialogs.getInstance();
     myUninstallFeedbackNotification = createFeedbackNotificationPanel(feedbackDialogProvider::getUninstallFeedbackDialog);
     myDisableFeedbackNotification = createFeedbackNotificationPanel(feedbackDialogProvider::getDisableFeedbackDialog);
     myRootPanel.add(myPanel, BorderLayout.CENTER);

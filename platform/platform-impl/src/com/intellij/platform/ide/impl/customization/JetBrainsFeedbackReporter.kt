@@ -4,7 +4,7 @@ package com.intellij.platform.ide.impl.customization
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.customization.FeedbackReporter
-import com.intellij.platform.ide.impl.feedback.GeneralFeedbackDialogs
+import com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -31,7 +31,7 @@ class JetBrainsFeedbackReporter(private val productName: String,
 
   override fun showFeedbackForm(project: Project?, requestedForEvaluation: Boolean): Boolean {
     if (useInIdeFeedback) {
-      val feedbackDialogs = GeneralFeedbackDialogs.getInstance()
+      val feedbackDialogs = PlatformFeedbackDialogs.getInstance()
 
       if (requestedForEvaluation) {
         val evaluationFeedbackDialog = feedbackDialogs.createEvaluationFeedbackDialog(project) ?: return false
