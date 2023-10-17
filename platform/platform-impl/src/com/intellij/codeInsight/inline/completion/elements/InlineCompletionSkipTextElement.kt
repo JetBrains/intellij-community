@@ -23,7 +23,7 @@ class InlineCompletionSkipTextElement(override val text: String) : InlineComplet
 
     override fun render(editor: Editor, offset: Int) {
       this.startOffset = offset
-      this.endOffset = offset + 1
+      this.endOffset = offset + element.text.length
       isRendered = true
     }
 
