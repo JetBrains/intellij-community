@@ -95,7 +95,6 @@ internal class InvalidCompilationTracker(
       .addAction(NotificationAction.createSimpleExpiring(
         JavaBundle.message("invalid.compilation.notification.action.rebuild", moduleName),
         Runnable {
-          InvalidCompilationStatistics.REBUILD_MODULE_NOTIFICATION_ACTION.log(project)
           val module = ModuleManager.getInstance(project).findModuleByName(moduleName)
           if (module != null) {
             ProjectTaskManager.getInstance(project).rebuild(module)

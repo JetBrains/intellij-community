@@ -6,10 +6,9 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal object InvalidCompilationStatistics : CounterUsagesCollector() {
-  val GROUP: EventLogGroup = EventLogGroup("idea.project.statistics", 1)
+  val GROUP: EventLogGroup = EventLogGroup("idea.project.statistics", 2)
 
   val INVALID_COMPILATION_FAILURE = GROUP.registerEvent("invalid.compilation.failure", EventFields.Language)
-  val REBUILD_MODULE_NOTIFICATION_ACTION = GROUP.registerEvent("invalid.compilation.rebuild.module.notification.action")
 
   override fun getGroup(): EventLogGroup {
     return GROUP
