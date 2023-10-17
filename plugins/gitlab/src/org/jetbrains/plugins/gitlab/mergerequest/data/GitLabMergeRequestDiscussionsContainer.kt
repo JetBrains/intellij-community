@@ -30,9 +30,9 @@ interface GitLabMergeRequestDiscussionsContainer {
 
   val canAddNotes: Boolean
 
-  suspend fun addNote(body: String)
+  suspend fun addNote(body: String, asDraft: Boolean)
 
-  suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String)
+  suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String, asDraft: Boolean)
 
   @SinceGitLab("15.11")
   suspend fun submitDraftNotes()
@@ -137,7 +137,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         { disc ->
           LoadedGitLabDiscussion(this,
                                  project, api, glMetadata, glProject,
-                                 { discussionEvents.emit(it) },
+                                 { discussionEvents.emit(it) }, { draftNotesEvents.emit(it) },
                                  mr, disc, getDiscussionDraftNotes(disc.id).throwFailure())
         },
         LoadedGitLabDiscussion::update
@@ -257,30 +257,58 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       }
   }
 
-  override suspend fun addNote(body: String) {
+  override suspend fun addNote(body: String, asDraft: Boolean) {
     withContext(cs.coroutineContext) {
-      withContext(Dispatchers.IO) {
-        api.graphQL.addNote(mr.gid, body).getResultOrThrow()
-      }.also {
+      if (asDraft) {
+        val newNote = withContext(Dispatchers.IO) {
+          api.rest.addDraftNote(glProject, mr.iid, null, body).body()
+        }
+
         withContext(NonCancellable) {
-          discussionEvents.emit(GitLabDiscussionEvent.Added(it))
+          draftNotesEvents.emit(GitLabNoteEvent.Added(newNote))
+        }
+      }
+      else {
+        val newDiscussion = withContext(Dispatchers.IO) {
+          api.graphQL.addNote(mr.gid, body).getResultOrThrow()
+        }
+
+        withContext(NonCancellable) {
+          discussionEvents.emit(GitLabDiscussionEvent.Added(newDiscussion))
         }
       }
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_NOTE)
+    GitLabStatistics.logMrActionExecuted(
+      project,
+      if (asDraft) GitLabStatistics.MergeRequestAction.ADD_DRAFT_NOTE
+      else GitLabStatistics.MergeRequestAction.ADD_NOTE)
   }
 
-  override suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String) {
+  override suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String, asDraft: Boolean) {
     withContext(cs.coroutineContext) {
-      withContext(Dispatchers.IO) {
-        api.graphQL.addDiffNote(mr.gid, GitLabDiffPositionInput.from(position), body).getResultOrThrow()
-      }.also {
+      if (asDraft) {
+        val newNote = withContext(Dispatchers.IO) {
+          api.rest.addDraftNote(glProject, mr.iid, GitLabDiffPositionInput.from(position), body).body()
+        }
+
         withContext(NonCancellable) {
-          discussionEvents.emit(GitLabDiscussionEvent.Added(it))
+          draftNotesEvents.emit(GitLabNoteEvent.Added(newNote))
+        }
+      }
+      else {
+        val newDiscussion = withContext(Dispatchers.IO) {
+          api.graphQL.addDiffNote(mr.gid, GitLabDiffPositionInput.from(position), body).getResultOrThrow()
+        }
+
+        withContext(NonCancellable) {
+          discussionEvents.emit(GitLabDiscussionEvent.Added(newDiscussion))
         }
       }
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_DIFF_NOTE)
+    GitLabStatistics.logMrActionExecuted(
+      project,
+      if (asDraft) GitLabStatistics.MergeRequestAction.ADD_DRAFT_DIFF_NOTE
+      else GitLabStatistics.MergeRequestAction.ADD_DIFF_NOTE)
   }
 
   override suspend fun submitDraftNotes() {

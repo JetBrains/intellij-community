@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
-import com.intellij.collaboration.util.SingleCoroutineLauncher
 
 interface GitLabNoteAdminActionsViewModel {
   val busy: Flow<Boolean>
@@ -26,6 +26,11 @@ interface GitLabNoteAdminActionsViewModel {
   fun stopEditing()
 
   fun delete()
+
+  /**
+   * Submits the draft note so that it is visible for other users.
+   */
+  fun submitDraft()
 }
 
 private val LOG = logger<GitLabNoteAdminActionsViewModel>()
@@ -82,5 +87,18 @@ class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val 
 
   override fun stopEditing() {
     isEditing.value = false
+  }
+
+  override fun submitDraft() {
+    taskLauncher.launch {
+      try {
+        note.submit()
+      }
+      catch (e: Exception) {
+        if (e is CancellationException) throw e
+        LOG.warn(e)
+        //TODO: handle???
+      }
+    }
   }
 }

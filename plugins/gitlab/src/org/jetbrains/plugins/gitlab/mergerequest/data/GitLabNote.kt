@@ -189,7 +189,7 @@ class GitLabMergeRequestDraftNoteImpl(
         withContext(Dispatchers.IO) {
           // Shouldn't require extra check, delete and get draft notes was introduced in
           // the same update
-          api.rest.submitSingleDraftNote(project, mr.iid, noteData.id.restId.toLong())
+          api.rest.submitSingleDraftNote(project, mr.iid, noteData.id.restId.toLong()).body()
         }
       }
       // Order of following operations: first start reload so that there's minimal delay between removing and re-adding the note.

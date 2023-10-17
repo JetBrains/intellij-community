@@ -4,17 +4,21 @@ package org.jetbrains.plugins.gitlab.ui.comment
 import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.swingAction
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.util.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import com.intellij.collaboration.util.SingleCoroutineLauncher
 import javax.swing.AbstractAction
 
 interface GitLabNoteEditingViewModel {
+  val canSubmitAsDraft: Boolean
+
   val text: MutableStateFlow<String>
   val focusRequests: Flow<Unit>
 
@@ -22,7 +26,7 @@ interface GitLabNoteEditingViewModel {
 
   fun requestFocus()
 
-  fun submit()
+  fun submit(asDraft: Boolean)
 
   suspend fun destroy()
 
@@ -35,8 +39,10 @@ interface GitLabNoteEditingViewModel {
 
 class DelegatingGitLabNoteEditingViewModel(parentCs: CoroutineScope,
                                            initialText: String,
-                                           private val submitter: suspend (String) -> Unit)
+                                           private val submitter: suspend (String) -> Unit,
+                                           private val submitterAsDraft: (suspend (String) -> Unit)? = null)
   : GitLabNoteEditingViewModel {
+  override val canSubmitAsDraft: Boolean = submitterAsDraft != null
 
   private val cs = parentCs.childScope()
   private val taskLauncher = SingleCoroutineLauncher(cs)
@@ -56,12 +62,18 @@ class DelegatingGitLabNoteEditingViewModel(parentCs: CoroutineScope,
     }
   }
 
-  override fun submit() {
+  override fun submit(asDraft: Boolean) {
     taskLauncher.launch {
       val newText = text.first()
       _state.value = GitLabNoteEditingViewModel.SubmissionState.Loading
       try {
-        submitter(newText)
+        if (asDraft) {
+          submitterAsDraft?.invoke(newText) ?: error("Cannot be submitted as draft")
+        }
+        else {
+          submitter(newText)
+        }
+
         _state.value = GitLabNoteEditingViewModel.SubmissionState.Done
       }
       catch (ce: CancellationException) {
@@ -100,6 +112,15 @@ fun GitLabNoteEditingViewModel.onDoneIn(cs: CoroutineScope, callback: suspend ()
 fun GitLabNoteEditingViewModel.submitActionIn(cs: CoroutineScope, actionName: @Nls String): AbstractAction {
   val enabledFlow = text.combine(state) { text, state -> text.isNotBlank() && state != GitLabNoteEditingViewModel.SubmissionState.Loading }
   return swingAction(actionName) {
-    submit()
+    submit(false)
+  }.apply { bindEnabledIn(cs, enabledFlow) }
+}
+
+fun GitLabNoteEditingViewModel.submitAsDraftActionIn(cs: CoroutineScope, actionName: @Nls String): AbstractAction? {
+  if (!canSubmitAsDraft) return null
+
+  val enabledFlow = text.combine(state) { text, state -> text.isNotBlank() && state != GitLabNoteEditingViewModel.SubmissionState.Loading }
+  return swingAction(actionName) {
+    submit(true)
   }.apply { bindEnabledIn(cs, enabledFlow) }
 }

@@ -83,13 +83,14 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   override fun requestNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, focus: Boolean) {
     _newDiscussions.updateAndGet {
       if (!it.containsKey(position)) {
-        val vm = DelegatingGitLabNoteEditingViewModel(cs, "") {
-          createDiscussion(position, it)
-        }.apply {
-          onDoneIn(cs) {
-            cancelNewDiscussion(position)
-          }
-        }.forNewNote(currentUser)
+        val vm = DelegatingGitLabNoteEditingViewModel(cs, "",
+                                                      { createDiscussion(position, it, false) },
+                                                      { createDiscussion(position, it, true) })
+          .apply {
+            onDoneIn(cs) {
+              cancelNewDiscussion(position)
+            }
+          }.forNewNote(currentUser)
         it + (position to vm)
       }
       else {
@@ -102,8 +103,12 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
     }
   }
 
-  private suspend fun createDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, body: String) {
-    mergeRequest.addNote(position.position, body)
+  private suspend fun createDiscussion(
+    position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition,
+    body: String,
+    asDraft: Boolean
+  ) {
+    mergeRequest.addNote(position.position, body, asDraft)
   }
 
   override fun cancelNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition) {

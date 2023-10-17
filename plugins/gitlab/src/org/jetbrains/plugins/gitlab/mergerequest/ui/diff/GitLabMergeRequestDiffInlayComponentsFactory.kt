@@ -34,6 +34,7 @@ object GitLabMergeRequestDiffInlayComponentsFactory {
                           onCancel: () -> Unit): JComponent {
     val actions = CommentInputActionsComponentFactory.Config(
       primaryAction = MutableStateFlow(vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comment.submit"))),
+      secondaryActions = MutableStateFlow(listOfNotNull(vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action")))),
       cancelAction = MutableStateFlow(swingAction("") { onCancel() }),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comment.hint",
                                                                      CommentInputActionsComponentFactory.submitShortcutText))

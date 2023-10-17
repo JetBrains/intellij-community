@@ -45,6 +45,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestT
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.submitActionIn
+import org.jetbrains.plugins.gitlab.ui.comment.submitAsDraftActionIn
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JScrollPane
@@ -116,6 +117,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     val noteCs = this
     val actions = CommentInputActionsComponentFactory.Config(
       primaryAction = MutableStateFlow(editVm.submitActionIn(noteCs, CollaborationToolsBundle.message("review.comments.reply.action"))),
+      secondaryActions = MutableStateFlow(listOfNotNull(editVm.submitAsDraftActionIn(noteCs, CollaborationToolsBundle.message("review.comments.save-as-draft.action")))),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
                                                                      CommentInputActionsComponentFactory.submitShortcutText))
     )

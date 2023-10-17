@@ -30,12 +30,16 @@ class GitLabDiscussionReplyViewModelImpl(parentCs: CoroutineScope,
   override val newNoteVm: Flow<NewGitLabNoteViewModel?> = isWriting.mapScoped {
     if (!it) return@mapScoped null
     val cs = this
-    DelegatingGitLabNoteEditingViewModel(cs, "", discussion::addNote).forNewNote(currentUser).apply {
-      onDoneIn(cs) {
-        text.value = ""
+    DelegatingGitLabNoteEditingViewModel(cs, "",
+                                         { discussion.addNote(it, false) },
+                                         { discussion.addNote(it, true) })
+      .forNewNote(currentUser)
+      .apply {
+        onDoneIn(cs) {
+          text.value = ""
+        }
+        requestFocus()
       }
-      requestFocus()
-    }
   }.modelFlow(cs, thisLogger())
 
   override fun startWriting() {

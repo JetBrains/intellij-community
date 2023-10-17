@@ -91,6 +91,7 @@ object GitLabDiscussionComponentFactory {
 
     val actions = CommentInputActionsComponentFactory.Config(
       primaryAction = MutableStateFlow(vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comments.reply.action"))),
+      secondaryActions = MutableStateFlow(listOfNotNull(vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action")))),
       additionalActions = MutableStateFlow(listOfNotNull(resolveAction)),
       cancelAction = MutableStateFlow(cancelAction),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
