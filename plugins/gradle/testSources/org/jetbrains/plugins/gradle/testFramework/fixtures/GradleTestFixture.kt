@@ -15,13 +15,13 @@ interface GradleTestFixture : IdeaTestFixture {
 
   val gradleVersion: GradleVersion
 
-  suspend fun openProject(relativePath: String, wait: Boolean): Project
+  suspend fun openProject(relativePath: String, wait: Boolean = true): Project
 
   suspend fun linkProject(project: Project, relativePath: String)
 
   suspend fun reloadProject(project: Project, relativePath: String, configure: ImportSpecBuilder.() -> Unit)
 
-  suspend fun <R> awaitAnyGradleProjectReload(wait: Boolean, action: suspend () -> R): R
+  suspend fun <R> awaitAnyGradleProjectReload(wait: Boolean = true, action: suspend () -> R): R
 
   fun assertNotificationIsVisible(project: Project, isNotificationVisible: Boolean)
 }
