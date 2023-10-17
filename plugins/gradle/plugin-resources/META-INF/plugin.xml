@@ -248,13 +248,13 @@
 
     <group id="Gradle.View.ActionsToolbar.LeftPanel">
       <separator/>
+      <reference id="Gradle.DownloadSources"/>
       <reference id="Gradle.ExecuteTask"/>
       <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel"/>
     </group>
 
     <group id="Gradle.View.ActionsToolbar.RightPanel">
       <reference id="Gradle.ToggleOfflineAction"/>
-      <reference id="Gradle.DownloadSources"/>
       <add-to-group group-id="ExternalSystemView.ActionsToolbar.RightPanel"/>
     </group>
 
