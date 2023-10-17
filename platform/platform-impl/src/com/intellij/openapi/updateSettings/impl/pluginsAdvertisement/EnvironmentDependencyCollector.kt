@@ -49,7 +49,7 @@ object EnvironmentScanner {
 
   fun hasToolInLocalPath(pathNames: List<Path>, executableWithoutExt: String): Boolean {
     val baseNames = if (SystemInfo.isWindows) {
-      sequenceOf(".bat", ".com", ".exe")
+      sequenceOf(".bat", ".com", ".exe", ".cmd")
         .map { exeSuffix -> executableWithoutExt + exeSuffix }
     }
     else {
