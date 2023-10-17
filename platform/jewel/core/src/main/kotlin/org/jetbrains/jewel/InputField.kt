@@ -76,7 +76,8 @@ internal fun InputField(
     }
 
     val borderColor by style.colors.borderFor(inputState)
-    val borderModifier = Modifier.appendIf(!undecorated && borderColor.isSpecified) {
+    val hasNoOutline = outline == Outline.None
+    val borderModifier = Modifier.appendIf(!undecorated && borderColor.isSpecified && hasNoOutline) {
         Modifier.border(
             alignment = Stroke.Alignment.Center,
             width = style.metrics.borderWidth,
@@ -93,8 +94,8 @@ internal fun InputField(
         value = value,
         modifier = modifier.then(backgroundModifier)
             .then(borderModifier)
-            .appendIf(!undecorated) { focusOutline(inputState, shape) }
-            .outline(inputState, outline, shape),
+            .appendIf(!undecorated && hasNoOutline) { focusOutline(inputState, shape) }
+            .outline(inputState, outline, shape, Stroke.Alignment.Center),
         onValueChange = onValueChange,
         enabled = enabled,
         readOnly = readOnly,

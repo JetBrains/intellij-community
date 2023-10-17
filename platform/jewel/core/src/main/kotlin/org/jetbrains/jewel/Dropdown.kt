@@ -94,6 +94,7 @@ fun Dropdown(
     val minSize = metrics.minSize
     val arrowMinSize = style.metrics.arrowMinSize
     val borderColor by colors.borderFor(dropdownState)
+    val hasNoOutline = outline == Outline.None
 
     Box(
         modifier.clickable(
@@ -110,7 +111,7 @@ fun Dropdown(
             indication = null,
         )
             .background(colors.backgroundFor(dropdownState).value, shape)
-            .border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
+            .appendIf(hasNoOutline) { border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape) }
             .appendIf(outline == Outline.None) { focusOutline(dropdownState, shape) }
             .outline(dropdownState, outline, shape)
             .width(IntrinsicSize.Max)
