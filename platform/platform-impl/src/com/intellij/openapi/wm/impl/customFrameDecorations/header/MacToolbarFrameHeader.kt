@@ -160,6 +160,10 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     updateRequests.tryEmit(Unit)
   }
 
+  override fun updateToolbarActionsImmediately() {
+    (view as? ToolbarHeaderView)?.updateActionsImmediately()
+  }
+
   private suspend fun updateView(isCompactHeader: Boolean): Boolean {
     val view = withContext(Dispatchers.EDT) {
       if (isCompactHeader == (view is CompactHeaderView)) {
@@ -259,6 +263,10 @@ private class ToolbarHeaderView(panel: JPanel, parentCoroutineScope: CoroutineSc
 
   override suspend fun init(customTitleBar: WindowDecorations.CustomTitleBar?) {
     toolbar.init(customTitleBar)
+  }
+
+  fun updateActionsImmediately() {
+    toolbar.updateActionsImmediately()
   }
 }
 
