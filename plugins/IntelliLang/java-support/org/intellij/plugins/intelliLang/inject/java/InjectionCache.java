@@ -71,7 +71,7 @@ public final class InjectionCache {
           ContainerUtil.addIfNotNull(result, ((PsiMember)element).getName());
         }
         else if (element instanceof PsiRecordComponent) {
-          final PsiClass record = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+          final PsiClass record = ((PsiRecordComponent)element).getContainingClass();
           if (record != null) {
             ContainerUtil.addIfNotNull(result, record.getName());
           }
