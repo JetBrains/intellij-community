@@ -55,7 +55,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     }
 
     protected fun loadProject(projectPath: String): Project = try {
-      println("Open and load project $projectPath. Operation may take few minutes.")
+      println("Open and load project $projectPath. Operation may take a few minutes.")
       val project = OpenProjectMethodProvider.find()?.openProjectInHeadlessMode(projectPath) ?: openProjectHeadless(projectPath)
       println("Project loaded!")
       project
