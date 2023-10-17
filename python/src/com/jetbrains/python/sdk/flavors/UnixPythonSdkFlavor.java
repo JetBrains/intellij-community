@@ -48,7 +48,7 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
   }
 
   public static @NotNull List<Path> getDefaultUnixPythons() {
-    return getDefaultUnixPythons((Path)null);
+    return getDefaultUnixPythons(null);
   }
 
   public static @NotNull List<Path> getDefaultUnixPythons(@Nullable Path rootPath) {

@@ -201,7 +201,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   public static boolean isReadOnly(final @NotNull EditorColorsScheme scheme) {
-    return ((MyColorScheme)scheme).isReadOnly();
+    return scheme.isReadOnly();
   }
 
   public static boolean canBeDeleted(final @NotNull EditorColorsScheme scheme) {
