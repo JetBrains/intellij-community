@@ -543,7 +543,7 @@ public final class HtmlUtil {
         tagStart++;
         for (int i = tagStart; i < line.length(); i ++) {
           char ch = line.charAt(i);
-          if (!Character.isAlphabetic(ch) && !Character.isDigit(ch)) {
+          if (!(Character.isAlphabetic(ch) || (i > tagStart && (Character.isDigit(ch) || ch == '-' )))) {
             return line.substring(tagStart, i);
           }
         }
