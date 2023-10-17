@@ -14,10 +14,7 @@ import com.jetbrains.util.filetype.FileType
 import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
@@ -38,7 +35,6 @@ import kotlin.io.path.invariantSeparatorsPathString
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 private val isUnpackedDist = System.getProperty("idea.dev.build.unpacked").toBoolean()
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val libsThatUsedInJps = java.util.Set.of(
   "ASM",
   "netty-buffer",
@@ -182,7 +178,9 @@ class JarPackager private constructor(private val outputDir: Path,
                                   dryRun = dryRun)
       return coroutineScope {
         if (nativeFiles.isNotEmpty()) {
-          packNativePresignedFiles(nativeFiles = nativeFiles, dryRun = dryRun, context = context)
+          launch {
+            packNativePresignedFiles(nativeFiles = nativeFiles, dryRun = dryRun, context = context)
+          }
         }
 
         val list = mutableListOf<DistributionFileEntry>()
