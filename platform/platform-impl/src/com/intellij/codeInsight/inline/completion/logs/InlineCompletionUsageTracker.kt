@@ -44,7 +44,9 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     override fun onRequest(event: InlineCompletionEventType.Request) = lock.withLock {
       invocationTracker = InvocationTracker(event).also {
         requestIds[event.request] = it.requestId
-        application.runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
+        if (application.isEAP) {
+          application.runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
+        }
       }
     }
 
