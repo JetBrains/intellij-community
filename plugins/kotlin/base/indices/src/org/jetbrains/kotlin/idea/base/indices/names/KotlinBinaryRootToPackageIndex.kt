@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.indices.names
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.DataIndexer
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import com.intellij.util.indexing.FileBasedIndex
@@ -13,6 +14,7 @@ import com.intellij.util.indexing.ID
 import com.intellij.util.io.EnumeratorStringDescriptor
 import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.incremental.storage.StringExternalizer
+import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION_WITH_DOT
 import kotlin.jvm.java
 
 /**
@@ -23,6 +25,11 @@ import kotlin.jvm.java
  * file name. This is acceptable because the index is used by K2 symbol providers, which allow false positives in package sets.
  *
  * If the index contains no values for some specific key, it means that the library contains no packages which contain compiled Kotlin code.
+ *
+ * The index currently only supports JARs and KLIBs. Loose `.class` files and unpacked KLIBs are not supported. This is because it is not
+ * trivial to arrive at a binary root for a loose `.class` file (the directory structure might not correspond to the package name). Such
+ * loose structures are rare, so it is currently not worth maintaining an index for it. Please use [isSupportedByBinaryRootToPackageIndex]
+ * to determine if a [VirtualFile] binary root is supported by the index.
  *
  * `.kotlin_builtins` files do not need to be supported because
  * [StandardClassIds.builtInsPackages][org.jetbrains.kotlin.name.StandardClassIds.builtInsPackages] can be used to get the package names.
@@ -45,7 +52,7 @@ class KotlinBinaryRootToPackageIndex : FileBasedIndexExtension<String, String>()
         KlibMetaFileType,
     )
 
-    override fun getVersion(): Int = 2
+    override fun getVersion(): Int = 3
 
     override fun getIndexer(): DataIndexer<String, String, FileContent> = DataIndexer { fileContent ->
         try {
@@ -62,6 +69,11 @@ class KotlinBinaryRootToPackageIndex : FileBasedIndexExtension<String, String>()
             // The file is in a JAR filesystem (even for KLIBs), whose root is the JAR/KLIB file itself.
             val binaryRoot = JarFileSystem.getInstance().getVirtualFileForJar(fileContent.file) ?: return@DataIndexer emptyMap()
 
+            // Avoid indexing loose class files, which are currently not supported.
+            if (!binaryRoot.isSupportedByBinaryRootToPackageIndex) {
+                return@DataIndexer emptyMap()
+            }
+
             return@DataIndexer mapOf(binaryRoot.name to packageName.asString())
         } catch (e: Exception) {
             if (e is ControlFlowException) throw e
@@ -70,3 +82,5 @@ class KotlinBinaryRootToPackageIndex : FileBasedIndexExtension<String, String>()
         }
     }
 }
+
+val VirtualFile.isSupportedByBinaryRootToPackageIndex: Boolean get() = name.endsWith(".jar") || name.endsWith(KLIB_FILE_EXTENSION_WITH_DOT)

@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.base.indices.names.KotlinBinaryRootToPackageInd
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
+import org.jetbrains.kotlin.idea.base.indices.names.isSupportedByBinaryRootToPackageIndex
 import org.jetbrains.kotlin.idea.base.indices.processElementsAndMeasure
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.stubindex.*
@@ -137,11 +138,16 @@ private class IdeKotlinDeclarationProvider(
 
     private fun computeSourceModulePackageSet(module: KtSourceModuleByModuleInfo): Set<String>? = null // KTIJ-27450
 
-    private fun computeLibraryModulePackageSet(module: KtLibraryModuleByModuleInfo): Set<String> {
+    private fun computeLibraryModulePackageSet(module: KtLibraryModuleByModuleInfo): Set<String>? {
         val binaryRoots = module.libraryInfo.library.getFiles(OrderRootType.CLASSES)
 
-        // If the `KotlinBinaryRootToPackageIndex` doesn't contain any of the binary roots, we can still return an empty set, because the
-        // index is exhaustive for binary libraries. An empty set means that the library doesn't contain any Kotlin declarations.
+        if (binaryRoots.any { !it.isSupportedByBinaryRootToPackageIndex }) {
+            return null
+        }
+
+        // If the `KotlinBinaryRootToPackageIndex` doesn't contain any of the (supported) binary roots, we can still return an empty set,
+        // because the index is exhaustive for binary libraries. An empty set means that the library doesn't contain any Kotlin
+        // declarations.
         return buildSet {
             binaryRoots.forEach { binaryRoot ->
                 FileBasedIndex.getInstance().processValues<String, String>(
