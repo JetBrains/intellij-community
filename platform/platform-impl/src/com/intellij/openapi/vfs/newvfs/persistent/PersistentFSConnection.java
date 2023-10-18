@@ -53,7 +53,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static com.intellij.notification.NotificationType.ERROR;
 import static com.intellij.notification.NotificationType.INFORMATION;
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
-import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
