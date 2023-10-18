@@ -3,6 +3,7 @@ package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel
 
 import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
+import com.intellij.gradle.toolingExtension.impl.util.GradleDependencyArtifactPolicyUtil
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionVisitor
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
@@ -25,7 +26,9 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.*
-import org.jetbrains.plugins.gradle.tooling.*
+import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
+import org.jetbrains.plugins.gradle.tooling.Message
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 import java.lang.reflect.InvocationTargetException
@@ -200,9 +203,8 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     def ideaResourceDirs = null
     def ideaTestSourceDirs = null
     def ideaTestResourceDirs = null
-    def downloadSourcesFlag = System.getProperty("idea.gradle.download.sources")
-    def downloadSources = downloadSourcesFlag == null ? true : Boolean.valueOf(downloadSourcesFlag)
-    def downloadJavadoc = downloadSourcesFlag == null ? false : downloadSources
+    final downloadSources = GradleDependencyArtifactPolicyUtil.shouldDownloadSources(ideaPlugin)
+    final downloadJavadoc = GradleDependencyArtifactPolicyUtil.shouldDownloadJavadoc(ideaPlugin)
 
     def testSourceSets = []
 
@@ -229,18 +231,14 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       if (is74OrBetter) {
         ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSources.files)
         ideaTestResourceDirs = new LinkedHashSet<>(ideaPluginModule.testResources.files)
-      } else {
-        ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSourceDirs)
-        ideaTestResourceDirs = ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
-      }
-      if (downloadSourcesFlag != null) {
-        ideaPluginModule.downloadSources = downloadSources
-        ideaPluginModule.downloadJavadoc = downloadJavadoc
       }
       else {
-        downloadJavadoc = ideaPluginModule.downloadJavadoc
-        downloadSources = ideaPluginModule.downloadSources
+        ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSourceDirs)
+        ideaTestResourceDirs =
+          ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
       }
+      ideaPluginModule.downloadSources = downloadSources
+      ideaPluginModule.downloadJavadoc = downloadJavadoc
     }
 
     def projectSourceCompatibility = JavaPluginUtil.getSourceCompatibility(project)
