@@ -33,7 +33,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
   private boolean isOfflineMode = false;
   private boolean isDownloadSources = Registry.is("gradle.download.sources", false);
-  private boolean isParallelModelFetch = true;
+  private boolean isParallelModelFetch = false;
 
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
@@ -190,7 +190,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     private final Set<GradleProjectSettings> myProjectSettings = new TreeSet<>();
     private boolean isOfflineMode = false;
     private boolean isDownloadSources = false;
-    private boolean isParallelModelFetch = true;
+    private boolean isParallelModelFetch = false;
 
     @Override
     @XCollection(elementTypes = GradleProjectSettings.class)
