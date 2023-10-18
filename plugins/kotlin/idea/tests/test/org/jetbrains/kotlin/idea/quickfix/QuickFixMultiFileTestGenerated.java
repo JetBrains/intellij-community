@@ -110,6 +110,94 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
     @TestMetadata("testData/quickfix/autoImports")
     public abstract static class AutoImports extends AbstractQuickFixMultiFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/autoImports/callableReference")
+        public static class CallableReference extends AbstractQuickFixMultiFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("annotation.test")
+            public void testAnnotation() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/annotation.test");
+            }
+
+            @TestMetadata("callableReferenceExtension.before.Main.kt")
+            public void testCallableReferenceExtension() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/callableReferenceExtension.before.Main.kt");
+            }
+
+            @TestMetadata("callableReferenceExtension2.before.Main.kt")
+            public void testCallableReferenceExtension2() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/callableReferenceExtension2.before.Main.kt");
+            }
+
+            @TestMetadata("callableReferenceTopLevel.before.Main.kt")
+            public void testCallableReferenceTopLevel() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/callableReferenceTopLevel.before.Main.kt");
+            }
+
+            @TestMetadata("constructorReference.before.Main.kt")
+            public void testConstructorReference() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/constructorReference.before.Main.kt");
+            }
+
+            @TestMetadata("enumClass.test")
+            public void testEnumClass() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/enumClass.test");
+            }
+
+            @TestMetadata("enumEntry.test")
+            public void testEnumEntry() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/enumEntry.test");
+            }
+
+            @TestMetadata("javaClass.test")
+            public void testJavaClass() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/javaClass.test");
+            }
+
+            @TestMetadata("noImportInterfaceRefAsConstructor.before.Main.kt")
+            public void testNoImportInterfaceRefAsConstructor() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/noImportInterfaceRefAsConstructor.before.Main.kt");
+            }
+
+            @TestMetadata("object.test")
+            public void testObject() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/object.test");
+            }
+
+            @TestMetadata("typealias.test")
+            public void testTypealias() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/typealias.test");
+            }
+
+            @TestMetadata("typealiasAnnotation.test")
+            public void testTypealiasAnnotation() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/typealiasAnnotation.test");
+            }
+
+            @TestMetadata("typealiasEnumClass.test")
+            public void testTypealiasEnumClass() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/typealiasEnumClass.test");
+            }
+
+            @TestMetadata("typealiasInterface.test")
+            public void testTypealiasInterface() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/typealiasInterface.test");
+            }
+
+            @TestMetadata("typealiasJavaClass.test")
+            public void testTypealiasJavaClass() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/typealiasJavaClass.test");
+            }
+
+            @TestMetadata("typealiasObject.test")
+            public void testTypealiasObject() throws Exception {
+                runTest("testData/quickfix/autoImports/callableReference/typealiasObject.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/autoImports/innerClass")
         public static class InnerClass extends AbstractQuickFixMultiFileTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -293,21 +381,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/callWithTrailingComma.before.Main.kt");
             }
 
-            @TestMetadata("callableReferenceExtension.before.Main.kt")
-            public void testCallableReferenceExtension() throws Exception {
-                runTest("testData/quickfix/autoImports/callableReferenceExtension.before.Main.kt");
-            }
-
-            @TestMetadata("callableReferenceExtension2.before.Main.kt")
-            public void testCallableReferenceExtension2() throws Exception {
-                runTest("testData/quickfix/autoImports/callableReferenceExtension2.before.Main.kt");
-            }
-
-            @TestMetadata("callableReferenceTopLevel.before.Main.kt")
-            public void testCallableReferenceTopLevel() throws Exception {
-                runTest("testData/quickfix/autoImports/callableReferenceTopLevel.before.Main.kt");
-            }
-
             @TestMetadata("classImport.before.Main.kt")
             public void testClassImport() throws Exception {
                 runTest("testData/quickfix/autoImports/classImport.before.Main.kt");
@@ -316,11 +389,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("constructorParameterAnnotation.test")
             public void testConstructorParameterAnnotation() throws Exception {
                 runTest("testData/quickfix/autoImports/constructorParameterAnnotation.test");
-            }
-
-            @TestMetadata("constructorReference.before.Main.kt")
-            public void testConstructorReference() throws Exception {
-                runTest("testData/quickfix/autoImports/constructorReference.before.Main.kt");
             }
 
             @TestMetadata("delegateExtensionBoth.test")
@@ -791,11 +859,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("noImportInSafeQualifiedExpressionNotFirst.before.Main.kt")
             public void testNoImportInSafeQualifiedExpressionNotFirst() throws Exception {
                 runTest("testData/quickfix/autoImports/noImportInSafeQualifiedExpressionNotFirst.before.Main.kt");
-            }
-
-            @TestMetadata("noImportInterfaceRefAsConstructor.before.Main.kt")
-            public void testNoImportInterfaceRefAsConstructor() throws Exception {
-                runTest("testData/quickfix/autoImports/noImportInterfaceRefAsConstructor.before.Main.kt");
             }
 
             @TestMetadata("noImportOfExtensionForReferenceWithPackageQualifier.test")
