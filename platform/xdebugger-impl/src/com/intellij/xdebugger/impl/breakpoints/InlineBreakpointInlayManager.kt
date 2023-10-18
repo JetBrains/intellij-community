@@ -169,6 +169,23 @@ class InlineBreakpointInlayManager(private val project: Project, private val lin
     redraw(file, document, null, editor)
   }
 
+  fun reinitializeAll() {
+    val enabled = Registry.`is`("debugger.show.breakpoints.inline")
+    for (editor in EditorFactory.getInstance().allEditors) {
+      val document = editor.document
+      val file = editor.virtualFile ?: continue
+      if (enabled) {
+        // We might be able to iterate all editors inside redraw,
+        // but this procedure is a really cold path and doesn't worse any optimization.
+        redraw(file, document, null, editor)
+      } else {
+        for (inlay in editor.inlayModel.getInlineElementsInRange(Int.MIN_VALUE, Int.MAX_VALUE, InlineBreakpointInlayRenderer::class.java)) {
+          Disposer.dispose(inlay)
+        }
+      }
+    }
+  }
+
   private fun isAllVariant(variant: XLineBreakpointType<*>.XLineBreakpointVariant): Boolean {
     // Currently, it's the easiest way to check that it's really multi-location variant.
     // Don't try to check whether the variant is an instance of XLineBreakpointAllVariant, they all are.

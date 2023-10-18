@@ -24,6 +24,8 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -96,6 +98,13 @@ public final class XLineBreakpointManager {
         public void editorCreated(@NotNull EditorFactoryEvent event) {
           if (!Registry.is("debugger.show.breakpoints.inline")) return;
           getInlineBreakpointInlayManager().initializeInNewEditor(event.getEditor());
+        }
+      }, project);
+
+      Registry.get("debugger.show.breakpoints.inline").addListener(new RegistryValueListener() {
+        @Override
+        public void afterValueChanged(@NotNull RegistryValue value) {
+          getInlineBreakpointInlayManager().reinitializeAll();
         }
       }, project);
     }
