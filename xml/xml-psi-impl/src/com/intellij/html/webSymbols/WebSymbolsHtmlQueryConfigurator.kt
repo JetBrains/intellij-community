@@ -39,10 +39,10 @@ import java.util.*
 class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
   override fun getScope(project: Project,
-                        element: PsiElement?,
+                        location: PsiElement?,
                         context: WebSymbolsContext,
                         allowResolve: Boolean): List<WebSymbolsScope> =
-    ((element as? XmlAttribute)?.parent ?: element as? XmlTag)?.let {
+    ((location as? XmlAttribute)?.parent ?: location as? XmlTag)?.let {
       listOf(StandardHtmlSymbolsScope(it))
     }
     ?: emptyList()
