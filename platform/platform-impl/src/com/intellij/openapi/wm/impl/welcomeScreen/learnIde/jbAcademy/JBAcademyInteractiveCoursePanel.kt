@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.plugins.org.PluginManagerFilters
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -108,7 +107,7 @@ class JBAcademyInteractiveCoursePanel(data: InteractiveCourseData) : Interactive
         val descriptors: MutableList<IdeaPluginDescriptor> = ArrayList(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins,
                                                                                                                      emptyList(), true))
         PluginManagerCore.plugins.filterTo(descriptors) {
-          !it.isEnabled && PluginManagerCore.isCompatible(it) && PluginManagerFilters.getInstance().allowInstallingPlugin(it)
+          !it.isEnabled && PluginManagerCore.isCompatible(it) && PluginManagementPolicy.getInstance().canInstallPlugin(it)
         }
         indicator.checkCanceled()
         progressBarPanel.updateProgressBar(0.2)

@@ -2,7 +2,6 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.*;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -53,10 +52,9 @@ public class PluginsAdvertiserDialogPluginInstaller {
       return false;
     }
 
-    var org = PluginManagerFilters.getInstance();
     var notAllowedToInstallPlugins = nodes
       .stream()
-      .filter(descriptor -> !org.allowInstallingPlugin(descriptor))
+      .filter(descriptor -> !PluginManagementPolicy.getInstance().canInstallPlugin(descriptor))
       .map(e -> e.getPluginId().getIdString())
       .collect(Collectors.toCollection(TreeSet<String>::new));
 

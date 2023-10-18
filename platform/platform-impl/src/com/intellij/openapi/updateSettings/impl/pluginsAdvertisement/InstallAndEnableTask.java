@@ -2,14 +2,10 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginNode;
-import com.intellij.ide.plugins.RepositoryHelper;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 
 @ApiStatus.Internal
 abstract class InstallAndEnableTask extends Task.Modal {
@@ -85,10 +82,9 @@ abstract class InstallAndEnableTask extends Task.Modal {
         }
       }
 
-      var org = PluginManagerFilters.getInstance();
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
         if (!descriptor.isEnabled() && PluginManagerCore.isCompatible(descriptor) &&
-            org.allowInstallingPlugin(descriptor) || allowInstallingPlugins) {
+            PluginManagementPolicy.getInstance().canInstallPlugin(descriptor) || allowInstallingPlugins) {
           descriptors.add(descriptor);
         }
       }

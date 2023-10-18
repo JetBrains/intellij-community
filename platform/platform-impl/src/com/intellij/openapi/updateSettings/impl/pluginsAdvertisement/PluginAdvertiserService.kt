@@ -3,11 +3,11 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.plugins.org.PluginManagerFilters
 import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -131,13 +131,12 @@ open class PluginAdvertiserServiceImpl(
       val (plugins, featuresMap) = fetchFeatures(unknownFeatures, includeIgnored)
 
       val descriptorsById = PluginManagerCore.buildPluginIdMap()
-      val pluginManagerFilters = PluginManagerFilters.getInstance()
       val disabledDescriptors = plugins.asSequence()
         .map { it.pluginId }
         .mapNotNull { descriptorsById[it] }
         .filterNot { it.isEnabled }
-        .filter { pluginManagerFilters.allowInstallingPlugin(it) }
-        .filter { pluginManagerFilters.isPluginCompatible(it) }
+        .filter { PluginManagementPolicy.getInstance().canInstallPlugin(it) }
+        .filter { isPluginCompatible(it) }
         .toList()
 
       val suggestToInstall = if (plugins.isEmpty())
@@ -145,8 +144,7 @@ open class PluginAdvertiserServiceImpl(
       else
         fetchPluginSuggestions(
           pluginIds = plugins.asSequence().map { it.pluginId }.toSet(),
-          customPlugins = customPlugins,
-          org = pluginManagerFilters,
+          customPlugins = customPlugins
         )
 
       launch(Dispatchers.EDT) {
@@ -161,6 +159,14 @@ open class PluginAdvertiserServiceImpl(
         )
       }
     }
+  }
+
+  /**
+   * Checks if the plugin is compatible with the current build of the IDE.
+   */
+  private fun isPluginCompatible(descriptor: IdeaPluginDescriptor): Boolean {
+    val incompatibilityReason = PluginManagerCore.checkBuildNumberCompatibility(descriptor, PluginManagerCore.buildNumber)
+    return incompatibilityReason == null
   }
 
   private suspend fun fetchFeatures(features: Collection<UnknownFeature>,
@@ -217,7 +223,6 @@ open class PluginAdvertiserServiceImpl(
     }
 
     val pluginIds = plugins.asSequence().map { it.pluginId }.toSet()
-    val pluginManagerFilters = PluginManagerFilters.getInstance()
 
     val result = ArrayList<IdeaPluginDescriptor>(RepositoryHelper.mergePluginsFromRepositories(
       MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds),
@@ -226,7 +231,7 @@ open class PluginAdvertiserServiceImpl(
     ).asSequence()
       .filter { pluginIds.contains(it.pluginId) }
       .filterNot { isBrokenPlugin(it) }
-      .filter { pluginManagerFilters.allowInstallingPlugin(it) }
+                                                   .filter { PluginManagementPolicy.getInstance().canInstallPlugin(it) }
       .toList())
 
     for (compatibleUpdate in MarketplaceRequests.getLastCompatiblePluginUpdate(result.map { it.pluginId }.toSet())) {
@@ -295,8 +300,7 @@ open class PluginAdvertiserServiceImpl(
 
   private fun fetchPluginSuggestions(
     pluginIds: Set<PluginId>,
-    customPlugins: List<PluginNode>,
-    org: PluginManagerFilters,
+    customPlugins: List<PluginNode>
   ): List<PluginDownloader> {
     return RepositoryHelper.mergePluginsFromRepositories(
       MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds),
@@ -312,7 +316,7 @@ open class PluginAdvertiserServiceImpl(
           else -> (!installedPlugin.isBundled || installedPlugin.allowBundledUpdate())
                   && PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, installedPlugin) > 0
         }
-      }.filter { org.allowInstallingPlugin(it) }
+      }.filter { PluginManagementPolicy.getInstance().canInstallPlugin(it) }
       .map { PluginDownloader.createDownloader(it) }
       .toList()
   }

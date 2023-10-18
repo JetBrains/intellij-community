@@ -9,7 +9,6 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -256,7 +255,7 @@ public final class PluginInstaller {
         return false;
       }
 
-      if (!PluginManagerFilters.getInstance().allowInstallingPlugin(pluginDescriptor)) {
+      if (!PluginManagementPolicy.getInstance().canInstallPlugin(pluginDescriptor)) {
         String message = IdeBundle.message("dialog.message.plugin.is.not.allowed", pluginDescriptor.getName());
         MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
         return false;
