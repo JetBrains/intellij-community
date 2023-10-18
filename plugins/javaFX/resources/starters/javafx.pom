@@ -8,7 +8,7 @@
     <gradle.version>8.2</gradle.version>
     <maven.version>3.8.5</maven.version>
     <maven.wrapper.version>3.1.0</maven.wrapper.version>
-    <junit.version>5.9.2</junit.version>
+    <junit.version>5.10.0</junit.version>
     <kotlin.version>1.8.22</kotlin.version>
     <javamodularity.version>1.8.12</javamodularity.version>
 
@@ -24,10 +24,11 @@
     <fx18.version>18.0.2</fx18.version>
     <fx19.version>19.0.2</fx19.version>
     <fx20.version>20.0.1</fx20.version>
-    <fx21.version>21-ea+24</fx21.version>
+    <fx21.version>21</fx21.version>
+    <fx22.version>22-ea+11</fx22.version>
 
     <fxgl11.version>11.17</fxgl11.version>
-    <fxgl17.version>17.2</fxgl17.version>
+    <fxgl17.version>17.3</fxgl17.version>
   </properties>
 
   <dependencyManagement>
@@ -102,7 +103,7 @@
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>7.7.1</version>
+        <version>7.8.0</version>
       </dependency>
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
@@ -122,7 +123,7 @@
       <dependency>
         <groupId>org.codehaus.gmavenplus</groupId>
         <artifactId>gmavenplus-plugin</artifactId>
-        <version>2.1.0</version>
+        <version>3.0.2</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
