@@ -2,6 +2,8 @@
 package com.intellij.ide.startup.importSettings.transfer
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.customize.transferSettings.models.ILookAndFeel
+import com.intellij.ide.customize.transferSettings.models.Keymap
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import javax.swing.Icon
@@ -9,41 +11,43 @@ import javax.swing.Icon
 class TransferableSetting(
   override val id: String,
   override val name: String,
-  override val icon: Icon
+  override val icon: Icon,
+  override val comment: String?
 ) : BaseSetting {
-
-  override val comment: String? = null
 
   companion object {
 
-    fun laf() = TransferableSetting(
-      "laf",
-      ImportSettingsBundle.message("transfer.settings.look-and-feel"),
-      AllIcons.Actions.Stub // TODO: Choose the right icon
-    )
+    fun uiTheme(laf: ILookAndFeel): TransferableSetting? {
+      val themeName = laf.getPreview().name
+      return TransferableSetting(
+        "ui",
+        ImportSettingsBundle.message("transfer.settings.ui-theme"),
+        AllIcons.Actions.Stub, // TODO: Choose the right icon
+        themeName
+      )
+    }
 
-    fun syntaxScheme() = TransferableSetting(
-      "syntaxScheme",
-      ImportSettingsBundle.message("transfer.settings.syntax-scheme"),
-      AllIcons.Actions.Stub // TODO: Choose the right icon
-    )
-
-    fun keymap() = TransferableSetting(
-      "keymap",
-      ImportSettingsBundle.message("transfer.settings.keymap"),
-      AllIcons.Actions.Stub // TODO: Choose the right icon
-    )
+    fun keymap(keymap: Keymap): TransferableSetting {
+      return TransferableSetting(
+        "keymap",
+        ImportSettingsBundle.message("transfer.settings.keymap"),
+        AllIcons.Actions.Stub, // TODO: Choose the right icon
+        keymap.displayName
+      )
+    }
 
     fun plugins() = TransferableSetting(
       "plugins",
       ImportSettingsBundle.message("transfer.settings.plugins"),
-      AllIcons.Actions.Stub // TODO: Choose the right icon
+      AllIcons.Actions.Stub, // TODO: Choose the right icon
+      null
     )
 
     fun recentProjects() = TransferableSetting(
       "recentProjects",
       ImportSettingsBundle.message("transfer.settings.recent-projects"),
-      AllIcons.Actions.Stub // TODO: Choose the right icon
+      AllIcons.Actions.Stub, // TODO: Choose the right icon
+      null
     )
   }
 }

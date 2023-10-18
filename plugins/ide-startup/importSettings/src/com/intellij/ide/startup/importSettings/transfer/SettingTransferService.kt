@@ -85,9 +85,8 @@ class SettingTransferService : ExternalService {
       val version = versions[itemId] ?: return emptyList()
       val settings = version.settingsCache // TODO: Preload in background
       buildList {
-        settings.laf?.let { TransferableSetting.laf() }?.let(::add)
-        settings.syntaxScheme?.let { TransferableSetting.syntaxScheme() }?.let(::add)
-        settings.keymap?.let { TransferableSetting.keymap() }?.let(::add)
+        settings.laf?.let(TransferableSetting::uiTheme)?.let(::add)
+        settings.keymap?.let(TransferableSetting::keymap)?.let(::add)
         settings.plugins.nullize()?.let { TransferableSetting.plugins() }?.let(::add)
         settings.recentProjects.nullize()?.let { TransferableSetting.recentProjects() }?.let(::add)
       }
