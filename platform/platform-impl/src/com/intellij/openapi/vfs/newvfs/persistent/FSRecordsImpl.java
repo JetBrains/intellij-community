@@ -282,9 +282,10 @@ public final class FSRecordsImpl implements Closeable {
 
 
       LOG.info("VFS initialized: " + NANOSECONDS.toMillis(initializationResult.totalInitializationDurationNs) + " ms, " +
-               initializationResult.attemptsFailures.size() + " failed attempts");
+               initializationResult.attemptsFailures.size() + " failed attempts, " +
+               initializationResult.connection.recoveryInfo().recoveredErrors.size() + " errors were recovered");
 
-      PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(/*USE_CONTENT_HASHES*/ connection);
+      PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(connection);
       PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);
       PersistentFSRecordAccessor recordAccessor = new PersistentFSRecordAccessor(contentAccessor, attributeAccessor, connection);
       PersistentFSTreeAccessor treeAccessor = attributeAccessor.supportsRawAccess() && USE_RAW_ACCESS_TO_READ_CHILDREN ?

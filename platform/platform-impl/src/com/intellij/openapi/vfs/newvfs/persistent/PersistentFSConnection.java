@@ -97,7 +97,7 @@ public final class PersistentFSConnection {
 
   private final @Nullable VfsLogEx vfsLog;
 
-  private volatile boolean dirty;
+  private volatile boolean dirty = false;
   private volatile boolean closed = false;
 
   /** How many errors were detected (during the use) that are likely caused by VFS corruptions -- i.e. broken internal invariants */
@@ -134,6 +134,8 @@ public final class PersistentFSConnection {
     this.enumeratedAttributes = enumeratedAttributes;
     recoveryInfo = info;
   }
+
+  //It is 'second level' of wrapping, not really used today, but for the bright future:
 
   private static RefCountingContentStorage wrapContents(RefCountingContentStorage contents, List<ConnectionInterceptor> interceptors) {
     var contentInterceptors = interceptors.stream()
@@ -223,6 +225,14 @@ public final class PersistentFSConnection {
     if (!dirty) {
       dirty = true;
       records.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);
+    }
+  }
+
+  private void writeConnectionState() throws IOException {
+    // no synchronization, it's ok to have race here
+    if (dirty) {
+      dirty = false;
+      records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
     }
   }
 
@@ -317,16 +327,6 @@ public final class PersistentFSConnection {
 
     if (vfsLog != null) {
       vfsLog.dispose();
-    }
-  }
-
-  private void writeConnectionState() throws IOException {
-    // no synchronization, it's ok to have race here
-    if (dirty) {
-      dirty = false;
-      records.setConnectionStatus(corruptionsDetected.get() > 0 ?
-                                  PersistentFSHeaders.CORRUPTED_MAGIC :
-                                  PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
     }
   }
 
