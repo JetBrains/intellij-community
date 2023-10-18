@@ -1554,10 +1554,7 @@ public class MavenUtil {
 
   public static VirtualFile getConfigFile(MavenProject mavenProject, String fileRelativePath) {
     VirtualFile baseDir = getVFileBaseDir(mavenProject.getDirectoryFile());
-    if (baseDir != null) {
-      return baseDir.findFileByRelativePath(fileRelativePath);
-    }
-    return null;
+    return baseDir.findFileByRelativePath(fileRelativePath);
   }
 
   public static Path toPath(@Nullable MavenProject mavenProject, String path) {
