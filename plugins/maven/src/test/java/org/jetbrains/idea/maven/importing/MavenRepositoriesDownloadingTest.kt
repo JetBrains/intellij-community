@@ -277,6 +277,9 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
       TestCase.assertEquals(0, projectsManager.rootProjects[0].problems.size)
     }
+    val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
+    removeFromLocalRepository("org/mytest/myartifact/")
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
   }
 
   private fun doLastUpdatedTest(updateSnapshots: Boolean, pomContent: String, checks: () -> Unit) = runBlocking {
