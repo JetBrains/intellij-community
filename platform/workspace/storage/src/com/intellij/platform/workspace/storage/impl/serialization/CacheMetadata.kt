@@ -35,61 +35,19 @@ internal fun getCacheMetadata(entityStorage: EntityStorageSnapshotImpl, typesRes
     }
   }
 
-  collectIndexes(
-    cacheMetadata,
-    entityStorage.indexes.entitySourceIndex.entries(),
-    entityStorage.indexes.symbolicIdIndex.entries(),
-    typesResolver
-  )
-
-  return cacheMetadata
-}
-
-internal fun getCacheMetadata(
-  entityDataSequence: Sequence<WorkspaceEntityData<*>>,
-  entitySources: Collection<EntitySource>,
-  symbolicIds: Collection<SymbolicEntityId<*>>,
-  typesResolver: EntityTypesResolver
-): CacheMetadata {
-  val cacheMetadata = CacheMetadata()
-
-  //collecting entities with unique entity family
-  val processedEntityFamilies = hashSetOf<Class<*>>()
-  val uniqueEntityDataSequence = entityDataSequence.filter {
-    val notProcessed = !processedEntityFamilies.contains(it.getEntityInterface())
-    if (notProcessed) {
-      processedEntityFamilies.add(it.getEntityInterface())
-    }
-    notProcessed
-  }
-
-  uniqueEntityDataSequence.forEach { entityData ->
-    val pluginId = typesResolver.getPluginId(entityData.getEntityInterface())
-    cacheMetadata.add(pluginId, entityData.getMetadata())
-  }
-
-  collectIndexes(cacheMetadata, entitySources, symbolicIds, typesResolver)
-
-  return cacheMetadata
-}
-
-private fun collectIndexes(
-  cacheMetadata: CacheMetadata,
-  entitySources: Collection<EntitySource>,
-  symbolicIds: Collection<SymbolicEntityId<*>>,
-  typesResolver: EntityTypesResolver
-) {
   val classes: MutableSet<Class<*>> = LinkedHashSet()
   //collecting unique entity source classes
-  classes.addAll(entitySources.map { it::class.java })
+  classes.addAll(entityStorage.indexes.entitySourceIndex.entries().map { it::class.java })
   //collecting unique symbolic id classes
-  classes.addAll(symbolicIds.map { it::class.java })
+  classes.addAll(entityStorage.indexes.symbolicIdIndex.entries().map { it::class.java })
 
   classes.forEach {
     val pluginId: PluginId = typesResolver.getPluginId(it)
     val typeMetadata = TypeMetadataResolver.getInstance().resolveTypeMetadata(it.name, pluginId, typesResolver)
     cacheMetadata.add(pluginId, typeMetadata)
   }
+
+  return cacheMetadata
 }
 
 

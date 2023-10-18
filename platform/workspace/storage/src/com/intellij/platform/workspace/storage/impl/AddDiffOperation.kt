@@ -374,15 +374,6 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     }
   }
 
-  // For serializing current model during the debug process
-  @Suppress("unused")
-  private fun serialize(path: String) {
-    val folder = Path.of(path)
-    target.serializeTo(folder.resolve("Instant_Save_Target"))
-    diff.serializeTo(folder.resolve("Instant_Save_Source"))
-    diff.serializeDiff(folder.resolve("Instant_Save_Diff"))
-  }
-
   companion object {
     private val LOG = logger<AddDiffOperation>()
   }

@@ -213,8 +213,7 @@ internal class MutableEntityStorageImpl(
         .getIdsByEntry(source)!!.map {
           val entityDataById: WorkspaceEntityData<WorkspaceEntity> = this.entityDataById(it) as? WorkspaceEntityData<WorkspaceEntity>
                                                                      ?: run {
-                                                                       reportErrorAndAttachStorage("Cannot find an entity by id $it",
-                                                                                                   this@MutableEntityStorageImpl)
+                                                                       reportErrorAndAttachStorage("Cannot find an entity by id $it")
                                                                        error("Cannot find an entity by id $it")
                                                                      }
           entityDataById.wrapAsModifiable(this)
@@ -1069,7 +1068,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
       indexes.entitySourceIndex
         .getIdsByEntry(source)!!.map {
           this.entityDataById(it)?.createEntity(this) ?: run {
-            reportErrorAndAttachStorage("Cannot find an entity by id $it", this@AbstractEntityStorage)
+            reportErrorAndAttachStorage("Cannot find an entity by id $it")
             error("Cannot find an entity by id $it")
           }
         }
@@ -1115,7 +1114,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
                                       right: EntityStorage?,
                                       reportInBackgroundThread: Boolean) {
     val storage = if (this is MutableEntityStorage) this.toSnapshot() as AbstractEntityStorage else this
-    val report = { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
+    val report = { reportConsistencyIssue(message, e, sourceFilter, left, right) }
     if (reportInBackgroundThread) {
       consistencyChecker.execute(report)
     }
