@@ -294,6 +294,7 @@
 
     <extensionPoint name="customPluginRepoContributor" interface="com.intellij.ide.plugins.CustomPluginRepoContributor" dynamic="true"/>
     <extensionPoint name="pluginRepositoryAuthProvider" interface="com.intellij.ide.plugins.auth.PluginRepositoryAuthProvider" dynamic="true"/>
+    <extensionPoint name="pluginsViewCustomizer" interface="com.intellij.ide.plugins.newui.PluginsViewCustomizer" dynamic="true"/>
 
     <extensionPoint name="ui.suitableFontProvider" interface="com.intellij.ui.SuitableFontProvider" dynamic="true"/>
 

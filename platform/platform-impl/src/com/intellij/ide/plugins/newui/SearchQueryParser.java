@@ -77,6 +77,7 @@ public abstract class SearchQueryParser {
     public final Set<String> repositories = new HashSet<>();
     public String sortBy;
     public boolean suggested;
+    public boolean internal;
     public boolean staffPicks = false;
 
     public Marketplace(@NotNull String query) {
@@ -117,6 +118,9 @@ public abstract class SearchQueryParser {
     protected void addToSearchQuery(@NotNull String query) {
       if (query.equals(SearchWords.SUGGESTED.getValue())) {
         suggested = true;
+      }
+      else if (query.equals(SearchWords.INTERNAL.getValue())) {
+        internal = true;
       }
       else if (query.equals(SearchWords.STAFF_PICKS.getValue())) {
         staffPicks = true;

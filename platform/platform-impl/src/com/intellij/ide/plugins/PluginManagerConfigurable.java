@@ -78,6 +78,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.intellij.ide.plugins.newui.PluginsViewCustomizerKt.getPluginsViewCustomizer;
+
 public final class PluginManagerConfigurable
   implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
 
@@ -251,6 +253,8 @@ public final class PluginManagerConfigurable
       myForceShowInstalledTabForTag = false;
     }
 
+    getPluginsViewCustomizer().processConfigurable(this);
+
     return myCardPanel;
   }
 
@@ -394,6 +398,21 @@ public final class PluginManagerConfigurable
               if (project != null) {
                 addSuggestedGroup(groups, project, customRepositoriesMap);
               }
+
+              PluginsViewCustomizer.PluginsGroupDescriptor internalPluginsGroupDescriptor =
+                getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
+              if (internalPluginsGroupDescriptor != null) {
+                List<IdeaPluginDescriptor> customPlugins = internalPluginsGroupDescriptor.getPlugins();
+                addGroup(
+                  groups,
+                  internalPluginsGroupDescriptor.getName(),
+                  PluginsGroupType.INTERNAL,
+                  SearchWords.INTERNAL.getValue(),
+                  customPlugins,
+                  group -> customPlugins.size() >= ITEMS_PER_GROUP
+                );
+              }
+
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.staff.picks"),
@@ -511,6 +530,9 @@ public final class PluginManagerConfigurable
             }
             attributes.add(SearchWords.STAFF_PICKS.getValue());
             attributes.add(SearchWords.SUGGESTED.getValue());
+            if (getPluginsViewCustomizer() != NoOpPluginsViewCustomizer.INSTANCE) {
+              attributes.add(SearchWords.INTERNAL.getValue());
+            }
             return attributes;
           }
 
@@ -557,7 +579,7 @@ public final class PluginManagerConfigurable
                 yield myVendorsSorted;
               }
               case REPOSITORY -> UpdateSettings.getInstance().getPluginHosts();
-              case SUGGESTED, STAFF_PICKS -> null;
+              case INTERNAL, SUGGESTED, STAFF_PICKS -> null;
             };
           }
 
@@ -678,7 +700,7 @@ public final class PluginManagerConfigurable
           }
 
           List<String> queries = new ArrayList<>();
-          new SearchQueryParser.Marketplace(mySearchTextField.getText()) {
+          new SearchQueryParser.Marketplace(mySearchTextField.getText()) { // FIXME: it's unused - why hasn't it been removed?
             @Override
             protected void addToSearchQuery(@NotNull String query) {
               queries.add(query);
@@ -732,10 +754,31 @@ public final class PluginManagerConfigurable
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
+                SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
+
+                if (parser.internal) {
+                  PluginsViewCustomizer.PluginsGroupDescriptor groupDescriptor =
+                    getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
+                  if (groupDescriptor != null) {
+                    if (parser.searchQuery == null) {
+                      result.descriptors.addAll(groupDescriptor.getPlugins());
+                    }
+                    else {
+                      for (IdeaPluginDescriptor pluginDescriptor : groupDescriptor.getPlugins()) {
+                        if (StringUtil.containsIgnoreCase(pluginDescriptor.getName(), parser.searchQuery)) {
+                          result.descriptors.add(pluginDescriptor);
+                        }
+                      }
+                    }
+                    ContainerUtil.removeDuplicates(result.descriptors);
+                    result.sortByName();
+                    return;
+                  }
+                }
+
                 Map<String, List<PluginNode>> customRepositoriesMap =
                   CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
 
-                SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
 
                 if (parser.suggested) {
                   if (project != null) {

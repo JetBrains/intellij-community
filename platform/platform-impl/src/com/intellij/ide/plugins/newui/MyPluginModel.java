@@ -351,6 +351,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     myPluginUpdatesService = service;
   }
 
+  public PluginUpdatesService getPluginUpdatesService() {
+    return myPluginUpdatesService;
+  }
+
   public @Nullable PluginsGroup getDownloadedGroup() {
     return myDownloaded;
   }
