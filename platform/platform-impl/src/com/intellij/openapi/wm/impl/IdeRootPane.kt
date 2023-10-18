@@ -55,6 +55,7 @@ import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
 import com.jetbrains.WindowDecorations
@@ -256,12 +257,21 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     glassPaneInitialized = true
 
     if (hideNativeLinuxTitle) {
-      val windowResizeListener = WindowResizeListenerEx(glassPane = glassPane,
-                                                        content = frame,
-                                                        border = JBUI.insets(4),
-                                                        corner = null)
-      windowResizeListener.install(coroutineScope)
-      windowResizeListener.setLeftMouseButtonOnly(true)
+      // Under Wayland, interactive resizing can only be done with the help
+      // of the server as soon as it involves the change in the location
+      // of the window like resizing from the top/left does.
+      // Therefore, resizing is implemented entirely in JBR and does not require
+      // any additional work. For other toolkits, we resize programmatically
+      // with WindowResizeListenerEx
+      val toolkitCannotResizeUndecorated = !StartupUiUtil.isWaylandToolkit()
+      if (toolkitCannotResizeUndecorated) {
+        val windowResizeListener = WindowResizeListenerEx(glassPane = glassPane,
+                                                          content = frame,
+                                                          border = JBUI.insets(4),
+                                                          corner = null)
+        windowResizeListener.install(coroutineScope)
+        windowResizeListener.setLeftMouseButtonOnly(true)
+      }
     }
 
     putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
