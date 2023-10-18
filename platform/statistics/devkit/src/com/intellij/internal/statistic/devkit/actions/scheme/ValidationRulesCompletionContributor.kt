@@ -14,6 +14,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.NotNull
 
+private val utilsRules = hashSetOf("class_name", "lang", "plugin_type", "plugin", "plugin_version", "current_file", "place",
+                                   "hash", "shortcut", "file_type", "action", "toolwindow")
+internal val PREFIXES = listOf("{util#}", "{util:}", "{enum#}", "{enum:}", "{regexp#}", "{regexp:}")
+
 internal class ValidationRulesCompletionContributor : CompletionContributor() {
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -57,9 +61,4 @@ internal class ValidationRulesCompletionContributor : CompletionContributor() {
     }
   }
 
-  companion object {
-    val utilsRules = hashSetOf("class_name", "lang", "plugin_type", "plugin", "plugin_version", "current_file", "place",
-                               "hash", "shortcut", "file_type", "action", "toolwindow")
-    val PREFIXES = listOf("{util#}", "{util:}", "{enum#}", "{enum:}", "{regexp#}", "{regexp:}")
-  }
 }
