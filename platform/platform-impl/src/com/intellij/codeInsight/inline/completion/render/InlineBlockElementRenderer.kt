@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Graphics
 import java.awt.Rectangle
 
-class InlineBlockElementRenderer(private val editor: Editor, val lines: List<String>) : EditorCustomElementRenderer {
+class InlineBlockElementRenderer(private val editor: Editor, val lines: List<String>) : InlineCompletionRenderer {
 
   private val width = editor
     .contentComponent
