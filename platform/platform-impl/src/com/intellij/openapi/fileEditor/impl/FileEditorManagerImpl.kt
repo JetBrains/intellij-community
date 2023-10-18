@@ -43,6 +43,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorComposite.Companion.retrofit
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters.Companion.isOpenedInBulk
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
+import com.intellij.openapi.fileEditor.impl.text.TEXT_EDITOR_PROVIDER_TYPE_ID
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
@@ -1642,6 +1643,21 @@ open class FileEditorManagerImpl(
       result.addAll(clientManager.getAllEditors())
     }
     return result.toTypedArray()
+  }
+
+  final override suspend fun waitForTextEditors() {
+    if (!initJob.isCompleted) {
+      return
+    }
+
+    for (composite in openedComposites) {
+      for ((editor, provider) in composite.allEditorsWithProviders) {
+        // wait only for our platform regular text editors
+        if (provider.editorTypeId == TEXT_EDITOR_PROVIDER_TYPE_ID && editor is TextEditor) {
+          AsyncEditorLoader.waitForLoaded(editor.editor)
+        }
+      }
+    }
   }
 
   @RequiresEdt

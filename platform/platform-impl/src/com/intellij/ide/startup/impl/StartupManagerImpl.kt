@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -22,6 +23,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareRunnable
@@ -37,7 +40,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.ui.EDT
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -103,6 +105,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   private val lock = Any()
   private val initProjectStartupActivities = ArrayDeque<Runnable>()
   private val postStartupActivities = ArrayDeque<Runnable>()
+
   @Volatile
   private var freezePostStartupActivities = false
 
@@ -165,17 +168,29 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     coroutineContext.ensureActive()
 
     val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode && !app.isDispatchThread) {
-      runPostStartupActivities(async = false)
+    if (app.isUnitTestMode) {
+      if (app.isDispatchThread) {
+        // doesn't block project opening
+        coroutineScope.launch {
+          runPostStartupActivities(async = true)
+        }
+        waitAndProcessInvocationEventsInIdeEventQueue(this)
+      }
+      else {
+        runPostStartupActivities(async = false)
+      }
     }
     else {
-      // doesn't block project opening
-      coroutineScope.launch(tracer.span("runPostStartupActivities")) {
-        runPostStartupActivities(async = true)
-      }
-      if (app.isUnitTestMode) {
-        EDT.assertIsEdt()
-        waitAndProcessInvocationEventsInIdeEventQueue(this)
+      coroutineScope.launch(tracer.span("project post-startup activities running")) {
+        if (System.getProperty("idea.delayed.project.post.startup.activities", "false").toBoolean()) {
+          withContext(tracer.span("fully opened editors waiting")) {
+            (project.serviceAsync<FileEditorManager>() as? FileEditorManagerEx)?.waitForTextEditors()
+          }
+        }
+
+        withContext(tracer.span("runPostStartupActivities")) {
+          runPostStartupActivities(async = true)
+        }
       }
     }
   }
