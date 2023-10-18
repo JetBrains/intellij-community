@@ -141,6 +141,8 @@ class TestExternalService : ExternalService {
     private val LOG = logger<TestExternalService>()
   }
 
+  override suspend fun warmUp() {}
+
   override fun products(): List<Product> {
     return listOf(TestJbService.main2)
   }

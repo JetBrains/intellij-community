@@ -99,7 +99,9 @@ interface SyncService : BaseJbService {
   fun generalSync()
 }
 
-interface ExternalService : BaseService
+interface ExternalService : BaseService {
+  suspend fun warmUp()
+}
 interface JbService: BaseJbService {
   fun getConfig(): Config
 }
