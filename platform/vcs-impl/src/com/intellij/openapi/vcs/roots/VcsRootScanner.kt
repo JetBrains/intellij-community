@@ -11,7 +11,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectInitialActivitiesNotifier
 import com.intellij.openapi.roots.ProjectRootManager
@@ -60,6 +59,8 @@ internal class VcsRootScanner(private val project: Project, coroutineScope: Coro
         .debounce(1.seconds)
         .collectLatest {
           withContext(Dispatchers.IO) {
+            project.service<ProjectInitialActivitiesNotifier>().awaitInitialVfsRefreshFinished()
+
             coroutineToIndicator {
               rootProblemNotifier.rescanAndNotifyIfNeeded()
             }
@@ -177,10 +178,6 @@ internal class VcsRootScanner(private val project: Project, coroutineScope: Coro
     ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG.debug("VcsRootScanner.scheduleScan")
     if (!VcsUtil.shouldDetectVcsMappingsFor(project)) {
       return
-    }
-
-    runBlockingCancellable {
-      project.service<ProjectInitialActivitiesNotifier>().awaitInitialVfsRefreshFinished()
     }
 
     check(scanRequests.tryEmit(Unit))
