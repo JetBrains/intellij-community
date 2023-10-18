@@ -6,9 +6,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -25,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
 
@@ -68,29 +66,24 @@ public class AnnotateLocalFileAction {
 
   private static void perform(AnActionEvent e, boolean selected) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VirtualFile selectedFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
+
     if (!selected) {
-      VirtualFile selectedFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
       Editor editor = Objects.requireNonNull(VcsAnnotateUtil.getEditorFor(selectedFile, e.getDataContext()));
       AnnotateToggleAction.closeVcsAnnotations(editor);
     }
     else {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      if (editor == null) {
-        VirtualFile selectedFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
-        FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(selectedFile, false);
-        for (FileEditor fileEditor : fileEditors) {
-          if (fileEditor instanceof TextEditor) {
-            editor = ((TextEditor)fileEditor).getEditor();
-          }
-        }
+      if (editor != null && !Objects.equals(editor.getVirtualFile(), selectedFile)) {
+        editor = null;
+      }
 
+      if (editor == null) {
+        editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, selectedFile), false);
         if (editor == null) {
           Messages.showErrorDialog(project,
                                    VcsBundle.message("dialog.message.can.t.create.text.editor.for", selectedFile.getPresentableUrl()),
                                    VcsBundle.message("message.title.annotate"));
-          LOG.warn(String.format("Can't create text editor for file: valid - %s; file type - %s; editors - %s", //NON-NLS
-                                 selectedFile.isValid(), selectedFile.getFileType().getName(), Arrays.toString(fileEditors)));
-
           return;
         }
       }
