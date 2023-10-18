@@ -44,10 +44,11 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
       val command = processBuilder.command()
 
       when (val processResult = getIjentApi(wslDistribution, project, options.isSudo).executeProcess(
-        exe = FileUtil.toSystemIndependentName(command.first ()),
+        exe = FileUtil.toSystemIndependentName(command.first()),
         args = *command.toList().drop(1).toTypedArray(),
         env = processBuilder.environment(),
-        pty = pty
+        pty = pty,
+        workingDirectory = wslDistribution.getWslPath(processBuilder.directory().path)
       )) {
         is IjentApi.ExecuteProcessResult.Success -> processResult.process.toProcess(pty != null)
         is IjentApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
