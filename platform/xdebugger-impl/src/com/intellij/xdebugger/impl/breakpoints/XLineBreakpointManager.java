@@ -58,9 +58,12 @@ public final class XLineBreakpointManager {
   private final MultiMap<String, XLineBreakpointImpl> myBreakpoints = MultiMap.createConcurrent();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
+  private final InlineBreakpointInlayManager myInlineBreakpointInlayManager;
 
   public XLineBreakpointManager(@NotNull Project project) {
     myProject = project;
+
+    myInlineBreakpointInlayManager = new InlineBreakpointInlayManager(project, this);
 
     MessageBusConnection busConnection = project.getMessageBus().connect();
 
@@ -92,10 +95,7 @@ public final class XLineBreakpointManager {
         @Override
         public void editorCreated(@NotNull EditorFactoryEvent event) {
           if (!Registry.is("debugger.show.breakpoints.inline")) return;
-
-          var file = event.getEditor().getVirtualFile();
-          if (file == null) return;
-          myBreakpoints.get(file.getUrl()).forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
+          getInlineBreakpointInlayManager().initializeInNewEditor(event.getEditor());
         }
       }, project);
     }
@@ -110,6 +110,10 @@ public final class XLineBreakpointManager {
           .forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
       }
     });
+  }
+
+  public @NotNull InlineBreakpointInlayManager getInlineBreakpointInlayManager() {
+    return myInlineBreakpointInlayManager;
   }
 
   void updateBreakpointsUI() {
@@ -158,12 +162,6 @@ public final class XLineBreakpointManager {
     }
 
     removeBreakpoints(toRemove);
-
-    // FIXME[inline-bp]: it's a temporary solution, only changed lines should be redrawn
-    var file = FileDocumentManager.getInstance().getFile(document);
-    if (file != null) {
-      InlineBreakpointInlayManager.redrawInlineBreakpoints(this, myProject, file, document);
-    }
   }
 
   private void removeBreakpoints(@Nullable final Collection<? extends XLineBreakpoint> toRemove) {
@@ -237,6 +235,19 @@ public final class XLineBreakpointManager {
             });
           }
         });
+
+        if (Registry.is("debugger.show.breakpoints.inline")) {
+          var file = FileDocumentManager.getInstance().getFile(document);
+          if (file != null) {
+            var inlineInlaysManager = getInlineBreakpointInlayManager();
+            var firstLine = document.getLineNumber(e.getOffset());
+            var lastLine = document.getLineNumber(e.getOffset() + e.getNewLength());
+            inlineInlaysManager.queueRedrawLine(document, firstLine);
+            if (lastLine != firstLine) {
+              inlineInlaysManager.queueRedrawLine(document, lastLine);
+            }
+          }
+        }
       }
     }
   }
