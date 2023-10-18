@@ -63,7 +63,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
                                                                                     @NotNull IntConsumer invertedIndexChangeCallback)
     throws StorageException {
     var forwardIndex = FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE ?
-                       new ForwardIndexFileControllerOverMappedFile() :
+                       new ForwardIndexFileControllerOverMappedFile(forwardIndexStorageFile) :
                        new ForwardIndexFileControllerOverFile(forwardIndexStorageFile);
     Int2ObjectMap<RandomAccessIntContainer> invertedIndex = new Int2ObjectOpenHashMap<>();
     forwardIndex.processEntries((inputId, data) -> {
@@ -590,11 +590,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
     private final AtomicLong modificationsCounter = new AtomicLong(0);
 
-    private ForwardIndexFileControllerOverMappedFile() throws StorageException {
+    private ForwardIndexFileControllerOverMappedFile(@NotNull Path forwardIndexStorageFile) throws StorageException {
       try {
         storage = MappedFileStorageHelper.openHelperAndVerifyVersions(
           FSRecords.getInstance(),
-          STORAGE_NAME,
+          forwardIndexStorageFile.toAbsolutePath(),
           BINARY_FORMAT_VERSION,
           FIELD_WIDTH,
           CHECK_FILE_ID_BELOW_MAX
