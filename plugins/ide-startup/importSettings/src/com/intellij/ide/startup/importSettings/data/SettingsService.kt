@@ -4,11 +4,14 @@ package com.intellij.ide.startup.importSettings.data
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.rd.createNestedDisposable
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.SystemProperties
-import com.jetbrains.rd.util.reactive.IOptPropertyView
-import com.jetbrains.rd.util.reactive.IPropertyView
-import com.jetbrains.rd.util.reactive.ISignal
-import com.jetbrains.rd.util.reactive.Signal
+import com.jetbrains.rd.swing.proxyProperty
+import com.jetbrains.rd.util.reactive.*
 import java.util.*
 import javax.swing.Icon
 
@@ -23,6 +26,10 @@ interface SettingsService {
   fun skipImport()
 
   val error: ISignal<NotificationData>
+
+  val jbAccount: IPropertyView<JBAccountInfoService.JBAData?>
+
+  val isSyncEnabled: IPropertyView<Boolean>
 }
 
 class SettingsServiceImpl : SettingsService {
@@ -40,6 +47,28 @@ class SettingsServiceImpl : SettingsService {
   override fun skipImport() = thisLogger().info("$IMPORT_SERVICE skipImport")
 
   override val error = Signal<NotificationData>()
+
+  override val jbAccount = Property<JBAccountInfoService.JBAData?>(null)
+
+  private fun unloggedSyncHide(): IPropertyView<Boolean> {
+    fun getValue(): Boolean = Registry.`is`("import.setting.unlogged.sync.hide")
+
+    return proxyProperty(getValue()) { lifetime, set ->
+      val listener = object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          set(value.asBoolean())
+        }
+      }
+
+      Registry.get("import.setting.unlogged.sync.hide").addListener(listener, lifetime.createNestedDisposable())
+    }
+  }
+
+  override val isSyncEnabled = jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
+
+  init {
+    jbAccount.set(JBAccountInfoService.JBAData("Aleksey Ivanovskii", "alex.ivanovskii", "alex.ivanovskii@gmail.com"))
+  }
 }
 
 
@@ -54,6 +83,7 @@ interface SyncService : BaseJbService {
     GENERAL
   }
 
+  @Deprecated("Use getJbAccount from SettingsService", ReplaceWith("jbAccount", "com.intellij.ide.startup.importSettings.data.SettingsService"))
   fun isLoggedIn(): Boolean {
     return syncState.value != SYNC_STATE.UNLOGGED
   }

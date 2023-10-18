@@ -21,5 +21,6 @@
 
     <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.SettingsService"
                         serviceImplementation="com.intellij.ide.startup.importSettings.data.SettingsServiceImpl"/>
+    <registryKey defaultValue="true" description="Hide import settings sync in unlogged mode" key="import.setting.unlogged.sync.hide" restartRequired="false" />
   </extensions>
 </idea-plugin>

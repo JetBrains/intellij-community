@@ -29,6 +29,11 @@ class SyncStateAction : ChooseProductActionButton() {
   }
 
   override fun update(e: AnActionEvent) {
+    e.presentation.isVisible = !settingsService.isSyncEnabled.value
+    if(!e.presentation.isVisible) {
+      return
+    }
+
     e.presentation.icon = AllIcons.Actions.Refresh
     e.presentation.isVisible = when (syncService.syncState.value) {
       SyncService.SYNC_STATE.UNLOGGED -> {

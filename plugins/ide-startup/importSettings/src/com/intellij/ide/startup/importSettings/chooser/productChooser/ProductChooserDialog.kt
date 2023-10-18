@@ -31,7 +31,7 @@ class ProductChooserDialog : PageProvider() {
     nextStep(it, OK_EXIT_CODE)
   }
 
-  private  val overlay = BannerOverlay()
+  private val overlay = BannerOverlay()
 
   init {
     val group = DefaultActionGroup()
@@ -44,8 +44,19 @@ class ProductChooserDialog : PageProvider() {
     group.add(SkipImportAction())
 
     val settService = SettingsService.getInstance()
-    settService.error.advise(disposable.createLifetime()) {
+    val lifetime = disposable.createLifetime()
+
+    settService.error.advise(lifetime) {
       overlay.showError(it)
+    }
+
+    settService.jbAccount.advise(lifetime) {
+      accountLabel.isVisible = it != null
+      if (!accountLabel.isVisible) {
+        return@advise
+      }
+
+      accountLabel.text = it?.loginName
     }
 
     val act = ActionManager.getInstance().createActionToolbar(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, false).apply {
@@ -86,6 +97,9 @@ class ProductChooserDialog : PageProvider() {
       gbc.weighty = 1.0
       gbc.fill = GridBagConstraints.NONE
       add(pane, gbc)
+/*      gbc.gridy = 1
+      gbc.fill = GridBagConstraints.HORIZONTAL
+      add(south, gbc)*/
     }
 
     return overlay.wrapComponent(comp)
@@ -95,19 +109,19 @@ class ProductChooserDialog : PageProvider() {
     return emptyArray()
   }
 
-  override fun createSouthPanel(leftSideButtons: MutableList<out JButton>,
-                                rightSideButtons: MutableList<out JButton>,
-                                addHelpToLeftSide: Boolean): JPanel {
+    private val south = JPanel(BorderLayout()).apply {
     val group = DefaultActionGroup()
     group.add(OtherOptions(callback))
 
     val at = createActionToolbar(group, true)
     at.targetComponent = pane
+    add(accountLabel, BorderLayout.WEST)
+    add(at.component, BorderLayout.EAST)
+  }
 
-    return JPanel(BorderLayout()).apply {
-      add(accountLabel, BorderLayout.WEST)
-      add(at.component, BorderLayout.EAST)
-    }
-
+  override fun createSouthPanel(leftSideButtons: MutableList<out JButton>,
+                                rightSideButtons: MutableList<out JButton>,
+                                addHelpToLeftSide: Boolean): JPanel {
+    return south
   }
 }

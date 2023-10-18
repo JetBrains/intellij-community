@@ -2,20 +2,13 @@
 package com.intellij.ide.startup.importSettings.sync
 
 import com.intellij.ide.startup.importSettings.data.*
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.progress.runBlockingCancellable
-//import com.intellij.settingsSync.SettingsSnapshot
-//import com.intellij.settingsSync.SettingsSyncMain
 import com.intellij.ui.JBAccountInfoService
 import com.jetbrains.rd.util.reactive.Property
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.time.withTimeout
 import java.time.Duration
 import java.util.*
 import javax.swing.Icon

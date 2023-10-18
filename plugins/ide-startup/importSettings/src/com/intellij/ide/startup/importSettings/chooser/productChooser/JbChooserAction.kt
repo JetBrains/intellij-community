@@ -18,7 +18,7 @@ class JbChooserAction(callback: (PageProvider) -> Unit) : MainChooserAction<JbSe
 class ExpChooserAction(callback: (PageProvider) -> Unit) : MainChooserAction<ExternalService>(ExtActionsDataProvider.getInstance(), callback)
 
 class SyncChooserAction(callback: (PageProvider) -> Unit) : MainChooserAction<SyncService>(SyncActionsDataProvider.getInstance(), callback) {
-  private val service = SettingsService.getInstance().getSyncService()
+  private val service = SettingsService.getInstance()
 
   override fun getIcon(products: List<Product>): Icon? {
     return AllIcons.Actions.Refresh
@@ -26,7 +26,7 @@ class SyncChooserAction(callback: (PageProvider) -> Unit) : MainChooserAction<Sy
 
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = false
-    if(!service.isLoggedIn()) {
+    if(!service.isSyncEnabled.value) {
       return
     }
     super.update(e)

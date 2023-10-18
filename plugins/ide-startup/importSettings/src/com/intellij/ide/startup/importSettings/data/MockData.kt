@@ -196,7 +196,7 @@ class TestSyncService : SyncService {
   }
 
   override fun getMainProduct(): Product? {
-    return null //TestJbService.main
+    return TestJbService.main
   }
 
   override fun products(): List<Product> {

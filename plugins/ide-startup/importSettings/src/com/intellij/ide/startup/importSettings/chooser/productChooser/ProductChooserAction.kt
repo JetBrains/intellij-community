@@ -45,6 +45,16 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
     createPopup(step).show(RelativePoint(comp, Point(0, comp.height + JBUI.scale(4))))
   }
 
+  override fun update(e: AnActionEvent) {
+    val ch = getChildren(e)
+    e.presentation.putClientProperty(UiUtils.POPUP, ch.size != 1)
+
+    if (ch.size == 1) {
+      ch.firstOrNull()?.update(e)
+      return
+    }
+  }
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private val renderer = ProductChooserRenderer()
