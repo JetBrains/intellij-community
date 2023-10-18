@@ -11,11 +11,12 @@ import java.security.cert.X509Certificate
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
+import kotlin.io.path.pathString
 
 object PluginCertificateStore {
   private val LOG = Logger.getInstance(PluginCertificateStore::class.java)
   private val MANAGED_TRUSTSTORE_PATH = System.getProperty("intellij.plugin.truststore", "")
-  private val DEFAULT_PATH = java.lang.String.join(File.separator, PathManager.getConfigPath(), "ssl", "plugins-certs")
+  private val DEFAULT_PATH = java.lang.String.join(File.separator, PathManager.getOriginalConfigDir()?.pathString ?: PathManager.getConfigPath(), "ssl", "plugins-certs")
   private const val DEFAULT_PASSWORD = "changeit"
   val customTrustManager: MutableTrustManager by lazy {
     ConfirmingTrustManager.createForStorage(DEFAULT_PATH, DEFAULT_PASSWORD).customManager
