@@ -127,7 +127,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   }
 
   @ApiStatus.Internal
-  public void initialize() {
+  public synchronized void initialize() {
     if (!isInitialized.compareAndSet(false, true)) {
       return;
     }
