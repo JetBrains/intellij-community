@@ -15,12 +15,6 @@ class SemanticSearchInitializer : ProjectActivity {
    * Whether the state exists or not, we generate the missing embeddings:
    */
   override suspend fun execute(project: Project) {
-    VirtualFileManager.getInstance().addAsyncFileListener(SemanticSearchFileContentListener.getInstance(project),
-                                                          IndexingLifecycleTracker.getInstance(project))
-
-    VirtualFileManager.getInstance().addAsyncFileListener(SemanticSearchFileNameListener.getInstance(project),
-                                                          IndexingLifecycleTracker.getInstance(project))
-
     if (SemanticSearchSettings.getInstance().enabledInActionsTab) {
       ActionEmbeddingsStorage.getInstance().prepareForSearch(project)
     }
@@ -36,30 +30,28 @@ class SemanticSearchInitializer : ProjectActivity {
 
     if (SemanticSearchSettings.getInstance().enabledInClassesTab) {
       ClassEmbeddingsStorage.getInstance(project).registerIndexInMemoryManager()
+      ClassEmbeddingsStorage.getInstance(project).prepareForSearch()
     }
 
     if (SemanticSearchSettings.getInstance().enabledInFilesTab) {
       FileEmbeddingsStorage.getInstance(project).registerIndexInMemoryManager()
-    }
-
-    if (SemanticSearchSettings.getInstance().enabledInSymbolsTab) {
-      SymbolEmbeddingStorage.getInstance(project).registerIndexInMemoryManager()
-    }
-
-    if (SemanticSearchSettings.getInstance().enabledInClassesTab) {
-      ClassEmbeddingsStorage.getInstance(project).prepareForSearch()
-    }
-
-    if (SemanticSearchSettings.getInstance().enabledInFilesTab) {
       FileEmbeddingsStorage.getInstance(project).prepareForSearch()
     }
 
     if (SemanticSearchSettings.getInstance().enabledInSymbolsTab) {
+      SymbolEmbeddingStorage.getInstance(project).registerIndexInMemoryManager()
       SymbolEmbeddingStorage.getInstance(project).prepareForSearch()
     }
 
-    if (SemanticSearchSettings.getInstance().enabledInClassesTab) {
-      ClassEmbeddingsStorage.getInstance(project).prepareForSearch()
+    if (SemanticSearchSettings.getInstance().enabledInClassesTab
+        || SemanticSearchSettings.getInstance().enabledInSymbolsTab) {
+      VirtualFileManager.getInstance().addAsyncFileListener(SemanticSearchFileContentListener.getInstance(project),
+                                                            IndexingLifecycleTracker.getInstance(project))
+    }
+
+    if (SemanticSearchSettings.getInstance().enabledInFilesTab) {
+      VirtualFileManager.getInstance().addAsyncFileListener(SemanticSearchFileNameListener.getInstance(project),
+                                                            IndexingLifecycleTracker.getInstance(project))
     }
   }
 }
