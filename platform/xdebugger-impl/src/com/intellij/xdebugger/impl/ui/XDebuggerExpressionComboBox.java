@@ -130,6 +130,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
       .inSmartMode(getProject())
       .finishOnUiThread(ModalityState.any(), document -> {
         myEditor.getEditorTextField().setNewDocumentAndFileType(getFileType(text), document);
+        getEditorsProvider().afterEditorCreated(getEditor());
       })
       .coalesceBy(this)
       .submit(AppExecutorUtil.getAppExecutorService());
