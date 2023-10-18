@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
-import com.intellij.ui.icons.CoreIconManager;
 import com.intellij.util.xml.ElementPresentationManager;
 
 import javax.swing.*;
@@ -23,7 +23,7 @@ public final class IconUtilEx {
     }
     if (object instanceof VirtualFile file) {
       IconManager iconManager = IconManager.getInstance();
-      if (iconManager instanceof CoreIconManager manager) {
+      if (iconManager instanceof CoreAwareIconManager manager) {
         return manager.getIcon(file, flags, project);
       }
     }

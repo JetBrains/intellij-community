@@ -98,6 +98,10 @@ interface IconManager {
 
   @ApiStatus.Internal
   fun hashClass(aClass: Class<*>): Long = aClass.hashCode().toLong()
+
+  fun getPluginAndModuleId(classLoader: ClassLoader): Pair<String, String?> = "com.intellij" to null
+
+  fun getClassLoader(pluginId: String, moduleId: String?): ClassLoader? = IconManager::class.java.classLoader
 }
 
 private object DummyIconManager : IconManager {

@@ -469,6 +469,8 @@ ${if (exception == null) "" else exception.message}""")
 
   override fun getPluginId(): PluginId = pluginId
 
+  override fun getModuleId(): String? = (pluginDescriptor as IdeaPluginDescriptorImpl).moduleName
+
   override fun getPluginDescriptor(): PluginDescriptor = pluginDescriptor
 
   override fun toString(): String {

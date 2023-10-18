@@ -8,9 +8,11 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IconLayerProvider
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.findIconUsingDeprecatedImplementation
@@ -230,6 +232,25 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
     hasher.putString(pluginDescriptor.pluginId.idString)
     hasher.putString(pluginDescriptor.version)
     return hasher.asLong
+  }
+
+  override fun getPluginAndModuleId(classLoader: ClassLoader): Pair<String, String?> {
+    if (classLoader is PluginAwareClassLoader) {
+      return classLoader.pluginId.idString to classLoader.moduleId
+    }
+    else {
+      return super.getPluginAndModuleId(classLoader)
+    }
+  }
+
+  override fun getClassLoader(pluginId: String, moduleId: String?): ClassLoader? {
+    val plugin = PluginManagerCore.findPlugin(PluginId.getId(pluginId)) ?: return null
+    if (moduleId == null) {
+      return plugin.classLoader
+    }
+    else {
+      return plugin.content.modules.firstOrNull { it.name == moduleId }?.requireDescriptor()?.classLoader
+    }
   }
 }
 

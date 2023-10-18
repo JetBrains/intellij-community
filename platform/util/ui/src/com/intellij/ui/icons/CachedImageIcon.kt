@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
+@file:OptIn(ExperimentalSerializationApi::class)
 
 package com.intellij.ui.icons
 
@@ -12,6 +13,11 @@ import com.intellij.ui.svg.colorPatcherDigestShim
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.SVGLoader
 import com.intellij.util.ui.MultiResolutionImageProvider
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -83,6 +89,8 @@ open class CachedImageIcon private constructor(
     // if url is explicitly specified, it means that path should be not transformed
     pathTransformModCount = pathTransformGlobalModCount.get()
   }
+
+  internal constructor(resolver: ImageDataLoader) : this(resolver = resolver, originalResolver = resolver)
 
   internal constructor(resolver: ImageDataLoader, toolTip: Supplier<String?>?) :
     this(resolver = resolver, originalResolver = resolver, toolTip = toolTip)
@@ -300,7 +308,7 @@ open class CachedImageIcon private constructor(
   }
 
   val url: URL?
-    get() = this.resolver?.url
+    get() = resolver?.url
 
   internal fun loadImage(scaleContext: ScaleContext, attributes: IconAttributes): Image? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
@@ -335,6 +343,14 @@ open class CachedImageIcon private constructor(
     }
   }
 
+  fun encodeToByteArray(): ByteArray {
+    var descriptor = originalResolver?.serializeToByteArray()
+    if (descriptor == null) {
+      descriptor = UrlDataLoaderDescriptor(url!!.toExternalForm())
+    }
+    return ProtoBuf.encodeToByteArray(descriptor)
+  }
+
   val imageFlags: Int
     get() = resolver?.flags ?: 0
 }
@@ -342,6 +358,15 @@ open class CachedImageIcon private constructor(
 @TestOnly
 @Internal
 fun createCachedIcon(file: Path, scaleContext: ScaleContext): CachedImageIcon = CachedImageIcon(file, scaleContext = scaleContext)
+
+@Serializable
+private data class UrlDataLoaderDescriptor(
+  @JvmField val url: String,
+) : ImageDataLoaderDescriptor {
+  override fun createIcon(): ImageDataLoader {
+    return ImageDataByFilePathLoader(url)
+  }
+}
 
 private sealed interface ColorPatcherStrategy {
   /**
@@ -373,3 +398,7 @@ private class CustomColorPatcherStrategy(override val colorPatcher: SVGLoader.Sv
   }
 }
 
+fun decodeCachedImageIconFromByteArray(byteArray: ByteArray): Icon? {
+  val descriptor = ProtoBuf.decodeFromByteArray<ImageDataLoaderDescriptor>(byteArray)
+  return CachedImageIcon(descriptor.createIcon() ?: return null)
+}
