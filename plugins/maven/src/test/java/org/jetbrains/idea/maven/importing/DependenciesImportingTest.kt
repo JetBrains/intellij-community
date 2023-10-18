@@ -1061,7 +1061,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testDependencyWithEnvironmentProperty() = runBlocking {
     val javaHome = FileUtil.toSystemIndependentName(System.getProperty("java.home"))
 
@@ -1088,7 +1087,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testDependencyWithEnvironmentENVProperty() = runBlocking {
     var envDir = FileUtil.toSystemIndependentName(System.getenv(getEnvVar()))
     envDir = StringUtil.trimEnd(envDir, "/")
@@ -1636,7 +1634,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testRemoveUnnecessaryMavenizedModuleDepsOnRepomport() = runBlocking {
     val m1 = createModulePom("m1",
                              """

@@ -391,8 +391,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected suspend fun importProjectsAsync(files: List<VirtualFile>) {
-    if (java.lang.Boolean.getBoolean("MAVEN_TEST_PREIMPORT")) {
-      assumeThisTestCanBeReusedForPreimport();
+    if (preimportTestMode) {
       val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(myProject)
       try {
         MavenProjectPreImporter.getInstance(myProject)
@@ -412,16 +411,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
 
   }
-
-  private fun assumeThisTestCanBeReusedForPreimport() {
-    val clazz = this.javaClass
-    if (clazz.getDeclaredAnnotation(InstantImportCompatible::class.java) == null) {
-      val testName = name
-      val testMethod = clazz.getDeclaredMethod(testName)
-      Assume.assumeNotNull(testMethod.getDeclaredAnnotation(InstantImportCompatible::class.java))
-    }
-  }
-
 
   protected fun importProjectWithErrors() {
     val files = listOf(myProjectPom)
