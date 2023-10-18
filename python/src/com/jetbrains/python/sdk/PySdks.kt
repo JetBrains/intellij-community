@@ -20,6 +20,25 @@ import java.util.stream.Collectors
 
 private val DETECTED_PYTHON_INTERPRETERS_KEY = Key.create<Set<PyDetectedSdk>>("DETECTED_PYTHON_INTERPRETERS")
 
+suspend fun detectSystemWideSdksSuspended(module: Module?,
+                                          target: TargetEnvironmentConfiguration? = null,
+                                          context: UserDataHolder): List<Sdk> {
+  return detectSystemWideSdksSuspended(module, existingSdks = emptyList(), target, context)
+}
+
+// TODO move close to view
+/**
+ * Gather detected SDKs using [detectSystemWideSdksSuspended].
+ */
+fun prepareSdkList(detectedSdks: List<Sdk>, existingSdks: List<Sdk>, target: TargetEnvironmentConfiguration?): List<Sdk> {
+  val existing = filterSystemWideSdks(existingSdks)
+    .sortedWith(PreferredSdkComparator.INSTANCE)
+    .filter { it.targetEnvConfiguration?.typeId == target?.typeId }
+    .filterNot { PythonSdkUtil.isBaseConda(it.homePath) }
+  val detected = detectedSdks.filter { detectedSdk -> existingSdks.none(detectedSdk::isSameAs) }
+  return existing + detected
+}
+
 suspend fun findBaseSdksSuspended(existingSdks: List<Sdk>,
                                   module: Module?,
                                   target: TargetEnvironmentConfiguration?,

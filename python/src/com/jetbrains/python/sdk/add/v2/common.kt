@@ -22,7 +22,9 @@ interface PythonTargetEnvironmentInterpreterCreator {
   fun getSdk(): Sdk
 }
 
-abstract class PythonAddEnvironment(val state: PythonAddInterpreterState) {
+abstract class PythonAddEnvironment(val presenter: PythonAddInterpreterPresenter) {
+  val state: PythonAddInterpreterState
+    get() = presenter.state
 
   internal val propertyGraph
     get() = state.propertyGraph

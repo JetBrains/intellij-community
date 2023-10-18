@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.projectRoots.Sdk
@@ -17,7 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class PipEnvNewEnvironmentCreator(state: PythonAddInterpreterState) : PythonAddEnvironment(state) {
+class PipEnvNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
   private val executable = propertyGraph.property(UNKNOWN_EXECUTABLE)
   private lateinit var pipEnvPathField: TextFieldWithBrowseButton
   private lateinit var basePythonComboBox: ComboBox<String>
@@ -25,7 +26,7 @@ class PipEnvNewEnvironmentCreator(state: PythonAddInterpreterState) : PythonAddE
   override fun buildOptions(panel: Panel) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
-        basePythonComboBox = pythonBaseInterpreterComboBox(state.basePythonHomePaths, state.basePythonHomePath)
+        basePythonComboBox = pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.basePythonHomePath)
       }
 
       pipEnvPathField = executableSelector(message("sdk.create.custom.pipenv.path"), executable,
@@ -42,9 +43,9 @@ class PipEnvNewEnvironmentCreator(state: PythonAddInterpreterState) : PythonAddE
     }
     else {
       val modalityState = ModalityState.current().asContextElement()
-      state.scope.launch(Dispatchers.Default + modalityState) {
+      state.scope.launch(Dispatchers.IO) {
         val detectedExecutable = detectPipEnvExecutable()
-        withContext(Dispatchers.Main + modalityState) {
+        withContext(Dispatchers.EDT + modalityState) {
           detectedExecutable?.let { executable.set(it.path) }
         }
       }

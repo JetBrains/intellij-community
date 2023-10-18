@@ -2,16 +2,15 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets.LOCAL_MACHINE
 
-class PythonAddCustomInterpreter(private val settings: PythonAddInterpreterState) {
+class PythonAddCustomInterpreter(presenter: PythonAddInterpreterPresenter) {
 
   //private lateinit var targetSelector: ComboBox<PythonInterpreterCreationTargets>
 
   private val targets = mapOf(
-    LOCAL_MACHINE to PythonLocalEnvironmentCreator(settings),
+    LOCAL_MACHINE to PythonLocalEnvironmentCreator(presenter),
   )
 
   fun buildPanel(outerPanel: Panel) {

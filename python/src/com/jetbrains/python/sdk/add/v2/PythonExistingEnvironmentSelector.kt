@@ -6,14 +6,14 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 
-class PythonExistingEnvironmentSelector(state: PythonAddInterpreterState) : PythonAddEnvironment(state) {
+class PythonExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
   private lateinit var versionComboBox: ComboBox<String>
   private val selectedPath = propertyGraph.property("")
 
   override fun buildOptions(panel: Panel) {
     with(panel) {
       row(message("sdk.create.custom.python.path")) {
-        versionComboBox = pythonBaseInterpreterComboBox(state.allValidSdkPaths, selectedPath)
+        versionComboBox = pythonBaseInterpreterComboBox(presenter, presenter.allExistingSdksFlow, selectedPath)
       }
     }
     selectedPath.dependsOn(state.basePythonHomePath) {

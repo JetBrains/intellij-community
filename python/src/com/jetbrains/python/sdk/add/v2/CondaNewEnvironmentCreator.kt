@@ -20,11 +20,10 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.conda.condaSupportedLanguages
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
-import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import kotlinx.coroutines.Dispatchers
 import java.io.File
 
-class CondaNewEnvironmentCreator(state: PythonAddInterpreterState) : PythonAddEnvironment(state) {
+class CondaNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
 
   private val envName = propertyGraph.property("")
   private lateinit var pythonVersion: ObservableMutableProperty<LanguageLevel>
@@ -57,8 +56,9 @@ class CondaNewEnvironmentCreator(state: PythonAddInterpreterState) : PythonAddEn
   }
 
   override fun getOrCreateSdk(): Sdk {
-    return runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.conda.create.progress"), TaskCancellation.nonCancellable()) {
-      PyCondaCommand(state.condaExecutable.get(), null, null)
+    return runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.conda.create.progress"),
+                                        TaskCancellation.nonCancellable()) {
+      presenter.createCondaCommand()
         .createCondaSdkAlongWithNewEnv(NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), envName.get()),
                                        Dispatchers.EDT,
                                        state.basePythonSdks.get(),

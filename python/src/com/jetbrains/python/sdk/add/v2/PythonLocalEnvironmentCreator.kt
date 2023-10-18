@@ -10,7 +10,9 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
 
-class PythonLocalEnvironmentCreator(private val settings: PythonAddInterpreterState) : PythonTargetEnvironmentInterpreterCreator {
+class PythonLocalEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonTargetEnvironmentInterpreterCreator {
+
+  private val settings = presenter.state
 
   private val selectionMethod = settings.propertyGraph.property(PythonInterpreterSelectionMethod.CREATE_NEW)
 
@@ -21,15 +23,15 @@ class PythonLocalEnvironmentCreator(private val settings: PythonAddInterpreterSt
   private val existingInterpreterManager = settings.propertyGraph.property(PYTHON)
 
   private val newInterpreterCreators = mapOf(
-    VIRTUALENV to PythonNewVirtualenvCreator(settings),
-    CONDA to CondaNewEnvironmentCreator(settings),
-    PIPENV to PipEnvNewEnvironmentCreator(settings),
-    POETRY to PoetryNewEnvironmentCreator(settings),
+    VIRTUALENV to PythonNewVirtualenvCreator(presenter),
+    CONDA to CondaNewEnvironmentCreator(presenter),
+    PIPENV to PipEnvNewEnvironmentCreator(presenter),
+    POETRY to PoetryNewEnvironmentCreator(presenter),
   )
 
   private val existingInterpreterSelectors = mapOf(
-    PYTHON to PythonExistingEnvironmentSelector(settings),
-    CONDA to CondaExistingEnvironmentSelector(settings),
+    PYTHON to PythonExistingEnvironmentSelector(presenter),
+    CONDA to CondaExistingEnvironmentSelector(presenter),
   )
 
 
@@ -38,13 +40,15 @@ class PythonLocalEnvironmentCreator(private val settings: PythonAddInterpreterSt
       buttonsGroup {
         row(message("sdk.create.custom.env.creation.type")) {
           radioButton(message("sdk.create.custom.generate.new"), PythonInterpreterSelectionMethod.CREATE_NEW).onChanged {
-            selectionMethod.set(if (it.isSelected) PythonInterpreterSelectionMethod.CREATE_NEW else PythonInterpreterSelectionMethod.SELECT_EXISTING)
+            selectionMethod.set(
+              if (it.isSelected) PythonInterpreterSelectionMethod.CREATE_NEW else PythonInterpreterSelectionMethod.SELECT_EXISTING)
           }
           radioButton(message("sdk.create.custom.select.existing"), PythonInterpreterSelectionMethod.SELECT_EXISTING).onChanged {
-            selectionMethod.set(if (it.isSelected) PythonInterpreterSelectionMethod.SELECT_EXISTING else PythonInterpreterSelectionMethod.CREATE_NEW)
+            selectionMethod.set(
+              if (it.isSelected) PythonInterpreterSelectionMethod.SELECT_EXISTING else PythonInterpreterSelectionMethod.CREATE_NEW)
           }
         }
-      }.bind({ selectionMethod.get() }, { selectionMethod.set(it) } )
+      }.bind({ selectionMethod.get() }, { selectionMethod.set(it) })
 
       row(message("sdk.create.custom.type")) {
         comboBox(newInterpreterCreators.keys, PythonEnvironmentComboBoxRenderer())

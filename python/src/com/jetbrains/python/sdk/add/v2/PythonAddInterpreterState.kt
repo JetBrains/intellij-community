@@ -6,7 +6,6 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.sdk.add.target.createDetectedSdk
 import kotlinx.coroutines.CoroutineScope
 
 class PythonAddInterpreterState(
@@ -20,21 +19,4 @@ class PythonAddInterpreterState(
 ) {
   val basePythonHomePath = basePythonVersion.transform({ sdk -> sdk?.homePath ?: "" },
                                                        { path -> basePythonSdks.get().find { it.homePath == path }!! })
-
-  val basePythonHomePaths = transformSdksToHomePath(basePythonSdks)
-  val allValidSdkPaths = transformSdksToHomePath(allExistingSdks)
-
-
-
-
-
-  private fun transformSdksToHomePath(sdkList: ObservableMutableProperty<List<Sdk>>): ObservableMutableProperty<List<String>> {
-    return sdkList.transform({ sdks -> sdks.map { it.homePath!! } },
-                             { paths ->
-                               val existing = sdkList.get()
-                               paths.map { path ->
-                                 existing.find { it.homePath == path } ?: createDetectedSdk(path, isLocal = true)
-                               }
-                             })
-  }
 }
