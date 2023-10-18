@@ -3,6 +3,7 @@ package com.intellij.platform.diagnostic.telemetry.exporters
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.trace.IdGenerator
@@ -29,19 +30,29 @@ class JaegerJsonSpanExporter(
   serviceVersion: String? = null,
   serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
-  private val tempTelemetryFile: Path = if (file.parent == null) {
-    Path.of("${file.toAbsolutePath()}.temp")
-  }
-  else {
-    Files.createDirectories(file.parent.toAbsolutePath()).resolve("telemetry.temp")
-  }
-
-  private val writer = JsonFactory().createGenerator(Files.newBufferedWriter(tempTelemetryFile))
-    .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
+  private val tempTelemetryPath: Path
+  private val telemetryJsonPath: Path
+  private val writer: JsonGenerator
 
   private val lock = ReentrantLock()
 
   init {
+    // presume that telemetry stuff need to be saved in log dir
+    if (!file.isAbsolute || file.parent == null) {
+      Files.createDirectories(PathManager.getLogDir().toAbsolutePath()).apply {
+        tempTelemetryPath = this.resolve("telemetry.temp")
+        telemetryJsonPath = this.resolve(file)
+      }
+    }
+    // path is absolute and has a parent
+    else {
+      tempTelemetryPath = Files.createDirectories(file.parent.toAbsolutePath()).resolve("telemetry.temp").toAbsolutePath()
+      telemetryJsonPath = file
+    }
+
+    writer = JsonFactory().createGenerator(java.nio.file.Files.newBufferedWriter(tempTelemetryPath))
+      .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
+
     beginWriter(writer, serviceName, serviceVersion, serviceNamespace)
   }
 
@@ -117,22 +128,20 @@ class JaegerJsonSpanExporter(
     lock.withLock {
       closeJsonFile(writer)
       // nothing was written to the file
-      if (Files.notExists(tempTelemetryFile)) {
-        return
-      }
+      if (Files.notExists(tempTelemetryPath)) return
 
-      Files.move(tempTelemetryFile, file, StandardCopyOption.REPLACE_EXISTING)
+      Files.move(tempTelemetryPath, telemetryJsonPath, StandardCopyOption.REPLACE_EXISTING)
     }
   }
 
   override fun forceFlush() {
     lock.withLock {
-      // if shutdown was already invoked OR nothing was written to the temp file
-      if (writer.isClosed || Files.notExists(tempTelemetryFile)) {
+      // if shutdown was already invoked OR nothing has been written to the temp file
+      if (writer.isClosed || Files.notExists(tempTelemetryPath)) {
         return
       }
 
-      Files.copy(tempTelemetryFile, file, StandardCopyOption.REPLACE_EXISTING)
+      Files.copy(tempTelemetryPath, telemetryJsonPath, StandardCopyOption.REPLACE_EXISTING)
       closeJsonFile(Files.newBufferedWriter(file, StandardOpenOption.APPEND))
     }
   }
@@ -215,6 +224,6 @@ private fun closeJsonFile(jsonGenerator: JsonGenerator) {
 }
 
 private fun closeJsonFile(writer: BufferedWriter) {
-  // newly created JsonGenerator can't close unfinished a json object
+  // JsonGenerator created from scratch can't close unfinished a json object
   writer.use { it.append("]}]}") }
 }
