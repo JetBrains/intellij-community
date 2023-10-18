@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.indices.names
 
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.util.indexing.FileContent
+import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
@@ -73,3 +74,6 @@ internal fun FileContent.toKotlinJvmBinaryClass(): KotlinJvmBinaryClass? {
 
 internal val KotlinJvmBinaryClass.packageName: FqName
     get() = classHeader.packageName?.let(::FqName) ?: classId.packageFqName
+
+internal fun FileContent.toCompatibleFileWithMetadata(): FileWithMetadata.Compatible? =
+    FileWithMetadata.forPackageFragment(file) as? FileWithMetadata.Compatible

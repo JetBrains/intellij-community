@@ -82,8 +82,7 @@ abstract class NameByPackageShortNameIndex : FileBasedIndexExtension<FqName, Lis
     }
 
     private fun getPackageAndNamesFromKnm(fileContent: FileContent): Map<FqName, List<Name>> {
-        val fileWithMetadata = FileWithMetadata.forPackageFragment(fileContent.file)
-        if (fileWithMetadata !is FileWithMetadata.Compatible) return emptyMap()
+        val fileWithMetadata = fileContent.toCompatibleFileWithMetadata() ?: return emptyMap()
         return mapOf(fileWithMetadata.packageFqName to getDeclarationNamesByKnm(fileWithMetadata))
     }
 }

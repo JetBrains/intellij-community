@@ -11,6 +11,7 @@ import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
 import com.intellij.util.io.EnumeratorStringDescriptor
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.incremental.storage.StringExternalizer
 import kotlin.jvm.java
 
@@ -39,18 +40,26 @@ class KotlinBinaryRootToPackageIndex : FileBasedIndexExtension<String, String>()
 
     override fun getValueExternalizer() = StringExternalizer
 
-    override fun getInputFilter(): FileBasedIndex.InputFilter = DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE)
+    override fun getInputFilter(): FileBasedIndex.InputFilter = DefaultFileTypeSpecificInputFilter(
+        JavaClassFileType.INSTANCE,
+        KlibMetaFileType,
+    )
 
-    override fun getVersion(): Int = 1
+    override fun getVersion(): Int = 2
 
     override fun getIndexer(): DataIndexer<String, String, FileContent> = DataIndexer { fileContent ->
         try {
             val packageName = when (fileContent.fileType) {
-                JavaClassFileType.INSTANCE -> fileContent.toKotlinJvmBinaryClass()?.packageName ?: return@DataIndexer emptyMap()
-                else -> return@DataIndexer emptyMap()
+                JavaClassFileType.INSTANCE -> fileContent.toKotlinJvmBinaryClass()?.packageName
+                KlibMetaFileType -> fileContent.toCompatibleFileWithMetadata()?.packageFqName
+                else -> null
             }
 
-            // The class file is in a JAR filesystem, whose root is the JAR file itself.
+            if (packageName == null) {
+                return@DataIndexer emptyMap()
+            }
+
+            // The file is in a JAR filesystem (even for KLIBs), whose root is the JAR/KLIB file itself.
             val binaryRoot = JarFileSystem.getInstance().getVirtualFileForJar(fileContent.file) ?: return@DataIndexer emptyMap()
 
             return@DataIndexer mapOf(binaryRoot.name to packageName.asString())
