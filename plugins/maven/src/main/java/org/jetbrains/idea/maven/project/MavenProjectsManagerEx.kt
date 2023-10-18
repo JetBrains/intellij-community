@@ -5,6 +5,7 @@ import com.intellij.build.SyncViewManager
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
@@ -468,13 +469,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   private suspend fun checkOrInstallMavenWrapper(project: Project) {
-    if (projectsTree.existingManagedFiles.size == 1) {
-      val baseDir = MavenUtil.getBaseDir(projectsTree.existingManagedFiles[0])
-      if (MavenUtil.isWrapper(generalSettings)) {
-        withContext(Dispatchers.IO) {
-          MavenWrapperDownloader.checkOrInstallForSync(project, baseDir.toString())
-        }
-      }
+    if (!MavenUtil.isWrapper(generalSettings)) return
+    val baseDir = readAction {
+      if (projectsTree.existingManagedFiles.size != 1) null else MavenUtil.getBaseDir(projectsTree.existingManagedFiles[0])
+    }
+    if (null == baseDir) return
+    withContext(Dispatchers.IO) {
+      MavenWrapperDownloader.checkOrInstallForSync(project, baseDir.toString())
     }
   }
 
