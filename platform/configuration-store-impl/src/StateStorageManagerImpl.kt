@@ -6,6 +6,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.util.io.FileUtilRt
@@ -404,7 +405,7 @@ fun checkStorageIsNotTracked(module: ComponentManager) {
 
 private class MyAsyncVfsListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    LOG.debug("Got a change in MyAsyncVfsListener: $events")
+    LOG.debug { "Got a change in MyAsyncVfsListener: $events" }
     service<StorageVirtualFileTracker>().schedule(events)
     return null
   }

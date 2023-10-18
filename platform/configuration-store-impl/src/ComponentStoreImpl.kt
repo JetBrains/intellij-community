@@ -659,7 +659,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     if (componentNames.isEmpty()) {
       return emptySet()
     }
-    LOG.debug("Reload components: $componentNames")
+    LOG.debug { "Reload components: $componentNames" }
 
     val notReloadableComponents = getNotReloadableComponents(componentNames)
     reinitComponents(componentNames, changedStorages, notReloadableComponents)
