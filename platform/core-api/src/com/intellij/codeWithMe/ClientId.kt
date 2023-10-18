@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -220,8 +221,12 @@ data class ClientId(val value: String) {
 
     /**
      * Computes a value under given [ClientId]
+     *
+     * **Note:** This method should not be called within a suspend context.
+     * It is recommended to use `withContext(clientId.asContextElement())` instead.
      */
     @JvmStatic
+    @RequiresBlockingContext
     inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
       val service = getCachedService() ?: return action()
 
@@ -252,7 +257,14 @@ data class ClientId(val value: String) {
       }
     }
 
+    /**
+     * Computes a value under given [ClientId]
+     *
+     * **Note:** This method should not be called within a suspend context.
+     * It is recommended to use `withContext(clientId.asContextElement())` instead.
+     */
     @JvmStatic
+    @RequiresBlockingContext
     fun withClientId(clientId: ClientId?): AccessToken {
       if (clientId == null) {
         if (absenceBehaviorValue == AbsenceBehavior.LOG_ERROR) {
@@ -263,7 +275,14 @@ data class ClientId(val value: String) {
       return withClientId(clientId.value)
     }
 
+    /**
+     * Computes a value under given [ClientId]
+     *
+     * **Note:** This method should not be called within a suspend context.
+     * It is recommended to use `withContext(clientId.asContextElement())` instead.
+     */
     @JvmStatic
+    @RequiresBlockingContext
     fun withClientId(clientIdValue: String): AccessToken {
       val service = getCachedService()
       if (service == null) {
