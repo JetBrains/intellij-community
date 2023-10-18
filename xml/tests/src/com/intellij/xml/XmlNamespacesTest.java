@@ -22,7 +22,6 @@ import com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
@@ -38,7 +37,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testUnusedDefaultNamespace() {
-    ExpectedHighlightingData.expectedDuplicatedHighlighting(this::doTestUnusedDefaultNamespace);
+    doTestUnusedDefaultNamespace();
   }
 
   // TODO: remove this temporary private method and inline its content into the tests when duplication problem will be fixed
@@ -308,7 +307,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testPatternPerformanceProblem() {
     myFixture.configureByFile("idproblem.html");
-    PlatformTestUtil.startPerformanceTest("?", 100, () -> myFixture.doHighlighting()).assertTiming();
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 100, () -> myFixture.doHighlighting()).assertTiming();
   }
 
   private void doUnusedDeclarationTest(String text, String after, String name) {

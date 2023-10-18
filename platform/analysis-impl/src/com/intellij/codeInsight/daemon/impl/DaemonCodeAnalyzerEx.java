@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -81,7 +82,8 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   public abstract void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile);
   public abstract boolean hasFileLevelHighlights(int group, @NotNull PsiFile psiFile);
-  public abstract void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile);
+  public abstract void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile, @Nullable RangeHighlighter toReuse);
+  abstract void removeFileLevelHighlight(@NotNull PsiFile psiFile, @NotNull HighlightInfo info);
 
   public void markDocumentDirty(@NotNull Document document, @NotNull Object reason) {
     getFileStatusMap().markFileScopeDirty(document, new TextRange(0, document.getTextLength()), document.getTextLength(), reason);

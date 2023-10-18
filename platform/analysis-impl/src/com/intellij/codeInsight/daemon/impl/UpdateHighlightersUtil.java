@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -187,7 +188,7 @@ public final class UpdateHighlightersUtil {
         return true;
       }
       if (info.isFileLevelAnnotation()) {
-        codeAnalyzer.addFileLevelHighlight(group, info, psiFile);
+        codeAnalyzer.addFileLevelHighlight(group, info, psiFile, null);
         changed[0] = true;
         return true;
       }
@@ -206,13 +207,22 @@ public final class UpdateHighlightersUtil {
     }
   }
 
+  private static final Logger LOG = Logger.getInstance(UpdateHighlightersUtil.class);
   static boolean incinerateObsoleteHighlighters(@NotNull HighlightersRecycler infosToRemove, @NotNull HighlightingSession session) {
     boolean changed = false;
     // do not remove obsolete highlighters if we are in "essential highlighting only" mode, because otherwise all inspection-produced results would be gone
     for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
-      if (shouldRemoveHighlighter(highlighter, session)) {
+      boolean shouldRemove = shouldRemoveHighlighter(highlighter, session);
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("incinerateObsoleteHighlighters "+highlighter+"; info:"+info+"; shouldRemove:"+shouldRemove);
+      }
+      if (shouldRemove) {
         highlighter.dispose();
         changed = true;
+        if (info != null && info.isFileLevelAnnotation()) {
+          session.removeFileLevelHighlight(info);
+        }
       }
     }
     return changed;

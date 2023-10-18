@@ -78,10 +78,9 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       void queueToUpdateIncrementally() {
         if (!isEmpty()) {
           myAnnotatorStatisticsCollector.reportAnnotationProduced(myCurrentAnnotator, get(0));
-          //noinspection ForLoopReplaceableByForEach
           for (int i = 0; i < size(); i++) {
             Annotation annotation = get(i);
-            holder.add(HighlightInfo.fromAnnotation(annotation, myBatchMode));
+            holder.add(HighlightInfo.fromAnnotation(myCurrentAnnotator.getClass(), annotation, myBatchMode));
           }
           clear();
         }
@@ -144,7 +143,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   private static HighlightInfo createErrorElementInfo(@NotNull PsiErrorElement element) {
-    HighlightInfo.Builder builder = createInfoWithoutFixes(element);
+    HighlightInfo.Builder builder = createErrorElementInfoWithoutFixes(element);
     List<ErrorQuickFixProvider> providers =
       DumbService.getInstance(element.getProject()).filterByDumbAwareness(ErrorQuickFixProvider.EP_NAME.getExtensionList());
     for (ErrorQuickFixProvider provider : providers) {
@@ -152,6 +151,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     }
     HighlightInfo info = builder.create();
     if (info != null) {
+      info.toolId = DefaultHighlightVisitor.class;
       for (ErrorQuickFixProvider provider : providers) {
         provider.registerErrorQuickFix(element, info);
       }
@@ -180,7 +180,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     return cloneTemplates(LanguageAnnotators.INSTANCE.allForLanguageOrAny(language));
   }
 
-  private static @NotNull HighlightInfo.Builder createInfoWithoutFixes(@NotNull PsiErrorElement element) {
+  private static @NotNull HighlightInfo.Builder createErrorElementInfoWithoutFixes(@NotNull PsiErrorElement element) {
     TextRange range = element.getTextRange();
     String errorDescription = element.getErrorDescription();
     if (!range.isEmpty()) {
@@ -193,9 +193,8 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     PsiElement elementAtOffset = viewProvider.findElementAt(offset, LanguageUtil.getRootLanguage(element));
     String text = elementAtOffset == null ? null : elementAtOffset.getText();
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(offset, offset + 1);
-      builder.descriptionAndTooltip(errorDescription);
-      return builder;
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(offset, offset + 1)
+        .descriptionAndTooltip(errorDescription);
     }
     int start;
     int end;
@@ -207,9 +206,8 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       start = offset;
       end = offset < fileLength ? offset + 1 : offset;
     }
-    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element, start, end);
-    builder.descriptionAndTooltip(errorDescription);
-    builder.endOfLine();
-    return builder;
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element, start, end)
+    .descriptionAndTooltip(errorDescription)
+    .endOfLine();
   }
 }
