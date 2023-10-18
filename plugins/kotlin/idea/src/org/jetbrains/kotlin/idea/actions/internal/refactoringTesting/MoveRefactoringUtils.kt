@@ -43,7 +43,6 @@ internal fun gitReset(project: Project, projectRoot: VirtualFile) {
     val resetLineHandler = gitLineHandlerCtor.newInstance(project, projectRoot, gitCommandReset)
     gitLineHandlerAddParameters.invoke(resetLineHandler, listOf("--hard", "HEAD"))
 
-    @Suppress("IncorrectServiceRetrieving")
     val gitService = ApplicationManager.getApplication().getService(gitCls)
     val runCommandResult = runCommand.invoke(gitService, resetLineHandler)
 

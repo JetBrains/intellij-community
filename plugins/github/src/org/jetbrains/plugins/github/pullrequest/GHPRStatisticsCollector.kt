@@ -183,7 +183,7 @@ private class GHServerVersionsCollector(
   private val scope = parentCs.childScope()
 
   init {
-    val accountsFlow = project.service<GHAccountManager>().accountsState
+    val accountsFlow = service<GHAccountManager>().accountsState
     scope.launch {
       accountsFlow.collect {
         for (account in it) {
