@@ -66,8 +66,6 @@ public final class PersistentFSConnection {
   static final int RESERVED_ATTR_ID = DataEnumerator.NULL_ID;
   static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
 
-  private static final boolean USE_GENTLE_FLUSHER = getBooleanProperty("vfs.flushing.use-gentle-flusher", true);
-
   /**
    * After how many errors ('corruptions') insist on restarting IDE? I.e. we schedule
    * VFS rebuild and _suggest_ restart IDE on the first error detected -- but it is
@@ -455,8 +453,9 @@ public final class PersistentFSConnection {
   }
 
   static @NotNull Closeable startFlusher(@NotNull ScheduledExecutorService scheduler,
-                                         @NotNull PersistentFSConnection connection) {
-    return USE_GENTLE_FLUSHER ?
+                                         @NotNull PersistentFSConnection connection,
+                                         boolean gentleFlusher) {
+    return gentleFlusher ?
            new GentleVFSFlusher(connection, scheduler) :
            new ClassicVFSFlusher(connection, scheduler);
   }

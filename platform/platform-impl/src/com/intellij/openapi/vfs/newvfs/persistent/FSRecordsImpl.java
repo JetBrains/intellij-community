@@ -84,6 +84,9 @@ public final class FSRecordsImpl implements Closeable {
 
   //@formatter:off
 
+  private static final boolean BACKGROUND_VFS_FLUSH = getBooleanProperty("vfs.flushing.use-background-flush", true);
+  private static final boolean USE_GENTLE_FLUSHER = getBooleanProperty("vfs.flushing.use-gentle-flusher", true);
+
   public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.attributes-storage.streamlined", true);
   /** Supported values: 'over-old-page-cache', 'over-lock-free-page-cache', 'over-mmapped-file'... */
   private static final String ATTRIBUTES_STORAGE_IMPL = System.getProperty("vfs.attributes-storage.impl", "over-mmapped-file");
@@ -373,9 +376,9 @@ public final class FSRecordsImpl implements Closeable {
       this.fileNamesEnumerator = connection.getNames();
     }
 
-    if (FSRecords.BACKGROUND_VFS_FLUSH) {
+    if (BACKGROUND_VFS_FLUSH) {
       final ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
-      flushingTask = PersistentFSConnection.startFlusher(scheduler, connection);
+      flushingTask = PersistentFSConnection.startFlusher(scheduler, connection, USE_GENTLE_FLUSHER);
     }
     else {
       flushingTask = null;
