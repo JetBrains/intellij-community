@@ -51,7 +51,7 @@ object TerminalUiUtils {
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
       editorFontSize = settings.terminalFont.size
-      lineSpacing = settings.lineSpacing
+      lineSpacing = 1.0f
     }
 
     editor.settings.apply {
