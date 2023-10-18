@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun a() {
     val b = true
     if (b) 2

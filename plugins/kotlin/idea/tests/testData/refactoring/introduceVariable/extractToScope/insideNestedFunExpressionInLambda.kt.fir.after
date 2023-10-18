@@ -2,5 +2,5 @@ fun foo(f: () -> Int) = f()
 
 fun test() {
     val i = 1 + 2
-    foo(fun() = foo(fun() = i * 3))
+    foo { foo(fun() = (i) * 3) }
 }

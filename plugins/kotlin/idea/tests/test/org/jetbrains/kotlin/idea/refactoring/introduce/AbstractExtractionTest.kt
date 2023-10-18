@@ -59,6 +59,7 @@ import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import java.io.File
 import java.util.*
@@ -70,15 +71,21 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
     val fixture: JavaCodeInsightTestFixture get() = myFixture
 
     protected open fun doIntroduceVariableTest(unused: String) {
-        doTest { file ->
-            file as KtFile
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            dataFilePath(),
+            IgnoreTests.DIRECTIVES.IGNORE_K1,
+            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
+        ) {
+            doTest { file ->
+                file as KtFile
 
-            KotlinIntroduceVariableHandler.invoke(
-                fixture.project,
-                fixture.editor,
-                file,
-                DataManager.getInstance().getDataContext(fixture.editor.component)
-            )
+                KotlinIntroduceVariableHandler.invoke(
+                    fixture.project,
+                    fixture.editor,
+                    file,
+                    DataManager.getInstance().getDataContext(fixture.editor.component)
+                )
+            }
         }
     }
 
@@ -382,7 +389,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
             try {
                 checkExtract(
-                    ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi),
+                    ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi, isFirPlugin),
                     checkAdditionalAfterdata,
                     action,
                 )
@@ -403,8 +410,21 @@ class ExtractTestFiles(
     val conflictFile: File,
     val extraFilesToPsi: Map<PsiFile, File> = emptyMap()
 ) {
-    constructor(path: String, mainFile: PsiFile, extraFilesToPsi: Map<PsiFile, File> = emptyMap()) :
-            this(mainFile, File("$path.after"), File("$path.conflicts"), extraFilesToPsi)
+    constructor(path: String, mainFile: PsiFile, extraFilesToPsi: Map<PsiFile, File> = emptyMap(), isFirPlugin: Boolean) :
+            this(mainFile, getAfterFile(path, isFirPlugin), File("$path.conflicts"), extraFilesToPsi)
+
+
+}
+
+private fun getAfterFile(path: String, isFirPlugin: Boolean): File {
+    var file = File("$path.after")
+    if (isFirPlugin) {
+        val firSpecific = File("$path.fir.after")
+        if (firSpecific.exists()) {
+            file = firSpecific
+        }
+    }
+    return file
 }
 
 fun checkExtract(files: ExtractTestFiles, checkAdditionalAfterdata: Boolean = false, action: (PsiFile) -> Unit) {
