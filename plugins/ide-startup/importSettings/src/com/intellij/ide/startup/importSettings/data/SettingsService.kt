@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
+import com.intellij.ide.startup.importSettings.transfer.SettingTransferService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.rd.createNestedDisposable
@@ -42,7 +43,9 @@ class SettingsServiceImpl : SettingsService {
 
   override fun getJbService() = TestJbService()
 
-  override fun getExternalService() = TestExternalService()
+  override fun getExternalService(): ExternalService =
+    if (shouldUseMockData) TestExternalService()
+    else SettingTransferService.getInstance()
 
   override fun skipImport() = thisLogger().info("$IMPORT_SERVICE skipImport")
 
