@@ -16,8 +16,9 @@ object InlineCompletionTooltipFactory {
     moreInfoAction: ((ActionEvent) -> Unit),
   ): JComponent = panel {
     row {
-      icon(icon).gap(RightGap.SMALL)
-      link(name, moreInfoAction).gap(RightGap.SMALL)
+      link(name, moreInfoAction).applyToComponent {
+        setIcon(icon)
+      }.gap(RightGap.SMALL)
       comment(comment)
     }
   }
