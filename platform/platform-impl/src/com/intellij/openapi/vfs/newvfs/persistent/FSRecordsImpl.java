@@ -286,7 +286,7 @@ public final class FSRecordsImpl implements Closeable {
 
       LOG.info("VFS initialized: " + NANOSECONDS.toMillis(initializationResult.totalInitializationDurationNs) + " ms, " +
                initializationResult.attemptsFailures.size() + " failed attempts, " +
-               initializationResult.connection.recoveryInfo().recoveredErrors.size() + " errors were recovered");
+               initializationResult.connection.recoveryInfo().recoveredErrors.size() + " error(s) were recovered");
 
       PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(connection);
       PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);
@@ -657,20 +657,29 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  int @NotNull [] listIds(int fileId) {
+  boolean mayHaveChildren(int fileId) {
     try {
-      return treeAccessor.listIds(fileId);
+      return treeAccessor.mayHaveChildren(fileId);
     }
     catch (IOException e) {
       throw handleError(e);
     }
   }
 
-  boolean mayHaveChildren(int fileId) {
+  boolean wereChildrenAccessed(int fileId) {
     try {
-      return treeAccessor.mayHaveChildren(fileId);
+      return treeAccessor.wereChildrenAccessed(fileId);
     }
     catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  int @NotNull [] listIds(int fileId) {
+    try {
+      return treeAccessor.listIds(fileId);
+    }
+    catch (IOException | IllegalArgumentException e) {
       throw handleError(e);
     }
   }
@@ -683,7 +692,7 @@ public final class FSRecordsImpl implements Closeable {
     try {
       return treeAccessor.doLoadChildren(parentId);
     }
-    catch (IOException e) {
+    catch (IOException | IllegalArgumentException e) {
       throw handleError(e);
     }
   }
@@ -692,15 +701,6 @@ public final class FSRecordsImpl implements Closeable {
   @Unmodifiable
   List<CharSequence> listNames(int parentId) {
     return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
-  }
-
-  boolean wereChildrenAccessed(int fileId) {
-    try {
-      return treeAccessor.wereChildrenAccessed(fileId);
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
   }
 
   /**
