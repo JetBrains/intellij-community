@@ -11,7 +11,10 @@ import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.impl.isRenamed
+import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitContentRevision
 import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
@@ -112,8 +115,7 @@ class GitFileHistory internal constructor(private val project: Project,
     val requirements = GitCommitRequirements(diffRenames = GitCommitRequirements.DiffRenames.Limit.Default,
                                              diffInMergeCommits = GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS)
     val h = GitLineHandler(project, root, GitCommand.SHOW, requirements.configParameters())
-    val parser = GitLogParser.createDefaultParser(project, GitLogParser.NameStatus.STATUS, GitLogOption.HASH, GitLogOption.COMMIT_TIME,
-                                                  GitLogOption.PARENTS)
+    val parser = GitLogParser.createDefaultParser(project, GitLogParser.NameStatus.STATUS, GitLogOption.PARENTS)
     h.setStdoutSuppressed(true)
     h.addParameters(requirements.commandParameters(project, h.executable))
     h.addParameters("--follow", "--name-status", parser.pretty, "--encoding=UTF-8", commit)
@@ -124,12 +126,9 @@ class GitFileHistory internal constructor(private val project: Project,
     val records = parser.parse(output)
 
     return records.mapIndexedNotNull { i, record ->
-      val changes = record.parseChanges(project, root)
-      changes.firstOrNull { change ->
-        (change.isMoved || change.isRenamed) && filePath == change.afterRevision!!.file
-      }?.let { change ->
+      record.statusInfos.firstOrNull { it.isRenamed && it.secondPath == VcsFileUtil.relativePath(root, filePath) }?.let { statusInfo ->
         val parents = record.parentsHashes
-        if (parents.isNotEmpty()) FileHistoryStart(parents[i], change.beforeRevision!!.file) else null
+        if (parents.isNotEmpty()) FileHistoryStart(parents[i], GitContentRevision.createPath(root, statusInfo.firstPath)) else null
       }
     }
   }
