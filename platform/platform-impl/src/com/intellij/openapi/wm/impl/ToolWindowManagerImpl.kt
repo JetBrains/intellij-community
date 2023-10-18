@@ -1208,19 +1208,21 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     entry.windowedDecorator?.let {
       entry.windowedDecorator = null
       Disposer.dispose(it)
+      detachInternalDecorator(entry)
       return
     }
 
-    entry.floatingDecorator?.let { floatingDecorator ->
+    entry.floatingDecorator?.let {
       entry.floatingDecorator = null
-      floatingDecorator.dispose()
-
-      // Detach internal decorator from the disposed window.
-      // This is important for RD/CWM case, when we might want to keep the content 'showing' by attaching it to ShowingContainer.
-      entry.toolWindow.decorator?.let { it.parent?.remove(it) }
-
+      it.dispose()
+      detachInternalDecorator(entry)
       return
     }
+  }
+
+  // This is important for RD/CWM case, when we might want to keep the content 'showing' by attaching it to ShowingContainer.
+  private fun detachInternalDecorator(entry: ToolWindowEntry) {
+    entry.toolWindow.decoratorComponent?.let { it.parent?.remove(it) }
   }
 
   private fun removeInternalDecorator(entry: ToolWindowEntry, state: WindowInfoImpl, dirtyMode: Boolean) {
