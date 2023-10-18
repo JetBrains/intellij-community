@@ -6,7 +6,6 @@ import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCar
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionInsertPolicy
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
@@ -19,11 +18,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.TextRange
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flowOn
@@ -95,26 +96,23 @@ class InlineCompletionHandler(
   }
 
   @RequiresEdt
+  @RequiresWriteLock
   @RequiresBlockingContext
   fun insert() {
-    val context = InlineCompletionContext.getOrNull(editor) ?: return
+    val session = InlineCompletionSession.getOrNull(editor) ?: return
+    val context = session.context
     val offset = context.startOffset() ?: return
     trace(InlineCompletionEventType.Insert)
 
-    val insertions = context.state.elements.map { it.element.insertPolicy() }
+    val elements = context.state.elements.map { it.element }
+    val textToInsert = context.textToInsert()
+    val insertionEnvironment = InlineCompletionInsertEnvironment(editor, TextRange.from(offset, textToInsert.length))
+    context.copyUserDataTo(insertionEnvironment)
     hide(false, context)
 
-    var offsetDelta = 0
-    for (insertPolicy in insertions) {
-      when (insertPolicy) {
-        is InlineCompletionInsertPolicy.Append -> {
-          editor.document.insertString(offset + offsetDelta, insertPolicy.text)
-        }
-        is InlineCompletionInsertPolicy.Skip -> Unit
-      }
-      offsetDelta += insertPolicy.caretShift
-    }
-    editor.caretModel.moveToOffset(offset + offsetDelta)
+    editor.document.insertString(offset, textToInsert)
+    editor.caretModel.moveToOffset(insertionEnvironment.range.endOffset)
+    session.provider.insertHandler.afterInsertion(insertionEnvironment, elements)
 
     LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
   }
@@ -140,10 +138,7 @@ class InlineCompletionHandler(
     }
   }
 
-  private suspend fun invokeRequest(
-    request: InlineCompletionRequest,
-    session: InlineCompletionSession,
-  ) {
+  private suspend fun invokeRequest(request: InlineCompletionRequest, session: InlineCompletionSession) {
     currentCoroutineContext().ensureActive()
 
     val context = session.context
@@ -154,7 +149,7 @@ class InlineCompletionHandler(
     }
     catch (e: Throwable) {
       LOG.errorIfNotMessage(e)
-      InlineCompletionSuggestion.EMPTY
+      InlineCompletionSuggestion.empty()
     }
 
     // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.

@@ -18,12 +18,14 @@ import kotlinx.coroutines.flow.debounce
  *   otherwise, proposals will be generated/canceled on each typing.
  *   - Any inline completion request will be cancelled if inline is in rendering mode
  *   - In case a newer inline completion proposals are generated, previous call will be cancelled and hidden
- *   - If some event requires hiding of shown elements, implement [restartOn].
+ *   - If some event requires hiding of shown elements, implement [restartOn]
+ *   - If you need to do something specific after insertion of provided elements, provide custom [InlineCompletionInsertHandler]
  *
  *
  * @see InlineCompletionElement
  * @see InlineCompletionRequest
  * @see InlineCompletionEvent
+ * @see InlineCompletionInsertHandler
  */
 interface InlineCompletionProvider {
   /**
@@ -43,6 +45,9 @@ interface InlineCompletionProvider {
 
   fun restartOn(event: InlineCompletionEvent): Boolean = false
 
+  val insertHandler: InlineCompletionInsertHandler
+    get() = DefaultInlineCompletionInsertHandler.INSTANCE
+
   companion object {
     val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")
     fun extensions(): List<InlineCompletionProvider> = EP_NAME.extensionList
@@ -50,7 +55,7 @@ interface InlineCompletionProvider {
 
   object DUMMY : InlineCompletionProvider {
     override val id = InlineCompletionProviderID("DUMMY")
-    override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion = InlineCompletionSuggestion.EMPTY
+    override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion = InlineCompletionSuggestion.empty()
     override fun isEnabled(event: InlineCompletionEvent): Boolean = false
   }
 }

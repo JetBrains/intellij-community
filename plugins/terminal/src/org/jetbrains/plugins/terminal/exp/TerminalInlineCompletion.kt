@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
@@ -38,7 +37,7 @@ class TerminalInlineCompletion(private val scope: CoroutineScope) {
 class TerminalInlineCompletionProvider : InlineCompletionProvider {
   override val id: InlineCompletionProviderID = InlineCompletionProviderID("TerminalInlineCompletionProvider")
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
-    val suggestion = flow {
+    return InlineCompletionSuggestion.withFlow {
       withContext(Dispatchers.EDT) {
         val lookup = LookupManager.getActiveLookup(request.editor) ?: return@withContext null
         val item = lookup.currentItem ?: return@withContext null
@@ -49,7 +48,6 @@ class TerminalInlineCompletionProvider : InlineCompletionProvider {
         emit(it)
       }
     }
-    return InlineCompletionSuggestionFlow(suggestion)
   }
 
   override fun isEnabled(event: InlineCompletionEvent): Boolean {

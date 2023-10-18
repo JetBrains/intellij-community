@@ -1,14 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.elements
 
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionInsertPolicy
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import java.awt.Rectangle
 
 interface InlineCompletionElement {
   val text: String
-  fun insertPolicy(): InlineCompletionInsertPolicy = InlineCompletionInsertPolicy.Append(text)
 
   /**
    * Returns a new [InlineCompletionElement] instance that has the same content as this one.

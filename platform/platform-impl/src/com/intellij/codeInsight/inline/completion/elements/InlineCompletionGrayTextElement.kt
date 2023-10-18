@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.inline.completion.elements
 
 import com.intellij.codeInsight.inline.completion.render.InlineBlockElementRenderer
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionInsertPolicy
 import com.intellij.codeInsight.inline.completion.render.InlineSuffixRenderer
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Editor
@@ -15,15 +14,9 @@ import com.intellij.openapi.util.Disposer
 import java.awt.Graphics
 import java.awt.Rectangle
 
-data class InlineCompletionGrayTextElement(
-  override val text: String,
-  // temporary solution, will be fixed when an insertion handler appears
-  private val insertPolicy: InlineCompletionInsertPolicy = InlineCompletionInsertPolicy.Append(text)
-) : InlineCompletionElement {
+data class InlineCompletionGrayTextElement(override val text: String) : InlineCompletionElement {
 
   override fun toPresentable(): InlineCompletionElement.Presentable = Presentable(this)
-
-  override fun insertPolicy(): InlineCompletionInsertPolicy = insertPolicy
 
   override fun withSameContent(): InlineCompletionElement = InlineCompletionGrayTextElement(text)
   override fun withTruncatedPrefix(length: Int): InlineCompletionElement? {
