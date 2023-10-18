@@ -197,9 +197,17 @@ public final class PluginDownloader {
       //store old plugins file
       descriptor = PluginManagerCore.getPlugin(myPluginId);
       LOG.assertTrue(descriptor != null);
-      if (myPluginVersion != null && compareVersionsSkipBrokenAndIncompatible(myPluginVersion, descriptor) <= 0) {
-        LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
-        return false;
+
+
+      if (myPluginVersion != null) {
+        int result = compareVersionsSkipBrokenAndIncompatible(myPluginVersion, descriptor);
+        if (result < 0 && isDowngradeAllowed(descriptor)) {
+          LOG.info("Preparing to downgrade plugin '" + myPluginId + "' : " + myPluginVersion + " -> " + descriptor.getVersion());
+        }
+        else if (result <= 0) {
+          LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
+          return false;
+        }
       }
       myOldFile = descriptor.isBundled() ? null : descriptor.getPluginPath();
     }
@@ -235,10 +243,16 @@ public final class PluginDownloader {
     }
 
     myPluginVersion = actualDescriptor.getVersion();
-    if (descriptor != null && compareVersionsSkipBrokenAndIncompatible(myPluginVersion, descriptor) <= 0) {
-      LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
-      reportError(IdeBundle.message("error.older.update", myPluginVersion, descriptor.getVersion()));
-      return false; //was not updated
+    if (descriptor != null) {
+      int result = compareVersionsSkipBrokenAndIncompatible(myPluginVersion, descriptor);
+      if (result < 0 && isDowngradeAllowed(descriptor)) {
+        LOG.info("Downgrading plugin '" + myPluginId + "' : " + myPluginVersion + " -> " + descriptor.getVersion());
+      }
+      else if (result <= 0) {
+        LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
+        reportError(IdeBundle.message("error.older.update", myPluginVersion, descriptor.getVersion()));
+        return false; //was not updated
+      }
     }
 
     myDescriptor = actualDescriptor;
@@ -253,6 +267,10 @@ public final class PluginDownloader {
     }
 
     return true;
+  }
+
+  private boolean isDowngradeAllowed(IdeaPluginDescriptor localDescriptor) {
+    return PluginManagementPolicy.getInstance().isDowngradeAllowed(localDescriptor, myDescriptor);
   }
 
   private @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact() throws IOException {
