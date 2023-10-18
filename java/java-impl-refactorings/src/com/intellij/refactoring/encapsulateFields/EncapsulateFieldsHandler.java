@@ -55,6 +55,18 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
    */
   @Override
   public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, DataContext dataContext) {
+    if (elements.length == 0) {
+      return;
+    }
+    PsiElement containingClass = elements[0];
+    if (containingClass instanceof PsiField field) {
+      containingClass = field.getContainingClass();
+    }
+    if (!(containingClass instanceof PsiClass)) {
+      return;
+    }
+    PsiElement finalContainingClass = containingClass;
+
     List<SmartPsiElementPointer<PsiElement>> smartElements = new ArrayList<>();
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     for (PsiElement psiElement : elements) {
@@ -67,11 +79,15 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
         PsiClass aClass = null;
         Runnable callback;
         final HashSet<PsiField> preselectedFields = new HashSet<>();
-        if (elements.length == 1) {
-          if (elements[0] instanceof PsiClass) {
+        if (smartElements.size() == 1) {
+          PsiElement element = smartElements.get(0).getElement();
+          if (element == null) {
+            return null;
+          }
+          if (element instanceof PsiClass) {
             aClass = (PsiClass)elements[0];
           }
-          else if (elements[0] instanceof PsiField field) {
+          else if (element instanceof PsiField field) {
             aClass = field.getContainingClass();
             preselectedFields.add(field);
           }
@@ -80,7 +96,11 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
           }
         }
         else {
-          for (PsiElement element : elements) {
+          for (SmartPsiElementPointer<PsiElement> smartElement : smartElements) {
+            PsiElement element = smartElement.getElement();
+            if (element == null) {
+              return null;
+            }
             if (!(element instanceof PsiField field)) {
               return null;
             }
@@ -140,20 +160,7 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
           callback.run();
         }
       })
-      .expireWhen(() -> {
-        if (project.isDisposed()) {
-          return true;
-        }
-        for (SmartPsiElementPointer<PsiElement> smartElement : smartElements) {
-          PsiElement element = smartElement.getElement();
-          if (element == null) {
-            return true;
-          }
-          PsiElement targetElement = element instanceof PsiField field ? field.getContainingClass() : element;
-          return targetElement != null && !targetElement.isValid();
-        }
-        return false;
-      })
+      .expireWhen(() -> !finalContainingClass.isValid())
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
