@@ -124,7 +124,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     }
 
     @Override
-    public boolean readExternal(@NotNull Element element) {
+    public boolean readExternalElement(@NotNull Element element) {
       return getImpl(myProject).readExternal(element);
     }
 

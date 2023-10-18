@@ -291,9 +291,9 @@ open class ProjectRootManagerImpl(val project: Project,
 
   override fun loadState(element: Element) {
     LOG.debug("Loading state into element")
-    var stateChanged = false;
+    var stateChanged = false
     for (extension in EP_NAME.getExtensions(project)) {
-      stateChanged = stateChanged or extension.readExternal(element)
+      stateChanged = stateChanged or extension.readExternalElement(element)
     }
 
     val oldSdkName = projectSdkName

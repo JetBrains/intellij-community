@@ -158,7 +158,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     }
 
     @Override
-    public boolean readExternal(@NotNull Element element) {
+    public boolean readExternalElement(@NotNull Element element) {
       return myInstance.readExternal(element);
     }
 

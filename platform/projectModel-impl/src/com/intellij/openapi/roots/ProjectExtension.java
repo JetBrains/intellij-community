@@ -20,9 +20,20 @@ public abstract class ProjectExtension {
   }
 
   /**
+   * @deprecated Please override {@link ProjectExtension#readExternalElement(Element)}
+   */
+  @Deprecated(forRemoval = true)
+  public void readExternal(@NotNull Element element) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
    * Returns true if the state was changed after read
    */
-  public abstract boolean readExternal(@NotNull Element element);
+  public boolean readExternalElement(@NotNull Element element) {
+    readExternal(element);
+    return true;
+  }
 
   public abstract void writeExternal(@NotNull Element element);
 }
