@@ -4,8 +4,12 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectViewModel
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
+import com.intellij.util.io.await
+import git4idea.GitStandardRemoteBranch
+import git4idea.push.GitPushRepoResult
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -143,4 +147,21 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean) =
     dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
+
+  suspend fun isExistingPullRequest(pushResult: GitPushRepoResult): Boolean? {
+    val creationService = dataContext.creationService
+    val repositoryDataService = dataContext.repositoryDataService
+
+    val repositoryMapping = repositoryDataService.repositoryMapping
+    val defaultRemoteBranch = repositoryDataService.getDefaultRemoteBranch() ?: return null
+
+    val pullRequest = creationService.findPullRequestAsync(
+      EmptyProgressIndicator(),
+      baseBranch = defaultRemoteBranch,
+      repositoryMapping,
+      headBranch = GitStandardRemoteBranch(repositoryMapping.gitRemote, pushResult.sourceBranch)
+    ).await()
+
+    return pullRequest != null
+  }
 }

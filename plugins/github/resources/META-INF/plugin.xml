@@ -233,4 +233,11 @@
                     anchor="before"/>
     </group>
   </actions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.github.notification.GHPushNotificationListener"
+              topic="git4idea.push.GitPushListener"
+              activeInHeadlessMode="false"
+              activeInTestMode="false"/>
+  </projectListeners>
 </idea-plugin>

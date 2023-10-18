@@ -3,13 +3,14 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import git4idea.GitRemoteBranch
+import git4idea.remote.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import git4idea.remote.GitRemoteUrlCoordinates
 import java.util.concurrent.CompletableFuture
 
 interface GHPRRepositoryDataService : Disposable {
@@ -30,4 +31,6 @@ interface GHPRRepositoryDataService : Disposable {
 
   @RequiresEdt
   fun resetData()
+
+  fun getDefaultRemoteBranch(): GitRemoteBranch?
 }

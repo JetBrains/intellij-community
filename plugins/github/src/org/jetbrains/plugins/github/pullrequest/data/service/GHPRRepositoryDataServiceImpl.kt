@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.progress.ProgressManager
+import git4idea.GitRemoteBranch
+import git4idea.remote.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -14,7 +16,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
-import git4idea.remote.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
@@ -93,6 +94,18 @@ class GHPRRepositoryDataServiceImpl internal constructor(progressManager: Progre
     teamsValue.drop()
     assigneesValue.drop()
     labelsValue.drop()
+  }
+
+  override fun getDefaultRemoteBranch(): GitRemoteBranch? {
+    val currentRemote = repositoryMapping.remote
+    val currentRepo = currentRemote.repository
+    val branches = currentRepo.branches
+    if (defaultBranchName != null) {
+      return branches.findRemoteBranch("${currentRemote.remote.name}/$defaultBranchName")
+    }
+
+    return branches.findRemoteBranch("${currentRemote.remote.name}/master")
+           ?: branches.findRemoteBranch("${currentRemote.remote.name}/main")
   }
 
   override fun dispose() {
