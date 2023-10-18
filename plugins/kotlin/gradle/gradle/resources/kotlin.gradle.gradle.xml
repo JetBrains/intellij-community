@@ -68,6 +68,10 @@
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.diagnostic.KotlinGradleBuildErrorsChecker"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSCollector"/>
+    <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.gradle.catalog.GradleKtsVersionCatalogGotoDeclarationHandler"/>
+    <referencesSearch implementation="org.jetbrains.kotlin.idea.gradle.catalog.GradleKtsVersionCatalogReferencesSearcher"/>
+    <lang.elementManipulator forClass="org.jetbrains.kotlin.psi.KtNameReferenceExpression"
+                             implementationClass="org.jetbrains.kotlin.idea.gradle.catalog.KotlinRefManipulator"/>
   </extensions>
 
   <actions>
