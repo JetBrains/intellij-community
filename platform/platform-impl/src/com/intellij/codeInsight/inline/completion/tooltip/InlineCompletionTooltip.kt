@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Point
@@ -37,5 +38,8 @@ internal object InlineCompletionTooltip {
       false,
       HintManagerImpl.createHintHint(editor, point, hint, HintManager.ABOVE).setContentActive(false)
     )
+    Disposer.register(session) {
+      hint.hide()
+    }
   }
 }
