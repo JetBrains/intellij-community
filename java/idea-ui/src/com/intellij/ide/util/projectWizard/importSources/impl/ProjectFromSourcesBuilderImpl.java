@@ -88,7 +88,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   public Set<String> getExistingProjectLibraryNames() {
     if (myProjectLibrariesNames == null) {
       myProjectLibrariesNames = new HashSet<>();
-      final LibrariesContainer container = LibrariesContainerFactory.createContainer(myContext, myModulesProvider);
+      LibrariesContainer container = LibrariesContainerFactory.createContainer(myContext, myModulesProvider);
       for (Library library : container.getLibraries(LibrariesContainer.LibraryLevel.PROJECT)) {
         myProjectLibrariesNames.add(library.getName());
       }
@@ -102,7 +102,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     return myContext;
   }
 
-  public void setBaseProjectPath(final String contentRootPath) {
+  public void setBaseProjectPath(String contentRootPath) {
     myBaseProjectPath = contentRootPath;
   }
 
@@ -152,7 +152,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   @Override
   public List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
     ModulesProvider updatedModulesProvider;
-    final ModifiableModuleModel moduleModel;
+    ModifiableModuleModel moduleModel;
     boolean commitModels;
 
     if (model != null) {
@@ -217,7 +217,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
                                  IdeCoreBundle.message("title.add.module"));
       }
 
-      final Map<ModuleDescriptor, Module> descriptorToModuleMap = new HashMap<>();
+      Map<ModuleDescriptor, Module> descriptorToModuleMap = new HashMap<>();
 
       try {
         WriteAction.run(() -> {
@@ -251,7 +251,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
         }
       }
       for (ProjectDescriptor descriptor : selectedDescriptors) {
-        for (final ModuleDescriptor moduleDescriptor : descriptor.getModules()) {
+        for (ModuleDescriptor moduleDescriptor : descriptor.getModules()) {
           for (File contentRoot : moduleDescriptor.getContentRoots()) {
             String url = VfsUtilCore.fileToUrl(contentRoot);
             Module existingModule = contentRootToModule.get(url);
@@ -259,14 +259,14 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
               moduleModel.disposeModule(existingModule);
             }
           }
-          final Module module;
+          Module module;
           if (moduleDescriptor.isReuseExistingElement()) {
-            final ExistingModuleLoader moduleLoader =
+            ExistingModuleLoader moduleLoader =
               ExistingModuleLoader.setUpLoader(FileUtil.toSystemIndependentName(moduleDescriptor.computeModuleFilePath()));
             module = moduleLoader.createModule(moduleModel);
           }
           else {
-            module = createModule(descriptor, moduleDescriptor, projectLibs, moduleModel);
+            module = createModule(descriptor, moduleDescriptor, projectLibs);
           }
           result.add(module);
           descriptorToModuleMap.put(moduleDescriptor, module);
@@ -275,29 +275,96 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
       return result;
     }
 
+    @NotNull
+    private Module createModule(ProjectDescriptor projectDescriptor,
+                                ModuleDescriptor descriptor,
+                                Map<LibraryDescriptor, Library> projectLibs)
+      throws InvalidDataException {
+
+      String moduleFilePath = descriptor.computeModuleFilePath();
+      ModuleBuilder.deleteModuleFile(moduleFilePath);
+
+      Module module = moduleModel.newModule(moduleFilePath, descriptor.getModuleType().getId());
+      ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+      setupRootModel(projectDescriptor, descriptor, modifiableModel, projectLibs);
+      descriptor.updateModuleConfiguration(module, modifiableModel);
+      if (commitModels) {
+        modifiableModel.commit();
+      }
+      return module;
+    }
+
+    private void setupRootModel(ProjectDescriptor projectDescriptor,
+                                ModuleDescriptor descriptor,
+                                ModifiableRootModel rootModel,
+                                Map<LibraryDescriptor, Library> projectLibs) {
+      CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
+      compilerModuleExtension.setExcludeOutput(true);
+      rootModel.inheritSdk();
+
+      Set<File> contentRoots = descriptor.getContentRoots();
+      for (File contentRoot : contentRoots) {
+        LocalFileSystem lfs = LocalFileSystem.getInstance();
+        VirtualFile moduleContentRoot = lfs.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(contentRoot.getPath()));
+        if (moduleContentRoot != null) {
+          ContentEntry contentEntry = rootModel.addContentEntry(moduleContentRoot);
+          Collection<DetectedSourceRoot> sourceRoots = descriptor.getSourceRoots(contentRoot);
+          for (DetectedSourceRoot srcRoot : sourceRoots) {
+            String srcpath = FileUtil.toSystemIndependentName(srcRoot.getDirectory().getPath());
+            VirtualFile sourceRoot = lfs.refreshAndFindFileByPath(srcpath);
+            if (sourceRoot != null) {
+              contentEntry.addSourceFolder(sourceRoot, shouldBeTestRoot(srcRoot.getDirectory()), getPackagePrefix(srcRoot));
+            }
+          }
+        }
+      }
+      compilerModuleExtension.inheritCompilerOutputPath(true);
+      LibraryTable moduleLibraryTable = rootModel.getModuleLibraryTable();
+      for (LibraryDescriptor libDescriptor : ModuleInsight.getLibraryDependencies(descriptor, projectDescriptor.getLibraries())) {
+        Library projectLib = projectLibs.get(libDescriptor);
+        if (projectLib != null) {
+          rootModel.addLibraryEntry(projectLib);
+        }
+        else {
+          // add as module library
+          Collection<File> jars = libDescriptor.getJars();
+          for (File file : jars) {
+            Library library = moduleLibraryTable.createLibrary();
+            Library.ModifiableModel modifiableModel = library.getModifiableModel();
+            modifiableModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
+            if (commitModels) {
+              modifiableModel.commit();
+            }
+          }
+        }
+      }
+    }
+
     private void setupDependenciesBetweenModules(ModifiableModelsProvider modelsProvider,
                                                  Map<ModuleDescriptor, Module> descriptorToModuleMap) {
       // setup dependencies between modules
       try {
         WriteAction.run(() -> {
           for (ProjectDescriptor data : selectedDescriptors) {
-            for (final ModuleDescriptor descriptor : data.getModules()) {
-              final Module module = descriptorToModuleMap.get(descriptor);
+            for (ModuleDescriptor descriptor : data.getModules()) {
+              Module module = descriptorToModuleMap.get(descriptor);
               if (module == null) {
                 continue;
               }
-              final Set<ModuleDescriptor> deps = descriptor.getDependencies();
-              if (deps.size() == 0) {
+              Set<ModuleDescriptor> deps = descriptor.getDependencies();
+              if (deps.isEmpty()) {
                 continue;
               }
-              final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+              ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
               for (ModuleDescriptor dependentDescriptor : deps) {
-                final Module dependentModule = descriptorToModuleMap.get(dependentDescriptor);
+                Module dependentModule = descriptorToModuleMap.get(dependentDescriptor);
                 if (dependentModule != null) {
                   rootModel.addModuleOrderEntry(dependentModule);
                 }
               }
-              rootModel.commit();
+              if (commitModels) {
+                rootModel.commit();
+              }
             }
           }
         });
@@ -319,13 +386,15 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
                                              Map<LibraryDescriptor, Library> projectLibs) {
       for (ProjectDescriptor projectDescriptor : selectedDescriptors) {
         for (LibraryDescriptor lib : projectDescriptor.getLibraries()) {
-          final Collection<File> files = lib.getJars();
-          final Library projectLib = projectLibraryTable.createLibrary(lib.getName());
-          final Library.ModifiableModel libraryModel = projectLib.getModifiableModel();
+          Collection<File> files = lib.getJars();
+          Library projectLib = projectLibraryTable.createLibrary(lib.getName());
+          Library.ModifiableModel libraryModel = projectLib.getModifiableModel();
           for (File file : files) {
             libraryModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
           }
-          libraryModel.commit();
+          if (commitModels) {
+            libraryModel.commit();
+          }
           projectLibs.put(lib, projectLib);
         }
       }
@@ -371,65 +440,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     }
   }
 
-  @NotNull
-  private static Module createModule(ProjectDescriptor projectDescriptor, final ModuleDescriptor descriptor,
-                                     final Map<LibraryDescriptor, Library> projectLibs, final ModifiableModuleModel moduleModel)
-    throws InvalidDataException {
-
-    final String moduleFilePath = descriptor.computeModuleFilePath();
-    ModuleBuilder.deleteModuleFile(moduleFilePath);
-
-    final Module module = moduleModel.newModule(moduleFilePath, descriptor.getModuleType().getId());
-    final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    setupRootModel(projectDescriptor, descriptor, modifiableModel, projectLibs);
-    descriptor.updateModuleConfiguration(module, modifiableModel);
-    modifiableModel.commit();
-    return module;
-  }
-
-  private static void setupRootModel(ProjectDescriptor projectDescriptor, final ModuleDescriptor descriptor,
-                                     final ModifiableRootModel rootModel, final Map<LibraryDescriptor, Library> projectLibs) {
-    final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
-    compilerModuleExtension.setExcludeOutput(true);
-    rootModel.inheritSdk();
-
-    final Set<File> contentRoots = descriptor.getContentRoots();
-    for (File contentRoot : contentRoots) {
-      final LocalFileSystem lfs = LocalFileSystem.getInstance();
-      VirtualFile moduleContentRoot = lfs.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(contentRoot.getPath()));
-      if (moduleContentRoot != null) {
-        final ContentEntry contentEntry = rootModel.addContentEntry(moduleContentRoot);
-        final Collection<DetectedSourceRoot> sourceRoots = descriptor.getSourceRoots(contentRoot);
-        for (DetectedSourceRoot srcRoot : sourceRoots) {
-          final String srcpath = FileUtil.toSystemIndependentName(srcRoot.getDirectory().getPath());
-          final VirtualFile sourceRoot = lfs.refreshAndFindFileByPath(srcpath);
-          if (sourceRoot != null) {
-            contentEntry.addSourceFolder(sourceRoot, shouldBeTestRoot(srcRoot.getDirectory()), getPackagePrefix(srcRoot));
-          }
-        }
-      }
-    }
-    compilerModuleExtension.inheritCompilerOutputPath(true);
-    final LibraryTable moduleLibraryTable = rootModel.getModuleLibraryTable();
-    for (LibraryDescriptor libDescriptor : ModuleInsight.getLibraryDependencies(descriptor, projectDescriptor.getLibraries())) {
-      final Library projectLib = projectLibs.get(libDescriptor);
-      if (projectLib != null) {
-        rootModel.addLibraryEntry(projectLib);
-      }
-      else {
-        // add as module library
-        final Collection<File> jars = libDescriptor.getJars();
-        for (File file : jars) {
-          Library library = moduleLibraryTable.createLibrary();
-          Library.ModifiableModel modifiableModel = library.getModifiableModel();
-          modifiableModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
-          modifiableModel.commit();
-        }
-      }
-    }
-  }
-
-  public static String getPackagePrefix(final DetectedSourceRoot srcRoot) {
+  public static String getPackagePrefix(DetectedSourceRoot srcRoot) {
     return srcRoot.getPackagePrefix();
   }
 
@@ -439,15 +450,15 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     return myProjectDescriptors.get(detector);
   }
 
-  private static boolean shouldBeTestRoot(final File srcRoot) {
+  private static boolean shouldBeTestRoot(File srcRoot) {
     if (isTestRootName(srcRoot.getName())) {
       return true;
     }
-    final File parentFile = srcRoot.getParentFile();
+    File parentFile = srcRoot.getParentFile();
     return parentFile != null && isTestRootName(parentFile.getName());
   }
 
-  private static boolean isTestRootName(final String name) {
+  private static boolean isTestRootName(String name) {
     return "test".equalsIgnoreCase(name) ||
            "tests".equalsIgnoreCase(name) ||
            "testSource".equalsIgnoreCase(name) ||
@@ -461,11 +472,11 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   }
 
   @Override
-  public boolean isSuitableSdkType(final SdkTypeId sdkTypeId) {
+  public boolean isSuitableSdkType(SdkTypeId sdkTypeId) {
     for (ProjectDescriptor projectDescriptor : getSelectedDescriptors()) {
       for (ModuleDescriptor moduleDescriptor : projectDescriptor.getModules()) {
         try {
-          final ModuleType<?> moduleType = getModuleType(moduleDescriptor);
+          ModuleType<?> moduleType = getModuleType(moduleDescriptor);
           if (moduleType != null && !moduleType.createModuleBuilder().isSuitableSdkType(sdkTypeId)) {
             return false;
           }
@@ -480,10 +491,10 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   @Nullable
   private static ModuleType<?> getModuleType(ModuleDescriptor moduleDescriptor) throws InvalidDataException, JDOMException, IOException {
     if (moduleDescriptor.isReuseExistingElement()) {
-      final File file = new File(moduleDescriptor.computeModuleFilePath());
+      File file = new File(moduleDescriptor.computeModuleFilePath());
       if (file.exists()) {
-        final Element rootElement = JDOMUtil.load(file);
-        final String type = rootElement.getAttributeValue("type");
+        Element rootElement = JDOMUtil.load(file);
+        String type = rootElement.getAttributeValue("type");
         if (type != null) {
           return ModuleTypeManager.getInstance().findByID(type);
         }
