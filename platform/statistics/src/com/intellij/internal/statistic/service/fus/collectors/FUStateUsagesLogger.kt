@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.logState
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger.Companion.LOG
 import com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler
+import com.intellij.internal.statistic.updater.allowExecution
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -149,9 +150,9 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
   }
 
   private suspend fun logApplicationStateRegularly() {
-    StatisticsStateCollectorsScheduler.allowExecution.set(true)
+    allowExecution.set(true)
     delay(LOG_APPLICATION_STATES_INITIAL_DELAY)
-    StatisticsStateCollectorsScheduler.allowExecution.set(false)
+    allowExecution.set(false)
     while (true) {
       logApplicationStates(onStartup = false)
       delay(LOG_APPLICATION_STATES_DELAY)
