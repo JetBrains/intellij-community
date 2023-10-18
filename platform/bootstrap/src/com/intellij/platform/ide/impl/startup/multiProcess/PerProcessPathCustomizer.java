@@ -106,10 +106,6 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
     return null;
   }
 
-  public static @Nullable Path getOriginalConfigPath() {
-    return PathManager.getOriginalConfigDir();
-  }
-
   @Nullable
   private static FileLock tryLockDirectory(@NotNull Path directory) {
     try {
