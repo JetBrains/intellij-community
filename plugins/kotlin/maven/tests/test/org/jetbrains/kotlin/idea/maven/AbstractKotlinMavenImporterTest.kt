@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
 import org.jetbrains.kotlin.idea.notification.asText
 import org.jetbrains.kotlin.idea.notification.catchNotificationTextAsync
-import org.jetbrains.kotlin.idea.notification.catchNotifications
 import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
 import org.jetbrains.kotlin.idea.test.resetCodeStyle
 import org.jetbrains.kotlin.idea.test.runAll
@@ -2198,7 +2197,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 """
             )
 
-            importProjects(mainPom, modulePom1, modulePom2, modulePom3)
+            importProjectsAsync(mainPom, modulePom1, modulePom2, modulePom3)
 
             assertModules("project", "myModule1", "myModule2", "myModule3")
             assertImporterStatePresent()
@@ -2254,7 +2253,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             val kotlinMainPluginVersion = "1.5.10"
             val kotlinMavenPluginVersion1 = "1.6.21"
             val kotlinMavenPluginVersion2 = "1.5.31"
-            val notifications = catchNotifications(myProject, "Kotlin JPS plugin") {
+            val notifications = catchNotificationsAsync(myProject, "Kotlin JPS plugin") {
                 val mainPom = createProjectPom(
                     """
                     <groupId>test</groupId>
@@ -2331,7 +2330,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 """
                 )
 
-                importProjects(mainPom, module1, module2)
+                importProjectsAsync(mainPom, module1, module2)
             }
 
             assertModules("project", "module1", "module2")
@@ -2649,7 +2648,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 """
             )
 
-            importProjects(mainPom, commonModule1, commonModule2, jvmModule, jsModule)
+            importProjectsAsync(mainPom, commonModule1, commonModule2, jvmModule, jsModule)
 
             assertModules("project", "my-common-module1", "my-common-module2", "my-jvm-module", "my-js-module")
             assertImporterStatePresent()
@@ -2878,7 +2877,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 """.trimIndent()
             )
 
-            importProjects(pomMain, pomA, pomB)
+            importProjectsAsync(pomMain, pomA, pomB)
             myProject.waitIndexingComplete()
             assertModules("module-with-kotlin", "module-with-java", "mvnktest")
 
