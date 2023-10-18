@@ -4,6 +4,7 @@ package com.intellij.execution.wsl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,7 @@ import java.util.List;
 
 public final class WSLCommandLineOptions {
 
-  private boolean myLaunchWithWslExe = true;
+  private boolean myLaunchWithWslExe = !Registry.is("wsl.use.remote.agent.for.launch.processes");
   private boolean myExecuteCommandInShell = true;
   private boolean myExecuteCommandInInteractiveShell = false;
   private boolean myExecuteCommandInLoginShell = true;
