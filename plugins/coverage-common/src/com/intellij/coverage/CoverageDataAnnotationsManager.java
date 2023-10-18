@@ -55,7 +55,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
     List<VirtualFile> openFiles = fileEditorManager.getOpenFilesWithRemotes();
     for (VirtualFile openFile : openFiles) {
       FileEditor[] allEditors = fileEditorManager.getAllEditors(openFile);
-      applyInformationToEditor(allEditors, openFile);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> applyInformationToEditor(allEditors, openFile));
     }
   }
 
