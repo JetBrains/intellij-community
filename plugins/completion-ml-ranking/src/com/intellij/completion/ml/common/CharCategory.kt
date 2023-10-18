@@ -14,6 +14,6 @@ enum class CharCategory(val chars: CharSequence) {
   SYMBOL("#$%&*^@~");
 
   companion object {
-    fun find(char: Char): CharCategory? = CharCategory.values().find { it.chars.contains(char) }
+    fun find(char: Char): CharCategory? = entries.find { it.chars.contains(char) }
   }
 }
