@@ -81,7 +81,7 @@
 
     <registryKey key="kotlin.fir.uast.force.uinjectionhost"
                  description="Whether to convert `KtStringTemplateExpression` to `KotlinStringTemplateUPolyadicExpression` in all cases"
-                 defaultValue="false"
+                 defaultValue="true"
                  restartRequired="false"/>
 
     <registryKey key="kotlin.k2.scripting.enabled"
