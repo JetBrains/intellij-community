@@ -8,6 +8,7 @@ import com.intellij.maven.testFramework.utils.importMavenProjects
 import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
+import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
@@ -53,11 +54,13 @@ import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.project.importing.*
+import org.jetbrains.idea.maven.project.preimport.MavenProjectPreImporter
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.junit.Assume
 import java.io.File
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -408,10 +411,37 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected suspend fun importProjectsAsync(files: List<VirtualFile>) {
-    initProjectsManager(false)
-    projectsManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
-    projectsManager.waitForPluginResolution()
+    if (java.lang.Boolean.getBoolean("MAVEN_TEST_PREIMPORT")) {
+      assumeThisTestCanBeReusedForPreimport();
+      val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(myProject)
+      try {
+        MavenProjectPreImporter.getInstance(myProject)
+          .preimport(files, null, mavenImporterSettings, mavenGeneralSettings, activity)
+      }
+      finally {
+        activity.finished()
+      }
+
+
+    }
+    else {
+      initProjectsManager(false)
+      projectsManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
+      projectsManager.waitForPluginResolution()
+    }
+
+
   }
+
+  private fun assumeThisTestCanBeReusedForPreimport() {
+    val clazz = this.javaClass
+    if (clazz.getDeclaredAnnotation(InstantImportCompatible::class.java) == null) {
+      val testName = name
+      val testMethod = clazz.getDeclaredMethod(testName)
+      Assume.assumeNotNull(testMethod.getDeclaredAnnotation(InstantImportCompatible::class.java))
+    }
+  }
+
 
   protected fun importProjectWithErrors() {
     val files = listOf(myProjectPom)
@@ -738,6 +768,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected open fun performPostImportTasks() {}
+
   @Throws(Exception::class)
   protected fun executeGoal(relativePath: String?, goal: String) {
     val dir = myProjectRoot.findFileByRelativePath(relativePath!!)
@@ -808,11 +839,13 @@ abstract class MavenImportingTestCase : MavenTestCase() {
         override fun importStarted() {
           importStarted.set(true)
         }
+
         override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
           if (importStarted.get()) {
             importFinished.set(true)
           }
         }
+
         override fun pluginResolutionStarted() {
           pluginResolutionFinished.set(false)
         }
