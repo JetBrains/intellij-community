@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.actions.devkit.scheme
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.internal.statistic.devkit.actions.scheme.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY
 import com.intellij.internal.statistic.devkit.actions.scheme.EventsSchemeJsonSchemaProviderFactory
 import com.intellij.internal.statistic.devkit.actions.scheme.EventsTestSchemeGroupConfiguration
 import com.intellij.internal.statistic.devkit.actions.scheme.ValidationRulesCompletionContributor
@@ -130,6 +131,6 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
   }
 
   private fun markValidationRulesFile(file: PsiFile) {
-    file.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
+    file.virtualFile.putUserData(EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions.scheme
 
 import com.intellij.codeInsight.completion.CompletionContributor
@@ -18,7 +18,7 @@ internal class ValidationRulesCompletionContributor : CompletionContributor() {
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val file = parameters.originalFile
-    if (file.virtualFile?.getUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY) != true) return
+    if (file.virtualFile?.getUserData(EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY) != true) return
 
     val element = parameters.position
     val parent = element.originalElement.parent as? JsonStringLiteral ?: return
