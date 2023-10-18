@@ -22,7 +22,7 @@ import java.awt.GridBagConstraints.HORIZONTAL
 import java.awt.GridBagLayout
 import javax.swing.*
 
-class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider() {
+class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(false) {
   private val panel = JPanel(VerticalLayout(JBUI.scale(8))).apply {
     add(JPanel(VerticalLayout(JBUI.scale(8))).apply {
       add(JLabel("Importing settings...").apply {

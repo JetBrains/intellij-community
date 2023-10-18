@@ -73,20 +73,6 @@ class ProductChooserDialog : PageProvider() {
     pane.add(act.component)
   }
 
-  private fun createActionToolbar(group: ActionGroup, horizontal: Boolean): ActionToolbar {
-    return object : ActionToolbarImpl(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, horizontal) {
-
-      override fun getPreferredSize(): Dimension {
-        val dm = super.getPreferredSize()
-        if (horizontal) {
-          dm.width -= 10
-        }
-        else dm.height -= 10
-        return dm
-      }
-    }
-  }
-
   override fun createContent(): JComponent {
     val comp = JPanel(GridBagLayout()).apply {
       preferredSize = JBDimension(640, 410)
@@ -97,9 +83,6 @@ class ProductChooserDialog : PageProvider() {
       gbc.weighty = 1.0
       gbc.fill = GridBagConstraints.NONE
       add(pane, gbc)
-/*      gbc.gridy = 1
-      gbc.fill = GridBagConstraints.HORIZONTAL
-      add(south, gbc)*/
     }
 
     return overlay.wrapComponent(comp)
@@ -109,14 +92,24 @@ class ProductChooserDialog : PageProvider() {
     return emptyArray()
   }
 
-    private val south = JPanel(BorderLayout()).apply {
+  private val south = JPanel(BorderLayout()).apply {
     val group = DefaultActionGroup()
     group.add(OtherOptions(callback))
 
-    val at = createActionToolbar(group, true)
+    val at = object : ActionToolbarImpl(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, true) {
+
+      override fun getPreferredSize(): Dimension {
+        val dm = super.getPreferredSize()
+        dm.width -= 15
+        return dm
+      }
+    }
+
     at.targetComponent = pane
     add(accountLabel, BorderLayout.WEST)
     add(at.component, BorderLayout.EAST)
+
+    border = JBUI.Borders.empty(0, 20, 10, 0)
   }
 
   override fun createSouthPanel(leftSideButtons: MutableList<out JButton>,

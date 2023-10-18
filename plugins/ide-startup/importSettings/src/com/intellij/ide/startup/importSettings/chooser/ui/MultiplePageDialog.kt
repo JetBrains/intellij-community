@@ -66,7 +66,9 @@ class MultiplePageDialog private constructor() : DialogWrapper(null) {
       panel.add(it, gbc)
     }
 
-    southPanel.add(dialog.southPanel, gbc)
+    if(dialog.createSouth) {
+      southPanel.add(dialog.southPanel, gbc)
+    }
 
 
     current = dialog
@@ -91,7 +93,7 @@ class MultiplePageDialog private constructor() : DialogWrapper(null) {
   }
 }
 
-abstract class PageProvider() : DialogWrapper(null) {
+abstract class PageProvider(val createSouth: Boolean = true) : DialogWrapper(null, null, true, IdeModalityType.IDE, createSouth) {
   var content: JComponent? = null
   var southPanel: JComponent = JPanel()
   private var inited = false

@@ -73,10 +73,12 @@ abstract class ChooseProductActionButton(text: @NlsActions.ActionText String? = 
 
   class ButtonHolder(val button: JButton) : JPanel(BorderLayout(0, 0)) {
     init {
-      preferredSize = JBDimension(280, 44)
+      val buttonGap = 4
+
+      preferredSize = JBDimension(280, 40+(buttonGap * 2))
       isOpaque = false
       add(button)
-      border = JBUI.Borders.empty(2, 0)
+      border = JBUI.Borders.empty(buttonGap, 0)
     }
   }
 }
