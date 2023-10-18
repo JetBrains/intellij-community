@@ -333,7 +333,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }
   }
 
-  protected static void foldNewLines(EditorEx editor) {
+  public static void foldNewLines(EditorEx editor) {
     editor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
     editor.reinitSettings();
     FoldingModelEx foldingModel = editor.getFoldingModel();
