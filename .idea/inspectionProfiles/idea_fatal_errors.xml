@@ -1166,7 +1166,7 @@
     </inspection_tool>
     <inspection_tool class="FinalPrivateMethod" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="FinalStaticMethod" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="Finalize" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="Finalize" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="FinalizeCallsSuperFinalize" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreObjectSubclasses" value="false" />
       <option name="ignoreTrivialFinalizers" value="true" />
@@ -2272,7 +2272,7 @@
     <inspection_tool class="NewObjectEquality" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="NewStringBufferWithCharArgument" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="NoButtonGroup" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="NoExplicitFinalizeCalls" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="NoExplicitFinalizeCalls" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="NoLabelFor" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="NoScrollPane" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="NodeCoreCodingAssistance" enabled="false" level="WARNING" enabled_by_default="false" />
