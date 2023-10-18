@@ -16,10 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -43,9 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
+import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -350,6 +345,16 @@ public final class ActionUtil {
     }
   }
 
+  public static void performInputEventHandlerWithCallbacks(@NotNull InputEvent inputEvent, @NotNull Runnable runnable) {
+    String place = inputEvent instanceof KeyEvent ? ActionPlaces.KEYBOARD_SHORTCUT :
+                   inputEvent instanceof MouseEvent ? ActionPlaces.MOUSE_SHORTCUT :
+                   ActionPlaces.UNKNOWN;
+    AnActionEvent event = AnActionEvent.createFromInputEvent(
+      inputEvent, place, InputEventDummyAction.INSTANCE.getTemplatePresentation().clone(),
+      DataManager.getInstance().getDataContext(Objects.requireNonNull(inputEvent.getComponent())));
+    performDumbAwareWithCallbacks(InputEventDummyAction.INSTANCE, event, runnable);
+  }
+
   public static void performDumbAwareWithCallbacks(@NotNull AnAction action,
                                                    @NotNull AnActionEvent event,
                                                    @NotNull Runnable performRunnable) {
@@ -358,7 +363,10 @@ public final class ActionUtil {
     ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     manager.fireBeforeActionPerformed(action, event);
     Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    String actionId = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
+    String actionId = StringUtil.notNullize(
+      event.getActionManager().getId(action),
+      action == InputEventDummyAction.INSTANCE ? performRunnable.getClass().getName() :
+      action.getClass().getName());
     if (component != null && !UIUtil.isShowing(component) &&
         !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) &&
         !Boolean.TRUE.equals(ClientProperty.get(component, ALLOW_ACTION_PERFORM_WHEN_HIDDEN))) {
@@ -664,5 +672,11 @@ public final class ActionUtil {
                                                               @Nullable InputEvent event) {
     return installThreadContext(currentThreadContext().plus(
       new ActionContextElement(actionId, place, event == null ? -1 : event.getID())), true);
+  }
+
+  private static class InputEventDummyAction extends DumbAwareAction implements LightEditCompatible {
+    static final InputEventDummyAction INSTANCE = new InputEventDummyAction();
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) { }
   }
 }
