@@ -479,6 +479,10 @@ fun <T : CommandChain> T.importMavenProject(): T = apply {
   addCommand("${CMD_PREFIX}importMavenProject")
 }
 
+fun <T : CommandChain> T.linkMavenProject(projectPath: Path): T = apply {
+  addCommand("${CMD_PREFIX}linkMavenProject ${projectPath}")
+}
+
 fun <T : CommandChain> T.inlineRename(to: String): T = apply {
   startInlineRename()
   delayType(150, to)
