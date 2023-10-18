@@ -26,8 +26,6 @@
 
     <spellchecker.dictionary.runtimeDictionaryProvider
       implementation="com.intellij.searchEverywhereMl.typos.models.RuntimeActionsDictionaryProvider"/>
-
-    <postStartupActivity implementation="com.intellij.searchEverywhereMl.typos.models.ModelComputationStarter"/>
   </extensions>
 
   <actions>

@@ -6,15 +6,10 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.searchEverywhereMl.typos.SearchEverywhereStringToken
@@ -115,20 +110,6 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
       .filterNot { it.isEmpty() || it.isSingleCharacter() }
       .map { it.lowercase() }
       .forEach(actionDictionary::addWord)
-  }
-}
-
-private class ModelComputationStarter : ProjectActivity {
-  init {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
-
-  override suspend fun execute(project: Project) {
-    if (isTypoFixingEnabled) {
-      serviceAsync<ActionsLanguageModel>()
-    }
   }
 }
 
