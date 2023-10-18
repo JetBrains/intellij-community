@@ -79,7 +79,7 @@ internal suspend fun updateGlobalStyleSheet() {
 }
 
 internal suspend fun initGlobalStyleSheet() {
-  service<GlobalStyleSheetUpdateService>().doUpdateGlobalStyleSheet()
+  service<GlobalStyleSheetUpdateService>().init()
 }
 
 @Service(Service.Level.APP)
@@ -87,17 +87,21 @@ internal suspend fun initGlobalStyleSheet() {
 private class GlobalStyleSheetUpdateService(private val coroutineScope: CoroutineScope) {
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  suspend fun doUpdateGlobalStyleSheet() {
-    span("global styleSheet updating") {
-      updateGlobalStyleSheet()
-    }
+  suspend fun init() {
+    doUpdateGlobalStyleSheet()
 
     coroutineScope.launch {
       updateRequests
-        .debounce(5.milliseconds)
+        .debounce(50.milliseconds)
         .collectLatest {
           doUpdateGlobalStyleSheet()
         }
+    }
+  }
+
+  private suspend fun doUpdateGlobalStyleSheet() {
+    span("global styleSheet updating") {
+      updateGlobalStyleSheet()
     }
   }
 

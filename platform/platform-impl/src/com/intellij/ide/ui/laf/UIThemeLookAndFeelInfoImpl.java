@@ -118,7 +118,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     }
 
     if (editorColorSchemeToSet != null) {
-      editorColorManager.setGlobalScheme(editorColorSchemeToSet);
+      editorColorManager.setCurrentSchemeOnLafChange(editorColorSchemeToSet);
     }
   }
 

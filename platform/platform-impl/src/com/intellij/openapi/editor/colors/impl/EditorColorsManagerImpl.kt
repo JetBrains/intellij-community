@@ -54,6 +54,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.ResourceUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.xml.dom.createXmlStreamReader
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -141,9 +142,8 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     schemeManager.reload()
 
     if (!activeScheme.isNullOrEmpty()) {
-      val scheme = getScheme(activeScheme)
-      if (scheme != null) {
-        globalScheme = scheme
+      getScheme(activeScheme)?.let {
+        setGlobalScheme(it)
       }
     }
   }
@@ -223,15 +223,9 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 
   fun schemeChangedOrSwitched(newScheme: EditorColorsScheme?) {
-    // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
-    for (project in ProjectManager.getInstance().getOpenProjects()) {
-      PsiManager.getInstance(project).dropPsiCaches()
-    }
+    dropPsiCaches()
 
-    schemeModificationCounter.incrementAndGet()
-    // we need to push events to components that use editor font, e.g., HTML editor panes
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(newScheme)
-    treeDispatcher.multicaster.globalSchemeChange(newScheme)
+    callGlobalSchemeChange(newScheme)
   }
 
   override fun getSchemeForCurrentUITheme(): EditorColorsScheme {
@@ -321,6 +315,41 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
 
   override fun setGlobalScheme(scheme: EditorColorsScheme?) {
     setGlobalScheme(scheme = scheme, processChangeSynchronously = false)
+  }
+
+  @RequiresEdt
+  override fun setCurrentSchemeOnLafChange(scheme: EditorColorsScheme) {
+    if (scheme === schemeManager.activeScheme) {
+      return
+    }
+
+    schemeManager.setCurrent(scheme = scheme, notify = false, processChangeSynchronously = false)
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+      return
+    }
+
+    callGlobalSchemeChange(scheme)
+
+    // don't do heavy operations right away
+    ApplicationManager.getApplication().invokeLater {
+      dropPsiCaches()
+    }
+  }
+
+  // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
+  @RequiresEdt
+  private fun dropPsiCaches() {
+    for (project in ProjectManager.getInstance().getOpenProjects()) {
+      PsiManager.getInstance(project).dropPsiCaches()
+    }
+  }
+
+  @RequiresEdt
+  private fun callGlobalSchemeChange(scheme: EditorColorsScheme?) {
+    schemeModificationCounter.incrementAndGet()
+    // we need to push events to components that use editor font, e.g., HTML editor panes
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(scheme)
+    treeDispatcher.multicaster.globalSchemeChange(scheme)
   }
 
   override fun getGlobalScheme(): EditorColorsScheme {
@@ -685,7 +714,8 @@ fun readEditorSchemeNameFromXml(parser: XMLStreamReader): String? {
 private val BUNDLED_EP_NAME = ExtensionPointName<BundledSchemeEP>("com.intellij.bundledColorScheme")
 
 @VisibleForTesting
-fun createLoadBundledSchemeRequests(additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>, checkId: Boolean = false)
+fun createLoadBundledSchemeRequests(additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>,
+                                    checkId: Boolean = false)
   : Sequence<SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme>> {
   return sequence {
     for (item in BUNDLED_EP_NAME.filterableLazySequence()) {

@@ -15,7 +15,7 @@ public interface LafManagerListener extends EventListener {
   Topic<LafManagerListener> TOPIC = new Topic<>(LafManagerListener.class, Topic.BroadcastDirection.NONE, true);
 
   /**
-   * Not executed in EDT.
+   * Not executed on an initial LaF set.
    */
   void lookAndFeelChanged(@NotNull LafManager source);
 }

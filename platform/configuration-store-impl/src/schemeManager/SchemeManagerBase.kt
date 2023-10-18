@@ -38,7 +38,7 @@ abstract class SchemeManagerBase<T: Scheme, in MUTABLE_SCHEME : T>(internal val 
     val oldCurrent = activeScheme
     activeScheme = scheme
     if (notify && oldCurrent !== scheme) {
-      processor.onCurrentSchemeSwitched(oldCurrent, scheme, processChangeSynchronously)
+      processor.onCurrentSchemeSwitched(oldScheme = oldCurrent, newScheme = scheme, processChangeSynchronously = processChangeSynchronously)
     }
   }
 

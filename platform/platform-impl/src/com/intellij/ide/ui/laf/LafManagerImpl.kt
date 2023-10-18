@@ -58,7 +58,6 @@ import com.intellij.util.ui.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -563,14 +562,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, StartupUiUtil.getLcdContrastValue())
     uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS, AppUIUtil.adjustFractionalMetrics(getPreferredFractionalMetricsValue()))
     usedValuesOfUiOptions = computeValuesOfUsedUiOptions()
-    if (isFirstSetup) {
-      coroutineScope.launch {
-        span("lookAndFeelChanged event processing") {
-          ApplicationManager.getApplication().messageBus.syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this@LafManagerImpl)
-        }
-      }
-    }
-    else {
+    if (!isFirstSetup) {
       ExperimentalUI.getInstance().lookAndFeelChanged()
       notifyLookAndFeelChanged()
       for (frame in Frame.getFrames()) {
