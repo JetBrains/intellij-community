@@ -6,6 +6,7 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.util.Disposer
 import java.awt.Point
 
 internal class InlineCompletionMouseMotionListener : EditorMouseMotionListener {
@@ -35,6 +36,9 @@ internal class InlineCompletionMouseMotionListener : EditorMouseMotionListener {
 
   private fun enterHover(newHoveredSession: InlineCompletionSession, locationOnScreen: Point) {
     hoveredSession = newHoveredSession
+    Disposer.register(newHoveredSession) {
+      hoveredSession = null
+    }
     InlineCompletionTooltip.enterHover(newHoveredSession, locationOnScreen)
   }
 
