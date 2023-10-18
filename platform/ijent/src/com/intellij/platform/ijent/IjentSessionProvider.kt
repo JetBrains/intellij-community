@@ -162,6 +162,7 @@ interface IjentApi : AutoCloseable {
     vararg args: String,
     env: Map<String, String> = emptyMap(),
     pty: Pty? = null,
+    workingDirectory: String? = null,
   ): ExecuteProcessResult
 
   suspend fun fetchLoginShellEnvVariables(): Map<String, String>
