@@ -3,6 +3,8 @@ package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
 import com.intellij.ide.startup.importSettings.transfer.SettingTransferService
+import com.intellij.ide.ui.ProductIcons
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.rd.createNestedDisposable
@@ -192,5 +194,17 @@ interface ImportProgress {
 }
 
 
-data class DialogImportItem(val item: SettingsContributor, val icon: Icon)
+data class DialogImportItem(val item: SettingsContributor, val icon: Icon) {
+
+  companion object {
+
+    fun self() = DialogImportItem(
+      object : SettingsContributor {
+        override val id = "DialogImportItem.self"
+        override val name = ApplicationInfo.getInstance().fullApplicationName
+      },
+      ProductIcons.getInstance().productIcon
+    )
+  }
+}
 

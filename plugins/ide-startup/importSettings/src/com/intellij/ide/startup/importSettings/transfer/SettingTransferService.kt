@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.customize.transferSettings.DefaultTransferSettingsConfiguration
 import com.intellij.ide.customize.transferSettings.TransferSettingsDataProvider
-import com.intellij.ide.customize.transferSettings.TransferableIdeId
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
+import com.intellij.ide.customize.transferSettings.models.SettingsPreferencesKind
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransferSettingsProvider
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.BaseSetting
@@ -104,19 +103,23 @@ class SettingTransferService : ExternalService {
                               size: IconProductSize): Icon? {
     return logger.runAndLogException {
       val version = loadIdeVersions()[itemId] ?: return null
-      when (version.transferableId) {
-        TransferableIdeId.VSCode -> AllIcons.Actions.Stub
-        else -> {
-          logger.error("Cannot find icon for transferable IDE ${version.transferableId}.")
-          null
-        }
-      }
+      return version.transferableId.icon
     }
   }
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
     try {
-      TODO()
+      val ideVersion = loadIdeVersions()[productId] ?: error(ImportSettingsBundle.message("transfer.error.product-not-found", productId))
+      applyPreferences(ideVersion, data)
+      val withPlugins = ideVersion.settingsCache.preferences.plugins
+      val importData = TransferSettingsProgress(ideVersion)
+      config.controller.performImport(
+        null,
+        ideVersion,
+        withPlugins,
+        importData.createProgressIndicatorAdapter()
+      )
+      return importData
     }
     catch(t: Throwable) {
       if (t is CancellationException || t is ProcessCanceledException) {
@@ -124,9 +127,19 @@ class SettingTransferService : ExternalService {
       }
 
       logger.error(t)
-      return importErrorData(t)
+      return importErrorData(t) // TODO: Report error via the parent service
     }
   }
+}
+
+private fun applyPreferences(ideVersion: IdeVersion, toApply: List<DataForSave>) {
+  val selectedIds = toApply.asSequence().map { it.id }.toSet()
+  val preferences = ideVersion.settingsCache.preferences
+  preferences[SettingsPreferencesKind.Laf] = selectedIds.contains(TransferableSetting.UI_ID)
+  preferences[SettingsPreferencesKind.SyntaxScheme] = selectedIds.contains(TransferableSetting.UI_ID)
+  preferences[SettingsPreferencesKind.Keymap] = selectedIds.contains(TransferableSetting.KEYMAP_ID)
+  preferences[SettingsPreferencesKind.Plugins] = selectedIds.contains(TransferableSetting.PLUGINS_ID)
+  preferences[SettingsPreferencesKind.RecentProjects] = selectedIds.contains(TransferableSetting.RECENT_PROJECTS_ID)
 }
 
 private fun importErrorData(error: Throwable) = object : DialogImportData {

@@ -17,10 +17,15 @@ class TransferableSetting(
 
   companion object {
 
+    const val UI_ID = "ui"
+    const val KEYMAP_ID = "keymap"
+    const val PLUGINS_ID = "plugins"
+    const val RECENT_PROJECTS_ID = "recentProjects"
+
     fun uiTheme(laf: ILookAndFeel): TransferableSetting? {
       val themeName = laf.getPreview().name
       return TransferableSetting(
-        "ui",
+        UI_ID,
         ImportSettingsBundle.message("transfer.settings.ui-theme"),
         AllIcons.Actions.Stub, // TODO: Choose the right icon
         themeName
@@ -29,7 +34,7 @@ class TransferableSetting(
 
     fun keymap(keymap: Keymap): TransferableSetting {
       return TransferableSetting(
-        "keymap",
+        KEYMAP_ID,
         ImportSettingsBundle.message("transfer.settings.keymap"),
         AllIcons.Actions.Stub, // TODO: Choose the right icon
         keymap.displayName
@@ -37,14 +42,14 @@ class TransferableSetting(
     }
 
     fun plugins() = TransferableSetting(
-      "plugins",
+      PLUGINS_ID,
       ImportSettingsBundle.message("transfer.settings.plugins"),
       AllIcons.Actions.Stub, // TODO: Choose the right icon
       null
     )
 
     fun recentProjects() = TransferableSetting(
-      "recentProjects",
+      RECENT_PROJECTS_ID,
       ImportSettingsBundle.message("transfer.settings.recent-projects"),
       AllIcons.Actions.Stub, // TODO: Choose the right icon
       null
