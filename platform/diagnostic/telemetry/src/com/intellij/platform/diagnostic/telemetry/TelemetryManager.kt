@@ -52,10 +52,9 @@ interface TelemetryManager {
       instance.value = value
     }
 
-    fun setNoopTelemetryManager() {
-      if (!instance.isInitialized()) {
-        instance.value = NoopTelemetryManager()
-      }
+    @TestOnly
+    fun forceSetTelemetryManager(value: TelemetryManager = NoopTelemetryManager()) {
+      instance.value = value
     }
   }
 
