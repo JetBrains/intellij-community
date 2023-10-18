@@ -8,20 +8,20 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.ui.LightweightHint
-import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Point
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 internal object InlineCompletionTooltip {
   @RequiresEdt
   fun enterHover(session: InlineCompletionSession, locationAtScreen: Point) {
     val insertShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
-    val panel = HintUtil.createInformationLabel("Press $insertShortcut to accept")
-    //val panel = panel {
-    //  row {
-    //    text("Press $insertShortcut to accept")
-    //  }
-    //}
+    val panel = JPanel().apply {
+      add(JLabel("$insertShortcut to accept"))
+      add(session.provider.getTooltip())
+    }
+    panel.background = HintUtil.getInformationColor()
     val hint = LightweightHint(panel)
     val editor = session.context.editor
 
