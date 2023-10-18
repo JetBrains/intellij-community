@@ -279,7 +279,7 @@ public final class Utils {
       debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
       debug("Root class: " + owner.getName());
 
-      Iterable<JvmNodeReferenceID> propagated;
+      Set<JvmNodeReferenceID> propagated;
       if (field != null) {
         propagated = collectSubclassesWithoutField(owner.getName(), field.getName());
       }
@@ -288,7 +288,7 @@ public final class Utils {
         propagated = new HashSet<>();
         for (ReferenceID id : withAllSubclasses(ownerID)) {
           if (id instanceof JvmNodeReferenceID && !id.equals(ownerID)) {
-            ((Set<JvmNodeReferenceID>)propagated).add((JvmNodeReferenceID)id);
+            propagated.add((JvmNodeReferenceID)id);
           }
         }
       }
