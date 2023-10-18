@@ -160,7 +160,7 @@ object GitRemoteBranchesUtil {
     }
   }
 
-  private fun findRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? =
+  fun findRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? =
     repository.remotes.find {
       val url = it.firstUrl
       url != null &&

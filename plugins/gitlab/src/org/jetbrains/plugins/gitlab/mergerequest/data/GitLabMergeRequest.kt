@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.async.asResultFlow
-import com.intellij.collaboration.async.collectBatches
-import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -12,6 +9,10 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
 import com.intellij.vcsUtil.VcsFileUtil
+import git4idea.GitStandardRemoteBranch
+import git4idea.remote.hosting.GitRemoteBranchesUtil
+import git4idea.remote.hosting.changesSignalFlow
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.*
@@ -155,6 +156,28 @@ internal class LoadedGitLabMergeRequest(
         }
       }
     }
+
+    cs.launch {
+      val repository = projectMapping.gitRepository
+      repository.changesSignalFlow().withInitial(Unit).combine(details) { _, currentDetails ->
+        isCurrentDataInSyncWithRepository(currentDetails, repository)
+      }.distinctUntilChanged().filterNotNull().collectLatest {
+        if (!it) {
+          mergeRequestRefreshRequest.emit(Unit)
+        }
+      }
+    }
+  }
+
+  private fun isCurrentDataInSyncWithRepository(details: GitLabMergeRequestFullDetails, repository: GitRepository): Boolean? {
+    val remoteMrBranchHash = details.getRemoteDescriptor(projectMapping.repository.serverPath)?.let {
+      GitRemoteBranchesUtil.findRemote(repository, it)
+    }?.let {
+      val branch = GitStandardRemoteBranch(it, details.sourceBranch)
+      repository.branches.getHash(branch)
+    } ?: return null
+    val knownHead = details.diffRefs?.headSha ?: return null
+    return remoteMrBranchHash.asString() == knownHead
   }
 
   override fun refreshData() {
