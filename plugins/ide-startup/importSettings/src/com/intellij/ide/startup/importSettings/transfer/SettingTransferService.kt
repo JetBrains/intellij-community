@@ -7,17 +7,24 @@ import com.intellij.ide.customize.transferSettings.TransferSettingsDataProvider
 import com.intellij.ide.customize.transferSettings.TransferableIdeId
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransferSettingsProvider
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import com.intellij.ide.startup.importSettings.data.DataForSave
 import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.ExternalService
 import com.intellij.ide.startup.importSettings.data.IconProductSize
+import com.intellij.ide.startup.importSettings.data.ImportProgress
 import com.intellij.ide.startup.importSettings.data.Product
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.containers.nullize
+import com.intellij.util.text.nullize
+import com.jetbrains.rd.util.reactive.OptProperty
+import com.jetbrains.rd.util.reactive.Property
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -107,8 +114,29 @@ class SettingTransferService : ExternalService {
     }
   }
 
-  override fun importSettings(productId: String,
-                              data: List<DataForSave>): DialogImportData {
-    TODO("Not yet implemented") // TODO: Return erroneous import data in case of an error
+  override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
+    try {
+      TODO()
+    }
+    catch(t: Throwable) {
+      if (t is CancellationException || t is ProcessCanceledException) {
+        throw t
+      }
+
+      logger.error(t)
+      return importErrorData(t)
+    }
+  }
+}
+
+private fun importErrorData(error: Throwable) = object : DialogImportData {
+  override val message = ImportSettingsBundle.message(
+    "transfer.error.unknown",
+    (error.localizedMessage ?: error.message)
+      .nullize(nullizeSpaces = true) ?: ImportSettingsBundle.message("transfer.error.no-error-message")
+  )
+  override val progress = object : ImportProgress {
+    override val progressMessage = Property("")
+    override val progress = OptProperty<Int>()
   }
 }
