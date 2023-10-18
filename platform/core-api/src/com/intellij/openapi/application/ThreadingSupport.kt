@@ -110,6 +110,27 @@ interface ThreadingSupport {
   @RequiresBlockingContext
   fun <T> executeOnPooledThread(action: Callable<T>, expired: BooleanSupplier): Future<T>
 
+
+  /**
+   * Runs the specified action under the write-intent lock. Can be called from any thread. The action is executed immediately
+   * if no write-intent action is currently running, or blocked until the currently running write-intent action completes.
+   *
+   * This method is used to implement higher-level API. Please do not use it directly.
+   *
+   * @param action the action to run
+   */
+  @ApiStatus.Internal
+  fun runIntendedWriteActionOnCurrentThread(action: Runnable)
+
+  /**
+   * Runs the specified action, releasing the write-intent lock if it is acquired at the moment of the call.
+   *
+   * This method is used to implement higher-level API. Please do not use it directly.
+   */
+  @ApiStatus.Internal
+  // @Throws(E::class)
+  fun <T, E : Throwable?> runUnlockingIntendedWrite(action: ThrowableComputable<T, E>): T
+
   /**
    * Adds a [ReadActionListener].
    *

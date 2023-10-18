@@ -783,35 +783,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
-    if (isWriteIntentLockAcquired()) {
-      action.run();
-    }
-    else {
-      acquireWriteIntentLock(action.getClass().getName());
-      try {
-        action.run();
-      }
-      finally {
-        releaseWriteIntentLock();
-      }
-    }
+    getThreadingSupport().runIntendedWriteActionOnCurrentThread(action);
   }
 
   @Override
   public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
-    // Do not ever unlock IW in legacy mode (EDT is holding lock at all times)
-    if (isWriteIntentLockAcquired() && StartupUtil.isImplicitReadOnEDTDisabled()) {
-      releaseWriteIntentLock();
-      try {
-        return action.compute();
-      }
-      finally {
-        acquireWriteIntentLock(action.getClass().getName());
-      }
-    }
-    else {
-      return action.compute();
-    }
+    return getThreadingSupport().runUnlockingIntendedWrite(action);
   }
 
   @Override
