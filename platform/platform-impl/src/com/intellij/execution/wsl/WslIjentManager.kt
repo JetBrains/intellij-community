@@ -10,6 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ijent.*
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
@@ -43,7 +44,7 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
       val command = processBuilder.command()
 
       when (val processResult = getIjentApi(wslDistribution, project, options.isSudo).executeProcess(
-        exe = command.first(),
+        exe = FileUtil.toSystemIndependentName(command.first ()),
         args = *command.toList().drop(1).toTypedArray(),
         env = processBuilder.environment(),
         pty = pty
