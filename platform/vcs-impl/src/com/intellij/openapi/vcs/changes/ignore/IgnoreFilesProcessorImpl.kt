@@ -112,6 +112,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
   }
 
   private fun writeIgnores(project: Project, potentiallyIgnoredFiles: Collection<VirtualFile>) {
+    if (project.isDisposed) return
     if (potentiallyIgnoredFiles.isEmpty()) return
 
     LOG.debug("Try to write potential ignored files", potentiallyIgnoredFiles)
@@ -158,9 +159,10 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
       if (storeDir != null
           && ignoredContentProvider.supportIgnoreFileNotInVcsRoot()
           && file.underProjectStoreDir(storeDir)) {
-        if (ignoredContentProvider.canCreateIgnoreFileInStateStoreDir()){
+        if (ignoredContentProvider.canCreateIgnoreFileInStateStoreDir()) {
           storeDir
-        } else return null
+        }
+        else return null
       }
       else VcsUtil.getVcsRootFor(project, file) ?: return null
 
