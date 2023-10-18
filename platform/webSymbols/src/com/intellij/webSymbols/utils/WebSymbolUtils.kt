@@ -278,7 +278,7 @@ fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue?
 
   for (value in this) {
     if (value == null) continue
-    if (kind == null) {
+    if (kind == null || kind == WebSymbolHtmlAttributeValue.Kind.PLAIN) {
       kind = value.kind
     }
     if (type == null) {
@@ -292,9 +292,6 @@ fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue?
     }
     if (langType == null) {
       langType = value.langType
-    }
-    if (kind != null && type != null && required != null) {
-      break
     }
   }
   return if (kind != null
