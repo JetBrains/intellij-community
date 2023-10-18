@@ -67,10 +67,9 @@ class AdditionalTableHeaderPositionHelper(var statisticsHeader: AdditionalTableH
 
   /** [PropertyChangeListener] interface.  */
   override fun propertyChange(evt: PropertyChangeEvent) {
-
     // the table has changed containment. clean up status and prepare again,
     // if possible; however, do nothing if the current setup is fine
-    if (previousTableViewport !== evt.newValue || evt.source !== statisticsHeader.table) {
+    if (previousTableViewport !== evt.newValue && evt.source !== statisticsHeader.table) {
       previousTableViewport = null
       cleanUp()
       trySetUp(statisticsHeader.table)
