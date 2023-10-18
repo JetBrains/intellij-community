@@ -23,3 +23,14 @@ class ImportProgressSingleDialogAction : DumbAwareAction() {
     dialog.pack()
   }
 }
+
+class ImportProgressSimpleDialogAction : DumbAwareAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    val dialog = ImportProgressDialog(TestJbService.simpleImport)
+    dialog.isModal = false
+    dialog.isResizable = false
+    dialog.show()
+
+    dialog.pack()
+  }
+}

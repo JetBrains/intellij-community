@@ -72,6 +72,8 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
         cn.gridy = 1
         add(HLabel(to.item.name).label, cn)
 
+        border = JBUI.Borders.emptyBottom(20)
+
       })
     }
 

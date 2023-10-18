@@ -8,6 +8,7 @@
     <action id="SettingChooserSimpleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.SettingChooserSimpleDialogAction" text="[INTERNAL] 2s Transfer: Show Setting Chooser Dialog Single" internal="true"/>
 
     <action id="ImportProgressDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportProgressDialogAction" text="[INTERNAL] 3 Transfer: Import Progress Dialog" internal="true"/>
+    <action id="ImportProgressSimpleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportProgressSimpleDialogAction" text="[INTERNAL] 3simple Transfer: Simple Import Progress Dialog" internal="true"/>
     <action id="ImportProgressSingleDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ImportProgressSingleDialogAction" text="[INTERNAL] 3s Transfer: Import Progress Dialog Single" internal="true"/>
 
     <action id="ErrorTestDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ErrorTestDialogAction" text="[INTERNAL] 4 Transfer: Error Dispatcher Dialog Single" internal="true"/>
