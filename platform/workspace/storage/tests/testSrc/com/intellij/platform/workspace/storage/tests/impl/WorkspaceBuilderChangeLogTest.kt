@@ -235,7 +235,8 @@ class WorkspaceBuilderChangeLogTest {
     assertTrue(changeEntry is ChangeEntry.ReplaceEntity)
     assertEquals(0, changeEntry.references!!.removedChildren.size)
     assertEquals(2, changeEntry.references.newChildren.size)
-    assertEquals(0, changeEntry.references.modifiedParents.size)
+    assertEquals(0, changeEntry.references.newParents.size)
+    assertEquals(0, changeEntry.references.removedParents.size)
   }
 
   @Test
@@ -259,7 +260,8 @@ class WorkspaceBuilderChangeLogTest {
     assertTrue(changeEntry is ChangeEntry.ReplaceEntity)
     assertEquals(2, changeEntry.references!!.removedChildren.size)
     assertEquals(0, changeEntry.references.newChildren.size)
-    assertEquals(0, changeEntry.references.modifiedParents.size)
+    assertEquals(0, changeEntry.references.newParents.size)
+    assertEquals(0, changeEntry.references.removedParents.size)
   }
 
   @Test
@@ -281,7 +283,8 @@ class WorkspaceBuilderChangeLogTest {
     assertTrue(changeEntry is ChangeEntry.ReplaceEntity)
     assertEquals(1, changeEntry.references!!.removedChildren.size)
     assertEquals(1, changeEntry.references.newChildren.size)
-    assertEquals(0, changeEntry.references.modifiedParents.size)
+    assertEquals(0, changeEntry.references.newParents.size)
+    assertEquals(0, changeEntry.references.removedParents.size)
   }
 
   @Test
@@ -351,7 +354,8 @@ class WorkspaceBuilderChangeLogTest {
     assertTrue(changeEntry is ChangeEntry.ReplaceEntity)
     assertEquals(2, changeEntry.references!!.removedChildren.size)
     assertEquals(0, changeEntry.references.newChildren.size)
-    assertEquals(0, changeEntry.references.modifiedParents.size)
+    assertEquals(0, changeEntry.references.newParents.size)
+    assertEquals(0, changeEntry.references.removedParents.size)
   }
 
   @Test
@@ -375,7 +379,8 @@ class WorkspaceBuilderChangeLogTest {
     assertTrue(changeEntry is ChangeEntry.ReplaceEntity)
     assertEquals(0, changeEntry.references!!.removedChildren.size)
     assertEquals(2, changeEntry.references.newChildren.size)
-    assertEquals(0, changeEntry.references.modifiedParents.size)
+    assertEquals(0, changeEntry.references.newParents.size)
+    assertEquals(0, changeEntry.references.removedParents.size)
   }
 
   // ------------- Testing events collapsing ----

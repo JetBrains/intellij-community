@@ -5,7 +5,6 @@ import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import java.nio.file.Path
 import java.util.*
@@ -187,7 +186,6 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     }
 
     val originalEntityData = target.getOriginalEntityData(targetEntityId.id)
-    val originalParents = target.getOriginalParents(targetEntityId.id.asChild())
 
     target.indexes.updateIndices(sourceEntityId.id, newTargetEntityData, diff)
 
@@ -212,7 +210,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     replaceRestoreParents(change, newEntityId)
 
     MutableEntityStorageImpl.addReplaceEvent(target, sourceEntityId.id, beforeChildren, beforeParents, newTargetEntityData,
-                                             originalEntityData, originalParents)
+                                             originalEntityData)
   }
 
   private fun replaceRestoreChildren(
@@ -294,47 +292,46 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     change: ChangeEntry.ReplaceEntity,
     newEntityId: EntityId,
   ) {
-    val updatedModifiedParents = change.references?.modifiedParents?.mapValues { it.value } ?: emptyMap()
+    val removedParents = change.references?.removedParents?.mapValues { it.value } ?: emptyMap()
+    val newParents = change.references?.newParents?.mapValues { it.value } ?: emptyMap()
+    val modifiableNewParents = newParents.toMutableMap()
 
-    val modifiedParentsMap = updatedModifiedParents.toMutableMap()
     val newChildEntityId = newEntityId.asChild()
     val existingParents = target.refs.getParentRefsOfChild(newChildEntityId)
     for ((connectionId, existingParent) in existingParents) {
-      if (connectionId in modifiedParentsMap) {
-        val newParent = modifiedParentsMap.getValue(connectionId)
-        if (newParent == null) {
-          // target child doesn't have a parent anymore
-          if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
-                                                                       initialStorage, diff)
-          else target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
+      if (connectionId in removedParents) {
+        // target child doesn't have a parent anymore
+        if (!connectionId.canRemoveParent() && connectionId !in newParents) {
+          target.addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff)
+        }
+        else target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
+      }
+      if (connectionId in newParents) {
+        val newParent = newParents[connectionId]!!
+        if (diffLog[newParent.id] is ChangeEntry.AddEntity) {
+          var possibleNewParent = replaceMap[newParent.id.notThis()]
+          if (possibleNewParent == null) {
+            possibleNewParent = target.entitiesByType.book(newParent.id.clazz).asThis()
+            replaceMap[newParent.id.notThis()] = possibleNewParent
+          }
+          target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.id.asParent())
         }
         else {
-          if (diffLog[newParent.id] is ChangeEntry.AddEntity) {
-            var possibleNewParent = replaceMap[newParent.id.notThis()]
-            if (possibleNewParent == null) {
-              possibleNewParent = target.entitiesByType.book(newParent.id.clazz).asThis()
-              replaceMap[newParent.id.notThis()] = possibleNewParent
-            }
-            target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.id.asParent())
+          if (target.entityDataById(newParent.id) != null) {
+            target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), newParent)
           }
           else {
-            if (target.entityDataById(newParent.id) != null) {
-              target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), newParent)
-            }
-            else {
-              if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
-                                                                           initialStorage, diff)
-              target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
-            }
+            if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
+                                                                         initialStorage, diff)
+            target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
           }
         }
-        modifiedParentsMap.remove(connectionId)
+        modifiableNewParents.remove(connectionId)
       }
     }
 
     // Any new parents? Add them
-    for ((connectionId, parentId) in modifiedParentsMap) {
-      if (parentId == null) continue
+    for ((connectionId, parentId) in modifiableNewParents) {
       if (diffLog[parentId.id] is ChangeEntry.AddEntity) {
         var possibleNewParent = replaceMap[parentId.id.notThis()]
         if (possibleNewParent == null) {

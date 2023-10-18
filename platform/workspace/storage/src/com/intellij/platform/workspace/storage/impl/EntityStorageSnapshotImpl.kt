@@ -323,7 +323,6 @@ internal class MutableEntityStorageImpl(
 
       val beforeSymbolicId = if (e is WorkspaceEntityWithSymbolicId) e.symbolicId else null
 
-      val originalParents = this.getOriginalParents(entityId.asChild())
       val beforeParents = this.refs.getParentRefsOfChild(entityId.asChild())
       val beforeChildren = this.refs.getChildrenRefsOfParentBy(entityId.asParent()).flatMap { (key, value) -> value.map { key to it } }
 
@@ -359,7 +358,7 @@ internal class MutableEntityStorageImpl(
         }
       }
 
-      addReplaceEvent(this, entityId, beforeChildren, beforeParents, copiedData, originalEntityData, originalParents)
+      addReplaceEvent(this, entityId, beforeChildren, beforeParents, copiedData, originalEntityData)
       if (modifiableEntity.changedProperty.contains("entitySource")) {
         val newSource = copiedData.entitySource
         indexes.entitySourceIndex.index(entityId, newSource)
@@ -459,8 +458,8 @@ internal class MutableEntityStorageImpl(
           is ChangeEntry.ReplaceEntity -> {
             changedEntityIds += entityId
             if (change.references != null) {
-              changedEntityIds += (change.references.oldParents - change.references.modifiedParents).values.map { it.id }
-              changedEntityIds += (change.references.modifiedParents - change.references.oldParents).values.mapNotNull { it?.id }
+              changedEntityIds += change.references.newParents.values.map { it.id }
+              changedEntityIds += change.references.removedParents.values.map { it.id }
 
               val updatedChildren = change.references.removedChildren.map { it.second.id } + change.references.newChildren.map { it.second.id }
               changedEntityIds += updatedChildren
@@ -548,7 +547,8 @@ internal class MutableEntityStorageImpl(
         val changedParent = changeLog.changeLog[parent.id]
         if (changedParent is ChangeEntry.ReplaceEntity) {
           if (changedParent.data?.newData == changedParent.data?.oldData
-              && changedParent.references?.modifiedParents?.isEmpty() == true
+              && changedParent.references?.newParents?.isEmpty() == true
+              && changedParent.references.removedParents.isEmpty()
               && changedParent.references.removedChildren.singleOrNull()?.takeIf { it.first == connection && it.second.id == initial } != null
               && changedParent.references.newChildren.singleOrNull()?.takeIf { it.first == connection && it.second.id == new } != null) {
             collapsibleChanges.add(parent.id)
@@ -811,7 +811,7 @@ internal class MutableEntityStorageImpl(
 
     @Suppress("UNCHECKED_CAST")
     val originals = accumulator.associateWith {
-      this.getOriginalEntityData(it) as WorkspaceEntityData<WorkspaceEntity> to this.getOriginalParents(it.asChild())
+      this.getOriginalEntityData(it) as WorkspaceEntityData<WorkspaceEntity>
     }
 
     for (id in accumulator) {
@@ -826,7 +826,7 @@ internal class MutableEntityStorageImpl(
 
     accumulator.forEach {
       LOG.debug { "Cascade removing: ${ClassToIntConverter.getInstance().getClassOrDie(it.clazz)}-${it.arrayId}" }
-      this.changeLog.addRemoveEvent(it, originals[it]!!.first, originals[it]!!.second)
+      this.changeLog.addRemoveEvent(it, originals[it]!!)
     }
 
     updateCalculationCache()
@@ -899,7 +899,6 @@ internal class MutableEntityStorageImpl(
       beforeParents: Map<ConnectionId, ParentEntityId>,
       copiedData: WorkspaceEntityData<out WorkspaceEntity>,
       originalEntity: WorkspaceEntityData<out WorkspaceEntity>,
-      originalParents: Map<ConnectionId, ParentEntityId>,
     ) {
       val parents = builder.refs.getParentRefsOfChild(entityId.asChild())
       val children = builder.refs
@@ -911,6 +910,8 @@ internal class MutableEntityStorageImpl(
       val (removedChildren, addedChildren) = getDiff(beforeChildrenSet, children)
 
       // Collect parent changes
+      val newParents: MutableMap<ConnectionId, ParentEntityId> = HashMap()
+      val removedParents: MutableMap<ConnectionId, ParentEntityId> = HashMap()
       val parentsMapRes: MutableMap<ConnectionId, ParentEntityId?> = beforeParents.toMutableMap()
       for ((connectionId, parentId) in parents) {
         val existingParent = parentsMapRes[connectionId]
@@ -920,17 +921,19 @@ internal class MutableEntityStorageImpl(
           }
           else {
             parentsMapRes[connectionId] = parentId
+            newParents[connectionId] = parentId
+            removedParents[connectionId] = existingParent
           }
         }
         else {
+          newParents[connectionId] = parentId
           parentsMapRes[connectionId] = parentId
         }
       }
       val removedKeys = beforeParents.keys - parents.keys
-      removedKeys.forEach { parentsMapRes[it] = null }
+      removedKeys.forEach { removedParents[it] = beforeParents[it]!! }
 
-      builder.changeLog.addReplaceEvent(entityId, copiedData, originalEntity, originalParents, addedChildren, removedChildren,
-                                        parentsMapRes)
+      builder.changeLog.addReplaceEvent(entityId, copiedData, originalEntity, addedChildren, removedChildren, newParents, removedParents)
     }
 
     private val getEntitiesTimeMs: AtomicLong = AtomicLong()

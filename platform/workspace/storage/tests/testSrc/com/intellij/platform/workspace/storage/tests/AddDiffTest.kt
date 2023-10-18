@@ -663,4 +663,24 @@ class AddDiffTest {
     assertEquals(1, entitySourceIndex.index.size)
     assertNotNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
   }
+
+  @RepeatedTest(10)
+  fun `modify and update`() {
+    val parentEntity1 = target addEntity XParentEntity("Parent1", MySource)
+    val parentEntity2 = target addEntity XParentEntity("Parent2", MySource)
+    val childEntity = target addEntity XChildEntity("property", MySource) {
+      this.parentEntity = parentEntity2
+    }
+
+    val source = createBuilderFrom(target)
+    source.modifyEntity(childEntity.from(source)) {
+      this.parentEntity = parentEntity1
+    }
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    assertEquals("Parent1", target.entities(XChildEntity::class.java).single().parentEntity.parentProperty)
+  }
 }

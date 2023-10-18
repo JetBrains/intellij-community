@@ -20,14 +20,14 @@ internal class WorkspaceBuilderChangeLog {
     entityId: EntityId,
     copiedData: WorkspaceEntityData<out WorkspaceEntity>,
     originalEntity: WorkspaceEntityData<out WorkspaceEntity>,
-    originalParents: Map<ConnectionId, ParentEntityId>,
     addedChildren: List<Pair<ConnectionId, ChildEntityId>>,
     removedChildren: Set<Pair<ConnectionId, ChildEntityId>>,
-    parentsMapRes: Map<ConnectionId, ParentEntityId?>,
+    newParents: Map<ConnectionId, ParentEntityId>,
+    removedParents: Map<ConnectionId, ParentEntityId>,
   ) {
     modificationCount++
 
-    addReplaceReferencesEvent(entityId, originalParents, addedChildren, removedChildren, parentsMapRes, incModificationCounter = false)
+    addReplaceReferencesEvent(entityId, addedChildren, removedChildren, newParents, removedParents, incModificationCounter = false)
     addReplaceDataEvent(entityId, copiedData, originalEntity, incModificationCounter = false)
   }
 
@@ -37,40 +37,56 @@ internal class WorkspaceBuilderChangeLog {
    */
   private fun addReplaceReferencesEvent(
     entityId: EntityId,
-    originalParents: Map<ConnectionId, ParentEntityId>,
     addedChildren: List<Pair<ConnectionId, ChildEntityId>>,
     removedChildren: Set<Pair<ConnectionId, ChildEntityId>>,
-    parentsMapRes: Map<ConnectionId, ParentEntityId?>,
+    newParents: Map<ConnectionId, ParentEntityId>,
+    removedParents: Map<ConnectionId, ParentEntityId>,
     incModificationCounter: Boolean = true,
   ) {
     if (incModificationCounter) modificationCount++
 
     val existingChange = changeLog[entityId]
 
-    val makeReplaceEvent = { replaceEntity: ChangeEntry.ReplaceEntity ->
+    val updateReplaceEvent = { replaceEntity: ChangeEntry.ReplaceEntity ->
       val addedChildrenSet = addedChildren.toSet()
       val newAddedChildren = if (replaceEntity.references != null) {
         (replaceEntity.references.newChildren.toSet() - removedChildren + (addedChildrenSet - replaceEntity.references.removedChildren.toSet())).toList()
-      } else addedChildrenSet.toList()
+      }
+      else addedChildrenSet.toList()
       val newRemovedChildren = if (replaceEntity.references != null) {
         (replaceEntity.references.removedChildren.toSet() - addedChildrenSet + (removedChildren - replaceEntity.references.newChildren.toSet())).toList()
-      } else removedChildren.toList()
-      val newChangedParents = ((replaceEntity.references?.modifiedParents ?: emptyMap()) + parentsMapRes).toMutableMap()
-      originalParents.forEach { (key, value) -> newChangedParents.remove(key, value) }
-      if (newAddedChildren.isEmpty() && newRemovedChildren.isEmpty() && newChangedParents.isEmpty()) {
+      }
+      else removedChildren.toList()
+
+      val newAddedParents: Map<ConnectionId, ParentEntityId> = if (replaceEntity.references != null) {
+        replaceEntity.references.newParents - removedParents.keys + (newParents.toMutableMap().also {
+          replaceEntity.references.removedParents.forEach { k, v ->
+            it.remove(k, v)
+          }
+        })
+      }
+      else newParents
+      val newRemovedParents = if (replaceEntity.references != null) {
+        replaceEntity.references.removedParents.toMutableMap().also {
+          newParents.forEach { k, v -> it.remove(k, v) }
+        } + (removedParents - replaceEntity.references.newParents.keys)
+      }
+      else removedParents
+
+      if (newAddedChildren.isEmpty() && newRemovedChildren.isEmpty() && newAddedParents.isEmpty() && newRemovedParents.isEmpty()) {
         if (replaceEntity.data == null) null else replaceEntity
       }
       else ChangeEntry.ReplaceEntity(
         replaceEntity.data,
-        ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren, originalParents, newChangedParents)
+        ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren, newAddedParents, newRemovedParents)
       )
     }
 
     if (existingChange == null) {
-      if (addedChildren.isNotEmpty() || removedChildren.isNotEmpty() || parentsMapRes.isNotEmpty()) {
+      if (addedChildren.isNotEmpty() || removedChildren.isNotEmpty() || newParents.isNotEmpty() || removedParents.isNotEmpty()) {
         changeLog[entityId] = ChangeEntry.ReplaceEntity(
           null,
-          ChangeEntry.ReplaceEntity.References(addedChildren, removedChildren.toList(), originalParents, parentsMapRes)
+          ChangeEntry.ReplaceEntity.References(addedChildren, removedChildren.toList(), newParents, removedParents)
         )
       }
     }
@@ -79,7 +95,7 @@ internal class WorkspaceBuilderChangeLog {
         is ChangeEntry.AddEntity -> Unit // Keep the existing change
         is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event.")
         is ChangeEntry.ReplaceEntity -> {
-          val event = makeReplaceEvent(existingChange)
+          val event = updateReplaceEvent(existingChange)
           if (event != null) {
             changeLog[entityId] = event
           }
@@ -146,12 +162,11 @@ internal class WorkspaceBuilderChangeLog {
   }
 
   internal fun addRemoveEvent(removedEntityId: EntityId,
-                              originalData: WorkspaceEntityData<WorkspaceEntity>,
-                              oldParents: Map<ConnectionId, ParentEntityId>) {
+                              originalData: WorkspaceEntityData<WorkspaceEntity>) {
     modificationCount++
 
     val existingChange = changeLog[removedEntityId]
-    val removeEvent = ChangeEntry.RemoveEntity(originalData, oldParents, removedEntityId)
+    val removeEvent = ChangeEntry.RemoveEntity(originalData, removedEntityId)
     if (existingChange == null) {
       changeLog[removedEntityId] = removeEvent
     }
@@ -174,7 +189,6 @@ internal sealed class ChangeEntry {
 
   data class RemoveEntity(
     val oldData: WorkspaceEntityData<out WorkspaceEntity>,
-    val oldParents: Map<ConnectionId, ParentEntityId>,
     val id: EntityId,
   ) : ChangeEntry()
 
@@ -196,8 +210,8 @@ internal sealed class ChangeEntry {
     data class References(
       val newChildren: List<Pair<ConnectionId, ChildEntityId>>,
       val removedChildren: List<Pair<ConnectionId, ChildEntityId>>,
-      val oldParents: Map<ConnectionId, ParentEntityId>,
-      val modifiedParents: Map<ConnectionId, ParentEntityId?>
+      val newParents: Map<ConnectionId, ParentEntityId>,
+      val removedParents: Map<ConnectionId, ParentEntityId>,
     )
   }
 }
@@ -210,17 +224,4 @@ internal fun MutableEntityStorageImpl.getOriginalEntityData(id: EntityId): Works
       is ChangeEntry.RemoveEntity -> it.oldData
     }
   }?.clone() ?: this.entityDataByIdOrDie(id).clone()
-}
-
-/**
- * This returns parents that were attached to the entity prior ANY modification of this entity.
- */
-internal fun MutableEntityStorageImpl.getOriginalParents(id: ChildEntityId): Map<ConnectionId, ParentEntityId> {
-  return this.changeLog.changeLog[id.id]?.let {
-    when (it) {
-      is ChangeEntry.ReplaceEntity -> it.references?.oldParents
-      is ChangeEntry.AddEntity -> this.refs.getParentRefsOfChild(id)
-      is ChangeEntry.RemoveEntity -> it.oldParents
-    }
-  } ?: this.refs.getParentRefsOfChild(id)
 }

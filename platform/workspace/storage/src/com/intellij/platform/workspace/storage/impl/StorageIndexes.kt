@@ -266,7 +266,6 @@ internal class MutableStorageIndexes(
     val idsWithSoftRef = HashSet(this.softLinks.getIdsByEntry(beforeSymbolicId))
     for (entityId in idsWithSoftRef) {
       val originalEntityData = builder.getOriginalEntityData(entityId) as WorkspaceEntityData<WorkspaceEntity>
-      val originalParentsData = builder.getOriginalParents(entityId.asChild())
       val entity = builder.entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<WorkspaceEntity>
       val editingBeforeSymbolicId = entity.symbolicId()
       (entity as SoftLinkable).updateLink(beforeSymbolicId, newSymbolicId)
