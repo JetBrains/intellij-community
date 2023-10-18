@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionFinishType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
@@ -119,7 +120,7 @@ class InlineCompletionHandler(
     val textToInsert = context.textToInsert()
     val insertEnvironment = InlineCompletionInsertEnvironment(editor, session.request.file, TextRange.from(offset, textToInsert.length))
     context.copyUserDataTo(insertEnvironment)
-    hide(false, context)
+    hide(context, InlineCompletionFinishType.SELECTED)
 
     editor.document.insertString(offset, textToInsert)
     editor.caretModel.moveToOffset(insertEnvironment.insertedRange.endOffset)
@@ -130,21 +131,21 @@ class InlineCompletionHandler(
 
   @RequiresEdt
   @RequiresBlockingContext
-  fun hide(explicit: Boolean, context: InlineCompletionContext) {
+  fun hide(context: InlineCompletionContext, finishType: InlineCompletionFinishType = InlineCompletionFinishType.OTHER) {
     LOG.assertTrue(!context.isDisposed)
     if (context.isCurrentlyDisplaying()) {
-      trace(InlineCompletionEventType.Hide(explicit))
+      trace(InlineCompletionEventType.Hide(finishType))
     }
 
     InlineCompletionSession.remove(editor)
     sessionManager.sessionRemoved()
   }
 
-  fun cancel() {
+  fun cancel(finishType: InlineCompletionFinishType = InlineCompletionFinishType.OTHER) {
     executor.cancel()
     application.invokeAndWait {
       InlineCompletionContext.getOrNull(editor)?.let {
-        hide(false, it)
+        hide(it, finishType)
       }
     }
   }
@@ -169,7 +170,7 @@ class InlineCompletionHandler(
         .onEmpty {
           coroutineToIndicator {
             trace(InlineCompletionEventType.Empty)
-            hide(false, context)
+            hide(context, InlineCompletionFinishType.EMPTY)
           }
         }
         .onCompletion {
@@ -198,7 +199,7 @@ class InlineCompletionHandler(
     }
 
     if (cause != null && !context.isDisposed) {
-      hide(false, context)
+      hide(context, InlineCompletionFinishType.ERROR)
       return
     }
   }
@@ -292,7 +293,7 @@ class InlineCompletionHandler(
           }
           is UpdateSessionResult.Same -> Unit
           UpdateSessionResult.Invalidated -> {
-            hide(false, session.context)
+            hide(session.context, InlineCompletionFinishType.INVALIDATED)
           }
         }
       }
@@ -306,7 +307,7 @@ class InlineCompletionHandler(
       if (!context.isDisposed) context.startOffset() ?: request.endOffset else -1
     }
     val cancel = {
-      if (!context.isDisposed) hide(false, context)
+      if (!context.isDisposed) hide(context, InlineCompletionFinishType.CARET_CHANGED)
     }
     val listener = InlineSessionWiseCaretListener(expectedOffset, cancel)
     editor.caretModel.addCaretListener(listener)

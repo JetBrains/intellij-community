@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionDocumentListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionFocusListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineEditorMouseListener
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionFinishType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -34,7 +35,7 @@ object InlineCompletion {
   }
 
   fun remove(editor: Editor) {
-    editor.getUserData(KEY)?.cancel()
+    editor.getUserData(KEY)?.cancel(InlineCompletionFinishType.EDITOR_REMOVED)
     editor.putUserData(KEY, null)
   }
 }
