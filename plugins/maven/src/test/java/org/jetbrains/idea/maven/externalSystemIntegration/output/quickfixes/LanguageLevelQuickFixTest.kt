@@ -17,12 +17,6 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
 
   override fun runInDispatchThread() = false
 
-  override fun tearDown() {
-    RunAll.runAll(
-      { stopMavenImportManager() },
-      { super.tearDown() },
-    )
-  }
 
   @Test
   fun `test property empty quick fix`() = runBlocking {

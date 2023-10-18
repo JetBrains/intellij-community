@@ -25,7 +25,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
 import org.jetbrains.idea.maven.project.actions.AddManagedFilesAction
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager
 import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
 
 abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() {
@@ -99,19 +98,10 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
 
     val projectManager = MavenProjectsManager.getInstance(project)
     projectManager.initForTests()
-    if (isNewImportingProcess) {
-      val deferred = withContext(Dispatchers.EDT) {
-        MavenImportingManager.getInstance(project).getImportFinishPromise()
-      }.asDeferred()
-      val importFinishedContext = deferred.await()
-      importFinishedContext.error?.let { throw it }
-    }
-    else {
-      withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-        projectManager.waitForReadingCompletion()
-        //projectManager.performScheduledImportInTests()
-        projectManager.waitForImportCompletion()
-      }
+    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+      projectManager.waitForReadingCompletion()
+      //projectManager.performScheduledImportInTests()
+      projectManager.waitForImportCompletion()
     }
   }
 

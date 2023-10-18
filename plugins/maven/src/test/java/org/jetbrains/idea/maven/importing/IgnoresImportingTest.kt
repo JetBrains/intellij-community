@@ -112,11 +112,6 @@ class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private suspend fun doReadAndImport() {
-    if (isNewImportingProcess) {
-      doImportProjects(projectsManager.getProjectsTree().getExistingManagedFiles(), true)
-    }
-    else {
-      updateAllProjects()
-    }
+    updateAllProjects()
   }
 }

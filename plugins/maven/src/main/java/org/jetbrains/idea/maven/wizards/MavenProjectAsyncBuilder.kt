@@ -160,7 +160,6 @@ internal class MavenProjectAsyncBuilder {
     }
     val manager = MavenProjectsManager.getInstance(project)
     manager.setIgnoredState(projects, false)
-    MavenLog.LOG.warn("performImport async: Linear Import is disabled")
 
     return manager.addManagedFilesWithProfilesAndUpdate(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider, previewModule)
   }

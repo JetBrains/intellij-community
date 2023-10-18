@@ -178,6 +178,8 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
 
       val parentInterpolated = interpolate(projectInReactor, tree, interpolatedCache).await()
       project.resolvedDependencyManagement.putAll(parentInterpolated.resolvedDependencyManagement)
+      project.allPlugins.putAll(parentInterpolated.allPlugins)
+      project.allPlugins.putAll(project.declaredPlugins)
       project.properties.putAll(parentInterpolated.properties)
       project.dependencyManagement.forEach {
         val version = it.version
@@ -317,10 +319,17 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     modelMap.put("build.finalName", mavenModel.build.finalName)
     modelMap.put("build.directory", mavenModel.build.directory)
 
+    readPlugins(mavenProjectData, rootModel)
+
     val result = MavenProjectReaderResult(mavenModel, modelMap, MavenExplicitProfiles.NONE, null, emptyList(), emptySet())
     mavenProject.set(result, MavenProjectsManager.getInstance(project).generalSettings, true, true, true);
     return mavenProjectData;
 
+  }
+
+  private fun readPlugins(mavenProjectData: MavenProjectData, rootModel: Element) {
+    MavenJDOMUtil.findChildrenByPath(rootModel, "build.plugins", "plugin")?.forEach {
+    }
   }
 
   companion object {
@@ -340,6 +349,7 @@ private class StatisticsData(val project: Project, val rootProjects: Int) {
       totalDependencies = forest.flatMap { it.projectsData() }.sumOf { it.declaredDependencies.size }
       addedModules = WorkspaceModel.getInstance(project).currentSnapshot.entitiesAmount(ModuleEntity::class.java) - modulesBefore
       totalProjects = allProjects.size
+
     }
     finally {
       MavenLog.LOG.info("preimport statistics: " +
@@ -417,10 +427,17 @@ class MavenProjectData(val mavenProject: MavenProject) {
   val properties = HashMap<String, String>()
   val resolvedDependencies = ArrayList<MavenId>()
 
+  val allPlugins = HashMap<MavenId, MavenPlugin>()
+  val declaredPlugins = HashMap<MavenId, MavenPlugin>()
+
   val mavenId by lazy { mavenProject.mavenId }
   val parentId by lazy { mavenProject.parentId }
   val file = mavenProject.file
 }
 
 private fun trimVersion(id: MavenId) = MavenId(id.groupId, id.artifactId, null)
+
+private fun extractId(e: Element): MavenId = MavenId(e.getChildTextTrim("groupId"),
+                                                     e.getChildTextTrim("artifactId"),
+                                                     e.getChildTextTrim("version"))
 

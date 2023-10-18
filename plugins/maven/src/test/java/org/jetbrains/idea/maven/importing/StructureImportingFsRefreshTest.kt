@@ -29,12 +29,7 @@ class StructureImportingFsRefreshTest : MavenMultiVersionImportingTestCase() {
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-      if (isNewImportingProcess) {
-        PlatformTestUtil.waitForPromise(myImportingResult!!.vfsRefreshPromise!!)
-      }
-      else {
-        PlatformTestUtil.waitForPromise(vfsRefreshPromise)
-      }
+      PlatformTestUtil.waitForPromise(vfsRefreshPromise)
       assertNotNull(myProjectRoot.findChild("foo"))
     }
   }

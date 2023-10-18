@@ -45,7 +45,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() {
     super.setUp()
     initProjectsManager(false)
-    Assume.assumeFalse(MavenUtil.isLinearImportEnabled())
   }
 
   @Test

@@ -1704,10 +1704,6 @@ public class MavenUtil {
     }
   }
 
-  public static boolean isLinearImportEnabled() {
-    return Registry.is("maven.linear.import");
-  }
-
   @ApiStatus.Internal
   public static boolean shouldResetDependenciesAndFolders(Collection<MavenProjectProblem> readingProblems) {
     if (Registry.is("maven.always.reset")) return true;

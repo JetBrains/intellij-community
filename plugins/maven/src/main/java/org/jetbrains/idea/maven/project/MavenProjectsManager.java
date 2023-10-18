@@ -54,9 +54,6 @@ import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.auto.reload.MavenProjectManagerWatcher;
-import org.jetbrains.idea.maven.project.importing.FilesList;
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
-import org.jetbrains.idea.maven.project.importing.MavenProjectManagerListenerToBusBridge;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
@@ -75,7 +72,8 @@ import static org.jetbrains.idea.maven.server.MavenWrapperSupport.getWrapperDist
 
 @State(name = "MavenProjectsManager")
 public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
-  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable, MavenAsyncProjectsManager {
+  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable,
+             MavenAsyncProjectsManager {
   private static final int IMPORT_DELAY = 1000;
 
   private final ReentrantLock initLock = new ReentrantLock();
@@ -250,8 +248,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       if (isInitialized.getAndSet(true)) {
         return;
       }
-      initManagerListenerToBusBridge();
-      initBusToManagerListenerBridge();
       initPreloadMavenServices();
       initProjectsTree();
       initWorkers();
@@ -290,40 +286,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     if (isInitialized()) {
       doActivate();
       if (runImportOnStartup.get()) {
-        if (!MavenUtil.isLinearImportEnabled()) {
-          var forceImport = Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
-          scheduleUpdateAllMavenProjects(new MavenImportSpec(forceImport, forceImport, false));
-        }
+        var forceImport =
+          Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
+        scheduleUpdateAllMavenProjects(new MavenImportSpec(forceImport, forceImport, false));
       }
     }
   }
 
-  private void initBusToManagerListenerBridge() {
-    if (!MavenUtil.isLinearImportEnabled()) return;
-    myProject.getMessageBus().connect(this).subscribe(MavenImportingManager.LEGACY_PROJECT_MANAGER_LISTENER, new Listener() {
-      @Override
-      public void activated() {
-        fireActivated();
-      }
-
-      @Override
-      public void importAndResolveScheduled() {
-        for (Listener each : myManagerListeners) {
-          each.importAndResolveScheduled();
-        }
-      }
-
-      @Override
-      public void projectImportCompleted() {
-        fireProjectImportCompleted();
-      }
-    });
-  }
-
-  private void initManagerListenerToBusBridge() {
-    if (MavenUtil.isLinearImportEnabled()) return;
-    addManagerListener(new MavenProjectManagerListenerToBusBridge(myProject), this);
-  }
 
   private void initPreloadMavenServices() {
     // init maven tool window
@@ -434,7 +403,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   protected abstract void listenForSettingsChanges();
 
   private void registerSyncConsoleListener() {
-    if (MavenUtil.isLinearImportEnabled()) return;
     myProjectsTreeDispatcher.addListener(new MavenProjectsTree.Listener() {
       @Override
       public void pluginsResolved(@NotNull MavenProject project) {
@@ -760,9 +728,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public void setProjectsTree(@NotNull MavenProjectsTree newTree) {
     if (!isInitialized()) {
       initAndActivate();
-      if (!MavenUtil.isLinearImportEnabled()) {
-        scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true, false));
-      }
+      scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true, false));
     }
     newTree.addListenersFrom(myProjectsTree);
     myProjectsTree = newTree;
@@ -815,7 +781,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   /**
-   * @deprecated  Use {@link #scheduleForceUpdateMavenProjects(List)}}
+   * @deprecated Use {@link #scheduleForceUpdateMavenProjects(List)}}
    */
   @Deprecated
   // used in third-party plugins
@@ -842,19 +808,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       addManagedFiles(collectAllAvailablePomFiles());
       return;
     }
-    if (MavenUtil.isLinearImportEnabled()) {
-      MavenLog.LOG.warn("forceUpdateAllProjectsOrFindAllAvailablePomFiles: Linear Import is enabled");
-      MavenImportingManager.getInstance(myProject)
-        .openProjectAndImport(new FilesList(myProjectsTree.getExistingManagedFiles()), getImportingSettings(), getGeneralSettings(), spec);
-      return;
-    }
-    MavenLog.LOG.warn("forceUpdateAllProjectsOrFindAllAvailablePomFiles: Linear Import is disabled");
     scheduleUpdateAllMavenProjects(spec);
   }
 
   /**
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
+   *
    * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}}
    */
   // used in third-party plugins
@@ -876,7 +836,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public Promise<?> waitForImportCompletion() {
-    if (MavenUtil.isLinearImportEnabled()) return MavenImportingManager.getInstance(myProject).getImportFinishPromise();
 
     waitForPluginResolution();
 
@@ -890,11 +849,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenProjectsManagerUtilKt.scheduleFoldersResolveForAllProjects(myProject);
   }
 
-  private static void checkNoLegacyImportInNewTests() {
-    if (ApplicationManager.getApplication().isUnitTestMode() && MavenUtil.isLinearImportEnabled()) {
-      throw new IllegalStateException("Do not call this API in tests");
-    }
-  }
 
   @ApiStatus.Internal
   public void runWhenFullyOpen(final Runnable runnable) {

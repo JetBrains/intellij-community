@@ -1036,12 +1036,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
 
     val disabledProfiles = listOf("one")
-    if (isNewImportingProcess) {
-      importViaNewFlow(listOf(myProjectPom), true, emptyList<String>())
-    }
-    else {
-      doImportProjectsLegacyWay(listOf(myProjectPom), true, disabledProfiles)
-    }
+    doImportProjects(listOf(myProjectPom), true, disabledProfiles)
     assertModules("project-two")
   }
 }

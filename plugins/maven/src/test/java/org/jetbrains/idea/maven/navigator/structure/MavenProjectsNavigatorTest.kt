@@ -21,8 +21,6 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorState
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.importing.FilesList
-import org.jetbrains.idea.maven.project.importing.MavenImportFlow
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -486,28 +484,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
   }
 
   private suspend fun readFiles(vararg files: VirtualFile) {
-    if (isNewImportingProcess) {
-      val flow = MavenImportFlow()
-      val allFiles: MutableList<VirtualFile> = ArrayList(projectsManager.getProjectsFiles())
-      allFiles.addAll(listOf(*files))
-      val initialImportContext =
-        flow.prepareNewImport(myProject,
-                              FilesList(allFiles),
-                              mavenGeneralSettings,
-                              mavenImporterSettings,
-                              emptyList(), emptyList())
-
-
-      ApplicationManager.getApplication().executeOnPooledThread {
-        val readContext = flow.readMavenFiles(initialImportContext, mavenProgressIndicator)
-        flow.updateProjectManager(readContext)
-        myNavigator!!.scheduleStructureUpdate()
-      }[10, TimeUnit.SECONDS]
-
-    }
-    else {
-      projectsManager.addManagedFilesWithProfilesAndUpdate(listOf(*files), MavenExplicitProfiles.NONE, null, null)
-    }
+    projectsManager.addManagedFilesWithProfilesAndUpdate(listOf(*files), MavenExplicitProfiles.NONE, null, null)
   }
 
   private val rootNodes: List<ProjectNode>

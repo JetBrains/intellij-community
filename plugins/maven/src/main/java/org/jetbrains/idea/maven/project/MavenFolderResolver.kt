@@ -8,7 +8,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
 import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
@@ -31,10 +30,6 @@ class MavenFolderResolver(private val project: Project) {
   }
 
   private suspend fun doResolveFoldersAndImport(projects: Collection<MavenProject>) {
-    if (MavenUtil.isLinearImportEnabled()) {
-      MavenImportingManager.getInstance(project).resolveFolders(projects)
-      return
-    }
 
     val allProjectsWithChanges = resolveFolders(projects)
     val projectsToImportWithChanges = allProjectsWithChanges.filter { !it.key.hasReadingProblems() && it.value.hasChanges() }

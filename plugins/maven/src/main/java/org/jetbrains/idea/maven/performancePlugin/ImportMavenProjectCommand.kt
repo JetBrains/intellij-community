@@ -20,46 +20,18 @@ import org.jetbrains.concurrency.toPromise
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.importing.FilesList
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text, line) {
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val project = context.getProject()
-    return if (MavenUtil.isLinearImportEnabled()) {
-      runLinearMavenImport(context, project)
-    }
-    else {
+    return run {
       val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
       runWhenMavenImportAndIndexingFinished(context, { actionCallback.setDone() }, project)
       actionCallback.toPromise()
     }
   }
 
-  private fun runLinearMavenImport(context: PlaybackContext, project: Project): Promise<Any?> {
-    val projectTrackerSettings = ExternalSystemProjectTrackerSettings.getInstance(project)
-    val currentAutoReloadType = projectTrackerSettings.autoReloadType
-    projectTrackerSettings.autoReloadType = AutoReloadType.NONE
-    context.message("Waiting for fully open and initialized maven project", line)
-    context.message("Import of the project has been started", line)
-    val result = AsyncPromise<Any?>()
-    ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
-      val mavenManager = MavenProjectsManager.getInstance(project)
-      MavenImportingManager.getInstance(project).openProjectAndImport(
-        FilesList(mavenManager.collectAllAvailablePomFiles())
-      ).finishPromise
-        .onSuccess {
-          context.message("Import of the maven project has been finished", line)
-          projectTrackerSettings.autoReloadType = currentAutoReloadType
-          DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create({ result.setResult(it) }, project))
-        }
-        .onError {
-          result.setError(it!!)
-        }
-    }
-    return result
-  }
 
   private fun runWhenMavenImportAndIndexingFinished(context: PlaybackContext,
                                                     runnable: Runnable,
