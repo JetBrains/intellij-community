@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.util.caching
 
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
@@ -36,7 +37,7 @@ abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value : A
         }
     }
 
-    private fun handleEvent(event: VersionedStorageChange) {
+    protected open fun handleEvent(event: VersionedStorageChange) {
         val storageBefore = event.storageBefore
         val changes = event.getChanges(entityClass).ifEmpty { return }
 
@@ -58,6 +59,27 @@ abstract class ModuleEntityChangeListener(project: Project, afterChangeApplied: 
 
     override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
         entity.findModule(storage)
+
+    override fun handleEvent(event: VersionedStorageChange) {
+        val storageBefore = event.storageBefore
+        val moduleChanges = event.getChanges(ModuleEntity::class.java)
+        val moduleSettingChanges = event.getChanges(JavaModuleSettingsEntity::class.java)
+
+        val outdatedEntities = (moduleChanges.asSequence()
+            .mapNotNull(EntityChange<ModuleEntity>::oldEntity) +
+                moduleSettingChanges.asSequence()
+                    .mapNotNull(EntityChange<JavaModuleSettingsEntity>::oldEntity)
+                    .mapNotNull { it.module })
+            .toSet()
+
+        val outdatedModules: List<Module> = outdatedEntities
+            .mapNotNull { it.findModule(storageBefore) }
+            .toList()
+
+        if (outdatedModules.isNotEmpty()) {
+            entitiesChanged(outdatedModules)
+        }
+    }
 }
 
 abstract class LibraryEntityChangeListener(project: Project, afterChangeApplied: Boolean = true) :
