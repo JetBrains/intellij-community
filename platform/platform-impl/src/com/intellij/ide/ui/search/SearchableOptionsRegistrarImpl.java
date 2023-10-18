@@ -149,6 +149,14 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     identifierTable = processor.getIdentifierTable();
   }
 
+  /**
+   * Retrieves all searchable option names.
+   */
+  @ApiStatus.Internal
+  public @NotNull Set<CharSequence> getAllOptionNames() {
+    return storage.keySet();
+  }
+
   static void processSearchableOptions(@NotNull Predicate<? super String> fileNameFilter,
                                        @NotNull BiConsumer<? super String, ? super Element> consumer) {
     Set<ClassLoader> visited = Collections.newSetFromMap(new IdentityHashMap<>());

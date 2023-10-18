@@ -1,7 +1,8 @@
 package com.intellij.searchEverywhereMl.typos.models
 
 import ai.grazie.spell.lists.FrequencyMetadata
-import com.intellij.ide.actions.ShowSettingsUtilImpl
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar
+import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
@@ -10,8 +11,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsActions
@@ -22,31 +23,30 @@ import com.intellij.searchEverywhereMl.typos.splitText
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
+import com.intellij.util.alsoIfNull
+import com.intellij.util.asSafely
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 
-@Service(Service.Level.PROJECT)
+@Service(Service.Level.APP)
 internal class ActionsLanguageModel @NonInjectable constructor(private val actionDictionary: ActionDictionary,
-                                                               private val project: Project,
                                                                coroutineScope: CoroutineScope) :
   Dictionary by actionDictionary, FrequencyMetadata by actionDictionary {
 
   @Suppress("unused")
-  constructor(project: Project, coroutineScope: CoroutineScope) : this(actionDictionary = ActionDictionaryImpl(), project, coroutineScope)
+  constructor(coroutineScope: CoroutineScope) : this(actionDictionary = ActionDictionaryImpl(), coroutineScope)
 
   companion object {
     /**
      * Returns null if the application is not in an internal mode
      */
-    fun getInstance(project: Project): ActionsLanguageModel? {
+    fun getInstance(): ActionsLanguageModel? {
       if (!isTypoFixingEnabled) {
         return null
       }
-      return project.service<ActionsLanguageModel>()
+      return service<ActionsLanguageModel>()
     }
   }
 
@@ -70,10 +70,13 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
       .mapNotNull { it.templateText }
   }
 
-  private fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName String> {
-    return ShowSettingsUtilImpl.configurables(project = project, withIdeSettings = true, checkNonDefaultProject = true)
-      .filterIsInstance<SearchableConfigurable>()
-      .mapNotNull { it.displayNameFast }
+  private fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName CharSequence> {
+    return SearchableOptionsRegistrar.getInstance()
+             .asSafely<SearchableOptionsRegistrarImpl>()
+             .alsoIfNull { thisLogger().warn("Failed to cast SearchableOptionsRegistrar") }
+             ?.also { it.initialize() }
+             ?.allOptionNames?.asSequence()
+           ?: emptySequence()
   }
 
   internal interface ActionDictionary : Dictionary, FrequencyMetadata {
@@ -81,7 +84,7 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
   }
 
   private class ActionDictionaryImpl : ActionDictionary {
-    private val words = Object2IntOpenHashMap<String>(1500)
+    private val words = Object2IntOpenHashMap<String>(12_000)
 
     override fun addWord(word: String) {
       words.addTo(word, 1)
@@ -123,9 +126,8 @@ private class ModelComputationStarter : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    delay(30.seconds)
     if (isTypoFixingEnabled) {
-      project.serviceAsync<ActionsLanguageModel>()
+      serviceAsync<ActionsLanguageModel>()
     }
   }
 }

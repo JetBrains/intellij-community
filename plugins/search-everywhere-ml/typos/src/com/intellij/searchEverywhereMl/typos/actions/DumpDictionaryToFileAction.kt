@@ -15,7 +15,7 @@ import com.intellij.util.DocumentUtil
 
 private class DumpDictionaryToFileAction : AnAction() {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project?.let { ActionsLanguageModel.getInstance(it)?.isComputed } ?: false
+    e.presentation.isEnabled = e.project?.let { ActionsLanguageModel.getInstance()?.isComputed } ?: false
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -25,7 +25,7 @@ private class DumpDictionaryToFileAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
 
-    val dictionaryWords = ActionsLanguageModel.getInstance(project)!!.words.sorted().joinToString(separator = "\n")
+    val dictionaryWords = ActionsLanguageModel.getInstance()!!.words.sorted().joinToString(separator = "\n")
     val virtualFile = writeToFile(project, dictionaryWords)
     FileEditorManager.getInstance(project).openFile(virtualFile, true)
   }
