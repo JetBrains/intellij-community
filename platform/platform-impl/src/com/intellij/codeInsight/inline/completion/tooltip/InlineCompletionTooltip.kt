@@ -11,12 +11,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.LightweightHint
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Point
-import javax.swing.JLabel
-import javax.swing.JPanel
 
 internal object InlineCompletionTooltip {
   @RequiresEdt
@@ -24,20 +23,20 @@ internal object InlineCompletionTooltip {
     val editor = session.context.editor
 
     val insertShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
-    val panel = JPanel().apply {
-      val acceptLink = HyperlinkLabel(insertShortcut)
-      acceptLink.addHyperlinkListener {
-        ApplicationManager.getApplication().invokeLater {
-          ApplicationManager.getApplication().runWriteAction {
-            CommandProcessor.getInstance().executeCommand(editor.project, {
-              InlineCompletion.getHandlerOrNull(editor)?.insert()
-            }, null, null, editor.document)
+    val panel = panel {
+      row {
+        link(insertShortcut) {
+          ApplicationManager.getApplication().invokeLater {
+            ApplicationManager.getApplication().runWriteAction {
+              CommandProcessor.getInstance().executeCommand(editor.project, {
+                InlineCompletion.getHandlerOrNull(editor)?.insert()
+              }, null, null, editor.document)
+            }
           }
-        }
+        }.gap(RightGap.SMALL)
+        text(IdeBundle.message("inline.completion.tooltip.shortcuts.accept.description")).gap(RightGap.SMALL)
+        cell(session.provider.getTooltip(editor.project))
       }
-      add(acceptLink)
-      add(JLabel(IdeBundle.message("inline.completion.tooltip.shortcuts.accept.description")))
-      add(session.provider.getTooltip(editor.project))
     }
     val hint = LightweightHint(panel)
 
