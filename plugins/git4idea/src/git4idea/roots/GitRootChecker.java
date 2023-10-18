@@ -29,6 +29,11 @@ final class GitRootChecker extends VcsRootChecker {
   }
 
   @Override
+  public boolean validateRoot(@NotNull VirtualFile file) {
+    return GitUtil.isGitRoot(file.toNioPath());
+  }
+
+  @Override
   public @NotNull VcsKey getSupportedVcs() {
     return GitVcs.getKey();
   }
