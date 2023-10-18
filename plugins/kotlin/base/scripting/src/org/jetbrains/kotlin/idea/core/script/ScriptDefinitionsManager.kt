@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.ex.PathUtilEx
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -40,8 +41,13 @@ import kotlin.concurrent.read
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.host.toScriptSource
 
+val loadScriptDefinitionsOnDemand
+    get() = Registry.`is`("kotlin.scripting.load.definitions.on.demand", true)
+
 internal class LoadScriptDefinitionsStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) : Unit = blockingContextScope {
+        if (loadScriptDefinitionsOnDemand) return@blockingContextScope
+
         if (isUnitTestMode()) {
             // In tests definitions are loaded synchronously because they are needed to analyze script
             // In IDE script won't be highlighted before all definitions are loaded, then the highlighting will be restarted
@@ -78,12 +84,16 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         configurations?.tryGetScriptDefinitionFast(locationId)?.let { fastPath -> return fastPath }
         scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
 
+        if (loadScriptDefinitionsOnDemand) {
+            reloadScriptDefinitionsIfNeeded()
+        }
+
         val definition =
             if (isScratchFile(script)) {
                 // Scratch should always have the default script definition
                 getDefaultDefinition()
             } else {
-                if (definitions == null) return DeferredScriptDefinition(script, this)
+                if (definitions == null && !loadScriptDefinitionsOnDemand) return DeferredScriptDefinition(script, this)
                 super.findDefinition(script) // Some embedded scripts (e.g., Kotlin Notebooks) have their own definition
                     ?: if (isEmbeddedScript(script)) getDefaultDefinition() else return null
             }
@@ -219,6 +229,8 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     }
 
     fun isReady(): Boolean {
+        if (loadScriptDefinitionsOnDemand) return true
+
         if (definitions == null) return false
         val keys = definitionsLock.writeWithCheckCanceled { definitionsBySource.keys }
         return keys.all { source ->
