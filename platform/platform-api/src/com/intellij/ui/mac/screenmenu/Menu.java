@@ -350,9 +350,10 @@ public class Menu extends MenuItem {
 
     IS_ENABLED = false;
 
-    if (!SystemInfoRt.isMac || !Boolean.getBoolean("jbScreenMenuBar.enabled")) {
+    if (!SystemInfoRt.isJBSystemMenu) {
       return false;
     }
+
     if (Boolean.getBoolean("apple.laf.useScreenMenuBar")) {
       getLogger().info("apple.laf.useScreenMenuBar==true, default screen menu implementation will be used");
       return false;
@@ -367,15 +368,16 @@ public class Menu extends MenuItem {
       Menu test = new Menu("test");
       test.ensureNativePeer();
       Disposer.dispose(test);
-      IS_ENABLED = true;
-      getLogger().info("use new ScreenMenuBar implementation");
     }
     catch (Throwable e) {
       // default screen menu implementation will be used
       getLogger().warn("can't load menu library: " + lib + ", exception: " + e.getMessage());
+      return false;
     }
 
-    return IS_ENABLED;
+    IS_ENABLED = true;
+    getLogger().info("use new ScreenMenuBar implementation");
+    return true;
   }
 
   private static MethodHandle invokeAndWait;

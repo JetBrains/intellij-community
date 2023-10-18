@@ -88,7 +88,6 @@ class MacDistributionBuilder(override val context: BuildContext,
       "# macOS-specific system properties",
       "#---------------------------------------------------------------------",
       "com.apple.mrj.application.live-resize=false",
-      "jbScreenMenuBar.enabled=true",
       "apple.awt.fileDialogForDirectories=true",
       "apple.awt.graphics.UseQuartz=true",
       "apple.awt.fullscreencapturealldisplays=false"

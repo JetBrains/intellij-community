@@ -619,8 +619,8 @@ public final class PathManager {
       }
     }
 
-    // Check and fix conflicting properties.
-    if ("true".equals(sysProperties.getProperty("jbScreenMenuBar.enabled"))) {
+    // check and fix conflicting properties
+    if (SystemInfoRt.isJBSystemMenu) {
       sysProperties.setProperty("apple.laf.useScreenMenuBar", "false");
     }
   }

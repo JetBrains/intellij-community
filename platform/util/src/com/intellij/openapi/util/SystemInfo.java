@@ -84,9 +84,7 @@ public final class SystemInfo {
     return "sun.awt.wl.WLToolkit".equals(tk.getClass().getName());
   }
 
-  public static final boolean isJBSystemMenu = isMac && Boolean.getBoolean("jbScreenMenuBar.enabled");
-
-  public static final boolean isMacSystemMenu = isMac && (isJBSystemMenu || Boolean.getBoolean("apple.laf.useScreenMenuBar"));
+  public static final boolean isMacSystemMenu = isMac && (SystemInfoRt.isJBSystemMenu || Boolean.getBoolean("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
 
