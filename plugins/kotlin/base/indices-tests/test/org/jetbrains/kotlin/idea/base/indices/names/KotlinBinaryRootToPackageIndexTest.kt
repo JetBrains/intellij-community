@@ -11,10 +11,10 @@ import java.nio.file.Path
 import kotlin.io.path.name
 
 /**
- * Checks that [KotlinBinaryRootToPackageIndex] returns the correct package sets contained in JAR files.
+ * Checks that [KotlinBinaryRootToPackageIndex] returns the correct package sets contained in JAR and KLIB files.
  *
- * Because the index contains data from JARs, we needed some simple test JARs to feed to the tests. The JARs in the test data are created
- * from the zipped JPS project `binary-root-to-package-index-test-data-origin-project.zip`, also found in the test data.
+ * Because the index contains data from JARs/KLIBs, we needed some simple test JARs/KLIBs to feed to the tests. The JARs/KLIBs in the test
+ * data are created from the zipped JPS project `binary-root-to-package-index-test-data-origin-project.zip`, also found in the test data.
  */
 class KotlinBinaryRootToPackageIndexTest : AbstractMultiModuleTest() {
     override fun isFirPlugin(): Boolean = false
@@ -22,115 +22,155 @@ class KotlinBinaryRootToPackageIndexTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory(): File = KotlinRoot.DIR.resolve("base/indices-tests/testData/kotlinBinaryRootToPackageIndex")
 
     private val fooBarJarPath = Path.of("jars", "fooBar.jar")
+    private val fooBarKlibPath = Path.of("klibs", "fooBar.klib")
+
+    private val fooBarExpectedPackages = setOf("foo.bar", "foo.bar.car")
+
     private val monthsJarPath = Path.of("jars", "months.jar")
+    private val monthsKlibPath = Path.of("klibs", "months.klib")
+
+    private val monthsExpectedPackages = setOf(
+        "months.april",
+        "months.may",
+        "months.javune.ghostMonth",
+        "months.june",
+        "months.july",
+    )
+
     private val months2JarPath = Path.of("jars", "months2.jar")
+    private val months2KlibPath = Path.of("klibs", "months2.klib")
+
+    private val months2ExpectedPackages = setOf(
+        "months.january",
+        "months.february",
+        "months.march",
+    )
+
     private val onlyJavaJarPath = Path.of("jars", "onlyJava.jar")
+
+    private val onlyJavaExpectedPackages = emptySet<String>()
+
+    private val allJarPaths = listOf(fooBarJarPath, monthsJarPath, months2JarPath, onlyJavaJarPath)
+    private val allKlibPaths = listOf(fooBarKlibPath, monthsKlibPath, months2KlibPath)
 
     fun testFooBarJar() {
         checkPackageNamesInJar(
             listOf(fooBarJarPath),
-            emptyList(),
-            setOf("foo.bar", "foo.bar.car"),
+            fooBarExpectedPackages,
         )
     }
 
     fun testFooBarJarWithUnrelatedJars() {
-        checkPackageNamesInJar(
+        checkPackageNamesInJarWithUnrelatedLibraries(
             listOf(fooBarJarPath),
-            listOf(monthsJarPath, months2JarPath),
-            setOf("foo.bar", "foo.bar.car"),
+            fooBarExpectedPackages,
+        )
+    }
+
+    fun testFooBarKlib() {
+        checkPackageNamesInKlib(
+            listOf(fooBarKlibPath),
+            fooBarExpectedPackages,
+        )
+    }
+
+    fun testFooBarKlibWithUnrelatedKlibs() {
+        checkPackageNamesInKlibWithUnrelatedLibraries(
+            listOf(fooBarKlibPath),
+            fooBarExpectedPackages,
         )
     }
 
     fun testMonthsJar() {
         checkPackageNamesInJar(
             listOf(monthsJarPath),
-            emptyList(),
-            setOf(
-                "months.april",
-                "months.may",
-                "months.javune.ghostMonth",
-                "months.june",
-                "months.july",
-            ),
+            monthsExpectedPackages,
         )
     }
 
     fun testMonthsJarWithUnrelatedJars() {
-        checkPackageNamesInJar(
+        checkPackageNamesInJarWithUnrelatedLibraries(
             listOf(monthsJarPath),
-            listOf(fooBarJarPath, months2JarPath),
-            setOf(
-                "months.april",
-                "months.may",
-                "months.javune.ghostMonth",
-                "months.june",
-                "months.july",
-            ),
+            monthsExpectedPackages,
+        )
+    }
+
+    fun testMonthsKlib() {
+        checkPackageNamesInKlib(
+            listOf(monthsKlibPath),
+            monthsExpectedPackages,
+        )
+    }
+
+    fun testMonthsKlibWithUnrelatedKlibs() {
+        checkPackageNamesInKlibWithUnrelatedLibraries(
+            listOf(monthsKlibPath),
+            monthsExpectedPackages,
         )
     }
 
     fun testMonths2Jar() {
         checkPackageNamesInJar(
             listOf(months2JarPath),
-            emptyList(),
-            setOf(
-                "months.january",
-                "months.february",
-                "months.march",
-            ),
+            months2ExpectedPackages,
         )
     }
 
     fun testMonths2JarWithUnrelatedJars() {
-        checkPackageNamesInJar(
+        checkPackageNamesInJarWithUnrelatedLibraries(
             listOf(months2JarPath),
-            listOf(fooBarJarPath, monthsJarPath),
-            setOf(
-                "months.january",
-                "months.february",
-                "months.march",
-            ),
+            months2ExpectedPackages,
+        )
+    }
+
+    fun testMonths2Klib() {
+        checkPackageNamesInKlib(
+            listOf(months2KlibPath),
+            months2ExpectedPackages,
+        )
+    }
+
+    fun testMonths2KlibWithUnrelatedKlibs() {
+        checkPackageNamesInKlibWithUnrelatedLibraries(
+            listOf(months2KlibPath),
+            months2ExpectedPackages,
         )
     }
 
     fun testOnlyJavaJar() {
         checkPackageNamesInJar(
             listOf(onlyJavaJarPath),
-            emptyList(),
-            emptySet(),
+            onlyJavaExpectedPackages,
         )
     }
 
     fun testOnlyJavaJarWithUnrelatedJars() {
-        checkPackageNamesInJar(
+        checkPackageNamesInJarWithUnrelatedLibraries(
             listOf(onlyJavaJarPath),
-            listOf(fooBarJarPath, monthsJarPath, months2JarPath),
-            emptySet(),
+            onlyJavaExpectedPackages,
         )
     }
 
-    fun testMultipleJars() {
+    fun testAllJars() {
         checkPackageNamesInJar(
-            listOf(
-                fooBarJarPath,
-                monthsJarPath,
-                months2JarPath,
-                onlyJavaJarPath
-            ),
-            emptyList(),
-            setOf(
-                "foo.bar",
-                "foo.bar.car",
-                "months.april",
-                "months.may",
-                "months.javune.ghostMonth",
-                "months.june",
-                "months.july",
-                "months.january",
-                "months.february",
-                "months.march",
-            ),
+            allJarPaths,
+            buildSet {
+                addAll(fooBarExpectedPackages)
+                addAll(monthsExpectedPackages)
+                addAll(months2ExpectedPackages)
+                addAll(onlyJavaExpectedPackages)
+            },
+        )
+    }
+
+    fun testAllKlibs() {
+        checkPackageNamesInKlib(
+            allKlibPaths,
+            buildSet {
+                addAll(fooBarExpectedPackages)
+                addAll(monthsExpectedPackages)
+                addAll(months2ExpectedPackages)
+            },
         )
     }
 
@@ -159,23 +199,45 @@ class KotlinBinaryRootToPackageIndexTest : AbstractMultiModuleTest() {
         assertEquals(expectedValues, values)
     }
 
-    private fun checkPackageNamesInJar(
-        targetJarPaths: List<Path>,
-        unrelatedJarPaths: List<Path>,
+    private fun checkPackageNamesInJar(targetLibraryPaths: List<Path>, expectedValues: Set<String>) {
+        checkPackageNamesInLibrary(targetLibraryPaths, emptyList(), expectedValues)
+    }
+
+    private fun checkPackageNamesInJarWithUnrelatedLibraries(targetLibraryPaths: List<Path>, expectedValues: Set<String>) {
+        checkPackageNamesInLibrary(targetLibraryPaths, allJarPaths - targetLibraryPaths, expectedValues)
+    }
+
+    private fun checkPackageNamesInKlib(targetLibraryPaths: List<Path>, expectedValues: Set<String>) {
+        // Metadata in KLIBs contains parent packages, even if they don't contain any Kotlin code, so we have to allow false positives.
+        checkPackageNamesInLibrary(targetLibraryPaths, emptyList(), expectedValues, allowFalsePositives = true)
+    }
+
+    private fun checkPackageNamesInKlibWithUnrelatedLibraries(targetLibraryPaths: List<Path>, expectedValues: Set<String>) {
+        checkPackageNamesInLibrary(targetLibraryPaths, allKlibPaths - targetLibraryPaths, expectedValues, allowFalsePositives = true)
+    }
+
+    private fun checkPackageNamesInLibrary(
+        targetLibraryPaths: List<Path>,
+        unrelatedLibraryPaths: List<Path>,
         expectedValues: Set<String>,
+        allowFalsePositives: Boolean = false,
     ) {
         val module = createMainModule()
 
-        targetJarPaths.forEach { module.addLibraryFromPath(it) }
-        unrelatedJarPaths.forEach { module.addLibraryFromPath(it) }
+        targetLibraryPaths.forEach { module.addLibraryFromPath(it) }
+        unrelatedLibraryPaths.forEach { module.addLibraryFromPath(it) }
 
         val values = buildSet {
-            targetJarPaths.forEach { jarPath ->
+            targetLibraryPaths.forEach { jarPath ->
                 addAll(accessIndex(jarPath.name))
             }
         }
 
-        assertEquals(expectedValues, values)
+        if (allowFalsePositives) {
+            assertContainsElements(values, expectedValues)
+        } else {
+            assertEquals(expectedValues, values)
+        }
     }
 
     private fun Module.addLibraryFromPath(libraryPath: Path) {
