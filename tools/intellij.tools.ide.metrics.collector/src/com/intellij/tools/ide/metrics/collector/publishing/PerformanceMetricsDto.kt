@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.ide.metrics.collector.metrics.MetricGroup
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.metrics.toJson
+import com.intellij.util.system.OS
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -50,7 +51,7 @@ data class PerformanceMetricsDto(
       project = projectName,
       projectURL = projectURL,
       os = SystemInfo.getOsNameAndVersion(),
-      osFamily = SystemInfo.getOsFamily().toString(),
+      osFamily = OS.CURRENT.toString(),
       runtime = SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_VERSION + " " + SystemInfo.JAVA_RUNTIME_VERSION,
       build = buildNumber.asStringWithoutProductCode(),
       branch = buildNumber.asStringWithoutProductCode().substringBeforeLast("."),

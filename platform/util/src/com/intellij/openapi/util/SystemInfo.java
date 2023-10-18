@@ -41,14 +41,6 @@ public final class SystemInfo {
   public static final boolean isSolaris = SystemInfoRt.isSolaris;
   public static final boolean isUnix = SystemInfoRt.isUnix;
 
-  public static @NotNull OsFamily getOsFamily() {
-    if (isMac) return OsFamily.MacOS;
-    if (isWindows) return OsFamily.Windows;
-    if (isLinux) return OsFamily.Linux;
-
-    return OsFamily.Other;
-  }
-
   public static final boolean isChromeOS = isLinux && isCrostini();
 
   public static final boolean isOracleJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Oracle", 0) >= 0;
