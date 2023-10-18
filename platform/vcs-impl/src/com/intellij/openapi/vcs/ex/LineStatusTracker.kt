@@ -83,7 +83,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   document: Document,
   final override val virtualFile: VirtualFile
 ) : LineStatusTrackerBase<R>(project, document), LocalLineStatusTracker<R> {
-  abstract override val renderer: LocalLineStatusMarkerRenderer
+  protected abstract val renderer: LocalLineStatusMarkerRenderer
 
   private val innerRangesHandler = MyInnerRangesDocumentTrackerHandler()
   private val clientIdsHandler = MyClientIdsDocumentTrackerHandler()
@@ -102,6 +102,11 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
     if (showClientIdGutterIconRenderer(project)) {
       documentTracker.addHandler(clientIdsHandler)
     }
+    listeners.addListener(object : LineStatusTrackerListener {
+      override fun onRangesChanged() {
+        renderer.scheduleUpdate()
+      }
+    })
   }
 
   @RequiresEdt
