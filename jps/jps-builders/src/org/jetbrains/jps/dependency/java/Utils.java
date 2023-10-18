@@ -114,20 +114,20 @@ public final class Utils {
     return Iterators.recurse(from, myDirectSubclasses::getDependencies, false);
   }
 
-  public Set<JvmNodeReferenceID> collectSubclassesWithoutField(String className, String fieldName) {
-    return collectSubclassesWithoutMember(className, f -> fieldName.equals(f.getName()), cls -> cls.getFields());
+  public Set<JvmNodeReferenceID> collectSubclassesWithoutField(JvmNodeReferenceID classId, String fieldName) {
+    return collectSubclassesWithoutMember(classId, f -> fieldName.equals(f.getName()), cls -> cls.getFields());
   }
 
-  public Set<JvmNodeReferenceID> collectSubclassesWithoutMethod(String className, JvmMethod method) {
-    return collectSubclassesWithoutMember(className, m -> method.equals(m), cls -> cls.getMethods());
+  public Set<JvmNodeReferenceID> collectSubclassesWithoutMethod(JvmNodeReferenceID classId, JvmMethod method) {
+    return collectSubclassesWithoutMember(classId, m -> method.equals(m), cls -> cls.getMethods());
   }
 
   // propagateMemberAccess
-  private <T extends ProtoMember> Set<JvmNodeReferenceID> collectSubclassesWithoutMember(String className, Predicate<? super T> isSame, Function<JvmClass, Iterable<T>> membersGetter) {
+  private <T extends ProtoMember> Set<JvmNodeReferenceID> collectSubclassesWithoutMember(JvmNodeReferenceID classId, Predicate<? super T> isSame, Function<JvmClass, Iterable<T>> membersGetter) {
     Predicate<ReferenceID> containsMember = id -> Iterators.isEmpty(Iterators.filter(getNodes(id, JvmClass.class), cls -> Iterators.isEmpty(Iterators.filter(membersGetter.apply(cls), isSame::test))));
     //stop further traversal, if nodes corresponding to the subclassName contain matching member
     Set<JvmNodeReferenceID> result = collectNodeData(
-      (ReferenceID)new JvmNodeReferenceID(className),
+      (ReferenceID)classId,
       id -> myDirectSubclasses.getDependencies(id),
       id -> id instanceof JvmNodeReferenceID && !containsMember.test(id)? (JvmNodeReferenceID)id : null,
       Objects::nonNull,
@@ -281,7 +281,7 @@ public final class Utils {
 
       Set<JvmNodeReferenceID> propagated;
       if (field != null) {
-        propagated = collectSubclassesWithoutField(owner.getName(), field.getName());
+        propagated = collectSubclassesWithoutField(owner.getReferenceID(), field.getName());
       }
       else {
         JvmNodeReferenceID ownerID = owner.getReferenceID();

@@ -7,6 +7,7 @@ import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.lang.annotation.RetentionPolicy;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -217,7 +218,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     return true;
   }
 
-  private boolean processMethodChanges(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> classChange, Utils future, Utils present) {
+  private <T> boolean processMethodChanges(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> classChange, Utils future, Utils present) {
     JvmClass changedClass = classChange.getPast();
     Difference.Specifier<JvmMethod, JvmMethod.Diff> methodsDiff = classChange.getDiff().methods();
 
@@ -253,7 +254,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         continue;
       }
       
-      Iterable<JvmNodeReferenceID> propagated = Iterators.lazy(() -> future.collectSubclassesWithoutMethod(changedClass.getName(), addedMethod));
+      Iterable<JvmNodeReferenceID> propagated = Iterators.lazy(() -> future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), addedMethod));
 
       if (!Iterators.isEmpty(addedMethod.getArgTypes()) && !present.hasOverriddenMethods(changedClass, addedMethod)) {
         debug("Conservative case on overriding methods, affecting method usages");
@@ -273,8 +274,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
       Predicate<JvmMethod> lessSpecificCond = future.lessSpecific(addedMethod);
       for (JvmMethod lessSpecific : Iterators.filter(changedClass.getMethods(), m -> !Iterators.contains(methodsDiff.removed(), m) && lessSpecificCond.test(m))) {
         debug("Found less specific method, affecting method usages; " + lessSpecific.getName() + lessSpecific.getDescriptor());
-        context.affectUsage(lessSpecific.createUsage(changedClass.getName()));
-        for (JvmNodeReferenceID id : propagated) {
+        for (JvmNodeReferenceID id : Iterators.flat(Iterators.asIterable(changedClass.getReferenceID()), propagated)) {
           context.affectUsage(lessSpecific.createUsage(id.getNodeName()));
         }
       }
@@ -289,9 +289,8 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         debug("Method: " + overriddenMethod.getName());
         debug("Class : " + cls.getName());
         debug("Affecting method usages for that found");
-        context.affectUsage(overriddenMethod.createUsage(changedClass.getName()));
-        for (JvmNodeReferenceID propagatedId : present.collectSubclassesWithoutMethod(changedClass.getName(), overriddenMethod)) {
-          context.affectUsage(overriddenMethod.createUsage(propagatedId.getNodeName()));
+        for (JvmNodeReferenceID id : Iterators.flat(Iterators.asIterable(changedClass.getReferenceID()), present.collectSubclassesWithoutMethod(changedClass.getReferenceID(), overriddenMethod))) {
+          context.affectUsage(overriddenMethod.createUsage(id.getNodeName()));
         }
       }
 
@@ -315,9 +314,8 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         else {
           debug("Current method does not override the added method");
           debug("Affecting method usages for the method");
-          context.affectUsage(overridingMethod.createUsage(cls.getName()));
-          for (JvmNodeReferenceID propagatedId : present.collectSubclassesWithoutMethod(cls.getName(), overridingMethod)) {
-            context.affectUsage(overridingMethod.createUsage(propagatedId.getNodeName()));
+          for (JvmNodeReferenceID id : Iterators.flat(Iterators.asIterable(cls.getReferenceID()), present.collectSubclassesWithoutMethod(cls.getReferenceID(), overridingMethod))) {
+            context.affectUsage(overridingMethod.createUsage(id.getNodeName()));
           }
         }
       }
@@ -340,12 +338,64 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     debug("End of added methods processing");
 
     debug("Processing removed methods: ");
-    for (JvmMethod removedMethod : methodsDiff.removed()) {
 
+    boolean extendsLibraryClass = future.inheritsFromLibraryClass(changedClass); // todo: lazy?
+    for (JvmMethod removedMethod : methodsDiff.removed()) {
+      debug("Method " + removedMethod.getName());
+      Iterable<JvmNodeReferenceID> propagated = Iterators.lazy(() -> future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), removedMethod));
+
+      if (!removedMethod.isPrivate() && removedMethod.isStatic()) {
+        debug("The method was static --- affecting static method import usages");
+        affectStaticMemberImportUsages(context, changedClass.getReferenceID(), removedMethod.getName(), propagated);
+      }
+
+      Iterable<Pair<JvmClass, JvmMethod>> overridden = Iterators.lazy(() -> removedMethod.isConstructor()? Collections.emptyList() : future.getOverriddenMethods(changedClass, removedMethod::isSame));
+      boolean isClearlyOverridden = removedMethod.getSignature().isEmpty() && !extendsLibraryClass && !Iterators.isEmpty(overridden) && Iterators.isEmpty(
+        Iterators.filter(overridden, p -> !p.getSecond().getType().equals(removedMethod.getType()) || !p.getSecond().getSignature().isEmpty() || removedMethod.isMoreAccessibleThan(p.getSecond()))
+      );
+      if (!isClearlyOverridden) {
+        debug("No overridden methods found, affecting method usages");
+        for (JvmNodeReferenceID id : Iterators.flat(Iterators.asIterable(changedClass.getReferenceID()), propagated)) {
+          context.affectUsage(removedMethod.createUsage(id.getNodeName()));
+          debug("Affect method usage referenced of class " + id.getNodeName());
+        }
+      }
+
+      for (Pair<JvmClass, JvmMethod> overriding : future.getOverridingMethods(changedClass, removedMethod, removedMethod::isSame)) {
+        for (NodeSource source : context.getGraph().getSources(overriding.getFirst().getReferenceID())) {
+          if (!context.isCompiled(source)) {
+            context.affectNodeSource(source);
+            debug("Affecting file by overriding: " + source.getPath());
+          }
+        }
+      }
+
+      if (!removedMethod.isConstructor() && !removedMethod.isAbstract() && !removedMethod.isStatic()) {
+        for (JvmNodeReferenceID id : propagated) {
+          for (JvmClass subClass : future.getNodes(id, JvmClass.class)) {
+            Iterable<Pair<JvmClass, JvmMethod>> overriddenForSubclass = future.getOverriddenMethods(subClass, removedMethod::isSame);
+            boolean allOverriddenAbstract = !Iterators.isEmpty(overriddenForSubclass) && Iterators.isEmpty(Iterators.filter(overriddenForSubclass, p -> !p.getSecond().isAbstract()));
+            if (allOverriddenAbstract || future.inheritsFromLibraryClass(subClass)) {
+              debug("Removed method is not abstract & overrides some abstract method which is not then over-overridden in subclass " + subClass.getName());
+              for (NodeSource source : context.getGraph().getSources(subClass.getReferenceID())) {
+                if (!context.isCompiled(source)) {
+                  context.affectNodeSource(source);
+                  debug("Affecting subclass source file: " + source.getPath());
+                }
+              }
+            }
+            break;
+          }
+        }
+      }
     }
+    debug("End of removed methods processing");
+
 
     debug("Processing changed methods: ");
     for (Difference.Change<JvmMethod, JvmMethod.Diff> methodChange : methodsDiff.changed()) {
+      // todo: in the new implementation methods with changes in return types will be placed in "changed" category, while in the previous one they were in the "removed" and "added" categories
+      // todo: check if 'testChangeToCovariantMethodInBase' test is correct and IImpl really should be recompiled
       JvmMethod changedMethod = methodChange.getPast();
     }
     return true;
@@ -355,6 +405,13 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     for (JvmNodeReferenceID id : Iterators.flat(Iterators.asIterable(clsId), propagated)) {
       debug("Affect static member on-demand import usage referenced of class " + id.getNodeName());
       context.affectUsage(new ImportStaticOnDemandUsage(id.getNodeName()));
+    }
+  }
+
+  private void affectStaticMemberImportUsages(DifferentiateContext context, JvmNodeReferenceID clsId, String memberName, Iterable<JvmNodeReferenceID> propagated) {
+    for (JvmNodeReferenceID id : Iterators.flat(Iterators.asIterable(clsId), propagated)) {
+      debug("Affect static member import usage referenced of class " + id.getNodeName());
+      context.affectUsage(new ImportStaticMemberUsage(id.getNodeName(), memberName));
     }
   }
 

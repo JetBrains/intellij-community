@@ -497,7 +497,7 @@ public final class Mappings {
           }
         }
         else {
-          container.add(Pair.create(MOCK_METHOD, MOCK_CLASS));
+          container.add(Pair.create(MOCK_METHOD, MOCK_CLASS));  
         }
       }
     }
@@ -1241,7 +1241,7 @@ public final class Mappings {
             final ClassRepr methodClass = pair.second;
 
             if (methodClass == MOCK_CLASS) {
-              continue;
+              continue; 
             }
 
             debug("Method: ", method.name);
@@ -1319,43 +1319,35 @@ public final class Mappings {
       assert myCompiledFiles != null;
 
       debug("Processing removed methods:");
-      for (final MethodRepr m : removed) {
-        debug("Method ", m.name);
 
-        final Collection<Pair<MethodRepr, ClassRepr>> overriddenMethods = myFuture.findOverriddenMethods(m, it);
-        final Supplier<IntSet> propagated = lazy(()-> myFuture.propagateMethodAccess(m, it.name));
+      for (final MethodRepr removedMethod : removed) {
+        debug("Method ", removedMethod.name);
 
-        if (!m.isPrivate() && m.isStatic()) {
+        final Collection<Pair<MethodRepr, ClassRepr>> overriddenMethods = myFuture.findOverriddenMethods(removedMethod, it);
+        final Supplier<IntSet> propagated = lazy(()-> myFuture.propagateMethodAccess(removedMethod, it.name));
+
+        if (!removedMethod.isPrivate() && removedMethod.isStatic()) {
           debug("The method was static --- affecting static method import usages");
-          myFuture.affectStaticMemberImportUsages(m.name, it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
+          myFuture.affectStaticMemberImportUsages(removedMethod.name, it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
         }
 
         if (overriddenMethods.isEmpty()) {
           debug("No overridden methods found, affecting method usages");
-          myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+          myFuture.affectMethodUsages(removedMethod, propagated.get(), removedMethod.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
         }
         else {
-          boolean clear = true;
+          boolean clearlyOverridden = isEmpty(removedMethod.signature) && Iterators.isEmpty(
+            Iterators.filter(overriddenMethods, p -> p.first == MOCK_METHOD || !p.first.myType.equals(removedMethod.myType) || !isEmpty(p.first.signature) || removedMethod.isMoreAccessibleThan(p.first))
+          );
 
-          loop:
-          for (final Pair<MethodRepr, ClassRepr> overriden : overriddenMethods) {
-            final MethodRepr mm = overriden.first;
-
-            if (mm == MOCK_METHOD || !mm.myType.equals(m.myType) || !isEmpty(mm.signature) || !isEmpty(m.signature) || m.isMoreAccessibleThan(mm)) {
-              clear = false;
-              break loop;
-            }
-          }
-
-          if (!clear) {
+          if (!clearlyOverridden) {
             debug("No clearly overridden methods found, affecting method usages");
-            myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+            myFuture.affectMethodUsages(removedMethod, propagated.get(), removedMethod.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
           }
         }
 
         final Collection<Pair<MethodRepr, ClassRepr>> overridingMethods = new HashSet<>();
-
-        myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods, null);
+        myFuture.addOverridingMethods(removedMethod, it, MethodRepr.equalByJavaRules(removedMethod), overridingMethods, null);
 
         for (final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
           final Iterable<File> fNames = classToSourceFileGet(p.second.name);
@@ -1369,18 +1361,18 @@ public final class Mappings {
           }
         }
 
-        if (!m.isAbstract() && !m.isStatic()) {
+        if (!removedMethod.isAbstract() && !removedMethod.isStatic()) {
           propagated.get().forEach(p -> {
             if (p != it.name) {
-              for (ClassRepr s : myFuture.reprsByName(p, ClassRepr.class)) {
-                final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = myFuture.findOverriddenMethods(m, s);
+              for (ClassRepr subClass : myFuture.reprsByName(p, ClassRepr.class)) {
+                final Collection<Pair<MethodRepr, ClassRepr>> overriddenInSubclass = myFuture.findOverriddenMethods(removedMethod, subClass);
 
-                overridenInS.addAll(overriddenMethods);
+                overriddenInSubclass.addAll(overriddenMethods);
 
                 boolean allAbstract = true;
                 boolean visited = false;
 
-                for (final Pair<MethodRepr, ClassRepr> pp : overridenInS) {
+                for (final Pair<MethodRepr, ClassRepr> pp : overriddenInSubclass) {
                   final ClassRepr cc = pp.second;
 
                   if (cc == MOCK_CLASS) {
