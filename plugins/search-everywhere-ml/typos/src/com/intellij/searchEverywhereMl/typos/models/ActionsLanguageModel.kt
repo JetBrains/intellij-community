@@ -24,6 +24,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.util.regex.Pattern
 
 @Service(Service.Level.APP)
 internal class ActionsLanguageModel @NonInjectable constructor(private val actionDictionary: ActionDictionary,
@@ -44,6 +45,9 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
       return service<ActionsLanguageModel>()
     }
   }
+
+  // Accept any word that consist of only alphabetical characters, that are between 3 and 45 characters long
+  private val acceptableWordsPattern = Pattern.compile("^[a-zA-Z]{3,45}\$")
 
   private val languageModelComputationJob: Job
 
@@ -106,8 +110,7 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
           .filter { token -> token is SearchEverywhereStringToken.Word }
           .map { token -> token.value }
       }
-      .map { it.filter { c -> c.isLetterOrDigit() } }
-      .filterNot { it.isEmpty() || it.isSingleCharacter() }
+      .filter { acceptableWordsPattern.matcher(it).matches() }
       .map { it.lowercase() }
       .forEach(actionDictionary::addWord)
   }
@@ -119,5 +122,3 @@ private class RuntimeActionsDictionaryProvider : RuntimeDictionaryProvider {
     return serviceIfCreated<ActionsLanguageModel>()?.let { arrayOf(it) } ?: arrayOf()
   }
 }
-
-private fun String.isSingleCharacter(): Boolean = this.length == 1
