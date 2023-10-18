@@ -124,7 +124,6 @@ class GitStageLineStatusTracker(
     if (!isInitialized) {
       isInitialized = true
       updateHighlighters()
-      listeners.multicaster.onOperationalStatusChange()
     }
   }
 
@@ -135,14 +134,12 @@ class GitStageLineStatusTracker(
 
     isInitialized = false
     updateHighlighters()
-    listeners.multicaster.onOperationalStatusChange()
   }
 
   override fun release() {
     val runnable = Runnable {
       if (isReleased) return@Runnable
       isReleased = true
-      listeners.multicaster.onOperationalStatusChange()
 
       Disposer.dispose(disposable)
     }

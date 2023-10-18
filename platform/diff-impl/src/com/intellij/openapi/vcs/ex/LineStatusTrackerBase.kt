@@ -89,7 +89,6 @@ abstract class LineStatusTrackerBase<R : Range>(
     if (!isInitialized) {
       isInitialized = true
       updateHighlighters()
-      listeners.multicaster.onOperationalStatusChange()
     }
   }
 
@@ -107,14 +106,12 @@ abstract class LineStatusTrackerBase<R : Range>(
         documentTracker.setFrozenState(emptyList())
       }
     }
-    listeners.multicaster.onOperationalStatusChange()
   }
 
   fun release() {
     val runnable = Runnable {
       if (isReleased) return@Runnable
       isReleased = true
-      listeners.multicaster.onOperationalStatusChange()
 
       Disposer.dispose(disposable)
     }

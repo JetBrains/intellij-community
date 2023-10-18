@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -14,16 +13,14 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.ex.LineStatusTracker
-import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.supervisorScope
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 
@@ -47,37 +44,33 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     }
 
     cs.launchNow(Dispatchers.Main) {
-      editor.getLineStatusTrackerFlow().collectLatest { lst ->
-        if (lst !is LocalLineStatusTracker<*>) return@collectLatest
-
-        project.service<GitLabToolWindowViewModel>().projectVm
-          .flatMapLatest {
-            it?.currentMergeRequestReviewVm ?: flowOf(null)
-          }.collectLatest { reviewVm ->
-            reviewVm?.getFileVm(file)?.collectLatest { fileVm ->
-              if (fileVm != null) {
-                try {
-                  editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, reviewVm)
-                  reviewVm.isReviewModeEnabled.collectLatest {
-                    if (it) supervisorScope {
-                      val model = GitLabMergeRequestEditorReviewUIModel(this, fileVm, lst)
-                      editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, model)
-                      showGutterMarkers(model, editor)
-                      showGutterControls(model, editor)
-                      showInlays(model, editor)
-                      awaitCancellationAndInvoke {
-                        editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, null)
-                      }
+      project.service<GitLabToolWindowViewModel>().projectVm
+        .flatMapLatest {
+          it?.currentMergeRequestReviewVm ?: flowOf(null)
+        }.collectLatest { reviewVm ->
+          reviewVm?.getFileVm(file)?.collectLatest { fileVm ->
+            if (fileVm != null) {
+              try {
+                editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, reviewVm)
+                reviewVm.isReviewModeEnabled.collectLatest {
+                  if (it) supervisorScope {
+                    val model = GitLabMergeRequestEditorReviewUIModel(this, project, fileVm, editor.document)
+                    editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, model)
+                    showGutterMarkers(model, editor)
+                    showGutterControls(model, editor)
+                    showInlays(model, editor)
+                    awaitCancellationAndInvoke {
+                      editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, null)
                     }
                   }
                 }
-                finally {
-                  editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, null)
-                }
+              }
+              finally {
+                editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, null)
               }
             }
           }
-      }
+        }
     }.cancelOnDispose(editorDisposable)
   }
 
@@ -132,29 +125,4 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     fun isPotentialEditor(editor: Editor): Boolean = editor.editorKind == EditorKind.MAIN_EDITOR && editor.virtualFile != null
   }
 }
-
-private fun Editor.getLineStatusTrackerFlow(): Flow<LineStatusTracker<*>?> =
-  callbackFlow {
-    val lstm = LineStatusTrackerManager.getInstanceImpl(project!!)
-    val listenerDisposable = Disposer.newDisposable()
-
-    val lst = lstm.getLineStatusTracker(document)
-    lstm.addTrackerListener(object : LineStatusTrackerManager.Listener {
-      override fun onTrackerAdded(tracker: LineStatusTracker<*>) {
-        if (tracker.document === document) {
-          trySend(tracker)
-        }
-      }
-
-      override fun onTrackerRemoved(tracker: LineStatusTracker<*>) {
-        if (tracker.document === document) {
-          trySend(null)
-        }
-      }
-    }, listenerDisposable)
-    send(lst)
-    awaitClose {
-      Disposer.dispose(listenerDisposable)
-    }
-  }.flowOn(Dispatchers.EDT)
 

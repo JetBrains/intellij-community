@@ -21,11 +21,11 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -100,7 +100,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
       val diffData = parsedChanges.patchesByChange[change]!!
 
       val vmFlow = channelFlow<GitLabMergeRequestEditorReviewFileViewModel> {
-        val vm = GitLabMergeRequestEditorReviewFileViewModelImpl(diffData, discussions, discussionsViewOption, avatarIconsProvider)
+        val vm = GitLabMergeRequestEditorReviewFileViewModelImpl(change, diffData, discussions, discussionsViewOption, avatarIconsProvider)
         launchNow {
           vm.showDiffRequests.collect {
             val selection = if (it != null) changeSelection.withLocation(DiffLineLocation(Side.RIGHT, it)) else changeSelection

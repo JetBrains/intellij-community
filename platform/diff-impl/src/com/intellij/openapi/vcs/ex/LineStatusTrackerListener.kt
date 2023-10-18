@@ -10,11 +10,6 @@ import java.util.*
 @ApiStatus.Internal
 interface LineStatusTrackerListener : EventListener {
   /**
-   * Fired when [LineStatusTrackerI.isOperational] is changed
-   */
-  fun onOperationalStatusChange() {}
-
-  /**
    * Fired when lines at [LineStatusTrackerI.getRanges] are changed
    */
   fun onRangesChanged() {}

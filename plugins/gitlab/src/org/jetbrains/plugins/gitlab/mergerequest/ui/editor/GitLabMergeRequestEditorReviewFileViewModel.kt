@@ -9,8 +9,12 @@ import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.withoutContext
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.vcs.changes.Change
 import git4idea.changes.GitTextFilePatchWithHistory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
@@ -27,6 +31,7 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
 
+  suspend fun getOriginalContent(): CharSequence
   fun getOriginalContent(range: LineRange): String?
 
   fun requestNewDiscussion(line: Int, focus: Boolean)
@@ -36,6 +41,7 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
 }
 
 internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
+  private val change: Change,
   private val diffData: GitTextFilePatchWithHistory,
   private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
   discussionsViewOption: Flow<DiscussionsViewOption>,
@@ -58,6 +64,12 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
     it.mapNotNull { (position, vm) ->
       val line = position.mapToLocation(diffData)?.takeIf { it.first == Side.RIGHT }?.second ?: return@mapNotNull null
       GitLabMergeRequestEditorNewDiscussionViewModelImpl(vm, line, discussionsViewOption)
+    }
+  }
+
+  override suspend fun getOriginalContent(): String = withContext(Dispatchers.IO) {
+    coroutineToIndicator {
+      change.afterRevision?.content ?: ""
     }
   }
 
