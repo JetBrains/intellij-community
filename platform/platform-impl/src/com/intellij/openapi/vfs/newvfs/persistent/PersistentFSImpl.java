@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.ApplicationVFileEventsTrac
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
@@ -68,7 +69,8 @@ import static com.intellij.notification.NotificationType.INFORMATION;
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
 
-  private static final boolean LOG_NON_CACHED_ROOTS_LIST = SystemProperties.getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
+  private static final boolean LOG_NON_CACHED_ROOTS_LIST =
+    SystemProperties.getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
@@ -165,9 +167,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       vfsPeer = _vfsPeer;
       activity.end();
 
-      if (app != null && !app.isHeadlessEnvironment()) {
-        List<VFSInitException> recoveredErrors = _vfsPeer.connection().recoveryInfo().recoveredErrors;
-        if (!recoveredErrors.isEmpty()) {
+      VFSRecoveryInfo recoveryInfo = _vfsPeer.connection().recoveryInfo();
+      List<VFSInitException> recoveredErrors = recoveryInfo.recoveredErrors;
+      if (!recoveredErrors.isEmpty()) {
+        if (app != null && !app.isHeadlessEnvironment()) {
           NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches");
           notificationGroup.createNotification(
               CoreBundle.message("vfs.vfs-recovered.notification.title"),
@@ -176,6 +179,29 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             )
             .setImportant(true)
             .notify(null);
+        }
+
+        //refresh the folders there something was 'recovered':
+        IntList directoryIdsToRefresh = recoveryInfo.directoriesIdsToRefresh();
+        if (!directoryIdsToRefresh.isEmpty()) {
+          try {
+            List<NewVirtualFile> directoriesToRefresh = directoryIdsToRefresh.intStream()
+              .mapToObj(dirId -> {
+                try {
+                  return findFileById(dirId);
+                }
+                catch (Throwable t) {
+                  LOG.info("Directory to refresh [#" + dirId + "] can't be resolved", t);
+                  return null;
+                }
+              })
+              .filter(Objects::nonNull)
+              .toList();
+            RefreshQueue.getInstance().refresh(false, false, null, directoriesToRefresh);
+          }
+          catch (Throwable t) {
+            LOG.warn("Can't refresh recovered directories: " + directoryIdsToRefresh, t);
+          }
         }
       }
     }
@@ -2255,6 +2281,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void doCleanPersistedContent(int id) {
+    //TODO set in single call: setFlag(id, MUST_RELOAD_CONTENT |  MUST_RELOAD_LENGTH, true);
     setFlag(id, Flags.MUST_RELOAD_CONTENT, true);
     setFlag(id, Flags.MUST_RELOAD_LENGTH, true);
   }
