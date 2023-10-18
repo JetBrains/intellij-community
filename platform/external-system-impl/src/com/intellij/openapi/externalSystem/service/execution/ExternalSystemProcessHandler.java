@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.process.BuildProcessHandler;
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   private @Nullable InputStream myProcessInputReader;
 
   private final @NotNull AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+  private boolean escapeAnsiText = true;
 
   public ExternalSystemProcessHandler(@NotNull ExternalSystemTask task, @NotNull String executionName) {
     this(task, executionName, ObjectUtils.tryCast(task, UserDataHolder.class));
@@ -69,11 +71,21 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
     return myTask;
   }
 
+  @ApiStatus.Experimental
+  public void disableAnsiTextEscaping() {
+    escapeAnsiText = false;
+  }
+
   @Override
-  public void notifyTextAvailable(@NotNull final String text, @NotNull final Key outputType) {
-    myAnsiEscapeDecoder.escapeText(text, outputType, (decodedText, attributes) ->
-      super.notifyTextAvailable(decodedText, attributes)
-    );
+  public void notifyTextAvailable(@NotNull String text, @NotNull final Key outputType) {
+    if (escapeAnsiText) {
+      myAnsiEscapeDecoder.escapeText(text, outputType, (decodedText, attributes) ->
+        super.notifyTextAvailable(decodedText, attributes)
+      );
+    }
+    else {
+      super.notifyTextAvailable(text, outputType);
+    }
   }
 
   @Override
