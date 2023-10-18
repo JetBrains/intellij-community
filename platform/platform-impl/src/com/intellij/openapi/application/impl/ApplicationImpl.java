@@ -2,7 +2,6 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.PluginException;
@@ -236,65 +235,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public @NotNull Future<?> executeOnPooledThread(@NotNull Runnable action) {
-    Runnable actionDecorated = ClientId.decorateRunnable(action);
-    return AppExecutorUtil.getAppExecutorService().submit(new Runnable() {
-      @Override
-      public void run() {
-        if (isDisposed()) {
-          return;
-        }
-
-        try {
-          actionDecorated.run();
-        }
-        catch (ProcessCanceledException e) {
-          // ignore
-        }
-        catch (Throwable e) {
-          getLogger().error(e);
-        }
-        finally {
-          Thread.interrupted(); // reset interrupted status
-        }
-      }
-
-      @Override
-      public String toString() {
-        return action.toString();
-      }
-    });
+    return getThreadingSupport().executeOnPooledThread(action, this::isDisposed);
   }
 
   @Override
   public @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
-    Callable<T> actionDecorated = ClientId.decorateCallable(action);
-    return AppExecutorUtil.getAppExecutorService().submit(new Callable<>() {
-      @Override
-      public T call() {
-        if (isDisposed()) {
-          return null;
-        }
-
-        try {
-          return actionDecorated.call();
-        }
-        catch (ProcessCanceledException e) {
-          // ignore
-        }
-        catch (Throwable e) {
-          getLogger().error(e);
-        }
-        finally {
-          Thread.interrupted(); // reset interrupted status
-        }
-        return null;
-      }
-
-      @Override
-      public String toString() {
-        return action.toString();
-      }
-    });
+    return getThreadingSupport().executeOnPooledThread(action, this::isDisposed);
   }
 
   @Override

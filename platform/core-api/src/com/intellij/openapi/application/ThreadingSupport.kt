@@ -11,6 +11,9 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import java.lang.Deprecated
+import java.util.concurrent.Callable
+import java.util.concurrent.Future
+import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 import javax.swing.JComponent
 
@@ -76,6 +79,36 @@ interface ThreadingSupport {
    */
   @ApiStatus.Internal
   fun runWithImplicitRead(runnable: Runnable)
+
+  /**
+   * Requests pooled thread to execute the action.
+   *
+   * This pool is an
+   *   - Unbounded.
+   *   - Application-wide, always active, non-shutdownable singleton.
+   *
+   * You can use this pool for long-running and/or IO-bound tasks.
+   *
+   * @param action to be executed
+   * @return future result
+   */
+  @RequiresBlockingContext
+  fun executeOnPooledThread(action: Runnable, expired: BooleanSupplier): Future<*>
+
+  /**
+   * Requests pooled thread to execute the action.
+   *
+   * This pool is an
+   *   - Unbounded.
+   *   - Application-wide, always active, non-shutdownable singleton.
+   *
+   * You can use this pool for long-running and/or IO-bound tasks.
+   *
+   * @param action to be executed
+   * @return future result
+   */
+  @RequiresBlockingContext
+  fun <T> executeOnPooledThread(action: Callable<T>, expired: BooleanSupplier): Future<T>
 
   /**
    * Adds a [ReadActionListener].
