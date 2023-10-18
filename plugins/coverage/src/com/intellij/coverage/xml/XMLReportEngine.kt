@@ -41,11 +41,7 @@ class XMLReportEngine : CoverageEngine() {
     return XMLReportSuite(this, coverageRunner)
   }
 
-  override fun coverageEditorHighlightingApplicableTo(psiFile: PsiFile): Boolean {
-    val suite = CoverageDataManager.getInstance(psiFile.project).currentSuitesBundle ?: return false
-    return acceptedByFilters(psiFile, suite)
-  }
-
+  override fun coverageEditorHighlightingApplicableTo(psiFile: PsiFile) = psiFile is PsiClassOwner
   override fun acceptedByFilters(psiFile: PsiFile, suite: CoverageSuitesBundle): Boolean {
     val (packageName, fileName) = psiFile.packageAndFileName() ?: return false
     for (xmlSuite in suite.suites) {

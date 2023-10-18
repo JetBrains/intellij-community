@@ -100,18 +100,18 @@ public final class CoverageDataAnnotationsManager implements Disposable {
   private void applyInformationToEditor(FileEditor[] editors, final VirtualFile file) {
     CoverageDataManager manager = CoverageDataManager.getInstance(myProject);
     PsiFile psiFile = manager.doInReadActionIfProjectOpen(() -> file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null);
-    CoverageSuitesBundle bundle = manager.getCurrentSuitesBundle();
-    if (psiFile == null || bundle == null || !psiFile.isPhysical()) return;
+    if (psiFile == null || !psiFile.isPhysical()) return;
+    for (CoverageSuitesBundle bundle : manager.activeSuites()) {
+      CoverageEngine engine = bundle.getCoverageEngine();
+      if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) return;
+      if (!engine.acceptedByFilters(psiFile, bundle)) return;
 
-    CoverageEngine engine = bundle.getCoverageEngine();
-    if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) return;
-    if (!engine.acceptedByFilters(psiFile, bundle)) return;
-
-    for (FileEditor editor : editors) {
-      if (editor instanceof TextEditor txtEditor) {
-        Editor textEditor = txtEditor.getEditor();
-        CoverageEditorAnnotator annotator = getOrCreateAnnotator(textEditor, psiFile, engine);
-        annotator.showCoverage(bundle);
+      for (FileEditor editor : editors) {
+        if (editor instanceof TextEditor txtEditor) {
+          Editor textEditor = txtEditor.getEditor();
+          CoverageEditorAnnotator annotator = getOrCreateAnnotator(textEditor, psiFile, engine);
+          annotator.showCoverage(bundle);
+        }
       }
     }
   }
@@ -131,28 +131,25 @@ public final class CoverageDataAnnotationsManager implements Disposable {
       Project project = editor.getProject();
       if (project == null) return;
 
-      CoverageDataManager dataManager = CoverageDataManager.getInstance(project);
-      CoverageDataAnnotationsManager annotationsManager = getInstance(project);
-
-      CoverageSuitesBundle bundle = dataManager.getCurrentSuitesBundle();
-      if (bundle == null) return;
-
       PsiFile psiFile = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
       if (psiFile == null || !psiFile.isPhysical()) return;
 
-      CoverageEngine engine = bundle.getCoverageEngine();
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) return;
-        if (!engine.acceptedByFilters(psiFile, bundle)) return;
-        CoverageEditorAnnotator annotator = annotationsManager.getOrCreateAnnotator(editor, psiFile, engine);
+        CoverageDataAnnotationsManager annotationsManager = getInstance(project);
+        CoverageDataManager dataManager = CoverageDataManager.getInstance(project);
+        for (CoverageSuitesBundle bundle : dataManager.activeSuites()) {
+          CoverageEngine engine = bundle.getCoverageEngine();
+          if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) return;
+          if (!engine.acceptedByFilters(psiFile, bundle)) return;
+          CoverageEditorAnnotator annotator = annotationsManager.getOrCreateAnnotator(editor, psiFile, engine);
 
-        Runnable request = () -> {
-          if (project.isDisposed()) return;
-          CoverageSuitesBundle suitesBundle = dataManager.getCurrentSuitesBundle();
-          annotator.showCoverage(suitesBundle);
-        };
-        myCurrentEditors.put(editor, request);
-        ApplicationManager.getApplication().invokeLater(() -> annotationsManager.getRequestsAlarm().addRequest(request, 100));
+          Runnable request = () -> {
+            if (project.isDisposed()) return;
+            annotator.showCoverage(bundle);
+          };
+          myCurrentEditors.put(editor, request);
+          ApplicationManager.getApplication().invokeLater(() -> annotationsManager.getRequestsAlarm().addRequest(request, 100));
+        }
       });
     }
 

@@ -23,11 +23,10 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
     }
 
     final CoverageDataManager coverageDataManager = getCoverageDataManager(project);
-    final JavaCoverageAnnotator javaCovAnnotator = getCovAnnotator(coverageDataManager, project);
-    // This decorator is applicable only to JavaCoverageAnnotator
-    if (javaCovAnnotator == null) {
-      return;
-    }
+    CoverageSuitesBundle javaSuite = getJavaSuite(coverageDataManager, project);
+    // This decorator is applicable only to java suites
+    if (javaSuite == null) return;
+    final JavaCoverageAnnotator javaCovAnnotator = (JavaCoverageAnnotator) javaSuite.getAnnotator(project);
 
     final Object value = node.getValue();
     PsiElement element = null;
@@ -45,7 +44,7 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
     }
 
     if (element instanceof PsiClass) {
-      final GlobalSearchScope searchScope = coverageDataManager.getCurrentSuitesBundle().getSearchScope(project);
+      final GlobalSearchScope searchScope = javaSuite.getSearchScope(project);
       final VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
       if (vFile != null && searchScope.contains(vFile)) {
         final String qName = ((PsiClass)element).getQualifiedName();
@@ -67,17 +66,14 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
     }
   }
 
-  @Nullable
-  private static JavaCoverageAnnotator getCovAnnotator(@Nullable CoverageDataManager dataManager, @NotNull Project project) {
+  private static CoverageSuitesBundle getJavaSuite(@Nullable CoverageDataManager dataManager, @NotNull Project project) {
     if (dataManager == null) {
       return null;
     }
-
-    CoverageSuitesBundle currentSuite = dataManager.getCurrentSuitesBundle();
-    if (currentSuite != null) {
-      final CoverageAnnotator coverageAnnotator = currentSuite.getAnnotator(project);
+    for (CoverageSuitesBundle bundle : dataManager.activeSuites()) {
+      final CoverageAnnotator coverageAnnotator = bundle.getAnnotator(project);
       if (coverageAnnotator instanceof JavaCoverageAnnotator) {
-        return (JavaCoverageAnnotator) coverageAnnotator;
+        return bundle;
       }
     }
     return null;

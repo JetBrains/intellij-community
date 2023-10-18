@@ -8,10 +8,14 @@ import com.intellij.coverage.analysis.JavaCoverageReportEnumerator
 import com.intellij.coverage.analysis.PackageAnnotator.*
 import com.intellij.coverage.xml.XMLReportAnnotator.Companion.getInstance
 import com.intellij.idea.ExcludeFromTestDiscovery
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import java.io.File
 import java.nio.file.Files
@@ -19,6 +23,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 @ExcludeFromTestDiscovery
 class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
+  fun `test ij statistics`(): Unit = runBlocking { actualAnnotatorTest(loadIJSuite()) }
+  fun `test jacoco statistics`(): Unit = runBlocking { actualAnnotatorTest(loadJaCoCoSuite()) }
+  fun `test xml statistics`(): Unit = runBlocking { actualAnnotatorTest(loadXMLSuite()) }
   fun testIJSuite() = assertHits(loadIJSuite())
 
   fun testXMLSuite() {
@@ -131,7 +138,22 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
       CoverageDataManager.getInstance(myProject).restoreMergedCoverage(suite)
     }
     assertHits(suite)
-    closeSuite()
+    closeSuite(suite)
+  }
+
+  private suspend fun actualAnnotatorTest(bundle: CoverageSuitesBundle) {
+    val manager = CoverageDataManager.getInstance(myProject)
+    openSuiteAndWait(bundle)
+    val annotator = bundle.getAnnotator(myProject)
+    val classes = listOf("foo.FooClass", "foo.bar.UncoveredClass", "foo.bar.BarClass")
+    for (clazz in classes) {
+      readAction {
+        val psiClass = JavaPsiFacade.getInstance(myProject).findClass(clazz, GlobalSearchScope.projectScope(myProject))
+        val psiDir = psiClass!!.containingFile!!.containingDirectory
+        Assert.assertNotNull(annotator.getDirCoverageInformationString(psiDir, bundle, manager))
+      }
+    }
+    closeSuite(bundle)
   }
 
   private fun assertHits(suite: CoverageSuitesBundle, ignoreBranches: Boolean = false) {

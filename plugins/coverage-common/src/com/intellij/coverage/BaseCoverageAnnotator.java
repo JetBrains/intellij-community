@@ -40,14 +40,14 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
         @Override
         public void onSuccess() {
           if (project.isDisposed()) return;
-          dataManager.coverageDataCalculated();
+          dataManager.coverageDataCalculated(suite);
         }
 
         @Override
         public void onCancel() {
           super.onCancel();
           if (project.isDisposed()) return;
-          dataManager.chooseSuitesBundle(null);
+          dataManager.closeSuitesBundle(suite);
         }
       });
     }

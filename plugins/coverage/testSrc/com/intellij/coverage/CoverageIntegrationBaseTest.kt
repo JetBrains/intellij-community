@@ -6,6 +6,7 @@ import com.intellij.coverage.xml.XMLReportRunner
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.JavaModuleTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.*
@@ -39,8 +40,8 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
   protected fun loadXMLSuite(includeFilters: Array<String>? = null, path: String = SIMPLE_XML_REPORT_PATH)
     = loadCoverageSuite(XMLReportEngine::class.java, XMLReportRunner::class.java, path, includeFilters)
 
-  protected fun closeSuite() {
-    CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null)
+  protected fun closeSuite(bundle: CoverageSuitesBundle) {
+    CoverageDataManager.getInstance(myProject).closeSuitesBundle(bundle)
   }
 
   protected suspend fun openSuiteAndWait(bundle: CoverageSuitesBundle) = waitSuiteProcessing {
@@ -51,7 +52,7 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     var dataCollected = false
     val disposable = Disposer.newDisposable()
     CoverageDataManager.getInstance(myProject).addSuiteListener(object : CoverageSuiteListener {
-      override fun coverageDataCalculated() {
+      override fun coverageDataCalculated(bundle: CoverageSuitesBundle) {
         dataCollected = true
       }
     }, disposable)
@@ -78,6 +79,16 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
       runner, coverageDataPath, fileProvider, includeFilters,
       -1, null, true, true, false, myProject)!!
     return CoverageSuitesBundle(suite)
+  }
+
+  protected fun loadIJSuiteCopy(): CoverageSuitesBundle {
+    val ijSuiteFile = FileUtil.createTempFile("coverage", ".ic").apply {
+      deleteOnExit()
+      val originalIJSuite = File(createCoverageFileProvider(SIMPLE_IJ_REPORT_PATH).coverageDataFilePath)
+      originalIJSuite.copyTo(this, overwrite = true)
+    }
+
+    return loadIJSuite(path = ijSuiteFile.absolutePath)
   }
 
   companion object {

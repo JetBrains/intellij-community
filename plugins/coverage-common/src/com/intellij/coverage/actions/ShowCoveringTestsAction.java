@@ -6,7 +6,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.hint.PsiImplementationViewElement;
 import com.intellij.coverage.CoverageBundle;
-import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -38,19 +37,20 @@ import java.util.function.Consumer;
 public class ShowCoveringTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ShowCoveringTestsAction.class);
 
+  private final CoverageSuitesBundle myBundle;
   private final String myClassFQName;
   private final LineData myLineData;
   private final boolean myTestsAvailable;
 
-  public ShowCoveringTestsAction(@Nullable Project project, final String classFQName, LineData lineData) {
+  public ShowCoveringTestsAction(@Nullable Project project, CoverageSuitesBundle bundle, final String classFQName, LineData lineData) {
     super(CoverageBundle.message("action.text.show.tests.covering.line"),
           CoverageBundle.message("action.description.show.tests.covering.line"), PlatformIcons.TEST_SOURCE_FOLDER);
+    myBundle = bundle;
     myClassFQName = classFQName;
     myLineData = lineData;
     boolean enabled = false;
     if (myLineData != null && myLineData.getStatus() != LineCoverage.NONE && project != null) {
-      final CoverageSuitesBundle bundle = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
-      enabled = bundle != null && bundle.isCoverageByTestEnabled() && bundle.getCoverageEngine().wasTestDataCollected(project);
+      enabled = bundle != null && bundle.isCoverageByTestEnabled() && bundle.getCoverageEngine().wasTestDataCollected(project, bundle);
     }
     myTestsAvailable = enabled;
   }
@@ -62,12 +62,11 @@ public class ShowCoveringTestsAction extends AnAction {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     LOG.assertTrue(editor != null);
 
-    final CoverageSuitesBundle currentSuite = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
-    LOG.assertTrue(currentSuite != null);
-    final CoverageEngine coverageEngine = currentSuite.getCoverageEngine();
+    LOG.assertTrue(myBundle != null);
+    final CoverageEngine coverageEngine = myBundle.getCoverageEngine();
 
     final Set<String> tests = new HashSet<>();
-    if (ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> tests.addAll(coverageEngine.getTestsForLine(project, myClassFQName, myLineData.getLineNumber())),
+    if (ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> tests.addAll(coverageEngine.getTestsForLine(project, myBundle, myClassFQName, myLineData.getLineNumber())),
                                                                           CoverageBundle.message("extract.information.about.tests"), false, project)) { //todo cache them? show nothing found message
       final String[] testNames = ArrayUtilRt.toStringArray(tests);
       Arrays.sort(testNames);

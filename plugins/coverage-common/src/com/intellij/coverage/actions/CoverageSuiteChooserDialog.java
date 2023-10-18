@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -101,10 +102,12 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final List<CoverageSuite> suites = collectSelectedSuites();
-    final CoverageSuitesBundle bundle = suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[0]));
-    CoverageLogger.logSuiteImport(myProject, bundle);
-    myCoverageManager.chooseSuitesBundle(bundle);
-    ExternalCoverageWatchManager.getInstance(myProject).addRootsToWatch(suites);
+    if (!suites.isEmpty()) {
+      CoverageSuitesBundle bundle = new CoverageSuitesBundle(suites.toArray(new CoverageSuite[0]));
+      CoverageLogger.logSuiteImport(myProject, bundle);
+      myCoverageManager.chooseSuitesBundle(bundle);
+      ExternalCoverageWatchManager.getInstance(myProject).addRootsToWatch(suites);
+    }
     super.doOKAction();
   }
 
@@ -167,10 +170,8 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
   private void initTree() {
     myRootNode.removeAllChildren();
-    final HashMap<CoverageRunner, Map<String, List<CoverageSuite>>> grouped =
-      new HashMap<>();
+    final HashMap<CoverageRunner, Map<String, List<CoverageSuite>>> grouped = new HashMap<>();
     groupSuites(grouped, myCoverageManager.getSuites(), myEngine);
-    final CoverageSuitesBundle currentSuite = myCoverageManager.getCurrentSuitesBundle();
     final List<CoverageRunner> runners = new ArrayList<>(grouped.keySet());
     runners.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     for (CoverageRunner runner : runners) {
@@ -188,7 +189,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         suites.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
         for (CoverageSuite suite : suites) {
           final CheckedTreeNode treeNode = new CheckedTreeNode(suite);
-          treeNode.setChecked(currentSuite != null && currentSuite.contains(suite) ? Boolean.TRUE : Boolean.FALSE);
+          treeNode.setChecked(isSuiteActive(suite));
           suitesNode.add(treeNode);
         }
       }
@@ -200,13 +201,17 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
           DefaultMutableTreeNode node = Comparing.strEqual(aClass, DefaultCoverageFileProvider.class.getName()) ? localNode : remoteNode;
           for (CoverageSuite suite : providers.get(aClass)) {
             final CheckedTreeNode treeNode = new CheckedTreeNode(suite);
-            treeNode.setChecked(currentSuite != null && currentSuite.contains(suite) ? Boolean.TRUE : Boolean.FALSE);
+            treeNode.setChecked(isSuiteActive(suite));
             node.add(treeNode);
           }
         }
       }
       myRootNode.add(runnerNode);
     }
+  }
+
+  private boolean isSuiteActive(CoverageSuite suite) {
+    return ContainerUtil.exists(myCoverageManager.activeSuites(), bundle -> bundle.contains(suite));
   }
 
   private static void groupSuites(final HashMap<CoverageRunner, Map<String, List<CoverageSuite>>> grouped,
@@ -269,7 +274,9 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
     @Override
     protected void doAction(ActionEvent e) {
-      myCoverageManager.chooseSuitesBundle(null);
+      for (CoverageSuitesBundle suitesBundle : myCoverageManager.activeSuites()) {
+        myCoverageManager.closeSuitesBundle(suitesBundle);
+      }
       CoverageSuiteChooserDialog.this.close(DialogWrapper.OK_EXIT_CODE);
     }
   }

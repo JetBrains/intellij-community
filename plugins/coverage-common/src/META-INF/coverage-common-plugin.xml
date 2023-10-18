@@ -14,7 +14,6 @@
                          bundle="messages.CoverageBundle" key="configurable.CoverageOptionsConfigurable.display.name"/>
 
     <projectService serviceImplementation="com.intellij.coverage.CoverageOptionsProvider"/>
-    <projectService serviceImplementation="com.intellij.coverage.view.CoverageViewManager"/>
     <projectService serviceImplementation="com.intellij.coverage.CoverageDataManagerImpl"/>
     <executor implementation="com.intellij.coverage.CoverageExecutor" />
     <editorFactoryListener implementation="com.intellij.coverage.CoverageDataAnnotationsManager$CoverageEditorFactoryListener"/>

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 public abstract class CoverageDataManager {
@@ -55,22 +56,29 @@ public abstract class CoverageDataManager {
   public abstract CoverageSuite @NotNull [] getSuites();
 
   /**
-   * @return currently active suite
+   * @return Currently opened suites.
+   */
+  public abstract Collection<CoverageSuitesBundle> activeSuites();
+
+  /**
+   * Currently visible or one of the opened suites if view is not enabled.
    */
   public abstract CoverageSuitesBundle getCurrentSuitesBundle();
 
   /**
    * Choose active suite. Calling this method triggers updating the presentations in project view, editors etc.
-   * @param suite coverage suite to choose. <b>null</b> means no coverage information should be presented
+   * @param suite coverage suite to choose. Must not be <code>null</code>. Use <code>closeSuitesBundle</code> to close a suite
    */
-  public abstract void chooseSuitesBundle(@Nullable CoverageSuitesBundle suite);
+  public abstract void chooseSuitesBundle(@NotNull CoverageSuitesBundle suite);
+
+  public abstract void closeSuitesBundle(@NotNull CoverageSuitesBundle suite);
 
   public abstract void coverageGathered(@NotNull CoverageSuite suite);
 
   /**
    * Called each time after a coverage suite is completely processed: data is loaded and accumulated
    */
-  public void coverageDataCalculated() {}
+  public void coverageDataCalculated(@NotNull CoverageSuitesBundle suite) {}
 
   /**
    * Remove suite

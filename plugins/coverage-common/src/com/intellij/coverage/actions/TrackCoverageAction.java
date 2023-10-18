@@ -1,9 +1,6 @@
 package com.intellij.coverage.actions;
 
-import com.intellij.coverage.CoverageBundle;
-import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageExecutor;
-import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.coverage.*;
 import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -17,10 +14,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +33,8 @@ public class TrackCoverageAction extends ToggleModelAction {
   private Alarm myUpdateCoverageAlarm;
 
   public TrackCoverageAction(TestConsoleProperties properties) {
-    super(CoverageBundle.message("show.coverage.per.test.action.text"), CoverageBundle.message("show.coverage.per.test.action.description"), AllIcons.RunConfigurations.TrackCoverage, properties,
+    super(CoverageBundle.message("show.coverage.per.test.action.text"), CoverageBundle.message("show.coverage.per.test.action.description"),
+          AllIcons.RunConfigurations.TrackCoverage, properties,
           TestConsoleProperties.TRACK_CODE_COVERAGE);
     myProperties = properties;
   }
@@ -60,7 +58,7 @@ public class TrackCoverageAction extends ToggleModelAction {
   private void restoreMergedCoverage() {
     final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(myProperties.getProject());
     if (coverageDataManager.isSubCoverageActive()) {
-      final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
+      CoverageSuitesBundle currentSuite = getCurrentCoverageSuite();
       if (currentSuite != null) {
         coverageDataManager.restoreMergedCoverage(currentSuite);
       }
@@ -103,15 +101,16 @@ public class TrackCoverageAction extends ToggleModelAction {
     }
 
     final RunProfile runConf = myModel.getProperties().getConfiguration();
-    if (runConf instanceof RunConfigurationBase) {
+    if (runConf instanceof RunConfigurationBase<?> base) {
 
       // if coverage supported for run configuration
-      if (CoverageEnabledConfiguration.isApplicableTo((RunConfigurationBase<?>)runConf)) {
+      if (CoverageEnabledConfiguration.isApplicableTo(base)) {
 
         // Get coverage settings
         Executor executor = myProperties.getExecutor();
         if (executor != null && executor.getId().equals(CoverageExecutor.EXECUTOR_ID)) {
-          return CoverageDataManager.getInstance(myProperties.getProject()).getCurrentSuitesBundle();
+          CoverageSuite suite = CoverageEnabledConfiguration.getOrCreate(base).getCurrentCoverageSuite();
+          return ContainerUtil.find(CoverageDataManager.getInstance(myProperties.getProject()).activeSuites(), b -> b.contains(suite));
         }
       }
     }
@@ -125,8 +124,7 @@ public class TrackCoverageAction extends ToggleModelAction {
   }
 
   private void selectSubCoverage() {
-    final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(myProperties.getProject());
-    final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
+    CoverageSuitesBundle currentSuite = getCurrentCoverageSuite();
     if (currentSuite != null) {
       final AbstractTestProxy test = myModel.getTreeView().getSelectedTest();
       List<String> testMethods = new ArrayList<>();
@@ -143,7 +141,7 @@ public class TrackCoverageAction extends ToggleModelAction {
           }
         }
       }
-      coverageDataManager.selectSubCoverage(currentSuite, testMethods);
+      CoverageDataManager.getInstance(myProperties.getProject()).selectSubCoverage(currentSuite, testMethods);
     }
   }
 
@@ -152,12 +150,7 @@ public class TrackCoverageAction extends ToggleModelAction {
     @Override
     public void valueChanged(final TreeSelectionEvent e) {
       if (!TestConsoleProperties.TRACK_CODE_COVERAGE.value(myModel.getProperties()) || !isEnabled()) return;
-      final Project project = myModel.getProperties().getProject();
-      final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
-      final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
-      if (currentSuite != null) {
-        selectSubCoverageAsync();
-      }
+      selectSubCoverageAsync();
     }
   }
 }

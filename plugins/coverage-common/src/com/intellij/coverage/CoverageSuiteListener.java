@@ -43,5 +43,5 @@ public interface CoverageSuiteListener {
   /**
    * Called <b>each time</b> after a coverage suite is completely processed: data is loaded and accumulated
    */
-  default void coverageDataCalculated() {}
+  default void coverageDataCalculated(@NotNull CoverageSuitesBundle bundle) {}
 }

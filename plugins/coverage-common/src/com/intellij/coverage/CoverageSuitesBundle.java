@@ -227,6 +227,10 @@ public class CoverageSuitesBundle {
     myShouldActivateToolWindow = shouldActivateToolWindow;
   }
 
+  boolean ensureReportFilesExist() {
+    return ContainerUtil.and(mySuites, s -> s.getCoverageDataFileProvider().ensureFileExists());
+  }
+
   /**
    * Merge include filters from different coverage report into one list.
    * @return merged list or <code>null</code> if some of the reports has empty include filters

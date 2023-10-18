@@ -59,14 +59,14 @@ public abstract class CoverageEngine {
   /**
    * @return tests, which covered specified line. Names should be compatible with {@link CoverageEngine#findTestsByNames(String[], Project)}
    */
-  public Set<String> getTestsForLine(Project project, String classFQName, int lineNumber) {
+  public Set<String> getTestsForLine(Project project, CoverageSuitesBundle bundle, String classFQName, int lineNumber) {
     return Collections.emptySet();
   }
 
   /**
    * @return true, if test data was collected
    */
-  public boolean wasTestDataCollected(Project project) {
+  public boolean wasTestDataCollected(Project project, CoverageSuitesBundle bundle) {
     return false;
   }
 
