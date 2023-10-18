@@ -3,12 +3,15 @@ package com.intellij.codeInsight.inline.completion.tooltip
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
-import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Point
@@ -18,14 +21,25 @@ import javax.swing.JPanel
 internal object InlineCompletionTooltip {
   @RequiresEdt
   fun enterHover(session: InlineCompletionSession, locationAtScreen: Point) {
+    val editor = session.context.editor
+
     val insertShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
     val panel = JPanel().apply {
-      add(JLabel(IdeBundle.message("inline.completion.tooltip.shortcuts", insertShortcut)))
+      val acceptLink = HyperlinkLabel(insertShortcut)
+      acceptLink.addHyperlinkListener {
+        ApplicationManager.getApplication().invokeLater {
+          ApplicationManager.getApplication().runWriteAction {
+            CommandProcessor.getInstance().executeCommand(editor.project, {
+              InlineCompletion.getHandlerOrNull(editor)?.insert()
+            }, null, null, editor.document)
+          }
+        }
+      }
+      add(acceptLink)
+      add(JLabel(IdeBundle.message("inline.completion.tooltip.shortcuts.accept.description")))
       add(session.provider.getTooltip())
     }
-    panel.background = HintUtil.getInformationColor()
     val hint = LightweightHint(panel)
-    val editor = session.context.editor
 
     val editorLocation = editor.contentComponent.topLevelAncestor.locationOnScreen
     val point = Point(locationAtScreen.x - editorLocation.x, locationAtScreen.y - editorLocation.y)
