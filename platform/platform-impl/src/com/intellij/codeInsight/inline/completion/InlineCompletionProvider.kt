@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionProviderTooltipFactory
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import javax.swing.JComponent
@@ -56,7 +57,7 @@ interface InlineCompletionProvider {
     get() = DefaultInlineCompletionOvertyper()
 
   @Suppress("HardCodedStringLiteral")
-  fun getTooltip(): JComponent = InlineCompletionProviderTooltipFactory.defaultProviderTooltip(id.id)
+  fun getTooltip(project: Project?): JComponent = InlineCompletionProviderTooltipFactory.defaultProviderTooltip(id.id)
 
   companion object {
     val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")

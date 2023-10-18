@@ -37,7 +37,7 @@ internal object InlineCompletionTooltip {
       }
       add(acceptLink)
       add(JLabel(IdeBundle.message("inline.completion.tooltip.shortcuts.accept.description")))
-      add(session.provider.getTooltip())
+      add(session.provider.getTooltip(editor.project))
     }
     val hint = LightweightHint(panel)
 
