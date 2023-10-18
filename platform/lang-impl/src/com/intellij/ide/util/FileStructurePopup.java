@@ -815,7 +815,10 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
         myFilteringStructure.refilter();
         myStructureTreeModel.invalidateAsync().thenRun(() -> {
           (selection == null ? myAsyncTreeModel.accept(o -> TreeVisitor.Action.CONTINUE) : select(selection))
-            .onError(ignore2 -> result.setError("rejected"))
+            .onError(ignore2 -> {
+              result.setError("rejected");
+              mySpeedSearch.refreshSelection(); // Selection failed, let the speed search reflect that by coloring itself red.
+            })
             .onSuccess(p -> EdtInvocationManager.invokeLaterIfNeeded(() -> {
               TreeUtil.expand(getTree(),
                               myTreeModel instanceof StructureViewCompositeModel
