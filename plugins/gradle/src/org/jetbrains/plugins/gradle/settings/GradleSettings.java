@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.Disposable;
@@ -34,7 +34,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
   private boolean isOfflineMode = false;
   private boolean isDownloadSources = AdvancedSettings.getBoolean("gradle.download.sources");
-  private boolean isParallelModelFetch = true;
+  private boolean isParallelModelFetch = false;
 
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
@@ -202,7 +202,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
     private final Set<GradleProjectSettings> myProjectSettings = new TreeSet<>();
     private boolean isOfflineMode = false;
-    private boolean isParallelModelFetch = true;
+    private boolean isParallelModelFetch = false;
 
     @Override
     @XCollection(elementTypes = GradleProjectSettings.class)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
@@ -31,7 +31,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   private boolean useQualifiedModuleNames = false;
   private boolean delegatedBuild = true;
   private boolean downloadSources = false;
-  private boolean isParallelModelFetch = true;
+  private boolean isParallelModelFetch = false;
 
   private boolean myBuiltInTestEventsUsed = false;
 
