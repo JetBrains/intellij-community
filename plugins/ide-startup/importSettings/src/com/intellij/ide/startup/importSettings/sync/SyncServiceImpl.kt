@@ -84,7 +84,7 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
   //}
 
   override fun getMainProduct(): Product? {
-    TODO()
+    return null
     //return logger.runAndLogException {
     //  @Suppress("SSBasedInspection") // TODO: Async
     //  runBlocking {
@@ -110,7 +110,7 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
   }
 
   override fun products(): List<Product> {
-    TODO()
+    return emptyList()
     //val oneProduct = logger.runAndLogException {
     //  // TODO: Async
     //  runBlockingCancellable block@{
