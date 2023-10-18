@@ -10,7 +10,9 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +41,12 @@ public class PyMemberInplaceRenameHandler extends MemberInplaceRenameHandler {
   protected @NotNull MemberInplaceRenamer createMemberRenamer(@NotNull PsiElement element,
                                                               @NotNull PsiNameIdentifierOwner elementToRename,
                                                               @NotNull Editor editor) {
-    var resElementToRename = PyUtil.isInitOrNewMethod(elementToRename) ? (PsiNameIdentifierOwner)element : elementToRename;
-    return new MemberInplaceRenamer(resElementToRename, element, editor);
+    if (element instanceof PyClass elementClass && elementToRename instanceof PyFunction &&
+        ((PyFunction)elementToRename).getContainingClass() == element && PyUtil.isInitOrNewMethod(elementToRename)) {
+      if (PyUtil.isInitOrNewMethod(elementToRename)) {
+        return new MemberInplaceRenamer(elementClass, element, editor);
+      }
+    }
+    return new MemberInplaceRenamer(elementToRename, element, editor);
   }
 }
