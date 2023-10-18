@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
+import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions
@@ -19,8 +20,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.GitlabIcons
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 @Service(Service.Level.PROJECT)
@@ -42,7 +43,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
       val currentBranchName = StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
         GitBranchPopupActions.truncateBranchName(branchName, repository.project)
       })
-      return when (val state = vm.actualChangesState.value) {
+      return when (vm.actualChangesState.value) {
         GitLabMergeRequestEditorReviewViewModel.ChangesState.Error -> GitCurrentBranchPresenter.Presentation(
           GitlabIcons.GitLabLogo,
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
@@ -56,8 +57,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
         is GitLabMergeRequestEditorReviewViewModel.ChangesState.OutOfSync -> GitCurrentBranchPresenter.Presentation(
           GitlabIcons.GitLabLogo,
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
-          GitLabBundle.message("merge.request.on.branch.out.of.sync", vm.mergeRequestIid, currentBranchName),
-          state.status
+          GitLabBundle.message("merge.request.on.branch.out.of.sync", vm.mergeRequestIid, currentBranchName)
         )
         GitLabMergeRequestEditorReviewViewModel.ChangesState.NotLoaded,
         is GitLabMergeRequestEditorReviewViewModel.ChangesState.Loaded -> GitCurrentBranchPresenter.Presentation(
@@ -65,7 +65,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
           GitLabBundle.message("merge.request.on.branch.description", vm.mergeRequestIid, currentBranchName)
         )
-      }
+      }.copy(syncStatus = GitBranchSyncStatus.calcForCurrentBranch(repository))
     }
   }
 

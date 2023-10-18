@@ -5,13 +5,11 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import git4idea.GitUtil
 import git4idea.GitVcs
-import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
@@ -44,26 +42,17 @@ interface GitCurrentBranchPresenter {
 }
 
 private fun getDefaultPresentation(repository: GitRepository): GitCurrentBranchPresenter.Presentation {
-  val project = repository.project
-  val syncStatus = repository.currentBranchName?.let { branch ->
-    val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
-    val incoming = incomingOutgoingManager.hasIncomingFor(repository, branch)
-    val outgoing = incomingOutgoingManager.hasOutgoingFor(repository, branch)
-    GitBranchSyncStatus(incoming, outgoing)
-  } ?: GitBranchSyncStatus.SYNCED
-
   return GitCurrentBranchPresenter.Presentation(
     repository.calcIcon(),
-    calcText(project, repository),
+    calcText(repository),
     repository.calcTooltip(),
-    syncStatus
+    GitBranchSyncStatus.calcForCurrentBranch(repository)
   )
 }
 
-
-private fun calcText(project: Project, repository: GitRepository): @NlsSafe String =
+private fun calcText(repository: GitRepository): @NlsSafe String =
   StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
-    GitBranchPopupActions.truncateBranchName(project, branchName,
+    GitBranchPopupActions.truncateBranchName(repository.project, branchName,
                                              GitToolbarWidgetAction.BRANCH_NAME_MAX_LENGTH,
                                              GitBranchPopupActions.BRANCH_NAME_SUFFIX_LENGTH,
                                              GitBranchPopupActions.BRANCH_NAME_LENGTH_DELTA)

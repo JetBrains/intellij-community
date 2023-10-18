@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
-import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -64,11 +63,15 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   init {
     cs.launchNow {
       mergeRequest.changes.collectLatest { changes ->
-        changes.localRepositorySynced.collectLatest {
-          if (it) {
+        changes.localRepositorySyncStatus.distinctUntilChangedBy { it?.incoming }.collectLatest { branchSync ->
+          if (branchSync == null) {
+            _actualChangesState.value = ChangesState.NotLoaded
+          }
+          else if (!branchSync.incoming) {
             _actualChangesState.value = ChangesState.NotLoaded
             changesRequest.distinctUntilChanged().collectLatest {
               try {
+                _actualChangesState.value = ChangesState.Loading
                 val parsed = changes.getParsedChanges()
                 _actualChangesState.value = ChangesState.Loaded(parsed)
               }
@@ -81,7 +84,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
             }
           }
           else {
-            _actualChangesState.value = ChangesState.OutOfSync(GitBranchSyncStatus(true, true))
+            _actualChangesState.value = ChangesState.OutOfSync
           }
         }
       }
@@ -145,10 +148,10 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   }
 
   sealed interface ChangesState {
-    object NotLoaded : ChangesState
-    object Loading : ChangesState
-    object Error : ChangesState
-    class OutOfSync(val status: GitBranchSyncStatus) : ChangesState
+    data object NotLoaded : ChangesState
+    data object Loading : ChangesState
+    data object Error : ChangesState
+    data object OutOfSync : ChangesState
     class Loaded(val changes: GitBranchComparisonResult) : ChangesState
   }
 
