@@ -185,6 +185,39 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
     })
   }
 
+  override fun runIntendedWriteActionOnCurrentThread(action: Runnable) {
+    if (isWriteIntentLocked()) {
+      action.run()
+    }
+    else {
+      acquireWriteIntentLock(action.javaClass.name)
+      try {
+        action.run()
+      }
+      finally {
+        releaseWriteIntentLock()
+      }
+    }
+  }
+
+  // @Throws(E::class)
+  override fun <T, E : Throwable?> runUnlockingIntendedWrite(action: ThrowableComputable<T, E>): T {
+    // Do not ever unlock IW in legacy mode (EDT is holding lock at all times)
+    return if (isWriteIntentLocked() && isImplicitReadOnEDTDisabled) {
+      releaseWriteIntentLock()
+      try {
+        action.compute()
+      }
+      finally {
+        acquireWriteIntentLock(action.javaClass.name)
+      }
+    }
+    else {
+      action.compute()
+    }
+  }
+
+
   @Deprecated
   override fun addReadActionListener(listener: ReadActionListener) {
     myReadActionDispatcher.addListener(listener)
