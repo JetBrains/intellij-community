@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.codeWithMe.ClientId.Companion.decorateCallable
+import com.intellij.codeWithMe.ClientId.Companion.decorateRunnable
 import com.intellij.diagnostic.PerformanceWatcher.Companion.getInstance
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
@@ -10,6 +12,7 @@ import com.intellij.openapi.application.ReadActionListener
 import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -29,8 +32,10 @@ import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.lang.Deprecated
+import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 import javax.swing.JComponent
 import kotlin.concurrent.Volatile
@@ -121,6 +126,63 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
     finally {
       lock.setAllowImplicitRead(oldVal)
     }
+  }
+
+  override fun executeOnPooledThread(action: Runnable, expired: BooleanSupplier): Future<*> {
+    val actionDecorated = decorateRunnable(action)
+    return AppExecutorUtil.getAppExecutorService().submit(object : Runnable {
+      override fun run() {
+        if (expired.asBoolean) {
+          return
+        }
+
+        try {
+          actionDecorated.run()
+        }
+        catch (e: ProcessCanceledException) {
+          // ignore
+        }
+        catch (e: Throwable) {
+          logger.error(e)
+        }
+        finally {
+          Thread.interrupted() // reset interrupted status
+        }
+      }
+
+      override fun toString(): String {
+        return action.toString()
+      }
+    })
+  }
+
+  override fun <T> executeOnPooledThread(action: Callable<T>, expired: BooleanSupplier): Future<T> {
+    val actionDecorated = decorateCallable(action)
+    return AppExecutorUtil.getAppExecutorService().submit<T>(object : Callable<T?> {
+      override fun call(): T? {
+        if (expired.asBoolean) {
+          return null
+        }
+
+        try {
+          return actionDecorated.call()
+        }
+        catch (e: ProcessCanceledException) {
+          // ignore
+        }
+        catch (e: Throwable) {
+          logger.error(e)
+        }
+        finally {
+          Thread.interrupted() // reset interrupted status
+        }
+        return null
+      }
+
+      override fun toString(): String {
+        return action.toString()
+      }
+    })
   }
 
   @Deprecated
