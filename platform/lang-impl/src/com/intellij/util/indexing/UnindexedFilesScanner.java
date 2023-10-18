@@ -128,6 +128,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myProvidedStatusMark = predefinedIndexableFilesIterators == null ? null : mark;
     myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
     LOG.assertTrue(myPredefinedIndexableFilesIterators == null || !myPredefinedIndexableFilesIterators.isEmpty());
+    LOG.assertTrue(!myOnProjectOpen || myPredefinedIndexableFilesIterators == null, "Should request full scanning on project open");
     myFutureScanningRequestToken = project.getService(ProjectIndexingDependenciesService.class).newFutureScanningToken();
 
     if (isFullIndexUpdate()) {
@@ -316,7 +317,8 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       Disposer.dispose(scanningLifetime);
     }
 
-    if (myOnProjectOpen) {
+    if (isFullIndexUpdate() &&
+        UnindexedFilesScannerExecutor.getInstance(myProject).getInitialVfsRefreshRequested().compareAndSet(false, true)) {
       // the full VFS refresh makes sense only after it's loaded, i.e., after scanning files to index is finished
       InitialRefreshKt.scheduleInitialVfsRefresh(myProject, LOG);
     }
