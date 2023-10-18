@@ -4,8 +4,9 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeCoreBundle;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
@@ -35,6 +36,7 @@ final class RefreshSessionImpl extends RefreshSession {
   private static final int RETRY_LIMIT = SystemProperties.getIntProperty("refresh.session.retry.limit", 3);
   private static final long DURATION_REPORT_THRESHOLD_MS =
     SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", -1) * 1_000L;
+  private static final int PROGRESS_THRESHOLD_MILLIS = 5_000;
 
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
@@ -55,7 +57,7 @@ final class RefreshSessionImpl extends RefreshSession {
     myFinishRunnable = finishRunnable;
     myModality = modality;
     TransactionGuard.getInstance().assertWriteSafeContext(modality);
-    Application app = ApplicationManager.getApplication();
+    var app = ApplicationManager.getApplication();
     myStartTrace = app.isUnitTestMode() && (async || !app.isDispatchThread()) ? new Throwable() : null;
   }
 
@@ -67,7 +69,7 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   private static ModalityState getSafeModalityState() {
-    ModalityState state = ModalityState.defaultModalityState();
+    var state = ModalityState.defaultModalityState();
     return state != ModalityState.any() ? state : ModalityState.nonModal();
   }
 
@@ -153,7 +155,7 @@ final class RefreshSessionImpl extends RefreshSession {
       }
     }
 
-    int count = 0;
+    var count = 0;
     var events = new ArrayList<VFileEvent>();
     do {
       if (myCancelled) break;
@@ -201,21 +203,18 @@ final class RefreshSessionImpl extends RefreshSession {
 
   void fireEvents(@NotNull List<CompoundVFileEvent> events, @NotNull List<AsyncFileListener.ChangeApplier> appliers, boolean asyncProcessing) {
     try {
-      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      var app = ApplicationManagerEx.getApplicationEx();
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
         if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events);
-        WriteAction.run(() -> {
-          app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeCoreBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
-            indicator.setText(IdeCoreBundle.message("progress.text.processing.detected.file.changes", events.size()));
-            int progressThresholdMillis = 5_000;
-            ((ProgressIndicatorWithDelayedPresentation)indicator).setDelayInMillis(progressThresholdMillis);
-            long t = System.nanoTime();
-            fireEventsInWriteAction(events, appliers, asyncProcessing);
-            t = NANOSECONDS.toMillis(System.nanoTime() - t);
-            if (t > progressThresholdMillis) {
-              LOG.warn("Long VFS change processing (" + t + "ms, " + events.size() + " events): " + StringUtil.trimLog(events.toString(), 10_000));
-            }
-          });
+        app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeCoreBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
+          indicator.setText(IdeCoreBundle.message("progress.text.processing.detected.file.changes", events.size()));
+          ((ProgressIndicatorWithDelayedPresentation)indicator).setDelayInMillis(PROGRESS_THRESHOLD_MILLIS);
+          var t = System.nanoTime();
+          fireEventsInWriteAction(events, appliers, asyncProcessing);
+          t = NANOSECONDS.toMillis(System.nanoTime() - t);
+          if (t > PROGRESS_THRESHOLD_MILLIS) {
+            LOG.warn("Long VFS change processing (" + t + "ms, " + events.size() + " events): " + StringUtil.trimLog(events.toString(), 10_000));
+          }
         });
       }
     }

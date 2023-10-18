@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.MathUtil;
@@ -63,6 +64,7 @@ final class RefreshWorker {
   private final Queue<NewVirtualFile> myRefreshQueue;
   private final Semaphore mySemaphore;
   private final PersistentFS myPersistence = PersistentFS.getInstance();
+  private final FSRecordsImpl myPersistencePeer = ((PersistentFSImpl)myPersistence).peer();
   private volatile boolean myCancelled;
 
   private final AtomicInteger myFullScans = new AtomicInteger(), myPartialScans = new AtomicInteger(), myProcessed = new AtomicInteger();
@@ -391,7 +393,7 @@ final class RefreshWorker {
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(child);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(child) : null;
     myIoTime.addAndGet(System.nanoTime() - t);
-    int nameId = ((PersistentFSImpl)myPersistence).peer().getNameId(name);
+    int nameId = myPersistencePeer.getNameId(name);
     return new ChildInfoImpl(nameId, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
@@ -541,7 +543,7 @@ final class RefreshWorker {
   private ChildInfo @Nullable [] scanChildren(Path root, List<Path> excluded, NewVirtualFile currentDir) {
     // the stack contains a list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
-    int nameId = ((PersistentFSImpl)myPersistence).peer().getNameId("");
+    int nameId = myPersistencePeer.getNameId("");
     ChildInfo fakeRoot = new ChildInfoImpl(nameId, null, null, null);
     stack.push(new SmartList<>(fakeRoot));
     FileVisitor<Path> visitor = new SimpleFileVisitor<>() {
@@ -555,9 +557,9 @@ final class RefreshWorker {
         if (SystemInfoRt.isWindows && attrs.isOther()) {
           return FileVisitResult.SKIP_SUBTREE;  // bypassing NTFS reparse points
         }
-        // on average, this "excluded" array is very small for any particular root, so linear search it is.
+        // on average, this "excluded" array is small for any particular root, so linear search it is.
         if (excluded.contains(dir)) {
-          // skipping excluded roots (just record its attributes nevertheless), even if we have content roots beneath
+          // skipping excluded roots (record its attributes nevertheless), even if we have content roots beneath
           // stop optimization right here - it's too much pain to track all these nested content/excluded/content otherwise
           return FileVisitResult.SKIP_SUBTREE;
         }
@@ -572,7 +574,7 @@ final class RefreshWorker {
         }
         FileAttributes attributes = FileAttributes.fromNio(file, attrs);
         String symLinkTarget = attrs.isSymbolicLink() ? FileUtilRt.toSystemIndependentName(file.toRealPath().toString()) : null;
-        int nameId = ((PersistentFSImpl)myPersistence).peer().getNameId(file.getFileName().toString());
+        int nameId = myPersistencePeer.getNameId(file.getFileName().toString());
         ChildInfo info = new ChildInfoImpl(nameId, attributes, null, symLinkTarget);
         stack.peek().add(info);
         return FileVisitResult.CONTINUE;

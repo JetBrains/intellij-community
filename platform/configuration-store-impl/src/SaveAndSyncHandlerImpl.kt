@@ -44,10 +44,10 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-private val LISTEN_DELAY = 15.milliseconds
-
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
+  private val LISTEN_DELAY = 15.milliseconds
+
   private val refreshRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val saveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -56,6 +56,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   private val refreshSession = AtomicReference<RefreshSession>()
 
+  private val saveAppAndProjectsSettingsTask = SaveTask()
   private val saveQueue = ArrayDeque<SaveTask>()
   private val currentJob = AtomicReference<Job?>()
 
@@ -81,6 +82,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
             }
           }
       }
+
       launch(CoroutineName("save requests flow processing")) {
         // not collectLatest - wait for previous execution
         saveRequests
@@ -103,8 +105,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
                 job.join()
               }
             }
-            catch (ignore: CancellationException) {
-            }
+            catch (_: CancellationException) { }
             finally {
               currentJob.compareAndSet(job, null)
             }
@@ -120,8 +121,8 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   }
 
   /**
-   * If there is already running job, it doesn't mean that queue is processed - maybe paused on delay.
-   * But even if `forceExecuteImmediately = true` specified, job is not re-added.
+   * If there is already running a job, it doesn't mean that queue is processed - maybe paused on delay.
+   * But even if `forceExecuteImmediately = true` specified, the job is not re-added.
    * That's ok - client doesn't expect that `forceExecuteImmediately` means "executes immediately", it means "do save without regular delay".
    */
   private fun requestSave(forceExecuteImmediately: Boolean = false) {
@@ -212,6 +213,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   private suspend fun executeOnIdle() {
     withContext(Dispatchers.EDT) {
+      @Suppress("ForbiddenInSuspectContextMethod")
       ClientId.withClientId(ClientId.ownerId) {
         (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
       }
@@ -284,7 +286,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
           val stateStore = project.stateStore
           val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
-          // update last modified for all project files that were modified between project open and close
+          // update last modified for all project files modified between project open and close
           withContext(Dispatchers.IO) {
             blockingContext {
               ConversionService.getInstance()?.saveConversionResult(path)
@@ -300,9 +302,8 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     return isSavedSuccessfully
   }
 
-  private fun canSyncOrSave(): Boolean {
-    return !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator()
-  }
+  private fun canSyncOrSave(): Boolean =
+    !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator()
 
   override fun scheduleRefresh() {
     externalChangesModificationTracker.incModificationCount()
@@ -312,8 +313,8 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   override fun maybeRefresh(modalityState: ModalityState) {
     if (blockSyncOnFrameActivationCount.get() != 0 || !GeneralSettings.getInstance().isSyncOnFrameActivation) {
       LOG.debug {
-        "vfs refresh rejected, blocked: ${blockSyncOnFrameActivationCount.get() != 0}, " +
-        "isSyncOnFrameActivation: ${GeneralSettings.getInstance().isSyncOnFrameActivation}"
+        "VFS refresh rejected: blocked=${blockSyncOnFrameActivationCount.get() != 0}" +
+        " isSyncOnFrameActivation=${GeneralSettings.getInstance().isSyncOnFrameActivation}"
       }
       return
     }
@@ -327,13 +328,10 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   override fun refreshOpenFiles() {
     val files = getOpenedProjects()
-      .flatMap { project ->
-        FileEditorManager.getInstance(project).selectedEditors.asSequence()
-      }
+      .flatMap { FileEditorManager.getInstance(it).selectedEditors.asSequence() }
       .flatMap { it.filesToRefresh }
       .filter { it is NewVirtualFile }
       .toList()
-
     if (files.isNotEmpty()) {
       // refresh open files synchronously, so it doesn't wait for a potentially longish refresh request in the queue to finish
       RefreshQueue.getInstance().refresh(false, false, null, files)
@@ -369,22 +367,16 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     blockSyncOnFrameActivationCount.decrementAndGet()
     LOG.debug("sync unblocked")
   }
-}
 
-private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask()
+  @NlsContexts.ProgressTitle
+  private fun getProgressTitle(componentManager: ComponentManager): String =
+    if (componentManager is Application) CommonBundle.message("title.save.app") else CommonBundle.message("title.save.project")
 
-@NlsContexts.ProgressTitle
-private fun getProgressTitle(componentManager: ComponentManager): String {
-  return if (componentManager is Application) CommonBundle.message("title.save.app") else CommonBundle.message("title.save.project")
-}
-
-private fun <T> generalSettingFlow(settings: GeneralSettings,
-                                   name: GeneralSettings.PropertyNames,
-                                   getter: (GeneralSettings) -> T): Flow<T> {
-  return merge(
-    settings.propertyChangedFlow
-      .filter { it == name }
-      .map { getter(GeneralSettings.getInstance()) },
-    flowOf(getter(GeneralSettings.getInstance())),
-  )
+  private fun <T> generalSettingFlow(settings: GeneralSettings, name: GeneralSettings.PropertyNames, getter: (GeneralSettings) -> T): Flow<T> =
+    merge(
+      settings.propertyChangedFlow
+        .filter { it == name }
+        .map { getter(GeneralSettings.getInstance()) },
+      flowOf(getter(GeneralSettings.getInstance())),
+    )
 }

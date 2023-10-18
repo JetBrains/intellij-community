@@ -76,11 +76,11 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     if (LOG.isDebugEnabled()) LOG.debug("Queue session with id=" + session.hashCode());
     var queuedAt = System.nanoTime();
     myQueue.execute(() -> {
-      long timeInQueue = NANOSECONDS.toMillis(System.nanoTime() - queuedAt);
+      var timeInQueue = NANOSECONDS.toMillis(System.nanoTime() - queuedAt);
       startIndicator(IdeCoreBundle.message("file.synchronize.progress"));
       var events = new AtomicReference<Collection<VFileEvent>>();
       try {
-        String title = IdeCoreBundle.message("progress.title.doing.file.refresh.0", session);
+        var title = IdeCoreBundle.message("progress.title.doing.file.refresh.0", session);
         HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, title, () -> events.set(runRefreshSession(session, timeInQueue)));
       }
       finally {
@@ -155,11 +155,11 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   private static Pair<List<CompoundVFileEvent>, List<AsyncFileListener.ChangeApplier>> runAsyncListeners(Collection<VFileEvent> events) {
     var compoundEvents = ContainerUtil.mapNotNull(events, e -> {
-      VirtualFile file = e instanceof VFileCreateEvent ? ((VFileCreateEvent)e).getParent() : e.getFile();
+      var file = e instanceof VFileCreateEvent ? ((VFileCreateEvent)e).getParent() : e.getFile();
       return file == null || file.isValid() ? new CompoundVFileEvent(e) : null;
     });
     var allEvents = ContainerUtil.flatMap(compoundEvents, e -> {
-      List<VFileEvent> toMap = new SmartList<>(e.getInducedEvents());
+      var toMap = new SmartList<>(e.getInducedEvents());
       toMap.add(e.getFileEvent());
       return toMap;
     });
@@ -196,7 +196,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   public static boolean isRefreshInProgress() {
-    RefreshQueueImpl refreshQueue = (RefreshQueueImpl)RefreshQueue.getInstance();
+    var refreshQueue = (RefreshQueueImpl)RefreshQueue.getInstance();
     return !refreshQueue.mySessions.isEmpty() || !((CoroutineDispatcherBackedExecutor)refreshQueue.myQueue).isEmpty();
   }
 
