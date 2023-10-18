@@ -11,33 +11,29 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.ex.PathUtilEx
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.containers.SLRUMap
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.base.util.writeWithCheckCanceled
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.script.ScriptTemplatesProvider
 import org.jetbrains.kotlin.scripting.definitions.*
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
+import org.jetbrains.kotlin.utils.addToStdlib.measureTimeMillisWithResult
 import java.io.File
-import java.nio.file.Path
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.script.dependencies.Environment
-import kotlin.script.dependencies.ScriptContents
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
-import kotlin.concurrent.read
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.host.toScriptSource
 
@@ -60,6 +56,62 @@ internal class LoadScriptDefinitionsStartupActivity : ProjectActivity {
 }
 
 class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinitionProvider(), Disposable {
+
+    private val delegate = if (loadScriptDefinitionsOnDemand) NewLogicDelegate(project) else OldLogicDelegate(project)
+
+    override val currentDefinitions: Sequence<ScriptDefinition>
+        get() = delegate.currentDefinitions
+
+
+    override fun findDefinition(script: SourceCode): ScriptDefinition? = delegate.findDefinition(script)
+
+    @Deprecated("Migrating to configuration refinement", level = DeprecationLevel.ERROR)
+    override fun findScriptDefinition(fileName: String): KotlinScriptDefinition? = delegate.findScriptDefinition(fileName)
+
+    fun getAllDefinitions(): List<ScriptDefinition> = delegate.getAllDefinitions()
+
+    fun reloadScriptDefinitionsIfNeeded() = delegate.reloadScriptDefinitionsIfNeeded()
+
+    fun reloadScriptDefinitions() = delegate.reloadScriptDefinitions()
+
+    fun isReady(): Boolean = delegate.isReady()
+
+    fun reloadDefinitionsBy(source: ScriptDefinitionsSource): List<ScriptDefinition> = delegate.reloadDefinitionsBy(source)
+
+    fun reorderScriptDefinitions() = delegate.reorderScriptDefinitions()
+
+    override fun getDefaultDefinition(): ScriptDefinition = delegate.getDefaultDefinition()
+
+    override fun dispose() = Disposer.dispose(delegate)
+
+    companion object {
+        fun getInstance(project: Project): ScriptDefinitionsManager =
+            project.service<ScriptDefinitionProvider>() as ScriptDefinitionsManager
+    }
+}
+
+abstract class LogicDelegate : LazyScriptDefinitionProvider(), Disposable {
+
+    public override val currentDefinitions: Sequence<ScriptDefinition>
+        get() = error("subclass implementation is required")
+
+    override fun dispose() {}
+
+    abstract fun reloadScriptDefinitionsIfNeeded(): List<ScriptDefinition>
+
+    abstract fun reloadScriptDefinitions(): List<ScriptDefinition>
+
+    abstract fun isReady(): Boolean
+
+    abstract fun getAllDefinitions(): List<ScriptDefinition>
+
+    abstract fun reorderScriptDefinitions()
+
+    abstract fun reloadDefinitionsBy(source: ScriptDefinitionsSource): List<ScriptDefinition>
+}
+
+class OldLogicDelegate(private val project: Project) : LogicDelegate() {
+
     private val definitionsLock = ReentrantReadWriteLock()
     private val definitionsBySource = mutableMapOf<ScriptDefinitionsSource, List<ScriptDefinition>>()
 
@@ -84,16 +136,12 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         configurations?.tryGetScriptDefinitionFast(locationId)?.let { fastPath -> return fastPath }
         scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
 
-        if (loadScriptDefinitionsOnDemand) {
-            reloadScriptDefinitionsIfNeeded()
-        }
-
         val definition =
             if (isScratchFile(script)) {
                 // Scratch should always have the default script definition
                 getDefaultDefinition()
             } else {
-                if (definitions == null && !loadScriptDefinitionsOnDemand) return DeferredScriptDefinition(script, this)
+                if (definitions == null) return DeferredScriptDefinition(script, this)
                 super.findDefinition(script) // Some embedded scripts (e.g., Kotlin Notebooks) have their own definition
                     ?: if (isEmbeddedScript(script)) getDefaultDefinition() else return null
             }
@@ -133,11 +181,11 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         return findDefinition(File(fileName).toScriptSource())?.legacyDefinition
     }
 
-    fun reloadDefinitionsBy(source: ScriptDefinitionsSource) {
+    override fun reloadDefinitionsBy(source: ScriptDefinitionsSource): List<ScriptDefinition> {
         definitionsLock.writeWithCheckCanceled {
             if (definitions == null) {
                 sourcesToReload.add(source)
-                return // not loaded yet
+                return emptyList() // not loaded yet
             }
             if (source !in definitionsBySource) error("Unknown script definition source: $source")
         }
@@ -151,6 +199,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
             updateDefinitions()
         }
         updateDefinitionsResult?.apply()
+        return definitions ?: emptyList()
     }
 
     override val currentDefinitions: Sequence<ScriptDefinition>
@@ -171,14 +220,14 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         return fromNewEp.dropLast(1) + fromDeprecatedEP + fromNewEp.last()
     }
 
-    fun reloadScriptDefinitionsIfNeeded() {
-        definitions ?: loadScriptDefinitions()
+    override fun reloadScriptDefinitionsIfNeeded(): List<ScriptDefinition> {
+        return definitions ?: loadScriptDefinitions()
     }
 
-    fun reloadScriptDefinitions() = loadScriptDefinitions()
+    override fun reloadScriptDefinitions(): List<ScriptDefinition> = loadScriptDefinitions()
 
-    private fun loadScriptDefinitions() {
-        if (project.isDisposed) return
+    private fun loadScriptDefinitions(): List<ScriptDefinition> {
+        if (project.isDisposed) return emptyList()
 
         val newDefinitionsBySource = getSources().associateWith { it.safeGetDefinitions() }
 
@@ -198,9 +247,11 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
                 copy
             }
         }?.forEach(::reloadDefinitionsBy)
+
+        return definitions ?: emptyList()
     }
 
-    fun reorderScriptDefinitions() {
+    override fun reorderScriptDefinitions() {
         val scriptingSettings = kotlinScriptingSettingsSafe() ?: return
         val updateDefinitionsResult = run {
             definitionsLock.writeWithCheckCanceled {
@@ -223,14 +274,12 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         }
     }
 
-    fun getAllDefinitions(): List<ScriptDefinition> = definitions ?: run {
+    override fun getAllDefinitions(): List<ScriptDefinition> = definitions ?: run {
         reloadScriptDefinitions()
         definitions!!
     }
 
-    fun isReady(): Boolean {
-        if (loadScriptDefinitionsOnDemand) return true
-
+    override fun isReady(): Boolean {
         if (definitions == null) return false
         val keys = definitionsLock.writeWithCheckCanceled { definitionsBySource.keys }
         return keys.all { source ->
@@ -309,9 +358,205 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         scriptDefinitionsCache.clear()
         configurations = null
     }
+}
 
-    companion object {
-        fun getInstance(project: Project): ScriptDefinitionsManager =
-            project.service<ScriptDefinitionProvider>() as ScriptDefinitionsManager
+
+class NewLogicDelegate(private val project: Project) : LogicDelegate() {
+
+    private val definitionsLock = ReentrantLock()
+
+    // @GuardedBy("definitionsLock")
+    // Support for insertion order is crucial because 'getSources()' is based on EP order in XML (default configuration source goes last)
+    private val definitionsBySource = mutableMapOf<ScriptDefinitionsSource, List<ScriptDefinition>>()
+
+    @Volatile
+    private var definitions: List<ScriptDefinition>? = null
+
+    private val failedContributorsHashes = ConcurrentHashMap.newKeySet<Int>()
+
+    // cache service as it's getter is on the hot path
+    // it is safe, since both services are in same plugin
+    @Volatile
+    private var configurations: CompositeScriptConfigurationManager? =
+        ScriptConfigurationManager.compositeScriptConfigurationManager(project)
+
+    override fun findDefinition(script: SourceCode): ScriptDefinition? {
+        val locationId = script.locationId ?: return null
+
+        configurations?.tryGetScriptDefinitionFast(locationId)?.let { fastPath -> return fastPath }
+
+        getOrLoadDefinitions()
+
+        val definition =
+            if (isScratchFile(script)) {
+                // Scratch should always have the default script definition
+                getDefaultDefinition()
+            } else {
+                super.findDefinition(script) // Some embedded scripts (e.g., Kotlin Notebooks) have their own definition
+                    ?: if (isEmbeddedScript(script)) getDefaultDefinition() else return null
+            }
+
+        return definition
+    }
+
+
+    private fun isScratchFile(script: SourceCode): Boolean {
+        val virtualFile =
+            if (script is VirtualFileScriptSource) script.virtualFile
+            else script.locationId?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
+        return virtualFile != null && ScratchFileService.getInstance().getRootType(virtualFile) is ScratchRootType
+    }
+
+    private fun isEmbeddedScript(code: SourceCode): Boolean {
+        val scriptSource = code as? VirtualFileScriptSource ?: return false
+        val virtualFile = scriptSource.virtualFile
+        return virtualFile is VirtualFileWindow && virtualFile.fileType == KotlinFileType.INSTANCE
+    }
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun findScriptDefinition(fileName: String): KotlinScriptDefinition? {
+        @Suppress("DEPRECATION")
+        return findDefinition(File(fileName).toScriptSource())?.legacyDefinition
+    }
+
+    override fun reloadDefinitionsBy(source: ScriptDefinitionsSource) = reloadDefinitionsInternal(listOf(source))
+
+    private fun reloadDefinitionsInternal(sources: List<ScriptDefinitionsSource>): List<ScriptDefinition> {
+        val scriptingSettings = kotlinScriptingSettingsSafe() ?: error("Kotlin script setting not found")
+
+        return definitionsLock.withLock {
+            val (ms, newDefinitionsBySource) = measureTimeMillisWithResult {
+                sources.associateWith {
+                    val (ms, definitions) = measureTimeMillisWithResult { it.safeGetDefinitions() }
+                    scriptingDebugLog { "Loaded definitions: time = $ms ms, source = ${it.javaClass.name}, definitions = ${definitions.map { it.name }}" }
+                    definitions
+                }
+            }
+
+            scriptingDebugLog { "Definitions loading total time: $ms ms" }
+
+            if (newDefinitionsBySource.isEmpty()) return@withLock emptyList()
+
+            definitionsBySource.putAll(newDefinitionsBySource)
+
+            definitions = definitionsBySource.values.flattenTo(mutableListOf())
+                .onEach { it.order = scriptingSettings.getScriptDefinitionOrder(it) }
+                .sortedBy(ScriptDefinition::order)
+
+            applyDefinitionsUpdate()
+
+            definitions ?: emptyList()
+        }
+    }
+
+    override val currentDefinitions: Sequence<ScriptDefinition>
+        get() {
+            val scriptingSettings = kotlinScriptingSettingsSafe() ?: return emptySequence()
+            return getOrLoadDefinitions().asSequence().filter { scriptingSettings.isScriptDefinitionEnabled(it) }
+        }
+
+    private fun getSources(): List<ScriptDefinitionsSource> {
+        @Suppress("DEPRECATION")
+        val fromDeprecatedEP = project.extensionArea.getExtensionPoint(ScriptTemplatesProvider.EP_NAME).extensions.toList()
+            .map { ScriptTemplatesProviderAdapter(it).asSource() }
+        val fromNewEp = ScriptDefinitionContributor.EP_NAME.getPoint(project).extensions.toList()
+            .map { it.asSource() }
+        return fromNewEp.dropLast(1) + fromDeprecatedEP + fromNewEp.last()
+    }
+
+    private fun getOrLoadDefinitions(): List<ScriptDefinition> {
+        return definitions ?: reloadDefinitionsInternal(getSources())
+    }
+
+    override fun reloadScriptDefinitionsIfNeeded(): List<ScriptDefinition> = getOrLoadDefinitions()
+
+    override fun reloadScriptDefinitions(): List<ScriptDefinition> = reloadDefinitionsInternal(getSources())
+
+    override fun reorderScriptDefinitions() {
+        val scriptingSettings = kotlinScriptingSettingsSafe() ?: return
+        if (definitions == null) return
+
+        definitionsLock.withLock {
+            definitions?.let { list ->
+                list.forEach {
+                    it.order = scriptingSettings.getScriptDefinitionOrder(it)
+                }
+                definitions = list.sortedBy(ScriptDefinition::order)
+            }
+            applyDefinitionsUpdate()
+        }
+    }
+
+    private fun kotlinScriptingSettingsSafe(): KotlinScriptingSettings? {
+        return runReadAction {
+            if (!project.isDisposed) KotlinScriptingSettings.getInstance(project) else null
+        }
+    }
+
+    override fun getAllDefinitions(): List<ScriptDefinition> = getOrLoadDefinitions()
+
+    override fun isReady(): Boolean = true
+
+    override fun getDefaultDefinition(): ScriptDefinition {
+        val bundledScriptDefinitionContributor = ScriptDefinitionContributor.find<BundledScriptDefinitionContributor>(project)
+            ?: error("StandardScriptDefinitionContributor should be registered in plugin.xml")
+        return ScriptDefinition.FromLegacy(getScriptingHostConfiguration(), bundledScriptDefinitionContributor.getDefinitions().last())
+    }
+
+    private fun applyDefinitionsUpdate() {
+        associateFileExtensionsIfNeeded()
+        ScriptConfigurationManager.getInstance(project).updateScriptDefinitionReferences()
+    }
+
+    private fun associateFileExtensionsIfNeeded() {
+        if (project.isDisposed) return
+
+        clearCache()
+
+        val fileTypeManager = FileTypeManager.getInstance()
+        val newExtensions = getKnownFilenameExtensions().toSet().filter {
+            val fileTypeByExtension = fileTypeManager.getFileTypeByFileName("xxx.$it")
+            val notKnown = fileTypeByExtension != KotlinFileType.INSTANCE
+            if (notKnown) {
+                scriptingWarnLog("extension $it file type [${fileTypeByExtension.name}] is not registered as ${KotlinFileType.INSTANCE.name}")
+            }
+            notKnown
+        }.toSet()
+
+        if (newExtensions.isNotEmpty()) {
+            scriptingWarnLog("extensions ${newExtensions} is about to be registered as ${KotlinFileType.INSTANCE.name}")
+            // Register new file extensions
+            ApplicationManager.getApplication().invokeLater {
+                runWriteAction {
+                    newExtensions.forEach {
+                        fileTypeManager.associateExtension(KotlinFileType.INSTANCE, it)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun ScriptDefinitionsSource.safeGetDefinitions(): List<ScriptDefinition> {
+        if (!failedContributorsHashes.contains(hashCode())) try {
+            return definitions.toList()
+        } catch (t: Throwable) {
+            if (t is ControlFlowException) throw t
+            // reporting failed loading only once
+            failedContributorsHashes.add(hashCode())
+            scriptingErrorLog("Cannot load script definitions from $this: ${t.cause?.message ?: t.message}", t)
+        }
+        return emptyList()
+    }
+
+    override fun dispose() {
+        super.dispose()
+
+        clearCache()
+
+        definitionsBySource.clear()
+        definitions = null
+        failedContributorsHashes.clear()
+        configurations = null
     }
 }
+
