@@ -471,5 +471,5 @@ open class ProjectRootManagerImpl(val project: Project,
   private val moduleManager: ModuleManager
     get() = ModuleManager.getInstance(project)
 
-  override fun markRootsForRefresh() {}
+  override fun markRootsForRefresh(): List<VirtualFile> = emptyList()
 }

@@ -176,7 +176,7 @@ public final class FileRefresher implements Disposable {
         session = this.session;
         this.session = null;
       }
-      if (session != null) RefreshQueue.getInstance().cancelSession(session.getId());
+      if (session != null) session.cancel();
     }
   }
 }

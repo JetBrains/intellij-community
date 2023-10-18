@@ -4,7 +4,7 @@ package com.intellij.util
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -18,7 +18,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  *
  * @param ctx additional context for the cleaner-coroutine, e.g. [CoroutineName]
  */
-@Experimental
+@ApiStatus.Experimental
 fun CoroutineScope.awaitCancellationAndInvoke(ctx: CoroutineContext = EmptyCoroutineContext, action: suspend CoroutineScope.() -> Unit) {
   requireNoJob(ctx)
   // UNDISPATCHED guarantees that the coroutine will execute until the first suspension point (awaitCancellation)
@@ -34,5 +34,15 @@ fun CoroutineScope.awaitCancellationAndInvoke(ctx: CoroutineContext = EmptyCorou
         action()
       }
     }
+  }
+}
+
+/**
+ * Same as [awaitCancellationAndInvoke], but suitable for Java clients.
+ */
+@ApiStatus.Internal
+fun CoroutineScope.awaitCancellationAndRun(action: Runnable) {
+  awaitCancellationAndInvoke {
+    action.run()
   }
 }

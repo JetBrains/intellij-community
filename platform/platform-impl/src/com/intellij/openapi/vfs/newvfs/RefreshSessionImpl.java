@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -37,12 +36,10 @@ final class RefreshSessionImpl extends RefreshSession {
   private static final long DURATION_REPORT_THRESHOLD_MS =
     SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", -1) * 1_000L;
 
-  private static final AtomicLong ID_COUNTER = new AtomicLong(0);
-
-  private final long myId = ID_COUNTER.incrementAndGet();
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
   private final Runnable myFinishRunnable;
+  private final ModalityState myModality;
   private final @Nullable Throwable myStartTrace;
   private final Semaphore mySemaphore = new Semaphore();
 
@@ -50,8 +47,7 @@ final class RefreshSessionImpl extends RefreshSession {
   private final List<VFileEvent> myEvents = new ArrayList<>();
   private volatile RefreshWorker myWorker;
   private volatile boolean myCancelled;
-  private final ModalityState myModality;
-  private boolean myLaunched;
+  private volatile boolean myLaunched;
 
   RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState modality) {
     myIsAsync = async;
@@ -76,11 +72,6 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   @Override
-  public long getId() {
-    return myId;
-  }
-
-  @Override
   public void addFile(@NotNull VirtualFile file) {
     checkState();
     doAddFile(file);
@@ -93,6 +84,7 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   private void checkState() {
+    if (myCancelled) throw new IllegalStateException("Already cancelled");
     if (myLaunched) throw new IllegalStateException("Already launched");
   }
 
@@ -105,23 +97,26 @@ final class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  @Override
-  public boolean isAsynchronous() {
+  boolean isAsynchronous() {
     return myIsAsync;
   }
 
   @Override
   public void launch() {
     checkState();
+    if (myWorkQueue.isEmpty() && myEvents.isEmpty()) {
+      if (myFinishRunnable == null) return;
+      LOG.warn(new Exception("no files to refresh"));
+    }
     myLaunched = true;
     mySemaphore.down();
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }
 
-  void scan(long timeInQueue) {
-    if (myWorkQueue.isEmpty()) return;
+  Collection<VFileEvent> scan(long timeInQueue) {
+    if (myWorkQueue.isEmpty()) return myEvents;
     var workQueue = myWorkQueue;
-    myWorkQueue = new ArrayList<>();
+    myWorkQueue = List.of();
     var forceRefresh = !myIsRecursive && !myIsAsync;  // shallow sync refresh (e.g., project config files on open)
 
     var fs = LocalFileSystem.getInstance();
@@ -159,18 +154,20 @@ final class RefreshSessionImpl extends RefreshSession {
     }
 
     int count = 0;
+    var events = new ArrayList<VFileEvent>();
     do {
+      if (myCancelled) break;
       if (LOG.isTraceEnabled()) LOG.trace("try=" + count);
 
       var worker = new RefreshWorker(refreshRoots, myIsRecursive);
       myWorker = worker;
-      myEvents.addAll(worker.scan());
+      events.addAll(worker.scan());
       myWorker = null;
 
       count++;
-      if (LOG.isTraceEnabled()) LOG.trace("events=" + myEvents.size());
+      if (LOG.isTraceEnabled()) LOG.trace("events=" + events.size());
     }
-    while (!myCancelled && myIsRecursive && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
+    while (myIsRecursive && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
 
     t = NANOSECONDS.toMillis(System.nanoTime() - t);
     int localRoots = 0, archiveRoots = 0, otherRoots = 0;
@@ -181,19 +178,22 @@ final class RefreshSessionImpl extends RefreshSession {
     }
     VfsUsageCollector.logRefreshSession(myIsRecursive, localRoots, archiveRoots, otherRoots, myCancelled, timeInQueue, t, count);
     if (LOG.isTraceEnabled()) {
-      LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, tries " + count + ", events " + myEvents);
+      LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, tries " + count + ", events " + events);
     }
     else if (snapshot != null && t > DURATION_REPORT_THRESHOLD_MS) {
       snapshot.logResponsivenessSinceCreation(String.format(
         "Refresh session (queue size: %s, scanned: %s, result: %s, tries: %s, events: %d)",
-        workQueue.size(), types, myCancelled ? "cancelled" : "done", count, myEvents.size()));
+        workQueue.size(), types, myCancelled ? "cancelled" : "done", count, events.size()));
     }
+
+    return events.isEmpty() ? List.of() : new LinkedHashSet<>(events);
   }
 
-  void cancel() {
+  @Override
+  public void cancel() {
     myCancelled = true;
 
-    RefreshWorker worker = myWorker;
+    var worker = myWorker;
     if (worker != null) {
       worker.cancel();
     }
@@ -253,26 +253,12 @@ final class RefreshSessionImpl extends RefreshSession {
     CancellationUtil.waitForMaybeCancellable(mySemaphore);
   }
 
-  Semaphore getSemaphore() {
-    return mySemaphore;
-  }
-
   @NotNull ModalityState getModality() {
     return myModality;
   }
 
-  boolean hasEvents() {
-    return !myEvents.isEmpty();
-  }
-
-  @NotNull List<VFileEvent> getEvents() {
-    return hasEvents() ? new ArrayList<>(new LinkedHashSet<>(myEvents)) : List.of();
-  }
-
   @Override
   public String toString() {
-    int size = myWorkQueue.size();
-    return "RefreshSessionImpl: " + size + " root(s) in the queue" +
-           (size == 0 ? "" : ": " + ContainerUtil.getFirstItem(myWorkQueue)) + (size >= 2 ? ", ..." : "");
+    return "RefreshSessionImpl: canceled=" + myCancelled + " launched=" + myLaunched + " queue=" + myWorkQueue.size();
   }
 }

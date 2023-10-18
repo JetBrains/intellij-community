@@ -737,7 +737,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       RefreshSession session = RefreshQueue.getInstance().createSession(false, true, null);
       String stopAt = top.getName() + "/sub_2/sub_2";
       RefreshQueueImpl.setTestListener(file -> {
-        if (file.getPath().endsWith(stopAt)) RefreshQueue.getInstance().cancelSession(session.getId());
+        if (file.getPath().endsWith(stopAt)) session.cancel();
       });
       session.addFile(topDir);
       session.launch();

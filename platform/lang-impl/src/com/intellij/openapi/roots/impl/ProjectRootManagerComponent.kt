@@ -390,16 +390,14 @@ open class ProjectRootManagerComponent(project: Project,
     }
   }
 
-  override fun markRootsForRefresh() {
+  override fun markRootsForRefresh(): List<VirtualFile> {
     val paths = CollectionFactory.createFilePathSet()
     collectModuleWatchRoots(paths, paths, false)
-    val fs = LocalFileSystem.getInstance()
-    for (path in paths) {
-      val root = fs.findFileByPath(path)
-      if (root is NewVirtualFile) {
-        root.markDirtyRecursively()
-      }
-    }
+    val roots = paths.mapNotNull(LocalFileSystem.getInstance()::findFileByPath)
+    roots.asSequence()
+      .filterIsInstance(NewVirtualFile::class.java)
+      .forEach(NewVirtualFile::markDirtyRecursively)
+    return roots
   }
 
   override fun dispose() {}

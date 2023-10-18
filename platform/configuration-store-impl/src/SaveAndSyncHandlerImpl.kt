@@ -26,6 +26,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.vfs.newvfs.RefreshSession
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -53,8 +54,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
 
-  @Volatile
-  private var refreshSessionId = -1L
+  private val refreshSession = AtomicReference<RefreshSession>()
 
   private val saveQueue = ArrayDeque<SaveTask>()
   private val currentJob = AtomicReference<Job?>()
@@ -115,9 +115,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     }
 
     coroutineScope.awaitCancellationAndInvoke {
-      if (refreshSessionId != -1L) {
-        RefreshQueue.getInstance().cancelSession(refreshSessionId)
-      }
+      refreshSession.get()?.cancel()
     }
   }
 
@@ -320,12 +318,9 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       return
     }
 
-    val queue = RefreshQueue.getInstance()
-    queue.cancelSession(refreshSessionId)
-
-    val session = queue.createSession(true, true, null, modalityState)
+    val session = RefreshQueue.getInstance().createSession(true, true, null, modalityState)
     session.addAllFiles(*ManagingFS.getInstance().localRoots)
-    refreshSessionId = session.id
+    refreshSession.getAndSet(session)?.cancel()
     session.launch()
     LOG.debug("vfs refreshed")
   }
