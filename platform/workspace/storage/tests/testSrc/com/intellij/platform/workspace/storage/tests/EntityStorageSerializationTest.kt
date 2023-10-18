@@ -316,9 +316,6 @@ private val expectedKryoRegistration = """
   com.intellij.util.containers.ContainerUtilRt#EmptyList
   com.intellij.util.containers.MostlySingularMultiMap#EmptyMap
   com.intellij.util.containers.MultiMap#EmptyMap
-  com.intellij.platform.workspace.storage.impl.AnonymizedEntitySource
-  com.intellij.platform.workspace.storage.impl.MatchedEntitySource
-  com.intellij.platform.workspace.storage.impl.UnmatchedEntitySource
   java.util.UUID
 """.trimIndent()
 
