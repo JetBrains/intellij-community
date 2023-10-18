@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.application
+import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
@@ -30,6 +31,10 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
+  private val requestIds = ContainerUtil.createConcurrentWeakMap<InlineCompletionRequest, Long>()
+
+  fun getRequestId(request: InlineCompletionRequest): Long = requestIds[request] ?: -1
+
   class Listener : InlineCompletionEventAdapter {
     private val lock = ReentrantLock()
     private var invocationTracker: InvocationTracker? = null
@@ -37,6 +42,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     override fun onRequest(event: InlineCompletionEventType.Request) = lock.withLock {
       invocationTracker = InvocationTracker(event).also {
+        requestIds[event.request] = it.requestId
         application.runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
       }
     }
