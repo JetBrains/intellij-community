@@ -12,17 +12,17 @@ class OpentelemetryJsonParser(private val spanFilter: SpanFilter) {
   private fun getSpans(file: File): JsonNode {
     val spanData: JsonNode? = withRetry(messageOnFailure = "Failure during spans extraction from OpenTelemetry json file",
                                         retries = 5,
-                                        printFailuresMode = PrintFailuresMode.LAST,
+                                        printFailuresMode = PrintFailuresMode.ONLY_LAST_FAILURE,
                                         delay = 300.milliseconds) {
       val json = file.readText()
-      //TODO workaround for non valid intermediate json
-      val root = jacksonObjectMapper().readTree(if (json.endsWith(",")) json else "$json]}]}")
+
+      val root = jacksonObjectMapper().readTree(json)
       val data = root.get("data")
       if (data == null || data.isEmpty) {
-        throw IllegalArgumentException("Not 'data' node in json")
+        throw IllegalArgumentException("No 'data' node in json at path $file")
       }
       if (data[0] == null || data[0].isEmpty) {
-        throw IllegalArgumentException("First data element is absent")
+        throw IllegalArgumentException("First data element is absent in json file $file")
       }
 
       return@withRetry data

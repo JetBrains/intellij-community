@@ -7,21 +7,18 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 enum class PrintFailuresMode {
-  /** Print all exceptions */
-  ALL,
+  /** Print exceptions from each retry */
+  ALL_FAILURES,
 
-  /** Print only first exception */
-  FIRST,
-
-  /** Print only the last exception */
-  LAST;
+  /** Print only the very last exception from the latest retry */
+  ONLY_LAST_FAILURE;
 }
 
 
 /** @return T - if successful; null - otherwise */
 suspend fun <T> withRetryAsync(messageOnFailure: String,
                                retries: Long = 3,
-                               printFailuresMode: PrintFailuresMode = PrintFailuresMode.ALL,
+                               printFailuresMode: PrintFailuresMode = PrintFailuresMode.ALL_FAILURES,
                                delay: Duration = 10.seconds,
                                retryAction: suspend () -> T): T? {
 
@@ -36,12 +33,8 @@ suspend fun <T> withRetryAsync(messageOnFailure: String,
       if (messageOnFailure.isNotBlank()) logError(messageOnFailure)
 
       when (printFailuresMode) {
-        PrintFailuresMode.ALL -> t.printStackTrace()
-        PrintFailuresMode.FIRST -> if (failureCount == 1L) {
-          logError("First failure:")
-          t.printStackTrace()
-        }
-        PrintFailuresMode.LAST -> if (failureCount == retries) {
+        PrintFailuresMode.ALL_FAILURES -> t.printStackTrace()
+        PrintFailuresMode.ONLY_LAST_FAILURE -> if (failureCount == retries) {
           logError("Last failure:")
           t.printStackTrace()
         }
@@ -67,7 +60,7 @@ open class NoRetryException(message: String, cause: Throwable?) : IllegalStateEx
 fun <T> withRetry(
   messageOnFailure: String,
   retries: Long = 3,
-  printFailuresMode: PrintFailuresMode = PrintFailuresMode.ALL,
+  printFailuresMode: PrintFailuresMode = PrintFailuresMode.ALL_FAILURES,
   delay: Duration = 10.seconds,
   retryAction: () -> T
 ): T? = runBlocking(Dispatchers.IO) {
