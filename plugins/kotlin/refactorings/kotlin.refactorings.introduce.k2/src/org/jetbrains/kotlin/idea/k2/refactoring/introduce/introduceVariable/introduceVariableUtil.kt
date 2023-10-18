@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.getParameterNames
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 
 internal fun chooseApplicableComponentNames(
@@ -16,8 +15,6 @@ internal fun chooseApplicableComponentNames(
     editor: Editor?,
     callback: (List<String>) -> Unit
 ) {
-    if (contextExpression !is KtDestructuringDeclaration) return callback(emptyList())
-
     val componentNames = analyzeInModalWindow(contextExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
         getParameterNames(contextExpression)
     } ?: return callback(emptyList())

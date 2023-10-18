@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun test() {
     <selection>Dimension(1, 2)</selection>
 }
