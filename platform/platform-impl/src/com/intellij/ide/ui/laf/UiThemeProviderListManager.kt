@@ -77,12 +77,11 @@ class UiThemeProviderListManager {
     return getLaFs().firstOrNull { it.name == name }
   }
 
-  fun findThemeById(id: String): UIThemeLookAndFeelInfo? {
-    return themeDescriptors.firstOrNull { it.id == id }?.theme?.get()
-  }
+  fun findThemeById(id: String): UIThemeLookAndFeelInfo? =
+    findThemeSupplierById(id)?.get()
 
   private fun findThemeBeanHolderById(id: String): UITheme? {
-    return themeDescriptors.firstOrNull { it.id == id }?.theme?.get()?.theme
+    return findLaFById(id)?.theme?.get()?.theme
   }
 
   internal fun findDefaultParent(isDark: Boolean, themeId: String): UITheme? {
@@ -100,13 +99,13 @@ class UiThemeProviderListManager {
   }
 
   fun findThemeSupplierById(id: String): Supplier<out UIThemeLookAndFeelInfo?>? {
-    return themeDescriptors.firstOrNull { it.id == id }?.theme
+    return findLaFById(id)?.theme
   }
 
   internal fun getDescriptors(): List<LafEntry> = themeDescriptors
 
   fun getThemeJson(id: String): ByteArray? {
-    val entry = themeDescriptors.firstOrNull { it.id == id } ?: return null
+    val entry = findLaFById(id) ?: return null
     return entry.bean.getThemeJson(entry.pluginDescriptor)
   }
 
@@ -142,7 +141,18 @@ class UiThemeProviderListManager {
     return oldLaF.theme.get()
   }
 
-  private fun findLaFById(id: String) = themeDescriptors.firstOrNull { it.id == id }
+  private fun findLaFById(id: String): LafEntry? {
+    fun lookUp(id: String) =
+      themeDescriptors.firstOrNull { it.id == id }
+
+    val entry = lookUp(id)
+    if (entry != null) return entry
+    return UiThemeRemapper.EP_NAME.filterableLazySequence()
+      .firstNotNullOfOrNull {
+        val remappedId = it.instance?.mapLaFId(id)
+        remappedId?.let(::lookUp)
+      }
+  }
 
   private fun findLaFByProviderId(provider: UIThemeProvider) = provider.id?.let { findLaFById(it) }
 }
