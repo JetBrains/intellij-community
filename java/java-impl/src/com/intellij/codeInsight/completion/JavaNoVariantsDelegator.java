@@ -203,7 +203,9 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
         if (ref != null) {
           for (LookupElement item : JavaSmartCompletionContributor.completeReference(position, ref, filter, true, true, parameters,
                                                                                      result.getPrefixMatcher())) {
-            LookupElement chain = highlighter.highlightIfNeeded(null, new JavaChainLookupElement(base, item, separator), item.getObject());
+            if (!JavaChainLookupElement.isReasonableChain(base, item)) continue;
+            JavaChainLookupElement chainedElement = new JavaChainLookupElement(base, item, separator);
+            LookupElement chain = highlighter.highlightIfNeeded(null, chainedElement, item.getObject());
             if (JavaCompletionContributor.shouldInsertSemicolon(position)) {
               chain = TailTypeDecorator.withTail(chain, TailTypes.semicolonType());
             }
