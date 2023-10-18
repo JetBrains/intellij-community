@@ -186,6 +186,11 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressionChecker"
             serviceImplementation="org.jetbrains.kotlin.idea.inspections.suppress.KotlinK2SuppressionChecker"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompilationInterceptor"
+            serviceImplementation="org.jetbrains.kotlin.idea.stubindex.K2KotlinBuiltInDecompilationInterceptor"
+    />
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
