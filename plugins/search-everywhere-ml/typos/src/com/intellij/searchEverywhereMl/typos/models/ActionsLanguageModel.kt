@@ -10,9 +10,15 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.searchEverywhereMl.typos.SearchEverywhereStringToken
+import com.intellij.searchEverywhereMl.typos.TyposBundle
 import com.intellij.searchEverywhereMl.typos.isTypoFixingEnabled
 import com.intellij.searchEverywhereMl.typos.splitText
 import com.intellij.serviceContainer.NonInjectable
@@ -53,7 +59,11 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
 
   init {
     languageModelComputationJob = coroutineScope.launch {
-      init()
+      guessProject()?.also {
+        withBackgroundProgress(it, TyposBundle.getMessage("progress.title.computing.actions.language.model"), false) { init() }
+      }.alsoIfNull {
+        init()
+      }
     }
   }
 
@@ -101,6 +111,16 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
       get() = words.maxOf { it.value }
 
     override fun getFrequency(word: String): Int? = if (words.containsKey(word)) words.getInt(word) else null
+  }
+
+  private fun guessProject(): Project? {
+    val recentFocusedWindow = WindowManagerEx.getInstanceEx().mostRecentFocusedWindow
+    if (recentFocusedWindow is IdeFrame) {
+      return (recentFocusedWindow as IdeFrame).project
+    }
+    else {
+      return ProjectManager.getInstance().openProjects.firstOrNull { o -> o.isInitialized && !o.isDisposed }
+    }
   }
 
   private fun init() {
