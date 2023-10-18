@@ -248,6 +248,23 @@ class GotItTooltip internal constructor(@NonNls val id: String,
   }
 
   /**
+   * Action to invoke when "Got It" button clicked.
+   */
+  fun withGotItButtonAction(action: () -> Unit): GotItTooltip {
+    gotItBuilder.onButtonClick(action)
+    return this
+  }
+
+  /**
+   * Show additional button on the right side of the "GotIt" button.
+   * Will be shown only if "GotIt" button is shown.
+   */
+  fun withSecondaryButton(@Nls label: String, action: () -> Unit = {}): GotItTooltip {
+    gotItBuilder.withSecondaryButton(label, action)
+    return this
+  }
+
+  /**
    * Show close shortcut next to the "Got It" button.
    */
   @Deprecated("Not supported in the updated design")

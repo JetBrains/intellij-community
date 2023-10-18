@@ -326,7 +326,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return path;
   }
 
-  static Configurable getConfigurable(SimpleNode node) {
+  @ApiStatus.Internal
+  public static Configurable getConfigurable(SimpleNode node) {
     return node instanceof MyNode
            ? ((MyNode)node).myConfigurable
            : null;

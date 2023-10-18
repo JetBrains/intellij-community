@@ -218,7 +218,11 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Action to invoke when any link clicked (inline or separated)
    */
   fun onLinkClick(action: () -> Unit): GotItComponentBuilder {
-    afterLinkClickedAction = action
+    val curAction = afterLinkClickedAction
+    afterLinkClickedAction = {
+      curAction()
+      action()
+    }
     return this
   }
 
@@ -251,7 +255,11 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Action to invoke when "Got It" button clicked.
    */
   fun onButtonClick(action: () -> Unit): GotItComponentBuilder {
-    this.buttonAction = action
+    val curAction = buttonAction
+    buttonAction = {
+      curAction()
+      action()
+    }
     return this
   }
 

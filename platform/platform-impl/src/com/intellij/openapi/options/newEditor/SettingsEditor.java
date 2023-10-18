@@ -301,6 +301,11 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
     updateController(configurable);
   }
 
+  @ApiStatus.Internal
+  public @NotNull SettingsTreeView getTreeView() {
+    return myTreeView;
+  }
+
   private @NotNull MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {
     return new MutableConfigurableGroup.Listener() {
       @Override
