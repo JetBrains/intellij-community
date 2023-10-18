@@ -12,7 +12,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class IntentionDescriptionTest : LightPlatformTestCase() {
+class KotlinIntentionDescriptionTest : LightPlatformTestCase() {
 
     private val necessaryNormalNames = listOf("description.html", "before.kt.template", "after.kt.template")
     private val necessaryXmlNames = listOf("description.html", "before.xml.template", "after.xml.template")
