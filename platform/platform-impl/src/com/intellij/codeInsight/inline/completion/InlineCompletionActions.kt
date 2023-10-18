@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionFinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
@@ -22,7 +23,9 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
   }
 }
 
-class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
+abstract class HideInlineCompletionHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
+  abstract val finishType: InlineCompletionFinishType
+
   public override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val context = InlineCompletionContext.getOrNull(editor) ?: run {
       if (originalHandler.isEnabled(editor, caret, dataContext)) {
@@ -30,7 +33,7 @@ class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : 
       }
       return
     }
-    InlineCompletion.getHandlerOrNull(editor)?.hide(true, context)
+    InlineCompletion.getHandlerOrNull(editor)?.hide(context, finishType)
 
     if (originalHandler.isEnabled(editor, caret, dataContext)) {
       originalHandler.execute(editor, caret, dataContext)
@@ -44,6 +47,14 @@ class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : 
 
     return originalHandler.isEnabled(editor, caret, dataContext)
   }
+}
+
+class EscapeInlineCompletionHandler(originalHandler: EditorActionHandler) : HideInlineCompletionHandler(originalHandler) {
+  override val finishType = InlineCompletionFinishType.ESCAPE_PRESSED
+}
+
+class BackSpaceInlineCompletionHandler(originalHandler: EditorActionHandler) : HideInlineCompletionHandler(originalHandler) {
+  override val finishType = InlineCompletionFinishType.KEY_PRESSED
 }
 
 class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {

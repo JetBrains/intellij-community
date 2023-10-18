@@ -73,7 +73,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onHide(event: InlineCompletionEventType.Hide): Unit = lock.withLock {
-      showTracker?.canceled(event.explicit)
+      showTracker?.canceled(event.finishType)
     }
 
     override fun onEmpty(event: InlineCompletionEventType.Empty): Unit = lock.withLock {
@@ -258,14 +258,14 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     fun selected() {
-      finish(ShownEvents.FinishType.SELECTED)
+      finish(InlineCompletionFinishType.SELECTED)
     }
 
-    fun canceled(explicit: Boolean) {
-      finish(if (explicit) ShownEvents.FinishType.EXPLICITLY_CANCELED else ShownEvents.FinishType.IMPLICITLY_CANCELED)
+    fun canceled(finishType: InlineCompletionFinishType) {
+      finish(finishType)
     }
 
-    private fun finish(finishType: ShownEvents.FinishType) {
+    private fun finish(finishType: InlineCompletionFinishType) {
       if (shownLogSent) {
         return
       }
@@ -290,9 +290,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     val TIME_TO_SHOW = Long("time_to_show")
     val SHOWING_TIME = Long("showing_time")
-    val FINISH_TYPE = Enum<FinishType>("finish_type")
-
-    enum class FinishType { SELECTED, IMPLICITLY_CANCELED, EXPLICITLY_CANCELED }
+    val FINISH_TYPE = Enum<InlineCompletionFinishType>("finish_type")
   }
 
   private val ShownEvent: VarargEventId = GROUP.registerVarargEvent(

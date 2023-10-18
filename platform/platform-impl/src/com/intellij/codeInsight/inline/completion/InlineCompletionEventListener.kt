@@ -14,7 +14,7 @@ sealed class InlineCompletionEventType {
   data object Empty : InlineCompletionEventType()
   data class Completion(val cause: Throwable?, val isActive: Boolean) : InlineCompletionEventType()
   data object Insert : InlineCompletionEventType()
-  open class Hide(val explicit: Boolean) : InlineCompletionEventType()
+  open class Hide(val finishType: InlineCompletionFinishType) : InlineCompletionEventType()
 }
 
 interface InlineCompletionEventListener : EventListener {
