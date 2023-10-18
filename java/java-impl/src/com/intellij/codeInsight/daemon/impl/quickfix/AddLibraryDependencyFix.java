@@ -106,16 +106,18 @@ class AddLibraryDependencyFix extends OrderEntryFix {
     JavaProjectModelModificationService.getInstance(project)
       .addDependency(myCurrentModule, library, myScope, myExported)
       .onSuccess(__ -> {
-        ReadAction
-          .nonBlocking(() -> {
+        ReadAction.nonBlocking(() -> {
             PsiReference reference = restoreReference();
             String qName = myLibraries.get(library);
-            if (!qName.isEmpty()) {
-              importClass(myCurrentModule, editor, reference, qName);
-            }
-            return null;
+            if (qName.isEmpty() || editor == null || reference == null) return null;
+            return getImportActionInfo(myCurrentModule, reference, qName);
           })
           .expireWhen(() -> editor == null || editor.isDisposed() || myCurrentModule.isDisposed())
+          .finishOnUiThread(modality, info -> {
+            if (info != null && editor != null) {
+              importReference(project, editor, info);
+            }
+          })
           .submit(AppExecutorUtil.getAppExecutorService());
       });
   }

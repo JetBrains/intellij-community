@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -61,21 +62,27 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
 
   @Override
   public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) throws IncorrectOperationException {
+    ModalityState modality = ModalityState.defaultModalityState();
     JavaProjectModelModificationService.getInstance(project)
       .addDependency(myCurrentModule, myLibraryDescriptor, myScope)
       .onSuccess(__ -> {
-        ReadAction
-          .nonBlocking(() -> {
+        ReadAction.nonBlocking(() -> {
             PsiReference reference = restoreReference();
+            if (myQualifiedClassName == null || editor == null || reference == null) return null;
             try {
-              importClass(myCurrentModule, editor, reference, myQualifiedClassName);
+              return getImportActionInfo(myCurrentModule, reference, myQualifiedClassName);
             }
             catch (IndexNotReadyException e) {
               Logger.getInstance(AddExtLibraryDependencyFix.class).info(e);
+              return null;
             }
-            return null;
           })
           .expireWhen(() -> editor == null || editor.isDisposed() || myCurrentModule.isDisposed())
+          .finishOnUiThread(modality, info -> {
+            if (info != null && editor != null) {
+              importReference(project, editor, info);
+            }
+          })
           .submit(AppExecutorUtil.getAppExecutorService());
       });
   }

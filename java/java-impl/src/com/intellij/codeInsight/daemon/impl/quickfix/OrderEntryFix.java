@@ -10,7 +10,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.MoveToTestRootFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -32,6 +31,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -347,18 +347,27 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return ThreeState.NO;
   }
 
+  protected record ImportActionInfo(@NotNull PsiClass aClass, @NotNull PsiReference reference) {
+  }
+
   @RequiresReadLock
-  public static void importClass(@NotNull Module currentModule, @Nullable Editor editor, @Nullable PsiReference reference, @Nullable String className) {
+  protected static @Nullable ImportActionInfo getImportActionInfo(
+    @NotNull Module currentModule,
+    @NotNull PsiReference reference,
+    @NotNull String className
+  ) {
     Project project = currentModule.getProject();
-    if (editor != null && reference != null && className != null) {
-      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
-        GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
-        PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-        if (aClass != null) {
-          ApplicationManager.getApplication().invokeLater(() -> new AddImportAction(project, reference, editor, aClass).execute());
-        }
-      });
-    }
+    return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
+      GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
+      PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
+      if (aClass == null) return null;
+      return new ImportActionInfo(aClass, reference);
+    });
+  }
+
+  @RequiresEdt
+  protected static void importReference(@NotNull Project project, @NotNull Editor editor, @NotNull ImportActionInfo info) {
+    new AddImportAction(project, info.reference, editor, info.aClass).execute();
   }
 
   public static void addJarToRoots(@NotNull String jarPath, final @NotNull Module module, @Nullable PsiElement location) {
