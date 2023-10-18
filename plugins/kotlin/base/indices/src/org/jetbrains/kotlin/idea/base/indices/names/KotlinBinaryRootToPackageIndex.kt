@@ -22,6 +22,9 @@ import kotlin.jvm.java
  * file name. This is acceptable because the index is used by K2 symbol providers, which allow false positives in package sets.
  *
  * If the index contains no values for some specific key, it means that the library contains no packages which contain compiled Kotlin code.
+ *
+ * `.kotlin_builtins` files do not need to be supported because
+ * [StandardClassIds.builtInsPackages][org.jetbrains.kotlin.name.StandardClassIds.builtInsPackages] can be used to get the package names.
  */
 class KotlinBinaryRootToPackageIndex : FileBasedIndexExtension<String, String>() {
     companion object {
