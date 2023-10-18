@@ -96,6 +96,10 @@ abstract class StatefulPresentation<S: Any?>(
     currentPresentation.mouseClicked(event, translated)
   }
 
+  override fun mousePressed(event: MouseEvent, translated: Point) {
+    currentPresentation.mousePressed(event, translated)
+  }
+
   override fun mouseMoved(event: MouseEvent, translated: Point) {
     currentPresentation.mouseMoved(event, translated)
   }
