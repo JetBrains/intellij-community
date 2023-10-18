@@ -39,8 +39,6 @@ internal class InlineCompletionMouseMotionListener : EditorMouseMotionListener {
   }
 
   private fun exitHover() {
-    hoveredSession?.let {
-      hoveredSession = null
-    }
+    hoveredSession = null
   }
 }
