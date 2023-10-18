@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.search
 
 import com.intellij.openapi.application.QueryExecutorBase
@@ -14,7 +15,7 @@ import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.search.impl.WebSymbolPsiSourcedSymbolHostClassEP
 
-class PsiSourcedWebSymbolReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(true) {
+internal class PsiSourcedWebSymbolReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(true) {
 
   override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
     val targetElement = queryParameters.elementToSearch
@@ -42,12 +43,10 @@ class PsiSourcedWebSymbolReferenceSearcher : QueryExecutorBase<PsiReference, Ref
     }
   }
 
-  companion object {
-    private val elementClasses: ClearableLazyValue<Set<Class<PsiElement>>> = ExtensionPointUtil.dropLazyValueOnChange(
-      ClearableLazyValue.create {
-        WebSymbolPsiSourcedSymbolHostClassEP.EP_NAME.extensionList.map { it.instance }.toSet()
-      }, WebSymbolPsiSourcedSymbolHostClassEP.EP_NAME, null
-    )
-  }
+  private val elementClasses: ClearableLazyValue<Set<Class<PsiElement>>> = ExtensionPointUtil.dropLazyValueOnChange(
+    ClearableLazyValue.create {
+      WebSymbolPsiSourcedSymbolHostClassEP.EP_NAME.extensionList.map { it.instance }.toSet()
+    }, WebSymbolPsiSourcedSymbolHostClassEP.EP_NAME, null
+  )
 
 }
