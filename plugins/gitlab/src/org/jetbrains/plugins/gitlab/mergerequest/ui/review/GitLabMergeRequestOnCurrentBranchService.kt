@@ -55,7 +55,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
           GitLabBundle.message("merge.request.on.branch.loading", vm.mergeRequestIid)
         )
         is GitLabMergeRequestEditorReviewViewModel.ChangesState.OutOfSync -> GitCurrentBranchPresenter.Presentation(
-          GitlabIcons.GitLabLogo,
+          GitlabIcons.GitLabWarning,
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
           GitLabBundle.message("merge.request.on.branch.out.of.sync", vm.mergeRequestIid, currentBranchName)
         )
