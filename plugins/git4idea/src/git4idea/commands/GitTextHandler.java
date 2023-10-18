@@ -97,13 +97,6 @@ public abstract class GitTextHandler extends GitHandler {
     myHandler.startNotify();
   }
 
-  protected void endCommandSpan() {
-    OpenTelemetrySpanHolder spanHolder = mySpanHolder;
-    if (spanHolder != null) {
-      spanHolder.endSpan();
-    }
-  }
-
   /**
    * Notification for handler to handle process exit event
    *

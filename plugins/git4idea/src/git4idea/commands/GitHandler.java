@@ -22,8 +22,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
@@ -34,8 +32,6 @@ import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableContext;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,9 +42,6 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Consumer;
-
-import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
 
 /**
  * A handler for git commands
@@ -82,8 +75,6 @@ public abstract class GitHandler {
 
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
-
-  protected @Nullable OpenTelemetrySpanHolder mySpanHolder;
 
   /**
    * A constructor
@@ -409,10 +400,6 @@ public abstract class GitHandler {
 
   void runInCurrentThread() throws IOException {
     try {
-      OpenTelemetrySpanHolder spanHolder = mySpanHolder;
-      if (spanHolder != null) {
-        spanHolder.startSpan();
-      }
       start();
       if (isStarted()) {
         try {
@@ -524,38 +511,6 @@ public abstract class GitHandler {
   @Override
   public String toString() {
     return myCommandLine.toString();
-  }
-
-  public void setSpan(@NotNull String spanName, @Nullable Consumer<Span> spanConfigurator) {
-    mySpanHolder = new OpenTelemetrySpanHolder(spanName, spanConfigurator);
-  }
-
-  protected static class OpenTelemetrySpanHolder {
-    private final @NotNull IJTracer myTracer = TelemetryManager.getInstance().getTracer(VcsScope);
-    private final @NotNull String myName;
-    private final @Nullable Consumer<Span> myConfigurator;
-
-    private @Nullable Span mySpan;
-
-    private OpenTelemetrySpanHolder(@NotNull String spanName, @Nullable Consumer<Span> spanConfigurator) {
-      myName = spanName;
-      myConfigurator = spanConfigurator;
-    }
-
-    void startSpan() {
-      Span span = myTracer.spanBuilder(myName).startSpan();
-      try (Scope scope = span.makeCurrent()) {
-        if (myConfigurator != null) myConfigurator.accept(span);
-        mySpan = span;
-      }
-    }
-
-    void endSpan() {
-      Span commandSpan = mySpan;
-      if (commandSpan != null) {
-        commandSpan.end();
-      }
-    }
   }
 
   //region deprecated stuff
