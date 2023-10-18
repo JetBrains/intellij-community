@@ -285,6 +285,40 @@ class GitFileHistoryTest : GitSingleRepoTest() {
                       collectFileHistory(renamedFile, full = true).sortedBy { it.revisionNumber.asString() })
   }
 
+  @Throws(VcsException::class, IOException::class)
+  fun `test history through incorrectly detected rename in monorepo merge`() {
+    val commits = ArrayList<TestCommit>()
+
+    val content = RandomStringUtils.randomAlphanumeric(200)
+
+    val repo1FileName = "file1.txt"
+    commits.add(add(repo1FileName, ourCurrentDir(), initialContent = content))
+    val repo1File = commits.last().file
+
+    val repo2FileName = "file2.txt"
+    repo.checkout("--orphan", "repo2-master")
+    rm(repo1File)
+    commits.add(add(repo2FileName, ourCurrentDir(), initialContent = "$content\n123"))
+    val repo2File = commits.last().file
+
+    repo.checkout("master")
+    git.merge(repo, "repo2-master", mutableListOf("--no-commit", "--allow-unrelated-histories"))
+
+    val repo1MovedFile = File(mkdir("repo1"), repo1FileName)
+    val repo2MovedFile = File(mkdir("repo2"), repo2FileName)
+    repo.mv(repo1File, repo1MovedFile)
+    repo.mv(repo2File, repo2MovedFile)
+    val monorepoMergeMessage = "monorepo merge"
+    val monorepoMerge = repo.addCommit(monorepoMergeMessage)
+    val monorepoMergeFile1 = TestCommit(monorepoMerge, monorepoMergeMessage, repo.root, repo1MovedFile)
+    val monorepoMergeFile2 = TestCommit(monorepoMerge, monorepoMergeMessage, repo.root, repo2MovedFile)
+
+    assertSameHistory((commits + monorepoMergeFile1).sortedBy { it.hash },
+                      collectFileHistory(repo1MovedFile, full = true).sortedBy { it.revisionNumber.asString() })
+    assertSameHistory((commits + monorepoMergeFile2).sortedBy { it.hash },
+                      collectFileHistory(repo2MovedFile, full = true).sortedBy { it.revisionNumber.asString() })
+  }
+
   private fun collectFileHistory(file: File, full: Boolean = false): List<VcsFileRevision> {
     val path = VcsUtil.getFilePath(file, false)
     return buildList {

@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.impl.VcsFileStatusInfo
 import com.intellij.vcs.log.impl.isRenamed
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitContentRevision
@@ -124,12 +125,22 @@ class GitFileHistory internal constructor(private val project: Project,
     val output = Git.getInstance().runCommand(h).getOutputOrThrow()
     val records = parser.parse(output)
 
-    return records.mapIndexedNotNull { i, record ->
-      record.statusInfos.firstOrNull { it.isRenamed }?.let { statusInfo ->
-        val parents = record.parentsHashes
-        if (parents.isNotEmpty()) FileHistoryStart(parents[i], GitContentRevision.createPath(root, statusInfo.firstPath)) else null
+    if (records.isEmpty()) return emptyList()
+
+    val parentsHashes = records.first().parentsHashes
+
+    // each record correspond to a parent of the target commit (since DIFF_TO_PARENTS was passed to the "git show" command)
+    val renames = parentsHashes.zip(records).mapNotNullValues { record ->
+      record.statusInfos.firstOrNull(VcsFileStatusInfo::isRenamed)
+    }.toMutableList()
+    if (records.size < parentsHashes.size && fullHistory) {
+      for (parent in parentsHashes.drop(records.size)) {
+        val rename = GitLogHistoryHandler.getRename(project, root, parent, commit, filePath) ?: continue
+        renames.add(Pair(parent, rename))
       }
     }
+
+    return renames.map { (parent, status) -> FileHistoryStart(parent, GitContentRevision.createPath(root, status.firstPath)) }
   }
 
   private fun createLogHandler(parser: GitLogParser<GitLogFullRecord>,
@@ -250,4 +261,8 @@ class GitFileHistory internal constructor(private val project: Project,
       return collectHistoryForRevision(project, path, GitRevisionNumber.HEAD, *parameters)
     }
   }
+}
+
+private fun <K, V, R> List<Pair<K, V>>.mapNotNullValues(mapping: (V) -> R?): List<Pair<K, R>> {
+  return mapNotNull { (key, value) -> mapping(value)?.let { mappedValue -> key to mappedValue } }
 }

@@ -4,6 +4,7 @@ package git4idea.history
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsKey
@@ -58,28 +59,13 @@ open class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistor
 
   @Throws(VcsException::class)
   override fun getRename(root: VirtualFile, filePath: FilePath, beforeHash: Hash, afterHash: Hash): Rename? {
-    val h = GitLineHandler(project, root, GitCommand.DIFF)
-    h.setWithMediator(false)
-    h.setStdoutSuppressed(true)
-    h.addParameters("-M", "--diff-filter=R", "--name-status", "--encoding=UTF-8", "--follow",
-                    beforeHash.asString() + ".." + afterHash.asString())
-    h.endOptions()
-    h.addRelativePaths(filePath)
-
-    val renamesCollector = RenamesCollector(h.printableCommandLine())
-    h.addLineListener(renamesCollector.getLineListener())
-    Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError()
-
-    renamesCollector.getSingleRename()?.let { info ->
-      val firstPath = VcsUtil.getFilePath(root.path + "/" + info.firstPath, false)
-      val secondPath = VcsUtil.getFilePath(root.path + "/" + info.secondPath, false)
-      return Rename(firstPath, secondPath, beforeHash, afterHash)
-    }
-
-    return null
+    val info = getRename(project, root, beforeHash.asString(), afterHash.asString(), filePath) ?: return null
+    val firstPath = VcsUtil.getFilePath(root.path + "/" + info.firstPath, false)
+    val secondPath = VcsUtil.getFilePath(root.path + "/" + info.secondPath, false)
+    return Rename(firstPath, secondPath, beforeHash, afterHash)
   }
 
-  private inner class RenamesCollector(private val commandLine: String) : DefaultGitLogFullRecordBuilder() {
+  private class RenamesCollector(private val commandLine: String) : DefaultGitLogFullRecordBuilder() {
     private var unexpectedStatusReported: Boolean = false
 
     override fun addPath(type: Change.Type, firstPath: String, secondPath: String?) {
@@ -111,5 +97,25 @@ open class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistor
 
   companion object {
     private val LOG = Logger.getInstance(GitLogHistoryHandler::class.java)
+
+    @Throws(VcsException::class)
+    internal fun getRename(project: Project,
+                           root: VirtualFile,
+                           beforeHash: @NlsSafe String,
+                           afterHash: @NlsSafe String,
+                           filePath: FilePath): VcsFileStatusInfo? {
+      val h = GitLineHandler(project, root, GitCommand.DIFF)
+      h.setWithMediator(false)
+      h.setStdoutSuppressed(true)
+      h.addParameters("-M", "--diff-filter=R", "--name-status", "--encoding=UTF-8", "--follow", "$beforeHash..$afterHash")
+      h.endOptions()
+      h.addRelativePaths(filePath)
+
+      val renamesCollector = RenamesCollector(h.printableCommandLine())
+      h.addLineListener(renamesCollector.getLineListener())
+      Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError()
+
+      return renamesCollector.getSingleRename()
+    }
   }
 }
