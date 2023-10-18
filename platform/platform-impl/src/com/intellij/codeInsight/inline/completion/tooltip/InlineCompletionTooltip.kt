@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.Disposer
@@ -19,7 +20,7 @@ internal object InlineCompletionTooltip {
   fun enterHover(session: InlineCompletionSession, locationAtScreen: Point) {
     val insertShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
     val panel = JPanel().apply {
-      add(JLabel("$insertShortcut to accept"))
+      add(JLabel(IdeBundle.message("inline.completion.tooltip.shortcuts", insertShortcut)))
       add(session.provider.getTooltip())
     }
     panel.background = HintUtil.getInformationColor()
