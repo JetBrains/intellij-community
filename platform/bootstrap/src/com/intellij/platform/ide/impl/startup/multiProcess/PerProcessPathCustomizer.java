@@ -29,8 +29,6 @@ import static com.intellij.idea.Main.isConfigImportNeeded;
 public final class PerProcessPathCustomizer implements PathCustomizer {
   private static final String LOCK_FILE_NAME = "process.lock";
 
-  private static Path ourOriginalConfigPath;
-  
   // Leave the folder locked until we exit. Store reference to keep CleanerFactory from releasing the file channel.
   @SuppressWarnings("unused") private static FileLock ourConfigLock;
 
@@ -84,7 +82,6 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
       //noinspection CallToPrintStackTrace
       e.printStackTrace();
     }
-    ourOriginalConfigPath = oldConfigPath;
     Path startupScriptDir = PathManager.getSystemDir().resolve("startup-script");
 
     return new CustomPaths(newConfig.toString(), newSystem.toString(), PathManager.getPluginsPath(), newLog.toString(), startupScriptDir);
@@ -110,7 +107,7 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
   }
 
   public static @Nullable Path getOriginalConfigPath() {
-    return ourOriginalConfigPath;
+    return PathManager.getOriginalConfigDir();
   }
 
   @Nullable
