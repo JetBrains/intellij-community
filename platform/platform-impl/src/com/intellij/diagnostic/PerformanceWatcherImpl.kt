@@ -404,24 +404,24 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   override fun newSnapshot(): Snapshot = SnapshotImpl(this)
 
   private class SnapshotImpl(private val watcher: PerformanceWatcherImpl) : Snapshot {
-    private val myStartGeneralSnapshot = watcher.generalApdex
-    private val myStartSwingSnapshot = watcher.swingApdex
-    private val myStartMillis = System.currentTimeMillis()
+    private val startGeneralSnapshot = watcher.generalApdex
+    private val startSwingSnapshot = watcher.swingApdex
+    private val startMillis = System.currentTimeMillis()
 
     override fun logResponsivenessSinceCreation(activityName: @NonNls String) {
       LOG.info(getLogResponsivenessSinceCreationMessage(activityName))
     }
 
     override fun getLogResponsivenessSinceCreationMessage(activityName: @NonNls String): String {
-      return activityName + " took " + (System.currentTimeMillis() - myStartMillis) + "ms" +
-             "; general responsiveness: " + watcher.generalApdex.summarizePerformanceSince(myStartGeneralSnapshot) +
-             "; EDT responsiveness: " + watcher.swingApdex.summarizePerformanceSince(myStartSwingSnapshot)
+      return "$activityName took ${System.currentTimeMillis() - startMillis}ms; general responsiveness: ${
+        watcher.generalApdex.summarizePerformanceSince(startGeneralSnapshot)
+      }; EDT responsiveness: ${watcher.swingApdex.summarizePerformanceSince(startSwingSnapshot)}"
     }
   }
 }
 
 private fun postProcessReportFolder(durationMs: Long, task: SamplingTask, dir: Path, logDir: Path): Path? {
-  if (!Files.exists(dir)) {
+  if (Files.notExists(dir)) {
     return null
   }
 

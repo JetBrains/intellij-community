@@ -11,7 +11,6 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -25,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
@@ -37,6 +35,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -45,49 +44,42 @@ import java.util.Objects;
 /**
  * Listens for editor events and starts brace/identifier highlighting in the background
  */
-final class BackgroundHighlighter implements StartupActivity, DumbAware {
-  private final Alarm myAlarm = new Alarm();
+final class BackgroundHighlighter {
+  private final Alarm alarm = new Alarm();
 
-  @Override
   public void runActivity(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode() ||
-        // sorry upsource
-        !IdentifierHighlighterPassFactory.isEnabled()) {
-      return;
-    }
+    Disposable parentDisposable = ExtensionPointUtil.createExtensionDisposable(this, StartupActivity.Companion.getPOST_STARTUP_ACTIVITY());
+    Disposer.register(project, parentDisposable);
 
-    Disposable activityDisposable = ExtensionPointUtil.createExtensionDisposable(this, StartupActivity.Companion.getPOST_STARTUP_ACTIVITY());
-    Disposer.register(project, activityDisposable);
-
-    registerListeners(project, activityDisposable);
+    registerListeners(project, parentDisposable, alarm);
   }
 
-  private void registerListeners(@NotNull Project project, @NotNull Disposable parentDisposable) {
+  static void registerListeners(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull Alarm alarm) {
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
         if (e.getCaret() != e.getEditor().getCaretModel().getPrimaryCaret()) return;
-        onCaretUpdate(e.getEditor(), project);
+        onCaretUpdate(e.getEditor(), project, alarm);
       }
 
       @Override
       public void caretAdded(@NotNull CaretEvent e) {
         if (e.getCaret() != e.getEditor().getCaretModel().getPrimaryCaret()) return;
-        onCaretUpdate(e.getEditor(), project);
+        onCaretUpdate(e.getEditor(), project, alarm);
       }
 
       @Override
       public void caretRemoved(@NotNull CaretEvent e) {
-        onCaretUpdate(e.getEditor(), project);
+        onCaretUpdate(e.getEditor(), project, alarm);
       }
     }, parentDisposable);
 
     SelectionListener selectionListener = new SelectionListener() {
       @Override
       public void selectionChanged(@NotNull SelectionEvent e) {
-        myAlarm.cancelAllRequests();
+        alarm.cancelAllRequests();
         Editor editor = e.getEditor();
         if (editor.getProject() != project) {
           return;
@@ -99,7 +91,7 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
           // Don't update braces in case of active/absent selection.
           return;
         }
-        updateHighlighted(project, editor);
+        updateHighlighted(project, editor, alarm);
       }
     };
     eventMulticaster.addSelectionListener(selectionListener, parentDisposable);
@@ -107,58 +99,57 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
     DocumentListener documentListener = new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
-        myAlarm.cancelAllRequests();
+        alarm.cancelAllRequests();
         EditorFactory.getInstance().editors(e.getDocument(), project).forEach(
-          editor -> submitUpdateHighlighted(project, editor)
+          editor -> submitUpdateHighlighted(project, editor, alarm)
         );
       }
     };
     eventMulticaster.addDocumentListener(documentListener, parentDisposable);
 
-    project.getMessageBus().connect(parentDisposable)
-      .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent e) {
+        alarm.cancelAllRequests();
+        FileEditor oldEditor = e.getOldEditor();
+        if (oldEditor instanceof TextEditor) {
+          clearBraces(project, ((TextEditor)oldEditor).getEditor(), alarm);
+        }
+        FileEditor newEditor = e.getNewEditor();
+        if (newEditor instanceof TextEditor) {
+          updateHighlighted(project, ((TextEditor)newEditor).getEditor(), alarm);
+        }
+      }
+    });
+
+    connection.subscribe(TemplateManager.TEMPLATE_STARTED_TOPIC, state -> {
+      if (state.isFinished()) return;
+      updateHighlighted(project, state.getEditor(), alarm);
+      state.addTemplateStateListener(new TemplateEditingAdapter() {
         @Override
-        public void selectionChanged(@NotNull FileEditorManagerEvent e) {
-          myAlarm.cancelAllRequests();
-          FileEditor oldEditor = e.getOldEditor();
-          if (oldEditor instanceof TextEditor) {
-            clearBraces(project, ((TextEditor)oldEditor).getEditor());
-          }
-          FileEditor newEditor = e.getNewEditor();
-          if (newEditor instanceof TextEditor) {
-            updateHighlighted(project, ((TextEditor)newEditor).getEditor());
-          }
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
+          updateHighlighted(project, state.getEditor(), alarm);
         }
       });
-
-    project.getMessageBus().connect(parentDisposable)
-      .subscribe(TemplateManager.TEMPLATE_STARTED_TOPIC, state -> {
-        if (state.isFinished()) return;
-        updateHighlighted(project, state.getEditor());
-        state.addTemplateStateListener(new TemplateEditingAdapter() {
-          @Override
-          public void templateFinished(@NotNull Template template, boolean brokenOff) {
-            updateHighlighted(project, state.getEditor());
-          }
-        });
-      });
+    });
   }
 
-  private void onCaretUpdate(@NotNull Editor editor, @NotNull Project project) {
-    myAlarm.cancelAllRequests();
+  private static void onCaretUpdate(@NotNull Editor editor, @NotNull Project project, @NotNull Alarm alarm) {
+    alarm.cancelAllRequests();
     SelectionModel selectionModel = editor.getSelectionModel();
     // Don't update braces in case of the active selection.
     if (editor.getProject() != project || selectionModel.hasSelection()) {
       return;
     }
-    submitUpdateHighlighted(project, editor);
+    submitUpdateHighlighted(project, editor, alarm);
   }
 
-  private void submitUpdateHighlighted(@NotNull Project project, @NotNull Editor editor) {
-    updateHighlighted(project, editor);
+  private static void submitUpdateHighlighted(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm) {
+    updateHighlighted(project, editor, alarm);
   }
 
-  private void updateHighlighted(@NotNull Project project, @NotNull Editor editor) {
+  private static void updateHighlighted(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm) {
     ThreadingAssertions.assertEventDispatchThread();
     if (editor.getDocument().isInBulkUpdate()) {
       return;
@@ -176,7 +167,7 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
         return HeavyBraceHighlighter.match(newFile, offsetBefore);
       },
       (newFile, newEditor, maybeMatch) -> {
-        BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, myAlarm, newFile);
+        BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, newFile);
         if (maybeMatch == null) {
           handler.updateBraces();
         }
@@ -192,9 +183,9 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
       });
   }
 
-  private void clearBraces(@NotNull Project project, @NotNull Editor editor) {
+  private static void clearBraces(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm) {
     BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (__, ___) -> null, (foundFile, newEditor, __) -> {
-      BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, myAlarm, foundFile);
+      BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, foundFile);
       handler.clearBraceHighlighters();
     });
   }
@@ -209,17 +200,19 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
           // sometimes some crazy stuff is returned (EA-248725)
           return null;
         }
+
         ProperTextRange visibleRange = ProperTextRange.from(0, textLength);
         IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().createHighlightingPass(newFile, newEditor, visibleRange);
         DaemonProgressIndicator indicator = new DaemonProgressIndicator();
         ProgressIndicatorUtils.runWithWriteActionPriority(() -> {
           PsiFile hostPsiFile = PsiDocumentManager.getInstance(newFile.getProject()).getPsiFile(hostEditor.getDocument());
           if (hostPsiFile == null) return;
-          HighlightingSessionImpl.runInsideHighlightingSession(hostPsiFile, hostEditor.getColorsScheme(), ProperTextRange.create(hostPsiFile.getTextRange()), false, session -> {
-            if (pass != null) {
-              pass.doCollectInformation(session);
-            }
-          });
+          HighlightingSessionImpl.runInsideHighlightingSession(hostPsiFile, hostEditor.getColorsScheme(),
+                                                               ProperTextRange.create(hostPsiFile.getTextRange()), false, session -> {
+              if (pass != null) {
+                pass.doCollectInformation(session);
+              }
+            });
         }, indicator);
         return pass;
       })
@@ -236,12 +229,14 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
 
   @NotNull
   static Alarm getAlarm() {
-    return Objects.requireNonNull(StartupActivity.Companion.getPOST_STARTUP_ACTIVITY().findExtension(BackgroundHighlighter.class)).myAlarm;
+    //noinspection UsagesOfObsoleteApi
+    return Objects.requireNonNull(StartupActivity.Companion.getPOST_STARTUP_ACTIVITY()
+                                    .findExtension(BackgroundHighlighterProjectActivity.class)).impl.alarm;
   }
 
   @TestOnly
   static void enableListenersInTest(@NotNull Project project, @NotNull Disposable disposable) {
-    StartupActivity.Companion.getPOST_STARTUP_ACTIVITY().findExtension(BackgroundHighlighter.class).registerListeners(project, disposable);
+    registerListeners(project, disposable, getAlarm());
   }
 
   private static final class HighlightIdentifiersKey {

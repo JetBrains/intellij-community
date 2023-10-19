@@ -488,7 +488,14 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   @Override
   public void findAndSelectElement(@NotNull String searchQuery) {
-    selectElement(findElement(searchQuery), searchQuery);
+    if (mySearchPopup != null) {
+      // If there's a popup showing, we must let it handle selection, because
+      // it also updates its own state (error / not error) in the process.
+      mySearchPopup.updateSelection(findElement(searchQuery), searchQuery);
+    }
+    else {
+      selectElement(findElement(searchQuery), searchQuery);
+    }
   }
 
   public boolean adjustSelection(int keyCode, @NotNull String searchQuery) {
@@ -544,7 +551,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           String newText = oldText.substring(0, offs) + str + oldText.substring(offs);
           super.insertString(offs, str, a);
           handleInsert(newText);
-          updateSelection(findElement(newText));
+          updateSelection(findElement(newText), mySearchField.getText());
         }
       });
 
@@ -601,7 +608,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           UIEventLogger.IncrementalSearchKeyTyped.log(myComponent.getClass());
           element = findElement(s);
         }
-        updateSelection(element);
+        updateSelection(element, mySearchField.getText());
       }
     }
 
@@ -609,9 +616,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       findAndSelectElement(mySearchField.getText());
     }
 
-    private void updateSelection(Object element) {
+    private void updateSelection(Object element, String selectedText) {
       if (element != null) {
-        selectElement(element, mySearchField.getText());
+        selectElement(element, selectedText);
         mySearchField.setForeground(FOREGROUND_COLOR);
       }
       else {
