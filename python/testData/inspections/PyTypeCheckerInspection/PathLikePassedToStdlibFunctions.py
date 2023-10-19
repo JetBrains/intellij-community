@@ -27,7 +27,7 @@ class B:
 
 b = B()
 
-open(<warning descr="Expected type 'str | bytes | PathLike[str] | PathLike[bytes] | int', got 'B' instead">b</warning>)
+open(<warning descr="Expected type 'int | str | bytes | PathLike[str] | PathLike[bytes]', got 'B' instead">b</warning>)
 
 os.fspath(<warning descr="Unexpected type(s):(B)Possible type(s):(str)(bytes)(PathLike[AnyStr])">b</warning>)
 os.fsencode(<warning descr="Expected type 'str | bytes | PathLike[str] | PathLike[bytes]', got 'B' instead">b</warning>)
