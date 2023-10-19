@@ -26,22 +26,14 @@ internal class MutableIntIntUniqueBiMap private constructor(
   constructor() : this(Int2IntOpenHashMap(), Int2IntOpenHashMap(), false)
   constructor(key2Value: Int2IntMap, value2Key: Int2IntMap) : this(key2Value, value2Key, true)
 
-  fun putForce(key: Int, value: Int) {
-    startWrite()
-
-    if (key2Value.containsKey(key)) {
-      val existingValue = key2Value[key]
-      key2Value.remove(key)
-      value2Key.remove(existingValue)
-    }
-    if (value2Key.containsKey(value)) {
-      val existingKey = value2Key[value]
-      value2Key.remove(value)
-      key2Value.remove(existingKey)
-    }
-    put(key, value)
-  }
-
+  /**
+   * Put the key-value pair to the map
+   *
+   * Since the map is unique, no existing key or existing value is allowed in the map.
+   * [IllegalStateException] will be thrown if trying to add existing values.
+   * If you're not sure if these values already exist in the map, you can remove the previous values
+   *   with [removeKey] and [removeValue] functions.
+   */
   fun put(key: Int, value: Int) {
     if (key2Value.containsKey(key)) error("Key $key already exists in the map")
     if (value2Key.containsKey(value)) error("Value $value already exists in the map")

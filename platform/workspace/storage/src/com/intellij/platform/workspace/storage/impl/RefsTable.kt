@@ -252,7 +252,13 @@ internal class MutableRefsTable(
           0 -> {
             copiedMap.removeValue(parentId.id.arrayId)
           }
-          1 -> copiedMap.putForce(newChildrenIds.single().id.arrayId, parentId.id.arrayId)
+          1 -> {
+            val childArrayId = newChildrenIds.single().id.arrayId
+            val parentArrayId = parentId.id.arrayId
+            copiedMap.removeKey(childArrayId)
+            copiedMap.removeValue(parentArrayId)
+            copiedMap.put(childArrayId, parentArrayId)
+          }
           else -> error("Trying to add multiple children to one-to-one connection")
         }
       }
@@ -321,7 +327,8 @@ internal class MutableRefsTable(
   ) {
     val copiedMap = getOneToOneMutableMap(connectionId)
     copiedMap.removeKey(childId)
-    copiedMap.putForce(childId, parentId.arrayId)
+    copiedMap.removeValue(parentId.arrayId)
+    copiedMap.put(childId, parentId.arrayId)
   }
 
   internal fun replaceParentOfChild(connectionId: ConnectionId, childId: ChildEntityId, parentId: ParentEntityId) {
@@ -334,7 +341,8 @@ internal class MutableRefsTable(
       ConnectionType.ONE_TO_ONE -> {
         val copiedMap = getOneToOneMutableMap(connectionId)
         copiedMap.removeKey(childId.id.arrayId)
-        copiedMap.putForce(childId.id.arrayId, parentId.id.arrayId)
+        copiedMap.removeValue(parentId.id.arrayId)
+        copiedMap.put(childId.id.arrayId, parentId.id.arrayId)
       }
       ConnectionType.ONE_TO_ABSTRACT_MANY -> {
         val copiedMap = getOneToAbstractManyMutableMap(connectionId)
