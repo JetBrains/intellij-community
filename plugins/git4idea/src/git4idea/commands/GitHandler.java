@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutable;
@@ -486,14 +485,23 @@ public abstract class GitHandler {
     executionEnvironment.putAll(myCustomEnv);
     executionEnvironment.put(GitCommand.IJ_HANDLER_MARKER_ENV, "true");
 
-    // customizers take read locks, which could not be acquired under potemkin progress
-    if (!(ProgressManager.getInstance().getProgressIndicator() instanceof PotemkinProgress)) {
+    if (!shouldSuppressReadLocks()) {
       VcsEnvCustomizer.EP_NAME.forEachExtensionSafe(customizer -> {
         customizer.customizeCommandAndEnvironment(myProject, executionEnvironment, myExecutableContext);
       });
 
       executionEnvironment.remove("PS1"); // ensure we won't get detected as interactive shell because of faulty customizer
     }
+  }
+
+  /**
+   * Tasks executed under {@link PotemkinProgress#runInBackground} cannot take read lock.
+   */
+  protected static boolean shouldSuppressReadLocks() {
+    if (ProgressManager.getInstance().getProgressIndicator() instanceof PotemkinProgress) {
+      return !ApplicationManager.getApplication().isDispatchThread();
+    }
+    return false;
   }
 
   protected abstract Process startProcess() throws ExecutionException;

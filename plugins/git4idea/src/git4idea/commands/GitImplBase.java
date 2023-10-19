@@ -17,6 +17,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -32,6 +33,7 @@ import git4idea.rebase.GitSimpleEditorHandler;
 import git4idea.rebase.GitUnstructuredEditor;
 import git4idea.util.GitVcsConsoleWriter;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -197,10 +199,35 @@ public abstract class GitImplBase implements Git {
     catch (IOException e) {
       return GitCommandResult.error(GitBundle.message("git.error.cant.process.output", e.getLocalizedMessage()));
     }
+
+    String rootName = getPresentableRootName(handler);
     return new GitCommandResult(resultListener.myStartFailed,
                                 resultListener.myExitCode,
                                 outputCollector.myErrorOutput,
-                                outputCollector.myOutput);
+                                outputCollector.myOutput,
+                                rootName);
+  }
+
+  private static @Nullable @Nls String getPresentableRootName(@NotNull GitLineHandler handler) {
+    if (GitHandler.shouldSuppressReadLocks()) return null;
+    if (handler.getCommand().equals(GitCommand.VERSION)) return null;
+
+    VirtualFile root = handler.getExecutableContext().getRoot();
+    if (root == null) return null;
+
+    Project project = handler.project();
+    if (project == null) return root.getName();
+
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    VirtualFile vcsRoot = vcsManager.getVcsRootFor(root);
+    if (root.equals(vcsRoot)) {
+      if (vcsManager.getRootsUnderVcs(GitVcs.getInstance(project)).length == 1) {
+        return null;
+      }
+      return ProjectLevelVcsManager.getInstance(project).getShortNameForVcsRoot(root);
+    }
+
+    return root.getName();
   }
 
   /**
