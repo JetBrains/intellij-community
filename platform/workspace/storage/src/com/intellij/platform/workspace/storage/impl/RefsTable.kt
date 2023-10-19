@@ -316,6 +316,7 @@ internal class MutableRefsTable(
 
   fun replaceOneToOneChildOfParent(connectionId: ConnectionId, parentId: Int, childEntityId: ChildEntityId) {
     val copiedMap = getOneToOneMutableMap(connectionId)
+    copiedMap.removeKey(childEntityId.id.arrayId)
     copiedMap.removeValue(parentId)
     copiedMap.put(childEntityId.id.arrayId, parentId)
   }
