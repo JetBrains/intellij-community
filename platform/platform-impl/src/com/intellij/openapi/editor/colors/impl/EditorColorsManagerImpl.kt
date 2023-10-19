@@ -54,6 +54,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.ResourceUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.xml.dom.createXmlStreamReader
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -141,9 +142,8 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     schemeManager.reload()
 
     if (!activeScheme.isNullOrEmpty()) {
-      val scheme = getScheme(activeScheme)
-      if (scheme != null) {
-        globalScheme = scheme
+      getScheme(activeScheme)?.let {
+        setGlobalScheme(it)
       }
     }
   }
@@ -223,15 +223,9 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 
   fun schemeChangedOrSwitched(newScheme: EditorColorsScheme?) {
-    // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
-    for (project in ProjectManager.getInstance().getOpenProjects()) {
-      PsiManager.getInstance(project).dropPsiCaches()
-    }
+    dropPsiCaches()
 
-    schemeModificationCounter.incrementAndGet()
-    // we need to push events to components that use editor font, e.g., HTML editor panes
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(newScheme)
-    treeDispatcher.multicaster.globalSchemeChange(newScheme)
+    callGlobalSchemeChange(newScheme)
   }
 
   override fun getSchemeForCurrentUITheme(): EditorColorsScheme {
@@ -323,6 +317,41 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     setGlobalScheme(scheme = scheme, processChangeSynchronously = false)
   }
 
+  @RequiresEdt
+  override fun setCurrentSchemeOnLafChange(scheme: EditorColorsScheme) {
+    if (scheme === schemeManager.activeScheme) {
+      return
+    }
+
+    schemeManager.setCurrent(scheme = scheme, notify = false, processChangeSynchronously = false)
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+      return
+    }
+
+    callGlobalSchemeChange(scheme)
+
+    // don't do heavy operations right away
+    ApplicationManager.getApplication().invokeLater {
+      dropPsiCaches()
+    }
+  }
+
+  // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
+  @RequiresEdt
+  private fun dropPsiCaches() {
+    for (project in ProjectManager.getInstance().getOpenProjects()) {
+      PsiManager.getInstance(project).dropPsiCaches()
+    }
+  }
+
+  @RequiresEdt
+  private fun callGlobalSchemeChange(scheme: EditorColorsScheme?) {
+    schemeModificationCounter.incrementAndGet()
+    // we need to push events to components that use editor font, e.g., HTML editor panes
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(scheme)
+    treeDispatcher.multicaster.globalSchemeChange(scheme)
+  }
+
   override fun getGlobalScheme(): EditorColorsScheme {
     val scheme = schemeManager.activeScheme
     if (scheme is AbstractColorsScheme && !scheme.isReadOnly && !scheme.isVisible) {
@@ -412,22 +441,15 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     isInitialConfigurationLoaded = true
 
     colorScheme?.let {
-      notifyAboutSolarizedColorSchemeDeprecationIfSet(it)
+      notifyAboutSolarizedColorSchemeDeprecationIfSet(scheme = it)
     }
 
     val activity = StartUpMeasurer.startActivity("editor color scheme initialization")
     val laf = if (ApplicationManager.getApplication().isUnitTestMode()) null else LafManager.getInstance().getCurrentUIThemeLookAndFeel()
     // null in a headless mode
-    if (laf != null) {
-      if (!themeIsCustomized) {
-        var scheme1: EditorColorsScheme? = null
-        val schemeName1 = laf.editorSchemeId
-        if (schemeName1 != null) {
-          scheme1 = getScheme(schemeName1)
-        }
-        if (scheme1 != null) {
-          schemeManager.setCurrent(scheme = scheme1, notify = false)
-        }
+    if (laf != null && !themeIsCustomized) {
+      laf.editorSchemeId?.let { getScheme(it) }?.let {
+        schemeManager.setCurrent(scheme = it, notify = false)
       }
     }
     activity.end()
@@ -463,7 +485,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       val scheme = if (isBundled) BundledEditorColorScheme(name) else EditorColorsSchemeImpl(null)
       // todo be lazy
       scheme.readExternal(dataHolder.read())
-      // we don't need to update digest for a bundled scheme because
+      // We don't need to update digest for a bundled scheme because:
       // 1) it can be computed on demand later (because a bundled scheme is not mutable)
       // 2) in the future user copy of a bundled scheme will use a bundled scheme as parent (not as full copy)
       if (isBundled ||
@@ -639,8 +661,8 @@ private fun notifyAboutSolarizedColorSchemeDeprecationIfSet(scheme: EditorColors
                 // Since the plugin provides two themes, we need to wait for both of them to be added
                 // (and applied) to reapply the needed one if it wasn't added last.
                 connection.subscribe(LafManagerListener.TOPIC, object : LafManagerListener {
-                  var matchingTheme: UIThemeLookAndFeelInfo? = null
-                  var otherWasSet: Boolean = false
+                  private var matchingTheme: UIThemeLookAndFeelInfo? = null
+                  private var otherWasSet: Boolean = false
 
                   override fun lookAndFeelChanged(source: LafManager) {
                     val themeInfo = source.getCurrentUIThemeLookAndFeel()
@@ -656,10 +678,9 @@ private fun notifyAboutSolarizedColorSchemeDeprecationIfSet(scheme: EditorColors
                     if (matchingTheme != null && otherWasSet) {
                       connection.disconnect()
 
-                      val lafManager = LafManager.getInstance()
-                      if (lafManager.getCurrentUIThemeLookAndFeel() != matchingTheme) {
-                        lafManager.setCurrentLookAndFeel(matchingTheme!!, false)
-                        lafManager.updateUI()
+                      if (source.getCurrentUIThemeLookAndFeel() != matchingTheme) {
+                        source.setCurrentLookAndFeel(matchingTheme!!, false)
+                        source.updateUI()
                       }
                     }
                   }
@@ -693,7 +714,8 @@ fun readEditorSchemeNameFromXml(parser: XMLStreamReader): String? {
 private val BUNDLED_EP_NAME = ExtensionPointName<BundledSchemeEP>("com.intellij.bundledColorScheme")
 
 @VisibleForTesting
-fun createLoadBundledSchemeRequests(additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>, checkId: Boolean = false)
+fun createLoadBundledSchemeRequests(additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>,
+                                    checkId: Boolean = false)
   : Sequence<SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme>> {
   return sequence {
     for (item in BUNDLED_EP_NAME.filterableLazySequence()) {
@@ -788,7 +810,7 @@ private fun createBundledEditorColorScheme(
   val scheme = BundledEditorColorScheme(resourcePath)
   // todo be lazy
   scheme.readExternal(JDOMUtil.load(data))
-  // we don't need to update digest for a bundled scheme because
+  // We don't need to update digest for a bundled scheme because:
   // 1) it can be computed on demand later (because a bundled scheme is not mutable)
   // 2) in the future user copy of a bundled scheme will use a bundled scheme as parent (not as full copy)
   if (scheme.parentScheme is AbstractColorsScheme) {

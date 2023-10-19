@@ -603,6 +603,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     @JvmStatic
     fun getInstance(project: Project): RunConfigurationStartHistory = project.service()
 
+    @Topic.ProjectLevel
     val TOPIC = Topic("RunConfigurationStartHistory events", Listener::class.java)
   }
 }

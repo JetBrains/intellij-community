@@ -118,21 +118,24 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
     if (StringUtil.isEmptyOrSpaces(pattern)) {
       if (isRecentEnabled()) {
-        Set<String> actionIDs = ActionHistoryManager.getInstance().getState().getIds();
-        Predicate<GotoActionModel.MatchedValue> actionDegreePredicate =
-          element -> {
-            if (!myDisabledActions && !((GotoActionModel.ActionWrapper)element.value).isAvailable()) return true;
+        if (!SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID.equals(
+          SearchEverywhereManager.getInstance(myProject).getSelectedTabID())) {
+          Set<String> actionIDs = ActionHistoryManager.getInstance().getState().getIds();
+          Predicate<GotoActionModel.MatchedValue> actionDegreePredicate =
+            element -> {
+              if (!myDisabledActions && !((GotoActionModel.ActionWrapper)element.value).isAvailable()) return true;
 
-            AnAction action = getAction(element);
-            if (action == null) return true;
+              AnAction action = getAction(element);
+              if (action == null) return true;
 
-            String id = ActionManager.getInstance().getId(action);
-            int degree = actionIDs.stream().toList().indexOf(id);
+              String id = ActionManager.getInstance().getId(action);
+              int degree = actionIDs.stream().toList().indexOf(id);
 
-            return consumer.process(new FoundItemDescriptor<>(element, degree));
-          };
+              return consumer.process(new FoundItemDescriptor<>(element, degree));
+            };
 
-        myProvider.processActions(pattern, actionDegreePredicate, new HashSet<>(actionIDs));
+          myProvider.processActions(pattern, actionDegreePredicate, new HashSet<>(actionIDs));
+        }
       }
       return;
     }

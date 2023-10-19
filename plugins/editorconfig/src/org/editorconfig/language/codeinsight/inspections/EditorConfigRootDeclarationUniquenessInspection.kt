@@ -7,21 +7,19 @@ import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveRootDe
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigRootDeclaration
 import org.editorconfig.language.psi.EditorConfigVisitor
+import java.util.concurrent.atomic.AtomicBoolean
 
 class EditorConfigRootDeclarationUniquenessInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
-    private var visitedRootDeclaration = false
+    private val visitedRootDeclaration = AtomicBoolean()
     override fun visitRootDeclaration(declaration: EditorConfigRootDeclaration) {
-      if (!visitedRootDeclaration) {
-        visitedRootDeclaration = true
-        return
+      if (!visitedRootDeclaration.compareAndSet(false, true)) {
+        holder.registerProblem(
+          declaration,
+          EditorConfigBundle.get("inspection.root-declaration.uniqueness.message"),
+          EditorConfigRemoveRootDeclarationQuickFix()
+        )
       }
-
-      holder.registerProblem(
-        declaration,
-        EditorConfigBundle.get("inspection.root-declaration.uniqueness.message"),
-        EditorConfigRemoveRootDeclarationQuickFix()
-      )
     }
   }
 }

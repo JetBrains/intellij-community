@@ -36,18 +36,7 @@ class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDat
     }.toList()
 
     val importSettings = productService.importSettings(product.id, dataForSaves)
-    val dialog = ImportProgressDialog(importSettings)
-
-    parentDialog?.let {
-      it.showPage(dialog)
-    } ?: run {
-      super.doOKAction()
-
-      dialog.isModal = false
-      dialog.isResizable = false
-      dialog.show()
-    }
-
+    nextStep(ImportProgressDialog(importSettings))
   }
 }
 
@@ -64,17 +53,17 @@ class SyncSettingDialog(val provider: SyncActionsDataProvider, product: Settings
     }
   }
 
-  override fun applyFields() {
-    provider.productService.syncSettings()
-    super.applyFields()
+  override fun doOKAction() {
+    val syncSettings = provider.productService.syncSettings()
+    nextStep(ImportProgressDialog(syncSettings), OK_EXIT_CODE)
   }
 
   private fun getImportAction(): Action {
     return object : DialogWrapperAction("Import Once") {
 
       override fun doAction(e: ActionEvent?) {
-        provider.productService.importSyncSettings()
-        doAction(OK_EXIT_CODE)
+        val importSyncSettings = provider.productService.importSyncSettings()
+        nextStep(ImportProgressDialog(importSyncSettings), OK_EXIT_CODE)
       }
     }
   }

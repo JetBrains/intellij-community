@@ -8,7 +8,6 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
-import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ConfigImportHelper
@@ -18,6 +17,7 @@ import com.intellij.platform.bootstrap.initMarketplace
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.AppStarter
+import com.intellij.platform.ide.bootstrap.StartupErrorReporter
 import com.intellij.platform.ide.bootstrap.startApplication
 import com.intellij.platform.impl.toolkit.IdeFontManager
 import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
@@ -94,7 +94,7 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
 
     if (AppMode.isRemoteDevHost()) {
       span("cwm host init") {
-        initRemoteDev()
+        initRemoteDev(args)
       }
     }
 
@@ -182,16 +182,17 @@ internal fun isConfigImportNeeded(configPath: Path): Boolean {
          customTargetDirectoryToImportConfig != null
 }
 
-private fun initRemoteDev() {
+private fun initRemoteDev(args: List<String>) {
   if (!JBR.isGraphicsUtilsSupported()) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
+  if (args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND) {
+    System.setProperty("idea.initially.ask.config", "never")
+  }
   initRemoteDevGraphicsEnvironment()
   initLux()
 }
-
-private fun isLuxEnabled() = System.getProperty("lux.enabled", "true").toBoolean()
 
 private fun initRemoteDevGraphicsEnvironment() {
   JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider { IdeGraphicsEnvironment.instance }
@@ -207,10 +208,6 @@ private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any)
 }
 
 private fun initLux() {
-  if (!isLuxEnabled()) {
-    return
-  }
-
   System.setProperty("java.awt.headless", false.toString())
   System.setProperty("swing.volatileImageBufferEnabled", false.toString())
   System.setProperty("keymap.current.os.only", false.toString())
@@ -304,7 +301,7 @@ private fun installPluginUpdates() {
 // separate class for nicer presentation in dumps
 private class StartupAbortedExceptionHandler : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
   override fun handleException(context: CoroutineContext, exception: Throwable) {
-    StartupAbortedException.processException(exception)
+    StartupErrorReporter.processException(exception)
   }
 
   override fun toString() = "StartupAbortedExceptionHandler"

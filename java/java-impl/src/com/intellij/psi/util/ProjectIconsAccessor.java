@@ -1,6 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -9,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.containers.SLRUMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,10 +27,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Resolve small icons located in project for use in UI (e.g. gutter preview icon, lookups).
+ * Resolve small icons located in a project for use in UI (e.g., gutter preview icon, lookups).
  */
-public class ProjectIconsAccessor {
-
+@Service(Service.Level.PROJECT)
+public final class ProjectIconsAccessor {
   @NonNls
   private static final String JAVAX_SWING_ICON = "javax.swing.Icon";
 
@@ -38,12 +40,12 @@ public class ProjectIconsAccessor {
 
   private static final List<String> ICON_EXTENSIONS = List.of("png", "ico", "bmp", "gif", "jpg", "svg");
 
-  private final Project myProject;
+  private final Project project;
 
-  private final SLRUMap<String, Pair<Long, Icon>> iconsCache = new SLRUMap<>(500, 1000);
+  private final Cache<String, Pair<Long, Icon>> iconCache = Caffeine.newBuilder().maximumSize(500).build();
 
-  ProjectIconsAccessor(Project project) {
-    myProject = project;
+  ProjectIconsAccessor(@NotNull Project project) {
+    this.project = project;
   }
 
   public static ProjectIconsAccessor getInstance(Project project) {
@@ -98,25 +100,23 @@ public class ProjectIconsAccessor {
     return null;
   }
 
-  @Nullable
-  public Icon getIcon(@NotNull VirtualFile file) {
-    final String path = file.getPath();
-    final long stamp = file.getModificationStamp();
+  public @Nullable Icon getIcon(@NotNull VirtualFile file) {
+    String path = file.getPath();
+    long stamp = file.getModificationStamp();
 
-    Pair<Long, Icon> iconInfo;
-    synchronized (iconsCache) {
-      iconInfo = iconsCache.get(path);
-      if (iconInfo == null || iconInfo.getFirst() < stamp) {
-        try {
-          final Icon icon = createOrFindBetterIcon(file, isIdeaProject(myProject));
-          iconInfo = new Pair<>(stamp, hasProperSize(icon) ? icon : null);
-          iconsCache.put(file.getPath(), iconInfo);
-        }
-        catch (Exception e) {
-          iconInfo = null;
-          iconsCache.remove(path);
-        }
-      }
+    Pair<Long, Icon> iconInfo = iconCache.getIfPresent(path);
+    if (iconInfo != null && iconInfo.getFirst() >= stamp) {
+      return iconInfo.second;
+    }
+
+    try {
+      Icon icon = createOrFindBetterIcon(file, isIdeaProject(project));
+      iconInfo = new Pair<>(stamp, hasProperSize(icon) ? icon : null);
+      iconCache.put(file.getPath(), iconInfo);
+    }
+    catch (Exception e) {
+      iconInfo = null;
+      iconCache.invalidate(path);
     }
     return Pair.getSecond(iconInfo);
   }
@@ -134,7 +134,7 @@ public class ProjectIconsAccessor {
            icon.getIconWidth() <= JBUIScale.scale(ICON_MAX_WEIGHT);
   }
 
-  private static boolean isIdeaProject(@Nullable Project project) {
+  public static boolean isIdeaProject(@Nullable Project project) {
     if (project == null) return false;
     VirtualFile baseDir = project.getBaseDir();
     //has copy in devkit plugin: org.jetbrains.idea.devkit.util.PsiUtil.isIntelliJBasedDir

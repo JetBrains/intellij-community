@@ -58,8 +58,12 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
   }
 
   public boolean isBig(@NotNull VirtualFile root) {
+    return isBig(root.getPath());
+  }
+
+  public boolean isBig(@NotNull String path) {
     synchronized (myLock) {
-      return myState.repositories.contains(root.getPath());
+      return myState.repositories.contains(path);
     }
   }
 

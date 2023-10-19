@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -67,7 +66,7 @@ enum class PathHandlingMode(@Nls val displayName: String, @Nls val tooltip: Stri
      * Gets the name of a snippet entry from the relative path from the content root of a file.
      */
     private fun pathFromContentRoot(project: Project): suspend (VirtualFile) -> String {
-      val pfi = project.service<ProjectFileIndex>()
+      val pfi = ProjectFileIndex.getInstance(project)
       return { file ->
         readAction { pfi.getContentRootForFile(file) }
           ?.let { root -> VfsUtilCore.getRelativePath(file, root) } ?: file.name

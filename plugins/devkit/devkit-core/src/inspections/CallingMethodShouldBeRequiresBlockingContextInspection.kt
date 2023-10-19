@@ -14,6 +14,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.*
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.QuickFixWithReferenceToElement
 import org.jetbrains.idea.devkit.util.REQUIRES_BLOCKING_CONTEXT_ANNOTATION
@@ -21,6 +22,7 @@ import org.jetbrains.idea.devkit.util.isInspectionForBlockingContextAvailable
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
+@VisibleForTesting
 class CallingMethodShouldBeRequiresBlockingContextInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return if (isInspectionForBlockingContextAvailable(holder)) {

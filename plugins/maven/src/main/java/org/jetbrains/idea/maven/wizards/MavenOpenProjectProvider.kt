@@ -11,6 +11,7 @@ import com.intellij.projectImport.ProjectImportBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenUtil
 
@@ -29,14 +30,26 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
     cs.launch {
       withContext(Dispatchers.Default) {
         linkToExistingProjectAsync(projectFile, project)
-    }
+      }
     }
   }
 
   override suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
-    LOG.debug("Link Maven project '$projectFile' to existing project ${project.name}")
+    if (Registry.`is`("external.system.auto.import.disabled")) {
+      LOG.debug("External system auto import disabled. Skip linking Maven project '$projectFile' to existing project ${project.name}")
+      return
+    }
 
-    if (Registry.`is`("external.system.auto.import.disabled")) return
+    doLinkToExistingProjectAsync(projectFile, project)
+  }
+
+  @ApiStatus.Internal
+  suspend fun forceLinkToExistingProjectAsync(projectFilePath: String, project: Project) {
+    doLinkToExistingProjectAsync(getProjectFile(projectFilePath), project)
+  }
+
+  private suspend fun doLinkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+    LOG.debug("Link Maven project '$projectFile' to existing project ${project.name}")
 
     val projectRoot = if (projectFile.isDirectory) projectFile else projectFile.parent
 

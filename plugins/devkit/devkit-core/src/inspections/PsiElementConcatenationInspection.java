@@ -20,7 +20,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+final class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

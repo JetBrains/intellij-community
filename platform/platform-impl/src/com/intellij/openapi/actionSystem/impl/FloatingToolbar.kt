@@ -46,7 +46,7 @@ abstract class FloatingToolbar(
   /**
    * This scope will be canceled on dispose.
    */
-  private val coroutineScope: CoroutineScope
+  protected val coroutineScope: CoroutineScope
 ): Disposable {
   protected var hint: LightweightHint? = null
   private var buttonSize: Int by Delegates.notNull()
@@ -123,7 +123,7 @@ abstract class FloatingToolbar(
     }
   }
 
-  private suspend fun createHint(): LightweightHint {
+  protected open suspend fun createHint(): LightweightHint {
     val toolbar = createUpdatedActionToolbar(editor.contentComponent)
     val component = BorderLayoutPanel().apply {
       addToCenter(toolbar.component)

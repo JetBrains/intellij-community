@@ -11,7 +11,7 @@ import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
 
 internal object MarketplaceUrls {
-  private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().pluginsCompatibleBuild)
+  private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().pluginCompatibleBuild)
 
   const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
   const val JB_PLUGINS_XML_IDS_FILENAME = "jbPluginsXMLIds.json"
@@ -21,7 +21,7 @@ internal object MarketplaceUrls {
   }
 
   private val downloadUrl by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    ApplicationInfoImpl.getShadowInstance().pluginsDownloadUrl.trimEnd('/')
+    ApplicationInfoImpl.getShadowInstance().pluginDownloadUrl.trimEnd('/')
   }
 
   fun getPluginMetaUrl(externalPluginId: String) = "$pluginManagerUrl/files/$externalPluginId/meta.json"
@@ -83,7 +83,7 @@ internal object MarketplaceUrls {
   fun getPluginDownloadUrl(descriptor: IdeaPluginDescriptor, uuid: String, buildNumber: BuildNumber?): String {
     val parameters = hashMapOf(
       "id" to descriptor.pluginId.idString,
-      "build" to ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
+      "build" to ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
       "uuid" to uuid
     )
     (descriptor as? PluginNode)?.channel?.let {

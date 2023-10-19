@@ -602,7 +602,7 @@ public final class StreamlinedBlobStorageOverPagedStorage extends StreamlinedBlo
     try {
       final DirectBufferWrapper headerPage = pagedStorage.getByteBuffer(0, /*forWrite: */ true);
       try {
-        putHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId);
+        putHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId());
         putHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET, recordsAllocated.get());
         putHeaderInt(HeaderLayout.RECORDS_RELOCATED_OFFSET, recordsRelocated.get());
         putHeaderInt(HeaderLayout.RECORDS_DELETED_OFFSET, recordsDeleted.get());

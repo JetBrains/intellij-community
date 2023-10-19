@@ -45,8 +45,9 @@ public final class JavaUnnamedClassUtil {
     String name = containingFile.getName();
     int extensionIndex = name.lastIndexOf(".java");
     if (extensionIndex == -1) return null;
-    // TODO check that the name is valid identifier
-    return name.substring(0, extensionIndex);
+    String jvmName = name.substring(0, extensionIndex);
+    if (!StringUtil.isJavaIdentifier(jvmName)) return null;
+    return jvmName;
   }
 
   /**

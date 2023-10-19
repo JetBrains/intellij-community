@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.asResultFlow
 import com.intellij.collaboration.async.collectBatches
+import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -99,8 +100,8 @@ internal class LoadedGitLabMergeRequest(
   override val details: StateFlow<GitLabMergeRequestFullDetails> = mergeRequestDetailsState.asStateFlow()
 
   override val changes: SharedFlow<GitLabMergeRequestChanges> = mergeRequestDetailsState
-    .distinctUntilChangedBy(GitLabMergeRequestFullDetails::diffRefs).map {
-      GitLabMergeRequestChangesImpl(project, cs, api, projectMapping, it)
+    .distinctUntilChangedBy(GitLabMergeRequestFullDetails::diffRefs).mapScoped {
+      GitLabMergeRequestChangesImpl(project, this, api, projectMapping, it)
     }.modelFlow(cs, LOG)
 
   private val stateEventsLoader =

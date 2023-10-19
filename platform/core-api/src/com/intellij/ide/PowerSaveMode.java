@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.messages.Topic;
 
 public final class PowerSaveMode {
+
+  @Topic.AppLevel
   public static final Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   private static final String POWER_SAVE_MODE = "power.save.mode";
@@ -15,7 +17,7 @@ public final class PowerSaveMode {
   public static boolean isEnabled() {
     if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       Application app = ApplicationManager.getApplication();
-      @SuppressWarnings("RetrievingService")
+      @SuppressWarnings("SimplifiableServiceRetrieving")
       PropertiesComponent propertyComponent = app == null ? null : app.getService(PropertiesComponent.class);
       if (propertyComponent != null && propertyComponent.getBoolean(POWER_SAVE_MODE)) {
         return true;

@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.impl.toolkit
 
 import com.intellij.openapi.Disposable
@@ -17,7 +16,6 @@ import java.awt.im.spi.InputMethodDescriptor
 import java.awt.image.ImageObserver
 import java.awt.peer.*
 import java.util.*
-import javax.swing.JComponent
 
 class IdeToolkit : SunToolkit() {
   companion object {

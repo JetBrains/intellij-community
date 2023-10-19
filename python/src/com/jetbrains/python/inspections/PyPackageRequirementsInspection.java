@@ -187,11 +187,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
       final String packageName = packageReferenceExpression.getName();
       if (packageName != null && !myIgnoredPackages.contains(packageName)) {
-        final List<String> possiblePyPIPackageNames = PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, Collections.emptyList());
+        final String possiblePyPIPackageNames = PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, "");
 
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
             !PyPIPackageUtil.INSTANCE.isInPyPI(packageName) &&
-            !ContainerUtil.exists(possiblePyPIPackageNames, PyPIPackageUtil.INSTANCE::isInPyPI)) return;
+            !PyPIPackageUtil.INSTANCE.isInPyPI(possiblePyPIPackageNames)) return;
 
         if (PyPackageUtil.SETUPTOOLS.equals(packageName)) return;
 
@@ -211,16 +211,16 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
         for (PyRequirement req : requirements) {
           final String name = req.getName();
-          if (name.equalsIgnoreCase(packageName) || ContainerUtil.exists(possiblePyPIPackageNames, name::equalsIgnoreCase)) {
+          if (name.equalsIgnoreCase(packageName) || name.equalsIgnoreCase(possiblePyPIPackageNames)) {
             return;
           }
           final String nameWhereUnderscoreReplacedWithHyphen = name.replaceAll("_", "-");
-          if (ContainerUtil.exists(possiblePyPIPackageNames, nameWhereUnderscoreReplacedWithHyphen::equalsIgnoreCase)) {
+          if (nameWhereUnderscoreReplacedWithHyphen.equalsIgnoreCase(possiblePyPIPackageNames)) {
             return;
           }
           final String nameWhereHyphenReplacedWithUnderscore = name.replaceAll("-", "_");
           if (nameWhereHyphenReplacedWithUnderscore.equalsIgnoreCase(packageName) ||
-              ContainerUtil.exists(possiblePyPIPackageNames, nameWhereHyphenReplacedWithUnderscore::equalsIgnoreCase)) {
+              nameWhereHyphenReplacedWithUnderscore.equalsIgnoreCase(possiblePyPIPackageNames)) {
             return;
           }
         }

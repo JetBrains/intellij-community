@@ -2,10 +2,9 @@
 package com.intellij.util.indexing.internal
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.util.indexing.FileBasedIndexTumbler
@@ -43,7 +42,7 @@ class InternalIndexingActionsService(private val project: Project, private val s
 
       withBackgroundProgress(project, activityName) {
         blockingContext {
-          project.service<UnindexedFilesScannerExecutor>().suspendScanningAndIndexingThenRun(activityName) {
+          UnindexedFilesScannerExecutor.getInstance(project).suspendScanningAndIndexingThenRun(activityName) {
             while (true) {
               ProgressManager.checkCanceled()
               Thread.sleep(100)

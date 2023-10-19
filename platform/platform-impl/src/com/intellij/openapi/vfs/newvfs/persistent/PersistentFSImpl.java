@@ -3,10 +3,13 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -59,19 +62,13 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
-import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.notification.NotificationType.INFORMATION;
 
 @SuppressWarnings("NonDefaultConstructor")
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
 
-
-  /**
-   * Eager VFS saving causes a lot of issues with dispose ordering. So far disable it by default -- until we'll
-   * be able to sort that out.
-   */
-  private static final boolean SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN = getBooleanProperty("PersistentFSImpl.SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN", false);
-  private static final boolean SAVE_VFS_REGULARLY_ON_UNEXPECTED_SHUTDOWN = getBooleanProperty("PersistentFSImpl.SAVE_VFS_REGULARLY_ON_UNEXPECTED_SHUTDOWN", true);
+  private static final boolean LOG_NON_CACHED_ROOTS_LIST = SystemProperties.getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
@@ -126,23 +123,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     // external signal (i.e. OS demands termination because of reboot), it is worth disposing VFS early, and
     // not waiting for all other services disposed first -- because OS could be impatient, and just kill the
     // app if the termination request not satisfied in 100-200-500ms, and we don't want to leave VFS in inconsistent
-    // state because of that.
-    //
-    //Such an eager closing makes sense for a real application, but in tests it makes more harm than good:
-    // if a test is killed (e.g. by timeout), and VFS is closed _eagerly_ by ShutDownTracker -- there will be
-    // lots of 'Already disposed' exception afterward, because other services are still disposing, and some of
-    // them use VFS on dispose. Such 'Already disposed' exception shadows the real reason of test failure,
-    // and it is painfully confusing and frustrating for people, and confused people blame VFS for nothing,
-    // which is painfully unfair for the VFS team.
-    // To reduce overall pain, suffering and frustration in the world, in tests we shut down VFS with regular
-    // priority, not with eager ('cache') priority.
-
-    if (SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN && !app.isUnitTestMode()) {
-      ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
-    }
-    else if(SAVE_VFS_REGULARLY_ON_UNEXPECTED_SHUTDOWN){
-      ShutDownTracker.getInstance().registerShutdownTask(this::disconnect);
-    }
+    // state because of that. It's absolutely important to shutdown VFS after Indexes eagerly otherwise data might be lost.
+    // Services might throw `AlreadyDisposedException`-s after and we have to suppress those exceptions or wrap with PCE-s.
+    ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
   }
 
   @ApiStatus.Internal
@@ -178,8 +161,23 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (myConnected.compareAndSet(false, true)) {
       Activity activity = StartUpMeasurer.startActivity("connect FSRecords");
       applyVfsLogPreferences();
-      vfsPeer = FSRecords.connect();
+      FSRecordsImpl _vfsPeer = FSRecords.connect();
+      vfsPeer = _vfsPeer;
       activity.end();
+
+      if (app != null && !app.isHeadlessEnvironment()) {
+        List<VFSInitException> recoveredErrors = _vfsPeer.connection().recoveryInfo().recoveredErrors;
+        if (!recoveredErrors.isEmpty()) {
+          NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches");
+          notificationGroup.createNotification(
+              CoreBundle.message("vfs.vfs-recovered.notification.title"),
+              CoreBundle.message("vfs.vfs-recovered.notification.text"),
+              INFORMATION
+            )
+            .setImportant(true)
+            .notify(null);
+        }
+      }
     }
   }
 
@@ -201,7 +199,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       catch (Throwable e) {
         LOG.error("failed to clear VfsLog storage", e);
       }
-    } else {
+    }
+    else {
       if (!vfsLogPath.toFile().exists()) {
         // existing vfs must be cleared if vfslog directory does not exist, otherwise, vfslog will lack crucial data for recovery
         Path corruptionMarker = fsRecordsPaths.getCorruptionMarkerFile();
@@ -1833,13 +1832,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           boolean fsRootsHasCurrentId = Arrays.stream(vfsPeer.listRoots())
             .anyMatch(rootId -> rootId == currentId);
 
-          StringBuilder sb = new StringBuilder();
-          vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
-            if (myIdToDirCache.getCachedDir(rootFileId) == null) {
-              String rootName = vfsPeer.getName(rootFileId);
-              sb.append("\t" + rootFileId + ": [name:'" + rootName + "'][url:'" + rootUrl + "']\n");
-            }
-          });
+          StringBuilder nonCachedRootsPerLine = new StringBuilder();
+          if (LOG_NON_CACHED_ROOTS_LIST) {
+            vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
+              if (myIdToDirCache.getCachedDir(rootFileId) == null) {
+                String rootName = vfsPeer.getName(rootFileId);
+                nonCachedRootsPerLine.append("\t" + rootFileId + ": [name:'" + rootName + "'][url:'" + rootUrl + "']\n");
+              }
+            });
+          }
 
           return
             "file[" + startingFileId + ", flags: " + startingFileFlags + "]: " +
@@ -1849,7 +1850,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             "pfs.roots.contains(" + currentId + ")=" + rootIds.contains(currentId) + ", " +
             "fs.roots.contains(" + currentId + ")=" + fsRootsHasCurrentId + ", " +
             "non-cached roots: " + nonCachedRoots.length + ", cached non-roots: " + cachedNonRoots.length + ", " +
-            "FS roots not PFS roots: " + fsRootsNonPFSRoots.length + ": \n" + sb;
+            "FS roots not PFS roots: " + fsRootsNonPFSRoots.length + ": \n" + nonCachedRootsPerLine;
         }
       );
     }

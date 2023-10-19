@@ -15,12 +15,16 @@
  */
 package com.intellij.vcs.log.visible
 
-enum class CommitCountStage(val count: Int) {
-  INITIAL(5), FIRST_STEP(2000), ALL(Int.MAX_VALUE);
+open class CommitCountStage(val count: Int) {
+  open fun next(): CommitCountStage = ALL
+  override fun toString(): String = if (isAll()) "ALL" else count.toString()
 
-  fun next(): CommitCountStage {
-    val values = values()
-    return if (ordinal == values.size - 1) this else values[ordinal + 1]
+  companion object {
+    @JvmField val ALL = CommitCountStage(Int.MAX_VALUE)
+    @JvmField val FIRST_STEP = CommitCountStage(2000)
+    @JvmField val INITIAL = object : CommitCountStage(5) {
+      override fun next() = FIRST_STEP
+    }
   }
 }
 

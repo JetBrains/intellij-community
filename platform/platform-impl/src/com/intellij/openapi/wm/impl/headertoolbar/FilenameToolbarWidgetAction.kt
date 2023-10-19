@@ -2,26 +2,37 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.ui.ClickListener
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.IconUtil
+import com.intellij.util.messages.SimpleMessageBusConnection
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Cursor
@@ -34,55 +45,118 @@ import javax.swing.JComponent
  */
 class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
 
-  companion object {
-    const val ID = "main.toolbar.Filename"
-  }
-
   override fun actionPerformed(e: AnActionEvent) {
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.project?.service<FilenameToolbarWidgetUpdateService>()?.updatePresentation(e.presentation)
+    e.presentation.isEnabledAndVisible = false
+    val uiSettings = UISettings.getInstance()
+    if (uiSettings.editorTabPlacement != UISettings.TABS_NONE && !(uiSettings.fullPathsInWindowHeader && isIDEA331002Fixed)) return
+    val project = e.project ?: return
+    val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return
+    updatePresentationFromFile(project, file, e.presentation)
   }
 
-  override fun createCustomComponent(presentation: Presentation, place: String): JBLabel = JBLabel().apply {
-    isOpaque = false
-    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    object : ClickListener() {
-      override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-        if (UIUtil.isCloseClick(event, MouseEvent.MOUSE_RELEASED)) {
-          val project = ProjectUtil.getProjectForComponent(this@apply)
-          if (project != null) {
-            val files = FileEditorManager.getInstance(project).selectedFiles
-            if (files.isNotEmpty()) {
-              FileEditorManager.getInstance(project).closeFile(files[0])
-              return true
+  private fun updatePresentationFromFile(project: Project, file: VirtualFile, presentation: Presentation) {
+    val status = FileStatusManager.getInstance(project).getStatus(file)
+    var fg:Color?
+
+    var icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, project)
+    if (JBColor.isBright() && isDarkToolbar()) {
+      icon = IconLoader.getDarkIcon(icon, true)
+      fg = EditorColorsManager.getInstance().getScheme("Dark").getColor(status.colorKey)
+    }
+    else {
+      fg = status.color
+    }
+
+    if (fg == null) {
+      @Suppress("UnregisteredNamedColor")
+      fg = JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
+    }
+
+    @Suppress("HardCodedStringLiteral")
+    val filename = VfsPresentationUtil.getUniquePresentableNameForUI(project, file)
+    presentation.isEnabledAndVisible = true
+    presentation.putClientProperty(FILE_COLOR, fg)
+    presentation.putClientProperty(FILE_FULL_PATH, if (UISettings.getInstance().fullPathsInWindowHeader) file.path else null)
+    presentation.description = StringUtil.shortenTextWithEllipsis(filename, 60, 30)
+    presentation.icon = icon
+  }
+
+  @Suppress("UseJBColor")
+  private fun isDarkToolbar() = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background", Color.WHITE))
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JBLabel = FilenameToolbarWidget()
+
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    (component as FilenameToolbarWidget).update(presentation)
+  }
+
+  private inner class FilenameToolbarWidget : JBLabel() {
+
+    private var messageBusConnection: SimpleMessageBusConnection? = null
+
+    init {
+      isOpaque = false
+      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+      object : ClickListener() {
+        override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+          if (UIUtil.isCloseClick(event, MouseEvent.MOUSE_RELEASED)) {
+            val project = ProjectUtil.getProjectForComponent(this@FilenameToolbarWidget)
+            if (project != null) {
+              val files = FileEditorManager.getInstance(project).selectedFiles
+              if (files.isNotEmpty()) {
+                FileEditorManager.getInstance(project).closeFile(files[0])
+                return true
+              }
             }
           }
+          if (clickCount == 1) {
+            showRecentFilesPopup(this@FilenameToolbarWidget)
+            return true
+          }
+          return false
         }
-        if (clickCount == 1) {
-          showRecentFilesPopup(this@apply)
-          return true
+      }.installOn(this)
+    }
+
+    fun update(presentation: Presentation) {
+      @Suppress("HardCodedStringLiteral")
+      val path = presentation.getClientProperty(FILE_FULL_PATH)
+      isOpaque = false
+      iconTextGap = JBUI.scale(4)
+      icon = presentation.icon
+      foreground = presentation.getClientProperty(FILE_COLOR)
+      text = presentation.description
+      if (text.isNullOrEmpty()) {
+        // A trick to avoid flashing the "unknown" icon on the toolbar during initialization,
+        // as the action system goes out of its way to make the action visible until the first update.
+        isVisible = false
+      }
+      if (path != null && isIDEA331002Fixed) {
+        val htmlColor = ColorUtil.toHtmlColor(JBColor.namedColor("Component.infoForeground", foreground))
+        @Suppress("HardCodedStringLiteral")
+        text = "<html><body>$text <font color='$htmlColor'>[$path]</font></body></html>"
+      }
+    }
+
+    override fun addNotify() {
+      check(messageBusConnection == null) { "addNotify() called twice without removeNotify()?!" }
+      val editorListener = object : FileEditorManagerListener {
+        override fun selectionChanged(event: FileEditorManagerEvent) {
+          ActionToolbar.findToolbarBy(this@FilenameToolbarWidget)?.updateActionsImmediately()
         }
-        return false
       }
-    }.installOn(this)
-    // This is just a hack to avoid unnecessary subclassing, as JComponent's addNotify/removeNotify fires these events:
-    addPropertyChangeListener("ancestor") { event ->
-      val project = ProjectUtil.getProjectForComponent(this@apply)
-      if (project == null) {
-        LOG.warn("")
-        return@addPropertyChangeListener
-      }
-      val service = project.service<FilenameToolbarWidgetUpdateService>()
-      if (event.newValue != null) {
-        service.registerComponent(this@apply)
-      }
-      else {
-        service.deregisterComponent(this@apply)
-      }
+      messageBusConnection = ProjectUtil.getProjectForComponent(this@FilenameToolbarWidget)?.messageBus?.simpleConnect()
+      messageBusConnection?.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener)
+    }
+
+    override fun removeNotify() {
+      messageBusConnection?.disconnect()
+      messageBusConnection = null
     }
   }
 
@@ -115,10 +189,8 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
       return null
     }
   }
-
-  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    ProjectUtil.getProjectForComponent(component)?.service<FilenameToolbarWidgetUpdateService>()?.updateComponent(component, presentation)
-  }
 }
 
-private val LOG = logger<FilenameToolbarWidgetAction>()
+private val FILE_COLOR: Key<Color> = Key.create("FILENAME_WIDGET_FILE_COLOR")
+private val FILE_FULL_PATH: Key<String?> = Key.create("FILENAME_WIDGET_FILE_PATH")
+private const val isIDEA331002Fixed = false //todo[mikhail.sokolov]

@@ -517,6 +517,11 @@ public final class BuildDataManager {
       }
 
       @Override
+      public @NotNull Iterable<ReferenceID> getDependingNodes(@NotNull ReferenceID id) {
+        return graph.getDependingNodes(id);
+      }
+
+      @Override
       public void close() throws IOException {
         synchronized (lock) {
           graph.close();

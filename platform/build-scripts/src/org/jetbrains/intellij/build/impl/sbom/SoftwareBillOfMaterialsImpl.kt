@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.sbom
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.outputStream
 import io.opentelemetry.api.common.AttributeKey
@@ -799,7 +800,7 @@ internal class SoftwareBillOfMaterialsImpl(
    * See https://pypi.org/project/ntia-conformance-checker/
    */
   private suspend fun checkNtiaConformance(documents: List<Path>) {
-    if (Docker.isAvailable) {
+    if (Docker.isAvailable && !SystemInfoRt.isWindows) {
       val ntiaChecker = "ntia-checker"
       suspendingRetryWithExponentialBackOff {
         runProcess(

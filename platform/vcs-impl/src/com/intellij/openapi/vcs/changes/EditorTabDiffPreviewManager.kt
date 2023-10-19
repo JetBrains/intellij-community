@@ -5,7 +5,6 @@ import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffInEditor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -45,6 +44,6 @@ class EditorTabDiffPreviewManager(private val project: Project) : DiffEditorTabF
 
     @JvmStatic
     fun getInstance(project: Project): EditorTabDiffPreviewManager =
-      project.service<DiffEditorTabFilesManager>() as EditorTabDiffPreviewManager
+      DiffEditorTabFilesManager.getInstance(project) as EditorTabDiffPreviewManager
   }
 }

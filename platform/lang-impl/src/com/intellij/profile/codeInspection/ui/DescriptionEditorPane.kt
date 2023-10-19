@@ -87,11 +87,8 @@ fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
     val psiFileFactory = PsiFileFactory.getInstance(defaultProject)
 
     val defaultFile = psiFileFactory.createFileFromText(PlainTextLanguage.INSTANCE, "")
-    val content = codeSnippet.text().let { text ->
-      val beforeFirstNewline = text.substringBefore("\n")
-      val afterFirstNewline = text.substringAfter("\n", "").trimIndent()
-      if (afterFirstNewline.isEmpty()) beforeFirstNewline else "$beforeFirstNewline\n$afterFirstNewline"
-    }
+    val content = codeSnippet.wholeText()
+      .trimIndent()
       .trimEnd()
       .replaceIndent("  ")
     var snippet: String

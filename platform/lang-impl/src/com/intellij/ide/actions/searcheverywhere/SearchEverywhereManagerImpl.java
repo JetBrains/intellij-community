@@ -167,7 +167,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   private static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project) {
-    SearchEverywhereMlContributorReplacementService.saveInitEvent(initEvent);
+    SearchEverywhereMlContributorReplacement.saveInitEvent(initEvent);
     if (project == null) {
       ActionSearchEverywhereContributor.Factory factory = new ActionSearchEverywhereContributor.Factory();
       return Collections.singletonList(factory.createContributor(initEvent));

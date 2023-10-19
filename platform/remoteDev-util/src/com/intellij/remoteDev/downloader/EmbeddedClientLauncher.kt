@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CustomConfigMigrationOption
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.Key
@@ -35,6 +36,7 @@ import kotlin.io.path.pathString
 class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
                                                  private val moduleRepositoryPath: Path) {
   companion object {
+    private const val USE_CUSTOM_PATHS_PROPERTY = "rdct.embedded.client.use.custom.paths"
     private val CLIENT_ROOT_MODULE = RuntimeModuleId.module("intellij.cwm.guest")
     private val LOG = logger<EmbeddedClientLauncher>()
     
@@ -56,7 +58,9 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val processLifetimeDef = lifetime.createNested()
     
     val javaParameters = createProcessParameters(moduleRepository, moduleRepositoryPath, urlToOpen)
-    val handler = OSProcessHandler.Silent(javaParameters.toCommandLine())
+    val commandLine = javaParameters.toCommandLine()
+    LOG.debug { "Starting embedded client: $commandLine" }
+    val handler = OSProcessHandler.Silent(commandLine)
     val output = Collections.synchronizedList(ArrayList<@NlsSafe String>())
     handler.addProcessListener(object : ProcessListener {
       override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
@@ -81,7 +85,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val javaParameters = SimpleJavaParameters()
     javaParameters.jdk = SimpleJavaSdkType.getInstance().createJdk("", SystemProperties.getJavaHome())
     javaParameters.setShortenCommandLine(ShortenCommandLine.ARGS_FILE)
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isUnitTestMode || SystemProperties.getBooleanProperty(USE_CUSTOM_PATHS_PROPERTY, false)) {
       val tempDir = Path(PathManager.getTempPath()) / "embedded-client"
       val configDir = tempDir / "config"
       if (!configDir.exists()) {
@@ -109,6 +113,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "pty4j.preferred.native.folder", 
       "jna.nosys", 
       "jna.noclasspath", 
+      "idea.is.internal",
     )
     propertiesToPass.forEach { 
       vmParametersList.defineProperty(it, System.getProperty(it))

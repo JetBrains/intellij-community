@@ -28,11 +28,9 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
             "ActionPresentationInstantiatedInCtor",
             "CancellationCheckInLoops",
             "ThreadingConcurrency",
-            "TokenSetInParserDefinition",
             "CallingMethodShouldBeRequiresBlockingContext",
             "IncorrectProcessCanceledExceptionHandling",
             "StaticInitializationInExtensions",
-            "ListenerImplementationMustNotBeDisposable",
             "UsePlatformProcessAwaitExit");
 
   /**

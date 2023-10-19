@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 
 internal class TableColumnAlignmentActionsGroup: DefaultActionGroup() {
   override fun update(event: AnActionEvent) {

@@ -504,13 +504,7 @@ private class AlertDialog(project: Project?,
     }
 
     button.preferredSize = size
-
-    if (SystemInfoRt.isMac) {
-      myButtons.add(0, button)
-    }
-    else {
-      myButtons.add(button)
-    }
+    myButtons.add(button)
 
     return button
   }

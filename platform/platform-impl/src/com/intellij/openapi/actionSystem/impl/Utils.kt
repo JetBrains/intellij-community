@@ -61,6 +61,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.asCancellablePromise
 import java.awt.*
@@ -177,11 +178,11 @@ object Utils {
   }
 
   @JvmStatic
-  @Deprecated("Use `createAsyncDataContext` instead")
+  @Deprecated("Use `createAsyncDataContext` instead", ReplaceWith("createAsyncDataContext(dataContext)"), DeprecationLevel.ERROR)
   fun wrapDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
 
   @JvmStatic
-  @Deprecated("Use `createAsyncDataContext` instead")
+  @Deprecated("Use `createAsyncDataContext` instead", ReplaceWith("createAsyncDataContext(dataContext)"), DeprecationLevel.ERROR)
   fun wrapToAsyncDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
 
   @JvmStatic
@@ -256,13 +257,13 @@ object Utils {
                                        isToolbarAction: Boolean,
                                        fastTrack: Boolean): List<AnAction> = withContext(
     CoroutineName("expandActionGroupSuspend ($place)") + ModalityState.any().asContextElement()) {
-    val wrapped = createAsyncDataContext(dataContext)
-    checkAsyncDataContext(wrapped, place)
+    val asyncDataContext = createAsyncDataContext(dataContext)
+    checkAsyncDataContext(asyncDataContext, place)
     val isContextMenu = ActionPlaces.isPopupPlace(place)
-    val fastTrackTime = getFastTrackMaxTime(fastTrack, group, place, wrapped, isToolbarAction, true)
+    val fastTrackTime = getFastTrackMaxTime(fastTrack, group, place, asyncDataContext, isToolbarAction, true)
     val deferred = async(if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() } else EmptyCoroutineContext) {
-      service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, wrapped, place, group, isToolbarAction) {
-        val updater = ActionUpdater(presentationFactory, wrapped, place, isContextMenu, isToolbarAction, this)
+      service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, asyncDataContext, place, group, isToolbarAction) {
+        val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, isToolbarAction, this)
         withContext(updaterContext(place, fastTrackTime, isContextMenu, isToolbarAction)) {
           updater.expandActionGroup(group, group is CompactActionGroup)
         }
@@ -313,8 +314,8 @@ object Utils {
                                     expire: (() -> Boolean)?,
                                     menuItem: Component?): List<AnAction> = runBlockingForActionExpand(
     CoroutineName("expandActionGroupImpl ($place)")) {
-    val wrapped = createAsyncDataContext(dataContext)
-    checkAsyncDataContext(wrapped, place)
+    val asyncDataContext = createAsyncDataContext(dataContext)
+    checkAsyncDataContext(asyncDataContext, place)
     val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
     val maxLoops = max(2, Registry.intValue("actionSystem.update.actions.async.max.nested.loops", 20))
     if (ourExpandActionGroupImplEDTLoopLevel >= maxLoops) {
@@ -325,21 +326,21 @@ object Utils {
     if (isContextMenu) {
       cancelAllUpdates("context menu requested")
     }
-    val fastTrackTime = getFastTrackMaxTime(true, group, place, wrapped, false, false)
+    val fastTrackTime = getFastTrackMaxTime(true, group, place, asyncDataContext, false, false)
     val mainJob = coroutineContext.job
     val loopJob = if (isUnitTestMode) null else launch {
       val start = System.nanoTime()
       while (TimeoutUtil.getDurationMillis(start) < fastTrackTime) {
         delay(1)
       }
-      runEdtLoop(mainJob, expire, PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrapped), menuItem)
+      runEdtLoop(mainJob, expire, PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(asyncDataContext), menuItem)
     }
     val progressJob = if (loadingIconPoint == null) null else launch {
       addLoadingIcon(loadingIconPoint, place)
     }
     try {
-      service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, wrapped, place, group, false) {
-        val updater = ActionUpdater(presentationFactory, wrapped, place, isContextMenu, false, this)
+      service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, asyncDataContext, place, group, false) {
+        val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, false, this)
         withContext(updaterContext(place, fastTrackTime, isContextMenu, false)) {
           updater.expandActionGroup(group, group is CompactActionGroup)
         }
@@ -379,23 +380,25 @@ object Utils {
     if (Thread.holdsLock(component.treeLock)) {
       throw ProcessCanceledException()
     }
+    val asyncDataContext = createAsyncDataContext(context)
+    checkAsyncDataContext(asyncDataContext, place)
     var result: List<AnAction>? = null
     val span = getTracer(checkNoop = false).spanBuilder("fillMenu").setAttribute("place", place).startSpan()
     val start = System.nanoTime()
     try {
       Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent().use {
-        val list = expandActionGroupImpl(group, presentationFactory, context, place, true, progressPoint, expire, component)
+        val list = expandActionGroupImpl(group, presentationFactory, asyncDataContext, place, true, progressPoint, expire, component)
         result = list
         if (expire?.invoke() == true) return@use
         val checked = group is CheckedActionGroup
         val multiChoice = isMultiChoiceGroup(group)
         if (nativePeer == null) {
           fillMenuInner(component as JComponent, list, checked, multiChoice, enableMnemonics,
-                        presentationFactory, context, place, isWindowMenu, useDarkIcons)
+                        presentationFactory, asyncDataContext, place, isWindowMenu, useDarkIcons)
         }
         else {
           fillMenuInnerMacNative(nativePeer, component as JFrame, list, checked, multiChoice, enableMnemonics,
-                                 presentationFactory, context, place, useDarkIcons)
+                                 presentationFactory, asyncDataContext, place, useDarkIcons)
         }
       }
     }
@@ -406,7 +409,7 @@ object Utils {
         LOG.warn("$elapsed ms to fillMenu@$place")
       }
       val submenu = component is ActionMenu && component.getParent() != null
-      recordActionGroupExpanded(group, context, place, submenu, elapsed, result)
+      recordActionGroupExpanded(group, asyncDataContext, place, submenu, elapsed, result)
     }
   }
 
@@ -666,13 +669,13 @@ object Utils {
                              place: String,
                              presentationFactory: PresentationFactory,
                              onUpdate: Runnable) {
-    val wrapped = createAsyncDataContext(dataContext)
-    checkAsyncDataContext(wrapped, place)
+    val asyncDataContext = createAsyncDataContext(dataContext)
+    checkAsyncDataContext(asyncDataContext, place)
     val actionGroup = DefaultActionGroup(actions.toList())
     ApplicationManager.getApplication().coroutineScope.async(
       Dispatchers.EDT + ModalityState.any().asContextElement(), CoroutineStart.UNDISPATCHED) {
       try {
-        expandActionGroupSuspend(actionGroup, presentationFactory, wrapped, place, false, true)
+        expandActionGroupSuspend(actionGroup, presentationFactory, asyncDataContext, place, false, true)
         onUpdate.run()
       }
       finally {
@@ -870,9 +873,9 @@ object Utils {
   }
 
   fun rearrangeByPromotersNonAsync(actions: List<AnAction>, dataContext: DataContext): List<AnAction> = runBlockingForActionExpand {
-    val wrapped = createAsyncDataContext(dataContext)
-    checkAsyncDataContext(wrapped, "rearrangeByPromotersNonAsync")
-    rearrangeByPromoters(actions, wrapped)
+    val asyncDataContext = createAsyncDataContext(dataContext)
+    checkAsyncDataContext(asyncDataContext, "rearrangeByPromotersNonAsync")
+    rearrangeByPromoters(actions, asyncDataContext)
   }
 }
 
@@ -883,7 +886,8 @@ suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataConte
       service<ActionUpdaterInterceptor>().rearrangeByPromoters(actions, frozenContext) {
         withContext(shortcutUpdateDispatcher) {
           readActionUndispatchedForActionExpand {
-            rearrangeByPromotersImpl(actions, frozenContext)
+            val promoters = ActionPromoter.EP_NAME.extensionList + actions.filterIsInstance<ActionPromoter>()
+            rearrangeByPromotersImpl(actions, frozenContext, promoters)
           }
         }
       }
@@ -898,21 +902,30 @@ suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataConte
   }
 }
 
-private fun rearrangeByPromotersImpl(readOnlyActions: List<AnAction>, dataContext: DataContext): List<AnAction> {
-  val promoters = ActionPromoter.EP_NAME.extensionList + readOnlyActions.filterIsInstance<ActionPromoter>()
-  val actions = ArrayList(readOnlyActions)
+@VisibleForTesting
+fun rearrangeByPromotersImpl(actions: List<AnAction>,
+                             dataContext: DataContext,
+                             promoters: List<ActionPromoter>): List<AnAction> {
+  if (promoters.isEmpty()) return actions
+  val result = ArrayList(actions)
+  val copy = ArrayList(actions)
+  var updateCopy = false
   for (promoter in promoters) {
-    val promoted = promoter.promote(Collections.unmodifiableList(actions), dataContext)
+    if (updateCopy) copy.run { clear(); addAll(result); updateCopy = false }
+    val promoted = promoter.promote(Collections.unmodifiableList(copy), dataContext)
     if (!promoted.isNullOrEmpty()) {
-      actions.removeAll(promoted)
-      actions.addAll(0, promoted)
+      result.removeAll(promoted)
+      result.addAll(0, promoted)
+      updateCopy = true
     }
-    val suppressed = promoter.suppress(Collections.unmodifiableList(actions), dataContext)
+    val suppressed = promoter.suppress(Collections.unmodifiableList(copy), dataContext)
     if (!suppressed.isNullOrEmpty()) {
-      actions.removeAll(suppressed)
+      result.removeAll(suppressed)
+      updateCopy = true
     }
   }
-  return actions
+  result.remove(null)
+  return result
 }
 
 private fun getFastTrackMaxTime(useFastTrack: Boolean,

@@ -1310,6 +1310,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/fwPropertyInInterface.kt");
         }
 
+        @TestMetadata("idea334404.kt")
+        public void testIdea334404() throws Exception {
+            runTest("../testData/stepping/custom/idea334404.kt");
+        }
+
         @TestMetadata("initBlocks.kt")
         public void testInitBlocks() throws Exception {
             runTest("../testData/stepping/custom/initBlocks.kt");

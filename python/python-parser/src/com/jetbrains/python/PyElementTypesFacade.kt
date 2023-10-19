@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import java.util.function.Function
 
-public abstract class PyElementTypesFacade {
+abstract class PyElementTypesFacade {
 
   abstract val functionDeclaration: IStubElementType<*, *>
   abstract val classDeclaration: IStubElementType<*, *>
@@ -119,6 +119,6 @@ public abstract class PyElementTypesFacade {
   abstract val asPatternConstructor: Function<in ASTNode, out PsiElement>
 
   companion object {
-    val INSTANCE: PyElementTypesFacade = ApplicationManager.getApplication().service<PyElementTypesFacade>()
+    val INSTANCE: PyElementTypesFacade by lazy { ApplicationManager.getApplication().service<PyElementTypesFacade>() }
   }
 }

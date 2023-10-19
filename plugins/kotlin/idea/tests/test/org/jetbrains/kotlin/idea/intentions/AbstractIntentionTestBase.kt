@@ -214,16 +214,14 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         val isApplicableOnPooled: Boolean = computeUnderProgressIndicatorAndWait {
             runReadAction{ intentionAction.isAvailable(project, editor, file) }
         }
+        Assert.assertTrue(
+            "isAvailable() for " + intentionAction.javaClass + " should return " + isApplicableExpected,
+            isApplicableExpected == isApplicableOnPooled
+        )
 
         val modCommandAction: ModCommandAction? = intentionAction.asModCommandAction()
         if (modCommandAction == null) {
             val isApplicableOnEdt = intentionAction.isAvailable(project, editor, file)
-
-            Assert.assertEquals(
-                "There should not be any difference what thread isApplicable is called from",
-                isApplicableOnPooled,
-                isApplicableOnEdt
-            )
 
             Assert.assertTrue(
                 "isAvailable() for " + intentionAction.javaClass + " should return " + isApplicableExpected,

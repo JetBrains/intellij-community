@@ -112,7 +112,10 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
                 ["%s/%s.pyx" % (dir_name, target_pydevd_name,)],
                 extra_compile_args=extra_compile_args,
                 extra_link_args=extra_link_args,
-                ), force=True)
+                ),
+                # See: https://cython.readthedocs.io/en/latest/src/userguide/migrating_to_cy30.html#binding-functions
+                compiler_directives={'binding': False},
+                force=True)
         else:
             # Always compile the .c (and not the .pyx) file (which we should keep
             # up-to-date by running build_tools/build.py).

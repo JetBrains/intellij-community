@@ -40,12 +40,12 @@ import java.util.function.Consumer
 private val LOG = logger<EntityStorageSerializerImpl>()
 
 public class EntityStorageSerializerImpl(
-  internal val typesResolver: EntityTypesResolver,
+  private val typesResolver: EntityTypesResolver,
   private val virtualFileManager: VirtualFileUrlManager,
   private val urlRelativizer: UrlRelativizer? = null
 ) : EntityStorageSerializer {
   public companion object {
-    public const val STORAGE_SERIALIZATION_VERSION: String = "v2"
+    public const val STORAGE_SERIALIZATION_VERSION: String = "v4"
 
     private val loadCacheMetadataFromFileTimeMs: AtomicLong = AtomicLong()
 
@@ -203,7 +203,9 @@ public class EntityStorageSerializerImpl(
         val builder = MutableEntityStorageImpl(storage)
 
         builder.entitiesByType.entityFamilies.forEach { family ->
-          family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }
+          family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData ->
+            builder.changeLog.addAddEvent(entityData.createEntityId(), entityData)
+          }
         }
 
         if (LOG.isTraceEnabled) {
@@ -264,63 +266,6 @@ public class EntityStorageSerializerImpl(
   internal val Class<*>.typeInfo: TypeInfo
     get() = getTypeInfo(this, interner, typesResolver)
 
-  @TestOnly
-  @Suppress("UNCHECKED_CAST")
-  public fun deserializeCacheAndDiffLog(file: Path, diffLogFile: Path): MutableEntityStorage? {
-    val builder = deserializeCache(file).getOrThrow() ?: return null
-
-    var log: ChangeLog
-    createKryoInput(diffLogFile).use { input ->
-      val (kryo, classCache) = createKryo()
-
-      // Read version
-      val cacheVersion = input.readString()
-      if (cacheVersion != serializerDataFormatVersion) {
-        LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
-        return null
-      }
-
-      val cacheMetadata = kryo.readObject(input, CacheMetadata::class.java)
-      val currentMetadata = loadCurrentEntitiesMetadata(cacheMetadata, typesResolver)
-      val comparisonResult = compareMetadata(cacheMetadata, currentMetadata)
-      if (!comparisonResult.areEquals) {
-        LOG.info("Cache isn't loaded. Reason:\n${comparisonResult.info}")
-        return null
-      }
-
-      readAndRegisterClasses(kryo, input, cacheMetadata, classCache)
-
-      log = kryo.readClassAndObject(input) as ChangeLog
-    }
-
-    builder as MutableEntityStorageImpl
-    builder.changeLog.changeLog.clear()
-    builder.changeLog.changeLog.putAll(log)
-
-    return builder
-  }
-
-  @TestOnly
-  @Suppress("UNCHECKED_CAST")
-  public fun deserializeClassToIntConverter(file: Path) {
-    createKryoInput(file).use { input ->
-      val (kryo, _) = createKryo()
-
-      // Read version
-      val cacheVersion = input.readString()
-      if (cacheVersion != serializerDataFormatVersion) {
-        LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
-        return
-      }
-
-      val classes = kryo.readClassAndObject(input) as List<Pair<TypeInfo, Int>>
-      val map = Object2IntOpenHashMap<Class<*>>()
-      for ((first, second) in classes) {
-        map.put(typesResolver.resolveClass(first.fqName, first.pluginId), second)
-      }
-      ClassToIntConverter.getInstance().fromMap(map)
-    }
-  }
 
   internal fun createKryoOutput(file: Path): Output {
     val output = KryoOutput(file)

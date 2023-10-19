@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.util
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import git4idea.config.GitProtectedBranchProvider
-import org.jetbrains.plugins.github.api.GHRepositoryPath
 import java.util.*
 
 @State(name = "GithubProjectSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
@@ -36,6 +35,6 @@ class GithubProjectSettings : PersistentStateComponentWithModificationTracker<Gi
 internal class GithubProtectedBranchProvider : GitProtectedBranchProvider {
 
   override fun doGetProtectedBranchPatterns(project: Project): List<String> {
-    return project.service<GithubProjectSettings>().branchProtectionPatterns
+    return GithubProjectSettings.getInstance(project).branchProtectionPatterns
   }
 }

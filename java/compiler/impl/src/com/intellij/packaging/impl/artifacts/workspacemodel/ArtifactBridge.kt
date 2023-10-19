@@ -1,11 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
-import com.intellij.configurationStore.deserializeInto
 import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
@@ -141,24 +139,7 @@ open class ArtifactBridge(
 
   override fun getProperties(propertiesProvider: ArtifactPropertiesProvider): ArtifactProperties<*>? {
     val artifactEntity = entityStorage.base.get(artifactId)
-    val providerId = propertiesProvider.id
-    val customProperty = artifactEntity.customProperties.find { it.providerType == providerId }
-                         ?: return if (propertiesProvider.isAvailableFor(this.artifactType)) {
-                           propertiesProvider.createProperties(this.artifactType)
-                         }
-                         else null
-
-    @Suppress("UNCHECKED_CAST")
-    val createdProperties: ArtifactProperties<Any> = propertiesProvider.createProperties(this.artifactType) as ArtifactProperties<Any>
-    val state = createdProperties.state!!
-
-    customProperty.propertiesXmlTag?.let {
-      JDOMUtil.load(it).deserializeInto(state)
-    }
-
-    createdProperties.loadState(state)
-
-    return createdProperties
+    return getArtifactProperties(artifactEntity, this.artifactType, propertiesProvider)
   }
 
   override fun getOutputFile(): VirtualFile? {

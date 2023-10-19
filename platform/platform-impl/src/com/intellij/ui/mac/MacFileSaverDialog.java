@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -11,13 +11,13 @@ import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PathChooserDialogHelper;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.OwnerOptional;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
 public final class MacFileSaverDialog implements FileSaverDialog {
   private FileDialog myFileDialog;
@@ -60,7 +60,7 @@ public final class MacFileSaverDialog implements FileSaverDialog {
     myFileDialog.setDirectory(baseDir);
     myFileDialog.setFile(filename);
     myFileDialog.setFilenameFilter(FileChooser.safeInvokeFilter((dir, name) -> {
-      return myDescriptor.isFileSelectable(PathChooserDialogHelper.fileToCoreLocalVirtualFile(dir, name));
+      return myDescriptor.isFileSelectable(PathChooserDialogHelper.Companion.fileToCoreLocalVirtualFile(dir, name));
     }, false));
 
     myFileDialog.setVisible(true);

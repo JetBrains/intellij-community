@@ -45,12 +45,16 @@ class ShortcutPresenter : Disposable {
   private fun enable() {
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(AnActionListener.TOPIC, object : AnActionListener {
       override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-        val actionId = ActionManager.getInstance().getId(action) ?: return
+        // Show popups a bit later after action is called, to avoid too many UI processes get triggered.
+        // Otherwise, popups may be presented with visible blinks.
+        ApplicationManager.getApplication().invokeLater {
+          val actionId = ActionManager.getInstance().getId(action) ?: return@invokeLater
 
-        if (!movingActions.contains(actionId) && !typingActions.contains(actionId)) {
-          val project = event.project
-          val text = event.presentation.text
-          showActionInfo(ActionData(actionId, project, text))
+          if (!movingActions.contains(actionId) && !typingActions.contains(actionId)) {
+            val project = event.project
+            val text = event.presentation.text
+            showActionInfo(ActionData(actionId, project, text))
+          }
         }
       }
     })
@@ -145,14 +149,9 @@ class ShortcutPresenter : Disposable {
 
   private fun getCustomShortcut(actionId: String, kind: KeymapKind): Array<KeyboardShortcut> {
     fun getShortcutForCloneCaret(keyCode: Int): Array<KeyboardShortcut> {
-      val modifierCode = when (kind) {
-        KeymapKind.MAC -> KeyEvent.VK_ALT
-        KeymapKind.WIN -> KeyEvent.VK_CONTROL
-      }
-      val modifierMask = when (kind) {
-        KeymapKind.MAC -> KeyEvent.ALT_DOWN_MASK
-        KeymapKind.WIN -> KeyEvent.CTRL_DOWN_MASK
-      }
+      val modifierCode = if (kind.isMac) KeyEvent.VK_ALT else KeyEvent.VK_CONTROL
+      val modifierMask = if (kind.isMac) KeyEvent.ALT_DOWN_MASK else KeyEvent.CTRL_DOWN_MASK
+
       return arrayOf(
         KeyboardShortcut(
           KeyStroke.getKeyStroke(modifierCode, 0),
@@ -180,7 +179,7 @@ class ShortcutPresenter : Disposable {
     val subtitle: String?
 
     when {
-      keymap == KeymapKind.WIN || SystemInfo.isMac || ActionInfoPanel.DEFAULT_FONT.canDisplayUpTo(shortcutText) == -1 -> {
+      !keymap.isMac || SystemInfo.isMac || ActionInfoPanel.DEFAULT_FONT.canDisplayUpTo(shortcutText) == -1 -> {
         title = shortcutText
         titleFont = null
       }
@@ -218,19 +217,17 @@ class ShortcutPresenter : Disposable {
     }
 
   private fun getKeystrokeText(keystroke: KeyStroke, keymapKind: KeymapKind) =
-    when (keymapKind) {
-      KeymapKind.MAC -> {
-        if (keystroke.modifiers == 0 && keystroke.keyCode == KeyEvent.VK_ALT) MacKeymapUtil.OPTION
-        else MacKeymapUtil.getKeyStrokeText(keystroke)
-      }
-      KeymapKind.WIN -> {
-        val modifiers = keystroke.modifiers
-        val tokens = arrayOf(
-          if (modifiers > 0) getWinModifiersText(modifiers) else null,
-          getWinKeyText(keystroke.keyCode)
-        )
-        tokens.filterNotNull().filter { it.isNotEmpty() }.joinToString(separator = "+").trim()
-      }
+    if (keymapKind.isMac) {
+      if (keystroke.modifiers == 0 && keystroke.keyCode == KeyEvent.VK_ALT) MacKeymapUtil.OPTION
+      else MacKeymapUtil.getKeyStrokeText(keystroke)
+    }
+    else {
+      val modifiers = keystroke.modifiers
+      val tokens = arrayOf(
+        if (modifiers > 0) getWinModifiersText(modifiers) else null,
+        getWinKeyText(keystroke.keyCode)
+      )
+      tokens.filterNotNull().filter { it.isNotEmpty() }.joinToString(separator = "+").trim()
     }
 
   fun disable() {

@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandlerFactory
 import com.intellij.refactoring.rename.RenameHandler
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.hasMarkdownType
+import org.intellij.plugins.markdown.lang.hasMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 
 internal class MarkdownFileRenameHandler: RenameHandler {

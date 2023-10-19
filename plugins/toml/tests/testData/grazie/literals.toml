@@ -1,0 +1,6 @@
+oneline_double_quoted_literal = "It <warning descr="IT_VBZ">are</warning> bad error in string literal"
+oneline_single_quoted_literal = 'das ist <warning descr="FUEHR_FUER">führ</warning> Dich!'
+multiline_double_quoted_literal = """Это случилось <warning descr="INVALID_DATE">31
+ноября</warning> 2014 г."""
+multiline_single_quoted_literal = '''В моей коробке лежало <warning descr="Sklonenije_NUM_NN">пять
+карандаша</warning>.'''

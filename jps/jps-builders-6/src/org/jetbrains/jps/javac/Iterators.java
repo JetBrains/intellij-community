@@ -367,6 +367,93 @@ public final class Iterators {
     return result;
   }
 
+  public static <T> Iterable<T> recurse(final T item, final Function<? super T, ? extends Iterable<? extends T>> step, final boolean includeHead) {
+    return new Iterable<T>() {
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        return new Object() {
+          private final Set<T> traversed = new HashSet<>();
+
+          private Iterator<T> recurse(final T elem, boolean includeHead) {
+            if (!traversed.add(elem)) {
+              return Collections.emptyIterator();
+            }
+
+            if (!includeHead) {
+              return tailOf(elem);
+            }
+
+            return flat(asIterator(elem), new LazyIterator<T>() {
+              @Override
+              protected Iterator<? extends T> create() {
+                return tailOf(elem);
+              }
+            });
+          }
+
+          @NotNull
+          private Iterator<T> tailOf(final T elem) {
+            final Iterable<? extends T> tail = filter(step.fun(elem), new BooleanFunction<T>() {
+              @Override
+              public boolean fun(T e) {
+                return !traversed.contains(e);
+              }
+            });
+            return flat(tail.iterator(), flat(map(tail.iterator(), new Function<T, Iterator<T>>() {
+              @Override
+              public Iterator<T> fun(T obj) {
+                return recurse(obj, false);
+              }
+            })));
+          }
+
+        }.recurse(item, includeHead);
+      }
+    };
+  }
+
+  public static <T> Iterable<T> recurseDepth(final T item, final Function<? super T, ? extends Iterable<? extends T>> step, final boolean includeHead) {
+    return new Iterable<T>() {
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        return new Object() {
+          private final Set<T> visited = new HashSet<>();
+
+          private Iterator<T> recurse(final T elem, boolean includeHead) {
+            if (!visited.add(elem)) {
+              return Collections.emptyIterator();
+            }
+
+            if (!includeHead) {
+              return flat(map(step.fun(elem).iterator(), new Function<T, Iterator<T>>() {
+                @Override
+                public Iterator<T> fun(T obj) {
+                  return recurse(obj, true);
+                }
+              }));
+            }
+
+            Iterator<? extends T> tail = new LazyIterator<T>() {
+              @Override
+              protected Iterator<? extends T> create() {
+                return step.fun(elem).iterator();
+              }
+            };
+            return flat(asIterator(elem), flat(map(tail, new Function<T, Iterator<T>>() {
+              @Override
+              public Iterator<T> fun(T obj) {
+                return recurse(obj, true);
+              }
+            })));
+          }
+
+        }.recurse(item, includeHead);
+      }
+    };
+  }
+
   private static abstract class BaseIterator<T> implements Iterator<T> {
     @Override
     public void remove() {
@@ -374,4 +461,32 @@ public final class Iterators {
     }
   }
 
+  private static abstract class LazyIterator<T> implements Iterator<T> {
+    private Iterator<? extends T> myDelegate;
+
+    protected abstract Iterator<? extends T> create();
+
+    @Override
+    public boolean hasNext() {
+      return getDelegate().hasNext();
+    }
+
+    @Override
+    public T next() {
+      return getDelegate().next();
+    }
+
+    @Override
+    public void remove() {
+      getDelegate().remove();
+    }
+
+    private Iterator<? extends T> getDelegate() {
+      Iterator<? extends T> delegate = myDelegate;
+      if (delegate == null) {
+        myDelegate = delegate = create();
+      }
+      return delegate;
+    }
+  }
 }

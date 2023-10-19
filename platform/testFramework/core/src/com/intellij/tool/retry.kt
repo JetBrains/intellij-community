@@ -41,5 +41,5 @@ fun <T> withRetry(retries: Int = 3,
                   messageOnFailure: String = "",
                   delayBetweenRetries: Duration = 5.seconds,
                   retryAction: () -> T): T? = runBlocking {
-  withRetryAsync(retries, messageOnFailure) { retryAction() }
+  withRetryAsync(retries = retries, messageOnFailure = messageOnFailure, delayBetweenRetries = delayBetweenRetries) { retryAction() }
 }

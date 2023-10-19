@@ -12,6 +12,13 @@ public interface Graph {
   BackDependencyIndex getIndex(String name);
 
   /**
+   * Obtain a list of backward dependencies for a certain node, denoted by a ReferenceID
+   * @param id - a ReferenceID of one or more nodes
+   * @return all known ids of Nodes that depend on nodes with the given id
+   */
+  @NotNull Iterable<ReferenceID> getDependingNodes(@NotNull ReferenceID id);
+
+  /**
    * A mapping from nodes to sources used to produce those nodes
    *
    * @param id a node identifier

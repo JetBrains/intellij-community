@@ -19,5 +19,10 @@
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" />
+    <orderEntry type="module" module-name="kotlin.project-configuration" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
+    <orderEntry type="module" module-name="kotlin.base.project-structure" />
   </component>
 </module>

@@ -57,7 +57,7 @@ class JBCefBrowserJsCallError(message: String) : IllegalStateException("Failed t
             replaceWith = ReplaceWith("browser.executeJavaScript", "com.intellij.ui.jcef.executeJavaScriptAsync"))
 fun JBCefBrowser.executeJavaScriptAsync(@Language("JavaScript") javaScriptExpression: JsExpression): Promise<JsExpressionResult> =
   @Suppress("DEPRECATION")
-  JBCefBrowserJsCall(javaScriptExpression, this).invoke()
+  JBCefBrowserJsCall(javaScriptExpression, this, 0).invoke()
 
 /**
  * Executes a JavaScript expression in the JBCefBrowser and returns the result.
@@ -90,11 +90,12 @@ fun JBCefBrowser.executeJavaScriptAsync(@Language("JavaScript") javaScriptExpres
  *
  * @return The result of the JavaScript expression execution.
  */
-suspend fun JBCefBrowser.executeJavaScript(@Language("JavaScript") javaScriptExpression: JsExpression): JsExpressionResult =
-  JBCefBrowserJsCall(javaScriptExpression, this).await()
+suspend fun JBCefBrowser.executeJavaScript(@Language("JavaScript") javaScriptExpression: JsExpression,
+                                           frameId: Int = 0): JsExpressionResult =
+  JBCefBrowserJsCall(javaScriptExpression, this, frameId).await()
 
 
-open class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, private val browser: JBCefBrowser) {
+open class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, private val browser: JBCefBrowser, private val frameId: Int) {
   // TODO: Ensure the related JBCefClient has a sufficient number of slots in the pool
 
   private val debugId = debugIdCounter.incrementAndGet()
@@ -139,7 +140,7 @@ open class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, pr
     val jsToRun = javaScriptExpression.wrapWithErrorHandling(resultQuery = resultHandlerQuery, errorQuery = errorHandlerQuery)
 
     try {
-      browser.cefBrowser.executeJavaScript(jsToRun, "", 0)
+      browser.cefBrowser.executeJavaScript(jsToRun, "", frameId)
     }
     catch (ex: Exception) {
       // In case something goes wrong with the browser interop
@@ -187,7 +188,7 @@ open class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, pr
                                    errorQuery = createErrorHandlerQueryWithinScope(continuation))
             .also { jsToRun ->
               debugIfEnabled("Executing: JavaScript expression in JCEF browser")
-              browser.cefBrowser.executeJavaScript(jsToRun, "", 0)
+              browser.cefBrowser.executeJavaScript(jsToRun, "", frameId)
               debugIfEnabled("Executed: JavaScript expression in JCEF browser")
             }
         }.also {

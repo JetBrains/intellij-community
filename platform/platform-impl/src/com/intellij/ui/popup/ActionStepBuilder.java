@@ -51,7 +51,7 @@ final class ActionStepBuilder {
       myPresentationFactory = Objects.requireNonNull(presentationFactory);
     }
     myListModel = new ArrayList<>();
-    myDataContext = Utils.wrapDataContext(dataContext);
+    myDataContext = dataContext;
     myShowNumbers = showNumbers;
     myShowDisabled = showDisabled;
     myCurrentNumber = 0;

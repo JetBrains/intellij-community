@@ -1,43 +1,45 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
 import com.intellij.codeInsight.inline.completion.render.InlineCompletionInsertPolicy
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
-import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExecutor
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
-import com.intellij.psi.PsiFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.flow.collectIndexed
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEmpty
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.errorIfNotMessage
 
-@ApiStatus.Experimental
-class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposable: Disposable) {
+/**
+ * Use [InlineCompletion] for acquiring, installing and uninstalling [InlineCompletionHandler].
+ */
+class InlineCompletionHandler(
+  scope: CoroutineScope,
+  val editor: Editor,
+  private val parentDisposable: Disposable
+) {
   private val executor = SafeInlineCompletionExecutor(scope)
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
   private val sessionManager = createSessionManager()
@@ -45,16 +47,6 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
-  }
-
-  private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
-    if (application.isUnitTestMode && testProvider != null) {
-      return testProvider
-    }
-
-    return InlineCompletionProvider.extensions().firstOrNull { it.isEnabled(event) }?.also {
-      LOG.trace("Selected inline provider: $it")
-    }
   }
 
   fun addEventListener(listener: InlineCompletionEventListener) {
@@ -76,102 +68,41 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
 
   @RequiresEdt
-  internal fun allowDocumentChange(event: SimpleTypingEvent) {
-    requestManager.allowDocumentChange(event)
-  }
-
-  @RequiresEdt
   fun invokeEvent(event: InlineCompletionEvent) {
     ThreadingAssertions.assertEventDispatchThread()
     LOG.trace("Start processing inline event $event")
 
+    val request = requestManager.getRequest(event) ?: return
+    if (editor != request.editor) {
+      LOG.warn("Request has an inappropriate editor. Another editor was expected. Will not be invoked.")
+      return
+    }
+
     val provider = getProvider(event)
-    val request = requestManager.getRequest(event)
-    if (request == null || sessionManager.updateSession(request, provider) || provider == null) {
+    if (sessionManager.updateSession(request, provider) || provider == null) {
       return
     }
 
     // At this point, the previous session must be removed, otherwise, `init` will throw.
-    val newSession = InlineCompletionSession.init(request.editor, provider, parentDisposable).apply {
+    val newSession = InlineCompletionSession.init(editor, provider, parentDisposable).apply {
       sessionManager.sessionCreated(this)
       guardCaretModifications(request)
     }
+
     executor.switchJobSafely(newSession::assignJob) {
       invokeRequest(request, newSession)
     }
   }
 
-  private suspend fun invokeRequest(request: InlineCompletionRequest, session: InlineCompletionSession) {
-    currentCoroutineContext().ensureActive()
-
-    val context = session.context
-    val editor = request.editor
-    val offset = request.endOffset
-
-    val resultFlow = try {
-      request(session.provider, request).flowOn(Dispatchers.Default)
-    }
-    catch (e: Throwable) {
-      LOG.errorIfNotCancellation(e)
-      emptyFlow()
-    }
-
-    // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
-    withContext(Dispatchers.EDT) {
-      resultFlow
-        .onEmpty {
-          coroutineToIndicator {
-            trace(InlineCompletionEventType.Empty)
-            hide(editor, false, context)
-          }
-        }
-        .onCompletion {
-          val isActive = currentCoroutineContext().isActive
-          coroutineToIndicator { complete(isActive, editor, it, context) }
-          LOG.errorIfNotCancellation(it)
-        }
-        .collectIndexed { index, it ->
-          ensureActive()
-          showInlineElement(it, index, offset, context)
-        }
-    }
-  }
-
-  suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): Flow<InlineCompletionBlock> {
-    withContext(Dispatchers.EDT) {
-      coroutineToIndicator {
-        trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
-      }
-    }
-    return provider.getProposals(request)
-  }
-
-  @RequiresEdt
-  private suspend fun showInlineElement(
-    element: InlineCompletionBlock,
-    index: Int,
-    offset: Int,
-    context: InlineCompletionContext
-  ) {
-    coroutineToIndicator { trace(InlineCompletionEventType.Show(element, index)) }
-    context.renderElement(element, offset)
-  }
-
-  @RequiresEdt
-  private fun InlineCompletionContext.renderElement(element: InlineCompletionBlock, startOffset: Int) {
-    element.render(editor, endOffset ?: startOffset)
-    state.addElement(element)
-  }
-
   @RequiresEdt
   @RequiresBlockingContext
-  fun insert(editor: Editor) {
+  fun insert() {
     val context = InlineCompletionContext.getOrNull(editor) ?: return
-    val offset = context.startOffset ?: return
+    val offset = context.startOffset() ?: return
     trace(InlineCompletionEventType.Insert)
 
-    val insertions = context.state.elements.map { it.insertPolicy }
-    hide(editor, false, context)
+    val insertions = context.state.elements.map { it.element.insertPolicy() }
+    hide(false, context)
 
     var offsetDelta = 0
     for (insertPolicy in insertions) {
@@ -190,9 +121,9 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
 
   @RequiresEdt
   @RequiresBlockingContext
-  fun hide(editor: Editor, explicit: Boolean, context: InlineCompletionContext) {
+  fun hide(explicit: Boolean, context: InlineCompletionContext) {
     LOG.assertTrue(!context.isDisposed)
-    if (context.isCurrentlyDisplayingInlays) {
+    if (context.isCurrentlyDisplaying()) {
       trace(InlineCompletionEventType.Hide(explicit))
     }
 
@@ -200,22 +131,120 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
     sessionManager.sessionRemoved()
   }
 
-  fun cancel(editor: Editor) {
+  fun cancel() {
     executor.cancel()
     application.invokeAndWait {
       InlineCompletionContext.getOrNull(editor)?.let {
-        hide(editor, false, it)
+        hide(false, it)
       }
+    }
+  }
+
+  private suspend fun invokeRequest(
+    request: InlineCompletionRequest,
+    session: InlineCompletionSession,
+  ) {
+    currentCoroutineContext().ensureActive()
+
+    val context = session.context
+    val offset = request.endOffset
+
+    val suggestion = try {
+      request(session.provider, request)
+    }
+    catch (e: Throwable) {
+      LOG.errorIfNotMessage(e)
+      InlineCompletionSuggestion.EMPTY
+    }
+
+    // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
+    withContext(Dispatchers.EDT) {
+      suggestion.suggestionFlow.flowOn(Dispatchers.Default)
+        .onEmpty {
+          coroutineToIndicator {
+            trace(InlineCompletionEventType.Empty)
+            hide(false, context)
+          }
+        }
+        .onCompletion {
+          val isActive = currentCoroutineContext().isActive
+          coroutineToIndicator { complete(isActive, it, context, suggestion) }
+          it?.let(LOG::errorIfNotMessage)
+        }
+        .collectIndexed { index, it ->
+          ensureActive()
+          showInlineElement(it, index, offset, context)
+        }
     }
   }
 
   @RequiresEdt
   @RequiresBlockingContext
-  fun complete(isActive: Boolean, editor: Editor, cause: Throwable?, context: InlineCompletionContext) {
+  private fun complete(
+    isActive: Boolean,
+    cause: Throwable?,
+    context: InlineCompletionContext,
+    suggestion: InlineCompletionSuggestion,
+  ) {
     trace(InlineCompletionEventType.Completion(cause, isActive))
-    if (cause != null && !context.isDisposed) {
-      hide(editor, false, context)
+    if (!suggestion.isUserDataEmpty) {
+      suggestion.copyUserDataTo(context)
     }
+
+    if (cause != null && !context.isDisposed) {
+      hide(false, context)
+      return
+    }
+  }
+
+  @RequiresEdt
+  internal fun allowDocumentChange(event: SimpleTypingEvent) {
+    requestManager.allowDocumentChange(event)
+  }
+
+  private suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): InlineCompletionSuggestion {
+    withContext(Dispatchers.EDT) {
+      coroutineToIndicator {
+        trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
+      }
+    }
+    return provider.getSuggestion(request)
+  }
+
+  private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
+    if (application.isUnitTestMode && testProvider != null) {
+      return testProvider
+    }
+
+    return InlineCompletionProvider.extensions().firstOrNull {
+      try {
+        it.isEnabled(event)
+      }
+      catch (e: Throwable) {
+        LOG.errorIfNotMessage(e)
+        false
+      }
+    }?.also {
+      LOG.trace("Selected inline provider: $it")
+    }
+  }
+
+  @RequiresEdt
+  private suspend fun showInlineElement(
+    element: InlineCompletionElement,
+    index: Int,
+    offset: Int,
+    context: InlineCompletionContext
+  ) {
+    coroutineToIndicator { trace(InlineCompletionEventType.Show(element, index)) }
+    context.renderElement(element, offset)
+  }
+
+  @RequiresEdt
+  private fun InlineCompletionContext.renderElement(element: InlineCompletionElement, startOffset: Int) {
+    val presentable = element.toPresentable()
+    presentable.render(editor, endOffset() ?: startOffset)
+    state.addElement(presentable)
   }
 
   private fun createSessionManager(): InlineCompletionSessionManager {
@@ -224,15 +253,15 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
         val context = session.context
         when (result) {
           is UpdateSessionResult.Changed -> {
-            context.editor.inlayModel.execute(true) {
+            editor.inlayModel.execute(true) {
               context.clear()
               trace(InlineCompletionEventType.Change(result.truncateTyping))
-              result.newElements.forEach { context.renderElement(it, context.endOffset ?: result.reason.endOffset) }
+              result.newElements.forEach { context.renderElement(it, context.endOffset() ?: result.reason.endOffset) }
             }
           }
-          UpdateSessionResult.Same -> Unit
+          is UpdateSessionResult.Same -> Unit
           UpdateSessionResult.Invalidated -> {
-            hide(session.context.editor, false, session.context)
+            hide(false, session.context)
           }
         }
       }
@@ -241,13 +270,12 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
 
   @RequiresEdt
   private fun InlineCompletionSession.guardCaretModifications(request: InlineCompletionRequest) {
-    val editor = request.editor
     val expectedOffset = {
       // This caret listener might be disposed after context: ML-1438
-      if (!context.isDisposed) context.startOffset ?: request.endOffset else -1
+      if (!context.isDisposed) context.startOffset() ?: request.endOffset else -1
     }
     val cancel = {
-      if (!context.isDisposed) hide(editor, false, context)
+      if (!context.isDisposed) hide(false, context)
     }
     val listener = InlineSessionWiseCaretListener(expectedOffset, cancel)
     editor.caretModel.addCaretListener(listener)
@@ -260,33 +288,6 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
     eventListeners.getMulticaster().on(event)
   }
 
-  @Deprecated(
-    "replaced with direct event call type",
-    ReplaceWith("invoke(InlineCompletionEvent.DocumentChange(event, editor))"),
-    DeprecationLevel.ERROR
-  )
-  fun invoke(event: DocumentEvent, editor: Editor) {
-    return invoke(InlineCompletionEvent.DocumentChange(event, editor))
-  }
-
-  @Deprecated(
-    "replaced with direct event call type",
-    ReplaceWith("invoke(InlineCompletionEvent.LookupChange(event))"),
-    DeprecationLevel.ERROR
-  )
-  fun invoke(event: LookupEvent) {
-    return invoke(InlineCompletionEvent.LookupChange(event))
-  }
-
-  @Deprecated(
-    "replaced with direct event call type",
-    ReplaceWith("invoke(InlineCompletionEvent.DirectCall(editor, caret, context))"),
-    DeprecationLevel.ERROR
-  )
-  fun invoke(editor: Editor, file: PsiFile, caret: Caret, context: DataContext?) {
-    return invoke(InlineCompletionEvent.DirectCall(editor, caret, context))
-  }
-
   @TestOnly
   suspend fun awaitExecution() {
     executor.awaitAll()
@@ -294,15 +295,6 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
 
   companion object {
     private val LOG = thisLogger()
-    val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
-
-    fun getOrNull(editor: Editor) = editor.getUserData(KEY)
-
-    private fun Logger.errorIfNotCancellation(e: Throwable?) {
-      if (e != null && e !is CancellationException) {
-        error(e)
-      }
-    }
 
     private var testProvider: InlineCompletionProvider? = null
 

@@ -213,8 +213,7 @@ internal class MutableEntityStorageImpl(
         .getIdsByEntry(source)!!.map {
           val entityDataById: WorkspaceEntityData<WorkspaceEntity> = this.entityDataById(it) as? WorkspaceEntityData<WorkspaceEntity>
                                                                      ?: run {
-                                                                       reportErrorAndAttachStorage("Cannot find an entity by id $it",
-                                                                                                   this@MutableEntityStorageImpl)
+                                                                       reportErrorAndAttachStorage("Cannot find an entity by id $it")
                                                                        error("Cannot find an entity by id $it")
                                                                      }
           entityDataById.wrapAsModifiable(this)
@@ -267,7 +266,7 @@ internal class MutableEntityStorageImpl(
       entitiesByType.add(newEntityData, entity.getEntityClass().toClassId())
 
       // Add the change to changelog
-      createAddEvent(newEntityData)
+      changeLog.addAddEvent(newEntityData.createEntityId(), newEntityData)
 
       // Update indexes
       indexes.entityAdded(newEntityData)
@@ -360,12 +359,11 @@ internal class MutableEntityStorageImpl(
         }
       }
 
-      if (!modifiableEntity.changedProperty.contains("entitySource") || modifiableEntity.changedProperty.size > 1) {
-        // Add an entry to changelog
-        addReplaceEvent(this, entityId, beforeChildren, beforeParents, copiedData, originalEntityData, originalParents)
-      }
+      addReplaceEvent(this, entityId, beforeChildren, beforeParents, copiedData, originalEntityData, originalParents)
       if (modifiableEntity.changedProperty.contains("entitySource")) {
-        updateEntitySource(entityId, originalEntityData, copiedData)
+        val newSource = copiedData.entitySource
+        indexes.entitySourceIndex.index(entityId, newSource)
+        newSource.virtualFileUrl?.let { indexes.virtualFileIndex.index(entityId, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
       }
 
       val updatedEntity = copiedData.createEntity(this)
@@ -382,16 +380,6 @@ internal class MutableEntityStorageImpl(
 
     modifyEntityTimeMs.addElapsedTimeMs(start)
     return updatedEntity
-  }
-
-  private fun <T : WorkspaceEntity> updateEntitySource(entityId: EntityId, originalEntityData: WorkspaceEntityData<T>,
-                                                       copiedEntityData: WorkspaceEntityData<T>) {
-    val newSource = copiedEntityData.entitySource
-    val originalSource = this.getOriginalSourceFromChangelog(entityId) ?: originalEntityData.entitySource
-
-    this.changeLog.addChangeSourceEvent(entityId, copiedEntityData, originalSource)
-    indexes.entitySourceIndex.index(entityId, newSource)
-    newSource.virtualFileUrl?.let { indexes.virtualFileIndex.index(entityId, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
   }
 
   override fun removeEntity(e: WorkspaceEntity): Boolean {
@@ -475,23 +463,6 @@ internal class MutableEntityStorageImpl(
               changedEntityIds += (change.references.modifiedParents - change.references.oldParents).values.mapNotNull { it?.id }
 
               val updatedChildren = change.references.removedChildren.map { it.second.id } + change.references.newChildren.map { it.second.id }
-              changedEntityIds += updatedChildren
-              updatedChildren.forEach { childId ->
-                val origParents: Set<EntityId> = originalImpl.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
-                val newParents: Set<EntityId> = this.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
-                changedEntityIds += (origParents - newParents)
-                changedEntityIds += (newParents - origParents)
-              }
-            }
-          }
-          is ChangeEntry.ChangeEntitySource -> changedEntityIds += entityId
-          is ChangeEntry.ReplaceAndChangeSource -> {
-            changedEntityIds += entityId
-            if (change.dataChange.references != null) {
-              changedEntityIds += (change.dataChange.references.oldParents - change.dataChange.references.modifiedParents).values.map { it.id }
-              changedEntityIds += (change.dataChange.references.modifiedParents - change.dataChange.references.oldParents).values.mapNotNull { it?.id }
-
-              val updatedChildren = change.dataChange.references.removedChildren.map { it.second.id } + change.dataChange.references.newChildren.map { it.second.id }
               changedEntityIds += updatedChildren
               updatedChildren.forEach { childId ->
                 val origParents: Set<EntityId> = originalImpl.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
@@ -889,11 +860,6 @@ internal class MutableEntityStorageImpl(
     threadName = null
   }
 
-  internal fun <T : WorkspaceEntity> createAddEvent(pEntityData: WorkspaceEntityData<T>) {
-    val entityId = pEntityData.createEntityId()
-    this.changeLog.addAddEvent(entityId, pEntityData)
-  }
-
   /**
    * Cleanup references and accumulate hard linked entities in [accumulator]
    */
@@ -1102,7 +1068,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
       indexes.entitySourceIndex
         .getIdsByEntry(source)!!.map {
           this.entityDataById(it)?.createEntity(this) ?: run {
-            reportErrorAndAttachStorage("Cannot find an entity by id $it", this@AbstractEntityStorage)
+            reportErrorAndAttachStorage("Cannot find an entity by id $it")
             error("Cannot find an entity by id $it")
           }
         }
@@ -1148,7 +1114,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
                                       right: EntityStorage?,
                                       reportInBackgroundThread: Boolean) {
     val storage = if (this is MutableEntityStorage) this.toSnapshot() as AbstractEntityStorage else this
-    val report = { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
+    val report = { reportConsistencyIssue(message, e, sourceFilter, left, right) }
     if (reportInBackgroundThread) {
       consistencyChecker.execute(report)
     }

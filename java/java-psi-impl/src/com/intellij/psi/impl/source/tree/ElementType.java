@@ -6,7 +6,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.tree.TokenSet;
 
-@SuppressWarnings("unused")
+@SuppressWarnings("unused") //because of backward compatibility, some of these sets are used in plugins
 public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElementType, JavaDocElementType {
   TokenSet JAVA_PLAIN_COMMENT_BIT_SET = BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET;
   TokenSet JAVA_COMMENT_BIT_SET = TokenSet.orSet(JAVA_PLAIN_COMMENT_BIT_SET, TokenSet.create(DOC_COMMENT));

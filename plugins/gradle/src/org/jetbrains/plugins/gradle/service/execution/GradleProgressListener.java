@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.build.FileNavigatable;
@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
@@ -39,7 +40,7 @@ import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
  */
 public class GradleProgressListener implements ProgressListener, org.gradle.tooling.ProgressListener {
   private static final Logger LOG = Logger.getInstance(GradleProgressListener.class);
-
+  public static final String SEND_PROGRESS_EVENTS_TO_OUTPUT_KEY = "gradle.output.sync.progress.events";
   private final GradleDownloadProgressMapper myDownloadProgressMapper;
   private final ExternalSystemTaskNotificationListener myListener;
   private final GradleExecutionProgressMapper myProgressMapper;
@@ -48,6 +49,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   private final String myOperationId;
   private static final String STARTING_GRADLE_DAEMON_EVENT = "Starting Gradle Daemon";
   private ExternalSystemTaskNotificationEvent myLastStatusChange = null;
+  private final boolean sendProgressEventsToOutput;
 
   public GradleProgressListener(
     @NotNull ExternalSystemTaskNotificationListener listener,
@@ -66,6 +68,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
     myProgressMapper = new GradleExecutionProgressMapper();
     myDownloadProgressMapper = new GradleDownloadProgressMapper();
+    sendProgressEventsToOutput = Registry.is(SEND_PROGRESS_EVENTS_TO_OUTPUT_KEY, true);
   }
 
   @Override
@@ -74,7 +77,9 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
       ExternalSystemTaskNotificationEvent downloadEvent = myDownloadProgressMapper.map(myTaskId, event);
       if (downloadEvent != null) {
         myListener.onStatusChange(downloadEvent);
-        sendProgressEventToOutput(downloadEvent);
+        if (sendProgressEventsToOutput) {
+          sendProgressEventToOutput(downloadEvent);
+        }
         return;
       }
     }
@@ -104,7 +109,9 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
       var taskNotificationEvent = GradleProgressEventConverter.legacyConvertTaskNotificationEvent(myTaskId, eventDescription);
       myListener.onStatusChange(taskNotificationEvent);
 
-      reportGradleDaemonStartingEvent(eventDescription);
+      if (sendProgressEventsToOutput) {
+        reportGradleDaemonStartingEvent(eventDescription);
+      }
     }
   }
 

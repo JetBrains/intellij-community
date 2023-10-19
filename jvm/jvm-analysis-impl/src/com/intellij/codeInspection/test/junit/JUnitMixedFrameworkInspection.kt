@@ -5,11 +5,12 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.fix.RemoveAnnotationQuickFix
-import com.intellij.codeInspection.fix.RenameQuickFix
+import com.intellij.jvm.analysis.quickFix.RemoveAnnotationQuickFix
+import com.intellij.jvm.analysis.quickFix.RenameQuickFix
 import com.intellij.lang.jvm.DefaultJvmElementVisitor
 import com.intellij.lang.jvm.JvmAnnotation
 import com.intellij.lang.jvm.JvmElementVisitor
@@ -141,8 +142,8 @@ private class RemoveAnnotationAndPrefixQuickFix(
 ) : LocalQuickFix {
   val annotationPointer = SmartPointerManager.createPointer(annotation as PsiAnnotation)
 
-  override fun getFamilyName(): String = JvmAnalysisBundle.message(
-    "jvm.inspections.remove.annotation.quickfix.text",
+  override fun getFamilyName(): String = CommonQuickFixBundle.message(
+    "fix.remove.annotation.text",
     annotationPointer.element.asSafely<JvmAnnotation>()?.qualifiedName?.substringAfterLast(".")
   )
 

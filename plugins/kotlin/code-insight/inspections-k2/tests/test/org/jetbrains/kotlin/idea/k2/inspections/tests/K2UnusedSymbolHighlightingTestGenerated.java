@@ -293,6 +293,11 @@ public class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2LocalInsp
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/secondaryLocalClassConstructor.kt");
     }
 
+    @TestMetadata("suppressedClass.kt")
+    public void testSuppressedClass() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/suppressedClass.kt");
+    }
+
     @TestMetadata("typeAlias.kt")
     public void testTypeAlias() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/typeAlias.kt");

@@ -7,7 +7,6 @@ import com.intellij.codeInsight.documentation.PopupDragListener
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.ide.DataManager
-import com.intellij.lang.documentation.ide.DocumentationCustomization
 import com.intellij.lang.documentation.ide.actions.*
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
@@ -26,7 +25,6 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.addPropertyChangeListener
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -39,7 +37,6 @@ import javax.swing.JComponent
 internal class DocumentationPopupUI(
   private val project: Project,
   ui: DocumentationUI,
-  customization: DocumentationCustomization
 ) : Disposable {
 
   private var _ui: DocumentationUI? = ui
@@ -53,16 +50,12 @@ internal class DocumentationPopupUI(
   val preferableFocusComponent: JComponent get() = ui.editorPane
 
   val coroutineScope: CoroutineScope = CoroutineScope(Job())
-  private val popupUpdateFlow = MutableSharedFlow<Any?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val popupUpdateFlow = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private lateinit var myPopup: AbstractPopup
 
   init {
     val editorPane = ui.editorPane
-
-    editorPane.addPropertyChangeListener(this, "font") {
-      popupUpdateFlow.tryEmit("font change")
-    }
 
     val primaryActions: List<AnAction> = primaryActions()
     val secondaryActions = ArrayList<AnAction>()
@@ -86,10 +79,8 @@ internal class DocumentationPopupUI(
     gearActions.addSeparator()
     gearActions.addAll(primaryActions)
 
-    val adjustedToolbarGroup = customization.editToolbarActions(toolbarActionGroup)
-    val adjustedGearGroup = customization.editGearActions(gearActions)
-    toolbarComponent = toolbarComponent(adjustedToolbarGroup, editorPane)
-    corner = actionButton(adjustedGearGroup, editorPane)
+    toolbarComponent = toolbarComponent(toolbarActionGroup, editorPane)
+    corner = actionButton(gearActions, editorPane)
     component = DocumentationPopupPane(ui.scrollPane).also {
       it.add(toolbarComponent, BorderLayout.NORTH)
       it.add(scrollPaneWithCorner(this, ui.scrollPane, corner), BorderLayout.CENTER)
@@ -97,10 +88,10 @@ internal class DocumentationPopupUI(
 
     openInToolwindowAction.registerCustomShortcutSet(component, this)
 
-    showToolbar(customization.isShowToolbar)
+    showToolbar(Registry.get("documentation.show.toolbar").asBoolean())
 
     coroutineScope.launch {
-      popupUpdateFlow.emitAll(ui.contentUpdates)
+      popupUpdateFlow.emitAll(ui.contentSizeUpdates)
     }
   }
 

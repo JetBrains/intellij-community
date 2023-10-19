@@ -422,7 +422,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
     if (psiFile == null) return false;
     PsiNameIdentifierOwner element =
-      PsiTreeUtil.getNonStrictParentOfType(psiFile.findElementAt(rename.symbolRange().getStartOffset()), PsiNameIdentifierOwner.class);
+      PsiTreeUtil.getNonStrictParentOfType(psiFile.findElementAt(rename.symbolRange().range().getStartOffset()), PsiNameIdentifierOwner.class);
     if (element == null) return false;
     Editor finalEditor = getEditor(project, editor, file);
     if (finalEditor == null) return false;

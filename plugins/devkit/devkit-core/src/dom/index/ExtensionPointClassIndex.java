@@ -46,7 +46,7 @@ import java.util.Map;
  * @see ExtensionPointIndex
  * @see org.jetbrains.idea.devkit.util.ExtensionPointLocator
  */
-public class ExtensionPointClassIndex extends PluginXmlIndexBase<String, IntList> {
+public final class ExtensionPointClassIndex extends PluginXmlIndexBase<String, IntList> {
 
   private static final ID<String, IntList> NAME = ID.create("devkit.ExtensionPointClassIndex");
 

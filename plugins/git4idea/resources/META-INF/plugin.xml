@@ -343,10 +343,8 @@
       <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
       <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
     </action>
-    <action id="Git.Stage.Enable" class="git4idea.index.actions.GitEnableStagingAreaAction" icon="AllIcons.Ide.Gift">
-      <add-to-group group-id="ChangesViewToolbar" anchor="last"/>
-    </action>
-    <action id="Git.Stage.Disable" class="git4idea.index.actions.GitDisableStagingAreaAction" icon="AllIcons.Vcs.Changelist"/>
+    <action id="Git.Stage.Enable" class="git4idea.index.actions.GitEnableStagingAreaAction"/>
+    <action id="Git.Stage.Disable" class="git4idea.index.actions.GitDisableStagingAreaAction"/>
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
     <action id="Git.Stage.Add.No.Content" class="git4idea.index.actions.GitAddWithoutContent"/>
     <action id="Git.Stage.Reset" class="git4idea.index.actions.GitResetAction" use-shortcut-of="ChangesView.Revert"/>
@@ -380,6 +378,13 @@
 
     <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.Stash"/>
 
+    <group id="Git.Stage.Configure" popup="true">
+      <separator key="separator.Git.Stage.Configure.display.as"/>
+      <reference id="Git.Stage.Enable"/>
+      <reference id="Git.Stage.Disable"/>
+      <add-to-group group-id="CommitView.GearActions"/>
+    </group>
+
     <group id="Git.Stage.Toolbar">
       <reference id="Diff.ShowDiff"/>
       <reference id="ChangesView.Refresh"/>
@@ -390,7 +395,6 @@
         <separator key="separator.show"/>
         <reference id="Git.Stage.ToggleIgnored"/>
       </group>
-      <reference id="Git.Stage.Disable"/>
     </group>
     <group id="Git.Stage.Tree.Menu">
       <reference id="Git.Stage.Merge"/>
@@ -600,6 +604,7 @@
                  description="Max amount of entry to process from Git reflog to parse recently checkout branches"/>
     <registryKey key="git.show.recent.checkout.branches" defaultValue="5"
                  description="Max count of recently checkout branches to show (e.g. in branches tree popup)"/>
+    <registryKey key="git.log.index.inexact.renames" description="Detect and store inexact renames during indexing" defaultValue="false"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>

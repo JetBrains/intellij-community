@@ -95,8 +95,11 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
     }
 
     override fun apply(fileEditor: FileEditor): EditorNotificationPanel? {
+      val hasSuggestedIde = isCommunityIde() && isDefaultTextMatePlugin(extensionOrFileName) && suggestedIdes.isNotEmpty()
+
       lateinit var label: JLabel
-      val panel = object : EditorNotificationPanel(fileEditor, Status.Info) {
+      val status = if (hasSuggestedIde) EditorNotificationPanel.Status.Promo else EditorNotificationPanel.Status.Info
+      val panel = object : EditorNotificationPanel(fileEditor, status) {
         init {
           label = myLabel
         }
@@ -120,7 +123,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       }
 
       val installedPlugin = installedPlugin
-      if (isCommunityIde() && isDefaultTextMatePlugin(extensionOrFileName) && suggestedIdes.isNotEmpty()) {
+      if (hasSuggestedIde) {
         addSuggestedIdes(panel, label, pluginAdvertiserExtensionsState)
         return panel    // Don't show the "Ignore extension" label
       }

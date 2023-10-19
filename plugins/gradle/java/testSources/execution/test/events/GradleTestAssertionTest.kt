@@ -140,7 +140,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test assert equals for ints") {
             assertTestConsoleContains("""
@@ -326,7 +326,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test assert equals for ints") {
             assertTestConsoleContains("""
@@ -497,7 +497,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test assert equals for ints") {
             assertTestConsoleContains("""
@@ -677,7 +677,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test_assert_equals_for_ints") {
             assertTestConsoleContains("""
@@ -852,7 +852,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test_assert_equals_for_ints") {
             assertTestConsoleContains("""
@@ -1018,7 +1018,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
             assertNode("TestCase", flattenIf = isGradleOlderThan("5.0")) {
@@ -1188,7 +1188,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
             assertNode("TestCase", flattenIf = isGradleOlderThan("5.0")) {
@@ -1314,7 +1314,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test_file_comparison_failure") {
             assertTestConsoleContains("""
@@ -1428,7 +1428,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test_file_comparison_failure") {
             assertTestConsoleContains("""

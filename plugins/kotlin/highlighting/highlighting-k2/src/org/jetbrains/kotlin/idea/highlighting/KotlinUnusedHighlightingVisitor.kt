@@ -146,11 +146,11 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
         val mustBeLocallyReferenced = declaration is KtParameter && !(declaration.hasValOrVar()) ||
                                       declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) ||
                                       ((declaration.parent as? KtClassBody)?.parent as? KtClassOrObject)?.isLocal == true
-
+        if (SuppressionUtil.inspectionResultSuppressed(declaration, deadCodeInspection)) {
+            return
+        }
         val nameIdentifier = declaration.nameIdentifier
-        val problemPsiElement: PsiElement = if (mustBeLocallyReferenced &&
-            !SuppressionUtil.inspectionResultSuppressed(declaration, deadCodeInspection) &&
-            declaration.annotationEntries.isEmpty() //instead of slow implicit usages checks
+        val problemPsiElement: PsiElement = if (mustBeLocallyReferenced && declaration.annotationEntries.isEmpty() //instead of slow implicit usages checks
         ) {
             nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration
         } else {

@@ -112,33 +112,25 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
                 ?.also { contributions -> _superContributions = contributions }
               ?: emptyList()
 
-    override fun getMatchingSymbols(namespace: SymbolNamespace,
-                                    kind: String,
-                                    name: String,
+    override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                     params: WebSymbolsNameMatchQueryParams,
                                     scope: Stack<WebSymbolsScope>): List<WebSymbol> =
       base.rootScope
-        .getMatchingSymbols(base.contributionForQuery, base.jsonOrigin, namespace,
-                            kind, name, params, scope)
+        .getMatchingSymbols(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
         .toList()
 
-    override fun getSymbols(namespace: SymbolNamespace,
-                            kind: SymbolKind,
+    override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
                             params: WebSymbolsListSymbolsQueryParams,
                             scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
       base.rootScope
-        .getSymbols(base.contributionForQuery, this.origin, namespace,
-                    kind, params)
+        .getSymbols(base.contributionForQuery, this.origin, qualifiedKind, params)
         .toList()
 
-    override fun getCodeCompletions(namespace: SymbolNamespace,
-                                    kind: String,
-                                    name: String,
+    override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                     params: WebSymbolsCodeCompletionQueryParams,
                                     scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
       base.rootScope
-        .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, namespace,
-                            kind, name, params, scope)
+        .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
         .toList()
 
     override val kind: SymbolKind

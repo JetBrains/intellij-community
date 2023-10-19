@@ -5,8 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtilRt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -140,7 +140,10 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
     if (File(repo.url).isDirectory) return File(repo.url).canonicalPath
     try {
       val uri = URI(repo.url)
-      if (uri.scheme == null || uri.scheme.lowercase() == "file") return uri.path
+      if (uri.scheme == null || uri.scheme.lowercase() == "file") {
+        val path = uri.path
+        if (path != null) return path
+      }
       return uri.toString()
     }
     catch (e: URISyntaxException) {

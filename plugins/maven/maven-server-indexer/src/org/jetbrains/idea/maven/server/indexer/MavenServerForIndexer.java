@@ -99,7 +99,7 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
 
   @NotNull
   @Override
-  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) throws RemoteException {
+  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir, MavenToken token) throws RemoteException {
     throw new UnsupportedOperationException("indexing server");
   }
 

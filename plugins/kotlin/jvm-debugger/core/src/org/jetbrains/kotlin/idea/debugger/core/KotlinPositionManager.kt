@@ -164,6 +164,10 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             throw NoDataException.INSTANCE
         }
 
+        if (location.safeMethod()?.isGeneratedErasedLambdaMethod() == true) {
+            return null
+        }
+
         PositionManagerImpl.adjustPositionForConditionalReturn(debugProcess, location, psiFile, sourceLineNumber)?.let {
             return it
         }
@@ -414,7 +418,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
         val method = location.safeMethod() ?: return null
-        if (!method.name().isGeneratedIrBackendLambdaMethodName() || method.isGeneratedErasedLambdaMethod()) {
+        if (!method.name().isGeneratedIrBackendLambdaMethodName()) {
             return null
         }
 

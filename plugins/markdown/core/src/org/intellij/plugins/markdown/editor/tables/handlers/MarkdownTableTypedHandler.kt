@@ -9,7 +9,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
 import org.intellij.plugins.markdown.editor.tables.TableUtils
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
+import org.intellij.plugins.markdown.lang.isMarkdownType
 
 internal class MarkdownTableTypedHandler: TypedHandlerDelegate() {
   override fun charTyped(char: Char, project: Project, editor: Editor, file: PsiFile): Result {

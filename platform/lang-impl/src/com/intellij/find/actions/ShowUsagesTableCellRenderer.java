@@ -360,6 +360,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       renderer.append(group.getPresentableGroupText(), attributes);
     }
     SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);
+    renderer.setMaximumSize(renderer.getPreferredSize());
     panel.add(renderer);
     panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.FILE_GROUP_COL", renderer.getAccessibleContext().getAccessibleName()));
   }

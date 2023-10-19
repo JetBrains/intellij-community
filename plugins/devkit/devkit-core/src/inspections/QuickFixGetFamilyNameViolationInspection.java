@@ -20,10 +20,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Dmitry Batkovich
- */
-public final class QuickFixGetFamilyNameViolationInspection extends DevKitUastInspectionBase {
+final class QuickFixGetFamilyNameViolationInspection extends DevKitUastInspectionBase {
 
   private static final boolean SKIP_CHILDREN = true;
 

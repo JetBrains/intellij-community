@@ -392,7 +392,7 @@ class ActionMenu constructor(private val context: DataContext?,
       val frame = ComponentUtil.getParentOfType(IdeFrame::class.java, this)
       context = dataManager.getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(frame as Window?))
     }
-    return Utils.wrapDataContext(context)
+    return context
   }
 
   fun fillMenu() {

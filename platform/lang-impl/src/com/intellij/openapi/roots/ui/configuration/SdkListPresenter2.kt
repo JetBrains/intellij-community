@@ -148,7 +148,7 @@ internal class SdkListPresenter2<T>(
   private fun archInfo(path: String?): @NlsSafe String? {
     if (path == null) return null
     return when (JdkVersionDetector.getInstance().detectJdkVersionInfo(path)?.arch) {
-      CpuArch.ARM64 -> ", aarch64"
+      CpuArch.ARM64 -> " - aarch64"
       else -> null
     }
   }

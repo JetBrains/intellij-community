@@ -300,4 +300,11 @@ public final class GitVersion implements Comparable<GitVersion> {
     return getType() == Type.NULL;
   }
 
+  public boolean isWSL() {
+    return switch (getType()) {
+      case WSL1, WSL2 -> true;
+      default -> false;
+    };
+  }
+
 }

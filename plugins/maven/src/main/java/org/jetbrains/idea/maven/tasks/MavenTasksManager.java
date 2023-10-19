@@ -97,7 +97,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
 
     @Override
     public boolean execute(@NotNull CompileContext context) {
-      MavenTasksManager mavenTasksManager = context.getProject().getService(MavenTasksManager.class);
+      MavenTasksManager mavenTasksManager = getInstance(context.getProject());
       return mavenTasksManager.doExecute(myBefore, context);
     }
   }

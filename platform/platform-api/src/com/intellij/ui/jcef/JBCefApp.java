@@ -75,12 +75,14 @@ public final class JBCefApp {
     boolean started = false;
     try {
       started = CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
-    } catch (UnsatisfiedLinkError e) {
+    }
+    catch (UnsatisfiedLinkError e) {
       LOG.error(e.getMessage());
     }
     if (!started) {
-      if (SystemInfoRt.isLinux)
+      if (SystemInfoRt.isLinux) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> SettingsHelper.showNotificationMissingLibraries());
+      }
       throw new IllegalStateException("CefApp failed to start");
     }
 
@@ -144,7 +146,8 @@ public final class JBCefApp {
       if (config != null) {
         try {
           app = new JBCefApp(config);
-        } catch (IllegalStateException ignore) {
+        }
+        catch (IllegalStateException ignore) {
         }
       }
       return app;
@@ -181,8 +184,7 @@ public final class JBCefApp {
         return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled=false'");
       }
       if (GraphicsEnvironment.isHeadless() &&
-          !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled"))
-      {
+          !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled")) {
         return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
       }
       if (!SKIP_VERSION_CHECK) {
@@ -199,16 +201,16 @@ public final class JBCefApp {
         }
         if (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION > version.apiVersion.major ||
             (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION == version.apiVersion.major &&
-             MIN_SUPPORTED_JCEF_API_MINOR_VERSION > version.apiVersion.minor))
-        {
+             MIN_SUPPORTED_JCEF_API_MINOR_VERSION > version.apiVersion.minor)) {
           return unsupported.apply("JCEF: minimum supported API version is " +
                                    MIN_SUPPORTED_JCEF_API_MAJOR_VERSION + "." + MIN_SUPPORTED_JCEF_API_MINOR_VERSION +
                                    ", current is " + version.apiVersion.major + "." + version.apiVersion.minor);
         }
       }
       String altCefPath = System.getProperty("ALT_CEF_FRAMEWORK_DIR", null);
-      if (altCefPath == null || altCefPath.isEmpty())
+      if (altCefPath == null || altCefPath.isEmpty()) {
         altCefPath = System.getenv("ALT_CEF_FRAMEWORK_DIR");
+      }
 
       final boolean skipModuleCheck = (altCefPath != null && !altCefPath.isEmpty()) || SKIP_MODULE_CHECK;
       if (!skipModuleCheck) {
@@ -242,6 +244,12 @@ public final class JBCefApp {
   @Contract(pure = true)
   @NotNull String getCachePath() {
     return myCefSettings.cache_path;
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  public Integer getRemoteDebuggingPort() {
+    return myCefSettings.remote_debugging_port;
   }
 
   public @NotNull JBCefClient createClient() {
@@ -341,8 +349,9 @@ public final class JBCefApp {
 
     @Override
     public void stateHasChanged(CefApp.CefAppState state) {
-      if (state.equals(CefApp.CefAppState.INITIALIZED))
+      if (state.equals(CefApp.CefAppState.INITIALIZED)) {
         LOG.info(String.format("jcef version: %s | cmd args: %s", CefApp.getInstance().getVersion().getJcefVersion(), myArgs));
+      }
     }
 
     @Override

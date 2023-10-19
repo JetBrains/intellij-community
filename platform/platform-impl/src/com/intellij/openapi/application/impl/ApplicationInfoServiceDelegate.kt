@@ -11,7 +11,7 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   private val delegate = ApplicationInfoImpl.getShadowInstance()
 
   override fun getBuildDate(): Calendar? = delegate.buildDate
-  override fun getBuildUnixTimeInMillis(): Long = delegate.buildUnixTimeInMillis
+  override fun getBuildTime() = delegate.buildTime
 
   override fun getBuild(): BuildNumber = delegate.build
   override fun getApiVersion(): String = delegate.apiVersion
@@ -30,7 +30,7 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun getFullVersion(): String = delegate.fullVersion
   override fun getStrictVersion(): String = delegate.strictVersion
   override fun getFullApplicationName(): String? = delegate.fullApplicationName
-  override fun getMajorReleaseBuildDate(): Calendar = delegate.majorReleaseBuildDate
+  override fun getMajorReleaseBuildDate() = delegate.majorReleaseBuildDate
   override fun getApplicationSvgIconUrl(): String = delegate.applicationSvgIconUrl
   override fun getSmallApplicationSvgIconUrl(): String = delegate.smallApplicationSvgIconUrl
   override fun getWelcomeScreenLogoUrl(): String? = delegate.welcomeScreenLogoUrl
@@ -45,8 +45,8 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun getPluginManagerUrl(): String = delegate.pluginManagerUrl
   override fun usesJetBrainsPluginRepository(): Boolean = delegate.usesJetBrainsPluginRepository()
   override fun getPluginsListUrl(): String = delegate.pluginsListUrl
-  override fun getChannelsListUrl(): String? = delegate.channelsListUrl
-  override fun getPluginsDownloadUrl(): String = delegate.pluginsDownloadUrl
+  override fun getChannelListUrl(): String? = delegate.channelListUrl
+  override fun getPluginDownloadUrl(): String = delegate.pluginDownloadUrl
   override fun getBuiltinPluginsUrl(): String? = delegate.builtinPluginsUrl
   override fun getWebHelpUrl(): String? = delegate.webHelpUrl
   override fun getWhatsNewUrl(): String? = delegate.whatsNewUrl
@@ -58,7 +58,7 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun getSubscriptionFormId(): String? = delegate.subscriptionFormId
   override fun areSubscriptionTipsAvailable(): Boolean = delegate.areSubscriptionTipsAvailable()
   override fun getApiVersionAsNumber(): BuildNumber = delegate.apiVersionAsNumber
-  override fun getEssentialPluginsIds(): List<PluginId> = delegate.essentialPluginsIds
+  override fun getEssentialPluginIds(): List<PluginId> = delegate.essentialPluginIds
   override fun getDefaultLightLaf(): String? = delegate.defaultLightLaf
   override fun getDefaultClassicLightLaf(): String? = delegate.defaultClassicLightLaf
   override fun getDefaultDarkLaf(): String? = delegate.defaultDarkLaf

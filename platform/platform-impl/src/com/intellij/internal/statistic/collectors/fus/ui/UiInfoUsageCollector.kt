@@ -100,10 +100,9 @@ private suspend fun getDescriptors(): Set<MetricEvent> {
   val properties = PropertiesComponent.getInstance()
   set.add(SHOW_TOOLWINDOW.metric(properties.isTrueValue("ShowDocumentationInToolWindow")))
   set.add(QUICK_DOC_AUTO_UPDATE.metric(properties.getBoolean("DocumentationAutoUpdateEnabled", true)))
-  val laf = LafManager.getInstance().currentLookAndFeel
-  val value1 = laf?.name?.takeIf(String::isNotEmpty) ?: "unknown"
-  set.add(LOOK_AND_FEEL.metric(value1))
-  set.add(LAF_AUTODETECT.metric(LafManager.getInstance().autodetect))
+  val lafManager = LafManager.getInstance()
+  set.add(LOOK_AND_FEEL.metric(lafManager.currentUIThemeLookAndFeel?.id?.takeIf(String::isNotEmpty) ?: "unknown"))
+  set.add(LAF_AUTODETECT.metric(lafManager.autodetect))
   set.add(TOOL_WINDOW_LAYOUTS_COUNT.metric(ToolWindowDefaultLayoutManager.getInstance().getLayoutNames().size))
   val value = if (JreHiDpiUtil.isJreHiDPIEnabled()) HidpiMode.per_monitor_dpi else HidpiMode.system_dpi
   set.add(HIDPI_MODE.metric(value))

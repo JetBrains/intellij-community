@@ -17,6 +17,8 @@ import java.util.Collection;
 import java.util.List;
 
 public interface MavenServerConnector extends Disposable {
+
+  @Topic.AppLevel
   Topic<MavenServerDownloadListener> DOWNLOAD_LISTENER_TOPIC =
     new Topic<>(MavenServerDownloadListener.class.getSimpleName(), MavenServerDownloadListener.class);
 
@@ -34,7 +36,7 @@ public interface MavenServerConnector extends Disposable {
 
   MavenServerIndexer createIndexer() throws RemoteException;
 
-  @NotNull MavenModel interpolateAndAlignModel(MavenModel model, Path basedir);
+  @NotNull MavenModel interpolateAndAlignModel(@NotNull MavenModel model, @NotNull Path basedir, @NotNull Path pomDir);
 
   MavenModel assembleInheritance(MavenModel model, MavenModel parentModel);
 

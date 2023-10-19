@@ -8,11 +8,11 @@ import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.URIUtil
-import com.intellij.ide.DataManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.update.UiNotifyConnector
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -21,13 +21,14 @@ import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
-import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabReviewTabViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.create.GitLabMergeRequestCreateComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsPanelFactory
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepositoryAndAccountSelectorViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabReviewTabViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -45,15 +46,7 @@ internal class GitLabReviewTabComponentFactory(
     projectVm: GitLabToolWindowProjectViewModel
   ): JComponent {
     GitLabStatistics.logMrListOpened(project)
-    return GitLabMergeRequestsPanelFactory()
-      .create(cs, projectVm.accountVm, projectVm.listVm).also { panel ->
-        DataManager.registerDataProvider(panel) { dataId ->
-          when {
-            GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectVm.filesController
-            else -> null
-          }
-        }
-      }
+    return GitLabMergeRequestsPanelFactory().create(cs, projectVm.accountVm, projectVm.listVm)
   }
 
   override fun createTabComponent(cs: CoroutineScope,
@@ -68,6 +61,9 @@ internal class GitLabReviewTabComponentFactory(
             refreshData()
           }
         }
+      }
+      is GitLabReviewTabViewModel.CreateMergeRequest -> {
+        GitLabMergeRequestCreateComponentFactory.create(project, cs, tabVm.createVm)
       }
     }
   }
@@ -85,14 +81,7 @@ internal class GitLabReviewTabComponentFactory(
     val avatarIconsProvider = projectVm.avatarIconProvider
     return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(
       project, cs, reviewDetailsVm, projectVm.accountVm, avatarIconsProvider
-    ).also {
-      DataManager.registerDataProvider(it) { dataId ->
-        when {
-          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectVm.filesController
-          else -> null
-        }
-      }
-    }
+    )
   }
 
   private fun createSelectorsComponent(cs: CoroutineScope): JComponent {
@@ -143,6 +132,10 @@ internal class GitLabReviewTabComponentFactory(
             req.login(account, token)
           }
         }
+      }
+
+      UiNotifyConnector.doWhenFirstShown(selectors) {
+        selectorVm.submitSelection()
       }
 
       selectors

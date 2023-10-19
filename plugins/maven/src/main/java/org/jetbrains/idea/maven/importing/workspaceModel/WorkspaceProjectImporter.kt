@@ -143,7 +143,7 @@ internal class WorkspaceProjectImporter(
 
   private fun migrateToExternalStorageIfNeeded(): Boolean {
     var migratedToExternalStorage = false
-    val externalStorageManager = myProject.getService(ExternalStorageConfigurationManager::class.java)
+    val externalStorageManager = ExternalStorageConfigurationManager.getInstance(myProject)
     if (!externalStorageManager.isEnabled) {
       ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true)
       migratedToExternalStorage = true
@@ -382,7 +382,7 @@ internal class WorkspaceProjectImporter(
       .filter { it.contentRoots.isEmpty() }
       .forEach { currentStorage.removeEntity(it) }
 
-    LegacyToWorkspaceImportUtil.retainLegacyImportEntities(myProject, currentStorage, newStorage)
+    WorkspaceChangesRetentionUtil.retainManualChanges(myProject, currentStorage, newStorage)
 
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
 

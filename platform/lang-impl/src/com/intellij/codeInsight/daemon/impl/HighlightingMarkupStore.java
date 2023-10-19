@@ -224,7 +224,8 @@ final class HighlightingMarkupStore {
   }
 
   private static @Nullable PersistentMapImpl<@NotNull Integer, @NotNull FileMarkupInfo> createPersistentMap(@NotNull Path path) {
-    var mapBuilder = PersistentMapBuilder.newBuilder(path, EnumeratorIntegerDescriptor.INSTANCE, FileMarkupInfoExternalizer.INSTANCE);
+    var mapBuilder = PersistentMapBuilder.newBuilder(path, EnumeratorIntegerDescriptor.INSTANCE, FileMarkupInfoExternalizer.INSTANCE)
+      .withVersion(2);
     PersistentMapImpl<Integer, FileMarkupInfo> map = null;
     IOException exception = null;
     int retryAttempts = 5;

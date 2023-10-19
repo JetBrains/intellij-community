@@ -1022,14 +1022,17 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     private final @NotNull SwitchRuleResult myRuleResult;
 
     private SwitchBranch(boolean isDefault,
-                         List<? extends PsiCaseLabelElement> caseExpressions,
+                         @NotNull List<? extends PsiCaseLabelElement> caseExpressions,
                          @Nullable PsiExpression guard, @NotNull SwitchRuleResult ruleResult,
                          @NotNull List<? extends PsiElement> usedElements) {
-      myIsDefault = isDefault;
+      if (ContainerUtil.exists(caseExpressions, exp -> exp instanceof PsiDefaultCaseLabelElement)) {
+        myIsDefault = true;
+      }
+      else {
+        myIsDefault = isDefault;
+      }
       myGuard = guard;
-      if (isDefault) {
-        //if preview is disabled, only default can be used
-        //in preview 20, we can combine default with null only
+      if (myIsDefault) {
         PsiCaseLabelElement nullLabel = findNullLabel(caseExpressions);
         if (nullLabel != null) {
           myCaseExpressions = List.of(nullLabel);

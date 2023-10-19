@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ final class MethodHandleCache {
   private static final ClassValue<ConcurrentMap<Method, MethodHandle>> CACHE = new ConcurrentMapClassValue();
 
   static @NotNull MethodHandle compute(@NotNull Method method, Object @Nullable [] args) {
-    // method name cannot be used as key because for one class maybe several methods with the same name and different set of parameters
+    // method name cannot be used as a key because for one class maybe several methods with the same name and different set of parameters
     return CACHE.get(method.getDeclaringClass()).computeIfAbsent(method, method1 -> {
       method1.setAccessible(true);
       MethodHandle result;
@@ -29,7 +29,7 @@ final class MethodHandleCache {
     });
   }
 
-  // as static to ensure that class doesn't reference anything else (otherwise maybe memory leak)
+  // as static to ensure that class doesn't reference anything else (otherwise maybe memory leaks)
   private static final class ConcurrentMapClassValue extends ClassValue<ConcurrentMap<Method, MethodHandle>> {
     @Override
     protected ConcurrentMap<Method, MethodHandle> computeValue(@NotNull Class<?> type) {

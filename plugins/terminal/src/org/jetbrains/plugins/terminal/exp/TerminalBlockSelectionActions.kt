@@ -3,10 +3,6 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.editor.Caret
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
@@ -49,20 +45,5 @@ class TerminalSelectBlockBelowAction : TerminalOutputSelectionAction() {
 class TerminalSelectBlockAboveAction : TerminalOutputSelectionAction() {
   override fun actionPerformed(e: AnActionEvent) {
     e.selectionController?.selectRelativeBlock(isBelow = false)
-  }
-}
-
-class TerminalSelectPromptHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
-  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
-    val selectionController = dataContext.selectionController
-    if (selectionController != null && (selectionController.primarySelection != null || editor.selectionModel.hasSelection())) {
-      // clear selection to move the focus to the prompt
-      selectionController.clearSelection()
-    }
-    else originalHandler.execute(editor, caret, dataContext)
-  }
-
-  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
-    return dataContext.editor?.isOutputEditor == true || originalHandler.isEnabled(editor, caret, dataContext)
   }
 }

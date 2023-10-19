@@ -5,18 +5,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 
-@Service
+@Service(Service.Level.PROJECT)
 class MarkdownDisposable: Disposable {
   override fun dispose() = Unit
 
   companion object {
     @JvmStatic
-    @JvmOverloads
-    fun getInstance(project: Project? = null): MarkdownDisposable {
-      return when (project) {
-        null -> service()
-        else -> project.service()
-      }
-    }
+    fun getInstance(project: Project): MarkdownDisposable = project.service()
   }
 }

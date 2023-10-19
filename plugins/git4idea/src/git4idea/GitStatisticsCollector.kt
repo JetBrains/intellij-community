@@ -12,7 +12,6 @@ import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
@@ -130,7 +129,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   private fun addCommitTemplateMetrics(project: Project, repositories: List<GitRepository>, set: MutableSet<MetricEvent>) {
     if (repositories.isEmpty()) return
 
-    val templatesCount = project.service<GitCommitTemplateTracker>().templatesCount()
+    val templatesCount = GitCommitTemplateTracker.getInstance(project).templatesCount()
     if (templatesCount == 0) return
 
     set.add(COMMIT_TEMPLATE.metric(

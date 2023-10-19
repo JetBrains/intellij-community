@@ -123,8 +123,8 @@
                  description="Pause dumb queue (including indexing) while scanning is in progress."/>
     <registryKey defaultValue="true" key="scanning.trust.indexing.flag" restartRequired="true"
                  description="Use previously stored 'indexed flag' while scanning. To store 'indexing flag' please set registry option 'indexing.disable.virtual.file.system.entry.is.file.indexed=false'."/>
-    <registryKey defaultValue="true" key="scanning.stamps.over.fast.attributes" restartRequired="true"
-                 description="Store IndexingStamps is regular (false) or fast enumerated (true) attributes storage"/>
+    <registryKey defaultValue="true" key="indexing.over.fast.attributes" restartRequired="true"
+                 description="Store indexing data (including IndexingStamps) in regular (false) or fast (true) attributes storage"/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>
     <registryKey defaultValue="true" key="retrieve.pushed.properties.from.vfs" restartRequired="true"
@@ -423,6 +423,7 @@
     <projectService serviceInterface="com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel"
                     serviceImplementation="com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModelImpl"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionThemeInfoProvider"/>
+    <registryKey description="Enable Code Vision performance watcher" key="code.vision.performance.watcher.enabled" defaultValue="true"/>
 
     <projectService serviceImplementation="com.intellij.codeInsight.actions.AsyncActionExecutionService"/>
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.codeVision.settings.CodeVisionInlaySettingProvider"/>
@@ -456,7 +457,7 @@
     <applicationService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
                         serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl"/>
     <treeStructureProvider implementation="com.intellij.ide.scratch.ScratchTreeStructureProvider" order="last"/>
-    <registryKey defaultValue="false" key="scratch.files.use.workspace.model"
+    <registryKey defaultValue="true" key="scratch.files.use.workspace.model" restartRequired="true"
                  description="Use WorkspaceModel API for scratch files integration"/>
     <postStartupActivity implementation="com.intellij.ide.scratch.workspace.ScratchWorkspaceStartupActivity"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.ide.scratch.workspace.ScratchRootsEntityWorkspaceFileIndexContributor"/>
@@ -1557,7 +1558,7 @@
       implementationClass="com.intellij.codeInsight.inline.completion.EscapeInlineCompletionHandler"
       order="before hide-hints"/>
     <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionEditorListener"/>
-    <actionPromoter implementation="com.intellij.codeInsight.inline.completion.InlineActionsPromoter" order="last"/>
+    <actionPromoter implementation="com.intellij.codeInsight.inline.completion.InlineCompletionActionsPromoter" order="last"/>
 
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ChameleonSyntaxHighlightingPass$Factory"/>

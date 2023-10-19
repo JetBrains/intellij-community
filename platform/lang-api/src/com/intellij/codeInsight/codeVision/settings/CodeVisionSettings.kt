@@ -76,6 +76,9 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     listener.groupPositionChanged(groupName, position)
   }
 
+  /**
+   * Ignores [State.isEnabled].
+   */
   fun isProviderEnabled(id: String): Boolean {
     return state.disabledCodeVisionProviderIds.contains(id).not()
   }

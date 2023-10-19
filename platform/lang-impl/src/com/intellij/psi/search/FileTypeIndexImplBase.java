@@ -64,11 +64,18 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     Ref<FileType> fileType = myId2FileTypeCache.get(id);
     if (fileType == null) {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Filetype is not cached for FileTypeId=" + id);
+        LOG.debug("Filetype is not cached for fileTypeId=" + id);
       }
 
       String fileTypeName = myFileTypeEnumerator.valueOf(id);
       FileType fileTypeByName = fileTypeName == null ? null : FileTypeManager.getInstance().findFileTypeByName(fileTypeName);
+
+      if ((fileTypeName == null || fileTypeByName == null) && LOG.isDebugEnabled()) {
+        LOG.debug("fileTypeName=" + fileTypeName + ", " +
+                  "fileTypeByName=" + fileTypeByName + ", " +
+                  "fileTypeId=" + id);
+        LOG.debug("Current list of filetypes: " + myFileTypeEnumerator.dumpToString());
+      }
       myId2FileTypeCache.put(id, fileType = Ref.create(fileTypeByName));
     }
 

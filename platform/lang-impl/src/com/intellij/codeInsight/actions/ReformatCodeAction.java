@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInsight.actions;
 
 import com.intellij.CodeStyleBundle;
@@ -260,7 +259,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
   public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     boolean available = isActionAvailable(event);
-    if (event.isFromContextMenu()) {
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
       presentation.setEnabledAndVisible(available);
     }
     else {
@@ -271,7 +270,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
   private static boolean isActionAvailable(@NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null){
+    if (project == null) {
       return false;
     }
 
@@ -289,7 +288,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
         return true;
       }
     }
-    else if (files!= null && containsOnlyFiles(files)) {
+    else if (files != null && containsOnlyFiles(files)) {
       boolean anyFormatters = false;
       for (VirtualFile virtualFile : files) {
         final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);

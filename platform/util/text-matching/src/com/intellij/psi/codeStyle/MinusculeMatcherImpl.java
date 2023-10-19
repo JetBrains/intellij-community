@@ -233,12 +233,12 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
     if (infix) {
       int index = Strings.indexOfIgnoreCase(name, new CharArrayCharSequence(patternWithoutWildChar, 0, patternWithoutWildChar.length), 0);
       if (index >= 0) {
-        return FList.<TextRange>emptyList().prepend(TextRange.from(index, patternWithoutWildChar.length - 1));
+        return FList.singleton(TextRange.from(index, patternWithoutWildChar.length - 1));
       }
       return null;
     }
     if (CharArrayUtil.regionMatches(patternWithoutWildChar, 0, patternWithoutWildChar.length, name)) {
-      return FList.<TextRange>emptyList().prepend(new TextRange(0, patternWithoutWildChar.length));
+      return FList.singleton(new TextRange(0, patternWithoutWildChar.length));
     }
     return null;
   }
@@ -280,7 +280,7 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
       if (isTrailingSpacePattern() && nameIndex != name.length() && (patternIndex < 2 || !isUpperCaseOrDigit(myPattern[patternIndex - 2]))) {
         int spaceIndex = name.indexOf(' ', nameIndex);
         if (spaceIndex >= 0) {
-          return FList.<TextRange>emptyList().prepend(TextRange.from(spaceIndex, 1));
+          return FList.singleton(TextRange.from(spaceIndex, 1));
         }
         return null;
       }
@@ -430,7 +430,7 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
                                                                boolean isAsciiName,
                                                                int fragmentLength, int minFragment) {
     if (patternIndex + fragmentLength >= myPattern.length) {
-      return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, fragmentLength));
+      return FList.singleton(TextRange.from(nameIndex, fragmentLength));
     }
 
     // try to match the remainder of pattern with the remainder of name

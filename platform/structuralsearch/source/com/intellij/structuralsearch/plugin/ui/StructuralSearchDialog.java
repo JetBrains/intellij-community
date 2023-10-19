@@ -1233,7 +1233,9 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   }
 
   private void exportToClipboard() {
-    CopyPasteManager.getInstance().setContents(new TextTransferable(ConfigurationUtil.toXml(getConfiguration())));
+    String text = ConfigurationUtil.toXml(getConfiguration());
+    String html = "<html><body><pre><code>" + StringUtil.escapeXmlEntities(text) + "</code></pre></body></html>";
+    CopyPasteManager.getInstance().setContents(new TextTransferable(html, text));
   }
 
   private void importFromClipboard() {

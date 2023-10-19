@@ -33,6 +33,7 @@ import java.io.File
 
 @JvmField
 val IDEA_TEST_DATA_DIR = File(KotlinRoot.DIR, "idea/tests/testData")
+const val IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY = "idea.kotlin.plugin.use.k2"
 
 fun KtFile.dumpTextWithErrors(ignoreErrors: Set<DiagnosticFactory<*>> = emptySet()): String {
     val text = text
@@ -131,7 +132,7 @@ fun interface SetUpFunction {
  */
 @Throws(Exception::class)
 fun setUpWithKotlinPlugin(isFirPlugin: Boolean, setUp: SetUpFunction) {
-    System.setProperty("idea.kotlin.plugin.use.k2", isFirPlugin.toString())
+    System.setProperty(IDEA_KOTLIN_PLUGIN_USE_K2_SYSTEM_PROPERTY, isFirPlugin.toString())
     setUp.invoke()
     checkPluginIsCorrect(isFirPlugin)
 }

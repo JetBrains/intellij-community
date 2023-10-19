@@ -27,7 +27,7 @@ public class ApplicationInfoTest {
       var info = createAppInfo();
       assertThat(info.getPluginManagerUrl()).contains(host).doesNotContain(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
       assertThat(info.getPluginsListUrl()).contains(host).doesNotContain(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
-      assertThat(info.getPluginsDownloadUrl()).contains(host).doesNotContain(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
+      assertThat(info.getPluginDownloadUrl()).contains(host).doesNotContain(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
     });
   }
 

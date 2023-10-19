@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -10,12 +9,11 @@ import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class InspectionDescriptionNotFoundInspection extends DescriptionNotFoundInspectionBase {
+@VisibleForTesting
+public final class InspectionDescriptionNotFoundInspection extends DescriptionNotFoundInspectionBase {
   @NonNls private static final String INSPECTION_PROFILE_ENTRY = DescriptionType.INSPECTION.getClassName();
 
   public InspectionDescriptionNotFoundInspection() {

@@ -3,6 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
 import com.intellij.codeInsight.annoPackages.Jsr305Support;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -412,5 +413,15 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @Override
   public long getModificationCount() {
     return myTracker.getModificationCount();
+  }
+
+  @Override
+  protected @Nullable NullabilityAnnotationInfo findNullityDefaultOnModule(PsiAnnotation.@NotNull TargetType @NotNull [] targetTypes,
+                                                                           @NotNull PsiElement element) {
+    PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(element);
+    if (module != null) {
+      return getNullityDefault(module, targetTypes, element, false);
+    }
+    return null;
   }
 }

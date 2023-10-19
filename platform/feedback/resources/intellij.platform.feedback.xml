@@ -5,8 +5,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.platform.ide.impl.feedback.GeneralFeedbackDialogs"
-                        serviceImplementation="com.intellij.platform.feedback.general.GeneralFeedbackDialogsImpl"
+    <applicationService serviceInterface="com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs"
+                        serviceImplementation="com.intellij.platform.feedback.impl.PlatformFeedbackDialogsImpl"
                         overrides="true"/>
 
     <applicationService serviceImplementation="com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService"/>
@@ -63,6 +63,8 @@
               class="com.intellij.platform.feedback.kafka.TestShowKafkaConsumerFeedbackAction" internal="true"/>
       <action id="com.intellij.platform.feedback.kafka.TestShowKafkaProducerFeedbackAction"
               class="com.intellij.platform.feedback.kafka.TestShowKafkaProducerFeedbackAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction"
+              class="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
 

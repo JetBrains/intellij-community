@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
 import javax.swing.JButton
 
 class SkipImportAction : ChooseProductActionButton("Skip Import") {
@@ -20,10 +21,8 @@ class SkipImportAction : ChooseProductActionButton("Skip Import") {
   }
 
 
-  override fun createButton(): JButton {
+  override fun createButton(presentation: Presentation): JButton {
     return OnboardingDialogButtons.createHoveredLinkButton()
   }
 
 }
-
-interface LinkAction

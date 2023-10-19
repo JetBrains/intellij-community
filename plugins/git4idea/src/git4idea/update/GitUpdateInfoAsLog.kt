@@ -193,7 +193,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     override fun getFilterValues(filterName: String): List<String>? {
       when (filterName) {
         RANGE_FILTER.name -> return ArrayList(rangeFilter.getTextPresentation())
-        ROOT_FILTER.name -> return getPathsFilterValues(filterName)
+        STRUCTURE_FILTER.name, ROOT_FILTER.name -> return getPathsFilterValues(filterName)
         else -> return filters[filterName]
       }
     }

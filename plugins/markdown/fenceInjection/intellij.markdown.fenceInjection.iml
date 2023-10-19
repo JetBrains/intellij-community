@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="intellij.markdown.core" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.localIde" />
   </component>
 </module>

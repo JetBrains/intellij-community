@@ -52,6 +52,7 @@ abstract class FrameworkAvailabilityChecker(
     private inner class ModelChangeListener(project: Project) : ModuleEntityChangeListener(project) {
         override fun entitiesChanged(outdated: List<Module>) {
             val checkerClass = this@FrameworkAvailabilityChecker.javaClass
+            @Suppress("IncorrectServiceRetrieving")
             val service = project.getService(checkerClass) ?: error("Cannot find service $checkerClass")
             service.invalidateEntries(condition = { key, _ -> key.module in outdated })
         }

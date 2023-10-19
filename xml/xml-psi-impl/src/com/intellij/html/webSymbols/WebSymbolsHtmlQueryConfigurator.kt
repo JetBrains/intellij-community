@@ -39,10 +39,10 @@ import java.util.*
 class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
   override fun getScope(project: Project,
-                        element: PsiElement?,
+                        location: PsiElement?,
                         context: WebSymbolsContext,
                         allowResolve: Boolean): List<WebSymbolsScope> =
-    ((element as? XmlAttribute)?.parent ?: element as? XmlTag)?.let {
+    ((location as? XmlAttribute)?.parent ?: location as? XmlTag)?.let {
       listOf(StandardHtmlSymbolsScope(it))
     }
     ?: emptyList()
@@ -151,13 +151,12 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       }
     }
 
-    override fun getSymbols(namespace: SymbolNamespace,
-                            kind: SymbolKind,
+    override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
                             params: WebSymbolsListSymbolsQueryParams,
                             scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
       if (params.queryExecutor.allowResolve) {
-        if (namespace == WebSymbol.NAMESPACE_HTML) {
-          when (kind) {
+        if (qualifiedKind.namespace == WebSymbol.NAMESPACE_HTML) {
+          when (qualifiedKind.kind) {
             WebSymbol.KIND_HTML_ELEMENTS ->
               (getStandardHtmlElementDescriptor(tag)?.getElementsDescriptors(tag)
                ?: getHtmlNSDescriptor(tag.project)?.getAllElementsDescriptors(null)
@@ -171,7 +170,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
             else -> emptyList()
           }
         }
-        else if (namespace == WebSymbol.NAMESPACE_JS && kind == WebSymbol.KIND_JS_EVENTS) {
+        else if (qualifiedKind.matches(WebSymbol.NAMESPACE_JS, WebSymbol.KIND_JS_EVENTS)) {
           getStandardHtmlAttributeDescriptors(tag)
             .filter { it.name.startsWith("on") }
             .map { HtmlEventDescriptorBasedSymbol(it) }
@@ -181,30 +180,28 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       }
       else emptyList()
 
-    override fun getMatchingSymbols(namespace: SymbolNamespace,
-                                    kind: String,
-                                    name: String,
+    override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                     params: WebSymbolsNameMatchQueryParams,
                                     scope: Stack<WebSymbolsScope>): List<WebSymbol> {
       if (params.queryExecutor.allowResolve) {
-        if (namespace == WebSymbol.NAMESPACE_HTML) {
-          when (kind) {
+        if (qualifiedName.namespace == WebSymbol.NAMESPACE_HTML) {
+          when (qualifiedName.kind) {
             WebSymbol.KIND_HTML_ELEMENTS ->
-              getStandardHtmlElementDescriptor(tag, name)
+              getStandardHtmlElementDescriptor(tag, qualifiedName.name)
                 ?.let { HtmlElementDescriptorBasedSymbol(it, tag) }
-                ?.match(name, params, scope)
+                ?.match(qualifiedName.name, params, scope)
                 ?.let { return it }
             WebSymbol.KIND_HTML_ATTRIBUTES ->
-              getStandardHtmlAttributeDescriptor(tag, name)
+              getStandardHtmlAttributeDescriptor(tag, qualifiedName.name)
                 ?.let { HtmlAttributeDescriptorBasedSymbol(it, tag) }
-                ?.match(name, params, scope)
+                ?.match(qualifiedName.name, params, scope)
                 ?.let { return it }
           }
         }
-        else if (namespace == WebSymbol.NAMESPACE_JS && kind == WebSymbol.KIND_JS_EVENTS) {
-          getStandardHtmlAttributeDescriptor(tag, "on$name")
+        else if (qualifiedName.matches(WebSymbol.NAMESPACE_JS, WebSymbol.KIND_JS_EVENTS)) {
+          getStandardHtmlAttributeDescriptor(tag, "on${qualifiedName.name}")
             ?.let { HtmlEventDescriptorBasedSymbol(it) }
-            ?.match(name, params, scope)
+            ?.match(qualifiedName.name, params, scope)
             ?.let { return it }
         }
       }

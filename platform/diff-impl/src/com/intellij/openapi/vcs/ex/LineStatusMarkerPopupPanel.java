@@ -44,6 +44,7 @@ import java.util.EventObject;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getDiffType;
+import static java.util.Collections.emptyList;
 
 public class LineStatusMarkerPopupPanel extends JPanel {
   private static final JBColor TOOLBAR_BACKGROUND_COLOR =
@@ -273,15 +274,18 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     });
   }
 
-  public static void installEditorDiffHighlighters(@NotNull Editor editor, @Nullable List<? extends DiffFragment> wordDiff) {
-    if (wordDiff == null) return;
+  public static @NotNull List<RangeHighlighter> installEditorDiffHighlighters(@NotNull Editor editor,
+                                                                              @Nullable List<? extends DiffFragment> wordDiff) {
+    if (wordDiff == null) return emptyList();
+    List<RangeHighlighter> highlighters = new ArrayList<>();
     for (DiffFragment fragment : wordDiff) {
       int vcsStart = fragment.getStartOffset1();
       int vcsEnd = fragment.getEndOffset1();
       TextDiffType type = getDiffType(fragment);
 
-      DiffDrawUtil.createInlineHighlighter(editor, vcsStart, vcsEnd, type);
+      highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, vcsStart, vcsEnd, type));
     }
+    return highlighters;
   }
 
   public static void installMasterEditorWordHighlighters(@NotNull Editor editor,

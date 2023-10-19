@@ -1,6 +1,7 @@
 package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.JBUI
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -9,8 +10,12 @@ import javax.swing.JPanel
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
-class MultiplePageDialog private constructor(): DialogWrapper(null) {
-  companion object{
+/** TODO
+ * should be replaced by card layout
+ */
+
+class MultiplePageDialog private constructor() : DialogWrapper(null) {
+  companion object {
     fun show(page: PageProvider) {
       val dialog = MultiplePageDialog()
       dialog.showPage(page)
@@ -21,8 +26,19 @@ class MultiplePageDialog private constructor(): DialogWrapper(null) {
       dialog.pack()
     }
   }
+
   init {
+    Disposer.register(disposable) {
+      current?.close(OK_EXIT_CODE)
+    }
+
     init()
+
+  }
+
+
+  override fun getStyle(): DialogStyle {
+    return DialogStyle.COMPACT
   }
 
   private lateinit var panel: JComponent
@@ -41,20 +57,23 @@ class MultiplePageDialog private constructor(): DialogWrapper(null) {
 
     dialog.parentDialog = this
 
-    dialog.content?.let {
-      panel.add(it, gbc)
-    }
-
-    southPanel.add(dialog.southPanel, gbc)
-
     current?.let {
       panel.remove(it.content)
       southPanel.remove(it.southPanel)
     }
 
+    dialog.content?.let {
+      panel.add(it, gbc)
+    }
+
+    if(dialog.createSouth) {
+      southPanel.add(dialog.southPanel, gbc)
+    }
+
+
     current = dialog
 
-    SwingUtilities.invokeLater{
+    SwingUtilities.invokeLater {
       pack()
     }
   }
@@ -74,14 +93,30 @@ class MultiplePageDialog private constructor(): DialogWrapper(null) {
   }
 }
 
-abstract class PageProvider() : DialogWrapper(null) {
+abstract class PageProvider(val createSouth: Boolean = true) : DialogWrapper(null, null, true, IdeModalityType.IDE, createSouth) {
   var content: JComponent? = null
   var southPanel: JComponent = JPanel()
+  private var inited = false
   var parentDialog: MultiplePageDialog? = null
     set(value) {
+      if (field == value) return
       field = value
-      init()
+
+      if(!inited) {
+        init()
+        inited = true
+      }
     }
+
+  init {
+    Disposer.register(disposable) {
+      parentDialog = null
+    }
+  }
+
+  override fun getStyle(): DialogStyle {
+    return DialogStyle.COMPACT
+  }
 
   override fun getRootPane(): JRootPane {
     return parentDialog?.rootPane ?: super.getRootPane()
@@ -92,7 +127,7 @@ abstract class PageProvider() : DialogWrapper(null) {
     parentDialog?.performOKAction()
   }
 
-  fun doAction(exitCode: Int){
+  fun doAction(exitCode: Int) {
     close(exitCode)
   }
 
@@ -102,7 +137,7 @@ abstract class PageProvider() : DialogWrapper(null) {
   }
 
   override fun show() {
-    if(parentDialog != null) return
+    if (parentDialog != null) return
     init()
     super.show()
   }
@@ -120,6 +155,22 @@ abstract class PageProvider() : DialogWrapper(null) {
   }
 
   open fun createCustomSouthPanel(): JComponent {
-   return super.createSouthPanel()
+    return super.createSouthPanel()
+  }
+
+  protected fun nextStep(page: PageProvider, code: Int? = null) {
+    parentDialog?.showPage(page) ?: run {
+      page.isModal = false
+      page.isResizable = false
+      page.show()
+
+      SwingUtilities.invokeLater {
+        page.pack()
+      }
+    }
+
+    code?.let {
+      doAction(it)
+    }
   }
 }

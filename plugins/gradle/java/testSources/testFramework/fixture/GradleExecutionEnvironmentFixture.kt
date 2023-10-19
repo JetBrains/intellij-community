@@ -44,6 +44,11 @@ class GradleExecutionEnvironmentFixture(
 
   private fun installExecutionListener() {
     val executionListener = object : ExecutionListener {
+
+      override fun processStartScheduled(executorId: String, env: ExecutionEnvironment) {
+        executionEnvironment = null
+      }
+
       override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
         executionEnvironment = env
       }
@@ -60,11 +65,10 @@ class GradleExecutionEnvironmentFixture(
   }
 
   fun <R> assertExecutionEnvironmentIsReady(action: () -> R): R {
-    executionEnvironment = null
-    val result = executionLeakTracker.withAllowedOperation(1, action)
-    Assertions.assertNotNull(executionEnvironment) {
-      "Gradle execution isn't finished."
-    }
-    return result
+    return executionLeakTracker.withAllowedOperation(1, action)
+  }
+
+  suspend fun <R> assertExecutionEnvironmentIsReadyAsync(action: suspend () -> R): R {
+    return executionLeakTracker.withAllowedOperationAsync(1, action)
   }
 }

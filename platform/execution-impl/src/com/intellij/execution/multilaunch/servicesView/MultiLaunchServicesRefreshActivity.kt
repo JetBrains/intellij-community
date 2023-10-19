@@ -3,22 +3,30 @@ package com.intellij.execution.multilaunch.servicesView
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunManagerListener
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.multilaunch.servicesView.MultiLaunchServicesRefresher
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
 import com.intellij.execution.multilaunch.execution.ExecutionEngine
 import com.intellij.execution.multilaunch.execution.ExecutionModel
 import com.intellij.execution.multilaunch.execution.MultiLaunchExecutionModel
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.CoroutineScope
 
-class MultiLaunchServicesRefreshActivity(private val scope: CoroutineScope) : ProjectActivity {
+class MultiLaunchServicesRefreshActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val executionModel = ExecutionModel.getInstance(project)
     val configurations = RunManager.getInstance(project).allConfigurationsList.filterIsInstance<MultiLaunchConfiguration>()
     ExecutionEngine.getInstance(project).initialize()
     executionModel.configurations.putAll(configurations.associateWith { MultiLaunchExecutionModel(it) })
-    project.messageBus.connect(scope).subscribe(RunManagerListener.TOPIC, MultiLaunchConfigurationsListener(project))
+    project.messageBus.connect(MyService.getInstance(project).scope).subscribe(RunManagerListener.TOPIC,MultiLaunchConfigurationsListener(project))
+  }
+
+  @Service(Service.Level.PROJECT)
+  class MyService(val scope: CoroutineScope) {
+    companion object {
+      fun getInstance(project: Project): MyService = project.service()
+    }
   }
 
   inner class MultiLaunchConfigurationsListener(project: Project) : RunManagerListener {

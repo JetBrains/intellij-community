@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.util.AbstractFileGistService
 import org.jetbrains.kotlin.idea.scratch.ScratchFileOptions
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class ScratchFileOptionsFile: AbstractFileGistService<ScratchFileOptions>(
     name = "kotlin-scratch-file-options",
     version = 1,

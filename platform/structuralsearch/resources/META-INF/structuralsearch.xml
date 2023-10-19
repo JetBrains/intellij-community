@@ -30,7 +30,7 @@
     <documentationProvider implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateDocumentationProvider"/>
     <daemon.highlightInfoFilter implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchHighlightInfoFilter"/>
     <inspectionProfileActionProvider implementation="com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider"/>
-    <emptyInspectionTreeActionProvider implementation="com.intellij.structuralsearch.inspection.InspectionTreeAdvertiser"/>
+    <inspectionTreeAdvertiser implementation="com.intellij.structuralsearch.inspection.StructuralSearchAdvertiser"/>
 
     <structuralsearch.filterProvider implementation="com.intellij.structuralsearch.plugin.ui.filters.DefaultFilterProvider"/>
     <notificationGroup id="Structural Search" displayType="STICKY_BALLOON" toolWindowId="Find"

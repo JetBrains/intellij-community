@@ -509,11 +509,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   void processBounce(Content content, final boolean activate) {
-    final GridImpl grid = getGridFor(content, false);
-    if (grid == null) return;
-
-    final TabInfo tab = myTabs.findInfo(grid);
+    final TabInfo tab = findTabInfoFor(content);
     if (tab == null) return;
+    final GridImpl grid = getGridFor(tab);
 
     if (getSelectedGrid() != grid) {
       tab.setAlertIcon(content.getAlertIcon());
@@ -1274,12 +1272,16 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   @Override
   public @Nullable Grid findGridFor(@NotNull Content content) {
+    TabInfo tabInfo = findTabInfoFor(content);
+    return tabInfo != null ? getGridFor(tabInfo) : null;
+  }
+
+  private @Nullable TabInfo findTabInfoFor(@NotNull Content content) {
     TabImpl tab = (TabImpl)getStateFor(content).getTab();
     for (TabInfo each : myTabs.getTabs()) {
       TabImpl t = getTabFor(each);
-      if (t != null && t.equals(tab)) return getGridFor(each);
+      if (t != null && t.equals(tab)) return each;
     }
-
     return null;
   }
 
@@ -1841,17 +1843,12 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   @Override
   public ActionCallback select(final @NotNull Content content, final boolean requestFocus) {
-    final GridImpl grid = (GridImpl)findGridFor(content);
-    if (grid == null) return ActionCallback.DONE;
-
-
-    final TabInfo info = myTabs.findInfo(grid);
+    final TabInfo info = findTabInfoFor(content);
     if (info == null) return ActionCallback.DONE;
-
+    final GridImpl grid = getGridFor(info);
 
     final ActionCallback result = new ActionCallback();
     myTabs.select(info, false).doWhenDone(() -> grid.select(content, requestFocus).notifyWhenDone(result));
-
 
     return result;
   }

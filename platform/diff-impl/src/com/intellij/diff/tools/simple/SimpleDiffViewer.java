@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -54,6 +55,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   @NotNull protected final StatusPanel myStatusPanel;
 
   @NotNull protected final SimpleDiffModel myModel = new SimpleDiffModel(this);
+  @NotNull private final AlignedDiffModel myAlignedDiffModel;
 
   @NotNull private final MyFoldingModel myFoldingModel;
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
@@ -65,6 +67,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     super(context, (ContentDiffRequest)request);
 
     mySyncScrollable = new MySyncScrollable();
+    myAlignedDiffModel = new SimpleAlignedDiffModel(this);
+
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
     myFoldingModel = new MyFoldingModel(getProject(), getEditors(), myContentPanel, this);
@@ -84,6 +88,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter());
     myModifierProvider.init();
+  }
+
+  @Override
+  protected void onDispose() {
+    Disposer.dispose(myAlignedDiffModel);
+    super.onDispose();
   }
 
   @NotNull
@@ -166,10 +176,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
 
   @ApiStatus.Internal
   public boolean needAlignChanges() {
-    Boolean forcedValue = myRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF);
-    if (forcedValue != null) return Boolean.TRUE.equals(forcedValue);
-
-    return getTextSettings().isEnableAligningChangesMode();
+    return myAlignedDiffModel.needAlignChanges();
   }
 
   @NotNull
@@ -246,6 +253,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
       }
 
       myModel.setChanges(ContainerUtil.notNullize(changes), isContentsEqual);
+      myAlignedDiffModel.realignChanges();
 
       myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
 
@@ -267,6 +275,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
 
   protected void clearDiffPresentation() {
     myModel.clear();
+    myAlignedDiffModel.clear();
 
     myPanel.resetNotifications();
     myStatusPanel.setBusy(false);

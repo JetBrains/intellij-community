@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="Gradle" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:8.2">
+    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:8.4">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/8.2/gradle-api-8.2.jar">
-          <sha256sum>e5ca97fe9991ad7736b9c2c2d44cff72a6fb44e6815a736d9e372bc850c53950</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/8.4/gradle-api-8.4.jar">
+          <sha256sum>cde28cac34dad830d775dde52778dc848fd426dc46b0a584207a0117df37246b</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api-impldep/8.2/gradle-api-impldep-8.2.jar">
-          <sha256sum>029d9d5b09ece9e5c345fbba0a8643505912ebde3e1d3933d00ea3313f817f6e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api-impldep/8.4/gradle-api-impldep-8.4.jar">
+          <sha256sum>ba09f2bce0594ce8a85ad4b763d64b01072ba7df6bc94aa3ca36ce505a2245c9</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-wrapper/8.2/gradle-wrapper-8.2.jar">
-          <sha256sum>a8451eeda314d0568b5340498b36edf147a8f0d692c5ff58082d477abe9146e4</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-wrapper/8.4/gradle-wrapper-8.4.jar">
+          <sha256sum>0336f591bc0ec9aa0c9988929b93ecc916b3c1d52aed202c7381db144aa0ef15</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-launcher/8.2/gradle-launcher-8.2.jar">
-          <sha256sum>8ffd8aa02fd30adf36a6d5fa0b00a3c67e9e26577cb81ea3915853a5bf970ac7</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-launcher/8.4/gradle-launcher-8.4.jar">
+          <sha256sum>8ab8ed49bdd1151ad4bd26a532a3e9a6d3fb373c616b371ec1fcca15423db941</sha256sum>
         </artifact>
       </verification>
     </properties>
@@ -20,10 +20,10 @@
       <root url="file://$PROJECT_DIR$/plugins/gradle/anno" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/8.2/gradle-api-8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api-impldep/8.2/gradle-api-impldep-8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-wrapper/8.2/gradle-wrapper-8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-launcher/8.2/gradle-launcher-8.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/8.4/gradle-api-8.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api-impldep/8.4/gradle-api-impldep-8.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-wrapper/8.4/gradle-wrapper-8.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-launcher/8.4/gradle-launcher-8.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

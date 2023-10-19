@@ -5,12 +5,14 @@ package com.intellij.ui.icons
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.ui.IconManager
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.SvgCacheClassifier
 import com.intellij.ui.svg.colorPatcherDigestShim
 import com.intellij.ui.svg.loadAndCacheIfApplicable
 import com.intellij.util.SVGLoader
+import kotlinx.serialization.Serializable
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Image
@@ -31,11 +33,37 @@ fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, fl
                          toolTip = toolTip)
 }
 
+@Serializable
+private data class RasterizedImageDataLoaderDescriptor(
+  @JvmField val path: String,
+  @JvmField val pluginId: String,
+  @JvmField val moduleId: String?,
+  @JvmField val cacheKey: Int,
+  @JvmField val flags: Int,
+) : ImageDataLoaderDescriptor {
+  override fun createIcon(): ImageDataLoader? {
+    val classLoader = IconManager.getInstance().getClassLoader(pluginId, moduleId) ?: return null
+    return RasterizedImageDataLoader(path = path, classLoaderRef = WeakReference(classLoader), cacheKey = cacheKey, flags = flags)
+  }
+}
+
 private class RasterizedImageDataLoader(override val path: String,
                                         private val classLoaderRef: WeakReference<ClassLoader>,
                                         private val cacheKey: Int,
                                         override val flags: Int) : ImageDataLoader {
   override fun getCoords(): Pair<String, ClassLoader>? = classLoaderRef.get()?.let { path to it }
+
+  override fun serializeToByteArray(): ImageDataLoaderDescriptor {
+    val classLoader = classLoaderRef.get()!!
+    val pluginInfo = IconManager.getInstance().getPluginAndModuleId(classLoader)
+    return RasterizedImageDataLoaderDescriptor(
+      path = path,
+      pluginId = pluginInfo.first,
+      moduleId = pluginInfo.second,
+      flags = flags,
+      cacheKey = cacheKey,
+    )
+  }
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
     val classLoader = classLoaderRef.get() ?: return null
@@ -162,7 +190,7 @@ private fun loadRasterized(path: String,
   val effectivePath: String
   val nonSvgScale: Float
   if (parameters.isStroke && (imageFlags and ImageDescriptor.HAS_STROKE) == ImageDescriptor.HAS_STROKE) {
-    effectivePath = "${name}_scale.$ext"
+    effectivePath = "${name}_stroke.$ext"
     nonSvgScale = 1f
   }
   else if (isRetina && parameters.isDark && (imageFlags and ImageDescriptor.HAS_DARK_2x) == ImageDescriptor.HAS_DARK_2x) {

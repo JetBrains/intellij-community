@@ -17,15 +17,12 @@ class PluginAdvertiserUsageCollector : CounterUsagesCollector() {
 
 private const val FUS_GROUP_ID = "plugins.advertiser"
 
-private val GROUP = EventLogGroup(
-  FUS_GROUP_ID,
-  6,
-)
+private val GROUP = EventLogGroup(FUS_GROUP_ID, 7)
 
 private val SOURCE_FIELD = EventFields.Enum(
   "source",
   FUSEventSource::class.java,
-) { it.name.toLowerCase(ROOT) }
+) { it.name.lowercase(ROOT) }
 
 private val CONFIGURE_PLUGINS_EVENT = GROUP.registerEvent(
   "configure.plugins",
@@ -68,6 +65,7 @@ private val OPEN_DOWNLOAD_PAGE_EVENT = GROUP.registerEvent(
 private val LEARN_MORE_EVENT = GROUP.registerEvent(
   "learn.more",
   SOURCE_FIELD,
+  PLUGIN_FIELD
 )
 
 private val IGNORE_EXTENSIONS_EVENT = GROUP.registerEvent(
@@ -83,7 +81,9 @@ private val IGNORE_UNKNOWN_FEATURES_EVENT = GROUP.registerEvent(
 enum class FUSEventSource {
   EDITOR,
   NOTIFICATION,
-  SEARCH;
+  SEARCH,
+  ACTIONS,
+  SETTINGS;
 
   fun doIgnoreUltimateAndLog(project: Project? = null) {
     isIgnoreIdeSuggestion = true
@@ -114,7 +114,13 @@ enum class FUSEventSource {
   @JvmOverloads
   fun learnMoreAndLog(project: Project? = null) {
     BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://www.jetbrains.com/products.html#type=ide"))
-    LEARN_MORE_EVENT.log(project, this)
+    LEARN_MORE_EVENT.log(project, this, null)
+  }
+
+  @JvmOverloads
+  fun learnMoreAndLog(project: Project? = null, url: String, pluginId: PluginId?) {
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
+    LEARN_MORE_EVENT.log(project, this, pluginId?.idString)
   }
 
   @JvmOverloads

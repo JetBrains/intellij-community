@@ -36,6 +36,6 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspectionTest extends 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_10;
+    return JAVA_9;
   }
 }

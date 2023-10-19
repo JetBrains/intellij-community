@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.missingApi.update
 
 import com.intellij.openapi.application.EDT
@@ -7,11 +7,11 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import kotlinx.coroutines.*
 import org.jetbrains.idea.devkit.DevKitBundle

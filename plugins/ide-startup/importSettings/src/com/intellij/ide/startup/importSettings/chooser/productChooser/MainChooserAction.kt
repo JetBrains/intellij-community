@@ -25,9 +25,10 @@ open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<
   }
 
   override fun update(e: AnActionEvent) {
+    super.update(e)
     e.presentation.isVisible = false
-    val products = provider.main ?: return
 
+    val products = provider.main ?: return
     if(products.isEmpty()) return
 
     if(products.size == 1) {

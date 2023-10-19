@@ -5,6 +5,8 @@ import com.intellij.util.messages.Topic;
 
 //used in Rider
 public interface SpellCheckerEngineListener {
+
+  @Topic.ProjectLevel
   Topic<SpellCheckerEngineListener> TOPIC = new Topic<>(SpellCheckerEngineListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   void onSpellerInitialized();

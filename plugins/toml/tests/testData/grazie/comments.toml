@@ -1,0 +1,6 @@
+# It is <warning descr="EN_A_VS_AN">an</warning> friend of human
+one = 1
+
+# It
+# <warning descr="IT_VBZ">are</warning> bad price
+two = 2

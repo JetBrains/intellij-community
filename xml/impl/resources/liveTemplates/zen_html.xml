@@ -364,8 +364,6 @@
   <template description="&lt;style&gt;...&lt;/style&gt;" name="style" toReformat="true" toShortenFQNames="true" value="&lt;style&gt;$END$&lt;/style&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
-      <option name="JSX_HTML" value="true"/>
-      <option name="TSX_HTML" value="true"/>
     </context>
   </template>
   <template description="&lt;script&gt;...&lt;/script&gt;" name="script" toReformat="true" toShortenFQNames="true" value="&lt;script !src=&quot;&quot;&gt;$END$&lt;/script&gt;">

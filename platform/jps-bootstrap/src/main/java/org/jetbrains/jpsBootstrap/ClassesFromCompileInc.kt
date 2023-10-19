@@ -22,13 +22,24 @@ import java.util.concurrent.*
 
 object ClassesFromCompileInc {
   const val MANIFEST_JSON_URL_ENV_NAME = "JPS_BOOTSTRAP_MANIFEST_JSON_URL"
+  const val MANIFEST_JSON_HTTP_USERNAME_ENV_NAME = "JPS_BOOTSTRAP_MANIFEST_JSON_HTTP_USERNAME"
+  const val MANIFEST_JSON_HTTP_PASSWORD_ENV_NAME = "JPS_BOOTSTRAP_MANIFEST_JSON_HTTP_PASSWORD"
 
   @Throws(IOException::class, InterruptedException::class)
   fun downloadProjectClasses(project: JpsProject, communityRoot: BuildDependenciesCommunityRoot, modules: Collection<JpsModule?>?) {
     val manifestUrl = System.getenv(MANIFEST_JSON_URL_ENV_NAME)
-    check(!(manifestUrl == null || manifestUrl.isBlank())) { "Env variable '$MANIFEST_JSON_URL_ENV_NAME' is missing or empty" }
-    verbose("Got manifest json url '$manifestUrl' from $$MANIFEST_JSON_URL_ENV_NAME")
-    val manifest = downloadFileToCacheLocation(communityRoot, URI.create(manifestUrl))
+    check(!manifestUrl.isNullOrBlank()) { "Env variable '$MANIFEST_JSON_URL_ENV_NAME' is missing or empty" }
+    verbose("Got manifest json url '$manifestUrl' from $MANIFEST_JSON_URL_ENV_NAME")
+    val manifestHttpUsername = System.getenv(MANIFEST_JSON_HTTP_USERNAME_ENV_NAME)
+    val manifestHttpPassword = System.getenv(MANIFEST_JSON_HTTP_PASSWORD_ENV_NAME)
+    check(manifestHttpUsername.isNullOrBlank() == manifestHttpPassword.isNullOrBlank()) { "Both env. variables '$MANIFEST_JSON_HTTP_USERNAME_ENV_NAME' and '$MANIFEST_JSON_HTTP_PASSWORD_ENV_NAME' must be either set or not" }
+
+    val manifest = if (manifestHttpUsername.isNullOrBlank()) {
+      downloadFileToCacheLocation(communityRoot, URI.create(manifestUrl))
+    }
+    else {
+      downloadFileToCacheLocation(communityRoot, URI.create(manifestUrl), manifestHttpUsername, manifestHttpPassword)
+    }
     val productionModuleOutputs = downloadProductionPartsFromMetadataJson(manifest, communityRoot, modules)
     assignModuleOutputs(project, productionModuleOutputs)
   }

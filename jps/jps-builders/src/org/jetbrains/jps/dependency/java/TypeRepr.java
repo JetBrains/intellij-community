@@ -116,7 +116,11 @@ public abstract class TypeRepr {
       return "[" + myElementType.getDescriptor();
     }
 
-    public TypeRepr getDeepElementType() {
+    public @NotNull TypeRepr getElementType() {
+      return myElementType;
+    }
+
+    public @NotNull TypeRepr getDeepElementType() {
       TypeRepr current = this;
       while (current instanceof ArrayType) {
         current = ((ArrayType)current).myElementType;

@@ -27,16 +27,10 @@ import com.intellij.openapi.ui.MessageConstants;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.*;
-import com.intellij.rt.coverage.data.ClassData;
-import com.intellij.rt.coverage.data.LineCoverage;
-import com.intellij.rt.coverage.data.LineData;
-import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,22 +49,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   private CoverageSuitesBundle myCurrentSuitesBundle;
 
   private boolean myIsProjectClosing = false;
-  private boolean mySubCoverageIsActive;
-
-  private Set<LocalFileSystem.WatchRequest> myWatchRequests;
-  private List<String> myCurrentSuiteRoots;
-  private final VirtualFileContentsChangedAdapter myContentListener = new VirtualFileContentsChangedAdapter() {
-    @Override
-    protected void onFileChange(@NotNull VirtualFile fileOrDirectory) {
-      if (myCurrentSuiteRoots != null && VfsUtilCore.isUnder(fileOrDirectory.getPath(), myCurrentSuiteRoots)) {
-        myCurrentSuitesBundle.restoreCoverageData();
-        updateCoverageData(myCurrentSuitesBundle);
-      }
-    }
-
-    @Override
-    protected void onBeforeFileChange(@NotNull VirtualFile fileOrDirectory) { }
-  };
 
 
 
@@ -213,30 +191,51 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   // ==== Suites storage ====
 
+  // ==== Sub coverage   ====
+
+  @Override
+  public boolean isSubCoverageActive() {
+    return SubCoverageManager.getInstance(myProject).isSubCoverageActive();
+  }
+
+  @Override
+  public void selectSubCoverage(@NotNull CoverageSuitesBundle suite, List<String> testNames) {
+    SubCoverageManager.getInstance(myProject).selectSubCoverage(suite, testNames);
+    reloadSuite(suite);
+  }
+
+  @Override
+  public void restoreMergedCoverage(@NotNull CoverageSuitesBundle suite) {
+    SubCoverageManager.getInstance(myProject).restoreMergedCoverage(suite);
+    reloadSuite(suite);
+  }
+
+  private void reloadSuite(@NotNull CoverageSuitesBundle suite) {
+    fireBeforeSuiteChosen();
+    CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
+    myCurrentSuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
+    renewCoverageData(suite);
+  }
+
+  // ==== Sub coverage   ====
+
   @Override
   public void chooseSuitesBundle(final CoverageSuitesBundle suite) {
     if (myCurrentSuitesBundle == suite && suite == null) {
       return;
     }
 
-    if (myWatchRequests != null) {
-      LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
-      VirtualFileManager.getInstance().removeVirtualFileListener(myContentListener);
-
-      myWatchRequests = null;
-      myCurrentSuiteRoots = null;
-    }
-
+    ExternalCoverageWatchManager.getInstance(myProject).clearWatches();
     updateCoverageData(suite);
   }
 
-  private void updateCoverageData(CoverageSuitesBundle suite) {
+  void updateCoverageData(CoverageSuitesBundle suite) {
     LOG.assertTrue(!myProject.isDefault());
 
     fireBeforeSuiteChosen();
 
-    mySubCoverageIsActive = false;
     if (myCurrentSuitesBundle != null) {
+      SubCoverageManager.getInstance(myProject).restoreMergedCoverage(myCurrentSuitesBundle);
       myCurrentSuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
     }
 
@@ -271,7 +270,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         final boolean canMergeSuites = myCurrentSuitesBundle.getCoverageEngine() == suite.getCoverageEngine();
         final boolean shouldAsk = replaceOption == CoverageOptionsProvider.ASK_ON_NEW_SUITE ||
                                   replaceOption == CoverageOptionsProvider.ADD_SUITE && !canMergeSuites;
-        coverageGathered(suite, shouldAsk ? askMergeOption(suite, canMergeSuites) : replaceOption);
+        int actualOption = shouldAsk ? askMergeOption(suite, canMergeSuites) : replaceOption;
+        switch (actualOption) {
+          case CoverageOptionsProvider.REPLACE_SUITE -> chooseSuitesBundle(new CoverageSuitesBundle(suite));
+          case CoverageOptionsProvider.ADD_SUITE ->
+            chooseSuitesBundle(new CoverageSuitesBundle(ArrayUtil.append(myCurrentSuitesBundle.getSuites(), suite)));
+        }
       }
       else {
         chooseSuitesBundle(new CoverageSuitesBundle(suite));
@@ -307,37 +311,19 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     String message = CoverageBundle.message("display.coverage.prompt", suite.getPresentableName());
     if (canMergeSuites) {
       int result = MessageDialogBuilder.yesNoCancel(title, message)
-        .yesText(getSuiteReplaceOption(CoverageOptionsProvider.REPLACE_SUITE))
-        .noText(getSuiteReplaceOption(CoverageOptionsProvider.ADD_SUITE))
-        .cancelText(getSuiteReplaceOption(CoverageOptionsProvider.IGNORE_SUITE))
+        .yesText(CoverageBundle.message("coverage.replace.active.suites"))
+        .noText(CoverageBundle.message("coverage.add.to.active.suites"))
+        .cancelText(CoverageBundle.message("coverage.do.not.apply.collected.coverage"))
         .doNotAsk(doNotAskOption)
         .show(suite.getProject());
       return mapCode.apply(result);
     }
     else {
       return MessageDialogBuilder.yesNo(title, message)
-               .yesText(getSuiteReplaceOption(CoverageOptionsProvider.REPLACE_SUITE))
-               .noText(getSuiteReplaceOption(CoverageOptionsProvider.IGNORE_SUITE))
+               .yesText(CoverageBundle.message("coverage.replace.active.suites"))
+               .noText(CoverageBundle.message("coverage.do.not.apply.collected.coverage"))
                .doNotAsk(doNotAskOption)
                .ask(suite.getProject()) ? CoverageOptionsProvider.REPLACE_SUITE : CoverageOptionsProvider.IGNORE_SUITE;
-    }
-  }
-
-  @Nls
-  private static String getSuiteReplaceOption(int optionCode) {
-    return switch (optionCode) {
-      case CoverageOptionsProvider.REPLACE_SUITE -> CoverageBundle.message("coverage.replace.active.suites");
-      case CoverageOptionsProvider.ADD_SUITE -> CoverageBundle.message("coverage.add.to.active.suites");
-      case CoverageOptionsProvider.IGNORE_SUITE -> CoverageBundle.message("coverage.do.not.apply.collected.coverage");
-      default -> throw new IllegalStateException("Unexpected value: " + optionCode);
-    };
-  }
-
-  private void coverageGathered(@NotNull final CoverageSuite suite, int replaceOption) {
-    switch (replaceOption) {
-      case CoverageOptionsProvider.REPLACE_SUITE -> chooseSuitesBundle(new CoverageSuitesBundle(suite));
-      case CoverageOptionsProvider.ADD_SUITE ->
-        chooseSuitesBundle(new CoverageSuitesBundle(ArrayUtil.append(myCurrentSuitesBundle.getSuites(), suite)));
     }
   }
 
@@ -370,17 +356,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     }
   }
 
-  /**
-   * Called from EDT, on external coverage suite choosing
-   */
-  public void addRootsToWatch(List<? extends CoverageSuite> suites) {
-    myCurrentSuiteRoots = ContainerUtil.map(suites, suite -> suite.getCoverageDataFileName());
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-    myCurrentSuiteRoots.forEach(path -> fileSystem.refreshAndFindFileByPath(path));
-    myWatchRequests = fileSystem.addRootsToWatch(myCurrentSuiteRoots, true);
-    VirtualFileManager.getInstance().addVirtualFileListener(myContentListener);
-  }
-
   @Override
   public void dispose() { }
 
@@ -408,63 +383,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       if (myIsProjectClosing) return null;
     }
     return ApplicationManager.getApplication().runReadAction(computation);
-  }
-
-  @Override
-  public void selectSubCoverage(@NotNull final CoverageSuitesBundle suite, final List<String> testNames) {
-    suite.restoreCoverageData();
-    final ProjectData data = suite.getCoverageData();
-    if (data == null) return;
-    mySubCoverageIsActive = true;
-    final Map<String, Set<Integer>> executionTrace = new HashMap<>();
-    for (CoverageSuite coverageSuite : suite.getSuites()) {
-      suite.getCoverageEngine().collectTestLines(testNames, coverageSuite, executionTrace);
-    }
-    final ProjectData projectData = new ProjectData();
-    for (String className : executionTrace.keySet()) {
-      ClassData loadedClassData = projectData.getClassData(className);
-      if (loadedClassData == null) {
-        loadedClassData = projectData.getOrCreateClassData(className);
-      }
-      final Set<Integer> lineNumbers = executionTrace.get(className);
-      final ClassData oldData = data.getClassData(className);
-      LOG.assertTrue(oldData != null, "missed className: \"" + className + "\"");
-      final Object[] oldLines = oldData.getLines();
-      LOG.assertTrue(oldLines != null);
-      int maxNumber = oldLines.length;
-      for (Integer lineNumber : lineNumbers) {
-        if (lineNumber >= maxNumber) {
-          maxNumber = lineNumber + 1;
-        }
-      }
-      final LineData[] lines = new LineData[maxNumber];
-      for (Integer line : lineNumbers) {
-        final int lineIdx = line.intValue() - 1;
-        String methodSig = null;
-        if (lineIdx < oldData.getLines().length) {
-          final LineData oldLineData = oldData.getLineData(lineIdx);
-          if (oldLineData != null) {
-            methodSig = oldLineData.getMethodSignature();
-          }
-        }
-        final LineData lineData = new LineData(lineIdx, methodSig);
-        if (methodSig != null) {
-          loadedClassData.registerMethodSignature(lineData);
-        }
-        lineData.setStatus(LineCoverage.FULL);
-        lines[lineIdx] = lineData;
-      }
-      loadedClassData.setLines(lines);
-    }
-    suite.setCoverageData(projectData);
-    renewCoverageData(suite);
-  }
-
-  @Override
-  public void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite) {
-    mySubCoverageIsActive = false;
-    suite.restoreCoverageData();
-    renewCoverageData(suite);
   }
 
   @Override
@@ -505,11 +423,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   @Override
   public void coverageDataCalculated() {
     fireCoverageDataCalculated();
-  }
-
-  @Override
-  public boolean isSubCoverageActive() {
-    return mySubCoverageIsActive;
   }
 
   public static class CoverageProjectManagerListener implements ProjectCloseListener {

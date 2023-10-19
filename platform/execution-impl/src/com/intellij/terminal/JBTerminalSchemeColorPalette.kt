@@ -50,7 +50,7 @@ internal class JBTerminalSchemeColorPalette(private val colorsScheme: EditorColo
         if (LOG.isDebugEnabled()) {
           LOG.debug("Default foreground color will be used for ANSI color index #$colorIndex")
         }
-        AwtTransformers.fromAwtColor(colorsScheme.defaultForeground)!!
+        defaultForeground
       }
     }
   }
@@ -64,7 +64,7 @@ internal class JBTerminalSchemeColorPalette(private val colorsScheme: EditorColo
         if (LOG.isDebugEnabled()) {
           LOG.debug("Default background color will be used for ANSI color index #$colorIndex")
         }
-        AwtTransformers.fromAwtColor(colorsScheme.defaultBackground)!!
+        defaultBackground
       }
     }
   }

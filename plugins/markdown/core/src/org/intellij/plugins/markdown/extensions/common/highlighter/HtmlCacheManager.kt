@@ -6,7 +6,6 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.util.application
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
@@ -72,11 +71,6 @@ internal class HtmlCacheManager {
   companion object {
     private const val expiration = 5 * 60 * 1000
 
-    fun getInstance(project: Project? = null): HtmlCacheManager {
-      return when (project) {
-        null -> service()
-        else -> project.service()
-      }
-    }
+    fun getInstance(): HtmlCacheManager = service()
   }
 }

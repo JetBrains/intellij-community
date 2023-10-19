@@ -33,7 +33,7 @@ public class PluginUpdatesService {
   private static boolean myReset;
 
   private Consumer<? super Integer> myCountCallback;
-  private Consumer<? super Collection<IdeaPluginDescriptor>> myUpdateCallback;
+  private List<Consumer<? super Collection<IdeaPluginDescriptor>>> myUpdateCallbacks;
 
   static {
     PluginStateManager.addStateListener(new PluginStateListener() {
@@ -44,7 +44,7 @@ public class PluginUpdatesService {
 
       @Override
       public void uninstall(@NotNull IdeaPluginDescriptor descriptor) {
-        install(descriptor);
+        finishUpdate(descriptor);
       }
     });
   }
@@ -68,7 +68,7 @@ public class PluginUpdatesService {
 
   public static @NotNull PluginUpdatesService connectWithUpdates(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
     PluginUpdatesService service = new PluginUpdatesService();
-    service.myUpdateCallback = callback;
+    service.myUpdateCallbacks = Collections.singletonList(callback);
 
     synchronized (ourLock) {
       SERVICES.add(service);
@@ -83,7 +83,10 @@ public class PluginUpdatesService {
 
   public void calculateUpdates(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
     synchronized (ourLock) {
-      myUpdateCallback = callback;
+      if (myUpdateCallbacks == null) {
+        myUpdateCallbacks = new ArrayList<>();
+      }
+      myUpdateCallbacks.add(callback);
 
       if (myPrepared) {
         callback.accept(myCache);
@@ -237,8 +240,10 @@ public class PluginUpdatesService {
   private void runAllCallbacks(@Nullable Integer countValue) {
     runCountCallbacks(countValue);
 
-    if (myUpdateCallback != null) {
-      myUpdateCallback.accept(countValue == null ? null : myCache);
+    if (myUpdateCallbacks != null) {
+      for (var callback : myUpdateCallbacks) {
+        callback.accept(countValue == null ? null : myCache);
+      }
     }
   }
 

@@ -14,6 +14,11 @@ import com.intellij.refactoring.move.MoveHandler
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.jsonUtils.getString
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveMembersRefactoringProcessor
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
@@ -47,10 +52,12 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
         val project = mainFile.project
         val source = if (mainFile is KtFile) buildSource(mainFile, config) else null
         val target = buildTarget(project, rootDir, config)
-        if (source is K2MoveSource.FileSource && target is K2MoveTarget.SourceDirectory) {
-            K2MoveFilesOrDirectoriesRefactoringProcessor(K2MoveDescriptor.Files(source, target)).run()
-        } else if (source is K2MoveSource.ElementSource && target is K2MoveTarget.File) {
-            K2MoveMembersRefactoringProcessor(K2MoveDescriptor.Members(source, target)).run()
+        if (source is K2MoveSourceDescriptor.FileSource && target is K2MoveTargetDescriptor.SourceDirectory) {
+            val descriptor = K2MoveDescriptor.Files(source, target, true, true, true)
+            K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor).run()
+        } else if (source is K2MoveSourceDescriptor.ElementSource && target is K2MoveTargetDescriptor.File) {
+            val descriptor = K2MoveDescriptor.Members(source, target, true, true, true)
+            K2MoveMembersRefactoringProcessor(descriptor).run()
         } else if (target is PsiElement) {
             MoveHandler.doMove(
                 project,
@@ -62,11 +69,11 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
         }
     }
 
-    private fun buildSource(mainFile: KtFile, config: JsonObject): K2MoveSource<*> {
+    private fun buildSource(mainFile: KtFile, config: JsonObject): K2MoveSourceDescriptor<*> {
         val type = config.getString("type")
         return when (type) {
-            "MOVE_FILES" -> K2MoveSource.FileSource(mainFile)
-            "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS" -> K2MoveSource.FileSource(mainFile)
+            "MOVE_FILES" -> K2MoveSourceDescriptor.FileSource(mainFile)
+            "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS" -> K2MoveSourceDescriptor.FileSource(mainFile)
             else -> error("Unsupported type")
         }
     }
@@ -79,17 +86,17 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
             targetFile != null && targetDir != null -> error("Target can't both be file and directory")
             targetFile != null -> {
                 val file = PsiManager.getInstance(project).findFile(rootDir.findFileByRelativePath(targetFile)!!)!!
-                if (file is KtFile) K2MoveTarget.File(file) else targetFile
+                if (file is KtFile) K2MoveTargetDescriptor.File(file) else targetFile
             }
             targetDir != null -> {
                 runWriteAction { VfsUtil.createDirectoryIfMissing(rootDir, targetDir) }
                 if (targetPackage != null) {
                     val pkg = JavaPsiFacade.getInstance(project).findPackage(targetPackage)!!
                     val directory = JavaPsiFacade.getInstance(project).findPackage(targetPackage)!!.directories.first()
-                    K2MoveTarget.SourceDirectory(pkg, directory)
+                    K2MoveTargetDescriptor.SourceDirectory(pkg, directory)
                 } else {
                     val directory = rootDir.findFileByRelativePath(targetDir)!!.toPsiDirectory(project)!!
-                    K2MoveTarget.SourceDirectory(directory)
+                    K2MoveTargetDescriptor.SourceDirectory(directory)
                 }
             }
             else -> error("No target specified")

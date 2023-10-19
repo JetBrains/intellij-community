@@ -16,7 +16,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
     return (ApplicationInfoEx)getInstance();
   }
 
-  public abstract Calendar getMajorReleaseBuildDate();
+  public abstract @NotNull Calendar getMajorReleaseBuildDate();
 
   /**
    * Returns a path to an SVG icon of the product.
@@ -100,9 +100,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract String getChannelsListUrl();
+  public abstract String getChannelListUrl();
 
-  public abstract @NotNull String getPluginsDownloadUrl();
+  public abstract @NotNull String getPluginDownloadUrl();
 
   /**
    * @deprecated use {@link com.intellij.ide.plugins.RepositoryHelper#CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY} system property to pass
@@ -166,7 +166,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract @NotNull BuildNumber getApiVersionAsNumber();
 
-  public abstract @NotNull List<PluginId> getEssentialPluginsIds();
+  public abstract @NotNull List<PluginId> getEssentialPluginIds();
 
   public abstract @Nullable String getDefaultLightLaf();
 

@@ -23,7 +23,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
@@ -317,9 +316,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       Disposer.dispose(scanningLifetime);
     }
 
-    boolean skipInitialRefresh = skipInitialRefresh();
-    boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    if (myOnProjectOpen && !isUnitTestMode && !skipInitialRefresh) {
+    if (myOnProjectOpen) {
       // the full VFS refresh makes sense only after it's loaded, i.e., after scanning files to index is finished
       InitialRefreshKt.scheduleInitialVfsRefresh(myProject, LOG);
     }
@@ -491,24 +488,28 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                                                    rootAndFiles.getFirst(), scanningRequest);
             var rootIterator = new SingleProviderIterator(project, indicator, provider, finder,
                                                           scanningStatistics, perProviderSink);
+            if (!rootIterator.mayBeUsed()) {
+              LOG.warn("Iterator based on " + provider + " can't be used.");
+              continue;
+            }
             rootAndFiles.getSecond().forEach(it -> rootIterator.processFile(it));
           }
           scanningStatistics.tryFinishFilesChecking();
 
-          scanningRequest.markSuccessful();
           perProviderSink.commit();
         }
         catch (ProcessCanceledException pce) {
+          scanningRequest.markUnsuccessful();
           throw pce;
         }
         catch (Exception e) {
+          scanningRequest.markUnsuccessful();
           // CollectingIterator should skip failing files by itself. But if provider.iterateFiles cannot iterate files and throws exception,
           // we want to ignore the whole origin and let other origins complete normally.
           LOG.error("Error while scanning files of " + provider.getDebugName() + "\n" +
                     "To reindex files under this origin IDEA has to be restarted", e);
         }
         finally {
-          projectIndexingDependenciesService.completeToken(scanningRequest);
           scanningStatistics.tryFinishVfsIterationAndScanningApplication();
           scanningStatistics.tryFinishFilesChecking();
           scanningStatistics.setTotalOneThreadTimeWithPauses(System.nanoTime() - providerScanningStartTime);
@@ -528,6 +529,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     finally {
       synchronized (allTasksFinished) {
         allTasksFinished.set(true);
+        projectIndexingDependenciesService.completeToken(scanningRequest);
       }
     }
   }
@@ -538,7 +540,8 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
     try {
       performScanningAndIndexing(indicator, progressReporter);
-    } finally {
+    }
+    finally {
       myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
     }
   }
@@ -584,10 +587,6 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     return "UnindexedFilesScanner[" + myProject.getName() + partialInfo + "]";
   }
 
-  private static boolean skipInitialRefresh() {
-    return SystemProperties.getBooleanProperty("ij.indexes.skip.initial.refresh", false);
-  }
-
   public static void scanAndIndexProjectAfterOpen(@NotNull Project project,
                                                   boolean startSuspended,
                                                   @Nullable @NonNls String indexingReason) {
@@ -631,12 +630,12 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       new DumbModeTask() {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-          myProject.getService(UnindexedFilesScannerExecutor.class).submitTask(UnindexedFilesScanner.this);
+          UnindexedFilesScannerExecutor.getInstance(myProject).submitTask(UnindexedFilesScanner.this);
         }
       }.queue(myProject);
     }
     else {
-      myProject.getService(UnindexedFilesScannerExecutor.class).submitTask(this);
+      UnindexedFilesScannerExecutor.getInstance(myProject).submitTask(this);
     }
   }
 

@@ -263,15 +263,15 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     return version + options.getVersion();
   }
 
-  private SLRUCache<Key, BufferExposingByteArrayOutputStream> createAppendCache(final KeyDescriptor<Key> keyDescriptor) {
+  private SLRUCache<Key, BufferExposingByteArrayOutputStream> createAppendCache(@NotNull KeyDescriptor<Key> keyDescriptor) {
     return new SLRUCache<Key, BufferExposingByteArrayOutputStream>(16 * 1024, 4 * 1024, keyDescriptor) {
       @Override
-      public @NotNull BufferExposingByteArrayOutputStream createValue(final Key key) {
+      public @NotNull BufferExposingByteArrayOutputStream createValue(Key key) {
         return myStreamPool.alloc();
       }
 
       @Override
-      protected void onDropFromCache(final Key key, final @NotNull BufferExposingByteArrayOutputStream bytes) {
+      protected void onDropFromCache(Key key, @NotNull BufferExposingByteArrayOutputStream bytes) {
         myEnumerator.lockStorageWrite();
         try {
           long previousRecord;

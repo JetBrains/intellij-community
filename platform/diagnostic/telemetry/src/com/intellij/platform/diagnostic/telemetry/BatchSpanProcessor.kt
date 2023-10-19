@@ -20,14 +20,6 @@ import java.util.function.BiFunction
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-@Internal
-interface AsyncSpanExporter {
-  suspend fun export(spans: Collection<SpanData>)
-
-  fun shutdown() {
-  }
-}
-
 @OptIn(ExperimentalCoroutinesApi::class)
 @Internal
 class BatchSpanProcessor(
@@ -52,6 +44,7 @@ class BatchSpanProcessor(
             flushRequested.onReceive { result ->
               try {
                 exportCurrentBatch(batch)
+                spanExporters.forEach { it.forceFlush() }
               }
               finally {
                 result.complete(Unit)

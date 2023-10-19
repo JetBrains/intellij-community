@@ -83,7 +83,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
    * then this view should ignore such event
    */
   private fun updateCurrentFileIfLocalId() {
-    if (ClientId.current == myClientId) {
+    if (ClientId.current == session.clientId) {
       updateSelectedFile()
     }
   }
@@ -91,7 +91,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   fun updateSelectedFile(): CancellablePromise<*> {
     return ReadAction.nonBlocking {
       if (!myDisposed) {
-        ClientId.withClientId(myClientId) {
+        ClientId.withClientId(session.clientId) {
           ApplicationManager.getApplication().assertIsNonDispatchThread()
           ApplicationManager.getApplication().assertReadAccessAllowed()
           setCurrentFile(findSelectedFile())
@@ -148,7 +148,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
 
   private fun updateStatus() {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    val status = ClientId.withClientId(myClientId) { ReadAction.compute(ThrowableComputable { getCurrentStatus() })}
+    val status = ClientId.withClientId(session.clientId) { ReadAction.compute(ThrowableComputable { getCurrentStatus() })}
     if (previousStatus != status) {
       ApplicationManager.getApplication().invokeLater {
         if (!myDisposed) {

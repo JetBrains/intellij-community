@@ -1,10 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.api.request
 
-import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflateAndReadWithErrorHandlingAndLogging
-import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.openapi.diagnostic.logger
@@ -12,7 +10,7 @@ import kotlinx.coroutines.CancellationException
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.GitLabEdition.Community
 import org.jetbrains.plugins.gitlab.api.GitLabEdition.Enterprise
-import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectsDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerMetadataDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerVersionDTO
 import org.jsoup.Jsoup
@@ -35,8 +33,11 @@ suspend fun GitLabApi.Rest.checkIsGitLabServer(): Boolean {
   val uri = server.restApiUri.resolveRelative("projects?page=1&per_page=1")
   val request = request(uri).GET().build()
   return try {
-    loadJsonList<Unit>(request).body()
-    true
+    // Skip error reporting done in JsonHttpApiHelper
+    val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(LOG, request) { reader, _ ->
+       GitLabRestJsonDataDeSerializer.fromJson(reader, List::class.java)
+    }
+    sendAndAwaitCancellable(request, bodyHandler).body() != null
   }
   catch (e: CancellationException) {
     throw e
@@ -62,7 +63,7 @@ suspend fun GitLabApi.Rest.guessServerEdition(): GitLabEdition? {
 
 // Authenticated
 // should not have statistics to avoid recursion
-@SinceGitLab("12.0")
+@SinceGitLab("15.6")
 suspend fun GitLabApi.GraphQL.getServerMetadata(): HttpResponse<out GitLabServerMetadataDTO?> {
   val request = gitLabQuery(GitLabGQLQuery.GET_METADATA)
   return loadResponse(request, "metadata")

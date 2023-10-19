@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.impl.perFileVersion
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes
@@ -11,9 +12,16 @@ import com.intellij.util.io.DataInputOutputUtil
 sealed interface IntFileAttribute {
   companion object {
     @JvmStatic
-    fun create(id: String, version: Int, fast: Boolean): IntFileAttribute {
-      val adjustedVersion = version * 2 + if (fast) 1 else 0
-      val attribute = FileAttribute(id, adjustedVersion, true)
+    fun shouldUseFastAttributes(): Boolean {
+      return Registry.`is`("indexing.over.fast.attributes", true)
+             || Registry.`is`("scanning.trust.indexing.flag", true)
+    }
+
+    @JvmStatic
+    fun create(id: String, version: Int): IntFileAttribute {
+      val fast = shouldUseFastAttributes()
+      val suffix = if (fast) ".fast" else ""
+      val attribute = FileAttribute(id + suffix, version, true)
       return if (fast) overFastAttribute(attribute) else overRegularAttribute(attribute)
     }
 

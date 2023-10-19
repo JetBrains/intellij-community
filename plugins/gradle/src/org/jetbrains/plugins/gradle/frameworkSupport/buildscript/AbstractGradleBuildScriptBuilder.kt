@@ -119,14 +119,22 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   override fun withIdeaPlugin() =
     withPlugin("idea")
 
-  override fun withKotlinJvmPlugin() =
-    withPlugin("org.jetbrains.kotlin.jvm", kotlinVersion)
+  override fun withKotlinJvmPlugin() = withKotlinJvmPlugin(kotlinVersion)
 
   override fun withKotlinJsPlugin() =
     withPlugin("org.jetbrains.kotlin.js", kotlinVersion)
 
   override fun withKotlinMultiplatformPlugin() =
     withPlugin("org.jetbrains.kotlin.multiplatform", kotlinVersion)
+
+  override fun withKotlinJvmToolchain(jvmTarget: Int): BSB = apply {
+    withPostfix {
+      call("kotlin") {
+        // We use a code here to force the generator to use parenthesis in Groovy, to be in-line with the documentation
+        code("jvmToolchain($jvmTarget)")
+      }
+    }
+  }
 
   override fun withGroovyPlugin() =
     withGroovyPlugin(groovyVersion)
@@ -156,6 +164,15 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
         assignIfNotNull("executableDir", executableDir)
         assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
       }
+    }
+  }
+
+  override fun withKotlinTest() = apply {
+    withMavenCentral()
+    // version is inherited from the Kotlin plugin
+    addTestImplementationDependency("org.jetbrains.kotlin:kotlin-test")
+    configureTestTask {
+      call("useJUnitPlatform")
     }
   }
 

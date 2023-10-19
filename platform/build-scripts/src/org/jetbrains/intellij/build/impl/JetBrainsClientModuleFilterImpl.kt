@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
 import com.intellij.platform.runtime.repository.ProductMode
-import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
@@ -32,16 +31,6 @@ class JetBrainsClientModuleFilterImpl(clientMainModuleName: String, context: Bui
 
   override fun isProjectLibraryIncluded(libraryName: String): Boolean {
     return RuntimeModuleId.projectLibrary(libraryName) in includedModules
-  }
-
-  private fun RuntimeModuleRepository.collectDependencies(moduleDescriptor: RuntimeModuleDescriptor,
-                                                          result: MutableSet<RuntimeModuleId> = HashSet()): Set<RuntimeModuleId> {
-    if (result.add(moduleDescriptor.moduleId)) {
-      for (dependency in moduleDescriptor.dependencies) {
-        collectDependencies(dependency, result)
-      }
-    }
-    return result
   }
 }
 

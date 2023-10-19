@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,34 +54,48 @@ public abstract class DvcsBranchManager<T extends Repository> {
     return isPredefinedAsFavorite(branchType, branchName);
   }
 
-  public @NotNull Map<T, Collection<String>> getFavoriteBranches(@NotNull BranchType branchType) {
-    String branchTypeName = branchType.getName();
-    List<DvcsBranchInfo> favorites = ContainerUtil.notNullize(myBranchSettings.getFavorites().getBranches().get(branchTypeName));
-    List<DvcsBranchInfo> excludedFavorites =
-      ContainerUtil.notNullize(myBranchSettings.getExcludedFavorites().getBranches().get(branchTypeName));
+  public @NotNull Map<T, Set<String>> getFavoriteBranches(@NotNull BranchType branchType) {
+    Map<T, List<String>> favorites = collectBranchesByRoot(myBranchSettings.getFavorites(), branchType);
+    Map<T, List<String>> excludedFavorites = collectBranchesByRoot(myBranchSettings.getExcludedFavorites(), branchType);
     Collection<String> predefinedFavorites = myPredefinedFavoriteBranches.get(branchType);
 
-    MultiMap<T, String> result = MultiMap.createSet();
+    Map<T, Set<String>> result = new HashMap<>();
+    for (T repo : myRepositoryManager.getRepositories()) {
+      HashSet<String> branches = new HashSet<>();
 
-    if (predefinedFavorites != null) {
-      for (T repo : myRepositoryManager.getRepositories()) {
-        result.putValues(repo, predefinedFavorites);
+      if (predefinedFavorites != null) {
+        branches.addAll(predefinedFavorites);
       }
+
+      List<String> repoExcludedFavorites = ContainerUtil.notNullize(excludedFavorites.get(repo));
+      for (String repoExcludedFavorite : repoExcludedFavorites) {
+        branches.remove(repoExcludedFavorite);
+      }
+
+      List<String> repoFavorites = ContainerUtil.notNullize(favorites.get(repo));
+      branches.addAll(repoFavorites);
+
+      result.put(repo, branches);
+    }
+    return result;
+  }
+
+  private @NotNull Map<T, List<String>> collectBranchesByRoot(@NotNull BranchStorage storage, @NotNull BranchType branchType) {
+    List<DvcsBranchInfo> infos = ContainerUtil.notNullize(storage.getBranches().get(branchType.getName()));
+
+    Map<String, List<String>> infoByPath = new HashMap<>();
+    for (DvcsBranchInfo info : infos) {
+      List<String> list = infoByPath.computeIfAbsent(info.repoPath, key -> new ArrayList<>());
+      list.add(info.sourceName);
     }
 
-    for (DvcsBranchInfo info : excludedFavorites) {
-      T repo = myRepositoryManager.getRepositoryForRootQuick(VcsUtil.getFilePath(info.repoPath, false));
-      if (repo == null) continue;
-      result.remove(repo, info.sourceName);
-    }
-
-    for (DvcsBranchInfo info : favorites) {
-      T repo = myRepositoryManager.getRepositoryForRootQuick(VcsUtil.getFilePath(info.repoPath, false));
-      if (repo == null) continue;
-      result.putValue(repo, info.sourceName);
-    }
-
-    return result.toHashMap();
+    Map<T, List<String>> infoByRepo = new HashMap<>();
+    infoByPath.forEach((repoPath, list) -> {
+      T repo = myRepositoryManager.getRepositoryForRootQuick(VcsUtil.getFilePath(repoPath, true));
+      if (repo == null) return;
+      infoByRepo.put(repo, list);
+    });
+    return infoByRepo;
   }
 
   private boolean isPredefinedAsFavorite(@NotNull BranchType type, @NotNull String branchName) {
@@ -141,6 +154,7 @@ public abstract class DvcsBranchManager<T extends Repository> {
 
   public interface DvcsBranchManagerListener {
     default void branchFavoriteSettingsChanged() { }
+
     default void branchGroupingSettingsChanged(@NotNull GroupingKey key, boolean state) { }
   }
 }

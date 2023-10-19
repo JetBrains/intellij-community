@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -47,7 +46,7 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
     assert(sessionInfo.isVcsCommit) { "Custom commit sessions are not supported with staging area: ${sessionInfo.executor.toString()}" }
     LOG.debug("Do actual commit")
 
-    commitContext.isCleanupCommitMessage = project.service<GitCommitTemplateTracker>().exists()
+    commitContext.isCleanupCommitMessage = GitCommitTemplateTracker.getInstance(project).exists()
 
     val committer = GitStageCommitter(project, commitState, getPathsToStage(), commitContext)
     addCommonResultHandlers(sessionInfo, committer)

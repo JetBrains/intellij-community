@@ -450,7 +450,7 @@ private fun ReferenceWithProps.createNameConversionRules(context: WebSymbol?): L
 
   buildConvertersMap(rules.canonicalNames?.value, builder::addCanonicalNamesRule)
   buildConvertersMap(rules.matchNames?.value, builder::addMatchNamesRule)
-  buildConvertersMap(rules.nameVariants?.value, builder::addNameVariantsRule)
+  buildConvertersMap(rules.nameVariants?.value, builder::addCompletionVariantsRule)
   return if (builder.isEmpty())
     emptyList()
   else

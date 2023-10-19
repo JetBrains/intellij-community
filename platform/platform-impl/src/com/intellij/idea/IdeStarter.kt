@@ -18,7 +18,9 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
@@ -74,7 +76,9 @@ open class IdeStarter : ModernApplicationStarter() {
       launch { reportPluginErrors() }
 
       LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
-      lifecyclePublisher.appStarted()
+      runCatching {
+        lifecyclePublisher.appStarted()
+      }.getOrLogException(thisLogger())
 
       if (!app.isHeadlessEnvironment) {
         postOpenUiTasks()
@@ -91,7 +95,9 @@ open class IdeStarter : ModernApplicationStarter() {
     lateinit var recentProjectManager: RecentProjectsManager
     val isOpenProjectNeeded = span("isOpenProjectNeeded") {
       span("app frame created callback") {
-        lifecyclePublisher.appFrameCreated(args)
+        runCatching {
+          lifecyclePublisher.appFrameCreated(args)
+        }.getOrLogException(thisLogger())
       }
 
       // must be after `AppLifecycleListener#appFrameCreated`, because some listeners can mutate the state of `RecentProjectsManager`
@@ -157,7 +163,9 @@ open class IdeStarter : ModernApplicationStarter() {
     val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
     serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
       showWelcomeFrameTask()
-      lifecyclePublisher.welcomeScreenDisplayed()
+      runCatching {
+        lifecyclePublisher.welcomeScreenDisplayed()
+      }.getOrLogException(thisLogger())
     }
     return false
   }

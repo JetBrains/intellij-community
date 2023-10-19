@@ -40,6 +40,7 @@ public final class MavenProjectReader {
     myReadHelper = MavenUtil.createModelReadHelper(project);
   }
 
+  @NotNull
   public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
                                               VirtualFile file,
                                               MavenExplicitProfiles explicitProfiles,

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
+import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.OPEN_IN_PREVIEW_TAB
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.module.ModuleUtilCore
@@ -63,7 +64,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val editSourceListeners: MutableList<EditSourceListener> = mutableListOf()
 
   private val state = BookmarksViewState.getInstance(project)
-  private val preview = DescriptorPreview(this, false, null)
+  private val preview = DescriptorPreview(this, false, project.currentSession)
 
   private val selectionAlarm = SingleAlarm(this::selectionChanged, 50, this, ThreadToUse.SWING_THREAD, stateForComponent(this))
 

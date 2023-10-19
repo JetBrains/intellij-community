@@ -95,8 +95,6 @@ internal class StorageClassesRegistrar(
 
     registerEmptyCollections(kryo)
 
-    registerAnonymizedEntitySources(kryo)
-
     kryo.register(UUID::class.java)
   }
 
@@ -190,8 +188,6 @@ internal class StorageClassesRegistrar(
     kryo.register(ChangeEntry.AddEntity::class.java)
     kryo.register(ChangeEntry.RemoveEntity::class.java)
     kryo.register(ChangeEntry.ReplaceEntity::class.java)
-    kryo.register(ChangeEntry.ChangeEntitySource::class.java)
-    kryo.register(ChangeEntry.ReplaceAndChangeSource::class.java)
     kryo.register(ChangeEntry.ReplaceEntity.Data::class.java)
     kryo.register(ChangeEntry.ReplaceEntity.References::class.java)
   }
@@ -250,11 +246,5 @@ internal class StorageClassesRegistrar(
     registerSingletonSerializer(kryo) { emptyList<Any>() }
     registerSingletonSerializer(kryo) { emptySet<Any>() }
     registerSingletonSerializer(kryo) { emptyArray<Any>() }
-  }
-
-  private fun registerAnonymizedEntitySources(kryo: Kryo) {
-    kryo.register(AnonymizedEntitySource::class.java)
-    kryo.register(MatchedEntitySource::class.java)
-    kryo.register(UnmatchedEntitySource::class.java)
   }
 }

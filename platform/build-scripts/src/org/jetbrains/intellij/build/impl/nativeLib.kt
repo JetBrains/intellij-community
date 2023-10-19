@@ -1,12 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.lang.HashMapZipFile
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -21,17 +20,20 @@ import java.util.*
 /**
  * Set of native files that shouldn't be signed.
  */
-private val nonSignFiles = setOf(
+@Suppress("SpellCheckingInspection")
+private val nonSignFiles = java.util.Set.of(
   // Native file used by skiko (Compose backend) for Windows.
   // It cannot be signed.
   "icudtl.dat"
 )
 
-internal fun CoroutineScope.packNativePresignedFiles(nativeFiles: Map<ZipSource, List<String>>, dryRun: Boolean, context: BuildContext) {
-  for ((source, paths) in nativeFiles) {
-    val sourceFile = source.file
-    launch(Dispatchers.IO) {
-      unpackNativeLibraries(sourceFile = sourceFile, paths = paths, dryRun = dryRun, context = context)
+internal suspend fun packNativePresignedFiles(nativeFiles: Map<ZipSource, List<String>>, dryRun: Boolean, context: BuildContext) {
+  coroutineScope {
+    for ((source, paths) in nativeFiles) {
+      val sourceFile = source.file
+      launch(Dispatchers.IO) {
+        unpackNativeLibraries(sourceFile = sourceFile, paths = paths, dryRun = dryRun, context = context)
+      }
     }
   }
 }

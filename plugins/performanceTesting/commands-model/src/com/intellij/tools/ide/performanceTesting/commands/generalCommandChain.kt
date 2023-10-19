@@ -750,13 +750,23 @@ fun <T : CommandChain> T.showFileHistory(): T {
   return this
 }
 
-fun <T : CommandChain> T.assertCompletionCommand(): T {
-  this.addCommand("${CMD_PREFIX}assertCompletionCommand")
+fun <T : CommandChain> T.chooseCompletionCommand(completionName: String): T {
+  this.addCommand("${CMD_PREFIX}chooseCompletionCommand ${completionName}")
   return this
 }
 
-fun <T : CommandChain> T.assertCompletionCommand(count: Int): T {
-  this.addCommand("${CMD_PREFIX}assertCompletionCommand ${count}")
+fun <T : CommandChain> T.assertCompletionCommand(): T {
+  this.addCommand("${CMD_PREFIX}assertCompletionCommand EXIST")
+  return this
+}
+
+fun <T : CommandChain> T.assertCompletionCommandContains(completionNames: List<String>): T {
+  this.addCommand("${CMD_PREFIX}assertCompletionCommand CONTAINS ${completionNames.joinToString(" ")}")
+  return this
+}
+
+fun <T : CommandChain> T.assertCompletionCommandCount(count: Int): T {
+  this.addCommand("${CMD_PREFIX}assertCompletionCommand COUNT ${count}")
   return this
 }
 

@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
@@ -16,19 +16,17 @@ class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val twVm = e.getData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM) as? GitLabToolWindowProjectViewModel
-    val filesController = e.getData(GitLabMergeRequestsActionKeys.FILES_CONTROLLER)
+    val projectVm = e.getData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM) as? GitLabToolWindowProjectViewModel
     val selection: GitLabMergeRequestDetails? = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
 
-    e.presentation.isEnabledAndVisible = twVm != null && filesController != null && selection != null
+    e.presentation.isEnabledAndVisible = projectVm != null && selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val twVm = e.getRequiredData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM) as GitLabToolWindowProjectViewModel
-    val filesController = e.getRequiredData(GitLabMergeRequestsActionKeys.FILES_CONTROLLER)
+    val projectVm = e.getRequiredData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM) as GitLabToolWindowProjectViewModel
     val selection: GitLabMergeRequestDetails = e.getRequiredData(GitLabMergeRequestsActionKeys.SELECTED)
 
-    twVm.showTab(GitLabReviewTab.ReviewSelected(selection.iid))
-    filesController.openTimeline(selection.iid, false)
+    projectVm.showTab(GitLabReviewTab.ReviewSelected(selection.iid))
+    projectVm.showTimeline(selection.iid, false)
   }
 }

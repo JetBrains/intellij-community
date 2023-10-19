@@ -64,6 +64,7 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 project = project,
                 projectPath = "$path/$name",
                 projectName = name,
+                isProject = context.isCreatingNewProject,
                 sdk = sdk,
                 buildSystemType = BuildSystemType.Jps,
                 addSampleCode = addSampleCode,

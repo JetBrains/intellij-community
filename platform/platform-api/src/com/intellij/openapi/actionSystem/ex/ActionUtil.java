@@ -16,10 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -33,10 +30,9 @@ import com.intellij.ui.ClientProperty;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import kotlin.coroutines.AbstractCoroutineContextElement;
-import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,9 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
+import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -351,6 +345,16 @@ public final class ActionUtil {
     }
   }
 
+  public static void performInputEventHandlerWithCallbacks(@NotNull InputEvent inputEvent, @NotNull Runnable runnable) {
+    String place = inputEvent instanceof KeyEvent ? ActionPlaces.KEYBOARD_SHORTCUT :
+                   inputEvent instanceof MouseEvent ? ActionPlaces.MOUSE_SHORTCUT :
+                   ActionPlaces.UNKNOWN;
+    AnActionEvent event = AnActionEvent.createFromInputEvent(
+      inputEvent, place, InputEventDummyAction.INSTANCE.getTemplatePresentation().clone(),
+      DataManager.getInstance().getDataContext(Objects.requireNonNull(inputEvent.getComponent())));
+    performDumbAwareWithCallbacks(InputEventDummyAction.INSTANCE, event, runnable);
+  }
+
   public static void performDumbAwareWithCallbacks(@NotNull AnAction action,
                                                    @NotNull AnActionEvent event,
                                                    @NotNull Runnable performRunnable) {
@@ -359,7 +363,10 @@ public final class ActionUtil {
     ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     manager.fireBeforeActionPerformed(action, event);
     Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    String actionId = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
+    String actionId = StringUtil.notNullize(
+      event.getActionManager().getId(action),
+      action == InputEventDummyAction.INSTANCE ? performRunnable.getClass().getName() :
+      action.getClass().getName());
     if (component != null && !UIUtil.isShowing(component) &&
         !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) &&
         !Boolean.TRUE.equals(ClientProperty.get(component, ALLOW_ACTION_PERFORM_WHEN_HIDDEN))) {
@@ -370,7 +377,7 @@ public final class ActionUtil {
     }
     AnActionResult result = null;
     try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM);
-         AccessToken ignore2 = withActionThreadContext(actionId)) {
+         AccessToken ignore2 = withActionThreadContext(actionId, event.getPlace(), event.getInputEvent())) {
       performRunnable.run();
       result = AnActionResult.PERFORMED;
     }
@@ -654,24 +661,22 @@ public final class ActionUtil {
   }
 
   @ApiStatus.Internal
+  @RequiresBlockingContext
   public static @Nullable String getActionThreadContext() {
-    ActionContext context = currentThreadContext().get(ACTION_CONTEXT_KEY);
-    return context == null ? null : context.actionId;
+    ActionContextElement context = currentThreadContext().get(ActionContextElement.Companion);
+    return context == null ? null : context.getActionId();
   }
 
-  private static @NotNull AccessToken withActionThreadContext(@NotNull String actionId) {
-    return installThreadContext(currentThreadContext().plus(new ActionContext(actionId)), true);
+  private static @NotNull AccessToken withActionThreadContext(@NotNull String actionId,
+                                                              @NotNull String place,
+                                                              @Nullable InputEvent event) {
+    return installThreadContext(currentThreadContext().plus(
+      new ActionContextElement(actionId, place, event == null ? -1 : event.getID())), true);
   }
 
-  private static final CoroutineContext.Key<ActionContext> ACTION_CONTEXT_KEY = new CoroutineContext.Key<>() {
-  };
-
-  private static class ActionContext extends AbstractCoroutineContextElement implements CoroutineContext.Element {
-    final String actionId;
-
-    ActionContext(@NotNull String actionId) {
-      super(ACTION_CONTEXT_KEY);
-      this.actionId = actionId;
-    }
+  private static class InputEventDummyAction extends DumbAwareAction implements LightEditCompatible {
+    static final InputEventDummyAction INSTANCE = new InputEventDummyAction();
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) { }
   }
 }

@@ -54,6 +54,8 @@ private class VFSInitializationConditionsToFusReporter : ProjectActivity {
 
       NAME_STORAGE_INCOMPLETE -> VFSInitKind.NAME_STORAGE_INCOMPLETE
 
+      ATTRIBUTES_STORAGE_CORRUPTED -> VFSInitKind.ATTRIBUTES_STORAGE_CORRUPTED
+
       CONTENT_STORAGES_INCOMPLETE -> VFSInitKind.CONTENT_STORAGES_INCOMPLETE
       CONTENT_STORAGES_NOT_MATCH -> VFSInitKind.CONTENT_STORAGES_NOT_MATCH
     }
@@ -108,6 +110,9 @@ private class VFSInitializationConditionsToFusReporter : ProjectActivity {
 
     /** VFS was cleared and rebuild from scratch because: name storage is not able to resolve existing reference */
     NAME_STORAGE_INCOMPLETE,
+
+    /** Attributes storage has corrupted record(s) */
+    ATTRIBUTES_STORAGE_CORRUPTED,
 
     /** Content and ContentHashes storages are not match with each other */
     CONTENT_STORAGES_NOT_MATCH,

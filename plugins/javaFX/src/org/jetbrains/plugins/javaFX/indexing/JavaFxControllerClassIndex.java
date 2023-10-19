@@ -29,8 +29,8 @@ import java.util.*;
 
 public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
   @NonNls public static final ID<String, Void> NAME = ID.create("JavaFxControllerClassIndex");
-  private final MyInputFilter myInputFilter = new MyInputFilter();
-  private final MyDataIndexer myDataIndexer = new MyDataIndexer();
+  private static final MyInputFilter myInputFilter = new MyInputFilter();
+  private static final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
   @Override
   @NotNull

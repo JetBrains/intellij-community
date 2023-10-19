@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.File;
 import java.util.List;
 import java.util.function.Supplier;
@@ -39,14 +40,6 @@ public final class SystemInfo {
   public static final boolean isFreeBSD = SystemInfoRt.isFreeBSD;
   public static final boolean isSolaris = SystemInfoRt.isSolaris;
   public static final boolean isUnix = SystemInfoRt.isUnix;
-
-  public static @NotNull OsFamily getOsFamily() {
-    if (isMac) return OsFamily.MacOS;
-    if (isWindows) return OsFamily.Windows;
-    if (isLinux) return OsFamily.Linux;
-
-    return OsFamily.Other;
-  }
 
   public static final boolean isChromeOS = isLinux && isCrostini();
 
@@ -86,9 +79,12 @@ public final class SystemInfo {
     }
   }
 
-  public static final boolean isJBSystemMenu = isMac && Boolean.getBoolean("jbScreenMenuBar.enabled");
+  public static boolean isWaylandToolkit() {
+    Toolkit tk = Toolkit.getDefaultToolkit();
+    return "sun.awt.wl.WLToolkit".equals(tk.getClass().getName());
+  }
 
-  public static final boolean isMacSystemMenu = isMac && (isJBSystemMenu || Boolean.getBoolean("apple.laf.useScreenMenuBar"));
+  public static final boolean isMacSystemMenu = isMac && (SystemInfoRt.isJBSystemMenu || Boolean.getBoolean("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
 

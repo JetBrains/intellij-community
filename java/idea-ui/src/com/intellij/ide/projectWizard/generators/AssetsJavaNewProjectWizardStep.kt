@@ -6,7 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.wizard.NewProjectOnboardingTips
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.whenProjectCreated
+import com.intellij.ide.wizard.OnboardingTipsInstallationInfo
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.keymap.KeymapTextContext
@@ -76,7 +76,9 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
     val template = templateManager.getInternalTemplate("SampleCode")
     val simpleSampleText = template.getText(defaultProperties + properties)
     for (extension in NewProjectOnboardingTips.EP_NAME.extensions) {
-      extension.installTips(project, simpleSampleText)
+      extension.installTips(project, OnboardingTipsInstallationInfo(simpleSampleText) { text ->
+        text.indexOf("System.out.println").takeIf { it >= 0 } ?: error("Cannot find place to install breakpoint")
+      })
     }
   }
 

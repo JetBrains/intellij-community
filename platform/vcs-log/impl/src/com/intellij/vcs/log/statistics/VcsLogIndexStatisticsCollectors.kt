@@ -69,8 +69,8 @@ internal class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() 
     getIndexCollector(project)?.state?.let { indexCollectorState ->
       val indexingTime = TimeUnit.MILLISECONDS.toMinutes(indexCollectorState.indexTime).toInt()
       usages.add(INDEXING_TIME.metric(indexingTime))
-      for ((root, time) in indexCollectorState.indexTimeByRoot) {
-        usages.add(INDEXING_TIME_BY_ROOT.metric(root.path, time, VcsLogBigRepositoriesList.getInstance().isBig(root)))
+      for ((rootPath, time) in indexCollectorState.indexTimeByRoot) {
+        usages.add(INDEXING_TIME_BY_ROOT.metric(rootPath, time, VcsLogBigRepositoriesList.getInstance().isBig(rootPath)))
       }
     }
 
@@ -95,7 +95,7 @@ internal class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() 
 
 class VcsLogIndexCollectorState : BaseState() {
   var indexTime by property(0L)
-  var indexTimeByRoot by linkedMap<VirtualFile, Long>()
+  var indexTimeByRoot by linkedMap<String, Long>()
 
   fun copy(): VcsLogIndexCollectorState {
     val copy = VcsLogIndexCollectorState()
@@ -133,7 +133,7 @@ class VcsLogIndexCollector : PersistentStateComponent<VcsLogIndexCollectorState>
   fun reportIndexingTime(root: VirtualFile, time: Long) {
     synchronized(lock) {
       state.indexTime += time
-      state.indexTimeByRoot[root] = (state.indexTimeByRoot[root] ?: 0) + time
+      state.indexTimeByRoot[root.path] = (state.indexTimeByRoot[root.path] ?: 0) + time
       state.intIncrementModificationCount()
     }
   }

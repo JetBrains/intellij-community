@@ -56,7 +56,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   //       'false id' with high probability. This leaves us with 3bytes record length, which is still enough for
   //       the most applications
 
-  static final class HeaderLayout {
+  public static final class HeaderLayout {
     public static final int MAGIC_WORD_OFFSET = 0;
     public static final int IMPLEMENTATION_VERSION_OFFSET = MAGIC_WORD_OFFSET + Integer.BYTES;
 

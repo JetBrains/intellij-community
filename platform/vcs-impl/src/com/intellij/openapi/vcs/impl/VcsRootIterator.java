@@ -27,7 +27,7 @@ public class VcsRootIterator {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myOtherVcsFolders = new HashMap<>();
-    myExcludedFileIndex = project.getService(FileIndexFacade.class);
+    myExcludedFileIndex = FileIndexFacade.getInstance(project);
 
     final VcsRoot[] allRoots = myVcsManager.getAllVcsRoots();
     final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);

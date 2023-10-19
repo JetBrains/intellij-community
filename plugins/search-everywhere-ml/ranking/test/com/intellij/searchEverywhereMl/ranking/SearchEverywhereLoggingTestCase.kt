@@ -2,7 +2,7 @@ package com.intellij.searchEverywhereMl.ranking
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchAdapter
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlContributorReplacementService
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlContributorReplacement
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.extensions.ExtensionPoint
@@ -81,7 +81,7 @@ abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
     // for which we need the search provider id to be ActionsSearchEverywhereContributor
     // to be replaced with SemanticActionSearchEverywhereContributor,
     // that will fail, as it will try to cast the mock contributor to the action's one
-    SearchEverywhereMlContributorReplacementService.EP_NAME.point.maskForSingleTest(emptyList())
+    SearchEverywhereMlContributorReplacement.EP_NAME.point.maskForSingleTest(emptyList())
   }
 
   protected fun <V : Any> ExtensionPoint<V>.maskForSingleTest(newList: List<V>) {

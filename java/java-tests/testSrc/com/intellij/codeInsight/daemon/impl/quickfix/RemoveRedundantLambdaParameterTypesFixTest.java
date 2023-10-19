@@ -15,6 +15,6 @@ public class RemoveRedundantLambdaParameterTypesFixTest extends LightQuickFixPar
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_10;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_9;
   }
 }

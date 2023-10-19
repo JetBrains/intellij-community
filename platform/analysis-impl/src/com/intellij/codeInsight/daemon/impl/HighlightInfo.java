@@ -14,6 +14,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.modcommand.ModCommandAction;
@@ -135,7 +136,7 @@ public class HighlightInfo implements Segment {
   private final @NotNull HighlightSeverity severity;
   private final GutterMark gutterIconRenderer;
   private final ProblemGroup myProblemGroup;
-  private final String inspectionToolId;
+  volatile Object toolId; // inspection.getShortName() in case when the inspection generated this info
   private int group;
   /**
    * Quick fix text range: the range within which the Alt-Enter should open the quick fix popup.
@@ -178,7 +179,7 @@ public class HighlightInfo implements Segment {
                           boolean isFileLevelAnnotation,
                           int navigationShift,
                           @Nullable ProblemGroup problemGroup,
-                          @Nullable String inspectionToolId,
+                          @Nullable Object toolId,
                           @Nullable GutterMark gutterIconRenderer,
                           int group,
                           @Nullable PsiReference unresolvedReference) {
@@ -201,7 +202,7 @@ public class HighlightInfo implements Segment {
     this.navigationShift = navigationShift;
     myProblemGroup = problemGroup;
     this.gutterIconRenderer = gutterIconRenderer;
-    this.inspectionToolId = inspectionToolId;
+    this.toolId = toolId;
     this.group = group;
     this.unresolvedReference = unresolvedReference;
   }
@@ -211,7 +212,7 @@ public class HighlightInfo implements Segment {
    */
   public static @Nullable HighlightInfo fromRangeHighlighter(@NotNull RangeHighlighter highlighter) {
     Object errorStripeTooltip = highlighter.getErrorStripeTooltip();
-    return errorStripeTooltip instanceof HighlightInfo ? (HighlightInfo)errorStripeTooltip : null;
+    return errorStripeTooltip instanceof HighlightInfo info ? info : null;
   }
 
   @NotNull
@@ -288,13 +289,12 @@ public class HighlightInfo implements Segment {
       return wrapped;
     }
 
-    String decoded = StringUtil.replace(wrapped, DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
-    return decoded;
+    return StringUtil.replace(wrapped, DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
   }
 
   /**
    * Encodes \p tooltip so that substrings equal to a \p description
-   * are replaced with the special placeholder to reduce size of the
+   * are replaced with the special placeholder to reduce the size of the
    * tooltip. <html></html> tags are stripped of the tooltip.
    *
    * @param tooltip     - html text
@@ -321,7 +321,7 @@ public class HighlightInfo implements Segment {
   }
 
   public @Nullable @NonNls String getInspectionToolId() {
-    return inspectionToolId;
+    return toolId instanceof String ? (String)toolId : null;
   }
 
   private boolean isFlagSet(@FlagConstant byte mask) {
@@ -489,7 +489,6 @@ public class HighlightInfo implements Segment {
     if (highlighter != null) s += " text='" + getText() + "'";
     if (getDescription() != null) s += ", description='" + getDescription() + "'";
     s += "; severity=" + getSeverity();
-    s += "; group=" + getGroup();
     synchronized (this) {
       if (quickFixActionRanges != null) {
         s += "; quickFixes: " + quickFixActionRanges;
@@ -498,6 +497,7 @@ public class HighlightInfo implements Segment {
     if (gutterIconRenderer != null) {
       s += "; gutter: " + gutterIconRenderer;
     }
+    s += "; toolId: " + toolId;
     return s;
   }
 
@@ -588,22 +588,32 @@ public class HighlightInfo implements Segment {
     return myProblemGroup;
   }
 
-  public static @NotNull HighlightInfo fromAnnotation(@NotNull Annotation annotation) {
-    return fromAnnotation(annotation, false);
+  /**
+   * @deprecated use {@link HighlightInfo#fromAnnotation(ExternalAnnotator, Annotation)}
+   */
+  @NotNull
+  @Deprecated
+  public static HighlightInfo fromAnnotation(@NotNull Annotation annotation) {
+    return fromAnnotation(ExternalAnnotator.class, annotation, false);
   }
 
-  static @NotNull HighlightInfo fromAnnotation(@NotNull Annotation annotation, boolean batchMode) {
+  @NotNull
+  public static HighlightInfo fromAnnotation(@NotNull ExternalAnnotator<?,?> externalAnnotator, @NotNull Annotation annotation) {
+    return fromAnnotation(externalAnnotator.getClass(), annotation, false);
+  }
+
+  @NotNull
+  static HighlightInfo fromAnnotation(@NotNull Class<?> annotatorClass, @NotNull Annotation annotation, boolean batchMode) {
     TextAttributes forcedAttributes = annotation.getEnforcedTextAttributes();
     TextAttributesKey key = annotation.getTextAttributes();
     TextAttributesKey forcedAttributesKey = forcedAttributes == null && key != HighlighterColors.NO_HIGHLIGHTING ? key : null;
 
     PsiReference unresolvedReference = annotation.getUnresolvedReference();
-    PsiElement psiElement = unresolvedReference == null ? null : unresolvedReference.getElement();
     HighlightInfo info = new HighlightInfo(
       forcedAttributes, forcedAttributesKey, convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
       annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(),
       annotation.needsUpdateOnTyping(),
-      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), null, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL,
+      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), annotatorClass, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL,
       unresolvedReference);
 
     List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
@@ -619,7 +629,9 @@ public class HighlightInfo implements Segment {
     return info;
   }
 
-  private static @NotNull HighlightInfoType convertType(@NotNull Annotation annotation) {
+  @ApiStatus.Internal
+  @NotNull
+  private static HighlightInfoType convertType(@NotNull Annotation annotation) {
     ProblemHighlightType type = annotation.getHighlightType();
     HighlightSeverity severity = annotation.getSeverity();
     return toHighlightInfoType(type, severity);
@@ -855,7 +867,7 @@ public class HighlightInfo implements Segment {
                       IntentionActionDelegate.unwrap(getAction());
       String name =
         action instanceof CommonIntentionAction intentionAction ? intentionAction.getFamilyName() : ((LocalQuickFix)action).getFamilyName();
-      return "IntentionActionDescriptor: " + name + " (" + action.getClass().getName() + ")";
+      return "IntentionActionDescriptor: " + name + " (" + action.getClass() + ")";
     }
 
     public @Nullable Icon getIcon() {

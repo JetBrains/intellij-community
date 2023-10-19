@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.importing
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
@@ -50,7 +49,7 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
         val project = id.findProject() ?: return
 
         if (sync.gradleHome == null) {
-            sync.gradleHome = ApplicationManager.getApplication().getService(GradleInstallationManager::class.java)
+            sync.gradleHome = GradleInstallationManager.getInstance()
                 .getGradleHome(project, sync.workingDir)
                 ?.path
         }

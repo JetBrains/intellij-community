@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -13,23 +13,27 @@ import java.lang.annotation.Target;
 /**
  * Defines messaging endpoint within particular {@link MessageBus bus}.
  *
- * @param <L>  type of the interface that defines contract for working with the particular topic instance
+ * @param <L> type of the interface that defines contract for working with the particular topic instance
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/messaging-infrastructure.html">Messaging Infrastructure (IntelliJ Platform Docs)</a>
  */
 @ApiStatus.NonExtendable
 public class Topic<L> {
-  /**
-   * Indicates that messages the of annotated topic are published to an application level message bus.
-   */
-  @Retention(RetentionPolicy.SOURCE)
-  @Target(ElementType.FIELD)
-  public @interface AppLevel {}
 
   /**
-   * Indicates that messages the of annotated topic are published to a project level message bus.
+   * Indicates that messages of the annotated topic are published to an application level message bus.
    */
-  @Retention(RetentionPolicy.SOURCE)
+  @Retention(RetentionPolicy.CLASS)
   @Target(ElementType.FIELD)
-  public @interface ProjectLevel {}
+  public @interface AppLevel {
+  }
+
+  /**
+   * Indicates that messages of the annotated topic are published to a project level message bus.
+   */
+  @Retention(RetentionPolicy.CLASS)
+  @Target(ElementType.FIELD)
+  public @interface ProjectLevel {
+  }
 
   private final String myDisplayName;
   private final Class<L> myListenerClass;
@@ -86,7 +90,7 @@ public class Topic<L> {
    *   </li>
    * </ul>
    *
-   * @return    class of the interface that defines contract for working with the current topic
+   * @return class of the interface that defines contract for working with the current topic
    */
   public @NotNull Class<L> getListenerClass() {
     return myListenerClass;
@@ -104,12 +108,14 @@ public class Topic<L> {
     return new Topic<>(displayName, listenerClass);
   }
 
-  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection direction) {
+  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName,
+                                             @NotNull Class<L> listenerClass,
+                                             @NotNull BroadcastDirection direction) {
     return new Topic<>(displayName, listenerClass, direction);
   }
 
   /**
-   * @return    broadcasting strategy configured for the current topic. Default value is {@link BroadcastDirection#TO_CHILDREN}
+   * @return broadcasting strategy configured for the current topic. Default value is {@link BroadcastDirection#TO_CHILDREN}
    * @see BroadcastDirection
    */
   public @NotNull BroadcastDirection getBroadcastDirection() {

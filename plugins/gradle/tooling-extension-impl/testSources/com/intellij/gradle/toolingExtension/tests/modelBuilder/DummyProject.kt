@@ -286,4 +286,6 @@ class DummyProject(
   override fun dependencyLocking(configuration: Action<in DependencyLockingHandler>) = throw UnsupportedOperationException()
 
   override fun getDependencyLocking() = throw UnsupportedOperationException()
+
+  override fun getBuildTreePath(): String? = throw UnsupportedOperationException()
 }

@@ -10,13 +10,11 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Inline completion will be shown only if at least one [InlineCompletionProvider] is enabled and returns at least one proposal
  */
-@ApiStatus.Experimental
-class InlineCompletionEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
+internal class InlineCompletionEditorListener(private val scope: CoroutineScope) : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
     if (editor.project == null || editor !is EditorImpl || !editorTypeSupported(editor) || editor.project?.isDisposed != false) {

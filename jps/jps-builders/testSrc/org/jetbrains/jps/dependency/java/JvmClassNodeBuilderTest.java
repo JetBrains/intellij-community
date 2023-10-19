@@ -10,8 +10,7 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -40,4 +39,39 @@ public class JvmClassNodeBuilderTest extends TestCase {
     assertEquals(1, methods.size());
     assertEquals("bar", methods.iterator().next().getName());
   }
+
+  public void testRecurseIterator() {
+    // dependencies
+    Map<String, Iterable<String>> nodes = new HashMap<>();
+    nodes.put("A", List.of("B", "C", "D"));
+    nodes.put("B", List.of("E", "F"));
+    nodes.put("C", List.of("E", "G"));
+    nodes.put("D", List.of("H"));
+    nodes.put("E", List.of("I"));
+    nodes.put("I", List.of("A"));
+
+    runTraversal("Recurse including head", "A,B,C,D,E,F,I,G,H", Iterators.recurse("A", n -> Iterators.filter(nodes.get(n), Objects::nonNull), true));
+    runTraversal("Recurse without head", "B,C,D,E,F,I,G,H", Iterators.recurse("A", n -> Iterators.filter(nodes.get(n), Objects::nonNull), false));
+
+    runTraversal("RecurseDeep including head", "A,B,E,I,F,C,G,D,H", Iterators.recurseDepth("A", n -> Iterators.filter(nodes.get(n), Objects::nonNull), true));
+    runTraversal("RecurseDeep without head", "B,E,I,F,C,G,D,H", Iterators.recurseDepth("A", n -> Iterators.filter(nodes.get(n), Objects::nonNull), false));
+  }
+
+  private static void runTraversal(String message, String expected, Iterable<String> sequence) {
+    assertEquals("1. " + message, expected, traverse(sequence));
+    assertEquals("2. " + message, expected, traverse(sequence));
+    assertEquals("3. " + message, expected, traverse(sequence));
+  }
+
+  private static String traverse(Iterable<String> sequence) {
+    StringBuilder buf = new StringBuilder();
+    for (String s : sequence) {
+      if (!buf.isEmpty()) {
+        buf.append(",");
+      }
+      buf.append(s);
+    }
+    return buf.toString();
+  }
+
 }

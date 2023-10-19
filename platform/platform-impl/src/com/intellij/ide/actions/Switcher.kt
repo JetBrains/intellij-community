@@ -149,7 +149,11 @@ object Switcher : BaseSwitcherAction(null) {
 
     init {
       recent = onlyEditedFiles != null
-      onKeyRelease = SwitcherKeyReleaseListener(if (recent) null else event) { e: InputEvent? -> navigate(e) }
+      onKeyRelease = SwitcherKeyReleaseListener(if (recent) null else event) { e: InputEvent ->
+        ActionUtil.performInputEventHandlerWithCallbacks(e) {
+          navigate(e)
+        }
+      }
       pinned = !onKeyRelease.isEnabled
       val onlyEdited = true == onlyEditedFiles
       myTitle = title
@@ -250,7 +254,9 @@ object Switcher : BaseSwitcherAction(null) {
               source.selectedIndex = source.anchorSelectionIndex
             }
             if (source.selectedIndex != -1) {
-              navigate(e)
+              ActionUtil.performInputEventHandlerWithCallbacks(e) {
+                navigate(e)
+              }
             }
           }
           return true

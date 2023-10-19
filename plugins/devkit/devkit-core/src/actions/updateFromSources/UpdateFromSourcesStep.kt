@@ -14,7 +14,7 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 import javax.swing.JComponent
 
-class UpdateFromSourcesStep: StepOption {
+internal class UpdateFromSourcesStep: StepOption {
   override val id = "update.from.sources"
   override val stepName: @Nls String = DevKitBundle.message("update.ide.from.sources")
   override val optionName: @Nls String = DevKitBundle.message("update.ide.from.sources.option")

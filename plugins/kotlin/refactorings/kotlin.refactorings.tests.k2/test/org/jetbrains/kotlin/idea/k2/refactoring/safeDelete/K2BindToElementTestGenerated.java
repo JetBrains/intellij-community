@@ -358,4 +358,27 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
             runTest("../../idea/tests/testData/refactoring/bindToElement/topLevelProperty/UnQualified.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/typeArgs")
+    public static class TypeArgs extends AbstractK2BindToElementTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AllTypeArguments.kt")
+        public void testAllTypeArguments() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/typeArgs/AllTypeArguments.kt");
+        }
+
+        @TestMetadata("FirstLastTypeArguments.kt")
+        public void testFirstLastTypeArguments() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/typeArgs/FirstLastTypeArguments.kt");
+        }
+
+        @TestMetadata("SingleRef.kt")
+        public void testSingleRef() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/typeArgs/SingleRef.kt");
+        }
+    }
 }

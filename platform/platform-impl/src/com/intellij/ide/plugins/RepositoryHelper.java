@@ -93,7 +93,7 @@ public final class RepositoryHelper {
     }
 
     if (!URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
-      url = url.addParameters(Map.of("build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(build)));
+      url = url.addParameters(Map.of("build", ApplicationInfoImpl.orFromPluginCompatibleBuild(build)));
     }
 
     if (indicator != null) {

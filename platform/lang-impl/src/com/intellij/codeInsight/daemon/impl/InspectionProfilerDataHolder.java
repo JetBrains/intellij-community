@@ -34,10 +34,11 @@ final class InspectionProfilerDataHolder {
   private final Map<PsiFile, InspectionFileData> data = Collections.synchronizedMap(new FixedHashMap<>(10));
 
   /**
-   * @param latencies       array of 3 elements for (ERROR,WARNING,OTHER) latency infos
-   * @param favoriteElement tool id -> {@link PsiElement} which produced some diagnostics during last run
+   * @param latencies                 array of 3 elements for (ERROR,WARNING,OTHER) latency infos
+   * @param favoriteElements  a map (tool id -> {@link PsiElement} which produced some diagnostics during last run)
    */
-  private record InspectionFileData(@NotNull Latencies @NotNull [] latencies, @NotNull Map<String, PsiElement> favoriteElement) {
+  private record InspectionFileData(@NotNull Latencies @NotNull [] latencies,
+                                    @NotNull Map<String, ? extends PsiElement> favoriteElements) {
   }
 
   static InspectionProfilerDataHolder getInstance(@NotNull Project project) {
@@ -92,20 +93,11 @@ final class InspectionProfilerDataHolder {
 
   static final class Latencies {
     final Object2LongMap<String> idToLatency = new Object2LongOpenHashMap<>();
-    long minLatency = Long.MAX_VALUE;
-    String minId;
+    // true if the passed latency won over the other saved in the map, and was saved as the new record
     void save(@NotNull InspectionRunner.InspectionContext context, long stampOf1st) {
-      long latency;
       if (stampOf1st != 0) {
-        latency = stampOf1st - context.holder.initTimeStamp;
-        idToLatency.put(context.tool.getID(), latency);
-      }
-      else {
-        latency = Long.MAX_VALUE;
-      }
-      if (latency < minLatency) {
-        minLatency = latency;
-        minId = context.tool.getID();
+        long latency = stampOf1st - context.holder().initTimeStamp;
+        idToLatency.mergeLong(context.tool().getID(), latency, (oldLatency, newLatency) -> Math.min(oldLatency, newLatency));
       }
     }
 
@@ -137,17 +129,20 @@ final class InspectionProfilerDataHolder {
       return;
     }
     Latencies[] latencies = new Latencies[3]; // ERROR,WARNING,OTHER
-    Map<String, PsiElement> favoriteElement = new HashMap<>();
+    Map<String, PsiElement> favoriteElements = new HashMap<>();
     Arrays.setAll(latencies, __ -> new Latencies());
     for (InspectionRunner.InspectionContext context : contexts) {
-      latencies[0].save(context, context.holder.errorStamp);
-      latencies[1].save(context, context.holder.warningStamp);
-      latencies[2].save(context, context.holder.otherStamp);
-      if (context.myFavoriteElement != null) {
-        favoriteElement.putIfAbsent(context.tool.getID(), context.myFavoriteElement);
+      InspectionRunner.InspectionProblemHolder holder = context.holder();
+      latencies[0].save(context, holder.errorStamp);
+      latencies[1].save(context, holder.warningStamp);
+      latencies[2].save(context, holder.otherStamp);
+      PsiElement favoriteElement = holder.myFavoriteElement;
+      if (favoriteElement != null) {
+        // The first are visible contexts, then invisible contexts. Prefer the favorite element from the visible context.
+        favoriteElements.putIfAbsent(context.tool().getID(), favoriteElement);
       }
     }
-    data.put(psiFile, new InspectionFileData(latencies, favoriteElement));
+    data.put(psiFile, new InspectionFileData(latencies, favoriteElements));
     if (LOG.isTraceEnabled()) {
       String s0 = latencies[0].topSmallestLatenciesStat("ERROR");
       String s1 = latencies[1].topSmallestLatenciesStat("WARNING");
@@ -166,7 +161,7 @@ final class InspectionProfilerDataHolder {
    * - first, contexts with inspection tools which produced errors in previous run, ordered by latency to the 1st created error
    * - second, contexts with inspection tools which produced warnings in previous run, ordered by latency to the 1st created warning
    * - last, contexts with inspection tools which produced all other problems in previous run, ordered by latency to the 1st created problem
-   * store the favorite element (i.e., the one with the lowest latency saved from the previous inspection run) to the {@link InspectionRunner.InspectionContext#myFavoriteElement}
+   * store the favorite element (i.e., the one with the lowest latency saved from the previous inspection run) to the {@link InspectionRunner.InspectionProblemHolder#myFavoriteElement}
    */
   void sortAndRetrieveFavoriteElement(@NotNull PsiFile psiFile, @NotNull List<InspectionRunner.InspectionContext> init) {
     InspectionFileData data = this.data.get(psiFile);
@@ -175,8 +170,8 @@ final class InspectionProfilerDataHolder {
       return;
     }
     init.sort((context1, context2) -> {
-      String id1 = context1.tool.getID();
-      String id2 = context2.tool.getID();
+      String id1 = context1.tool().getID();
+      String id2 = context2.tool().getID();
       for (int i = 0; i < data.latencies.length; i++) {
         Latencies l = data.latencies[i];
         int err = compareLatencies(id1, id2, l.idToLatency);
@@ -185,14 +180,14 @@ final class InspectionProfilerDataHolder {
       return 0;
     });
 
-    Map<String, PsiElement> favoriteElement = data.favoriteElement;
     for (InspectionRunner.InspectionContext context : init) {
-      PsiElement element = favoriteElement.get(context.tool.getID());
+      InspectionRunner.InspectionProblemHolder holder = context.holder();
+      PsiElement element = data.favoriteElements().get(context.tool().getID());
       if (element != null && !element.isValid()) {
         element = null;
       }
       if (element != null) {
-        context.myFavoriteElement = element;
+        holder.myFavoriteElement = element;
       }
     }
   }

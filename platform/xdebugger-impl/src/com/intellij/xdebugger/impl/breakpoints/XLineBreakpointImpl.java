@@ -114,7 +114,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
         if (myHighlighter != null && !(myHighlighter instanceof RangeHighlighter)) {
           removeHighlighter();
-          myHighlighter = null;
+          assert myHighlighter == null;
         }
 
         TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
@@ -133,6 +133,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
              // and highlighter is removed on line and file change anyway
               /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/)) {
           removeHighlighter();
+          redrawInlineInlays();
           highlighter = null;
         }
 
@@ -164,6 +165,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
           highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
           myHighlighter = highlighter;
+
+          redrawInlineInlays();
         }
         else {
           markupModel = null;
@@ -180,9 +183,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
             highlighter.setEditorFilter(filter); // to fireChanged
           }
         }
-
-        // FIXME[inline-bp]: fix this, it's quadratic redraw of all inlays
-        InlineBreakpointInlayManager.redrawInlineBreakpoints(getBreakpointManager().getLineBreakpointManager(), getProject(), file, finalDocument);
 
         callOnUpdate.run();
       });
@@ -251,20 +251,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   @Override
   protected void doDispose() {
     removeHighlighter();
-
-    // FIXME[inline-bp]: this part seems very dirty, we should modify only one inlay here or remove all of them in a line
-    if (Registry.is("debugger.show.breakpoints.inline")) {
-      var file = getFile();
-      if (file != null) {
-        var document = FileDocumentManager.getInstance().getDocument(file);
-        if (document != null) {
-          if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
-            document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
-          }
-          InlineBreakpointInlayManager.redrawInlineBreakpoints(getBreakpointManager().getLineBreakpointManager(), getProject(), file, document);
-        }
-      }
-    }
+    redrawInlineInlays();
   }
 
   private void removeHighlighter() {
@@ -277,6 +264,26 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       }
       myHighlighter = null;
     }
+  }
+
+  private void redrawInlineInlays() {
+    redrawInlineInlays(getFile(), getLine());
+  }
+
+  private void redrawInlineInlays(@Nullable VirtualFile file, int line) {
+    if (!Registry.is("debugger.show.breakpoints.inline")) return;
+
+    if (file == null) return;
+
+    var document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return;
+
+    if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
+      document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
+    }
+
+    getBreakpointManager().getLineBreakpointManager().getInlineBreakpointInlayManager().
+      redrawLine(document, line);
   }
 
   @Override
@@ -346,9 +353,12 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   public void setFileUrl(final String newUrl) {
     if (!Objects.equals(getFileUrl(), newUrl)) {
+      var oldFile = getFile();
       myState.setFileUrl(newUrl);
       mySourcePosition = null;
       removeHighlighter();
+      redrawInlineInlays(oldFile, getLine());
+      redrawInlineInlays(getFile(), getLine());
       fireBreakpointChanged();
     }
   }
@@ -358,13 +368,16 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     setLine(line, true);
   }
 
-  private void setLine(final int line, boolean removeHighlighter) {
+  private void setLine(final int line, boolean visualLineMightBeChanged) {
     if (getLine() != line) {
+      var oldLine = getLine();
       myState.setLine(line);
       mySourcePosition = null;
-      if (removeHighlighter) {
+      if (visualLineMightBeChanged) {
         removeHighlighter();
-      }
+        redrawInlineInlays(getFile(), oldLine);
+        redrawInlineInlays(getFile(), getLine());
+      } // otherwise highlighter and inlay would move together with line
       fireBreakpointChanged();
     }
   }

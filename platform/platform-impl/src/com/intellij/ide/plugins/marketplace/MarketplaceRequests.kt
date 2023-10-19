@@ -249,7 +249,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     val param = mapOf(
       "featureType" to featureType,
       "implementationName" to implementationName,
-      "build" to ApplicationInfoImpl.getShadowInstanceImpl().pluginsCompatibleBuild,
+      "build" to ApplicationInfoImpl.getShadowInstanceImpl().pluginCompatibleBuild,
     )
     return getFeatures(param)
   }
@@ -689,7 +689,7 @@ private data class CompatibleUpdateRequest(
     pluginIds: Set<PluginId>,
     buildNumber: BuildNumber? = null,
   ) : this(
-    ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
+    ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
     pluginIds.map { it.idString },
   )
 }
@@ -705,7 +705,7 @@ private data class CompatibleUpdateForModuleRequest(
     buildNumber: BuildNumber? = null,
   ) : this(
     module,
-    ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
+    ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
   )
 }
 

@@ -8,7 +8,7 @@ import serviceDeclarations.RegisteredApplicationService
 // static property with backing field
 val <warning descr="Application service must not be assigned to a static immutable property with a backing field">service1</warning> = RegisteredApplicationService.getInstance()
 
-// static property without backing field (but not an instance, so no warning)
+// static property without backing field and not being an instance
 val service2: RegisteredApplicationService
   get() = RegisteredApplicationService.getInstance()
 
@@ -32,8 +32,8 @@ class AppService(val service3: RegisteredApplicationService = RegisteredApplicat
     // static property with backing field
     val <warning descr="Application service must not be assigned to a static immutable property with a backing field">service6</warning> = RegisteredApplicationService.getInstance()
 
-    // static property without backing field, but being an instance
-    val <warning descr="Provide explicit 'getInstance()' method to access application service instead of a property">service7</warning>: AppService
+    // static property without backing field and being an instance
+    val service7: AppService
       get() = service<AppService>()
 
 
@@ -53,7 +53,7 @@ class AppService(val service3: RegisteredApplicationService = RegisteredApplicat
     // static property with backing field
     val <warning descr="Application service must not be assigned to a static immutable property with a backing field">service10</warning> = RegisteredApplicationService.getInstance()
 
-    // static property without backing field (but not an instance)
+    // static property without backing field and not being an instance
     val service11: AppService
       get() = service<AppService>()
 

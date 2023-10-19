@@ -72,7 +72,7 @@ class GitLabMergeRequestChangesImpl(
   override val commits: List<GitLabCommit> = mergeRequestDetails.commits.asReversed()
 
   override val localRepositorySynced: StateFlow<Boolean> = projectMapping.remote.repository.changesSignalFlow().withInitial(Unit).map {
-    projectMapping.remote.repository.currentRevision == mergeRequestDetails.diffRefs.headSha
+    projectMapping.remote.repository.currentRevision == mergeRequestDetails.diffRefs?.headSha
   }.stateIn(cs, SharingStarted.Lazily, false)
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
@@ -83,8 +83,9 @@ class GitLabMergeRequestChangesImpl(
 
   private suspend fun loadChanges(commits: List<GitLabCommit>): GitBranchComparisonResult {
     val repository = projectMapping.remote.repository
-    val baseSha = mergeRequestDetails.diffRefs.startSha
-    val mergeBaseSha = mergeRequestDetails.diffRefs.baseSha ?: error("Missing merge base revision")
+    val diffRefs = mergeRequestDetails.diffRefs ?: error("Missing diff refs")
+    val baseSha = diffRefs.startSha
+    val mergeBaseSha = diffRefs.baseSha ?: error("Missing merge base revision")
 
     val commitsWithPatches = withContext(Dispatchers.IO) {
       coroutineScope {
@@ -116,7 +117,7 @@ class GitLabMergeRequestChangesImpl(
 
   override suspend fun ensureAllRevisionsFetched() {
     val revsToCheck = commits.map { it.sha }.toMutableList()
-    mergeRequestDetails.diffRefs.baseSha?.also {
+    mergeRequestDetails.diffRefs?.baseSha?.also {
       revsToCheck.add(it)
     }
     withContext(Dispatchers.IO) {

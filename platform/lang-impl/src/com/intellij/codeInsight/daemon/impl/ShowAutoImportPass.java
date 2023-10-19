@@ -102,7 +102,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
       if (DumbService.isDumb(myProject) || !myFile.isValid()) {
         return;
       }
-      if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) {
+      if (myEditor.isDisposed() || myEditor instanceof EditorWindow window && !window.isValid()) {
         return;
       }
 
@@ -189,8 +189,8 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
     info.findRegisteredQuickFix((descriptor, range) -> {
       ProgressManager.checkCanceled();
       IntentionAction action = descriptor.getAction();
-      if (action instanceof HintAction) {
-        result.add((HintAction)action);
+      if (action instanceof HintAction hint) {
+        result.add(hint);
       }
       return null;
     });

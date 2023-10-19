@@ -12,10 +12,16 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.openapi.vfs.newvfs.refreshVFSAsync
+import com.intellij.util.SystemProperties
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 internal fun scheduleInitialVfsRefresh(project: Project, log: Logger) {
+  if (skipInitialRefresh()) {
+    notifyVfsRefreshIsFinished(project)
+    return
+  }
+
   val projectId: String = project.locationHash
   log.info("$projectId: marking roots for initial VFS refresh")
   ProjectRootManagerEx.getInstanceEx(project).markRootsForRefresh()
@@ -27,20 +33,29 @@ internal fun scheduleInitialVfsRefresh(project: Project, log: Logger) {
     project.coroutineScope.launch {
       refreshVFSAsync()
       timeInitialVfsRefresh(t, project, log)
-      (project.service<ProjectInitialActivitiesNotifier>() as ProjectInitialActivitiesNotifierImpl).notifyInitialVfsRefreshFinished()
+      notifyVfsRefreshIsFinished(project)
     }
   }
   else {
     ApplicationManager.getApplication().invokeAndWait {
       VirtualFileManager.getInstance().syncRefresh()
       timeInitialVfsRefresh(t, project, log)
-      (project.service<ProjectInitialActivitiesNotifier>() as ProjectInitialActivitiesNotifierImpl).notifyInitialVfsRefreshFinished()
+      notifyVfsRefreshIsFinished(project)
     }
   }
+}
+
+private fun notifyVfsRefreshIsFinished(project: Project) {
+  (project.service<ProjectInitialActivitiesNotifier>() as ProjectInitialActivitiesNotifierImpl).notifyInitialVfsRefreshFinished()
 }
 
 private fun timeInitialVfsRefresh(t: Long, project: Project, log: Logger) {
   val duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
   log.info(project.locationHash + ": initial VFS refresh finished " + duration + " ms")
   VfsUsageCollector.logInitialRefresh(project, duration)
+}
+
+private fun skipInitialRefresh(): Boolean {
+  return SystemProperties.getBooleanProperty("ij.indexes.skip.initial.refresh", false) ||
+         ApplicationManager.getApplication().isUnitTestMode
 }

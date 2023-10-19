@@ -8,7 +8,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.ui.hasher
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.io.*
 import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions
@@ -76,7 +75,7 @@ private fun openSvgCache(dbDir: Path): PersistentMapBase<LongArray, IconValue> {
 private fun createMap(dbFile: Path): PersistentMapBase<LongArray, IconValue> {
   val builder = PersistentMapBuilder.newBuilder(dbFile, object : KeyDescriptor<LongArray> {
     override fun getHashCode(value: LongArray): Int {
-      return hasher.hashLongLongToLong(value[0], value[1]).toInt()
+      return Hashing.komihash5_0().hashLongLongToLong(value[0], value[1]).toInt()
     }
 
     override fun save(out: DataOutput, value: LongArray) {

@@ -394,7 +394,7 @@ object PluginManagerCore {
     get() {
       var result = ourBuildNumber
       if (result == null) {
-        result = BuildNumber.fromPluginsCompatibleBuild()
+        result = BuildNumber.fromPluginCompatibleBuild()
         if (logger.isDebugEnabled()) {
           logger.debug("getBuildNumber: fromPluginsCompatibleBuild=" + (result?.asString() ?: "null"))
         }
@@ -430,7 +430,7 @@ object PluginManagerCore {
           set.add(PluginId.getId(it))
         }
       }
-      set.addAll(ApplicationInfoImpl.getShadowInstance().getEssentialPluginsIds())
+      set.addAll(ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds())
       val selectedPlugins = LinkedHashSet<IdeaPluginDescriptorImpl>(set.size)
       for (id in set) {
         val descriptor = idMap[id] ?: continue
@@ -463,7 +463,7 @@ object PluginManagerCore {
     }
 
     if (explicitlyEnabled == null && shouldLoadPlugins) {
-      for (essentialId in ApplicationInfoImpl.getShadowInstance().getEssentialPluginsIds()) {
+      for (essentialId in ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds()) {
         val essentialPlugin = idMap[essentialId] ?: continue
         for (incompatibleId in essentialPlugin.incompatibilities) {
           val incompatiblePlugin = idMap[incompatibleId] ?: continue
@@ -546,7 +546,7 @@ object PluginManagerCore {
   }
 
   private fun checkEssentialPluginsAreAvailable(idMap: Map<PluginId, IdeaPluginDescriptorImpl>) {
-    val required = ApplicationInfoImpl.getShadowInstance().getEssentialPluginsIds()
+    val required = ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds()
     var missing: MutableList<String>? = null
     for (id in required) {
       val descriptor = idMap.get(id)

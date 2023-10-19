@@ -54,7 +54,7 @@ import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.compute
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.computeWithSpanThrows;
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
-import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
+import static git4idea.history.GitCommitRequirements.DiffRenames;
 import static git4idea.telemetry.GitTelemetrySpan.LogProvider.*;
 
 public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
@@ -316,7 +316,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     }
 
     GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(repository),
-                                                                   DiffRenameLimit.GitConfig.INSTANCE,
+                                                                   DiffRenames.Limit.Default.INSTANCE,
                                                                    DiffInMergeCommits.DIFF_TO_PARENTS);
     GitLogUtil.readFullDetailsForHashes(myProject, root, hashes, requirements, commitConsumer);
   }

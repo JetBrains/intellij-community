@@ -10,10 +10,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.util.ui.ImageUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.File
@@ -34,12 +31,21 @@ private val LOG: Logger
  * Example: %takeScreenshot onExit
 </fullPathToFile> */
 class TakeScreenshotCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+
+  @Suppress("UNUSED") //Needs for Driver
+  constructor() : this("", 0)
+
   companion object {
     const val PREFIX: String = CMD_PREFIX + "takeScreenshot"
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
     takeScreenshotOfAllWindows(extractCommandArgument(PREFIX).ifEmpty { "beforeExit" })
+  }
+
+  @Suppress("UNUSED") //Needs for Driver
+  fun takeScreenshot(childFolder: String?) {
+    runBlocking { takeScreenshotOfAllWindows(childFolder) }
   }
 }
 
@@ -69,7 +75,7 @@ fun takeScreenshotWithAwtRobot(fullPathToFile: String) {
 }
 
 suspend fun captureComponent(component: Component, file: File) {
-  if(component.width == 0 || component.height == 0) {
+  if (component.width == 0 || component.height == 0) {
     LOG.info(component.name + " has zero size, skipping")
     LOG.info(component.javaClass.toString())
     return

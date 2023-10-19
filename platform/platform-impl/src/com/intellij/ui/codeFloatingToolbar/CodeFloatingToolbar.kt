@@ -30,8 +30,11 @@ import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.awt.Dimension
 import java.awt.Point
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
 /**
@@ -45,10 +48,22 @@ class CodeFloatingToolbar(
 
   companion object {
     private val FLOATING_TOOLBAR = Key<CodeFloatingToolbar>("floating.codeToolbar")
-    
+
+    private var TEMPORARILY_DISABLED = false
+
     @JvmStatic
     fun getToolbar(editor: Editor?): CodeFloatingToolbar? {
       return editor?.getUserData(FLOATING_TOOLBAR)
+    }
+
+    @JvmStatic
+    fun temporarilyDisable(disable: Boolean = true) {
+      TEMPORARILY_DISABLED = disable
+    }
+
+    @JvmStatic
+    fun isTemporarilyDisabled(): Boolean {
+      return TEMPORARILY_DISABLED
     }
   }
 
@@ -66,7 +81,7 @@ class CodeFloatingToolbar(
     if (!selection.hasSelection()) return false
     val range = editor.calculateVisibleRange()
     if (selection.selectionStart !in range && selection.selectionEnd !in range) return false
-    return editor.document.isWritable && !AdvancedSettings.getBoolean("floating.codeToolbar.hide")
+    return editor.document.isWritable && !AdvancedSettings.getBoolean("floating.codeToolbar.hide") && !TEMPORARILY_DISABLED
   }
 
   override fun disableForDoubleClickSelection(): Boolean = true
@@ -150,6 +165,20 @@ class CodeFloatingToolbar(
     }
   }
 
+  override suspend fun createHint(): LightweightHint {
+    val hint = super.createHint()
+    val buttons = UIUtil.findComponentsOfType(hint.component, ActionButton::class.java)
+    buttons.filter { button -> button.presentation.isPopupGroup }.forEach { button ->
+      button.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+      button.addMouseEnteredListener(300) {
+        ApplicationManager.getApplication().invokeLater {
+          button.click()
+        }
+      }
+    }
+    return hint
+  }
+
   private fun getContextAwareGroupId(editor: Editor): String? {
     val project = editor.project ?: return null
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
@@ -205,5 +234,26 @@ class CodeFloatingToolbar(
     }
     point.translate(1, 1)
     popup.setLocation(point)
+  }
+
+  private fun JComponent.addMouseEnteredListener(delayMs: Long, listener: (e: MouseEvent?) -> Unit) {
+    var mouseWasOutsideOfComponent: Boolean
+    addMouseListener(object : java.awt.event.MouseListener{
+      override fun mouseEntered(e: MouseEvent?) {
+        coroutineScope.launch {
+          mouseWasOutsideOfComponent = false
+          delay(delayMs)
+          if (!mouseWasOutsideOfComponent) {
+            listener.invoke(e)
+          }
+        }
+      }
+      override fun mouseClicked(e: MouseEvent?) { }
+      override fun mousePressed(e: MouseEvent?) { }
+      override fun mouseReleased(e: MouseEvent?) { }
+      override fun mouseExited(e: MouseEvent?) {
+        mouseWasOutsideOfComponent = true
+      }
+    })
   }
 }

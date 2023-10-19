@@ -36,7 +36,7 @@ import java.util.function.Supplier;
  *
  * @see ExtensionPointClassIndex
  */
-public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
+public final class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
 
   private static final ID<String, Integer> NAME = ID.create("devkit.ExtensionPointIndex");
 

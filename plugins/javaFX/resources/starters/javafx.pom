@@ -81,7 +81,7 @@
       <dependency>
         <groupId>eu.hansolo</groupId>
         <artifactId>tilesfx</artifactId>
-        <version>17.1.17</version>
+        <version>11.48</version>
       </dependency>
       <dependency>
         <groupId>com.github.almasb</groupId>

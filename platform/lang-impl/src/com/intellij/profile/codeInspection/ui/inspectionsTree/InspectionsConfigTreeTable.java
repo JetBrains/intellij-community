@@ -153,6 +153,14 @@ public final class InspectionsConfigTreeTable extends TreeTable {
            : null;
   }
 
+  @Nullable
+  public InspectionConfigTreeNode.Group getStrictlySelectedGroupNode() {
+    TreePath[] paths = getTree().getSelectionPaths();
+    return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Group
+           ? (InspectionConfigTreeNode.Group)paths[0].getLastPathComponent()
+           : null;
+  }
+
   public Collection<InspectionConfigTreeNode.Tool> getSelectedToolNodes() {
     return InspectionsAggregationUtil.getInspectionsNodes(getTree().getSelectionPaths());
   }

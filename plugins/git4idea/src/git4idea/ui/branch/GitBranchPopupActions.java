@@ -541,15 +541,15 @@ public final class GitBranchPopupActions {
         GitRepository repository = repositories.get(0);
         GitRemoteBranch remoteBranch = Objects.requireNonNull(repository.getBranches().findRemoteBranch(remoteBranchName));
         String suggestedLocalName = remoteBranch.getNameForRemoteOperations();
-        checkoutRemoteBranch(project, repositories, remoteBranchName, suggestedLocalName);
+        checkoutRemoteBranch(project, repositories, remoteBranchName, suggestedLocalName, null);
       }
 
       @RequiresEdt
       public static void checkoutRemoteBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
-                                              @NotNull String remoteBranchName, @NotNull String suggestedLocalName) {
+                                              @NotNull String remoteBranchName, @NotNull String suggestedLocalName, @Nullable Runnable callInAwtLater) {
         // can have remote conflict if git-svn is used  - suggested local name will be equal to selected remote
         if (BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, suggestedLocalName)) {
-          askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName);
+          askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName, callInAwtLater);
           return;
         }
 
@@ -559,16 +559,17 @@ public final class GitBranchPopupActions {
         });
 
         if (hasTrackingConflicts(conflictingLocalBranches, remoteBranchName)) {
-          askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName);
+          askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName, callInAwtLater);
           return;
         }
         new GitBranchCheckoutOperation(project, repositories)
-          .perform(remoteBranchName, new GitNewBranchOptions(suggestedLocalName, true, true));
+          .perform(remoteBranchName, new GitNewBranchOptions(suggestedLocalName, true, true), callInAwtLater);
       }
 
       @RequiresEdt
       private static void askNewBranchNameAndCheckout(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
-                                                      @NotNull String remoteBranchName, @NotNull String suggestedLocalName) {
+                                                      @NotNull String remoteBranchName, @NotNull String suggestedLocalName,
+                                                      @Nullable Runnable callInAwtLater) {
         //do not allow name conflicts
         GitNewBranchOptions options =
           new GitNewBranchDialog(project, repositories, GitBundle.message("branches.checkout.s", remoteBranchName), suggestedLocalName,
@@ -576,7 +577,7 @@ public final class GitBranchPopupActions {
             .showAndGetOptions();
         if (options == null) return;
         GitBrancher brancher = GitBrancher.getInstance(project);
-        brancher.checkoutNewBranchStartingFrom(options.getName(), remoteBranchName, options.shouldReset(), repositories, null);
+        brancher.checkoutNewBranchStartingFrom(options.getName(), remoteBranchName, options.shouldReset(), repositories, callInAwtLater);
       }
     }
 

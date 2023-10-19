@@ -21,12 +21,12 @@ public final class EditorNotificationActions {
     Project project = hostEditor.getProject();
     if (project == null) return;
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-    if (!(fileEditorManager instanceof FileEditorManagerImpl)) return;
+    if (!(fileEditorManager instanceof FileEditorManagerImpl impl)) return;
     TextEditor fileEditor = TextEditorProvider.getInstance().getTextEditor(hostEditor);
-    List<JComponent> components = ((FileEditorManagerImpl)fileEditorManager).getTopComponents(fileEditor);
+    List<JComponent> components = impl.getTopComponents(fileEditor);
     for (JComponent component : components) {
-      if (component instanceof IntentionActionProvider) {
-        IntentionActionWithOptions action = ((IntentionActionProvider)component).getIntentionAction();
+      if (component instanceof IntentionActionProvider provider) {
+        IntentionActionWithOptions action = provider.getIntentionAction();
         if (action != null) {
           intentions.notificationActionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, action.getOptions(), null, null, null, null, null));
         }

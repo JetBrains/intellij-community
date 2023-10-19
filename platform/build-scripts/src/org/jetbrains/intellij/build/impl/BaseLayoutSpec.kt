@@ -72,6 +72,10 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.withModuleLibrary(libraryName = libraryName, moduleName = moduleName, relativeOutputPath = relativeOutputPath, extraCopy = extraCopy)
   }
 
+  fun excludeModuleLibrary(libraryName: String, moduleName: String) {
+    layout.excludedModuleLibraries.putValue(moduleName, libraryName)
+  }
+
   /**
    * Exclude the specified files when [moduleName] is packed into JAR file.
    * <strong>This is a temporary method added to keep the layout of some old plugins. If some files from a module shouldn't be included in the

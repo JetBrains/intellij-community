@@ -15,3 +15,6 @@ val JsonElement.asSafeJsonArray: JsonArray?
 
 val JsonElement.asSafeString: String?
   get() = runCatching { asString }.getOrNull()
+
+val JsonElement.asSafeInt: Int?
+  get() = runCatching { asInt }.getOrNull()

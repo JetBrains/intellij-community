@@ -15,10 +15,9 @@ import com.intellij.util.ui.EDT
 import com.intellij.xdebugger.*
 import javax.swing.SwingUtilities
 
-private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption("ide.debug.in.title", null)) {
-  companion object {
-    private fun getHelper(project: Project) = project.service<DebuggerTitleInfoProviderService>()
-  }
+internal class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption("ide.debug.in.title", null)) {
+
+  private fun getHelper(project: Project) = project.service<DebuggerTitleInfoProviderService>()
 
   init {
     option.listener = {
@@ -75,7 +74,8 @@ private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption
 
       if (EDT.isCurrentThreadEdt()) {
         action()
-      } else {
+      }
+      else {
         // Some debuggers are known to terminate their debug sessions outside the EDT (RIDER-66994). Reschedule title update for this case.
         SwingUtilities.invokeLater(::action)
       }

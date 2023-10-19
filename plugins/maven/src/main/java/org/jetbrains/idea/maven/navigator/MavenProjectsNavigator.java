@@ -291,7 +291,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
         toolWindow.remove();
       }
     });
-    final ContentFactory contentFactory = ApplicationManager.getApplication().getService(ContentFactory.class);
+    final ContentFactory contentFactory = ContentFactory.getInstance();
     final Content content = contentFactory.createContent(panel, "", false);
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, false);

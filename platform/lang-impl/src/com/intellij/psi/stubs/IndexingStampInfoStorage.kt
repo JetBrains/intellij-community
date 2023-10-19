@@ -6,13 +6,15 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.dev.FastFileAttributes
 import com.intellij.util.BitUtil
 import com.intellij.util.indexing.impl.perFileVersion.AutoRefreshingOnVfsCloseRef
+import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute
 import com.intellij.util.io.DataInputOutputUtil
 import java.io.IOException
 
 internal sealed interface IndexingStampInfoStorage {
   companion object {
     @JvmStatic
-    fun create(id: String, version: Int, fast: Boolean): IndexingStampInfoStorage {
+    fun create(id: String, version: Int): IndexingStampInfoStorage {
+      val fast = IntFileAttribute.shouldUseFastAttributes()
       val attribute = FileAttribute(id, version, true)
       return if (fast) IndexingStampInfoStorageOverFastAttributes(attribute) else IndexingStampStorageOverRegularAttributes(attribute)
     }

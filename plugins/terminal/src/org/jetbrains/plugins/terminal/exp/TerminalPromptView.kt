@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.components.panels.ListLayout
@@ -19,6 +20,8 @@ import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import java.awt.Color
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -61,6 +64,13 @@ class TerminalPromptView(
     component.layout = ListLayout.vertical(TerminalUi.promptToCommandInset)
     component.add(promptLabel)
     component.add(editorTextField)
+
+    // move focus to the prompt text field on mouse click in the area of the prompt
+    component.addMouseListener(object : MouseAdapter() {
+      override fun mousePressed(e: MouseEvent?) {
+        IdeFocusManager.getInstance(project).requestFocus(editor.contentComponent, true)
+      }
+    })
   }
 
   override fun promptLabelChanged(newText: @NlsSafe String) {

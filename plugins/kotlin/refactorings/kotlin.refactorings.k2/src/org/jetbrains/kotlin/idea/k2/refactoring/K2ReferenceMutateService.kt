@@ -99,10 +99,16 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return importedReference?.replaced(newImportReferenceExpression)
     }
 
-    private fun KtTypeElement.replaceWith(fqName: FqName): KtTypeElement {
-        val newReference = KtPsiFactory(project)
-            .createType(fqName.asString()).typeElement ?: error("Could not create type from $fqName")
-        return replaced(newReference)
+    private fun KtUserType.replaceWith(fqName: FqName): KtUserType {
+        return if (qualifier == null) {
+            val typeArgText = typeArgumentList?.text ?: ""
+            val newReference = KtPsiFactory(project).createType(fqName.asString() + typeArgText).typeElement as? KtUserType
+                ?: error("Could not create type from $fqName")
+            replaced(newReference)
+        } else {
+            if (!fqName.isRoot) qualifier?.replaceWith(fqName.parent()) // do recursive short name replacement to preserve type arguments
+            referenceExpression?.replaceShortName(fqName)?.parent as KtUserType
+        }
     }
 
     private fun KtDotQualifiedExpression.replaceWith(fqName: FqName): KtExpression? {

@@ -11,8 +11,11 @@ import com.intellij.collaboration.util.resolveRelative
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabRepositoryDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpResponse
@@ -40,5 +43,45 @@ suspend fun GitLabApi.Rest.getProjectUsers(uri: URI): HttpResponse<out List<GitL
   }
 }
 
+@SinceGitLab("12.0")
+suspend fun GitLabApi.GraphQL.getProjectRepository(
+  project: GitLabProjectCoordinates
+): HttpResponse<out GitLabRepositoryDTO> {
+  val parameters = mapOf(
+    "fullPath" to project.projectPath.fullPath()
+  )
+
+  val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT_REPOSITORY, parameters)
+  return withErrorStats(GitLabGQLQuery.GET_PROJECT_REPOSITORY) {
+    loadResponse<GitLabRepositoryDTO>(request, "project", "repository")
+  }
+}
+
+@SinceGitLab("13.1")
+suspend fun GitLabApi.GraphQL.createMergeRequest(
+  project: GitLabProjectCoordinates,
+  sourceBranch: String,
+  targetBranch: String,
+  title: String
+): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
+  val parameters = mapOf(
+    "projectId" to project.projectPath.fullPath(),
+    "sourceBranch" to sourceBranch,
+    "targetBranch" to targetBranch,
+    "title" to title
+  )
+
+  val request = gitLabQuery(GitLabGQLQuery.MERGE_REQUEST_CREATE, parameters)
+  return withErrorStats(GitLabGQLQuery.MERGE_REQUEST_CREATE) {
+    loadResponse<GitLabCreateMergeRequestResult>(request, "mergeRequestCreate")
+  }
+}
+
 private class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelDTO>)
   : GraphQLConnectionDTO<GitLabLabelDTO>(pageInfo, nodes)
+
+private class GitLabCreateMergeRequestResult(
+  mergeRequest: GitLabMergeRequestDTO,
+  errors: List<String>?,
+  override val value: GitLabMergeRequestDTO = mergeRequest
+) : GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>(errors)

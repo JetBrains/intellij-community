@@ -15,10 +15,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class UnspecifiedActionsPlaceInspection extends DevKitUastInspectionBase {
+final class UnspecifiedActionsPlaceInspection extends DevKitUastInspectionBase {
 
   private static final boolean SKIP_CHILDREN = true;
 

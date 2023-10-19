@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -18,18 +19,22 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.GitlabIcons
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 @Service(Service.Level.PROJECT)
 class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineScope) {
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val mergeRequestReviewVmState: StateFlow<GitLabMergeRequestReviewViewModel?> =
-    project.service<GitLabToolWindowViewModel>().projectVm.flatMapLatest {
+  private val mergeRequestReviewVmState: StateFlow<GitLabMergeRequestEditorReviewViewModel?> by lazy {
+    val toolWindowVm = project.service<GitLabToolWindowViewModel>()
+    toolWindowVm.projectVm.flatMapLatest {
       it?.currentMergeRequestReviewVm ?: flowOf(null)
+    }.onStart {
+      toolWindowVm.loginIfPossible()
     }.stateIn(cs, SharingStarted.Eagerly, null)
+  }
 
   class BranchPresenter : GitCurrentBranchPresenter {
     override fun getPresentation(repository: GitRepository): GitCurrentBranchPresenter.Presentation? {
@@ -39,24 +44,24 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
       })
       val changesState = vm.actualChangesState.value
       return when (changesState) {
-        GitLabMergeRequestReviewViewModel.ChangesState.Error -> GitCurrentBranchPresenter.Presentation(
+        GitLabMergeRequestEditorReviewViewModel.ChangesState.Error -> GitCurrentBranchPresenter.Presentation(
           GitlabIcons.GitLabLogo,
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
           GitLabBundle.message("merge.request.on.branch.error", vm.mergeRequestIid, currentBranchName)
         )
-        GitLabMergeRequestReviewViewModel.ChangesState.Loading -> GitCurrentBranchPresenter.Presentation(
+        GitLabMergeRequestEditorReviewViewModel.ChangesState.Loading -> GitCurrentBranchPresenter.Presentation(
           CollaborationToolsUIUtil.animatedLoadingIcon,
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
           GitLabBundle.message("merge.request.on.branch.loading", vm.mergeRequestIid)
         )
-        GitLabMergeRequestReviewViewModel.ChangesState.OutOfSync -> GitCurrentBranchPresenter.Presentation(
+        GitLabMergeRequestEditorReviewViewModel.ChangesState.OutOfSync -> GitCurrentBranchPresenter.Presentation(
           GitlabIcons.GitLabLogo,
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
           GitLabBundle.message("merge.request.on.branch.out.of.sync", vm.mergeRequestIid, currentBranchName),
           hasIncomingChanges = true, hasOutgoingChanges = true
         )
-        GitLabMergeRequestReviewViewModel.ChangesState.NotLoaded,
-        is GitLabMergeRequestReviewViewModel.ChangesState.Loaded -> GitCurrentBranchPresenter.Presentation(
+        GitLabMergeRequestEditorReviewViewModel.ChangesState.NotLoaded,
+        is GitLabMergeRequestEditorReviewViewModel.ChangesState.Loaded -> GitCurrentBranchPresenter.Presentation(
           GitlabIcons.GitLabLogo,
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
           GitLabBundle.message("merge.request.on.branch.description", vm.mergeRequestIid, currentBranchName)
@@ -69,7 +74,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-      val action = e.project?.service<GitLabMergeRequestOnCurrentBranchService>()?.mergeRequestReviewVmState?.value?.let {
+      val action = e.project?.serviceIfCreated<GitLabMergeRequestOnCurrentBranchService>()?.mergeRequestReviewVmState?.value?.let {
         { it.showMergeRequest() }
       }
       e.presentation.isEnabledAndVisible = action != null

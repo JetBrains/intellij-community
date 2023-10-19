@@ -1606,10 +1606,13 @@ public final class MavenProjectsTree {
       return this;
     }
 
-    public Updater setRootProject(MavenProject root) {
+    public Updater setRootProjects(List<MavenProject> roots) {
       myRootProjects.clear();
-      myRootProjects.add(root);
-      myVirtualFileToProjectMapping.put(root.getFile(), root);
+      myRootProjects.addAll(roots);
+      roots.forEach(root -> {
+        myVirtualFileToProjectMapping.put(root.getFile(), root);
+      });
+
       return this;
     }
 

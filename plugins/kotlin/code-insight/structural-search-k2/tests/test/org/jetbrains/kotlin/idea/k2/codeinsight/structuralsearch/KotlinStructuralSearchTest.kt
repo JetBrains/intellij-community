@@ -14,9 +14,12 @@ import com.intellij.structuralsearch.plugin.ui.SearchConfiguration
 import com.intellij.structuralsearch.plugin.ui.UIUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.SmartList
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 
 abstract class KotlinStructuralSearchTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -54,6 +57,13 @@ abstract class KotlinStructuralSearchTest : KotlinLightCodeInsightFixtureTestCas
         assertNull("Constraint applicability error: $message\n", message)
         StructuralSearchProfileActionProvider.createNewInspection(myConfiguration, project)
         myFixture.testHighlighting(true, false, false)
+    }
+
+    override fun tearDown() {
+        runAll(
+            ThrowableRunnable { project.invalidateCaches() },
+            ThrowableRunnable { super.tearDown() }
+        )
     }
 
     companion object {

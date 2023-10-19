@@ -99,8 +99,6 @@ class TestJbService : JbService {
         IconProductSize.LARGE -> AllIcons.General.SuccessLogin
       }
     }
-
-
   }
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
@@ -142,6 +140,8 @@ class TestExternalService : ExternalService {
   companion object {
     private val LOG = logger<TestExternalService>()
   }
+
+  override suspend fun warmUp() {}
 
   override fun products(): List<Product> {
     return listOf(TestJbService.main2)
@@ -198,7 +198,7 @@ class TestSyncService : SyncService {
   }
 
   override fun getMainProduct(): Product? {
-    return null //TestJbService.main
+    return TestJbService.main
   }
 
   override fun products(): List<Product> {
@@ -260,7 +260,6 @@ class TestImportFromProduct(
 class TestImportProgress(lifetime: Lifetime) : ImportProgress {
   override val progressMessage = Property<String?>(null)
   override val progress = OptProperty<Int>()
-  override val error = OptProperty<ImportError>()
 
   private var value: Int = 0
   private val list = listOf("Plugins: Docker", "Connect to WebApp", "Connect", "Show configuration on toolbar")

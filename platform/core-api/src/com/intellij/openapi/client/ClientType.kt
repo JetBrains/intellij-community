@@ -14,6 +14,12 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 enum class ClientType {
   LOCAL,
+
+  @ApiStatus.Internal
+  @Deprecated("This api will be removed")
+  // This api will be removed as soon as Rider is able to run separate projects in different processes. Ask Rider Team
+  FRONTEND,
+
   CONTROLLER,
   GUEST;
 
@@ -27,12 +33,15 @@ enum class ClientType {
 
   val isRemote: Boolean get() = isController || isGuest
 
+  val isFrontend: Boolean get() = this == FRONTEND
+
   fun matches(kind: ClientKind): Boolean {
     return kind == ClientKind.ALL ||
            kind == ClientKind.LOCAL && isLocal ||
            kind == ClientKind.CONTROLLER && isController ||
            kind == ClientKind.GUEST && isGuest ||
            kind == ClientKind.OWNER && isOwner ||
-           kind == ClientKind.REMOTE && isRemote
+           kind == ClientKind.REMOTE && isRemote ||
+           kind == ClientKind.FRONTEND && isFrontend
   }
 }

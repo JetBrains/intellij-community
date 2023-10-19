@@ -66,39 +66,44 @@ public final class StorageTestingUtils {
         continue;
       }
 
-      field.setAccessible(true);
-      Object fieldValue = field.get(storage);
-      if (isUntouchable(fieldValue)) {
-        //log(depth, field, "skipped");
-        continue;
-      }
+      try {
+        field.setAccessible(true);
+        Object fieldValue = field.get(storage);
+        if (isUntouchable(fieldValue)) {
+          //log(depth, field, "skipped");
+          continue;
+        }
 
 
-      //'raw' storages:
-      if (fieldValue instanceof MMappedFileStorage) {
-        log(depth, field, "closing");
-        //... and unmap because otherwise there would be issues with removing underlying file on Windows
-        ((MMappedFileStorage)fieldValue).closeAndUnsafelyUnmap();
+        //'raw' storages:
+        if (fieldValue instanceof MMappedFileStorage) {
+          log(depth, field, "closing");
+          //... and unmap because otherwise there would be issues with removing underlying file on Windows
+          ((MMappedFileStorage)fieldValue).closeAndUnsafelyUnmap();
+        }
+        else if (fieldValue instanceof MappedFileStorageHelper) {
+          //MappedFileStorageHelper keeps its own registry of opened helpers, so we should close helper explicitly,
+          // and can't just dive deeper and close underlying MMappedFileStorage -- otherwise MappedFileStorageHelper
+          // denies re-opening the same file later
+          log(depth, field, "closing");
+          //... and unmap because otherwise there would be issues with removing underlying file on Windows
+          ((MappedFileStorageHelper)fieldValue).closeAndUnsafelyUnmap();
+        }
+        else if (fieldValue instanceof PagedStorage) {
+          log(depth, field, "closing");
+          ((PagedStorage)fieldValue).close();
+        }
+        else if (fieldValue instanceof PagedFileStorage) {
+          log(depth, field, "closing");
+          ((PagedFileStorage)fieldValue).close();
+        }
+        else {
+          log(depth, field, "diving deeper...");
+          emulateImproperClose(fieldValue, alreadyProcessed, depth + 1);
+        }
       }
-      else if (fieldValue instanceof MappedFileStorageHelper) {
-        //MappedFileStorageHelper keeps its own registry of opened helpers, so we should close helper explicitly,
-        // and can't just dive deeper and close underlying MMappedFileStorage -- otherwise MappedFileStorageHelper
-        // denies re-opening the same file later
-        log(depth, field, "closing");
-        //... and unmap because otherwise there would be issues with removing underlying file on Windows
-        ((MappedFileStorageHelper)fieldValue).closeAndUnsafelyUnmap();
-      }
-      else if (fieldValue instanceof PagedStorage) {
-        log(depth, field, "closing");
-        ((PagedStorage)fieldValue).close();
-      }
-      else if (fieldValue instanceof PagedFileStorage) {
-        log(depth, field, "closing");
-        ((PagedFileStorage)fieldValue).close();
-      }
-      else {
-        log(depth, field, "diving deeper...");
-        emulateImproperClose(fieldValue, alreadyProcessed, depth + 1);
+      catch (Throwable t) {
+        log(depth, field, "failed: " + t.getMessage());
       }
     }
   }
@@ -166,15 +171,19 @@ public final class StorageTestingUtils {
         //log(depth + 1, field, "ignore");
         continue;
       }
+      try {
+        field.setAccessible(true);
+        Object fieldValue = field.get(value);
+        if (fieldValue == null) {
+          //log(depth + 1, field, "ignore null");
+          continue;
+        }
 
-      field.setAccessible(true);
-      Object fieldValue = field.get(value);
-      if (fieldValue == null) {
-        //log(depth + 1, field, "ignore null");
-        continue;
+        bestEffortToCloseAndClean(field.getName(), fieldValue, alreadyProcessed, depth + 1);
       }
-
-      bestEffortToCloseAndClean(field.getName(), fieldValue, alreadyProcessed, depth + 1);
+      catch (Throwable t) {
+        log(depth, field, "failed: " + t.getMessage());
+      }
     }
   }
 
@@ -236,14 +245,19 @@ public final class StorageTestingUtils {
         continue;
       }
 
-      field.setAccessible(true);
-      Object fieldValue = field.get(value);
-      if (fieldValue == null) {
-        //log(depth + 1, field, "ignore null");
-        continue;
-      }
+      try {
+        field.setAccessible(true);
+        Object fieldValue = field.get(value);
+        if (fieldValue == null) {
+          //log(depth + 1, field, "ignore null");
+          continue;
+        }
 
-      bestEffortToCloseAndUnmap(field.getName(), fieldValue, alreadyProcessed, depth + 1);
+        bestEffortToCloseAndUnmap(field.getName(), fieldValue, alreadyProcessed, depth + 1);
+      }
+      catch (Throwable t) {
+        log(depth, field, "failed: " + t.getMessage());
+      }
     }
   }
 
@@ -282,8 +296,15 @@ public final class StorageTestingUtils {
         || value instanceof Lock
         || value instanceof ReadWriteLock
         || value instanceof Executor
+        || value instanceof java.util.logging.Logger
+        || value instanceof com.intellij.openapi.diagnostic.Logger
         || value instanceof Condition) {
 
+      return true;
+    }
+
+    if (value.getClass().getPackageName().startsWith("io.opentelemetry")) {
+      //don't mess with ITel internals
       return true;
     }
 

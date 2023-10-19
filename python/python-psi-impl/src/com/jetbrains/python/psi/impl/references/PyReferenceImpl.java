@@ -241,11 +241,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final ScopeOwner resolvedOwner = processor.getOwner();
 
     final Collection<PsiElement> resolvedElements = processor.getElements();
-
-    if (referenceOwner instanceof PyTypeParameterListOwner typeParameterListOwner) {
-      tryMatchTypeParametersInDeclaration(referencedName, typeParameterListOwner, realContext, resultList, typeEvalContext);
-    }
-
     if (resolvedOwner != null && !resolvedElements.isEmpty() && !ControlFlowCache.getScope(resolvedOwner).isGlobal(referencedName)) {
       if (resolvedOwner == referenceOwner) {
         final List<Instruction> instructions = getLatestDefinitions(referencedName, resolvedOwner, realContext);
@@ -274,9 +269,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           resolveInParentScope = () -> ScopeUtil.getScopeOwner(resolvedOwner);
         }
         else {
-          if (resultList.isEmpty()) {
-            unreachableLocalDeclaration = true;
-          }
+          unreachableLocalDeclaration = true;
         }
       }
       else if (referenceOwner != null) {
@@ -317,18 +310,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             continue;
           }
           if (definer == null) {
-            if (resolved instanceof PyTypeParameter) {
-              if (resolvedOwner != referenceOwner ||
-                  PsiTreeUtil.getParentOfType(realContext, PyAnnotation.class, PyTypeCommentOwner.class) != null) {
-                resultList.poke(resolved, RatedResolveResult.RATE_HIGH);
-              }
-              else {
-                resultList.poke(resolved, RatedResolveResult.RATE_LOW);
-              }
-            }
-            else {
-              resultList.poke(resolved, getRate(resolved, typeEvalContext));
-            }
+            resultList.poke(resolved, getRate(resolved, typeEvalContext));
           }
           else {
             resultList.poke(definer, getRate(definer, typeEvalContext));
@@ -389,22 +371,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       .forEach(results::addAll);
 
     return results;
-  }
-
-  private static void tryMatchTypeParametersInDeclaration(@NotNull String referencedName,
-                                                          PyTypeParameterListOwner owner,
-                                                          PsiElement realContext,
-                                                          ResolveResultList resultList,
-                                                          TypeEvalContext typeEvalContext) {
-    PyTypeParameterList typeParameterList = owner.getTypeParameterList();
-    if (typeParameterList != null && PsiTreeUtil.getParentOfType(realContext, PyTypeParameterListOwner.class) != null) {
-      typeParameterList.getTypeParameters()
-        .stream().filter(typeParameter -> typeParameter.getName() != null && typeParameter.getName().equals(referencedName))
-        .forEach(typeParameter -> {
-                   resultList.add(new RatedResolveResult(getRate(typeParameter, typeEvalContext), typeParameter));
-                 }
-        );
-    }
   }
 
   @NotNull

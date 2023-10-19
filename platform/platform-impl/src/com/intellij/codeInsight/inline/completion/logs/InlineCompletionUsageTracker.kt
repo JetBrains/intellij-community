@@ -3,7 +3,7 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.render.InlineCompletionInsertPolicy
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -20,17 +20,20 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.application
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.random.Random
 
-@ApiStatus.Experimental
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 8)
+  private val GROUP = EventLogGroup("inline.completion", 9)
 
   override fun getGroup() = GROUP
+
+  private val requestIds = ContainerUtil.createConcurrentWeakMap<InlineCompletionRequest, Long>()
+
+  fun getRequestId(request: InlineCompletionRequest): Long = requestIds[request] ?: -1
 
   class Listener : InlineCompletionEventAdapter {
     private val lock = ReentrantLock()
@@ -39,6 +42,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     override fun onRequest(event: InlineCompletionEventType.Request) = lock.withLock {
       invocationTracker = InvocationTracker(event).also {
+        requestIds[event.request] = it.requestId
         application.runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
       }
     }
@@ -66,7 +70,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onHide(event: InlineCompletionEventType.Hide): Unit = lock.withLock {
-      showTracker?.canceled()
+      showTracker?.canceled(event.explicit)
     }
 
     override fun onEmpty(event: InlineCompletionEventType.Empty): Unit = lock.withLock {
@@ -215,7 +219,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     private var lines = 0
     private var typingDuringShow = 0
 
-    fun firstShown(element: InlineCompletionBlock) {
+    fun firstShown(element: InlineCompletionElement) {
       if (firstShown) {
         error("Already first shown")
       }
@@ -230,7 +234,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       assert(!shownLogSent)
     }
 
-    fun nextShown(element: InlineCompletionBlock) {
+    fun nextShown(element: InlineCompletionElement) {
       assert(firstShown) {
         "Call firstShown firstly"
       }
@@ -239,7 +243,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       if (suggestionLength == 0 && element.text.isNotEmpty()) {
         lines++ // first line
       }
-      when (val insertPolicy = element.insertPolicy) {
+      when (val insertPolicy = element.insertPolicy()) {
         is InlineCompletionInsertPolicy.Append -> suggestionAppendedLength += insertPolicy.caretShift
         is InlineCompletionInsertPolicy.Skip -> suggestionSkippedLength += insertPolicy.caretShift
       }
@@ -256,8 +260,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       finish(ShownEvents.FinishType.SELECTED)
     }
 
-    fun canceled() {
-      finish(ShownEvents.FinishType.CANCELED)
+    fun canceled(explicit: Boolean) {
+      finish(if (explicit) ShownEvents.FinishType.EXPLICITLY_CANCELED else ShownEvents.FinishType.IMPLICITLY_CANCELED)
     }
 
     private fun finish(finishType: ShownEvents.FinishType) {
@@ -287,7 +291,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val SHOWING_TIME = Long("showing_time")
     val FINISH_TYPE = Enum<FinishType>("finish_type")
 
-    enum class FinishType { SELECTED, CANCELED }
+    enum class FinishType { SELECTED, IMPLICITLY_CANCELED, EXPLICITLY_CANCELED }
   }
 
   private val ShownEvent: VarargEventId = GROUP.registerVarargEvent(

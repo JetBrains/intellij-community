@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.NotClosedProperlyRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.util.ExceptionUtil;
@@ -43,12 +44,14 @@ final class PersistentFSConnector {
   private static final int MAX_INITIALIZATION_ATTEMPTS = SystemProperties.getIntProperty("vfs.max-initialization-attempts", 3);
 
   public static final List<VFSRecoverer> RECOVERERS = List.of(
+    //order is important: wrap the set of problems -> try to solve them.
+    new NotClosedProperlyRecoverer(),
     new ContentStoragesRecoverer()
   );
 
   public static @NotNull VFSInitializationResult connectWithoutVfsLog(@NotNull Path cachesDir,
-                                                                      int version){
-    return connect(cachesDir, version, false, Collections.emptyList());
+                                                                      int version) {
+    return connect(cachesDir, version, /*enableVfsLog: */ false, Collections.emptyList());
   }
 
   public static @NotNull VFSInitializationResult connect(@NotNull Path cachesDir,

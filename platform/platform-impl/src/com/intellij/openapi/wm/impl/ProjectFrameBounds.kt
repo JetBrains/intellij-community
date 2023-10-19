@@ -11,7 +11,7 @@ import java.awt.Frame
 import java.awt.Rectangle
 import javax.swing.JFrame
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class ProjectFrameBounds {
   companion object {
     @JvmStatic

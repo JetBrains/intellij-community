@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.FrameBoundsConverter
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -52,7 +53,9 @@ private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "
 
 private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
 
-internal fun CoroutineScope.scheduleShowSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
+internal fun CoroutineScope.scheduleShowSplashIfNeeded(initUiDeferred: Job,
+                                                       appInfoDeferred: Deferred<ApplicationInfo>,
+                                                       args: List<String>) {
   launch(CoroutineName("showSplashIfNeeded")) {
     if (!AppMode.isLightEdit() && CommandLineArgs.isSplashNeeded(args)) {
       try {
@@ -83,6 +86,16 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferr
     // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
     // https://youtrack.jetbrains.com/issue/IDEA-286544
     initUiDeferred.join()
+
+    /*
+    Wayland doesn't have the concept of splash screens at all, so they may not appear centered.
+    Avoid showing the splash screen at all in this case up until this is solved (as, for example,
+    in java.awt.SplashScreen that works around the issue using some tricks and the native API).
+    We check only here as isWaylandToolkit calls `Toolkit.getDefaultToolkit()` - it should be done only when initUiDeferred is completed
+    */
+    if (SystemInfoRt.isLinux && SystemInfo.isWaylandToolkit()) {
+      return@launch
+    }
 
     val appInfo = appInfoDeferred.await()
     val image = span("splash preparation") {
@@ -314,23 +327,16 @@ private fun loadImageFromCache(file: Path, scale: Float, isJreHiDPIEnabled: Bool
 }
 
 private fun getCacheFile(scale: Float, appInfo: ApplicationInfo, path: String): Path {
-  val buildTime = appInfo.buildUnixTimeInMillis
-  if (buildTime == 0L) {
+  val appInfoData = ApplicationNamesInfo.getAppInfoData()
+  if (appInfoData.isEmpty()) {
     val hasher = Hashing.komihash5_0().hashStream()
-    val appInfoData = ApplicationNamesInfo.getAppInfoData()
-    if (appInfoData.isEmpty()) {
-      try {
-        hasher.putInt(Splash::class.java.classLoader.getResourceAsStream(path)?.use { it.available() } ?: 0)
-        hasher.putString("")
-      }
-      catch (e: Throwable) {
-        logger<Splash>().warn("Failed to read splash image", e)
-      }
+    try {
+      hasher.putInt(Splash::class.java.classLoader.getResourceAsStream(path)?.use { it.available() } ?: 0)
     }
-    else {
-      hasher.putInt(0)
-      hasher.putChars(appInfoData)
+    catch (e: Throwable) {
+      logger<Splash>().warn("Failed to read splash image", e)
     }
+
     hasher.putChars(path)
 
     val fileName = java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX) +
@@ -339,7 +345,7 @@ private fun getCacheFile(scale: Float, appInfo: ApplicationInfo, path: String): 
     return Path.of(PathManager.getSystemPath(), "splash", fileName)
   }
   else {
-    val fileName = java.lang.Long.toUnsignedString(buildTime, Character.MAX_RADIX) +
+    val fileName = java.lang.Long.toUnsignedString(appInfo.buildTime.toEpochSecond(), Character.MAX_RADIX) +
                    "-" +
                    Integer.toUnsignedString(path.hashCode(), Character.MAX_RADIX) +
                    "-" +

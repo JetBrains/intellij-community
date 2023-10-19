@@ -3,10 +3,11 @@ package com.intellij.codeInsight.inline.completion.listeners
 
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
-import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 import com.intellij.codeInsight.inline.completion.SimpleTypingEvent
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.isCurrent
@@ -26,10 +27,9 @@ import java.awt.event.FocusEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
-@ApiStatus.Experimental
-class InlineCompletionDocumentListener(private val editor: Editor) : BulkAwareDocumentListener {
+internal class InlineCompletionDocumentListener(private val editor: Editor) : BulkAwareDocumentListener {
   override fun documentChangedNonBulk(event: DocumentEvent) {
-    val handler = InlineCompletionHandler.getOrNull(editor)
+    val handler = InlineCompletion.getHandlerOrNull(editor)
 
     if (!(ClientEditorManager.getClientId(editor) ?: ClientId.localId).isCurrent()) {
       hideInlineCompletion(editor, handler)
@@ -44,7 +44,7 @@ class InlineCompletionDocumentListener(private val editor: Editor) : BulkAwareDo
   }
 }
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter() {
 
   override fun keyReleased(event: KeyEvent) {
@@ -84,8 +84,7 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
 }
 
 // ML-1086
-@ApiStatus.Experimental
-class InlineEditorMouseListener : EditorMouseListener {
+internal class InlineEditorMouseListener : EditorMouseListener {
   override fun mousePressed(event: EditorMouseEvent) {
     LOG.trace("Valuable mouse pressed event $event")
     hideInlineCompletion(event.editor)
@@ -96,7 +95,7 @@ class InlineEditorMouseListener : EditorMouseListener {
   }
 }
 
-class InlineCompletionFocusListener : FocusChangeListener {
+internal class InlineCompletionFocusListener : FocusChangeListener {
   override fun focusLost(editor: Editor, event: FocusEvent) {
     LOG.trace("Losing focus with ${event}, ${event.cause}")
     hideInlineCompletion(editor)
@@ -112,7 +111,7 @@ class InlineCompletionFocusListener : FocusChangeListener {
  * * A caret added/removed.
  * * A new caret offset doesn't correspond to [expectedOffset].
  */
-class InlineSessionWiseCaretListener(
+internal class InlineSessionWiseCaretListener(
   @RequiresEdt private val expectedOffset: () -> Int,
   @RequiresEdt private val cancel: () -> Unit
 ) : CaretListener {
@@ -135,8 +134,7 @@ class InlineSessionWiseCaretListener(
   }
 }
 
-@ApiStatus.Experimental
-class InlineCompletionTypedHandlerDelegate : TypedHandlerDelegate() {
+internal class InlineCompletionTypedHandlerDelegate : TypedHandlerDelegate() {
 
   override fun beforeClosingParenInserted(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
     allowDocumentChange(editor, c.toString())
@@ -149,26 +147,25 @@ class InlineCompletionTypedHandlerDelegate : TypedHandlerDelegate() {
   }
 
   private fun allowDocumentChange(editor: Editor, typed: String) {
-    val handler = InlineCompletionHandler.getOrNull(editor)
+    val handler = InlineCompletion.getHandlerOrNull(editor)
     handler?.allowDocumentChange(SimpleTypingEvent(typed, false))
   }
 }
 
-@ApiStatus.Experimental
-class InlineCompletionAnActionListener : AnActionListener {
+internal class InlineCompletionAnActionListener : AnActionListener {
   override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
     val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return
-    val handler = InlineCompletionHandler.getOrNull(editor) ?: return
+    val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
     handler.allowDocumentChange(SimpleTypingEvent(c.toString(), true))
   }
 }
 
 private fun hideInlineCompletion(editor: Editor) {
   val context = InlineCompletionContext.getOrNull(editor) ?: return
-  InlineCompletionHandler.getOrNull(editor)?.hide(editor, false, context)
+  InlineCompletion.getHandlerOrNull(editor)?.hide(false, context)
 }
 
 private fun hideInlineCompletion(editor: Editor, handler: InlineCompletionHandler?) {
   if (handler == null) return
-  InlineCompletionContext.getOrNull(editor)?.let { handler.hide(editor, false, it) }
+  InlineCompletionContext.getOrNull(editor)?.let { handler.hide(false, it) }
 }

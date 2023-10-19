@@ -9,11 +9,11 @@ import com.intellij.ide.AssertiveRepaintManager
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.ui.html.GlobalStyleSheetHolder
+import com.intellij.ide.ui.html.getGlobalStyleSheet
+import com.intellij.ide.ui.html.updateGlobalSwingStyleSheet
 import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.idea.AppExitCodes
-import com.intellij.idea.StartupErrorReporter
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -45,39 +45,37 @@ import javax.swing.UIManager
 import javax.swing.plaf.basic.BasicLookAndFeel
 import kotlin.system.exitProcess
 
-internal fun CoroutineScope.scheduleInitUi(initAwtToolkitJob: Job, isHeadless: Boolean): Job {
-  return launch {
-    // IdeaLaF uses AllIcons - icon manager must be activated
-    if (!isHeadless) {
-      span("icon manager activation") {
-        IconManager.activate(CoreIconManager())
-      }
+internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean) {
+  // IdeaLaF uses AllIcons - icon manager must be activated
+  if (!isHeadless) {
+    span("icon manager activation") {
+      IconManager.activate(CoreIconManager())
     }
+  }
 
-    initAwtToolkitJob.join()
-    // SwingDispatcher must be used after Toolkit init
-    span("initUi", RawSwingDispatcher) {
-      initLafAndScale(isHeadless)
-    }
+  initAwtToolkitJob.join()
+  // SwingDispatcher must be used after Toolkit init
+  span("initUi", RawSwingDispatcher) {
+    initLafAndScale(isHeadless)
+  }
+
+  if (!isHeadless) {
+    patchHtmlStyle()
   }
 }
 
-internal suspend fun patchHtmlStyle(initLafJob: Job) {
-  initLafJob.join()
-
-  Class.forName(GlobalStyleSheetHolder::class.java.name, true, AppStarter::class.java.classLoader)
-
+private suspend fun patchHtmlStyle() {
   // separate task - allow other UI tasks to be executed (e.g., show splash)
   withContext(RawSwingDispatcher) {
     val uiDefaults = span("app-specific laf state initialization") { UIManager.getDefaults() }
     span("html style patching") {
       // create a separate copy for each case
-      val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
+      val globalStyleSheet = getGlobalStyleSheet()
       uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
       uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
 
       span("global styleSheet updating") {
-        GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
+        updateGlobalSwingStyleSheet()
       }
     }
   }
@@ -224,7 +222,8 @@ fun checkHiDPISettings() {
 }
 
 // must happen after initUi
-internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfoEx>) {
+internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred: Job,
+                                                                                       appInfoDeferred: Deferred<ApplicationInfoEx>) {
   launch {
     initUiDeferred.join()
 

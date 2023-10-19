@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.annotations.ApiStatus.Obsolete
 
@@ -18,6 +17,6 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
 @Obsolete
 class ProjectRootManagerOnEndOfDumbModeIncrementer(private val project: Project) : DumbService.DumbModeListener {
   override fun exitDumbMode() {
-    project.service<ProjectRootManager>().incModificationCount()
+    ProjectRootManager.getInstance(project).incModificationCount()
   }
 }

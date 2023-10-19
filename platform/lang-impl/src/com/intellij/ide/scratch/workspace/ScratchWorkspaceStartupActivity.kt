@@ -13,13 +13,13 @@ import com.intellij.platform.workspace.storage.EntityStorageSnapshot
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.ide.getGlobalInstance
+import com.intellij.workspaceModel.ide.getInstance
 
 class ScratchWorkspaceStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     RootType.ROOT_EP.addChangeListener({
                                          getEntityBuilderIfNeeded(project)?.also { builder ->
-                                           ApplicationManager.getApplication().invokeLater {
+                                           ApplicationManager.getApplication().invokeAndWait {
                                              WriteAction.run<RuntimeException> { writeBuilder(builder, project) }
                                            }
                                          }
@@ -54,10 +54,10 @@ private fun getEntityBuilderIfNeeded(project: Project): MutableEntityStorage? {
 
   //workspace integration is enabled
   val scratchFileService = ScratchFileService.getInstance()
-  val globalInstance = VirtualFileUrlManager.getGlobalInstance()
+  val urlManager = VirtualFileUrlManager.getInstance(project)
   val urls = RootType.getAllRootTypes().filter { !it.isHidden }.map {
     scratchFileService.getRootPath(it)
-  }.sorted().map { globalInstance.fromPath(it) }.toList()
+  }.sorted().map { urlManager.fromPath(it) }.toList()
 
   if (oldEntities.size == 1) {
     val entity: ScratchRootsEntity = oldEntities[0]

@@ -53,7 +53,7 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<GithubPullRequestsProjectUISettings>()
+    fun getInstance(project: Project): GithubPullRequestsProjectUISettings = project.service<GithubPullRequestsProjectUISettings>()
 
     class UrlAndAccount private constructor() {
 

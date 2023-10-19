@@ -6,10 +6,10 @@ import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.comparison.DiffTooBigException
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.tools.fragmented.LineNumberConvertor
+import com.intellij.diff.tools.simple.AlignedDiffModel
 import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
-import com.intellij.diff.util.DiffRangeUtil
-import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.*
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.editor.Document
@@ -100,39 +100,13 @@ class PatchChangeBuilder {
         val deletionRange = LineRange(deletion, insertion)
         val insertionRange = LineRange(insertion, hunkEnd)
 
-        hunks.add(Hunk(deletionRange, insertionRange))
+        if (!deletionRange.isEmpty || !insertionRange.isEmpty) {
+          hunks.add(Hunk(deletionRange, insertionRange))
+        }
       }
     }
 
     return PatchState(textBuilder, hunks, convertor1.build(), convertor2.build(), separatorLines)
-  }
-
-  private fun cutIntoBlocks(lines: List<PatchLine>,
-                            consumer: (preContext: List<PatchLine>, deletions: List<PatchLine>, additions: List<PatchLine>) -> Unit) {
-    var lastType = PatchLine.Type.CONTEXT
-
-    val preContext = mutableListOf<PatchLine>()
-    val deletions = mutableListOf<PatchLine>()
-    val additions = mutableListOf<PatchLine>()
-
-    for (line in lines) {
-      val type = line.type
-      if (lastType != type && lastType != PatchLine.Type.CONTEXT &&
-          !(lastType == PatchLine.Type.REMOVE && type == PatchLine.Type.ADD)) {
-        consumer(preContext, deletions, additions)
-        preContext.clear()
-        deletions.clear()
-        additions.clear()
-      }
-      lastType = type
-
-      when (type) {
-        PatchLine.Type.CONTEXT -> preContext.add(line)
-        PatchLine.Type.REMOVE -> deletions.add(line)
-        PatchLine.Type.ADD -> additions.add(line)
-      }
-    }
-    consumer(preContext, deletions, additions)
   }
 
   private fun addChangedLines(lines: List<String>, lineNumber: Int, isAddition: Boolean) {
@@ -164,17 +138,21 @@ class PatchChangeBuilder {
     totalLines++
   }
 
-  class PatchState(val patchContent: CharSequence,
-                   val hunks: List<Hunk>,
-                   val lineConvertor1: LineNumberConvertor,
-                   val lineConvertor2: LineNumberConvertor,
-                   val separatorLines: IntList)
+  class PatchState(
+    val patchContent: CharSequence,
+    val hunks: List<Hunk>,
+    val lineConvertor1: LineNumberConvertor,
+    val lineConvertor2: LineNumberConvertor,
+    val separatorLines: IntList
+  )
 
-  class AppliedPatchState(val patchContent: CharSequence,
-                          val hunks: List<AppliedHunk>,
-                          val lineConvertor1: LineNumberConvertor,
-                          val lineConvertor2: LineNumberConvertor,
-                          val separatorLines: IntList)
+  class AppliedPatchState(
+    val patchContent: CharSequence,
+    val hunks: List<AppliedHunk>,
+    val lineConvertor1: LineNumberConvertor,
+    val lineConvertor2: LineNumberConvertor,
+    val separatorLines: IntList
+  )
 
   open class Hunk(val patchDeletionRange: LineRange,
                   val patchInsertionRange: LineRange)
@@ -183,6 +161,12 @@ class PatchChangeBuilder {
                     patchInsertionRange: LineRange,
                     val appliedToLines: LineRange?,
                     val status: HunkStatus) : Hunk(patchDeletionRange, patchInsertionRange)
+
+  class PatchSideChange(val range: Range) : AlignedDiffModel.AlignableChange {
+    override val diffType: TextDiffType get() = DiffUtil.getDiffType(range)
+    override fun getStartLine(side: Side): Int = side.select(range.start1, range.start2)
+    override fun getEndLine(side: Side): Int = side.select(range.end1, range.end2)
+  }
 
   companion object {
     @JvmStatic
@@ -211,4 +195,134 @@ class PatchChangeBuilder {
       }
     }
   }
+}
+
+class SideBySidePatchChangeBuilder {
+  private val textBuilder1 = StringBuilder()
+  private val textBuilder2 = StringBuilder()
+  private val convertor1 = LineNumberConvertor.Builder()
+  private val convertor2 = LineNumberConvertor.Builder()
+  private val separatorLines1: IntList = IntArrayList()
+  private val separatorLines2: IntList = IntArrayList()
+
+  private var totalLines1 = 0
+  private var totalLines2 = 0
+
+  fun build(patchHunks: List<PatchHunk>): SideBySidePatchState {
+    val changes = mutableListOf<PatchChangeBuilder.PatchSideChange>()
+
+    for (hunk in patchHunks) {
+      if (totalLines1 > 0 || totalLines2 > 0) {
+        appendSeparator()
+      }
+
+      val beforeRange = LineRange(hunk.startLineBefore, hunk.endLineBefore)
+      val afterRange = LineRange(hunk.startLineAfter, hunk.endLineAfter)
+
+      var beforeBlockLines = 0
+      var afterBlockLines = 0
+      cutIntoBlocks(hunk.lines) { preContextLines, deletedLines, insertedLines ->
+        addContext(preContextLines.map { line -> line.text }, beforeRange.start + beforeBlockLines, afterRange.start + afterBlockLines)
+        beforeBlockLines += preContextLines.size
+        afterBlockLines += preContextLines.size
+
+        val deletion = totalLines1
+        addChangedLines(deletedLines.map { line -> line.text }, beforeRange.start + beforeBlockLines, false)
+        beforeBlockLines += deletedLines.size
+
+        val insertion = totalLines2
+        addChangedLines(insertedLines.map { line -> line.text }, afterRange.start + afterBlockLines, true)
+        afterBlockLines += insertedLines.size
+
+        val range = Range(deletion, totalLines1, insertion, totalLines2)
+        if (!range.isEmpty) {
+          changes.add(PatchChangeBuilder.PatchSideChange(range))
+        }
+      }
+    }
+
+    return SideBySidePatchState(textBuilder1, textBuilder2, changes,
+                                convertor1.build(), convertor2.build(),
+                                separatorLines1, separatorLines2)
+  }
+
+  private fun addChangedLines(lines: List<String>, lineNumber: Int, isAddition: Boolean) {
+    if (isAddition) {
+      convertor2.put(totalLines2, lineNumber, lines.size)
+      appendLines2(lines)
+    }
+    else {
+      convertor1.put(totalLines1, lineNumber, lines.size)
+      appendLines1(lines)
+    }
+  }
+
+  private fun addContext(context: List<String>, beforeLineNumber: Int, afterLineNumber: Int) {
+    convertor1.put(totalLines1, beforeLineNumber, context.size)
+    convertor2.put(totalLines2, afterLineNumber, context.size)
+    appendLines1(context)
+    appendLines2(context)
+  }
+
+  private fun appendSeparator() {
+    separatorLines1.add(totalLines1)
+    separatorLines2.add(totalLines2)
+    textBuilder1.append("\n")
+    textBuilder2.append("\n")
+    totalLines1++
+    totalLines2++
+  }
+
+  private fun appendLines1(lines: List<String>) {
+    for (line in lines) {
+      textBuilder1.append(line).append("\n")
+    }
+    totalLines1 += lines.size
+  }
+
+  private fun appendLines2(lines: List<String>) {
+    for (line in lines) {
+      textBuilder2.append(line).append("\n")
+    }
+    totalLines2 += lines.size
+  }
+
+
+  class SideBySidePatchState(
+    val patchContent1: CharSequence,
+    val patchContent2: CharSequence,
+    val changes: List<PatchChangeBuilder.PatchSideChange>,
+    val lineConvertor1: LineNumberConvertor,
+    val lineConvertor2: LineNumberConvertor,
+    val separatorLines1: IntList,
+    val separatorLines2: IntList
+  )
+}
+
+private fun cutIntoBlocks(lines: List<PatchLine>,
+                          consumer: (preContext: List<PatchLine>, deletions: List<PatchLine>, additions: List<PatchLine>) -> Unit) {
+  var lastType = PatchLine.Type.CONTEXT
+
+  val preContext = mutableListOf<PatchLine>()
+  val deletions = mutableListOf<PatchLine>()
+  val additions = mutableListOf<PatchLine>()
+
+  for (line in lines) {
+    val type = line.type
+    if (lastType != type && lastType != PatchLine.Type.CONTEXT &&
+        !(lastType == PatchLine.Type.REMOVE && type == PatchLine.Type.ADD)) {
+      consumer(preContext, deletions, additions)
+      preContext.clear()
+      deletions.clear()
+      additions.clear()
+    }
+    lastType = type
+
+    when (type) {
+      PatchLine.Type.CONTEXT -> preContext.add(line)
+      PatchLine.Type.REMOVE -> deletions.add(line)
+      PatchLine.Type.ADD -> additions.add(line)
+    }
+  }
+  consumer(preContext, deletions, additions)
 }

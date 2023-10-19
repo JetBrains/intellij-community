@@ -48,11 +48,15 @@ suspend fun GitLabApi.GraphQL.loadMergeRequest(
 }
 
 @SinceGitLab("13.1")
-suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(project: GitLabProjectCoordinates, branch: String)
-  : HttpResponse<out GraphQLConnectionDTO<GitLabMergeRequestIidDTO>?> {
-  val parameters = mapOf(
+suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(
+  project: GitLabProjectCoordinates,
+  sourceBranch: String,
+  targetBranch: String? = null
+): HttpResponse<out GraphQLConnectionDTO<GitLabMergeRequestIidDTO>?> {
+  val parameters = mutableMapOf(
     "projectId" to project.projectPath.fullPath(),
-    "branch" to branch
+    "sourceBranches" to listOf(sourceBranch),
+    "targetBranches" to targetBranch?.let { listOf(it) }
   )
   val request = gitLabQuery(GitLabGQLQuery.FIND_MERGE_REQUESTS, parameters)
   return withErrorStats(GitLabGQLQuery.FIND_MERGE_REQUESTS) {

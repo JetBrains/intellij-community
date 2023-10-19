@@ -27,7 +27,6 @@ import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +38,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
   private final Project myProject;
   private ContentManager myContentManager;
   private StateBean myStateBean = new StateBean();
-  private final Map<String, CoverageView> myViews = new HashMap<>();
+  private final Map<CoverageSuitesBundle, CoverageView> myViews = new HashMap<>();
 
   public CoverageViewManager(@NotNull Project project) {
     myProject = project;
@@ -80,7 +79,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
   }
 
   public CoverageView getToolwindow(CoverageSuitesBundle suitesBundle) {
-    return myViews.get(getDisplayName(suitesBundle));
+    return myViews.get(suitesBundle);
   }
 
   public void activateToolwindow(@NotNull CoverageView view, boolean requestFocus) {
@@ -96,11 +95,18 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     return project.getService(CoverageViewManager.class);
   }
 
-  public void createToolWindow(@NlsSafe String displayName, boolean activate) {
-    final CoverageView coverageView = new CoverageView(myProject, CoverageDataManager.getInstance(myProject), myStateBean);
-    myViews.put(displayName, coverageView);
-    Content content = myContentManager.getFactory().createContent(coverageView, displayName, false);
-    myContentManager.addContent(content);
+  public void createToolWindow(CoverageSuitesBundle suitesBundle, boolean activate) {
+    CoverageView coverageView = myViews.get(suitesBundle);
+    Content content;
+    if (coverageView == null) {
+      coverageView = new CoverageView(myProject, CoverageDataManager.getInstance(myProject), myStateBean);
+      myViews.put(suitesBundle, coverageView);
+      content = myContentManager.getFactory().createContent(coverageView, getDisplayName(suitesBundle), false);
+      myContentManager.addContent(content);
+    }
+    else {
+      content = myContentManager.getContent(coverageView);
+    }
     myContentManager.setSelectedContent(content);
 
     if (CoverageOptionsProvider.getInstance(myProject).activateViewOnRun() && activate) {
@@ -108,8 +114,8 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     }
   }
 
-  void closeView(String displayName) {
-    CoverageView oldView = myViews.remove(displayName);
+  void closeView(CoverageSuitesBundle suitesBundle) {
+    CoverageView oldView = myViews.remove(suitesBundle);
     if (oldView != null) {
       oldView.saveSize();
       Content content = myContentManager.getContent(oldView);
@@ -121,7 +127,8 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     }
   }
 
-  public static String getDisplayName(CoverageSuitesBundle suitesBundle) {
+  @NlsSafe
+  public static String getDisplayName(@NotNull CoverageSuitesBundle suitesBundle) {
     RunConfigurationBase<?> configuration = suitesBundle.getRunConfiguration();
     return configuration != null ? configuration.getName() : suitesBundle.getPresentableName();
   }

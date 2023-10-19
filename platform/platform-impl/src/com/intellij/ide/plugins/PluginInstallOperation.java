@@ -255,7 +255,10 @@ public final class PluginInstallOperation {
       }
 
       boolean allowNoRestart = myAllowInstallWithoutRestart &&
-                               DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor);
+                               DynamicPlugins.allowLoadUnloadWithoutRestart(
+                                 descriptor, null,
+                                 ContainerUtil.map(myPendingDynamicPluginInstalls, pluginInstall -> pluginInstall.getPluginDescriptor())
+                               );
       if (allowNoRestart) {
         myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFilePath(), descriptor));
         InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();

@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -15,15 +16,17 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
+import com.intellij.util.IconUtil
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
+import javax.swing.SwingConstants
 
 internal class PresentationAssistantQuickSettingsButton(private val project: Project,
                                                         private val appearance: ActionInfoPopupGroup.Appearance,
                                                         private val shownStateRequestCountChanged: (Int) -> Unit):
-  JBLabel(AllIcons.Actions.PresentationAssistantSettings), Disposable, DataContext {
+  JBLabel(IconUtil.colorize(AllIcons.Actions.PresentationAssistantSettings, appearance.theme.keymapLabel)), Disposable, DataContext {
 
   private var popup: JBPopup? = null
   private var hideAlarm = Alarm()
@@ -40,7 +43,7 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
     }
 
   init {
-    background = ActionInfoPanel.BACKGROUND
+    background = appearance.theme.background
     isOpaque = true
     updatePreferredSize()
 
@@ -77,6 +80,8 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
                                                                     false,
                                                                     { releaseShownStateRequest() },
                                                                     Int.MAX_VALUE)
+    popup.isShowSubmenuOnHover = true
+    popup.setAdText(IdeBundle.message("presentation.assistant.quick.settings.ad").asHtml, SwingConstants.LEFT)
 
     popup.showInBestPositionFor(SimpleDataContext
                                   .builder()
@@ -84,6 +89,8 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
                                   .add(PlatformDataKeys.CONTEXT_MENU_POINT, Point(0, height + appearance.spaceBetweenPopups))
                                   .build())
   }
+
+  private val String.asHtml: String get() = "<html>" + replace("\n", "<br>") + "</html>"
 
   fun acquireShownStateRequest(point: RelativePoint) {
     shownStateRequestCount++

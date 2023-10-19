@@ -95,7 +95,7 @@ internal object BranchesDashboardUtil {
 
 
   fun GitRepository.getIncomingOutgoingState(localBranchName: String): IncomingOutgoing? =
-    with(project.service<GitBranchIncomingOutgoingManager>()) {
+    with(GitBranchIncomingOutgoingManager.getInstance(project)) {
       val repo = this@getIncomingOutgoingState
       val hasIncoming = hasIncomingFor(repo, localBranchName)
       val hasOutgoing = hasOutgoingFor(repo, localBranchName)

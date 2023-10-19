@@ -31,6 +31,7 @@ import org.junit.Assert;
 import org.junit.Assume;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -79,10 +80,10 @@ public final class IdeaTestUtil {
                   version.feature >= 7 ? version.feature :
                   version.feature >= 5 ? 7 :
                   4;
-    if (mockJdk > 11) {
+    if (mockJdk > 9) {
       return createMockJdkFromRepository("java " + version, mockJdk);
     }
-    String path = getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + (mockJdk < 11 ? "1." : "") + mockJdk).getPath();
+    String path = getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1." + mockJdk).getPath();
     return createMockJdk("java " + version, path);
   }
 
@@ -107,7 +108,25 @@ public final class IdeaTestUtil {
     return createMockJdk(name, canonicalPath);
   }
 
+  /**
+   * @param path Mock JDK path
+   * @return Sdk created from the known legacy filesystem path to a mockJDK, which doesn't exist anymore,
+   * because the corresponding SDK is created from the artifacts repository now. Can be used as a
+   * bridge for older code which identifies SDKs by file system path. Returns null, if the path
+   * is not recognized as a legacy SDK path.
+   */
+  public static @Nullable Sdk createMockJdkFromLegacyPath(@NotNull String path) {
+    if (Path.of(path).getFileName().toString().equals("mockJDK-11")) {
+      return getMockJdk(JavaVersion.compose(11));
+    }
+    return null;
+  }
+
   public static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path) {
+    Sdk fromLegacyPath = createMockJdkFromLegacyPath(path);
+    if (fromLegacyPath != null) {
+      return fromLegacyPath;
+    }
     JavaSdk javaSdk = JavaSdk.getInstance();
     if (javaSdk == null) {
       throw new AssertionError("The test uses classes from Java plugin but Java plugin wasn't loaded; make sure that Java plugin " +

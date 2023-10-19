@@ -15,7 +15,6 @@ private val UNRESOLVED_URL = URL("file:///unresolved")
 internal class ImageDataByUrlLoader internal constructor(
   private val ownerClass: Class<*>? = null,
   private val classLoader: ClassLoader? = null,
-  private val useCacheOnLoad: Boolean,
   override val url: URL,
 ) : ImageDataLoader {
   override val path: String
@@ -28,7 +27,7 @@ internal class ImageDataByUrlLoader internal constructor(
                      resourceClass = ownerClass,
                      classLoader = classLoader,
                      isDark = parameters.isDark,
-                     useCache = useCacheOnLoad,
+                     useCache = false,
                      scaleContext = scaleContext)
   }
 
@@ -39,7 +38,7 @@ internal class ImageDataByUrlLoader internal constructor(
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
 
   override fun toString(): String {
-    return "UrlResolver(ownerClass=${ownerClass?.name}, classLoader=$classLoader, url=$url, useCacheOnLoad=$useCacheOnLoad)"
+    return "ImageDataByUrlLoader(ownerClass=${ownerClass?.name}, classLoader=$classLoader, url=$url"
   }
 }
 
@@ -81,7 +80,7 @@ internal class ImageDataByPathResourceLoader(
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
 
-  override fun toString(): String = "UrlResolver(ownerClass=${ownerClass?.name}, classLoader=$classLoader, path=$path)"
+  override fun toString(): String = "ImageDataByPathResourceLoader(ownerClass=${ownerClass?.name}, classLoader=$classLoader, path=$path)"
 }
 
 private fun resolveUrl(path: String?,
@@ -141,7 +140,7 @@ internal class ImageDataByFilePathLoader(override val path: String) : PatchedIma
                      scaleContext = scaleContext)
   }
 
-  override fun toString(): String = "ImageDataByFilePathLoader(path=$path"
+  override fun toString(): String = "ImageDataByFilePathLoader(path=$path)"
 }
 
 private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?, originalPath: String, transform: IconTransform): ImageDataLoader? {

@@ -12,7 +12,7 @@ import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformat
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.modifyColumn
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
+import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
 internal class MarkdownTableBackspaceHandler: BackspaceHandlerDelegate() {

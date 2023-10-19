@@ -28,6 +28,7 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import com.intellij.webSymbols.utils.matchedNameOrName
+import com.intellij.webSymbols.utils.qualifiedName
 import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
@@ -324,7 +325,7 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
    * This method is used by the framework to determine a new name for a symbol based on its occurrence
    */
   fun adjustNameForRefactoring(queryExecutor: WebSymbolsQueryExecutor, newName: String, occurence: String): String =
-    queryExecutor.namesProvider.adjustRename(namespace, kind, name, newName, occurence)
+    queryExecutor.namesProvider.adjustRename(qualifiedName, newName, occurence)
 
 
   enum class Priority(val value: Double) {

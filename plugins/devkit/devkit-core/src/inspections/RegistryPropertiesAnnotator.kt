@@ -43,7 +43,7 @@ internal fun isRegistryPropertiesFile(psiFile: PsiFile): Boolean =
 /**
  * Highlights key in `registry.properties` without matching `key.description` entry + corresponding quickfix.
  */
-class RegistryPropertiesAnnotator : Annotator {
+internal class RegistryPropertiesAnnotator : Annotator {
 
   @NonNls
   private val PLUGIN_GROUP_NAMES = setOf(

@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
+import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.JBrActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.Product
@@ -10,10 +11,15 @@ import com.intellij.ide.startup.importSettings.data.SyncActionsDataProvider
 import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.util.ui.JBUI
 import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.SwingConstants
 
-class OtherOptions(val callback: (PageProvider) -> Unit) : ProductChooserAction(), LinkAction {
+class OtherOptions(val callback: (PageProvider) -> Unit) : ProductChooserAction() {
+
   private val jbDataProvider = JBrActionsDataProvider.getInstance()
   private val syncDataProvider = SyncActionsDataProvider.getInstance()
 
@@ -79,14 +85,12 @@ class OtherOptions(val callback: (PageProvider) -> Unit) : ProductChooserAction(
   }
 
   override fun update(e: AnActionEvent) {
+    super.update(e)
+
     val ch = getChildren(e)
+
     if (ch.isEmpty()) {
       e.presentation.isVisible = false
-      return
-    }
-
-    if (ch.size == 1) {
-      ch.firstOrNull()?.update(e)
       return
     }
 
@@ -96,10 +100,26 @@ class OtherOptions(val callback: (PageProvider) -> Unit) : ProductChooserAction(
     e.presentation.isPopupGroup = true
   }
 
-  override fun createButton(): JButton {
+
+  override fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
+    super.updateButtonFromPresentation(button, presentation)
+    if (presentation.getClientProperty(UiUtils.POPUP) == true) {
+      button.setHorizontalTextPosition(SwingConstants.LEFT)
+      button.iconTextGap = 0
+    } else {
+      button.setHorizontalTextPosition(SwingConstants.RIGHT)
+      button.iconTextGap = JBUI.scale(4)
+    }
+  }
+
+  override fun createButton(presentation: Presentation): JButton {
     return OnboardingDialogButtons.createLinkButton().apply {
       icon = AllIcons.General.LinkDropTriangle
     }
+  }
+
+  override fun wrapButton(button: JButton): JComponent {
+    return button
   }
 }
 

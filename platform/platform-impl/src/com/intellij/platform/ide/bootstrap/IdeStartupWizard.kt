@@ -17,15 +17,6 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
   val point = app.extensionArea
     .getExtensionPoint<IdeStartupWizard>("com.intellij.ideStartupWizard") as ExtensionPointImpl<IdeStartupWizard>
   val sortedAdapters = point.sortedAdapters
-  if (sortedAdapters.isEmpty()) {
-    log.info("No IdeStartupWizard implementations")
-    return
-  }
-
-  span("app manager initial state waiting") {
-    isInitialStart.join()
-  }
-
   for (adapter in sortedAdapters) {
     val pluginDescriptor = adapter.pluginDescriptor
     if (!pluginDescriptor.isBundled) {
@@ -34,10 +25,18 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
     }
 
     try {
+      val wizard = adapter.createInstance<IdeStartupWizard>(app) ?: continue
+
+      span("app manager initial state waiting") {
+        isInitialStart.join()
+      }
+
       log.info("Passing execution control to $adapter.")
       span("${adapter.assignableToClassName}.run") {
-        adapter.createInstance<IdeStartupWizard>(app)?.run()
+        wizard.run()
       }
+
+      // first wizard wins
       break
     }
     catch (e: Throwable) {

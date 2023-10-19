@@ -15,6 +15,7 @@ import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -88,38 +89,38 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   //    b) implement something like BlobStorageHousekeeper, which runs in dedicated thread, with some precautions to not
   //       interrupt frontend work.
 
-  protected static final class HeaderLayout {
+  @VisibleForTesting
+  public static final class HeaderLayout {
     //@formatter:off
 
     /** Encodes storage (file) type */
-    static final int MAGIC_WORD_OFFSET                           = 0;   //int32
+    public static final int MAGIC_WORD_OFFSET                           = 0;   //int32
 
     /** Version of this storage persistent format */
-    static final int STORAGE_VERSION_OFFSET                      = 4;   //int32
+    public static final int STORAGE_VERSION_OFFSET                      = 4;   //int32
     /** pageSize is a part of binary layout: records are page-aligned */
-    static final int PAGE_SIZE_OFFSET                            = 8;   //int32
-    static final int FILE_STATUS_OFFSET                          = 12;  //int32
+    public static final int PAGE_SIZE_OFFSET                            = 8;   //int32
+    public static final int FILE_STATUS_OFFSET                          = 12;  //int32
 
-    static final int NEXT_RECORD_ID_OFFSET                       = 16;  //int32
+    public static final int NEXT_RECORD_ID_OFFSET                       = 16;  //int32
 
-    static final int RECORDS_ALLOCATED_OFFSET                    = 20;  //int32
-    static final int RECORDS_RELOCATED_OFFSET                    = 24;  //int32
-    static final int RECORDS_DELETED_OFFSET                      = 28;  //int32
+    public static final int RECORDS_ALLOCATED_OFFSET                    = 20;  //int32
+    public static final int RECORDS_RELOCATED_OFFSET                    = 24;  //int32
+    public static final int RECORDS_DELETED_OFFSET                      = 28;  //int32
 
-    static final int RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET      = 32;  //int64
-    static final int RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET     = 40;  //int64
+    public static final int RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET      = 32;  //int64
+    public static final int RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET     = 40;  //int64
 
     /** Version of data, stored in a blobs, managed by client code */
-    static final int DATA_FORMAT_VERSION_OFFSET                  = 48;  //int32
+    public static final int DATA_FORMAT_VERSION_OFFSET                  = 48;  //int32
 
 
-    static final int FIRST_UNUSED_FIELD_OFFSET                   = 52;
+    public static final int FIRST_UNUSED_FIELD_OFFSET                   = 52;
 
     //Bytes [52..64] is reserved for the generations to come:
-    static final int HEADER_SIZE                                 = 64;
+    public static final int HEADER_SIZE                                 = 64;
 
-    //@formatter:off
-
+    //@formatter:on
   }
 
   /**
@@ -158,7 +159,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
   /** Field could be read as volatile, but writes are protected with this intrinsic lock */
   //@GuardedBy(this)
-  protected volatile int nextRecordId;
+  private volatile int nextRecordId;
 
 
   //==== monitoring fields: =======================================================================================
@@ -245,6 +246,12 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     FileUtil.delete(storagePath());
   }
 
+  @Override
+  public boolean isClosed() {
+    return closed.get();
+  }
+
+
 
   //monitoring:
 
@@ -276,7 +283,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "[" + storagePath() + "]{nextRecordId: " + nextRecordId + '}';
+    return getClass().getSimpleName() + "[" + storagePath() + "]{nextRecordId: " + nextRecordId() + '}';
   }
 
   //==================== implementation: ==========================================================================
@@ -325,14 +332,18 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     return Math.toIntExact(offsetInFile % pageSize);
   }
 
+  /** Field could be read as volatile, but writes are protected with this intrinsic lock */
+  protected int nextRecordId() {
+    return nextRecordId;
+  }
 
+  /** Must be called under 'this' lock */
+  //@GuardedBy(this)
   protected void updateNextRecordId(int nextRecordId) {
-    if( nextRecordId <= NULL_ID ){
-      throw new IllegalArgumentException("nextRecordId(="+nextRecordId+") must be >0");
+    if (nextRecordId <= NULL_ID) {
+      throw new IllegalArgumentException("nextRecordId(=" + nextRecordId + ") must be >0");
     }
-    synchronized (this) {
-      this.nextRecordId = nextRecordId;
-    }
+    this.nextRecordId = nextRecordId;
   }
 
   protected int allocateSlotForRecord(int pageSize,
@@ -344,7 +355,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     //MAYBE RC: all this could be implemented as CAS-loop, without lock
     synchronized (this) {// protect nextRecordId modifications:
       while (true) {     // [totalRecordSize <= pageSize] =implies=> [loop must finish in <=2 iterations]
-        int newRecordId = nextRecordId;
+        int newRecordId = nextRecordId();
         long recordStartOffset = idToOffset(newRecordId);
         int offsetOnPage = toOffsetOnPage(recordStartOffset);
         int recordSizeRoundedUp = roundSizeUpToBucket(offsetOnPage, pageSize, totalRecordSize);
@@ -356,7 +367,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
         long endPage = recordEndOffset / pageSize;
         if (startPage == endPage) {
           actualRecordSize.set(recordSizeRoundedUp);
-          nextRecordId = offsetToId(recordEndOffset + 1);
+          updateNextRecordId(offsetToId(recordEndOffset + 1));
           return newRecordId;
         }
 
@@ -370,9 +381,9 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
         //...move pointer to the next page, and re-try allocate record:
         long nextPageStartOffset = (startPage + 1) * pageSize;
-        nextRecordId = offsetToId(nextPageStartOffset);
-        assert idToOffset(nextRecordId) == nextPageStartOffset : "idToOffset(" + nextRecordId + ")=" + idToOffset(nextRecordId) +
-                                                                 " != nextPageStartOffset(" + nextPageStartOffset + ")";
+        updateNextRecordId(offsetToId(nextPageStartOffset));
+        assert idToOffset(nextRecordId()) == nextPageStartOffset : "idToOffset(" + nextRecordId() + ")=" + idToOffset(nextRecordId()) +
+                                                                   " != nextPageStartOffset(" + nextPageStartOffset + ")";
       }
     }
   }
@@ -381,10 +392,10 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
                                                int pageSize) throws IOException;
 
 
-  protected void checkRecordIdExists(final int recordId) throws IOException {
+  protected void checkRecordIdExists(int recordId) throws IOException {
     checkRecordIdValid(recordId);
     if (!isRecordIdAllocated(recordId)) {
-      throw new IllegalArgumentException("recordId(" + recordId + ") is not yet allocated: allocated ids are all < " + nextRecordId);
+      throw new IllegalArgumentException("recordId(" + recordId + ") is not yet allocated: allocated ids are all < " + nextRecordId());
     }
   }
 
@@ -393,7 +404,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
    * It doesn't mean the record is fully written, though -- we could be in the middle of record write.
    */
   protected boolean isRecordIdAllocated(int recordId) {
-    return recordId < nextRecordId;
+    return recordId < nextRecordId();
   }
 
   protected long nextRecordOffset(long recordOffset,

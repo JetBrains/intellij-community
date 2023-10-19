@@ -38,18 +38,29 @@ class GitBrancherImpl implements GitBrancher {
     }.runInBackground();
   }
 
+  @Override
+  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints) {
+    createBranch(name, startPoints, null);
+  }
+
   private @NotNull GitBranchWorker newWorker(@NotNull ProgressIndicator indicator) {
     return new GitBranchWorker(myProject, Git.getInstance(), new GitBranchUiHandlerImpl(myProject, indicator));
   }
 
   @Override
-  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints) {
-    createBranch(name, startPoints, false);
+  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, @Nullable Runnable callInAwtLater) {
+    createBranch(name, startPoints, false, callInAwtLater);
   }
 
   @Override
   public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, boolean force) {
-    new CommonBackgroundTask(myProject, GitBundle.message("branch.creating.branch.process", name), null) {
+    createBranch(name, startPoints, force, null);
+  }
+
+  @Override
+  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, boolean force,
+                           @Nullable Runnable callInAwtLater) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.creating.branch.process", name), callInAwtLater) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).createBranch(name, startPoints, force);

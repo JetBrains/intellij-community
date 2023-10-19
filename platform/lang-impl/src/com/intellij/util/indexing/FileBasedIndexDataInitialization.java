@@ -80,8 +80,6 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       }
       RebuildStatus.registerIndex(extension.getName());
 
-      myRegisteredIndexes.registerIndexExtension(extension);
-
       tasks.add(() -> {
         if (IOUtil.isSharedCachesEnabled()) {
           IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
@@ -92,11 +90,18 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
                                              myRegistrationResultSink,
                                              myStaleIds,
                                              myDirtyFileIds);
+
+          // FileBasedIndexImpl.registerIndexer may throw, then the line below will not be executed
+          myRegisteredIndexes.registerIndexExtension(extension);
         }
         catch (IOException | AlreadyDisposedException e) {
+          LOG.warnWithDebug("Could not register indexing extension: " + extension + ". reason: " + e, e);
+          ID.unloadId(extension.getName());
           throw e;
         }
         catch (Throwable t) {
+          LOG.warnWithDebug("Could not register indexing extension: " + extension + ". reason: " + t, t);
+          ID.unloadId(extension.getName());
           handleComponentError(t, extension.getClass().getName(), null);
         }
         finally {

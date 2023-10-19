@@ -10,11 +10,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.emptyText
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle

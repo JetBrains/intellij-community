@@ -40,8 +40,8 @@ public final class ErrorStripeUpdateManager implements Disposable {
     myPsiDocumentManager = PsiDocumentManager.getInstance(myProject);
     TrafficLightRendererContributor.EP_NAME.addChangeListener(() -> {
       for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
-        if (fileEditor instanceof TextEditor) {
-          Editor editor = ((TextEditor)fileEditor).getEditor();
+        if (fileEditor instanceof TextEditor textEditor) {
+          Editor editor = textEditor.getEditor();
           PsiFile file = myPsiDocumentManager.getCachedPsiFile(editor.getDocument());
           repaintErrorStripePanel(editor, file);
         }
@@ -107,8 +107,8 @@ public final class ErrorStripeUpdateManager implements Disposable {
     public void afterValueChanged(@NotNull RegistryValue value) {
       HighlightingSettingsPerFile.getInstance(myProject).incModificationCount();
       for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
-        if (fileEditor instanceof TextEditor) {
-          Editor editor = ((TextEditor)fileEditor).getEditor();
+        if (fileEditor instanceof TextEditor textEditor) {
+          Editor editor = textEditor.getEditor();
           PsiFile file = myPsiDocumentManager.getCachedPsiFile(editor.getDocument());
           repaintErrorStripePanel(editor, file);
         }

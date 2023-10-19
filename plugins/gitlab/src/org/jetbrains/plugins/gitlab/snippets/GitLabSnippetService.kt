@@ -9,12 +9,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
@@ -147,7 +147,11 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
               ?: return null
 
     // If token is present, we check that it is valid with a test request. Reattempt login if token is invalid.
-    if (api.graphQL.getCurrentUser() == null) {
+    try {
+      api.graphQL.getCurrentUser() ?: error("No current user")
+    } catch (e: Exception) {
+      if (e is CancellationException) throw e
+
       return reattemptLogin(apiManager, accountManager, result)
     }
 
@@ -180,7 +184,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
     }
 
     val httpResult = api.graphQL.createSnippet(
-      data.onProject,
+      result.onProject,
       data.title,
       data.description,
       if (data.isPrivate) GitLabVisibilityLevel.private else GitLabVisibilityLevel.public,
@@ -253,7 +257,6 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
           true,
           false,
 
-          null,
           PathHandlingMode.RelativePaths
         )
       )
@@ -345,7 +348,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    * could not be completed, [GitLabSnippetFileContents] representing the selection or file otherwise.
    */
   private fun Editor.collectContents(): GitLabSnippetFileContents? {
-    val content = selectionModel.getSelectedText(true)?.ifEmpty { null }
+    val content = selectionModel.selectedText?.ifEmpty { null }
                   ?: document.text.ifEmpty { null }
                   ?: return null
 

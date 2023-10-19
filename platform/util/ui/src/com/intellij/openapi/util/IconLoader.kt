@@ -20,14 +20,16 @@ import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
-import java.awt.image.RGBImageFilter
 import java.net.URL
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -39,7 +41,8 @@ private val LOG: Logger
   get() = logger<IconLoader>()
 
 private val iconCache = Caffeine.newBuilder()
-  .expireAfterAccess(1, TimeUnit.HOURS)
+  .expireAfterAccess(30, TimeUnit.MINUTES)
+  .executor(Dispatchers.Default.asExecutor())
   .maximumSize(256)
   .build<Pair<String, ClassLoader?>, CachedImageIcon>()
 
@@ -149,19 +152,33 @@ object IconLoader {
   }
 
   @JvmStatic
-  @JvmOverloads
-  fun findIcon(url: URL?, storeToCache: Boolean = true): Icon? {
+  fun findIcon(url: URL?): Icon? {
+    if (url == null) {
+      return null
+    }
+
+    val key = Pair<String, ClassLoader?>(url.toString(), null)
+    return iconCache.get(key) { CachedImageIcon(url = url) }
+  }
+
+  @JvmStatic
+  fun findIcon(url: URL?, storeToCache: Boolean): Icon? {
     if (url == null) {
       return null
     }
 
     val key = Pair<String, ClassLoader?>(url.toString(), null)
     if (storeToCache) {
-      return iconCache.get(key) { CachedImageIcon(url = url, useCacheOnLoad = true) }
+      return iconCache.get(key) { CachedImageIcon(url = url) }
     }
     else {
-      return iconCache.getIfPresent(key) ?: CachedImageIcon(url = url, useCacheOnLoad = false)
+      return iconCache.getIfPresent(key) ?: CachedImageIcon(url = url)
     }
+  }
+
+  @Internal
+  fun findUserIconByPath(file: Path): com.intellij.ui.icons.CachedImageIcon {
+    return iconCache.get(Pair(file.toString(), null)) { CachedImageIcon(file = file) }
   }
 
   @JvmStatic
@@ -248,7 +265,7 @@ object IconLoader {
   /**
    * Creates a new icon with the filter applied.
    */
-  fun filterIcon(icon: Icon, filterSupplier: () -> RGBImageFilter): Icon {
+  fun filterIcon(icon: Icon, filterSupplier: RgbImageFilterSupplier): Icon {
     val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
     if (!checkIconSize(effectiveIcon)) {
       return EMPTY_ICON

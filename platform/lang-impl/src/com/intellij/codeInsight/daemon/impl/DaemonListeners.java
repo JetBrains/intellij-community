@@ -420,8 +420,8 @@ public final class DaemonListeners implements Disposable {
   void repaintTrafficLightIconForAllEditors() {
     for (Editor editor : myActiveEditors) {
       MarkupModel markup = editor.getMarkupModel();
-      if (markup instanceof EditorMarkupModelImpl) {
-        ((EditorMarkupModelImpl)markup).repaintTrafficLightIcon();
+      if (markup instanceof EditorMarkupModelImpl editorMarkup) {
+        editorMarkup.repaintTrafficLightIcon();
       }
     }
   }
@@ -484,7 +484,7 @@ public final class DaemonListeners implements Disposable {
       return false;
     }
     // non-physical docs can be updated outside EDT as a rule
-    return !(document instanceof DocumentImpl) || ((DocumentImpl)document).isWriteThreadOnly();
+    return !(document instanceof DocumentImpl impl) || impl.isWriteThreadOnly();
   }
 
   @Override
@@ -570,11 +570,11 @@ public final class DaemonListeners implements Disposable {
       if (affectedDocument != null) return affectedDocument;
       Object id = event.getCommandGroupId();
 
-      if (id instanceof Document) {
-        affectedDocument = (Document)id;
+      if (id instanceof Document document) {
+        affectedDocument = document;
       }
-      else if (id instanceof DocCommandGroupId) {
-        affectedDocument = ((DocCommandGroupId)id).getDocument();
+      else if (id instanceof DocCommandGroupId docId) {
+        affectedDocument = docId.getDocument();
       }
       return affectedDocument;
     }
@@ -686,18 +686,18 @@ public final class DaemonListeners implements Disposable {
 
   private void removeHighlightersOnPluginUnload(@NotNull PluginDescriptor pluginDescriptor) {
     for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
-      if (fileEditor instanceof TextEditor) {
+      if (fileEditor instanceof TextEditor textEditor) {
         boolean clearAll = false;
         VirtualFile file = fileEditor.getFile();
         if (file != null) {
           ClassLoader classLoader = file.getFileType().getClass().getClassLoader();
-          if (classLoader instanceof PluginAwareClassLoader &&
-              ((PluginAwareClassLoader)classLoader).getPluginId().equals(pluginDescriptor.getPluginId())) {
+          if (classLoader instanceof PluginAwareClassLoader pluginLoader &&
+              pluginLoader.getPluginId().equals(pluginDescriptor.getPluginId())) {
             clearAll = true;
           }
         }
 
-        Editor editor = ((TextEditor)fileEditor).getEditor();
+        Editor editor = textEditor.getEditor();
         if (clearAll) {
           editor.getMarkupModel().removeAllHighlighters();
         }
@@ -721,8 +721,8 @@ public final class DaemonListeners implements Disposable {
   private static void removeHighlightersOnPluginUnload(@NotNull MarkupModel model, @NotNull PluginDescriptor pluginDescriptor) {
     ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
     for (RangeHighlighter highlighter: model.getAllHighlighters()) {
-      if (!(highlighter instanceof RangeHighlighterEx)
-          || !((RangeHighlighterEx)highlighter).isPersistent()
+      if (!(highlighter instanceof RangeHighlighterEx ex)
+          || !ex.isPersistent()
           || pluginClassLoader instanceof PluginAwareClassLoader && isHighlighterFromPlugin(highlighter, pluginClassLoader)) {
         model.removeHighlighter(highlighter);
       }

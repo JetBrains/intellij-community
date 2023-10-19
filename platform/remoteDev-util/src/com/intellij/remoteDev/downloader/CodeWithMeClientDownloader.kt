@@ -346,10 +346,6 @@ object CodeWithMeClientDownloader {
     }
   }
 
-
-  /**
-   * @returns Pair(path/to/thin/client, path/to/jre)
-   */
   fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData {
     ApplicationManager.getApplication().assertIsNonDispatchThread()

@@ -5,6 +5,7 @@ import com.intellij.build.SyncViewManager
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
@@ -12,11 +13,16 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.ExceptionUtil
@@ -37,6 +43,7 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.importing.importActivityStarted
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.project.preimport.MavenProjectPreImporter
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.utils.*
 import java.util.concurrent.ConcurrentHashMap
@@ -291,11 +298,23 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     MavenSyncConsole.startTransaction(myProject)
     val syncActivity = importActivityStarted(project, MavenUtil.SYSTEM_ID)
     try {
-      val readingResult = readMavenProjectsActivity(syncActivity) { read() }
+
 
       if (spec.isForceResolve) {
+
         val console = syncConsole
         console.startImport(myProgressListener, spec)
+        if (MavenUtil.enablePreimport()) {
+          val result = console.runTask(MavenProjectBundle.message("maven.project.preimporting")) {
+            return@runTask MavenProjectPreImporter.getInstance(myProject).preimport(projectsTree.rootProjectsFiles, modelsProvider,
+                                                                                    importingSettings,
+                                                                                    generalSettings, syncActivity)
+          }
+          if (MavenUtil.enablePreimportOnly()) return result
+        }
+        val readingResult = readMavenProjectsActivity(syncActivity) { read() }
+
+
 
         fireImportAndResolveScheduled()
         val projectsToResolve = collectProjectsToResolve(readingResult)
@@ -306,6 +325,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
 
         return result
+      }
+      else {
+        val readingResult = readMavenProjectsActivity(syncActivity) { read() }
       }
       return emptyList()
     }
@@ -452,13 +474,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   private suspend fun checkOrInstallMavenWrapper(project: Project) {
-    if (projectsTree.existingManagedFiles.size == 1) {
-      val baseDir = MavenUtil.getBaseDir(projectsTree.existingManagedFiles[0])
-      if (MavenUtil.isWrapper(generalSettings)) {
-        withContext(Dispatchers.IO) {
-          MavenWrapperDownloader.checkOrInstallForSync(project, baseDir.toString())
-        }
-      }
+    if (!MavenUtil.isWrapper(generalSettings)) return
+    val baseDir = readAction {
+      if (projectsTree.existingManagedFiles.size != 1) null else MavenUtil.getBaseDir(projectsTree.existingManagedFiles[0])
+    }
+    if (null == baseDir) return
+    withContext(Dispatchers.IO) {
+      MavenWrapperDownloader.checkOrInstallForSync(project, baseDir.toString())
     }
   }
 
@@ -560,7 +582,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
 
   }
-
 
 
   private fun logDebug(debugMessage: String) {

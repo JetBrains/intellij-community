@@ -290,17 +290,26 @@ open class ProjectRootManagerImpl(val project: Project,
   }
 
   override fun loadState(element: Element) {
+    LOG.debug("Loading state into element")
+    var stateChanged = false
     for (extension in EP_NAME.getExtensions(project)) {
-      extension.readExternal(element)
+      stateChanged = stateChanged or extension.readExternalElement(element)
     }
 
+    val oldSdkName = projectSdkName
+    val oldSdkType = projectSdkType
     projectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR)
     projectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR)
+    if (oldSdkName != projectSdkName) stateChanged = true
+    if (oldSdkType != projectSdkType) stateChanged = true
     val app = ApplicationManager.getApplication()
+    LOG.debug("State was changed: $stateChanged")
     if (app != null) {
       val isStateLoaded = isStateLoaded
-      coroutineScope.launch(ModalityState.nonModal().asContextElement()) {
-        applyState(isStateLoaded)
+      if (stateChanged) {
+        coroutineScope.launch(ModalityState.nonModal().asContextElement()) {
+          applyState(isStateLoaded)
+        }
       }
     }
     isStateLoaded = true
@@ -308,6 +317,7 @@ open class ProjectRootManagerImpl(val project: Project,
 
   private suspend fun applyState(isStateLoaded: Boolean) {
     if (isStateLoaded) {
+      LOG.debug("Run write action for projectJdkChanged()")
       writeAction {
         projectJdkChanged()
       }
@@ -331,6 +341,7 @@ open class ProjectRootManagerImpl(val project: Project,
       }
     }
 
+    LOG.debug("Run write action for extension.projectSdkChanged(sdk)")
     val extensions = EP_NAME.getExtensions(project)
     writeAction {
       for (extension in extensions) {

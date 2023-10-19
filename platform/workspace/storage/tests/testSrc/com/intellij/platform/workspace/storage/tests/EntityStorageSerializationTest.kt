@@ -117,10 +117,15 @@ class EntityStorageSerializationTest {
 
     val (kryo, _) = serializer.createKryo()
 
-    val registration = (10..1_000).mapNotNull { kryo.getRegistration(it) }.joinToString(separator = "\n")
+    val registration = (10..1_000)
+      .mapNotNull {
+        kryo.getRegistration(it)?.type?.name?.replace("$",
+                                                      "#") // '$' is not convenient to be saved in expected string, so let's replace it with '#'
+      }
+      .joinToString(separator = "\n")
 
     assertEquals(expectedKryoRegistration, registration,
-                            "Have you changed kryo registration? Update the version number! (And this test)")
+                 "Have you changed kryo registration? Update the version number! (And this test)")
   }
 
   @Test
@@ -210,113 +215,108 @@ class EntityStorageSerializationTest {
   }
 }
 
-// Kotlin tip: Use the ugly ${'$'} to insert the $ into the multiline string
+// Use '#' instead of '$' to separate the subclass of the class
 private val expectedKryoRegistration = """
-  [10, com.intellij.platform.workspace.storage.impl.ConnectionId]
-  [11, com.intellij.platform.workspace.storage.impl.ImmutableEntitiesBarrel]
-  [12, com.intellij.platform.workspace.storage.impl.ChildEntityId]
-  [13, com.intellij.platform.workspace.storage.impl.ParentEntityId]
-  [14, it.unimi.dsi.fastutil.objects.ObjectOpenHashSet]
-  [15, com.intellij.platform.workspace.storage.impl.indices.SymbolicIdInternalIndex]
-  [16, com.intellij.platform.workspace.storage.impl.indices.EntityStorageInternalIndex]
-  [17, com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndex]
-  [18, com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap]
-  [19, it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap]
-  [20, it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap]
-  [21, com.intellij.platform.workspace.storage.impl.serialization.TypeInfo]
-  [22, java.util.List]
-  [23, java.util.Set]
-  [24, java.util.Map]
-  [25, Object[]]
-  [26, kotlin.collections.ArrayDeque]
-  [27, kotlin.collections.EmptyList]
-  [28, kotlin.collections.EmptyMap]
-  [29, kotlin.collections.EmptySet]
-  [30, java.util.ArrayList]
-  [31, java.util.LinkedList]
-  [32, java.util.Stack]
-  [33, java.util.Vector]
-  [34, java.util.HashSet]
-  [35, java.util.EnumSet]
-  [36, java.util.TreeSet]
-  [37, java.util.HashMap]
-  [38, java.util.TreeMap]
-  [39, java.util.EnumMap]
-  [40, java.util.Hashtable]
-  [41, java.util.WeakHashMap]
-  [42, java.util.IdentityHashMap]
-  [43, com.intellij.util.SmartList]
-  [44, java.util.LinkedHashMap]
-  [45, com.intellij.platform.workspace.storage.impl.containers.BidirectionalMap]
-  [46, com.intellij.platform.workspace.storage.impl.containers.BidirectionalSetMap]
-  [47, com.intellij.util.containers.BidirectionalMultiMap]
-  [48, com.google.common.collect.HashBiMap]
-  [49, java.util.LinkedHashSet]
-  [50, com.intellij.platform.workspace.storage.impl.containers.LinkedBidirectionalMap]
-  [51, it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap]
-  [52, it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap]
-  [53, com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList]
-  [54, com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet]
-  [55, java.util.Arrays${'$'}ArrayList]
-  [56, byte[]]
-  [57, com.intellij.platform.workspace.storage.impl.ImmutableEntityFamily]
-  [58, com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex]
-  [59, int[]]
-  [60, kotlin.Pair]
-  [61, com.intellij.platform.workspace.storage.impl.serialization.SerializableEntityId]
-  [62, com.intellij.platform.workspace.storage.impl.RefsTable]
-  [63, com.intellij.platform.workspace.storage.impl.references.ImmutableOneToOneContainer]
-  [64, com.intellij.platform.workspace.storage.impl.references.ImmutableOneToManyContainer]
-  [65, com.intellij.platform.workspace.storage.impl.references.ImmutableAbstractOneToOneContainer]
-  [66, com.intellij.platform.workspace.storage.impl.references.ImmutableOneToAbstractManyContainer]
-  [67, com.intellij.platform.workspace.storage.impl.containers.MutableIntIntUniqueBiMap]
-  [68, com.intellij.platform.workspace.storage.impl.containers.MutableNonNegativeIntIntBiMap]
-  [69, com.intellij.platform.workspace.storage.impl.containers.MutableNonNegativeIntIntMultiMap${'$'}ByList]
-  [70, com.intellij.platform.workspace.storage.impl.ChangeEntry${'$'}AddEntity]
-  [71, com.intellij.platform.workspace.storage.impl.ChangeEntry${'$'}RemoveEntity]
-  [72, com.intellij.platform.workspace.storage.impl.ChangeEntry${'$'}ReplaceEntity]
-  [73, com.intellij.platform.workspace.storage.impl.ChangeEntry${'$'}ChangeEntitySource]
-  [74, com.intellij.platform.workspace.storage.impl.ChangeEntry${'$'}ReplaceAndChangeSource]
-  [75, com.intellij.platform.workspace.storage.impl.ChangeEntry${'$'}ReplaceEntity${'$'}Data]
-  [76, com.intellij.platform.workspace.storage.impl.ChangeEntry${'$'}ReplaceEntity${'$'}References]
-  [77, com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata]
-  [78, com.intellij.platform.workspace.storage.metadata.model.EntityMetadata]
-  [79, com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata]
-  [80, com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata]
-  [81, com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata${'$'}ClassMetadata]
-  [82, com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata${'$'}ObjectMetadata]
-  [83, com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata${'$'}EnumClassMetadata]
-  [84, com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata${'$'}KnownClass]
-  [85, com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata]
-  [86, com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata${'$'}AbstractClassMetadata]
-  [87, com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata]
-  [88, com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata]
-  [89, com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata]
-  [90, com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata]
-  [91, com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata${'$'}ParameterizedType]
-  [92, com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata${'$'}SimpleType]
-  [93, com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata${'$'}SimpleType${'$'}PrimitiveType]
-  [94, com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata${'$'}SimpleType${'$'}CustomType]
-  [95, com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata${'$'}EntityReference]
-  [96, com.intellij.platform.workspace.storage.impl.ConnectionId${'$'}ConnectionType]
-  [97, com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata]
-  [98, java.util.Collections${'$'}UnmodifiableCollection]
-  [99, java.util.Collections${'$'}UnmodifiableSet]
-  [100, java.util.Collections${'$'}UnmodifiableRandomAccessList]
-  [101, java.util.Collections${'$'}UnmodifiableMap]
-  [102, java.util.Collections${'$'}EmptyList]
-  [103, java.util.Collections${'$'}EmptyMap]
-  [104, java.util.Collections${'$'}EmptySet]
-  [105, java.util.Collections${'$'}SingletonList]
-  [106, java.util.Collections${'$'}SingletonMap]
-  [107, java.util.Collections${'$'}SingletonSet]
-  [108, com.intellij.util.containers.ContainerUtilRt${'$'}EmptyList]
-  [109, com.intellij.util.containers.MostlySingularMultiMap${'$'}EmptyMap]
-  [110, com.intellij.util.containers.MultiMap${'$'}EmptyMap]
-  [111, com.intellij.platform.workspace.storage.impl.AnonymizedEntitySource]
-  [112, com.intellij.platform.workspace.storage.impl.MatchedEntitySource]
-  [113, com.intellij.platform.workspace.storage.impl.UnmatchedEntitySource]
-  [114, java.util.UUID]
+  com.intellij.platform.workspace.storage.impl.ConnectionId
+  com.intellij.platform.workspace.storage.impl.ImmutableEntitiesBarrel
+  com.intellij.platform.workspace.storage.impl.ChildEntityId
+  com.intellij.platform.workspace.storage.impl.ParentEntityId
+  it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+  com.intellij.platform.workspace.storage.impl.indices.SymbolicIdInternalIndex
+  com.intellij.platform.workspace.storage.impl.indices.EntityStorageInternalIndex
+  com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndex
+  com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
+  it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
+  it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
+  com.intellij.platform.workspace.storage.impl.serialization.TypeInfo
+  java.util.List
+  java.util.Set
+  java.util.Map
+  [Ljava.lang.Object;
+  kotlin.collections.ArrayDeque
+  kotlin.collections.EmptyList
+  kotlin.collections.EmptyMap
+  kotlin.collections.EmptySet
+  java.util.ArrayList
+  java.util.LinkedList
+  java.util.Stack
+  java.util.Vector
+  java.util.HashSet
+  java.util.EnumSet
+  java.util.TreeSet
+  java.util.HashMap
+  java.util.TreeMap
+  java.util.EnumMap
+  java.util.Hashtable
+  java.util.WeakHashMap
+  java.util.IdentityHashMap
+  com.intellij.util.SmartList
+  java.util.LinkedHashMap
+  com.intellij.platform.workspace.storage.impl.containers.BidirectionalMap
+  com.intellij.platform.workspace.storage.impl.containers.BidirectionalSetMap
+  com.intellij.util.containers.BidirectionalMultiMap
+  com.google.common.collect.HashBiMap
+  java.util.LinkedHashSet
+  com.intellij.platform.workspace.storage.impl.containers.LinkedBidirectionalMap
+  it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+  it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+  com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
+  com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
+  java.util.Arrays#ArrayList
+  [B
+  com.intellij.platform.workspace.storage.impl.ImmutableEntityFamily
+  com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
+  [I
+  kotlin.Pair
+  com.intellij.platform.workspace.storage.impl.serialization.SerializableEntityId
+  com.intellij.platform.workspace.storage.impl.RefsTable
+  com.intellij.platform.workspace.storage.impl.references.ImmutableOneToOneContainer
+  com.intellij.platform.workspace.storage.impl.references.ImmutableOneToManyContainer
+  com.intellij.platform.workspace.storage.impl.references.ImmutableAbstractOneToOneContainer
+  com.intellij.platform.workspace.storage.impl.references.ImmutableOneToAbstractManyContainer
+  com.intellij.platform.workspace.storage.impl.containers.MutableIntIntUniqueBiMap
+  com.intellij.platform.workspace.storage.impl.containers.MutableNonNegativeIntIntBiMap
+  com.intellij.platform.workspace.storage.impl.containers.MutableNonNegativeIntIntMultiMap#ByList
+  com.intellij.platform.workspace.storage.impl.ChangeEntry#AddEntity
+  com.intellij.platform.workspace.storage.impl.ChangeEntry#RemoveEntity
+  com.intellij.platform.workspace.storage.impl.ChangeEntry#ReplaceEntity
+  com.intellij.platform.workspace.storage.impl.ChangeEntry#ReplaceEntity#Data
+  com.intellij.platform.workspace.storage.impl.ChangeEntry#ReplaceEntity#References
+  com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+  com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+  com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
+  com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
+  com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata#ClassMetadata
+  com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata#ObjectMetadata
+  com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata#EnumClassMetadata
+  com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata#KnownClass
+  com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata
+  com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata#AbstractClassMetadata
+  com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata
+  com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
+  com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata
+  com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
+  com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#ParameterizedType
+  com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#SimpleType
+  com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#SimpleType#PrimitiveType
+  com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#SimpleType#CustomType
+  com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#EntityReference
+  com.intellij.platform.workspace.storage.impl.ConnectionId#ConnectionType
+  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata
+  java.util.Collections#UnmodifiableCollection
+  java.util.Collections#UnmodifiableSet
+  java.util.Collections#UnmodifiableRandomAccessList
+  java.util.Collections#UnmodifiableMap
+  java.util.Collections#EmptyList
+  java.util.Collections#EmptyMap
+  java.util.Collections#EmptySet
+  java.util.Collections#SingletonList
+  java.util.Collections#SingletonMap
+  java.util.Collections#SingletonSet
+  com.intellij.util.containers.ContainerUtilRt#EmptyList
+  com.intellij.util.containers.MostlySingularMultiMap#EmptyMap
+  com.intellij.util.containers.MultiMap#EmptyMap
+  java.util.UUID
 """.trimIndent()
 
 private inline fun withTempFile(task: (file: Path) -> Unit) {

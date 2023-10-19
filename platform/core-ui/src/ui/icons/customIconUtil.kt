@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.ui.RetrievableIcon
@@ -62,7 +61,7 @@ private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int
  * @param size the size before system scaling (without `JBUIScale.scale`)
  */
 @ApiStatus.Internal
-fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int, isDark: Boolean? = null): Icon {
+fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int): Icon {
   if (icon.iconWidth == JBUIScale.scale(size)) {
     return icon
   }
@@ -74,15 +73,21 @@ fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int, isDark: Boolean?
     }
     if (cachedIcon !is CachedImageIcon) {
       val result = icon.scale(JBUIScale.scale(1.0f) * size / icon.iconWidth)
-      return if (isDark == null) result else IconLoader.getDarkIcon(result, isDark)
+      return result
     }
   }
 
-  val version = loadIconCustomVersion(icon = cachedIcon, width = size, height = size, isDark = isDark)
-  if (version != null) {
-    return version
+  return loadIconCustomVersionOrScale(icon = cachedIcon, size = size, isDark = null)
+}
+
+@ApiStatus.Internal
+fun loadIconCustomVersionOrScale(icon: CachedImageIcon, size: Int, isDark: Boolean? = null): Icon {
+  if (icon.iconWidth == JBUIScale.scale(size)) {
+    return if (isDark == null) icon else icon.getDarkIcon(isDark)
   }
 
-  val scale = (JBUIScale.scale(1.0f) * size) / cachedIcon.iconWidth
-  return (if (isDark == null) cachedIcon else cachedIcon.getDarkIcon(isDark)).scale(scale)
+  loadIconCustomVersion(icon = icon, width = size, height = size, isDark = isDark)?.let {
+    return it
+  }
+  return icon.scale(scale = (JBUIScale.scale(1.0f) * size) / icon.getRawIconWidth(), isDark = isDark)
 }

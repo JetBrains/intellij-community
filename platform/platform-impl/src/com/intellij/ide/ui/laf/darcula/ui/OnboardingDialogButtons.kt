@@ -103,7 +103,6 @@ object OnboardingDialogButtons {
 
   fun createButton(isDefault: Boolean): JButton {
     val btn = JButton()
-    btn.preferredSize = Dimension(280, 40)
     btn.putClientProperty("ActionToolbar.smallVariant", true)
     btn.putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, isDefault)
     val listener: MouseAdapter = object : MouseAdapter() {

@@ -2265,8 +2265,7 @@ private val servicePreloadingAllowListForNonCorePlugin = java.util.Set.of(
   "com.jetbrains.rdserver.editors.BackendEditorService",
   "com.jetbrains.rdserver.toolWindow.BackendServerToolWindowManager",
   "com.jetbrains.rdserver.toolbar.CWMHostClosedToolbarNotification",
-  "com.jetbrains.rdclient.client.FrontendProjectSessionsManager",
-  "com.jetbrains.rdclient.client.FrontendAppSessionsManager",
+  "com.jetbrains.rider.protocol.RiderProtocolProjectSessionsManager",
   "com.jetbrains.rider.projectView.workspace.impl.RiderWorkspaceModel",
 )
 

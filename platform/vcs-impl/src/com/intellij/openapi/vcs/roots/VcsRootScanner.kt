@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectInitialActivitiesNotifier
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -45,7 +46,7 @@ private val LOG = logger<VcsRootScanner>()
 internal class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScope) : Disposable {
   private val rootProblemNotifier = VcsRootProblemNotifier.createInstance(project)
 
-  private val scanRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val scanRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     AsyncVfsEventsPostProcessor.getInstance().addListener(::filesChanged, this)
@@ -58,6 +59,8 @@ internal class VcsRootScanner(private val project: Project, coroutineScope: Coro
         .debounce(1.seconds)
         .collectLatest {
           withContext(Dispatchers.IO) {
+            project.service<ProjectInitialActivitiesNotifier>().awaitInitialVfsRefreshFinished()
+
             coroutineToIndicator {
               rootProblemNotifier.rescanAndNotifyIfNeeded()
             }

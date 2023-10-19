@@ -4,6 +4,7 @@ package com.intellij.ui.preview
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ModalityState.stateForComponent
+import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
@@ -17,7 +18,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.ui.JBUI
 import kotlin.properties.Delegates.observable
 
-class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val id: ClientId?) {
+class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val session: ClientProjectSession) {
 
   fun editor(): Editor? = editor
   fun close(): Unit = open(null)
@@ -46,7 +47,7 @@ class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val id: C
       if (newEditor != null && newDescriptor?.rangeMarker != null) {
         getApplication().invokeLater({
                                        if (newDescriptor === descriptor && newEditor === editor) {
-                                         ClientId.withClientId(id) { newDescriptor.navigateIn(newEditor) }
+                                         ClientId.withClientId(session.clientId) { newDescriptor.navigateIn(newEditor) }
                                        }
                                      }, stateForComponent(splitter))
       }

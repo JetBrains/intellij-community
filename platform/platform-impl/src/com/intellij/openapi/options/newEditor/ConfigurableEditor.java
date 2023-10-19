@@ -268,7 +268,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         HtmlChunk.text(exception.getTitle()).wrapWith("strong"),
         HtmlChunk.text(":"),
         HtmlChunk.br(),
-        exception.isHtmlMessage() ? HtmlChunk.raw(exception.getMessage()) : HtmlChunk.text(exception.getMessage())
+        exception.getMessageHtml()
       ).wrapWith("html").toString());
       myErrorLabel.setVisible(true);
     }

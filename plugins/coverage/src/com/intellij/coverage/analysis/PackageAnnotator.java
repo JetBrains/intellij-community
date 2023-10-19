@@ -164,12 +164,18 @@ public final class PackageAnnotator {
 
   @Nullable
   private PackageAnnotator.ClassCoverageInfo collectClassCoverageInformation(@Nullable File classFile,
-                                                                            @Nullable PsiClass psiClass,
-                                                                            String className) {
+                                                                             @Nullable PsiClass psiClass,
+                                                                             String className) {
     ClassData classData = myProjectData.getClassData(className);
     final boolean classExists = classData != null && classData.getLines() != null;
     if (classFile != null && (!classExists || !classData.isFullyAnalysed())) {
-      classData = collectNonCoveredClassInfo(classFile, className, classExists ? myProjectData : getUnloadedClassesProjectData());
+      ClassData fullClassData = collectNonCoveredClassInfo(classFile, className, getUnloadedClassesProjectData());
+      if (classData == null) {
+        classData = fullClassData;
+      }
+      else {
+        classData.merge(fullClassData);
+      }
     }
 
     return getSummaryInfo(psiClass, classData, myIgnoreImplicitConstructor);
@@ -196,16 +202,15 @@ public final class PackageAnnotator {
     final Object[] lines = classData.getLines();
     for (Object l : lines) {
       if (l instanceof LineData lineData) {
-        if (lineData.getStatus() == LineCoverage.FULL) {
+        if (isDefaultConstructorGenerated &&
+            isDefaultConstructor(lineData.getMethodSignature())) {
+          continue;
+        }
+        else if (lineData.getStatus() == LineCoverage.FULL) {
           info.fullyCoveredLineCount++;
         }
         else if (lineData.getStatus() == LineCoverage.PARTIAL) {
           info.partiallyCoveredLineCount++;
-        }
-        else if (ignoreImplicitConstructor &&
-                 isDefaultConstructorGenerated &&
-                 isDefaultConstructor(lineData.getMethodSignature())) {
-          continue;
         }
         info.totalLineCount++;
         BranchData branchData = lineData.getBranchData();

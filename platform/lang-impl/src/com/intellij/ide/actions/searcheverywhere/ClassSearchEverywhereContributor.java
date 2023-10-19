@@ -41,7 +41,7 @@ import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplK
 /**
  * @author Konstantin Bulenkov
  */
-public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor {
+public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor implements EssentialContributor {
   private static final Pattern ourPatternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 
   private final PersistentSearchEverywhereContributorFilter<LanguageRef> filter;

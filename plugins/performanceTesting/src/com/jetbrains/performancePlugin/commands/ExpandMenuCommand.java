@@ -1,6 +1,5 @@
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -11,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -32,7 +32,7 @@ abstract public class ExpandMenuCommand extends AbstractCallbackBasedCommand {
   protected void execute(@NotNull ActionCallback callback, @NotNull PlaybackContext context)  {
     ActionManager actionManager = ActionManager.getInstance();
     Component focusedComponent = IdeFocusManager.findInstance().getFocusOwner(); // real focused component (editor/project view/..)
-    DataContext dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(focusedComponent));
+    DataContext dataContext = DataManager.getInstance().getDataContext(focusedComponent);
     ActionGroup mainMenu = (ActionGroup)actionManager.getAction(getGroupId());
     TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, getSpanName(), totalSpan -> {
       JBTreeTraverser.<AnAction>from(action -> {

@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.LafReference;
 import com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -70,7 +71,7 @@ final class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public UIThemeLookAndFeelInfo findLaf(LafReference reference) {
+  public UIThemeLookAndFeelInfo findLaf(@NotNull String themeId) {
     return null;
   }
 

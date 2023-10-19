@@ -165,6 +165,8 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
   @Override
   void close() throws IOException;
 
+  boolean isClosed();
+
 
   interface Processor<E extends Exception> {
     boolean processRecord(final int recordId,

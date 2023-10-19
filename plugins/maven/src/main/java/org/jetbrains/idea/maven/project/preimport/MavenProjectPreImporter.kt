@@ -1,19 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.preimport
 
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
+import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector.PREIMPORT_ACTIVITY
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.*
@@ -24,41 +32,106 @@ import java.util.concurrent.ConcurrentHashMap
 
 
 @Service(Service.Level.PROJECT)
+@Internal
 class MavenProjectPreImporter(val project: Project, val coroutineScope: CoroutineScope) {
-  private val localRepo = project.service<MavenProjectsManager>().localRepository
+  private val localRepo = MavenProjectsManager.getInstance(project).localRepository
 
-  suspend fun preimport(rootProjectFile: VirtualFile,
+  suspend fun preimport(rootProjectFiles: List<VirtualFile>,
                         optionalModelsProvider: IdeModifiableModelsProvider?,
                         importingSettings: MavenImportingSettings,
-                        generalSettings: MavenGeneralSettings) {
+                        generalSettings: MavenGeneralSettings,
+                        parentActivity: StructuredIdeActivity): List<Module> {
 
-    val time = System.currentTimeMillis();
-    println("preimport started on $time")
-    val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)
+    val activity = PREIMPORT_ACTIVITY.startedWithParent(project, parentActivity)
+    val statisticsData = StatisticsData(project, rootProjectFiles.size)
+    try {
+      val scope = coroutineScope.childScope(Dispatchers.IO, false)
+
+      val forest = rootProjectFiles.map {
+        scope.preimport(it)
+      }.awaitAll().filterNotNull()
+      if (forest.isEmpty()) return emptyList()
+
+
+      val projectTree = MavenProjectsTree(project)
+      val roots = ArrayList<MavenProject>()
+      val mavenProjectMappings = HashMap<MavenProject, List<MavenProject>>()
+      val allProjects = ArrayList<MavenProject>()
+
+      forest.forEach {
+        mavenProjectMappings.putAll(it.mavenProjectMappings())
+        allProjects.addAll(it.projects())
+        it.root?.let(roots::add)
+      }
+
+
+      projectTree.updater()
+        .setRootProjects(roots)
+        .setManagedFiles(roots.map { it.file.path })
+        .setAggregatorMappings(mavenProjectMappings)
+        .setMavenIdMappings(allProjects)
+
+      val modelsProvider = optionalModelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(project)
+      // MavenProjectsManager.getInstance(project).projectsTree = projectTree
+      return withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
+        blockingContext {
+          val importer = MavenProjectImporter.createImporter(project, projectTree,
+                                                             allProjects.associateWith { MavenProjectChanges.ALL },
+                                                             modelsProvider,
+                                                             importingSettings,
+                                                             null,
+                                                             parentActivity)
+
+          importer.importProject()
+          statisticsData.add(forest, allProjects)
+          return@blockingContext importer.createdModules()
+
+        }
+      }
+    }
+    catch (e: Throwable) {
+      MavenLog.LOG.error(e)
+      return emptyList()
+    }
+    finally {
+      activity.finished {
+        listOf(
+          ProjectImportCollector.SUBMODULES_COUNT.with(statisticsData.totalProjects),
+          ProjectImportCollector.ROOT_PROJECTS.with(statisticsData.rootProjects),
+          ProjectImportCollector.LINKED_PROJECTS.with(statisticsData.linkedProject),
+          ProjectImportCollector.RESOLVED_DEPENDENCIES.with(statisticsData.resolvedDependencies),
+          ProjectImportCollector.RESOLVED_DEPS_PERCENT.with(
+            statisticsData.resolvedDependencies.toFloat() / statisticsData.totalDependencies.toFloat()),
+          ProjectImportCollector.ADDED_MODULES.with(statisticsData.addedModules))
+      }
+    }
+  }
+
+  private fun CoroutineScope.preimport(rootProjectFile: VirtualFile): Deferred<ProjectTree?> = async {
+
     val tree = ProjectTree()
     try {
-      val rootModel = MavenJDOMUtil.read(rootProjectFile, null) ?: return
+      val rootModel = MavenJDOMUtil.read(rootProjectFile, null) ?: return@async null
 
       // reading
-      val scope = coroutineScope.childScope(Dispatchers.IO, false)
       val rootProjectData = readProject(rootModel, rootProjectFile);
       tree.addRoot(rootProjectData)
 
-      val readPomsJob = scope.launch {
+      val readPomsJob = launch {
         readRecursively(rootModel, rootProjectFile, rootProjectData, tree)
       }
       readPomsJob.join()
 
       val interpolatedCache = ConcurrentHashMap<VirtualFile, Deferred<MavenProjectData>>()
 
-      val interpolationJob = scope.launch {
+      val interpolationJob = launch {
         tree.forEachProject {
           interpolate(it, tree, interpolatedCache)
         }
       }
       interpolationJob.join()
 
-      val meditationJob = scope.launch {
+      val meditationJob = launch {
         tree.forEachProject {
           launch {
             resolveDependencies(it)
@@ -66,34 +139,16 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
         }
       }
       meditationJob.join()
-
-      val projectTree = MavenProjectsTree(project)
-      projectTree.updater()
-        .setRootProject(rootProjectData.mavenProject)
-        .setManagedFiles(listOf(rootProjectFile.path))
-        .setAggregatorMappings(tree.mavenProjectMappings())
-        .setMavenIdMappings(tree.projects())
-
-      val modelsProvider = optionalModelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(project)
-      // MavenProjectsManager.getInstance(project).projectsTree = projectTree
-
-
-      MavenProjectImporter.createImporter(project, projectTree,
-                                          tree.withAllChanges(),
-                                          modelsProvider,
-                                          importingSettings,
-                                          null,
-                                          activity).importProject()
+      return@async tree;
     }
     catch (e: Exception) {
       MavenLog.LOG.warn(e)
     }
     finally {
-      val len = System.currentTimeMillis() - time;
-      println("preimport finished. Took $len milliseconds")
       listOf(ProjectImportCollector.LINKED_PROJECTS.with(1),
              ProjectImportCollector.SUBMODULES_COUNT.with(tree.projects().size))
     }
+    return@async null
 
 
   }
@@ -267,6 +322,40 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     return mavenProjectData;
 
   }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): MavenProjectPreImporter = project.service()
+  }
+}
+
+private class StatisticsData(val project: Project, val rootProjects: Int) {
+
+  val modulesBefore = WorkspaceModel.getInstance(project).currentSnapshot.entitiesAmount(ModuleEntity::class.java)
+  fun add(forest: List<ProjectTree>, allProjects: ArrayList<MavenProject>) {
+    val time = System.currentTimeMillis()
+    try {
+      linkedProject = forest.size
+      resolvedDependencies = forest.flatMap { it.projectsData() }.sumOf { it.resolvedDependencies.size }
+      totalDependencies = forest.flatMap { it.projectsData() }.sumOf { it.declaredDependencies.size }
+      addedModules = WorkspaceModel.getInstance(project).currentSnapshot.entitiesAmount(ModuleEntity::class.java) - modulesBefore
+      totalProjects = allProjects.size
+    }
+    finally {
+      MavenLog.LOG.info("preimport statistics: " +
+                        "linked: $linkedProject of $rootProjects with total $totalProjects modules" +
+                        "interpolated $resolvedDependencies of $totalDependencies, " +
+                        "$addedModules modules added. This statistics calculated for ${System.currentTimeMillis() - time} millis")
+    }
+  }
+
+  var linkedProject = 0
+  var resolvedDependencies = 0
+  var totalDependencies = 0
+  var totalProjects = 0
+  var addedModules = 0
+
+
 }
 
 private fun Element.getChildrenText(s: String, c: String): List<String> {
@@ -275,17 +364,20 @@ private fun Element.getChildrenText(s: String, c: String): List<String> {
 }
 
 class ProjectTree {
+  var root: MavenProject? = null
   private val tree = HashMap<VirtualFile, MutableList<MavenProjectData>>()
   private val allProjects = HashMap<VirtualFile, MavenProjectData>()
   private val fullMavenIds = HashMap<MavenId, MavenProjectData>()
   private val managedMavenIds = HashMap<MavenId, MavenProjectData>()
 
   fun projects() = allProjects.values.map { it.mavenProject }
+  fun projectsData() = allProjects.values
 
   private val mutex = Mutex(false)
 
   suspend fun addRoot(root: MavenProjectData) {
     mutex.withLock {
+      this.root = root.mavenProject
       allProjects[root.file] = root
       fullMavenIds[root.mavenId] = root
       managedMavenIds[trimVersion(root.mavenId)] = root
@@ -315,10 +407,6 @@ class ProjectTree {
     return allProjects.mapNotNull { (file, data) ->
       tree[file]?.map { it.mavenProject }?.let { data.mavenProject to it }
     }.toMap()
-  }
-
-  fun withAllChanges(): Map<MavenProject, MavenProjectChanges> {
-    return allProjects.map { it.value.mavenProject to MavenProjectChanges.ALL }.toMap()
   }
 }
 

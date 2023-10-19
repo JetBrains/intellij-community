@@ -30,7 +30,7 @@ import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
 private val TEXT_EDITOR_KEY = Key.create<TextEditor>("textEditor")
-private const val TYPE_ID: @NonNls String = "text-editor"
+internal const val TEXT_EDITOR_PROVIDER_TYPE_ID: @NonNls String = "text-editor"
 private const val LINE_ATTR: @NonNls String = "line"
 private const val COLUMN_ATTR: @NonNls String = "column"
 private const val LEAN_FORWARD_ATTR: @NonNls String = "lean-forward"
@@ -133,7 +133,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     }
   }
 
-  override fun getEditorTypeId(): String = TYPE_ID
+  override fun getEditorTypeId(): String = TEXT_EDITOR_PROVIDER_TYPE_ID
 
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.NONE
 

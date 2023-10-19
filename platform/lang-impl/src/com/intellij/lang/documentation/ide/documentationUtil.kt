@@ -15,6 +15,7 @@ import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.EmptyDocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Experimental
 import javax.swing.JComponent
 
@@ -64,4 +65,6 @@ private class DocumentationComponentImpl(
   override fun resetBrowser(targetPointer: Pointer<out DocumentationTarget>, targetPresentation: TargetPresentation) {
     browser.resetBrowser(DocumentationRequest(targetPointer, targetPresentation))
   }
+
+  override val contentSizeUpdates: Flow<Any> = ui.contentSizeUpdates
 }

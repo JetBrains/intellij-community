@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet;
 
 import com.intellij.openapi.module.Module;
@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.NonExtendable
 public abstract class FacetManager implements FacetModel {
+
+  @Topic.ProjectLevel
   public static final Topic<FacetManagerListener> FACETS_TOPIC = new Topic<>(FacetManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public static FacetManager getInstance(@NotNull Module module) {

@@ -43,7 +43,7 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
     mySettings = GitVcsSettings.getInstance(project);
     myPusher = new GitPusher(project, mySettings, this);
     myOutgoingCommitsProvider = new GitOutgoingCommitsProvider(project);
-    mySharedSettings = project.getService(GitSharedSettings.class);
+    mySharedSettings = GitSharedSettings.getInstance(project);
     myCommonPushSettings = project.getService(PushSettings.class);
   }
 

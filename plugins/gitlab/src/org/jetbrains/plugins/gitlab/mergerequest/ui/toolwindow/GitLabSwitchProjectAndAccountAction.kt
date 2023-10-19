@@ -5,7 +5,7 @@ import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowDataKeys
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabSwitchProjectAndAccountAction : DumbAwareAction(GitLabBundle.message("merge.request.toolwindow.switch.project.account.action.title")) {

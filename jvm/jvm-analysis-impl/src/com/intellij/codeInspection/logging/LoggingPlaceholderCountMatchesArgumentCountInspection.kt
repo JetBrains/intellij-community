@@ -339,7 +339,9 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
         return false
       }
       val lastParameterType = lastParameter.type.let { if (it is PsiEllipsisType) it.componentType else it }
-
+      if (lastParameterType is UastErrorType) {
+        return false
+      }
       if (!(InheritanceUtil.isInheritor(lastParameterType, CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER) || InheritanceUtil.isInheritor(
           lastParameterType, "org.apache.logging.log4j.util.Supplier"))) {
         return false
@@ -366,6 +368,9 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
 
     private fun hasThrowableType(lastArgument: UExpression): Boolean {
       val type = lastArgument.getExpressionType()
+      if (type is UastErrorType) {
+        return false
+      }
       if (type is PsiDisjunctionType) {
         return type.disjunctions.all { InheritanceUtil.isInheritor(it, CommonClassNames.JAVA_LANG_THROWABLE) }
       }
@@ -450,7 +455,11 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       val qualifierExpression = getImmediateLoggerQualifier(expression)
       var initializer: UExpression? = null
       if (qualifierExpression is UReferenceExpression) {
-        val target: UVariable = qualifierExpression.resolveToUElement() as? UVariable ?: return null
+        var resolvedToUElement = qualifierExpression.resolveToUElement()
+        if (resolvedToUElement is UMethod) {
+          resolvedToUElement = resolvedToUElement.sourcePsi.toUElement()
+        }
+        val target: UVariable = resolvedToUElement as? UVariable ?: return null
         val sourcePsi = target.sourcePsi as? PsiVariable
         // for lombok
         if (sourcePsi != null && !sourcePsi.isPhysical) {

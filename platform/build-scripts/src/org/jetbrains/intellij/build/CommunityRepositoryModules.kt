@@ -5,16 +5,17 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.intellij.build.impl.BundledMavenDownloader
-import org.jetbrains.intellij.build.impl.LibraryPackMode
-import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
 import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
+import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 
 object CommunityRepositoryModules {
   /**
@@ -238,7 +239,12 @@ object CommunityRepositoryModules {
       "intellij.grazie.xml",
       "intellij.grazie.yaml",
     )),
-    plugin(listOf("intellij.toml", "intellij.toml.core", "intellij.toml.json")),
+    plugin(listOf(
+      "intellij.toml",
+      "intellij.toml.core",
+      "intellij.toml.json",
+      "intellij.toml.grazie",
+    )),
     plugin(listOf(
       "intellij.markdown",
       "intellij.markdown.core",
@@ -246,6 +252,10 @@ object CommunityRepositoryModules {
       "intellij.markdown.frontmatter",
       "intellij.markdown.frontmatter.yaml",
       "intellij.markdown.frontmatter.toml",
+      "intellij.markdown.images",
+      "intellij.markdown.xml",
+      "intellij.markdown.model",
+      "intellij.markdown.spellchecker"
     )),
     plugin(listOf("intellij.settingsSync", "intellij.settingsSync.git")),
     plugin(listOf(
@@ -316,7 +326,7 @@ object CommunityRepositoryModules {
   )
 
   private fun androidDesignPlugin(mainModuleName: String = "intellij.android.design-plugin"): PluginLayout {
-    return plugin(mainModuleName) { spec ->
+    return plugin (mainModuleName) { spec ->
       spec.directoryName = "design-tools"
       spec.mainJarName = "design-tools.jar"
 
@@ -349,12 +359,26 @@ object CommunityRepositoryModules {
     }
   }
 
-  @Suppress("SpellCheckingInspection")
   fun androidPlugin(additionalModulesToJars: Map<String, String> = emptyMap(),
                     mainModuleName: String = "intellij.android.plugin",
-                    addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    // the following is adapted from https://android.googlesource.com/platform/tools/adt/idea/+/refs/heads/studio-main/studio/BUILD
-    return plugin(mainModuleName) { spec ->
+                    allPlatforms: Boolean = false,
+                    addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null,): PluginLayout {
+    return createAndroidPluginLayout(mainModuleName, additionalModulesToJars, allPlatforms, addition)
+  }
+
+  private val supportedFfmpegPresets: PersistentList<SupportedDistribution> = persistentListOf(
+    // todo notarization
+    //SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64),
+    //SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
+    SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64),
+    SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64),
+  )
+
+  private fun createAndroidPluginLayout(mainModuleName: String,
+                                        additionalModulesToJars: Map<String, String> = emptyMap(),
+                                        allPlatforms: Boolean,
+                                        addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?): PluginLayout =
+    plugin(mainModuleName) { spec ->
       spec.directoryName = "android"
       spec.mainJarName = "android.jar"
       spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
@@ -451,7 +475,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.device-explorer-monitor", "android.jar")
       spec.withModule("intellij.android.device-manager", "android.jar")
       spec.withModule("intellij.android.device-manager-v2", "android.jar")
-      spec.withModule("intellij.android.streaming", "android.jar")
       //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
       //tools/adt/idea/gradle-dsl-kotlin:intellij.android.gradle.dsl.kotlin <= REMOVED
       spec.withModule("intellij.android.lang-databinding", "android.jar")
@@ -594,7 +617,6 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("precompiled-wizardTemplate.impl", "android.sdktools.wizardTemplate.impl", "wizard-template.jar")
       spec.withModuleLibrary("precompiled-wizardTemplate.plugin", "android.sdktools.wizardTemplate.plugin", "wizard-template.jar")
 
-
       // libs:
       spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea", "")
       spec.withModuleLibrary("explainer", "android.sdktools.analyzer", "")
@@ -623,8 +645,49 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("asm-tools")
       spec.withProjectLibrary("baksmali")
       spec.withProjectLibrary("emulator-proto")
-      spec.withProjectLibrary("ffmpeg")
-      spec.withProjectLibrary("ffmpeg-javacpp")
+
+      val ffmpegVersion = "5.1.2-1.5.8"
+      val javacppVersion = "1.5.8"
+
+      // Add ffmpeg and javacpp
+      spec.withModuleLibrary("ffmpeg", "intellij.android.streaming",  "ffmpeg-$ffmpegVersion.jar")
+      spec.withModuleLibrary("ffmpeg-javacpp", "intellij.android.streaming", "javacpp-$javacppVersion.jar")
+
+      // todo notarization
+      spec.excludeModuleLibrary("ffmpeg-macos-aarch64", "intellij.android.streaming")
+      spec.excludeModuleLibrary("ffmpeg-macos-x64", "intellij.android.streaming")
+      spec.excludeModuleLibrary("javacpp-macos-aarch64", "intellij.android.streaming")
+      spec.excludeModuleLibrary("javacpp-macos-x64", "intellij.android.streaming")
+
+      // include only required as platform-dependent binaries
+      for ((supportedOs, supportedArch) in supportedFfmpegPresets) {
+        val osName = supportedOs.osName.lowercase(Locale.ENGLISH)
+        val ffmpegLibraryName = "ffmpeg-$osName-$supportedArch"
+        val javacppLibraryName = "javacpp-$osName-$supportedArch"
+
+        if (allPlatforms) {
+          // for the Marketplace we include all binaries
+          spec.withModuleLibrary(ffmpegLibraryName, "intellij.android.streaming", "${ffmpegLibraryName}-$ffmpegVersion.jar")
+          spec.withModuleLibrary(javacppLibraryName, "intellij.android.streaming", "${javacppLibraryName}-$javacppVersion.jar")
+        }
+        else {
+          spec.withGeneratedPlatformResources(supportedOs, supportedArch) { targetDir, context ->
+            val streamingModule = context.projectModel.project.modules.find { it.name == "intellij.android.streaming" }!!
+            val ffmpegLibrary = streamingModule.libraryCollection.findLibrary(ffmpegLibraryName)!!
+            val javacppLibrary = streamingModule.libraryCollection.findLibrary(javacppLibraryName)!!
+            val libDir = targetDir.resolve("lib")
+
+            copyFileToDir(ffmpegLibrary.getFiles(JpsOrderRootType.COMPILED)[0].toPath(), libDir)
+            copyFileToDir(javacppLibrary.getFiles(JpsOrderRootType.COMPILED)[0].toPath(), libDir)
+          }
+
+          spec.excludeModuleLibrary(ffmpegLibraryName, "intellij.android.streaming")
+          spec.excludeModuleLibrary(javacppLibraryName, "intellij.android.streaming")
+        }
+      }
+
+      spec.withModule("intellij.android.streaming")
+
       //tools/adt/idea/.idea/libraries:ffmpeg-platform <= FIXME
       //tools/adt/idea/.idea/libraries:firebase_java_proto <= REMOVED
       spec.withProjectLibrary("google-dexlib2")
@@ -726,7 +789,6 @@ object CommunityRepositoryModules {
 
       addition?.invoke(spec)
     }
-  }
 
   fun javaFXPlugin(mainModuleName: String): PluginLayout {
     return plugin(mainModuleName) { spec ->

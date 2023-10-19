@@ -2,25 +2,22 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.modelFlow
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.api.GitLabServerPath
-import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import javax.swing.JComponent
+import java.util.*
+import kotlin.jvm.optionals.getOrNull
 
 private val LOG = logger<GitLabCreateSnippetViewModel>()
 
@@ -46,17 +43,20 @@ internal class GitLabCreateSnippetViewModel(
   glApiManager: GitLabApiManager,
   val availablePathModes: Set<PathHandlingMode>,
   contents: Deferred<List<GitLabSnippetFileContents>>,
-  data: GitLabCreateSnippetViewModelData,
+  _data: GitLabCreateSnippetViewModelData,
 ) {
   /** Flow of GitLab accounts taken from [GitLabAccountManager]. */
   val glAccounts: StateFlow<Set<GitLabAccount>> = glAccountManager.accountsState
-    .stateIn(cs, SharingStarted.Lazily, emptySet())
 
   /**
    * Flow of the currently chosen account to use.
    * By default, this will be the first account found by [GitLabAccountManager].
    */
-  val glAccount: MutableStateFlow<GitLabAccount?> = MutableStateFlow(glAccounts.value.firstOrNull())
+  val glAccount: MutableStateFlow<GitLabAccount?> = run {
+    val server = project.service<GitLabProjectsManager>().knownRepositoriesState.value.first().repository.serverPath
+    val account = glAccounts.value.find { it.server == server } ?: glAccounts.value.firstOrNull()
+    MutableStateFlow(account)
+  }
 
   /**
    * Flow of the current account and credentials for that account. Credentials can be null for an account.
@@ -70,7 +70,7 @@ internal class GitLabCreateSnippetViewModel(
     .modelFlow(cs, LOG)
 
   /** Flow of [GitLabProjectCoordinates] based on the current selection of account. */
-  val glRepositories: SharedFlow<List<GitLabProjectCoordinates>> = channelFlow {
+  val glRepositories: StateFlow<List<GitLabProjectCoordinates>> = channelFlow {
     val flowCs = this
     val cache = mutableMapOf<Pair<GitLabAccount, String?>?, Flow<List<GitLabProjectCoordinates>>>()
     glAccountAndCredentials
@@ -87,7 +87,13 @@ internal class GitLabCreateSnippetViewModel(
             .shareIn(flowCs, SharingStarted.Lazily, 1) // Let this live for as long as the repositories flow lives
         }.collectLatest { send(it) }
       }
-  }.modelFlow(cs, LOG)
+  }.stateIn(cs, SharingStarted.Lazily, listOf())
+
+  /**
+   * The project the snippet will be posted under.
+   * Can be `null` or `Optional.empty`, but both mean the project coordinates are left unassigned.
+   */
+  val onProject: MutableStateFlow<Optional<GitLabProjectCoordinates>?> = MutableStateFlow(Optional.empty())
 
   /**
    * Lists the collected contents for the snippet that are completely empty.
@@ -104,21 +110,23 @@ internal class GitLabCreateSnippetViewModel(
   /**
    * Mutable flow of the current static view model data.
    */
-  val data: MutableStateFlow<GitLabCreateSnippetViewModelData> = MutableStateFlow(data)
+  val data: MutableStateFlow<GitLabCreateSnippetViewModelData> = MutableStateFlow(_data)
 
-  /**
-   * Launches a dialog to login to a new account. Called when no account is currently present in the
-   * account state and the user clicks some link to add an account. After this function is complete
-   * and a new account is added, an update should be pushed to the account state from [GitLabAccountManager].
-   */
-  fun performNewLogin(parentComponent: JComponent) {
-    cs.launch(Dispatchers.Main + ModalityState.stateForComponent(parentComponent).asContextElement()) {
-      val defaultServer = project.service<GitLabProjectsManager>().knownRepositories.firstOrNull()?.repository?.serverPath
-                          ?: GitLabServerPath.DEFAULT_SERVER
-      val (account, token) = GitLabLoginUtil.logInViaToken(project, parentComponent, defaultServer) { server, username ->
-        GitLabLoginUtil.isAccountUnique(glAccountManager.accountsState.value, server, username)
-      } ?: return@launch
-      glAccountManager.updateAccount(account, token)
+  init {
+    cs.launch {
+      val projectsManager = project.serviceAsync<GitLabProjectsManager>()
+      glRepositories.collectLatest { glProjects ->
+        onProject.update {
+          if (it?.isPresent == true) {
+            return@update it
+          }
+
+          val knownRepositories = projectsManager.knownRepositoriesState.value
+          val currentRepository = knownRepositories.find { glProjects.contains(it.repository) }
+                                  ?: return@update Optional.empty()
+          Optional.of(currentRepository.repository)
+        }
+      }
     }
   }
 
@@ -129,6 +137,7 @@ internal class GitLabCreateSnippetViewModel(
     val (account, _) = glAccountAndCredentials.firstOrNull() ?: return null
     return GitLabCreateSnippetResult(
       account,
+      onProject.value?.getOrNull(),
       nonEmptyContents.await(),
       data.value
     )
@@ -140,6 +149,7 @@ internal class GitLabCreateSnippetViewModel(
  */
 internal data class GitLabCreateSnippetResult(
   val account: GitLabAccount,
+  val onProject: GitLabProjectCoordinates?,
   val nonEmptyContents: List<GitLabSnippetFileContents>,
   val data: GitLabCreateSnippetViewModelData
 )
@@ -155,5 +165,4 @@ internal data class GitLabCreateSnippetViewModelData(
   val isCopyUrl: Boolean,
   val isOpenInBrowser: Boolean,
 
-  val onProject: GitLabProjectCoordinates?,
   val pathHandlingMode: PathHandlingMode)

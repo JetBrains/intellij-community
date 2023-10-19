@@ -91,8 +91,8 @@ public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor 
 
   static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project, @Nullable PsiFile file) {
     MarkupModel markup = editor.getMarkupModel();
-    if (markup instanceof EditorMarkupModelImpl) {
-      ((EditorMarkupModelImpl)markup).repaintTrafficLightIcon();
+    if (markup instanceof EditorMarkupModelImpl editorMarkup) {
+      editorMarkup.repaintTrafficLightIcon();
       ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor, file);
     }
   }

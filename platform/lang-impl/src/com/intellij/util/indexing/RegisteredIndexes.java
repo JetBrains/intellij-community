@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -30,11 +31,11 @@ public final class RegisteredIndexes {
   @NotNull
   private final Future<IndexConfiguration> myStateFuture;
 
-  private final List<ID<?, ?>> myIndicesForDirectories = new SmartList<>();
+  private final List<ID<?, ?>> myIndicesForDirectories = new CopyOnWriteArrayList<>();
 
-  private final Set<ID<?, ?>> myNotRequiringContentIndices = new HashSet<>();
-  private final Set<ID<?, ?>> myRequiringContentIndices = new HashSet<>();
-  private final Set<FileType> myNoLimitCheckTypes = new HashSet<>();
+  private final Set<ID<?, ?>> myNotRequiringContentIndices = ConcurrentHashMap.newKeySet();
+  private final Set<ID<?, ?>> myRequiringContentIndices = ConcurrentHashMap.newKeySet();
+  private final Set<FileType> myNoLimitCheckTypes = ConcurrentHashMap.newKeySet();
 
   private volatile boolean myExtensionsRelatedDataWasLoaded;
 

@@ -305,5 +305,11 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       }
       return false
     }
+
+    override fun hashCode(): Int = packages.hashCode()
+
+    override fun equals(other: Any?): Boolean {
+      return packages == (other as? HierarchyPackageSet)?.packages
+    }
   }
 }

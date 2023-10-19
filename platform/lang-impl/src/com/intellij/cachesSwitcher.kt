@@ -39,7 +39,6 @@ object CacheSwitcher {
 
         ID.reloadEnumFile()
         IndexingFlag.reloadAttributes()
-        IndexingStamp.reloadAttributes()
       }
     }
   }

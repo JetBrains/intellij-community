@@ -13,13 +13,9 @@ import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.*
 import java.util.*
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class AddDiffTest {
   private lateinit var target: MutableEntityStorageImpl
@@ -430,7 +426,7 @@ class AddDiffTest {
 
     val entitySourceIndex = target.indexes.entitySourceIndex
     assertEquals(1, entitySourceIndex.index.size)
-    assertNotNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
+    assertNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
   }
 
   @RepeatedTest(10)
@@ -646,5 +642,25 @@ class AddDiffTest {
     builder.removeEntity(newChild)
 
     snapshot.toBuilder().addDiff(builder)
+  }
+
+  @RepeatedTest(10)
+  fun `change source and data`() {
+    val sampleEntity = target addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
+                                                     virtualFileUrlManager.fromUrl("file:///tmp"), MySource)
+
+    val source = createBuilderFrom(target)
+    source.modifyEntity(sampleEntity.from(source)) {
+      this.stringProperty = "Updated"
+      this.entitySource = AnotherSource
+    }
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    val entitySourceIndex = target.indexes.entitySourceIndex
+    assertEquals(1, entitySourceIndex.index.size)
+    assertNotNull(entitySourceIndex.getIdsByEntry(AnotherSource)?.single())
   }
 }

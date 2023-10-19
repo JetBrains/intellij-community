@@ -54,7 +54,7 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
@@ -131,13 +131,10 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val initAwtToolkitJob = scheduleInitAwtToolkit(lockSystemDirsJob, busyThread)
   val initEventQueueJob = scheduleInitIdeEventQueue(initAwtToolkitJob, isHeadless)
-  val initLafJob = scheduleInitUi(initAwtToolkitJob, isHeadless)
+  val initLafJob = launch { initUi(initAwtToolkitJob = initAwtToolkitJob, isHeadless = isHeadless) }
   if (!isHeadless) {
     scheduleShowSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
     scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred)
-    launch {
-      patchHtmlStyle(initLafJob)
-    }
   }
 
   val zipFilePoolDeferred = async(Dispatchers.IO) {
@@ -377,7 +374,6 @@ private fun CoroutineScope.scheduleSvgIconCacheInitAndPreloadPhm(logDeferred: De
   }
 }
 
-@Suppress("SpellCheckingInspection")
 private fun CoroutineScope.scheduleLoadSystemLibsAndLogInfoAndInitMacApp(logDeferred: Deferred<Logger>,
                                                                          appInfoDeferred: Deferred<ApplicationInfoEx>,
                                                                          initUiDeferred: Job,
@@ -633,8 +629,8 @@ private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob:
 }
 
 fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<String>) {
-  val buildDate = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.buildDate.time)
-  log.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${appInfo.build.asString()}, ${buildDate})")
+  val buildTimeString = DateTimeFormatter.RFC_1123_DATE_TIME.format(appInfo.buildTime)
+  log.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${appInfo.build.asString()}, $buildTimeString)")
   log.info("OS: ${SystemInfoRt.OS_NAME} (${SystemInfoRt.OS_VERSION})")
   log.info(
     "JRE: ${System.getProperty("java.runtime.version", "-")}, ${System.getProperty("os.arch")} (${System.getProperty("java.vendor", "-")})")

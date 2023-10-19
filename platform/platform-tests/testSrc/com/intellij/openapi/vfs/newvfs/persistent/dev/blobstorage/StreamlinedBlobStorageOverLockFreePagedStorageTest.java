@@ -54,7 +54,7 @@ public class StreamlinedBlobStorageOverLockFreePagedStorageTest
 
   @Override
   public void tearDown() throws Exception {
-    if (storage != null) {
+    if (storage != null && !storage.isClosed() ) {
       System.out.printf("Storage after test: %d records allocated, %d deleted, %d relocated, live records %.1f%% of total \n",
                         storage.recordsAllocated(),
                         storage.recordsDeleted(),

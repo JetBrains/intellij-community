@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.List;
 
 public final class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
-  private static final UISettings ourUISettings = UISettings.getInstance();
 
   public CompletionLookupArrangerImpl(CompletionProcessEx process) {
     super(process);
@@ -30,7 +29,7 @@ public final class CompletionLookupArrangerImpl extends BaseCompletionLookupArra
 
   @Override
   protected boolean isAlphaSorted() {
-    return ourUISettings.getSortLookupElementsLexicographically();
+    return UISettings.getInstance().getSortLookupElementsLexicographically();
   }
 
   @NotNull

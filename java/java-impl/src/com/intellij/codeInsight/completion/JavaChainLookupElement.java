@@ -28,6 +28,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   public JavaChainLookupElement(LookupElement qualifier, LookupElement main) {
     this(qualifier, main, ".");
   }
+  
   public JavaChainLookupElement(LookupElement qualifier, LookupElement main, String separator) {
     super(main);
     myQualifier = qualifier;
@@ -185,5 +186,23 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
       return JavaCompletionUtil.getQualifiedMemberReferenceType(JavaCompletionUtil.getLookupElementType(myQualifier), (PsiMember)object);
     }
     return ((PsiVariable) object).getType();
+  }
+
+  /**
+   * @param base base item to create a chain
+   * @param item nested item
+   * @return false if the chain looks redundant, and it's better not to suggest it.
+   */
+  static boolean isReasonableChain(LookupElement base, LookupElement item) {
+    PsiElement baseElement = base.getPsiElement();
+    PsiElement itemElement = item.getPsiElement();
+    if (baseElement == null || itemElement == null) return true;
+    if (baseElement.equals(itemElement)) return false;
+    if (itemElement instanceof PsiMember member) {
+      PsiClass itemClass = member.getContainingClass();
+      if (itemClass == null || itemClass.equals(baseElement)) return true;
+      if (PsiTreeUtil.isAncestor(itemClass, baseElement, true)) return false;
+    }
+    return true;
   }
 }

@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiBinaryFile;
@@ -129,6 +128,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private volatile RegisteredIndexes myRegisteredIndexes;
   private volatile @Nullable String myShutdownReason;
+  private volatile long vfsCreationStamp;
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
 
@@ -398,6 +398,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       myStorageBufferingHandler.resetState();
       myRegisteredIndexes = new RegisteredIndexes(myFileDocumentManager, this);
       myShutdownReason = null;
+
+      // capture VFS creation time. It will be used to identify VFS epoch for dirty files queue.
+      // at the moment when we write the queue, VFS might have already been disposed via shutdown hook (in the case on emergency shutdown)
+      vfsCreationStamp = ManagingFS.getInstance().getCreationTimestamp();
     }
   }
 
@@ -592,9 +596,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           dirtyFileIds.addAll(myStaleIds);
           myStaleIds.clear();
         }
-        PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), dirtyFileIds, ManagingFS.getInstance().getCreationTimestamp());
+        PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), dirtyFileIds, vfsCreationStamp);
         getChangedFilesCollector().clearFilesToUpdate();
+        vfsCreationStamp = 0;
 
+        // TODO-ank: Should we catch and ignore CancellationException here to allow other lines to execute?
         IndexingStamp.flushCaches();
         IndexingFlag.unlockAllFiles();
 

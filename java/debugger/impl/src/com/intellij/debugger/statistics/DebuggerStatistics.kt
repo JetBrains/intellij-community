@@ -10,7 +10,7 @@ import kotlin.math.roundToLong
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 2)
+  private val GROUP = EventLogGroup("java.debugger", 3)
 
   // fields
   private val breakpointTypeField = EventFields.String("type", listOf(
@@ -31,6 +31,7 @@ object DebuggerStatistics : CounterUsagesCollector() {
   private val breakpointVisitOverhead = GROUP.registerEvent("breakpoint.visit.overhead", averageTimeField, countField)
   private val steppingOverhead = GROUP.registerVarargEvent("stepping.overhead", steppingActionField, languageField, averageTimeField,
                                                            countField)
+  private val steppingFailedMethodNotCalled = GROUP.registerEvent("stepping.method.not.called", steppingActionField, languageField)
 
   @JvmStatic
   fun logProcessStatistics(debugProcess: DebugProcess) {
@@ -60,6 +61,12 @@ object DebuggerStatistics : CounterUsagesCollector() {
     for ((type, stats) in installationOverheads) {
       breakpointInstallationOverhead.log(debugProcess.project, type, stats.averageTime, stats.hits)
     }
+  }
+
+  @JvmStatic
+  fun logMethodSkippedDuringStepping(debugProcess: DebugProcess, statistic: SteppingStatistic?) {
+    if (statistic == null) return
+    steppingFailedMethodNotCalled.log(debugProcess.project, statistic.action, statistic.engine)
   }
 }
 

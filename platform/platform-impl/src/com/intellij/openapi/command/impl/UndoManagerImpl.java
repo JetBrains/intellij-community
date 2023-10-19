@@ -832,7 +832,7 @@ public final class UndoManagerImpl extends UndoManager {
     @SuppressWarnings("unused")
     MyCommandListener() {
       project = null;
-      manager = (UndoManagerImpl)ApplicationManager.getApplication().getService(UndoManager.class);
+      manager = (UndoManagerImpl)UndoManager.getGlobalInstance();
     }
 
     @Override

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
@@ -90,5 +91,6 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellI
 
   companion object {
     val KEY: Key<TerminalSession> = Key.create("TerminalSession")
+    val DATA_KEY: DataKey<TerminalSession> = DataKey.create("TerminalSession")
   }
 }

@@ -2,10 +2,13 @@
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.chooser.ui.BannerOverlay
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
+import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.rd.createLifetime
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
@@ -24,19 +27,11 @@ class ProductChooserDialog : PageProvider() {
     })
   }
 
-  private val callback: (PageProvider)-> Unit = {
-    parentDialog?.showPage(it) ?: run {
-      close(OK_EXIT_CODE)
-
-      it.isModal = false
-      it.isResizable = false
-      it.show()
-
-      SwingUtilities.invokeLater{
-        it.pack()
-      }
-    }
+  private val callback: (PageProvider) -> Unit = {
+    nextStep(it, OK_EXIT_CODE)
   }
+
+  private val overlay = BannerOverlay()
 
   init {
     val group = DefaultActionGroup()
@@ -47,6 +42,22 @@ class ProductChooserDialog : PageProvider() {
     group.add(JbChooserAction(callback))
     group.add(ExpChooserAction(callback))
     group.add(SkipImportAction())
+
+    val settService = SettingsService.getInstance()
+    val lifetime = disposable.createLifetime()
+
+    settService.error.advise(lifetime) {
+      overlay.showError(it)
+    }
+
+    settService.jbAccount.advise(lifetime) {
+      accountLabel.isVisible = it != null
+      if (!accountLabel.isVisible) {
+        return@advise
+      }
+
+      accountLabel.text = it?.loginName
+    }
 
     val act = ActionManager.getInstance().createActionToolbar(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, false).apply {
       if (this is ActionToolbarImpl) {
@@ -62,21 +73,8 @@ class ProductChooserDialog : PageProvider() {
     pane.add(act.component)
   }
 
-  private fun createActionToolbar(group: ActionGroup, horizontal: Boolean): ActionToolbar {
-    return object : ActionToolbarImpl(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, horizontal){
-
-      override fun getPreferredSize(): Dimension {
-        val dm = super.getPreferredSize()
-        if(horizontal) {
-          dm.width -= 10
-        } else dm.height -= 10
-          return dm
-      }
-    }
-  }
-
   override fun createContent(): JComponent {
-    return JPanel(GridBagLayout()).apply {
+    val comp = JPanel(GridBagLayout()).apply {
       preferredSize = JBDimension(640, 410)
       val gbc = GridBagConstraints()
       gbc.gridx = 0
@@ -86,25 +84,37 @@ class ProductChooserDialog : PageProvider() {
       gbc.fill = GridBagConstraints.NONE
       add(pane, gbc)
     }
+
+    return overlay.wrapComponent(comp)
   }
 
   override fun createActions(): Array<Action> {
     return emptyArray()
   }
 
-  override fun createSouthPanel(leftSideButtons: MutableList<out JButton>,
-                                rightSideButtons: MutableList<out JButton>,
-                                addHelpToLeftSide: Boolean): JPanel {
+  private val south = JPanel(BorderLayout()).apply {
     val group = DefaultActionGroup()
     group.add(OtherOptions(callback))
 
-    val at = createActionToolbar(group, true)
-    at.targetComponent = pane
+    val at = object : ActionToolbarImpl(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, true) {
 
-    return JPanel(BorderLayout()).apply {
-      add(accountLabel, BorderLayout.WEST)
-      add(at.component, BorderLayout.EAST)
+      override fun getPreferredSize(): Dimension {
+        val dm = super.getPreferredSize()
+        dm.width -= 15
+        return dm
+      }
     }
 
+    at.targetComponent = pane
+    add(accountLabel, BorderLayout.WEST)
+    add(at.component, BorderLayout.EAST)
+
+    border = JBUI.Borders.empty(0, 20, 10, 0)
+  }
+
+  override fun createSouthPanel(leftSideButtons: MutableList<out JButton>,
+                                rightSideButtons: MutableList<out JButton>,
+                                addHelpToLeftSide: Boolean): JPanel {
+    return south
   }
 }

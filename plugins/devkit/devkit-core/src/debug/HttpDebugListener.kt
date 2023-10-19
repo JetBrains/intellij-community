@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.debug
 
 import com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider
@@ -14,7 +15,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.io.send
 import java.nio.charset.Charset
 
-class HttpDebugListener : HttpRequestHandler() {
+internal class HttpDebugListener : HttpRequestHandler() {
 
   companion object {
     @NonNls

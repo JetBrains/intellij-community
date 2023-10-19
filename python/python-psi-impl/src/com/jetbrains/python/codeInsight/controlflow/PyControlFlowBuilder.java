@@ -91,9 +91,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
     visitParameterListExpressions(node.getParameterList());
     visitDecorators(node.getDecoratorList());
-    final PyAnnotation annotation = node.getAnnotation();
-    if (annotation != null) {
-      annotation.accept(this);
+    if (node.getTypeParameterList() == null) {
+      final PyAnnotation annotation = node.getAnnotation();
+      if (annotation != null) {
+        annotation.acceptChildren(this);
+      }
     }
 
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
@@ -121,9 +123,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         if (defaultValue != null) {
           defaultValue.accept(PyControlFlowBuilder.this);
         }
-        final PyAnnotation annotation = param.getAnnotation();
-        if (annotation != null) {
-          annotation.accept(PyControlFlowBuilder.this);
+        if (parameterList.getParent() instanceof PyFunction function && function.getTypeParameterList() == null) {
+          final PyAnnotation annotation = param.getAnnotation();
+          if (annotation != null) {
+            annotation.acceptChildren(PyControlFlowBuilder.this);
+          }
         }
       }
     });
@@ -302,13 +306,25 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyNamedParameter(final @NotNull PyNamedParameter node) {
-    final PyExpression defaultValue = node.getDefaultValue();
-    if (defaultValue != null) {
-      defaultValue.accept(this);
+    PyAnnotation annotation = node.getAnnotation();
+    if (annotation != null) {
+      annotation.accept(this);
     }
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
     myBuilder.addNode(instruction);
     myBuilder.checkPending(instruction);
+  }
+
+  @Override
+  public void visitPyAnnotation(@NotNull PyAnnotation node) {
+    // Unless there is a type parameter list, return type and parameter annotations for functions are evaluated in their enclosing scope
+    // and processed in visitPyFunction.
+    // If there are type parameters, though, we need to put the corresponding instructions *inside* the function's scope to be able to
+    // access them from annotations. 
+    PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, true, PyStatement.class);
+    if (function == null || function.getTypeParameterList() != null) {
+      super.visitPyAnnotation(node);
+    }
   }
 
   @Override
@@ -1031,11 +1047,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   @Override
   public void visitPyTypeAliasStatement(@NotNull PyTypeAliasStatement node) {
     myBuilder.startNode(node);
-
-    PyExpression typeExpression = node.getTypeExpression();
-    if (typeExpression != null) {
-      typeExpression.accept(this);
-    }
 
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
     myBuilder.addNode(instruction);

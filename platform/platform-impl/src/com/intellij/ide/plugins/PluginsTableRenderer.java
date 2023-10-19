@@ -34,7 +34,6 @@ import java.util.Objects;
 * @author Konstantin Bulenkov
 */
 public class PluginsTableRenderer extends DefaultTableCellRenderer {
-  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   protected SimpleColoredComponent myName;
   private JLabel myStatus;
@@ -153,40 +152,44 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         if (!isSelected) myName.setForeground(FileStatus.DELETED.getColor());
         myPanel.setToolTipText(IdeBundle.message("plugin.manager.uninstalled.tooltip"));
       }
-      else if (ourState.wasInstalled(pluginId)) {
-        // new plugin installed (both views)
-        myStatus.setIcon(AllIcons.Nodes.PluginRestart);
-        if (!isSelected) myName.setForeground(FileStatus.ADDED.getColor());
-        myPanel.setToolTipText(IdeBundle.message("plugin.manager.installed.tooltip"));
-      }
-      else if (ourState.wasUpdated(pluginId)) {
-        // existing plugin updated (both views)
-        myStatus.setIcon(AllIcons.Nodes.PluginRestart);
-        if (!isSelected) myName.setForeground(FileStatus.ADDED.getColor());
-        myPanel.setToolTipText(IdeBundle.message("plugin.manager.updated.tooltip"));
-      }
-      else if (ourState.hasNewerVersion(pluginId)) {
-        // existing plugin has a newer version (both views)
-        myStatus.setIcon(AllIcons.Nodes.Pluginobsolete);
-        if (!isSelected) myName.setForeground(FileStatus.MODIFIED.getColor());
-        if (!myPluginsView && installed != null) {
-          myPanel.setToolTipText(IdeBundle.message("plugin.manager.new.version.tooltip", installed.getVersion()));
+      else {
+        InstalledPluginsState state = InstalledPluginsState.getInstance();
+        if (state.wasInstalled(pluginId)) {
+          // new plugin installed (both views)
+          myStatus.setIcon(AllIcons.Nodes.PluginRestart);
+          if (!isSelected) myName.setForeground(FileStatus.ADDED.getColor());
+          myPanel.setToolTipText(IdeBundle.message("plugin.manager.installed.tooltip"));
         }
-        else {
-          myPanel.setToolTipText(IdeBundle.message("plugin.manager.update.available.tooltip"));
+        else if (state.wasUpdated(pluginId)) {
+          // existing plugin updated (both views)
+          myStatus.setIcon(AllIcons.Nodes.PluginRestart);
+          if (!isSelected) myName.setForeground(FileStatus.ADDED.getColor());
+          myPanel.setToolTipText(IdeBundle.message("plugin.manager.updated.tooltip"));
         }
-      }
-      else if (isIncompatible(myPluginDescriptor)) {
-        // a plugin is incompatible with current installation (both views)
-        if (!isSelected) myName.setForeground(JBColor.RED);
-        table.getModel();
-        myPanel.setToolTipText(IdeBundle.message("plugin.manager.incompatible.tooltip", ApplicationNamesInfo.getInstance().getFullProductName()));
-      }
-      else if (!myPluginDescriptor.isEnabled() && myPluginsView) {
-        // a plugin is disabled (plugins view only)
-        Icon icon = myStatus.getIcon();
-        if (icon != null) {
-          myStatus.setIcon(IconLoader.getDisabledIcon(icon));
+        else if (state.hasNewerVersion(pluginId)) {
+          // existing plugin has a newer version (both views)
+          myStatus.setIcon(AllIcons.Nodes.Pluginobsolete);
+          if (!isSelected) myName.setForeground(FileStatus.MODIFIED.getColor());
+          if (!myPluginsView && installed != null) {
+            myPanel.setToolTipText(IdeBundle.message("plugin.manager.new.version.tooltip", installed.getVersion()));
+          }
+          else {
+            myPanel.setToolTipText(IdeBundle.message("plugin.manager.update.available.tooltip"));
+          }
+        }
+        else if (isIncompatible(myPluginDescriptor)) {
+          // a plugin is incompatible with current installation (both views)
+          if (!isSelected) myName.setForeground(JBColor.RED);
+          table.getModel();
+          myPanel.setToolTipText(
+            IdeBundle.message("plugin.manager.incompatible.tooltip", ApplicationNamesInfo.getInstance().getFullProductName()));
+        }
+        else if (!myPluginDescriptor.isEnabled() && myPluginsView) {
+          // a plugin is disabled (plugins view only)
+          Icon icon = myStatus.getIcon();
+          if (icon != null) {
+            myStatus.setIcon(IconLoader.getDisabledIcon(icon));
+          }
         }
       }
       String pluginName = myPluginDescriptor.getName() + "  ";

@@ -21,12 +21,10 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +35,6 @@ import javax.swing.*;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 
 import static com.intellij.util.io.DataInputOutputUtil.readINT;
@@ -315,7 +312,7 @@ final class HighlightingMarkupGrave implements Disposable {
       int target = readINT(in);
       TextAttributesKey key = in.readBoolean() ? TextAttributesKey.find(IOUtil.readUTF(in)) : null;
       TextAttributes attributes = in.readBoolean() ? new TextAttributes(in) : null;
-      Icon icon = in.readBoolean() ? IconLoader.findIcon(new URL(IOUtil.readUTF(in))) : null;
+      Icon icon = EditorCacheKt.readGutterIcon(in);
       return new HighlighterState(start, end, layer, HighlighterTargetArea.values()[target], key, attributes, icon);
     }
 
@@ -326,7 +323,7 @@ final class HighlightingMarkupGrave implements Disposable {
       writeINT(out, targetArea.ordinal());
       writeTextAttributesKey(out);
       writeTextAttributes(out);
-      writeGutterIcon(out);
+      EditorCacheKt.writeGutterIcon(gutterIcon, out);
     }
 
     private void writeTextAttributesKey(@NotNull DataOutput out) throws IOException {
@@ -342,15 +339,6 @@ final class HighlightingMarkupGrave implements Disposable {
       out.writeBoolean(attributesExists);
       if (attributesExists) {
         textAttributes.writeExternal(out);
-      }
-    }
-
-    private void writeGutterIcon(@NotNull DataOutput out) throws IOException {
-      if (gutterIcon instanceof CachedImageIcon cii && cii.getUrl() != null) {
-        out.writeBoolean(true);
-        IOUtil.writeUTF(out, cii.getUrl().toExternalForm());
-      } else {
-        out.writeBoolean(false);
       }
     }
 

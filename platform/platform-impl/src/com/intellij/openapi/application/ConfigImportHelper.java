@@ -13,8 +13,8 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
-import com.intellij.idea.StartupErrorReporter;
 import com.intellij.openapi.application.migrations.BigDataTools232;
+import com.intellij.openapi.application.migrations.PresentationAssistant233;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.bootstrap.StartupErrorReporter;
 import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Restarter;
@@ -119,6 +120,7 @@ public final class ConfigImportHelper {
     }
 
     ConfigImportSettings settings = findCustomConfigImportSettings();
+    log.info("Custom ConfigImportSettings instance: " + settings);
 
     List<String> otherProductPrefixes = settings != null ? settings.getProductsToImportFrom(args) : List.of();
     ConfigDirsSearchResult guessedOldConfigDirs = findConfigDirectories(newConfigDir, settings, otherProductPrefixes);
@@ -449,6 +451,12 @@ public final class ConfigImportHelper {
     @NotNull List<Path> findRelatedDirectories(@NotNull Path config, boolean forAutoClean) {
       return getRelatedDirectories(config, forAutoClean);
     }
+  }
+
+  @ApiStatus.Internal
+  public static boolean hasPreviousVersionConfigDirs() {
+    ConfigDirsSearchResult directories = findConfigDirectories(PathManager.getConfigDir());
+    return directories.fromSameProduct && directories.directories.size() > 1;
   }
 
   static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir) {
@@ -896,6 +904,7 @@ public final class ConfigImportHelper {
     var currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
     var options = new PluginMigrationOptions(currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload);
     new BigDataTools232().migratePlugins(options);
+    new PresentationAssistant233().migratePlugin(options);
   }
 
   private static void partitionNonBundled(Collection<? extends IdeaPluginDescriptor> descriptors,

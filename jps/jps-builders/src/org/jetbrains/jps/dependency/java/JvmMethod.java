@@ -2,6 +2,9 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.ReferenceID;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.javac.Iterators;
@@ -10,6 +13,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, JvmMethod.Diff> {
   private final Iterable<TypeRepr> myArgTypes;
@@ -27,11 +31,21 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
     myArgTypes = TypeRepr.getTypes(Type.getArgumentTypes(descriptor));
   }
 
+  public boolean isConstructor() {
+    return "<init>".equals(getName());
+  }
+
   @Override
   public MethodUsage createUsage(String owner) {
     return new MethodUsage(owner, getName(), getDescriptor());
   }
-  
+
+  public BiPredicate<Node<?, ?>, Usage> createUsageQuery(String owner) {
+    String thisMethodName = getName();
+    ReferenceID ownerID = new JvmNodeReferenceID(owner);
+    return (n,u) -> u instanceof MethodUsage && ownerID.equals(u.getElementOwner()) && Objects.equals(((MethodUsage)u).getName(), thisMethodName);
+  }
+
   public Set<ParamAnnotation> getParamAnnotations() {
     return myParamAnnotations;
   }

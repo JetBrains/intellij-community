@@ -45,13 +45,15 @@ class JBAcademyInteractiveCoursePanel(data: InteractiveCourseData) : Interactive
       isOpaque = false
     }
 
-    cardLayoutPanel.add(createButtonPanel(InstallEduToolsAction()), BUTTON_ID)
+    cardLayoutPanel.add(createButtonPanel(), BUTTON_ID)
 
     progressBarPanel = ProgressBarPanel(CancelPluginActionListener())
     cardLayoutPanel.add(progressBarPanel, PROGRESS_ID)
 
     return cardLayoutPanel
   }
+
+  override fun getButtonAction(): Action = InstallEduToolsAction()
 
   private inner class CancelPluginActionListener : MouseAdapter() {
 

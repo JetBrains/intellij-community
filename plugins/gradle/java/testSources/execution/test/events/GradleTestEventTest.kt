@@ -151,7 +151,7 @@ class GradleTestEventTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("successTest")
           assertNode("failedTest")

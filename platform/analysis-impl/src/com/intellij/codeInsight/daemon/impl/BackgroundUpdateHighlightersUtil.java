@@ -13,7 +13,10 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.SweepProcessor;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -40,41 +43,54 @@ import java.util.*;
 @ApiStatus.Experimental
 public final class BackgroundUpdateHighlightersUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundUpdateHighlightersUtil.class);
-  static void addHighlighterToEditorIncrementally(@NotNull PsiFile file,
-                                                  @NotNull Document document,
-                                                  @NotNull TextRange restrictRange,
-                                                  @NotNull HighlightInfo info,
-                                                  @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
-                                                  int group,
-                                                  @NotNull Long2ObjectMap<RangeMarker> range2markerCache) {
+  // return true if added
+  static boolean addHighlighterToEditorIncrementally(@NotNull HighlightingSession session,
+                                                     @NotNull PsiFile file,
+                                                     @NotNull Document document,
+                                                     @NotNull TextRange restrictRange,
+                                                     @NotNull HighlightInfo info,
+                                                     @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
+                                                     int group,
+                                                     @NotNull Long2ObjectMap<RangeMarker> range2markerCache) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = file.getProject();
     if (!UpdateHighlightersUtil.HighlightInfoPostFilters.accept(project, info)) {
-      return;
+      return false;
     }
 
-    if (UpdateHighlightersUtil.isFileLevelOrGutterAnnotation(info)) return;
-    if (!restrictRange.intersects(info)) return;
+    if (UpdateHighlightersUtil.isFileLevelOrGutterAnnotation(info)) return false;
+    if (!restrictRange.intersects(info)) return false;
 
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     boolean myInfoIsError = UpdateHighlightersUtil.isSevere(info, severityRegistrar);
+    HighlightersRecycler recycler = new HighlightersRecycler();
     Processor<HighlightInfo> otherHighlightInTheWayProcessor = oldInfo -> {
       if (!myInfoIsError && UpdateHighlightersUtil.isCovered(info, severityRegistrar, oldInfo)) {
         return false;
       }
-
-      return oldInfo.getGroup() != group || !oldInfo.equalsByActualOffset(info);
+      RangeHighlighterEx oldHighlighter = oldInfo.highlighter;
+      if (oldHighlighter != null && oldInfo.equals(info)) {
+        recycler.recycleHighlighter(oldHighlighter);
+      }
+      return !(Objects.equals(oldInfo.toolId, info.toolId) && oldInfo.equalsByActualOffset(info));
     };
     boolean allIsClear = DaemonCodeAnalyzerEx.processHighlights(document, project,
                                                                 null, info.getActualStartOffset(), info.getActualEndOffset(),
                                                                 otherHighlightInTheWayProcessor);
-    if (allIsClear) {
-      createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, range2markerCache, severityRegistrar);
-
-      UpdateHighlightersUtil.clearWhiteSpaceOptimizationFlag(document);
+    try {
+      if (allIsClear) {
+        createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, recycler, range2markerCache, severityRegistrar);
+        UpdateHighlightersUtil.incinerateObsoleteHighlighters(recycler, session);
+        UpdateHighlightersUtil.clearWhiteSpaceOptimizationFlag(document);
+        return true;
+      }
     }
+    finally {
+      recycler.releaseHighlighters();
+    }
+    return false;
   }
 
   public static void setHighlightersToEditor(@NotNull Project project,
@@ -179,6 +195,32 @@ public final class BackgroundUpdateHighlightersUtil {
                                      @NotNull HighlightingSession session) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    Project project = session.getProject();
+    List<HighlightInfo> toReuse = new ArrayList<>();
+    Document document = session.getDocument();
+
+    DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
+      if (info.getGroup() == group) {
+        int hiEnd = info.getEndOffset();
+        boolean willBeRemoved = range.contains(info)
+                                || hiEnd == document.getTextLength() && range.getEndOffset() == hiEnd;
+        if (willBeRemoved) {
+          toReuse.add(info);
+        }
+      }
+      return true;
+    });
+
+    setHighlightersInRange(range, infos, markup, group, session, toReuse);
+  }
+  static void setHighlightersInRange(@NotNull TextRange range,
+                                     @NotNull List<? extends HighlightInfo> infos,
+                                     @NotNull MarkupModelEx markup,
+                                     int group,
+                                     @NotNull HighlightingSession session,
+                                     @NotNull List<? extends HighlightInfo> toRemove) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile psiFile = session.getPsiFile();
     Project project = session.getProject();
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
@@ -188,20 +230,12 @@ public final class BackgroundUpdateHighlightersUtil {
     boolean[] changed = {false};
 
     try {
-      DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
-        if (info.getGroup() == group) {
-          RangeHighlighterEx highlighter = info.getHighlighter();
-          int hiStart = highlighter.getStartOffset();
-          int hiEnd = highlighter.getEndOffset();
-          boolean willBeRemoved = range.containsRange(hiStart, hiEnd)
-                                  || hiEnd == document.getTextLength() && range.getEndOffset() == hiEnd;
-          if (willBeRemoved) {
-            toReuse.recycleHighlighter(highlighter);
-          }
+      for (HighlightInfo info : toRemove) {
+        RangeHighlighterEx highlighter = info.getHighlighter();
+        if (highlighter != null) {
+          toReuse.recycleHighlighter(highlighter);
         }
-        return true;
-      });
-
+      }
       List<HighlightInfo> filteredInfos = UpdateHighlightersUtil.HighlightInfoPostFilters.applyPostFilter(project, infos);
       ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_ACTUAL_START_OFFSET_NO_DUPS);
       SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
@@ -240,15 +274,16 @@ public final class BackgroundUpdateHighlightersUtil {
     }
   }
 
-  private static void createOrReuseHighlighterFor(@NotNull HighlightInfo info,
-                                                  @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
-                                                  @NotNull Document document,
-                                                  int group,
-                                                  @NotNull PsiFile psiFile,
-                                                  @NotNull MarkupModelEx markup,
-                                                  @Nullable HighlightersRecycler infosToRemove,
-                                                  @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
-                                                  @NotNull SeverityRegistrar severityRegistrar) {
+  static void createOrReuseHighlighterFor(@NotNull HighlightInfo info,
+                                          @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
+                                          @NotNull Document document,
+                                          int group,
+                                          @NotNull PsiFile psiFile,
+                                          @NotNull MarkupModelEx markup,
+                                          @Nullable HighlightersRecycler infosToRemove,
+                                          @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
+                                          @NotNull SeverityRegistrar severityRegistrar) {
+    assert !info.isFileLevelAnnotation();
     int infoStartOffset = info.startOffset;
     int infoEndOffset = info.endOffset;
 
@@ -310,6 +345,9 @@ public final class BackgroundUpdateHighlightersUtil {
       markup.changeAttributesInBatch(highlighter, changeAttributes);
     }
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("createOrReuseHighlighterFor "+info +(salvagedFromBin == null ? "" : " (recycled)"));
+    }
     if (infoAttributes != null) {
       TextAttributes actualAttributes = highlighter.getTextAttributes(colorsScheme);
       boolean attributesSet = Comparing.equal(infoAttributes, actualAttributes);

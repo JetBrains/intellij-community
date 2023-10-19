@@ -18,7 +18,12 @@ internal class EnvironmentDependencyCollector : DependencyCollector {
     "docker",
     "kubectl",
     "podman",
-    "terraform"
+    "terraform",
+
+    // Reserved for Cloud vendors only
+    "az",
+    "gcloud",
+    "aws"
   )
 
   override fun collectDependencies(project: Project): Collection<String> {

@@ -3,11 +3,10 @@ package git4idea.index.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider
 import com.intellij.openapi.help.HelpManager
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
@@ -17,32 +16,26 @@ import git4idea.index.enableStagingArea
 import git4idea.index.ui.GitStagePanel
 import javax.swing.JComponent
 
-abstract class GitToggleStagingAreaAction(private val enable: Boolean) : DumbAwareAction(), RightAlignedToolbarAction {
-
+abstract class GitToggleStagingAreaAction(private val enable: Boolean) : DumbAwareToggleAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null || !canEnableStagingArea() ||
         ProjectLevelVcsManager.getInstance(project).singleVCS?.keyInstanceMethod != GitVcs.getKey()) {
       e.presentation.isEnabledAndVisible = false
-      return
     }
-
-    e.presentation.isEnabledAndVisible = GitVcsApplicationSettings.getInstance().isStagingAreaEnabled != enable
+    super.update(e)
   }
 
-  override fun actionPerformed(e: AnActionEvent) {
-    enableStagingArea(!GitVcsApplicationSettings.getInstance().isStagingAreaEnabled)
+  override fun isSelected(e: AnActionEvent): Boolean {
+    return GitVcsApplicationSettings.getInstance().isStagingAreaEnabled == enable
+  }
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    enableStagingArea(if (enable) state else !state)
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }
 
-class GitEnableStagingAreaAction : GitToggleStagingAreaAction(true), TooltipDescriptionProvider, TooltipLinkProvider {
-  override fun getTooltipLink(owner: JComponent?): TooltipLinkProvider.TooltipLink {
-    return TooltipLinkProvider.TooltipLink(GitBundle.message("stage.default.status.help")) {
-      HelpManager.getInstance().invokeHelp(GitStagePanel.HELP_ID)
-    }
-  }
-}
-
+class GitEnableStagingAreaAction : GitToggleStagingAreaAction(true)
 class GitDisableStagingAreaAction : GitToggleStagingAreaAction(false)

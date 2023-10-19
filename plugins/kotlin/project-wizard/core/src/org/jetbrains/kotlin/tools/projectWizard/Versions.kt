@@ -52,6 +52,7 @@ object Versions {
         val ANDROID = loadVersion("7.3.1") { gradleAndroidVersion }
 
         val MIN_GRADLE_FOOJAY_VERSION = loadVersion("7.6") { minGradleFoojayVersion }
+        val MIN_KOTLIN_FOOJAY_VERSION = loadVersion("1.5.30") { minKotlinFoojayVersion }
         val FOOJAY_VERSION = loadVersion("0.5.0") { foojayVersion }
     }
 

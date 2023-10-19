@@ -1949,6 +1949,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return getUserData(BUFFER) != null;
   }
 
+  @ApiStatus.Internal
   public void suppressPainting(boolean suppress) {
     mySuppressPainting = suppress;
   }
@@ -2003,7 +2004,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull Color getDisposedBackground() {
-    if (mySuppressDisposedPainting) return getBackgroundColor();
+    if (mySuppressDisposedPainting || mySuppressPainting) return getBackgroundColor();
     return new JBColor(new Color(128, 255, 128), new Color(128, 255, 128));
   }
 

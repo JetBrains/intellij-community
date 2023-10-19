@@ -129,6 +129,7 @@ private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
       checkHealthReport.recordsReport.fileRecordsDeleted,
       checkHealthReport.recordsReport.nullNameIds,
       checkHealthReport.recordsReport.unresolvableNameIds,
+      checkHealthReport.recordsReport.unresolvableAttributesIds,
       checkHealthReport.recordsReport.notNullContentIds,
       checkHealthReport.recordsReport.unresolvableContentIds,
       checkHealthReport.recordsReport.nullParents,
@@ -228,6 +229,15 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
           if (fileName == null) {
             unresolvableNameIds++.alsoLogThrottled(
               "file[#$fileId]: name[#$nameId] does not exist (null)! -> names enumerator is inconsistent (broken?)"
+            )
+          }
+
+          try {
+            connection.attributes.checkAttributeRecordSanity(fileId, attributeRecordId)
+          }
+          catch (t: Throwable) {
+            unresolvableAttributesIds++.alsoLogThrottled(
+              "file[#$fileId]{$fileName}: attribute[#$attributeRecordId] can't be read", t
             )
           }
 
@@ -382,7 +392,6 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             //MAYBE RC: dedicated counter for that kind of errors?
             generalErrors++.alsoLogThrottled(
               "root[#$rootId]: is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$maxAllocatedID]")
-            
             continue
           }
           val rootParentId = records.getParent(rootId)
@@ -407,7 +416,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val namesEnumerator = impl.connection().names
     val report = VFSHealthCheckReport.NamesEnumeratorReport()
     try {
-      namesEnumerator.forEach{ id, name ->
+      namesEnumerator.forEach { id, name ->
         try {
           report.namesChecked++
           val nameId = namesEnumerator.tryEnumerate(name)
@@ -446,7 +455,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val connection = impl.connection()
     val contentHashesEnumerator = connection.contentHashesEnumerator
     val contentsStorage = connection.contents
-    contentHashesEnumerator.forEach{ contentId, contentHash ->
+    contentHashesEnumerator.forEach { contentId, contentHash ->
       if (contentHash == null) {
         report.generalErrors++.alsoLogThrottled(
           "contentId[#$contentId]: contentHash is absent in contentHashes -> contentHashEnumerator is corrupted?")
@@ -486,6 +495,8 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
                                  var notNullContentIds: Int = 0,
                                  /* contentEnumerator.valueOf(record.contentId) = null */
                                  var unresolvableContentIds: Int = 0,
+                                 /* failure to read attribute record from the attribute storage */
+                                 var unresolvableAttributesIds: Int = 0,
                                  /* record.parentId = NULL_ID & record is not ROOT */
                                  var nullParents: Int = 0,
                                  var childrenChecked: Int = 0,
@@ -496,6 +507,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
       val healthy: Boolean
         get() = nullNameIds == 0
                 && unresolvableNameIds == 0
+                && unresolvableAttributesIds == 0
                 && unresolvableContentIds == 0
                 && nullParents == 0
                 && inconsistentParentChildRelationships == 0

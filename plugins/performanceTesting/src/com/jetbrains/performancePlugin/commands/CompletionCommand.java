@@ -8,7 +8,10 @@ import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.CompletionPhaseListener;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupListener;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -180,14 +183,14 @@ public class CompletionCommand extends PerformanceCommand {
   }
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private static final class CompletionVariant {
+  public static final class CompletionVariant {
     @JsonProperty
     private final String name;
 
     @JsonCreator
     private CompletionVariant(@JsonProperty("name") String name) { this.name = name; }
 
-    private String getName() {
+    public String getName() {
       return name;
     }
 

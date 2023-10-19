@@ -80,6 +80,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   private final TreeExpander myTreeExpander;
   private String myHelpId;
 
+  @Topic.ProjectLevel
   public static final Topic<CommittedChangesReloadListener> ITEMS_RELOADED =
     new Topic<>("ITEMS_RELOADED", CommittedChangesReloadListener.class);
 

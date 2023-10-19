@@ -3,11 +3,13 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.BundleBase;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.actions.searcheverywhere.MergeableElement;
+import com.intellij.ide.actions.searcheverywhere.PromoAction;
 import com.intellij.ide.ui.RegistryTextOptionDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -43,6 +45,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
@@ -89,7 +92,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor) {
     myProject = project;
     myEditor = new WeakReference<>(editor);
-    myDataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(component));
+    myDataContext = Utils.createAsyncDataContext(DataManager.getInstance().getDataContext(component));
     myUpdateSession = newUpdateSession();
   }
 
@@ -853,6 +856,10 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
           panel.setRight(groupLabel);
         }
 
+        if (anAction instanceof PromoAction promoAction) {
+          customizePromoAction(promoAction, bg, eastBorder, groupFg, panel);
+        }
+
         panel.setToolTipText(presentation.getDescription());
         @NlsSafe String actionId = ActionManager.getInstance().getId(anAction);
         Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts();
@@ -904,6 +911,37 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
       }
       return panel;
+    }
+
+    private static void customizePromoAction(PromoAction promoAction,
+                                             Color panelBackground,
+                                             Border eastBorder,
+                                             Color groupFg,
+                                             IconCompOptionalCompPanel<SimpleColoredComponent> panel) {
+      SimpleColoredComponent promo = new SimpleColoredComponent();
+      promo.setBackground(panelBackground);
+      promo.setForeground(groupFg);
+      promo.setIcon(AllIcons.Ide.External_link_arrow);
+      promo.setIconOnTheRight(true);
+      promo.setTransparentIconBackground(true);
+      promo.append(IdeBundle.message("plugin.advertiser.product.call.to.action",
+                                     promoAction.getPromotedProductTitle(), promoAction.getCallToAction()));
+
+      SimpleColoredComponent upgradeTo = new SimpleColoredComponent();
+      upgradeTo.setIcon(promoAction.getPromotedProductIcon());
+      upgradeTo.setBackground(panelBackground);
+      upgradeTo.setForeground(groupFg);
+      upgradeTo.setIconOnTheRight(true);
+      upgradeTo.append(IdeBundle.message("plugin.advertiser.upgrade.to"));
+      upgradeTo.setTransparentIconBackground(true);
+
+      BorderLayoutPanel compositeUpgradeHint = JBUI.Panels.simplePanel(promo)
+        .addToLeft(upgradeTo)
+        .andTransparent();
+
+      compositeUpgradeHint.setBorder(eastBorder);
+
+      panel.setRight(compositeUpgradeHint);
     }
 
     @ActionText

@@ -5,7 +5,6 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
-import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -42,6 +41,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             project: Project,
             projectPath: String,
             projectName: String,
+            isProject: Boolean = true, // false stands for module
             sdk: Sdk?,
             buildSystemType: BuildSystemType,
             projectGroupId: String? = suggestGroupId(),
@@ -58,10 +58,12 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                 .apply {
                     wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
                     wizard.jdk = sdk
+                    wizard.isCreatingNewProject = isProject
                     wizard.context.writeSettings {
                         StructurePlugin.name.reference.setValue(projectName)
                         StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
                         StructurePlugin.useCompactProjectStructure.reference.setValue(useCompactProjectStructure)
+                        StructurePlugin.isCreatingNewProjectHierarchy.reference.setValue(isProject)
                         KotlinPlugin.createResourceDirectories.reference.setValue(createResourceDirectories)
 
                         // If a local gradle installation was selected, we want to use the local gradle installation's
@@ -99,7 +101,8 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         }
     }
 
-    override fun isEnabled(context: WizardContext): Boolean = context.isCreatingNewProject
+    // Uncommenting this line disables new Kotlin modules
+    //override fun isEnabled(context: WizardContext): Boolean = context.isCreatingNewProject
 
     override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 

@@ -128,17 +128,6 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
   }
 
-  protected void enableInspectionToolsFromProvider(InspectionToolProvider toolProvider){
-    try {
-      for (Class<? extends LocalInspectionTool> c : toolProvider.getInspectionClasses()) {
-        enableInspectionTool(InspectionTestUtil.instantiateTool(c));
-      }
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   protected void disableInspectionTool(@NotNull String shortName){
     InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
     if (profile.getInspectionTool(shortName, getProject()) != null) {
@@ -243,8 +232,8 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   protected void doCheckResult(@NotNull ExpectedHighlightingData data,
-                             Collection<HighlightInfo> infos,
-                             String text) {
+                               @NotNull Collection<? extends HighlightInfo> infos,
+                               @NotNull String text) {
     PsiFile file = getFile();
     data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), getProject()), text);
     data.checkResult(file, infos, text);

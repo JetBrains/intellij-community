@@ -724,7 +724,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                 separator = "||") { "$it (Persistent Id: ${(it as? WorkspaceEntityWithSymbolicId)?.symbolicId})" }
             }
               """.trimMargin()
-            reportErrorAndAttachStorage(message, storage)
+            reportErrorAndAttachStorage(message)
           }
           if (existingSerializers.isEmpty() || existingSerializers.any { it.internalEntitySource != actualFileSource }) {
             processNewlyAddedDirectoryEntities(entities, serializersToRun)

@@ -342,7 +342,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     return StringUtil.convertLineSeparators(text);
   }
 
-  private static @Nullable LineSeparator detectLineSeparators(@Nullable Document document, @Nullable String text) {
+  public static @Nullable LineSeparator detectLineSeparators(@Nullable Document document, @Nullable String text) {
     if (text == null) return null;
     boolean doNotNormalizeDetect = document instanceof DocumentImpl && ((DocumentImpl)document).acceptsSlashR();
     if (doNotNormalizeDetect) return null;

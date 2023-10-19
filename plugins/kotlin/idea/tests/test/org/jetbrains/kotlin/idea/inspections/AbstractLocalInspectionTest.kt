@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.utils.IgnoreTests
-import org.junit.Assert
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -145,7 +144,9 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         inspectionSettings: Element? = null
     ): Boolean {
         val problemExpected = expectedProblemString == null || expectedProblemString != "none"
-        myFixture.enableInspections(inspection)
+        // use Class instead of `inspection` as an argument to correctly calculate LocalInspectionToolWrapper.getID()
+        // (because "suppressID" can be hardcoded in plugin.xml the just created LocalInspectionTool knows nothing about)
+        myFixture.enableInspections(inspection::class.java)
 
         // Set default level to WARNING to make possible to test DO_NOT_SHOW
         val inspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
@@ -159,7 +160,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         val highlightInfos = collectHighlightInfos()
 
-        Assert.assertTrue(
+        assertTrue(
             if (!problemExpected)
                 "No problems should be detected at caret\n" +
                         "Detected problems: ${highlightInfos.joinToString { it.description }}"
@@ -171,7 +172,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         if (!problemExpected || highlightInfos.isEmpty()) return false
 
         if (expectedProblemString != null) {
-            Assert.assertTrue(
+            assertTrue(
                 "Expected the following problem at caret: $expectedProblemString\n" +
                         "Active problems: ${highlightInfos.joinToString(separator = "\n") { it.description }}",
                 highlightInfos.any { it.description == expectedProblemString }
@@ -183,7 +184,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             else -> expectedHighlightString
         }
         if (expectedHighlightType != null) {
-            Assert.assertTrue(
+            assertTrue(
                 "Expected the following problem highlight type: $expectedHighlightType\n" +
                         "Actual type: ${highlightInfos.joinToString { it.type.toString() }}",
                 highlightInfos.all { expectedHighlightType in it.type.toString() }
@@ -208,7 +209,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         val fixDescription = localFixTextString?.let { "with specified text '$localFixTextString'" } ?: ""
         if (localFixTextString != "none") {
-            TestCase.assertTrue(
+            assertTrue(
               "Fix $fixDescription not found in actions available:\n $availableDescription",
               localFixActions.isNotEmpty()
             )
@@ -216,10 +217,10 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         val localFixAction = localFixActions.singleOrNull { it !is EmptyIntentionAction }
         if (localFixTextString == "none") {
-            Assert.assertTrue("Expected no fix action", localFixAction == null)
+            assertTrue("Expected no fix action", localFixAction == null)
             return false
         }
-        TestCase.assertTrue(
+        assertTrue(
             "More than one fix action $fixDescription\n" +
                     "Available actions: $availableDescription",
             localFixAction != null

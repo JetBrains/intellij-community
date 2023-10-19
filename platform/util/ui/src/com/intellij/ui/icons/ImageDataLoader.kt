@@ -2,6 +2,7 @@
 package com.intellij.ui.icons
 
 import com.intellij.ui.scale.ScaleContext
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Image
 import java.net.URL
@@ -20,6 +21,13 @@ internal sealed interface ImageDataLoader {
 
   fun isMyClassLoader(classLoader: ClassLoader): Boolean
 
+  fun serializeToByteArray(): ImageDataLoaderDescriptor? = null
+
   val flags: Int
     get() = 0
+}
+
+@Serializable
+internal sealed interface ImageDataLoaderDescriptor {
+  fun createIcon(): ImageDataLoader?
 }

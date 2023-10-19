@@ -88,7 +88,7 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
     Object subtreeRootObject = subtreeRoot != null ? subtreeRoot.getUserObject() : null;
 
     if (subtreeRootObject instanceof LocalChangeList localChangeList) return !localChangeList.getChanges().isEmpty();
-    if (subtreeRootObject == UNVERSIONED_FILES_TAG) return true;
+    if (subtreeRootObject == UNVERSIONED_FILES_TAG && subtreeRoot.getChildCount() > 0) return true;
     return false;
   }
 

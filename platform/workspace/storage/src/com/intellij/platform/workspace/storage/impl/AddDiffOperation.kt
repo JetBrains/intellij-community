@@ -91,15 +91,6 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           LOG.trace { "addDiff: replace entity" }
           replaceOperation(entityId, change)
         }
-        is ChangeEntry.ChangeEntitySource -> {
-          LOG.trace { "addDiff: change entity source" }
-          replaceSourceOperation(change.newData, change.originalSource)
-        }
-        is ChangeEntry.ReplaceAndChangeSource -> {
-          LOG.trace { "addDiff: replace and change source" }
-          replaceOperation(entityId, change.dataChange)
-          replaceSourceOperation(change.sourceChange.newData, change.sourceChange.originalSource)
-        }
       }
     }
     target.indexes.applyExternalMappingChanges(diff, replaceMap, target)
@@ -110,20 +101,6 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     }
     else {
       target.brokenConsistency = true
-    }
-  }
-
-  private fun replaceSourceOperation(data: WorkspaceEntityData<out WorkspaceEntity>, originalSource: EntitySource) {
-    val outdatedId = data.createEntityId().notThis()
-    val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId.id.asThis())
-
-    // We don't modify entity that isn't exist in target version of storage
-    val existingEntityData = target.entitiesByType.getEntityDataForModificationOrNull(usedPid.id)
-    if (existingEntityData != null) {
-      val newEntitySource = data.entitySource
-      existingEntityData.entitySource = newEntitySource
-      target.indexes.entitySourceIndex.index(usedPid.id, newEntitySource)
-      target.changeLog.addChangeSourceEvent(usedPid.id, existingEntityData, originalSource)
     }
   }
 
@@ -211,9 +188,6 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
 
     val originalEntityData = target.getOriginalEntityData(targetEntityId.id)
     val originalParents = target.getOriginalParents(targetEntityId.id.asChild())
-
-    // Replace entity doesn't modify entitySource
-    newTargetEntityData.entitySource = existingTargetEntityData.entitySource
 
     target.indexes.updateIndices(sourceEntityId.id, newTargetEntityData, diff)
 
@@ -398,15 +372,6 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
         }
       }
     }
-  }
-
-  // For serializing current model during the debug process
-  @Suppress("unused")
-  private fun serialize(path: String) {
-    val folder = Path.of(path)
-    target.serializeTo(folder.resolve("Instant_Save_Target"))
-    diff.serializeTo(folder.resolve("Instant_Save_Source"))
-    diff.serializeDiff(folder.resolve("Instant_Save_Diff"))
   }
 
   companion object {

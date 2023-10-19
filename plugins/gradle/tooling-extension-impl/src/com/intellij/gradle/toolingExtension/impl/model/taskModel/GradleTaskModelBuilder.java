@@ -83,6 +83,9 @@ public class GradleTaskModelBuilder extends AbstractModelBuilderService {
     @NotNull ModelBuilderContext context,
     @NotNull Exception exception
   ) {
+    GradleTaskCache.getInstance(context)
+        .markTaskModelAsError(project);
+
     context.getMessageReporter().createMessage()
       .withGroup(Messages.TASK_MODEL_GROUP)
       .withKind(Message.Kind.WARNING)

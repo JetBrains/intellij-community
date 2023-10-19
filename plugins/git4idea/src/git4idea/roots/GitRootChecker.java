@@ -24,7 +24,13 @@ import java.util.List;
 final class GitRootChecker extends VcsRootChecker {
   @Override
   public boolean isRoot(@NotNull VirtualFile path) {
-    return GitUtil.isGitRoot(path.toNioPath());
+    return path.findChild(GitUtil.DOT_GIT) != null && // fast check without refreshing the VFS
+           GitUtil.isGitRoot(path.toNioPath());
+  }
+
+  @Override
+  public boolean validateRoot(@NotNull VirtualFile file) {
+    return GitUtil.isGitRoot(file.toNioPath());
   }
 
   @Override

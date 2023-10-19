@@ -6,9 +6,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -392,29 +394,20 @@ public final class Mappings {
       }
       final IntSet _visitedClasses = visitedClasses;
       subClasses.forEach(subClassName -> {
-        Iterable<ClassRepr> reprs = reprsByName(subClassName, ClassRepr.class);
+        Iterable<ClassRepr> reprs = Iterators.collect(reprsByName(subClassName, ClassRepr.class), new SmartList<>());
         if (!Iterators.isEmpty(reprs)) {
-          Iterable<Pair<MethodRepr, ClassRepr>> overriding = Iterators.filter(Iterators.map(reprs, r -> {
-            for (MethodRepr mm : r.findMethods(predicate)) {
-              if (isVisibleIn(fromClass, m, r)) {
-                return Pair.create(mm, r);
-              }
-            }
-            return null;
-          }), Iterators.notNullFilter());
+          Iterable<Pair<MethodRepr, ClassRepr>> overriding = Iterators.flat(Iterators.map(
+            reprs,
+            r -> isVisibleIn(fromClass, m, r)? Iterators.map(r.findMethods(predicate), mm -> Pair.create(mm, r)) : Collections.emptyList())
+          );
 
+          Set<ClassRepr> found = new SmartHashSet<>();
           for (Pair<MethodRepr, ClassRepr> pair : overriding) {
             container.add(pair);
+            found.add(pair.getSecond());
           }
 
-          for (ClassRepr r : Iterators.filter(reprs, r -> {
-            for (Pair<MethodRepr, ClassRepr> pair : overriding) {
-              if (pair.getSecond() == r) {
-                return false;
-              }
-            }
-            return true;
-          })) {
+          for (ClassRepr r : Iterators.filter(reprs, r -> !found.contains(r))) {
             // continue with reprs, for those no overriding members were found
             addOverridingMethods(m, r, predicate, container, _visitedClasses);
           }
@@ -422,20 +415,12 @@ public final class Mappings {
       });
     }
 
-    private Collection<Pair<MethodRepr, ClassRepr>> findAllMethodsBySpecificity(final MethodRepr m, final ClassRepr c) {
-      final Predicate<MethodRepr> predicate = lessSpecific(m);
-      final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<>();
-      addOverridenMethods(c, predicate, result, null);
-      addOverridingMethods(m, c, predicate, result, null);
-      return result;
-    }
-
     private Collection<Pair<MethodRepr, ClassRepr>> findOverriddenMethods(final MethodRepr m, final ClassRepr c) {
       if (m.name == myInitName) {
         return Collections.emptySet(); // overriding is not defined for constructors
       }
       final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<>();
-      addOverridenMethods(c, MethodRepr.equalByJavaRules(m), result, null);
+      addOverriddenMethods(c, MethodRepr.equalByJavaRules(m), result, null);
       return result;
     }
 
@@ -471,12 +456,12 @@ public final class Mappings {
         if (!visitedClasses.add(superName.className) || superName.className == myObjectClassName) {
           continue;
         }
-        Iterable<ClassRepr> superClasses = reprsByName(superName.className, ClassRepr.class);
-        if (Iterators.isEmpty(superClasses)) {
+        Iterator<ClassRepr> superClasses = reprsByName(superName.className, ClassRepr.class).iterator();
+        if (!superClasses.hasNext()) {
           return true;
         }
-        for (ClassRepr superClass : superClasses) {
-          if (extendsLibraryClass(superClass, visitedClasses)) {
+        while (superClasses.hasNext()) {
+          if (extendsLibraryClass(superClasses.next(), visitedClasses)) {
             return true;
           }
         }
@@ -484,7 +469,7 @@ public final class Mappings {
       return false;
     }
 
-    private void addOverridenMethods(final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, IntSet visitedClasses) {
+    private void addOverriddenMethods(final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, IntSet visitedClasses) {
       if (visitedClasses == null) {
         visitedClasses = new IntOpenHashSet();
         visitedClasses.add(fromClass.name);
@@ -493,35 +478,26 @@ public final class Mappings {
         if (!visitedClasses.add(superName.className) || superName.className == myObjectClassName) {
           continue;  // prevent SOE
         }
-        Iterable<ClassRepr> superClasses = reprsByName(superName.className, ClassRepr.class);
+        Iterable<ClassRepr> superClasses = Iterators.collect(reprsByName(superName.className, ClassRepr.class), new SmartList<>());
         if (!Iterators.isEmpty(superClasses)) {
-          Iterable<Pair<MethodRepr, ClassRepr>> pairs = Iterators.filter(Iterators.map(superClasses, superClass -> {
-            for (MethodRepr mm : superClass.findMethods(predicate)) {
-              if (isVisibleIn(superClass, mm, fromClass)) {
-                return Pair.create(mm, superClass);
-              }
-            }
-            return null;
-          }), Iterators.notNullFilter());
+          Iterable<Pair<MethodRepr, ClassRepr>> pairs = Iterators.flat(Iterators.map(
+            superClasses,
+            superClass -> Iterators.filter(Iterators.map(superClass.findMethods(predicate), mm -> isVisibleIn(superClass, mm, fromClass)? Pair.create(mm, superClass) : null), Iterators.notNullFilter()))
+          );
 
+          Set<ClassRepr> found = new SmartHashSet<>();
           for (Pair<MethodRepr, ClassRepr> pair : pairs) {
             container.add(pair);
+            found.add(pair.getSecond());
           }
 
-          for (ClassRepr superClass : Iterators.filter(superClasses, superClass -> {
-            for (Pair<MethodRepr, ClassRepr> pair : pairs) {
-              if (pair.getSecond() == superClass) {
-                return false;
-              }
-            }
-            return true;
-          })) {
+          for (ClassRepr superClass : Iterators.filter(superClasses, superClass -> !found.contains(superClass))) {
             // continue with those, for whom the matching method was not found
-            addOverridenMethods(superClass, predicate, container, visitedClasses);
+            addOverriddenMethods(superClass, predicate, container, visitedClasses);
           }
         }
         else {
-          container.add(Pair.create(MOCK_METHOD, MOCK_CLASS));
+          container.add(Pair.create(MOCK_METHOD, MOCK_CLASS));  
         }
       }
     }
@@ -682,11 +658,12 @@ public final class Mappings {
     }
 
     boolean isFieldVisible(final int className, final FieldRepr field) {
-      final Iterable<ClassRepr> reprs = reprsByName(className, ClassRepr.class);
-      if (Iterators.isEmpty(reprs)) {
+      final Iterator<ClassRepr> reprs = reprsByName(className, ClassRepr.class).iterator();
+      if (!reprs.hasNext()) {
         return true;
       }
-      for (ClassRepr r : reprs) {
+      while (reprs.hasNext()) {
+        ClassRepr r = reprs.next();
         if (r.getFields().contains(field)) {
           return true;
         }
@@ -968,7 +945,7 @@ public final class Mappings {
 
   private static boolean isVisibleIn(final ClassRepr c, final ProtoMember m, final ClassRepr scope) {
     final boolean privacy = m.isPrivate() && c.name != scope.name;
-    final boolean packageLocality = m.isPackageLocal() && !c.getPackageName().equals(scope.getPackageName());
+    final boolean packageLocality = m.isPackageLocal() && !Objects.equals(c.getPackageName(), scope.getPackageName());
     return !privacy && !packageLocality;
   }
 
@@ -1245,32 +1222,48 @@ public final class Mappings {
             myFuture.affectStaticMemberOnDemandUsages(it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
           }
 
+          Predicate<MethodRepr> lessSpecificCond = myFuture.lessSpecific(addedMethod);
+          
           final Collection<MethodRepr> removed = diff.methods().removed();
-          for (final MethodRepr lessSpecific : it.findMethods(myFuture.lessSpecific(addedMethod))) {
+          for (final MethodRepr lessSpecific : it.findMethods(lessSpecificCond)) {
             if (!lessSpecific.equals(addedMethod) && !removed.contains(lessSpecific))  {
               debug("Found less specific method, affecting method usages");
               myFuture.affectMethodUsages(lessSpecific, propagated.get(), lessSpecific.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
             }
           }
 
-          debug("Processing affected by specificity methods");
-          final Collection<Pair<MethodRepr, ClassRepr>> affectedMethods = myFuture.findAllMethodsBySpecificity(addedMethod, it);
-          final Predicate<MethodRepr> overrides = MethodRepr.equalByJavaRules(addedMethod);
+          debug("Processing overridden by specificity methods");
 
-          for (final Pair<MethodRepr, ClassRepr> pair : affectedMethods) {
+          final Collection<Pair<MethodRepr, ClassRepr>> overridden = new HashSet<>();
+          myFuture.addOverriddenMethods(it, lessSpecificCond, overridden, null);
+          for (final Pair<MethodRepr, ClassRepr> pair : overridden) {
             final MethodRepr method = pair.first;
             final ClassRepr methodClass = pair.second;
 
             if (methodClass == MOCK_CLASS) {
-              continue;
+              continue; 
             }
-            final boolean isInheritor = Boolean.TRUE.equals(myPresent.isInheritorOf(methodClass.name, it.name, null));
+
+            debug("Method: ", method.name);
+            debug("Class : ", methodClass.name);
+            debug("Affecting method usages for that found");
+            myFuture.affectMethodUsages(method, myPresent.propagateMethodAccess(method, it.name), method.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+          }
+
+          debug("Processing overriding by specificity methods");
+
+          final Predicate<MethodRepr> overrides = MethodRepr.equalByJavaRules(addedMethod);
+          final Collection<Pair<MethodRepr, ClassRepr>> overriding = new HashSet<>();
+          myFuture.addOverridingMethods(addedMethod, it, lessSpecificCond, overriding, null);
+          for (final Pair<MethodRepr, ClassRepr> pair : overriding) {
+            final MethodRepr method = pair.first;
+            final ClassRepr methodClass = pair.second;
 
             debug("Method: ", method.name);
             debug("Class : ", methodClass.name);
 
-            if (overrides.test(method) && isInheritor) {
-              debug("Current method overrides that found");
+            if (overrides.test(method)) {
+              debug("Current method overrides the added method");
 
               final Iterable<File> files = classToSourceFileGet(methodClass.name);
               if (files != null) {
@@ -1284,22 +1277,16 @@ public final class Mappings {
 
             }
             else {
-              debug("Current method does not override that found");
+              debug("Current method does not override the added method");
+              debug("Affecting method usages for the method");
 
-              final IntSet yetPropagated = myPresent.propagateMethodAccess(method, it.name);
-
-              if (isInheritor) {
-                myPresent.appendDependents(methodClass, state.myDependants);
-                myFuture.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, methodClass.name), state.myAffectedUsages, state.myDependants);
-              }
-
-              debug("Affecting method usages for that found");
-              myFuture.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+              myPresent.appendDependents(methodClass, state.myDependants);
+              myFuture.affectMethodUsages(method, myPresent.propagateMethodAccess(method, methodClass.name), method.createUsage(myContext, methodClass.name), state.myAffectedUsages, state.myDependants);
             }
           }
 
           getAllSubclasses(it.name).forEach(subClass -> {
-            Iterable<ClassRepr> reprs = myFuture.reprsByName(subClass, ClassRepr.class);
+            Iterable<ClassRepr> reprs = Iterators.collect(myFuture.reprsByName(subClass, ClassRepr.class), new SmartList<>());
             if (Iterators.isEmpty(reprs)) {
               return;
             }
@@ -1332,43 +1319,35 @@ public final class Mappings {
       assert myCompiledFiles != null;
 
       debug("Processing removed methods:");
-      for (final MethodRepr m : removed) {
-        debug("Method ", m.name);
 
-        final Collection<Pair<MethodRepr, ClassRepr>> overriddenMethods = myFuture.findOverriddenMethods(m, it);
-        final Supplier<IntSet> propagated = lazy(()-> myFuture.propagateMethodAccess(m, it.name));
+      for (final MethodRepr removedMethod : removed) {
+        debug("Method ", removedMethod.name);
 
-        if (!m.isPrivate() && m.isStatic()) {
+        final Collection<Pair<MethodRepr, ClassRepr>> overriddenMethods = myFuture.findOverriddenMethods(removedMethod, it);
+        final Supplier<IntSet> propagated = lazy(()-> myFuture.propagateMethodAccess(removedMethod, it.name));
+
+        if (!removedMethod.isPrivate() && removedMethod.isStatic()) {
           debug("The method was static --- affecting static method import usages");
-          myFuture.affectStaticMemberImportUsages(m.name, it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
+          myFuture.affectStaticMemberImportUsages(removedMethod.name, it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
         }
 
         if (overriddenMethods.isEmpty()) {
           debug("No overridden methods found, affecting method usages");
-          myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+          myFuture.affectMethodUsages(removedMethod, propagated.get(), removedMethod.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
         }
         else {
-          boolean clear = true;
+          boolean clearlyOverridden = isEmpty(removedMethod.signature) && Iterators.isEmpty(
+            Iterators.filter(overriddenMethods, p -> p.first == MOCK_METHOD || !p.first.myType.equals(removedMethod.myType) || !isEmpty(p.first.signature) || removedMethod.isMoreAccessibleThan(p.first))
+          );
 
-          loop:
-          for (final Pair<MethodRepr, ClassRepr> overriden : overriddenMethods) {
-            final MethodRepr mm = overriden.first;
-
-            if (mm == MOCK_METHOD || !mm.myType.equals(m.myType) || !isEmpty(mm.signature) || !isEmpty(m.signature) || m.isMoreAccessibleThan(mm)) {
-              clear = false;
-              break loop;
-            }
-          }
-
-          if (!clear) {
+          if (!clearlyOverridden) {
             debug("No clearly overridden methods found, affecting method usages");
-            myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+            myFuture.affectMethodUsages(removedMethod, propagated.get(), removedMethod.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
           }
         }
 
         final Collection<Pair<MethodRepr, ClassRepr>> overridingMethods = new HashSet<>();
-
-        myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods, null);
+        myFuture.addOverridingMethods(removedMethod, it, MethodRepr.equalByJavaRules(removedMethod), overridingMethods, null);
 
         for (final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
           final Iterable<File> fNames = classToSourceFileGet(p.second.name);
@@ -1382,18 +1361,18 @@ public final class Mappings {
           }
         }
 
-        if (!m.isAbstract() && !m.isStatic()) {
+        if (!removedMethod.isAbstract() && !removedMethod.isStatic()) {
           propagated.get().forEach(p -> {
             if (p != it.name) {
-              for (ClassRepr s : myFuture.reprsByName(p, ClassRepr.class)) {
-                final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = myFuture.findOverriddenMethods(m, s);
+              for (ClassRepr subClass : myFuture.reprsByName(p, ClassRepr.class)) {
+                final Collection<Pair<MethodRepr, ClassRepr>> overriddenInSubclass = myFuture.findOverriddenMethods(removedMethod, subClass);
 
-                overridenInS.addAll(overriddenMethods);
+                overriddenInSubclass.addAll(overriddenMethods);
 
                 boolean allAbstract = true;
                 boolean visited = false;
 
-                for (final Pair<MethodRepr, ClassRepr> pp : overridenInS) {
+                for (final Pair<MethodRepr, ClassRepr> pp : overriddenInSubclass) {
                   final ClassRepr cc = pp.second;
 
                   if (cc == MOCK_CLASS) {
@@ -1682,7 +1661,7 @@ public final class Mappings {
 
         if (!f.isPrivate()) {
           getAllSubclasses(classRepr.name).forEach(subClass -> {
-            final Iterable<ClassRepr> reprs = myFuture.reprsByName(subClass, ClassRepr.class);
+            final Iterable<ClassRepr> reprs = Iterators.collect(myFuture.reprsByName(subClass, ClassRepr.class), new SmartList<>());
             if (!Iterators.isEmpty(reprs)) {
               final Iterable<File> sourceFileNames = classToSourceFileGet(subClass);
               if (sourceFileNames != null && !containsAll(myCompiledFiles, sourceFileNames)) {

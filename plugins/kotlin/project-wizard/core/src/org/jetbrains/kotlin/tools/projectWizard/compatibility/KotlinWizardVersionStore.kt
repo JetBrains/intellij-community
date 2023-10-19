@@ -17,6 +17,7 @@ internal object KotlinWizardVersionParser : IdeVersionedDataParser<KotlinWizardV
         versionData.kotlinForComposeVersion = obj["kotlinForComposeVersion"]?.asSafeString ?: return null
         versionData.composeCompilerExtension = obj["composeCompilerExtension"]?.asSafeString ?: return null
         versionData.minGradleFoojayVersion = obj["minGradleFoojayVersion"]?.asSafeString ?: return null
+        versionData.minKotlinFoojayVersion = obj["minKotlinFoojayVersion"]?.asSafeString ?: return null
         versionData.gradleAndroidVersion = obj["gradleAndroidVersion"]?.asSafeString ?: return null
         versionData.foojayVersion = obj["foojayVersion"]?.asSafeString ?: return null
         versionData.failsafeVersion = obj["failsafeVersion"]?.asSafeString ?: return null
@@ -32,6 +33,7 @@ class KotlinWizardVersionState() : IdeVersionedDataState() {
         kotlinForComposeVersion: String,
         composeCompilerExtension: String,
         minGradleFoojayVersion: String,
+        minKotlinFoojayVersion: String,
         foojayVersion: String,
         failsafeVersion: String,
         surefireVersion: String,
@@ -52,6 +54,7 @@ class KotlinWizardVersionState() : IdeVersionedDataState() {
     var kotlinForComposeVersion by string()
     var composeCompilerExtension by string()
     var minGradleFoojayVersion by string()
+    var minKotlinFoojayVersion by string()
     var foojayVersion by string()
     var failsafeVersion by string()
     var surefireVersion by string()
@@ -91,6 +94,7 @@ internal val DEFAULT_KOTLIN_WIZARD_VERSIONS = KotlinWizardVersionState(
     kotlinForComposeVersion = "$kotlinForComposeVersion",
     composeCompilerExtension = "$composeCompilerExtension",
     minGradleFoojayVersion = "$minGradleFoojayVersion",
+    minKotlinFoojayVersion = "$minKotlinFoojayVersion",
     foojayVersion = "$foojayVersion",
     failsafeVersion = "$failsafeVersion",
     surefireVersion = "$surefireVersion",

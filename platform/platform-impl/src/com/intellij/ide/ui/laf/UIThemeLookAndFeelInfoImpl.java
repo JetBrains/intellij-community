@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Konstantin Bulenkov
@@ -45,16 +46,17 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
   @Nls
   @Override
   public @NotNull String getName() {
-    return super.getName();
+    //noinspection HardCodedStringLiteral
+    return Objects.requireNonNullElse(theme.getName(), theme.getId());
   }
 
   @Override
-  public @NotNull String getId() {
+  public final @NotNull String getId() {
     return theme.getId();
   }
 
   @Override
-  public boolean isDark() {
+  public final boolean isDark() {
     return theme.isDark();
   }
 
@@ -116,7 +118,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     }
 
     if (editorColorSchemeToSet != null) {
-      editorColorManager.setGlobalScheme(editorColorSchemeToSet);
+      editorColorManager.setCurrentSchemeOnLafChange(editorColorSchemeToSet);
     }
   }
 

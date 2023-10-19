@@ -21,7 +21,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -236,7 +235,7 @@ public final class IntentionActionWithTextCaching
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      SlowOperations.allowSlowOperations(() -> myAction.invoke(project, editor, file));
+      myAction.invoke(project, editor, file);
       myMarkInvoked.accept(IntentionActionWithTextCaching.this, myAction);
     }
 

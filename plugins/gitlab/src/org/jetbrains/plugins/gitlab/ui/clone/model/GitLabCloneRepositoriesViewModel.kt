@@ -65,7 +65,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   private val switchToLoginAction: (GitLabAccount) -> Unit
 ) : GitLabCloneRepositoriesViewModel {
   private val apiManager: GitLabApiManager = service<GitLabApiManager>()
-  private val vcsNotifier: VcsNotifier = project.service<VcsNotifier>()
+  private val vcsNotifier: VcsNotifier = VcsNotifier.getInstance(project)
 
   private val cs: CoroutineScope = parentCs.childScope()
 

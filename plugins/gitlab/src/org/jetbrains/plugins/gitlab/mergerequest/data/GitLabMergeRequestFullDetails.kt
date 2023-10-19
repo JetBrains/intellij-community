@@ -29,7 +29,7 @@ data class GitLabMergeRequestFullDetails(
   val isApproved: Boolean,
   val conflicts: Boolean,
   val commits: List<GitLabCommit>,
-  val diffRefs: GitLabDiffRefs,
+  val diffRefs: GitLabDiffRefs?,
   val headPipeline: GitLabPipelineDTO?,
   val userPermissions: GitLabMergeRequestPermissionsDTO,
   val shouldBeRebased: Boolean,

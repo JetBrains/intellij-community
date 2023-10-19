@@ -37,6 +37,14 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
     if (!selection.isEmpty()) {
       // does not check if octal escape is inside char or string literal (garbage in, garbage out)
       final Document document = element.getContainingFile().getViewProvider().getDocument();
+      while (selection.getEndOffset() < document.getTextLength()) {
+        char nextChar = document.getCharsSequence().charAt(selection.getEndOffset());
+        if (nextChar >= '0' && nextChar <= '7') {
+          selection = selection.grown(1);
+        } else {
+          break;
+        }
+      }
       final String text = document.getText(selection);
       final int textLength = selection.getLength();
       final StringBuilder replacement = new StringBuilder(textLength);

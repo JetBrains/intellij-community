@@ -23,6 +23,8 @@ import java.util.List;
 
 @State(name = "TodoConfiguration", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class TodoConfiguration implements PersistentStateComponent<Element> {
+
+  @Topic.ProjectLevel
   public static final Topic<PropertyChangeListener> PROPERTY_CHANGE = new Topic<>("TodoConfiguration changes", PropertyChangeListener.class);
 
   private boolean myMultiLine = true;

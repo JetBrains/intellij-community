@@ -16,7 +16,7 @@ public class ImplicitArrayToStringInspectionTest extends LightJavaInspectionTest
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_10;
+    return JAVA_11;
   }
 
   @Nullable

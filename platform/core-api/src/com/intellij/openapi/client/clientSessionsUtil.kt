@@ -5,16 +5,23 @@
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Executes given action for each client connected to all projects opened in IDE
+ *
+ * **Note:** This method should not be called within a suspend context.
+ * It is recommended to use [Application.forEachSessionSuspending] instead.
  */
+@RequiresBlockingContext
 inline fun Application.forEachSession(kind: ClientKind, action: (ClientAppSession) -> Unit) {
   for (session in this.service<ClientSessionsManager<*>>().getSessions(kind)) {
     ClientId.withClientId(session.clientId) {
@@ -26,11 +33,41 @@ inline fun Application.forEachSession(kind: ClientKind, action: (ClientAppSessio
 }
 
 /**
- * Executes given action for each client connected to this [Project]
+ * Executes given action for each client connected to all projects opened in IDE
  */
+suspend fun Application.forEachSessionSuspending(kind: ClientKind, action: suspend (ClientAppSession) -> Unit) {
+  for (session in this.service<ClientSessionsManager<*>>().getSessions(kind)) {
+    withContext(session.clientId.asContextElement()) {
+      logger<ClientSessionsManager<*>>().runAndLogException {
+        action(session as ClientAppSession)
+      }
+    }
+  }
+}
+
+/**
+ * Executes given action for each client connected to this [Project]
+ *
+ * **Note:** This method should not be called within a suspend context.
+ * It is recommended to use [Project.forEachSessionSuspending] instead.
+ */
+@RequiresBlockingContext
 inline fun Project.forEachSession(kind: ClientKind, action: (ClientProjectSession) -> Unit) {
   for (session in this.service<ClientSessionsManager<*>>().getSessions(kind) as List<ClientProjectSession>) {
     ClientId.withClientId(session.clientId) {
+      logger<ClientSessionsManager<*>>().runAndLogException {
+        action(session)
+      }
+    }
+  }
+}
+
+/**
+ * Executes given action for each client connected to this [Project]
+ */
+suspend fun Project.forEachSessionSuspending(kind: ClientKind, action: suspend (ClientProjectSession) -> Unit) {
+  for (session in this.service<ClientSessionsManager<*>>().getSessions(kind) as List<ClientProjectSession>) {
+    withContext(session.clientId.asContextElement()) {
       logger<ClientSessionsManager<*>>().runAndLogException {
         action(session)
       }

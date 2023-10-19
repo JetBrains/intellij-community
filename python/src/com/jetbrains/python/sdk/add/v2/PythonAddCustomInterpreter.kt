@@ -8,7 +8,7 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets.LOCAL_MA
 
 class PythonAddCustomInterpreter(private val settings: PythonAddInterpreterState) {
 
-  private lateinit var targetSelector: ComboBox<PythonInterpreterCreationTargets>
+  //private lateinit var targetSelector: ComboBox<PythonInterpreterCreationTargets>
 
   private val targets = mapOf(
     LOCAL_MACHINE to PythonLocalEnvironmentCreator(settings),
@@ -41,7 +41,9 @@ class PythonAddCustomInterpreter(private val settings: PythonAddInterpreterState
   }
 
   fun getSdk(): Sdk {
-    return targets[targetSelector.selectedItem]!!.getSdk()
+    // todo uncomment for all available targets
+    //return targets[targetSelector.selectedItem]!!.getSdk()
+    return targets[LOCAL_MACHINE]!!.getSdk()
   }
 
 }

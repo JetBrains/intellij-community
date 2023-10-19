@@ -656,7 +656,7 @@ public class SwitchBlockHighlightingModel {
         break;
       }
     }
-    return new SealedResult(missingClasses, coveredClasses) ;
+    return new SealedResult(missingClasses, coveredClasses);
   }
 
   static boolean isAbstractSealed(@Nullable PsiClass psiClass) {
@@ -1385,6 +1385,8 @@ public class SwitchBlockHighlightingModel {
         if (permitsList == null) {
           results = SyntaxTraverser.psiTraverser(psiClass.getContainingFile())
             .filter(PsiClass.class)
+            //local classes and anonymous classes must not extend sealed
+            .filter(cls -> !(cls instanceof PsiAnonymousClass || PsiUtil.isLocalClass(cls)))
             .filter(cls -> cls.isInheritor(psiClass, false))
             .toList();
         }

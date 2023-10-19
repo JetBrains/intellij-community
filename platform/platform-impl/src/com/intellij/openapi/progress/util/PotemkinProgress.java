@@ -67,7 +67,9 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     String eventString = event.toString();
     return eventString.contains(",runnable=sun.lwawt.macosx.LWCToolkit") || // [tav] todo: remove in 2022.2
            (event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent") // see JBR-4208
-           && !eventString.contains(",runnable=com.intellij.openapi.actionSystem.impl.ActionMenu$$Lambda")); // see IDEA-291469 Menu on macOs is invoked inside checkCanceled
+            // see IDEA-291469 Menu on macOS is invoked inside checkCanceled (PotemkinProgress)
+            && !(eventString.contains(",runnable=com.intellij.openapi.actionSystem.impl.ActionMenu$$Lambda") ||
+                 eventString.contains(",runnable=com.intellij.platform.ide.menu.MacNativeActionMenuKt$$Lambda")));
   }
 
   @Override

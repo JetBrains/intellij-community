@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompileContext
 import com.intellij.openapi.compiler.CompileTask
 import com.intellij.openapi.compiler.CompilerMessageCategory
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -35,7 +34,7 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
   }
 
   override fun execute(context: CompileContext): Boolean {
-    val queue = context.project.service<LibrarySynchronizationQueue>()
+    val queue = LibrarySynchronizationQueue.getInstance(context.project)
     val missingLibrariesResolutionTasks = mutableMapOf<LibraryEx, ResolutionTask>()
     val application = ApplicationManager.getApplication()
     val affectedModules = application.runReadAction<Array<Module>> {

@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
+@file:OptIn(ExperimentalSerializationApi::class)
 
 package com.intellij.ui.icons
 
@@ -8,15 +9,24 @@ import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.svg.colorPatcherDigestShim
+import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.SVGLoader
 import com.intellij.util.ui.MultiResolutionImageProvider
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Image
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
-import java.awt.image.RGBImageFilter
 import java.net.URL
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
@@ -30,9 +40,6 @@ val EMPTY_ICON: ImageIcon by lazy {
     override fun toString(): String = "Empty icon ${super.toString()}"
   }
 }
-
-@JvmField
-internal var isIconActivated: Boolean = !GraphicsEnvironment.isHeadless()
 
 @JvmField
 internal val pathTransformGlobalModCount: AtomicInteger = AtomicInteger()
@@ -55,20 +62,17 @@ open class CachedImageIcon private constructor(
   @Volatile
   @JvmField
   internal var resolver: ImageDataLoader?,
-  private val isDarkOverridden: Boolean? = null,
-  private val localFilterSupplier: (() -> RGBImageFilter)? = null,
+  private val localFilterSupplier: RgbImageFilterSupplier? = null,
   private val colorPatcher: ColorPatcherStrategy = GlobalColorPatcherStrategy,
-  private val useStroke: Boolean = false,
   private val toolTip: Supplier<String?>? = null,
   private val scaleContext: ScaleContext? = null,
   private val originalResolver: ImageDataLoader? = resolver,
+  // Do not use it directly for rendering - use `getEffectiveAttributes`
+  // isDark is not defined in most cases, and we use a global state at the call moment.
+  private val attributes: IconAttributes = IconAttributes(),
+  private val iconCache: ScaledIconCache = ScaledIconCache(),
 ) : CopyableIcon, ScalableIcon, DarkIconProvider, IconWithToolTip {
   private var pathTransformModCount = -1
-
-  private val scaledIconCache = ScaledIconCache()
-
-  @Volatile
-  private var darkVariant: CachedImageIcon? = null
 
   val originalPath: String?
     get() = originalResolver?.path
@@ -77,15 +81,23 @@ open class CachedImageIcon private constructor(
   internal constructor(file: Path, scaleContext: ScaleContext)
     : this(resolver = ImageDataByFilePathLoader(file.toUri().toString()), scaleContext = scaleContext)
 
-  constructor(url: URL, useCacheOnLoad: Boolean, scaleContext: ScaleContext? = null) :
-    this(resolver = ImageDataByUrlLoader(url = url, useCacheOnLoad = useCacheOnLoad), scaleContext = scaleContext) {
+  internal constructor(file: Path) : this(resolver = ImageDataByFilePathLoader(file.toUri().toString()))
+
+  constructor(url: URL, scaleContext: ScaleContext? = null) :
+    this(resolver = ImageDataByUrlLoader(url = url), scaleContext = scaleContext) {
 
     // if url is explicitly specified, it means that path should be not transformed
     pathTransformModCount = pathTransformGlobalModCount.get()
   }
 
+  internal constructor(resolver: ImageDataLoader) : this(resolver = resolver, originalResolver = resolver)
+
   internal constructor(resolver: ImageDataLoader, toolTip: Supplier<String?>?) :
-    this(resolver = resolver, isDarkOverridden = null, toolTip = toolTip)
+    this(resolver = resolver, originalResolver = resolver, toolTip = toolTip)
+
+  private fun getEffectiveAttributes(): IconAttributes {
+    return if (attributes.isDarkSet) attributes else attributes.copy(isDark = pathTransform.get().isDark, isDarkSet = true)
+  }
 
   @ApiStatus.Experimental
   fun getCoords(): Pair<String, ClassLoader>? = resolver?.getCoords()
@@ -98,22 +110,21 @@ open class CachedImageIcon private constructor(
       return
     }
 
-    val resolver = resolver
-    if (resolver == null || !isIconActivated) {
-      return
-    }
-
     val gc = c?.graphicsConfiguration ?: (g as? Graphics2D)?.deviceConfiguration
-    synchronized(scaledIconCache) {
+    synchronized(iconCache) {
       checkPathTransform()
-      if (colorPatcher.updateDigest()) {
-        scaledIconCache.clear()
-      }
-      scaledIconCache.getCachedIcon(host = this, gc = gc) ?: EMPTY_ICON
+      iconCache.getCachedIcon(host = this, gc = gc, attributes = getEffectiveAttributes())
     }.paintIcon(c, g, x, y)
   }
 
   final override fun getIconWidth(): Int = resolveActualIcon().iconWidth
+
+  fun getRawIconWidth(): Int {
+    synchronized(iconCache) {
+      checkPathTransform()
+      return iconCache.getCachedIcon(host = this, gc = null, attributes = getEffectiveAttributes()).iconWidth
+    }
+  }
 
   final override fun getIconHeight(): Int = resolveActualIcon().iconHeight
 
@@ -123,7 +134,10 @@ open class CachedImageIcon private constructor(
   fun getRealIcon(): Icon = resolveActualIcon()
 
   @Internal
-  fun getRealImage(): Image? = (resolveActualIcon() as? ScaledResultIcon)?.image
+  fun getRealImage(): Image? {
+    val image = (resolveActualIcon() as? ScaledResultIcon)?.image
+    return (image as? JBHiDPIScaledImage)?.delegate ?: image
+  }
 
   internal fun resolveImage(scaleContext: ScaleContext?): Image? {
     val icon = if (scaleContext == null) resolveActualIcon() else resolveActualIcon(scaleContext)
@@ -131,44 +145,38 @@ open class CachedImageIcon private constructor(
   }
 
   private fun resolveActualIcon(scaleContext: ScaleContext): Icon {
-    val resolver = resolver
-    if (resolver == null || !isIconActivated) {
-      return EMPTY_ICON
-    }
-
-    synchronized(scaledIconCache) {
+    synchronized(iconCache) {
       checkPathTransform()
-      return scaledIconCache.getOrScaleIcon(host = this, scaleContext = scaleContext) ?: EMPTY_ICON
+      return iconCache.getOrScaleIcon(host = this, scaleContext = scaleContext, attributes = getEffectiveAttributes())
     }
   }
 
   private fun resolveActualIcon(): Icon {
-    val resolver = resolver
-    if (resolver == null || !isIconActivated) {
-      return EMPTY_ICON
-    }
-
-    synchronized(scaledIconCache) {
+    synchronized(iconCache) {
       checkPathTransform()
 
       if (scaleContext == null) {
-        return scaledIconCache.getOrScaleIcon(host = this, scaleContext = ScaleContext.create()) ?: EMPTY_ICON
+        return iconCache.getCachedIcon(host = this, gc = null, attributes = getEffectiveAttributes())
       }
       else {
         scaleContext.update()
-        return scaledIconCache.getOrScaleIcon(host = this, scaleContext = scaleContext) ?: EMPTY_ICON
+        return iconCache.getOrScaleIcon(host = this, scaleContext = scaleContext, attributes = getEffectiveAttributes())
       }
     }
   }
 
   private fun checkPathTransform() {
+    if (colorPatcher.updateDigest()) {
+      iconCache.clear()
+    }
+
     if (pathTransformModCount == pathTransformGlobalModCount.get()) {
       return
     }
 
     resolver = originalResolver
     pathTransformModCount = pathTransformGlobalModCount.get()
-    scaledIconCache.clear()
+    iconCache.clear()
     if (originalPath != null) {
       resolver?.patch(transform = pathTransform.get())?.let {
         this.resolver = it
@@ -178,73 +186,87 @@ open class CachedImageIcon private constructor(
 
   override fun toString(): String = resolver?.toString() ?: (originalPath ?: "unknown path")
 
-  override fun scale(scale: Float): Icon {
-    if (scale == 1.0f) {
-      return this
-    }
-    else if (scaleContext == null) {
-      return scaledIconCache.getOrScaleIcon(host = this, scaleContext = ScaleContext.create(ScaleType.OBJ_SCALE.of(scale))) ?: this
-    }
-    else {
-      return scaledIconCache.getOrScaleIcon(host = this, scaleContext = scaleContext.copyWithScale(ScaleType.OBJ_SCALE.of(scale))) ?: this
+  override fun scale(scale: Float): CachedImageIcon {
+    return when {
+      scale == 1.0f -> this
+      scaleContext == null -> copy(scaleContext = ScaleContext.create(ScaleType.OBJ_SCALE.of(scale)))
+      else -> copy(scaleContext = scaleContext.copyWithScale(ScaleType.OBJ_SCALE.of(scale)))
     }
   }
 
   fun scale(scaleContext: ScaleContext): Icon {
-    return scaledIconCache.getOrScaleIcon(host = this, scaleContext = scaleContext) ?: this
+    return iconCache.getOrScaleIcon(host = this, scaleContext = scaleContext, attributes = getEffectiveAttributes())
   }
 
-  fun scale(scale: Float, ancestor: Component?): Icon {
+  fun scale(scale: Float, ancestor: Component? = null, isDark: Boolean? = null): CachedImageIcon {
     if (scale == 1.0f && ancestor == null) {
       return this
     }
 
-    val scaleContext = if (ancestor == null && scaleContext != null) ScaleContext.create(scaleContext) else ScaleContext.create(ancestor)
-    scaleContext.setScale(ScaleType.OBJ_SCALE.of(scale))
-    return scaledIconCache.getOrScaleIcon(host = this, scaleContext = scaleContext) ?: this
+    val scaleContext = if (ancestor == null) {
+      @Suppress("IfThenToElvis")
+      if (scaleContext == null) {
+        ScaleContext.create(ScaleType.OBJ_SCALE.of(scale))
+      }
+      else {
+        scaleContext.copyWithScale(ScaleType.OBJ_SCALE.of(scale))
+      }
+    }
+    else {
+      ScaleContext.create(ancestor).also {
+        it.setScale(ScaleType.OBJ_SCALE.of(scale))
+      }
+    }
+
+    var newAttributes = attributes
+    if (isDark != null) {
+      newAttributes = newAttributes.copy(isDark = isDark, isDarkSet = true)
+    }
+    return copy(scaleContext = scaleContext, attributes = newAttributes)
   }
 
-  override fun copy(): Icon = copy(isDarkOverridden = isDarkOverridden)
+  override fun copy(): Icon = copy(attributes = attributes)
 
   private fun copy(
-    isDarkOverridden: Boolean? = this.isDarkOverridden,
-    localFilterSupplier: (() -> RGBImageFilter)? = this.localFilterSupplier,
+    attributes: IconAttributes = this.attributes,
+    localFilterSupplier: RgbImageFilterSupplier? = this.localFilterSupplier,
     colorPatcher: ColorPatcherStrategy = this.colorPatcher,
-    useStroke: Boolean = this.useStroke,
+    scaleContext: ScaleContext? = this.scaleContext?.copy(),
   ): CachedImageIcon {
-    val result = CachedImageIcon(resolver = resolver,
-                                 originalResolver = originalResolver,
-                                 isDarkOverridden = isDarkOverridden,
-                                 localFilterSupplier = localFilterSupplier,
-                                 colorPatcher = colorPatcher,
-                                 useStroke = useStroke,
-                                 toolTip = toolTip,
-                                 scaleContext = scaleContext?.copy())
+    val reuseIconCache = localFilterSupplier === this.localFilterSupplier && colorPatcher === this.colorPatcher
+    val result = CachedImageIcon(
+      resolver = resolver,
+      originalResolver = originalResolver,
+      attributes = attributes,
+      localFilterSupplier = localFilterSupplier,
+      colorPatcher = colorPatcher,
+      toolTip = toolTip,
+      scaleContext = scaleContext,
+      iconCache = if (reuseIconCache) iconCache else ScaledIconCache(),
+    )
     result.pathTransformModCount = pathTransformModCount
     return result
   }
 
-  override fun getDarkIcon(isDark: Boolean): CachedImageIcon {
-    if (isDarkOverridden != null && isDarkOverridden == isDark) {
+  fun withAnotherIconModifications(useModificationsFrom: CachedImageIcon): Icon {
+    if (attributes == useModificationsFrom.attributes &&
+        localFilterSupplier == useModificationsFrom.localFilterSupplier &&
+        colorPatcher === useModificationsFrom.colorPatcher) {
       return this
     }
 
-    var result = if (isDark) darkVariant else null
-    if (result == null) {
-      synchronized(scaledIconCache) {
-        if (isDark) {
-          result = darkVariant
-        }
+    return copy(attributes = useModificationsFrom.attributes,
+                localFilterSupplier = useModificationsFrom.localFilterSupplier,
+                colorPatcher = useModificationsFrom.colorPatcher)
+  }
 
-        if (result == null) {
-          result = copy(isDarkOverridden = isDark)
-          if (isDark) {
-            darkVariant = result
-          }
-        }
-      }
+  override fun getDarkIcon(isDark: Boolean): CachedImageIcon {
+    if (attributes.isDarkSet && attributes.isDark == isDark) {
+      return this
     }
-    return result!!
+    else {
+      return copy(attributes = attributes.copy(isDark = isDark, isDarkSet = true))
+    }
   }
 
   fun getMenuBarIcon(isDark: Boolean): Icon {
@@ -254,59 +276,48 @@ open class CachedImageIcon private constructor(
 
     checkPathTransform()
 
-    var image = loadImage(scaleContext = scaleContext, isDark = isDark)
+    val icon = iconCache.getOrScaleIcon(scaleContext = scaleContext,
+                                        attributes = attributes.copy(isDark = isDark, isDarkSet = true),
+                                        host = this)
     if (useMultiResolution) {
-      image = MultiResolutionImageProvider.convertFromJBImage(image)
+      return ImageIcon(MultiResolutionImageProvider.convertFromJBImage((icon as ScaledResultIcon).image))
     }
-    return ImageIcon(image ?: return this)
+    else {
+      return icon
+    }
   }
 
-  internal fun createWithFilter(filterSupplier: () -> RGBImageFilter): Icon = copy(localFilterSupplier = filterSupplier)
+  internal fun createWithFilter(filterSupplier: RgbImageFilterSupplier): Icon = copy(localFilterSupplier = filterSupplier)
 
   fun createWithPatcher(colorPatcher: SVGLoader.SvgElementColorPatcherProvider,
-                        useStroke: Boolean = this.useStroke,
+                        useStroke: Boolean = attributes.useStroke,
                         isDark: Boolean? = null): Icon {
-    return copy(colorPatcher = CustomColorPatcherStrategy(colorPatcher), useStroke = useStroke, isDarkOverridden = isDark)
-  }
-
-  internal fun createStrokeIcon(): CachedImageIcon = copy(useStroke = true)
-
-  fun withAnotherIconModifications(useModificationsFrom: CachedImageIcon): Icon {
-    if (isDarkOverridden == useModificationsFrom.isDarkOverridden &&
-        localFilterSupplier == useModificationsFrom.localFilterSupplier &&
-        colorPatcher === useModificationsFrom.colorPatcher &&
-        useStroke == useModificationsFrom.useStroke) {
-      return this
+    var newAttributes = attributes.copy(useStroke = useStroke)
+    if (isDark != null) {
+      newAttributes = newAttributes.copy(isDark = isDark, isDarkSet = true)
     }
-
-    return CachedImageIcon(resolver = resolver,
-                           originalResolver = originalResolver,
-                           isDarkOverridden = useModificationsFrom.isDarkOverridden,
-                           localFilterSupplier = useModificationsFrom.localFilterSupplier,
-                           colorPatcher = useModificationsFrom.colorPatcher,
-                           useStroke = useModificationsFrom.useStroke,
-                           scaleContext = scaleContext?.copy())
+    return copy(colorPatcher = CustomColorPatcherStrategy(colorPatcher), attributes = newAttributes)
   }
 
-  internal val isDark: Boolean
-    get() = isDarkOverridden ?: pathTransform.get().isDark
+  internal fun createStrokeIcon(): CachedImageIcon = copy(attributes.copy(useStroke = true))
 
   private fun getFilters(): List<ImageFilter> {
     val global = pathTransform.get().filter
-    val local = localFilterSupplier?.invoke()
+    val local = localFilterSupplier?.getFilter()
     return if (global != null && local != null) listOf(global, local) else listOfNotNull(global ?: local)
   }
 
   val url: URL?
-    get() = this.resolver?.url
+    get() = resolver?.url
 
-  internal fun loadImage(scaleContext: ScaleContext, isDark: Boolean): Image? {
+  internal fun loadImage(scaleContext: ScaleContext, attributes: IconAttributes): Image? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
     val resolver = resolver ?: return null
+
     val image = resolver.loadImage(parameters = LoadIconParameters(filters = getFilters(),
-                                                                   isDark = isDark,
+                                                                   isDark = attributes.isDark,
                                                                    colorPatcher = colorPatcher.colorPatcher,
-                                                                   isStroke = useStroke),
+                                                                   isStroke = attributes.useStroke),
                                    scaleContext = scaleContext)
     if (start != -1L) {
       IconLoadMeasurer.findIconLoad.end(start)
@@ -319,7 +330,7 @@ open class CachedImageIcon private constructor(
       return true
     }
 
-    synchronized(scaledIconCache) {
+    synchronized(iconCache) {
       val resolver = resolver ?: return true
       val originalResolver = originalResolver
       if (!resolver.isMyClassLoader(loader) && !(originalResolver != null && originalResolver.isMyClassLoader(loader))) {
@@ -327,26 +338,35 @@ open class CachedImageIcon private constructor(
       }
 
       this.resolver = null
-      scaledIconCache.clear()
-
-      val darkVariant = darkVariant
-      if (darkVariant != null) {
-        this.darkVariant = null
-        darkVariant.detachClassLoader(loader)
-      }
+      iconCache.clear()
       return true
     }
   }
 
-  val imageFlags: Int
-    get() {
-      return (resolver ?: return 0).flags
+  fun encodeToByteArray(): ByteArray {
+    var descriptor = originalResolver?.serializeToByteArray()
+    if (descriptor == null) {
+      descriptor = UrlDataLoaderDescriptor(url!!.toExternalForm())
     }
+    return ProtoBuf.encodeToByteArray(descriptor)
+  }
+
+  val imageFlags: Int
+    get() = resolver?.flags ?: 0
 }
 
 @TestOnly
 @Internal
 fun createCachedIcon(file: Path, scaleContext: ScaleContext): CachedImageIcon = CachedImageIcon(file, scaleContext = scaleContext)
+
+@Serializable
+private data class UrlDataLoaderDescriptor(
+  @JvmField val url: String,
+) : ImageDataLoaderDescriptor {
+  override fun createIcon(): ImageDataLoader {
+    return ImageDataByFilePathLoader(url)
+  }
+}
 
 private sealed interface ColorPatcherStrategy {
   /**
@@ -365,10 +385,20 @@ private data object GlobalColorPatcherStrategy : ColorPatcherStrategy {
 }
 
 private class CustomColorPatcherStrategy(override val colorPatcher: SVGLoader.SvgElementColorPatcherProvider) : ColorPatcherStrategy {
-  private val lastDigest = AtomicReference(colorPatcher.digest())
+  @Volatile
+  private var lastDigest = colorPatcherDigestShim(colorPatcher)
 
   override fun updateDigest(): Boolean {
     val digest = colorPatcher.digest()
-    return !lastDigest.getAndSet(digest).contentEquals(digest)
+    if (lastDigest.contentEquals(digest)) {
+      return false
+    }
+    lastDigest = digest
+    return true
   }
+}
+
+fun decodeCachedImageIconFromByteArray(byteArray: ByteArray): Icon? {
+  val descriptor = ProtoBuf.decodeFromByteArray<ImageDataLoaderDescriptor>(byteArray)
+  return CachedImageIcon(descriptor.createIcon() ?: return null)
 }

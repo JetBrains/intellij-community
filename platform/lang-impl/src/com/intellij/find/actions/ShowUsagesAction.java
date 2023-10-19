@@ -1339,26 +1339,20 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     if (isCodeWithMeClientInstance(popup)) return;
 
-    Dimension d = popup.getSize();
-    Insets contentInsets = popup.getContent().getInsets();
-    JBInsets.removeFrom(d, contentInsets);
-
     Component toolbarComponent = ((BorderLayout)popup.getComponent().getLayout()).getLayoutComponent(BorderLayout.NORTH);
     Dimension toolbarSize = toolbarComponent != null ? toolbarComponent.getPreferredSize() : JBUI.emptySize();
     Dimension headerSize = popup.getHeaderPreferredSize();
 
-    int width = Math.max(d.width, calcMaxWidth(table));
-    width = Math.max(Math.max(headerSize.width, width), toolbarSize.width);
+    int width = calcMaxWidth(table);
+    width = Math.max(headerSize.width, width);
+    width = Math.max(toolbarSize.width, width);
     width = Math.max(minWidth.get(), width);
 
-    int delta = minWidth.get() == -1 ? 0 : width - minWidth.get();
-    int newWidth = Math.max(width, d.width + delta);
-
-    minWidth.set(newWidth);
+    minWidth.set(width);
 
     int minHeight = headerSize.height + toolbarSize.height;
 
-    Rectangle rectangle = getPreferredBounds(table, popupPosition.getScreenPoint(), newWidth, minHeight, dataSize, showCodePreview);
+    Rectangle rectangle = getPreferredBounds(table, popupPosition.getScreenPoint(), width, minHeight, dataSize, showCodePreview);
     table.setSize(rectangle.width, rectangle.height - minHeight);
     if (dataSize > 0) ScrollingUtil.ensureSelectionExists(table);
 
@@ -1380,6 +1374,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     }
 
     popup.setSize(rectangle.getSize());
+    popup.moveToFitScreen();
   }
 
   private static boolean isCodeWithMeClientInstance(@NotNull JBPopup popup) {

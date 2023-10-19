@@ -12,7 +12,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.hover.HoverListener
@@ -23,6 +25,8 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.event.MouseEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import javax.swing.SwingUtilities
 
 internal class ActionInfoPopupGroup(val project: Project, textFragments: List<TextData>, showAnimated: Boolean) : Disposable {
@@ -31,7 +35,8 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
   }
 
   private val configuration = PresentationAssistant.INSTANCE.configuration
-  private val appearance = appearanceFromSize(PresentationAssistantPopupSize.from(configuration.popupSize))
+  private val appearance = appearanceFromSize(PresentationAssistantPopupSize.from(configuration.popupSize),
+                                              PresentationAssistantTheme.fromValueOrDefault(configuration.theme))
   private val actionBlocks = textFragments.map { fragment ->
     val panel = ActionInfoPanel(fragment, appearance)
     val popup = createPopup(panel, showAnimated)
@@ -46,7 +51,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
       if (oldValue != isPopupHovered) {
         if (isPopupHovered) {
-          settingsButton.acquireShownStateRequest(computeLocation(project, actionBlocks.size))
+          settingsButton.acquireShownStateRequest(computeLocation(project, actionBlocks.size).popupLocation)
         }
         else {
           settingsButton.releaseShownStateRequest()
@@ -82,9 +87,17 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     val connect = ApplicationManager.getApplication().getMessageBus().connect(this)
     connect.subscribe<LafManagerListener>(LafManagerListener.TOPIC, LafManagerListener { updatePopupsBounds(project) })
 
+    addWindowListener(project, object : WindowAdapter() {
+      override fun windowDeactivated(ev: WindowEvent) {
+        // Hide popup on switching to another non-IDE window. Otherwise, the popup stays on top of another application
+        // The issue reproduces only on macOS
+        if (ev.oppositeWindow == null && SystemInfo.isMac) close()
+      }
+    })
+
     animator = FadeInOutAnimator(true, showAnimated)
     actionBlocks.mapIndexed { index, block ->
-      block.popup.show(computeLocation(project, index))
+      block.popup.show(computeLocation(project, index).popupLocation)
     }
 
     if (showAnimated) {
@@ -97,6 +110,14 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     resetHideAlarm()
   }
 
+  private fun addWindowListener(project: Project, listener: WindowAdapter) {
+    val frame = WindowManager.getInstance().getFrame(project)!!
+    frame.addWindowListener(listener)
+    Disposer.register(this) {
+      frame.removeWindowListener(listener)
+    }
+  }
+
   private fun createPopup(panel: ActionInfoPanel, hiddenInitially: Boolean): JBPopup {
     val popup = with(JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel)) {
       if (hiddenInitially) setAlpha(1.0.toFloat())
@@ -107,7 +128,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
       createPopup()
     }
 
-    popup.content.background = ActionInfoPanel.BACKGROUND
+    popup.content.background = PresentationAssistantTheme.fromValueOrDefault(configuration.theme).background
 
     popup.addListener(object : JBPopupListener {
       override fun beforeShown(lightweightWindowEvent: LightweightWindowEvent) {}
@@ -123,11 +144,41 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     })
 
     val moveListener = object : WindowMoveListener(panel) {
+      private var isDragging = false
+
       override fun mouseDragged(event: MouseEvent?) {
         super.mouseDragged(event)
+        updateDelta(event, false)
+        isDragging = true
+      }
+
+      override fun mouseReleased(event: MouseEvent?) {
+        super.mouseReleased(event)
+        if (isDragging) {
+          updateDelta(event, true)
+        }
+        isDragging = false
+      }
+
+      override fun mouseExited(e: MouseEvent?) {
+        super.mouseExited(e)
+        if (isDragging) {
+          updateDelta(e, true)
+        }
+        isDragging = false
+      }
+
+      private fun updateDelta(event: MouseEvent?, isFinal: Boolean) {
         val actionInfoPanel = event?.component as? ActionInfoPanel?: return
         saveLocationDelta(project, actionInfoPanel)
-        updatePopupsBounds(project, actionInfoPanel)
+
+        if (isFinal) {
+          validateAndFixLocationDelta(project)
+          updatePopupsBounds(project, null)
+        }
+        else {
+          updatePopupsBounds(project, actionInfoPanel)
+        }
       }
     }.installTo(panel)
     Disposer.register(this) { moveListener.uninstallFrom(panel) }
@@ -155,7 +206,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
         it.repaint()
       }
 
-      val newBounds = Rectangle(computeLocation(project, index).screenPoint, actionBlock.panel.preferredSize)
+      val newBounds = Rectangle(computeLocation(project, index).popupLocation.screenPoint, actionBlock.panel.preferredSize)
       actionBlock.popup.setBounds(newBounds)
     }
 
@@ -170,10 +221,60 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     if (index < 0) return
 
     val window = getPopupWindow(actionBlocks[index].popup) ?: return
-    val originalLocation = computeLocation(project, index, true).screenPoint
 
-    configuration.deltaX = JBUI.unscale(window.x - originalLocation.x)
-    configuration.deltaY = JBUI.unscale(window.y - originalLocation.y)
+    val newAlignment = calculateNewAlignmentAfterDrag(window)
+    configuration.horizontalAlignment = newAlignment.x
+    configuration.verticalAlignment = newAlignment.y
+
+    val originalLocation = computeLocation(project, index, true).popupLocation.screenPoint
+    applyDeltaToConfiguration(originalLocation, window.location)
+  }
+
+  private fun validateAndFixLocationDelta(project: Project) {
+    val newGroupBounds = computeLocation(project, null).let {
+      Rectangle(it.popupLocation.screenPoint, it.groupSize)
+    }
+    val validatedGroupBounds = newGroupBounds.clone() as Rectangle
+
+    val ideFrameBounds = ideFrameScreenBounds(project)
+    ScreenUtil.moveToFit(validatedGroupBounds, ideFrameBounds, JBInsets.emptyInsets())
+
+    if (newGroupBounds != validatedGroupBounds) {
+      val originalGroupLocation = computeLocation(project, null, true).popupLocation.screenPoint
+      applyDeltaToConfiguration(originalGroupLocation, validatedGroupBounds.location)
+    }
+  }
+
+  private fun applyDeltaToConfiguration(original: Point, new: Point) {
+    configuration.deltaX = JBUI.unscale(new.x - original.x)
+    configuration.deltaY = JBUI.unscale(new.y - original.y)
+  }
+
+  private fun calculateNewAlignmentAfterDrag(popupWindow: Window): PresentationAssistantPopupAlignment {
+    val popupBounds = popupWindow.bounds
+    val ideBounds = ideFrameScreenBounds(project)
+    popupBounds.x -= ideBounds.x
+    popupBounds.y -= ideBounds.y
+    ideBounds.x = 0
+    ideBounds.y = 0
+
+    return if (popupBounds.x < ideBounds.width / 2) {
+      if (popupBounds.y < ideBounds.height / 2) PresentationAssistantPopupAlignment.TOP_LEFT
+      else PresentationAssistantPopupAlignment.BOTTOM_LEFT
+    }
+    else {
+      if (popupBounds.y < ideBounds.height / 2) PresentationAssistantPopupAlignment.TOP_RIGHT
+      else PresentationAssistantPopupAlignment.BOTTOM_RIGHT
+    }
+  }
+
+  private fun ideFrameScreenBounds(project: Project): Rectangle {
+    val ideFrame = WindowManager.getInstance().getIdeFrame(project)!!
+    val ideFrameBounds = ideFrame.component.visibleRect
+    val ideFrameScreenLocation = RelativePoint(ideFrame.component, ideFrameBounds.location).screenPoint
+    ideFrameBounds.location = ideFrameScreenLocation
+
+    return ideFrameBounds
   }
 
   fun close() {
@@ -232,7 +333,9 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     forcedToBeShown = isPopupHovered || isSettingsButtonForcedToBeShown
   }
 
-  private fun computeLocation(project: Project, index: Int?, ignoreDelta: Boolean = false): RelativePoint {
+  private data class PopupLocationInfo(val popupLocation: RelativePoint, val groupSize: Dimension)
+
+  private fun computeLocation(project: Project, index: Int?, ignoreDelta: Boolean = false): PopupLocationInfo {
     val preferredSizes = actionBlocks.map { it.panel.preferredSize }
     val gap = JBUIScale.scale(appearance.spaceBetweenPopups)
     val popupGroupSize: Dimension = if (actionBlocks.isNotEmpty()) {
@@ -265,7 +368,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
       else -> visibleRect.y + visibleRect.height - popupGroupSize.height - margin
     } + deltaY
 
-    return RelativePoint(ideFrame.component, Point(x, y))
+    return PopupLocationInfo(RelativePoint(ideFrame.component, Point(x, y)), popupGroupSize)
   }
 
   inner class FadeInOutAnimator(private val forward: Boolean, animated: Boolean) : Animator("Action Hint Fade In/Out", 8, if (animated) 100 else 0, false, forward) {
@@ -291,17 +394,20 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
                                  val subtitleInsets: JBInsets,
                                  val spaceBetweenPopups: Int,
                                  val titleSubtitleGap: Int,
-                                 val settingsButtonWidth: Int)
+                                 val settingsButtonWidth: Int,
+                                 val theme: PresentationAssistantTheme)
 
   companion object {
-    private fun appearanceFromSize(popupSize: PresentationAssistantPopupSize): Appearance = when(popupSize) {
+    private fun appearanceFromSize(popupSize: PresentationAssistantPopupSize,
+                                   theme: PresentationAssistantTheme): Appearance = when(popupSize) {
       PresentationAssistantPopupSize.SMALL -> Appearance(22f,
                                                          12f,
                                                          JBInsets(6, 12, 0, 12),
                                                          JBInsets(0, 14, 6, 14),
                                                          8,
                                                          1,
-                                                         25)
+                                                         25,
+                                                         theme)
 
       PresentationAssistantPopupSize.MEDIUM -> Appearance(32f,
                                                           13f,
@@ -309,7 +415,8 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
                                                           JBInsets(0, 18, 8, 18),
                                                           12,
                                                           -2,
-                                                          30)
+                                                          30,
+                                                          theme)
 
       PresentationAssistantPopupSize.LARGE -> Appearance(40f,
                                                          14f,
@@ -317,7 +424,8 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
                                                          JBInsets(0, 18, 8, 18),
                                                          12,
                                                          -2,
-                                                         34)
+                                                         34,
+                                                         theme)
     }
   }
 }

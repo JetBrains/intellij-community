@@ -127,7 +127,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   }
 
   @ApiStatus.Internal
-  public void initialize() {
+  public synchronized void initialize() {
     if (!isInitialized.compareAndSet(false, true)) {
       return;
     }
@@ -147,6 +147,14 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
     storage = processor.getStorage();
     identifierTable = processor.getIdentifierTable();
+  }
+
+  /**
+   * Retrieves all searchable option names.
+   */
+  @ApiStatus.Internal
+  public @NotNull Set<CharSequence> getAllOptionNames() {
+    return storage.keySet();
   }
 
   static void processSearchableOptions(@NotNull Predicate<? super String> fileNameFilter,

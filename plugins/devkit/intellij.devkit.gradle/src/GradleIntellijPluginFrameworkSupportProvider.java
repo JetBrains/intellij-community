@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradleFrameworkSupportProvider {
+class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradleFrameworkSupportProvider {
   private static final @NonNls String ID = "gradle-intellij-plugin";
   private static final Logger LOG = Logger.getInstance(GradleIntellijPluginFrameworkSupportProvider.class);
 

@@ -4,4 +4,4 @@ package com.intellij.ui.dsl.listCellRenderer
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface LcrIconInitParams : LcrInitParams
+class LcrIconInitParams : LcrInitParams()

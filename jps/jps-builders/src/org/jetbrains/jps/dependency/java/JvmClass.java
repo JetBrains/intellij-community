@@ -32,7 +32,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     ) {
     
     super(flags, signature, fqName, outFilePath, annotations, usages);
-    mySuperFqName = superFqName == null? "" : superFqName;
+    mySuperFqName = superFqName == null || "java/lang/Object".equals(superFqName)? "" : superFqName;
     myOuterFqName = outerFqName == null? "" : outerFqName;
     myInterfaces = interfaces;
     myFields = fields;
@@ -76,7 +76,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   }
 
   public Iterable<String> getSuperTypes() {
-    return Iterators.flat(Iterators.asIterable(mySuperFqName), getInterfaces());
+    return mySuperFqName.isEmpty()? getInterfaces() : Iterators.flat(Iterators.asIterable(mySuperFqName), getInterfaces());
   }
 
   public Iterable<JvmField> getFields() {

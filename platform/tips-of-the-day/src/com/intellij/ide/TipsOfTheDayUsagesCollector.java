@@ -19,15 +19,20 @@ import static com.intellij.ide.util.TipOrderUtil.SHUFFLE_ALGORITHM;
 import static com.intellij.ide.util.TipOrderUtil.SORTING_ALGORITHM;
 
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 12);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 13);
 
   public enum DialogType {automatically, manually}
+
+  public enum SkipReason {dialog, suggestions}
 
   public static final EventId NEXT_TIP = GROUP.registerEvent("next.tip");
   public static final EventId PREVIOUS_TIP = GROUP.registerEvent("previous.tip");
 
   private static final EventId1<DialogType> DIALOG_SHOWN =
     GROUP.registerEvent("dialog.shown", EventFields.Enum("type", DialogType.class));
+
+  private static final EventId1<SkipReason> DIALOG_SKIPPED =
+    GROUP.registerEvent("dialog.skipped", EventFields.Enum("reason", SkipReason.class));
 
   private static final EventId2<Boolean, Boolean> DIALOG_CLOSED =
     GROUP.registerEvent("dialog.closed", EventFields.Boolean("keep_showing_before"), EventFields.Boolean("keep_showing_after"));
@@ -56,6 +61,10 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
 
   public static void triggerDialogShown(@NotNull DialogType type) {
     DIALOG_SHOWN.log(type);
+  }
+
+  public static void triggerDialogSkipped(@NotNull TipsOfTheDayUsagesCollector.SkipReason reason) {
+    DIALOG_SKIPPED.log(reason);
   }
 
   public static void triggerDialogClosed(boolean showOnStartupBefore) {

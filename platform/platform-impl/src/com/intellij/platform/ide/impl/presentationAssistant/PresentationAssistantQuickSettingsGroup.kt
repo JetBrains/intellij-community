@@ -13,10 +13,11 @@ class PresentationAssistantQuickSettingsGroup: DefaultActionGroup(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    return arrayOf(PresentationAssistantQuickSettingsSizeGroup(),
-                   PresentationAssistantQuickSettingsPositionGroup(),
-                   Separator(),
-                   PresentationAssistantQuickSettingsOpenSettings())
+    return listOfNotNull(PresentationAssistantQuickSettingsSizeGroup(),
+                         PresentationAssistantQuickSettingsPositionGroup(),
+                         if (PresentationAssistant.isThemeEnabled) PresentationAssistantQuickSettingsThemeGroup() else null,
+                         Separator(),
+                         PresentationAssistantQuickSettingsOpenSettings()).toTypedArray()
   }
 }
 
@@ -66,6 +67,28 @@ internal class PresentationAssistantQuickSettingsPosition(val position: Presenta
       configuration.verticalAlignment = position.y
       configuration.horizontalAlignment = position.x
       configuration.resetDelta()
+      PresentationAssistant.INSTANCE.updatePresenter()
+    }
+  }
+}
+
+internal class PresentationAssistantQuickSettingsThemeGroup: DefaultActionGroup(IdeBundle.message("presentation.assistant.quick.settings.theme.group"), PresentationAssistantTheme.entries.map {
+  PresentationAssistantQuickSettingsTheme(it)
+}), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun isPopup(): Boolean = true
+}
+
+internal class PresentationAssistantQuickSettingsTheme(val theme: PresentationAssistantTheme): DumbAwareToggleAction(theme.displayName) {
+  private val configuration = PresentationAssistant.INSTANCE.configuration
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun isSelected(e: AnActionEvent): Boolean = configuration.theme == theme.value
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    if (state) {
+      configuration.theme = theme.value
       PresentationAssistant.INSTANCE.updatePresenter()
     }
   }

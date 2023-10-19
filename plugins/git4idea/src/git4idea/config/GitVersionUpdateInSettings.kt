@@ -44,7 +44,7 @@ internal class GitVersionUpdateSettingsEntryProvider : SettingsEntryPointAction.
       val versionToUpdate = project?.service<GitNewVersionChecker>()?.newAvailableVersion
       val presentation = e.presentation
 
-      if (project == null || versionToUpdate == null || versionToUpdate.isNull) {
+      if (project == null || versionToUpdate == null || versionToUpdate.isNull || versionToUpdate.isWSL) {
         presentation.isEnabledAndVisible = false
       }
       else {
@@ -91,6 +91,12 @@ internal class GitNewVersionChecker(project: Project, cs: CoroutineScope) {
             if (newAvailableVersion.isNotNull) return@withContext
 
             val currentVersion = GitExecutableManager.getInstance().getVersionOrIdentifyIfNeeded(project)
+
+            if (currentVersion.isWSL) {
+              newAvailableVersion = currentVersion
+              return@withContext
+            }
+
             val latestVersion = getLatestAvailableVersion()
 
             if (latestVersion > currentVersion) {

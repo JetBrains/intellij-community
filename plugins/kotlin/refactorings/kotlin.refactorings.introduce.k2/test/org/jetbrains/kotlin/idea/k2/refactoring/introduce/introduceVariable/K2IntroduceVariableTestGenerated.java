@@ -556,9 +556,14 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/NameSuggestionCheckVisibility.kt");
         }
 
-        @TestMetadata("noConflictWithInnerVariable.kt")
-        public void testNoConflictWithInnerVariable() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/noConflictWithInnerVariable.kt");
+        @TestMetadata("noConflictWithInnerVariableK1.kt")
+        public void testNoConflictWithInnerVariableK1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/noConflictWithInnerVariableK1.kt");
+        }
+
+        @TestMetadata("noConflictWithInnerVariableK2.kt")
+        public void testNoConflictWithInnerVariableK2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/noConflictWithInnerVariableK2.kt");
         }
 
         @TestMetadata("NoExplicitReceivers.kt")

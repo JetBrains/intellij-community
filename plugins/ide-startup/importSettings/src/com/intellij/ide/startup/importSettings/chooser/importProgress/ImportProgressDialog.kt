@@ -1,9 +1,12 @@
 package com.intellij.ide.startup.importSettings.chooser.importProgress
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.chooser.ui.BannerOverlay
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.ImportFromProduct
+import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.openapi.rd.createLifetime
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.minimumWidth
@@ -19,7 +22,7 @@ import java.awt.GridBagConstraints.HORIZONTAL
 import java.awt.GridBagLayout
 import javax.swing.*
 
-class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider() {
+class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(false) {
   private val panel = JPanel(VerticalLayout(JBUI.scale(8))).apply {
     add(JPanel(VerticalLayout(JBUI.scale(8))).apply {
       add(JLabel("Importing settings...").apply {
@@ -98,8 +101,17 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider() 
     border = JBUI.Borders.empty()
   }
 
+  private val overlay = BannerOverlay()
+
+  init {
+    val settService = SettingsService.getInstance()
+    settService.error.advise(disposable.createLifetime()) {
+      overlay.showError(it)
+    }
+  }
+
   override fun createContent(): JComponent {
-    return JPanel(GridBagLayout()).apply {
+    val comp = JPanel(GridBagLayout()).apply {
       preferredSize = JBDimension(640, 442)
       val gbc = GridBagConstraints()
       gbc.gridx = 0
@@ -109,6 +121,8 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider() 
       add(panel, gbc)
       border = JBUI.Borders.empty()
     }
+
+    return overlay.wrapComponent(comp)
   }
 
   override fun createActions(): Array<Action> {

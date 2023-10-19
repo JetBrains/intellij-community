@@ -26,7 +26,7 @@ private val BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
 @Suppress("SpellCheckingInspection")
 internal val MAJOR_RELEASE_DATE_PATTERN: DateTimeFormatter = DateTimeFormatter.ofPattern("uuuuMMdd")
 
-class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
+internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
   override lateinit var majorVersion: String
   override lateinit var minorVersion: String
   override val microVersion: String
@@ -49,7 +49,9 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
   override val launcherName: String
   private lateinit var context: BuildContext
 
-  constructor(context: BuildContext) : this(context.project, context.productProperties, context.options) {
+  constructor(context: BuildContext) : this(project = context.project,
+                                            productProperties = context.productProperties,
+                                            buildOptions = context.options) {
     this.context = context
   }
 
@@ -107,7 +109,7 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
           error("majorReleaseDate may be omitted only for EAP")
         }
       }
-      formatMajorReleaseDate(majorReleaseDate, buildOptions.buildDateInSeconds)
+      formatMajorReleaseDate(majorReleaseDateRaw = majorReleaseDate, buildDateInSeconds = buildOptions.buildDateInSeconds)
     }
     productName = namesTag.getAttributeValue("fullname") ?: shortProductName
     edition = namesTag.getAttributeValue("edition")

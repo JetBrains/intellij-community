@@ -7,8 +7,8 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.Utils.isAsyncDataContext
-import com.intellij.openapi.actionSystem.impl.Utils.wrapToAsyncDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
@@ -46,7 +46,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
       LOG.error("Expected async context, got: $ctx")
       val asyncContext = withContext(Dispatchers.EDT) {
         // hope that context component is still available
-        wrapToAsyncDataContext(ctx)
+        Utils.createAsyncDataContext(ctx)
       }
       navigate(asyncContext, options)
     }

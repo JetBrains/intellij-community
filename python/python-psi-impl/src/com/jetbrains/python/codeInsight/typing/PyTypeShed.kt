@@ -92,7 +92,7 @@ object PyTypeShed {
         return true
       }
       val possiblePackage = name.firstComponent ?: return false
-      val alternativePossiblePackages = PyPsiPackageUtil.PACKAGES_TOPLEVEL[possiblePackage] ?: emptyList()
+      val alternativePossiblePackages = PyPsiPackageUtil.PACKAGES_TOPLEVEL[possiblePackage] ?: ""
 
       val packageManager = PyPackageManagers.getInstance().forSdk(sdk)
       val installedPackages = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
@@ -103,7 +103,7 @@ object PyTypeShed {
       }
 
       return packageManager.parseRequirement(possiblePackage)?.match(installedPackages) != null ||
-             alternativePossiblePackages.any { PyPsiPackageUtil.findPackage(installedPackages, it) != null }
+             PyPsiPackageUtil.findPackage(installedPackages, alternativePossiblePackages) != null
     }
     return false
   }

@@ -159,8 +159,9 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       registerIssuedToken(RequestHeavyScanningOnNextStartToken)
     }
     synchronized(issuedScanningTokens) {
-      issuedScanningTokens.remove(token)
-      if (issuedScanningTokens.isEmpty()) {
+      // ignore repeated "complete" calls
+      val removed = issuedScanningTokens.remove(token)
+      if (removed && issuedScanningTokens.isEmpty()) {
         storage.writeIncompleteScanningMark(false)
       }
     }

@@ -42,7 +42,7 @@ import java.awt.event.ComponentListener;
 import java.util.List;
 import java.util.*;
 
-@Service
+@Service(Service.Level.PROJECT)
 final class PyUnitTestsDebuggingService {
   private static final @NotNull Map<XDebugSession, List<Inlay<FailedTestInlayRenderer>>> ourActiveInlays = new WeakHashMap<>();
   private static final @NotNull Map<Inlay<?>, ComponentListener> ourEditorListeners = Maps.newHashMap();

@@ -2,6 +2,7 @@ package com.intellij.smartUpdate
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -60,8 +61,15 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
         val formatter = DateTimeFormatter.ofPattern("HH:mm")
         row {
           label(SmartUpdateBundle.message("label.every.day.at"))
-          val field = JFormattedTextField(MaskFormatter("##:##")).apply { text = time.format(formatter) }
-          cell(field).onApply { options.scheduledTime = LocalTime.parse(field.text, formatter).toSecondOfDay() }
+          val field = JFormattedTextField(MaskFormatter("##:##").apply { placeholderCharacter = '0'}).apply { text = time.format(formatter) }
+          cell(field).onApply {
+            try {
+              options.scheduledTime = LocalTime.parse(field.text, formatter).toSecondOfDay()
+            }
+            catch (e: Exception) {
+              Logger.getInstance(SmartUpdateDialog::class.java).error(e)
+            }
+          }
         }.enabledIf(scheduled.selected)
       }
     }

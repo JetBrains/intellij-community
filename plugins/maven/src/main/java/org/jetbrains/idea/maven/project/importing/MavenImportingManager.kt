@@ -61,7 +61,7 @@ class MavenImportingManager(val project: Project) {
     }
 
   private val console by lazy {
-    project.getService(MavenProjectsManager::class.java).syncConsole
+    MavenProjectsManager.getInstance(project).syncConsole
   }
 
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Maven importing executor", 1)
@@ -306,7 +306,7 @@ class MavenImportingManager(val project: Project) {
                               activityKlass: Class<*>,
                               init: () -> Result): Result where Result : MavenImportContext = withStructuredIdeActivity(parentActivity,
                                                                                                                         activityKlass) {
-    return@withStructuredIdeActivity console.runTask(message, init).also { ctx -> currentContext = ctx }
+    return@withStructuredIdeActivity console.runTaskSync(message, init).also { ctx -> currentContext = ctx }
   }
 
 

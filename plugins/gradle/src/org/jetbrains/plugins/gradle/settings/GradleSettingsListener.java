@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface GradleSettingsListener extends ExternalSystemSettingsListener<GradleProjectSettings> {
 
+  @Topic.ProjectLevel
   Topic<GradleSettingsListener> TOPIC = new Topic<>(GradleSettingsListener.class, Topic.BroadcastDirection.NONE);
 
   /**

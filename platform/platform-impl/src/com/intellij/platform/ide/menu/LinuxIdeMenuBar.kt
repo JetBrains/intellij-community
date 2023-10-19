@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.IdeRootPane
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JFrame
@@ -54,9 +53,7 @@ internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame, cu
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       Disposer.dispose(globalMenuLinux)
     }
-    coroutineScope.launch {
-      updateMenuActions(forceRebuild = true)
-    }
+    updateMenuActions(forceRebuild = true)
   }
 
   override fun onToggleFullScreen(isFullScreen: Boolean) {

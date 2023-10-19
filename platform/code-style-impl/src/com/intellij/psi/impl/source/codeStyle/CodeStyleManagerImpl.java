@@ -11,6 +11,7 @@ import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -527,20 +528,26 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     CodeStyleCachingService.getInstance(myProject).scheduleWhenSettingsComputed(
       file,
       () -> {
+        NonBlockingReadAction<CodeFormattingData> prepareDataAction = ReadAction.nonBlocking(
+            () -> {
+              return CodeFormattingData.prepare(file, Collections.singletonList(file.getTextRange()));
+            }
+          )
+          .expireWhen(() -> myProject.isDisposed());
+
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           ensureDocumentCommitted(file);
           commandRunnable.run();
         }
+        else if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          prepareDataAction.executeSynchronously();
+          commandRunnable.run();
+        }
         else {
-          ReadAction.nonBlocking(
-                      () -> {
-                        return CodeFormattingData.prepare(file, Collections.singletonList(file.getTextRange()));
-                      }
-                    )
-                    .withDocumentsCommitted(myProject)
-                    .expireWhen(() -> myProject.isDisposed())
-                    .finishOnUiThread(ModalityState.nonModal(), data -> commandRunnable.run())
-                    .submit(AppExecutorUtil.getAppExecutorService());
+          prepareDataAction
+            .withDocumentsCommitted(myProject)
+            .finishOnUiThread(ModalityState.nonModal(), data -> commandRunnable.run())
+            .submit(AppExecutorUtil.getAppExecutorService());
         }
       }
     );

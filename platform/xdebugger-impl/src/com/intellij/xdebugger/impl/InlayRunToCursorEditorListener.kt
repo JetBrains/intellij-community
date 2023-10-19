@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpdatedToolbar
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.*
@@ -20,17 +21,17 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.IterationState
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.Computable
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HintHint
 import com.intellij.ui.JBColor
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.icons.toStrokeIcon
-import com.intellij.util.PlatformUtils
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
@@ -49,14 +50,10 @@ private const val MINIMAL_TEXT_OFFSET = 16
 private const val ACTION_BUTTON_SIZE = 22
 private const val ACTION_BUTTON_GAP = 2
 
-private val inlayToolbarStrokeColor = Color.WHITE
-
 class InlayRunToCursorEditorListener(private val project: Project, private val coroutineScope: CoroutineScope) : EditorMouseMotionListener, EditorMouseListener {
   companion object {
     @JvmStatic
-    val isInlayRunToCursorEnabled: Boolean get() =
-      Registry.`is`("debugger.inlayRunToCursor") ||
-      AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor") && (PlatformUtils.isIntelliJ())
+    val isInlayRunToCursorEnabled: Boolean get() = AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor")
   }
 
   private var currentJob: Job? = null
@@ -103,7 +100,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       return true
     }
 
-    if (editor.getEditorKind() != EditorKind.MAIN_EDITOR) {
+    if (editor.getEditorKind() != EditorKind.MAIN_EDITOR && e != null) {
       return true
     }
     val session = XDebuggerManager.getInstance(project).getCurrentSession() as XDebugSessionImpl?
@@ -112,7 +109,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       return true
     }
     IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = true
-    val lineNumber = if (e != null) XDebuggerManagerImpl.getLineNumber(e) else lineFromCurrentMouse(editor)
+    val lineNumber = if (e != null) XDebuggerManagerImpl.getLineNumber(e) else lineFromCurrentMouse(editor) ?: return false
     if (lineNumber < 0) {
       return true
     }
@@ -125,9 +122,14 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     return true
   }
 
-  private fun lineFromCurrentMouse(editor: Editor): Int {
+  private fun lineFromCurrentMouse(editor: Editor): Int? {
     val location = MouseInfo.getPointerInfo().location
     SwingUtilities.convertPointFromScreen(location, editor.getContentComponent())
+
+    val editorGutterComponentEx = editor.gutter as? EditorGutterComponentEx ?: return null
+    if (!editor.getContentComponent().bounds.contains(location) && !editorGutterComponentEx.bounds.contains(location)) {
+      return null
+    }
 
     val logicalPosition: LogicalPosition = editor.xyToLogicalPosition(location)
     if (logicalPosition.line >= editor.document.getLineCount()) {
@@ -215,6 +217,11 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     val xPosition = JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) -
                     (if (needShowOnGutter) JBUI.scale(ACTION_BUTTON_SIZE) else 0)
 
+    val gutterRenderer = editorGutterComponentEx.getGutterRenderer(Point(editorGutterComponentEx.width + xPosition, lineY))
+    if (gutterRenderer != null) {
+      return
+    }
+
     val caretLine = editor.getCaretModel().logicalPosition.line
     val minimalOffsetBeforeText = MINIMAL_TEXT_OFFSET + (ACTION_BUTTON_GAP * 2 + ACTION_BUTTON_SIZE) * group.childrenCount
     if (editor.getSettings().isShowIntentionBulb() && caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(minimalOffsetBeforeText)) {
@@ -244,17 +251,11 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     toolbarImpl.setNeedCheckHoverOnLayout(true)
     toolbarImpl.setBorder(null)
     toolbarImpl.setOpaque(false)
-    val effectiveHoverColor = if (needShowOnGutter) {
-      JBColor.PanelBackground
-    }
-    else {
-      val hoverColor: Color = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
-                              ?: JBColor.PanelBackground
-      getEditorBackgroundColorForTheLineStart(editor, lineNumber)?.let {
-        ColorUtil.alphaBlending(ColorUtil.withAlpha(hoverColor, HintRenderer.BACKGROUND_ALPHA.toDouble()), it)
-      } ?: hoverColor
-    }
-    toolbarImpl.setCustomButtonLook(InlayPopupButtonLook(effectiveHoverColor))
+    toolbarImpl.setCustomButtonLook(InlayPopupButtonLook {
+      ApplicationManager.getApplication().runReadAction(Computable {
+        calculateEffectiveHoverColorAndStroke(needShowOnGutter, editor, lineNumber)
+      })
+    })
     toolbarImpl.setAdditionalDataProvider { dataId: String? ->
       if (XDebuggerUtilImpl.LINE_NUMBER.`is`(dataId)) {
         return@setAdditionalDataProvider lineNumber
@@ -284,17 +285,36 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, flags, questionAction, HintManager.RIGHT)
   }
 
+  private fun calculateEffectiveHoverColorAndStroke(needShowOnGutter: Boolean, editor: Editor, lineNumber: Int): Pair<Color, Color?> {
+    return if (needShowOnGutter) {
+      JBColor.PanelBackground to null
+    }
+    else {
+      val hoverColor: Color = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
+                              ?: JBColor.PanelBackground
+      val textAttributesForLineStart = getEditorTextAttributesForTheLineStart(editor, lineNumber)
+      val backgroundColor = textAttributesForLineStart?.backgroundColor
+      if (backgroundColor != null) {
+        val resultBackground = ColorUtil.alphaBlending(
+          ColorUtil.withAlpha(hoverColor, HintRenderer.BACKGROUND_ALPHA.toDouble()), backgroundColor)
+        resultBackground to textAttributesForLineStart.foregroundColor
+      }
+      else {
+        hoverColor to null
+      }
+    }
+  }
+
   private fun isOutOfVisibleEditor(rootPane: JRootPane, x: Int, y: Int, h: Int, editorContentComponent: JComponent): Boolean {
     return SwingUtilities.getDeepestComponentAt(rootPane.layeredPane, x, y) != editorContentComponent ||
           SwingUtilities.getDeepestComponentAt(rootPane.layeredPane, x, y + h) != editorContentComponent
   }
 
-  private fun getEditorBackgroundColorForTheLineStart(editor: Editor, lineNumber: Int): Color? {
+  private fun getEditorTextAttributesForTheLineStart(editor: Editor, lineNumber: Int): TextAttributes? {
     val lineStartOffset = editor.getDocument().getLineStartOffset(lineNumber)
     val editorEx = editor as? EditorEx ?: return null
     val iterationState = IterationState(editorEx, lineStartOffset, lineStartOffset + 1, null, false, false, true, false)
-    val mergedAttributes = iterationState.mergedAttributes
-    return mergedAttributes.backgroundColor
+    return iterationState.mergedAttributes
   }
 
   private class RunToCursorHint(component: JComponent, private val listener: InlayRunToCursorEditorListener) : LightweightHint(component) {
@@ -310,19 +330,20 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   }
 }
 
-private class InlayPopupButtonLook(val effectiveHoverColor: Color) : IdeaActionButtonLook() {
-  val useStrokeVariants = ColorUtil.getColorDistance(effectiveHoverColor, JBColor.PanelBackground) > 50
-                          && ColorUtil.getColorDistance(effectiveHoverColor, inlayToolbarStrokeColor) > 250
-
+private class InlayPopupButtonLook(val effectiveHoverColorAndStroke: () -> Pair<Color, Color?>) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent?, state: Int): Color? {
     if (state == ActionButtonComponent.POPPED) {
-      return effectiveHoverColor
+      return effectiveHoverColorAndStroke().first
     }
     return super.getStateBackground(component, state)
   }
 
   override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
-    val resultIcon = if (useStrokeVariants) toStrokeIcon(icon, inlayToolbarStrokeColor) else icon
+    val (effectiveHoverColor, strokeColor) = effectiveHoverColorAndStroke()
+    val useStrokeVariants = strokeColor != null &&
+                            ColorUtil.getColorDistance(effectiveHoverColor, JBColor.PanelBackground) > 50
+                            && ColorUtil.getColorDistance(effectiveHoverColor, strokeColor) > 250
+    val resultIcon = if (useStrokeVariants) toStrokeIcon(icon, strokeColor!!) else icon
     super.paintIcon(g, actionButton, resultIcon, x, y)
   }
 

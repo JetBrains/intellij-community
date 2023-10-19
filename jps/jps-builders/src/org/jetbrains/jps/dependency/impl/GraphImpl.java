@@ -31,12 +31,8 @@ abstract class GraphImpl implements Graph {
     myIndices.add(index);
   }
 
-  /**
-   * Obtain a list of backward dependencies for a certain node, denoted by a ReferenceID
-   * @param id - a ReferenceID of one or more nodes
-   * @return all known ids of Nodes that depend on nodes with the given id
-   */
-  protected @NotNull Iterable<ReferenceID> getDependingNodes(@NotNull ReferenceID id) {
+  @Override
+  public @NotNull Iterable<ReferenceID> getDependingNodes(@NotNull ReferenceID id) {
     return myDependencyIndex.getDependencies(id);
   }
 

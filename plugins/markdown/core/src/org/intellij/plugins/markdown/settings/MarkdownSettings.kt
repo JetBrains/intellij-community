@@ -5,7 +5,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.messages.Topic
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
@@ -149,9 +148,5 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
 
     @JvmStatic
     fun getInstance(project: Project): MarkdownSettings = project.service()
-
-    fun getInstanceForDefaultProject(): MarkdownSettings {
-      return ProjectManager.getInstance().defaultProject.service()
-    }
   }
 }

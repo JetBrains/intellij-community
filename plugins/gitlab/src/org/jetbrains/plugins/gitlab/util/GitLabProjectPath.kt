@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 
 data class GitLabProjectPath(val owner: @NlsSafe String, val name: @NlsSafe String) {
   @NlsSafe
-  fun fullPath(): String = "$owner/$name"
+  fun fullPath(withOwner: Boolean = true): String = if (withOwner) "$owner/$name" else name
 
   @NlsSafe
   override fun toString(): String = "$owner/$name"

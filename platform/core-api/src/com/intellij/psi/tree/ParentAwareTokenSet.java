@@ -14,6 +14,8 @@ import java.util.Set;
  * The main difference is that this class supports hierarchy with {@link ParentProviderElementType}
  */
 public final class ParentAwareTokenSet {
+
+  @NotNull
   private final TokenSet myTokenSet;
 
   private ParentAwareTokenSet(@NotNull TokenSet set) { myTokenSet = set; }

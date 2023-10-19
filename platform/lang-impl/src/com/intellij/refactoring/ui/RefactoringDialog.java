@@ -185,7 +185,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     }
     catch (ConfigurationException e) {
       enabled = false;
-      setErrorText(e.getMessage());
+      setErrorHtml(e.getMessageHtml());
     }
     getPreviewAction().setEnabled(enabled);
     getRefactorAction().setEnabled(enabled);
@@ -205,7 +205,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
           return e;
         }
       }).finishOnUiThread(modalityState, e -> {
-        setErrorText(e == null ? null : e.getMessage());
+        setErrorHtml(e == null ? null : e.getMessageHtml());
         getPreviewAction().setEnabled(e == null);
         getRefactorAction().setEnabled(e == null);
       })

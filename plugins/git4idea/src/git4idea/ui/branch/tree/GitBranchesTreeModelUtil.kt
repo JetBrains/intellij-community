@@ -28,7 +28,7 @@ internal val GitRepository.recentCheckoutBranches
 internal val emptyBranchComparator = Comparator<GitBranch> { _, _ -> 0 }
 
 private fun getBranchComparator(repositories: List<GitRepository>,
-                                favoriteBranches: Map<GitRepository, Collection<String>>,
+                                favoriteBranches: Map<GitRepository, Set<String>>,
                                 isPrefixGrouping: () -> Boolean): Comparator<GitBranch> {
   return compareBy<GitBranch> {
     it.isNotCurrentBranch(repositories)
@@ -39,7 +39,7 @@ private fun getBranchComparator(repositories: List<GitRepository>,
   } then compareBy { it.name }
 }
 
-internal fun getSubTreeComparator(favoriteBranches: Map<GitRepository, Collection<String>>,
+internal fun getSubTreeComparator(favoriteBranches: Map<GitRepository, Set<String>>,
                                   repositories: List<GitRepository>): Comparator<Any> {
   return compareBy<Any> {
     it is GitBranch && it.isNotCurrentBranch(repositories) && it.isNotFavorite(favoriteBranches, repositories)
@@ -51,7 +51,7 @@ internal fun getSubTreeComparator(favoriteBranches: Map<GitRepository, Collectio
 private fun GitBranch.isNotCurrentBranch(repositories: List<GitRepository>) =
   !repositories.any { repo -> repo.currentBranch == this }
 
-private fun GitBranch.isNotFavorite(favoriteBranches: Map<GitRepository, Collection<String>>,
+private fun GitBranch.isNotFavorite(favoriteBranches: Map<GitRepository, Set<String>>,
                                     repositories: List<GitRepository>): Boolean {
   return repositories.any { repo -> !(favoriteBranches[repo]?.contains(this.name) ?: false) }
 }
@@ -177,7 +177,7 @@ internal fun getLocalAndRemoteTopLevelNodes(localBranchesTree: LazyBranchesSubtr
 internal class LazyBranchesSubtreeHolder(
   repositories: List<GitRepository>,
   unsortedBranches: Collection<GitBranch>,
-  favoriteBranches: Map<GitRepository, Collection<String>>,
+  favoriteBranches: Map<GitRepository, Set<String>>,
   private val matcher: MinusculeMatcher?,
   private val isPrefixGrouping: () -> Boolean,
   private val exceptBranchFilter: (GitBranch) -> Boolean = { false },

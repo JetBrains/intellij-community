@@ -3,7 +3,6 @@
 
 package com.intellij.ui.svg
 
-import com.dynatrace.hash4j.hashing.Hashing
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.diagnostic.StartUpMeasurer
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.LazyIcon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.IconManager
 import com.intellij.ui.icons.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
@@ -24,6 +24,8 @@ import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.xml.dom.createXmlStreamReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Graphics
@@ -79,13 +81,12 @@ internal fun colorPatcherDigestShim(colorPatcherProvider: SVGLoader.SvgElementCo
   if (colorPatcherProvider == null) {
     return ArrayUtilRt.EMPTY_LONG_ARRAY
   }
-  else {
-    try {
-      return colorPatcherProvider.digest()
-    }
-    catch (e: AbstractMethodError) {
-      return longArrayOf(Hashing.komihash5_0().hashCharsToLong(colorPatcherProvider::class.java.name))
-    }
+
+  try {
+    return colorPatcherProvider.digest()
+  }
+  catch (e: AbstractMethodError) {
+    return longArrayOf(IconManager.getInstance().hashClass(colorPatcherProvider::class.java))
   }
 }
 
@@ -99,7 +100,8 @@ fun newSvgPatcher(newPalette: Map<String, String>, alphaProvider: (String) -> In
 
     private fun patchColorAttribute(attributes: MutableMap<String, String>, attributeName: String) {
       val color = attributes.get(attributeName) ?: return
-      val opacity = attributes.get("$attributeName-opacity")
+      val opacityAttributeName = "$attributeName-opacity"
+      val opacity = attributes.get(opacityAttributeName)
       var alpha = 255
       if (!opacity.isNullOrEmpty()) {
         try {
@@ -120,7 +122,12 @@ fun newSvgPatcher(newPalette: Map<String, String>, alphaProvider: (String) -> In
       if (newColor != null) {
         attributes.put(attributeName, newColor)
         alphaProvider(newColor)?.let {
-          attributes.put("$attributeName-opacity", (it.toFloat() / 255f).toString())
+          if (it == 255) {
+            attributes.remove(opacityAttributeName)
+          }
+          else {
+            attributes.put(opacityAttributeName, (it.toFloat() / 255f).toString())
+          }
         }
       }
     }
@@ -331,6 +338,7 @@ fun colorPatchedIcon(icon: Icon, colorPatcher: SVGLoader.SvgElementColorPatcherP
     .computeIfAbsent(colorPatcher) {
       Caffeine.newBuilder()
         .maximumSize(64)
+        .executor(Dispatchers.Default.asExecutor())
         .expireAfterAccess(10.minutes.toJavaDuration())
         .build {
           patchIconsWithColorPatcher(icon = it, colorPatcher = colorPatcher)
