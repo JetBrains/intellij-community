@@ -530,6 +530,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected class SearchPopup extends JPanel {
     protected final @NotNull SearchField mySearchField;
     private String myLastPattern = "";
+    private boolean myFiringCallback = false;
 
     protected SearchPopup(String initialString) {
       mySearchField = new SearchField();
@@ -629,7 +630,14 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         mySearchPopup.validate();
       }
 
-      fireStateChanged();
+      if (myFiringCallback) return;
+      myFiringCallback = true;
+      try {
+        fireStateChanged();
+      }
+      finally {
+        myFiringCallback = false;
+      }
     }
   }
 
