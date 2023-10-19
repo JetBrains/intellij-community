@@ -3,11 +3,9 @@ package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.observable.AbstractInProgressService
-import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
-class ExternalSystemInProgressService(scope: CoroutineScope) : AbstractInProgressService(scope) {
+class ExternalSystemInProgressService {
   @Volatile
   private var isUnlinkedActivityStarted: Boolean = false
   @Volatile
@@ -25,9 +23,8 @@ class ExternalSystemInProgressService(scope: CoroutineScope) : AbstractInProgres
     return !ApplicationManager.getApplication().isUnitTestMode && !isUnlinkedActivityStarted
   }
 
-  override fun isInProgress(): Boolean {
-    return super.isInProgress() ||
-           isUnlinkedActivityPending() ||
+  fun isInProgress(): Boolean {
+    return isUnlinkedActivityPending() ||
            !isExternalProjectActivityStarted
   }
 }
