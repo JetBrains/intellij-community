@@ -3,7 +3,9 @@ package com.intellij.ide.startup.importSettings.transfer
 
 import com.intellij.ide.customize.transferSettings.DefaultTransferSettingsConfiguration
 import com.intellij.ide.customize.transferSettings.TransferSettingsDataProvider
+import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsListener
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
+import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.customize.transferSettings.models.SettingsPreferencesKind
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransferSettingsProvider
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
@@ -13,11 +15,14 @@ import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.ExternalService
 import com.intellij.ide.startup.importSettings.data.IconProductSize
 import com.intellij.ide.startup.importSettings.data.ImportProgress
+import com.intellij.ide.startup.importSettings.data.NotificationData
 import com.intellij.ide.startup.importSettings.data.Product
+import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.nullize
@@ -110,6 +115,7 @@ class SettingTransferService : ExternalService {
       applyPreferences(ideVersion, data)
       val withPlugins = ideVersion.settingsCache.preferences.plugins
       val importData = TransferSettingsProgress(ideVersion)
+      config.controller.addListener(TransferSettingsWizardListener())
       config.controller.performImport(
         null,
         ideVersion,
@@ -124,7 +130,8 @@ class SettingTransferService : ExternalService {
       }
 
       logger.error(t)
-      return importErrorData(t) // TODO: Report error via the parent service
+      showImportErrorNotification(t)
+      return dummyImportData()
     }
   }
 }
@@ -139,12 +146,38 @@ private fun applyPreferences(ideVersion: IdeVersion, toApply: List<DataForSave>)
   preferences[SettingsPreferencesKind.RecentProjects] = selectedIds.contains(TransferableSetting.RECENT_PROJECTS_ID)
 }
 
-private fun importErrorData(error: Throwable) = object : DialogImportData {
-  override val message = ImportSettingsBundle.message(
+internal class TransferSettingsWizardListener : TransferSettingsListener {
+
+  override fun importStarted(ideVersion: IdeVersion, settings: Settings) {
+    thisLogger().info("Settings import from ${ideVersion.name} has been started.")
+  }
+
+  override fun importFailed(ideVersion: IdeVersion, settings: Settings, throwable: Throwable) {
+    thisLogger().error("Setting import error from ${ideVersion.name}.", throwable)
+    showImportErrorNotification(throwable)
+  }
+
+  override fun importPerformed(ideVersion: IdeVersion, settings: Settings) {
+    thisLogger().info("Setting import error from ${ideVersion.name} has been finished.")
+    SettingsService.getInstance().doClose.fire(Unit)
+  }
+}
+
+private fun showImportErrorNotification(error: Throwable) {
+  val message = ImportSettingsBundle.message(
     "transfer.error.unknown",
     (error.localizedMessage ?: error.message)
       .nullize(nullizeSpaces = true) ?: ImportSettingsBundle.message("transfer.error.no-error-message")
   )
+  SettingsService.getInstance().error.fire(object : NotificationData {
+    override val status = NotificationData.NotificationStatus.ERROR
+    override val message = message
+    override val customActionList = emptyList<NotificationData.Action>()
+  })
+}
+
+private fun dummyImportData() = object : DialogImportData {
+  override val message = ""
   override val progress = object : ImportProgress {
     override val progressMessage = Property("")
     override val progress = OptProperty<Int>()
