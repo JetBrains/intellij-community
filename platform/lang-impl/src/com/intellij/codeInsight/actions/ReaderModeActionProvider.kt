@@ -36,33 +36,35 @@ import java.awt.Insets
 import javax.swing.JComponent
 import javax.swing.plaf.FontUIResource
 
-private class ReaderModeActionProvider : InspectionWidgetActionProvider {
+internal class ReaderModeActionProvider : InspectionWidgetActionProvider {
 
   override fun createAction(editor: Editor): AnAction? {
     val project: Project? = editor.project
     return if (project == null || project.isDefault) null
-      else object : DefaultActionGroup(ReaderModeAction(editor), Separator.create()) {
+    else object : DefaultActionGroup(ReaderModeAction(editor), Separator.create()) {
 
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
       override fun update(e: AnActionEvent) {
-          e.presentation.isEnabledAndVisible = false
-          if (Experiments.getInstance().isFeatureEnabled("editor.reader.mode")) {
-            val p = e.project ?: return
-            if (p.isInitialized) {
-              val textEditor = e.getData(CommonDataKeys.EDITOR) ?: return
-              val file = PsiDocumentManager.getInstance(p).getPsiFile(textEditor.document)?.virtualFile
-              e.presentation.isEnabledAndVisible = matchMode(p, file, textEditor)
-            }
+        e.presentation.isEnabledAndVisible = false
+        if (Experiments.getInstance().isFeatureEnabled("editor.reader.mode")) {
+          val p = e.project ?: return
+          if (p.isInitialized) {
+            val textEditor = e.getData(CommonDataKeys.EDITOR) ?: return
+            val file = PsiDocumentManager.getInstance(p).getPsiFile(textEditor.document)?.virtualFile
+            e.presentation.isEnabledAndVisible = matchMode(p, file, textEditor)
           }
         }
       }
+    }
   }
 
   private class ReaderModeAction(private val editor: Editor) : DumbAwareToggleAction(
     LangBundle.messagePointer("action.ReaderModeProvider.text"),
     LangBundle.messagePointer("action.ReaderModeProvider.description"),
     null), CustomComponentAction {
+
+    private val FOREGROUND = ColorKey.createColorKey("ActionButton.iconTextForeground", UIUtil.getContextHelpForeground())
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -99,7 +101,9 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
           }
         }
       }.also {
-        it.foreground = JBColor.lazy { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor ?: UIUtil.getInactiveTextColor()}
+        it.foreground = JBColor.lazy {
+          editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor ?: UIUtil.getInactiveTextColor()
+        }
         if (!SystemInfo.isWindows) {
           it.font = FontUIResource(it.font.deriveFont(it.font.style, it.font.size - JBUIScale.scale(2).toFloat()))
         }
@@ -109,19 +113,19 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
 
           val connection = p.messageBus.connect(p)
           val gotItTooltip = GotItTooltip("reader.mode.got.it", LangBundle.message("text.reader.mode.got.it.popup"), p)
-                              .withHeader(LangBundle.message("title.reader.mode.got.it.popup"))
+            .withHeader(LangBundle.message("title.reader.mode.got.it.popup"))
 
           if (gotItTooltip.canShow()) {
             connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
               override fun daemonFinished(fileEditors: Collection<FileEditor>) {
                 fileEditors.find { fe -> (fe is TextEditor) && editor == fe.editor }?.let { _ ->
                   gotItTooltip.setOnBalloonCreated { balloon ->
-                    balloon.addListener(object: JBPopupListener {
+                    balloon.addListener(object : JBPopupListener {
                       override fun onClosed(event: LightweightWindowEvent) {
                         connection.disconnect()
                       }
-                    })}.
-                  show(it, GotItTooltip.BOTTOM_MIDDLE)
+                    })
+                  }.show(it, GotItTooltip.BOTTOM_MIDDLE)
                 }
               }
             })
@@ -163,7 +167,4 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
     }
   }
 
-  companion object {
-    val FOREGROUND = ColorKey.createColorKey("ActionButton.iconTextForeground", UIUtil.getContextHelpForeground())
-  }
 }
