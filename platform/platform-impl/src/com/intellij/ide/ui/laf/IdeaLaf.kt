@@ -4,7 +4,6 @@
 package com.intellij.ide.ui.laf
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.laf.initInputMapDefaults
 import com.intellij.ui.ColoredSideBorder
 import com.intellij.ui.TableActions
 import com.intellij.ui.plaf.beg.*
@@ -43,7 +42,7 @@ private fun initIdeaDefaults(defaults: UIDefaults) {
   defaults.put("MenuItem.maxGutterIconWidth", 18)
   // TODO[vova,anton] REMOVE!!! INVESTIGATE??? Borland???
   defaults.put("MenuItem.acceleratorDelimiter", "-")
-  defaults["TitledBorder.titleColor"] = ColorUIResource(10, 36, 106)
+  defaults.put("TitledBorder.titleColor", ColorUIResource(10, 36, 106))
   val colorUiResource = ColorUIResource(230, 230, 230)
   defaults.put("ScrollBar.background", colorUiResource)
   defaults.put("ScrollBar.track", colorUiResource)

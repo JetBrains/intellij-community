@@ -34,6 +34,7 @@ import com.intellij.platform.ide.bootstrap.*
 import com.intellij.ui.*
 import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.*
 import com.intellij.util.containers.ConcurrentLongObjectMap
@@ -130,11 +131,27 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val initAwtToolkitJob = scheduleInitAwtToolkit(lockSystemDirsJob, busyThread)
-  val initEventQueueJob = scheduleInitIdeEventQueue(initAwtToolkitJob, isHeadless)
-  val initLafJob = launch { initUi(initAwtToolkitJob = initAwtToolkitJob, isHeadless = isHeadless) }
+  val initLafJob = launch {
+    initUi(initAwtToolkitJob = initAwtToolkitJob, isHeadless = isHeadless, asyncScope = this@startApplication)
+  }
   if (!isHeadless) {
-    scheduleShowSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
-    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred)
+    val initUiScale = launch {
+      if (SystemInfoRt.isMac) {
+        initAwtToolkitJob.join()
+        JBUIScale.preloadOnMac()
+      }
+      else {
+        // A splash instance must not be created before base LaF is created.
+        // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
+        // https://youtrack.jetbrains.com/issue/IDEA-286544
+        initLafJob.join()
+      }
+    }
+
+    scheduleShowSplashIfNeeded(initUiScale = initUiScale, appInfoDeferred = appInfoDeferred, args = args)
+    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initAwtToolkitJob = initAwtToolkitJob,
+                                                               initUiDeferred = initLafJob,
+                                                               appInfoDeferred = appInfoDeferred)
   }
 
   val zipFilePoolDeferred = async(Dispatchers.IO) {
@@ -238,8 +255,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  scheduleEnableCoroutineDumpAndJstack()
-
   val appRegisteredJob = CompletableDeferred<Unit>()
 
   launch {
@@ -250,6 +265,8 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val appLoaded = launch {
+    val initEventQueueJob = scheduleInitIdeEventQueue(initAwtToolkitJob, isHeadless)
+
     checkSystemDirJob.join()
 
     val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY)
@@ -288,6 +305,8 @@ fun CoroutineScope.startApplication(args: List<String>,
       executeApplicationStarter(starter = starter, args = args)
     }
   }
+
+  scheduleEnableCoroutineDumpAndJstack()
 
   launch {
     // required for appStarter.prepareStart

@@ -53,13 +53,11 @@ private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "
 
 private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
 
-internal fun CoroutineScope.scheduleShowSplashIfNeeded(initUiDeferred: Job,
-                                                       appInfoDeferred: Deferred<ApplicationInfo>,
-                                                       args: List<String>) {
+internal fun CoroutineScope.scheduleShowSplashIfNeeded(initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
   launch(CoroutineName("showSplashIfNeeded")) {
     if (!AppMode.isLightEdit() && CommandLineArgs.isSplashNeeded(args)) {
       try {
-        showSplashIfNeeded(initUiDeferred = initUiDeferred, appInfoDeferred = appInfoDeferred)
+        showSplashIfNeeded(initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
       }
       catch (e: CancellationException) {
         throw e
@@ -71,7 +69,7 @@ internal fun CoroutineScope.scheduleShowSplashIfNeeded(initUiDeferred: Job,
   }
 }
 
-private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
+private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
   val oldJob = splashJob.get()
   if (oldJob.isCancelled) {
     return
@@ -82,10 +80,7 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferr
     //  return@launch
     //}
 
-    // A splash instance must not be created before base LaF is created.
-    // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
-    // https://youtrack.jetbrains.com/issue/IDEA-286544
-    initUiDeferred.join()
+    initUiScale.join()
 
     /*
     Wayland doesn't have the concept of splash screens at all, so they may not appear centered.

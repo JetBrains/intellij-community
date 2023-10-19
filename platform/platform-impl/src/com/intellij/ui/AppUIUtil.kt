@@ -165,11 +165,12 @@ fun findAppIcon(): String? {
   return if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) URLUtil.urlToFile(url).absolutePath else null
 }
 
-@Suppress("MemberVisibilityCanBePrivate")
-fun isWindowIconAlreadyExternallySet(): Boolean = when {
-  SystemInfoRt.isWindows -> java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
-  SystemInfoRt.isMac -> isMacDocIconSet || (!PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources())
-  else -> false
+internal fun isWindowIconAlreadyExternallySet(): Boolean {
+  return when {
+    SystemInfoRt.isWindows -> java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
+    SystemInfoRt.isMac -> isMacDocIconSet || (!PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources())
+    else -> false
+  }
 }
 
 object AppUIUtil {

@@ -32,7 +32,6 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
@@ -240,10 +239,7 @@ private suspend fun preInitApp(app: ApplicationImpl,
 
   if (!app.isHeadlessEnvironment) {
     val cssInit = asyncScope.launch {
-      span("EditorColorsManager preloading") {
-        // preload only when LafManager is ready - that's why out of coroutineScope
-        app.serviceAsync<EditorColorsManager>()
-      }
+      // preload EditorColorsManager only when LafManager is ready - that's why out of coroutineScope
       initGlobalStyleSheet()
     }
 
