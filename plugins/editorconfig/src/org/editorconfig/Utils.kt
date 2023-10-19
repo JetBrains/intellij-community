@@ -22,8 +22,7 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.LineSeparator
 import org.ec4j.core.ResourceProperties
-import org.editorconfig.configmanagement.ConfigEncodingManager
-import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider
+import org.editorconfig.configmanagement.ConfigEncodingCharsetUtil
 import org.editorconfig.configmanagement.StandardEditorConfigProperties
 import org.editorconfig.configmanagement.indentSizeKey
 import org.editorconfig.configmanagement.indentStyleKey
@@ -167,11 +166,11 @@ object Utils {
       ?.let { StringUtil.toLowerCase(it.name) }
 
   private fun getEncodingLine(project: Project): String =
-    getEncoding(project)?.let { "${ConfigEncodingManager.charsetKey}=$it\n" } ?: ""
+    getEncoding(project)?.let { "${ConfigEncodingCharsetUtil.charsetKey}=$it\n" } ?: ""
 
   fun getEncoding(project: Project): String? {
     val encodingManager = EncodingProjectManager.getInstance(project)
-    return ConfigEncodingManager.toString(encodingManager.defaultCharset, encodingManager.shouldAddBOMForNewUtf8File())
+    return ConfigEncodingCharsetUtil.toString(encodingManager.defaultCharset, encodingManager.shouldAddBOMForNewUtf8File())
   }
 
   fun buildPattern(fileType: FileType): String {
