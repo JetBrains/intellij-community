@@ -30,7 +30,7 @@ data class CoverageNodeInfo(val id: String,
 }
 
 
-class CoverageClassStructure(val project: Project) : Disposable {
+class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAnnotator) : Disposable {
   private val fileStatusManager = FileStatusManager.getInstance(project)
   private val state = CoverageViewManager.getInstance(project).stateBean
   private val cache = hashMapOf<String, PsiNamedElement?>()
@@ -61,7 +61,7 @@ class CoverageClassStructure(val project: Project) : Disposable {
 
     hasVCSFilteredChildren = false
     hasFullyCoveredChildren = false
-    val classes = JavaCoverageAnnotator.getInstance(project).classesCoverage.mapNotNull { (fqn, counter) ->
+    val classes = annotator.classesCoverage.mapNotNull { (fqn, counter) ->
       if (hideFullyCovered && counter.isFullyCovered) {
         hasFullyCoveredChildren = true
         null

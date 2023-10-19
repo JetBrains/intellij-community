@@ -9,9 +9,11 @@ import com.intellij.coverage.analysis.JavaCoverageAnnotator
 import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator
 import com.intellij.coverage.analysis.PackageAnnotator.ClassCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.PackageCoverageInfo
+import com.intellij.coverage.view.CoverageClassStructure
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.rt.coverage.report.XMLProjectData
@@ -19,7 +21,9 @@ import com.intellij.rt.coverage.report.XMLProjectData
 @Service(Service.Level.PROJECT)
 class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(project) {
   override fun createRenewRequest(suite: CoverageSuitesBundle, dataManager: CoverageDataManager) = Runnable {
-    annotate(suite, dataManager, JavaPackageAnnotator())
+    annotate(suite, dataManager, JavaPackageAnnotator(this))
+    myStructure = CoverageClassStructure(project, this)
+    Disposer.register(this, myStructure)
     dataManager.triggerPresentationUpdate()
   }
 

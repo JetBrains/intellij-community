@@ -6,7 +6,7 @@ import com.intellij.coverage.analysis.Annotator
 import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator
 import com.intellij.coverage.analysis.JavaCoverageReportEnumerator
 import com.intellij.coverage.analysis.PackageAnnotator.*
-import com.intellij.coverage.xml.XMLReportAnnotator.Companion.getInstance
+import com.intellij.coverage.xml.XMLReportAnnotator
 import com.intellij.idea.ExcludeFromTestDiscovery
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFile
@@ -31,7 +31,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   fun testXMLSuite() {
     val bundle = loadXMLSuite()
     val consumer = PackageAnnotationConsumer()
-    getInstance(myProject).annotate(bundle, CoverageDataManager.getInstance(myProject), consumer)
+    XMLReportAnnotator.getInstance(myProject).annotate(bundle, CoverageDataManager.getInstance(myProject), consumer)
     assertHits(consumer, ignoreConstructor = false)
     assertEquals(3, consumer.myDirectoryCoverage.size)
   }
@@ -141,19 +141,48 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     closeSuite(suite)
   }
 
+  fun `test xml and ij suites are independent`(): Unit = runBlocking {
+    val xmlSuite = loadXMLSuite()
+    val ijSuite = loadIJSuite()
+
+    assertAnnotator(xmlSuite, false)
+    assertAnnotator(ijSuite, false)
+
+    openSuiteAndWait(xmlSuite)
+    assertAnnotator(xmlSuite, true)
+    assertAnnotator(ijSuite, false)
+
+    openSuiteAndWait(ijSuite)
+    assertAnnotator(xmlSuite, true)
+    assertAnnotator(ijSuite, true)
+
+    closeSuite(ijSuite)
+    assertAnnotator(xmlSuite, true)
+    assertAnnotator(ijSuite, false)
+
+    closeSuite(xmlSuite)
+    assertAnnotator(xmlSuite, false)
+    assertAnnotator(ijSuite, false)
+  }
+
   private suspend fun actualAnnotatorTest(bundle: CoverageSuitesBundle) {
-    val manager = CoverageDataManager.getInstance(myProject)
     openSuiteAndWait(bundle)
+    assertAnnotator(bundle, true)
+    closeSuite(bundle)
+  }
+
+  private suspend fun assertAnnotator(bundle: CoverageSuitesBundle, loaded: Boolean) {
+    val manager = CoverageDataManager.getInstance(myProject)
     val annotator = bundle.getAnnotator(myProject)
     val classes = listOf("foo.FooClass", "foo.bar.UncoveredClass", "foo.bar.BarClass")
     for (clazz in classes) {
       readAction {
         val psiClass = JavaPsiFacade.getInstance(myProject).findClass(clazz, GlobalSearchScope.projectScope(myProject))
         val psiDir = psiClass!!.containingFile!!.containingDirectory
-        Assert.assertNotNull(annotator.getDirCoverageInformationString(psiDir, bundle, manager))
+        val info = annotator.getDirCoverageInformationString(psiDir, bundle, manager)
+        Assert.assertEquals(loaded, info != null)
       }
     }
-    closeSuite(bundle)
   }
 
   private fun assertHits(suite: CoverageSuitesBundle, ignoreBranches: Boolean = false) {

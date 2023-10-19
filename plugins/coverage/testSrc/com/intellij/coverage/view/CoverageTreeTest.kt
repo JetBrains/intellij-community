@@ -9,7 +9,7 @@ import org.junit.Assert
 class CoverageTreeTest : CoverageIntegrationBaseTest() {
 
   fun `test ij coverage tree contains elements`() = testCoverageSuiteTree(loadIJSuite())
-  fun `test xml coverage tree contains elements`() = testCoverageSuiteTree(loadIJSuite())
+  fun `test xml coverage tree contains elements`() = testCoverageSuiteTree(loadXMLSuite())
 
   private fun testCoverageSuiteTree(suite: CoverageSuitesBundle): Unit = runBlocking {
     openSuiteAndWait(suite)
