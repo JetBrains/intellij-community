@@ -1149,7 +1149,7 @@
     <renameHandler implementation="com.intellij.refactoring.rename.PlainDirectoryRenameHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler"/>
-    <completion.contributor language="any"
+    <completion.contributor language="any" id="InplaceRename"
                             implementationClass="com.intellij.refactoring.rename.inplace.CompletionContributorForInplaceRename"
                             order="first"/>
 
