@@ -1215,6 +1215,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     mySdk = sdk;
   }
 
+  @Override
+  public @Nullable Sdk getSdk() {
+    return mySdk;
+  }
+
   private class ConnectDebuggerAction extends ToggleAction implements DumbAware {
     private boolean mySelected = false;
     private XDebugSession mySession = null;
