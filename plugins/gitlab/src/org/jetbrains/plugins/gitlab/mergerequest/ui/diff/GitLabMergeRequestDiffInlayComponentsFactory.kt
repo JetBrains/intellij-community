@@ -32,14 +32,16 @@ object GitLabMergeRequestDiffInlayComponentsFactory {
                           avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                           vm: NewGitLabNoteViewModel,
                           onCancel: () -> Unit): JComponent {
+    val addAction = vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comment.submit"))
+    val addAsDraftAction = vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"))
+
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comment.submit"))),
-      secondaryActions = MutableStateFlow(listOfNotNull(vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action")))),
+      primaryAction = vm.primarySubmitActionIn(cs, addAction, addAsDraftAction),
+      secondaryActions = vm.secondarySubmitActionIn(cs, addAction, addAsDraftAction),
       cancelAction = MutableStateFlow(swingAction("") { onCancel() }),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comment.hint",
                                                                      CommentInputActionsComponentFactory.submitShortcutText))
     )
-
 
     val itemType = CodeReviewChatItemUIUtil.ComponentType.COMPACT
     val icon = CommentTextFieldFactory.IconConfig.of(itemType, avatarIconsProvider, vm.currentUser)

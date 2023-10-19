@@ -54,7 +54,7 @@ class GitLabNoteViewModelImpl(
   override val serverUrl: URL = glProject.serverPath.toURL()
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
-    if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, note) else null
+    if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
 
   override val body: Flow<String> = note.body
   override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, it) }.modelFlow(cs, LOG)

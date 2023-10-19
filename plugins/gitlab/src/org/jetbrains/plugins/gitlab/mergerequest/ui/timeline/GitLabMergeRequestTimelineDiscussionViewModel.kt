@@ -78,7 +78,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
 
   override val replyVm: Flow<GitLabDiscussionReplyViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
-      GitLabDiscussionReplyViewModelImpl(this, currentUser, discussion).takeIf { canAddNotes }
+      GitLabDiscussionReplyViewModelImpl(this, project, currentUser, discussion).takeIf { canAddNotes }
     }.shareIn(cs, SharingStarted.Eagerly, 1)
 
   override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =

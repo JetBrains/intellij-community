@@ -25,6 +25,7 @@ class GitLabMergeRequestsPreferences(private val project: Project)
     val selectedUrlAndAccountId: Pair<String, String>? = null,
     val showEventsInTimeline: Boolean = true,
     val highlightDiffLinesInEditor: Boolean = true,
+    val usedAsDraftSubmitActionLast: Boolean = true,
   )
 
   var selectedRepoAndAccount: Pair<GitLabProjectMapping, GitLabAccount>?
@@ -58,6 +59,14 @@ class GitLabMergeRequestsPreferences(private val project: Project)
     set(value) {
       updateStateAndEmit {
         it.copy(highlightDiffLinesInEditor = value)
+      }
+    }
+
+  var usedAsDraftSubmitActionLast: Boolean
+    get() = state.usedAsDraftSubmitActionLast
+    set(value) {
+      updateStateAndEmit {
+        it.copy(usedAsDraftSubmitActionLast = value)
       }
     }
 
