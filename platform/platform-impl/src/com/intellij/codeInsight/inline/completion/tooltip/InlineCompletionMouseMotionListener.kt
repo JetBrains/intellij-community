@@ -35,7 +35,7 @@ internal class InlineCompletionMouseMotionListener : EditorMouseMotionListener {
   private fun enterHover(newHoveredSession: InlineCompletionSession) {
     hoveredSession = newHoveredSession
     Disposer.register(newHoveredSession) {
-      hoveredSession = null
+      exitHover()
     }
     InlineCompletionTooltip.enterHover(newHoveredSession)
   }
