@@ -15,7 +15,6 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
-import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -57,7 +56,7 @@ class ProductChooserRenderer() : ListCellRenderer<PopupFactoryImpl.ActionItem> {
         val provider = action.provider
 
         name = product.name
-        comment = DateFormatUtil.formatPrettyDate(product.lastUsage)
+        comment = provider.getComment(product)
         icon  = provider.getProductIcon(product.id)
       }
     }

@@ -17,7 +17,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.jetbrains.rd.swing.proxyProperty
 import com.jetbrains.rd.util.reactive.*
-import java.util.*
+import java.time.LocalDate
 import javax.swing.Icon
 
 interface SettingsService {
@@ -134,11 +134,11 @@ enum class IconProductSize(val int: Int) {
 
 interface Product : SettingsContributor {
   val version: String
-  val lastUsage: Date
+  val lastUsage: LocalDate
 }
 
 interface Config : SettingsContributor {
-  val path: String /* /IntelliJ IDEA Ultimate 2023.2.1 */
+  val path: String
 }
 
 interface SettingsContributor {
@@ -164,8 +164,8 @@ interface Multiple : BaseSetting {
 interface ChildSetting {
   val id: String
   val name: String
-  val leftComment: String? /* built-in */
-  val rightComment: String? /* hotkey */
+  val leftComment: String?
+  val rightComment: String?
 }
 
 data class DataForSave(val id: String, val childIds: List<String>? = null)

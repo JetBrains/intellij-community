@@ -11,6 +11,8 @@ import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.*
 import javax.swing.Icon
 
@@ -21,23 +23,39 @@ class TestJbService : JbService {
 
     private val LOG = logger<TestJbService>()
 
-    val main = TestProduct("Main", "версия", Date(), "main")
-    val main2 = TestProduct("IdeaMain1", "версия", Date())
-    val enemy = TestProduct("IdeaMain1", "версия", Date())
+    val dM1 = LocalDate.now().minusMonths(1)
+    val dM6 = LocalDate.now().minusMonths(6)
+    val dD6 = LocalDate.now().minusDays(6)
+    val dD1 = LocalDate.now().minusDays(1)
+    val dY1 = LocalDate.now().minusYears(1)
+    val dY3 = LocalDate.now().minusYears(3)
+    val dd20 = LocalDate.now().minusDays(20)
+    val dd5 = LocalDate.now().minusDays(5)
+    val dd2 = LocalDate.now().minusDays(2)
+
+
+    val main = TestProduct("Main", "версия", dM1, "main")
+    val main2 = TestProduct("IdeaMain1", "версия", LocalDate.now())
+    val enemy = TestProduct("IdeaMain1", "версия", LocalDate.now())
 
     val fresh = listOf(main,
-                       TestProduct("Idea222", "версия", Date()),
-                       TestProduct("Idea333", "версия", Date()),
-                       TestProduct("Idea444", "версия", Date()),
-                       TestProduct("Idea555", "версия", Date()),
-                       TestProduct("Idea666", "версия", Date()))
+                       TestProduct("Idea222", "версия", dM1),
+                       TestProduct("Idea333", "версия", dM6),
+                       TestProduct("Idea444", "версия", dD6),
+                       TestProduct("Idea555", "версия", dD1),
+                       TestProduct("Idea666", "версия", dY1),
+                       TestProduct("Idea666", "версия", dY3),
+                       TestProduct("Idea666", "версия", dd20),
+                       TestProduct("Idea666", "версия", dd5),
+                       TestProduct("Idea666", "версия", dd2),
+    )
     val empty = emptyList<Product>()
     val old = listOf(
-      TestProduct("Idea222", "версия", Date()),
-      TestProduct("Idea333", "версия", Date()),
-      TestProduct("Idea444", "версия", Date()),
-      TestProduct("Idea555", "версия", Date()),
-      TestProduct("Idea666", "версия", Date()))
+      TestProduct("Idea222", "версия", LocalDate.now()),
+      TestProduct("Idea333", "версия", LocalDate.now()),
+      TestProduct("Idea444", "версия", LocalDate.now()),
+      TestProduct("Idea555", "версия", LocalDate.now()),
+      TestProduct("Idea666", "версия", LocalDate.now()))
 
 
     val children = listOf(
@@ -78,8 +96,8 @@ class TestJbService : JbService {
     val testChildConfig = TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
                                                   "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more",
                                                   children)
-    private val from = TestProduct("Visual Studio Code", "версия", Date())
-    private val to = TestProduct("IntelliJ IDEA", "версия", Date())
+    private val from = TestProduct("Visual Studio Code", "версия", LocalDate.now())
+    private val to = TestProduct("IntelliJ IDEA", "версия", LocalDate.now())
 
     val progress = TestImportProgress(Lifetime.Eternal)
 
@@ -213,7 +231,7 @@ class TestSyncService : SyncService {
 class TestProduct(
   override val name: String,
   override val version: String,
-  override val lastUsage: Date,
+  override val lastUsage: LocalDate,
   override val id: String = UUID.randomUUID().toString()) : Product {
 
 }

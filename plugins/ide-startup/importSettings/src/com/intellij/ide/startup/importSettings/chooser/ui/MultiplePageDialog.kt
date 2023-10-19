@@ -17,23 +17,24 @@ import javax.swing.SwingUtilities
 
 class MultiplePageDialog private constructor() : DialogWrapper(null) {
   companion object {
-    fun show(page: PageProvider) {
-      createDialog(page).apply {
+    fun show(page: PageProvider, title: String? = null) {
+      createDialog(page, title).apply {
         show()
         pack()
       }
     }
 
-    fun showAndGet(page: PageProvider): Boolean {
-      return createDialog(page).run {
+    fun showAndGet(page: PageProvider, title: String? = null): Boolean {
+      return createDialog(page, title).run {
         isModal = true
         pack()
         showAndGet()
       }
     }
 
-    private fun createDialog(page: PageProvider): MultiplePageDialog {
+    private fun createDialog(page: PageProvider, title: String?): MultiplePageDialog {
       val dialog = MultiplePageDialog()
+      dialog.title = title
       dialog.showPage(page)
       dialog.isModal = false
       dialog.isResizable = false
@@ -83,7 +84,6 @@ class MultiplePageDialog private constructor() : DialogWrapper(null) {
     if(dialog.createSouth) {
       southPanel.add(dialog.southPanel, gbc)
     }
-
 
     current = dialog
 
