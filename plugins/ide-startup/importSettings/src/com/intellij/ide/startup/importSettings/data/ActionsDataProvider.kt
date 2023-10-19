@@ -14,7 +14,7 @@ interface ActionsDataProvider<T : BaseService> {
 
   companion object {
 
-    fun prepareMap(service: BaseJbService): Map<popUpPlace, List<Product>> {
+    fun prepareMap(service: JbService): Map<popUpPlace, List<Product>> {
       val fresh = service.products()
       val old = service.getOldProducts()
 

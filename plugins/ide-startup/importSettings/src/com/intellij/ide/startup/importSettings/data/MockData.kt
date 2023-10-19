@@ -103,7 +103,7 @@ class TestJbService : JbService {
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
     LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
-    return if (productId == getConfig().id) simpleImport else importFromProduct
+    return importFromProduct
   }
 
   override fun products(): List<Product> {
@@ -124,15 +124,6 @@ class TestJbService : JbService {
 
   override fun baseProduct(id: String): Boolean {
     return id == main.id
-  }
-
-  override fun getConfig(): Config {
-    return object : Config {
-      override val path: String = "/IntelliJ IDEA Ultimate 2023.2.1"
-
-      override val id: String = "Config"
-      override val name: String = "Config or Installation Directory"
-    }
   }
 }
 

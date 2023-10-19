@@ -85,7 +85,7 @@ class SettingsServiceImpl : SettingsService {
 }
 
 
-interface SyncService : BaseJbService {
+interface SyncService : JbService {
   enum class SYNC_STATE {
     UNLOGGED,
     WAINING_FOR_LOGIN,
@@ -107,11 +107,7 @@ interface SyncService : BaseJbService {
 interface ExternalService : BaseService {
   suspend fun warmUp()
 }
-interface JbService: BaseJbService {
-  fun getConfig(): Config
-}
-
-interface BaseJbService : BaseService {
+interface JbService: BaseService {
   fun getOldProducts(): List<Product>
 }
 
@@ -122,8 +118,9 @@ interface BaseService {
 
   fun getProductIcon(itemId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
 
-  fun baseProduct(id: String): Boolean = true /* синк возможет только из того же продукта. в противном случае мне нужно показать импорт
-  диалог прогресса импорта выглядит иначе если импорт того же продукта */
+  // sync is only possible from the same product. Otherwise, we need to show import.
+  // import dialog progress looks differently, if it's importing from the same product
+  fun baseProduct(id: String): Boolean = true
 
   fun importSettings(productId: String, data: List<DataForSave>): DialogImportData
 }
@@ -152,31 +149,23 @@ interface SettingsContributor {
 
 interface BaseSetting {
   val id: String
-
   val icon: Icon
   val name: String
   val comment: String?
 }
 
 interface Configurable : Multiple {
-  /* https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=1420%3A237610&mode=dev */
 }
 
 interface Multiple : BaseSetting {
-  /* это список с настройками данного сеттинга. например кеймапа с ключами. плагины. этот интерфейс обозначает только наличие дочерних настроек.
-  для этого интерфейса есть расширение Configurable которое применимо, если В ТЕОРИИ эти настройки можно выбирать.
-  в теории потому что для того чтобы показалась выпадашка с выбором нужно чтобы самый верхний сервис предоставлял возможность редактирования.
-  например ImportService позвозяет выбирать\редактировать, SettingsService - нет. в случае если редактирование невозможно Configurable -ы
-  в диалоге будут выглядеть как Multiple
-   https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169735&mode=dev */
   val list: List<List<ChildSetting>>
 }
 
 interface ChildSetting {
   val id: String
   val name: String
-  val leftComment: String? /* built-in скетч: https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169853&mode=dev */
-  val rightComment: String? /* hotkey скетч https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169735&mode=dev*/
+  val leftComment: String? /* built-in */
+  val rightComment: String? /* hotkey */
 }
 
 data class DataForSave(val id: String, val childIds: List<String>? = null)

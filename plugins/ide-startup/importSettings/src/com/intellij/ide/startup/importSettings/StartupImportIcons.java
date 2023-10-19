@@ -18,6 +18,7 @@ public final class StartupImportIcons {
   public static final class Icons {
     /** 16x32 */ public static final @NotNull Icon Build = load("icons/build.svg", 263576131, 0);
     /** 16x16 */ public static final @NotNull Icon ColorPicker = load("icons/colorPicker.svg", -2131734344, 0);
+    /** 20x20 */ public static final @NotNull Icon ConfigFile = load("icons/configFile.svg", 1186090686, 0);
     /** 16x32 */ public static final @NotNull Icon Json = load("icons/json.svg", -322377413, 0);
     /** 16x16 */ public static final @NotNull Icon Keyboard = load("icons/keyboard.svg", -1617681176, 0);
     /** 16x16 */ public static final @NotNull Icon Plugin = load("icons/plugin.svg", 62738285, 0);

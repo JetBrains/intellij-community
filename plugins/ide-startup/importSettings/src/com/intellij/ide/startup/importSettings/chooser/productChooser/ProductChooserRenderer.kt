@@ -50,12 +50,7 @@ class ProductChooserRenderer() : ListCellRenderer<PopupFactoryImpl.ActionItem> {
 
     init {
       if(action is ConfigAction) {
-        val config = action.config
-
-        name = config.name
-        comment = config.path
-        icon  = action.service.getProductIcon(config.id)
-
+        //TODO implement properly
       } else if(action is SettingChooserItemAction) {
 
         val product = action.product
