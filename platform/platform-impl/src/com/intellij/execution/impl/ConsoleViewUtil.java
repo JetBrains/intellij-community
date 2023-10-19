@@ -33,6 +33,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 public final class ConsoleViewUtil {
   public static final Key<Boolean> EDITOR_IS_CONSOLE_HISTORY_VIEW = Key.create("EDITOR_IS_CONSOLE_HISTORY_VIEW");
@@ -219,7 +220,15 @@ public final class ConsoleViewUtil {
     printWithHighlighting(console, text, highlighter, null);
   }
 
-  public static void printWithHighlighting(@NotNull ConsoleView console, @NotNull String text,
+  public static void printWithHighlighting(@NotNull ConsoleView console,
+                                           @NotNull String text,
+                                           @NotNull SyntaxHighlighter highlighter,
+                                           Runnable doOnNewLine) {
+    printWithHighlighting((token, contentType) -> console.print(token, contentType), text, highlighter, doOnNewLine);
+  }
+
+  public static void printWithHighlighting(@NotNull BiConsumer<? super String, ? super ConsoleViewContentType> tokenSink,
+                                           @NotNull String text,
                                            @NotNull SyntaxHighlighter highlighter,
                                            Runnable doOnNewLine) {
     Lexer lexer = highlighter.getHighlightingLexer();
@@ -231,7 +240,7 @@ public final class ConsoleViewUtil {
       StringTokenizer eolTokenizer = new StringTokenizer(lexer.getTokenText(), "\n", true);
       while (eolTokenizer.hasMoreTokens()){
         String tok = eolTokenizer.nextToken();
-        console.print(tok, contentType);
+        tokenSink.accept(tok, contentType);
         if (doOnNewLine != null && "\n".equals(tok)) {
             doOnNewLine.run();
         }
