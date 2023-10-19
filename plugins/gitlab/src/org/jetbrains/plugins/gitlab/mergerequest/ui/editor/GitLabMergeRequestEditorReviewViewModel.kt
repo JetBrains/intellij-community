@@ -3,18 +3,25 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.withLocation
 import com.intellij.diff.util.Side
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
+import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
+import git4idea.remote.hosting.changesSignalFlow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -60,31 +67,46 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     }.shareIn(cs, SharingStarted.Eagerly, 1)
   }
 
+  val localRepositorySyncStatus: StateFlow<GitBranchSyncStatus?> = run {
+    val repository = projectMapping.remote.repository
+    val changesFlow = _actualChangesState.map { (it as? ChangesState.Loaded)?.changes }.distinctUntilChanged()
+    val currentRevisionFlow = repository.changesSignalFlow().withInitial(Unit).map { repository.currentRevision }.distinctUntilChanged()
+    combine(changesFlow, currentRevisionFlow) { changes, currentRev ->
+      if (changes == null || currentRev == null) null
+      else checkSyncState(changes, currentRev)
+    }.stateIn(cs, SharingStarted.Lazily, null)
+  }
+
+  private suspend fun checkSyncState(changes: GitBranchComparisonResult, currentRev: String): GitBranchSyncStatus {
+    if (currentRev == changes.headSha) return GitBranchSyncStatus.SYNCED
+    if (changes.commits.mapTo(mutableSetOf()) { it.sha }.contains(currentRev)) return GitBranchSyncStatus(true, false)
+    if (testCurrentBranchContains(changes.headSha)) return GitBranchSyncStatus(false, true)
+    return GitBranchSyncStatus(true, true)
+  }
+
+  private suspend fun testCurrentBranchContains(sha: String): Boolean =
+    coroutineToIndicator {
+      val h = GitLineHandler(projectMapping.gitRepository.project, projectMapping.remote.repository.root, GitCommand.MERGE_BASE)
+      h.setSilent(true)
+      h.addParameters("--is-ancestor", sha, "HEAD")
+      Git.getInstance().runCommand(h).success()
+    }
+
   init {
     cs.launchNow {
       mergeRequest.changes.collectLatest { changes ->
-        changes.localRepositorySyncStatus.distinctUntilChangedBy { it?.incoming }.collectLatest { branchSync ->
-          if (branchSync == null) {
+        _actualChangesState.value = ChangesState.NotLoaded
+        changesRequest.distinctUntilChanged().collectLatest {
+          try {
+            _actualChangesState.value = ChangesState.Loading
+            val parsed = changes.getParsedChanges()
+            _actualChangesState.value = ChangesState.Loaded(parsed)
+          }
+          catch (ce: CancellationException) {
             _actualChangesState.value = ChangesState.NotLoaded
           }
-          else if (!branchSync.incoming) {
-            _actualChangesState.value = ChangesState.NotLoaded
-            changesRequest.distinctUntilChanged().collectLatest {
-              try {
-                _actualChangesState.value = ChangesState.Loading
-                val parsed = changes.getParsedChanges()
-                _actualChangesState.value = ChangesState.Loaded(parsed)
-              }
-              catch (ce: CancellationException) {
-                throw ce
-              }
-              catch (e: Exception) {
-                _actualChangesState.value = ChangesState.Error
-              }
-            }
-          }
-          else {
-            _actualChangesState.value = ChangesState.OutOfSync
+          catch (e: Exception) {
+            _actualChangesState.value = ChangesState.Error
           }
         }
       }
@@ -151,7 +173,6 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     data object NotLoaded : ChangesState
     data object Loading : ChangesState
     data object Error : ChangesState
-    data object OutOfSync : ChangesState
     class Loaded(val changes: GitBranchComparisonResult) : ChangesState
   }
 

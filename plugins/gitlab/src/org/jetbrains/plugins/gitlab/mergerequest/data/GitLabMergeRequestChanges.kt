@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
-import com.intellij.collaboration.async.withInitial
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
@@ -11,7 +10,6 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.util.childScope
-import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitBranchComparisonResultImpl
 import git4idea.changes.GitCommitShaWithPatches
@@ -20,9 +18,8 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitHandlerInputProcessorUtil
 import git4idea.commands.GitLineHandler
 import git4idea.fetch.GitFetchSupport
-import git4idea.remote.hosting.changesSignalFlow
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
@@ -36,11 +33,6 @@ interface GitLabMergeRequestChanges {
    * List of merge request commits
    */
   val commits: List<GitLabCommit>
-
-  /**
-   * State of remote<->local repository sync (to the best of out knowledge)
-   */
-  val localRepositorySyncStatus: Flow<GitBranchSyncStatus?>
 
   /**
    * Load and parse changes diffs
@@ -68,27 +60,6 @@ class GitLabMergeRequestChangesImpl(
   private val glProject = projectMapping.repository
 
   override val commits: List<GitLabCommit> = mergeRequestDetails.commits.asReversed()
-
-  override val localRepositorySyncStatus: StateFlow<GitBranchSyncStatus?> = channelFlow {
-    val repository = projectMapping.remote.repository
-    repository.changesSignalFlow().withInitial(Unit).map { repository.currentRevision }.distinctUntilChanged().collectLatest { currentRev ->
-      if (currentRev != null) {
-        val state = checkSyncState(currentRev)
-        send(state)
-      }
-      else {
-        send(GitBranchSyncStatus(true, true))
-      }
-    }
-  }.stateIn(cs, SharingStarted.Lazily, null)
-
-  private suspend fun checkSyncState(currentRev: String): GitBranchSyncStatus? {
-    val headSha = mergeRequestDetails.diffRefs?.headSha ?: return null
-    if (currentRev == headSha) return GitBranchSyncStatus.SYNCED
-    if (commits.mapTo(mutableSetOf()) { it.sha }.contains(currentRev)) return GitBranchSyncStatus(true, false)
-    if (testCurrentBranchContains(headSha)) return GitBranchSyncStatus(false, true)
-    return GitBranchSyncStatus(true, true)
-  }
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
     loadChanges(commits)
@@ -154,14 +125,6 @@ class GitLabMergeRequestChangesImpl(
       h.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(revisions, StandardCharsets.UTF_8))
 
       !Git.getInstance().runCommand(h).getOutputOrThrow().contains("missing")
-    }
-
-  private suspend fun testCurrentBranchContains(sha: String): Boolean =
-    coroutineToIndicator {
-      val h = GitLineHandler(project, projectMapping.remote.repository.root, GitCommand.MERGE_BASE)
-      h.setSilent(true)
-      h.addParameters("--is-ancestor", sha, "HEAD")
-      Git.getInstance().runCommand(h).success()
     }
 
   private suspend fun fetch(refspec: String) {

@@ -54,17 +54,23 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
           GitLabBundle.message("merge.request.on.branch.loading", vm.mergeRequestIid)
         )
-        is GitLabMergeRequestEditorReviewViewModel.ChangesState.OutOfSync -> GitCurrentBranchPresenter.Presentation(
-          GitlabIcons.GitLabWarning,
-          GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
-          GitLabBundle.message("merge.request.on.branch.out.of.sync", vm.mergeRequestIid, currentBranchName)
-        )
         GitLabMergeRequestEditorReviewViewModel.ChangesState.NotLoaded,
-        is GitLabMergeRequestEditorReviewViewModel.ChangesState.Loaded -> GitCurrentBranchPresenter.Presentation(
-          GitlabIcons.GitLabLogo,
-          GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
-          GitLabBundle.message("merge.request.on.branch.description", vm.mergeRequestIid, currentBranchName)
-        )
+        is GitLabMergeRequestEditorReviewViewModel.ChangesState.Loaded -> {
+          if (vm.localRepositorySyncStatus.value?.incoming != true) {
+            GitCurrentBranchPresenter.Presentation(
+              GitlabIcons.GitLabLogo,
+              GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
+              GitLabBundle.message("merge.request.on.branch.description", vm.mergeRequestIid, currentBranchName)
+            )
+          }
+          else {
+            GitCurrentBranchPresenter.Presentation(
+              GitlabIcons.GitLabWarning,
+              GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
+              GitLabBundle.message("merge.request.on.branch.out.of.sync", vm.mergeRequestIid, currentBranchName)
+            )
+          }
+        }
       }.copy(syncStatus = GitBranchSyncStatus.calcForCurrentBranch(repository))
     }
   }

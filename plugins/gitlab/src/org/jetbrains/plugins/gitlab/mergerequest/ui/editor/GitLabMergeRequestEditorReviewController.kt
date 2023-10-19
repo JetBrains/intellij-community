@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.supervisorScope
@@ -52,7 +53,9 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
             if (fileVm != null) {
               try {
                 editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, reviewVm)
-                reviewVm.isReviewModeEnabled.collectLatest {
+                reviewVm.isReviewModeEnabled.combine(reviewVm.localRepositorySyncStatus) { enabled, syncStatus ->
+                  enabled && syncStatus?.incoming != true
+                }.collectLatest {
                   if (it) supervisorScope {
                     val model = GitLabMergeRequestEditorReviewUIModel(this, project, fileVm, editor.document)
                     editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, model)

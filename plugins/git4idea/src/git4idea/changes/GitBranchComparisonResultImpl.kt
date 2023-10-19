@@ -150,6 +150,31 @@ class GitBranchComparisonResultImpl(private val project: Project,
     return beforeName?.let { VcsUtil.getFilePath(vcsRoot, it) } to afterName?.let { VcsUtil.getFilePath(vcsRoot, it) }
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as GitBranchComparisonResultImpl
+
+    if (project != other.project) return false
+    if (vcsRoot != other.vcsRoot) return false
+    if (baseSha != other.baseSha) return false
+    if (mergeBaseSha != other.mergeBaseSha) return false
+    if (headSha != other.headSha) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = project.hashCode()
+    result = 31 * result + vcsRoot.hashCode()
+    result = 31 * result + baseSha.hashCode()
+    result = 31 * result + mergeBaseSha.hashCode()
+    result = 31 * result + headSha.hashCode()
+    return result
+  }
+
+
   companion object {
     private val LOG = logger<GitBranchComparisonResult>()
   }

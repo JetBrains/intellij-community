@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -19,6 +21,7 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import javax.swing.Icon
 import javax.swing.JComponent
 
 class GitLabMergeRequestEditorReviewModeActionProvider : InspectionWidgetActionProvider {
@@ -60,12 +63,14 @@ private class ReviewModeActionGroup(private val editor: Editor) : ActionGroup(),
     }
 
     override fun update(e: AnActionEvent) {
-      val selected = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY)?.isReviewModeEnabled?.value ?: false
+      val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY)
+      val selected = vm?.isReviewModeEnabled?.value ?: false
+      val synced = !(vm?.localRepositorySyncStatus?.value?.incoming ?: false)
       val presentation = e.presentation
       with(presentation) {
         if (selected) {
           text = GitLabBundle.message("merge.request.review.mode.title")
-          icon = EmptyIcon.ICON_16
+          icon = if (synced) EmptyIcon.ICON_16 else getWarningIcon()
           hoveredIcon = AllIcons.Actions.CloseDarkGrey
           description = GitLabBundle.message("merge.request.review.mode.exit.description")
           val tooltip = HelpTooltip()
@@ -75,7 +80,6 @@ private class ReviewModeActionGroup(private val editor: Editor) : ActionGroup(),
         }
         else {
           text = null
-          //TODO: better icon
           icon = AllIcons.Actions.Preview
           hoveredIcon = null
           description = GitLabBundle.message("merge.request.review.mode.enter.description")
@@ -87,6 +91,8 @@ private class ReviewModeActionGroup(private val editor: Editor) : ActionGroup(),
         }
       }
     }
+
+    private fun getWarningIcon(): Icon = HighlightDisplayLevel.find(HighlightSeverity.WARNING)?.icon ?: AllIcons.General.Warning
   }
 }
 
