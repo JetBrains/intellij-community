@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig
 
 import com.intellij.BundleBase
@@ -25,6 +25,9 @@ import org.ec4j.core.ResourceProperties
 import org.editorconfig.configmanagement.ConfigEncodingManager
 import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider
 import org.editorconfig.configmanagement.StandardEditorConfigProperties
+import org.editorconfig.configmanagement.indentSizeKey
+import org.editorconfig.configmanagement.indentStyleKey
+import org.editorconfig.configmanagement.tabWidthKey
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.editorconfig.settings.EditorConfigSettings
@@ -194,14 +197,14 @@ object Utils {
     result.apply {
       append("[").append(pattern).append("]").append("\n")
       append(additionalText)
-      append(EditorConfigIndentOptionsProvider.indentStyleKey).append("=")
+      append(indentStyleKey).append("=")
       if (options.USE_TAB_CHARACTER) {
         append("tab\n")
-        append(EditorConfigIndentOptionsProvider.tabWidthKey).append("=").append(options.TAB_SIZE).append("\n")
+        append(tabWidthKey).append("=").append(options.TAB_SIZE).append("\n")
       }
       else {
         append("space\n")
-        append(EditorConfigIndentOptionsProvider.indentSizeKey).append("=").append(options.INDENT_SIZE).append("\n")
+        append(indentSizeKey).append("=").append(options.INDENT_SIZE).append("\n")
       }
       append("\n")
     }
