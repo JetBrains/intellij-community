@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -40,8 +41,10 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
   fun prepareForSearch() = cs.launch {
     project.waitForSmartMode() // project may become dumb again, but we don't interfere initial indexing
     withContext(Dispatchers.IO) {
-      launch {
-        LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        launch {
+          LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
+        }
       }
 
       launch {

@@ -11,7 +11,6 @@ import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -99,17 +98,17 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
   }
 
   fun saveIds(ids: List<String>) = lock.write {
-    idsPath.outputStream(options = arrayOf(StandardOpenOption.SYNC)).use { output ->
+    idsPath.outputStream().use { output ->
       mapper.writer(prettyPrinter).writeValue(output, ids)
     }
   }
 
   fun saveIndex(ids: List<String>, embeddings: List<FloatTextEmbedding>) = lock.write {
-    idsPath.outputStream(options = arrayOf(StandardOpenOption.SYNC)).use { output ->
+    idsPath.outputStream().use { output ->
       mapper.writer(prettyPrinter).writeValue(output, ids)
     }
     val buffer = ByteBuffer.allocate(EMBEDDING_ELEMENT_SIZE)
-    embeddingsPath.outputStream(options = arrayOf(StandardOpenOption.SYNC)).use { output ->
+    embeddingsPath.outputStream().use { output ->
       embeddings.forEach { embedding ->
         embedding.values.forEach {
           output.write(buffer.putFloat(0, it).array())
