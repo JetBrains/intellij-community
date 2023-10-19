@@ -252,7 +252,7 @@ private class DeduplicatedJobRepresentationTree(
 
 private fun JobTree.toRepresentation(stripTrace: Boolean): JobRepresentationTree {
   val context: CoroutineContext = when {
-    job is AbstractCoroutine<*> -> job.context
+    job is CoroutineScope -> job.coroutineContext
     debugInfo !== null -> debugInfo.context
     else -> EmptyCoroutineContext
   }
