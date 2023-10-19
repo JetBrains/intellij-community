@@ -62,10 +62,7 @@ class CsvGzippedMetricsExporter(private var fileToWrite: Path) : MetricExporter 
     try {
       val fileSize = Files.size(fileToWrite)
       if (fileSize > 10 * 1024 * 1024) {
-        val newPath = generatePathForConnectionMetrics()
-        fileToWrite = newPath
-        initFileCreating(newPath)
-        storage.updateDestFile(fileToWrite)
+        updateFileForMetrics()
       }
       storage.dump()
       result.succeed()
@@ -77,7 +74,15 @@ class CsvGzippedMetricsExporter(private var fileToWrite: Path) : MetricExporter 
     return result
   }
 
+  private fun updateFileForMetrics() {
+    val newPath = generatePathForConnectionMetrics()
+    fileToWrite = newPath
+    initFileCreating(newPath)
+    storage.updateDestFile(fileToWrite)
+  }
+
   override fun flush(): CompletableResultCode? {
+    updateFileForMetrics()
     return CompletableResultCode.ofSuccess()
   }
 
