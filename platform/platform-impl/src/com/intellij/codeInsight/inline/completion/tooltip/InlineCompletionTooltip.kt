@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
@@ -20,9 +21,13 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 
 internal object InlineCompletionTooltip {
+  private val tooltipKey = Key<Unit>("EDITOR_HAS_INLINE_TOOLTIP")
   @RequiresEdt
   fun enterHover(session: InlineCompletionSession) {
     val editor = session.context.editor
+    if (tooltipKey.isIn(editor)) {
+      return
+    }
     val activeLookup = LookupManager.getActiveLookup(editor)
 
     if (activeLookup?.isPositionedAboveCaret == true) {
@@ -54,8 +59,12 @@ internal object InlineCompletionTooltip {
       setForceShowAsPopup(true)
     }
 
-    val pos = editor.offsetToLogicalPosition(editor.caretModel.offset)
-    val location = HintManagerImpl.getHintPosition(hint, editor, pos, HintManager.ABOVE)
+    val location = HintManagerImpl.getHintPosition(
+      hint,
+      editor,
+      editor.offsetToLogicalPosition(editor.caretModel.offset),
+      HintManager.ABOVE
+    )
     location.y -= panel.preferredHeight
 
     HintManagerImpl.getInstanceImpl().showEditorHint(
@@ -67,6 +76,11 @@ internal object InlineCompletionTooltip {
       false,
       HintManagerImpl.createHintHint(editor, location, hint, HintManager.ABOVE).setContentActive(false)
     )
+    editor.putUserData(tooltipKey, Unit)
+    hint.addHintListener {
+      // on hint hide
+      editor.putUserData(tooltipKey, null)
+    }
     Disposer.register(session) {
       hint.hide()
     }
