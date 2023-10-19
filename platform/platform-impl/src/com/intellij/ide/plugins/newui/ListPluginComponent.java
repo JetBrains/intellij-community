@@ -146,7 +146,7 @@ public final class ListPluginComponent extends JPanel {
 
     UiInspectorUtil.registerProvider(this, new PluginIdUiInspectorContextProvider());
 
-    PluginsViewCustomizerKt.getPluginsViewCustomizer().getListPluginComponentCustomizer().processListPluginComponent(this);
+    PluginsViewCustomizerKt.getListPluginComponentCustomizer().processListPluginComponent(this);
   }
 
   @NotNull PluginsGroup getGroup() { return myGroup; }
@@ -321,7 +321,7 @@ public final class ListPluginComponent extends JPanel {
       myAlignButton.setOpaque(false);
     }
 
-    PluginsViewCustomizerKt.getPluginsViewCustomizer().getListPluginComponentCustomizer().processCreateButtons(this);
+    PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreateButtons(this);
   }
 
   private @NotNull InstallButton createInstallButton() {
@@ -793,7 +793,7 @@ public final class ListPluginComponent extends JPanel {
       myAlignButton.setVisible(true);
     }
 
-    PluginsViewCustomizerKt.getPluginsViewCustomizer().getListPluginComponentCustomizer().processRemoveButtons(this);
+    PluginsViewCustomizerKt.getListPluginComponentCustomizer().processRemoveButtons(this);
   }
 
   public void updateEnabledState() {
@@ -806,7 +806,7 @@ public final class ListPluginComponent extends JPanel {
     updateErrors();
     setSelection(mySelection, false);
 
-    PluginsViewCustomizerKt.getPluginsViewCustomizer().getListPluginComponentCustomizer().processUpdateEnabledState(this);
+    PluginsViewCustomizerKt.getListPluginComponentCustomizer().processUpdateEnabledState(this);
   }
 
   private void updateEnabledStateUI() {

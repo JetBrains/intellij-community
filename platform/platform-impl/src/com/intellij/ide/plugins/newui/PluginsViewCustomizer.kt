@@ -59,3 +59,6 @@ val pluginsViewCustomizerEP = ExtensionPointName.create<PluginsViewCustomizer>("
 fun getPluginsViewCustomizer(): PluginsViewCustomizer =
   pluginsViewCustomizerEP.extensionsIfPointIsRegistered.getOrNull(0) ?: NoOpPluginsViewCustomizer
 
+fun getListPluginComponentCustomizer(): PluginsViewCustomizer.ListPluginComponentCustomizer =
+  getPluginsViewCustomizer().getListPluginComponentCustomizer()
+
