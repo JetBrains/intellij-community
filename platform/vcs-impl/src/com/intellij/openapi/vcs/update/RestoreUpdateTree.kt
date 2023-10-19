@@ -1,60 +1,58 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.update;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.update
 
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectReloadState;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.components.*
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectReloadState
+import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+import org.jdom.Element
 
-@State(name = "RestoreUpdateTree", storages = @Storage(StoragePathMacros.CACHE_FILE))
+@State(name = "RestoreUpdateTree", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 @Service(Service.Level.PROJECT)
-public final class RestoreUpdateTree implements PersistentStateComponent<Element> {
-  private UpdateInfo myUpdateInfo;
+class RestoreUpdateTree : PersistentStateComponent<Element> {
+  private var updateInfo: UpdateInfo? = null
 
-  static final class MyStartUpActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      RestoreUpdateTree instance = getInstance(project);
-      UpdateInfo updateInfo = instance.myUpdateInfo;
-      if (updateInfo != null && !updateInfo.isEmpty() && ProjectReloadState.getInstance(project).isAfterAutomaticReload()) {
-        ActionInfo actionInfo = updateInfo.getActionInfo();
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): RestoreUpdateTree = project.service<RestoreUpdateTree>()
+  }
+
+  internal class MyStartUpActivity : StartupActivity.DumbAware {
+    override fun runActivity(project: Project) {
+      val instance = getInstance(project)
+      val updateInfo = instance.updateInfo
+      if (updateInfo != null && !updateInfo.isEmpty && ProjectReloadState.getInstance(project).isAfterAutomaticReload) {
+        val actionInfo = updateInfo.actionInfo
         if (actionInfo != null) {
-          ProjectLevelVcsManagerEx projectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
-          projectLevelVcsManager.showUpdateProjectInfo(updateInfo.getFileInformation(), VcsBundle.message("action.display.name.update"), actionInfo, false);
-          CommittedChangesCache.getInstance(project).refreshIncomingChangesAsync();
+          val projectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
+          projectLevelVcsManager.showUpdateProjectInfo(updateInfo.fileInformation, VcsBundle.message("action.display.name.update"),
+                                                       actionInfo, false)
+          CommittedChangesCache.getInstance(project).refreshIncomingChangesAsync()
         }
       }
-      instance.myUpdateInfo = null;
+      instance.updateInfo = null
     }
   }
 
-  public static RestoreUpdateTree getInstance(@NotNull Project project) {
-    return project.getService(RestoreUpdateTree.class);
-  }
-
-  @NotNull
-  @Override
-  public Element getState() {
-    Element element = new Element("state");
-    if (myUpdateInfo != null && !myUpdateInfo.isEmpty()) {
-      myUpdateInfo.writeExternal(element);
+  override fun getState(): Element {
+    val element = Element("state")
+    val updateInfo = updateInfo
+    if (updateInfo != null && !updateInfo.isEmpty) {
+      updateInfo.writeExternal(element)
     }
-    return element;
+    return element
   }
 
-  @Override
-  public void loadState(@NotNull Element state) {
-    UpdateInfo updateInfo = new UpdateInfo();
-    updateInfo.readExternal(state);
-    myUpdateInfo = updateInfo.isEmpty() ? null : updateInfo;
+  override fun loadState(state: Element) {
+    val updateInfo = UpdateInfo()
+    updateInfo.readExternal(state)
+    this.updateInfo = if (updateInfo.isEmpty) null else updateInfo
   }
 
-  public void registerUpdateInformation(UpdatedFiles updatedFiles, ActionInfo actionInfo) {
-    myUpdateInfo = new UpdateInfo(updatedFiles, actionInfo);
+  fun registerUpdateInformation(updatedFiles: UpdatedFiles?, actionInfo: ActionInfo?) {
+    updateInfo = UpdateInfo(updatedFiles, actionInfo)
   }
 }
