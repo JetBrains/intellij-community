@@ -201,7 +201,7 @@ internal class MutableRefsTable(
       ConnectionType.ONE_TO_ONE -> getOneToOneMutableMap(connectionId).removeValue(parentId.id.arrayId)
       ConnectionType.ONE_TO_ABSTRACT_MANY -> getOneToAbstractManyMutableMap(connectionId).removeValue(parentId)
       ConnectionType.ABSTRACT_ONE_TO_ONE -> getAbstractOneToOneMutableMap(connectionId).inverse().remove(parentId)
-    }.let { }
+    }
   }
 
   fun removeOneToOneRefByParent(connectionId: ConnectionId, parentId: Int) {
@@ -229,13 +229,12 @@ internal class MutableRefsTable(
   }
 
   fun removeParentToChildRef(connectionId: ConnectionId, parentId: ParentEntityId, childId: ChildEntityId) {
-    @Suppress("IMPLICIT_CAST_TO_ANY")
     when (connectionId.connectionType) {
       ConnectionType.ONE_TO_MANY -> getOneToManyMutableMap(connectionId).remove(childId.id.arrayId, parentId.id.arrayId)
       ConnectionType.ONE_TO_ONE -> getOneToOneMutableMap(connectionId).remove(childId.id.arrayId, parentId.id.arrayId)
       ConnectionType.ONE_TO_ABSTRACT_MANY -> getOneToAbstractManyMutableMap(connectionId).remove(childId, parentId)
       ConnectionType.ABSTRACT_ONE_TO_ONE -> getAbstractOneToOneMutableMap(connectionId).remove(childId, parentId)
-    }.let { }
+    }
   }
 
   internal fun replaceChildrenOfParent(connectionId: ConnectionId, parentId: ParentEntityId, newChildrenIds: Collection<ChildEntityId>) {
@@ -272,7 +271,7 @@ internal class MutableRefsTable(
         copiedMap.inverse().remove(parentId)
         newChildrenIds.forEach { copiedMap[it] = parentId }
       }
-    }.let { }
+    }
   }
 
   fun replaceOneToManyChildrenOfParent(connectionId: ConnectionId, parentId: Int, newChildrenEntityIds: List<ChildEntityId>) {
@@ -348,7 +347,7 @@ internal class MutableRefsTable(
         copiedMap.forcePut(childId, parentId)
         Unit
       }
-    }.let { }
+    }
   }
 
   fun replaceOneToManyParentOfChild(
