@@ -12,11 +12,11 @@ import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.impl.VcsProjectLog
-import git4idea.remote.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
+import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffSelectionModelImpl
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModelImpl
 import org.jetbrains.plugins.github.pullrequest.data.provider.*
 import org.jetbrains.plugins.github.pullrequest.data.service.*
@@ -156,7 +156,8 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
     })
 
     return GHPRDataProviderImpl(
-      id, detailsData, stateData, changesData, commentsData, reviewData, viewedStateData, timelineLoaderHolder, GHPRDiffRequestModelImpl()
+      id, detailsData, stateData, changesData, commentsData, reviewData, viewedStateData, timelineLoaderHolder,
+      GHPRDiffRequestModelImpl(), GHPRCombinedDiffSelectionModelImpl()
     )
   }
 

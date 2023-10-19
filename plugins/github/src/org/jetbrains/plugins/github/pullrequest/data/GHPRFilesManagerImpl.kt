@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.plugins.github.GHRegistry
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.*
@@ -45,7 +46,11 @@ internal class GHPRFilesManagerImpl(private val project: Project,
 
   override fun createAndOpenDiffFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
     diffFiles.getOrPut(pullRequest) {
-      GHPRDiffVirtualFile(id, project, repository, pullRequest)
+      if (GHRegistry.isCombinedDiffEnabled()) {
+        GHPRCombinedDiffPreviewVirtualFile(pullRequest.number.toString(), id, project, repository, pullRequest)
+      } else {
+        GHPRDiffVirtualFile(id, project, repository, pullRequest)
+      }
     }.let {
       DiffEditorTabFilesManager.getInstance(project).showDiffFile(it, requestFocus)
       GHPRStatisticsCollector.logDiffOpened(project)

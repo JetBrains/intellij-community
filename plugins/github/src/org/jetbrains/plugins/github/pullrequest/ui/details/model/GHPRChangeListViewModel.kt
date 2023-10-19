@@ -102,6 +102,7 @@ internal class GHPRChangeListViewModelImpl(
             }
           }
         }
+        dataProvider.combinedDiffSelectionModel.updateSelectedChanges(it)
         dataProvider.diffRequestModel.requestChain = listSelection?.let(diffRequestProducer::getRequestChain)
       }
     }
