@@ -27,10 +27,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.Path
-import kotlin.io.path.div
-import kotlin.io.path.exists
-import kotlin.io.path.pathString
+import kotlin.io.path.*
 
 @ApiStatus.Internal
 class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
@@ -121,48 +118,21 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
   }
 
   private fun addVmOptions(vmParametersList: ParametersList, moduleRepositoryPath: Path) {
-    //todo reuse options instead of duplicating them here: IJPL-225
-    
-    val memoryOptions = listOf(
-      "-Xms128m",
-      "-Xmx1500m",
-      "-XX:ReservedCodeCacheSize=512m",
-    )  
-    vmParametersList.addAll(memoryOptions)
-    
-    //duplicates VmOptionsGenerator
-    val commonOptions = listOf(
-      "-XX:+UseG1GC",
-      "-XX:SoftRefLRUPolicyMSPerMB=50",
-      "-XX:CICompilerCount=2",
-      "-XX:+HeapDumpOnOutOfMemoryError",
-      "-XX:-OmitStackTraceInFastThrow",
-      "-XX:+IgnoreUnrecognizedVMOptions",
-      "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend",
-      "-XX:MaxJavaStackTraceDepth=10000",
-      "-ea",
-      "-Dsun.io.useCanonCaches=false",
-      "-Dsun.java2d.metal=true",
-      "-Djbr.catch.SIGABRT=true",
-      "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
-      "-Djdk.attach.allowAttachSelf=true",
-      "-Djdk.module.illegalAccess.silent=true",
-      "-Dkotlinx.coroutines.debug=off",
-      "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
-    )
-    vmParametersList.addAll(commonOptions)
-    
-    val osSpecificOptions = when (OS.CURRENT) {
-      OS.Linux -> listOf(//LinuxDistributionBuilder::generateVMOptions
-        "-Dsun.tools.attach.tmp.only=true",
-        "-Dawt.lock.fair=true",
-      )
-      OS.macOS -> listOf("-Dapple.awt.application.appearance=system") //MacDistributionBuilder.layoutMacApp
-      else -> emptyList()
-    }    
-    vmParametersList.addAll(osSpecificOptions)
-    
+    val vmOptionsFile = PathManager.getConfigDir() / "embedded-client" / "jetbrains_client64.vmoptions"
+    val customizableOptions: List<String>
+    if (vmOptionsFile.exists()) {
+      customizableOptions = vmOptionsFile.readLines()
+    }
+    else {
+      customizableOptions = getDefaultCustomizableVmOptions()
+      vmOptionsFile.createParentDirectories()
+      vmOptionsFile.writeLines(customizableOptions)
+    }
+
+    vmParametersList.addAll(customizableOptions)
+
     val jetBrainsClientOptions = listOf(
+      "-Djb.vmOptionsFile=${vmOptionsFile.pathString}",
       "-Didea.vendor.name=JetBrains",
       "-Didea.paths.selector=JetBrainsClient${ApplicationInfo.getInstance().build.withoutProductCode().asString()}",
       "-Didea.platform.prefix=JetBrainsClient",
@@ -189,5 +159,47 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       val suspend = if (Registry.get("rdct.embedded.client.debug.suspend").asBoolean()) "y" else "n"
       vmParametersList.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspend,address=$debugPort")
     }
+  }
+
+  private fun getDefaultCustomizableVmOptions(): List<String> {
+    //todo reuse options instead of duplicating them here: IJPL-225
+
+    val memoryOptions = listOf(
+      "-Xms128m",
+      "-Xmx1500m",
+      "-XX:ReservedCodeCacheSize=512m",
+    )
+
+    //duplicates VmOptionsGenerator
+    val commonOptions = listOf(
+      "-XX:+UseG1GC",
+      "-XX:SoftRefLRUPolicyMSPerMB=50",
+      "-XX:CICompilerCount=2",
+      "-XX:+HeapDumpOnOutOfMemoryError",
+      "-XX:-OmitStackTraceInFastThrow",
+      "-XX:+IgnoreUnrecognizedVMOptions",
+      "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend",
+      "-XX:MaxJavaStackTraceDepth=10000",
+      "-ea",
+      "-Dsun.io.useCanonCaches=false",
+      "-Dsun.java2d.metal=true",
+      "-Djbr.catch.SIGABRT=true",
+      "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
+      "-Djdk.attach.allowAttachSelf=true",
+      "-Djdk.module.illegalAccess.silent=true",
+      "-Dkotlinx.coroutines.debug=off",
+      "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
+    )
+
+    val osSpecificOptions = when (OS.CURRENT) {
+      OS.Linux -> listOf(
+        //LinuxDistributionBuilder::generateVMOptions
+        "-Dsun.tools.attach.tmp.only=true",
+        "-Dawt.lock.fair=true",
+      )
+      OS.macOS -> listOf("-Dapple.awt.application.appearance=system") //MacDistributionBuilder.layoutMacApp
+      else -> emptyList()
+    }
+    return memoryOptions + commonOptions + osSpecificOptions
   }
 }
