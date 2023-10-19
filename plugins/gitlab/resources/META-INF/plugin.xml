@@ -191,9 +191,7 @@
                     anchor="before"/>
     </group>
     <action id="GitLab.MergeRequest.Review.Submit"
-            class="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestDiffSubmitReviewAction">
-      <add-to-group group-id="Git.Branches.List" anchor="after" relative-to-action="GitLab.Show.In.Toolwindow"/>
-    </action>
+            class="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestDiffSubmitReviewAction"/>
 
     <group id="GitLab.Open.In.Browser" class="org.jetbrains.plugins.gitlab.ui.action.GitLabOpenInBrowserActionGroup"
            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
@@ -213,8 +211,15 @@
     <action id="GitLab.Show.In.Toolwindow"
             class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$ShowAction"
             icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
-      <add-to-group group-id="Git.Branches.List"/>
     </action>
+
+    <group id="GitLab.Merge.Request.Review.Editor.Branch.Popup.Actions">
+      <separator/>
+      <reference id="GitLab.Show.In.Toolwindow"/>
+      <reference id="GitLab.MergeRequest.Review.Submit"/>
+      <add-to-group group-id="Git.Experimental.Branch.Popup.Actions"/>
+    </group>
+
     <action id="GitLab.Merge.Request.Review.Editor.Show.Diff"
             class="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action.GitLabMergeRequestShowFileDiffAction">
       <add-to-group group-id="EditorPopupMenu"/>

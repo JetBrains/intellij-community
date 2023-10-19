@@ -15,7 +15,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewPopup
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal class GitLabMergeRequestDiffSubmitReviewAction
   : JButtonAction(CollaborationToolsBundle.message("review.start.submit.action")) {
@@ -28,7 +27,7 @@ internal class GitLabMergeRequestDiffSubmitReviewAction
     e.presentation.isEnabledAndVisible = review != null
 
     if (ActionPlaces.isPopupPlace(e.place) && !e.place.contains("gitlab", true)) {
-      e.presentation.text = GitLabBundle.message("merge.request.review.submit.action")
+      e.presentation.text = CollaborationToolsBundle.message("review.start.submit.action")
       return
     }
 
