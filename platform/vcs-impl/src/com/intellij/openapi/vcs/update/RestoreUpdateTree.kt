@@ -2,9 +2,11 @@
 package com.intellij.openapi.vcs.update
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectReloadState
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
@@ -20,20 +22,24 @@ class RestoreUpdateTree : PersistentStateComponent<Element> {
     fun getInstance(project: Project): RestoreUpdateTree = project.service<RestoreUpdateTree>()
   }
 
-  internal class MyStartUpActivity : StartupActivity.DumbAware {
-    override fun runActivity(project: Project) {
-      val instance = getInstance(project)
-      val updateInfo = instance.updateInfo
-      if (updateInfo != null && !updateInfo.isEmpty && ProjectReloadState.getInstance(project).isAfterAutomaticReload) {
+  internal class MyStartUpActivity : ProjectActivity {
+    override suspend fun execute(project: Project) {
+      val updateTree = project.serviceAsync<RestoreUpdateTree>()
+      val updateInfo = updateTree.updateInfo
+      if (updateInfo != null && !updateInfo.isEmpty && project.serviceAsync<ProjectReloadState>().isAfterAutomaticReload) {
         val actionInfo = updateInfo.actionInfo
         if (actionInfo != null) {
-          val projectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
-          projectLevelVcsManager.showUpdateProjectInfo(updateInfo.fileInformation, VcsBundle.message("action.display.name.update"),
-                                                       actionInfo, false)
-          CommittedChangesCache.getInstance(project).refreshIncomingChangesAsync()
+          val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>() as ProjectLevelVcsManagerEx
+          blockingContext {
+            projectLevelVcsManager.showUpdateProjectInfo(updateInfo.fileInformation,
+                                                         VcsBundle.message("action.display.name.update"),
+                                                         actionInfo,
+                                                         false)
+          }
+          project.serviceAsync<CommittedChangesCache>().refreshIncomingChangesAsync()
         }
       }
-      instance.updateInfo = null
+      updateTree.updateInfo = null
     }
   }
 
