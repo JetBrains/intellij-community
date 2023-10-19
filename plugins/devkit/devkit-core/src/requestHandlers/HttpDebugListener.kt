@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.debug
+package org.jetbrains.idea.devkit.requestHandlers
 
 import com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider
 import com.intellij.execution.ExecutionManager
