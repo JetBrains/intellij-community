@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestFullDetails
 import org.jetbrains.plugins.gitlab.mergerequest.data.getRemoteDescriptor
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 internal class GitLabMergeRequestBranchesViewModel(
@@ -49,13 +50,7 @@ internal class GitLabMergeRequestBranchesViewModel(
   override fun fetchAndCheckoutRemoteBranch() {
     cs.launch {
       val details = mergeRequest.details.first()
-      val remoteDescriptor = details.getRemoteDescriptor(mapping.repository.serverPath) ?: return@launch
-      val localPrefix = if(details.sourceProject?.fullPath != details.targetProject.fullPath) {
-        "fork/${remoteDescriptor.name}"
-      } else {
-        null
-      }
-      GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(gitRepository, remoteDescriptor, details.sourceBranch, localPrefix)
+      GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(mapping, details)
     }
   }
 

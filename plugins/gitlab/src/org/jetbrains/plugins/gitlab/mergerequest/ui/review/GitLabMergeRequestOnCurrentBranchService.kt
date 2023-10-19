@@ -91,6 +91,26 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
       e.presentation.getClientProperty(actionKey)?.invoke()
     }
   }
+
+  class UpdateAction : DumbAwareAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      val action = e.project?.serviceIfCreated<GitLabMergeRequestOnCurrentBranchService>()?.mergeRequestReviewVmState?.value
+        ?.takeIf {
+          it.localRepositorySyncStatus.value?.incoming == true
+        }?.let {
+          { it.fetchAndCheckoutBranch() }
+        }
+      e.presentation.isEnabledAndVisible = action != null
+      // required for thread safety
+      e.presentation.putClientProperty(actionKey, action)
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      e.presentation.getClientProperty(actionKey)?.invoke()
+    }
+  }
 }
 
 private val actionKey = Key.create<() -> Unit>("ShowAction.Action")

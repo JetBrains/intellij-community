@@ -31,6 +31,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDis
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -38,7 +39,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
   private val projectMapping: GitLabProjectMapping,
   currentUser: GitLabUserDTO,
-  mergeRequest: GitLabMergeRequest,
+  private val mergeRequest: GitLabMergeRequest,
   private val diffBridge: GitLabMergeRequestDiffBridge,
   private val projectVm: GitLabToolWindowProjectViewModel,
   private val discussions: GitLabMergeRequestDiscussionsViewModels,
@@ -148,6 +149,13 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   fun showMergeRequest() {
     projectVm.showTab(GitLabReviewTab.ReviewSelected(mergeRequestIid))
     projectVm.twVm.activate()
+  }
+
+  fun fetchAndCheckoutBranch() {
+    cs.launch {
+      val details = mergeRequest.details.first()
+      GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(projectMapping, details)
+    }
   }
 
   /**
