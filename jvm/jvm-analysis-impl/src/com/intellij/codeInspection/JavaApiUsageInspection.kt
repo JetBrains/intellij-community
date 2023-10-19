@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -25,7 +25,20 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
 import org.jdom.Element
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
+
+private val overrideModifierLanguages = listOf("kotlin", "scala")
+
+private val logger = logger<JavaApiUsageInspection>()
+
+private const val EFFECTIVE_LL = "effectiveLL"
+
+private val ignored6ClassesApi = setOf("java.awt.geom.GeneralPath")
+
+private val generifiedClasses = setOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
+
+private val defaultMethods = setOf("java.util.Iterator#remove()")
 
 /**
  * In order to add the support for new API in the most recent JDK execute:
@@ -40,6 +53,7 @@ import org.jetbrains.uast.*
  *   </li>
  * </ol>
  */
+@VisibleForTesting
 class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.ERROR
 
@@ -226,17 +240,4 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     return effectiveLanguageLevel ?: LanguageLevelUtil.getEffectiveLanguageLevel(module)
   }
 
-  companion object {
-    private val overrideModifierLanguages = listOf("kotlin", "scala")
-
-    private val logger = logger<JavaApiUsageInspection>()
-
-    private const val EFFECTIVE_LL = "effectiveLL"
-
-    private val ignored6ClassesApi = setOf("java.awt.geom.GeneralPath")
-
-    private val generifiedClasses = setOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
-
-    private val defaultMethods = setOf("java.util.Iterator#remove()")
-  }
 }
