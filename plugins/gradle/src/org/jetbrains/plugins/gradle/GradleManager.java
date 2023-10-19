@@ -39,7 +39,6 @@ import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -146,7 +145,7 @@ public final class GradleManager
         LOG.info("Instructing gradle to use java from " + javaHome);
       }
       result.setJavaHome(javaHome);
-      result.setDownloadSources(settings.isDownloadSources() || Registry.is("gradle.download.sources", false));
+      result.setDownloadSources(settings.isDownloadSources());
       result.setParallelModelFetch(settings.isParallelModelFetch());
       String ideProjectPath;
       if (project.getBasePath() == null ||

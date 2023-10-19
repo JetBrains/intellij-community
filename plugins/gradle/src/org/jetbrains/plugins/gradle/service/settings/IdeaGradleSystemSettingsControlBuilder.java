@@ -58,7 +58,6 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private boolean dropVmOptions;
   private boolean dropStoreExternallyCheckBox;
   private boolean dropDefaultProjectSettings;
-  private boolean dropDownloadSourcesCheckBox;
   private boolean dropParallelModelFetchCheckBox;
 
   @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
@@ -74,8 +73,6 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private @Nullable JBCheckBox myGenerateImlFilesCheckBox;
   @SuppressWarnings({"FieldCanBeLocal", "unused"}) // Used by reflection at showUi() and disposeUiResources()
   private @Nullable JBLabel myGenerateImlFilesHint;
-
-  private @Nullable JBCheckBox myDownloadSourcesCheckBox;
 
   private @Nullable JBCheckBox myParallelModelFetchCheckBox;
   @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
@@ -106,11 +103,6 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     return this;
   }
 
-  public IdeaGradleSystemSettingsControlBuilder dropDownloadSources() {
-    dropDownloadSourcesCheckBox = true;
-    return this;
-  }
-
   public IdeaGradleSystemSettingsControlBuilder dropParallelModelFetchCheckBox() {
     dropParallelModelFetchCheckBox = true;
     return this;
@@ -124,9 +116,6 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     }
     if (!dropStoreExternallyCheckBox) {
       addStoreExternallyCheckBox(canvas, indentLevel);
-    }
-    if (!dropDownloadSourcesCheckBox) {
-      addDownloadSourcesCheckBox(canvas, indentLevel);
     }
     if (!dropParallelModelFetchCheckBox) {
       addParallelModelFetchCheckBox(canvas, indentLevel);
@@ -164,10 +153,6 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
       myGenerateImlFilesCheckBox.setSelected(!myInitialSettings.getStoreProjectFilesExternally());
     }
 
-    if (myDownloadSourcesCheckBox != null) {
-      myDownloadSourcesCheckBox.setSelected(myInitialSettings.isDownloadSources());
-    }
-
     if (myParallelModelFetchCheckBox != null) {
       myParallelModelFetchCheckBox.setSelected(myInitialSettings.isParallelModelFetch());
     }
@@ -190,11 +175,6 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
 
     if (myGenerateImlFilesCheckBox != null &&
         myGenerateImlFilesCheckBox.isSelected() == myInitialSettings.getStoreProjectFilesExternally()) {
-      return true;
-    }
-
-    if (myDownloadSourcesCheckBox != null &&
-        myDownloadSourcesCheckBox.isSelected() != myInitialSettings.isDownloadSources()) {
       return true;
     }
 
@@ -221,9 +201,6 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     }
     if (myGenerateImlFilesCheckBox != null) {
       settings.setStoreProjectFilesExternally(!myGenerateImlFilesCheckBox.isSelected());
-    }
-    if (myDownloadSourcesCheckBox != null) {
-      settings.setDownloadSources(myDownloadSourcesCheckBox.isSelected());
     }
     if (myParallelModelFetchCheckBox != null) {
       settings.setParallelModelFetch(myParallelModelFetchCheckBox.isSelected());
@@ -322,11 +299,6 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
       XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.generate.iml.files.hint", getIDEName())),
       ExternalSystemUiUtil.getCheckBoxCommentConstraints(indentLevel, myGenerateImlFilesCheckBox)
     );
-  }
-
-  private void addDownloadSourcesCheckBox(@NotNull PaintAwarePanel canvas, int indentLevel) {
-    myDownloadSourcesCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.download.sources"));
-    canvas.add(myDownloadSourcesCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
   }
 
   private void addParallelModelFetchCheckBox(@NotNull PaintAwarePanel canvas, int indentLevel) {
