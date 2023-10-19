@@ -2,7 +2,7 @@
 package com.intellij.ide.observation
 
 import com.intellij.configurationStore.saveProjectsAndApp
-import com.intellij.openapi.observable.ActivityInProgressPredicate
+import com.intellij.openapi.observable.ActivityInProgressWitness
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus.Experimental
 
@@ -13,28 +13,26 @@ object Observation {
    * Suspends until configuration processes in the IDE are completed.
    */
   suspend fun awaitConfiguration(project: Project, messageCallback: ((String) -> Unit)? = null) {
-      while (true) {
-        val wasModified = doAwaitConfigurationPredicates(project, messageCallback)
-        if (!wasModified) {
-          messageCallback?.invoke("The project is configured completely.") // NON-NLS
-          break
-        }
-        else {
-          messageCallback?.invoke("Modified files are saved. Checking if it triggered configuration process...") // NON-NLS
-        }
+    while (true) {
+      val wasModified = doAwaitConfigurationPredicates(project, messageCallback)
+      if (!wasModified) {
+        messageCallback?.invoke("The project is configured completely.") // NON-NLS
+        break
+      }
+      else {
+        messageCallback?.invoke("Modified files are saved. Checking if it triggered configuration process...") // NON-NLS
       }
     }
+  }
 
   private suspend fun doAwaitConfigurationPredicates(project: Project, messageCallback: ((String) -> Unit)?): Boolean {
     var isModificationOccurred = false
-    predicateLoop@ while (true) {
-      for (processBusyPredicate in ActivityInProgressPredicate.EP_NAME.extensionList) {
-        if (processBusyPredicate.isInProgress(project)) {
+    witnessLoop@ while (true) {
+      for (processBusyWitness in ActivityInProgressWitness.EP_NAME.extensionList) {
+        val localModificationDetected = awaitSubsystemConfiguration(project, processBusyWitness, messageCallback)
+        if (localModificationDetected) {
           isModificationOccurred = true
-          messageCallback?.invoke("'${processBusyPredicate.presentableName}' is in progress...") // NON-NLS
-          processBusyPredicate.awaitConfiguration(project)
-          messageCallback?.invoke("'${processBusyPredicate.presentableName}' is completed.") // NON-NLS
-          continue@predicateLoop
+          continue@witnessLoop
         }
       }
       break
@@ -46,4 +44,18 @@ object Observation {
 
     return isModificationOccurred
   }
+
+  private suspend fun awaitSubsystemConfiguration(project: Project,
+                                                  witness: ActivityInProgressWitness,
+                                                  messageCallback: ((String) -> Unit)?): Boolean {
+    val isInProgress = witness.isInProgress(project)
+    if (!isInProgress) {
+      return false
+    }
+    messageCallback?.invoke("'${witness.presentableName}' is in progress...")
+    witness.awaitConfiguration(project)
+    messageCallback?.invoke("'${witness.presentableName}' is completed.")
+    return true
+  }
+
 }
