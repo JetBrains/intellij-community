@@ -219,5 +219,9 @@ interface IjentChildProcess {
   val stderr: ReceiveChannel<ByteArray>
   val exitCode: Deferred<Int>
 
-  suspend fun sendSignal(signal: Int)  // TODO Use a separate class for signals.
+  @Deprecated("Switch either to kill or terminate")
+  suspend fun sendSignal(signal: Int)
+
+  suspend fun terminate()
+  suspend fun kill()
 }
