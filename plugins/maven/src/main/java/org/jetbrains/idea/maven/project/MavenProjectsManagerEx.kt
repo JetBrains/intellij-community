@@ -75,11 +75,10 @@ interface MavenAsyncProjectsManager {
                                 artifacts: Collection<MavenArtifact>?,
                                 sources: Boolean,
                                 docs: Boolean): MavenArtifactDownloader.DownloadResult
-
-  fun downloadArtifactsSync(projects: Collection<MavenProject>,
-                            artifacts: Collection<MavenArtifact>?,
-                            sources: Boolean,
-                            docs: Boolean): MavenArtifactDownloader.DownloadResult
+  fun scheduleDownloadArtifacts(projects: Collection<MavenProject>,
+                                artifacts: Collection<MavenArtifact>?,
+                                sources: Boolean,
+                                docs: Boolean)
 
   @ApiStatus.Internal
   suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
@@ -489,20 +488,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       return BTWMavenConsole(project, generalSettings.outputLevel, generalSettings.isPrintErrorStackTraces)
     }
 
-  override fun downloadArtifactsSync(projects: Collection<MavenProject>,
-                                     artifacts: Collection<MavenArtifact>?,
-                                     sources: Boolean,
-                                     docs: Boolean): MavenArtifactDownloader.DownloadResult {
-    if (ApplicationManager.getApplication().isDispatchThread) {
-      return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.downloading")) {
-        downloadArtifacts(projects, artifacts, sources, docs)
-      }
-    }
-    else {
-      return runBlockingMaybeCancellable {
-        downloadArtifacts(projects, artifacts, sources, docs)
-      }
-    }
+  override fun scheduleDownloadArtifacts(projects: Collection<MavenProject>,
+                                         artifacts: Collection<MavenArtifact>?,
+                                         sources: Boolean,
+                                         docs: Boolean) {
+    cs.launch { downloadArtifacts(projects, artifacts, sources, docs) }
   }
 
   override suspend fun downloadArtifacts(projects: Collection<MavenProject>,

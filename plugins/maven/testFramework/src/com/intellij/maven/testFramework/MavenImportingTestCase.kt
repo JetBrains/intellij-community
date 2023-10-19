@@ -48,7 +48,6 @@ import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
-import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.project.preimport.MavenProjectPreImporter
@@ -56,7 +55,6 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.junit.Assume
 import java.io.File
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -590,13 +588,8 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     projectsManager.waitForImportCompletion()
   }
 
-  protected fun downloadArtifacts() {
-    downloadArtifacts(projectsManager.getProjects(), null)
-  }
-
-  protected fun downloadArtifacts(projects: Collection<MavenProject>,
-                                  artifacts: List<MavenArtifact>?): MavenArtifactDownloader.DownloadResult {
-    return projectsManager.downloadArtifactsSync(projects, artifacts, true, true)
+  protected suspend fun downloadArtifacts() {
+    projectsManager.downloadArtifacts(projectsManager.getProjects(), null, true, true)
   }
 
   protected open fun performPostImportTasks() {}
