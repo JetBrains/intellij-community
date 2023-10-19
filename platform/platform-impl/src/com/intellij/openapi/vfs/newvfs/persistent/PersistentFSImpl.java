@@ -6,6 +6,7 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.notification.NotificationGroup;
@@ -171,14 +172,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       List<VFSInitException> recoveredErrors = recoveryInfo.recoveredErrors;
       if (!recoveredErrors.isEmpty()) {
         if (app != null && !app.isHeadlessEnvironment()) {
-          NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches");
+          NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("VFS");
           notificationGroup.createNotification(
-              CoreBundle.message("vfs.vfs-recovered.notification.title"),
-              CoreBundle.message("vfs.vfs-recovered.notification.text"),
+              IdeBundle.message("notification.vfs.vfs-recovered.notification.title"),
+              IdeBundle.message("notification.vfs.vfs-recovered.notification.text"),
               INFORMATION
             )
-            .setImportant(true)
-            .notify(null);
+            .setImportant(false)
+            .notify(/*project: */ null);
         }
 
         //refresh the folders there something was 'recovered':
