@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -16,7 +16,7 @@ import java.util.function.Supplier
 abstract class ShelfAction(
   dynamicText: Supplier<@NlsActions.ActionText String>,
   dynamicDescription: Supplier<@NlsActions.ActionDescription String>)
-  : DumbAwareAction(dynamicText, dynamicDescription, null) {
+  : DumbAwareAction(dynamicText, dynamicDescription) {
 
   abstract fun perform(project: Project, shelves: List<ShelvedChangeList>)
 

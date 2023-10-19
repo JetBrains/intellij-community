@@ -6,13 +6,12 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
-class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer("merge.request.show.action"),
-                                                     GitLabBundle.messagePointer("merge.request.show.action.description"),
-                                                     null) {
+private class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer("merge.request.show.action"),
+                                                     GitLabBundle.messagePointer("merge.request.show.action.description")) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

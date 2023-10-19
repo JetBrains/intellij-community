@@ -1,5 +1,4 @@
- // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+ // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -36,6 +35,15 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   protected BaseRunConfigurationAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, final Icon icon) {
     super(text, description, icon);
+    setPopup(true);
+    setEnabledInModalContext(true);
+  }
+
+  protected BaseRunConfigurationAction(@NotNull Supplier<String> text,
+                                       @NotNull Supplier<String> description,
+                                       @Nullable Supplier<? extends @Nullable Icon> icon) {
+    super(text, description, icon);
+
     setPopup(true);
     setEnabledInModalContext(true);
   }

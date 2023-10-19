@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -14,10 +14,10 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Commit;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowCommitTooltipAction extends DumbAwareAction {
+public final class ShowCommitTooltipAction extends DumbAwareAction {
   public ShowCommitTooltipAction() {
     super(VcsLogBundle.messagePointer("action.ShowCommitTooltipAction.text"),
-          VcsLogBundle.messagePointer("action.ShowCommitTooltipAction.description"), null);
+          VcsLogBundle.messagePointer("action.ShowCommitTooltipAction.description"));
   }
 
   @Override

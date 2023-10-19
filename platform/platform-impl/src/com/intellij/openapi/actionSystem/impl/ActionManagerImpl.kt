@@ -57,10 +57,7 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.childScope
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.ChildContext
-import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.createChildContext
+import com.intellij.util.concurrency.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
@@ -97,12 +94,15 @@ private val DEFAULT_ACTION_GROUP_CLASS_NAME = DefaultActionGroup::class.java.nam
 
 open class ActionManagerImpl protected constructor(private val coroutineScope: CoroutineScope) : ActionManagerEx(), Disposable {
   private val lock = Any()
+
   @Volatile
   private var idToAction = persistentHashMapOf<String, AnAction>()
   private val pluginToId = HashMap<PluginId, MutableList<String>>()
   private val idToIndex = Object2IntOpenHashMap<String>()
+
   @Volatile
   private var prohibitedActionIds = persistentHashSetOf<String>()
+
   @Suppress("SSBasedInspection")
   private val actionToId = Object2ObjectOpenHashMap<Any, String>()
   private val idToGroupId = HashMap<String, MutableList<String>>()
@@ -175,7 +175,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     if (timer == null) {
       timer = MyTimer(coroutineScope.childScope())
     }
-    val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation() && listener !is CapturingListener) CapturingListener(listener) else listener
+    val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation() && listener !is CapturingListener) CapturingListener(
+      listener)
+    else listener
     timer!!.listeners.add(wrappedListener)
   }
 
@@ -403,6 +405,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val iconPath = element.attributes.get(ICON_ATTR_NAME)
     val projectType = element.attributes.get(PROJECT_TYPE)
     val textValue = element.attributes.get(TEXT_ATTR_NAME)
+
     @Suppress("HardCodedStringLiteral")
     val descriptionValue = element.attributes.get(DESCRIPTION)
     val stub = ActionStub(className, id, module, iconPath, ProjectType.create(projectType)) {
@@ -1049,7 +1052,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   @TestOnly
   fun resetProhibitedActions() {
     synchronized(lock) {
-      prohibitedActionIds  = prohibitedActionIds.clear()
+      prohibitedActionIds = prohibitedActionIds.clear()
     }
   }
 
@@ -1422,8 +1425,11 @@ private fun <T> instantiate(stubClassName: String,
 private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction, componentManager: ComponentManager) {
   val iconPath = stub.iconPath
   if (iconPath != null) {
-    val icon = loadIcon(module = stub.plugin, iconPath = iconPath, requestor = anAction.javaClass.name)
-    anAction.templatePresentation.icon = icon
+    val module = stub.plugin
+    val requestor = anAction.javaClass.name
+    anAction.templatePresentation.setIconSupplier(SynchronizedClearableLazy {
+      loadIcon(module = module, iconPath = iconPath, requestor = requestor)
+    })
   }
 
   val customActionsSchema = componentManager.serviceIfCreated<CustomActionsSchema>()
@@ -1771,6 +1777,8 @@ private fun configureGroupDescriptionAndIcon(presentation: Presentation,
   }
 
   if (iconPath != null && group !is ActionGroupStub) {
-    presentation.icon = loadIcon(module = module, iconPath = iconPath, requestor = className)
+    presentation.setIconSupplier(SynchronizedClearableLazy {
+      loadIcon(module = module, iconPath = iconPath, requestor = className)
+    })
   }
 }

@@ -31,6 +31,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.codeInsight.intention.IntentionShortcuts.WRAPPER_PREFIX;
@@ -183,7 +185,7 @@ public final class ActionsTreeUtil {
   }
 
   public static Group createGroup(ActionGroup actionGroup, boolean forceAsPopup, Condition<? super AnAction> filtered) {
-    return createGroup(actionGroup, getName(actionGroup), actionGroup.getTemplatePresentation().getIcon(), null, forceAsPopup, filtered);
+    return createGroup(actionGroup, getName(actionGroup), actionGroup.getTemplatePresentation().getIcon(), forceAsPopup, filtered);
   }
 
   public static @NlsActions.ActionText String getName(AnAction action) {
@@ -213,33 +215,29 @@ public final class ActionsTreeUtil {
   public static Group createGroup(ActionGroup actionGroup,
                                   @NlsActions.ActionText String groupName,
                                   Icon icon,
-                                  Icon openIcon,
                                   boolean forceAsPopup,
                                   Condition<? super AnAction> filtered) {
-    return createGroup(actionGroup, groupName, icon, openIcon, forceAsPopup, filtered, true);
+    return createGroup(actionGroup, groupName, icon, forceAsPopup, filtered, true);
   }
 
   public static Group createGroup(ActionGroup actionGroup,
                                   @NlsActions.ActionText String groupName,
                                   Icon icon,
-                                  Icon openIcon,
                                   boolean forceAsPopup,
-                                  Condition<? super AnAction> filtered,
+                                  Predicate<? super AnAction> filtered,
                                   boolean normalizeSeparators) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon);
     AnAction[] children = getActions(actionGroup, actionManager);
-
     for (AnAction action : children) {
       if (action == null) {
         LOG.error(groupName + " contains null actions");
         continue;
       }
       if (action instanceof ActionGroup childGroup) {
-        Group subGroup = createGroup(childGroup, getName(action), null, null, forceAsPopup, filtered, normalizeSeparators);
-        if (forceAsPopup || childGroup.isPopup() || StringUtil.isNotEmpty(childGroup.getTemplateText())) {
-          if (subGroup.getSize() > 0 ||
-              filtered == null || filtered.value(childGroup)) {
+        Group subGroup = createGroup(childGroup, getName(action), null, forceAsPopup, filtered, normalizeSeparators);
+        if (forceAsPopup || childGroup.isPopup() || !Strings.isEmpty(childGroup.getTemplateText())) {
+          if (subGroup.getSize() > 0 || filtered == null || filtered.test(childGroup)) {
             group.addGroup(subGroup);
           }
         }
@@ -248,14 +246,14 @@ public final class ActionsTreeUtil {
         }
       }
       else if (action instanceof Separator) {
-        if (filtered == null || filtered.value(action)) {
+        if (filtered == null || filtered.test(action)) {
           group.addSeparator();
         }
       }
       else {
         String id = actionManager.getId(action);
         if (id != null) {
-          if (filtered == null || filtered.value(action)) {
+          if (filtered == null || filtered.test(action)) {
             group.addActionId(id);
           }
         }
@@ -337,7 +335,7 @@ public final class ActionsTreeUtil {
     return true;
   }
 
-  private static Group createEditorActionsGroup(Condition<? super AnAction> filtered) {
+  private static Group createEditorActionsGroup(Predicate<? super AnAction> filtered) {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup editorGroup = (DefaultActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_EDITOR);
     if (editorGroup == null) throw new AssertionError(IdeActions.GROUP_EDITOR + " group not found");
@@ -354,7 +352,7 @@ public final class ActionsTreeUtil {
     return group;
   }
 
-  private static void addEditorActions(final Condition<? super AnAction> filtered,
+  private static void addEditorActions(Predicate<? super AnAction> filtered,
                                        final DefaultActionGroup editorGroup,
                                        final ArrayList<? super String> ids) {
     AnAction[] editorActions = editorGroup.getChildActionsOrStubs();
@@ -365,8 +363,10 @@ public final class ActionsTreeUtil {
       }
       else {
         String actionId = actionManager.getId(editorAction);
-        if (actionId == null) continue;
-        if (filtered == null || filtered.value(editorAction)) {
+        if (actionId == null) {
+          continue;
+        }
+        if (filtered == null || filtered.test(editorAction)) {
           ids.add(actionId);
         }
       }

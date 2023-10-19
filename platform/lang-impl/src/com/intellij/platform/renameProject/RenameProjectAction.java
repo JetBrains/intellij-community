@@ -16,6 +16,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 /**
  * @author lene
  */
@@ -23,7 +25,7 @@ public final class RenameProjectAction extends DumbAwareAction {
 
   public RenameProjectAction() {
     super(RefactoringBundle.messagePointer("rename.project.action.title"),
-          RefactoringBundle.messagePointer("renames.project"), null);
+          RefactoringBundle.messagePointer("renames.project"), (Icon)null);
   }
 
   private static final Logger LOG = Logger.getInstance(RenameProjectAction.class);

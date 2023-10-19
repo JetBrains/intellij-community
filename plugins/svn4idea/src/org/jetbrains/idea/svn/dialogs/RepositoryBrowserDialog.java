@@ -320,8 +320,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public HistoryAction() {
       super(
         messagePointer("action.repository.browser.history.text"),
-        messagePointer("action.repository.browser.history.description"),
-        null
+        messagePointer("action.repository.browser.history.description")
       );
     }
 
@@ -1005,8 +1004,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public BrowseCommittedChangesAction() {
       super(
         messagePointer("repository.browser.browse.changes.action"),
-        messagePointer("repository.browser.browse.changes.description"),
-        null
+        messagePointer("repository.browser.browse.changes.description")
       );
     }
 

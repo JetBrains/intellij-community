@@ -738,15 +738,12 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   private inner class RemoveStripeButtonAction :
     AnAction(ActionsBundle.messagePointer("action.RemoveStripeButton.text"),
-             ActionsBundle.messagePointer("action.RemoveStripeButton.description"),
-             null), DumbAware, FusAwareAction {
+             ActionsBundle.messagePointer("action.RemoveStripeButton.description")), DumbAware, FusAwareAction {
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isShowStripeButton
     }
 
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
-    }
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
     override fun actionPerformed(e: AnActionEvent) {
       toolWindowManager.hideToolWindow(id, removeFromStripe = true, source = ToolWindowEventSource.RemoveStripeButtonAction)

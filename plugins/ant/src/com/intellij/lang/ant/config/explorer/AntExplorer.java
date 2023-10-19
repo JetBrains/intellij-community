@@ -74,7 +74,7 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 
-public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, Disposable {
+public final class AntExplorer extends SimpleToolWindowPanel implements DataProvider, Disposable {
   private Project myProject;
   private Tree myTree;
   private final AntBuildFilePropertiesAction myAntBuildFilePropertiesAction;
@@ -847,10 +847,9 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   private final class CreateMetaTargetAction extends AnAction {
-
     CreateMetaTargetAction() {
       super(AntBundle.messagePointer("ant.create.meta.target.action.name"),
-            AntBundle.messagePointer("ant.create.meta.target.action.description"), null);
+            AntBundle.messagePointer("ant.create.meta.target.action.description"));
     }
 
     @Override

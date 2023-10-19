@@ -425,7 +425,7 @@ public final class CustomizationUtil {
 
     @NlsSafe
     String displayName = schema.getDisplayName(groupId);
-    return ActionsTreeUtil.createGroup(group, displayName, null, null, false, action -> true);
+    return ActionsTreeUtil.createGroup(group, displayName, null, false, action -> true);
   }
 
   /**

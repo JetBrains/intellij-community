@@ -975,7 +975,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
   private final class SelectInLeftTreeAction extends AnAction {
     SelectInLeftTreeAction() {
       super(CodeInsightBundle.messagePointer("action.select.in.left.tree"),
-            CodeInsightBundle.messagePointer("action.select.in.left.tree.description"), null);
+            CodeInsightBundle.messagePointer("action.select.in.left.tree.description"));
     }
 
     @Override

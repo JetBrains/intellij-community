@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization
 
 import com.intellij.icons.AllIcons
@@ -184,7 +184,7 @@ class ActionGroupPanel(
         .mapNotNull { (id, group) ->
           group ?: return@mapNotNull null
           @NlsSafe val name = currentSchema.getDisplayName(id)
-          ActionsTreeUtil.createGroup(group, name, null, null, false) { true }
+          ActionsTreeUtil.createGroup(group, name, null, false) { true }
         }
     }
   }

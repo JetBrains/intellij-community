@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.actions.*;
@@ -34,7 +34,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -115,7 +114,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     if (executor instanceof ExecutorGroup<?> executorGroup) {
       ActionGroup toolbarActionGroup = new SplitButtonAction(new ExecutorGroupActionGroup(executorGroup, ExecutorAction::new));
       Presentation presentation = toolbarActionGroup.getTemplatePresentation();
-      presentation.setIcon(executor.getIcon());
+      presentation.setIconSupplier(executor::getIcon);
       presentation.setText(executor.getStartActionText());
       presentation.setDescription(executor.getDescription());
       toolbarAction = toolbarActionGroup;
@@ -306,7 +305,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     protected final Executor myExecutor;
 
     protected ExecutorAction(@NotNull Executor executor) {
-      super(executor.getStartActionText(), executor.getDescription(), IconLoader.createLazy(() -> executor.getIcon()));
+      super(executor::getStartActionText, executor::getDescription, executor::getIcon);
+
       myExecutor = executor;
     }
 
@@ -797,8 +797,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
                                        @NotNull Function<? super Executor, ? extends AnAction> childConverter) {
       myExecutorGroup = executorGroup;
       myChildConverter = childConverter;
-      getTemplatePresentation().setText(executorGroup.getStartActionText());
-      getTemplatePresentation().setIcon(executorGroup.getIcon());
+      Presentation presentation = getTemplatePresentation();
+      presentation.setText(executorGroup.getStartActionText());
+      presentation.setIconSupplier(executorGroup::getIcon);
     }
 
     @Override

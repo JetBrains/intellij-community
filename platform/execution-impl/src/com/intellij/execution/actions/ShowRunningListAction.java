@@ -44,10 +44,9 @@ import java.util.List;
 import java.util.Set;
 
 final class ShowRunningListAction extends AnAction {
-
   ShowRunningListAction() {
     super(ExecutionBundle.messagePointer("show.running.list.action.name"),
-          ExecutionBundle.messagePointer("show.running.list.action.description"), null);
+          ExecutionBundle.messagePointer("show.running.list.action.description"));
   }
 
   @Override

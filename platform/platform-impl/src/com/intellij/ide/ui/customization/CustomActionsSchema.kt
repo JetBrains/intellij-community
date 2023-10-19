@@ -340,7 +340,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     for ((key, value) in idToName) {
       val actionGroup = (actionManager.getAction(key) as? ActionGroup) ?: continue
       //J2EE/Commander plugin was disabled
-      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, value, null, null, true, null, false)))
+      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, value, null, true, null, false)))
     }
   }
 

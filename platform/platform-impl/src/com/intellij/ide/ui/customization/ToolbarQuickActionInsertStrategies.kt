@@ -75,7 +75,7 @@ fun groupContainsAction(groupID: String, actionID: String, schema: CustomActions
 private fun getGroup(groupID: String, schema: CustomActionsSchema): Group? {
   val group = (schema.getCorrectedAction(groupID) as? ActionGroup) ?: return null
   @NlsSafe val name = schema.getDisplayName(groupID)
-  return ActionsTreeUtil.createGroup(group, name, null, null, false, { _: AnAction? -> true }, false)
+  return ActionsTreeUtil.createGroup(group, name, null, false, { _: AnAction? -> true }, false)
 }
 
 private fun getSubGroup(group: Group, path: List<String>): Group? {
