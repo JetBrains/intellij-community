@@ -104,7 +104,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   String myTargets;
   public boolean myErrorCodeRequired = true;
-  protected String myScopePattern;
+  String myScopePattern;
 
   public void startup() {
     if (myProjectPath == null) {
@@ -276,11 +276,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   protected @Nullable SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
-
-    if (myAnalyzeChanges) {
-      return getSearchScopeFromChangedFiles(project);
-    }
-
     if (myScopePattern != null) {
       try {
         PackageSet packageSet = PackageSetFactory.getInstance().compile(myScopePattern);
@@ -311,14 +306,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     String scopeName = System.getProperty("idea.analyze.scope");
     NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
     return namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
-  }
-
-  public @NotNull SearchScope getSearchScopeFromChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
-    List<VirtualFile> files = getChangedFiles(project);
-    for (VirtualFile file : files) {
-      reportMessage(0, "modified file: " + file.getPath());
-    }
-    return GlobalSearchScope.filesWithoutLibrariesScope(project, files);
   }
 
   private static void addRootChangesListener(Disposable parentDisposable, InspectionsReportConverter reportConverter) {
