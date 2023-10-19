@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.allopen.AllOpenComponentRegistrar
 import org.jetbrains.kotlin.assignment.plugin.AssignmentComponentRegistrar
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.Companion.COMPILER_PLUGIN_REGISTRAR_FILE
 import org.jetbrains.kotlin.lombok.LombokComponentRegistrar
 import org.jetbrains.kotlin.noarg.NoArgComponentRegistrar
 import org.jetbrains.kotlin.parcelize.ParcelizeComponentRegistrar
@@ -30,7 +29,7 @@ import kotlin.reflect.KClass
  * their availability in compile time; it should not try to instantiate them.
  *
  * Jars with specified compiler plugins are identified by the content of
- * [COMPILER_PLUGIN_REGISTRAR_FILE] inside of them. If this file contains one of
+ * one of [COMPILER_PLUGIN_REGISTRAR_FILES] inside of them. If any of those files contains one of
  * [registrarClassName]s, then we consider this jar to be a compiler plugin.
  *
  * [PathManager.getJarForClass] is used to get the correct location of plugin's jars
@@ -85,12 +84,16 @@ enum class KotlinK2BundledCompilerPlugins(
             ?: error("Unable to find .jar for '$registrarClassName' registrar in IDE distribution")
 
     companion object {
-        private const val COMPILER_PLUGIN_REGISTRAR_FILE = "META-INF/services/org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar"
+        private val COMPILER_PLUGIN_REGISTRAR_FILES: Set<String> = setOf(
+            "META-INF/services/org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar",   // default registrar location
+            "META-INF/services/org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar",        // old registrar location, see KT-52665
+        )
 
         fun findCorrespondingBundledPlugin(originalJar: Path): KotlinK2BundledCompilerPlugins? {
-            val compilerPluginRegistrarContent = readFileContentFromJar(originalJar, COMPILER_PLUGIN_REGISTRAR_FILE) ?: return null
+            val compilerPluginRegistrarContent =
+                COMPILER_PLUGIN_REGISTRAR_FILES.firstNotNullOfOrNull { readFileContentFromJar(originalJar, it) } ?: return null
 
-            return KotlinK2BundledCompilerPlugins.values().firstOrNull { it.registrarClassName in compilerPluginRegistrarContent }
+            return KotlinK2BundledCompilerPlugins.entries.firstOrNull { it.registrarClassName in compilerPluginRegistrarContent }
         }
     }
 }
