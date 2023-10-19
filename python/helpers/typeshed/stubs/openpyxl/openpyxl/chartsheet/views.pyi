@@ -1,27 +1,31 @@
-from typing import Any
+from _typeshed import Incomplete, Unused
+from typing import ClassVar
+from typing_extensions import Literal
 
+from openpyxl.descriptors.base import Bool, Integer, Typed, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.serialisable import Serialisable
 
 class ChartsheetView(Serialisable):
-    tagname: str
-    tabSelected: Any
-    zoomScale: Any
-    workbookViewId: Any
-    zoomToFit: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    tabSelected: Bool[Literal[True]]
+    zoomScale: Integer[Literal[True]]
+    workbookViewId: Integer[Literal[False]]
+    zoomToFit: Bool[Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        tabSelected: Any | None = ...,
-        zoomScale: Any | None = ...,
-        workbookViewId: int = ...,
-        zoomToFit: Any | None = ...,
-        extLst: Any | None = ...,
+        tabSelected: _ConvertibleToBool | None = None,
+        zoomScale: _ConvertibleToInt | None = None,
+        workbookViewId: _ConvertibleToInt = 0,
+        zoomToFit: _ConvertibleToBool | None = True,
+        extLst: Unused = None,
     ) -> None: ...
 
 class ChartsheetViewList(Serialisable):
-    tagname: str
-    sheetView: Any
-    extLst: Any
-    __elements__: Any
-    def __init__(self, sheetView: Any | None = ..., extLst: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    sheetView: Incomplete
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, sheetView: Incomplete | None = None, extLst: Unused = None) -> None: ...

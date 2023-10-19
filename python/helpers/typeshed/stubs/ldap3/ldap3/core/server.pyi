@@ -1,9 +1,6 @@
-import sys
+from _typeshed import Incomplete
 from typing import Any
 from typing_extensions import Literal
-
-if sys.platform != "win32":
-    from socket import AF_UNIX as AF_UNIX
 
 unix_socket_available: bool
 
@@ -25,28 +22,31 @@ class Server:
     def __init__(
         self,
         host: str,
-        port: int | None = ...,
-        use_ssl: bool = ...,
-        allowed_referral_hosts: Any | None = ...,
-        get_info: Literal["NO_INFO", "DSA", "SCHEMA", "ALL"] = ...,
-        tls: Any | None = ...,
-        formatter: Any | None = ...,
-        connect_timeout: Any | None = ...,
-        mode: Literal["IP_SYSTEM_DEFAULT", "IP_V4_ONLY", "IP_V6_ONLY", "IP_V4_PREFERRED", "IP_V6_PREFERRED"] = ...,
-        validator: Any | None = ...,
+        port: int | None = None,
+        use_ssl: bool = False,
+        allowed_referral_hosts: Incomplete | None = None,
+        get_info: Literal["NO_INFO", "DSA", "SCHEMA", "ALL"] = "SCHEMA",
+        tls: Incomplete | None = None,
+        formatter: Incomplete | None = None,
+        connect_timeout: Incomplete | None = None,
+        mode: Literal["IP_SYSTEM_DEFAULT", "IP_V4_ONLY", "IP_V6_ONLY", "IP_V4_PREFERRED", "IP_V6_PREFERRED"] = "IP_V6_PREFERRED",
+        validator: Incomplete | None = None,
     ) -> None: ...
     @property
     def address_info(self): ...
     def update_availability(self, address, available) -> None: ...
     def reset_availability(self) -> None: ...
     def check_availability(
-        self, source_address: Any | None = ..., source_port: Any | None = ..., source_port_list: Any | None = ...
+        self,
+        source_address: Incomplete | None = None,
+        source_port: Incomplete | None = None,
+        source_port_list: Incomplete | None = None,
     ): ...
     @staticmethod
     def next_message_id(): ...
     def get_info_from_server(self, connection) -> None: ...
-    def attach_dsa_info(self, dsa_info: Any | None = ...) -> None: ...
-    def attach_schema_info(self, dsa_schema: Any | None = ...) -> None: ...
+    def attach_dsa_info(self, dsa_info: Incomplete | None = None) -> None: ...
+    def attach_schema_info(self, dsa_schema: Incomplete | None = None) -> None: ...
     @property
     def info(self): ...
     @property
@@ -56,10 +56,10 @@ class Server:
         host,
         dsa_info,
         dsa_schema,
-        port: Any | None = ...,
-        use_ssl: bool = ...,
-        formatter: Any | None = ...,
-        validator: Any | None = ...,
+        port: Incomplete | None = None,
+        use_ssl: bool = False,
+        formatter: Incomplete | None = None,
+        validator: Incomplete | None = None,
     ): ...
     def candidate_addresses(self): ...
     def has_control(self, control): ...

@@ -1,84 +1,107 @@
-from typing import Any
+from _typeshed import Incomplete, Unused
+from typing import ClassVar
+from typing_extensions import Literal, TypeAlias
 
+from openpyxl.descriptors.base import (
+    Bool,
+    Float,
+    Integer,
+    NoneSet,
+    Set,
+    String,
+    Typed,
+    _ConvertibleToBool,
+    _ConvertibleToFloat,
+    _ConvertibleToInt,
+)
+from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.serialisable import Serialisable
 
-class Pane(Serialisable):  # type: ignore[misc]
-    xSplit: Any
-    ySplit: Any
-    topLeftCell: Any
-    activePane: Any
-    state: Any
+_Pane: TypeAlias = Literal["bottomRight", "topRight", "bottomLeft", "topLeft"]
+_SheetViewView: TypeAlias = Literal["normal", "pageBreakPreview", "pageLayout"]
+_PaneState: TypeAlias = Literal["split", "frozen", "frozenSplit"]
+
+class Pane(Serialisable):
+    xSplit: Float[Literal[True]]
+    ySplit: Float[Literal[True]]
+    topLeftCell: String[Literal[True]]
+    activePane: Set[_Pane]
+    state: Set[_PaneState]
     def __init__(
         self,
-        xSplit: Any | None = ...,
-        ySplit: Any | None = ...,
-        topLeftCell: Any | None = ...,
-        activePane: str = ...,
-        state: str = ...,
+        xSplit: _ConvertibleToFloat | None = None,
+        ySplit: _ConvertibleToFloat | None = None,
+        topLeftCell: str | None = None,
+        activePane: _Pane = "topLeft",
+        state: _PaneState = "split",
     ) -> None: ...
 
-class Selection(Serialisable):  # type: ignore[misc]
-    pane: Any
-    activeCell: Any
-    activeCellId: Any
-    sqref: Any
+class Selection(Serialisable):
+    pane: NoneSet[_Pane]
+    activeCell: String[Literal[True]]
+    activeCellId: Integer[Literal[True]]
+    sqref: String[Literal[True]]
     def __init__(
-        self, pane: Any | None = ..., activeCell: str = ..., activeCellId: Any | None = ..., sqref: str = ...
+        self,
+        pane: _Pane | Literal["none"] | None = None,
+        activeCell: str | None = "A1",
+        activeCellId: _ConvertibleToInt | None = None,
+        sqref: str | None = "A1",
     ) -> None: ...
 
 class SheetView(Serialisable):
-    tagname: str
-    windowProtection: Any
-    showFormulas: Any
-    showGridLines: Any
-    showRowColHeaders: Any
-    showZeros: Any
-    rightToLeft: Any
-    tabSelected: Any
-    showRuler: Any
-    showOutlineSymbols: Any
-    defaultGridColor: Any
-    showWhiteSpace: Any
-    view: Any
-    topLeftCell: Any
-    colorId: Any
-    zoomScale: Any
-    zoomScaleNormal: Any
-    zoomScaleSheetLayoutView: Any
-    zoomScalePageLayoutView: Any
-    zoomToFit: Any
-    workbookViewId: Any
-    selection: Any
-    pane: Any
+    tagname: ClassVar[str]
+    windowProtection: Bool[Literal[True]]
+    showFormulas: Bool[Literal[True]]
+    showGridLines: Bool[Literal[True]]
+    showRowColHeaders: Bool[Literal[True]]
+    showZeros: Bool[Literal[True]]
+    rightToLeft: Bool[Literal[True]]
+    tabSelected: Bool[Literal[True]]
+    showRuler: Bool[Literal[True]]
+    showOutlineSymbols: Bool[Literal[True]]
+    defaultGridColor: Bool[Literal[True]]
+    showWhiteSpace: Bool[Literal[True]]
+    view: NoneSet[_SheetViewView]
+    topLeftCell: String[Literal[True]]
+    colorId: Integer[Literal[True]]
+    zoomScale: Integer[Literal[True]]
+    zoomScaleNormal: Integer[Literal[True]]
+    zoomScaleSheetLayoutView: Integer[Literal[True]]
+    zoomScalePageLayoutView: Integer[Literal[True]]
+    zoomToFit: Bool[Literal[True]]
+    workbookViewId: Integer[Literal[True]]
+    selection: Incomplete
+    pane: Typed[Pane, Literal[True]]
     def __init__(
         self,
-        windowProtection: Any | None = ...,
-        showFormulas: Any | None = ...,
-        showGridLines: Any | None = ...,
-        showRowColHeaders: Any | None = ...,
-        showZeros: Any | None = ...,
-        rightToLeft: Any | None = ...,
-        tabSelected: Any | None = ...,
-        showRuler: Any | None = ...,
-        showOutlineSymbols: Any | None = ...,
-        defaultGridColor: Any | None = ...,
-        showWhiteSpace: Any | None = ...,
-        view: Any | None = ...,
-        topLeftCell: Any | None = ...,
-        colorId: Any | None = ...,
-        zoomScale: Any | None = ...,
-        zoomScaleNormal: Any | None = ...,
-        zoomScaleSheetLayoutView: Any | None = ...,
-        zoomScalePageLayoutView: Any | None = ...,
-        zoomToFit: Any | None = ...,
-        workbookViewId: int = ...,
-        selection: Any | None = ...,
-        pane: Any | None = ...,
+        windowProtection: _ConvertibleToBool | None = None,
+        showFormulas: _ConvertibleToBool | None = None,
+        showGridLines: _ConvertibleToBool | None = None,
+        showRowColHeaders: _ConvertibleToBool | None = None,
+        showZeros: _ConvertibleToBool | None = None,
+        rightToLeft: _ConvertibleToBool | None = None,
+        tabSelected: _ConvertibleToBool | None = None,
+        showRuler: _ConvertibleToBool | None = None,
+        showOutlineSymbols: _ConvertibleToBool | None = None,
+        defaultGridColor: _ConvertibleToBool | None = None,
+        showWhiteSpace: _ConvertibleToBool | None = None,
+        view: _SheetViewView | Literal["none"] | None = None,
+        topLeftCell: str | None = None,
+        colorId: _ConvertibleToInt | None = None,
+        zoomScale: _ConvertibleToInt | None = None,
+        zoomScaleNormal: _ConvertibleToInt | None = None,
+        zoomScaleSheetLayoutView: _ConvertibleToInt | None = None,
+        zoomScalePageLayoutView: _ConvertibleToInt | None = None,
+        zoomToFit: _ConvertibleToBool | None = None,
+        workbookViewId: _ConvertibleToInt | None = 0,
+        selection: Incomplete | None = None,
+        pane: Pane | None = None,
     ) -> None: ...
 
 class SheetViewList(Serialisable):
-    tagname: str
-    sheetView: Any
-    extLst: Any
-    __elements__: Any
-    def __init__(self, sheetView: Any | None = ..., extLst: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    sheetView: Incomplete
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, sheetView: Incomplete | None = None, extLst: Unused = None) -> None: ...

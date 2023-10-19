@@ -1,11 +1,11 @@
-from typing import Any
+from _typeshed import Incomplete
 
 def get_active_sheet(wb): ...
 
 class WorkbookWriter:
-    wb: Any
-    rels: Any
-    package: Any
+    wb: Incomplete
+    rels: Incomplete
+    package: Incomplete
     def __init__(self, wb) -> None: ...
     def write_properties(self) -> None: ...
     def write_worksheets(self) -> None: ...

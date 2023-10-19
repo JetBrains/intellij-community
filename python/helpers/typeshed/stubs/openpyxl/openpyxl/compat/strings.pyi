@@ -1,5 +1,6 @@
-from typing import Any
+import sys
+from typing_extensions import Final
 
-VER: Any
+VER: Final[sys._version_info]
 
 def safe_string(value): ...

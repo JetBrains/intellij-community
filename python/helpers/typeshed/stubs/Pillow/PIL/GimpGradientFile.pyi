@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 EPSILON: float
 
@@ -8,12 +8,12 @@ def sine(middle, pos): ...
 def sphere_increasing(middle, pos): ...
 def sphere_decreasing(middle, pos): ...
 
-SEGMENTS: Any
+SEGMENTS: Incomplete
 
 class GradientFile:
-    gradient: Any
-    def getpalette(self, entries: int = ...): ...
+    gradient: Incomplete
+    def getpalette(self, entries: int = 256): ...
 
 class GimpGradientFile(GradientFile):
-    gradient: Any
+    gradient: Incomplete
     def __init__(self, fp) -> None: ...

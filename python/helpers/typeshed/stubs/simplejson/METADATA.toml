@@ -1,1 +1,6 @@
-version = "3.17.*"
+version = "3.19.*"
+upstream_repository = "https://github.com/simplejson/simplejson"
+partial_stub = true
+
+[tool.stubtest]
+ignore_missing_stub = true

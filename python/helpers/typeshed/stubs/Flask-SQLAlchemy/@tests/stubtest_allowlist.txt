@@ -1,2 +1,0 @@
-# Needed due dynamic attribute generation
-flask_sqlalchemy.SQLAlchemy.__getattr__

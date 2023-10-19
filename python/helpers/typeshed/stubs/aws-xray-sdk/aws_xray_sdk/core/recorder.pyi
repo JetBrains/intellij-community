@@ -3,27 +3,15 @@ from collections.abc import Callable, Iterable
 from logging import Logger
 from typing import Any
 
-from aws_xray_sdk import global_sdk_config as global_sdk_config
-from aws_xray_sdk.version import VERSION as VERSION
-
-from .context import Context as Context
-from .daemon_config import DaemonConfig as DaemonConfig
-from .emitters.udp_emitter import UDPEmitter as UDPEmitter
-from .exceptions.exceptions import (
-    SegmentNameMissingException as SegmentNameMissingException,
-    SegmentNotFoundException as SegmentNotFoundException,
-)
-from .lambda_launcher import check_in_lambda as check_in_lambda
-from .models.default_dynamic_naming import DefaultDynamicNaming as DefaultDynamicNaming
-from .models.dummy_entities import DummySegment as DummySegment, DummySubsegment as DummySubsegment
-from .models.segment import Segment as Segment, SegmentContextManager as SegmentContextManager
-from .models.subsegment import Subsegment as Subsegment, SubsegmentContextManager as SubsegmentContextManager
-from .plugins.utils import get_plugin_modules as get_plugin_modules
+from .context import Context
+from .emitters.udp_emitter import UDPEmitter
+from .models.default_dynamic_naming import DefaultDynamicNaming
+from .models.dummy_entities import DummySegment, DummySubsegment
+from .models.segment import Segment, SegmentContextManager
+from .models.subsegment import Subsegment, SubsegmentContextManager
 from .sampling.local.sampler import LocalSampler
 from .sampling.sampler import DefaultSampler
-from .streaming.default_streaming import DefaultStreaming as DefaultStreaming
-from .utils import stacktrace as stacktrace
-from .utils.compat import string_types as string_types
+from .streaming.default_streaming import DefaultStreaming
 
 log: Logger
 TRACING_NAME_KEY: str
@@ -36,39 +24,39 @@ class AWSXRayRecorder:
     def __init__(self) -> None: ...
     def configure(
         self,
-        sampling: bool | None = ...,
-        plugins: Iterable[str] | None = ...,
-        context_missing: str | None = ...,
-        sampling_rules: dict[str, Any] | str | None = ...,
-        daemon_address: str | None = ...,
-        service: str | None = ...,
-        context: Context | None = ...,
-        emitter: UDPEmitter | None = ...,
-        streaming: DefaultStreaming | None = ...,
-        dynamic_naming: DefaultDynamicNaming | None = ...,
-        streaming_threshold: int | None = ...,
-        max_trace_back: int | None = ...,
-        sampler: LocalSampler | DefaultSampler | None = ...,
-        stream_sql: bool | None = ...,
+        sampling: bool | None = None,
+        plugins: Iterable[str] | None = None,
+        context_missing: str | None = None,
+        sampling_rules: dict[str, Any] | str | None = None,
+        daemon_address: str | None = None,
+        service: str | None = None,
+        context: Context | None = None,
+        emitter: UDPEmitter | None = None,
+        streaming: DefaultStreaming | None = None,
+        dynamic_naming: DefaultDynamicNaming | None = None,
+        streaming_threshold: int | None = None,
+        max_trace_back: int | None = None,
+        sampler: LocalSampler | DefaultSampler | None = None,
+        stream_sql: bool | None = True,
     ) -> None: ...
-    def in_segment(self, name: str | None = ..., **segment_kwargs) -> SegmentContextManager: ...
-    def in_subsegment(self, name: str | None = ..., **subsegment_kwargs) -> SubsegmentContextManager: ...
+    def in_segment(self, name: str | None = None, **segment_kwargs) -> SegmentContextManager: ...
+    def in_subsegment(self, name: str | None = None, **subsegment_kwargs) -> SubsegmentContextManager: ...
     def begin_segment(
-        self, name: str | None = ..., traceid: str | None = ..., parent_id: str | None = ..., sampling: bool | None = ...
+        self, name: str | None = None, traceid: str | None = None, parent_id: str | None = None, sampling: bool | None = None
     ) -> Segment | DummySegment: ...
-    def end_segment(self, end_time: time.struct_time | None = ...) -> None: ...
+    def end_segment(self, end_time: time.struct_time | None = None) -> None: ...
     def current_segment(self) -> Segment: ...
-    def begin_subsegment(self, name: str, namespace: str = ...) -> DummySubsegment | Subsegment | None: ...
+    def begin_subsegment(self, name: str, namespace: str = "local") -> DummySubsegment | Subsegment | None: ...
     def current_subsegment(self) -> Subsegment | DummySubsegment | None: ...
-    def end_subsegment(self, end_time: time.struct_time | None = ...) -> None: ...
+    def end_subsegment(self, end_time: time.struct_time | None = None) -> None: ...
     def put_annotation(self, key: str, value: Any) -> None: ...
-    def put_metadata(self, key: str, value: Any, namespace: str = ...) -> None: ...
+    def put_metadata(self, key: str, value: Any, namespace: str = "default") -> None: ...
     def is_sampled(self) -> bool: ...
     def get_trace_entity(self) -> Segment | Subsegment | DummySegment | DummySubsegment: ...
     def set_trace_entity(self, trace_entity: Segment | Subsegment | DummySegment | DummySubsegment) -> None: ...
     def clear_trace_entities(self) -> None: ...
     def stream_subsegments(self) -> None: ...
-    def capture(self, name: str | None = ...) -> SubsegmentContextManager: ...
+    def capture(self, name: str | None = None) -> SubsegmentContextManager: ...
     def record_subsegment(
         self,
         wrapped: Callable[..., Any],

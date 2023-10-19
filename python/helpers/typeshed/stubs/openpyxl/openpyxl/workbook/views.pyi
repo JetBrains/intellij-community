@@ -1,95 +1,134 @@
-from typing import Any
+from _typeshed import Incomplete, Unused
+from typing import ClassVar, overload
+from typing_extensions import Literal, TypeAlias
 
+from openpyxl import _VisibilityType
+from openpyxl.descriptors.base import Bool, Integer, NoneSet, String, Typed, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.serialisable import Serialisable
 
+_CustomWorkbookViewShowComments: TypeAlias = Literal["commNone", "commIndicator", "commIndAndComment"]
+_CustomWorkbookViewShowObjects: TypeAlias = Literal["all", "placeholders"]
+
 class BookView(Serialisable):
-    tagname: str
-    visibility: Any
-    minimized: Any
-    showHorizontalScroll: Any
-    showVerticalScroll: Any
-    showSheetTabs: Any
-    xWindow: Any
-    yWindow: Any
-    windowWidth: Any
-    windowHeight: Any
-    tabRatio: Any
-    firstSheet: Any
-    activeTab: Any
-    autoFilterDateGrouping: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    visibility: NoneSet[_VisibilityType]
+    minimized: Bool[Literal[True]]
+    showHorizontalScroll: Bool[Literal[True]]
+    showVerticalScroll: Bool[Literal[True]]
+    showSheetTabs: Bool[Literal[True]]
+    xWindow: Integer[Literal[True]]
+    yWindow: Integer[Literal[True]]
+    windowWidth: Integer[Literal[True]]
+    windowHeight: Integer[Literal[True]]
+    tabRatio: Integer[Literal[True]]
+    firstSheet: Integer[Literal[True]]
+    activeTab: Integer[Literal[True]]
+    autoFilterDateGrouping: Bool[Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        visibility: str = ...,
-        minimized: bool = ...,
-        showHorizontalScroll: bool = ...,
-        showVerticalScroll: bool = ...,
-        showSheetTabs: bool = ...,
-        xWindow: Any | None = ...,
-        yWindow: Any | None = ...,
-        windowWidth: Any | None = ...,
-        windowHeight: Any | None = ...,
-        tabRatio: int = ...,
-        firstSheet: int = ...,
-        activeTab: int = ...,
-        autoFilterDateGrouping: bool = ...,
-        extLst: Any | None = ...,
+        visibility: _VisibilityType | Literal["none"] | None = "visible",
+        minimized: _ConvertibleToBool | None = False,
+        showHorizontalScroll: _ConvertibleToBool | None = True,
+        showVerticalScroll: _ConvertibleToBool | None = True,
+        showSheetTabs: _ConvertibleToBool | None = True,
+        xWindow: _ConvertibleToInt | None = None,
+        yWindow: _ConvertibleToInt | None = None,
+        windowWidth: _ConvertibleToInt | None = None,
+        windowHeight: _ConvertibleToInt | None = None,
+        tabRatio: _ConvertibleToInt | None = 600,
+        firstSheet: _ConvertibleToInt | None = 0,
+        activeTab: _ConvertibleToInt | None = 0,
+        autoFilterDateGrouping: _ConvertibleToBool | None = True,
+        extLst: Unused = None,
     ) -> None: ...
 
 class CustomWorkbookView(Serialisable):
-    tagname: str
-    name: Any
-    guid: Any
-    autoUpdate: Any
-    mergeInterval: Any
-    changesSavedWin: Any
-    onlySync: Any
-    personalView: Any
-    includePrintSettings: Any
-    includeHiddenRowCol: Any
-    maximized: Any
-    minimized: Any
-    showHorizontalScroll: Any
-    showVerticalScroll: Any
-    showSheetTabs: Any
-    xWindow: Any
-    yWindow: Any
-    windowWidth: Any
-    windowHeight: Any
-    tabRatio: Any
-    activeSheetId: Any
-    showFormulaBar: Any
-    showStatusbar: Any
-    showComments: Any
-    showObjects: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    name: String[Literal[False]]
+    guid: Incomplete
+    autoUpdate: Bool[Literal[True]]
+    mergeInterval: Integer[Literal[True]]
+    changesSavedWin: Bool[Literal[True]]
+    onlySync: Bool[Literal[True]]
+    personalView: Bool[Literal[True]]
+    includePrintSettings: Bool[Literal[True]]
+    includeHiddenRowCol: Bool[Literal[True]]
+    maximized: Bool[Literal[True]]
+    minimized: Bool[Literal[True]]
+    showHorizontalScroll: Bool[Literal[True]]
+    showVerticalScroll: Bool[Literal[True]]
+    showSheetTabs: Bool[Literal[True]]
+    xWindow: Integer[Literal[False]]
+    yWindow: Integer[Literal[False]]
+    windowWidth: Integer[Literal[False]]
+    windowHeight: Integer[Literal[False]]
+    tabRatio: Integer[Literal[True]]
+    activeSheetId: Integer[Literal[False]]
+    showFormulaBar: Bool[Literal[True]]
+    showStatusbar: Bool[Literal[True]]
+    showComments: NoneSet[_CustomWorkbookViewShowComments]
+    showObjects: NoneSet[_CustomWorkbookViewShowObjects]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
         self,
-        name: Any | None = ...,
-        guid: Any | None = ...,
-        autoUpdate: Any | None = ...,
-        mergeInterval: Any | None = ...,
-        changesSavedWin: Any | None = ...,
-        onlySync: Any | None = ...,
-        personalView: Any | None = ...,
-        includePrintSettings: Any | None = ...,
-        includeHiddenRowCol: Any | None = ...,
-        maximized: Any | None = ...,
-        minimized: Any | None = ...,
-        showHorizontalScroll: Any | None = ...,
-        showVerticalScroll: Any | None = ...,
-        showSheetTabs: Any | None = ...,
-        xWindow: Any | None = ...,
-        yWindow: Any | None = ...,
-        windowWidth: Any | None = ...,
-        windowHeight: Any | None = ...,
-        tabRatio: Any | None = ...,
-        activeSheetId: Any | None = ...,
-        showFormulaBar: Any | None = ...,
-        showStatusbar: Any | None = ...,
-        showComments: str = ...,
-        showObjects: str = ...,
-        extLst: Any | None = ...,
+        name: str,
+        guid: Incomplete | None = None,
+        autoUpdate: _ConvertibleToBool | None = None,
+        mergeInterval: _ConvertibleToInt | None = None,
+        changesSavedWin: _ConvertibleToBool | None = None,
+        onlySync: _ConvertibleToBool | None = None,
+        personalView: _ConvertibleToBool | None = None,
+        includePrintSettings: _ConvertibleToBool | None = None,
+        includeHiddenRowCol: _ConvertibleToBool | None = None,
+        maximized: _ConvertibleToBool | None = None,
+        minimized: _ConvertibleToBool | None = None,
+        showHorizontalScroll: _ConvertibleToBool | None = None,
+        showVerticalScroll: _ConvertibleToBool | None = None,
+        showSheetTabs: _ConvertibleToBool | None = None,
+        *,
+        xWindow: _ConvertibleToInt,
+        yWindow: _ConvertibleToInt,
+        windowWidth: _ConvertibleToInt,
+        windowHeight: _ConvertibleToInt,
+        tabRatio: _ConvertibleToInt | None = None,
+        activeSheetId: _ConvertibleToInt,
+        showFormulaBar: _ConvertibleToBool | None = None,
+        showStatusbar: _ConvertibleToBool | None = None,
+        showComments: _CustomWorkbookViewShowComments | Literal["none"] | None = "commIndicator",
+        showObjects: _CustomWorkbookViewShowObjects | Literal["none"] | None = "all",
+        extLst: Unused = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        name: str,
+        guid: Incomplete | None,
+        autoUpdate: _ConvertibleToBool | None,
+        mergeInterval: _ConvertibleToInt | None,
+        changesSavedWin: _ConvertibleToBool | None,
+        onlySync: _ConvertibleToBool | None,
+        personalView: _ConvertibleToBool | None,
+        includePrintSettings: _ConvertibleToBool | None,
+        includeHiddenRowCol: _ConvertibleToBool | None,
+        maximized: _ConvertibleToBool | None,
+        minimized: _ConvertibleToBool | None,
+        showHorizontalScroll: _ConvertibleToBool | None,
+        showVerticalScroll: _ConvertibleToBool | None,
+        showSheetTabs: _ConvertibleToBool | None,
+        xWindow: _ConvertibleToInt,
+        yWindow: _ConvertibleToInt,
+        windowWidth: _ConvertibleToInt,
+        windowHeight: _ConvertibleToInt,
+        tabRatio: _ConvertibleToInt | None,
+        activeSheetId: _ConvertibleToInt,
+        showFormulaBar: _ConvertibleToBool | None = None,
+        showStatusbar: _ConvertibleToBool | None = None,
+        showComments: _CustomWorkbookViewShowComments | Literal["none"] | None = "commIndicator",
+        showObjects: _CustomWorkbookViewShowObjects | Literal["none"] | None = "all",
+        extLst: Unused = None,
     ) -> None: ...

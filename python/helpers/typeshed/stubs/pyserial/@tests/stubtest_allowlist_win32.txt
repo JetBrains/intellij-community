@@ -1,0 +1,12 @@
+# Error: failed to import
+# =======================
+serial.serialposix  # Posix only
+serial.tools.list_ports_osx  # Mac only
+serial.tools.list_ports_posix  # Posix only
+
+# Error: is inconsistent
+# ======================
+# Methods defined with positional-only argument in the stub because they inherit from
+# io.RawIOBase but at runtime they are normal arguments that don't have consistent
+# names.
+serial.serialwin32.Serial.write
