@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -131,5 +132,17 @@ class AddChildrenTest {
     builder.modifyEntity(right) {
       this.children = listOf(ChildSecondEntity("data", "Data", MySource))
     }
+  }
+
+  @Test
+  fun `adding one to one parent entity with reference to existing child`() {
+    val builder = createEmptyBuilder()
+    val child = builder addEntity OptionalOneToOneChildEntity("data", MySource)
+    val newBuilder = builder.toSnapshot().toBuilder()
+    newBuilder addEntity OptionalOneToOneParentEntity(MySource) {
+      this.child = child.from(newBuilder)
+    }
+
+    assertEquals("data", newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child!!.data)
   }
 }

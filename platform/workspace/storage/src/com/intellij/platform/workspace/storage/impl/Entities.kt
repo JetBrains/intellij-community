@@ -406,7 +406,9 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
       builder.instrumentation.replaceChildren(connectionId, this, withBuilder_entity)
     }
     else if (entity is WorkspaceEntity) {
-      builder.addEntity(entity)
+      if (entity is ModifiableWorkspaceEntityBase<*, *> && entity.diff == null) {
+        builder.addEntity(entity)
+      }
       if (!connectionId.isOneToOne) error("Only one-to-one connection is supported")
       builder.instrumentation.replaceChildren(connectionId, this, listOfNotNull(entity))
     }
