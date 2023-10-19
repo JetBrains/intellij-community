@@ -25,7 +25,7 @@ internal const val invalidEntityId: EntityId = -1
 
 internal val EntityId.arrayId: Int
   get() {
-    assert(this >= 0)
+    assert(this >= 0) { "arrayId is $this, but it should be >=0" }
     return (this shr 32).toInt()
   }
 
