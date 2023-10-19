@@ -5,7 +5,7 @@ import com.intellij.concurrency.installTemporaryThreadContext
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.toArray
-import com.intellij.util.lateinitVal
+import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
@@ -225,8 +225,8 @@ private suspend fun <T> instantiate(
   lazyArgs: List<Argument>,
   instantiate: (Array<out Any>) -> T,
 ): T {
-  return coroutineScope {
-    val args: Array<Any> = lazyArgs.map { argument: Argument ->
+  val args: Array<Any> = coroutineScope {
+    lazyArgs.map { argument: Argument ->
       if (argument === Argument.CoroutineScopeMarker) {
         CompletableDeferred(argument)
       }
@@ -236,50 +236,38 @@ private suspend fun <T> instantiate(
           supplier()
         }
       }
-    }.awaitAll().toArray(ArrayUtil.EMPTY_OBJECT_ARRAY)
-    val initializerContext = currentCoroutineContext()
-    var instanceResult: Result<T> by lateinitVal()
-    parentScope.launch(CoroutineName(instanceClass.name), start = CoroutineStart.UNDISPATCHED) {
-      // Don't cancel parentScope on failure.
-      supervisorScope {
-        val requiresScope = replaceScopeMarkerWithScope(args, this@supervisorScope)
-        instanceResult = runCatching {
-          // If a service is requested during highlighting (under impatient=true),
-          // then it's initialization might be broken forever.
-          // Impatient reader is a property of thread (at the moment, before IJPL-53 is completed),
-          // so it leaks to newInstance call, where it might cause ReadMostlyRWLock.throwIfImpatient() to throw,
-          // for example, if a service obtains a read action in the constructor.
-          // Non-cancellable section is required to silence throwIfImpatient().
-          // In general, we want initialization to be cancellable, and it must be cancelled only on parent scope cancellation,
-          // which happens only on project/application shutdown, or on plugin unload.
-          Cancellation.withNonCancelableSection().use {
-            // A separate thread-local is required to track cyclic service initialization, because
-            // we don't want it to be captured by lambdas scheduled in the constructor (= context propagation).
-            // Only the context of the owner coroutine should be captured.
-            // TODO Put BlockingJob to bind all computations started in instance constructor to instance scope.
-            installTemporaryThreadContext(initializerContext).use {
-              instantiate(args)
-            }
-          }
-        }
-        if (instanceResult.isSuccess) {
-          if (requiresScope) {
-            awaitCancellation() // keep instance coroutine alive
-          }
-        }
-      }
+    }.awaitAll()
+  }.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY)
+  replaceScopeMarkerWithScope(args) {
+    parentScope.namedChildScope(instanceClass.name)
+  }
+  // If a service is requested during highlighting (under impatient=true),
+  // then it's initialization might be broken forever.
+  // Impatient reader is a property of thread (at the moment, before IJPL-53 is completed),
+  // so it leaks to newInstance call, where it might cause ReadMostlyRWLock.throwIfImpatient() to throw,
+  // for example, if a service obtains a read action in the constructor.
+  // Non-cancellable section is required to silence throwIfImpatient().
+  // In general, we want initialization to be cancellable, and it must be cancelled only on parent scope cancellation,
+  // which happens only on project/application shutdown, or on plugin unload.
+  Cancellation.withNonCancelableSection().use {
+    // A separate thread-local is required to track cyclic service initialization, because
+    // we don't want it to be captured by lambdas scheduled in the constructor (= context propagation).
+    // Only the context of the owner coroutine should be captured.
+    // TODO Put BlockingJob to bind all computations started in instance constructor to instance scope.
+    installTemporaryThreadContext(currentCoroutineContext()).use {
+      return instantiate(args)
     }
-    instanceResult.getOrThrow()
   }
 }
 
-private fun replaceScopeMarkerWithScope(args: Array<Any>, instanceScope: CoroutineScope): Boolean {
-  var requiresScope = false
+private fun replaceScopeMarkerWithScope(args: Array<Any>, instanceScope: () -> CoroutineScope) {
+  var scope: CoroutineScope? = null
   for ((index, arg) in args.withIndex()) {
     if (arg === Argument.CoroutineScopeMarker) {
-      requiresScope = true
-      args[index] = instanceScope
+      if (scope == null) {
+        scope = instanceScope()
+      }
+      args[index] = scope
     }
   }
-  return requiresScope
 }
