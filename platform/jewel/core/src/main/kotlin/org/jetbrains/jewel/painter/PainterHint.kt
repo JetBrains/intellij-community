@@ -19,13 +19,47 @@ import org.w3c.dom.Element
 @Immutable
 sealed interface PainterHint {
 
+    fun canApplyTo(path: String): Boolean = true
+
     /**
      * An empty [PainterHint], it will be ignored.
      */
     companion object None : PainterHint {
 
+        override fun canApplyTo(path: String): Boolean = false
+
         override fun toString(): String = "None"
     }
+}
+
+/**
+ * Mark this [PainterHint] just available with SVG images.
+ */
+@Immutable
+interface SvgPainterHint : PainterHint {
+
+    override fun canApplyTo(path: String): Boolean = path.substringAfterLast('.').lowercase() == "svg"
+}
+
+/**
+ * Mark this [PainterHint] just available with Bitmap images.
+ */
+@Immutable
+interface BitmapPainterHint : PainterHint {
+
+    override fun canApplyTo(path: String): Boolean = when (path.substringAfterLast('.').lowercase()) {
+        "svg", "xml" -> false
+        else -> true
+    }
+}
+
+/**
+ * Mark this [PainterHint] just available with XML images.
+ */
+@Immutable
+interface XmlPainterHint : PainterHint {
+
+    override fun canApplyTo(path: String): Boolean = path.substringAfterLast('.').lowercase() == "xml"
 }
 
 /**
@@ -35,6 +69,7 @@ sealed interface PainterHint {
  */
 @Immutable
 interface PainterPathHint : PainterHint {
+
     /**
      * Replace the entire path with the given value.
      */
@@ -59,7 +94,7 @@ interface PainterResourcePathHint : PainterHint {
  * to SVG resources; it doesn't affect other types of resources.
  */
 @Immutable
-interface PainterSvgPatchHint : PainterHint {
+interface PainterSvgPatchHint : SvgPainterHint {
 
     /**
      * Patch the SVG content.

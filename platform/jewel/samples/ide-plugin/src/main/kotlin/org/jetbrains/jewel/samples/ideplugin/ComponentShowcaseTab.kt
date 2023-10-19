@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
 import com.intellij.ui.JBColor
+import icons.JewelIcons
 import org.jetbrains.jewel.CheckboxRow
 import org.jetbrains.jewel.CircularProgressIndicator
 import org.jetbrains.jewel.CircularProgressIndicatorBig
@@ -118,9 +119,18 @@ import org.jetbrains.jewel.intui.standalone.IntUiTheme
                 modifier = Modifier.border(1.dp, Color.Magenta),
                 contentDescription = "An icon",
             )
+            Icon(
+                "icons/github.svg",
+                iconClass = JewelIcons::class.java,
+                modifier = Modifier.border(1.dp, Color.Magenta),
+                contentDescription = "An icon",
+            )
 
             IconButton(onClick = { }) {
                 Icon("actions/close.svg", contentDescription = "An icon", AllIcons::class.java)
+            }
+            IconButton(onClick = { }) {
+                Icon("actions/addList.svg", contentDescription = "An icon", AllIcons::class.java)
             }
         }
 

@@ -1,0 +1,293 @@
+package org.jetbrains.jewel
+
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.state.ToggleableState
+import org.jetbrains.jewel.painter.PainterHint
+import org.jetbrains.jewel.painter.PainterPathHint
+import org.jetbrains.jewel.painter.PainterResourcePathHint
+import org.jetbrains.jewel.painter.PainterSvgPatchHint
+import org.jetbrains.jewel.painter.hints.Dark
+import org.jetbrains.jewel.painter.hints.HiDpi
+import org.jetbrains.jewel.painter.hints.Override
+import org.jetbrains.jewel.painter.hints.Palette
+import org.jetbrains.jewel.painter.hints.Selected
+import org.jetbrains.jewel.painter.hints.Size
+import org.jetbrains.jewel.painter.hints.Stateful
+import org.jetbrains.jewel.painter.hints.Stroke
+import org.jetbrains.jewel.painter.rememberResourcePainterProvider
+import org.jetbrains.jewel.painter.writeToString
+import org.junit.Assert
+import org.junit.Test
+import javax.xml.XMLConstants
+import javax.xml.parsers.DocumentBuilderFactory
+
+@Suppress("ImplicitUnitReturnType")
+class PainterHintTest : BasicJewelUiTest() {
+
+    @Test
+    fun `empty hint should be ignored`() = runComposeTest({
+        CompositionLocalProvider(LocalIsDarkTheme provides false) {
+            val provider = rememberResourcePainterProvider("icons/github.svg", PainterHintTest::class.java)
+
+            val painter1 by provider.getPainter()
+            // must be ignored the None and hit cache
+            val painter2 by provider.getPainter(PainterHint.None)
+            // must be ignored the None and hit cache too
+            val painter3 by provider.getPainter(PainterHint.None, PainterHint.None)
+
+            Assert.assertEquals(painter1, painter2)
+            Assert.assertEquals(painter3, painter2)
+        }
+    }) {
+        awaitIdle()
+    }
+
+    private fun String.applyPathHints(vararg hints: PainterHint): String {
+        var result = this
+        val format = this.substringAfterLast('.').lowercase()
+        hints.forEach {
+            if (!it.canApplyTo(format)) return@forEach
+            result = when (it) {
+                is PainterResourcePathHint -> it.patch(result, emptyList())
+                is PainterPathHint -> it.patch(result)
+                else -> return@forEach
+            }
+        }
+        return result
+    }
+
+    private val documentBuilderFactory = DocumentBuilderFactory.newDefaultInstance()
+        .apply { setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true) }
+
+    private fun String.applyPaletteHints(vararg hints: PainterHint): String {
+        val doc = documentBuilderFactory.newDocumentBuilder().parse(this.toByteArray().inputStream())
+
+        hints.filterIsInstance<PainterSvgPatchHint>()
+            .onEach { it.patch(doc.documentElement) }
+
+        return doc.writeToString()
+    }
+
+    @Test
+    fun `dark painter hint should append suffix when isDark is true`() {
+        val basePath = "icons/github.svg"
+        val patchedPath = basePath.applyPathHints(Dark(true))
+        Assert.assertEquals("icons/github_dark.svg", patchedPath)
+    }
+
+    @Test
+    fun `dark painter hint should not append suffix when isDark is false`() {
+        val basePath = "icons/github.svg"
+        val patchedPath = basePath.applyPathHints(Dark(false))
+        Assert.assertEquals(basePath, patchedPath)
+    }
+
+    @Test
+    fun `override painter hint should replace path entirely`() {
+        val basePath = "icons/github.svg"
+        val patchedPath = basePath.applyPathHints(Override(mapOf("icons/github.svg" to "icons/search.svg")))
+        Assert.assertEquals("icons/search.svg", patchedPath)
+    }
+
+    @Test
+    fun `override painter hint should not replace path when not matched`() {
+        val basePath = "icons/github.svg"
+        val patchedPath = basePath.applyPathHints(Override(mapOf("icons/settings.svg" to "icons/search.svg")))
+        Assert.assertEquals(basePath, patchedPath)
+    }
+
+    @Test
+    fun `selected painter hint should append suffix when selected is true`() {
+        val basePath = "icons/checkbox.svg"
+        val patchedPath = basePath.applyPathHints(Selected(true))
+        Assert.assertEquals("icons/checkboxSelected.svg", patchedPath)
+    }
+
+    @Test
+    fun `selected painter hint should not append suffix when selected is false`() {
+        val basePath = "icons/checkbox.svg"
+        val patchedPath = basePath.applyPathHints(Selected(false))
+        Assert.assertEquals(basePath, patchedPath)
+    }
+
+    @Test
+    fun `size painter hint should append suffix when size is not empty`() {
+        val basePath = "icons/github.svg"
+        val patchedPath = basePath.applyPathHints(Size("20x20"))
+        Assert.assertEquals("icons/github@20x20.svg", patchedPath)
+    }
+
+    @Test
+    fun `size painter hint should not append suffix when size is empty or null`() {
+        val basePath = "icons/github.svg"
+        val patchedPath = basePath.applyPathHints(Size(""))
+        Assert.assertEquals(basePath, patchedPath)
+    }
+
+    @Test
+    fun `highDpi painter hint should not append suffix for svg`() {
+        val basePath = "icons/github.svg"
+        val patchedPath = basePath.applyPathHints(HiDpi(true))
+        Assert.assertEquals(basePath, patchedPath)
+    }
+
+    @Test
+    fun `highDpi painter hint should append suffix when isHiDpi is true`() {
+        val basePath = "icons/github.png"
+        val patchedPath = basePath.applyPathHints(HiDpi(true))
+        Assert.assertEquals("icons/github@2x.png", patchedPath)
+    }
+
+    @Test
+    fun `highDpi painter hint should not append suffix when isHiDpi is false`() {
+        val basePath = "icons/github.png"
+        val patchedPath = basePath.applyPathHints(HiDpi(false))
+        Assert.assertEquals(basePath, patchedPath)
+    }
+
+    @Test
+    fun `size painter hint should not append suffix for bitmap`() {
+        val basePath = "icons/github.png"
+        val patchedPath = basePath.applyPathHints(Size(20))
+        Assert.assertEquals(basePath, patchedPath)
+    }
+
+    @Test
+    fun `size painter hint should throw when size format incorrect`() {
+        val basePath = "icons/github.svg"
+
+        Assert.assertThrows(IllegalArgumentException::class.java) {
+            basePath.applyPathHints(Size("wrongSizeString"))
+        }
+    }
+
+    @Test
+    fun `size painter hint should throw with wrong width or height`() {
+        val basePath = "icons/github.svg"
+
+        Assert.assertThrows(IllegalArgumentException::class.java) {
+            basePath.applyPathHints(Size(-1, 20))
+        }
+
+        Assert.assertThrows(IllegalArgumentException::class.java) {
+            basePath.applyPathHints(Size(20, 0))
+        }
+    }
+
+    @Test
+    fun `stateful painter hint should append Disabled suffix when enabled is false`() {
+        val basePath = "icons/checkbox.svg"
+        val state = CheckboxState.of(toggleableState = ToggleableState.Off)
+        val patchedPath = basePath.applyPathHints(Stateful(state.copy(enabled = false)))
+        Assert.assertEquals("icons/checkboxDisabled.svg", patchedPath)
+
+        basePath.applyPathHints(Stateful(state.copy(enabled = false, pressed = true, hovered = true, focused = true)))
+            .let {
+                Assert.assertEquals("icons/checkboxDisabled.svg", it)
+            }
+    }
+
+    @Test
+    fun `stateful painter hint disabled state takes higher priority over other states`() {
+        val basePath = "icons/checkbox.svg"
+        val state = CheckboxState.of(toggleableState = ToggleableState.Off)
+        val patchedPath =
+            basePath.applyPathHints(
+                Stateful(
+                    state.copy(
+                        enabled = false,
+                        pressed = true,
+                        hovered = true,
+                        focused = true,
+                    ),
+                ),
+            )
+        Assert.assertEquals("icons/checkboxDisabled.svg", patchedPath)
+    }
+
+    @Test
+    fun `stateful painter hint should append Focused suffix when focused is true`() {
+        val basePath = "icons/checkbox.svg"
+        val state = CheckboxState.of(toggleableState = ToggleableState.Off)
+        val patchedPath = basePath.applyPathHints(Stateful(state.copy(focused = true)))
+        Assert.assertEquals("icons/checkboxFocused.svg", patchedPath)
+    }
+
+    @Test
+    fun `stateful painter hint focused state takes higher priority over pressed and hovered states`() {
+        val basePath = "icons/checkbox.svg"
+        val state = CheckboxState.of(toggleableState = ToggleableState.Off)
+        val patchedPath = basePath.applyPathHints(Stateful(state.copy(pressed = true, hovered = true, focused = true)))
+        Assert.assertEquals("icons/checkboxFocused.svg", patchedPath)
+    }
+
+    @Test
+    fun `stateful painter hint should append Pressed suffix when pressed is true`() {
+        val basePath = "icons/checkbox.svg"
+        val state = CheckboxState.of(toggleableState = ToggleableState.Off)
+        val patchedPath = basePath.applyPathHints(Stateful(state.copy(pressed = true)))
+        Assert.assertEquals("icons/checkboxPressed.svg", patchedPath)
+    }
+
+    @Test
+    fun `stateful painter hint pressed state takes higher priority over hovered state`() {
+        val basePath = "icons/checkbox.svg"
+        val state = CheckboxState.of(toggleableState = ToggleableState.Off)
+        val patchedPath = basePath.applyPathHints(Stateful(state.copy(pressed = true, hovered = true)))
+        Assert.assertEquals("icons/checkboxPressed.svg", patchedPath)
+    }
+
+    @Test
+    fun `stateful painter hint should append Hovered suffix when hovered is true`() {
+        val basePath = "icons/checkbox.svg"
+        val state = CheckboxState.of(toggleableState = ToggleableState.Off)
+        val patchedPath = basePath.applyPathHints(Stateful(state.copy(hovered = true)))
+        Assert.assertEquals("icons/checkboxHovered.svg", patchedPath)
+    }
+
+    @Test
+    fun `stroke painter hint should append suffix when stroked is true`() {
+        val basePath = "icons/rerun.svg"
+        val patchedPath = basePath.applyPathHints(Stroke(true))
+        Assert.assertEquals("icons/rerun_stroke.svg", patchedPath)
+    }
+
+    @Test
+    fun `stroke painter hint should not append suffix when stroked is false`() {
+        val basePath = "icons/rerun.svg"
+        val patchedPath = basePath.applyPathHints(Stroke(false))
+        Assert.assertEquals(basePath, patchedPath)
+    }
+
+    @Test
+    fun `palette painter hint should patch colors correctly in SVG`() {
+        val baseSvg = """
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <rect fill="#000000" height="20" stroke="#000000" stroke-opacity="0.5" width="20" x="2" y="2"/>
+                <rect fill="#00ff00" height="16" width="16" x="4" y="4"/>
+                <rect fill="#123456" height="12" width="12" x="6" y="6"/>
+            </svg>
+        """.trimIndent()
+        val patchedSvg = baseSvg.applyPaletteHints(
+            Palette(
+                mapOf(
+                    Color(0x80000000) to Color(0xFF123456),
+                    Color.Black to Color.White,
+                    Color.Green to Color.Red,
+                ),
+            ),
+        )
+        Assert.assertEquals(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <rect fill="#ffffff" height="20" stroke="#123456" stroke-opacity="1.0" width="20" x="2" y="2"/>
+                <rect fill="#ff0000" height="16" width="16" x="4" y="4"/>
+                <rect fill="#123456" height="12" width="12" x="6" y="6"/>
+            </svg>
+            """.trimIndent(),
+            patchedSvg,
+        )
+    }
+}

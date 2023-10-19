@@ -61,7 +61,7 @@ class ResourcePainterProvider(
     @Composable
     override fun getPainter(vararg hints: PainterHint): State<Painter> {
         val resolvedHints = (hints.toList() + LocalPainterHintsProvider.current.hints(basePath))
-            .filter { it != PainterHint.None }
+            .filter { it.canApplyTo(basePath) }
 
         val cacheKey = resolvedHints.hashCode()
 
@@ -190,24 +190,6 @@ class ResourcePainterProvider(
             rememberAction = { remember(url, density) { it } },
         )
 
-    private fun Document.writeToString(): String {
-        val tf = TransformerFactory.newInstance()
-        val transformer: Transformer
-
-        try {
-            transformer = tf.newTransformer()
-            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
-
-            val writer = StringWriter()
-            transformer.transform(DOMSource(this), StreamResult(writer))
-            return writer.buffer.toString()
-        } catch (e: TransformerException) {
-            error("Unable to render XML document to string: ${e.message}")
-        } catch (e: IOException) {
-            error("Unable to render XML document to string: ${e.message}")
-        }
-    }
-
     @Composable
     private fun <T> tryLoadingResource(
         url: URL,
@@ -228,6 +210,24 @@ class ResourcePainterProvider(
         }
 
         return rememberAction(painter)
+    }
+}
+
+internal fun Document.writeToString(): String {
+    val tf = TransformerFactory.newInstance()
+    val transformer: Transformer
+
+    try {
+        transformer = tf.newTransformer()
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
+
+        val writer = StringWriter()
+        transformer.transform(DOMSource(this), StreamResult(writer))
+        return writer.buffer.toString()
+    } catch (e: TransformerException) {
+        error("Unable to render XML document to string: ${e.message}")
+    } catch (e: IOException) {
+        error("Unable to render XML document to string: ${e.message}")
     }
 }
 

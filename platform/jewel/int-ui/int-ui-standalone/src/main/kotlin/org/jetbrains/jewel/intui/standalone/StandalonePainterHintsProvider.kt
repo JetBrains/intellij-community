@@ -1,11 +1,13 @@
 package org.jetbrains.jewel.intui.standalone
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalDensity
 import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.intui.core.IntUiPainterHintsProvider
 import org.jetbrains.jewel.intui.core.IntUiThemeDefinition
 import org.jetbrains.jewel.painter.PainterHint
 import org.jetbrains.jewel.painter.hints.Dark
+import org.jetbrains.jewel.painter.hints.HiDpi
 import org.jetbrains.jewel.painter.hints.Override
 
 class StandalonePainterHintsProvider(
@@ -31,6 +33,7 @@ class StandalonePainterHintsProvider(
     override fun hints(path: String): List<PainterHint> = buildList {
         add(getPaletteHint(path))
         add(overrideHint)
+        add(HiDpi(LocalDensity.current))
         add(Dark(IntelliJTheme.isDark))
     }
 
