@@ -208,11 +208,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
 
       @Override
-      protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action, ActionButtonLook look,
-                                                          @NotNull String place, @NotNull Presentation presentation,
-                                                          Supplier<? extends @NotNull Dimension> minimumSize) {
-
-        ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
+      protected @NotNull ActionButton createIconButton(@NotNull AnAction action,
+                                                       @NotNull String place,
+                                                       @NotNull Presentation presentation,
+                                                       Supplier<? extends @NotNull Dimension> minimumSize) {
+        return new ActionButton(action, presentation, place, minimumSize) {
           @Override
           public void updateIcon() {
             super.updateIcon();
@@ -240,9 +240,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
             return size;
           }
         };
-
-        applyToolbarLook(look, presentation, actionButton);
-        return actionButton;
       }
 
       @Override

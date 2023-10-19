@@ -577,23 +577,36 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                                                       @NotNull String place,
                                                       @NotNull Presentation presentation,
                                                       Supplier<? extends @NotNull Dimension> minimumSize) {
+    ActionButton actionButton;
     if (action.displayTextInToolbar()) {
-      int mnemonic = action.getTemplatePresentation().getMnemonic();
-
-      ActionButtonWithText buttonWithText = new ActionButtonWithText(action, presentation, place, minimumSize);
-
-      if (mnemonic != KeyEvent.VK_UNDEFINED) {
-        buttonWithText.registerKeyboardAction(__ -> buttonWithText.click(),
-                                              KeyStroke.getKeyStroke(mnemonic, InputEvent.ALT_DOWN_MASK), WHEN_IN_FOCUSED_WINDOW);
-      }
-      applyToolbarLook(look, presentation, buttonWithText);
-      return buttonWithText;
+      actionButton = createTextButton(action, place, presentation, minimumSize);
     }
-
-    ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize);
-
+    else {
+      actionButton = createIconButton(action, place, presentation, minimumSize);
+    }
     applyToolbarLook(look, presentation, actionButton);
     return actionButton;
+  }
+
+  protected @NotNull ActionButton createIconButton(@NotNull AnAction action,
+                                                   @NotNull String place,
+                                                   @NotNull Presentation presentation,
+                                                   Supplier<? extends @NotNull Dimension> minimumSize) {
+    return new ActionButton(action, presentation, place, minimumSize);
+  }
+
+  protected @NotNull ActionButtonWithText createTextButton(@NotNull AnAction action,
+                                                           @NotNull String place,
+                                                           @NotNull Presentation presentation,
+                                                           Supplier<? extends @NotNull Dimension> minimumSize) {
+    int mnemonic = action.getTemplatePresentation().getMnemonic();
+    ActionButtonWithText buttonWithText = new ActionButtonWithText(action, presentation, place, minimumSize);
+
+    if (mnemonic != KeyEvent.VK_UNDEFINED) {
+      buttonWithText.registerKeyboardAction(__ -> buttonWithText.click(),
+                                            KeyStroke.getKeyStroke(mnemonic, InputEvent.ALT_DOWN_MASK), WHEN_IN_FOCUSED_WINDOW);
+    }
+    return buttonWithText;
   }
 
   protected void applyToolbarLook(@Nullable ActionButtonLook look, @NotNull Presentation presentation, @NotNull JComponent component) {
