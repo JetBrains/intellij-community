@@ -3,12 +3,13 @@ package com.intellij.codeInsight.inline.completion.render
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionFontUtils
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Graphics
 import java.awt.Rectangle
 
-class InlineSuffixRenderer(private val editor: Editor, val suffix: String) : InlineCompletionRenderer {
+class InlineSuffixRenderer(private val editor: Editor, val suffix: String) : EditorCustomElementRenderer {
   private val width = editor.contentComponent.getFontMetrics(InlineCompletionFontUtils.font(editor)).stringWidth(suffix)
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int = width

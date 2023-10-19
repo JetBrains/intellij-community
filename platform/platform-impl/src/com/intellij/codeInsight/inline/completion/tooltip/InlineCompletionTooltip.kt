@@ -22,8 +22,6 @@ import com.intellij.util.ui.JBUI
 internal object InlineCompletionTooltip {
   @RequiresEdt
   fun enterHover(session: InlineCompletionSession) {
-
-
     val editor = session.context.editor
     val activeLookup = LookupManager.getActiveLookup(editor)
 
