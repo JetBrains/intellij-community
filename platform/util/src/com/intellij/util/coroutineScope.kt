@@ -75,36 +75,21 @@ private class ChildScope(ctx: CoroutineContext, private val supervisor: Boolean)
  */
 @Internal
 @OptIn(InternalCoroutinesApi::class)
+@Suppress("DEPRECATION_ERROR")
 fun CoroutineScope.attachAsChildTo(secondaryParent: CoroutineScope) {
   val parentJob = secondaryParent.coroutineContext.job
   val childJob = this.coroutineContext.job
-
-  // Prevent parent completion while child is not completed.
-  secondaryParent.launch(
-    CoroutineName("child handle '${coroutineContext[CoroutineName]?.name}'") +
-    Dispatchers.Default,
-    start = CoroutineStart.UNDISPATCHED,
-  ) {
-    withContext(NonCancellable) {
-      childJob.join()
-    }
-  }
-
+  // prevent parent completion while child is not completed
   // propagate cancellation from parent to child
-  val handle = parentJob.invokeOnCompletion(onCancelling = true) { throwable ->
-    if (throwable != null) {
-      @Suppress("DEPRECATION_ERROR")
-      (childJob as ChildJob).parentCancelled(parentJob as ParentJob)
-    }
-  }
-
+  val handle = (parentJob as JobSupport).attachChild(childJob as ChildJob)
   // propagate cancellation from child to parent
   childJob.invokeOnCompletion(onCancelling = true) { throwable ->
-    handle.dispose() // remove reference from parent to child
     if (throwable != null) {
-      @Suppress("DEPRECATION_ERROR")
-      (parentJob as JobSupport).childCancelled(throwable)
+      parentJob.childCancelled(throwable)
     }
+  }
+  childJob.invokeOnCompletion {
+    handle.dispose() // remove reference from parent to child
   }
 }
 
