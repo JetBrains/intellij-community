@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -248,6 +249,9 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     private fun handleLibraryChanges(event: VersionedStorageChange) {
         val libraryEntities = event.getChanges(LibraryEntity::class.java).ifEmpty { return }
         for (change in libraryEntities) {
+            if (change.oldEntity?.entitySource is JpsGlobalFileEntitySource) {
+                continue
+            }
             when (change) {
                 is EntityChange.Added -> {}
                 is EntityChange.Removed -> {
