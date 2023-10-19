@@ -302,7 +302,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         debug("Method: " + overridingMethod.getName());
         debug("Class : " + cls.getName());
 
-        if (overridingMethod.isSame(addedMethod)) {
+        if (overridingMethod.isSameByJavaRules(addedMethod)) {
           debug("Current method overrides the added method");
           for (NodeSource source : context.getGraph().getSources(cls.getReferenceID())) {
             if (!context.isCompiled(source)) {
@@ -349,7 +349,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         affectStaticMemberImportUsages(context, changedClass.getReferenceID(), removedMethod.getName(), propagated);
       }
 
-      Iterable<Pair<JvmClass, JvmMethod>> overridden = Iterators.lazy(() -> removedMethod.isConstructor()? Collections.emptyList() : future.getOverriddenMethods(changedClass, removedMethod::isSame));
+      Iterable<Pair<JvmClass, JvmMethod>> overridden = Iterators.lazy(() -> removedMethod.isConstructor()? Collections.emptyList() : future.getOverriddenMethods(changedClass, removedMethod::isSameByJavaRules));
       boolean isClearlyOverridden = removedMethod.getSignature().isEmpty() && !extendsLibraryClass && !Iterators.isEmpty(overridden) && Iterators.isEmpty(
         Iterators.filter(overridden, p -> !p.getSecond().getType().equals(removedMethod.getType()) || !p.getSecond().getSignature().isEmpty() || removedMethod.isMoreAccessibleThan(p.getSecond()))
       );
@@ -361,7 +361,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         }
       }
 
-      for (Pair<JvmClass, JvmMethod> overriding : future.getOverridingMethods(changedClass, removedMethod, removedMethod::isSame)) {
+      for (Pair<JvmClass, JvmMethod> overriding : future.getOverridingMethods(changedClass, removedMethod, removedMethod::isSameByJavaRules)) {
         for (NodeSource source : context.getGraph().getSources(overriding.getFirst().getReferenceID())) {
           if (!context.isCompiled(source)) {
             context.affectNodeSource(source);
@@ -373,7 +373,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
       if (!removedMethod.isConstructor() && !removedMethod.isAbstract() && !removedMethod.isStatic()) {
         for (JvmNodeReferenceID id : propagated) {
           for (JvmClass subClass : future.getNodes(id, JvmClass.class)) {
-            Iterable<Pair<JvmClass, JvmMethod>> overriddenForSubclass = future.getOverriddenMethods(subClass, removedMethod::isSame);
+            Iterable<Pair<JvmClass, JvmMethod>> overriddenForSubclass = future.getOverriddenMethods(subClass, removedMethod::isSameByJavaRules);
             boolean allOverriddenAbstract = !Iterators.isEmpty(overriddenForSubclass) && Iterators.isEmpty(Iterators.filter(overriddenForSubclass, p -> !p.getSecond().isAbstract()));
             if (allOverriddenAbstract || future.inheritsFromLibraryClass(subClass)) {
               debug("Removed method is not abstract & overrides some abstract method which is not then over-overridden in subclass " + subClass.getName());

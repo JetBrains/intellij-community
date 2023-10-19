@@ -58,32 +58,32 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
     return myArgTypes;
   }
 
+  public boolean isSameByJavaRules(JvmMethod other) {
+    return getName().equals(other.getName()) && Iterators.equals(myArgTypes, other.myArgTypes);
+  }
+
   @Override
   public boolean isSame(DiffCapable<?, ?> other) {
     if (!(other instanceof JvmMethod)) {
       return false;
     }
     JvmMethod that = (JvmMethod)other;
-    return getName().equals(that.getName()) && Iterators.equals(myArgTypes, that.myArgTypes);
+    return Objects.equals(getType(), that.getType()) && isSameByJavaRules(that);
   }
 
   @Override
   public int diffHashCode() {
-    return 31 * (31 * Iterators.hashCode(myArgTypes) + getName().hashCode());
+    return 31 * (31 * Iterators.hashCode(myArgTypes) + getType().hashCode()) + getName().hashCode();
   }
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof JvmMethod)) {
-      return false;
-    }
-    JvmMethod other = (JvmMethod)obj;
-    return isSame(other) && Objects.equals(getType(), other.getType());
+    return obj instanceof JvmMethod && isSame((JvmMethod)obj);
   }
 
   @Override
   public int hashCode() {
-    return 31 * diffHashCode() + getType().hashCode();
+    return diffHashCode();
   }
 
   @Override
@@ -99,11 +99,7 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
 
     @Override
     public boolean unchanged() {
-      return super.unchanged() && !returnTypeChanged() && paramAnnotationsChanged().unchanged() && exceptionsChanged().unchanged();
-    }
-
-    public boolean returnTypeChanged() {
-      return !Objects.equals(myPast.getType(), getType());
+      return super.unchanged() && paramAnnotationsChanged().unchanged() && exceptionsChanged().unchanged();
     }
 
     public Specifier<ParamAnnotation, ?> paramAnnotationsChanged() {

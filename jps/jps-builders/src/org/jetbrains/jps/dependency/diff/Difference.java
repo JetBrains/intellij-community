@@ -5,9 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.javac.Iterators;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public interface Difference {
 
@@ -132,29 +130,19 @@ public interface Difference {
     Set<T> removed = Containers.createCustomPolicySet(pastSet, T::isSame, T::diffHashCode);
     removed.removeAll(nowSet);
 
-    //final List<Change<T, D>> changed = new ArrayList<>(0);
-    //for (T before : pastSet) {
-    //  T after = nowMap.get(before);
-    //  if (after == null) {
-    //    continue;
-    //  }
-    //  D diff = after.difference(before);
-    //  if (!diff.unchanged()) {
-    //    changed.add(Change.create(before, after, diff));
-    //  }
-    //}
-
-    // calculate changes lazily
-    Iterable<Change<T, D>> changed = Iterators.filter(Iterators.map(pastSet, before -> {
-      T after = nowMap.get(before);
-      if (after != null) {
-        D diff = after.difference(before);
-        if (!diff.unchanged()) {
-          return Change.create(before, after, diff);
+    Iterable<Change<T, D>> changed = Iterators.lazy(() -> {
+      final List<Change<T, D>> result = new ArrayList<>(0);
+      for (T before : pastSet) {
+        T after = nowMap.get(before);
+        if (after != null) {
+          D diff = after.difference(before);
+          if (!diff.unchanged()) {
+            result.add(Change.create(before, after, diff));
+          }
         }
       }
-      return null;
-    }), Iterators.notNullFilter());
+      return result;
+    });
 
     return new Specifier<>() {
       @Override

@@ -175,11 +175,11 @@ public final class Utils {
   }
 
   public boolean hasOverriddenMethods(JvmClass cls, JvmMethod method) {
-    return !Iterators.isEmpty(getOverriddenMethods(cls, method::isSame)); // todo: ignore mock pair, if any
+    return !Iterators.isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules)) || inheritsFromLibraryClass(cls) /*assume the method can override some method from the library*/;
   }
 
   boolean isMethodVisible(final JvmClass cls, final JvmMethod method) {
-    return !Iterators.isEmpty(Iterators.filter(cls.getMethods(), method::isSame)) || hasOverriddenMethods(cls, method);
+    return !Iterators.isEmpty(Iterators.filter(cls.getMethods(), method::isSameByJavaRules)) || !Iterators.isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules));
   }
 
   // tests visibility within a class hierarchy
