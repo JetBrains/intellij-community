@@ -93,9 +93,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    if (e.isFromActionToolbar()) presentation.setText("");
+    if (e.isFromActionToolbar()) {
+      presentation.setText("");
+    }
+
     presentation.setDescription(getActionTooltip());
-    presentation.setIcon(getActionIcon());
+    presentation.setIconSupplier(SettingsEntryPointAction::getActionIcon);
   }
 
   @Override
@@ -319,14 +322,10 @@ public final class SettingsEntryPointAction extends DumbAwareAction
 
   private static @NotNull Icon calculateActionIcon() {
     if (ourShowPlatformUpdateIcon) {
-      return ExperimentalUI.isNewUI()
-             ? GEAR_ICON.getWarningIcon()
-             : getCustomizedIcon(IDE_UPDATE_ICON);
+      return ExperimentalUI.isNewUI() ? GEAR_ICON.getWarningIcon() : getCustomizedIcon(IDE_UPDATE_ICON);
     }
     if (ourShowPluginsUpdateIcon) {
-      return ExperimentalUI.isNewUI()
-             ? GEAR_ICON.getInfoIcon()
-             : getCustomizedIcon(PLUGIN_UPDATE_ICON);
+      return ExperimentalUI.isNewUI() ? GEAR_ICON.getInfoIcon() : getCustomizedIcon(PLUGIN_UPDATE_ICON);
     }
     if (ourNewUiIcon) {
       return NEW_UI_ICON;

@@ -33,7 +33,7 @@ public abstract class CreateInDirectoryActionBase extends AnAction {
   }
 
   protected CreateInDirectoryActionBase(@NotNull Supplier<@NlsActions.ActionText String> dynamicText,
-                                        @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription,
+                                        @Nullable Supplier<@NlsActions.ActionDescription String> dynamicDescription,
                                         @Nullable Supplier<? extends @Nullable Icon> icon) {
     super(dynamicText, dynamicDescription, icon);
   }

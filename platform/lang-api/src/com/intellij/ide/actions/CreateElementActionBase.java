@@ -39,7 +39,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
   }
 
   protected CreateElementActionBase(@NotNull Supplier<String> dynamicText,
-                                    @NotNull Supplier<String> dynamicDescription,
+                                    @Nullable Supplier<String> dynamicDescription,
                                     @Nullable Supplier<? extends @Nullable Icon> icon) {
     super(dynamicText, dynamicDescription, icon);
   }

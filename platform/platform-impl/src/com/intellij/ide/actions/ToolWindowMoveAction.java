@@ -144,7 +144,8 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
   private final @NotNull Anchor myAnchor;
 
   public ToolWindowMoveAction(@NotNull Anchor anchor) {
-    super(anchor.toString(), null, anchor.getIcon());
+    super(() -> anchor.toString(), null, () -> anchor.getIcon());
+
     myAnchor = anchor;
   }
 
