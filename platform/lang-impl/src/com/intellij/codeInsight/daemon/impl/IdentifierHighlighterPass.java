@@ -281,13 +281,13 @@ public final class IdentifierHighlighterPass {
     markers.sort(Segment.BY_START_OFFSET_THEN_END_OFFSET);
     TextRange leftBraceRange = markers.get(0);
     TextRange rightBraceRange = markers.get(markers.size() - 1);
-    int startLine = myEditor.offsetToLogicalPosition(leftBraceRange.getStartOffset()).line;
-    int endLine = myEditor.offsetToLogicalPosition(rightBraceRange.getEndOffset()).line;
+    int startLine = editorEx.offsetToLogicalPosition(leftBraceRange.getStartOffset()).line;
+    int endLine = editorEx.offsetToLogicalPosition(rightBraceRange.getEndOffset()).line;
     if (endLine - startLine > 0) {
-      BraceHighlightingHandler.lineMarkFragment(editorEx, myEditor.getDocument(), startLine, endLine, true);
+      BraceHighlightingHandler.lineMarkFragment(editorEx, editorEx.getDocument(), startLine, endLine, true);
     }
 
-    BraceHighlightingHandler.showScopeHint(myEditor, myFile, leftBraceRange.getStartOffset(), leftBraceRange.getEndOffset());
+    BraceHighlightingHandler.showScopeHint(editorEx, myFile, leftBraceRange.getStartOffset(), leftBraceRange.getEndOffset());
   }
 
   private @NotNull List<HighlightInfo> getHighlights() {
