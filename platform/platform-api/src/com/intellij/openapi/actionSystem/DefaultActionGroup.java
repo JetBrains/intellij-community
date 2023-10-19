@@ -37,7 +37,7 @@ public class DefaultActionGroup extends ActionGroup {
   private int myModificationStamp;
 
   public DefaultActionGroup() {
-    this(Presentation.NULL_STRING, false);
+    super();
   }
 
   /**
