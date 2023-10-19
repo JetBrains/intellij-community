@@ -93,12 +93,12 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     }
 
     val targets = dataContext.getData(DOCUMENTATION_TARGETS)
-    val requests = targets?.map { it.documentationRequest() }
-    if (requests.isNullOrEmpty()) return
-
     // This happens in the UI thread because IntelliJ action system returns `DocumentationTarget` instance from the `DataContext`,
     // and it's not possible to guarantee that it will still be valid when sent to another thread,
-    // so we create pointer and presentation right in the UI thread.
+    // so we create pointers and presentations right in the UI thread.
+    val requests = targets?.map { it.documentationRequest() }
+
+    if (requests.isNullOrEmpty()) return
     val popupContext = secondaryPopupContext ?: DefaultPopupContext(project, editor)
     showDocumentation(requests, popupContext, popupDependencies)
   }
