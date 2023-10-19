@@ -14,9 +14,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
-import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.forNewNote
 import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
 import java.net.URL
 
@@ -76,12 +75,13 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 
   override val newNoteVm: NewGitLabNoteViewModel? =
     if (mergeRequest.canAddNotes) {
-      DelegatingGitLabNoteEditingViewModel(
-        cs, "",
-        { mergeRequest.addNote(it) },
-        if (mergeRequest.canAddDraftNotes) { { mergeRequest.addDraftNote(it) } } else null
-      )
-        .forNewNote(currentUser)
+      GitLabNoteEditingViewModel
+        .forNewNote(cs, project, currentUser,
+                    { mergeRequest.addNote(it) },
+                    if (mergeRequest.canAddDraftNotes) {
+                      { mergeRequest.addDraftNote(it) }
+                    }
+                    else null)
         .apply {
           onDoneIn(cs) {
             text.value = ""

@@ -58,7 +58,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
 
   override val replyVm: Flow<GitLabDiscussionReplyViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
-      if (canAddNotes) GitLabDiscussionReplyViewModelImpl(this, currentUser, discussion)
+      if (canAddNotes) GitLabDiscussionReplyViewModelImpl(this, project, currentUser, discussion)
       else null
     }.modelFlow(cs, LOG)
 

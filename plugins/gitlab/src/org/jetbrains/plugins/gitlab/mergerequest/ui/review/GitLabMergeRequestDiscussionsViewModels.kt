@@ -56,7 +56,7 @@ fun GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition.mapToLocation(
 private val LOG = logger<GitLabMergeRequestDiscussionsViewModelsImpl>()
 
 internal class GitLabMergeRequestDiscussionsViewModelsImpl(
-  project: Project,
+  private val project: Project,
   parentCs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest
@@ -83,16 +83,15 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   override fun requestNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, focus: Boolean) {
     _newDiscussions.updateAndGet { currentNewDiscussions ->
       if (!currentNewDiscussions.containsKey(position) && mergeRequest.canAddNotes) {
-        val vm = DelegatingGitLabNoteEditingViewModel(
-          cs, "",
-          { createDiscussion(position, it) },
-          if (mergeRequest.canAddDraftNotes) {{ createDraftDiscussion(position, it) }} else null
-        )
+        val vm = GitLabNoteEditingViewModel
+          .forNewNote(cs, project, currentUser,
+                      { createDiscussion(position, it) },
+                      if (mergeRequest.canAddDraftNotes) {{ createDraftDiscussion(position, it) }} else null)
           .apply {
             onDoneIn(cs) {
               cancelNewDiscussion(position)
             }
-          }.forNewNote(currentUser)
+          }
         currentNewDiscussions + (position to vm)
       }
       else {

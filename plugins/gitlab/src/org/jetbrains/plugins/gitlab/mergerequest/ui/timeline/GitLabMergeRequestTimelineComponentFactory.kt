@@ -42,10 +42,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestVi
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestTimelineErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.submitActionIn
-import org.jetbrains.plugins.gitlab.ui.comment.submitAsDraftActionIn
+import org.jetbrains.plugins.gitlab.ui.comment.*
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JScrollPane
@@ -115,9 +112,13 @@ internal object GitLabMergeRequestTimelineComponentFactory {
                                                 iconsProvider: IconsProvider<GitLabUserDTO>,
                                                 editVm: NewGitLabNoteViewModel): JComponent {
     val noteCs = this
+
+    val addAction = editVm.submitActionIn(noteCs, CollaborationToolsBundle.message("review.comment.submit"))
+    val addAsDraftAction = editVm.submitAsDraftActionIn(noteCs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"))
+
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(editVm.submitActionIn(noteCs, CollaborationToolsBundle.message("review.comments.reply.action"))),
-      secondaryActions = MutableStateFlow(listOfNotNull(editVm.submitAsDraftActionIn(noteCs, CollaborationToolsBundle.message("review.comments.save-as-draft.action")))),
+      primaryAction = editVm.primarySubmitActionIn(noteCs, addAction, addAsDraftAction),
+      secondaryActions = editVm.secondarySubmitActionIn(noteCs, addAction, addAsDraftAction),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
                                                                      CommentInputActionsComponentFactory.submitShortcutText))
     )

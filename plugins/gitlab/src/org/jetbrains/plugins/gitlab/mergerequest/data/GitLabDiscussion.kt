@@ -34,7 +34,8 @@ interface GitLabDiscussion {
 
   suspend fun changeResolvedState()
 
-  suspend fun addNote(body: String, asDraft: Boolean)
+  suspend fun addNote(body: String)
+  suspend fun addDraftNote(body: String)
 }
 
 val GitLabMergeRequestDiscussion.firstNote: Flow<GitLabMergeRequestNote?>
@@ -137,30 +138,29 @@ class LoadedGitLabDiscussion(
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CHANGE_DISCUSSION_RESOLVE)
   }
 
-  override suspend fun addNote(body: String, asDraft: Boolean) {
+  override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
-      if (!asDraft) {
-        val newDiscussion = withContext(Dispatchers.IO) {
-          api.graphQL.createReplyNote(mr.gid, id.gid, body).getResultOrThrow()
-        }
+      val newDiscussion = withContext(Dispatchers.IO) {
+        api.graphQL.createReplyNote(mr.gid, id.gid, body).getResultOrThrow()
+      }
 
+      withContext(NonCancellable) {
+        noteEvents.emit(GitLabNoteEvent.Added(newDiscussion))
+      }
+      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_DISCUSSION_NOTE)
+    }
+  }
+
+  override suspend fun addDraftNote(body: String) {
+    withContext(cs.coroutineContext) {
+      withContext(Dispatchers.IO) {
+        api.rest.addDraftReplyNote(glProject, mr.iid, id.guessRestId(), body).body()
+      }?.also {
         withContext(NonCancellable) {
-          noteEvents.emit(GitLabNoteEvent.Added(newDiscussion))
+          draftNotesEventSink(GitLabNoteEvent.Added(it))
         }
       }
-      else {
-        withContext(Dispatchers.IO) {
-          api.rest.addDraftReplyNote(glProject, mr.iid, id.guessRestId(), body).body()
-        }?.also {
-          withContext(NonCancellable) {
-            draftNotesEventSink(GitLabNoteEvent.Added(it))
-          }
-        }
-      }
-      GitLabStatistics.logMrActionExecuted(
-        project,
-        if (!asDraft) GitLabStatistics.MergeRequestAction.ADD_DISCUSSION_NOTE
-        else GitLabStatistics.MergeRequestAction.ADD_DRAFT_DISCUSSION_NOTE)
+      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_DRAFT_DISCUSSION_NOTE)
     }
   }
 

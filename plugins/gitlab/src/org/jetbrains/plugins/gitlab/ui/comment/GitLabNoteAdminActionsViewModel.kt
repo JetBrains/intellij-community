@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -17,6 +18,7 @@ interface GitLabNoteAdminActionsViewModel {
    * Whether the note can be edited.
    */
   fun canEdit(): Boolean
+
   /**
    * Whether the note can be individually submitted when it is a draft note.
    */
@@ -36,8 +38,11 @@ interface GitLabNoteAdminActionsViewModel {
 private val LOG = logger<GitLabNoteAdminActionsViewModel>()
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val note: MutableGitLabNote)
-  : GitLabNoteAdminActionsViewModel {
+class GitLabNoteAdminActionsViewModelImpl(
+  parentCs: CoroutineScope,
+  private val project: Project,
+  private val note: MutableGitLabNote
+) : GitLabNoteAdminActionsViewModel {
 
   private val cs = parentCs.childScope()
   private val taskLauncher = SingleCoroutineLauncher(cs)
@@ -48,11 +53,13 @@ class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val 
     if (editing) {
       coroutineScope {
         val cs = this@coroutineScope
-        val editVm = DelegatingGitLabNoteEditingViewModel(cs, note.body.value, note::setBody).apply {
-          onDoneIn(cs) {
-            stopEditing()
+        val editVm = GitLabNoteEditingViewModel
+          .forExistingNote(cs, note.body.value, note::setBody)
+          .apply {
+            onDoneIn(cs) {
+              stopEditing()
+            }
           }
-        }
         emit(editVm)
         awaitCancellation()
       }

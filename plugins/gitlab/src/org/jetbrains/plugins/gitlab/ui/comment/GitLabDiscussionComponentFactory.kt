@@ -89,9 +89,12 @@ object GitLabDiscussionComponentFactory {
       bindTextIn(cs, resolveVm.actionTextFlow)
     }
 
+    val addAction = vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comment.submit"))
+    val addAsDraftAction = vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"))
+
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comments.reply.action"))),
-      secondaryActions = MutableStateFlow(listOfNotNull(vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action")))),
+      primaryAction = vm.primarySubmitActionIn(cs, addAction, addAsDraftAction),
+      secondaryActions = vm.secondarySubmitActionIn(cs, addAction, addAsDraftAction),
       additionalActions = MutableStateFlow(listOfNotNull(resolveAction)),
       cancelAction = MutableStateFlow(cancelAction),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
