@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup
 
-import com.intellij.openapi.observable.ActivityInProgressPredicate
+import com.intellij.openapi.observable.ActivityInProgressWitness
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 
-class StartupActivityInProgressPredicate : ActivityInProgressPredicate {
+class StartupActivityInProgressWitness : ActivityInProgressWitness {
   override val presentableName: String = "startup-activities"
 
   override suspend fun isInProgress(project: Project): Boolean {

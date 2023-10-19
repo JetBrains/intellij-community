@@ -2,10 +2,10 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.observable.ActivityInProgressPredicate
+import com.intellij.openapi.observable.ActivityInProgressWitness
 import kotlinx.coroutines.flow.first
 
-class ScanningInProgressPredicate : ActivityInProgressPredicate {
+class ScanningInProgressWitness : ActivityInProgressWitness {
   override val presentableName: String = "scanning"
 
   override suspend fun isInProgress(project: Project): Boolean {

@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
-import com.intellij.openapi.observable.ActivityInProgressPredicate
+import com.intellij.openapi.observable.ActivityInProgressWitness
 import kotlinx.coroutines.suspendCancellableCoroutine
 
-class DumbServiceInProgressPredicate : ActivityInProgressPredicate {
+class DumbServiceInProgressWitness : ActivityInProgressWitness {
 
   override val presentableName: String = "dumb-mode"
 
