@@ -3,12 +3,12 @@ package com.intellij.searchEverywhereMl.semantics.services
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
