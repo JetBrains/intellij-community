@@ -7,14 +7,12 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.util.Disposer
-import java.awt.Point
 
 internal class InlineCompletionMouseMotionListener : EditorMouseMotionListener {
   private var hoveredSession: InlineCompletionSession? = null
 
   override fun mouseMoved(e: EditorMouseEvent) {
     if (e.isConsumed) return
-    val event = e.mouseEvent
     if (e.area != EditorMouseEventArea.EDITING_AREA) {
       exitHover()
       return
@@ -30,16 +28,16 @@ internal class InlineCompletionMouseMotionListener : EditorMouseMotionListener {
     }
     if (hoveredSession !== newHoveredSession) {
       exitHover()
-      enterHover(newHoveredSession, event.locationOnScreen)
+      enterHover(newHoveredSession)
     }
   }
 
-  private fun enterHover(newHoveredSession: InlineCompletionSession, locationOnScreen: Point) {
+  private fun enterHover(newHoveredSession: InlineCompletionSession) {
     hoveredSession = newHoveredSession
     Disposer.register(newHoveredSession) {
       hoveredSession = null
     }
-    InlineCompletionTooltip.enterHover(newHoveredSession, locationOnScreen)
+    InlineCompletionTooltip.enterHover(newHoveredSession)
   }
 
   private fun exitHover() {
