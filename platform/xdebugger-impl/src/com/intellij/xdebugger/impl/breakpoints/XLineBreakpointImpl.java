@@ -282,8 +282,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
     }
 
-    getBreakpointManager().getLineBreakpointManager().getInlineBreakpointInlayManager().
-      redrawLine(document, line);
+    InlineBreakpointInlayManager.getInstance(getProject()).redrawLine(document, line);
   }
 
   @Override

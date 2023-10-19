@@ -60,12 +60,9 @@ public final class XLineBreakpointManager {
   private final MultiMap<String, XLineBreakpointImpl> myBreakpoints = MultiMap.createConcurrent();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
-  private final InlineBreakpointInlayManager myInlineBreakpointInlayManager;
 
   public XLineBreakpointManager(@NotNull Project project) {
     myProject = project;
-
-    myInlineBreakpointInlayManager = new InlineBreakpointInlayManager(project, this);
 
     MessageBusConnection busConnection = project.getMessageBus().connect();
 
@@ -121,8 +118,8 @@ public final class XLineBreakpointManager {
     });
   }
 
-  public @NotNull InlineBreakpointInlayManager getInlineBreakpointInlayManager() {
-    return myInlineBreakpointInlayManager;
+  private @NotNull InlineBreakpointInlayManager getInlineBreakpointInlayManager() {
+    return InlineBreakpointInlayManager.getInstance(myProject);
   }
 
   void updateBreakpointsUI() {
@@ -251,9 +248,9 @@ public final class XLineBreakpointManager {
             var inlineInlaysManager = getInlineBreakpointInlayManager();
             var firstLine = document.getLineNumber(e.getOffset());
             var lastLine = document.getLineNumber(e.getOffset() + e.getNewLength());
-            inlineInlaysManager.queueRedrawLine(document, firstLine);
+            inlineInlaysManager.redrawLineQueued(document, firstLine);
             if (lastLine != firstLine) {
-              inlineInlaysManager.queueRedrawLine(document, lastLine);
+              inlineInlaysManager.redrawLineQueued(document, lastLine);
             }
           }
         }

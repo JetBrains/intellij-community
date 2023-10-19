@@ -144,6 +144,38 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   /**
    * Get non-empty list of variants assuming that given list of types is non-empty too.
    */
+  public static List<? extends XLineBreakpointType.XLineBreakpointVariant>
+  getLineBreakpointVariantsSync(@NotNull final Project project,
+                                @NotNull List<? extends XLineBreakpointType> types,
+                                @NotNull final XSourcePosition position) {
+    if (types.isEmpty()) {
+      throw new IllegalArgumentException("non-empty types are expected");
+    }
+
+    boolean multipleTypes = types.size() > 1;
+    List<XLineBreakpointType.XLineBreakpointVariant> allVariants = new SmartList<>();
+    for (XLineBreakpointType type : types) {
+      var variants = type.computeVariants(project, position);
+      if (variants.isEmpty() && multipleTypes) {
+        // We have multiple types, but no non-default variants for this type. So we just create one.
+        allVariants.add(createDefaultBreakpointVariant(position, type));
+      }
+      else {
+        allVariants.addAll(variants);
+      }
+    }
+
+    if (allVariants.isEmpty()) {
+      assert !multipleTypes;
+      return Collections.singletonList(createDefaultBreakpointVariant(position, types.get(0)));
+    } else {
+      return allVariants;
+    }
+  }
+
+  /**
+   * Get non-empty list of variants assuming that given list of types is non-empty too.
+   */
   public static Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>
   getLineBreakpointVariants(@NotNull final Project project,
                             @NotNull List<? extends XLineBreakpointType> types,
