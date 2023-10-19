@@ -3,8 +3,10 @@
 
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.lang.documentation.ide.ui.ExpandableDefinition
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.lang.documentation.ide.ui.UIState
+import com.intellij.lang.documentation.ide.ui.parseExpandableDefinition
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.platform.backend.documentation.ContentUpdater
 import com.intellij.platform.backend.documentation.DocumentationContentData
@@ -19,6 +21,7 @@ internal class DocumentationPage(val request: DocumentationRequest) {
   private val myContentFlow = MutableStateFlow<DocumentationPageContent?>(null)
   val contentFlow: SharedFlow<DocumentationPageContent?> = myContentFlow.asSharedFlow()
   val currentContent: DocumentationPageContent.Content? get() = myContentFlow.value as? DocumentationPageContent.Content
+  var expandableDefinition: ExpandableDefinition? = null
 
   /**
    * @return `true` if some content was loaded, `false` if content is empty
@@ -39,7 +42,9 @@ internal class DocumentationPage(val request: DocumentationRequest) {
       return
     }
     val uiState = data.anchor?.let(UIState::ScrollToAnchor) ?: UIState.Reset
-    myContentFlow.value = prepareContent(data.content, data.links, uiState)
+    val original = data.content.html
+    expandableDefinition = parseExpandableDefinition(original, 4)
+    myContentFlow.value = prepareContent(data.content.copy(html = expandableDefinition?.getDecorated() ?: original), data.links, uiState)
     update(data.updates, data.links)
   }
 

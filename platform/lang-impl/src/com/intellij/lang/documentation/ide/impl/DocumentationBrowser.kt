@@ -110,7 +110,7 @@ internal class DocumentationBrowser private constructor(
   private suspend fun handleLink(url: String) {
     val targetPointer = this.targetPointer
     val internalResult = try {
-      handleLink(project, targetPointer, url)
+      handleLink(project, targetPointer, url, page)
     }
     catch (e: IndexNotReadyException) {
       return // normal situation, nothing to do
