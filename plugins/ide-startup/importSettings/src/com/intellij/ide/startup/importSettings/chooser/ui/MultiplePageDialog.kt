@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.openapi.ui.DialogWrapper
@@ -17,13 +18,26 @@ import javax.swing.SwingUtilities
 class MultiplePageDialog private constructor() : DialogWrapper(null) {
   companion object {
     fun show(page: PageProvider) {
+      createDialog(page).apply {
+        show()
+        pack()
+      }
+    }
+
+    fun showAndGet(page: PageProvider): Boolean {
+      return createDialog(page).run {
+        isModal = true
+        pack()
+        showAndGet()
+      }
+    }
+
+    private fun createDialog(page: PageProvider): MultiplePageDialog {
       val dialog = MultiplePageDialog()
       dialog.showPage(page)
       dialog.isModal = false
       dialog.isResizable = false
-      dialog.show()
-
-      dialog.pack()
+      return dialog
     }
   }
 

@@ -26,7 +26,7 @@ private class IdeStartupWizardImpl : IdeStartupWizard {
 
       withContext(Dispatchers.EDT) {
 
-        MultiplePageDialog.show(ProductChooserDialog())
+        MultiplePageDialog.showAndGet(ProductChooserDialog())
       }
     }
   }
