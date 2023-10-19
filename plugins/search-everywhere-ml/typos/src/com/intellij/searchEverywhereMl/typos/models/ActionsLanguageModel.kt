@@ -10,13 +10,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.searchEverywhereMl.typos.SearchEverywhereStringToken
 import com.intellij.searchEverywhereMl.typos.TyposBundle
 import com.intellij.searchEverywhereMl.typos.isTypoFixingEnabled
@@ -60,7 +60,9 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
   init {
     languageModelComputationJob = coroutineScope.launch {
       guessProject()?.also {
-        withBackgroundProgress(it, TyposBundle.getMessage("progress.title.computing.actions.language.model"), false) { init() }
+        withBackgroundProgress(project = it,
+                               title = TyposBundle.getMessage("progress.title.computing.actions.language.model"),
+                               cancellable = false) { init() }
       }.alsoIfNull {
         init()
       }
