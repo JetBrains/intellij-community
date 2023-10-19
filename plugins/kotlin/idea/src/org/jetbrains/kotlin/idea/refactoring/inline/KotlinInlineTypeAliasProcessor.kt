@@ -6,8 +6,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.idea.codeInliner.TypeAliasUsageReplacementStrategy
-import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
+import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
 class KotlinInlineTypeAliasProcessor(
@@ -30,4 +33,7 @@ class KotlinInlineTypeAliasProcessor(
     }
 
     override fun createReplacementStrategy(): UsageReplacementStrategy = TypeAliasUsageReplacementStrategy(declaration)
+    override fun unwrapSpecialUsage(usage: KtReferenceExpression): KtSimpleNameExpression? {
+        return unwrapSpecialUsageOrNull(usage)
+    }
 }

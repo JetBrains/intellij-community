@@ -87,7 +87,10 @@ interface KotlinSearchUsagesSupport {
         ): Boolean = getInstance(ktClass.project).forEachKotlinOverride(ktClass, members, scope, searchDeeply, processor)
 
         fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
-            getInstance(method.project).findDeepestSuperMethodsNoWrapping(method)
+            getInstance(method.project).findSuperMethodsNoWrapping(method, true)
+
+        fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
+            getInstance(method.project).findSuperMethodsNoWrapping(method, false)
 
         fun KtDeclaration.isOverridable(): Boolean =
             getInstance(project).isOverridable(this)
@@ -152,7 +155,7 @@ interface KotlinSearchUsagesSupport {
         processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean
     ): Boolean
 
-    fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement>
+    fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiElement>
 
     fun isOverridable(declaration: KtDeclaration): Boolean
 

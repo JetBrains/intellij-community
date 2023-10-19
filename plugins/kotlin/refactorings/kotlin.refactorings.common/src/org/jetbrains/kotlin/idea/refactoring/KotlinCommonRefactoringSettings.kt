@@ -52,6 +52,13 @@ interface KotlinCommonRefactoringSettings {
      */
     var renameTestMethods: Boolean
 
+    var INLINE_LOCAL_THIS: Boolean
+    var INLINE_PROPERTY_KEEP: Boolean
+    var INLINE_METHOD_THIS: Boolean
+    var INLINE_METHOD_KEEP: Boolean
+    var INLINE_TYPE_ALIAS_THIS: Boolean
+    var INLINE_TYPE_ALIAS_KEEP: Boolean
+
     companion object {
         @JvmStatic
         fun getInstance(): KotlinCommonRefactoringSettings = service()

@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.inline
 
 import com.intellij.lang.Language
@@ -11,8 +10,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtElement
 
 abstract class KotlinInlineActionHandler : InlineActionHandler() {
@@ -24,7 +23,9 @@ abstract class KotlinInlineActionHandler : InlineActionHandler() {
 
     final override fun inlineElement(project: Project, editor: Editor?, element: PsiElement) {
         val kotlinElement = unwrapKotlinElement(element) ?: error("Kotlin element not found")
-        KotlinInlineRefactoringFUSCollector.log(elementFrom = kotlinElement, languageTo = KotlinLanguage.INSTANCE, isCrossLanguage = false)
+        KotlinInlineRefactoringFUSCollector.log(elementFrom = kotlinElement,
+                                                languageTo = KotlinLanguage.INSTANCE,
+                                                isCrossLanguage = false)
         inlineKotlinElement(project, editor, kotlinElement)
     }
 
@@ -37,7 +38,7 @@ abstract class KotlinInlineActionHandler : InlineActionHandler() {
     open val helpId: String? = null
 
     fun showErrorHint(project: Project, editor: Editor?, @NlsContexts.DialogMessage message: String) {
-        CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId)
+      CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId)
     }
 
     fun checkSources(project: Project, editor: Editor?, declaration: KtElement): Boolean = !declaration.containingKtFile.isCompiled.also {

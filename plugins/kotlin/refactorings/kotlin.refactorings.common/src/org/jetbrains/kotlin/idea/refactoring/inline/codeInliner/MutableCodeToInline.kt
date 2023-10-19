@@ -1,11 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.codeInliner
+package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.psi.BuilderByPattern
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -17,8 +18,9 @@ import org.jetbrains.kotlin.resolve.ImportPath
 private val POST_INSERTION_ACTION: Key<(KtElement) -> Unit> = Key("POST_INSERTION_ACTION")
 private val PRE_COMMIT_ACTION: Key<(KtElement) -> Unit> = Key("PRE_COMMIT_ACTION_KEY")
 
-internal class MutableCodeToInline(
+class MutableCodeToInline(
     var mainExpression: KtExpression?,
+    var originalDeclaration: KtDeclaration?,
     val statementsBefore: MutableList<KtExpression>,
     val fqNamesToImport: MutableCollection<ImportPath>,
     val alwaysKeepMainExpression: Boolean,
@@ -80,8 +82,9 @@ internal class MutableCodeToInline(
     operator fun contains(element: PsiElement): Boolean = expressions.any { it.isAncestor(element) }
 }
 
-internal fun CodeToInline.toMutable(): MutableCodeToInline = MutableCodeToInline(
+fun CodeToInline.toMutable(): MutableCodeToInline = MutableCodeToInline(
     mainExpression?.copied(),
+    originalDeclaration,
     statementsBefore.asSequence().map { it.copied() }.toMutableList(),
     fqNamesToImport.toMutableSet(),
     alwaysKeepMainExpression,
@@ -101,10 +104,11 @@ private fun performPreCommitActions(expressions: Collection<KtExpression>) = exp
     .sortedWith(compareByDescending(KtElement::startOffset).thenBy(PsiElement::getTextLength))
     .forEach { performAction(it, PRE_COMMIT_ACTION) }
 
-internal fun MutableCodeToInline.toNonMutable(): CodeToInline {
+fun MutableCodeToInline.toNonMutable(): CodeToInline {
     performPreCommitActions(expressions)
     return CodeToInline(
         mainExpression,
+        originalDeclaration,
         statementsBefore,
         fqNamesToImport,
         alwaysKeepMainExpression,
@@ -112,11 +116,11 @@ internal fun MutableCodeToInline.toNonMutable(): CodeToInline {
     )
 }
 
-internal inline fun <reified T : PsiElement> MutableCodeToInline.collectDescendantsOfType(noinline predicate: (T) -> Boolean = { true }): List<T> {
+inline fun <reified T : PsiElement> MutableCodeToInline.collectDescendantsOfType(noinline predicate: (T) -> Boolean = { true }): List<T> {
     return expressions.flatMap { it.collectDescendantsOfType({ true }, predicate) }
 }
 
-internal inline fun <reified T : PsiElement> MutableCodeToInline.forEachDescendantOfType(noinline action: (T) -> Unit) {
+inline fun <reified T : PsiElement> MutableCodeToInline.forEachDescendantOfType(noinline action: (T) -> Unit) {
     expressions.forEach { it.forEachDescendantOfType(action) }
 }
 

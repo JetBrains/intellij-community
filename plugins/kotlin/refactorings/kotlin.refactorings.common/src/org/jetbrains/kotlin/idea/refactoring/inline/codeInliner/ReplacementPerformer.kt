@@ -1,25 +1,29 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.codeInliner
+package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.*
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal abstract class ReplacementPerformer<TElement : KtElement>(
+abstract class ReplacementPerformer<TElement : KtElement>(
     protected val codeToInline: MutableCodeToInline,
     protected var elementToBeReplaced: TElement
 ) {
@@ -28,7 +32,7 @@ internal abstract class ReplacementPerformer<TElement : KtElement>(
     abstract fun doIt(postProcessing: (PsiChildRange) -> PsiChildRange): TElement?
 }
 
-internal abstract class AbstractSimpleReplacementPerformer<TElement : KtElement>(
+abstract class AbstractSimpleReplacementPerformer<TElement : KtElement>(
     codeToInline: MutableCodeToInline,
     elementToBeReplaced: TElement
 ) : ReplacementPerformer<TElement>(codeToInline, elementToBeReplaced) {
@@ -54,7 +58,7 @@ internal abstract class AbstractSimpleReplacementPerformer<TElement : KtElement>
     }
 }
 
-internal class AnnotationEntryReplacementPerformer(
+class AnnotationEntryReplacementPerformer(
     codeToInline: MutableCodeToInline,
     elementToBeReplaced: KtAnnotationEntry
 ) : AbstractSimpleReplacementPerformer<KtAnnotationEntry>(codeToInline, elementToBeReplaced) {
@@ -80,7 +84,7 @@ internal class AnnotationEntryReplacementPerformer(
     }
 }
 
-internal class SuperTypeCallEntryReplacementPerformer(
+class SuperTypeCallEntryReplacementPerformer(
     codeToInline: MutableCodeToInline,
     elementToBeReplaced: KtSuperTypeCallEntry
 ) : AbstractSimpleReplacementPerformer<KtSuperTypeCallEntry>(codeToInline, elementToBeReplaced) {
@@ -106,7 +110,7 @@ private fun callWithoutLambdaArguments(callExpression: KtCallElement): String {
     ).text ?: callExpression.text
 }
 
-internal class ExpressionReplacementPerformer(
+class ExpressionReplacementPerformer(
     codeToInline: MutableCodeToInline,
     expressionToBeReplaced: KtExpression
 ) : ReplacementPerformer<KtExpression>(codeToInline, expressionToBeReplaced) {
@@ -164,8 +168,15 @@ internal class ExpressionReplacementPerformer(
             else -> {
                 // NB: Unit is never used as expression
                 val stub = elementToBeReplaced.replaced(psiFactory.createExpression("0"))
-                val bindingContext = stub.analyze()
-                val canDropElementToBeReplaced = !stub.isUsedAsExpression(bindingContext)
+
+                @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+                val canDropElementToBeReplaced = allowAnalysisFromWriteAction {
+                    allowAnalysisOnEdt {
+                        analyze(stub) {
+                            !stub.isUsedAsExpression()
+                        }
+                    }
+                }
                 if (canDropElementToBeReplaced) {
                     stub.delete()
                     null
@@ -214,6 +225,7 @@ internal class ExpressionReplacementPerformer(
     /**
      * Returns statement in a block to insert statement before it
      */
+    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
     private fun findOrCreateBlockToInsertStatement(): KtExpression {
         for (element in elementToBeReplaced.parentsWithSelf) {
             val parent = element.parent
@@ -229,7 +241,21 @@ internal class ExpressionReplacementPerformer(
 
                     if (parent is KtDeclarationWithBody) {
                         withElementToBeReplacedPreserved {
-                            ConvertToBlockBodyIntention.Holder.convert(parent)
+                            val context = allowAnalysisFromWriteAction {
+                                allowAnalysisOnEdt {
+                                    analyze(parent) {
+                                        ConvertToBlockBodyUtils.createContext(
+                                            parent,
+                                            ShortenReferencesFacility.getInstance(),
+                                            reformat = false
+                                        )
+                                    }
+                                }
+                            }
+                            if (context != null) {
+                                ConvertToBlockBodyUtils.convert(parent, context)
+                            }
+                            parent
                         }
                         return (parent.bodyExpression as KtBlockExpression).statements.single()
                     }

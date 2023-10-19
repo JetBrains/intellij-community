@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.codeInliner
+package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.idea.codeInliner.CodeToInline.Companion.PARAMETER_USAGE_KEY
-import org.jetbrains.kotlin.idea.codeInliner.CodeToInline.Companion.TYPE_PARAMETER_USAGE_KEY
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.ImportPath
 
@@ -20,6 +19,7 @@ import org.jetbrains.kotlin.resolve.ImportPath
  */
 class CodeToInline(
     val mainExpression: KtExpression?,
+    val originalDeclaration: KtDeclaration?,
     val statementsBefore: List<KtExpression>,
     val fqNamesToImport: Collection<ImportPath>,
     val alwaysKeepMainExpression: Boolean,

@@ -191,3 +191,15 @@ fun KtElement.isInsideOfCallerBody(
     val body = container.getDeclarationBody() ?: return false
     return body.textRange.contains(textRange) && container.isCaller(allUsages)
 }
+fun KtNamedDeclaration.deleteWithCompanion() {
+    val containingClass = this.containingClassOrObject
+    if (containingClass is KtObjectDeclaration &&
+        containingClass.isCompanion() &&
+        containingClass.declarations.size == 1 &&
+        containingClass.getSuperTypeList() == null
+    ) {
+        containingClass.delete()
+    } else {
+        this.delete()
+    }
+}

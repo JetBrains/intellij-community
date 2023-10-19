@@ -1,9 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.inline
 
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.OverrideMethodsProcessor
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.search.declarationsSearch.hasOverridingElement
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -27,9 +31,15 @@ class KotlinOverrideMethodsProcessor : OverrideMethodsProcessor {
     }
 }
 
+//called under potemkin progress
+@OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
 private fun KtNamedDeclaration.addOpenModifierIfNeeded() {
     if (hasModifier(KtTokens.ABSTRACT_KEYWORD) || hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.FINAL_KEYWORD)) return
-    if (!hasOverridingElement()) return
+    allowAnalysisFromWriteAction {
+        allowAnalysisOnEdt {
+            if (!hasOverridingElement()) return
+        }
+    }
 
     addModifier(KtTokens.OPEN_KEYWORD)
 }

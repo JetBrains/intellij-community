@@ -5,3 +5,4 @@ fun String.foo() {
     println("a".property)
     println(property)
 }
+// IGNORE_K2

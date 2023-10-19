@@ -47,6 +47,8 @@
     <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler$Processor"
                                id="JavaSyntheticPropertyFromKotlin"/>
 
+    <refactoring.overrideMethodProcessor implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinOverrideMethodsProcessor"/>
+
     <refactoring.moveMemberHandler
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinMemberHandler"/>

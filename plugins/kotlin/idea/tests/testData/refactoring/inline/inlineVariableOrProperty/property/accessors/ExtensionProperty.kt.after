@@ -2,3 +2,4 @@ fun String.foo() {
     println("a".length * 2)
     println(length * 2)
 }
+// IGNORE_K2

@@ -11,7 +11,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.test.*
 import java.io.File
 
@@ -44,7 +44,7 @@ abstract class AbstractInlineTest : KotlinLightCodeInsightFixtureTestCase() {
 
             val expectedErrors = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, "// ERROR: ")
             val inlinePropertyKeepValue = InTextDirectivesUtils.getPrefixedBoolean(myFixture.file.text, "// INLINE_PROPERTY_KEEP: ")
-            val settings = KotlinRefactoringSettings.instance
+            val settings = KotlinCommonRefactoringSettings.getInstance()
             val oldInlinePropertyKeepValue = settings.INLINE_PROPERTY_KEEP
             if (handler != null) {
                 try {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.inline
 
@@ -12,7 +12,7 @@ import com.intellij.refactoring.inline.InlineOptionsDialog
 import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import kotlin.reflect.KMutableProperty1
 
@@ -21,15 +21,18 @@ abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(
     protected val reference: PsiReference?,
     protected val editor: Editor?,
 ) : InlineOptionsDialog(declaration.project, true, declaration) {
-    final override fun isKeepTheDeclarationByDefault(): Boolean = inlineKeepOption.get(KotlinRefactoringSettings.instance)
-    final override fun isInlineThis(): Boolean = inlineThisOption.get(KotlinRefactoringSettings.instance)
+
+    protected val kotlinRefactoringSettings: KotlinCommonRefactoringSettings = KotlinCommonRefactoringSettings.getInstance()
+
+    final override fun isKeepTheDeclarationByDefault(): Boolean = inlineKeepOption.get(kotlinRefactoringSettings)
+    final override fun isInlineThis(): Boolean = inlineThisOption.get(kotlinRefactoringSettings)
     public final override fun doAction() {
         invokeRefactoring(createProcessor())
         saveSettings()
     }
 
     private fun saveSettings() {
-        val settings = KotlinRefactoringSettings.instance
+        val settings = kotlinRefactoringSettings
         if (myRbInlineThisOnly.isEnabled && myRbInlineAll.isEnabled) {
             inlineThisOption.set(settings, isInlineThisOnly)
         }
@@ -39,8 +42,8 @@ abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(
         }
     }
 
-    abstract val inlineThisOption: KMutableProperty1<KotlinRefactoringSettings, Boolean>
-    abstract val inlineKeepOption: KMutableProperty1<KotlinRefactoringSettings, Boolean>
+    abstract val inlineThisOption: KMutableProperty1<KotlinCommonRefactoringSettings, Boolean>
+    abstract val inlineKeepOption: KMutableProperty1<KotlinCommonRefactoringSettings, Boolean>
     abstract fun createProcessor(): BaseRefactoringProcessor
 
     // NB: can be -1 in case of too expensive search!

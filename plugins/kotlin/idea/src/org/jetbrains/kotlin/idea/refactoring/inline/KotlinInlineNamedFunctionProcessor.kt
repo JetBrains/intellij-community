@@ -6,9 +6,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.idea.codeInliner.CallableUsageReplacementStrategy
-import org.jetbrains.kotlin.idea.codeInliner.CodeToInline
-import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
+import org.jetbrains.kotlin.idea.codeInliner.CodeToInlineBuilder
+import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.buildCodeToInline
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 class KotlinInlineFunctionProcessor(
     declaration: KtNamedFunction,
@@ -26,6 +31,9 @@ class KotlinInlineFunctionProcessor(
     project = project,
 ) {
     override fun createReplacementStrategy(): UsageReplacementStrategy? = createUsageReplacementStrategyForFunction(declaration, editor)
+    override fun unwrapSpecialUsage(usage: KtReferenceExpression): KtSimpleNameExpression? {
+        return unwrapSpecialUsageOrNull(usage)
+    }
 }
 
 fun createUsageReplacementStrategyForFunction(
@@ -46,5 +54,8 @@ fun createCodeToInlineForFunction(
     function.bodyExpression!!,
     function.hasBlockBody(),
     editor,
-    fallbackToSuperCall,
+    CodeToInlineBuilder(
+        originalDeclaration = function,
+        fallbackToSuperCall = fallbackToSuperCall,
+    ),
 )

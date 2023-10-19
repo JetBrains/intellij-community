@@ -3,3 +3,4 @@ import java.util.ArrayList
 fun f() {
     val copy: List<Int> = ArrayList(listOf())
 }
+// IGNORE_K2
