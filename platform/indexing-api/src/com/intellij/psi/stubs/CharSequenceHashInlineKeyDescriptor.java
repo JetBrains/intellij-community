@@ -65,5 +65,10 @@ final class CharSequenceHashInlineKeyDescriptor extends InlineKeyDescriptor<Char
     public @NotNull IntStream codePoints() {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public String toString() {
+      return "hash[" + hashCode + "]";
+    }
   }
 }

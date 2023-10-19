@@ -181,6 +181,12 @@ public final class SerializedStubTree {
   }
 
   public @NotNull SerializedStubTree withoutStub() {
+    try {
+      restoreIndexedStubs();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     return new SerializedStubTree(ArrayUtil.EMPTY_BYTE_ARRAY,
                                   0,
                                   myIndexedStubBytes,
