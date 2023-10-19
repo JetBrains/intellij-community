@@ -1380,7 +1380,7 @@ public final class Mappings {
                     continue;
                   }
 
-                  if (cc.name == it.name || !pp.first.equals(removedMethod) /*need exact match*/) {
+                  if (!pp.first.isAbstract() && !pp.first.equals(removedMethod) /*need exact match for non-abstract methods*/) {
                     continue;
                   }
 
