@@ -592,15 +592,10 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     }
 
     if (myGenerateGetter) {
-      final String getterVisibility = PsiModifier.PUBLIC;
-      StringBuilder getterBuffer = new StringBuilder();
-      getterBuffer.append(getterVisibility);
-      getterBuffer.append(" Object ");
-      getterBuffer.append(myGetterName);
-      getterBuffer.append("() {\n return ");
-      getterBuffer.append(myFieldName);
-      getterBuffer.append(";\n}");
-      PsiMethod getter = myFactory.createMethodFromText(getterBuffer.toString(), myClass);
+      String getterText = PsiModifier.PUBLIC + " Object " + myGetterName + "() {\n" +
+                          " return " + myFieldName + ";\n" +
+                          "}";
+      PsiMethod getter = myFactory.createMethodFromText(getterText, myClass);
       getter.getReturnTypeElement().replace(myFactory.createTypeElement(myBaseClassType));
       getter = (PsiMethod) CodeStyleManager.getInstance(myProject).reformat(getter);
       myClass.add(getter);

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
@@ -95,15 +96,9 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
   private static @NlsContexts.Label @NotNull String getPresentableRelativePathFor(
     @NotNull Module module,
     @NotNull VirtualFile contentRoot,
-    @NotNull String relativePath
+    @NlsSafe @NotNull String relativePath
   ) {
-    @NlsContexts.Label StringBuilder result = new StringBuilder();
-    result.append("[");
-    result.append(module.getName());
-    result.append("] ");
-    result.append(contentRoot.getName());
-    result.append(File.separatorChar);
-    result.append(relativePath);
-    return result.toString();
+    return "[" + module.getName() + "] " +
+           contentRoot.getName() + File.separatorChar + relativePath;
   }
 }

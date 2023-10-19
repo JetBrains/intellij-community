@@ -13,18 +13,14 @@ import java.io.IOException;
 public final class ScriptGeneratorUtil {
   @NotNull
   private static File createBatchScript(@NotNull @NonNls String fileName, @NotNull @NonNls String commandLine) throws IOException {
-    @NonNls StringBuilder sb = new StringBuilder();
-    sb.append("@echo off").append("\n");
-    sb.append(commandLine).append(" %*").append("\n");
-    return createTempExecutable(fileName + ".bat", sb.toString());
+    String batchScriptText = "@echo off" + "\n" + commandLine + " %*\n";
+    return createTempExecutable(fileName + ".bat", batchScriptText);
   }
 
   @NotNull
   private static File createShellScript(@NotNull @NonNls String fileName, @NotNull @NonNls String commandLine) throws IOException {
-    @NonNls StringBuilder sb = new StringBuilder();
-    sb.append("#!/bin/sh").append("\n");
-    sb.append(commandLine).append(" \"$@\"").append("\n");
-    return createTempExecutable(fileName + ".sh", sb.toString());
+    String shellText = "#!/bin/sh\n" + commandLine + " \"$@\"\n";
+    return createTempExecutable(fileName + ".sh", shellText);
   }
 
   @NotNull

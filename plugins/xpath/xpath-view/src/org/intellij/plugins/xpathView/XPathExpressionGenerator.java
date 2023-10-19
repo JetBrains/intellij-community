@@ -282,13 +282,7 @@ public final class XPathExpressionGenerator {
                                      (descriptor != null && descriptor.hasIdType()) ||
                                      name.equalsIgnoreCase("id") ||
                                      name.equalsIgnoreCase("name"))) {
-                                  final StringBuilder buffer = new StringBuilder(uniquePath);
-                                  buffer.append("[@");
-                                  buffer.append(name);
-                                  buffer.append("='");
-                                  buffer.append(attribute.getValue());
-                                  buffer.append("']");
-                                  return buffer.toString();
+                                  return uniquePath + "[@" + name + "='" + attribute.getValue() + "']";
                                 }
                             }
                         }
