@@ -4,6 +4,7 @@ package git4idea.log;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.observable.TrackingUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -372,12 +373,11 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   public @NotNull Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher) {
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, repository -> {
-      myProject.getService(VcsInProgressService.class).trackConfigurationActivityBlocking(() -> {
+      TrackingUtil.trackActivity(myProject, VcsInProgressWitness.class, () -> {
         VirtualFile root = repository.getRoot();
         if (roots.contains(root)) {
           refresher.refresh(root);
         }
-        return null;
       });
     });
     return connection;

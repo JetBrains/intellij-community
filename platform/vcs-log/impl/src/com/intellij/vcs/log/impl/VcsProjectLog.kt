@@ -17,9 +17,9 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.observable.trackActivity
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
@@ -29,6 +29,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -191,7 +192,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
     if (logProviders.isEmpty()) return null
 
-    project.serviceAsync<VcsInProgressService>().trackConfigurationActivity {
+    project.trackActivity(VcsInProgressWitness::class) {
       val logManager = getOrCreateLogManager(logProviders)
       logManager.initialize(force = forceInit)
     }

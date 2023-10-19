@@ -4,6 +4,7 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.observable.TrackingUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -144,9 +145,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   private void doScheduleIndex(boolean full) {
-    myProject.getService(VcsInProgressService.class).trackConfigurationActivityBlocking(() -> {
+    TrackingUtil.trackActivity(myProject, VcsInProgressWitness.class, () -> {
       doScheduleIndex(full, request -> mySingleTaskController.request(request));
-      return null;
     });
   }
 
