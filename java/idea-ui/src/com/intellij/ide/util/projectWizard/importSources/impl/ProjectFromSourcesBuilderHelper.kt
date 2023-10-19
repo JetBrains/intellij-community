@@ -2,6 +2,7 @@
 package com.intellij.ide.util.projectWizard.importSources.impl
 
 import com.intellij.ide.IdeCoreBundle
+import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.importProject.LibraryDescriptor
 import com.intellij.ide.util.importProject.ModuleDescriptor
 import com.intellij.ide.util.importProject.ModuleInsight
@@ -9,7 +10,8 @@ import com.intellij.ide.util.importProject.ProjectDescriptor
 import com.intellij.ide.util.projectWizard.ExistingModuleLoader
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl.ProjectConfigurationUpdater
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
@@ -26,8 +28,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.ArrayUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
@@ -41,15 +46,21 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
                                                private val myUpdaters: List<ProjectConfigurationUpdater>,
                                                private val selectedDescriptors: Collection<ProjectDescriptor>) {
   @RequiresEdt
-  fun doCommit(): List<Module> {
+  fun commit(): List<Module> {
+    return runWithModalProgressBlocking(project, JavaUiBundle.message("modal.text.importing.module")) {
+      doCommit()
+    }
+  }
+
+  private suspend fun doCommit(): List<Module> {
     val modelsProvider: ModifiableModelsProvider = IdeaModifiableModelsProvider()
     val projectLibraryTable = modelsProvider.getLibraryTableModifiableModel(project)
     val projectLibs: MutableMap<LibraryDescriptor, Library> = HashMap()
     val result: MutableList<Module> = ArrayList()
     try {
-      WriteAction.run<RuntimeException> {
-        createProjectLevelLibraries(projectLibraryTable, projectLibs)
-        if (commitModels) {
+      createProjectLevelLibraries(projectLibraryTable, projectLibs)
+      if (commitModels) {
+        writeAction {
           projectLibraryTable.commit()
         }
       }
@@ -63,9 +74,9 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
     val descriptorToModuleMap: MutableMap<ModuleDescriptor, Module> = HashMap()
 
     try {
-      WriteAction.run<Exception> {
-        result.addAll(createModules(projectLibs, descriptorToModuleMap))
-        if (commitModels) {
+      result.addAll(createModules(projectLibs, descriptorToModuleMap))
+      if (commitModels) {
+        writeAction {
           moduleModel.commit()
         }
       }
@@ -81,7 +92,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
   }
 
   @Throws(IOException::class, ModuleWithNameAlreadyExists::class, JDOMException::class, ConfigurationException::class)
-  private fun createModules(projectLibs: Map<LibraryDescriptor, Library>,
+  private suspend fun createModules(projectLibs: Map<LibraryDescriptor, Library>,
                             descriptorToModuleMap: MutableMap<ModuleDescriptor, Module>): List<Module> {
     val result: MutableList<Module> = ArrayList()
     val contentRootToModule: MutableMap<String, Module> = HashMap()
@@ -120,28 +131,29 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
   }
 
   @Throws(InvalidDataException::class)
-  private fun createModule(projectDescriptor: ProjectDescriptor,
+  private suspend fun createModule(projectDescriptor: ProjectDescriptor,
                            descriptor: ModuleDescriptor,
                            projectLibs: Map<LibraryDescriptor, Library>): Module {
     val moduleFilePath = descriptor.computeModuleFilePath()
-    ModuleBuilder.deleteModuleFile(moduleFilePath)
+    withContext(Dispatchers.EDT) {
+      ModuleBuilder.deleteModuleFile(moduleFilePath)
+    }
 
     val module = moduleModel.newModule(moduleFilePath, descriptor.moduleType.id)
     val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
     setupRootModel(projectDescriptor, descriptor, modifiableModel, projectLibs)
     descriptor.updateModuleConfiguration(module, modifiableModel)
-    if (commitModels) {
+    writeAction {
       modifiableModel.commit()
     }
     return module
   }
 
-  private fun setupRootModel(projectDescriptor: ProjectDescriptor,
+  private suspend fun setupRootModel(projectDescriptor: ProjectDescriptor,
                              descriptor: ModuleDescriptor,
                              rootModel: ModifiableRootModel,
                              projectLibs: Map<LibraryDescriptor, Library>) {
-    val compilerModuleExtension = rootModel.getModuleExtension(
-      CompilerModuleExtension::class.java)
+    val compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension::class.java)
     compilerModuleExtension.isExcludeOutput = true
     rootModel.inheritSdk()
 
@@ -176,7 +188,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
           val library = moduleLibraryTable.createLibrary()
           val modifiableModel = library.modifiableModel
           modifiableModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES)
-          if (commitModels) {
+          writeAction {
             modifiableModel.commit()
           }
         }
@@ -184,31 +196,29 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
     }
   }
 
-  private fun setupDependenciesBetweenModules(modelsProvider: ModifiableModelsProvider,
+  private suspend fun setupDependenciesBetweenModules(modelsProvider: ModifiableModelsProvider,
                                               descriptorToModuleMap: Map<ModuleDescriptor, Module>) {
     // setup dependencies between modules
     try {
-      WriteAction.run<RuntimeException> {
-        for (data in selectedDescriptors) {
-          for (descriptor in data.modules) {
-            val module = descriptorToModuleMap[descriptor]
-            if (module == null) {
-              continue
+      for (data in selectedDescriptors) {
+        for (descriptor in data.modules) {
+          val module = descriptorToModuleMap[descriptor]
+          if (module == null) {
+            continue
+          }
+          val deps = descriptor.dependencies
+          if (deps.isEmpty()) {
+            continue
+          }
+          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+          for (dependentDescriptor in deps) {
+            val dependentModule = descriptorToModuleMap[dependentDescriptor]
+            if (dependentModule != null) {
+              rootModel.addModuleOrderEntry(dependentModule)
             }
-            val deps = descriptor.dependencies
-            if (deps.isEmpty()) {
-              continue
-            }
-            val rootModel = ModuleRootManager.getInstance(module).modifiableModel
-            for (dependentDescriptor in deps) {
-              val dependentModule = descriptorToModuleMap[dependentDescriptor]
-              if (dependentModule != null) {
-                rootModel.addModuleOrderEntry(dependentModule)
-              }
-            }
-            if (commitModels) {
-              rootModel.commit()
-            }
+          }
+          writeAction {
+            rootModel.commit()
           }
         }
       }
@@ -219,24 +229,24 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
                                IdeCoreBundle.message("title.add.module"))
     }
 
-    WriteAction.run<RuntimeException> {
+    writeAction {
       for (updater in myUpdaters) {
         updater.updateProject(project, modelsProvider, updatedModulesProvider)
       }
     }
   }
 
-  private fun createProjectLevelLibraries(projectLibraryTable: LibraryTable.ModifiableModel,
+  private suspend fun createProjectLevelLibraries(projectLibraryTable: LibraryTable.ModifiableModel,
                                           projectLibs: MutableMap<LibraryDescriptor, Library>) {
     for (projectDescriptor in selectedDescriptors) {
       for (lib in projectDescriptor.libraries) {
         val files = lib.jars
-        val projectLib = projectLibraryTable.createLibrary(lib.name)
+        val projectLib = withContext(Dispatchers.EDT) { projectLibraryTable.createLibrary(lib.name) }
         val libraryModel = projectLib.modifiableModel
         for (file in files) {
           libraryModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES)
         }
-        if (commitModels) {
+        writeAction {
           libraryModel.commit()
         }
         projectLibs[lib] = projectLib
