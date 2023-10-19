@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewController
@@ -39,6 +40,8 @@ private class ReviewModeActionGroup(private val editor: Editor) : ActionGroup(),
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = arrayOf(reviewModeAction, Separator.create())
 
   private inner class ReviewModeAction : ActionGroup(), DumbAware {
+    private val updateAction = UpdateAction()
+
     private val disableReviewAction =
       ViewOptionToggleAction(DiscussionsViewOption.DONT_SHOW,
                              GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Disable.text"))
@@ -52,7 +55,7 @@ private class ReviewModeActionGroup(private val editor: Editor) : ActionGroup(),
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-      arrayOf(disableReviewAction, hideResolvedAction, showAllAction)
+      arrayOf(updateAction, Separator.create(), disableReviewAction, hideResolvedAction, showAllAction)
 
     override fun displayTextInToolbar(): Boolean = true
 
@@ -91,27 +94,47 @@ private class ReviewModeActionGroup(private val editor: Editor) : ActionGroup(),
     }
 
     private fun getWarningIcon(): Icon = HighlightDisplayLevel.find(HighlightSeverity.WARNING)?.icon ?: AllIcons.General.Warning
-  }
 
-  private inner class ViewOptionToggleAction(private val option: DiscussionsViewOption,
-                                             text: @NlsActions.ActionText String) : ToggleAction(text) {
+    private inner class UpdateAction
+      : DumbAwareAction(GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Update.text"), null, AllIcons.Actions.CheckOut) {
 
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-      val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY)
-      e.presentation.isEnabledAndVisible = vm != null
+      override fun update(e: AnActionEvent) {
+        val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY)
+        if (vm == null) {
+          e.presentation.isEnabledAndVisible = false
+          return
+        }
+        e.presentation.isEnabledAndVisible = vm.localRepositorySyncStatus.value?.incoming == true
+      }
+
+      override fun actionPerformed(e: AnActionEvent) {
+        val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY) ?: return
+        vm.fetchAndCheckoutBranch()
+      }
     }
 
-    override fun isSelected(e: AnActionEvent): Boolean {
-      val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY) ?: return false
-      return vm.discussionsViewOption.value == option
-    }
+    private inner class ViewOptionToggleAction(private val option: DiscussionsViewOption,
+                                               text: @NlsActions.ActionText String) : ToggleAction(text) {
 
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
-      val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY) ?: return
-      vm.setDiscussionsViewOption(option)
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+      override fun update(e: AnActionEvent) {
+        super.update(e)
+        val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY)
+        e.presentation.isEnabledAndVisible = vm != null
+      }
+
+      override fun isSelected(e: AnActionEvent): Boolean {
+        val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY) ?: return false
+        return vm.discussionsViewOption.value == option
+      }
+
+      override fun setSelected(e: AnActionEvent, state: Boolean) {
+        val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY) ?: return
+        vm.setDiscussionsViewOption(option)
+      }
     }
   }
 }
