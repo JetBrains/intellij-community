@@ -12,7 +12,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
-private class IdeStartupWizardImpl : IdeStartupWizard {
+internal class IdeStartupWizardImpl : IdeStartupWizard {
   init {
     if (!System.getProperty("intellij.startup.wizard", "false").toBoolean()) {
       throw ExtensionNotApplicableException.create()
