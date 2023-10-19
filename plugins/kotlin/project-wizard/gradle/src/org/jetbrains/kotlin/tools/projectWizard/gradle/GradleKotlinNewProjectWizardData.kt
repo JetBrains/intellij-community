@@ -12,6 +12,10 @@ interface GradleKotlinNewProjectWizardData : GradleNewProjectWizardData {
 
     var addSampleCode: Boolean
 
+    val generateOnboardingTipsProperty: GraphProperty<Boolean>
+
+    var generateOnboardingTips: Boolean
+
     companion object {
 
         val KEY = Key.create<GradleKotlinNewProjectWizardData>(GradleKotlinNewProjectWizardData::class.java.name)

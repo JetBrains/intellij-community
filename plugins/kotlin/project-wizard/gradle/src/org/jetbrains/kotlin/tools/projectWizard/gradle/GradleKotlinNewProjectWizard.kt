@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.tools.projectWizard.gradle
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChangedEvent
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
-import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
+import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.tools.projectWizard.*
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
+import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaKotlinVersionProviderService
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
@@ -63,10 +65,15 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             data.putUserData(GradleKotlinNewProjectWizardData.KEY, this)
         }
 
-        override var addSampleCodeProperty = propertyGraph.property(true)
+        override val addSampleCodeProperty = propertyGraph.property(true)
             .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
         override var addSampleCode by addSampleCodeProperty
+
+        override val generateOnboardingTipsProperty = propertyGraph.property(AssetsJavaNewProjectWizardStep.proposeToGenerateOnboardingTipsByDefault())
+            .bindBooleanStorage(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME)
+
+        override var generateOnboardingTips by generateOnboardingTipsProperty
 
         private fun setupSampleCodeUI(builder: Panel) {
             builder.row {
@@ -76,11 +83,22 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }
         }
 
+        private fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) {
+            builder.indent {
+                row {
+                    checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
+                        .bindSelected(generateOnboardingTipsProperty)
+                        .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
+                }
+            }.enabledIf(addSampleCodeProperty)
+        }
+
         override fun setupSettingsUI(builder: Panel) {
             setupJavaSdkUI(builder)
             setupGradleDslUI(builder)
             setupParentsUI(builder)
             setupSampleCodeUI(builder)
+            setupSampleCodeWithOnBoardingTipsUI(builder)
         }
 
         override fun validateLanguageCompatibility(gradleVersion: GradleVersion): Boolean {
@@ -239,7 +257,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         }
     }
 
-    private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
+    private class AssetsStep(private val parent: Step) : AssetsKotlinNewProjectWizardStep(parent) {
         private fun createKotlinContentRoots() {
             val directories = listOf(
                 "$outputDirectory/src/main/kotlin",
@@ -252,15 +270,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }
         }
 
-        private fun withKotlinSampleCode(packageName: String) {
-            val templateName = "KotlinSampleCode"
-            val sourcePath = "src/main/kotlin/Main.kt"
-            addTemplateAsset(sourcePath, templateName, buildMap {
-                put("PACKAGE_NAME", packageName)
-            })
-            addFilesToOpen(sourcePath)
-        }
-
+        private fun shouldAddOnboardingTips(): Boolean = parent.addSampleCode && parent.generateOnboardingTips
 
         override fun setupAssets(project: Project) {
             if (context.isCreatingNewProject) {
@@ -268,7 +278,14 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }
             createKotlinContentRoots()
             if (parent.addSampleCode) {
-                withKotlinSampleCode(parent.groupId)
+                withKotlinSampleCode("src/main/kotlin", parent.groupId, shouldAddOnboardingTips())
+            }
+        }
+
+        override fun setupProject(project: Project) {
+            super.setupProject(project)
+            if (shouldAddOnboardingTips()) {
+                prepareTipsInEditor(project)
             }
         }
     }

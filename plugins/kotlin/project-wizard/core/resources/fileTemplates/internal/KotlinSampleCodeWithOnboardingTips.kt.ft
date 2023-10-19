@@ -1,0 +1,20 @@
+#if (${PACKAGE_NAME} && ${PACKAGE_NAME} != "")
+package ${PACKAGE_NAME}
+
+#end
+#parse("File Header.java")
+// ${SearchEverywhereComment1}
+// ${SearchEverywhereComment2}
+fun main() {
+    // ${ShowIntentionComment1}
+    // ${ShowIntentionComment2}
+    val name = "Kotlin"
+    println("Hello, " + name + "!")
+
+    // ${RunComment}
+    for (i in 1..5) {
+        // ${DebugComment1}
+        // ${DebugComment2}
+        println("i = $i")
+    }
+}
