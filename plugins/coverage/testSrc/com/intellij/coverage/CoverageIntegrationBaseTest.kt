@@ -27,6 +27,8 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(getTestDataPath()), getTestRootDisposable())
   }
 
+  val manager get() = CoverageDataManager.getInstance(myProject) as CoverageDataManagerImpl
+
 
   @JvmOverloads
   protected fun loadIJSuite(includeFilters: Array<String>? = DEFAULT_FILTER, path: String = SIMPLE_IJ_REPORT_PATH) =
@@ -41,17 +43,17 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     = loadCoverageSuite(XMLReportEngine::class.java, XMLReportRunner::class.java, path, includeFilters)
 
   protected fun closeSuite(bundle: CoverageSuitesBundle) {
-    CoverageDataManager.getInstance(myProject).closeSuitesBundle(bundle)
+    manager.closeSuitesBundle(bundle)
   }
 
   protected suspend fun openSuiteAndWait(bundle: CoverageSuitesBundle) = waitSuiteProcessing {
-    CoverageDataManager.getInstance(myProject).chooseSuitesBundle(bundle)
+    manager.chooseSuitesBundle(bundle)
   }
 
   protected suspend fun waitSuiteProcessing(action: () -> Unit) {
     var dataCollected = false
     val disposable = Disposer.newDisposable()
-    CoverageDataManager.getInstance(myProject).addSuiteListener(object : CoverageSuiteListener {
+    manager.addSuiteListener(object : CoverageSuiteListener {
       override fun coverageDataCalculated(bundle: CoverageSuitesBundle) {
         dataCollected = true
       }

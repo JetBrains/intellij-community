@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view
 
-import com.intellij.coverage.CoverageDataManager
 import com.intellij.coverage.CoverageEditorAnnotatorImpl
 import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.openapi.application.readAction
@@ -77,7 +76,7 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     openSuiteAndWait(suite)
 
     waitSuiteProcessing {
-      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.bar.BarTest,testMethod3"))
+      manager.selectSubCoverage(suite, listOf("foo.bar.BarTest,testMethod3"))
     }
     waitAnnotations()
     assertGutterHighlightLines("foo.bar.BarClass", mapOf(5 to LineCoverage.FULL, 9 to LineCoverage.NONE, 13 to LineCoverage.NONE))
@@ -85,7 +84,7 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     assertGutterHighlightLines("foo.FooClass", mapOf())
 
     waitSuiteProcessing {
-      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.FooTest,testMethod1"))
+      manager.selectSubCoverage(suite, listOf("foo.FooTest,testMethod1"))
     }
     waitAnnotations()
     assertGutterHighlightLines("foo.bar.BarClass", mapOf())
@@ -93,7 +92,7 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     assertGutterHighlightLines("foo.FooClass", mapOf(5 to LineCoverage.FULL, 9 to LineCoverage.NONE))
 
     waitSuiteProcessing {
-      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.FooTest,testMethod2"))
+      manager.selectSubCoverage(suite, listOf("foo.FooTest,testMethod2"))
     }
     waitAnnotations()
     assertGutterHighlightLines("foo.bar.BarClass", mapOf())

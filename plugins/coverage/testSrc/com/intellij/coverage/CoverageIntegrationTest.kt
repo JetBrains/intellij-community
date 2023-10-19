@@ -31,7 +31,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   fun testXMLSuite() {
     val bundle = loadXMLSuite()
     val consumer = PackageAnnotationConsumer()
-    XMLReportAnnotator.getInstance(myProject).annotate(bundle, CoverageDataManager.getInstance(myProject), consumer)
+    XMLReportAnnotator.getInstance(myProject).annotate(bundle, manager, consumer)
     assertHits(consumer, ignoreConstructor = false)
     assertEquals(3, consumer.myDirectoryCoverage.size)
   }
@@ -104,7 +104,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     openSuiteAndWait(suite)
 
     waitSuiteProcessing {
-      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.bar.BarTest,testMethod3"))
+      manager.selectSubCoverage(suite, listOf("foo.bar.BarTest,testMethod3"))
     }
     run {
       val consumer = PackageAnnotationConsumer()
@@ -115,7 +115,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
 
     val fooPartCoverage = intArrayOf(1, 1, 2, 1, 2, 1, 2, 0)
     waitSuiteProcessing {
-      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.FooTest,testMethod1"))
+      manager.selectSubCoverage(suite, listOf("foo.FooTest,testMethod1"))
     }
     run {
       val consumer = PackageAnnotationConsumer()
@@ -125,7 +125,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
 
     waitSuiteProcessing {
-      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.FooTest,testMethod2"))
+      manager.selectSubCoverage(suite, listOf("foo.FooTest,testMethod2"))
     }
     run {
       val consumer = PackageAnnotationConsumer()
@@ -135,7 +135,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
 
     waitSuiteProcessing {
-      CoverageDataManager.getInstance(myProject).restoreMergedCoverage(suite)
+      manager.restoreMergedCoverage(suite)
     }
     assertHits(suite)
     closeSuite(suite)
@@ -172,7 +172,6 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   }
 
   private suspend fun assertAnnotator(bundle: CoverageSuitesBundle, loaded: Boolean) {
-    val manager = CoverageDataManager.getInstance(myProject)
     val annotator = bundle.getAnnotator(myProject)
     val classes = listOf("foo.FooClass", "foo.bar.UncoveredClass", "foo.bar.BarClass")
     for (clazz in classes) {

@@ -107,8 +107,7 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     final File file = new File(relativePath);
     return new DefaultCoverageFileProvider(file.exists() ? file
                                                          : new File(PathManager.getSystemPath(), relativePath),
-                                            sourceProvider != null ? sourceProvider
-                                                                   : DefaultCoverageFileProvider.class.getName());
+                                            sourceProvider != null ? sourceProvider : DefaultCoverageFileProvider.DEFAULT_LOCAL_PROVIDER_KEY);
   }
 
   @Override
@@ -180,8 +179,8 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     element.setAttribute(FILE_PATH, fileName != null ? FileUtil.toSystemIndependentName(fileName) : myCoverageDataFileProvider.getCoverageDataFilePath());
     element.setAttribute(NAME_ATTRIBUTE, myName);
     element.setAttribute(MODIFIED_STAMP, String.valueOf(myLastCoverageTimeStamp));
-    element.setAttribute(SOURCE_PROVIDER, myCoverageDataFileProvider instanceof DefaultCoverageFileProvider
-                                          ? ((DefaultCoverageFileProvider)myCoverageDataFileProvider).getSourceProvider()
+    element.setAttribute(SOURCE_PROVIDER, myCoverageDataFileProvider instanceof DefaultCoverageFileProvider defaultProvider
+                                          ? defaultProvider.getSourceProvider()
                                           : myCoverageDataFileProvider.getClass().getName());
     // runner
     if (getRunner() != null) {
