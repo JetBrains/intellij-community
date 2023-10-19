@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.maven
 import com.intellij.application.options.CodeStyle
 import com.intellij.facet.FacetManager
 import com.intellij.notification.Notification
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -19,7 +21,9 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -69,6 +73,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
     private annotation class MppGoal
 
+    override fun runInDispatchThread() = false
+
     override fun setUp() {
         super.setUp()
         if(KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled) {
@@ -82,7 +88,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         ThrowableRunnable { super.tearDown() },
     )
 
-    protected fun checkStableModuleName(projectName: String, expectedName: String, platform: TargetPlatform, isProduction: Boolean) {
+    protected suspend fun checkStableModuleName(projectName: String, expectedName: String, platform: TargetPlatform, isProduction: Boolean) = readAction {
         val module = getModule(projectName)
         val moduleInfo = if (isProduction) module.productionSourceInfo else module.testSourceInfo
 
@@ -2878,10 +2884,14 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             importProjectsAsync(pomMain, pomA, pomB)
-            myProject.waitIndexingComplete()
+            withContext(Dispatchers.EDT) {
+                myProject.waitIndexingComplete()
+            }
             assertModules("module-with-kotlin", "module-with-java", "mvnktest")
 
-            val dependencies = (dummyFile.toPsiFile(myProject) as KtFile).analyzeAndGetResult().moduleDescriptor.allDependencyModules
+            val dependencies = readAction {
+                (dummyFile.toPsiFile(myProject) as KtFile).analyzeAndGetResult().moduleDescriptor.allDependencyModules
+            }
             TestCase.assertTrue(dependencies.any { it.name.asString() == "<production sources for module module-with-java>" })
             TestCase.assertTrue(dependencies.any { it.name.asString() == "<test sources for module module-with-java>" })
         }
