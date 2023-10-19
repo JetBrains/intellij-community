@@ -25,6 +25,10 @@ final class MixedListFactory extends SEResultsListFactory {
     }
   }
 
+  void remove(String contributorId) {
+    prioritizedContributors.remove(contributorId);
+  }
+
   @Override
   public SearchListModel createModel(Computable<String> tabIDProvider) {
     MixedSearchListModel mixedModel = new MixedSearchListModel();

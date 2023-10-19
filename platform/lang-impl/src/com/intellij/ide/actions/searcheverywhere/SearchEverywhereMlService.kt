@@ -63,4 +63,6 @@ interface SearchEverywhereMlService {
   fun wrapRenderer(renderer: ListCellRenderer<Any>, listModel: SearchListModel): ListCellRenderer<Any>
 
   fun buildListener(listModel: SearchListModel, resultsList: JBList<Any>, selectionTracker: SEListSelectionTracker): SearchListener?
+
+  fun shouldAllTabPrioritizeRecentFiles(tabId: String) : Boolean
 }

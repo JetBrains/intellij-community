@@ -172,6 +172,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     myMlService = SearchEverywhereMlService.getInstance();
     if (myMlService != null) {
+      if (myListFactory instanceof MixedListFactory && !myMlService.shouldAllTabPrioritizeRecentFiles(myHeader.getSelectedTab().getID())) {
+        ((MixedListFactory)myListFactory).remove(RecentFilesSEContributor.class.getSimpleName());
+      }
       myMlService.onSessionStarted(myProject, new SearchEverywhereMixedListInfo(myListFactory));
     }
 

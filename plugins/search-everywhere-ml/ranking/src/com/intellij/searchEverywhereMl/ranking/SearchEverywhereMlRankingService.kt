@@ -37,6 +37,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
   internal fun shouldUseExperimentalModel(tab: SearchEverywhereTabWithMlRanking): Boolean {
     return experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
+           || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_MODEL_WITHOUT_RECENT_FILES_PRIOR
   }
 
   internal fun getCurrentSession(): SearchEverywhereMLSearchSession? {
@@ -52,6 +53,13 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
         SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet(), FeaturesLoggingRandomisation())
       }
     }
+  }
+
+  override fun shouldAllTabPrioritizeRecentFiles(tabId: String): Boolean {
+    val tab = SearchEverywhereTabWithMlRanking.findById(tabId)
+    return tab?.let {
+      experiment.getExperimentForTab(tab) != SearchEverywhereMlExperiment.ExperimentType.USE_MODEL_WITHOUT_RECENT_FILES_PRIOR
+    } ?: true
   }
 
   override fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
@@ -129,6 +137,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     else {
       return settings.isSortingByMlEnabled(tab)
              || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
+             || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_MODEL_WITHOUT_RECENT_FILES_PRIOR
     }
   }
 
