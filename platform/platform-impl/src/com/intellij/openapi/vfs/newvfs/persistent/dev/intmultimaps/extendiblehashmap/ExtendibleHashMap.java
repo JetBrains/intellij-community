@@ -75,7 +75,10 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
   private static final boolean MARK_SAFELY_CLOSED_ON_FLUSH = getBooleanProperty("ExtendibleHashMap.MARK_SAFELY_CLOSED_ON_FLUSH", true);
 
-  //TODO RC: pruning of tombstones (see comment in a .split() method for details)
+  //TODO RC: unfinished work
+  //        1) prune tombstones (see comment in a .split() method for details)
+  //        2) .size() is now O(N), make it O(1)
+  //        3) Half-utilized segmentTable room (see HeaderLayout)
 
   private final MMappedFileStorage storage;
   private transient BufferSource bufferSource;
@@ -922,7 +925,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     public boolean put(@NotNull HashTableData table,
                        int key,
                        int value) {
-      //FIXME RC: check hash(key) has correct hashSuffix -- but this violates an abstraction of HashAlgo,
+      //MAYBE RC: check hash(key) has correct hashSuffix -- but this violates an abstraction of HashAlgo,
       //          so this check is better to be moved to HashSegment?
       checkNotNoValue("key", key);
       checkNotNoValue("value", value);
