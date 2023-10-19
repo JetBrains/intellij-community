@@ -1,18 +1,18 @@
-from typing import Any
+from _typeshed import Incomplete
 
 from ..cmd import Command
 
 class install_scripts(Command):
     description: str
-    user_options: Any
-    boolean_options: Any
-    install_dir: Any
+    user_options: Incomplete
+    boolean_options: Incomplete
+    install_dir: Incomplete
     force: int
-    build_dir: Any
-    skip_build: Any
+    build_dir: Incomplete
+    skip_build: Incomplete
     def initialize_options(self) -> None: ...
     def finalize_options(self) -> None: ...
-    outfiles: Any
+    outfiles: Incomplete
     def run(self) -> None: ...
     def get_inputs(self): ...
     def get_outputs(self): ...

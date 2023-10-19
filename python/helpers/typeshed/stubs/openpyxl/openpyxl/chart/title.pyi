@@ -1,33 +1,43 @@
-from typing import Any
+from _typeshed import Unused
+from typing import ClassVar
+from typing_extensions import Literal
 
-from openpyxl.descriptors import Typed
+from openpyxl.chart.layout import Layout
+from openpyxl.chart.shapes import GraphicalProperties
+from openpyxl.chart.text import RichText, Text
+from openpyxl.descriptors import Strict, Typed
+from openpyxl.descriptors.base import Alias, _ConvertibleToBool
+from openpyxl.descriptors.excel import ExtensionList
+from openpyxl.descriptors.nested import NestedBool
 from openpyxl.descriptors.serialisable import Serialisable
 
+from ..xml._functions_overloads import _HasTagAndGet
+
 class Title(Serialisable):
-    tagname: str
-    tx: Any
-    text: Any
-    layout: Any
-    overlay: Any
-    spPr: Any
-    graphicalProperties: Any
-    txPr: Any
-    body: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    tx: Typed[Text, Literal[True]]
+    text: Alias
+    layout: Typed[Layout, Literal[True]]
+    overlay: NestedBool[Literal[True]]
+    spPr: Typed[GraphicalProperties, Literal[True]]
+    graphicalProperties: Alias
+    txPr: Typed[RichText, Literal[True]]
+    body: Alias
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        tx: Any | None = ...,
-        layout: Any | None = ...,
-        overlay: Any | None = ...,
-        spPr: Any | None = ...,
-        txPr: Any | None = ...,
-        extLst: Any | None = ...,
+        tx: Text | None = None,
+        layout: Layout | None = None,
+        overlay: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
+        spPr: GraphicalProperties | None = None,
+        txPr: RichText | None = None,
+        extLst: Unused = None,
     ) -> None: ...
 
-def title_maker(text): ...
+def title_maker(text) -> Title: ...
 
-class TitleDescriptor(Typed):
-    expected_type: Any
-    allow_none: bool
-    def __set__(self, instance, value) -> None: ...
+class TitleDescriptor(Typed[Title, Literal[True]]):
+    expected_type: type[Title]
+    allow_none: Literal[True]
+    def __set__(self, instance: Serialisable | Strict, value: str | Title | None) -> None: ...

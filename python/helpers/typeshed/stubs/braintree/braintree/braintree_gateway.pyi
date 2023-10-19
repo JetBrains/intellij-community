@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from braintree.add_on_gateway import AddOnGateway as AddOnGateway
@@ -57,4 +58,4 @@ class BraintreeGateway:
     verification: Any
     webhook_notification: Any
     webhook_testing: Any
-    def __init__(self, config: Any | None = ..., **kwargs) -> None: ...
+    def __init__(self, config: Incomplete | None = None, **kwargs) -> None: ...

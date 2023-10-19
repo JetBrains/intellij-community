@@ -1,66 +1,76 @@
-from typing import Any
+from _typeshed import Incomplete, Unused
+from typing import ClassVar
+from typing_extensions import Literal, Self
 
-from openpyxl.descriptors.serialisable import Serialisable
+from openpyxl.chart.layout import Layout
+from openpyxl.chart.shapes import GraphicalProperties
+from openpyxl.chart.text import RichText
+from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool
+from openpyxl.descriptors.excel import ExtensionList
+from openpyxl.descriptors.nested import NestedBool
+from openpyxl.descriptors.serialisable import Serialisable, _ChildSerialisableTreeElement
+
+from ..xml._functions_overloads import _HasTagAndGet
 
 class DataTable(Serialisable):
-    tagname: str
-    showHorzBorder: Any
-    showVertBorder: Any
-    showOutline: Any
-    showKeys: Any
-    spPr: Any
-    graphicalProperties: Any
-    txPr: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    showHorzBorder: NestedBool[Literal[True]]
+    showVertBorder: NestedBool[Literal[True]]
+    showOutline: NestedBool[Literal[True]]
+    showKeys: NestedBool[Literal[True]]
+    spPr: Typed[GraphicalProperties, Literal[True]]
+    graphicalProperties: Alias
+    txPr: Typed[RichText, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        showHorzBorder: Any | None = ...,
-        showVertBorder: Any | None = ...,
-        showOutline: Any | None = ...,
-        showKeys: Any | None = ...,
-        spPr: Any | None = ...,
-        txPr: Any | None = ...,
-        extLst: Any | None = ...,
+        showHorzBorder: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
+        showVertBorder: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
+        showOutline: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
+        showKeys: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
+        spPr: GraphicalProperties | None = None,
+        txPr: RichText | None = None,
+        extLst: Unused = None,
     ) -> None: ...
 
 class PlotArea(Serialisable):
-    tagname: str
-    layout: Any
-    dTable: Any
-    spPr: Any
-    graphicalProperties: Any
-    extLst: Any
-    areaChart: Any
-    area3DChart: Any
-    lineChart: Any
-    line3DChart: Any
-    stockChart: Any
-    radarChart: Any
-    scatterChart: Any
-    pieChart: Any
-    pie3DChart: Any
-    doughnutChart: Any
-    barChart: Any
-    bar3DChart: Any
-    ofPieChart: Any
-    surfaceChart: Any
-    surface3DChart: Any
-    bubbleChart: Any
-    valAx: Any
-    catAx: Any
-    dateAx: Any
-    serAx: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    layout: Typed[Layout, Literal[True]]
+    dTable: Typed[DataTable, Literal[True]]
+    spPr: Typed[GraphicalProperties, Literal[True]]
+    graphicalProperties: Alias
+    extLst: Typed[ExtensionList, Literal[True]]
+    areaChart: Incomplete
+    area3DChart: Incomplete
+    lineChart: Incomplete
+    line3DChart: Incomplete
+    stockChart: Incomplete
+    radarChart: Incomplete
+    scatterChart: Incomplete
+    pieChart: Incomplete
+    pie3DChart: Incomplete
+    doughnutChart: Incomplete
+    barChart: Incomplete
+    bar3DChart: Incomplete
+    ofPieChart: Incomplete
+    surfaceChart: Incomplete
+    surface3DChart: Incomplete
+    bubbleChart: Incomplete
+    valAx: Incomplete
+    catAx: Incomplete
+    dateAx: Incomplete
+    serAx: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        layout: Any | None = ...,
-        dTable: Any | None = ...,
-        spPr: Any | None = ...,
-        _charts=...,
-        _axes=...,
-        extLst: Any | None = ...,
+        layout: Layout | None = None,
+        dTable: DataTable | None = None,
+        spPr: GraphicalProperties | None = None,
+        _charts=(),
+        _axes=(),
+        extLst: Unused = None,
     ) -> None: ...
-    def to_tree(self, tagname: Any | None = ..., idx: Any | None = ..., namespace: Any | None = ...): ...
+    def to_tree(self, tagname: str | None = None, idx: Incomplete | None = None, namespace: str | None = None): ...
     @classmethod
-    def from_tree(cls, node): ...
+    def from_tree(cls, node: _ChildSerialisableTreeElement) -> Self: ...

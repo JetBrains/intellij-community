@@ -1,5 +1,5 @@
-from _typeshed import Self
 from typing import ClassVar
+from typing_extensions import Self
 
 import passlib.utils.handlers as uh
 
@@ -16,9 +16,9 @@ class sun_md5_crypt(uh.HasRounds, uh.HasSalt, uh.GenericHandler):  # type: ignor
     rounds_cost: ClassVar[str]
     ident_values: ClassVar[tuple[str, ...]]
     bare_salt: bool
-    def __init__(self, bare_salt: bool = ..., **kwds) -> None: ...
+    def __init__(self, bare_salt: bool = False, **kwds) -> None: ...
     @classmethod
     def identify(cls, hash): ...
     @classmethod
-    def from_string(cls: type[Self], hash: str | bytes) -> Self: ...  # type: ignore[override]
-    def to_string(self, _withchk: bool = ...) -> str: ...
+    def from_string(cls, hash: str | bytes) -> Self: ...  # type: ignore[override]
+    def to_string(self, _withchk: bool = True) -> str: ...

@@ -1,14 +1,17 @@
-from typing import Any
+from _typeshed import Incomplete
+from typing import ClassVar
+from typing_extensions import Literal
 
+from openpyxl.descriptors.base import String
 from openpyxl.descriptors.serialisable import Serialisable
 
 class CellWatch(Serialisable):
-    tagname: str
-    r: Any
-    def __init__(self, r: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    r: String[Literal[True]]
+    def __init__(self, r: str) -> None: ...
 
 class CellWatches(Serialisable):
-    tagname: str
-    cellWatch: Any
-    __elements__: Any
-    def __init__(self, cellWatch=...) -> None: ...
+    tagname: ClassVar[str]
+    cellWatch: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, cellWatch=()) -> None: ...

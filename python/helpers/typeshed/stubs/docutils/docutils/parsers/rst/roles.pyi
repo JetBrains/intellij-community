@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from collections.abc import Callable
 from typing import Any
 from typing_extensions import TypeAlias
@@ -16,4 +17,4 @@ def register_local_role(name: str, role_fn: _RoleFn) -> None: ...
 def role(
     role_name: str, language_module: _LanguageModule, lineno: int, reporter: Reporter
 ) -> tuple[_RoleFn | None, list[SystemMessage]]: ...
-def __getattr__(name: str) -> Any: ...  # incomplete
+def __getattr__(name: str) -> Incomplete: ...
