@@ -7,18 +7,17 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigVisitor
 
-class EditorConfigNumerousWildcardsInspection : LocalInspectionTool() {
+private const val QuestionLimit = 8
+
+internal fun EditorConfigHeader.hasNumerousWildcards(): Boolean = header.text.count('?'::equals) >= QuestionLimit
+
+internal class EditorConfigNumerousWildcardsInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitHeader(header: EditorConfigHeader) {
-      if (!containsIssue(header)) return
+      if (!header.hasNumerousWildcards()) return
       val message = EditorConfigBundle["inspection.header.many.wildcards.message"]
       holder.registerProblem(header, message)
     }
   }
 
-  companion object {
-    private const val QuestionLimit = 8
-    fun containsIssue(header: EditorConfigHeader) =
-      header.text.count('?'::equals) >= QuestionLimit
-  }
 }
