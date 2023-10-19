@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -37,6 +38,7 @@ import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Assume;
@@ -1989,6 +1991,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     Assume.assumeFalse("Can not run on Windows. " +
                        "The test locks native library files in test directory and can not be torn down properly.", SystemInfo.isWindows);
     overrideGradleUserHome("project/cache");
+    Registry.get("gradle.download.sources").setValue(false, getTestRootDisposable());
     var dependency = "junit:junit:4.12";
     var dependencyName = "Gradle: junit:junit:4.12";
     var dependencyJar = "junit-4.12.jar";
@@ -2009,6 +2012,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     Assume.assumeFalse("Can not run on Windows. " +
                        "The test locks native library files in test directory and can not be torn down properly.", SystemInfo.isWindows);
     overrideGradleUserHome("project/cache");
+    Registry.get("gradle.download.sources").setValue(true, getTestRootDisposable());
     var dependency = "junit:junit:4.12";
     var dependencyName = "Gradle: junit:junit:4.12";
     var dependencyJar = "junit-4.12.jar";
@@ -2018,11 +2022,71 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .withJavaPlugin()
         .withIdeaPlugin()
         .withMavenCentral()
-        .addTestImplementationDependency(dependency);
+        .addTestImplementationDependency(dependency)
+        .addPrefix(
+          "idea.module {",
+          "  downloadJavadoc = false",
+          "  downloadSources = false",
+          "}");
     }));
 
     LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", dependencyName);
     assertNoSourcesAndDocsInGradleCache(dependencyJar, regularLibFromGradleCache);
+  }
+
+  @Test
+  public void testUserDefinedDownloadSourcesPolicyOverridesIdeSettings() throws Exception {
+    Assume.assumeFalse("Can not run on Windows. " +
+                       "The test locks native library files in test directory and can not be torn down properly.", SystemInfo.isWindows);
+    overrideGradleUserHome("project/cache");
+    Registry.get("gradle.download.sources").setValue(false, getTestRootDisposable());
+    var dependency = "junit:junit:4.12";
+    var dependencyName = "Gradle: junit:junit:4.12";
+    var dependencyJar = "junit-4.12.jar";
+
+    importProject(script(it -> {
+      it
+        .withJavaPlugin()
+        .withIdeaPlugin()
+        .withMavenCentral()
+        .addTestImplementationDependency(dependency)
+        .addPrefix(
+          "idea.module {",
+          "  downloadJavadoc = false",
+          "  downloadSources = true",
+          "}");
+    }));
+
+    LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", dependencyName);
+    assertSourcesAndDocsInGradleCache(dependencyJar, regularLibFromGradleCache, true, false);
+  }
+
+  @Test
+  public void testForceDownloadSourceFlagAreMoreImportantThanUserAndIdeSettings() throws Exception {
+    GradleSystemSettings.getInstance().setGradleVmOptions("-Didea.gradle.download.sources.force=true");
+    Assume.assumeFalse("Can not run on Windows. " +
+                       "The test locks native library files in test directory and can not be torn down properly.", SystemInfo.isWindows);
+    overrideGradleUserHome("project/cache");
+    Registry.get("gradle.download.sources").setValue(false, getTestRootDisposable());
+    var dependency = "junit:junit:4.12";
+    var dependencyName = "Gradle: junit:junit:4.12";
+    var dependencyJar = "junit-4.12.jar";
+
+    importProject(script(it -> {
+      it
+        .withJavaPlugin()
+        .withIdeaPlugin()
+        .withMavenCentral()
+        .addTestImplementationDependency(dependency)
+        .addPrefix(
+          "idea.module {",
+          "  downloadJavadoc = false",
+          "  downloadSources = false",
+          "}");
+    }));
+
+    LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", dependencyName);
+    assertSourcesAndDocsInGradleCache(dependencyJar, regularLibFromGradleCache, true, false);
   }
 
   @Test
@@ -2357,7 +2421,14 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       });
   }
 
-  private void assertNoSourcesAndDocsInGradleCache(String dependencyJar, LibraryOrderEntry regularLibFromGradleCache) {
+  private static void assertNoSourcesAndDocsInGradleCache(String dependencyJar, LibraryOrderEntry regularLibFromGradleCache) {
+    assertSourcesAndDocsInGradleCache(dependencyJar, regularLibFromGradleCache, false, false);
+  }
+
+  private static void assertSourcesAndDocsInGradleCache(String dependencyJar,
+                                                        LibraryOrderEntry regularLibFromGradleCache,
+                                                        Boolean sourcesExpected,
+                                                        Boolean docsExpected) {
     assertThat(regularLibFromGradleCache.getRootFiles(OrderRootType.CLASSES))
       .hasSize(1)
       .allSatisfy(file -> assertEquals(dependencyJar, file.getName()));
@@ -2371,8 +2442,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     catch (IOException e) {
       throw new IllegalStateException("Unable to lookup dependency artifacts in " + binaryPath);
     }
-    assertFalse(sourceFound.get());
-    assertFalse(docFound.get());
+    assertEquals(sourcesExpected, sourceFound.get());
+    assertEquals(docsExpected, docFound.get());
   }
 
   private static void checkIfSourcesOrJavadocsCanBeAttached(String binaryPath,
