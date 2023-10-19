@@ -21,6 +21,8 @@ import java.awt.Color
 import java.awt.Component
 import java.util.function.Supplier
 import javax.accessibility.Accessible
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.plaf.basic.BasicComboPopup
 import kotlin.math.max
@@ -67,6 +69,15 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
       for (cell in cells) {
         cell.lcrCell.component.foreground = fg
       }
+    }
+
+    override fun getAccessibleContext(): AccessibleContext {
+      if (accessibleContext == null) {
+        accessibleContext = object : AccessibleJPanel() {
+          override fun getAccessibleRole(): AccessibleRole = AccessibleRole.LABEL
+        }
+      }
+      return accessibleContext
     }
   }
 
