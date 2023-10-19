@@ -388,12 +388,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
     pluginResolutionJobs.add(pluginResolutionJob)
-    cs.launch {
-      downloadArtifacts(projectsToImport.map { it.key },
-                        null,
-                        importingSettings.isDownloadSourcesAutomatically,
-                        importingSettings.isDownloadDocsAutomatically)
-    }
+    scheduleDownloadArtifacts(projectsToImport.map { it.key },
+                              null,
+                              importingSettings.isDownloadSourcesAutomatically,
+                              importingSettings.isDownloadDocsAutomatically)
+
 
     return importMavenProjects(projectsToImport, modelsProvider, syncActivity)
   }
@@ -492,6 +491,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                          artifacts: Collection<MavenArtifact>?,
                                          sources: Boolean,
                                          docs: Boolean) {
+    if (!sources && !docs) return
+
+    project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingScheduled()
     cs.launch { downloadArtifacts(projects, artifacts, sources, docs) }
   }
 

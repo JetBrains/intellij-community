@@ -27,6 +27,8 @@ public interface MavenImportListener {
 
   default void pluginResolutionFinished() { }
 
+  default void artifactDownloadingScheduled() { }
+
   default void artifactDownloadingStarted() { }
 
   default void artifactDownloadingFinished() { }

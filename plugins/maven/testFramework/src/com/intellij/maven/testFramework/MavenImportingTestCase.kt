@@ -740,6 +740,10 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       log("pluginResolutionFinished")
     }
 
+    override fun artifactDownloadingScheduled() {
+      log("artifactDownloadingScheduled")
+    }
+
     override fun artifactDownloadingStarted() {
       log("artifactDownloadingStarted")
     }
