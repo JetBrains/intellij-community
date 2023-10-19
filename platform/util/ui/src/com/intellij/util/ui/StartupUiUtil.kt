@@ -184,6 +184,11 @@ object StartupUiUtil {
     Disposer.register(parent) { Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }
   }
 
+  @JvmStatic
+  fun isWaylandToolkit(): Boolean {
+    return "sun.awt.wl.WLToolkit" == Toolkit.getDefaultToolkit().javaClass.name
+  }
+
   /**
    * Waits for the EDT to dispatch all its invocation events.
    * Must be called outside EDT.

@@ -79,11 +79,6 @@ public final class SystemInfo {
     }
   }
 
-  public static boolean isWaylandToolkit() {
-    Toolkit tk = Toolkit.getDefaultToolkit();
-    return "sun.awt.wl.WLToolkit".equals(tk.getClass().getName());
-  }
-
   public static final boolean isMacSystemMenu = isMac && (SystemInfoRt.isJBSystemMenu || Boolean.getBoolean("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;

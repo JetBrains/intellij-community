@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.FrameBoundsConverter
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -24,6 +23,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.lang.ByteBufferCleaner
 import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import sun.awt.image.SunWritableRaster
 import java.awt.*
@@ -93,7 +93,7 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferr
     in java.awt.SplashScreen that works around the issue using some tricks and the native API).
     We check only here as isWaylandToolkit calls `Toolkit.getDefaultToolkit()` - it should be done only when initUiDeferred is completed
     */
-    if (SystemInfoRt.isLinux && SystemInfo.isWaylandToolkit()) {
+    if (SystemInfoRt.isLinux && StartupUiUtil.isWaylandToolkit()) {
       return@launch
     }
 
