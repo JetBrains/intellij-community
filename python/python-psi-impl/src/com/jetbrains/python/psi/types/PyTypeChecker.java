@@ -334,7 +334,8 @@ public final class PyTypeChecker {
       }
     }
 
-    if (ContainerUtil.exists(actual.getMembers(), x -> x instanceof PyLiteralStringType)) { // checking strictly separately until PY-24834 gets implemented
+    // checking strictly separately until PY-24834 gets implemented
+    if (ContainerUtil.exists(actual.getMembers(), x -> x instanceof PyLiteralStringType || x instanceof PyLiteralType)) {
       return ContainerUtil.and(actual.getMembers(), type -> match(expected, type, context).orElse(false));
     }
 
