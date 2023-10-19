@@ -13,10 +13,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.GroupedComboBoxRenderer;
-import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -125,7 +122,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       @Override
       public @NlsContexts.ListItem String getText(ScopeDescriptor item) {
         String text = item.getDisplayName();
-        return text == null ? "" : text;
+        return text == null ? super.getText(item) : text;
       }
 
       @Nullable
@@ -140,6 +137,16 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         String firstElementDisplayName = value.getDisplayName();
         if (firstElementDisplayName != null) return scopeModel.getSeparatorName(value.getDisplayName());
         return null;
+      }
+
+      @Override
+      public void customize(@NotNull SimpleColoredComponent item,
+                            ScopeDescriptor value,
+                            int index,
+                            boolean isSelected,
+                            boolean cellHasFocus) {
+        if (value == null) return;
+        super.customize(item, value, index, isSelected, cellHasFocus);
       }
     };
   }
