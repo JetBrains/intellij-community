@@ -231,6 +231,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   @Override
   protected void applyInformationWithProgress() {
+    myHighlightingSession.applyFileLevelHighlightsRequests();
   }
 
   private void createHighlightsForDescriptor(@NotNull Set<? super Pair<TextRange, String>> emptyActionRegistered,

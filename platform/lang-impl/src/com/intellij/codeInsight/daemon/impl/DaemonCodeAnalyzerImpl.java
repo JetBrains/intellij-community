@@ -519,7 +519,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
              ThreadDumper.dumpThreadsToString());
         }
 
-        ((HighlightingSessionImpl)session).waitForHighlightInfosApplied();
+        ((HighlightingSessionImpl)session).applyFileLevelHighlightsRequests();
         EDT.dispatchAllInvocationEvents();
         EDT.dispatchAllInvocationEvents();
         assert progress.isCanceled();

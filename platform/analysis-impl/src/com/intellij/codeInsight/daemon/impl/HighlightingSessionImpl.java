@@ -170,7 +170,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     ConcurrentMap<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     if (map != null) {
       for (HighlightingSession session : map.values()) {
-        ((HighlightingSessionImpl)session).waitForHighlightInfosApplied();
+        ((HighlightingSessionImpl)session).applyFileLevelHighlightsRequests();
       }
     }
   }
@@ -207,7 +207,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                                          info, getColorsScheme(), groupId, myRange2markerCache);
   }
 
-  void waitForHighlightInfosApplied() {
+  void applyFileLevelHighlightsRequests() {
     ThreadingAssertions.assertEventDispatchThread();
     List<RunnableFuture<?>> requests = new ArrayList<>(pendingFileLevelHighlightRequests);
     for (RunnableFuture<?> request : requests) {

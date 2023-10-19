@@ -260,6 +260,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @Override
   protected void applyInformationWithProgress() {
+    ((HighlightingSessionImpl)myHighlightingSession).applyFileLevelHighlightsRequests();
     getFile().putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
   }
 
