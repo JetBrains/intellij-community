@@ -254,7 +254,7 @@ abstract class ComponentManagerImpl(
   @Volatile
   private var isServicePreloadingCancelled = false
 
-  private fun debugString(short: Boolean = false): String {
+  protected open fun debugString(short: Boolean = false): String {
     return "${if (short) javaClass.simpleName else javaClass.name}@${System.identityHashCode(this)}"
   }
 

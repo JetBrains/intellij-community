@@ -254,6 +254,15 @@ open class ModuleImpl @ApiStatus.Internal constructor(
     info.put("name", getName())
   }
 
+  override fun debugString(short: Boolean): String {
+    return if (short) {
+      javaClass.simpleName
+    }
+    else {
+      super.debugString(short)
+    }
+  }
+
   @ApiStatus.Internal
   @State(name = "DeprecatedModuleOptionManager", useLoadedStateAsExisting = false)
   class DeprecatedModuleOptionManager internal constructor(private val module: Module)
