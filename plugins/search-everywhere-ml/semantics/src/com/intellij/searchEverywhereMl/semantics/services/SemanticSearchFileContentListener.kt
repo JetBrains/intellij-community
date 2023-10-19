@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
@@ -43,6 +44,9 @@ class SemanticSearchFileContentListener(val project: Project, cs: CoroutineScope
       }
     }
   }
+
+  @TestOnly
+  fun clearEvents() = reindexQueue.clear()
 
   override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier? {
     if (listeners.none { it.isEnabled }) return null

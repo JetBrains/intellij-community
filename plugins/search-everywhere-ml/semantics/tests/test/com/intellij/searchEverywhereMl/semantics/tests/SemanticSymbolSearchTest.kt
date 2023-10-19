@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticSymbolSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.services.IndexableClass
+import com.intellij.searchEverywhereMl.semantics.services.SemanticSearchFileContentListener
 import com.intellij.searchEverywhereMl.semantics.services.SymbolEmbeddingStorage
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.testFramework.PlatformTestUtil
@@ -113,6 +114,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
   }
 
   private suspend fun setupTest(vararg filePaths: String) {
+    SemanticSearchFileContentListener.getInstance(project).clearEvents()
     myFixture.configureByFiles(*filePaths)
     LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
     SemanticSearchSettings.getInstance().enabledInSymbolsTab = true

@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -41,6 +42,9 @@ class SemanticSearchFileNameListener(private val project: Project, cs: Coroutine
       }
     }
   }
+
+  @TestOnly
+  fun clearEvents() = eventsQueue.clear()
 
   override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier? {
     if (!SemanticSearchSettings.getInstance().enabledInFilesTab) return null
@@ -79,6 +83,6 @@ class SemanticSearchFileNameListener(private val project: Project, cs: Coroutine
   }
 
   companion object {
-    fun getInstance(project: Project) = project.service<SemanticSearchFileNameListener>()
+    fun getInstance(project: Project): SemanticSearchFileNameListener = project.service()
   }
 }

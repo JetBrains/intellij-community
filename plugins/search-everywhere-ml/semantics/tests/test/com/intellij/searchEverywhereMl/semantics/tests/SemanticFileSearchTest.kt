@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticFileSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.services.FileEmbeddingsStorage
 import com.intellij.searchEverywhereMl.semantics.services.IndexableClass
+import com.intellij.searchEverywhereMl.semantics.services.SemanticSearchFileNameListener
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.vfs.deleteRecursively
@@ -135,6 +136,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
   }
 
   private suspend fun setupTest(vararg filePaths: String) {
+    SemanticSearchFileNameListener.getInstance(project).clearEvents()
     myFixture.configureByFiles(*filePaths)
     LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
     SemanticSearchSettings.getInstance().enabledInFilesTab = true
