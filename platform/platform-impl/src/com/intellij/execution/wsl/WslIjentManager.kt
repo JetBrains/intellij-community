@@ -38,6 +38,12 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
       }
     }.getValue()
   }
+  
+  fun fetchLoginShellEnv(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): Map<String, String> {
+    return runBlocking { 
+      getIjentApi(wslDistribution, project, rootUser).fetchLoginShellEnvVariables()
+    }
+  }
 
   fun runProcessBlocking(wslDistribution: WSLDistribution, project: Project?, processBuilder: ProcessBuilder, options: WSLCommandLineOptions, pty: IjentApi.Pty?): Process {
     return runBlocking {

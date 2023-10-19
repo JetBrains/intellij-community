@@ -469,6 +469,9 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @return environment map of the default user in wsl
    */
   public @Nullable Map<String, String> getEnvironment() {
+    if (Registry.is("wsl.use.remote.agent.for.launch.processes")) {
+      return WslIjentManager.getInstance().fetchLoginShellEnv(this, null, false);
+    }
     try {
       ProcessOutput processOutput = WslExecution.executeInShellAndGetCommandOnlyStdout(
         this, new GeneralCommandLine("env"),
