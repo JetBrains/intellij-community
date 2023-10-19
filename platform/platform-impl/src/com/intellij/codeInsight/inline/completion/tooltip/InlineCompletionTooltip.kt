@@ -44,7 +44,7 @@ internal object InlineCompletionTooltip {
         }.gap(RightGap.SMALL)
         @Suppress("DialogTitleCapitalization")
         text(IdeBundle.message("inline.completion.tooltip.shortcuts.accept.description")).gap(RightGap.SMALL)
-        cell(session.provider.getTooltip(editor.project))
+        cell(session.provider.providerPresentation.getTooltip(editor.project))
       }
     }.apply {
       border = JBUI.Borders.empty(4)

@@ -45,6 +45,9 @@ interface InlineCompletionProvider {
    */
   val id: InlineCompletionProviderID
 
+  val providerPresentation: InlineCompletionProviderPresentation
+    get() = InlineCompletionProviderPresentation.dummy(this)
+
   suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion
 
   fun isEnabled(event: InlineCompletionEvent): Boolean
@@ -59,9 +62,6 @@ interface InlineCompletionProvider {
 
   val overtyper: InlineCompletionOvertyper
     get() = DefaultInlineCompletionOvertyper()
-
-  @Suppress("HardCodedStringLiteral")
-  fun getTooltip(project: Project?): JComponent = JLabel(id.id)
 
   companion object {
     val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")
