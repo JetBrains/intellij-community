@@ -11,7 +11,6 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gradle.GradleWarmupConfigurator
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager
 
@@ -44,10 +43,8 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
       }
     })
     progressManager.addNotificationListener(listener)
-    scope.launch {
-      awaitCancellationAndInvoke {
-        progressManager.removeNotificationListener(listener)
-      }
+    scope.awaitCancellationAndInvoke {
+      progressManager.removeNotificationListener(listener)
     }
   }
 
