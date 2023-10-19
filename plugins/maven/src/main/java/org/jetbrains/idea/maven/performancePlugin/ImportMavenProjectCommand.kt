@@ -14,12 +14,12 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.util.DisposeAwareRunnable
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.preimport.MavenProjectPreImporter
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text, line) {
@@ -48,6 +48,7 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
             context.message("Import of the project has been started", line)
             val mavenManager = MavenProjectsManager.getInstance(project)
             runBlockingMaybeCancellable {
+              MavenProjectPreImporter.setPreimport(false)
               if (!mavenManager.isMavenizedProject) {
                 val files = mavenManager.collectAllAvailablePomFiles()
                 mavenManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)

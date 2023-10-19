@@ -1260,12 +1260,19 @@ public class MavenProject {
   }
 
   public class Updater {
-    public void setDependencies(@NotNull List<MavenArtifact> dependencies) {
+    public Updater setDependencies(@NotNull List<MavenArtifact> dependencies) {
       myState.myDependencies = dependencies;
+      return this;
     }
 
-    public void setProperties(@NotNull Properties properties) {
+    public Updater setProperties(@NotNull Properties properties) {
       myState.myProperties = properties;
+      return this;
+    }
+
+    public void setPlugins(@NotNull List<MavenPlugin> plugins) {
+      myState.myPlugins.clear();
+      myState.myPlugins.addAll(plugins);
     }
   }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector.PRE
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -332,9 +333,15 @@ class MavenProjectPreImporter(val project: Project, val coroutineScope: Coroutin
     }
   }
 
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): MavenProjectPreImporter = project.service()
+
+    @JvmStatic
+    fun setPreimport(value: Boolean) {
+      Registry.get("maven.preimport.project").setValue(value)
+    }
   }
 }
 
