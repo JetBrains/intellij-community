@@ -85,7 +85,7 @@ class InlineCompletionHandler(
     }
 
     // At this point, the previous session must be removed, otherwise, `init` will throw.
-    val newSession = InlineCompletionSession.init(editor, provider, parentDisposable).apply {
+    val newSession = InlineCompletionSession.init(editor, provider, request, parentDisposable).apply {
       sessionManager.sessionCreated(this)
       guardCaretModifications(request)
     }
@@ -106,13 +106,13 @@ class InlineCompletionHandler(
 
     val elements = context.state.elements.map { it.element }
     val textToInsert = context.textToInsert()
-    val insertionEnvironment = InlineCompletionInsertEnvironment(editor, TextRange.from(offset, textToInsert.length))
-    context.copyUserDataTo(insertionEnvironment)
+    val insertEnvironment = InlineCompletionInsertEnvironment(editor, session.request.file, TextRange.from(offset, textToInsert.length))
+    context.copyUserDataTo(insertEnvironment)
     hide(false, context)
 
     editor.document.insertString(offset, textToInsert)
-    editor.caretModel.moveToOffset(insertionEnvironment.range.endOffset)
-    session.provider.insertHandler.afterInsertion(insertionEnvironment, elements)
+    editor.caretModel.moveToOffset(insertEnvironment.insertedRange.endOffset)
+    session.provider.insertHandler.afterInsertion(insertEnvironment, elements)
 
     LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
   }

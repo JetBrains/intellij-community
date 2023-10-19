@@ -6,11 +6,16 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 
-data class InlineCompletionInsertEnvironment(val editor: Editor, val range: TextRange) : UserDataHolderBase()
+data class InlineCompletionInsertEnvironment(
+  val editor: Editor,
+  val file: PsiFile,
+  val insertedRange: TextRange,
+) : UserDataHolderBase()
 
 interface InlineCompletionInsertHandler {
   @RequiresEdt
