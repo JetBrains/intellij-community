@@ -65,7 +65,7 @@ class ComboBoxWithActionsModel<T>
       if (action.isEnabled) action.actionPerformed(ActionEvent(this, ActionEvent.ACTION_PERFORMED, null))
       return
     }
-    itemsModel.selectedItem = item.asSafely<Item.Wrapper<T>>()
+    itemsModel.selectedItem = item.asSafely<Item.Wrapper<T>>()?.wrappee
   }
 
   override fun getSize() = itemsModel.size + actions.size
