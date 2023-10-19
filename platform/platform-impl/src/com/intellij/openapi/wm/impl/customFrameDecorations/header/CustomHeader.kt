@@ -98,7 +98,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
   }
 
   private val iconProvider = ScaleContextCache {
-    AppUIUtil.loadSmallApplicationIcon(it)
+    loadSmallApplicationIcon(scaleContext = it)
   }
 
   @JvmField

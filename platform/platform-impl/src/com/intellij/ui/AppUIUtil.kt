@@ -138,7 +138,12 @@ private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
   return null
 }
 
-fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
+// todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
+fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon {
+  return loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
+}
+
+internal fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
   val appInfo = ApplicationInfoImpl.getShadowInstance()
   val upscale = size * scaleContext.getScale(DerivedScaleType.PIX_SCALE) >= 20
   val svgUrl = if (appInfo is ApplicationInfoImpl) {
@@ -148,7 +153,7 @@ fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestRelea
   else {
     if (upscale) appInfo.applicationSvgIconUrl else appInfo.smallApplicationSvgIconUrl
   }
-  return JBImageIcon(loadAppIconImage(svgUrl, scaleContext, size) ?: error("Can't load '${svgUrl}'"))
+  return JBImageIcon(loadAppIconImage(svgPath = svgUrl, scaleContext = scaleContext, size = size) ?: error("Can't load '${svgUrl}'"))
 }
 
 fun findAppIcon(): String? {
@@ -174,15 +179,12 @@ internal fun isWindowIconAlreadyExternallySet(): Boolean {
 }
 
 object AppUIUtil {
-  // todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
-  @JvmOverloads
   @JvmStatic
-  fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon =
-    loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
-
-  @JvmStatic
-  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? =
-    loadAppIconImage(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl, ctx, size)?.let { JBImageIcon(it) }
+  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? {
+    return loadAppIconImage(svgPath = ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl,
+                            scaleContext = ctx,
+                            size = size)?.let { JBImageIcon(it) }
+  }
 
   @JvmStatic
   fun invokeLaterIfProjectAlive(project: Project, runnable: Runnable) {
@@ -220,7 +222,6 @@ object AppUIUtil {
     }
   }
 
-  @JvmStatic
   fun getFrameClass(): String {
     val name = ApplicationNamesInfo.getInstance().fullProductNameWithEdition.lowercase()
       .replace(' ', '-')
