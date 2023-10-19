@@ -341,7 +341,7 @@
     <projectService serviceImplementation="com.jetbrains.python.console.PythonConsoleToolWindow"/>
     <toolWindowExtractorMode id="Python Console" mode="mirror"/>
 
-    <activityInProgressPredicate implementation="com.jetbrains.python.sdk.headless.PythonInProgressPredicate"/>
+    <activityInProgressWitness implementation="com.jetbrains.python.sdk.headless.PythonInProgressWitness"/>
 
     <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python"
                          instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"

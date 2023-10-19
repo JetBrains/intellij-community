@@ -13,6 +13,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.observable.TrackingUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -48,7 +49,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
-import com.jetbrains.python.sdk.headless.PythonInProgressService;
+import com.jetbrains.python.sdk.headless.PythonInProgressWitness;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -371,7 +372,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
       LOG.info("Skipping background update for '" + sdk + "' in unit test mode");
       return;
     }
-    project.getService(PythonInProgressService.class).trackConfigurationActivityBlocking(() -> {
+    TrackingUtil.trackActivity(project, PythonInProgressWitness.class, () -> {
       synchronized (ourLock) {
         if (ourUnderRefresh.contains(sdk)) {
           if (Trigger.LOG.isDebugEnabled()) {
@@ -382,14 +383,12 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
             }
           }
           ourToBeRefreshed.merge(sdk, requestData, PyUpdateSdkRequestData::merge);
-          return null;
         }
         else {
           ourUnderRefresh.add(sdk);
         }
       }
       ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, requestData));
-      return null;
     });
   }
 
