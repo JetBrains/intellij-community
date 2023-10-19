@@ -37,6 +37,7 @@ kotlin {
                 optIn("androidx.compose.ui.ExperimentalComposeUiApi")
                 optIn("androidx.compose.foundation.ExperimentalFoundationApi")
                 optIn("org.jetbrains.jewel.ExperimentalJewelApi")
+                optIn("org.jetbrains.jewel.InternalJewelApi")
             }
         }
     }

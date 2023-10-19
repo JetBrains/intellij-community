@@ -111,28 +111,32 @@ import org.jetbrains.jewel.intui.standalone.IntUiTheme
             }
         }
 
-        Row {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Icon(
                 "actions/close.svg",
                 iconClass = AllIcons::class.java,
                 modifier = Modifier.border(1.dp, Color.Magenta),
                 contentDescription = "An icon",
             )
-        }
 
-        Row {
             IconButton(onClick = { }) {
                 Icon("actions/close.svg", contentDescription = "An icon", AllIcons::class.java)
             }
         }
 
-        Row {
-            Text("Circular progress small: ")
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("Circular progress small:")
             CircularProgressIndicator()
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Circular progress big: ")
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("Circular progress big:")
             CircularProgressIndicatorBig()
         }
 

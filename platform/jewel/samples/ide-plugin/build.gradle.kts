@@ -45,6 +45,6 @@ tasks {
     }
 
     runIde {
-        this.systemProperties["org.jetbrains.jewel.debug"] = "true"
+        systemProperties["org.jetbrains.jewel.debug"] = "true"
     }
 }
