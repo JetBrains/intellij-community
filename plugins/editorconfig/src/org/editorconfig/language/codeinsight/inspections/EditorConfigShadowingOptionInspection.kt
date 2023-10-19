@@ -3,7 +3,6 @@ package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
-import org.editorconfig.language.codeinsight.inspections.EditorConfigShadowedOptionInspection.Companion.equalOptions
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveOptionQuickFix
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigOption
