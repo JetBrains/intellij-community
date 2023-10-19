@@ -38,7 +38,7 @@ class OtherOptions(val callback: (PageProvider) -> Unit) : ProductChooserAction(
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val jbProducts = jbDataProvider.other
-    val syncProducts = if(syncDataProvider.productService.isLoggedIn()) syncDataProvider.other else emptyList()
+    val syncProducts = if(syncDataProvider.settingsService.isLoggedIn()) syncDataProvider.other else emptyList()
 
     val arr = mutableListOf<AnAction>()
     if (jb == null && jbProducts != null) {

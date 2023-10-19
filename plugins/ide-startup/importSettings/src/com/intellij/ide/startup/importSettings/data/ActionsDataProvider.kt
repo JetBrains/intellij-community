@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
+import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -71,7 +72,7 @@ class JBrActionsDataProvider private constructor(): ActionsDataProvider<JbServic
       return contributor.path
     }
     if(contributor is Product) {
-      return contributor.lastUsage.toString()
+      return DateFormatUtil.formatPrettyDate(contributor.lastUsage)
     }
     return null
   }
@@ -98,7 +99,7 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
 
   private fun updateSyncMap() {
     val service = settingsService.getSyncService()
-    if (!service.isLoggedIn()) {
+    if (!settingsService.isLoggedIn()) {
       map = null
       return
     }
@@ -127,7 +128,7 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
 
   override fun getComment(contributor: SettingsContributor): String? {
     if(contributor is Product) {
-      return contributor.lastUsage.toString()
+      return DateFormatUtil.formatPrettyDate(contributor.lastUsage)
     }
     return null
   }

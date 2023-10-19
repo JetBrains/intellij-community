@@ -6,6 +6,7 @@ import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.IconProductSize
 import com.intellij.ide.startup.importSettings.data.SettingsContributor
+import com.intellij.openapi.rd.createLifetime
 import com.intellij.ui.JBColor
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.SeparatorOrientation
@@ -31,6 +32,13 @@ import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, val product: SettingsContributor) : PageProvider() {
   open val configurable = true
   protected val settingPanes = mutableListOf<BaseSettingPane>()
+
+  init {
+    val lifetime = disposable.createLifetime()
+    provider.settingsService.doClose.advise(lifetime) {
+      doClose()
+    }
+  }
 
   private val pane = JPanel(BorderLayout()).apply {
     add(panel {

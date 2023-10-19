@@ -47,6 +47,11 @@ class ErrorTestDialogAction : DumbAwareAction() {
 
             })})
           }
+          row {
+            button("close dialog") {
+              settService.doClose.fire(Unit)
+            }
+          }
         }
 
         return pane

@@ -31,6 +31,10 @@ class ProductChooserDialog : PageProvider() {
     nextStep(it, OK_EXIT_CODE)
   }
 
+  private val doClose = {
+    doClose()
+  }
+
   private val overlay = BannerOverlay()
 
   init {
@@ -41,10 +45,14 @@ class ProductChooserDialog : PageProvider() {
     group.add(SyncChooserAction(callback))
     group.add(JbChooserAction(callback))
     group.add(ExpChooserAction(callback))
-    group.add(SkipImportAction())
+    group.add(SkipImportAction(doClose))
 
     val settService = SettingsService.getInstance()
     val lifetime = disposable.createLifetime()
+
+    settService.doClose.advise(lifetime) {
+      doClose()
+    }
 
     settService.error.advise(lifetime) {
       overlay.showError(it)

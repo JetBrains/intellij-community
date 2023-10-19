@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import javax.swing.JButton
 
-class SkipImportAction : ChooseProductActionButton("Skip Import") {
+class SkipImportAction(val doClose: () -> Unit) : ChooseProductActionButton("Skip Import") {
   init {
     templatePresentation.text = "Skip Import"
     templatePresentation.icon = null
@@ -17,7 +17,7 @@ class SkipImportAction : ChooseProductActionButton("Skip Import") {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-
+    doClose()
   }
 
 

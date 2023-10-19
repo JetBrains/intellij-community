@@ -33,6 +33,10 @@ interface SettingsService {
   val jbAccount: IPropertyView<JBAccountInfoService.JBAData?>
 
   val isSyncEnabled: IPropertyView<Boolean>
+
+  val doClose: ISignal<Unit>
+
+  fun isLoggedIn(): Boolean = jbAccount.value != null
 }
 
 class SettingsServiceImpl : SettingsService {
@@ -54,6 +58,8 @@ class SettingsServiceImpl : SettingsService {
   override val error = Signal<NotificationData>()
 
   override val jbAccount = Property<JBAccountInfoService.JBAData?>(null)
+
+  override val doClose = Signal<Unit>()
 
   private fun unloggedSyncHide(): IPropertyView<Boolean> {
     fun getValue(): Boolean = Registry.`is`("import.setting.unlogged.sync.hide")
@@ -86,11 +92,6 @@ interface SyncService : BaseJbService {
     TURNED_OFF,
     NO_SYNC,
     GENERAL
-  }
-
-  @Deprecated("Use getJbAccount from SettingsService", ReplaceWith("jbAccount", "com.intellij.ide.startup.importSettings.data.SettingsService"))
-  fun isLoggedIn(): Boolean {
-    return syncState.value != SYNC_STATE.UNLOGGED
   }
 
   val syncState: IPropertyView<SYNC_STATE>

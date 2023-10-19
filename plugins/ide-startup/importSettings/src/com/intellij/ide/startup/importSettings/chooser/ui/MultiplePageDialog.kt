@@ -131,6 +131,12 @@ abstract class PageProvider(val createSouth: Boolean = true) : DialogWrapper(nul
     close(exitCode)
   }
 
+  fun doClose() {
+    parentDialog?.close(CANCEL_EXIT_CODE) ?: run {
+      close(CANCEL_EXIT_CODE)
+    }
+  }
+
   override fun doCancelAction() {
     super.doCancelAction()
     parentDialog?.doCancelAction()

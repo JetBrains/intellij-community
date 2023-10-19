@@ -110,6 +110,11 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
     settService.error.advise(disposable.createLifetime()) {
       overlay.showError(it)
     }
+
+    val lifetime = disposable.createLifetime()
+    settService.doClose.advise(lifetime) {
+      doClose()
+    }
   }
 
   override fun createContent(): JComponent {
