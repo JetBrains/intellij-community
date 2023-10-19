@@ -24,7 +24,7 @@ class GitLabMergeRequestsPreferences(private val project: Project)
   data class SettingsState(
     val selectedUrlAndAccountId: Pair<String, String>? = null,
     val showEventsInTimeline: Boolean = true,
-    val highlightDiffLinesInEditor: Boolean = true
+    val highlightDiffLinesInEditor: Boolean = true,
   )
 
   var selectedRepoAndAccount: Pair<GitLabProjectMapping, GitLabAccount>?
@@ -39,31 +39,32 @@ class GitLabMergeRequestsPreferences(private val project: Project)
       return repo to account
     }
     set(value) {
-      val state = updateState {
+      updateStateAndEmit {
         val saved = value?.let { (repo, account) -> repo.remote.url to account.id }
         SettingsState(saved)
       }
-      listeners.multicaster.onSettingsChange(state)
     }
 
   var showEventsInTimeline: Boolean
     get() = state.showEventsInTimeline
     set(value) {
-      val state = updateState {
+      updateStateAndEmit {
         it.copy(showEventsInTimeline = value)
       }
-      listeners.multicaster.onSettingsChange(state)
     }
 
   var highlightDiffLinesInEditor: Boolean
     get() = state.highlightDiffLinesInEditor
     set(value) {
-      val state = updateState {
+      updateStateAndEmit {
         it.copy(highlightDiffLinesInEditor = value)
       }
-      listeners.multicaster.onSettingsChange(state)
     }
 
+  private inline fun updateStateAndEmit(updateFunction: (currentState: SettingsState) -> SettingsState) {
+    val state = super.updateState(updateFunction)
+    listeners.multicaster.onSettingsChange(state)
+  }
 
   fun addListener(disposable: Disposable, listener: Listener) = listeners.addListener(listener, disposable)
 
