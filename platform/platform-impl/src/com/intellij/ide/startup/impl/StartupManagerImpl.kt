@@ -182,7 +182,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     }
     else {
       coroutineScope.launch(tracer.span("project post-startup activities running")) {
-        if (System.getProperty("idea.delayed.project.post.startup.activities", "false").toBoolean()) {
+        if (System.getProperty("idea.delayed.project.post.startup.activities", "true").toBoolean()) {
           withContext(tracer.span("fully opened editors waiting")) {
             (project.serviceAsync<FileEditorManager>() as? FileEditorManagerEx)?.waitForTextEditors()
           }
