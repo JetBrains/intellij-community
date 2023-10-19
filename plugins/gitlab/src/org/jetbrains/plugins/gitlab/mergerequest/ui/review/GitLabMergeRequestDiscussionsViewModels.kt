@@ -81,20 +81,22 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   override val newDiscussions: NewDiscussionsFlow = _newDiscussions.asStateFlow()
 
   override fun requestNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, focus: Boolean) {
-    _newDiscussions.updateAndGet {
-      if (!it.containsKey(position)) {
-        val vm = DelegatingGitLabNoteEditingViewModel(cs, "",
-                                                      { createDiscussion(position, it, false) },
-                                                      { createDiscussion(position, it, true) })
+    _newDiscussions.updateAndGet { currentNewDiscussions ->
+      if (!currentNewDiscussions.containsKey(position) && mergeRequest.canAddNotes) {
+        val vm = DelegatingGitLabNoteEditingViewModel(
+          cs, "",
+          { createDiscussion(position, it) },
+          if (mergeRequest.canAddDraftNotes) {{ createDraftDiscussion(position, it) }} else null
+        )
           .apply {
             onDoneIn(cs) {
               cancelNewDiscussion(position)
             }
           }.forNewNote(currentUser)
-        it + (position to vm)
+        currentNewDiscussions + (position to vm)
       }
       else {
-        it
+        currentNewDiscussions
       }
     }.apply {
       if (focus) {
@@ -105,10 +107,16 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
 
   private suspend fun createDiscussion(
     position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition,
-    body: String,
-    asDraft: Boolean
+    body: String
   ) {
-    mergeRequest.addNote(position.position, body, asDraft)
+    mergeRequest.addNote(position.position, body)
+  }
+
+  private suspend fun createDraftDiscussion(
+    position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition,
+    body: String
+  ) {
+    mergeRequest.addDraftNote(position.position, body)
   }
 
   override fun cancelNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition) {

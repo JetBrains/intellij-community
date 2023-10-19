@@ -355,11 +355,22 @@ internal class LoadedGitLabMergeRequest(
   override val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>> = discussionsContainer.discussions
   override val systemNotes: Flow<Result<Collection<GitLabNote>>> = discussionsContainer.systemNotes
   override val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>> = discussionsContainer.draftNotes
+
   override val canAddNotes: Boolean = discussionsContainer.canAddNotes
+  override val canAddDraftNotes: Boolean = discussionsContainer.canAddDraftNotes
+  override val canAddPositionalDraftNotes: Boolean = discussionsContainer.canAddPositionalDraftNotes
 
-  override suspend fun addNote(body: String, asDraft: Boolean) = discussionsContainer.addNote(body, asDraft)
+  override suspend fun addNote(body: String) =
+    discussionsContainer.addNote(body)
 
-  override suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String, asDraft: Boolean) = discussionsContainer.addNote(position, body, asDraft)
+  override suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String) =
+    discussionsContainer.addNote(position, body)
+
+  override suspend fun addDraftNote(body: String) =
+    discussionsContainer.addDraftNote(body)
+
+  override suspend fun addDraftNote(position: GitLabMergeRequestNewDiscussionPosition, body: String) =
+    discussionsContainer.addDraftNote(position, body)
 
   override suspend fun submitDraftNotes() = discussionsContainer.submitDraftNotes()
 
