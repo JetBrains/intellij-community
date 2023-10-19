@@ -1,17 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
+import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
 import com.intellij.ide.startup.importSettings.transfer.SettingTransferService
-import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.ui.JBAccountInfoService
+import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.jetbrains.rd.swing.proxyProperty
 import com.jetbrains.rd.util.reactive.*
@@ -204,8 +206,32 @@ data class DialogImportItem(val item: SettingsContributor, val icon: Icon) {
         override val id = "DialogImportItem.self"
         override val name = ApplicationNamesInfo.getInstance().getFullProductName()
       },
-      ProductIcons.getInstance().productIcon
+      getCurrentProductIcon()
     )
+
+    @Suppress("DEPRECATION")
+    private fun getCurrentProductIcon() = when {
+      PlatformUtils.isAppCode() -> StartupImportIcons.IdeIcons.AC_48
+      PlatformUtils.isAqua() -> StartupImportIcons.IdeIcons.Aqua_48
+      PlatformUtils.isCLion() -> StartupImportIcons.IdeIcons.CL_48
+      PlatformUtils.isDataGrip() -> StartupImportIcons.IdeIcons.DG_48
+      PlatformUtils.isDataSpell() -> StartupImportIcons.IdeIcons.DS_48
+      PlatformUtils.isGoIde() -> StartupImportIcons.IdeIcons.GO_48
+      PlatformUtils.isIdeaCommunity() -> StartupImportIcons.IdeIcons.IC_48
+      PlatformUtils.isIdeaUltimate() -> StartupImportIcons.IdeIcons.IU_48
+      PlatformUtils.isPhpStorm() -> StartupImportIcons.IdeIcons.PS_48
+      PlatformUtils.isPyCharmCommunity() -> StartupImportIcons.IdeIcons.PC_48
+      PlatformUtils.isPyCharmPro() -> StartupImportIcons.IdeIcons.PY_48
+      PlatformUtils.isRider() -> StartupImportIcons.IdeIcons.RD_48
+      PlatformUtils.isRubyMine() -> StartupImportIcons.IdeIcons.RM_48
+      PlatformUtils.isRustRover() -> StartupImportIcons.IdeIcons.RR_48
+      PlatformUtils.isWebStorm() -> StartupImportIcons.IdeIcons.WS_48
+      // TODO: StartupImportIcons.IdeIcons.MPS_48
+      else -> {
+        logger<DialogImportItem>().error("Unknown IDE: ${PlatformUtils.getPlatformPrefix()}.")
+        StartupImportIcons.IdeIcons.IC_48 // fall back to IDEA Community
+      }
+    }
   }
 }
 
