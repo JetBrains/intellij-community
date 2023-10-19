@@ -9,12 +9,12 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigVisitor
 
-internal fun EditorConfigHeader.containsIssue(): Boolean = this.textMatches("[]")
+internal fun EditorConfigHeader.isEmptyHeader(): Boolean = this.textMatches("[]")
 
 internal class EditorConfigEmptyHeaderInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitHeader(header: EditorConfigHeader) {
-      if (!header.containsIssue()) return
+      if (!header.isEmptyHeader()) return
       val message = EditorConfigBundle["inspection.header.empty.message"]
       holder.registerProblem(header, message, EditorConfigRemoveSectionQuickFix(), EditorConfigInsertStarQuickFix())
     }

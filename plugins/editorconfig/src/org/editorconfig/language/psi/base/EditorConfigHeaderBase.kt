@@ -6,7 +6,7 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.editorconfig.language.codeinsight.inspections.EditorConfigNumerousWildcardsInspection
 import org.editorconfig.language.codeinsight.inspections.EditorConfigPatternEnumerationRedundancyInspection
-import org.editorconfig.language.codeinsight.inspections.containsIssue
+import org.editorconfig.language.codeinsight.inspections.isEmptyHeader
 import org.editorconfig.language.psi.EditorConfigEnumerationPattern
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.reference.EditorConfigHeaderReference
@@ -18,7 +18,7 @@ abstract class EditorConfigHeaderBase(node: ASTNode) : EditorConfigHeaderElement
     if (containsErrors(header)) return false
     // That is, if closing bracket is missing
     if (nextSibling is PsiErrorElement) return false
-    if (header.containsIssue()) return false
+    if (header.isEmptyHeader()) return false
     if (EditorConfigNumerousWildcardsInspection.containsIssue(header)) return false
     if (PsiTreeUtil.findChildrenOfAnyType(header, EditorConfigEnumerationPattern::class.java).any(patternChecker)) return false
     return true
