@@ -90,8 +90,11 @@ public final class PyTypeUtil {
 
   @Nullable
   public static PyTupleType toPositionalContainerType(@NotNull PsiElement anchor, @Nullable PyType elementType) {
-    if (elementType instanceof PyGenericVariadicType genericVariadicType) {
-      return genericVariadicType.asTupleType(anchor);
+    if (elementType instanceof PyUnpackedTupleTypeImpl unpackedTupleType) {
+      return unpackedTupleType.asTupleType(anchor);
+    }
+    else if (elementType instanceof PyTypeVarTupleType) {
+      return PyTupleType.create(anchor, Collections.singletonList(elementType));
     }
     return PyTupleType.createHomogeneous(anchor, elementType);
   }

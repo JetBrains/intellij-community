@@ -124,10 +124,10 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
     return PyUnionType.union(myElementTypes);
   }
 
-  public @NotNull PyGenericVariadicType asUnpackedTupleType() {
+  public @NotNull PyUnpackedTupleType asUnpackedTupleType() {
     if (isHomogeneous()) {
-      return PyGenericVariadicType.homogeneous(getElementType(0));
+      return PyUnpackedTupleTypeImpl.createUnbound(getElementType(0));
     }
-    return PyGenericVariadicType.fromElementTypes(getElementTypes());
+    return PyUnpackedTupleTypeImpl.create(getElementTypes());
   }
 }

@@ -121,12 +121,12 @@ public final class PyTypeChecker {
       }
     }
 
-    if (actual instanceof PyGenericVariadicType genericVariadicType && !genericVariadicType.isUnpackedTupleType() && context.reversedSubstitutions) {
-      return Optional.of(match((PyGenericVariadicType)actual, expected, context));
+    if (actual instanceof PyTypeVarTupleType typeVarTupleType && context.reversedSubstitutions) {
+      return Optional.of(match(typeVarTupleType, expected, context));
     }
 
-    if (expected instanceof PyGenericVariadicType) {
-      return Optional.of(match((PyGenericVariadicType)expected, actual, context));
+    if (expected instanceof PyVariadicType variadic) {
+      return Optional.of(match(variadic, actual, context));
     }
 
     if (actual instanceof PyGenericType && context.reversedSubstitutions) {
@@ -270,48 +270,49 @@ public final class PyTypeChecker {
     return true;
   }
 
-  private static boolean match(@NotNull PyGenericVariadicType expected, @Nullable PyType actual, @NotNull MatchContext context) {
+  private static boolean match(@NotNull PyVariadicType expected, @Nullable PyType actual, @NotNull MatchContext context) {
     if (actual == null) {
       return true;
     }
-    if (!(actual instanceof PyGenericVariadicType actualVariadic)) {
+    if (!(actual instanceof PyVariadicType actualVariadic)) {
       return false;
     }
-    if (expected.isUnpackedTupleType()) {
+    if (expected instanceof PyUnpackedTupleType expectedUnpackedTupleType) {
       // The actual type is just a TypeVarTuple
-      if (!actualVariadic.isUnpackedTupleType()) {
+      if (!(actualVariadic instanceof PyUnpackedTupleType actualUnpackedTupleType)) {
         return false;
       }
-      if (expected.isHomogeneous()) {
-        if (actualVariadic.isHomogeneous()) {
-          return match(expected.getIteratedItemType(), actualVariadic.getIteratedItemType(), context).orElse(false);
+      if (expectedUnpackedTupleType.isUnbound()) {
+        PyType repeatedExpectedType = expectedUnpackedTupleType.getElementTypes().get(0);
+        if (actualUnpackedTupleType.isUnbound()) {
+          return match(repeatedExpectedType, actualUnpackedTupleType.getElementTypes().get(0), context).orElse(false);
         }
         else {
-          //noinspection DataFlowIssue
-          return ContainerUtil.all(actualVariadic.getElementTypes(), singleActualType -> match(expected.getIteratedItemType(), singleActualType, context).orElse(false));
+          return ContainerUtil.all(actualUnpackedTupleType.getElementTypes(),
+                                   singleActualType -> match(repeatedExpectedType, singleActualType, context).orElse(false));
         }
       }
       else {
-        if (actualVariadic.isHomogeneous()) {
-          //noinspection DataFlowIssue
-          return ContainerUtil.all(expected.getElementTypes(), singleExpectedType -> match(singleExpectedType, actualVariadic.getIteratedItemType(), context).orElse(false));
+        if (actualUnpackedTupleType.isUnbound()) {
+          PyType repeatedActualType = actualUnpackedTupleType.getElementTypes().get(0);
+          return ContainerUtil.all(expectedUnpackedTupleType.getElementTypes(), 
+                                   singleExpectedType -> match(singleExpectedType, repeatedActualType, context).orElse(false));
         }
         else {
-          //noinspection DataFlowIssue
-          return matchTypeParameters(expected.getElementTypes(), actualVariadic.getElementTypes(), context);
+          return matchTypeParameters(expectedUnpackedTupleType.getElementTypes(), actualUnpackedTupleType.getElementTypes(), context);
         }
       }
     }
     // The expected type is just a TypeVarTuple
     else {
-      PyGenericVariadicType substitution = context.mySubstitutions.typeVarTuples.get(expected);
-      if (substitution != null && !substitution.isUnspecified()) {
+      PyVariadicType substitution = context.mySubstitutions.typeVarTuples.get(expected);
+      if (substitution != null && !substitution.equals(PyUnpackedTupleTypeImpl.UNSPECIFIED)) {
         if (expected.equals(actual) || substitution.equals(expected)) {
           return true;
         }
         return context.reversedSubstitutions ? match(actualVariadic, substitution, context) : match(substitution, actualVariadic, context);
       }
-      context.mySubstitutions.typeVarTuples.put(expected, actualVariadic);
+      context.mySubstitutions.typeVarTuples.put((PyTypeVarTupleType)expected, actualVariadic);
     }
     return true;
   }
@@ -628,8 +629,8 @@ public final class PyTypeChecker {
 
     List<PyType> expectedElementTypes = ContainerUtil.map(expectedParameters, cp -> {
       PyType argType = cp.getArgumentType(context);
-      if (cp.isPositionalContainer() && !(argType instanceof PyGenericVariadicType)) {
-        return PyGenericVariadicType.homogeneous(argType);
+      if (cp.isPositionalContainer() && !(argType instanceof PyVariadicType)) {
+        return PyUnpackedTupleTypeImpl.createUnbound(argType);
       }
       return argType;
     });
@@ -745,9 +746,9 @@ public final class PyTypeChecker {
         if (entry.getKey() instanceof PyGenericType) {
           result.typeVars.put((PyGenericType)entry.getKey(), entry.getValue());
         }
-        else if (entry.getKey() instanceof PyGenericVariadicType typeVarTuple) {
-          assert entry.getValue() instanceof PyGenericVariadicType;
-          result.typeVarTuples.put(typeVarTuple, (PyGenericVariadicType)entry.getValue());
+        else if (entry.getKey() instanceof PyTypeVarTupleType typeVarTuple) {
+          assert entry.getValue() instanceof PyVariadicType;
+          result.typeVarTuples.put(typeVarTuple, (PyVariadicType)entry.getValue());
         }
         // TODO Handle ParamSpecs here
       }
@@ -758,14 +759,14 @@ public final class PyTypeChecker {
           List<PyType> definitionTypeParameters = genericDefinitionType.getElementTypes();
           if (!(classType instanceof PyCollectionType genericType)) {
             for (PyType typeParameter : definitionTypeParameters) {
-              if (typeParameter instanceof PyGenericVariadicType gvt) {
-                result.typeVarTuples.put(gvt, null);
+              if (typeParameter instanceof PyTypeVarTupleType typeVarTupleType) {
+                result.typeVarTuples.put(typeVarTupleType, null);
               }
-              else if (typeParameter instanceof PyParamSpecType pst) {
-                result.paramSpecs.put(pst, null);
+              else if (typeParameter instanceof PyParamSpecType paramSpecType) {
+                result.paramSpecs.put(paramSpecType, null);
               }
-              else if (typeParameter instanceof PyTypeVarType tvt) {
-                result.typeVars.put((PyGenericType)tvt, null);
+              else if (typeParameter instanceof PyTypeVarType typeVarType) {
+                result.typeVars.put((PyGenericType)typeVarType, null);
               }
             }
           }
@@ -779,9 +780,9 @@ public final class PyTypeChecker {
                 if (typeParameter instanceof PyGenericType) {
                   result.typeVars.put((PyGenericType)typeParameter, typeArgument);
                 }
-                else if (typeParameter instanceof PyGenericVariadicType typeVarTuple) {
-                  assert typeArgument instanceof PyGenericVariadicType || typeArgument == null;
-                  result.typeVarTuples.put(typeVarTuple, (PyGenericVariadicType)typeArgument);
+                else if (typeParameter instanceof PyTypeVarTupleType typeVarTuple) {
+                  assert typeArgument instanceof PyVariadicType || typeArgument == null;
+                  result.typeVarTuples.put(typeVarTuple, (PyVariadicType)typeArgument);
                 }
                 else if (typeParameter instanceof PyParamSpecType) {
                   result.getParamSpecs().put((PyParamSpecType)typeParameter, as(typeArgument, PyParamSpecType.class));
@@ -945,9 +946,7 @@ public final class PyTypeChecker {
                                       @NotNull Generics generics,
                                       @NotNull Set<? super PyType> visited) {
     if (type instanceof PyTypeParameterType typeParameter) {
-      if (!(type instanceof PyGenericVariadicType genericVariadic && genericVariadic.isUnpackedTupleType())) {
-        generics.allTypeParameters.add(typeParameter);
-      }
+      generics.allTypeParameters.add(typeParameter);
     }
     if (visited.contains(type)) {
       return;
@@ -956,8 +955,8 @@ public final class PyTypeChecker {
     if (type instanceof PyGenericType) {
       generics.typeVars.add((PyGenericType)type);
     }
-    if (type instanceof PyGenericVariadicType genericVariadic && !genericVariadic.isUnpackedTupleType()) {
-      generics.typeVarTuples.add(genericVariadic);
+    if (type instanceof PyTypeVarTupleType typeVarTupleType) {
+      generics.typeVarTuples.add(typeVarTupleType);
     }
     // TODO Filter out PyParamSpecTypes representing actual lists of parameters, not type parameters declared via ParamSpec
     if (type instanceof PyParamSpecType) {
@@ -997,9 +996,8 @@ public final class PyTypeChecker {
       }
       collectGenerics(callable.getReturnType(context), context, generics, visited);
     }
-    else if (type instanceof PyGenericVariadicType genericVariadicType && genericVariadicType.isUnpackedTupleType()) {
-      //noinspection DataFlowIssue
-      for (PyType elementType : genericVariadicType.getElementTypes()) {
+    else if (type instanceof PyUnpackedTupleType unpackedTupleType) {
+      for (PyType elementType : unpackedTupleType.getElementTypes()) {
         collectGenerics(elementType, context, generics, visited);
       }
     }
@@ -1010,9 +1008,8 @@ public final class PyTypeChecker {
                                                                  @NotNull TypeEvalContext context,
                                                                  @NotNull Set<PyType> substituting) {
     PyType substituted = substitute(type, substitutions, context, substituting);
-    if (substituted instanceof PyGenericVariadicType typeVarTuple && typeVarTuple.isUnpackedTupleType() && !typeVarTuple.isHomogeneous()) {
-      //noinspection DataFlowIssue
-      return typeVarTuple.getElementTypes();
+    if (substituted instanceof PyUnpackedTupleType unpackedTupleType && !unpackedTupleType.isUnbound()) {
+      return unpackedTupleType.getElementTypes();
     }
     return Collections.singletonList(substituted);
   }
@@ -1033,24 +1030,21 @@ public final class PyTypeChecker {
     }
     try {
       if (hasGenerics(type, context)) {
-        if (type instanceof PyGenericVariadicType genericVariadicType) {
-          if (genericVariadicType.isUnpackedTupleType()) {
-            //noinspection DataFlowIssue
-            return new PyGenericVariadicType("", genericVariadicType.isHomogeneous(),
-                                             ContainerUtil.flatMap(genericVariadicType.getElementTypes(),
-                                                                   t -> substituteExpand(t, substitutions, context, substituting)));
+        if (type instanceof PyUnpackedTupleType unpackedTupleType) {
+          return new PyUnpackedTupleTypeImpl(ContainerUtil.flatMap(unpackedTupleType.getElementTypes(),
+                                                                   t -> substituteExpand(t, substitutions, context, substituting)),
+                                             unpackedTupleType.isUnbound());
+        }
+        if (type instanceof PyTypeVarTupleType typeVarTupleType) {
+          if (!substitutions.typeVarTuples.containsKey(typeVarTupleType)) {
+            return type;
           }
-          else {
-            if (!substitutions.typeVarTuples.containsKey(genericVariadicType)) {
-              return type;
-            }
-            PyGenericVariadicType substitution = substitutions.typeVarTuples.get(genericVariadicType);
-            if (!genericVariadicType.equals(substitution) && hasGenerics(substitution, context)) {
-              return substitute(substitution, substitutions, context, substituting);
-            }
-            // Replace unknown TypeVarTuples by *tuple[Any, ...] instead of plain Any
-            return substitution == null ? PyGenericVariadicType.homogeneous(null) : substitution;
+          PyVariadicType substitution = substitutions.typeVarTuples.get(typeVarTupleType);
+          if (!typeVarTupleType.equals(substitution) && hasGenerics(substitution, context)) {
+            return substitute(substitution, substitutions, context, substituting);
           }
+          // Replace unknown TypeVarTuples by *tuple[Any, ...] instead of plain Any
+          return substitution == null ? PyUnpackedTupleTypeImpl.UNSPECIFIED : substitution;
         }
         if (type instanceof PyGenericType typeVar) {
           // Both mappings of kind {T: T2} (and no mapping for T2) and {T: T} mean the substitution process should stop for T.
@@ -1250,8 +1244,8 @@ public final class PyTypeChecker {
     }
     final List<PyType> actualArgumentTypes = ContainerUtil.map(arguments, context::getType);
     final PyType expectedArgumentType = container.getArgumentType(context);
-    if (container.isPositionalContainer() && expectedArgumentType instanceof final PyGenericVariadicType genericVariadicType) {
-      return match(genericVariadicType, PyGenericVariadicType.fromElementTypes(actualArgumentTypes),
+    if (container.isPositionalContainer() && expectedArgumentType instanceof PyVariadicType variadicType) {
+      return match(variadicType, PyUnpackedTupleTypeImpl.create(actualArgumentTypes),
                    new MatchContext(context, substitutions, false));
     }
     return match(expectedArgumentType, PyUnionType.union(actualArgumentTypes), context, substitutions);
@@ -1277,7 +1271,7 @@ public final class PyTypeChecker {
           for (Map.Entry<PyGenericType, PyType> typeVarMapping : newSubstitutions.typeVars.entrySet()) {
             substitutions.typeVars.putIfAbsent(typeVarMapping.getKey(), typeVarMapping.getValue());
           }
-          for (Map.Entry<PyGenericVariadicType, PyGenericVariadicType> typeVarMapping : newSubstitutions.typeVarTuples.entrySet()) {
+          for (Map.Entry<PyTypeVarTupleType, PyVariadicType> typeVarMapping : newSubstitutions.typeVarTuples.entrySet()) {
             substitutions.typeVarTuples.putIfAbsent(typeVarMapping.getKey(), typeVarMapping.getValue());
           }
           for (Map.Entry<PyParamSpecType, PyParamSpecType> paramSpecMapping : newSubstitutions.paramSpecs.entrySet()) {
@@ -1466,9 +1460,9 @@ public final class PyTypeChecker {
           if (pair.getFirst() instanceof PyTypeVarType typeVar) {
             substitutions.typeVars.put((PyGenericType)typeVar, pair.getSecond());
           }
-          else if (pair.getFirst() instanceof PyGenericVariadicType typeVarTuple) {
-            assert pair.getSecond() instanceof PyGenericVariadicType;
-            substitutions.typeVarTuples.put(typeVarTuple, (PyGenericVariadicType)pair.getSecond());
+          else if (pair.getFirst() instanceof PyTypeVarTupleType typeVarTuple) {
+            assert pair.getSecond() instanceof PyVariadicType;
+            substitutions.typeVarTuples.put(typeVarTuple, (PyVariadicType)pair.getSecond());
           }
         }
       }
@@ -1493,7 +1487,7 @@ public final class PyTypeChecker {
     private final Set<PyGenericType> typeVars = new LinkedHashSet<>();
 
     @NotNull
-    private final Set<PyGenericVariadicType> typeVarTuples = new LinkedHashSet<>();
+    private final Set<PyTypeVarTupleType> typeVarTuples = new LinkedHashSet<>();
 
     @NotNull
     private final List<PyTypeParameterType> allTypeParameters = new ArrayList<>();
@@ -1511,7 +1505,7 @@ public final class PyTypeChecker {
       return Collections.unmodifiableSet(typeVars);
     }
 
-    public @NotNull Set<PyGenericVariadicType> getTypeVarTuples() {
+    public @NotNull Set<PyTypeVarTupleType> getTypeVarTuples() {
       return Collections.unmodifiableSet(typeVarTuples);
     }
 
@@ -1543,7 +1537,7 @@ public final class PyTypeChecker {
     private final Map<PyGenericType, PyType> typeVars;
 
     @NotNull
-    private final Map<PyGenericVariadicType, PyGenericVariadicType> typeVarTuples;
+    private final Map<PyTypeVarTupleType, PyVariadicType> typeVarTuples;
 
     @NotNull
     private final Map<PyParamSpecType, PyParamSpecType> paramSpecs;
@@ -1560,7 +1554,7 @@ public final class PyTypeChecker {
     }
 
     GenericSubstitutions(@NotNull Map<PyGenericType, PyType> typeVars,
-                         @NotNull Map<PyGenericVariadicType, PyGenericVariadicType> typeVarTuples,
+                         @NotNull Map<PyTypeVarTupleType, PyVariadicType> typeVarTuples,
                          @NotNull Map<PyParamSpecType, PyParamSpecType> paramSpecs,
                          @Nullable PyType qualifierType) {
       this.typeVars = typeVars;
@@ -1577,7 +1571,7 @@ public final class PyTypeChecker {
       return typeVars;
     }
 
-    public @NotNull Map<PyGenericVariadicType, PyGenericVariadicType> getTypeVarTuples() {
+    public @NotNull Map<PyTypeVarTupleType, PyVariadicType> getTypeVarTuples() {
       return typeVarTuples;
     }
 

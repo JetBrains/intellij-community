@@ -219,8 +219,8 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
       // *args: str is equivalent to *args: *tuple[str, ...]
       // *args: *Ts is equivalent to *args: *tuple[*Ts]
       // Convert its type to a more general form of an unpacked tuple
-      PyGenericVariadicType unpackedTupleType = tupleType.asUnpackedTupleType();
-      if (unpackedTupleType.isHomogeneous()) {
+      PyUnpackedTupleType unpackedTupleType = tupleType.asUnpackedTupleType();
+      if (unpackedTupleType.isUnbound()) {
         return unpackedTupleType.getElementTypes().get(0);
       }
       return unpackedTupleType;

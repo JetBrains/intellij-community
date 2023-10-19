@@ -965,7 +965,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     if (type instanceof PyParamSpecType paramSpec) {
       return paramSpec.withScopeOwner(getTypeParameterScope(paramSpec.getName(), typeHint, context)).withTargetExpression(targetExpr);
     }
-    if (type instanceof PyGenericVariadicType typeVarTuple) {
+    if (type instanceof PyTypeVarTupleTypeImpl typeVarTuple) {
       return typeVarTuple.withScopeOwner(getTypeParameterScope(typeVarTuple.getName(), typeHint, context)).withTargetExpression(targetExpr);
     }
     return type;
@@ -1477,7 +1477,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
             if (firstArgument instanceof PyStringLiteralExpression) {
               final String name = ((PyStringLiteralExpression)firstArgument).getStringValue();
               if (calleeQNames.contains(TYPE_VAR_TUPLE)) {
-                return new PyGenericVariadicType(name);
+                return new PyTypeVarTupleTypeImpl(name);
               }
               else {
                 return new PyTypeVarTypeImpl(name, getGenericTypeBound(arguments, context));
@@ -1565,7 +1565,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   }
 
   @Nullable
-  public static PyType getUnpackedType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+  public static PyVariadicType getUnpackedType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     // TODO Add support for Unpacked here
     if (!(element instanceof PyStarExpression starExpression)) return null;
     var typeHint = starExpression.getExpression();
@@ -1576,10 +1576,10 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     var expressionType = typeRef.get();
 
     if (expressionType instanceof PyTupleType tupleType) {
-      return new PyGenericVariadicType("", tupleType.isHomogeneous(), tupleType.getElementTypes());
+      return new PyUnpackedTupleTypeImpl(tupleType.getElementTypes(), tupleType.isHomogeneous());
     }
-    if (expressionType instanceof PyGenericVariadicType) {
-      return expressionType;
+    if (expressionType instanceof PyTypeVarTupleType typeVarTupleType) {
+      return typeVarTupleType;
     }
     return null;
   }
