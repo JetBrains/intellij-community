@@ -43,7 +43,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseEvent
-import java.beans.PropertyChangeListener
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.Icon
@@ -363,10 +362,9 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
   }
 
   private fun adjustIcons(presentation: Presentation) {
-    iconUpdater.registerFor(presentation, "icon", { it.icon }, { pst, icn -> pst.icon = icn })
-    iconUpdater.registerFor(presentation, "selectedIcon", { it.selectedIcon }, { pst, icn -> pst.selectedIcon = icn })
-    iconUpdater.registerFor(presentation, "hoveredIcon", { it.hoveredIcon }, { pst, icn -> pst.hoveredIcon = icn })
-    iconUpdater.registerFor(presentation, "disabledIcon", { it.disabledIcon }, { pst, icn -> pst.disabledIcon = icn })
+    PresentationIconUpdater.updateIcons(presentation) { icon ->
+      iconUpdater.updateIcon(icon)
+    }
   }
 
   override fun getSeparatorColor(): Color {
@@ -457,29 +455,12 @@ fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDa
 private class HeaderIconUpdater {
   private val iconCache = ContainerUtil.createWeakSet<Icon>()
 
-  private fun updateIcon(p: Presentation, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
-    if (!isDarkHeader()) {
-      return
-    }
+  fun updateIcon(sourceIcon: Icon): Icon {
+    if (sourceIcon in iconCache) return sourceIcon
 
-    getter(p)?.let { icon ->
-      val replaceIcon = adjustIconForHeader(icon)
-      iconCache.add(replaceIcon)
-      setter(p, replaceIcon)
-    }
-  }
-
-  fun registerFor(presentation: Presentation, propName: String, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
-    updateIcon(presentation, getter, setter)
-    presentation.addPropertyChangeListener(PropertyChangeListener { event ->
-      if (event.propertyName != propName) {
-        return@PropertyChangeListener
-      }
-      if (event.newValue != null && event.newValue in iconCache) {
-        return@PropertyChangeListener
-      }
-      updateIcon(presentation, getter, setter)
-    })
+    val replaceIcon = adjustIconForHeader(sourceIcon)
+    iconCache.add(replaceIcon)
+    return replaceIcon
   }
 }
 
