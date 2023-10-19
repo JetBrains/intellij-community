@@ -125,12 +125,14 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   @ApiStatus.Experimental
   public AnAction(@NotNull @ActionText Supplier<String> text,
-                  @NotNull @ActionDescription Supplier<String> description,
-                  @Nullable Supplier<? extends @Nullable Icon> iconSupplier) {
+                  @Nullable @ActionDescription Supplier<String> description,
+                  @Nullable Supplier<? extends @Nullable Icon> icon) {
     Presentation presentation = getTemplatePresentation();
     presentation.setText(text);
-    presentation.setDescription(description);
-    presentation.setIconSupplier(iconSupplier);
+    if (description != null) {
+      presentation.setDescription(description);
+    }
+    presentation.setIconSupplier(icon);
   }
 
   @ApiStatus.Experimental

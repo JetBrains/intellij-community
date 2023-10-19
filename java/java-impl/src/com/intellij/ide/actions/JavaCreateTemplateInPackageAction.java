@@ -43,13 +43,6 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
     super(text, description, icon, rootTypes);
   }
 
-  protected JavaCreateTemplateInPackageAction(@NotNull Supplier<String> dynamicText,
-                                              @NotNull Supplier<String> dynamicDescription,
-                                              @Nullable Supplier<? extends @Nullable Icon> icon,
-                                              boolean inSourceOnly) {
-    super(dynamicText, dynamicDescription, icon, inSourceOnly ? JavaModuleSourceRootTypes.SOURCES : null);
-  }
-
   @Override
   protected boolean checkPackageExists(PsiDirectory directory) {
     return doCheckPackageExists(directory);
