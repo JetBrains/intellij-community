@@ -6,17 +6,19 @@ import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.maven.testFramework.utils.importMavenProjects
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.write
+import junit.framework.TestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.assertj.core.api.Assertions
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.jetbrains.idea.maven.project.BundledMaven3
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -90,7 +92,7 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     assertEquals(setOf("project", "project2"), mavenProjectNames)
   }
 
-  fun testShouldStoreImlFileInSameDirAsPomXml(): Unit = runBlocking {
+  fun testShouldStoreImlFileInSameDirAsPomXml() = runBlocking {
     val dir = tempDir.newPath("", true)
     val projectName = dir.toFile().getName()
     val pom = dir.resolve("pom.xml")
@@ -108,9 +110,10 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
     val modules = ModuleManager.getInstance(project).modules
     val imlFile = dir.resolve("$projectName.iml").toFile()
-    Assertions.assertThat(modules).hasOnlyOneElementSatisfying { m: Module ->
-      PlatformTestUtil.assertPathsEqual(m.moduleFilePath, imlFile.absolutePath)
+    val m = modules.filter {
+      FileUtil.toSystemIndependentName(it.moduleFilePath) == FileUtil.toSystemIndependentName(imlFile.absolutePath)
     }
+    TestCase.assertEquals(1, m.size)
   }
 
   private fun waitForMavenImporting(project: Project, file: VirtualFile) {
@@ -118,7 +121,9 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     manager.waitForImportCompletion()
     importMavenProjects(manager, List.of(file))
     val promise = manager.waitForImportCompletion()
-    PlatformTestUtil.waitForPromise(promise)
+    runInEdtAndWait{
+      PlatformTestUtil.waitForPromise(promise)
+    }
   }
 
   companion object {
