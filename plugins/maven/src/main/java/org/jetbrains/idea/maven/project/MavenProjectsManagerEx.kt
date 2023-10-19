@@ -6,13 +6,13 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.trackActivity
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -263,7 +263,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   override fun scheduleUpdateAllMavenProjects(spec: MavenImportSpec) {
     cs.launch {
-      project.serviceAsync<MavenInProgressService>().trackConfigurationActivity {
+      project.trackActivity(MavenInProgressWitness::class) {
         updateAllMavenProjects(spec)
       }
     }
@@ -611,7 +611,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 }
 
 class MavenProjectsManagerProjectActivity : ProjectActivity {
-  override suspend fun execute(project: Project) = project.serviceAsync<MavenInProgressService>().trackConfigurationActivity {
+  override suspend fun execute(project: Project) = project.trackActivity(MavenInProgressWitness::class) {
     blockingContext {
       MavenProjectsManager.getInstance(project).onProjectStartup()
     }

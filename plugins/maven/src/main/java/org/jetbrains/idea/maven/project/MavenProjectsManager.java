@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.observable.TrackingUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -204,12 +205,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void initializeComponent() {
-    myProject.getService(MavenInProgressService.class).trackConfigurationActivityBlocking(() -> {
+    TrackingUtil.trackActivity(myProject, MavenInProgressWitness.class, () -> {
       //noinspection deprecation
       ProjectUtilKt.executeOnPooledThread(myProject, () -> {
         tryInit();
       });
-      return null;
     });
   }
 
