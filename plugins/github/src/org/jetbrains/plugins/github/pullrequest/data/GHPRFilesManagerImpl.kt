@@ -34,17 +34,6 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     }
   }
 
-  override fun createOrGetDiffFile(pullRequest: GHPRIdentifier, sourceId: String, combinedDiff: Boolean): DiffVirtualFileBase {
-    return diffFiles.getOrPut(pullRequest) {
-      if (combinedDiff) {
-        GHPRCombinedDiffPreviewVirtualFile(sourceId, id, project, repository, pullRequest)
-      }
-      else {
-        GHPRDiffVirtualFile(id, project, repository, pullRequest)
-      }
-    }
-  }
-
   override fun createAndOpenTimelineFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
     files.getOrPut(pullRequest) {
       GHPRTimelineVirtualFile(id, project, repository, pullRequest)
@@ -58,29 +47,6 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     diffFiles.getOrPut(pullRequest) {
       GHPRDiffVirtualFile(id, project, repository, pullRequest)
     }.let {
-      DiffEditorTabFilesManager.getInstance(project).showDiffFile(it, requestFocus)
-      GHPRStatisticsCollector.logDiffOpened(project)
-    }
-  }
-
-  override fun createAndOpenDiffPreviewFile(pullRequest: GHPRIdentifier, sourceId: String, requestFocus: Boolean): DiffVirtualFileBase {
-    return diffFiles.getOrPut(pullRequest) {
-      GHPRCombinedDiffPreviewVirtualFile(sourceId, id, project, repository, pullRequest)
-    }.also {
-      DiffEditorTabFilesManager.getInstance(project).showDiffFile(it, requestFocus)
-      GHPRStatisticsCollector.logDiffOpened(project)
-    }
-  }
-
-  override fun createAndOpenNewPRDiffPreviewFile(sourceId: String, combinedDiff: Boolean, requestFocus: Boolean): DiffVirtualFileBase {
-    return newPRDiffFiles.getOrPut(sourceId) {
-      if (combinedDiff) {
-        GHNewPRCombinedDiffPreviewVirtualFile(sourceId, id, project, repository)
-      }
-      else {
-        GHNewPRDiffVirtualFile(id, project, repository)
-      }
-    }.also {
       DiffEditorTabFilesManager.getInstance(project).showDiffFile(it, requestFocus)
       GHPRStatisticsCollector.logDiffOpened(project)
     }
