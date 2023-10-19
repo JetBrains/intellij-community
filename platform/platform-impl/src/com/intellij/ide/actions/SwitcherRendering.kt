@@ -136,8 +136,7 @@ class SwitcherVirtualFile(
 
   override var mainText: String = ""
 
-  override val statusText: String
-    get() = getLocationRelativeToUserHome((file.parent ?: file).presentableUrl)
+  override var statusText: String = ""
 
   override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
   }
