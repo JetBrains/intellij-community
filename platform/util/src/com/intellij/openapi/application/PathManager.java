@@ -657,11 +657,11 @@ public final class PathManager {
   }
 
   /**
-   * Return original value of the config path, if it was changed via {@link PathCustomizer}, or {@code null} if no custom paths were set. 
+   * Return original value of the config path ignoring possible customizations made by {@link PathCustomizer}. 
    */
   @ApiStatus.Internal
-  public static @Nullable Path getOriginalConfigDir() {
-    return ourOriginalConfigDir;
+  public static @NotNull Path getOriginalConfigDir() {
+    return ourOriginalConfigDir != null ? ourOriginalConfigDir : getConfigDir();
   }
 
   private static String getCustomPropertiesFile() {

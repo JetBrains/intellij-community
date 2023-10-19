@@ -18,7 +18,6 @@ import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
-import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileAlreadyExistsException
@@ -97,7 +96,7 @@ class CertificateManager : PersistentStateComponent<CertificateManager.Config?> 
   companion object {
     const val COMPONENT_NAME: @NonNls String = "Certificate Manager"
     @JvmField
-    val DEFAULT_PATH: @NonNls String = java.lang.String.join(File.separator, PathManager.getOriginalConfigDir()?.pathString ?: PathManager.getConfigPath(), "ssl", "cacerts")
+    val DEFAULT_PATH: @NonNls String = PathManager.getOriginalConfigDir().resolve("ssl").resolve("cacerts").pathString
     @Suppress("SpellCheckingInspection")
     const val DEFAULT_PASSWORD: @NonNls String = "changeit"
     private val LOG = logger<CertificateManager>()
