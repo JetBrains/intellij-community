@@ -6,15 +6,13 @@ import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
+import com.intellij.platform.workspace.storage.tests.from
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.testFramework.assertInstanceOf
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertIs
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class WorkspaceBuilderChangeLogTest {
   internal lateinit var builder: MutableEntityStorageImpl
@@ -647,4 +645,25 @@ class WorkspaceBuilderChangeLogTest {
   }
 
   // ------------- Testing events collapsing end ----
+
+  @Test
+  fun `make a modification of references then modification of data then revert modification of references`() {
+    val child = builder addEntity OoChildWithNullableParentEntity(MySource)
+
+    val newBuilder = builder.toSnapshot().toBuilder() as MutableEntityStorageImpl
+
+    val newParent1 = newBuilder addEntity OoParentEntity("data", MySource)
+    newBuilder.modifyEntity(child.from(newBuilder)) {
+      this.parentEntity = newParent1
+    }
+    newBuilder.modifyEntity(child.from(newBuilder)) {
+      this.entitySource = AnotherSource
+    }
+    newBuilder.modifyEntity(child.from(newBuilder)) {
+      this.parentEntity = null
+    }
+
+    val log = newBuilder.changeLog.changeLog
+    assertNull(log.values.filterIsInstance<ChangeEntry.ReplaceEntity>().single().references)
+  }
 }

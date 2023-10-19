@@ -74,12 +74,10 @@ internal class WorkspaceBuilderChangeLog {
       else removedParents
 
       if (newAddedChildren.isEmpty() && newRemovedChildren.isEmpty() && newAddedParents.isEmpty() && newRemovedParents.isEmpty()) {
-        if (replaceEntity.data == null) null else replaceEntity
+        if (replaceEntity.data == null) null else replaceEntity.copy(references = null)
       }
-      else ChangeEntry.ReplaceEntity(
-        replaceEntity.data,
-        ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren, newAddedParents, newRemovedParents)
-      )
+      else replaceEntity
+        .copy(references = ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren, newAddedParents, newRemovedParents))
     }
 
     if (existingChange == null) {
@@ -122,7 +120,7 @@ internal class WorkspaceBuilderChangeLog {
 
     val existingChange = changeLog[entityId]
 
-    val makeReplaceEvent = { replaceEntity: ChangeEntry.ReplaceEntity ->
+    val updateReplaceEvent = { replaceEntity: ChangeEntry.ReplaceEntity ->
       if (originalEntity == copiedData) {
         if (replaceEntity.references == null) null else replaceEntity
       }
@@ -139,7 +137,7 @@ internal class WorkspaceBuilderChangeLog {
         is ChangeEntry.AddEntity -> changeLog[entityId] = ChangeEntry.AddEntity(copiedData, entityId.clazz)
         is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event. $copiedData")
         is ChangeEntry.ReplaceEntity -> {
-          val event = makeReplaceEvent(existingChange)
+          val event = updateReplaceEvent(existingChange)
           if (event != null) {
             changeLog[entityId] = event
           }
