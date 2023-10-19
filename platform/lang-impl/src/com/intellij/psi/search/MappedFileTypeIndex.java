@@ -62,9 +62,16 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   private static @NotNull MappedFileTypeIndex.IndexDataController loadIndexToMemory(@NotNull Path forwardIndexStorageFile,
                                                                                     @NotNull IntConsumer invertedIndexChangeCallback)
     throws StorageException {
-    var forwardIndex = FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE ?
-                       new ForwardIndexFileControllerOverMappedFile(forwardIndexStorageFile) :
-                       new ForwardIndexFileControllerOverFile(forwardIndexStorageFile);
+    final IndexDataController.ForwardIndexFileController forwardIndex;
+    if (FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE) {
+      forwardIndex = new ForwardIndexFileControllerOverMappedFile(
+        // TODO put this piece in the constructor after OverFile implementation is removed
+        forwardIndexStorageFile.resolveSibling(forwardIndexStorageFile.getFileName().toString() + ".mmap")
+      );
+    }
+    else {
+      forwardIndex = new ForwardIndexFileControllerOverFile(forwardIndexStorageFile);
+    }
     Int2ObjectMap<RandomAccessIntContainer> invertedIndex = new Int2ObjectOpenHashMap<>();
     forwardIndex.processEntries((inputId, data) -> {
       if (data != 0) {
@@ -212,9 +219,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         if (lastRangeStart == -1) {
           lastRangeStart = key;
           lastRangeEnd = key;
-        } else if (lastRangeEnd == key - 1) {
+        }
+        else if (lastRangeEnd == key - 1) {
           lastRangeEnd = key;
-        } else {
+        }
+        else {
           invertedIndexInitKeysRanges.add(new IntRange(lastRangeStart, lastRangeEnd));
           lastRangeStart = key;
           lastRangeEnd = key;
@@ -233,7 +242,8 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           var indexedSet = myInvertedIndex.get(indexedData);
           var ok = indexedSet != null && indexedSet.contains(inputId);
           if (!ok) {
-            logInconsistencySameValueIndexedSetIsNullOrDoesntContainInputId(inputId, indexedData, indexedData, indexedSet == null, myExtraChecksInfo);
+            logInconsistencySameValueIndexedSetIsNullOrDoesntContainInputId(inputId, indexedData, indexedData, indexedSet == null,
+                                                                            myExtraChecksInfo);
           }
         }
         return;
@@ -255,7 +265,8 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
                   keyWitness.set(key);
                 }
               });
-            } else {
+            }
+            else {
               keyWitness = null;
             }
             logInconsistencyIndexedSetValueNotRemoved(inputId, indexedData, data, keyWitness, myExtraChecksInfo);
