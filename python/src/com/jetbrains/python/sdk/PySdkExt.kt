@@ -95,6 +95,9 @@ fun filterSystemWideSdks(existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
 }
 
+/**
+ * @param context used to get [BASE_DIR] in [com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.suggestLocalHomePaths]
+ */
 @JvmOverloads
 fun detectSystemWideSdks(module: Module?,
                          existingSdks: List<Sdk>,
