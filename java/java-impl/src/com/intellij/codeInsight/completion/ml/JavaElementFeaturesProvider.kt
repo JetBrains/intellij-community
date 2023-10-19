@@ -6,13 +6,14 @@ import com.intellij.codeInsight.completion.JavaIncorrectElements
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
+import org.jetbrains.annotations.VisibleForTesting
 
+@VisibleForTesting
 class JavaElementFeaturesProvider : ElementFeatureProvider {
-  companion object {
-    private val POPULAR_MODIFIERS: List<JvmModifier> =
-      listOf(JvmModifier.PUBLIC, JvmModifier.PRIVATE, JvmModifier.PROTECTED,
-             JvmModifier.ABSTRACT, JvmModifier.FINAL, JvmModifier.STATIC)
-  }
+
+  private val POPULAR_MODIFIERS: List<JvmModifier> =
+    listOf(JvmModifier.PUBLIC, JvmModifier.PRIVATE, JvmModifier.PROTECTED,
+           JvmModifier.ABSTRACT, JvmModifier.FINAL, JvmModifier.STATIC)
 
   override fun getName(): String = "java"
 
