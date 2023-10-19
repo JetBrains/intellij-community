@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -47,28 +33,36 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateFromTemplateAction<T> {
-  @Nullable
-  private final Set<? extends JpsModuleSourceRootType<?>> mySourceRootTypes;
+  private final @Nullable Set<? extends JpsModuleSourceRootType<?>> mySourceRootTypes;
 
   protected CreateTemplateInPackageAction(String text, String description, Icon icon,
-                                          final Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+                                          Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     this(() -> text, () -> description, icon, rootTypes);
   }
 
-  protected CreateTemplateInPackageAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon,
-                                          final @Nullable Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+  protected CreateTemplateInPackageAction(@NotNull Supplier<String> text,
+                                          @NotNull Supplier<String> description,
+                                          @Nullable Supplier<? extends @Nullable Icon> icon,
+                                          @Nullable Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    super(text, description, icon);
+
+    mySourceRootTypes = rootTypes;
+  }
+
+  protected CreateTemplateInPackageAction(@NotNull Supplier<String> dynamicText,
+                                          @NotNull Supplier<String> dynamicDescription,
+                                          @Nullable Icon icon,
+                                          @Nullable Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     super(dynamicText, dynamicDescription, icon);
     mySourceRootTypes = rootTypes;
   }
 
   @Override
-  @Nullable
-  protected T createFile(String name, String templateName, PsiDirectory dir) {
+  protected @Nullable T createFile(String name, String templateName, PsiDirectory dir) {
     return checkOrCreate(name, dir, templateName);
   }
 
-  @Nullable
-  protected abstract PsiElement getNavigationElement(@NotNull T createdElement);
+  protected abstract @Nullable PsiElement getNavigationElement(@NotNull T createdElement);
 
   @Override
   protected void postProcess(@NotNull T createdElement, String templateName, Map<String, String> customProperties) {
@@ -92,8 +86,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
     return adjustDirectory(directory, mySourceRootTypes);
   }
 
-  @NotNull
-  public static PsiDirectory adjustDirectory(@NotNull PsiDirectory directory, @Nullable Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+  public static @NotNull PsiDirectory adjustDirectory(@NotNull PsiDirectory directory, @Nullable Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     ProjectFileIndex index = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
     if (rootTypes != null && !index.isUnderSourceRootOfType(directory.getVirtualFile(), rootTypes)) {
       Module module = ModuleUtilCore.findModuleForPsiElement(directory);
@@ -143,8 +136,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
   protected abstract boolean checkPackageExists(PsiDirectory directory);
 
-  @Nullable
-  private T checkOrCreate(String newName, PsiDirectory directory, String templateName) throws IncorrectOperationException {
+  private @Nullable T checkOrCreate(String newName, PsiDirectory directory, String templateName) throws IncorrectOperationException {
     PsiDirectory dir = directory;
     String className = removeExtension(templateName, newName);
 
@@ -173,7 +165,6 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
     return className;
   }
 
-  @Nullable
-  protected abstract T doCreate(final PsiDirectory dir, final String className, String templateName) throws IncorrectOperationException;
+  protected abstract @Nullable T doCreate(final PsiDirectory dir, final String className, String templateName) throws IncorrectOperationException;
 
 }
