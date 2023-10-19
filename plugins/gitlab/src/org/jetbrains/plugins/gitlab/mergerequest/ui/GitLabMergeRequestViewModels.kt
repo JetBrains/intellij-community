@@ -27,7 +27,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeReq
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModelsImpl
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
@@ -57,21 +56,17 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
     }
   }
 
-  private val globalReviewVm: GitLabMergeRequestReviewViewModelBase by lazy {
-    GitLabMergeRequestReviewViewModelBase(cs, currentUser, mergeRequest)
-  }
-
   private val discussionsVms: GitLabMergeRequestDiscussionsViewModels by lazy {
     GitLabMergeRequestDiscussionsViewModelsImpl(project, cs, currentUser, mergeRequest)
   }
 
   val diffVm: GitLabMergeRequestDiffViewModel by lazy {
-    GitLabMergeRequestDiffViewModelImpl(cs, mergeRequest, diffBridge, globalReviewVm, discussionsVms, projectVm.avatarIconProvider)
+    GitLabMergeRequestDiffViewModelImpl(cs, currentUser, mergeRequest, diffBridge, discussionsVms, projectVm.avatarIconProvider)
   }
 
   val editorReviewVm: GitLabMergeRequestEditorReviewViewModel by lazy {
-    GitLabMergeRequestEditorReviewViewModel(cs, projectData.projectMapping, mergeRequest, diffBridge,
-                                            projectVm, globalReviewVm, discussionsVms, projectVm.avatarIconProvider)
+    GitLabMergeRequestEditorReviewViewModel(cs, projectData.projectMapping, currentUser, mergeRequest, diffBridge,
+                                            projectVm, discussionsVms, projectVm.avatarIconProvider)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)

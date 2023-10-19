@@ -41,14 +41,15 @@ private val LOG = logger<GitLabMergeRequestDiffViewModel>()
 
 internal class GitLabMergeRequestDiffViewModelImpl(
   parentCs: CoroutineScope,
+  currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   private val diffBridge: GitLabMergeRequestDiffBridge,
-  private val globalReviewVm: GitLabMergeRequestReviewViewModelBase,
   private val discussions: GitLabMergeRequestDiscussionsViewModels,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
-) : GitLabMergeRequestDiffViewModel, GitLabMergeRequestReviewViewModel by globalReviewVm {
-
-  private val cs = parentCs.childScope(CoroutineName("GitLab Merge Request Diff Review VM"))
+) : GitLabMergeRequestDiffViewModel, GitLabMergeRequestReviewViewModelBase(
+  parentCs.childScope(CoroutineName("GitLab Merge Request Diff Review VM")),
+  currentUser, mergeRequest
+) {
 
   override val changes: SharedFlow<GitLabMergeRequestChanges> =
     mergeRequest.changes.modelFlow(cs, LOG)

@@ -28,7 +28,6 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
@@ -38,15 +37,16 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
   private val projectMapping: GitLabProjectMapping,
+  currentUser: GitLabUserDTO,
   mergeRequest: GitLabMergeRequest,
   private val diffBridge: GitLabMergeRequestDiffBridge,
   private val projectVm: GitLabToolWindowProjectViewModel,
-  private val globalReviewVm: GitLabMergeRequestReviewViewModelBase,
   private val discussions: GitLabMergeRequestDiscussionsViewModels,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
-) : GitLabMergeRequestReviewViewModel by globalReviewVm {
-
-  private val cs = parentCs.childScope(CoroutineName("GitLab Merge Request Editor Review VM"))
+) : GitLabMergeRequestReviewViewModelBase(
+  parentCs.childScope(CoroutineName("GitLab Merge Request Editor Review VM")),
+  currentUser, mergeRequest
+) {
 
   val mergeRequestIid: String = mergeRequest.iid
 

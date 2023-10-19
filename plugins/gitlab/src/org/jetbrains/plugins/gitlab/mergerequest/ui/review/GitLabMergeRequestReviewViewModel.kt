@@ -3,9 +3,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.util.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
@@ -27,13 +29,11 @@ interface GitLabMergeRequestReviewViewModel {
   }
 }
 
-internal class GitLabMergeRequestReviewViewModelBase(
-  parentCs: CoroutineScope,
+internal open class GitLabMergeRequestReviewViewModelBase(
+  protected val cs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestReviewViewModel {
-
-  private val cs = parentCs.childScope(Dispatchers.Default + CoroutineName("GitLab Merge Request Review VM"))
 
   private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
   override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()
