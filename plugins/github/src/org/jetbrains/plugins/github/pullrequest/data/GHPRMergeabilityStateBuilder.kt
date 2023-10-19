@@ -20,12 +20,15 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
   private var canOverrideAsAdmin = false
   private var requiredContexts = emptyList<String>()
   private var isRestricted = false
+  private var requiredConversationResolution = false
   private var requiredApprovingReviewsCount = 0
 
   fun withRestrictions(securityService: GHPRSecurityService, baseBranchProtectionRules: GHBranchProtectionRules) {
     canOverrideAsAdmin = baseBranchProtectionRules.enforceAdmins?.enabled == false &&
                          securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.ADMIN)
     requiredContexts = baseBranchProtectionRules.requiredStatusChecks?.contexts.orEmpty()
+
+    requiredConversationResolution = baseBranchProtectionRules.requiredConversationResolution?.enabled == true
 
     val restrictions = baseBranchProtectionRules.restrictions
     val allowedLogins = restrictions?.users?.map { it.login }.nullize()
@@ -47,14 +50,16 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
     val lastCommit = mergeabilityData.commits.lastOrNull()?.commit
     val contexts = lastCommit?.status?.contexts.orEmpty()
     contexts.forEach { context ->
-      val status = CodeReviewCIJob(name = context.context, status = context.state.toCiState(), detailsUrl = context.targetUrl)
+      val status = CodeReviewCIJob(name = context.context, status = context.state.toCiState(), required = context.isRequired,
+                                   detailsUrl = context.targetUrl)
       ciJobs.add(status)
     }
 
     val checkSuites = lastCommit?.checkSuites.orEmpty()
     checkSuites.flatMap { checkSuite -> checkSuite.checkRuns }
       .forEach { checkRun ->
-        val status = CodeReviewCIJob(name = checkRun.name, status = checkRun.conclusion.toCiState(), detailsUrl = checkRun.url)
+        val status = CodeReviewCIJob(name = checkRun.name, status = checkRun.conclusion.toCiState(), required = checkRun.isRequired,
+                                     detailsUrl = checkRun.url)
         ciJobs.add(status)
       }
 
@@ -93,7 +98,7 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
                                  hasConflicts,
                                  ciJobs,
                                  canBeMerged, mergeabilityData.canBeRebased,
-                                 isRestricted, actualRequiredApprovingReviewsCount)
+                                 isRestricted, actualRequiredApprovingReviewsCount, requiredConversationResolution)
   }
 
   private fun GHCommitStatusContextState.toCiState(): CodeReviewCIJobState {

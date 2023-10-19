@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.api.data
 class GHBranchProtectionRules(val requiredStatusChecks: RequiredStatusChecks?,
                               val enforceAdmins: EnforceAdmins?,
                               val requiredPullRequestReviews: RequiredPullRequestReviews?,
+                              val requiredConversationResolution : RequiredConversationResolution?,
                               val restrictions: Restrictions?) {
 
   class RequiredStatusChecks(val strict: Boolean, val contexts: List<String>)
@@ -11,6 +12,8 @@ class GHBranchProtectionRules(val requiredStatusChecks: RequiredStatusChecks?,
   class EnforceAdmins(val enabled: Boolean)
 
   class RequiredPullRequestReviews(val requiredApprovingReviewCount: Int)
+
+  class RequiredConversationResolution(val enabled: Boolean)
 
   class Restrictions(val users: List<UserLogin>?, val teams: List<TeamSlug>?)
 
