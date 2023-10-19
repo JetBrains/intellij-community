@@ -17,14 +17,18 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
+import com.intellij.openapi.fileEditor.impl.text.foldingGrave.FoldingModelGrave;
+import com.intellij.openapi.fileEditor.impl.text.foldingGrave.FoldingState;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -37,7 +41,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.codeInsight.documentation.render.DocRenderPassFactory.forceRefreshOnNextPass;
 
 public final class CodeFoldingManagerImpl extends CodeFoldingManager implements Disposable {
   private final Project myProject;
@@ -47,8 +54,12 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   private final Key<DocumentFoldingInfo> myFoldingInfoInDocumentKey = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
   private static final Key<Boolean> FOLDING_STATE_KEY = Key.create("FOLDING_STATE_KEY");
 
+  private final FoldingModelGrave myFoldingGrave;
+
   public CodeFoldingManagerImpl(Project project) {
     myProject = project;
+    myFoldingGrave = FoldingModelGrave.Companion.getInstance(project);
+    myFoldingGrave.subscribeFileClosed();
 
     LanguageFolding.EP_NAME.addExtensionPointListener(
       new ExtensionPointListener<>() {
@@ -135,8 +146,13 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       return null;
     }
 
+    VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
+    FoldingState fileFoldingState = myFoldingGrave.getFoldingState(vFile);
+    List<FoldingUpdate.RegionInfo> regionInfos = fileFoldingState == null
+                                                 ? FoldingUpdate.getFoldingsFor(file, true)
+                                                 : Collections.emptyList();
+
     boolean supportsDumbModeFolding = FoldingUpdate.supportsDumbModeFolding(file);
-    List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, true);
 
     return editor -> {
       ThreadingAssertions.assertEventDispatchThread();
@@ -145,14 +161,30 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       if (!foldingModel.isFoldingEnabled()) return;
       if (isFoldingsInitializedInEditor(editor)) return;
       if (DumbService.isDumb(myProject) && !supportsDumbModeFolding) return;
-
-      foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, regionInfos,
-                                                                                             UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
-                                                                                             false, false));
-      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-319892, EA-838676")) {
-        initFolding(editor);
+      if (fileFoldingState != null) {
+        file.putUserData(CodeFoldingPass.CodeFoldingReevaluator, () -> {
+          return FoldingUpdate.getFoldingsFor(file, true);
+        });
+        file.putUserData(CodeFoldingPass.CodeFoldingApplier, infos -> {
+          updateAndInitFolding(editor, foldingModel, file, infos);
+        });
+        fileFoldingState.applyState(document, foldingModel);
+        forceRefreshOnNextPass(editor);
       }
+      else {
+        updateAndInitFolding(editor, foldingModel, file, regionInfos);
+      }
+      myFoldingGrave.setFoldingModel(vFile, foldingModel);
     };
+  }
+
+  private void updateAndInitFolding(Editor editor, FoldingModelEx foldingModel, PsiFile file, List<FoldingUpdate.RegionInfo> regionInfos) {
+    foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, regionInfos,
+                                                                                           UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
+                                                                                           false, false));
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-319892, EA-838676")) {
+      initFolding(editor);
+    }
   }
 
   @Nullable

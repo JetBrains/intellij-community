@@ -10,9 +10,11 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -259,7 +261,10 @@ public class JavaDocRenderTest extends AbstractEditorTest {
   private void updateRenderedItems(boolean collapseNewRegions) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     DocRenderPassFactory.Items items = DocRenderPassFactory.calculateItemsToRender(getEditor(), getFile());
-    DocRenderPassFactory.applyItemsToRender(getEditor(), getProject(), items, collapseNewRegions);
+    long psiCounter = PsiModificationTracker.getInstance(getFile().getProject()).getModificationCount();
+    long foldingCounter = FoldingModelImpl.getFoldingOperationCounter(getEditor());
+
+    DocRenderPassFactory.applyItemsToRender(getEditor(), items, psiCounter, foldingCounter, collapseNewRegions);
   }
 
   private void toggleItem() {

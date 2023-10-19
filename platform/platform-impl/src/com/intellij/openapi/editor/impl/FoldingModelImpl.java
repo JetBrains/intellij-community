@@ -48,6 +48,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   static final Key<Boolean> HIDE_GUTTER_RENDERER_FOR_COLLAPSED = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED");
 
+  public static final Key<Boolean> ZOMBIE_REGION_KEY = Key.create("zombie fold region");
+
   private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private boolean myIsFoldingEnabled;
@@ -67,6 +69,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private boolean myDocumentChangeProcessed = true;
   boolean myComplexDocumentChange;
   private final AtomicLong myExpansionCounter = new AtomicLong();
+  private final AtomicLong myFoldingOperationCount = new AtomicLong();
   private final EditorScrollingPositionKeeper myScrollingPositionKeeper;
 
   final Set<CustomFoldRegionImpl> myAffectedCustomRegions = new HashSet<>();
@@ -273,11 +276,16 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     runBatchFoldingOperation(operation, false, moveCaret, true);
   }
 
+  private long getFoldingOperationCounter() {
+    return myFoldingOperationCount.get();
+  }
+
   void runBatchFoldingOperation(@NotNull Runnable operation,
                                 boolean dontCollapseCaret,
                                 boolean moveCaret,
                                 boolean adjustScrollingPosition) {
     assertIsDispatchThreadForEditor();
+    myFoldingOperationCount.incrementAndGet();
     if (myEditor.getInlayModel().isInBatchMode()) LOG.error("Folding operations shouldn't be performed during inlay batch update");
 
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
@@ -416,6 +424,34 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       region.dispose();
     }
     doClearFoldRegions();
+  }
+
+  @Override
+  public void disposeZombieRegions() {
+    if (!myIsBatchFoldingProcessing) {
+      LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
+      return;
+    }
+    FoldRegion[] regions = getAllFoldRegions();
+    if (regions.length == 0) {
+      return;
+    }
+    List<FoldRegion> toRemove = Arrays.stream(regions).filter(r -> {
+      Boolean isZombie = r.getUserData(ZOMBIE_REGION_KEY);
+      return isZombie != null && isZombie;
+    }).toList();
+    if (toRemove.isEmpty()) {
+      return;
+    }
+    onFoldProcessingStart();
+    for (FoldRegion region : toRemove) {
+      if (!region.isExpanded()) {
+        onFoldRegionStateChange(region);
+      }
+      beforeFoldRegionRemoved(region);
+      region.dispose();
+    }
+    myFoldTree.removeIntervals(toRemove);
   }
 
   private void doClearFoldRegions() {
@@ -988,5 +1024,11 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         }
       }
     }
+  }
+
+  @ApiStatus.Internal
+  public static long getFoldingOperationCounter(@NotNull Editor editor) {
+    FoldingModel model = editor.getFoldingModel();
+    return model instanceof FoldingModelImpl modelImpl ? modelImpl.getFoldingOperationCounter() : 0;
   }
 }

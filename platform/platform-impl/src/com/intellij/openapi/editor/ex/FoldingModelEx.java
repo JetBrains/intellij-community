@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,4 +54,7 @@ public interface FoldingModelEx extends FoldingModel {
   boolean hasDocumentRegionChangedFor(@NotNull FoldRegion region);
 
   @NotNull List<@NotNull FoldRegion> getRegionsOverlappingWith(int startOffset, int endOffset);
+
+  @ApiStatus.Internal
+  default void disposeZombieRegions() {}
 }

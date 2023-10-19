@@ -15,17 +15,34 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 final class CodeFoldingPass extends EditorBoundHighlightingPass implements PossiblyDumbAware {
   private static final Key<Boolean> THE_FIRST_TIME = Key.create("FirstFoldingPass");
+  static final Key<Supplier<List<FoldingUpdate.RegionInfo>>> CodeFoldingReevaluator = Key.create("editor.CodeFoldingReevaluator");
+  static final Key<Consumer<List<FoldingUpdate.RegionInfo>>> CodeFoldingApplier = Key.create("editor.CodeFoldingApplier");
+
+  private final Supplier<List<FoldingUpdate.RegionInfo>> myEvaluator;
+  private final Consumer<List<FoldingUpdate.RegionInfo>> myApplier;
+  private volatile List<FoldingUpdate.RegionInfo> myInfos;
   private volatile Runnable myRunnable;
 
-  CodeFoldingPass(@NotNull Editor editor, @NotNull PsiFile file) {
+  CodeFoldingPass(Editor editor, PsiFile file) {
     super(editor, file, false);
+    myEvaluator = file.getUserData(CodeFoldingReevaluator);
+    myApplier = file.getUserData(CodeFoldingApplier);
+    file.putUserData(CodeFoldingReevaluator, null);
+    file.putUserData(CodeFoldingApplier, null);
   }
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     boolean firstTime = isFirstTime(myFile, myEditor, THE_FIRST_TIME);
+    if (myEvaluator != null) {
+      myInfos = myEvaluator.get();
+    }
     myRunnable = CodeFoldingManager.getInstance(myProject).updateFoldRegionsAsync(myEditor, firstTime);
   }
 
@@ -40,6 +57,9 @@ final class CodeFoldingPass extends EditorBoundHighlightingPass implements Possi
 
   @Override
   public void doApplyInformationToEditor() {
+    if (myApplier != null && myInfos != null) {
+      myApplier.accept(myInfos);
+    }
     Runnable runnable = myRunnable;
     if (runnable != null){
       try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333911, EA-840750")) {

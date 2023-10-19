@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -52,7 +53,7 @@ final class HighlightingMarkupStore {
 
   @RequiresBackgroundThread
   static @NotNull HighlightingMarkupStore create(@NotNull Project project) {
-    String storeName = project.getName() + "-" + project.getLocationHash();
+    String storeName = trimLongString(project.getName()) + "-" + trimLongString(project.getLocationHash());
     var persistentMap = createPersistentMap(getAbsolutePath(storeName));
     HighlightingMarkupStore markupStore = new HighlightingMarkupStore(storeName, persistentMap);
     markupStore.flushOnLowMemory(project);
@@ -252,6 +253,13 @@ final class HighlightingMarkupStore {
 
   private static @NotNull Path getAbsolutePath(@NotNull String storeName) {
     return PathManager.getSystemDir().resolve(PERSISTENT_MARKUP).resolve(storeName);
+  }
+
+  private static @NotNull String trimLongString(@NotNull String string) {
+    return StringUtil.shortenTextWithEllipsis(string, 50, 10, "")
+      .replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]", "")
+      .replace(" ", "")
+      .replace(StringUtil.NON_BREAK_SPACE, "");
   }
 
   private static final class FileMarkupInfoExternalizer implements DataExternalizer<@NotNull FileMarkupInfo> {

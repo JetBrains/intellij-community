@@ -79,6 +79,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
   public void run() {
     EditorFoldingInfo info = EditorFoldingInfo.get(myEditor);
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
+    foldingModel.disposeZombieRegions();
     Map<TextRange,Boolean> rangeToExpandStatusMap = new HashMap<>();
 
     removeInvalidRegions(info, foldingModel, rangeToExpandStatusMap);
