@@ -374,7 +374,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         for (JvmNodeReferenceID id : propagated) {
           for (JvmClass subClass : future.getNodes(id, JvmClass.class)) {
             Iterable<Pair<JvmClass, JvmMethod>> overriddenForSubclass = future.getOverriddenMethods(subClass, removedMethod::isSameByJavaRules);
-            boolean allOverriddenAbstract = !Iterators.isEmpty(overriddenForSubclass) && Iterators.isEmpty(Iterators.filter(overriddenForSubclass, p -> !p.getSecond().isAbstract()));
+            boolean allOverriddenAbstract = !Iterators.isEmpty(overriddenForSubclass) && Iterators.isEmpty(Iterators.filter(overriddenForSubclass, p -> removedMethod.isSame(p.getSecond()) && !p.getSecond().isAbstract()));
             if (allOverriddenAbstract || future.inheritsFromLibraryClass(subClass)) {
               debug("Removed method is not abstract & overrides some abstract method which is not then over-overridden in subclass " + subClass.getName());
               for (NodeSource source : context.getGraph().getSources(subClass.getReferenceID())) {

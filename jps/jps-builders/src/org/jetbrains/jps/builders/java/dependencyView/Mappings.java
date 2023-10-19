@@ -1266,7 +1266,7 @@ public final class Mappings {
               debug("Current method overrides the added method");
 
               final Iterable<File> files = classToSourceFileGet(methodClass.name);
-              if (files != null) {
+              if (files != null && !containsAll(myCompiledFiles, files)) {
                 ContainerUtil.addAll(myAffectedFiles, files);
                 if (myDebugS.isDebugEnabled()) {
                   for (File file : files) {
@@ -1351,7 +1351,7 @@ public final class Mappings {
 
         for (final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
           final Iterable<File> fNames = classToSourceFileGet(p.second.name);
-          if (fNames != null) {
+          if (fNames != null && !containsAll(myCompiledFiles, fNames)) {
             ContainerUtil.addAll(myAffectedFiles, fNames);
             if (myDebugS.isDebugEnabled()) {
               for (File fName : fNames) {
@@ -1380,7 +1380,7 @@ public final class Mappings {
                     continue;
                   }
 
-                  if (cc.name == it.name) {
+                  if (cc.name == it.name || !pp.first.equals(removedMethod) /*need exact match*/) {
                     continue;
                   }
 
