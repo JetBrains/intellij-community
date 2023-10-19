@@ -16,10 +16,10 @@ import java.awt.datatransfer.StringSelection
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * Created by Yuli Fiterman on 9/17/2016.
- */
-class ConsoleHistoryCopyHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
+@JvmField
+val PROMPT_LENGTH_MARKER: Key<Int?> = Key.create<Int>("PROMPT_LENGTH_MARKER")
+
+internal class ConsoleHistoryCopyHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
 
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     if (!RichCopySettings.getInstance().isEnabled) {
@@ -64,8 +64,4 @@ class ConsoleHistoryCopyHandler(val originalHandler: EditorActionHandler) : Edit
     }
   }
 
-  companion object {
-    @JvmField
-    val PROMPT_LENGTH_MARKER: Key<Int?> = Key.create<Int>("PROMPT_LENGTH_MARKER")
-  }
 }

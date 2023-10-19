@@ -443,7 +443,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       this.getHistoryViewer().getMarkupModel().addRangeHighlighter(null, document.getTextLength(), document.getTextLength(), 0,
                                                                    HighlighterTargetArea.EXACT_RANGE);
     print(prompt, myConsoleExecutionEditor.getPromptAttributes());
-    highlighter.putUserData(ConsoleHistoryCopyHandler.PROMPT_LENGTH_MARKER, prompt.length());
+    highlighter.putUserData(ConsoleHistoryCopyHandlerKt.PROMPT_LENGTH_MARKER, prompt.length());
   }
 
   public static class Helper {
