@@ -35,6 +35,7 @@ internal object InlineCompletionTooltip {
     val panel = panel {
       row {
         link(insertShortcut) {
+          // TODO refactor: direct action call
           ApplicationManager.getApplication().invokeLater {
             ApplicationManager.getApplication().runWriteAction {
               CommandProcessor.getInstance().executeCommand(editor.project, {
