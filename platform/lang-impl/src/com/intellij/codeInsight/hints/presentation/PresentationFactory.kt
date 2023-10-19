@@ -239,19 +239,6 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
   }
 
   /**
-   * @see OnPressedPresentation
-   */
-  @Contract(pure = true)
-  fun onPressed(base: InlayPresentation, buttons: EnumSet<MouseButton>, onPressed: (MouseEvent, Point) -> Unit): InlayPresentation {
-    return OnPressedPresentation(base) { e, p ->
-      if (e.mouseButton in buttons) {
-        onPressed(e, p)
-      }
-    }
-  }
-
-
-  /**
    * @see ChangeOnHoverPresentation
    */
   @Contract(pure = true)
@@ -266,16 +253,6 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     return referenceInternal(base, onClickAction)
   }
 
-  @ApiStatus.Internal
-  @Contract(pure = true)
-  fun referenceOnPressed(base: InlayPresentation, onPressedAction: (MouseEvent?) -> Unit): InlayPresentation {
-    return referenceOnPressedInternal(
-      base,
-      onPressedAction,
-      clickButtonsWithoutHover = EnumSet.of(MouseButton.Middle),
-      clickButtonsWithHover = EnumSet.of(MouseButton.Left, MouseButton.Middle),
-      hoverPredicate = { isControlDown(it) })
-  }
 
   @Contract(pure = true)
   fun referenceOnHover(base: InlayPresentation, clickListener: ClickListener): InlayPresentation {
@@ -325,24 +302,6 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
         return super.toString()
       }
     }
-  }
-
-  @Contract(pure = true)
-  private fun referenceOnPressedInternal(
-    base: InlayPresentation,
-    onPressedAction: (MouseEvent?) -> Unit,
-    clickButtonsWithoutHover: EnumSet<MouseButton>,
-    clickButtonsWithHover: EnumSet<MouseButton>,
-    hoverPredicate: (MouseEvent) -> Boolean
-    ): InlayPresentation{
-    val noHighlightReference = onPressed(base, clickButtonsWithoutHover) { event, _ ->
-      onPressedAction(event)
-    }
-    return ChangeOnHoverPresentation(noHighlightReference, hover@{
-      return@hover onPressed(withReferenceAttributes(noHighlightReference), clickButtonsWithHover) { event, _ ->
-        onPressedAction(event)
-      }
-    }, hoverPredicate)
   }
 
   @Contract(pure = true)
