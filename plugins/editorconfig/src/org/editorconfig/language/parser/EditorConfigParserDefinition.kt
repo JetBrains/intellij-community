@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.parser
 
 import com.intellij.lang.ASTNode
@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.editorconfig.configmanagement.lexer.EditorConfigLexerFactory
@@ -16,7 +15,7 @@ import org.editorconfig.language.EditorConfigLanguage
 import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigPsiFile
 
-class EditorConfigParserDefinition : ParserDefinition {
+internal class EditorConfigParserDefinition : ParserDefinition {
   override fun createLexer(project: Project) = EditorConfigLexerFactory.getAdapter()
   override fun createParser(project: Project): PsiParser = EditorConfigParser()
 
@@ -27,9 +26,7 @@ class EditorConfigParserDefinition : ParserDefinition {
   override fun createFile(viewProvider: FileViewProvider): PsiFile = EditorConfigPsiFile(viewProvider)
   override fun createElement(node: ASTNode): PsiElement = EditorConfigElementTypes.Factory.createElement(node)
 
-  private companion object {
-    val FILE = IFileElementType(EditorConfigLanguage)
-  }
+  private val FILE = IFileElementType(EditorConfigLanguage)
 }
 
 private object EditorConfigTokenSets {
