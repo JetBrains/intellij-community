@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 import java.util.regex.Pattern
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
@@ -272,26 +273,33 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
      * Invalidates removed and replaced [Module]s and returns the set of these invalidated modules.
      */
     private fun handleModuleChanges(event: VersionedStorageChange): Set<Module> {
-        val moduleEntities = event.getChanges(ModuleEntity::class.java).ifEmpty { return emptySet() }
+        val moduleEntities = event.getChanges(ModuleEntity::class.java)
+        val moduleSettingChanges: List<EntityChange<JavaModuleSettingsEntity>> = event.getChanges(JavaModuleSettingsEntity::class.java)
 
-        return buildSet {
-            for (change in moduleEntities) {
+        fun <T : WorkspaceEntity> MutableSet<Module>.processEntities(changes: List<EntityChange<T>>, toModule: (T) -> ModuleEntity?) {
+            for (change: EntityChange<T> in changes) {
                 when (change) {
                     is EntityChange.Added -> {}
                     is EntityChange.Removed -> {
-                        change.oldEntity.findModule(event.storageBefore)?.let { module ->
+                        toModule(change.oldEntity)?.findModule(event.storageBefore)?.let { module ->
                             module.publishModuleStateModification(KotlinModuleStateModificationKind.REMOVAL)
                             add(module)
                         }
                     }
 
                     is EntityChange.Replaced -> {
-                        val changedModule = change.getReplacedEntity(event, ModuleEntity::findModule) ?: continue
-                        changedModule.publishModuleStateModification()
-                        add(changedModule)
+                        toModule(change.newEntity)?.findModule(event.storageAfter)?.let { module ->
+                            module.publishModuleStateModification()
+                            add(module)
+                        }
                     }
                 }
             }
+        }
+
+        return buildSet {
+            processEntities(moduleEntities) { it }
+            processEntities(moduleSettingChanges) { it.module }
         }
     }
 

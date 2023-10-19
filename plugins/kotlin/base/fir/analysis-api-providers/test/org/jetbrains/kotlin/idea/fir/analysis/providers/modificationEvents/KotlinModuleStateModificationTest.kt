@@ -6,6 +6,8 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
@@ -395,6 +397,22 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
 
         disposeTrackers(trackerA, trackerB)
     }
+
+    fun `test module jvm settings`() {
+        val moduleA = createModuleInTmpDir("a")
+        val moduleB = createModuleInTmpDir("b")
+
+        val trackerA = createTracker(moduleA)
+        val trackerB = createTracker(moduleB)
+
+        IdeaTestUtil.setModuleLanguageLevel(moduleA, LanguageLevel.JDK_1_8)
+
+        trackerA.assertModifiedOnce("module A language level is changed")
+        trackerB.assertNotModified("unchanged module B")
+
+        disposeTrackers(trackerA, trackerB)
+    }
+
 }
 
 class ModuleStateModificationEventTracker(module: KtModule) : ModuleModificationEventTracker(
