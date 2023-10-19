@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement
 
 import com.intellij.application.options.CodeStyle
@@ -17,7 +17,7 @@ import org.editorconfig.language.messages.EditorConfigBundle.message
 import org.jetbrains.annotations.Nls
 import java.io.IOException
 
-class EditorConfigEncodingInspection : LocalInspectionTool() {
+internal class EditorConfigEncodingInspection : LocalInspectionTool() {
   override fun checkFile(file: PsiFile,
                          manager: InspectionManager,
                          isOnTheFly: Boolean): Array<ProblemDescriptor>? {
@@ -69,6 +69,11 @@ class EditorConfigEncodingInspection : LocalInspectionTool() {
         }
       }
     }
+
+    private fun showError(project: Project, title: @Nls String, message: @Nls String) {
+      val group = NotificationGroupManager.getInstance().getNotificationGroup(EditorConfigNotifier.GROUP_DISPLAY_ID)
+      Notifications.Bus.notify(group.createNotification(title, message, NotificationType.ERROR), project)
+    }
   }
 
   private class IgnoreFileQuickFix : LocalQuickFix {
@@ -82,26 +87,20 @@ class EditorConfigEncodingInspection : LocalInspectionTool() {
     }
   }
 
-  companion object {
-    private fun isHardcodedCharsetOrFailed(virtualFile: VirtualFile): Boolean {
-      val fileType = virtualFile.fileType
-      return try {
-        val charsetName = fileType.getCharset(virtualFile, virtualFile.contentsToByteArray())
-        charsetName != null
-      }
-      catch (e: IOException) {
-        true
-      }
+  private fun isHardcodedCharsetOrFailed(virtualFile: VirtualFile): Boolean {
+    val fileType = virtualFile.fileType
+    return try {
+      val charsetName = fileType.getCharset(virtualFile, virtualFile.contentsToByteArray())
+      charsetName != null
     }
-
-    private fun getMainPsi(psiFile: PsiFile): PsiFile {
-      val baseLanguage = psiFile.viewProvider.baseLanguage
-      return psiFile.viewProvider.getPsi(baseLanguage)
-    }
-
-    private fun showError(project: Project, title: @Nls String, message: @Nls String) {
-      val group = NotificationGroupManager.getInstance().getNotificationGroup(EditorConfigNotifier.GROUP_DISPLAY_ID)
-      Notifications.Bus.notify(group.createNotification(title, message, NotificationType.ERROR), project)
+    catch (e: IOException) {
+      true
     }
   }
+
+  private fun getMainPsi(psiFile: PsiFile): PsiFile {
+    val baseLanguage = psiFile.viewProvider.baseLanguage
+    return psiFile.viewProvider.getPsi(baseLanguage)
+  }
+
 }
