@@ -215,7 +215,7 @@ public final class CompositeCommittedChangesProvider implements CommittedChanges
       }
     }
 
-    private void updateVcsEnabled(@NotNull JCheckBox checkBox, @NotNull ChangesBrowserSettingsEditor<?> editor) {
+    private static void updateVcsEnabled(@NotNull JCheckBox checkBox, @NotNull ChangesBrowserSettingsEditor<?> editor) {
       UIUtil.setEnabled(editor.getComponent(), checkBox.isSelected(), true);
       if (checkBox.isSelected()) {
         editor.updateEnabledControls();

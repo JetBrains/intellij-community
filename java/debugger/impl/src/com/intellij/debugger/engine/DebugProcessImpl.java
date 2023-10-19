@@ -1275,7 +1275,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       return result.get();
     }
 
-    private void assertThreadSuspended(final ThreadReferenceProxyImpl thread, final SuspendContextImpl context) {
+    private static void assertThreadSuspended(final ThreadReferenceProxyImpl thread, final SuspendContextImpl context) {
       LOG.assertTrue(context.isEvaluating());
       try {
         final boolean isSuspended = thread.isSuspended();

@@ -179,7 +179,7 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection implements 
                     Integer.valueOf(SUPER_METHOD));
     }
 
-    private PsiReference extractReference(PsiDocTag tag) {
+    private static PsiReference extractReference(PsiDocTag tag) {
       final PsiDocTagValue valueElement = tag.getValueElement();
       if (valueElement != null) {
         return valueElement.getReference();

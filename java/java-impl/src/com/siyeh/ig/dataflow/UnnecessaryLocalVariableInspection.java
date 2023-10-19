@@ -18,7 +18,6 @@ package com.siyeh.ig.dataflow;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -27,14 +26,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.InlineVariableFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -313,7 +309,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       return true;
     }
 
-    private boolean isVariableUsedInFollowingDeclarations(PsiVariable variable, PsiDeclarationStatement declarationStatement) {
+    private static boolean isVariableUsedInFollowingDeclarations(PsiVariable variable, PsiDeclarationStatement declarationStatement) {
       final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
       if (declaredElements.length == 1) {
         return false;

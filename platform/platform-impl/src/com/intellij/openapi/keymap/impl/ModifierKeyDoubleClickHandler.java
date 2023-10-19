@@ -291,7 +291,7 @@ public final class ModifierKeyDoubleClickHandler {
       }
     }
 
-    private @NotNull DataContext calculateContext() {
+    private static @NotNull DataContext calculateContext() {
       IdeFocusManager focusManager = IdeFocusManager.findInstance();
       Component focusedComponent = focusManager.getFocusOwner();
       Window ideWindow = focusManager.getLastFocusedIdeWindow();

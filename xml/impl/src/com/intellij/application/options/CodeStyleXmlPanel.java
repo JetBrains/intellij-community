@@ -81,7 +81,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     myRightMarginForm.apply(settings);
   }
 
-  private int getIntValue(JTextField keepBlankLines) {
+  private static int getIntValue(JTextField keepBlankLines) {
     try {
       return Integer.parseInt(keepBlankLines.getText());
     }
@@ -157,7 +157,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     return myRightMarginForm.isModified(settings);
   }
 
-  private boolean wrapText(final CodeStyleSettings settings) {
+  private static boolean wrapText(final CodeStyleSettings settings) {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     return xmlSettings.XML_TEXT_WRAP == CommonCodeStyleSettings.WRAP_AS_NEEDED;
   }

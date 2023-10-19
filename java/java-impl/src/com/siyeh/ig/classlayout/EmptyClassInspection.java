@@ -191,7 +191,7 @@ public class EmptyClassInspection extends BaseInspection {
       registerClassError(aClass, aClass);
     }
 
-    private boolean hasTypeArguments(PsiReferenceList extendsList) {
+    private static boolean hasTypeArguments(PsiReferenceList extendsList) {
       if (extendsList == null) {
         return false;
       }

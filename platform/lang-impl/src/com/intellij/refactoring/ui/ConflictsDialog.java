@@ -256,7 +256,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       }
 
       @Contract(pure = true)
-      private String getEscapedDescription(String conflictsMessage) {
+      private static String getEscapedDescription(String conflictsMessage) {
         return Pattern.compile("<[^<>]*>").matcher(conflictsMessage).replaceAll("");
       }
 

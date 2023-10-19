@@ -86,7 +86,7 @@ public final class XPathExpressionGenerator {
         }
 
         @Nullable
-        private String getXPathNameStep(XmlTag tag) {
+        private static String getXPathNameStep(XmlTag tag) {
             return tag.getName();
         }
 

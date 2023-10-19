@@ -131,7 +131,7 @@ public class GroovyDocParsing {
     return true;
   }
 
-  private boolean parseParamTagReference(PsiBuilder builder) {
+  private static boolean parseParamTagReference(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     if (GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN == builder.getTokenType()) {
       builder.advanceLexer();
@@ -142,7 +142,7 @@ public class GroovyDocParsing {
     return false;
   }
 
-  private boolean parseSeeOrLinkTagReference(PsiBuilder builder) {
+  private static boolean parseSeeOrLinkTagReference(PsiBuilder builder) {
     IElementType type = builder.getTokenType();
     if (!REFERENCE_BEGIN.contains(type)) return false;
     PsiBuilder.Marker marker = builder.mark();
@@ -167,7 +167,7 @@ public class GroovyDocParsing {
     return true;
   }
 
-  private RESULT parseFieldOrMethod(PsiBuilder builder) {
+  private static RESULT parseFieldOrMethod(PsiBuilder builder) {
     if (builder.getTokenType() != GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN) return RESULT.ERROR;
     builder.advanceLexer();
     PsiBuilder.Marker params = builder.mark();
@@ -193,7 +193,7 @@ public class GroovyDocParsing {
     return RESULT.METHOD;
   }
 
-  private boolean parseMethodParameter(PsiBuilder builder) {
+  private static boolean parseMethodParameter(PsiBuilder builder) {
     PsiBuilder.Marker param = builder.mark();
     if (GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN == builder.getTokenType()) {
       builder.advanceLexer();
@@ -210,7 +210,7 @@ public class GroovyDocParsing {
     return true;
   }
 
-  private boolean parseReferenceOrType(PsiBuilder builder) {
+  private static boolean parseReferenceOrType(PsiBuilder builder) {
     IElementType type = builder.getTokenType();
     if (GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN != type) return false;
     return true;

@@ -640,7 +640,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @NotNull
-    private List<AbstractFilePatchInProgress.PatchChange> getOnlyValidChanges(@NotNull Collection<? extends AbstractFilePatchInProgress.PatchChange> changes) {
+    private static List<AbstractFilePatchInProgress.PatchChange> getOnlyValidChanges(@NotNull Collection<? extends AbstractFilePatchInProgress.PatchChange> changes) {
       return ContainerUtil.filter(changes, AbstractFilePatchInProgress.PatchChange::isValid);
     }
 

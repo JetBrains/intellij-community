@@ -570,7 +570,7 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     @Contract(pure = true)
-    private String escapeString(String line, Function<? super String, String> escapeFunction) {
+    private static String escapeString(String line, Function<? super String, String> escapeFunction) {
       line = XmlStringUtil.escapeString(line);
       return escapeFunction == null ? line : escapeFunction.fun(line);
     }
@@ -705,7 +705,8 @@ public final class ParameterInfoComponent extends JPanel {
 
     // flagsMap is supposed to use TEXT_RANGE_COMPARATOR
     @Contract(pure = true)
-    private String buildLabelText(@NotNull final String text, @NotNull final TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
+    private static String buildLabelText(@NotNull final String text,
+                                         @NotNull final TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
       final Int2IntMap faultMap = new Int2IntOpenHashMap();
 

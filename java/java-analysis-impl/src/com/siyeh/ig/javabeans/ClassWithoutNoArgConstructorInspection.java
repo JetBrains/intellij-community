@@ -68,7 +68,7 @@ public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
       registerClassError(aClass);
     }
 
-    private boolean classHasNoArgConstructor(PsiClass aClass, boolean ignoreNoConstructor) {
+    private static boolean classHasNoArgConstructor(PsiClass aClass, boolean ignoreNoConstructor) {
       final PsiMethod[] constructors = aClass.getConstructors();
       if (ignoreNoConstructor && constructors.length == 0) {
         return true;

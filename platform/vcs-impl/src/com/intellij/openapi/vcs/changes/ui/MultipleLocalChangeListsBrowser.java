@@ -470,7 +470,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     }
 
     @Nullable
-    private Object getUserObject(@NotNull AnActionEvent e) {
+    private static Object getUserObject(@NotNull AnActionEvent e) {
       Object object = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (object == null) object = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
       return object;

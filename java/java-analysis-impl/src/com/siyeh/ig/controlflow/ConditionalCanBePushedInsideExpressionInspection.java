@@ -117,7 +117,7 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
       }
     }
 
-    private boolean isOnlyArgumentOfMethodCall(PsiElement element, PsiConditionalExpression conditional) {
+    private static boolean isOnlyArgumentOfMethodCall(PsiElement element, PsiConditionalExpression conditional) {
       if (element == null) {
         return false;
       }

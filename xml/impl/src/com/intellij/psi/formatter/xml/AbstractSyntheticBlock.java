@@ -50,7 +50,7 @@ public abstract class AbstractSyntheticBlock implements Block {
     return myTag != null && myXmlFormattingPolicy.keepWhiteSpacesInsideTag(myTag);
   }
 
-  private ASTNode getFirstNode(final List<? extends Block> subBlocks) {
+  private static ASTNode getFirstNode(final List<? extends Block> subBlocks) {
     LOG.assertTrue(!subBlocks.isEmpty());
     final Block firstBlock = subBlocks.get(0);
     if (firstBlock instanceof AbstractBlock) {
@@ -61,7 +61,7 @@ public abstract class AbstractSyntheticBlock implements Block {
     }
   }
 
-  private ASTNode getLastNode(final List<? extends Block> subBlocks) {
+  private static ASTNode getLastNode(final List<? extends Block> subBlocks) {
     LOG.assertTrue(!subBlocks.isEmpty());
     final Block lastBlock = subBlocks.get(subBlocks.size() - 1);
     if (lastBlock instanceof AbstractBlock) {
@@ -148,7 +148,7 @@ public abstract class AbstractSyntheticBlock implements Block {
     return isXmlTag(treeNode) && myXmlFormattingPolicy.isTextElement((XmlTag)SourceTreeToPsiMap.treeElementToPsi(treeNode));
   }
 
-  private boolean isXmlTag(final ASTNode treeNode) {
+  private static boolean isXmlTag(final ASTNode treeNode) {
     return (treeNode.getPsi() instanceof XmlTag);
   }
 
@@ -205,7 +205,7 @@ public abstract class AbstractSyntheticBlock implements Block {
     return isCDATA(myStartTreeNode.getFirstChildNode());
   }
 
-  private boolean isCDATA(final ASTNode node) {
+  private static boolean isCDATA(final ASTNode node) {
     return node != null && node.getElementType() == XmlElementType.XML_CDATA;
   }
 

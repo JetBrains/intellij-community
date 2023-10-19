@@ -75,7 +75,7 @@ public class PyRestDocstringLanguageInjector implements LanguageInjector {
     }
   }
 
-  private int getEndOffset(int start, String s) {
+  private static int getEndOffset(int start, String s) {
     int length = s.length();
     int end = start + length;
     if (s.endsWith("\n"))

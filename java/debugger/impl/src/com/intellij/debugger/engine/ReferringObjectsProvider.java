@@ -36,7 +36,7 @@ public interface ReferringObjectsProvider {
     }
 
     @Nullable
-    private Field findField(@NotNull Value value, @NotNull ObjectReference reference) {
+    private static Field findField(@NotNull Value value, @NotNull ObjectReference reference) {
       for (Field field : reference.referenceType().allFields()) {
         if (reference.getValue(field) == value) {
           return field;

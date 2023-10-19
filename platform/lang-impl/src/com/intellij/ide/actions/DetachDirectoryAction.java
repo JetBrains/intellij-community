@@ -57,12 +57,12 @@ public final class DetachDirectoryAction extends DumbAwareAction {
   }
 
   @NlsSafe
-  private String getTitle(int directoriesAmount) {
+  private static String getTitle(int directoriesAmount) {
     return IdeBundle.message("detach.directory.action.text.detach.0", directoriesAmount);
   }
 
   @NlsSafe
-  private String getConfirmDetachDialogTitle() {
+  private static String getConfirmDetachDialogTitle() {
     return IdeBundle.message("detach.directory.dialog.title.detach");
   }
 

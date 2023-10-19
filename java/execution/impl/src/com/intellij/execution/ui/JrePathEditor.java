@@ -124,7 +124,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
             update(e);
           }
 
-          private void update(FocusEvent e) {
+          private static void update(FocusEvent e) {
             Component c = e.getComponent().getParent();
             if (c != null) {
               c.revalidate();

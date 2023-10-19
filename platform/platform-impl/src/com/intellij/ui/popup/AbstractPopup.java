@@ -554,7 +554,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     show(point);
   }
 
-  private boolean isComponentSupportsAlignment(Component c) {
+  private static boolean isComponentSupportsAlignment(Component c) {
     if (!(c instanceof JComponent)
         || (c instanceof ActionButton)
         || (c instanceof ComboBoxWithWidePopup<?>)) {

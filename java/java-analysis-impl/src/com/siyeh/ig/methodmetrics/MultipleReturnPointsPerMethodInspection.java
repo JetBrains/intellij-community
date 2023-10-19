@@ -111,7 +111,7 @@ public class MultipleReturnPointsPerMethodInspection
       return count;
     }
 
-    private boolean mayFallThroughBottom(PsiMethod method) {
+    private static boolean mayFallThroughBottom(PsiMethod method) {
       if (method.isConstructor()) {
         return true;
       }

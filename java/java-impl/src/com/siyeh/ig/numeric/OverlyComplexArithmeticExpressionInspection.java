@@ -129,7 +129,7 @@ public class OverlyComplexArithmeticExpressionInspection extends BaseInspection 
       return 1;
     }
 
-    private boolean isArithmetic(PsiExpression expression) {
+    private static boolean isArithmetic(PsiExpression expression) {
       if (expression instanceof PsiPolyadicExpression binaryExpression) {
         final PsiType type = expression.getType();
         if (TypeUtils.isJavaLangString(type)) {

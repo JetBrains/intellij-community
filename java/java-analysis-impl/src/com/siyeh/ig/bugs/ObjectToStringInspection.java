@@ -16,7 +16,6 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,9 +30,6 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
@@ -166,7 +162,7 @@ public class ObjectToStringInspection extends BaseInspection {
       registerError(expression);
     }
 
-    private boolean hasGoodToString(PsiClass aClass) {
+    private static boolean hasGoodToString(PsiClass aClass) {
       final PsiMethod[] methods = aClass.findMethodsByName(HardcodedMethodConstants.TO_STRING, true);
       for (PsiMethod method : methods) {
         final PsiClass containingClass = method.getContainingClass();

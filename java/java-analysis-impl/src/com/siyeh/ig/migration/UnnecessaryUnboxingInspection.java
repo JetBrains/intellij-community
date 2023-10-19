@@ -227,7 +227,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       return false;
     }
 
-    private boolean isUnboxingExpression(PsiExpression expression) {
+    private static boolean isUnboxingExpression(PsiExpression expression) {
       if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }

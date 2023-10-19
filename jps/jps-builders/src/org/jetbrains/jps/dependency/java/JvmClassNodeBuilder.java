@@ -713,7 +713,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   /**
    * @return corresponding field access opcode or -1 if the handle does not represent field access handle
    */
-  private int getFieldAccessOpcode(Handle handle) {
+  private static int getFieldAccessOpcode(Handle handle) {
     switch (handle.getTag()) {
       case Opcodes.H_GETFIELD:
         return Opcodes.GETFIELD;

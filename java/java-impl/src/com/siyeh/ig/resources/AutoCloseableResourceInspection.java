@@ -5,7 +5,6 @@ import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.resources.ImplicitResourceCloser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -230,7 +229,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       registerMethodCallError(expression, expression.getType(), !isStreamHoldingResource(expression));
     }
 
-    private boolean isReturnedByContract(PsiMethodCallExpression expression) {
+    private static boolean isReturnedByContract(PsiMethodCallExpression expression) {
       PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue(expression);
       PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();

@@ -423,7 +423,7 @@ public class Javac2 extends Javac {
    * @param cp the path to modify
    * @param p  the path to append
    */
-  private void appendPath(Path cp, final Path p) {
+  private static void appendPath(Path cp, final Path p) {
     if (p != null && p.size() > 0) {
       cp.append(p);
     }

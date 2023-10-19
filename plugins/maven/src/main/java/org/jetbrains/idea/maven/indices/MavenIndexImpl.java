@@ -381,7 +381,7 @@ public final class MavenIndexImpl implements MavenIndex {
     }
   }
 
-  private void closeAndClean(PersistentHashMap<String, Set<String>> map) {
+  private static void closeAndClean(PersistentHashMap<String, Set<String>> map) {
     try {
       map.closeAndClean();
     }
@@ -684,7 +684,7 @@ public final class MavenIndexImpl implements MavenIndex {
       }
     }
 
-    private PersistentHashMap<String, Set<String>> createPersistentMap(final File f) throws IOException {
+    private static PersistentHashMap<String, Set<String>> createPersistentMap(final File f) throws IOException {
       return new PersistentHashMap<>(f.toPath(), EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
     }
 
@@ -706,7 +706,7 @@ public final class MavenIndexImpl implements MavenIndex {
       if (exceptions[0] != null) throw exceptions[0];
     }
 
-    private void safeClose(@Nullable Closeable enumerator, MavenIndexException[] exceptions) {
+    private static void safeClose(@Nullable Closeable enumerator, MavenIndexException[] exceptions) {
       try {
         if (enumerator != null) enumerator.close();
       }

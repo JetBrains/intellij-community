@@ -279,7 +279,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  private boolean canResolveDependenciesInParallel() {
+  private static boolean canResolveDependenciesInParallel() {
     return true;
   }
 
@@ -430,7 +430,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  private MavenId extractIdFromException(Throwable exception) {
+  private static MavenId extractIdFromException(Throwable exception) {
     try {
       Field field = exception.getClass().getDeclaredField("extension");
       field.setAccessible(true);
@@ -959,7 +959,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return artifact;
   }
 
-  private void initLogging(Maven40ServerConsoleLogger consoleWrapper) {
+  private static void initLogging(Maven40ServerConsoleLogger consoleWrapper) {
     Maven40Sl4jLoggerWrapper.setCurrentWrapper(consoleWrapper);
   }
 

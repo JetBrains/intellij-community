@@ -44,7 +44,7 @@ final class MoveLineHandler extends BaseMoveHandler {
     return super.isEnabledForCaret(editor, caret, dataContext) && isCurrentCaretFirstInItsLine(editor);
   }
 
-  private boolean isCurrentCaretFirstInItsLine(@NotNull Editor editor) {
+  private static boolean isCurrentCaretFirstInItsLine(@NotNull Editor editor) {
     final Caret currentCaret = editor.getCaretModel().getCurrentCaret();
     final int currentCaretLine = currentCaret.getLogicalPosition().line;
     final Caret firstCaretInLine = editor.getCaretModel().getAllCarets().stream()

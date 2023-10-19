@@ -494,7 +494,7 @@ public final class ActionsTree {
     }
 
 
-    private ArrayList<TreeNode> childrenToArray(DefaultMutableTreeNode node) {
+    private static ArrayList<TreeNode> childrenToArray(DefaultMutableTreeNode node) {
       ArrayList<TreeNode> arrayList = new ArrayList<>();
       for (int i = 0; i < node.getChildCount(); i++) {
         arrayList.add(node.getChildAt(i));

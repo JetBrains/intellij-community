@@ -150,7 +150,7 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection impl
       registerError(literal);
     }
 
-    private boolean isConfusing(@Nullable CharSequence text) {
+    private static boolean isConfusing(@Nullable CharSequence text) {
       if (text == null) {
         return false;
       }

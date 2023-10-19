@@ -69,7 +69,7 @@ public final class PluginConflictDialog extends DialogWrapper {
   }
 
   @NlsContexts.Label
-  private String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
+  private static String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
     final int pluginsNumber = conflictingPlugins.size();
     if (isConflictWithPlatform) {
       return DiagnosticBundle.message("error.dialog.conflict.plugin.header.platform", pluginsNumber);

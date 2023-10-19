@@ -286,7 +286,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return commandLineOptions;
   }
 
-  private MavenId extractIdFromException(Throwable exception) {
+  private static MavenId extractIdFromException(Throwable exception) {
     try {
       Field field = exception.getClass().getDeclaredField("extension");
       field.setAccessible(true);
@@ -1155,7 +1155,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return createEmbedderExecutionResult(file, result);
   }
 
-  private MavenExecutionResult safeExecute(MavenExecutionRequest request, Maven maven) {
+  private static MavenExecutionResult safeExecute(MavenExecutionRequest request, Maven maven) {
     MavenLeakDetector detector = new MavenLeakDetector().mark();
     MavenExecutionResult result = maven.execute(request);
     detector.check();

@@ -149,7 +149,7 @@ public final class GitUIUtil {
        * @param changed the changed control
        * @param impliedState the implied state
        */
-      private void check(final JCheckBox checked, final boolean checkedState, final JCheckBox changed, final boolean impliedState) {
+      private static void check(final JCheckBox checked, final boolean checkedState, final JCheckBox changed, final boolean impliedState) {
         if (checked.isSelected() == checkedState) {
           changed.setSelected(impliedState);
           changed.setEnabled(false);

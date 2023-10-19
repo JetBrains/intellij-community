@@ -421,11 +421,11 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     return true;
   }
 
-  private boolean processRemovedModule(DifferentiateContext context, JvmModule removedModule, Utils future, Utils present) {
+  private static boolean processRemovedModule(DifferentiateContext context, JvmModule removedModule, Utils future, Utils present) {
     return true;
   }
 
-  private boolean processAddedModule(DifferentiateContext context, JvmModule addedModule, Utils future, Utils present) {
+  private static boolean processAddedModule(DifferentiateContext context, JvmModule addedModule, Utils future, Utils present) {
     return true;
   }
 

@@ -1103,7 +1103,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Nullable
-    private KeyStroke getShortcut(@NotNull String actionCodeCompletion) {
+    private static KeyStroke getShortcut(@NotNull String actionCodeCompletion) {
       final Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionCodeCompletion).getShortcuts();
       for (final Shortcut shortcut : shortcuts) {
         if (shortcut instanceof KeyboardShortcut) {
@@ -1598,9 +1598,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     }
 
-    private void fillUsages(@NotNull Collection<Object> matchElementsArray,
-                            @NotNull Collection<? super Usage> usages,
-                            @NotNull List<? super PsiElement> targets) {
+    private static void fillUsages(@NotNull Collection<Object> matchElementsArray,
+                                   @NotNull Collection<? super Usage> usages,
+                                   @NotNull List<? super PsiElement> targets) {
       for (Object o : matchElementsArray) {
         if (o instanceof PsiElement element) {
           if (element.getTextRange() != null) {

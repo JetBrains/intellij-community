@@ -155,7 +155,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
       /**
        * Hides selected menu.
        */
-      private void hideMenu() {
+      private static void hideMenu() {
         MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
         menuSelectionManager.clearSelectedPath();
       }

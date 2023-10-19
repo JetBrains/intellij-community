@@ -132,7 +132,7 @@ public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
       return 1;
     }
 
-    private boolean isBoolean(PsiExpression expression) {
+    private static boolean isBoolean(PsiExpression expression) {
       if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         return s_booleanOperators.contains(polyadicExpression.getOperationTokenType());
       }
@@ -145,7 +145,7 @@ public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
       return false;
     }
 
-    private boolean isPureConjunctionDisjunction(PsiExpression expression) {
+    private static boolean isPureConjunctionDisjunction(PsiExpression expression) {
       if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
         return false;
       }

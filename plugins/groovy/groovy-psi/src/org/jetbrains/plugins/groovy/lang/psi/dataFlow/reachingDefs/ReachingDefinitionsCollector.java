@@ -149,11 +149,11 @@ public final class ReachingDefinitionsCollector {
         super.visitClosure(closure);
       }
 
-      private void addUsagesInClosure(final Map<String, VariableInfo> imap,
-                                      final Map<String, VariableInfo> omap,
-                                      final GrClosableBlock closure,
-                                      final GrStatement first,
-                                      final GrStatement last) {
+      private static void addUsagesInClosure(final Map<String, VariableInfo> imap,
+                                             final Map<String, VariableInfo> omap,
+                                             final GrClosableBlock closure,
+                                             final GrStatement first,
+                                             final GrStatement last) {
         closure.accept(new GroovyRecursiveElementVisitor() {
           @Override
           public void visitReferenceExpression(@NotNull GrReferenceExpression refExpr) {

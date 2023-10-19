@@ -239,7 +239,7 @@ final class WslDistributionDescriptor {
         return super.getValue();
       }
 
-      private long getCurrentExternalChangesCount() {
+      private static long getCurrentExternalChangesCount() {
         return SaveAndSyncHandler.getInstance().getExternalChangesTracker().getModificationCount();
       }
     };

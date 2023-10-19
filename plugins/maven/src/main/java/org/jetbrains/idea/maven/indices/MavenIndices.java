@@ -185,7 +185,7 @@ public class MavenIndices implements Disposable {
     return isDisposed;
   }
 
-  private void closeIndices(@NotNull List<MavenIndex> indices) {
+  private static void closeIndices(@NotNull List<MavenIndex> indices) {
     List<MavenIndex> list = new ArrayList<>(indices);
     for (MavenIndex each : list) {
       try {

@@ -396,7 +396,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
 
-      private boolean clientOwns(@NotNull JBPopup hint) {
+      private static boolean clientOwns(@NotNull JBPopup hint) {
         ClientId ownerId = hint.getUserData(ClientId.class);
         return ownerId == null || ownerId.equals(ClientId.getCurrent());
       }

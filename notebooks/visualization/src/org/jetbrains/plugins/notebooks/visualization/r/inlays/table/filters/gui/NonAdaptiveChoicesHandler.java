@@ -155,7 +155,7 @@ class NonAdaptiveChoicesHandler extends ChoicesHandler {
     }
 
     /** Sets the content for the given editor from the model's values. */
-    private void setChoicesFromModel(FilterEditor editor, TableModel model) {
+    private static void setChoicesFromModel(FilterEditor editor, TableModel model) {
         editor.setChoices(modelExtract(editor, model, 0,
                 model.getRowCount() - 1, editor.getCustomChoices()));
     }
@@ -164,11 +164,11 @@ class NonAdaptiveChoicesHandler extends ChoicesHandler {
      * Extract content from the given range of rows in the model, adding the
      * results to the provided Set, which is then returned.
      */
-    private Set modelExtract(FilterEditor editor,
-                             TableModel   model,
-                             int          firstRow,
-                             int          lastRow,
-                             Set          fill) {
+    private static Set modelExtract(FilterEditor editor,
+                                    TableModel model,
+                                    int firstRow,
+                                    int lastRow,
+                                    Set fill) {
         return fill;
     }
 

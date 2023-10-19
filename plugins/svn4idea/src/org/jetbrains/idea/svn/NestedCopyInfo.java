@@ -58,7 +58,7 @@ public class NestedCopyInfo {
     return myType;
   }
 
-  private String key(final VirtualFile file) {
+  private static String key(final VirtualFile file) {
     return file.getPath();
   }
 

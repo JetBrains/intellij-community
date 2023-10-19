@@ -281,7 +281,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       registerMethodCallError(expression);
     }
 
-    private boolean isBoxingNecessary(PsiExpression boxingExpression, PsiExpression boxedExpression) {
+    private static boolean isBoxingNecessary(PsiExpression boxingExpression, PsiExpression boxedExpression) {
       if (ExpressionUtils.isVoidContext(boxingExpression)) {
         // removing the boxing in this case will make the code uncompilable
         return true;

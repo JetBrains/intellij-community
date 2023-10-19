@@ -240,7 +240,7 @@ public final class CollapsedGraph {
     }
 
     @NotNull
-    private GraphEdge createEdge(@NotNull GraphEdge delegateEdge, @Nullable Integer upNodeIndex, @Nullable Integer downNodeIndex) {
+    private static GraphEdge createEdge(@NotNull GraphEdge delegateEdge, @Nullable Integer upNodeIndex, @Nullable Integer downNodeIndex) {
       return new GraphEdge(upNodeIndex, downNodeIndex, delegateEdge.getTargetId(), delegateEdge.getType());
     }
 
@@ -255,7 +255,7 @@ public final class CollapsedGraph {
       }
     }
 
-    private boolean isVisibleEdge(@Nullable Integer compiledUpNode, @Nullable Integer compiledDownNode) {
+    private static boolean isVisibleEdge(@Nullable Integer compiledUpNode, @Nullable Integer compiledDownNode) {
       if (compiledUpNode != null && compiledUpNode == -1) return false;
       if (compiledDownNode != null && compiledDownNode == -1) return false;
       return true;

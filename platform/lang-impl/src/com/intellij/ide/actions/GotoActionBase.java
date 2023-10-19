@@ -244,7 +244,7 @@ public abstract class GotoActionBase extends AnAction {
         }
       }
 
-      private void updateHistory(@Nullable String text) {
+      private static void updateHistory(@Nullable String text) {
         if (!StringUtil.isEmptyOrSpaces(text)) {
           List<String> history = ourHistory.get(myInAction);
           if (history == null) history = new ArrayList<>();

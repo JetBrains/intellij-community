@@ -180,7 +180,7 @@ public class MavenServerCMDState extends CommandLineState {
     MavenUtil.addEventListener(myDistribution.getVersion(), params);
   }
 
-  private void configureSslRelatedOptions(Map<String, String> defs) {
+  private static void configureSslRelatedOptions(Map<String, String> defs) {
     for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {
       Object key = each.getKey();
       Object value = each.getValue();

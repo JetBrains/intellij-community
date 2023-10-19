@@ -187,7 +187,7 @@ public final class HintHint {
     return myQuickHint;
   }
 
-  private IdeTooltipManager getTooltipManager() {
+  private static IdeTooltipManager getTooltipManager() {
     return IdeTooltipManager.getInstance();
   }
 

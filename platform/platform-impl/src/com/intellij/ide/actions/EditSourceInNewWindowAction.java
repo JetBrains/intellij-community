@@ -25,7 +25,7 @@ public final class EditSourceInNewWindowAction extends DumbAwareAction implement
     ((FileEditorManagerImpl)manager).openFileInNewWindow(getVirtualFiles(e)[0]);
   }
 
-  private VirtualFile[] getVirtualFiles(@NotNull AnActionEvent e) {
+  private static VirtualFile[] getVirtualFiles(@NotNull AnActionEvent e) {
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null) return Arrays.stream(files).filter(file -> !file.isDirectory()).toArray(VirtualFile[]::new);
 

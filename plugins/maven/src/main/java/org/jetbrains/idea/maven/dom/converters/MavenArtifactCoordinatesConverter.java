@@ -228,7 +228,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return project == null ? null : context.getPsiManager().findFile(project.getFile());
     }
 
-    private MavenProject resolveMavenProject(MavenId id, MavenProjectsManager projectsManager, ConvertContext context) {
+    private static MavenProject resolveMavenProject(MavenId id, MavenProjectsManager projectsManager, ConvertContext context) {
       if (MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled(context)) {
         return projectsManager.findSingleProjectInReactor(id);
       }
@@ -237,7 +237,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       }
     }
 
-    private PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
+    private static PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
       File file = MavenUtil.getRepositoryFile(psiManager.getProject(), id, "pom", null);
       if (null == file) return null;
       VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);

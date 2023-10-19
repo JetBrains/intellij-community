@@ -650,7 +650,7 @@ public final class PluginManagerConfigurable
             return getIcon().getIconHeight();
           }
 
-          private @NotNull Icon getIcon() {
+          private static @NotNull Icon getIcon() {
             return AllIcons.General.ButtonDropTriangle;
           }
         }); // TODO: icon

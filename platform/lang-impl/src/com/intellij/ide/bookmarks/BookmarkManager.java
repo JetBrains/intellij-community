@@ -539,7 +539,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
       }
     }
 
-    private String getLineContent(Document document, int line) {
+    private static String getLineContent(Document document, int line) {
       int start = document.getLineStartOffset(line);
       int end = document.getLineEndOffset(line);
       return document.getText(new TextRange(start, end));

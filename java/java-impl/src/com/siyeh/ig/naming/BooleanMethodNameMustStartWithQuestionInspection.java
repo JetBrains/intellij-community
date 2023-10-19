@@ -95,7 +95,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends NonBoolean
       registerMethodError(method, method);
     }
 
-    private boolean isSpecialCase(String name) {
+    private static boolean isSpecialCase(String name) {
       return name.equals("add") || name.equals("remove") || name.equals("put");
     }
   }

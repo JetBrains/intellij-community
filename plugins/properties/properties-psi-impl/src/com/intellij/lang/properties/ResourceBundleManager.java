@@ -115,7 +115,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
       }
 
       @Nullable
-      private String getUrl(PsiElement element) {
+      private static String getUrl(PsiElement element) {
         return !(element instanceof PsiDirectory) ? null : ((PsiDirectory)element).getVirtualFile().getUrl();
       }
 

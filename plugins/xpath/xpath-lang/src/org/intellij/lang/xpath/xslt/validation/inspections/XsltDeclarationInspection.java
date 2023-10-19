@@ -89,7 +89,7 @@ public class XsltDeclarationInspection extends XsltInspection {
                 }
             }
 
-            private boolean isLegalName(String value, Project project) {
+            private static boolean isLegalName(String value, Project project) {
                 return LanguageNamesValidation.isIdentifier(XPathFileType.XPATH.getLanguage(), value, project);
             }
         };

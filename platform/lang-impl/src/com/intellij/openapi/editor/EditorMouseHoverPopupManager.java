@@ -317,7 +317,11 @@ public class EditorMouseHoverPopupManager implements Disposable {
   }
 
   @Nullable
-  private Context createContext(@NotNull Editor editor, int offset, long startTimestamp, boolean showImmediately, boolean showDocumentation) {
+  private static Context createContext(@NotNull Editor editor,
+                                       int offset,
+                                       long startTimestamp,
+                                       boolean showImmediately,
+                                       boolean showDocumentation) {
     Project project = Objects.requireNonNull(editor.getProject());
 
     HighlightInfo info = null;

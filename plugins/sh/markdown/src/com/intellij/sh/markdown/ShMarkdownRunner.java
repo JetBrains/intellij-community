@@ -53,7 +53,7 @@ public class ShMarkdownRunner implements MarkdownRunner {
     return ShBundle.message("sh.markdown.runner.title");
   }
 
-  private DefaultExecutionResult runInTerminal(String command, String workingDirectory, Project project) throws ExecutionException {
+  private static DefaultExecutionResult runInTerminal(String command, String workingDirectory, Project project) throws ExecutionException {
     GeneralCommandLine commandLine = createCommandLineForScript(workingDirectory, command);
     ProcessHandler processHandler = createProcessHandler(commandLine);
     ProcessTerminatedListener.attach(processHandler);
@@ -63,7 +63,7 @@ public class ShMarkdownRunner implements MarkdownRunner {
   }
 
   @NotNull
-  private GeneralCommandLine createCommandLineForScript(String workingDirectory,  String command) {
+  private static GeneralCommandLine createCommandLineForScript(String workingDirectory, String command) {
     PtyCommandLine commandLine = new PtyCommandLine();
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);

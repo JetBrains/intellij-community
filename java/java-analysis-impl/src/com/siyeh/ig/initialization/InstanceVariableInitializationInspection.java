@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeInitializerExplicitFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.InitializationUtils;
@@ -124,13 +123,13 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
       }
     }
 
-    private boolean isInitializedInSetup(PsiField field,
-                                         PsiClass aClass) {
+    private static boolean isInitializedInSetup(PsiField field,
+                                                PsiClass aClass) {
       final PsiMethod setupMethod = TestFrameworks.getInstance().findSetUpMethod(aClass);
       return InitializationUtils.methodAssignsVariableOrFails(setupMethod, field);
     }
 
-    private boolean isInitializedInInitializer(@NotNull PsiField field) {
+    private static boolean isInitializedInInitializer(@NotNull PsiField field) {
       final PsiClass aClass = field.getContainingClass();
       if (aClass == null) {
         return false;

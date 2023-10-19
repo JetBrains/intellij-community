@@ -427,7 +427,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       return userObject instanceof NodeDescriptor && !isFirst(node);
     }
 
-    private boolean isFirst(final TreeNode node) {
+    private static boolean isFirst(final TreeNode node) {
       final TreeNode parent = node.getParent();
       return parent == null || parent.getIndex(node) == 0 && isFirst(parent);
     }

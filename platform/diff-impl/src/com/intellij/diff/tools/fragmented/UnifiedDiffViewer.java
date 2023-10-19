@@ -1159,7 +1159,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     }
 
     @NotNull
-    private LogicalPosition getPosition(int line, int column) {
+    private static LogicalPosition getPosition(int line, int column) {
       if (line == -1) return new LogicalPosition(0, 0);
       return new LogicalPosition(line, column);
     }

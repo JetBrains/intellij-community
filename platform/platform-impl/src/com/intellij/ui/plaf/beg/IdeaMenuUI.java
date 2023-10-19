@@ -438,7 +438,7 @@ public class IdeaMenuUI extends BasicMenuUI {
     LinePainter2D.paint((Graphics2D)g, i1, l1, k1, l1);
   }
 
-  private void resetRects() {
+  private static void resetRects() {
     ourIconRect.setBounds(ourZeroRect);
     ourTextRect.setBounds(ourZeroRect);
     ourAcceleratorRect.setBounds(ourZeroRect);

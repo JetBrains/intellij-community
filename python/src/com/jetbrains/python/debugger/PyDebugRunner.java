@@ -19,7 +19,6 @@ import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
@@ -39,10 +38,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -61,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -926,8 +921,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       return debuggerScript;
     }
 
-    private @NotNull ServerSocket createServerSocketForDebugging(@NotNull TargetEnvironment environment,
-                                                                 @NotNull TargetEnvironment.LocalPortBinding ideServerPortBinding)
+    private static @NotNull ServerSocket createServerSocketForDebugging(@NotNull TargetEnvironment environment,
+                                                                        @NotNull TargetEnvironment.LocalPortBinding ideServerPortBinding)
       throws IOException {
       ResolvedPortBinding localPortBinding = environment.getLocalPortBindings().get(ideServerPortBinding);
       int port = ideServerPortBinding.getLocal();

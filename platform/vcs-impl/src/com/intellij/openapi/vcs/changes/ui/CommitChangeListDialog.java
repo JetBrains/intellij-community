@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.diff.actions.impl.OpenInEditorAction;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
@@ -884,7 +883,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     @NotNull
-    private Iterable<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends FilePath> unversioned) {
+    private static Iterable<Wrapper> wrap(@NotNull Collection<? extends Change> changes,
+                                          @NotNull Collection<? extends FilePath> unversioned) {
       return JBIterable.<Wrapper>empty()
         .append(JBIterable.from(changes).map(ChangeWrapper::new))
         .append(JBIterable.from(unversioned).map(UnversionedFileWrapper::new));

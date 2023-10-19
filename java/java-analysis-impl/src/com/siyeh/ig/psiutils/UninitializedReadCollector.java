@@ -299,7 +299,7 @@ public class UninitializedReadCollector {
     return false;
   }
 
-  private boolean foreachStatementAssignsVariable(
+  private static boolean foreachStatementAssignsVariable(
     PsiForeachStatement forStatement, PsiVariable variable) {
     return false;
   }

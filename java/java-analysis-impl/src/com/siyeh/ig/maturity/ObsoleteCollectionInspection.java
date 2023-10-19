@@ -16,7 +16,6 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -31,8 +30,6 @@ import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
@@ -126,7 +123,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
       registerNewExpressionError(newExpression);
     }
 
-    private boolean isObsoleteCollectionType(@Nullable PsiType type) {
+    private static boolean isObsoleteCollectionType(@Nullable PsiType type) {
       if (type == null) {
         return false;
       }
@@ -203,8 +200,8 @@ public class ObsoleteCollectionInspection extends BaseInspection {
       return isObsoleteCollectionType(type);
     }
 
-    private int getIndexOfArgument(PsiExpressionList argumentList,
-                                   PsiElement argument) {
+    private static int getIndexOfArgument(PsiExpressionList argumentList,
+                                          PsiElement argument) {
       final PsiExpression[] expressions =
         argumentList.getExpressions();
       int index = -1;

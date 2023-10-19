@@ -161,7 +161,7 @@ public final class PyCythonExtensionWarning {
               }
             }
 
-            private boolean isSignificantOutput(String line) {
+            private static boolean isSignificantOutput(String line) {
               return line.trim().length() > 3;
             }
           });

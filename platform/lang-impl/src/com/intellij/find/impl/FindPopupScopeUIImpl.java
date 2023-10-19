@@ -216,7 +216,7 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
     myFindPopupPanel.scheduleResultsUpdate();
   }
 
-  private ScopeType getScope(FindModel model) {
+  private static ScopeType getScope(FindModel model) {
     if (model.isCustomScope()) {
       return SCOPE;
     }

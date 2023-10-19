@@ -108,8 +108,8 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
       registerStatementError(statement);
     }
 
-    private boolean ifStatementAssignsVolatileVariable(
-        GrIfStatement statement) {
+    private static boolean ifStatementAssignsVolatileVariable(
+      GrIfStatement statement) {
       GrStatement innerThen = statement.getThenBranch();
       innerThen = ControlFlowUtils.stripBraces(innerThen);
       if (!(innerThen instanceof GrAssignmentExpression assignmentExpression)) {

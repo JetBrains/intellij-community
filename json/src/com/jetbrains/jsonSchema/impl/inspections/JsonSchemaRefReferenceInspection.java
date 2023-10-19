@@ -61,7 +61,7 @@ public final class JsonSchemaRefReferenceInspection extends JsonSchemaBasedInspe
         }
       }
 
-      private @InspectionMessage String getReferenceErrorDesc(PsiReference reference) {
+      private static @InspectionMessage String getReferenceErrorDesc(PsiReference reference) {
         final String text = reference.getCanonicalText();
         if (reference instanceof FileReference) {
           final int hash = text.indexOf('#');

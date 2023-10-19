@@ -73,7 +73,7 @@ public final class TextCompletionUtil {
           }
         }
 
-        private boolean hasValidationInfo(@NotNull Editor editor) {
+        private static boolean hasValidationInfo(@NotNull Editor editor) {
           for (Component parent : UIUtil.uiParents(editor.getComponent(), false)) {
             if (parent instanceof JComponent) {
               ComponentValidator validator = ComponentValidator.getInstance((JComponent)parent).orElse(null);

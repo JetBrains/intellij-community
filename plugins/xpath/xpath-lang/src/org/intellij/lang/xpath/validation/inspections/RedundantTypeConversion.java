@@ -93,7 +93,7 @@ public class RedundantTypeConversion extends XPathInspection {
             }
         }
 
-      private boolean isSameType(XPathExpression expression, XPathType convertedType) {
+      private static boolean isSameType(XPathExpression expression, XPathType convertedType) {
         XPathType type = ExpectedTypeUtil.mapType(expression, expression.getType());
         while (type instanceof XPath2SequenceType) {
           type = ((XPath2SequenceType)type).getType();

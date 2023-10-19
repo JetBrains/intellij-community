@@ -122,7 +122,7 @@ public class PublicMethodNotExposedInInterfaceInspection extends BaseInspection 
       registerMethodError(method, method);
     }
 
-    private boolean exposedInInterface(PsiMethod method, Set<PsiMethod> seen) {
+    private static boolean exposedInInterface(PsiMethod method, Set<PsiMethod> seen) {
       if (!seen.add(method)) {
         return true;
       }

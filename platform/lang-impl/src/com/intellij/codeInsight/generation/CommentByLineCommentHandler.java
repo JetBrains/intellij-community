@@ -444,7 +444,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     return CharArrayUtil.regionMatches(chars, offset, prefix) ? offset : -1;
   }
 
-  private void doDefaultCommenting(final Block block) {
+  private static void doDefaultCommenting(final Block block) {
     final Document document = block.editor.getDocument();
     DocumentUtil.executeInBulk(
       document, block.endLine - block.startLine >= Registry.intValue("comment.by.line.bulk.lines.trigger"), () -> {

@@ -324,7 +324,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         return DragSource.DefaultMoveNoDrop;
       }
 
-      private boolean isCopyAction(int actionId) {
+      private static boolean isCopyAction(int actionId) {
         return (actionId & DnDConstants.ACTION_COPY) == DnDConstants.ACTION_COPY;
       }
     };

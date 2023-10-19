@@ -28,7 +28,7 @@ final class ExporterToTextFileHierarchy implements ExporterToTextFile {
     return buf.toString();
   }
 
-  private void appendNode(StringBuilder buf, @NotNull TreeNode node, String lineSeparator, String indent) {
+  private static void appendNode(StringBuilder buf, @NotNull TreeNode node, String lineSeparator, String indent) {
     String childIndent;
     if (node.getParent() != null) {
       childIndent = indent + "    ";

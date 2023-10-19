@@ -210,7 +210,7 @@ public class StopAction extends DumbAwareAction {
     }
   }
 
-  private void showStopPopup(@NotNull AnActionEvent e, DataContext dataContext, Project project, JBPopup popup) {
+  private static void showStopPopup(@NotNull AnActionEvent e, DataContext dataContext, Project project, JBPopup popup) {
     InputEvent inputEvent = e.getInputEvent();
     Component component = inputEvent != null ? inputEvent.getComponent() : null;
     if (component != null && (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())

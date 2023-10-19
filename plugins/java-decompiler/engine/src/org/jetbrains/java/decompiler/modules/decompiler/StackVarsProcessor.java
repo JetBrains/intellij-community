@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class StackVarsProcessor {
-  public void simplifyStackVars(RootStatement root, StructMethod mt, StructClass cl) {
+  public static void simplifyStackVars(RootStatement root, StructMethod mt, StructClass cl) {
     CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
     Set<Integer> setReorderedIfs = new HashSet<>();
@@ -100,7 +100,7 @@ public class StackVarsProcessor {
     }
   }
 
-  private boolean iterateStatements(RootStatement root, SSAUConstructorSparseEx ssa) {
+  private static boolean iterateStatements(RootStatement root, SSAUConstructorSparseEx ssa) {
     CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
@@ -230,11 +230,11 @@ public class StackVarsProcessor {
     }
   }
 
-  private int[] iterateExprent(List<Exprent> lstExprents,
-                               int index,
-                               Exprent next,
-                               Map<VarVersionPair, Exprent> mapVarValues,
-                               SSAUConstructorSparseEx ssau) {
+  private static int[] iterateExprent(List<Exprent> lstExprents,
+                                      int index,
+                                      Exprent next,
+                                      Map<VarVersionPair, Exprent> mapVarValues,
+                                      SSAUConstructorSparseEx ssau) {
     Exprent exprent = lstExprents.get(index);
 
     int changed = 0;

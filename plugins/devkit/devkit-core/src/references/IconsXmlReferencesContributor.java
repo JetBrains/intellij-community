@@ -76,7 +76,7 @@ final class IconsXmlReferencesContributor extends PsiReferenceContributor {
               return super.bindToElement(element);
             }
 
-            private PsiElement handleFile(PsiElement element, Function<FileReference, PsiElement> callback) {
+            private static PsiElement handleFile(PsiElement element, Function<FileReference, PsiElement> callback) {
               if (element instanceof PsiFile) {
                 FileReference lastRef = new FileReferenceSet(element).getLastReference();
                 if (lastRef != null) {

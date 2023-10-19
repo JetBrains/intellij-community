@@ -476,10 +476,10 @@ public final class FormatterImpl extends FormatterEx
     return indents;
   }
 
-  private @Nullable String generateIndentWhitespace(FormatProcessor processor,
-                                                    CommonCodeStyleSettings.IndentOptions indentOptions,
-                                                    FormattingDocumentModel documentModel,
-                                                    int offset) {
+  private static @Nullable String generateIndentWhitespace(FormatProcessor processor,
+                                                           CommonCodeStyleSettings.IndentOptions indentOptions,
+                                                           FormattingDocumentModel documentModel,
+                                                           int offset) {
     WhiteSpace whiteSpace = getWhiteSpaceAtOffset(offset, processor);
     if (whiteSpace != null) {
       final IndentInfo indent = calcIndent(offset, documentModel, processor, whiteSpace);

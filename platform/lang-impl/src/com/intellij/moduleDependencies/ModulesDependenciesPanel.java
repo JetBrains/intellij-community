@@ -174,7 +174,7 @@ public final class ModulesDependenciesPanel extends JPanel implements Disposable
         }
       }
 
-      private boolean isLooped(TreePath path, DefaultMutableTreeNode child) {
+      private static boolean isLooped(TreePath path, DefaultMutableTreeNode child) {
         for (Object o : path.getPath()) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)o;
           if (node != child && Comparing.equal(node.getUserObject(), child.getUserObject())) {

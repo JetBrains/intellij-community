@@ -127,7 +127,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
       registerError(castTypeElement, operandType, lostRange.max() < 0);
     }
 
-    private boolean valueIsContainableInType(Number value, PsiType type) {
+    private static boolean valueIsContainableInType(Number value, PsiType type) {
       final long longValue = value.longValue();
       final double doubleValue = value.doubleValue();
       if (PsiTypes.byteType().equals(type)) {

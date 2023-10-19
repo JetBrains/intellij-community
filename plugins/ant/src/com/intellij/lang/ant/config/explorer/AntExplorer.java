@@ -1027,7 +1027,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       return FileCopyPasteUtil.isFileListFlavorAvailable(support.getDataFlavors());
     }
 
-    private VirtualFile[] getAntFiles(final TransferSupport support) {
+    private static VirtualFile[] getAntFiles(final TransferSupport support) {
       List<VirtualFile> virtualFileList = new ArrayList<>();
       final List<File> fileList = FileCopyPasteUtil.getFileList(support.getTransferable());
       if (fileList != null) {

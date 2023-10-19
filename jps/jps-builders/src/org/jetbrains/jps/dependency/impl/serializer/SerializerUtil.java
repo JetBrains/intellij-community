@@ -612,7 +612,7 @@ public final class SerializerUtil {
     );
   }
 
-  private String getJvmMethodDescr(Iterable<TypeRepr> myArgTypes, TypeRepr type) {
+  private static String getJvmMethodDescr(Iterable<TypeRepr> myArgTypes, TypeRepr type) {
     final StringBuilder buf = new StringBuilder();
 
     buf.append("(");

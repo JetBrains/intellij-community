@@ -88,7 +88,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     return false;
   }
 
-  private boolean containsWhiteSpacesOnly(final ASTNode node) {
+  private static boolean containsWhiteSpacesOnly(final ASTNode node) {
     if (node == null) return false;
     if (node.getElementType() == TokenType.WHITE_SPACE) return true;
     if (node instanceof LeafElement) return false;

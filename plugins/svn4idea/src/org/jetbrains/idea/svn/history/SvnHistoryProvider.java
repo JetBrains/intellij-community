@@ -688,7 +688,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     @Nullable
-    private SvnFileRevision getSelectedRevision(final MouseEvent e) {
+    private static SvnFileRevision getSelectedRevision(final MouseEvent e) {
       JTable table = (JTable)e.getSource();
       int row = table.rowAtPoint(e.getPoint());
       int column = table.columnAtPoint(e.getPoint());

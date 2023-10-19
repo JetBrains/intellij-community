@@ -149,10 +149,10 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     return buildingResults;
   }
 
-  private void buildSinglePom(ProjectBuilder builder,
-                              List<ProjectBuildingResult> buildingResults,
-                              ProjectBuildingRequest projectBuildingRequest,
-                              File pomFile) {
+  private static void buildSinglePom(ProjectBuilder builder,
+                                     List<ProjectBuildingResult> buildingResults,
+                                     ProjectBuildingRequest projectBuildingRequest,
+                                     File pomFile) {
     try {
       ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
       buildingResults.add(build);

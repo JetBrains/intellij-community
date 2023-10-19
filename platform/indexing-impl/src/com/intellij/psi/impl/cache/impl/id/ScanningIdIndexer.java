@@ -38,7 +38,7 @@ public abstract class ScanningIdIndexer implements IdIndexer {
         return true;
       }
 
-      private int convertToMask(final WordOccurrence.Kind kind) {
+      private static int convertToMask(final WordOccurrence.Kind kind) {
         if (kind == null) {
           return UsageSearchContext.ANY;
         }

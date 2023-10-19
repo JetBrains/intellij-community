@@ -419,7 +419,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
    * Splits the nameComponent into fragments based on the offsets of the decorated text ranges,
    * then applies the appropriate decorations to each fragment.
    */
-  private void renderItemNameDecoration(SimpleColoredComponent nameComponent,
+  private static void renderItemNameDecoration(SimpleColoredComponent nameComponent,
                                                @NotNull List<LookupElementPresentation.DecoratedTextRange> itemNameDecorations,
                                                @NotNull LookupElement item) {
     if (nameComponent.getFragmentCount() == 0 || itemNameDecorations.isEmpty()) {

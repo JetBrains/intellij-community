@@ -344,7 +344,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
         }
       }
 
-      private int checkChildRangeConsistency(PsiFile file, int parentOffset, int childOffset, ASTNode child) {
+      private static int checkChildRangeConsistency(PsiFile file, int parentOffset, int childOffset, ASTNode child) {
         assertEquals(child.getStartOffsetInParent(), childOffset);
         assertEquals(child.getStartOffset(), childOffset + parentOffset);
         int childLength = child.getTextLength();

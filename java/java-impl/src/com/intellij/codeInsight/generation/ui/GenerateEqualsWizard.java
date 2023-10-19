@@ -409,7 +409,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       return myPanel;
     }
 
-    private void setupCombobox(EqualsHashCodeTemplatesManager templatesManager,
+    private static void setupCombobox(EqualsHashCodeTemplatesManager templatesManager,
                                       ComboBox<String> comboBox,
                                       PsiClass psiClass,
                                       Set<String> invalid) {

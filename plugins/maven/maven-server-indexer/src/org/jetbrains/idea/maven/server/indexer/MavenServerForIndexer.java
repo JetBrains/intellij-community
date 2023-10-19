@@ -35,7 +35,7 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
     }
   }
 
-  private Level getLogLevel(String level) {
+  private static Level getLogLevel(String level) {
     switch (level) {
       case "error":
         return Level.SEVERE;

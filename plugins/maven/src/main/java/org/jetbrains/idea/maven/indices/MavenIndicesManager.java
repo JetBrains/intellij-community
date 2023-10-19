@@ -171,7 +171,7 @@ public final class MavenIndicesManager implements Disposable {
     }, this);
   }
 
-  public void addArchetype(@NotNull MavenArchetype archetype) {
+  public static void addArchetype(@NotNull MavenArchetype archetype) {
     MavenArchetypeManager.addArchetype(archetype, getUserArchetypesFile());
   }
 
@@ -246,7 +246,7 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   @NotNull
-  private Path getUserArchetypesFile() {
+  private static Path getUserArchetypesFile() {
     return MavenSystemIndicesManager.getInstance().getIndicesDir().resolve("UserArchetypes.xml");
   }
 

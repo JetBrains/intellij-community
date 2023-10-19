@@ -80,7 +80,7 @@ public class SwitchStatementDensityInspection extends BaseInspection {
       registerError(block.getFirstChild(), Integer.valueOf(intDensity));
     }
 
-    private double calculateDensity(@NotNull PsiCodeBlock body, int branchCount) {
+    private static double calculateDensity(@NotNull PsiCodeBlock body, int branchCount) {
       final StatementCountVisitor visitor = new StatementCountVisitor();
       body.accept(visitor);
       return (double)branchCount / (double)visitor.getStatementCount();

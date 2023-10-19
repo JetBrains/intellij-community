@@ -271,7 +271,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     ServiceViewDragHelper.installDnDSupport(myProject, toolWindowEx.getDecorator(), contentManager);
   }
 
-  private void addMainContent(ContentManager contentManager, ServiceView mainView) {
+  private static void addMainContent(ContentManager contentManager, ServiceView mainView) {
     Content mainContent = ContentFactory.getInstance().createContent(mainView, null, false);
     mainContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
     mainContent.setHelpId(getToolWindowContextHelpId());

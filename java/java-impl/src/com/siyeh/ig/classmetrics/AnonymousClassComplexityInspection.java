@@ -83,7 +83,7 @@ public class AnonymousClassComplexityInspection
       registerClassError(aClass, Integer.valueOf(totalComplexity));
     }
 
-    private int calculateTotalComplexity(PsiClass aClass) {
+    private static int calculateTotalComplexity(PsiClass aClass) {
       final PsiMethod[] methods = aClass.getMethods();
       int totalComplexity = calculateComplexityForMethods(methods);
       totalComplexity += calculateInitializerComplexity(aClass);

@@ -121,7 +121,7 @@ public class MagicNumberInspection extends BaseInspection {
       }
     }
 
-    private boolean isInitialCapacity(PsiLiteralExpression expression) {
+    private static boolean isInitialCapacity(PsiLiteralExpression expression) {
       final PsiElement element =
         PsiTreeUtil.skipParentsOfType(expression, PsiTypeCastExpression.class, PsiParenthesizedExpression.class);
       if (!(element instanceof PsiExpressionList)) {
@@ -139,7 +139,7 @@ public class MagicNumberInspection extends BaseInspection {
                                                   "java.awt.Dimension") != null;
     }
 
-    private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
+    private static boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
       final Object object = ExpressionUtils.computeConstantExpression(expression);
       if (object instanceof Integer) {
         final int i = ((Integer)object).intValue();

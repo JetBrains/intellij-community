@@ -95,16 +95,16 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
       registerStatementError(statement, Boolean.valueOf(hasInitializer), Boolean.valueOf(hasCondition), Boolean.valueOf(hasUpdate));
     }
 
-    private boolean hasCondition(PsiForStatement statement) {
+    private static boolean hasCondition(PsiForStatement statement) {
       return statement.getCondition() != null;
     }
 
-    private boolean hasInitializer(PsiForStatement statement) {
+    private static boolean hasInitializer(PsiForStatement statement) {
       final PsiStatement initialization = statement.getInitialization();
       return initialization != null && !(initialization instanceof PsiEmptyStatement);
     }
 
-    private boolean hasUpdate(PsiForStatement statement) {
+    private static boolean hasUpdate(PsiForStatement statement) {
       final PsiStatement update = statement.getUpdate();
       return update != null && !(update instanceof PsiEmptyStatement);
     }
@@ -151,7 +151,7 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
       return isCallToBooleanZeroArgumentMethod("hasMoreElements", condition, enumeration);
     }
 
-    private boolean isCallToBooleanZeroArgumentMethod(@NonNls String methodName, PsiExpression expression, PsiVariable calledOn) {
+    private static boolean isCallToBooleanZeroArgumentMethod(@NonNls String methodName, PsiExpression expression, PsiVariable calledOn) {
       if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         for (PsiExpression operand : polyadicExpression.getOperands()) {
           if (isCallToBooleanZeroArgumentMethod(methodName, operand, calledOn)) {

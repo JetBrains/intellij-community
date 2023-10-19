@@ -73,7 +73,7 @@ public class ReplaceOnLiteralHasNoEffectInspection extends AbstractBaseJavaLocal
         return false;
       }
 
-      private boolean isRedundantLiteralMatch(@NotNull String str, Object value, boolean literalMatch) {
+      private static boolean isRedundantLiteralMatch(@NotNull String str, Object value, boolean literalMatch) {
         String patternValue;
         if (value instanceof String) {
           patternValue = (String)value;

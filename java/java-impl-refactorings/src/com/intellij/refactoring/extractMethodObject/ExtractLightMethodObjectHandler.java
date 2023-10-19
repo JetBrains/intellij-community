@@ -180,7 +180,7 @@ public final class ExtractLightMethodObjectHandler {
     if (useMagicAccessor) {
       LOG.info("Magic accessor available");
       copy.accept(new JavaRecursiveElementWalkingVisitor() {
-        private void makePublic(PsiMember method) {
+        private static void makePublic(PsiMember method) {
           if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
             VisibilityUtil.setVisibility(method.getModifierList(), PsiModifier.PUBLIC);
           }

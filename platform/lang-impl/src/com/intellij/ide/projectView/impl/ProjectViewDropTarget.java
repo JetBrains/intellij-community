@@ -312,7 +312,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
       getActionHandler().invoke(myProject, sources, context);
     }
 
-    private RefactoringActionHandler getActionHandler() {
+    private static RefactoringActionHandler getActionHandler() {
       return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
     }
 

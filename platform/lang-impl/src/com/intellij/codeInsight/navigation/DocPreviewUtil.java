@@ -62,7 +62,7 @@ public final class DocPreviewUtil {
       }
     }
 
-    private String extractShortName(@NotNull String s) {
+    private static String extractShortName(@NotNull String s) {
       int i = s.lastIndexOf('.');
       return i > 0 && i < s.length() - 1 ? s.substring(i + 1) : s;
     }

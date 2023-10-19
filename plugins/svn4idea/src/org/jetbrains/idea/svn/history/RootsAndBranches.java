@@ -333,7 +333,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   // todo refactor to get rid of duplicate code dealing with separators
-  private String ensureEndsWithSeparator(final String wcPath) {
+  private static String ensureEndsWithSeparator(final String wcPath) {
     return wcPath.endsWith(File.separator) ? wcPath : (wcPath + File.separator);
   }
 

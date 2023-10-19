@@ -129,7 +129,7 @@ public class XmlBuilderDriver {
     return b;
   }
 
-  private void processErrorNode(PsiBuilder psiBuilder, LighterASTNode node, XmlBuilder builder) {
+  private static void processErrorNode(PsiBuilder psiBuilder, LighterASTNode node, XmlBuilder builder) {
     assert node.getTokenType() == TokenType.ERROR_ELEMENT;
     String message = PsiBuilderImpl.getErrorMessage(node);
     assert message != null;

@@ -124,7 +124,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
       // 1) method name is not frequently used
       // 2) most of overridden methods already have @Override annotation
       // 3) only one annotation with short name 'Override' exists: it's 'java.lang.Override'
-      private boolean isMissingOverrideInOverriders(@NotNull PsiMethod method) {
+      private static boolean isMissingOverrideInOverriders(@NotNull PsiMethod method) {
         if (!PsiUtil.canBeOverridden(method)) return false;
 
         Project project = method.getProject();
@@ -164,7 +164,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
         return true;
       }
 
-      private boolean hasOverrideAnnotation(PsiModifierListOwner modifierListOwner) {
+      private static boolean hasOverrideAnnotation(PsiModifierListOwner modifierListOwner) {
         final PsiModifierList modifierList = modifierListOwner.getModifierList();
         if (modifierList != null && modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)) {
           return true;
@@ -216,7 +216,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
       }
 
       @Contract("_, _, _,null -> true")
-      private boolean ignoreSuperMethod(PsiMethod method, PsiClass methodClass, PsiMethod superMethod, PsiClass superClass) {
+      private static boolean ignoreSuperMethod(PsiMethod method, PsiClass methodClass, PsiMethod superMethod, PsiClass superClass) {
         return !InheritanceUtil.isInheritorOrSelf(methodClass, superClass, true) ||
                LanguageLevelUtil.getLastIncompatibleLanguageLevel(superMethod, PsiUtil.getLanguageLevel(method)) != null;
       }

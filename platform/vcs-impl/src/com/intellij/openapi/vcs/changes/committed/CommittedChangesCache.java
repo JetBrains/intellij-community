@@ -919,7 +919,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return null;
   }
 
-  private long getLatestListForFile(final ChangesCacheFile file) {
+  private static long getLatestListForFile(final ChangesCacheFile file) {
     try {
       if ((file == null) || (file.isEmpty())) {
         return -1;

@@ -135,7 +135,7 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
             return createComment(element);
           }
 
-          private Comment createComment(final Element element) {
+          private static Comment createComment(final Element element) {
             return new Comment() {
               @Override
               public String getText() {

@@ -93,7 +93,7 @@ public class TestAll implements Test {
       return "Not @Bombed";
     }
 
-    private boolean isBombed(Description description) {
+    private static boolean isBombed(Description description) {
       Bombed bombed = description.getAnnotation(Bombed.class);
       return bombed != null && !TestFrameworkUtil.bombExplodes(bombed);
     }

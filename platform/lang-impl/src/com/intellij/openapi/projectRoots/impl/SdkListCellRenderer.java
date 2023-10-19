@@ -40,7 +40,7 @@ public final class SdkListCellRenderer extends ColoredListCellRenderer<Sdk> {
     }
   }
 
-  private Icon getSdkIcon(Sdk sdk) {
+  private static Icon getSdkIcon(Sdk sdk) {
     return ((SdkType) sdk.getSdkType()).getIcon();
   }
 }

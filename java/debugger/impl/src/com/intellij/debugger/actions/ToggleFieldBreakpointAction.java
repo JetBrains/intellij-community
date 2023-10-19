@@ -88,7 +88,7 @@ public class ToggleFieldBreakpointAction extends AnAction implements ActionRemot
   }
 
   @Nullable
-  private SourcePosition getPlace(AnActionEvent event) {
+  private static SourcePosition getPlace(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {

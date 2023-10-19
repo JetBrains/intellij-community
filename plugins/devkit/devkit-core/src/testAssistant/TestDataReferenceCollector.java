@@ -185,7 +185,7 @@ public class TestDataReferenceCollector {
     }
 
     /** see {@link com.intellij.testFramework.PlatformTestUtil#lowercaseFirstLetter} */
-    private String lowercaseFirstLetter(String name) {
+    private static String lowercaseFirstLetter(String name) {
       boolean lowercaseChars = false;
       int uppercaseChars = 0;
       for (int i = 0; i < name.length(); i++) {
