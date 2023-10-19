@@ -13,6 +13,10 @@ if [[ ! -n "${bash_preexec_imported:-}" ]]; then
     return
   fi
 fi
+
+if [ -r "${JETBRAINS_INTELLIJ_BASH_DIR}/bash-fig.bash" ]; then
+  source "${JETBRAINS_INTELLIJ_BASH_DIR}/bash-fig.bash"
+fi
 unset JETBRAINS_INTELLIJ_BASH_DIR
 
 __jetbrains_intellij_encode_slow() {
