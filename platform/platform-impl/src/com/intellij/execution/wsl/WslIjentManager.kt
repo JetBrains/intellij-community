@@ -5,12 +5,15 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ChannelInputStream
 import com.intellij.execution.process.ChannelOutputStream
 import com.intellij.execution.process.UnixSignal
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.*
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
@@ -38,14 +41,20 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
       }
     }.getValue()
   }
-  
+
   fun fetchLoginShellEnv(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): Map<String, String> {
-    return runBlocking { 
+    return runBlocking {
       getIjentApi(wslDistribution, project, rootUser).fetchLoginShellEnvVariables()
     }
   }
 
-  fun runProcessBlocking(wslDistribution: WSLDistribution, project: Project?, processBuilder: ProcessBuilder, options: WSLCommandLineOptions, pty: IjentApi.Pty?): Process {
+  fun runProcessBlocking(
+    wslDistribution: WSLDistribution,
+    project: Project?,
+    processBuilder: ProcessBuilder,
+    options: WSLCommandLineOptions,
+    pty: IjentApi.Pty?
+  ): Process {
     return runBlocking {
       val command = processBuilder.command()
 
@@ -63,6 +72,12 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
   }
 
   companion object {
+    @JvmStatic
+    fun isIjentAvailable(): Boolean {
+      val id = PluginId.getId("intellij.platform.ijent.impl")
+      return Registry.`is`("wsl.use.remote.agent.for.launch.processes") && PluginManagerCore.getPlugin(id)?.isEnabled == true
+    }
+
     @JvmStatic
     fun getInstance(): WslIjentManager = service()
   }

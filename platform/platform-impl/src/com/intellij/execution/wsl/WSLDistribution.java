@@ -227,7 +227,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
-    if (Registry.is("wsl.use.remote.agent.for.launch.processes") && !options.isLaunchWithWslExe()) {
+    if (WslIjentManager.isIjentAvailable() && !options.isLaunchWithWslExe()) {
       if (commandLine instanceof PtyCommandLine) {
         commandLine.setProcessCreator((processBuilder) -> {
           var ptyOptions = ((PtyCommandLine)commandLine).getPtyOptions();
@@ -469,7 +469,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @return environment map of the default user in wsl
    */
   public @Nullable Map<String, String> getEnvironment() {
-    if (Registry.is("wsl.use.remote.agent.for.launch.processes")) {
+    if (WslIjentManager.isIjentAvailable()) {
       return WslIjentManager.getInstance().fetchLoginShellEnv(this, null, false);
     }
     try {
