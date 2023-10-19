@@ -300,6 +300,7 @@
     <activityInProgressWitness implementation="com.intellij.openapi.project.DumbServiceInProgressWitness"/>
     <activityInProgressWitness implementation="com.intellij.openapi.project.ScanningInProgressWitness"/>
     <activityInProgressWitness implementation="com.intellij.ide.startup.StartupActivityInProgressWitness"/>
+    <activityInProgressWitness implementation="com.intellij.openapi.vfs.newvfs.VfsActivityInProgressWitness"/>
 
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
