@@ -47,7 +47,7 @@ internal object InlineCompletionTooltip {
         cell(session.provider.providerPresentation.getTooltip(editor.project))
       }
     }.apply {
-      border = JBUI.Borders.empty(4)
+      border = JBUI.Borders.empty(2)
     }
 
     val hint = LightweightHint(panel).apply {
