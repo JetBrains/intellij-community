@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
 import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdleTracker
@@ -212,11 +213,8 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   }
 
   private suspend fun executeOnIdle() {
-    withContext(Dispatchers.EDT) {
-      @Suppress("ForbiddenInSuspectContextMethod")
-      ClientId.withClientId(ClientId.ownerId) {
+    withContext(Dispatchers.EDT + ClientId.ownerId.asContextElement()) {
         (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
-      }
     }
   }
 
