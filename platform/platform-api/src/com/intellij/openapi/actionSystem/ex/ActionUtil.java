@@ -377,7 +377,7 @@ public final class ActionUtil {
     }
     AnActionResult result = null;
     try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM);
-         AccessToken ignore2 = withActionThreadContext(actionId, event.getPlace(), event.getInputEvent())) {
+         AccessToken ignore2 = withActionThreadContext(actionId, event.getPlace(), event.getInputEvent(), component)) {
       performRunnable.run();
       result = AnActionResult.PERFORMED;
     }
@@ -662,16 +662,25 @@ public final class ActionUtil {
 
   @ApiStatus.Internal
   @RequiresBlockingContext
-  public static @Nullable String getActionThreadContext() {
-    ActionContextElement context = currentThreadContext().get(ActionContextElement.Companion);
-    return context == null ? null : context.getActionId();
+  public static @Nullable ActionContextElement getActionThreadContext() {
+    return currentThreadContext().get(ActionContextElement.Companion);
+  }
+
+  private static final Key<ActionContextElement> ACTION_CONTEXT_ELEMENT_KEY = Key.create("ACTION_CONTEXT_ELEMENT_KEY");
+
+  @ApiStatus.Internal
+  public static void initActionContextForComponent(@NotNull JComponent component) {
+    ClientProperty.put(component, ACTION_CONTEXT_ELEMENT_KEY, getActionThreadContext());
   }
 
   private static @NotNull AccessToken withActionThreadContext(@NotNull String actionId,
                                                               @NotNull String place,
-                                                              @Nullable InputEvent event) {
+                                                              @Nullable InputEvent event,
+                                                              @Nullable Component component) {
+    ActionContextElement parent = UIUtil.uiParents(component, false)
+      .filterMap(o -> ClientProperty.get(o, ACTION_CONTEXT_ELEMENT_KEY)).first();
     return installThreadContext(currentThreadContext().plus(
-      new ActionContextElement(actionId, place, event == null ? -1 : event.getID())), true);
+      new ActionContextElement(actionId, place, event == null ? -1 : event.getID(), parent)), true);
   }
 
   private static class InputEventDummyAction extends DumbAwareAction implements LightEditCompatible {

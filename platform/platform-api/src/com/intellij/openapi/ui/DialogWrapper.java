@@ -1350,6 +1350,7 @@ public abstract class DialogWrapper {
     if (SystemInfoRt.isWindows || (SystemInfoRt.isLinux && Registry.is("ide.linux.enter.on.dialog.triggers.focused.button", true))) {
       installEnterHook(myRoot, myDisposable);
     }
+    ActionUtil.initActionContextForComponent(myRoot);
   }
 
   protected int getErrorTextAlignment() {

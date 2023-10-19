@@ -6,7 +6,10 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
 @ApiStatus.Internal
-class ActionContextElement(val actionId: String, val place: String, val inputEventId: Int):
+class ActionContextElement(val actionId: String,
+                           val place: String,
+                           val inputEventId: Int,
+                           val parent: ActionContextElement?):
   AbstractCoroutineContextElement(ActionContextElement), CoroutineContext.Element {
 
   companion object: CoroutineContext.Key<ActionContextElement>
