@@ -20,7 +20,10 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerListener;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.index.GitIndexUtil;
@@ -350,8 +353,7 @@ public final class GitMergeUtil {
       handler.endOptions();
       handler.addParameters(paths);
 
-      GitCommandResult result = Git.getInstance().runCommand(handler);
-      if (!result.success()) throw new VcsException(result.getErrorOutputAsJoinedString());
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 
