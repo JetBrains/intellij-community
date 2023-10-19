@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
+package org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.icons.AllIcons
@@ -20,6 +20,8 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewController
+import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.Icon
 import javax.swing.JComponent

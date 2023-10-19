@@ -86,7 +86,7 @@
       order="after org.jetbrains.plugins.github.ui.cloneDialog.GHECloneDialogExtension"/>
 
     <editorFactoryListener implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewController$InstallerListener"/>
-    <iw.actionProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewModeActionProvider"/>
+    <iw.actionProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action.GitLabMergeRequestEditorReviewModeActionProvider"/>
 
     <registryKey key="vcs.gitlab.connect.silently"
                  description="Connect to GitLab repository without an explicit user action"
@@ -183,7 +183,7 @@
     </group>
 
     <group id="GitLab.Merge.Request.Diff.Discussions.View.Options"
-           class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestDiffReviewDiscussionsToggleAction"
+           class="org.jetbrains.plugins.gitlab.mergerequest.ui.diff.action.GitLabMergeRequestDiffReviewDiscussionsToggleAction"
            icon="AllIcons.Actions.Show"
            popup="true">
       <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"
