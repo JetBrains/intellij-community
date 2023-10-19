@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalSystem
 
 import com.intellij.compiler.CompilerConfiguration
@@ -20,7 +18,7 @@ import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
 
 
-class JavaProjectDataService : AbstractProjectDataService<JavaProjectData, Project?>() {
+internal class JavaProjectDataService : AbstractProjectDataService<JavaProjectData, Project?>() {
 
   override fun getTargetDataKey(): Key<JavaProjectData> = JavaProjectData.KEY
 
@@ -60,13 +58,12 @@ class JavaProjectDataService : AbstractProjectDataService<JavaProjectData, Proje
     val projectSdk = projectRootManager.projectSdk
     val projectSdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(projectSdk)
     val projectSdkLanguageLevel = projectSdkVersion?.maxLanguageLevel
-    val languageLevel = adjustLevelAndNotify(project, javaProjectData.languageLevel)
+    val languageLevel = JavaProjectDataServiceUtil.adjustLevelAndNotify(project, javaProjectData.languageLevel)
 
     val languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(project)
     languageLevelProjectExtension.languageLevel = languageLevel
     languageLevelProjectExtension.default = languageLevel == projectSdkLanguageLevel
   }
-
 
   private fun importTargetBytecodeVersion(project: Project, javaProjectData: JavaProjectData) {
     val compilerConfiguration = CompilerConfiguration.getInstance(project)
@@ -74,17 +71,18 @@ class JavaProjectDataService : AbstractProjectDataService<JavaProjectData, Proje
     compilerConfiguration.projectBytecodeTarget = targetBytecodeVersion
   }
 
-  companion object {
+}
 
-    internal fun adjustLevelAndNotify(project: Project, level: LanguageLevel): LanguageLevel {
-      if (!AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(level)) {
-        val highestAcceptedLevel = AcceptedLanguageLevelsSettings.getHighestAcceptedLevel()
-        if (highestAcceptedLevel.isLessThan(level)) {
-          AcceptedLanguageLevelsSettings.showNotificationToAccept(project, level)
-        }
-        return if (highestAcceptedLevel.isAtLeast(level)) LanguageLevel.HIGHEST else highestAcceptedLevel
+internal object JavaProjectDataServiceUtil {
+
+  internal fun adjustLevelAndNotify(project: Project, level: LanguageLevel): LanguageLevel {
+    if (!AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(level)) {
+      val highestAcceptedLevel = AcceptedLanguageLevelsSettings.getHighestAcceptedLevel()
+      if (highestAcceptedLevel.isLessThan(level)) {
+        AcceptedLanguageLevelsSettings.showNotificationToAccept(project, level)
       }
-      return level
+      return if (highestAcceptedLevel.isAtLeast(level)) LanguageLevel.HIGHEST else highestAcceptedLevel
     }
+    return level
   }
 }
