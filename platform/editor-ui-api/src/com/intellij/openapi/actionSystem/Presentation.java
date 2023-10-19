@@ -308,6 +308,10 @@ public final class Presentation implements Cloneable {
     return icon == null ? null : icon.get();
   }
 
+  public @Nullable Supplier<? extends @Nullable Icon> getIconSupplier() {
+    return icon;
+  }
+
   public void copyIconIfUnset(@NotNull Presentation other) {
     if (icon == null && other.icon != null) {
       icon = other.icon;
