@@ -6,13 +6,13 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
@@ -20,10 +20,7 @@ import com.intellij.searchEverywhereMl.semantics.indices.InMemoryEmbeddingSearch
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.semantics.utils.ScoredText
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 
@@ -47,8 +44,10 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
     get() = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.actions.generation.label")
 
   fun prepareForSearch(project: Project) = SemanticSearchCoroutineScope.getScope(project).launch {
-    project.waitForSmartMode() // project may become dumb again, but we don't interfere initial indexing
-    LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      // In unit tests you have to manually download artifacts when needed
+      LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
+    }
     index.loadFromDisk()
     generateEmbeddingsIfNecessary(project)
   }
@@ -57,7 +56,7 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
 
   /* Thread-safe job for updating embeddings. Consequent call stops the previous execution */
   @RequiresBackgroundThread
-  suspend fun generateEmbeddingsIfNecessary(project: Project) {
+  suspend fun generateEmbeddingsIfNecessary(project: Project) = coroutineScope {
     val backgroundable = ActionEmbeddingsStorageSetup(index, indexSetupJob)
     try {
       if (Registry.`is`("search.everywhere.ml.semantic.indexing.show.progress")) {
