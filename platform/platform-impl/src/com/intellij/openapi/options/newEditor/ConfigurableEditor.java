@@ -17,7 +17,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableCardPanel;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -62,7 +61,6 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   };
   private final JLabel myErrorLabel = new JLabel();
   private final AbstractAction myApplyAction = new AbstractAction(CommonBundle.getApplyButtonText()) {
-    { putValue(DialogWrapper.MAC_ACTION_ORDER, 75); }
     @Override
     public void actionPerformed(ActionEvent event) {
       apply();

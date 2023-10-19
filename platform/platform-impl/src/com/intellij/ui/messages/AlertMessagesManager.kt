@@ -201,6 +201,10 @@ private class AlertDialog(project: Project?,
     WindowRoundedCornersManager.configure(this)
   }
 
+  override fun sortActionsOnMac(actions: MutableList<Action>) {
+    actions.reverse()
+  }
+
   override fun beforeShowCallback() {
     if (SystemInfoRt.isMac) {
       val initSize = myInitSize!!

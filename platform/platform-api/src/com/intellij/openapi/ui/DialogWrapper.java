@@ -532,8 +532,7 @@ public abstract class DialogWrapper {
         leftSideActions.add(macOtherAction);
         actions.remove(macOtherAction);
       }
-      actions.sort(Comparator.comparing(action -> Objects.<Integer>requireNonNullElse(
-        (Integer)action.getValue(MAC_ACTION_ORDER), action.getValue(DEFAULT_ACTION) == null ? 0 : DEFAULT_ACTION_ORDER)));
+      sortActionsOnMac(actions);
     }
 
     List<JButton> leftSideButtons = createButtons(leftSideActions);
@@ -552,6 +551,11 @@ public abstract class DialogWrapper {
       Touchbar.setButtonActions(result, leftSideButtons, rightSideButtons, null);
     }
     return result;
+  }
+
+  protected void sortActionsOnMac(@NotNull List<Action> actions) {
+    actions.sort(Comparator.comparing(action -> Objects.<Integer>requireNonNullElse(
+      (Integer)action.getValue(MAC_ACTION_ORDER), action.getValue(DEFAULT_ACTION) == null ? 0 : DEFAULT_ACTION_ORDER)));
   }
 
   protected @NotNull JButton createHelpButton(@NotNull Insets insets) {
@@ -1930,7 +1934,7 @@ public abstract class DialogWrapper {
   protected final class CancelAction extends DialogWrapperAction {
     private CancelAction() {
       super(CommonBundle.getCancelButtonText());
-      putValue(MAC_ACTION_ORDER, 10);
+      putValue(MAC_ACTION_ORDER, -10);
       addPropertyChangeListener(myRepaintOnNameChangeListener);
     }
 

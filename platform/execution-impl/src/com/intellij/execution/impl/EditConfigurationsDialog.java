@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -134,6 +135,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
         doOKAction();
       }
     };
+    myRunAction.putValue(DialogWrapper.MAC_ACTION_ORDER, -100);
     return ArrayUtil.prepend(myRunAction, actions);
   }
 
