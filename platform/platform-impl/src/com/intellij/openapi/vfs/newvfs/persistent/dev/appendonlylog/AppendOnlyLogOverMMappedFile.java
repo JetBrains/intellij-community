@@ -489,7 +489,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
       int recordOffsetInPage = storage.toOffsetInPage(recordOffsetInFile);
       ByteBuffer pageBuffer = page.rawPageBuffer();
 
-      if (pageSize - recordOffsetInPage <= RecordLayout.RECORD_HEADER_SIZE) {
+      if (pageSize - recordOffsetInPage < RecordLayout.RECORD_HEADER_SIZE) {
         throw new IOException(
           getClass().getSimpleName() + " corrupted: recordOffsetInPage(=" + recordOffsetInPage + ") less than " +
           "RECORD_HEADER(=" + RecordLayout.RECORD_HEADER_SIZE + "b) left until " +
@@ -724,22 +724,13 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     int pageSize = storage.pageSize();
     int offsetInPage = storage.toOffsetInPage(nextRecordOffset);
     int remainingOnPage = pageSize - offsetInPage;
-    if (remainingOnPage == RecordLayout.RECORD_HEADER_SIZE) {
-      //no room on the current page even for the record header => jump to the next page:
-      return nextPageStartingOffset(recordOffsetInFile, pageSize);
-    }
-    else if (remainingOnPage < RecordLayout.RECORD_HEADER_SIZE) {
+    if (remainingOnPage < RecordLayout.RECORD_HEADER_SIZE) {
       throw new IllegalStateException(
         "remainingOnPage(=" + remainingOnPage + ") <= recordHeader(=" + RecordLayout.RECORD_HEADER_SIZE + ")");
     }
     return nextRecordOffset;
   }
 
-  /** @return starting offset of the next page, given recordOffsetInFile in current page, and pageSize */
-  private static long nextPageStartingOffset(long recordOffsetInFile,
-                                             int pageSize) {
-    return ((recordOffsetInFile / pageSize) + 1) * pageSize;
-  }
 
   private long firstUnAllocatedOffset() {
     return getLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_ALLOCATED_OFFSET);
