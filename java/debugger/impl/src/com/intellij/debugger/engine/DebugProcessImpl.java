@@ -1214,7 +1214,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
             if (Patches.JDK_BUG_ID_21275177 && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
               //noinspection ResultOfMethodCallIgnored
-              myArgs.forEach(Object::toString);
+              StreamEx.of(myArgs).nonNull().forEach(Object::toString);
             }
 
             // workaround for jdi hang in trace mode, see IDEA-183387
