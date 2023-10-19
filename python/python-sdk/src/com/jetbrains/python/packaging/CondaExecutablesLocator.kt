@@ -68,7 +68,7 @@ fun findCondaExecutableRelativeToEnv(pyExecutable: Path): Path? {
     return immediateConda
   }
   val envsDir = condaFolder.parent ?: return null
-  if (!isBaseConda && envsDir.fileName.toString() == CONDA_ENVS_DIR) {
+  if (!isBaseConda && envsDir.fileName?.toString() == CONDA_ENVS_DIR) {
     val envsDirParent = envsDir.parent ?: return null
     return findExecutable(condaName, envsDirParent)
   }
