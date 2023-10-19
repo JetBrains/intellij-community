@@ -12,7 +12,10 @@ import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.CeProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
@@ -34,10 +37,7 @@ import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.AWTEvent
-import java.awt.Component
-import java.awt.Container
-import java.awt.EventQueue
+import java.awt.*
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
@@ -344,6 +344,14 @@ private suspend fun doShowModalIndicator(
 
       deferredDialog?.complete(dialog)
     }
+  }
+}
+
+private fun ownerWindow(owner: ModalTaskOwner): Window? {
+  return when (owner) {
+    is ComponentModalTaskOwner -> ProgressWindow.calcParentWindow(owner.component, null)
+    is ProjectModalTaskOwner -> ProgressWindow.calcParentWindow(null, owner.project)
+    is GuessModalTaskOwner -> ProgressWindow.calcParentWindow(null, null) // guess
   }
 }
 
