@@ -1,73 +1,72 @@
-from collections.abc import Generator
-from typing import Any
+from _typeshed import Incomplete
+from collections import defaultdict
+from collections.abc import Generator, Iterator
+from re import Pattern
+from typing import ClassVar
+from typing_extensions import Final, Literal
 
+from openpyxl.descriptors import Sequence
+from openpyxl.descriptors.base import Alias, Bool, Integer, String, _ConvertibleToBool, _ConvertibleToInt
 from openpyxl.descriptors.serialisable import Serialisable
+from openpyxl.formula.tokenizer import _TokenOperandSubtypes, _TokenTypesNotOperand
 
-RESERVED: Any
-RESERVED_REGEX: Any
-COL_RANGE: str
-COL_RANGE_RE: Any
-ROW_RANGE: str
-ROW_RANGE_RE: Any
-TITLES_REGEX: Any
+RESERVED: Final[frozenset[str]]
+RESERVED_REGEX: Final[Pattern[str]]
 
 class DefinedName(Serialisable):
-    tagname: str
-    name: Any
-    comment: Any
-    customMenu: Any
-    description: Any
-    help: Any
-    statusBar: Any
-    localSheetId: Any
-    hidden: Any
-    function: Any
-    vbProcedure: Any
-    xlm: Any
-    functionGroupId: Any
-    shortcutKey: Any
-    publishToServer: Any
-    workbookParameter: Any
-    attr_text: Any
-    value: Any
+    tagname: ClassVar[str]
+    name: String[Literal[False]]
+    comment: String[Literal[True]]
+    customMenu: String[Literal[True]]
+    description: String[Literal[True]]
+    help: String[Literal[True]]
+    statusBar: String[Literal[True]]
+    localSheetId: Integer[Literal[True]]
+    hidden: Bool[Literal[True]]
+    function: Bool[Literal[True]]
+    vbProcedure: Bool[Literal[True]]
+    xlm: Bool[Literal[True]]
+    functionGroupId: Integer[Literal[True]]
+    shortcutKey: String[Literal[True]]
+    publishToServer: Bool[Literal[True]]
+    workbookParameter: Bool[Literal[True]]
+    attr_text: Incomplete
+    value: Alias
     def __init__(
         self,
-        name: Any | None = ...,
-        comment: Any | None = ...,
-        customMenu: Any | None = ...,
-        description: Any | None = ...,
-        help: Any | None = ...,
-        statusBar: Any | None = ...,
-        localSheetId: Any | None = ...,
-        hidden: Any | None = ...,
-        function: Any | None = ...,
-        vbProcedure: Any | None = ...,
-        xlm: Any | None = ...,
-        functionGroupId: Any | None = ...,
-        shortcutKey: Any | None = ...,
-        publishToServer: Any | None = ...,
-        workbookParameter: Any | None = ...,
-        attr_text: Any | None = ...,
+        name: str,
+        comment: str | None = None,
+        customMenu: str | None = None,
+        description: str | None = None,
+        help: str | None = None,
+        statusBar: str | None = None,
+        localSheetId: _ConvertibleToInt | None = None,
+        hidden: _ConvertibleToBool | None = None,
+        function: _ConvertibleToBool | None = None,
+        vbProcedure: _ConvertibleToBool | None = None,
+        xlm: _ConvertibleToBool | None = None,
+        functionGroupId: _ConvertibleToInt | None = None,
+        shortcutKey: str | None = None,
+        publishToServer: _ConvertibleToBool | None = None,
+        workbookParameter: _ConvertibleToBool | None = None,
+        attr_text: Incomplete | None = None,
     ) -> None: ...
     @property
-    def type(self): ...
+    def type(self) -> _TokenTypesNotOperand | _TokenOperandSubtypes: ...
     @property
-    def destinations(self) -> Generator[Any, None, None]: ...
+    def destinations(self) -> Generator[tuple[str, str], None, None]: ...
     @property
-    def is_reserved(self): ...
+    def is_reserved(self) -> str | None: ...
     @property
-    def is_external(self): ...
-    def __iter__(self): ...
+    def is_external(self) -> bool: ...
+    def __iter__(self) -> Iterator[tuple[str, str]]: ...
+
+class DefinedNameDict(dict[str, DefinedName]):
+    def add(self, value: DefinedName) -> None: ...
 
 class DefinedNameList(Serialisable):
-    tagname: str
-    definedName: Any
-    def __init__(self, definedName=...) -> None: ...
-    def append(self, defn) -> None: ...
-    def __len__(self): ...
-    def __contains__(self, name): ...
-    def __getitem__(self, name): ...
-    def get(self, name, scope: Any | None = ...): ...
-    def __delitem__(self, name) -> None: ...
-    def delete(self, name, scope: Any | None = ...): ...
-    def localnames(self, scope): ...
+    tagname: ClassVar[str]
+    definedName: Sequence
+    def __init__(self, definedName=()) -> None: ...
+    def by_sheet(self) -> defaultdict[int, DefinedNameDict]: ...
+    def __len__(self) -> int: ...

@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from braintree.configuration import Configuration as Configuration
@@ -25,7 +26,7 @@ class MerchantAccount(Resource):
     master_merchant_account: Any
     def __init__(self, gateway, attributes) -> None: ...
     @staticmethod
-    def create(params: Any | None = ...): ...
+    def create(params: Incomplete | None = None): ...
     @staticmethod
     def update(id, attributes): ...
     @staticmethod

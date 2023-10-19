@@ -1,55 +1,60 @@
-from typing import Any
-from typing_extensions import final
-
-GLOBAL_ACK_EINTR: int
-GLOBAL_ALL: int
-GLOBAL_DEFAULT: int
-GLOBAL_NOTHING: int
-GLOBAL_SSL: int
-GLOBAL_WIN32: int
-
-def global_init(option: int) -> None: ...
-def global_cleanup() -> None: ...
+import sys
+from _typeshed import Incomplete
+from typing_extensions import Self, final
 
 version: str
 
-def version_info() -> tuple[int, str, int, str, int, str, int, str, tuple[str, ...], Any, int, Any]: ...
+def global_init(option: int) -> None: ...
+def global_cleanup() -> None: ...
+def version_info() -> (
+    tuple[int, str, int, str, int, str, int, str, tuple[str, ...], Incomplete | None, int, Incomplete | None]
+): ...
 
 class error(Exception): ...
 
 @final
 class Curl:
+    USERPWD: int
     def close(self) -> None: ...
-    def setopt(self, option: int, value: Any) -> None: ...
+    def setopt(self, option: int, value: Incomplete) -> None: ...
     def setopt_string(self, option: int, value: str) -> None: ...
     def perform(self) -> None: ...
     def perform_rb(self) -> bytes: ...
     def perform_rs(self) -> str: ...
-    def getinfo(self, info: Any) -> Any: ...
-    def getinfo_raw(self, info: Any) -> Any: ...
+    def getinfo(self, info: Incomplete) -> Incomplete: ...
+    def getinfo_raw(self, info: Incomplete) -> Incomplete: ...
     def reset(self) -> None: ...
-    def unsetopt(self, option: int) -> Any: ...
-    def pause(self, bitmask: Any) -> Any: ...
+    def unsetopt(self, option: int) -> Incomplete: ...
+    def pause(self, bitmask: Incomplete) -> Incomplete: ...
     def errstr(self) -> str: ...
-    # TODO(MichalPokorny): wat?
-    USERPWD: int
+    def duphandle(self) -> Self: ...
+    def errstr_raw(self) -> bytes: ...
+    def set_ca_certs(self, __value: bytes | str) -> None: ...
 
 @final
 class CurlMulti:
     def close(self) -> None: ...
     def add_handle(self, obj: Curl) -> None: ...
     def remove_handle(self, obj: Curl) -> None: ...
-    def setopt(self, option: int, value: Any) -> None: ...
-    def perform(self) -> tuple[Any, int]: ...
-    def fdset(self) -> tuple[list[Any], list[Any], list[Any]]: ...
-    def select(self, timeout: float = ...) -> int: ...
-    def info_read(self, max_objects: int = ...) -> tuple[int, list[Any], list[Any]]: ...
+    def setopt(self, option: int, value: Incomplete) -> None: ...
+    def perform(self) -> tuple[Incomplete, int]: ...
+    def fdset(self) -> tuple[list[Incomplete], list[Incomplete], list[Incomplete]]: ...
+    def select(self, timeout: float) -> int: ...
+    def info_read(self, max_objects: int = ...) -> tuple[int, list[Incomplete], list[Incomplete]]: ...
     def socket_action(self, sockfd: int, ev_bitmask: int) -> tuple[int, int]: ...
+    def assign(self, __sockfd: int, __socket: Incomplete) -> Incomplete: ...
+    def socket_all(self) -> tuple[int, int]: ...
+    def timeout(self) -> int: ...
 
 @final
 class CurlShare:
     def close(self) -> None: ...
-    def setopt(self, option: int, value: Any) -> Any: ...
+    def setopt(self, option: int, value: Incomplete) -> Incomplete: ...
+
+if sys.platform != "darwin":
+    CURL_VERSION_HTTP3: int
+    MAXAGE_CONN: int
+    M_MAX_CONCURRENT_STREAMS: int
 
 ACCEPTTIMEOUT_MS: int
 ACCEPT_ENCODING: int
@@ -86,9 +91,20 @@ CSELECT_OUT: int
 CURL_HTTP_VERSION_1_0: int
 CURL_HTTP_VERSION_1_1: int
 CURL_HTTP_VERSION_2: int
+CURL_HTTP_VERSION_2TLS: int
 CURL_HTTP_VERSION_2_0: int
+CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE: int
+CURL_HTTP_VERSION_3: int
 CURL_HTTP_VERSION_LAST: int
 CURL_HTTP_VERSION_NONE: int
+CURL_VERSION_ALTSVC: int
+CURL_VERSION_BROTLI: int
+CURL_VERSION_GSASL: int
+CURL_VERSION_HSTS: int
+CURL_VERSION_HTTPS_PROXY: int
+CURL_VERSION_MULTI_SSL: int
+CURL_VERSION_UNICODE: int
+CURL_VERSION_ZSTD: int
 CUSTOMREQUEST: int
 DEBUGFUNCTION: int
 DEFAULT_PROTOCOL: int
@@ -96,6 +112,7 @@ DIRLISTONLY: int
 DNS_CACHE_TIMEOUT: int
 DNS_SERVERS: int
 DNS_USE_GLOBAL_CACHE: int
+DOH_URL: int
 EFFECTIVE_URL: int
 EGDSOCKET: int
 ENCODING: int
@@ -138,16 +155,24 @@ FTP_SSL_CCC: int
 FTP_USE_EPRT: int
 FTP_USE_EPSV: int
 FTP_USE_PRET: int
+GLOBAL_ACK_EINTR: int
+GLOBAL_ALL: int
+GLOBAL_DEFAULT: int
+GLOBAL_NOTHING: int
+GLOBAL_SSL: int
+GLOBAL_WIN32: int
 GSSAPI_DELEGATION: int
 GSSAPI_DELEGATION_FLAG: int
 GSSAPI_DELEGATION_NONE: int
 GSSAPI_DELEGATION_POLICY_FLAG: int
+HAPROXYPROTOCOL: int
 HEADER: int
 HEADERFUNCTION: int
 HEADEROPT: int
 HEADER_SEPARATE: int
 HEADER_SIZE: int
 HEADER_UNIFIED: int
+HTTP09_ALLOWED: int
 HTTP200ALIASES: int
 HTTPAUTH: int
 HTTPAUTH_ANY: int
@@ -221,8 +246,10 @@ LOCALPORT: int
 LOCALPORTRANGE: int
 LOCAL_IP: int
 LOCAL_PORT: int
+LOCK_DATA_CONNECT: int
 LOCK_DATA_COOKIE: int
 LOCK_DATA_DNS: int
+LOCK_DATA_PSL: int
 LOCK_DATA_SSL_SESSION: int
 LOGIN_OPTIONS: int
 LOW_SPEED_LIMIT: int
@@ -233,6 +260,7 @@ MAIL_RCPT: int
 MAXCONNECTS: int
 MAXFILESIZE: int
 MAXFILESIZE_LARGE: int
+MAXLIFETIME_CONN: int
 MAXREDIRS: int
 MAX_RECV_SPEED_LARGE: int
 MAX_SEND_SPEED_LARGE: int
@@ -279,6 +307,7 @@ PAUSE_RECV: int
 PAUSE_SEND: int
 PINNEDPUBLICKEY: int
 PIPEWAIT: int
+PIPE_HTTP1: int
 PIPE_MULTIPLEX: int
 PIPE_NOTHING: int
 POLL_IN: int
@@ -354,6 +383,7 @@ PROXY_SSLKEY: int
 PROXY_SSLKEYTYPE: int
 PROXY_SSL_VERIFYHOST: int
 PROXY_SSL_VERIFYPEER: int
+PROXY_TLS13_CIPHERS: int
 PROXY_TRANSFER_MODE: int
 PUT: int
 QUOTE: int
@@ -439,13 +469,18 @@ SSLOPT_ALLOW_BEAST: int
 SSLOPT_NO_REVOKE: int
 SSLVERSION: int
 SSLVERSION_DEFAULT: int
+SSLVERSION_MAX_DEFAULT: int
+SSLVERSION_MAX_TLSv1_0: int
+SSLVERSION_MAX_TLSv1_1: int
+SSLVERSION_MAX_TLSv1_2: int
+SSLVERSION_MAX_TLSv1_3: int
 SSLVERSION_SSLv2: int
 SSLVERSION_SSLv3: int
 SSLVERSION_TLSv1: int
 SSLVERSION_TLSv1_0: int
 SSLVERSION_TLSv1_1: int
 SSLVERSION_TLSv1_2: int
-SSLVERSION_MAX_DEFAULT: int
+SSLVERSION_TLSv1_3: int
 SSL_CIPHER_LIST: int
 SSL_ENABLE_ALPN: int
 SSL_ENABLE_NPN: int
@@ -474,6 +509,7 @@ TIMECONDITION_NONE: int
 TIMEOUT: int
 TIMEOUT_MS: int
 TIMEVALUE: int
+TLS13_CIPHERS: int
 TLSAUTH_PASSWORD: int
 TLSAUTH_TYPE: int
 TLSAUTH_USERNAME: int
@@ -483,6 +519,7 @@ TRANSFER_ENCODING: int
 UNIX_SOCKET_PATH: int
 UNRESTRICTED_AUTH: int
 UPLOAD: int
+UPLOAD_BUFFERSIZE: int
 URL: int
 USERAGENT: int
 USERNAME: int
@@ -497,7 +534,6 @@ VERSION_ASYNCHDNS: int
 VERSION_CONV: int
 VERSION_CURLDEBUG: int
 VERSION_DEBUG: int
-VERSION_FIRST: int
 VERSION_GSSAPI: int
 VERSION_GSSNEGOTIATE: int
 VERSION_HTTP2: int

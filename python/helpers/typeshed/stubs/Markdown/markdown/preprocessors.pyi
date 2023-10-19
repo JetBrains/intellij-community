@@ -1,4 +1,3 @@
-from re import Pattern
 from typing import Any
 
 from . import util
@@ -12,13 +11,8 @@ class NormalizeWhitespace(Preprocessor): ...
 
 class HtmlBlockPreprocessor(Preprocessor):
     right_tag_patterns: Any
-    attrs_pattern: str = ...
+    attrs_pattern: str
     left_tag_pattern: Any
     attrs_re: Any
     left_tag_re: Any
-    markdown_in_raw: bool = ...
-
-class ReferencePreprocessor(Preprocessor):
-    TITLE: str = ...
-    RE: Pattern[str]
-    TITLE_RE: Pattern[str]
+    markdown_in_raw: bool

@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from braintree.document_upload import DocumentUpload as DocumentUpload
@@ -9,4 +10,4 @@ class DocumentUploadGateway:
     gateway: Any
     config: Any
     def __init__(self, gateway) -> None: ...
-    def create(self, params: Any | None = ...): ...
+    def create(self, params: Incomplete | None = None): ...

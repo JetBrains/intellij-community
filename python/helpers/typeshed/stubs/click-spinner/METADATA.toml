@@ -1,4 +1,2 @@
 version = "0.1.*"
-
-[tool.stubtest]
-ignore_missing_stub = false
+upstream_repository = "https://github.com/click-contrib/click-spinner"

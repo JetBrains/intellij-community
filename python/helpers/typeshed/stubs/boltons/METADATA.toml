@@ -1,0 +1,5 @@
+version = "23.0.*"
+upstream_repository = "https://github.com/mahmoud/boltons"
+
+[tool.stubtest]
+ignore_missing_stub = false

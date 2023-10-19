@@ -1,0 +1,3 @@
+version = "0.22.*"
+requires = ["types-setuptools"]
+upstream_repository = "https://github.com/sass/libsass-python"
