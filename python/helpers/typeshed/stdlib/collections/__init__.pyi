@@ -7,7 +7,9 @@ from typing_extensions import Self, SupportsIndex, final
 if sys.version_info >= (3, 9):
     from types import GenericAlias
 
-if sys.version_info >= (3, 10):
+if sys.version_info < (3, 10):
+    from _collections_abc import *
+else:
     from collections.abc import (
         Callable,
         ItemsView,
@@ -21,8 +23,6 @@ if sys.version_info >= (3, 10):
         Sequence,
         ValuesView,
     )
-else:
-    from _collections_abc import *
 
 __all__ = ["ChainMap", "Counter", "OrderedDict", "UserDict", "UserList", "UserString", "defaultdict", "deque", "namedtuple"]
 
@@ -373,15 +373,6 @@ class OrderedDict(dict[_KT, _VT], Reversible[_KT], Generic[_KT, _VT]):
     @overload
     def setdefault(self, key: _KT, default: _VT) -> _VT: ...
     def __eq__(self, __value: object) -> bool: ...
-    if sys.version_info >= (3, 9):
-        @overload
-        def __or__(self, __value: dict[_KT, _VT]) -> Self: ...
-        @overload
-        def __or__(self, __value: dict[_T1, _T2]) -> OrderedDict[_KT | _T1, _VT | _T2]: ...
-        @overload
-        def __ror__(self, __value: dict[_KT, _VT]) -> Self: ...
-        @overload
-        def __ror__(self, __value: dict[_T1, _T2]) -> OrderedDict[_KT | _T1, _VT | _T2]: ...  # type: ignore[misc]
 
 class defaultdict(dict[_KT, _VT], Generic[_KT, _VT]):
     default_factory: Callable[[], _VT] | None
