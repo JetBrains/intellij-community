@@ -1340,8 +1340,7 @@
   </extensions>
 
   <actions>
-    <group id="Groovy.CheckResources" class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Group"
-           popup="true">
+    <group id="Groovy.CheckResources" popup="true">
       <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Make" id="Groovy.CheckResources.Make"/>
       <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Rebuild" id="Groovy.CheckResources.Rebuild"/>
       <add-to-group group-id="BuildMenu"/>
