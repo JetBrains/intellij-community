@@ -91,7 +91,7 @@ public abstract class GitImplBase implements Git {
   public @NotNull GitCommandResult runCommandWithoutCollectingOutput(@NotNull GitLineHandler handler) {
     return run(handler, new OutputCollector() {
       @Override
-      protected void outputLineReceived(@NotNull String line) {}
+      protected void outputLineReceived(@NotNull String line) { }
 
       @Override
       protected void errorLineReceived(@NotNull String line) {
@@ -104,7 +104,7 @@ public abstract class GitImplBase implements Git {
    * Run handler with retry on authentication failure
    */
   private static @NotNull GitCommandResult run(@NotNull Computable<? extends GitLineHandler> handlerConstructor,
-                                      @NotNull Computable<? extends OutputCollector> outputCollectorConstructor) {
+                                               @NotNull Computable<? extends OutputCollector> outputCollectorConstructor) {
     @NotNull GitCommandResult result;
 
     int authAttempt = 0;
@@ -168,7 +168,8 @@ public abstract class GitImplBase implements Git {
     }
   }
 
-  private static @NotNull GitHandlerRebaseEditorManager prepareGeneralPurposeEditor(@NotNull Project project, @NotNull GitLineHandler handler) {
+  private static @NotNull GitHandlerRebaseEditorManager prepareGeneralPurposeEditor(@NotNull Project project,
+                                                                                    @NotNull GitLineHandler handler) {
     return GitHandlerRebaseEditorManager.prepareEditor(handler, new GitSimpleEditorHandler(project));
   }
 
@@ -176,8 +177,8 @@ public abstract class GitImplBase implements Git {
    * Run handler with per-project locking, logging
    */
   private static @NotNull GitCommandResult doRun(@NotNull GitLineHandler handler,
-                                        @NotNull GitVersion version,
-                                        @NotNull OutputCollector outputCollector) {
+                                                 @NotNull GitVersion version,
+                                                 @NotNull OutputCollector outputCollector) {
     getGitTraceEnvironmentVariables(version).forEach(handler::addCustomEnvironmentVariable);
 
     boolean canSuppressOptionalLocks = Registry.is("git.use.no.optional.locks") &&
