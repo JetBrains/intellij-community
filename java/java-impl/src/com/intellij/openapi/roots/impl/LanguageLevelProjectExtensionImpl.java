@@ -73,7 +73,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     if (aDefault != null) {
       setDefault(Boolean.parseBoolean(aDefault));
     }
-    return defaultOldValue != getDefault() || languageLevelOldValue != myLanguageLevel;
+    return !Objects.equals(defaultOldValue, getDefault()) || languageLevelOldValue != myLanguageLevel;
   }
 
   private static LanguageLevel readLanguageLevel(String level) {
