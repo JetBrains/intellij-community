@@ -1,7 +1,6 @@
-package com.intellij.searchEverywhereMl.semantics.tests
+package com.intellij.searchEverywhereMl.semantics.settings
 
 import com.intellij.openapi.components.Service
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 
 @Service(Service.Level.APP)
 class MockSemanticSearchSettings : SemanticSearchSettings {
