@@ -17,7 +17,7 @@ import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFa
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
-import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
+import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.diff.util.LineRange

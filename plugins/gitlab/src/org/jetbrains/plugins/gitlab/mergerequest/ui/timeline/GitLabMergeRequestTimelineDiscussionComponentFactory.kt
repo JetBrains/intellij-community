@@ -11,7 +11,7 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.Compone
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
+import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.editor.EditorFactory

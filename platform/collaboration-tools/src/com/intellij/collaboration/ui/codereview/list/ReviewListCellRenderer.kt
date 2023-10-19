@@ -2,7 +2,7 @@
 package com.intellij.collaboration.ui.codereview.list
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle.message
-import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
+import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
