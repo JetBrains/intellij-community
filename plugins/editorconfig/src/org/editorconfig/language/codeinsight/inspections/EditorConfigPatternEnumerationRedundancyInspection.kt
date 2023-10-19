@@ -9,17 +9,15 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigEnumerationPattern
 import org.editorconfig.language.psi.EditorConfigVisitor
 
-class EditorConfigPatternEnumerationRedundancyInspection : LocalInspectionTool() {
+internal fun EditorConfigEnumerationPattern.hasRedundancy(): Boolean = this.patternList.size <= 1
+
+internal class EditorConfigPatternEnumerationRedundancyInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitEnumerationPattern(patternEnumeration: EditorConfigEnumerationPattern) {
-      if (!containsIssue(patternEnumeration)) return
+      if (!patternEnumeration.hasRedundancy()) return
       val message = EditorConfigBundle.get("inspection.pattern-enumeration.redundant.message")
       holder.registerProblem(patternEnumeration, message, ProblemHighlightType.WARNING, EditorConfigRemoveBracesQuickFix())
     }
   }
 
-  companion object {
-    fun containsIssue(patternEnumeration: EditorConfigEnumerationPattern) =
-      patternEnumeration.patternList.size <= 1
-  }
 }

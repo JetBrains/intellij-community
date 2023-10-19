@@ -4,8 +4,8 @@ package org.editorconfig.language.psi.base
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.editorconfig.language.codeinsight.inspections.EditorConfigPatternEnumerationRedundancyInspection
 import org.editorconfig.language.codeinsight.inspections.hasNumerousWildcards
+import org.editorconfig.language.codeinsight.inspections.hasRedundancy
 import org.editorconfig.language.codeinsight.inspections.isEmptyHeader
 import org.editorconfig.language.psi.EditorConfigEnumerationPattern
 import org.editorconfig.language.psi.EditorConfigHeader
@@ -20,13 +20,10 @@ abstract class EditorConfigHeaderBase(node: ASTNode) : EditorConfigHeaderElement
     if (nextSibling is PsiErrorElement) return false
     if (header.isEmptyHeader()) return false
     if (header.hasNumerousWildcards()) return false
-    if (PsiTreeUtil.findChildrenOfAnyType(header, EditorConfigEnumerationPattern::class.java).any(patternChecker)) return false
+    if (PsiTreeUtil.findChildrenOfAnyType(header, EditorConfigEnumerationPattern::class.java).any({ it.hasRedundancy() })) return false
     return true
   }
 
   final override fun getReference() = EditorConfigHeaderReference(this)
 
-  private companion object {
-    private val patternChecker = EditorConfigPatternEnumerationRedundancyInspection.Companion::containsIssue
-  }
 }
