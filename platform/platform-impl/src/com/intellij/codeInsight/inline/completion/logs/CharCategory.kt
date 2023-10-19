@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.inline.completion.logs
 
-@Suppress("unused")
 enum class CharCategory(val chars: CharSequence) {
   LETTER(('a'..'z').joinToString("")),
   CAPITAL_LETTER(('A'..'Z').joinToString("")),

@@ -1,6 +1,5 @@
 package com.intellij.completion.ml.common
 
-@Suppress("unused")
 enum class CharCategory(val chars: CharSequence) {
   LETTER(('a'..'z').joinToString("")),
   CAPITAL_LETTER(('A'..'Z').joinToString("")),
