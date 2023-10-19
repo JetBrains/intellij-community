@@ -11,16 +11,17 @@ import org.jetbrains.annotations.NotNull
 
 class SvgLanguage : XMLLanguage(XMLLanguage.INSTANCE, "SVG", "image/svg+xml") {
   companion object {
-    @JvmField val INSTANCE = SvgLanguage()
+    @JvmField
+    val INSTANCE = SvgLanguage()
   }
 }
 
-class SvgParserDefinition : XMLParserDefinition() {
+internal class SvgParserDefinition : XMLParserDefinition() {
+
   override fun getFileNodeType(): IFileElementType = SVG_FILE
 
   override fun createFile(viewProvider: @NotNull FileViewProvider): @NotNull PsiFile = XmlFileImpl(viewProvider, SVG_FILE)
 
-  companion object {
-    val SVG_FILE = IFileElementType(SvgLanguage.INSTANCE)
-  }
+  private val SVG_FILE = IFileElementType(SvgLanguage.INSTANCE)
+
 }
