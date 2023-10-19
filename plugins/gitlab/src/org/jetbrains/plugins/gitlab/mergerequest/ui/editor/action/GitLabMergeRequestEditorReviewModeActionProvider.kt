@@ -2,29 +2,21 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.ui.JBColor
-import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.openapi.util.NlsActions
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewController
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.Icon
-import javax.swing.JComponent
 
 class GitLabMergeRequestEditorReviewModeActionProvider : InspectionWidgetActionProvider {
   override fun createAction(editor: Editor): AnAction? {
@@ -46,57 +38,80 @@ private class ReviewModeActionGroup(private val editor: Editor) : ActionGroup(),
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = arrayOf(reviewModeAction, Separator.create())
 
-  private inner class ReviewModeAction : DumbAwareAction(), CustomComponentAction {
+  private inner class ReviewModeAction : ActionGroup(), DumbAware {
+    private val disableReviewAction =
+      ViewOptionToggleAction(DiscussionsViewOption.DONT_SHOW,
+                             GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Disable.text"))
+    private val hideResolvedAction =
+      ViewOptionToggleAction(DiscussionsViewOption.UNRESOLVED_ONLY,
+                             GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Show.Unresolved.text"))
+    private val showAllAction =
+      ViewOptionToggleAction(DiscussionsViewOption.ALL,
+                             GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Show.All.text"))
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-    override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
-      object : ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
-        // button is not revalidated on hover, so the size of hovered/non-hovered must be constant
-        override fun iconTextSpace(): Int = JBUI.scale(2)
-      }.also {
-        it.foreground = JBColor.lazy { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor }
-        it.font = JBFont.small()
-      }
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+      arrayOf(disableReviewAction, hideResolvedAction, showAllAction)
 
-    override fun actionPerformed(e: AnActionEvent) {
-      val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY) ?: return
-      vm.toggleReviewMode()
+    override fun displayTextInToolbar(): Boolean = true
+
+    override fun useSmallerFontForTextInToolbar(): Boolean = true
+
+    init {
+      with(templatePresentation) {
+        isPopupGroup = true
+        putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+        description = GitLabBundle.message("merge.request.review.mode.description.title")
+        val tooltip = HelpTooltip()
+          .setTitle(GitLabBundle.message("merge.request.review.mode.description.title"))
+          .setDescription(GitLabBundle.message("merge.request.review.mode.description"))
+        putClientProperty(ActionButton.CUSTOM_HELP_TOOLTIP, tooltip)
+      }
     }
 
     override fun update(e: AnActionEvent) {
       val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY)
-      val selected = vm?.isReviewModeEnabled?.value ?: false
-      val synced = !(vm?.localRepositorySyncStatus?.value?.incoming ?: false)
-      val presentation = e.presentation
-      with(presentation) {
-        if (selected) {
+      if (vm == null) {
+        e.presentation.isEnabledAndVisible = false
+        return
+      }
+      val shown = vm.discussionsViewOption.value != DiscussionsViewOption.DONT_SHOW
+      val synced = vm.localRepositorySyncStatus.value?.incoming?.not() ?: true
+      with(e.presentation) {
+        if (shown) {
           text = GitLabBundle.message("merge.request.review.mode.title")
-          icon = if (synced) EmptyIcon.ICON_16 else getWarningIcon()
-          hoveredIcon = AllIcons.Actions.CloseDarkGrey
-          description = GitLabBundle.message("merge.request.review.mode.exit.description")
-          val tooltip = HelpTooltip()
-            .setTitle(GitLabBundle.message("merge.request.review.mode.exit.description"))
-            .setDescription(GitLabBundle.message("merge.request.review.mode.description"))
-          putClientProperty(ActionButton.CUSTOM_HELP_TOOLTIP, tooltip)
+          icon = if (synced) null else getWarningIcon()
         }
         else {
           text = null
           icon = AllIcons.Actions.Preview
-          hoveredIcon = null
-          description = GitLabBundle.message("merge.request.review.mode.enter.description")
-          val tooltip = HelpTooltip()
-            .setTitle(GitLabBundle.message("merge.request.review.mode.enter.description"))
-            //TODO: better description
-            .setDescription(GitLabBundle.message("merge.request.review.mode.description"))
-          putClientProperty(ActionButton.CUSTOM_HELP_TOOLTIP, tooltip)
         }
       }
     }
 
     private fun getWarningIcon(): Icon = HighlightDisplayLevel.find(HighlightSeverity.WARNING)?.icon ?: AllIcons.General.Warning
   }
+
+  private inner class ViewOptionToggleAction(private val option: DiscussionsViewOption,
+                                             text: @NlsActions.ActionText String) : ToggleAction(text) {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY)
+      e.presentation.isEnabledAndVisible = vm != null
+    }
+
+    override fun isSelected(e: AnActionEvent): Boolean {
+      val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY) ?: return false
+      return vm.discussionsViewOption.value == option
+    }
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY) ?: return
+      vm.setDiscussionsViewOption(option)
+    }
+  }
 }
-
-private val FOREGROUND = ColorKey.createColorKey("ActionButton.iconTextForeground", UIUtil.getContextHelpForeground())
-

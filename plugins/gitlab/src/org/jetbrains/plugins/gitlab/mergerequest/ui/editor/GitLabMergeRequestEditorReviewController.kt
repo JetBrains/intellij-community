@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -18,10 +19,7 @@ import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.supervisorScope
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 
@@ -53,9 +51,9 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
             if (fileVm != null) {
               try {
                 editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, reviewVm)
-                reviewVm.isReviewModeEnabled.combine(reviewVm.localRepositorySyncStatus) { enabled, syncStatus ->
-                  enabled && syncStatus?.incoming != true
-                }.collectLatest {
+                val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }.distinctUntilChanged()
+                val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.incoming != true }.distinctUntilChanged()
+                combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.collectLatest {
                   if (it) supervisorScope {
                     val model = GitLabMergeRequestEditorReviewUIModel(this, project, fileVm, editor.document)
                     editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, model)

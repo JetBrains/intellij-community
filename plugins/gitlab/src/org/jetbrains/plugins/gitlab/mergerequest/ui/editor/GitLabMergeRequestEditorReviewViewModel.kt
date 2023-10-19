@@ -142,9 +142,6 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     return result
   }
 
-  private val _isReviewModeEnabled = MutableStateFlow(true)
-  val isReviewModeEnabled: StateFlow<Boolean> = _isReviewModeEnabled.asStateFlow()
-
   /**
    * Show merge request details in a standard view
    */
@@ -163,10 +160,6 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     }
     val filePath = VcsContextFactory.getInstance().createFilePathOn(virtualFile)
     return filesVmsState.flatMapLatest { it[filePath] ?: flowOf(null) }
-  }
-
-  fun toggleReviewMode() {
-    _isReviewModeEnabled.update { !it }
   }
 
   sealed interface ChangesState {
