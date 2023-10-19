@@ -48,7 +48,7 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
         args = *command.toList().drop(1).toTypedArray(),
         env = processBuilder.environment(),
         pty = pty,
-        workingDirectory = wslDistribution.getWslPath(processBuilder.directory().path)
+        workingDirectory = processBuilder.directory()?.let { wslDistribution.getWslPath(it.path) }
       )) {
         is IjentApi.ExecuteProcessResult.Success -> processResult.process.toProcess(pty != null)
         is IjentApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
