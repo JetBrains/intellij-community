@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -35,7 +36,7 @@ import java.lang.invoke.MethodType
 
 private val LOG = logger<DefaultProject>()
 
-internal class DefaultProject : UserDataHolderBase(), Project {
+internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerEx {
   private val timedProject = object : DefaultProjectTimed(this) {
     public override fun compute(): Project {
       val app = ApplicationManager.getApplication()
@@ -159,6 +160,10 @@ internal class DefaultProject : UserDataHolderBase(), Project {
   }
 
   override fun <T> getServiceIfCreated(serviceClass: Class<T>): T? = delegate.getServiceIfCreated(serviceClass)
+
+  override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
+    return (delegate as ComponentManagerEx).getServiceAsync(keyClass)
+  }
 
   @Deprecated("Deprecated in interface")
   override fun <T> getComponent(interfaceClass: Class<T>): T = delegate.getComponent(interfaceClass)
