@@ -94,6 +94,11 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     }
   }
 
+  private fun tryParseJavaVersionFromOutput(output: String?): JavaVersion? =
+    output?.lines()?.firstNotNullOfOrNull {
+      kotlin.runCatching { JavaVersion.parse(it) }.getOrNull()
+    }
+
   override fun volumeDescriptors(): List<VolumeDescriptor> = listOf(CLASS_PATH_VOLUME, AGENTS_VOLUME)
 
   override fun duplicateConfig(config: JavaLanguageRuntimeConfiguration): JavaLanguageRuntimeConfiguration =
@@ -120,10 +125,5 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
       ExecutionBundle.message("java.language.runtime.agents.volume.browsing.title"),
       ""
     )
-
-    private fun tryParseJavaVersionFromOutput(output: String?): JavaVersion? =
-      output?.lines()?.firstNotNullOfOrNull {
-        kotlin.runCatching { JavaVersion.parse(it) }.getOrNull()
-      }
   }
 }
