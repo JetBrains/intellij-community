@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.File;
 import java.util.List;
 import java.util.function.Supplier;
@@ -178,11 +177,9 @@ public final class SystemInfo {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings("Since15")
   public static boolean isJavaVersionAtLeast(int major, int minor, int update) {
     return JavaVersion.current().compareTo(JavaVersion.compose(major, minor, update, 0, false)) >= 0;
   }
@@ -190,7 +187,6 @@ public final class SystemInfo {
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings("Since15")
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
