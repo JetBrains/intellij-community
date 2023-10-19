@@ -461,6 +461,7 @@
                  description="Use WorkspaceModel API for scratch files integration"/>
     <postStartupActivity implementation="com.intellij.ide.scratch.workspace.ScratchWorkspaceStartupActivity"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.ide.scratch.workspace.ScratchRootsEntityWorkspaceFileIndexContributor"/>
+    <workspaceModel.entityLifecycleSupporter implementation="com.intellij.ide.scratch.workspace.ScratchEntityLifecycleSupporter"/>
 
     <projectService serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager" preload="true"/>
     <fileTypeOverrider implementation="com.intellij.openapi.file.exclude.UserFileTypeOverrider"/>
