@@ -37,7 +37,7 @@ public interface PsiDocumentationTargetProvider {
   @RequiresReadLock
   @RequiresBackgroundThread
   default @Nullable DocumentationTarget documentationTarget(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
-    throw new IllegalStateException("Override this or documentationTargets");
+    throw new IllegalStateException("Override this or documentationTargets(PsiElement, PsiElement)");
   }
 
   @RequiresReadLock

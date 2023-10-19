@@ -144,14 +144,14 @@ internal class DocumentationToolWindowManager(
    * orders it to display [requests],
    * and makes it visible.
    */
-  fun showInToolWindow(requests: List<DocumentationRequest>, initial: DocumentationRequest) {
+  fun showInToolWindow(requests: List<DocumentationRequest>) {
     val reusableContent = getReusableContent()
     if (reusableContent == null) {
-      val browser = DocumentationBrowser.createBrowser(project, initial)
-      showInNewTab(DocumentationUI(project, browser, requests))
+      val browser = DocumentationBrowser.createBrowser(project, requests)
+      showInNewTab(DocumentationUI(project, browser))
     }
     else {
-      reusableContent.toolWindowUI.browser.resetBrowser(initial)
+      reusableContent.toolWindowUI.browser.resetBrowser(requests.first())
       makeVisible(reusableContent)
     }
   }

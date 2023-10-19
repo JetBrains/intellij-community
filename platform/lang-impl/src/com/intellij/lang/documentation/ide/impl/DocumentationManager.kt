@@ -100,7 +100,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     // and it's not possible to guarantee that it will still be valid when sent to another thread,
     // so we create pointer and presentation right in the UI thread.
     val popupContext = secondaryPopupContext ?: DefaultPopupContext(project, editor)
-    showDocumentation(requests, requests.first(), popupContext, popupDependencies)
+    showDocumentation(requests, popupContext, popupDependencies)
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
@@ -138,11 +138,11 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
   }
 
   private fun showDocumentation(requests: List<DocumentationRequest>,
-                                initial: DocumentationRequest,
                                 popupContext: PopupContext,
                                 popupDependencies: Disposable? = null) {
+    val initial = requests.first()
     if (skipPopup) {
-      toolWindowManager.showInToolWindow(requests, initial)
+      toolWindowManager.showInToolWindow(requests)
       return
     }
     else if (toolWindowManager.updateVisibleReusableTab(initial)) {
@@ -212,7 +212,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     if (request == null) {
       return
     }
-    showDocumentation(listOf(request), request, LookupPopupContext(lookup))
+    showDocumentation(listOf(request), LookupPopupContext(lookup))
   }
 
   fun navigateInlineLink(
@@ -264,7 +264,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
         browseAbsolute(project, url)
       }
       else {
-        showDocumentation(listOf(result.value), result.value, InlinePopupContext(project, editor, popupPosition))
+        showDocumentation(listOf(result.value), InlinePopupContext(project, editor, popupPosition))
         true
       }
     }

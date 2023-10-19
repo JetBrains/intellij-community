@@ -16,9 +16,10 @@ import com.intellij.platform.backend.documentation.impl.computeDocumentation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 
-internal class DocumentationPage(val request: DocumentationRequest) {
+internal class DocumentationPage(val requests: List<DocumentationRequest>) {
 
   private val myContentFlow = MutableStateFlow<DocumentationPageContent?>(null)
+  val request = requests.first()
   val contentFlow: SharedFlow<DocumentationPageContent?> = myContentFlow.asSharedFlow()
   val currentContent: DocumentationPageContent.Content? get() = myContentFlow.value as? DocumentationPageContent.Content
   var expandableDefinition: ExpandableDefinition? = null

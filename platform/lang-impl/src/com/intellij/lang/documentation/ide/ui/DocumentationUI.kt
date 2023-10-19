@@ -46,7 +46,6 @@ import javax.swing.JScrollPane
 internal class DocumentationUI(
   project: Project,
   val browser: DocumentationBrowser,
-  private val requests: List<DocumentationRequest>
 ) : DataProvider, Disposable {
 
   val scrollPane: JScrollPane
@@ -265,6 +264,7 @@ internal class DocumentationUI(
   }
 
   fun createSwitcherIfNeeded(component: JComponent): DefinitionSwitcher<DocumentationRequest>? {
+    val requests = browser.page.requests
     if (requests.size < 2) return null
     return DefinitionSwitcher(requests.toTypedArray(), component) {
       browser.resetBrowser(it)

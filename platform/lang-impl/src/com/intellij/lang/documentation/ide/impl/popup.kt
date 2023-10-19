@@ -23,7 +23,7 @@ internal suspend fun showDocumentationPopup(
   requests: List<DocumentationRequest>,
   popupContext: PopupContext,
 ): AbstractPopup {
-  val browser = DocumentationBrowser.createBrowser(project, requests.first())
+  val browser = DocumentationBrowser.createBrowser(project, requests)
   try {
     // to avoid flickering: show popup after there is anything to show
     // OR show popup after the timeout
@@ -35,7 +35,7 @@ internal suspend fun showDocumentationPopup(
     Disposer.dispose(browser)
     throw ce
   }
-  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser, requests))
+  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
   val popup = createDocumentationPopup(project, popupUI, popupContext)
   try {
     popupContext.setUpPopup(popup, popupUI)
