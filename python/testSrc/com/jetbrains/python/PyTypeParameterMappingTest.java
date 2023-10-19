@@ -40,7 +40,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
 
   public void testMatchingTypeVarTupleAtTheBeginning() {
     doTestShapeMapping("*Ts, T", "int, T2, str", """
-      *Ts -> *(int,T2)
+      *Ts -> *tuple[int, T2]
       T -> str
       """);
   }
@@ -48,14 +48,14 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testMatchingTypeVarTupleAtTheEnd() {
     doTestShapeMapping("T, *Ts", "int, T2, str", """
       T -> int
-      *Ts -> *(T2,str)
+      *Ts -> *tuple[T2, str]
       """);
   }
 
   public void testMatchingTypeVarTupleInTheMiddle() {
     doTestShapeMapping("T, *Ts, int", "int, T2, str, int", """
       T -> int
-      *Ts -> *(T2,str)
+      *Ts -> *tuple[T2, str]
       int -> int
       """);
   }
@@ -129,7 +129,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testExpectedTypeVarTupleMappedToUnpackedTuple() {
     doTestShapeMapping("T1, *Ts, T2", "int, *tuple[bool, ...], str", """
       T1 -> int
-      *Ts -> *(bool, ...)
+      *Ts -> *tuple[bool, ...]
       T2 -> str
       """);
   }
@@ -137,7 +137,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testExpectedTypeVarTupleMappedToSingleRemainingType() {
     doTestShapeMapping("T1, *Ts, T2", "int, bool, str", """
       T1 -> int
-      *Ts -> *(bool)
+      *Ts -> *tuple[bool]
       T2 -> str
       """);
   }
@@ -145,7 +145,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testExpectedTypeVarTupleMappedToEmptyUnpackedTuple() {
     doTestShapeMapping("T1, *Ts, T2", "int, str", """
       T1 -> int
-      *Ts -> *()
+      *Ts -> *tuple[]
       T2 -> str
       """);
   }
@@ -153,7 +153,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testExpectedUnboundUnpackedTupleMappedToEmptyUnpackedTuple() {
     doTestShapeMapping("T1, *tuple[bool, ...], T2", "int, str", """
       T1 -> int
-      *(bool, ...) -> *()
+      *tuple[bool, ...] -> *tuple[]
       T2 -> str
       """);
   }
@@ -176,7 +176,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testExtractingElementsFromUnboundTupleTypeFollowedByExpectedVariadic() {
     doTestShapeMapping("T, *Ts", "*tuple[float, ...]", """
       T -> float
-      *Ts -> *(float, ...)
+      *Ts -> *tuple[float, ...]
       """);
   }
 
@@ -184,7 +184,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
     doTestShapeMapping("int, T, *Ts, T1", "int, *tuple[float, ...], int, str", """
       int -> int
       T -> float
-      *Ts -> *(*(float, ...),int)
+      *Ts -> *tuple[*tuple[float, ...], int]
       T1 -> str
       """);
   }
@@ -251,7 +251,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testMappingVariadicTypeToOnePositionalParameter() {
     doTestParameterListMapping("int, *Ts, str", "x: int, y: str, z: bool", """
       int -> int
-      *Ts -> *(str)
+      *Ts -> *tuple[str]
       str -> bool
       """);
   }
@@ -259,7 +259,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testMappingVariadicTypeToNoPositionalParameters() {
     doTestParameterListMapping("int, *Ts, str", "x: int, z: bool", """
       int -> int
-      *Ts -> *()
+      *Ts -> *tuple[]
       str -> bool
       """);
   }
@@ -267,7 +267,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testMappingVariadicTypeToFewPositionalParameters() {
     doTestParameterListMapping("int, *Ts", "x: int, y: str, z: bool", """
       int -> int
-      *Ts -> *(str,bool)
+      *Ts -> *tuple[str, bool]
       """);
   }
 
@@ -278,7 +278,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testMappingVariadicTypeToPositionalVarargParameter() {
     doTestParameterListMapping("int, *Ts", "x: int, y: str = 'a', *args: bool, z: int = 42", """
       int -> int
-      *Ts -> *(str,*(bool, ...))
+      *Ts -> *tuple[str, *tuple[bool, ...]]
       """);
   }
 
@@ -293,7 +293,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testVariadicTypesToFixedSizePositionalVarargPrecededWithDefaults() {
     doTestParameterListMapping("int, *Ts, bool", "x: int, y: str = 'a', *args: *tuple[str, bool]", """
       int -> int
-      *Ts -> *(str,str)
+      *Ts -> *tuple[str, str]
       bool -> bool
       """);
   }

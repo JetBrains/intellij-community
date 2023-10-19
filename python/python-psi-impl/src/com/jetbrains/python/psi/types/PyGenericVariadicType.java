@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -103,20 +104,12 @@ public final class PyGenericVariadicType implements PyTypeParameterType {
   @NotNull
   public String getElementTypesToStr() {
     if (myElementTypes == null) return "";
-    StringBuilder res = new StringBuilder();
-    res.append("(");
-    for (int i = 0; i < myElementTypes.size(); ++i) {
-      var type = myElementTypes.get(i);
-      var name = type != null ? type.getName() : "Any";
-      res.append(name);
-      if (i < myElementTypes.size() - 1) {
-        res.append(",");
-      }
-    }
+    StringBuilder res = new StringBuilder("tuple[");
+    StringUtil.join(myElementTypes, type -> type != null ? type.getName() : "Any", ", ", res);
     if (isHomogeneous()) {
       res.append(", ...");
     }
-    res.append(")");
+    res.append("]");
     return res.toString();
   }
 
