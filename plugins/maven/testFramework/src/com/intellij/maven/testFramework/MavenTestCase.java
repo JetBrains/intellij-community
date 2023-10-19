@@ -142,7 +142,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
       Class<? extends MavenTestCase> aClass = this.getClass();
       if (aClass.getDeclaredAnnotation(InstantImportCompatible.class) == null) {
         String testName = getName();
-        Method testMethod = aClass.getDeclaredMethod(testName);
+        Method testMethod = aClass.getMethod(testName);
         Assume.assumeNotNull(testMethod.getDeclaredAnnotation(InstantImportCompatible.class));
       }
     }
