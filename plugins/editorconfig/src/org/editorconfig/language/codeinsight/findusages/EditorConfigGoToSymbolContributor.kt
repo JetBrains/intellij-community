@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight.findusages
 
 import com.intellij.navigation.ChooseByNameContributorEx
@@ -10,18 +10,18 @@ import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
-import org.editorconfig.language.index.EditorConfigIdentifierIndex
+import org.editorconfig.language.index.EDITOR_CONFIG_IDENTIFIER_INDEX_ID
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 
-class EditorConfigGoToSymbolContributor : ChooseByNameContributorEx {
+internal class EditorConfigGoToSymbolContributor : ChooseByNameContributorEx {
   override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
-    FileBasedIndex.getInstance().processAllKeys(EditorConfigIdentifierIndex.id, processor, scope, filter)
+    FileBasedIndex.getInstance().processAllKeys(EDITOR_CONFIG_IDENTIFIER_INDEX_ID, processor, scope, filter)
   }
 
   override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
     val psiManager = PsiManager.getInstance(parameters.project)
     FileBasedIndex.getInstance().getFilesWithKey(
-      EditorConfigIdentifierIndex.id, setOf(name), { file ->
+      EDITOR_CONFIG_IDENTIFIER_INDEX_ID, setOf(name), { file ->
       SyntaxTraverser.psiTraverser(psiManager.findFile(file))
         .filter(EditorConfigDescribableElement::class.java)
         .processEach(processor)
