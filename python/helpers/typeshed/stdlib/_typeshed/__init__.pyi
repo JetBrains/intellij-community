@@ -306,13 +306,6 @@ ProfileFunction: TypeAlias = Callable[[FrameType, str, Any], object]
 # Objects suitable to be passed to sys.settrace, threading.settrace, and similar
 TraceFunction: TypeAlias = Callable[[FrameType, str, Any], TraceFunction | None]
 
-# experimental
-# Might not work as expected for pyright, see
-#   https://github.com/python/typeshed/pull/9362
-#   https://github.com/microsoft/pyright/issues/4339
-class DataclassInstance(Protocol):
-    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
-
 # Anything that can be passed to the int/float constructors
 ConvertibleToInt: TypeAlias = str | ReadableBuffer | SupportsInt | SupportsIndex | SupportsTrunc
 ConvertibleToFloat: TypeAlias = str | ReadableBuffer | SupportsFloat | SupportsIndex
