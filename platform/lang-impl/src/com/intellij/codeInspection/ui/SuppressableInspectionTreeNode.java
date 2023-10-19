@@ -102,7 +102,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   public final synchronized String getPresentableText() {
     String name = myPresentableName;
     if (name == null) {
-      name = calculatePresentableName();
+      name = ReadAction.compute(() -> calculatePresentableName());
       myPresentableName = name;
     }
     return name;
