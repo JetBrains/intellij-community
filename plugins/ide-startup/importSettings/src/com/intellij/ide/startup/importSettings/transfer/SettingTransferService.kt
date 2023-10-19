@@ -24,10 +24,9 @@ import com.intellij.util.text.nullize
 import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.Property
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.completeWith
 import kotlinx.coroutines.runBlocking
 import javax.swing.Icon
 
@@ -47,19 +46,17 @@ class SettingTransferService : ExternalService {
     ),
     shouldDisplayFailedVersions = false
   )
-  private lateinit var ideVersions: Deferred<Map<String, IdeVersion>>
+  private val ideVersions = CompletableDeferred<Map<String, IdeVersion>>()
   override suspend fun warmUp() {
-    coroutineScope {
-      ideVersions = async {
-        config.dataProvider.run {
-          refresh()
-          orderedIdeVersions
-            .filterIsInstance<IdeVersion>()
-            .map { version -> version.id to version }
-            .toMap()
-        }
+    ideVersions.completeWith(runCatching {
+      config.dataProvider.run {
+        refresh()
+        orderedIdeVersions
+          .filterIsInstance<IdeVersion>()
+          .map { version -> version.id to version }
+          .toMap()
       }
-    }
+    })
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
