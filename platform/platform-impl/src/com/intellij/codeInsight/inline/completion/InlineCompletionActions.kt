@@ -23,9 +23,8 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
   }
 }
 
-abstract class HideInlineCompletionHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
-  abstract val finishType: InlineCompletionFinishType
-
+abstract class HideInlineCompletionHandler(val originalHandler: EditorActionHandler,
+                                           val finishType: InlineCompletionFinishType) : EditorActionHandler() {
   public override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val context = InlineCompletionContext.getOrNull(editor) ?: run {
       if (originalHandler.isEnabled(editor, caret, dataContext)) {
@@ -49,13 +48,11 @@ abstract class HideInlineCompletionHandler(val originalHandler: EditorActionHand
   }
 }
 
-class EscapeInlineCompletionHandler(originalHandler: EditorActionHandler) : HideInlineCompletionHandler(originalHandler) {
-  override val finishType = InlineCompletionFinishType.ESCAPE_PRESSED
-}
+class EscapeInlineCompletionHandler(originalHandler: EditorActionHandler) :
+  HideInlineCompletionHandler(originalHandler, InlineCompletionFinishType.ESCAPE_PRESSED)
 
-class BackSpaceInlineCompletionHandler(originalHandler: EditorActionHandler) : HideInlineCompletionHandler(originalHandler) {
-  override val finishType = InlineCompletionFinishType.KEY_PRESSED
-}
+class BackSpaceInlineCompletionHandler(originalHandler: EditorActionHandler) :
+  HideInlineCompletionHandler(originalHandler, InlineCompletionFinishType.KEY_PRESSED)
 
 class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class CallInlineCompletionHandler : EditorWriteActionHandler() {
