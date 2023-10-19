@@ -8,7 +8,6 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.ide.AssertiveRepaintManager
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.idea.AppExitCodes
@@ -67,11 +66,8 @@ internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncSc
 
 private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job) {
   if (!isHeadless) {
-    val env = span("GraphicsEnvironment init") {
-      GraphicsEnvironment.getLocalGraphicsEnvironment()
-    }
     span("graphics environment checking") {
-      if (env.isHeadlessInstance) {
+      if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance) {
         StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"),
                                          BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
         exitProcess(AppExitCodes.NO_GRAPHICS)
@@ -158,7 +154,7 @@ private suspend fun initAwtToolkit(busyThread: Thread) {
   }
 
   // required for both UI scale computation and base LaF
-  span("local graphics environment getting") {
+  span("GraphicsEnvironment init") {
     GraphicsEnvironment.getLocalGraphicsEnvironment()
   }
 }
@@ -216,7 +212,7 @@ fun checkHiDPISettings() {
 
 // must happen after initUi
 internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initAwtToolkitJob: Job,
-                                                                                       initUiDeferred: Job,
+                                                                                       initUiScale: Job,
                                                                                        appInfoDeferred: Deferred<ApplicationInfoEx>) {
   launch {
     initAwtToolkitJob.join()
@@ -237,14 +233,15 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
       }
     }
 
-    initUiDeferred.join()
-
     // `updateWindowIcon` should be called after `initUiJob`, because it uses computed system font data for scale context
-    if (!isWindowIconAlreadyExternallySet() && !PluginManagerCore.isRunningFromSources()) {
-      appInfoDeferred.await()
-      // most of the time is consumed by loading SVG and can be done in parallel
-      launch(CoroutineName("update window icon")) {
-        updateAppWindowIcon(JOptionPane.getRootFrame())
+    if (!isWindowIconAlreadyExternallySet()) {
+      launch {
+        initUiScale.join()
+        appInfoDeferred.join()
+        // most of the time is consumed by loading SVG and can be done in parallel
+        span("update window icon") {
+          updateAppWindowIcon(JOptionPane.getRootFrame())
+        }
       }
     }
 

@@ -52,7 +52,7 @@ import javax.swing.border.Border
 import kotlin.math.roundToInt
 
 private const val VENDOR_PREFIX = "jetbrains-"
-private var ourIcons: MutableList<Image?>? = null
+private var appIcons: MutableList<Image?>? = null
 
 @Volatile
 private var isMacDocIconSet = false
@@ -61,11 +61,11 @@ private val LOG: Logger
   get() = logger<AppUIUtil>()
 
 fun updateAppWindowIcon(window: Window) {
-  if (isWindowIconAlreadyExternallySet()) {
+  if (isMacDocIconSet || isWindowIconAlreadyExternallySet()) {
     return
   }
 
-  var images = ourIcons
+  var images = appIcons
   if (images == null) {
     images = ArrayList(3)
     val appInfo = ApplicationInfoImpl.getShadowInstance()
@@ -90,7 +90,7 @@ fun updateAppWindowIcon(window: Window) {
       }
     }
 
-    ourIcons = images
+    appIcons = images
   }
 
   if (!images.isEmpty()) {
@@ -173,7 +173,7 @@ fun findAppIcon(): String? {
 internal fun isWindowIconAlreadyExternallySet(): Boolean {
   return when {
     SystemInfoRt.isWindows -> java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
-    SystemInfoRt.isMac -> isMacDocIconSet || (!PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources())
+    SystemInfoRt.isMac -> isMacDocIconSet || !PlatformUtils.isJetBrainsClient()
     else -> false
   }
 }

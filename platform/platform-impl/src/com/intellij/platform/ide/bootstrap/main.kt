@@ -150,7 +150,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     scheduleShowSplashIfNeeded(initUiScale = initUiScale, appInfoDeferred = appInfoDeferred, args = args)
     scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initAwtToolkitJob = initAwtToolkitJob,
-                                                               initUiDeferred = initLafJob,
+                                                               initUiScale = initUiScale,
                                                                appInfoDeferred = appInfoDeferred)
   }
 
