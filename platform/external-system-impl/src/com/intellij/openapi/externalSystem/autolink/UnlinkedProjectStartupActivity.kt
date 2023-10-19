@@ -306,19 +306,18 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     }
   }
 
+  private fun ExternalSystemUnlinkedProjectAware.createProjectId(externalProjectPath: String): ExternalSystemProjectId {
+    return ExternalSystemProjectId(systemId, externalProjectPath)
+  }
+
+  private suspend fun ExternalSystemUnlinkedProjectAware.hasBuildFiles(project: Project, externalProjectPath: String): Boolean {
+    return readAction {
+      val projectRoot = LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
+      projectRoot?.children?.firstOrNull { isBuildFile(project, it) } != null
+    }
+  }
+
   companion object {
-
     private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autolink")
-
-    private fun ExternalSystemUnlinkedProjectAware.createProjectId(externalProjectPath: String): ExternalSystemProjectId {
-      return ExternalSystemProjectId(systemId, externalProjectPath)
-    }
-
-    private suspend fun ExternalSystemUnlinkedProjectAware.hasBuildFiles(project: Project, externalProjectPath: String): Boolean {
-      return readAction {
-        val projectRoot = LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
-        projectRoot?.children?.firstOrNull { isBuildFile(project, it) } != null
-      }
-    }
   }
 }
