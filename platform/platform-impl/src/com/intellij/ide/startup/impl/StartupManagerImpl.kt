@@ -274,7 +274,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           continue
         }
         else if (!isProjectLightEditCompatible) {
-          //LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
+          LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
           // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
           counter.incrementAndGet()
           blockingContext {
