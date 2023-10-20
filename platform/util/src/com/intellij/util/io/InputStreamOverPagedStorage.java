@@ -54,15 +54,21 @@ public final class InputStreamOverPagedStorage extends InputStream {
 
   @Override
   public int read(byte @NotNull [] buffer, int offset, int length) throws IOException {
-    //only allow a read of the amount available.
-    if (length > available()) {
-      length = available();
+    if (length == 0) {
+      return 0;
+    }
+    int bytesRemains = available();
+    assert bytesRemains >= 0 : "position(=" + position + ") > limit(=" + limit + ")";
+    if (bytesRemains == 0) {
+      return -1;
     }
 
-    if (available() > 0) {
-      pagedStorage.get(position, buffer, offset, length);
-      position += length;
+    //only allow a read of the amount remains.
+    if (length > bytesRemains) {
+      length = bytesRemains;
     }
+    pagedStorage.get(position, buffer, offset, length);
+    position += length;
 
     return length;
   }

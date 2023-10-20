@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.io.keyStorage;
 
@@ -61,16 +61,22 @@ public final class MappedFileInputStream extends InputStream {
   }
 
   @Override
-  public int read(byte @NotNull [] b, int offset, int length) throws IOException {
-    //only allow a read of the amount available.
-    if (length > available()) {
-      length = available();
+  public int read(byte @NotNull [] buffer, int offset, int length) throws IOException {
+    if (length == 0) {
+      return 0;
+    }
+    int bytesRemains = available();
+    assert bytesRemains >= 0 : "position(=" + position + ") > limit(=" + limit + ")";
+    if (bytesRemains == 0) {
+      return -1;
     }
 
-    if (available() > 0) {
-      raf.get(position, b, offset, length, checkAccess);
-      position += length;
+    //only allow a read of the amount remains.
+    if (length > bytesRemains) {
+      length = bytesRemains;
     }
+    raf.get(position, buffer, offset, length, checkAccess);
+    position += length;
 
     return length;
   }

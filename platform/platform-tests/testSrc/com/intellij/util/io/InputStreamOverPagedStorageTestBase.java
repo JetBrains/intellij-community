@@ -80,6 +80,49 @@ public abstract class InputStreamOverPagedStorageTestBase {
     );
   }
 
+  @Test
+  public void zeroLengthRead_AlwaysSucceed() throws IOException {
+    byte[] bytesWritten = writeRandomBytesToStorage(0);
+    try(var stream = streamOverStorage(0, 0)){
+      byte[] bytesReadBack = new byte[bytesWritten.length];
+      int bytesActuallyRead = stream.read(bytesReadBack, 0, 0);
+      assertEquals(
+        "read(length: 0) should always return 0",
+        0,
+        bytesActuallyRead
+      );
+    }
+  }
+
+  @Test
+  public void readsBeyondEOF_ShouldReturnMinusOne() throws IOException {
+    writeRandomBytesToStorage(BYTES_SIZE_TO_TEST);
+    try(var stream = streamOverStorage(0, 0)){
+      byte[] bytesReadBack = new byte[10];
+      int bytesActuallyRead = stream.read(bytesReadBack);
+      assertEquals(
+        "read(position >= EOF) should return -1",
+        -1,
+        bytesActuallyRead
+      );
+    }
+  }
+
+  @Test
+  public void readsWithLengthMoreThanRemains_ShouldReturnRemains() throws IOException {
+    writeRandomBytesToStorage(BYTES_SIZE_TO_TEST);
+    int remains = 10;
+    try(var stream = streamOverStorage(0, remains)){
+      byte[] bytesReadBack = new byte[20];
+      int bytesActuallyRead = stream.read(bytesReadBack);
+      assertEquals(
+        "read(length > remains) should return (remains)",
+        remains,
+        bytesActuallyRead
+      );
+    }
+  }
+
   //================== infrastructure: ====================================================
 
 
