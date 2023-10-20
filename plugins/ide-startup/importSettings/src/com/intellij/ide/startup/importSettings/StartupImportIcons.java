@@ -22,6 +22,7 @@ public final class StartupImportIcons {
     /** 16x32 */ public static final @NotNull Icon Json = load("icons/json.svg", -322377413, 0);
     /** 16x16 */ public static final @NotNull Icon Keyboard = load("icons/keyboard.svg", -1617681176, 0);
     /** 16x16 */ public static final @NotNull Icon Plugin = load("icons/plugin.svg", 62738285, 0);
+    /** 16x16 */ public static final @NotNull Icon Recent = load("icons/recent.svg", -1439746341, 0);
     /** 16x16 */ public static final @NotNull Icon Settings = load("icons/settings.svg", -1557837202, 0);
   }
 

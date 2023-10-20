@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.customize.transferSettings.models.ILookAndFeel
 import com.intellij.ide.customize.transferSettings.models.Keymap
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
+import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import javax.swing.Icon
 
@@ -27,7 +27,7 @@ class TransferableSetting(
       return TransferableSetting(
         UI_ID,
         ImportSettingsBundle.message("transfer.settings.ui-theme"),
-        AllIcons.Actions.Stub, // TODO: Choose the right icon
+        StartupImportIcons.Icons.ColorPicker,
         themeName
       )
     }
@@ -36,7 +36,7 @@ class TransferableSetting(
       return TransferableSetting(
         KEYMAP_ID,
         ImportSettingsBundle.message("transfer.settings.keymap"),
-        AllIcons.Actions.Stub, // TODO: Choose the right icon
+        StartupImportIcons.Icons.Keyboard,
         keymap.displayName
       )
     }
@@ -44,14 +44,14 @@ class TransferableSetting(
     fun plugins() = TransferableSetting(
       PLUGINS_ID,
       ImportSettingsBundle.message("transfer.settings.plugins"),
-      AllIcons.Actions.Stub, // TODO: Choose the right icon
+      StartupImportIcons.Icons.Plugin,
       null
     )
 
     fun recentProjects() = TransferableSetting(
       RECENT_PROJECTS_ID,
       ImportSettingsBundle.message("transfer.settings.recent-projects"),
-      AllIcons.Actions.Stub, // TODO: Choose the right icon
+      StartupImportIcons.Icons.Recent,
       null
     )
   }
