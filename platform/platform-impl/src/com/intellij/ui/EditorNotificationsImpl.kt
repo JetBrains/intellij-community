@@ -298,8 +298,9 @@ class EditorNotificationsImpl(private val project: Project,
       .mapNotNull { it.intentionAction }
     fileEditor.putUserData(FILE_LEVEL_INTENTIONS, ContainerUtil.unmodifiableOrEmptyList(intentions))
   }
+
   override fun getStoredFileLevelIntentions(fileEditor: FileEditor) : List<IntentionActionWithOptions> {
-    return ContainerUtil.notNullize(fileEditor.getUserData(FILE_LEVEL_INTENTIONS))
+    return fileEditor.getUserData(FILE_LEVEL_INTENTIONS) ?: emptyList()
   }
 
   override fun updateAllNotifications() {

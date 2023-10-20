@@ -5,7 +5,10 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.IntentionsUI;
+import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl;
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -144,13 +147,11 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     String progressTitle = CodeInsightBundle.message("progress.title.searching.for.context.actions");
     DumbService dumbService = DumbService.getInstance(project);
     boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
-    ShowIntentionsPass.IntentionsInfo intentionsInfo = new ShowIntentionsPass.IntentionsInfo();
-    EditorNotificationActions.collectActions(editor, intentionsInfo);
     ThrowableComputable<CachedIntentions, RuntimeException> prioritizedRunnable =
       () -> ProgressManager.getInstance().computePrioritized(() -> {
-        intentionsInfo.filterActions(file);
         DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
         return ReadAction.compute(() -> {
+          ShowIntentionsPass.IntentionsInfo intentionsInfo = new ShowIntentionsPass.IntentionsInfo();
           ShowIntentionsPass.getActionsToShow(editor, file, intentionsInfo, -1);
           return CachedIntentions.createAndUpdateActions(project, file, editor, intentionsInfo);
         });

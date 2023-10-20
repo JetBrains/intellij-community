@@ -253,8 +253,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
     IntentionsInfo intentionsInfo = new IntentionsInfo();
     getActionsToShow(myEditor, myFile, intentionsInfo, myPassIdToShowIntentionsFor, myQueryIntentionActions);
-    EditorNotificationActions.collectActions(myEditor, intentionsInfo); // TODO EDT-only call! (IDEA-333895)
-    intentionsInfo.filterActions(myFile);
     myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myFile);
     myActionsChanged = myCachedIntentions.wrapAndUpdateActions(intentionsInfo, false);
     UnresolvedReferenceQuickFixUpdater.getInstance(myProject).startComputingNextQuickFixes(myFile, myEditor, myVisibleRange);
