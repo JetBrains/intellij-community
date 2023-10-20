@@ -9,6 +9,8 @@ class ChangeSignatureQuickFixesRegistrar: KotlinQuickFixRegistrar() {
     private val changeSignature = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(ChangeSignatureFixFactory.addParameterFactory)
         registerApplicator(ChangeSignatureFixFactory.removeParameterFactory)
+        registerApplicator(ChangeSignatureFixFactory.typeMismatchFactory)
+        registerApplicator(ChangeSignatureFixFactory.nullForNotNullFactory)
     }
 
     override val list: KotlinQuickFixesList = changeSignature
