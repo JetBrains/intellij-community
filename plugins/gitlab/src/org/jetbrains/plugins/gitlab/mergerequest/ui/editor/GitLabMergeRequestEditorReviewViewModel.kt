@@ -151,9 +151,9 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     projectVm.twVm.activate()
   }
 
-  fun fetchAndCheckoutBranch() {
+  fun updateBranch() {
     cs.launch {
-      val details = mergeRequest.details.first()
+      val details = mergeRequest.refreshDataNow()
       GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(projectMapping, details)
     }
   }

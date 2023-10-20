@@ -111,7 +111,7 @@ private class ReviewModeActionGroup(private val editor: Editor) : ActionGroup(),
 
       override fun actionPerformed(e: AnActionEvent) {
         val vm = editor.getUserData(GitLabMergeRequestEditorReviewViewModel.KEY) ?: return
-        vm.fetchAndCheckoutBranch()
+        vm.updateBranch()
       }
     }
 

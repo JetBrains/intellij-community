@@ -100,7 +100,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
         ?.takeIf {
           it.localRepositorySyncStatus.value?.incoming == true
         }?.let {
-          { it.fetchAndCheckoutBranch() }
+          { it.updateBranch() }
         }
       e.presentation.isEnabledAndVisible = action != null
       // required for thread safety

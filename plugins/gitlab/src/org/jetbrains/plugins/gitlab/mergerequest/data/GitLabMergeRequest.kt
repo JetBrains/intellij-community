@@ -15,6 +15,7 @@ import git4idea.remote.hosting.changesSignalFlow
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
@@ -48,7 +49,15 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   // NOT a great place for it, but placing it in VM layer is a pain in the neck
   val draftReviewText: MutableStateFlow<String>
 
+  /**
+   * Sends a signal to reload the details and check for other data changes
+   */
   fun refreshData()
+
+  /**
+   * Reloads the details without a debounce
+   */
+  suspend fun refreshDataNow(): GitLabMergeRequestFullDetails
 
   /**
    * Sends a signal to reload data on all submitted discussions within the container.
@@ -148,12 +157,13 @@ internal class LoadedGitLabMergeRequest(
 
   private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
   override val isLoading: SharedFlow<Boolean> = _isLoading.asSharedFlow()
+  private val detailsLoadingGuard = Mutex()
 
   override val draftReviewText: MutableStateFlow<String> = MutableStateFlow("")
 
   init {
     mergeRequestRefreshRequest
-      .mapLatest { reloadMergeRequestData() }
+      .mapLatest { refreshDataNow() }
       .catch { LOG.info("Error occurred while loading merge request data", it) }
       .launchNowIn(cs)
 
@@ -171,16 +181,18 @@ internal class LoadedGitLabMergeRequest(
     }
   }
 
-  private suspend fun reloadMergeRequestData() {
+  override suspend fun refreshDataNow(): GitLabMergeRequestFullDetails {
     try {
+      detailsLoadingGuard.lock()
       _isLoading.value = true
       val updatedMergeRequest = withContext(Dispatchers.IO) {
         api.graphQL.loadMergeRequest(glProject, iid).body()!!
       }
-      updateMergeRequestData(updatedMergeRequest)
+      return updateMergeRequestData(updatedMergeRequest)
     }
     finally {
       _isLoading.value = false
+      detailsLoadingGuard.unlock()
     }
   }
 
@@ -359,13 +371,15 @@ internal class LoadedGitLabMergeRequest(
   override suspend fun submitDraftNotes() = discussionsContainer.submitDraftNotes()
 
   // Compatibility fix to make sure commits are loaded
-  private suspend fun updateMergeRequestData(updatedMergeRequest: GitLabMergeRequestDTO) {
+  private suspend fun updateMergeRequestData(updatedMergeRequest: GitLabMergeRequestDTO): GitLabMergeRequestFullDetails {
     val commits =
       if (updatedMergeRequest.commits == null)
         api.rest.getMergeRequestCommits(projectMapping.repository, updatedMergeRequest.iid).body()
       else listOf()
 
-    mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest, commits)
+    return GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest, commits).also {
+      mergeRequestDetailsState.value = it
+    }
   }
 
   override fun getRelativeFilePath(virtualFile: VirtualFile): FilePath? {
