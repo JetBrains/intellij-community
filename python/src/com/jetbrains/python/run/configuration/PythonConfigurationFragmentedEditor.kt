@@ -3,6 +3,7 @@ package com.jetbrains.python.run.configuration
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ui.CommandLinePanel
+import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.SettingsEditorFragmentType
 import com.intellij.ide.macro.MacrosDialog
@@ -34,6 +35,7 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
       { true })
     MacrosDialog.addMacroSupport(parametersEditor.editorField, MacrosDialog.Filters.ALL) { false }
     parametersEditor.editorField.emptyText.setText(PyBundle.message("python.run.configuration.fragments.script.parameters.hint"))
+    FragmentedSettingsUtil.setupPlaceholderVisibility(parametersEditor.editorField)
     scriptParametersFragment.setHint(PyBundle.message("python.run.configuration.fragments.script.parameters.hint"))
     scriptParametersFragment.actionHint = PyBundle.message("python.run.configuration.fragments.script.parameters.hint")
     fragments.add(scriptParametersFragment)
