@@ -1,10 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
+import com.intellij.ide.customize.transferSettings.models.BuiltInFeature
 import com.intellij.ide.customize.transferSettings.models.DummyKeyboardShortcut
+import com.intellij.ide.customize.transferSettings.models.FeatureInfo
 import com.intellij.ide.customize.transferSettings.models.ILookAndFeel
 import com.intellij.ide.customize.transferSettings.models.Keymap
 import com.intellij.ide.customize.transferSettings.models.PatchedKeymap
+import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.BaseSetting
@@ -42,7 +45,7 @@ open class TransferableSetting(
       )
     }
 
-    fun keymap(keymap: Keymap): BaseSetting {
+    fun keymap(keymap: Keymap): Multiple {
       val customShortcuts = (keymap as? PatchedKeymap)?.overrides
       val customShortcutCount = customShortcuts?.size ?: 0
       val title = if (customShortcutCount == 0)
@@ -66,12 +69,18 @@ open class TransferableSetting(
       )
     }
 
-    fun plugins() = TransferableSetting(
-      PLUGINS_ID,
-      ImportSettingsBundle.message("transfer.settings.plugins"),
-      StartupImportIcons.Icons.Plugin,
-      null
-    )
+    fun plugins(features: List<FeatureInfo>): Multiple {
+      val items = features.filter { !it.isHidden }.map(::FeatureSetting)
+      val limitForPreview = 3
+      val comment = NlsMessages.formatNarrowAndList(items.take(limitForPreview).map { it.nameForPreview })
+      return TransferableSettingGroup(
+        PLUGINS_ID,
+        ImportSettingsBundle.message("transfer.settings.plugins"),
+        StartupImportIcons.Icons.Plugin,
+        comment,
+        listOf(items)
+      )
+    }
 
     fun recentProjects() = TransferableSetting(
       RECENT_PROJECTS_ID,
@@ -119,4 +128,19 @@ private class DemoShortcut(override val name: String, shortcut: Any) : ChildSett
       }
     }
   }
+}
+
+private class FeatureSetting(feature: FeatureInfo) : ChildSetting {
+  override val id = ""
+  override val name = feature.name
+  override val leftComment = if (feature is BuiltInFeature) ImportSettingsBundle.message("transfer.setting.feature.built-in") else null
+  override val rightComment = null
+  val nameForPreview: String
+    get() = buildString {
+      append(name)
+      leftComment?.let {
+        append(' ')
+        append(it)
+      }
+    }
 }
