@@ -21,6 +21,7 @@
 
     <automaticRenamerFactory implementation="org.jetbrains.idea.devkit.refactoring.InspectionAutomaticRenamerFactory"/>
     <httpRequestHandler implementation="org.jetbrains.idea.devkit.requestHandlers.HttpDebugListener"/>
+    <httpRequestHandler implementation="org.jetbrains.idea.devkit.requestHandlers.BuildHttpRequestHandler"/>
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <runConfigurationExtension implementation="org.jetbrains.idea.devkit.run.DevKitApplicationPatcher"/>
