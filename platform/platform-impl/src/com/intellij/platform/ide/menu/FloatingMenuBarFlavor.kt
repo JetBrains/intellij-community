@@ -24,8 +24,11 @@ import kotlin.math.sqrt
 private const val COLLAPSED_HEIGHT = 2
 
 internal class FloatingMenuBarFlavor(private val menuBar: IdeJMenuBar) : IdeMenuFlavor {
-  private var clockPanel: ClockPanel? = null
-  private var exitFullScreenButton: FloatingMenuBarExitFullScreenButton? = null
+  private val clockPanel: ClockPanel?
+    get() = menuBar.components.firstNotNullOfOrNull { it as? ClockPanel }
+
+  private val exitFullScreenButton: FloatingMenuBarExitFullScreenButton?
+    get() = menuBar.components.firstNotNullOfOrNull { it as? FloatingMenuBarExitFullScreenButton }
 
   private val animator = MyAnimator(menuBar = menuBar, flavor = this)
 
@@ -75,23 +78,19 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeJMenuBar) : IdeMenu
 
   private fun addClockAndFullScreenButton() {
     if (clockPanel == null) {
-      clockPanel = ClockPanel()
-      menuBar.add(clockPanel)
+      menuBar.add(ClockPanel())
     }
 
     if (exitFullScreenButton == null) {
-      exitFullScreenButton = FloatingMenuBarExitFullScreenButton()
-      menuBar.add(exitFullScreenButton)
+      menuBar.add(FloatingMenuBarExitFullScreenButton())
     }
   }
 
   private fun removeClockAndFullScreenExitButton() {
     clockPanel?.let {
-      clockPanel = null
       menuBar.remove(it)
     }
     exitFullScreenButton?.let {
-      exitFullScreenButton = null
       menuBar.remove(it)
     }
   }
