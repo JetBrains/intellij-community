@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -1081,7 +1082,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       if (labelElementList == null) return false;
       PsiCaseLabelElement[] elements = labelElementList.getElements();
       return !ContainerUtil.exists(elements,
-                                   element -> element instanceof PsiPattern && JavaPsiPatternUtil.containsNamedPatternVariable(element) ||
+                                   element -> element instanceof PsiPattern && (!HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(element) ||
+                                                                                JavaPsiPatternUtil.containsNamedPatternVariable(element)) ||
                                               element instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }
 

@@ -39,6 +39,8 @@ class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCas
   fun testNullDuplicatesDefault() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20_PREVIEW) { doTest() }
   fun testMixedCases() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21_PREVIEW) { doTest() }
   fun testDominatedUnnamedVariables() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21_PREVIEW) { doTest() }
+
+  fun testSkipUnnamedForPreviousVersions() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
   private fun doTest() {
     myFixture.enableInspections(DuplicateBranchesInSwitchInspection())
     myFixture.testHighlighting("${getTestName(false)}.java")

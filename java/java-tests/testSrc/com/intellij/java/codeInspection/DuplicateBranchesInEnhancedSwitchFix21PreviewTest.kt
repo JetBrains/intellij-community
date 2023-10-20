@@ -7,15 +7,15 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class DuplicateBranchesInEnhancedSwitchFixTest : LightQuickFixParameterizedTestCase() {
+class DuplicateBranchesInEnhancedSwitchFix21PreviewTest : LightQuickFixParameterizedTestCase() {
 
   override fun configureLocalInspectionTools(): Array<LocalInspectionTool> = arrayOf(DuplicateBranchesInSwitchInspection())
 
-  override fun getBasePath() = "/inspection/duplicateBranchesInEnhancedSwitchFix"
-
-  override fun getProjectDescriptor() = LightJavaCodeInsightFixtureTestCase.JAVA_21
+  override fun getBasePath() = "/inspection/duplicateBranchesInEnhancedSwitchFix21Preview"
 
   override fun getLanguageLevel(): LanguageLevel {
-    return LanguageLevel.JDK_21
+    return LanguageLevel.JDK_21_PREVIEW
   }
+
+  override fun getProjectDescriptor() = LightJavaCodeInsightFixtureTestCase.JAVA_21
 }
