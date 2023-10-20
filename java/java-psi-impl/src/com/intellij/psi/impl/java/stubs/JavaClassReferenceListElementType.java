@@ -7,7 +7,6 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
@@ -20,9 +19,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -71,10 +68,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
   @Override
   public PsiClassReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     int len = dataStream.readVarInt();
-    if (len == 0) {
-      return new PsiClassReferenceListStubImpl(this, parentStub, TypeInfo.EMPTY_ARRAY);
-    }
-    TypeInfo[] infos = new TypeInfo[len];
+    TypeInfo[] infos = len == 0 ? TypeInfo.EMPTY_ARRAY : new TypeInfo[len];
     for (int i = 0; i < infos.length; i++) {
       infos[i] = TypeInfo.readTYPE(dataStream);
     }

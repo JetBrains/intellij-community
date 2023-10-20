@@ -76,7 +76,8 @@ private fun processActionOverrider(method : PsiMethod, substitutor: PsiSubstitut
           val original = super.getExtendsList()
           return object : LightReferenceListBuilder(original.manager, original.role) {
             override fun getReferencedTypes(): Array<PsiClassType> {
-              return original.referencedTypes.map { substitutor.substitute(it) as PsiClassType }.toTypedArray()
+              val types = original.referencedTypes.map { substitutor.substitute(it) as PsiClassType }
+              return if (types.isEmpty()) PsiClassType.EMPTY_ARRAY else types.toTypedArray()
             }
           }
         }
