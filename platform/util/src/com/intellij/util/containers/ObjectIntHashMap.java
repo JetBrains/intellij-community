@@ -12,7 +12,7 @@ import java.util.Set;
  * @deprecated Use {@link Object2IntOpenHashMap}
  */
 @Deprecated
-public class ObjectIntHashMap<K> implements ObjectIntMap<K> {
+public final class ObjectIntHashMap<K> implements ObjectIntMap<K> {
   private final Object2IntMap<K> myMap;
   public ObjectIntHashMap() {
     this(10);
@@ -87,7 +87,7 @@ public class ObjectIntHashMap<K> implements ObjectIntMap<K> {
    * @deprecated use {@link #getOrDefault(Object, int)}
    */
   @Deprecated
-  public final int get(@NotNull K key, int defaultValue) {
+  public int get(@NotNull K key, int defaultValue) {
     return getOrDefault(key, defaultValue);
   }
 
