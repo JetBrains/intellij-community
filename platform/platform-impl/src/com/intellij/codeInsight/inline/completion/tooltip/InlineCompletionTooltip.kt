@@ -48,7 +48,12 @@ internal object InlineCompletionTooltip {
 
     val panel = createPanel(session)
 
-    val hint = LightweightHint(panel).apply {
+    val hint = object : LightweightHint(panel) {
+      override fun onPopupCancel() {
+        // on hint hide
+        editor.putUserData(tooltipKey, null)
+      }
+    }.apply {
       setForceShowAsPopup(true)
     }
 
@@ -70,10 +75,6 @@ internal object InlineCompletionTooltip {
       HintManagerImpl.createHintHint(editor, location, hint, HintManager.ABOVE).setContentActive(false)
     )
     editor.putUserData(tooltipKey, Unit)
-    hint.addHintListener {
-      // on hint hide
-      editor.putUserData(tooltipKey, null)
-    }
     Disposer.register(session) {
       hint.hide()
     }
