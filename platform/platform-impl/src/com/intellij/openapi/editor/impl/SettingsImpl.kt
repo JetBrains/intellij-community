@@ -28,19 +28,17 @@ import kotlin.math.max
 private val LOG = logger<SettingsImpl>()
 internal const val EDITOR_SHOW_SPECIAL_CHARS: String = "editor.show.special.chars"
 
-class SettingsImpl internal constructor(private val editor: EditorImpl?,
-                                        kind: EditorKind?,
-                                        project: Project?) : EditorSettings {
+class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: EditorKind?, project: Project?) : EditorSettings {
   private var languageSupplier: (() -> Language?)? = null
 
-  private val myState: EditorSettingsState
+  private val state: EditorSettingsState
   private var doNotRefreshEditorFlag = false
 
   // This group of settings does not have a UI
 
   @get:Deprecated("use {@link EditorKind}")
   val softWrapAppliancePlace: SoftWrapAppliancePlaces
-  private val myComputableSettings = ArrayList<CacheableBackgroundComputable<*>>()
+  private val computableSettings = ArrayList<CacheableBackgroundComputable<*>>()
 
   private val tabSize = object : CacheableBackgroundComputable<Int>(
     CodeStyleSettings.getDefaults().indentOptions.TAB_SIZE) {
@@ -85,47 +83,47 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?,
     }
 
     @Suppress("DEPRECATION")
-    myState = EditorSettingsState(editor, project, softWrapAppliancePlace)
-    myState.refreshAll()
+    state = EditorSettingsState(editor, project, softWrapAppliancePlace)
+    state.refreshAll()
 
-    myState.addPropertyChangeListener(object : ObservableStateListener {
+    state.addPropertyChangeListener(object : ObservableStateListener {
       override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
         // todo optimize?
         val propertyName = event.propertyName
         if (!doNotRefreshEditorFlag &&
-            propertyName != myState::myLineCursorWidth.name &&
-            propertyName != myState::myAutoCodeFoldingEnabled.name &&
-            propertyName != myState::myAllowSingleLogicalLineFolding.name &&
-            propertyName != myState::myVerticalScrollJump.name &&
-            propertyName != myState::myHorizontalScrollJump.name &&
-            propertyName != myState::myIsBlockCursor.name &&
-            propertyName != myState::myIsFullLineHeightCursor.name &&
-            propertyName != myState::myIsWhitespacesShown.name &&
-            propertyName != myState::myIsLeadingWhitespacesShown.name &&
-            propertyName != myState::myIsInnerWhitespacesShown.name &&
-            propertyName != myState::myIsTrailingWhitespacesShown.name &&
-            propertyName != myState::myIsSelectionWhitespacesShown.name &&
-            propertyName != myState::myIsAnimatedScrolling.name &&
-            propertyName != myState::myIsAdditionalPageAtBottom.name &&
-            propertyName != myState::myIsDndEnabled.name &&
-            propertyName != myState::myIsWheelFontChangeEnabled.name &&
-            propertyName != myState::myIsMouseClickSelectionHonorsCamelWords.name &&
-            propertyName != myState::myIsRenameVariablesInplace.name &&
-            propertyName != myState::myIsRefrainFromScrolling.name &&
-            propertyName != myState::myPaintSoftWraps.name &&
-            propertyName != myState::myUseCustomSoftWrapIndent.name &&
-            propertyName != myState::myCustomSoftWrapIndent.name &&
-            propertyName != myState::myRenamePreselect.name &&
-            propertyName != myState::myWrapWhenTypingReachesRightMargin.name &&
-            propertyName != myState::myShowIntentionBulb.name &&
-            propertyName != myState::myLineNumeration.name &&
-            propertyName != myState::tabSize.name // `tabSize` is managed by logic located in SettingsImpl
+            propertyName != state::myLineCursorWidth.name &&
+            propertyName != state::myAutoCodeFoldingEnabled.name &&
+            propertyName != state::myAllowSingleLogicalLineFolding.name &&
+            propertyName != state::myVerticalScrollJump.name &&
+            propertyName != state::myHorizontalScrollJump.name &&
+            propertyName != state::myIsBlockCursor.name &&
+            propertyName != state::myIsFullLineHeightCursor.name &&
+            propertyName != state::myIsWhitespacesShown.name &&
+            propertyName != state::myIsLeadingWhitespacesShown.name &&
+            propertyName != state::myIsInnerWhitespacesShown.name &&
+            propertyName != state::myIsTrailingWhitespacesShown.name &&
+            propertyName != state::myIsSelectionWhitespacesShown.name &&
+            propertyName != state::myIsAnimatedScrolling.name &&
+            propertyName != state::myIsAdditionalPageAtBottom.name &&
+            propertyName != state::myIsDndEnabled.name &&
+            propertyName != state::myIsWheelFontChangeEnabled.name &&
+            propertyName != state::myIsMouseClickSelectionHonorsCamelWords.name &&
+            propertyName != state::myIsRenameVariablesInplace.name &&
+            propertyName != state::myIsRefrainFromScrolling.name &&
+            propertyName != state::myPaintSoftWraps.name &&
+            propertyName != state::myUseCustomSoftWrapIndent.name &&
+            propertyName != state::myCustomSoftWrapIndent.name &&
+            propertyName != state::myRenamePreselect.name &&
+            propertyName != state::myWrapWhenTypingReachesRightMargin.name &&
+            propertyName != state::myShowIntentionBulb.name &&
+            propertyName != state::myLineNumeration.name &&
+            propertyName != state::tabSize.name // `tabSize` is managed by logic located in SettingsImpl
         ) {
           fireEditorRefresh()
         }
 
-        if (propertyName == myState::myIsBlockCursor.name ||
-            propertyName == myState::myIsFullLineHeightCursor.name) {
+        if (propertyName == state::myIsBlockCursor.name ||
+            propertyName == state::myIsFullLineHeightCursor.name) {
           editor?.updateCaretCursor()
           editor?.contentComponent?.repaint()
         }
@@ -134,142 +132,142 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?,
   }
 
   override fun isRightMarginShown(): Boolean {
-    return myState.myIsRightMarginShown
+    return state.myIsRightMarginShown
   }
 
   override fun setRightMarginShown(`val`: Boolean) {
-    myState.myIsRightMarginShown = `val`
+    state.myIsRightMarginShown = `val`
   }
 
   override fun isWhitespacesShown(): Boolean {
-    return myState.myIsWhitespacesShown
+    return state.myIsWhitespacesShown
   }
 
   override fun setWhitespacesShown(`val`: Boolean) {
-    myState.myIsWhitespacesShown = `val`
+    state.myIsWhitespacesShown = `val`
   }
 
   override fun isLeadingWhitespaceShown(): Boolean {
-    return myState.myIsLeadingWhitespacesShown
+    return state.myIsLeadingWhitespacesShown
   }
 
   override fun setLeadingWhitespaceShown(`val`: Boolean) {
-    myState.myIsLeadingWhitespacesShown = `val`
+    state.myIsLeadingWhitespacesShown = `val`
   }
 
   override fun isInnerWhitespaceShown(): Boolean {
-    return myState.myIsInnerWhitespacesShown
+    return state.myIsInnerWhitespacesShown
   }
 
   override fun setInnerWhitespaceShown(`val`: Boolean) {
-    myState.myIsInnerWhitespacesShown = `val`
+    state.myIsInnerWhitespacesShown = `val`
   }
 
   override fun isTrailingWhitespaceShown(): Boolean {
-    return myState.myIsTrailingWhitespacesShown
+    return state.myIsTrailingWhitespacesShown
   }
 
   override fun setTrailingWhitespaceShown(`val`: Boolean) {
-    myState.myIsTrailingWhitespacesShown = `val`
+    state.myIsTrailingWhitespacesShown = `val`
   }
 
   override fun isSelectionWhitespaceShown(): Boolean {
-    return myState.myIsSelectionWhitespacesShown
+    return state.myIsSelectionWhitespacesShown
   }
 
   override fun setSelectionWhitespaceShown(`val`: Boolean) {
-    myState.myIsSelectionWhitespacesShown = `val`
+    state.myIsSelectionWhitespacesShown = `val`
   }
 
   override fun isIndentGuidesShown(): Boolean {
-    return myState.myIndentGuidesShown
+    return state.myIndentGuidesShown
   }
 
   override fun setIndentGuidesShown(`val`: Boolean) {
-    myState.myIndentGuidesShown = `val`
+    state.myIndentGuidesShown = `val`
   }
 
   override fun isLineNumbersShown(): Boolean {
-    return myState.myAreLineNumbersShown
+    return state.myAreLineNumbersShown
   }
 
   override fun setLineNumbersShown(`val`: Boolean) {
-    myState.myAreLineNumbersShown = `val`
+    state.myAreLineNumbersShown = `val`
   }
 
   override fun areGutterIconsShown(): Boolean {
-    return myState.myGutterIconsShown
+    return state.myGutterIconsShown
   }
 
   override fun setGutterIconsShown(`val`: Boolean) {
-    myState.myGutterIconsShown = `val`
+    state.myGutterIconsShown = `val`
   }
 
-  override fun getRightMargin(project: Project?): Int = myState.rightMargin
+  override fun getRightMargin(project: Project?): Int = state.rightMargin
 
   override fun isWrapWhenTypingReachesRightMargin(project: Project): Boolean {
-    return myState.myWrapWhenTypingReachesRightMargin
+    return state.myWrapWhenTypingReachesRightMargin
   }
 
   override fun setWrapWhenTypingReachesRightMargin(`val`: Boolean) {
-    myState.myWrapWhenTypingReachesRightMargin = `val`
+    state.myWrapWhenTypingReachesRightMargin = `val`
   }
 
   override fun setRightMargin(rightMargin: Int) {
-    myState.rightMargin = rightMargin
+    state.rightMargin = rightMargin
   }
 
-  override fun getSoftMargins(): List<Int> = myState.softMargins
+  override fun getSoftMargins(): List<Int> = state.softMargins
 
   override fun setSoftMargins(softMargins: List<Int>?) {
-    myState.softMargins = softMargins ?: emptyList()
+    state.softMargins = softMargins ?: emptyList()
   }
 
-  override fun getAdditionalLinesCount(): Int = myState.myAdditionalLinesCount
+  override fun getAdditionalLinesCount(): Int = state.myAdditionalLinesCount
 
   override fun setAdditionalLinesCount(additionalLinesCount: Int) {
-    myState.myAdditionalLinesCount = additionalLinesCount
+    state.myAdditionalLinesCount = additionalLinesCount
   }
 
   override fun getAdditionalColumnsCount(): Int {
-    return myState.myAdditionalColumnsCount
+    return state.myAdditionalColumnsCount
   }
 
   override fun setAdditionalColumnsCount(additionalColumnsCount: Int) {
-    myState.myAdditionalColumnsCount = additionalColumnsCount
+    state.myAdditionalColumnsCount = additionalColumnsCount
   }
 
   override fun isLineMarkerAreaShown(): Boolean {
-    return myState.myLineMarkerAreaShown
+    return state.myLineMarkerAreaShown
   }
 
   override fun setLineMarkerAreaShown(lineMarkerAreaShown: Boolean) {
-    myState.myLineMarkerAreaShown = lineMarkerAreaShown
+    state.myLineMarkerAreaShown = lineMarkerAreaShown
   }
 
   override fun isFoldingOutlineShown(): Boolean {
-    return myState.myIsFoldingOutlineShown
+    return state.myIsFoldingOutlineShown
   }
 
   override fun setFoldingOutlineShown(`val`: Boolean) {
-    myState.myIsFoldingOutlineShown = `val`
+    state.myIsFoldingOutlineShown = `val`
   }
 
   override fun isAutoCodeFoldingEnabled(): Boolean {
-    return myState.myAutoCodeFoldingEnabled
+    return state.myAutoCodeFoldingEnabled
   }
 
   override fun setAutoCodeFoldingEnabled(`val`: Boolean) {
-    myState.myAutoCodeFoldingEnabled = `val`
+    state.myAutoCodeFoldingEnabled = `val`
   }
 
   override fun isUseTabCharacter(project: Project): Boolean {
-    if (project != myState.project) {
+    if (project != state.project) {
       // todo mb log error only under some flag?
       LOG.error("called isUseTabCharacter with foreign project")  // investigating such cases
       return isUseTabCharacterForForeignProject(project)
     }
-    return myState.myUseTabCharacter
+    return state.myUseTabCharacter
   }
   private fun isUseTabCharacterForForeignProject(project: Project): Boolean {
     val file = getVirtualFile()
@@ -282,14 +280,14 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?,
   }
 
   override fun setUseTabCharacter(`val`: Boolean) {
-    myState.myUseTabCharacter = `val`
+    state.myUseTabCharacter = `val`
   }
 
   fun reinitSettings() {
-    for (setting in myComputableSettings) {
+    for (setting in computableSettings) {
       setting.resetCache()
     }
-    myState.refreshAll()
+    state.refreshAll()
     reinitDocumentIndentOptions()
   }
 
@@ -335,196 +333,196 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?,
   }
 
   override fun isSmartHome(): Boolean {
-    return myState.myIsSmartHome
+    return state.myIsSmartHome
   }
 
   override fun setSmartHome(`val`: Boolean) {
-    myState.myIsSmartHome = `val`
+    state.myIsSmartHome = `val`
   }
 
   override fun getVerticalScrollOffset(): Int {
-    return myState.myVerticalScrollOffset
+    return state.myVerticalScrollOffset
   }
 
   override fun setVerticalScrollOffset(`val`: Int) {
-    if (`val` == -1) myState.clearOverriding(myState::myVerticalScrollOffset)
-    else myState.myVerticalScrollOffset = `val`
+    if (`val` == -1) state.clearOverriding(state::myVerticalScrollOffset)
+    else state.myVerticalScrollOffset = `val`
   }
 
   override fun getVerticalScrollJump(): Int {
-    return myState.myVerticalScrollJump
+    return state.myVerticalScrollJump
   }
 
   override fun setVerticalScrollJump(`val`: Int) {
-    if (`val` == -1) myState.clearOverriding(myState::myVerticalScrollJump)
-    else myState.myVerticalScrollJump = `val`
+    if (`val` == -1) state.clearOverriding(state::myVerticalScrollJump)
+    else state.myVerticalScrollJump = `val`
   }
 
   override fun getHorizontalScrollOffset(): Int {
-    return myState.myHorizontalScrollOffset
+    return state.myHorizontalScrollOffset
   }
 
   override fun setHorizontalScrollOffset(`val`: Int) {
-    if (`val` == -1) myState.clearOverriding(myState::myHorizontalScrollOffset)
-    else myState.myHorizontalScrollOffset = `val`
+    if (`val` == -1) state.clearOverriding(state::myHorizontalScrollOffset)
+    else state.myHorizontalScrollOffset = `val`
   }
 
   override fun getHorizontalScrollJump(): Int {
-    return myState.myHorizontalScrollJump
+    return state.myHorizontalScrollJump
   }
 
   override fun setHorizontalScrollJump(`val`: Int) {
-    if (`val` == -1) myState.clearOverriding(myState::myHorizontalScrollJump)
-    else myState.myHorizontalScrollJump = `val`
+    if (`val` == -1) state.clearOverriding(state::myHorizontalScrollJump)
+    else state.myHorizontalScrollJump = `val`
   }
 
   override fun isVirtualSpace(): Boolean {
-    return myState.myIsVirtualSpace
+    return state.myIsVirtualSpace
   }
 
   override fun setVirtualSpace(allow: Boolean) {
-    myState.myIsVirtualSpace = allow
+    state.myIsVirtualSpace = allow
   }
 
   override fun isAdditionalPageAtBottom(): Boolean {
-    return myState.myIsAdditionalPageAtBottom
+    return state.myIsAdditionalPageAtBottom
   }
 
   override fun setAdditionalPageAtBottom(`val`: Boolean) {
-    myState.myIsAdditionalPageAtBottom = `val`
+    state.myIsAdditionalPageAtBottom = `val`
   }
 
   override fun isCaretInsideTabs(): Boolean {
-    return myState.myIsCaretInsideTabs
+    return state.myIsCaretInsideTabs
   }
 
   override fun setCaretInsideTabs(allow: Boolean) {
-    myState.myIsCaretInsideTabs = allow
+    state.myIsCaretInsideTabs = allow
   }
 
   override fun isBlockCursor(): Boolean {
-    return myState.myIsBlockCursor
+    return state.myIsBlockCursor
   }
 
   override fun setBlockCursor(`val`: Boolean) {
-    myState.myIsBlockCursor = `val`
+    state.myIsBlockCursor = `val`
   }
 
   override fun isFullLineHeightCursor(): Boolean {
-    return myState.myIsFullLineHeightCursor
+    return state.myIsFullLineHeightCursor
   }
 
   override fun setFullLineHeightCursor(`val`: Boolean) {
-    myState.myIsFullLineHeightCursor = `val`
+    state.myIsFullLineHeightCursor = `val`
   }
 
   override fun isCaretRowShown(): Boolean {
-    return myState.myCaretRowShown
+    return state.myCaretRowShown
   }
 
   override fun setCaretRowShown(`val`: Boolean) {
-    myState.myCaretRowShown = `val`
+    state.myCaretRowShown = `val`
   }
 
   override fun getLineCursorWidth(): Int {
-    return myState.myLineCursorWidth
+    return state.myLineCursorWidth
   }
 
   override fun setLineCursorWidth(width: Int) {
     //if (width == myLineCursorWidth) return
 
-    myState.myLineCursorWidth = width
+    state.myLineCursorWidth = width
     //myDispatcher.multicaster.lineCursorWidthChanged(width)
   }
 
   override fun isAnimatedScrolling(): Boolean {
-    return myState.myIsAnimatedScrolling
+    return state.myIsAnimatedScrolling
   }
 
   override fun setAnimatedScrolling(`val`: Boolean) {
-    myState.myIsAnimatedScrolling = `val`
+    state.myIsAnimatedScrolling = `val`
   }
 
   override fun isCamelWords(): Boolean {
-    return myState.myIsCamelWords
+    return state.myIsCamelWords
   }
 
   override fun setCamelWords(`val`: Boolean) {
-    myState.myIsCamelWords = `val`
+    state.myIsCamelWords = `val`
   }
 
   override fun resetCamelWords() {
-    myState.clearOverriding(myState::myIsCamelWords)
+    state.clearOverriding(state::myIsCamelWords)
   }
 
   override fun isBlinkCaret(): Boolean {
-    return myState.myIsCaretBlinking
+    return state.myIsCaretBlinking
   }
 
   override fun setBlinkCaret(`val`: Boolean) {
-    myState.myIsCaretBlinking = `val`
+    state.myIsCaretBlinking = `val`
   }
 
   override fun getCaretBlinkPeriod(): Int {
-    return myState.myCaretBlinkingPeriod
+    return state.myCaretBlinkingPeriod
   }
 
   override fun setCaretBlinkPeriod(blinkPeriod: Int) {
-    myState.myCaretBlinkingPeriod = blinkPeriod
+    state.myCaretBlinkingPeriod = blinkPeriod
   }
 
   override fun isDndEnabled(): Boolean {
-    return myState.myIsDndEnabled
+    return state.myIsDndEnabled
   }
 
   override fun setDndEnabled(`val`: Boolean) {
-    myState.myIsDndEnabled = `val`
+    state.myIsDndEnabled = `val`
   }
 
   override fun isWheelFontChangeEnabled(): Boolean {
-    return myState.myIsWheelFontChangeEnabled
+    return state.myIsWheelFontChangeEnabled
   }
 
   override fun setWheelFontChangeEnabled(`val`: Boolean) {
-    myState.myIsWheelFontChangeEnabled = `val`
+    state.myIsWheelFontChangeEnabled = `val`
   }
 
   override fun isMouseClickSelectionHonorsCamelWords(): Boolean {
-    return myState.myIsMouseClickSelectionHonorsCamelWords
+    return state.myIsMouseClickSelectionHonorsCamelWords
   }
 
   override fun setMouseClickSelectionHonorsCamelWords(`val`: Boolean) {
-    myState.myIsMouseClickSelectionHonorsCamelWords = `val`
+    state.myIsMouseClickSelectionHonorsCamelWords = `val`
   }
 
   override fun isVariableInplaceRenameEnabled(): Boolean {
-    return myState.myIsRenameVariablesInplace
+    return state.myIsRenameVariablesInplace
   }
 
   override fun setVariableInplaceRenameEnabled(`val`: Boolean) {
-    myState.myIsRenameVariablesInplace = `val`
+    state.myIsRenameVariablesInplace = `val`
   }
 
   override fun isRefrainFromScrolling(): Boolean {
-    return myState.myIsRefrainFromScrolling
+    return state.myIsRefrainFromScrolling
   }
 
   override fun setRefrainFromScrolling(b: Boolean) {
-    myState.myIsRefrainFromScrolling = b
+    state.myIsRefrainFromScrolling = b
   }
 
   override fun isUseSoftWraps(): Boolean {
-    return myState.myUseSoftWraps
+    return state.myUseSoftWraps
   }
 
   override fun setUseSoftWraps(use: Boolean) {
-    myState.myUseSoftWraps = use
+    state.myUseSoftWraps = use
   }
 
   fun setUseSoftWrapsQuiet() {
     doNotRefreshEditorFlag = true
     try {
-      myState.myUseSoftWraps = true
+      state.myUseSoftWraps = true
     }
     finally {
       doNotRefreshEditorFlag = false
@@ -536,35 +534,35 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?,
   }
 
   override fun isPaintSoftWraps(): Boolean {
-    return myState.myPaintSoftWraps
+    return state.myPaintSoftWraps
   }
 
   override fun setPaintSoftWraps(`val`: Boolean) {
-    myState.myPaintSoftWraps = `val`
+    state.myPaintSoftWraps = `val`
   }
 
   override fun isUseCustomSoftWrapIndent(): Boolean {
-    return myState.myUseCustomSoftWrapIndent
+    return state.myUseCustomSoftWrapIndent
   }
 
   override fun setUseCustomSoftWrapIndent(useCustomSoftWrapIndent: Boolean) {
-    myState.myUseCustomSoftWrapIndent = useCustomSoftWrapIndent
+    state.myUseCustomSoftWrapIndent = useCustomSoftWrapIndent
   }
 
   override fun getCustomSoftWrapIndent(): Int {
-    return myState.myCustomSoftWrapIndent
+    return state.myCustomSoftWrapIndent
   }
 
   override fun setCustomSoftWrapIndent(indent: Int) {
-    myState.myCustomSoftWrapIndent = indent
+    state.myCustomSoftWrapIndent = indent
   }
 
   override fun isAllowSingleLogicalLineFolding(): Boolean {
-    return myState.myAllowSingleLogicalLineFolding
+    return state.myAllowSingleLogicalLineFolding
   }
 
   override fun setAllowSingleLogicalLineFolding(allow: Boolean) {
-    myState.myAllowSingleLogicalLineFolding = allow
+    state.myAllowSingleLogicalLineFolding = allow
   }
 
   private fun fireEditorRefresh(reinitSettings: Boolean = true) {
@@ -572,19 +570,19 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?,
   }
 
   override fun isPreselectRename(): Boolean {
-    return myState.myRenamePreselect
+    return state.myRenamePreselect
   }
 
   override fun setPreselectRename(`val`: Boolean) {
-    myState.myRenamePreselect = `val`
+    state.myRenamePreselect = `val`
   }
 
   override fun isShowIntentionBulb(): Boolean {
-    return myState.myShowIntentionBulb
+    return state.myShowIntentionBulb
   }
 
   override fun setShowIntentionBulb(show: Boolean) {
-    myState.myShowIntentionBulb = show
+    state.myShowIntentionBulb = show
   }
 
   val language: Language?
@@ -595,26 +593,26 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?,
       @Suppress("SuspiciousCallableReferenceInLambda", "RedundantSuppression")
       it::get
     }
-    myState.languageSupplier = languageSupplier?.let {
+    state.languageSupplier = languageSupplier?.let {
       @Suppress("SuspiciousCallableReferenceInLambda", "RedundantSuppression")
       it::get
     }
   }
 
   override fun isShowingSpecialChars(): Boolean {
-    return myState.showingSpecialCharacters
+    return state.showingSpecialCharacters
   }
 
   override fun setShowingSpecialChars(value: Boolean) {
-    myState.showingSpecialCharacters = value
+    state.showingSpecialCharacters = value
   }
 
   override fun getLineNumerationType(): LineNumerationType {
-    return myState.myLineNumeration
+    return state.myLineNumeration
   }
 
   override fun setLineNumerationType(value: LineNumerationType) {
-    myState.myLineNumeration = value
+    state.myLineNumeration = value
   }
 
   override fun isInsertParenthesesAutomatically(): Boolean {
@@ -624,7 +622,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?,
   @ApiStatus.Internal
   @ApiStatus.Experimental
   fun getState(): EditorSettingsState {
-    return myState
+    return state
   }
 
   private abstract inner class CacheableBackgroundComputable<T>(defaultValue: T) {
@@ -635,7 +633,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?,
 
     init {
       @Suppress("LeakingThis")
-      myComputableSettings.add(this)
+      computableSettings.add(this)
       this.defaultValue = defaultValue
     }
 
