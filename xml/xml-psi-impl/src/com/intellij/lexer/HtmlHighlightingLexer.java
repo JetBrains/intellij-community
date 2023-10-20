@@ -28,28 +28,35 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
   private final int EMBEDDED_LEXER_ON = 0x1 << getBaseStateShift();
 
-  private final FileType ourStyleFileType;// = FileTypeManager.getInstance().getStdFileType("CSS");
   private Lexer embeddedLexer;
   private boolean hasNoEmbedments;
   private final boolean hasNoLayers;
 
   public HtmlHighlightingLexer() {
-    this(null);
+    this(new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()), TOKENS_TO_MERGE), true);
   }
 
-  public HtmlHighlightingLexer(@Nullable FileType styleFileType) {
-    this(new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()), TOKENS_TO_MERGE), true, styleFileType);
-  }
-
-  protected HtmlHighlightingLexer(@NotNull Lexer lexer, boolean caseInsensitive,
-                                  @Nullable FileType styleFileType) {
+  protected HtmlHighlightingLexer(@NotNull Lexer lexer, boolean caseInsensitive) {
     super(lexer, caseInsensitive);
     hasNoLayers = Boolean.TRUE.equals(LayeredLexer.ourDisableLayersFlag.get());
-    ourStyleFileType = styleFileType;
   }
 
-  public @Nullable FileType getStyleFileType() {
-    return ourStyleFileType;
+
+  /**
+   * @deprecated {@code styleFileType} parameter is not used.
+   */
+  @Deprecated
+  public HtmlHighlightingLexer(@Nullable FileType styleFileType) {
+    this();
+  }
+
+  /**
+   * @deprecated {@code styleFileType} parameter is not used.
+   */
+  @Deprecated
+  protected HtmlHighlightingLexer(@NotNull Lexer lexer, boolean caseInsensitive,
+                                  @Nullable FileType styleFileType) {
+    this(lexer, caseInsensitive);
   }
 
   @Override

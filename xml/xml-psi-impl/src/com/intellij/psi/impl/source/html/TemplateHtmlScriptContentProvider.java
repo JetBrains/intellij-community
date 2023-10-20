@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.html;
 
-import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.lang.HtmlScriptContentProvider;
 import com.intellij.lexer.HtmlHighlightingLexer;
 import com.intellij.lexer.Lexer;
@@ -20,6 +19,6 @@ public class TemplateHtmlScriptContentProvider implements HtmlScriptContentProvi
 
   @Override
   public @Nullable Lexer getHighlightingLexer() {
-    return new HtmlHighlightingLexer(HtmlFileType.INSTANCE);
+    return new HtmlHighlightingLexer();
   }
 }

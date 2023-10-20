@@ -13,7 +13,7 @@ public class HtmlIndexPatternBuilder extends XmlIndexPatternBuilder {
   @Override
   public @Nullable Lexer getIndexingLexer(@NotNull PsiFile file) {
     if (HtmlUtil.isHtmlFile(file)) {
-      return new HtmlHighlightingLexer(FileTypeManager.getInstance().getStdFileType("CSS"));
+      return new HtmlHighlightingLexer();
     }
     return null;
   }

@@ -16,7 +16,6 @@
 package com.intellij.lexer;
 
 import com.intellij.html.embedding.HtmlEmbeddedContentProvider;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import org.jetbrains.annotations.NotNull;
 
 public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
@@ -25,7 +24,7 @@ public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
   }
 
   public XHtmlHighlightingLexer(Lexer baseLexer) {
-    super(baseLexer, false, FileTypeRegistry.getInstance().findFileTypeByName("CSS"));
+    super(baseLexer, false);
   }
 
   @Override

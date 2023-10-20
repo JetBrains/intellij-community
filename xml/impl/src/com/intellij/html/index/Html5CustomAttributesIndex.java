@@ -9,7 +9,6 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lexer.HtmlHighlightingLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XHtmlHighlightingLexer;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
@@ -34,7 +33,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
       Language language = ((LanguageFileType)inputData.getFileType()).getLanguage();
       if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
         final Lexer lexer = (language == HTMLLanguage.INSTANCE
-                             ? new HtmlHighlightingLexer(FileTypeManager.getInstance().getStdFileType("CSS"))
+                             ? new HtmlHighlightingLexer()
                              : new XHtmlHighlightingLexer());
         lexer.start(input);
         Map<String, Void> result = new HashMap<>();

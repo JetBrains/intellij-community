@@ -59,7 +59,7 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
 
   @Override
   public @NotNull Lexer getHighlightingLexer() {
-    return new HtmlHighlightingLexer(FileTypeRegistry.getInstance().findFileTypeByName("CSS"));
+    return new HtmlHighlightingLexer();
   }
 
   @Override
