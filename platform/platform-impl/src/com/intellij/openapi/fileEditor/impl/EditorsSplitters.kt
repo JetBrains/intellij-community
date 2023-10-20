@@ -965,19 +965,22 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
 
           val session = fileEditorManager.project.currentSession
           if (session.isLocal) {
-            fileEditorManager.openFileOnStartup(windowDeferred = windowDeferred,
-                                                file = file,
-                                                entry = entry,
-                                                options = FileEditorOpenOptions(
-                                                  selectAsCurrent = false,
-                                                  pin = fileEntry.pinned,
-                                                  index = index,
-                                                  usePreviewTab = entry.isPreview,
-                                                ),
-                                                newProviders = newProviders.await())
+            fileEditorManager.openFileOnStartup(
+              windowDeferred = windowDeferred,
+              file = file,
+              document = document,
+              entry = entry,
+              options = FileEditorOpenOptions(
+                selectAsCurrent = false,
+                pin = fileEntry.pinned,
+                index = index,
+                usePreviewTab = entry.isPreview,
+              ),
+              newProviders = newProviders.await(),
+            )
           }
           else {
-              session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, forceCreate = false, requestFocus = true)
+            session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, forceCreate = false, requestFocus = true)
           }
 
           // This is just to make sure document reference is kept on stack till this point

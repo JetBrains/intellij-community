@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.split
 
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
@@ -37,8 +38,8 @@ abstract class SplitTextEditorProvider(
   }
 
   override fun createEditorAsync(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
-    val firstBuilder = createEditorBuilder(provider = firstProvider, project = project, file = file)
-    val secondBuilder = createEditorBuilder(provider = secondProvider, project = project, file = file)
+    val firstBuilder = createEditorBuilder(provider = firstProvider, project = project, file = file, document = null)
+    val secondBuilder = createEditorBuilder(provider = secondProvider, project = project, file = file, document = null)
     return object : AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
         return createSplitEditor(firstEditor = firstBuilder.build(), secondEditor = secondBuilder.build())
@@ -46,9 +47,9 @@ abstract class SplitTextEditorProvider(
     }
   }
 
-  override suspend fun createEditorBuilder(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
-    val firstBuilder = createEditorBuilderAsync(provider = firstProvider, project = project, file = file)
-    val secondBuilder = createEditorBuilderAsync(provider = secondProvider, project = project, file = file)
+  override suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): AsyncFileEditorProvider.Builder {
+    val firstBuilder = createEditorBuilderAsync(provider = firstProvider, project = project, file = file, document = null)
+    val secondBuilder = createEditorBuilderAsync(provider = secondProvider, project = project, file = file, document = null)
     return object: AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
         return createSplitEditor(firstEditor = firstBuilder.build(), secondEditor = secondBuilder.build())
@@ -118,16 +119,17 @@ abstract class SplitTextEditorProvider(
 private fun createEditorBuilder(
   provider: FileEditorProvider,
   project: Project,
-  file: VirtualFile
+  file: VirtualFile,
+  document: Document?
 ): AsyncFileEditorProvider.Builder {
   if (provider is AsyncFileEditorProvider) {
     if (application.isDispatchThread) {
       return runWithModalProgressBlocking(project, title = "Creating Markdown Editor") {
-        provider.createEditorBuilder(project, file)
+        provider.createEditorBuilder(project = project, file = file, document = document)
       }
     }
     return runBlockingCancellable {
-      provider.createEditorBuilder(project, file)
+      provider.createEditorBuilder(project = project, file = file, document = document)
     }
   }
   return object: AsyncFileEditorProvider.Builder() {
@@ -140,10 +142,11 @@ private fun createEditorBuilder(
 private suspend fun createEditorBuilderAsync(
   provider: FileEditorProvider,
   project: Project,
-  file: VirtualFile
+  file: VirtualFile,
+  document: Document?,
 ): AsyncFileEditorProvider.Builder {
   if (provider is AsyncFileEditorProvider) {
-    return provider.createEditorBuilder(project, file)
+    return provider.createEditorBuilder(project = project, file = file, document = document)
   }
   return object: AsyncFileEditorProvider.Builder() {
     override fun build(): FileEditor {

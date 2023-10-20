@@ -29,6 +29,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.editor.ScrollType
@@ -819,7 +820,7 @@ open class FileEditorManagerImpl(
         }
       }
       if (composite is EditorComposite && options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
-        // NOTE: it is a workaround on problem with runWithModalProgressBlocking which does not respect focus requests.
+        // NOTE: it is a workaround on problem with runWithModalProgressBlocking that does not respect focus requests.
         // It can be removed when the problem is solved. Original bug: IDEA-327729
         composite.preferredFocusedComponent?.requestFocusInWindow()
       }
@@ -1014,7 +1015,12 @@ open class FileEditorManagerImpl(
       else {
         newProviders = runBlockingCancellable {
           FileEditorProviderManager.getInstance().getProvidersAsync(project, file).map { provider ->
-            provider to (if (provider is AsyncFileEditorProvider) provider.createEditorBuilder(project, file) else null)
+            provider to (if (provider is AsyncFileEditorProvider) {
+              provider.createEditorBuilder(project = project, file = file, document = null)
+            }
+            else {
+              null
+            })
           }
         }
       }
@@ -1072,7 +1078,7 @@ open class FileEditorManagerImpl(
 
         // A file is not opened yet. In this case, we have to create editors and select the created EditorComposite.
         val p = FileEditorProviderManager.getInstance().getProvidersAsync(project, file)
-        providers = createBuilders(providers = p, file = file, project = project)
+        providers = createBuilders(providers = p, file = file, project = project, document = null)
       }
       else {
         providers = emptyList()
@@ -1341,7 +1347,7 @@ open class FileEditorManagerImpl(
         }
       }
       if (composite is EditorComposite && openOptions.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
-        // NOTE: it is a workaround on problem with runWithModalProgressBlocking which does not respect focus requests.
+        // NOTE: it is a workaround on problem with runWithModalProgressBlocking that does not respect focus requests.
         // It can be removed when the problem is solved. Original bug: IDEA-327729
         composite.preferredFocusedComponent?.requestFocusInWindow()
       }
@@ -2090,6 +2096,7 @@ open class FileEditorManagerImpl(
 
   internal suspend fun openFileOnStartup(windowDeferred: Deferred<EditorWindow>,
                                          file: VirtualFile,
+                                         document: Document?,
                                          entry: HistoryEntry,
                                          options: FileEditorOpenOptions,
                                          newProviders: List<FileEditorProvider>) {
@@ -2099,7 +2106,7 @@ open class FileEditorManagerImpl(
 
     // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
     coroutineScope {
-      val providerWithBuilderList = async { createBuilders(providers = newProviders, file = file, project = project) }
+      val providerWithBuilderList = async { createBuilders(providers = newProviders, file = file, project = project, document = document) }
       val window = windowDeferred.await()
       val existingComposite = withContext(Dispatchers.EDT) { window.getComposite(file) }
       openFileInEdt(existingComposite = existingComposite,
@@ -2379,14 +2386,15 @@ private fun getEffectiveOptions(options: FileEditorOpenOptions, entry: HistoryEn
 }
 
 private suspend fun createBuilders(providers: List<FileEditorProvider>,
-                                          file: VirtualFile,
-                                          project: Project): List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>> {
+                                   file: VirtualFile,
+                                   project: Project,
+                                   document: Document?): List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>> {
   return coroutineScope {
     providers.map { provider ->
       async {
         if (provider is AsyncFileEditorProvider) {
           try {
-            provider to provider.createEditorBuilder(project = project, file = file)
+            provider to provider.createEditorBuilder(project = project, file = file, document = document)
           }
           catch (e: CancellationException) {
             throw e

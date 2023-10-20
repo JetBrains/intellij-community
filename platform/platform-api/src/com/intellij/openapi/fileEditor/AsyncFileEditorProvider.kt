@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -20,7 +21,7 @@ interface AsyncFileEditorProvider : FileEditorProvider {
   }
 
   @Experimental
-  suspend fun createEditorBuilder(project: Project, file: VirtualFile): Builder {
+  suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): Builder {
     return readAction { createEditorAsync(project, file) }
   }
 
