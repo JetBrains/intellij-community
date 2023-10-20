@@ -58,6 +58,14 @@ fun CoroutineScope.nestedDisposable(): Disposable {
 fun CoroutineScope.launchNow(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job =
   launch(context, CoroutineStart.UNDISPATCHED, block)
 
+/**
+ * Similar to [launchIn], but starts the collection with [CoroutineStart.UNDISPATCHED] and allows overriding context
+ */
+fun <T> Flow<T>.launchNowIn(scope: CoroutineScope, context: CoroutineContext = EmptyCoroutineContext): Job =
+  scope.launch(context, CoroutineStart.UNDISPATCHED) {
+    collect()
+  }
+
 @ApiStatus.Experimental
 fun <T1, T2, R> combineState(scope: CoroutineScope,
                              state1: StateFlow<T1>,

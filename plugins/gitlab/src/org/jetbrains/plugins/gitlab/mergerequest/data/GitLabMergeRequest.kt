@@ -81,6 +81,7 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   fun getRelativeFilePath(virtualFile: VirtualFile): FilePath?
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class LoadedGitLabMergeRequest(
   private val project: Project,
   parentCs: CoroutineScope,
@@ -151,18 +152,10 @@ internal class LoadedGitLabMergeRequest(
   override val draftReviewText: MutableStateFlow<String> = MutableStateFlow("")
 
   init {
-    cs.launch(Dispatchers.IO) {
-      mergeRequestRefreshRequest.collectLatest {
-        try {
-          _isLoading.value = true
-          val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, iid).body()!!
-          updateMergeRequestData(updatedMergeRequest)
-        }
-        finally {
-          _isLoading.value = false
-        }
-      }
-    }
+    mergeRequestRefreshRequest
+      .mapLatest { reloadMergeRequestData() }
+      .catch { LOG.info("Error occurred while loading merge request data", it) }
+      .launchNowIn(cs)
 
     cs.launch {
       val repository = projectMapping.gitRepository
@@ -175,6 +168,19 @@ internal class LoadedGitLabMergeRequest(
           discussionsContainer.requestDiscussionsReload()
         }
       }
+    }
+  }
+
+  private suspend fun reloadMergeRequestData() {
+    try {
+      _isLoading.value = true
+      val updatedMergeRequest = withContext(Dispatchers.IO) {
+        api.graphQL.loadMergeRequest(glProject, iid).body()!!
+      }
+      updateMergeRequestData(updatedMergeRequest)
+    }
+    finally {
+      _isLoading.value = false
     }
   }
 
