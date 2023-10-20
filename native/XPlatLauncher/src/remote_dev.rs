@@ -320,25 +320,6 @@ impl RemoteDevLaunchConfiguration {
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
 
-        match env::var("REMOTE_DEV_NEW_UI_ENABLED") {
-            Ok(remote_dev_new_ui_enabled) => {
-                match remote_dev_new_ui_enabled.as_str() {
-                    "1" | "true" => {
-                        info!("Force enable new UI");
-                        self.init_eap_registry_file_if_needed()?.write_all("\nide.experimental.ui\ntrue\n".as_bytes())
-                            .with_context(|| "Failed to write in 'early-access-registry.txt'")?;
-                        remote_dev_properties.push(("ide.experimental.ui", "true"));
-                    },
-                    _ => {
-                        bail!("Unsupported value for REMOTE_DEV_NEW_UI_ENABLED variable: '{}'", remote_dev_new_ui_enabled);
-                    },
-                }
-            }
-            Err(_) => {
-                info!("Using ui config with default values");
-            }
-        }
-
         let remote_dev_server_jcef_enabled = env::var("REMOTE_DEV_SERVER_JCEF_ENABLED").unwrap_or_default();
 
         match remote_dev_server_jcef_enabled.to_lowercase().as_str() {
@@ -439,22 +420,6 @@ impl RemoteDevLaunchConfiguration {
         writer.flush()?;
 
         Ok(path)
-    }
-
-
-    fn init_eap_registry_file_if_needed(&self) -> Result<File> {
-        let ij_host_config_dir = &self.config_dir;
-        let eap_registry_file_path = &ij_host_config_dir.join("early-access-registry.txt");
-
-        if eap_registry_file_path.exists() {
-            debug!("{eap_registry_file_path:?} exists");
-            return Ok(File::open(&eap_registry_file_path)?);
-        }
-
-        let eap_registry_file = File::create(eap_registry_file_path).with_context(|| format!("Failed to create {eap_registry_file_path:?}"))?;
-        debug!("File '{eap_registry_file:?}' has been created");
-
-        Ok(eap_registry_file)
     }
 
     #[cfg(target_os = "linux")]
