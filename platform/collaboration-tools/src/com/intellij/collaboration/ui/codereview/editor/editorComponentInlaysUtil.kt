@@ -8,6 +8,8 @@ import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -27,6 +29,8 @@ interface EditorMapped {
   val line: Flow<Int?>
   val isVisible: Flow<Boolean>
 }
+
+private val LOG = Logger.getInstance("codereview.editor.inlays")
 
 @ApiStatus.Experimental
 fun <VM : EditorMapped> EditorEx.controlInlaysIn(
@@ -76,11 +80,13 @@ private fun <VM : EditorMapped> CoroutineScope.controlInlay(
       .collectLatest { (line, isVisible) ->
         val currentInlay = inlay
         if (line != null && isVisible) {
-          val offset = editor.document.getLineEndOffset(line)
-          if (currentInlay == null || !currentInlay.isValid || currentInlay.offset != offset) {
-            currentInlay?.let(Disposer::dispose)
-            inlay = editor.insertComponent(offset, rendererFactory(vm))
-          }
+          runCatching {
+            val offset = editor.document.getLineEndOffset(line)
+            if (currentInlay == null || !currentInlay.isValid || currentInlay.offset != offset) {
+              currentInlay?.let(Disposer::dispose)
+              inlay = editor.insertComponent(offset, rendererFactory(vm))
+            }
+          }.getOrLogException(LOG)
           awaitCancellation()
         }
         else if (currentInlay != null) {
