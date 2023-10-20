@@ -32,7 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -49,8 +49,8 @@ public final class EditorFactoryImpl extends EditorFactory {
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
 
   public EditorFactoryImpl() {
-    MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    busConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
+    SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
@@ -69,8 +69,8 @@ public final class EditorFactoryImpl extends EditorFactory {
         });
       }
     });
-    busConnection.subscribe(EditorColorsManager.TOPIC, __ -> refreshAllEditors());
-    busConnection.subscribe(AdvancedSettingsChangeListener.TOPIC, (id, __, __1) -> {
+    connection.subscribe(EditorColorsManager.TOPIC, __ -> refreshAllEditors());
+    connection.subscribe(AdvancedSettingsChangeListener.TOPIC, (id, __, __1) -> {
       if (id.equals(EditorGutterComponentImpl.DISTRACTION_FREE_MARGIN) ||
           id.equals(EditorPainter.EDITOR_TAB_PAINTING) ||
           id.equals(SettingsImplKt.EDITOR_SHOW_SPECIAL_CHARS)) {
@@ -134,7 +134,11 @@ public final class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public void refreshAllEditors() {
-    collectAllEditors().forEach(editor -> ((EditorEx)editor).reinitSettings());
+    collectAllEditors().forEach(editor -> {
+      if (AsyncEditorLoader.isEditorLoaded(editor)) {
+        ((EditorEx)editor).reinitSettings();
+      }
+    });
   }
 
   @Override
