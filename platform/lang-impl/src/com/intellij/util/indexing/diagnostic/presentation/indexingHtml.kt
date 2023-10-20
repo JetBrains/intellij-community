@@ -444,6 +444,10 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                 td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage.toString())
               }
               tr {
+                td("Number of files for which there was nothing to write (indexes were already up-to-date)")
+                td(fileCount.numberOfNothingToWriteFiles.toString())
+              }
+              tr {
                 td(TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT)
                 td(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
               }
