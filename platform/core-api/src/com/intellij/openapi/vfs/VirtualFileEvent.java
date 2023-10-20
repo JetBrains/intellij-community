@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EventObject;
 
+import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
+
 /**
  * Provides data for a virtual file system change event.
  *
@@ -81,7 +83,7 @@ public class VirtualFileEvent extends EventObject {
   }
 
   public boolean isFromRefresh() {
-    return myRequestor == null;
+    return myRequestor == REFRESH_REQUESTOR;
   }
 
   /**

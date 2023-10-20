@@ -65,6 +65,7 @@ final class RefreshWorker {
   private final Semaphore mySemaphore;
   private final PersistentFS myPersistence = PersistentFS.getInstance();
   private final FSRecordsImpl myPersistencePeer = ((PersistentFSImpl)myPersistence).peer();
+  private final Object myRequestor = VFileEvent.REFRESH_REQUESTOR;
   private volatile boolean myCancelled;
 
   private final AtomicInteger myFullScans = new AtomicInteger(), myPartialScans = new AtomicInteger(), myProcessed = new AtomicInteger();
@@ -397,11 +398,11 @@ final class RefreshWorker {
     return new ChildInfoImpl(nameId, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
-  private static void generateDeleteEvents(List<VFileEvent> events,
-                                           VirtualDirectoryImpl dir,
-                                           Set<String> deletedNames,
-                                           ObjectOpenCustomHashSet<String> actualNames,
-                                           List<ChildInfo> newKids) {
+  private void generateDeleteEvents(List<VFileEvent> events,
+                                    VirtualDirectoryImpl dir,
+                                    Set<String> deletedNames,
+                                    ObjectOpenCustomHashSet<String> actualNames,
+                                    List<ChildInfo> newKids) {
     for (String name : deletedNames) {
       VirtualFileSystemEntry child = dir.findChild(name);
       if (child != null) {
@@ -476,9 +477,9 @@ final class RefreshWorker {
     file.markDirty();
   }
 
-  private static void scheduleDeletion(List<VFileEvent> events, VirtualFile file) {
+  private void scheduleDeletion(List<VFileEvent> events, VirtualFile file) {
     if (LOG.isTraceEnabled()) LOG.trace("delete file=" + file);
-    events.add(new VFileDeleteEvent(null, file, true));
+    events.add(new VFileDeleteEvent(myRequestor, file));
   }
 
   private void scheduleCreation(List<VFileEvent> events, NewVirtualFile parent, String childName, FileAttributes attributes, @Nullable String symlinkTarget) {
@@ -505,7 +506,7 @@ final class RefreshWorker {
       }
     }
 
-    events.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children));
+    events.add(new VFileCreateEvent(myRequestor, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, children));
 
     VFileEvent event = VirtualDirectoryImpl.generateCaseSensitivityChangedEventForUnknownCase(parent, childName);
     if (event != null) {
@@ -647,7 +648,7 @@ final class RefreshWorker {
           "update file=" + child +
           (oldTimestamp != newTimestamp ? " TS=" + oldTimestamp + "->" + newTimestamp : "") +
           (oldLength != newLength ? " len=" + oldLength + "->" + newLength : ""));
-        events.add(new VFileContentChangeEvent(null, child, child.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength, true));
+        events.add(new VFileContentChangeEvent(myRequestor, child, child.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength));
       }
       child.markClean();
     }
@@ -690,9 +691,9 @@ final class RefreshWorker {
     return false;
   }
 
-  private static boolean checkAndScheduleFileNameChange(List<VFileEvent> events,
-                                                        @Nullable ObjectOpenCustomHashSet<String> actualNames,
-                                                        VirtualFile child) {
+  private boolean checkAndScheduleFileNameChange(List<VFileEvent> events,
+                                                 @Nullable ObjectOpenCustomHashSet<String> actualNames,
+                                                 VirtualFile child) {
     if (actualNames != null) {
       String currentName = child.getName();
       String actualName = actualNames.get(currentName);
@@ -704,32 +705,32 @@ final class RefreshWorker {
     return false;
   }
 
-  private static void checkWritableAttributeChange(List<VFileEvent> events, VirtualFile file, boolean oldWritable, boolean newWritable) {
+  private void checkWritableAttributeChange(List<VFileEvent> events, VirtualFile file, boolean oldWritable, boolean newWritable) {
     if (oldWritable != newWritable) {
       scheduleAttributeChange(events, file, VirtualFile.PROP_WRITABLE, oldWritable, newWritable);
     }
   }
 
-  private static void checkHiddenAttributeChange(List<VFileEvent> events, VirtualFile child, boolean oldHidden, boolean newHidden) {
+  private void checkHiddenAttributeChange(List<VFileEvent> events, VirtualFile child, boolean oldHidden, boolean newHidden) {
     if (oldHidden != newHidden) {
       scheduleAttributeChange(events, child, VirtualFile.PROP_HIDDEN, oldHidden, newHidden);
     }
   }
 
-  private static void checkSymbolicLinkChange(List<VFileEvent> events, VirtualFile child, String oldTarget, String currentTarget) {
+  private void checkSymbolicLinkChange(List<VFileEvent> events, VirtualFile child, String oldTarget, String currentTarget) {
     String currentVfsTarget = currentTarget != null ? FileUtilRt.toSystemIndependentName(currentTarget) : null;
     if (!Objects.equals(oldTarget, currentVfsTarget)) {
       scheduleAttributeChange(events, child, VirtualFile.PROP_SYMLINK_TARGET, oldTarget, currentVfsTarget);
     }
   }
 
-  private static void scheduleAttributeChange(List<VFileEvent> events,
-                                              VirtualFile file,
-                                              @VirtualFile.PropName String property,
-                                              Object current,
-                                              Object upToDate) {
+  private void scheduleAttributeChange(List<VFileEvent> events,
+                                       VirtualFile file,
+                                       @VirtualFile.PropName String property,
+                                       Object current,
+                                       Object upToDate) {
     if (LOG.isTraceEnabled()) LOG.trace("update file=" + file + ' ' + property + '=' + current + "->" + upToDate);
-    events.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
+    events.add(new VFilePropertyChangeEvent(myRequestor, file, property, current, upToDate));
   }
 
   static Consumer<? super VirtualFile> ourTestListener;

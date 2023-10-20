@@ -19,6 +19,22 @@ public final class VFileCreateEvent extends VFileEvent {
   private final int myChildNameId;
   private VirtualFile myCreatedFile;
 
+  /** @deprecated use {@link VFileCreateEvent#VFileCreateEvent(Object, VirtualFile, String, boolean, FileAttributes, String, ChildInfo[])} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("unused")
+  public VFileCreateEvent(Object requestor, @NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory,
+                          @Nullable FileAttributes attributes, @Nullable String symlinkTarget, boolean isFromRefresh,
+                          ChildInfo @Nullable [] children) {
+    super(requestor);
+    myParent = parent;
+    myDirectory = isDirectory;
+    myAttributes = attributes;
+    mySymlinkTarget = symlinkTarget;
+    myChildren = children;
+    myChildNameId = VirtualFileManager.getInstance().storeName(childName);
+  }
+
   @ApiStatus.Internal
   public VFileCreateEvent(Object requestor,
                           @NotNull VirtualFile parent,
@@ -26,9 +42,8 @@ public final class VFileCreateEvent extends VFileEvent {
                           boolean isDirectory,
                           @Nullable("null means should read from the created file") FileAttributes attributes,
                           @Nullable String symlinkTarget,
-                          boolean isFromRefresh,
                           ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] children) {
-    super(requestor, isFromRefresh);
+    super(requestor);
     myParent = parent;
     myDirectory = isDirectory;
     myAttributes = attributes;

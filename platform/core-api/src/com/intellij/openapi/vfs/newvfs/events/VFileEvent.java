@@ -4,21 +4,23 @@ package com.intellij.openapi.vfs.newvfs.events;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class VFileEvent {
-  private final boolean myIsFromRefresh;
+  @ApiStatus.Internal
+  public static final Object REFRESH_REQUESTOR = "VFileEvent.refresh";
+
   private final Object myRequestor;
   private String myCachedPath;
 
-  public VFileEvent(Object requestor, final boolean isFromRefresh) {
+  public VFileEvent(Object requestor) {
     myRequestor = requestor;
-    myIsFromRefresh = isFromRefresh;
   }
 
   public boolean isFromRefresh() {
-    return myIsFromRefresh;
+    return myRequestor == REFRESH_REQUESTOR;
   }
 
   /**

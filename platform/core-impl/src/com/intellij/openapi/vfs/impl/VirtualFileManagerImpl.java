@@ -204,7 +204,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
       if (virtualFile.isValid()) {
         ApplicationManager.getApplication().runWriteAction(() -> {
           List<VFileEvent> events =
-            Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));
+            Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue));
           BulkFileListener listener = app.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
           listener.before(events);
           listener.after(events);

@@ -322,7 +322,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     for (int i = 0; i < N; i++) {
       String childName = i + ".txt";
       fs.createIfNotExists(temp, childName);
-      events.add(new VFileCreateEvent(this, temp, childName, false, null, null, false, null));
+      events.add(new VFileCreateEvent(this, temp, childName, false, null, null, null));
     }
     List<CharSequence> names = ContainerUtil.map(events, e -> ((VFileCreateEvent)e).getChildName());
     temp.removeChildren(IntSortedSets.EMPTY_SET, names);
@@ -331,7 +331,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   private void eventsForDeleting(List<VFileEvent> events, VirtualDirectoryImpl temp) {
     events.clear();
     temp.getCachedChildren().stream()
-      .map(v->new VFileDeleteEvent(this, v, false))
+      .map(v->new VFileDeleteEvent(this, v))
       .forEach(events::add);
   }
 }

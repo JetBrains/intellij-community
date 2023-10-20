@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.find.ngrams.TrigramIndex
@@ -1004,10 +1004,10 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       def len = max / 2
 
       for (int i = 0; i < len; ++i) {
-        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename, filename2, true))
-        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename2, filename, true))
-        eventList.add(new VFileDeleteEvent(null, file, true))
-        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, null, true, null))
+        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename, filename2))
+        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename2, filename))
+        eventList.add(new VFileDeleteEvent(null, file))
+        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, null, null))
       }
 
       def applier = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector.prepareChange(eventList)

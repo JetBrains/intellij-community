@@ -1,5 +1,5 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.CacheSwitcher;
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
@@ -404,8 +404,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileDeleteEvent->file.txt
                   """,
 
-                new VFileDeleteEvent(this, file, false),
-                new VFileDeleteEvent(this, file, false));
+                new VFileDeleteEvent(this, file),
+                new VFileDeleteEvent(this, file));
   }
 
   @Test
@@ -417,9 +417,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileCreateEvent->xx.created VFileDeleteEvent->file.txt
                   """,
 
-                new VFileDeleteEvent(this, file, false),
-                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, false, null),
-                new VFileDeleteEvent(this, file, false));
+                new VFileDeleteEvent(this, file),
+                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, null),
+                new VFileDeleteEvent(this, file));
   }
 
   @Test
@@ -431,9 +431,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileDeleteEvent->d
                   """,
 
-                new VFileDeleteEvent(this, file.getParent(), false),
-                new VFileDeleteEvent(this, file, false),
-                new VFileDeleteEvent(this, file, false));
+                new VFileDeleteEvent(this, file.getParent()),
+                new VFileDeleteEvent(this, file),
+                new VFileDeleteEvent(this, file));
   }
 
   @Test
@@ -445,8 +445,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileCreateEvent->xx.created
                   """,
 
-                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, false, null),
-                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, false, null));
+                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, null),
+                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, null));
   }
 
   @Test
@@ -460,10 +460,10 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileDeleteEvent->c
                   """,
 
-                new VFileDeleteEvent(this, file, false),
-                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, false, null),
-                new VFileCreateEvent(this, file.getParent(), "xx.created2", false, null, null, false, null),
-                new VFileDeleteEvent(this, file.getParent(), false));
+                new VFileDeleteEvent(this, file),
+                new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, null),
+                new VFileCreateEvent(this, file.getParent(), "xx.created2", false, null, null, null),
+                new VFileDeleteEvent(this, file.getParent()));
   }
 
   @Test
@@ -477,8 +477,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileDeleteEvent->test.txt
                   """,
 
-                new VFileContentChangeEvent(this, vFile.getParent(), 0, 0, false),
-                new VFileDeleteEvent(this, vFile, false));
+                new VFileContentChangeEvent(this, vFile.getParent(), 0, 0),
+                new VFileDeleteEvent(this, vFile));
   }
 
   @Test
@@ -493,9 +493,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileDeleteEvent->c
                   """,
 
-                new VFileDeleteEvent(this, file, false),
-                new VFileDeleteEvent(this, file.getParent(), false),
-                new VFileDeleteEvent(this, file2, false));
+                new VFileDeleteEvent(this, file),
+                new VFileDeleteEvent(this, file.getParent()),
+                new VFileDeleteEvent(this, file2));
   }
 
   @Test
@@ -507,9 +507,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFileContentChangeEvent->test.txt VFilePropertyChangeEvent->test.txt VFilePropertyChangeEvent->test.txt
                   """,
 
-                new VFileContentChangeEvent(this, file, 0, 1, false),
-                new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_WRITABLE, false, true, false),
-                new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_ENCODING, ISO_8859_1, UTF_8, false));
+                new VFileContentChangeEvent(this, file, 0, 1),
+                new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_WRITABLE, false, true),
+                new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_ENCODING, ISO_8859_1, UTF_8));
   }
 
   @Test
@@ -525,7 +525,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   """,
 
                 new VFileMoveEvent(this, testTxt, newParent),
-                new VFileDeleteEvent(this, newParent, false));
+                new VFileDeleteEvent(this, newParent));
   }
 
   @Test
@@ -541,7 +541,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   """,
 
                 new VFileCopyEvent(this, file, newParent, "new.txt"),
-                new VFileDeleteEvent(this, file, false));
+                new VFileDeleteEvent(this, file));
   }
 
   @Test
@@ -556,8 +556,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
                   After: VFilePropertyChangeEvent->test2.txt
                   """,
 
-                new VFileDeleteEvent(this, file2, false),
-                new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_NAME, file.getName(), file2.getName(), false));
+                new VFileDeleteEvent(this, file2),
+                new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_NAME, file.getName(), file2.getName()));
   }
 
   @Test
@@ -851,7 +851,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     jarVFile.refresh(false, false);
     events.sort(Comparator.comparing((VFileEvent e) -> e.getFile().getUrl()));
-    assertEqualUnorderedEvents(events, new VFileDeleteEvent(this, vFile, false), new VFileDeleteEvent(this, jarVFile, false));
+    assertEqualUnorderedEvents(events, new VFileDeleteEvent(this, vFile), new VFileDeleteEvent(this, jarVFile));
   }
 
   @Test
@@ -876,8 +876,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     ((JarFileSystemImpl)JarFileSystem.getInstance()).markDirtyAndRefreshVirtualFileDeepInsideJarForTest(webXml);
 
-    assertEqualUnorderedEvents(events, new VFileDeleteEvent(this, webXml, false),
-                               new VFileContentChangeEvent(this, vFile, 0, 0, false));
+    assertEqualUnorderedEvents(events, new VFileDeleteEvent(this, webXml),
+                               new VFileContentChangeEvent(this, vFile, 0, 0));
   }
 
   @Test
@@ -913,7 +913,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     vFile.refresh(false, false);
     vFILE.refresh(false, false);
     assertEqualUnorderedEvents(events,
-                               new VFileContentChangeEvent(this, vFile, -1, -1, true));
+                               new VFileContentChangeEvent(this, vFile, -1, -1));
 
     events.clear();
 
@@ -921,7 +921,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     vFile.refresh(false, false);
     vFILE.refresh(false, false);
     assertEqualUnorderedEvents(events,
-                               new VFileContentChangeEvent(this, vFILE, -1, -1, true));
+                               new VFileContentChangeEvent(this, vFILE, -1, -1));
 
     events.clear();
 
@@ -929,8 +929,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     FileUtil.writeToFile(FILE, "content2");
     vDir.refresh(false, true);
     assertEqualUnorderedEvents(events,
-                               new VFileContentChangeEvent(this, vFile, -1, -1, true),
-                               new VFileContentChangeEvent(this, vFILE, -1, -1, true));
+                               new VFileContentChangeEvent(this, vFile, -1, -1),
+                               new VFileContentChangeEvent(this, vFILE, -1, -1));
 
     events.clear();
 
@@ -938,8 +938,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     FileUtil.delete(FILE);
     vDir.refresh(false, true);
     assertEqualUnorderedEvents(events,
-                               new VFileDeleteEvent(this, vFile, false),
-                               new VFileDeleteEvent(this, vFILE, false));
+                               new VFileDeleteEvent(this, vFile),
+                               new VFileDeleteEvent(this, vFILE));
 
     events.clear();
 
@@ -947,8 +947,8 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertTrue(FILE.createNewFile());
     vDir.refresh(false, true);
     assertEqualUnorderedEvents(events,
-                               new VFileCreateEvent(this, vDir, vFile.getName(), false, null, null, true, null),
-                               new VFileCreateEvent(this, vDir, vFILE.getName(), false, null, null, true, null));
+                               new VFileCreateEvent(this, vDir, vFile.getName(), false, null, null, null),
+                               new VFileCreateEvent(this, vDir, vFILE.getName(), false, null, null, null));
   }
 
   @Test
@@ -1129,7 +1129,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
   private VFileEvent ignoreCrazyVFileContentChangedEquals(VFileEvent exp) {
     if (exp instanceof VFileContentChangeEvent) {
-      exp = new VFileContentChangeEvent(this, ((VFileContentChangeEvent)exp).getFile(), 0, 0, -1, -1, -1, -1, true);
+      exp = new VFileContentChangeEvent(this, ((VFileContentChangeEvent)exp).getFile(), 0, 0, -1, -1, -1, -1);
     }
     return exp;
   }

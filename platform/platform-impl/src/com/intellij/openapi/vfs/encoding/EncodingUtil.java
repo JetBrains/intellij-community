@@ -190,7 +190,7 @@ public final class EncodingUtil {
     // if file was modified, the user will be asked here
     try {
       VFileContentChangeEvent event =
-        new VFileContentChangeEvent(null, virtualFile, 0, 0, false);
+        new VFileContentChangeEvent(null, virtualFile, 0, 0);
       EncodingProjectManagerImpl.suppressReloadDuring(() -> ((FileDocumentManagerImpl)documentManager).contentsChanged(event));
     }
     finally {

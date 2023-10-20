@@ -3,15 +3,23 @@ package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class VFileDeleteEvent extends VFileEvent {
-  private final @NotNull VirtualFile myFile;
+  private final VirtualFile myFile;
 
-  public VFileDeleteEvent(@Nullable Object requestor, @NotNull VirtualFile file, boolean isFromRefresh) {
-    super(requestor, isFromRefresh);
+  /** @deprecated use {@link VFileDeleteEvent#VFileDeleteEvent(Object, VirtualFile)} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("unused")
+  public VFileDeleteEvent(Object requestor, @NotNull VirtualFile file, boolean isFromRefresh) {
+    this(requestor, file);
+  }
+
+  @ApiStatus.Internal
+  public VFileDeleteEvent(Object requestor, @NotNull VirtualFile file) {
+    super(requestor);
     myFile = file;
   }
 
@@ -21,7 +29,7 @@ public final class VFileDeleteEvent extends VFileEvent {
   }
 
   @Override
-  public @NonNls String toString() {
+  public String toString() {
     return "VfsEvent[deleted: " + myFile.getUrl() + "]";
   }
 

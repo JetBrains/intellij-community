@@ -19,13 +19,26 @@ public final class VFilePropertyChangeEvent extends VFileEvent {
   private final Object myOldValue;
   private final Object myNewValue;
 
+  /** @deprecated use {@link VFilePropertyChangeEvent#VFilePropertyChangeEvent(Object, VirtualFile, String, Object, Object)} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("unused")
   public VFilePropertyChangeEvent(Object requestor,
                                   @NotNull VirtualFile file,
                                   @VirtualFile.PropName @NotNull String propertyName,
                                   @Nullable Object oldValue,
                                   @Nullable Object newValue,
                                   boolean isFromRefresh) {
-    super(requestor, isFromRefresh);
+    this(requestor, file, propertyName, oldValue, newValue);
+  }
+
+  @ApiStatus.Internal
+  public VFilePropertyChangeEvent(Object requestor,
+                                  @NotNull VirtualFile file,
+                                  @VirtualFile.PropName @NotNull String propertyName,
+                                  @Nullable Object oldValue,
+                                  @Nullable Object newValue) {
+    super(requestor);
     myFile = file;
     myPropertyName = propertyName;
     myOldValue = oldValue;

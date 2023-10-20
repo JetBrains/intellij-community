@@ -45,6 +45,7 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.function.BiConsumer;
 
+import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
@@ -305,7 +306,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     boolean isEmptyDirectory = isDirectory && !fs.hasChildren(fake);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(fake) : null;
     ChildInfo[] children = isEmptyDirectory ? ChildInfo.EMPTY_ARRAY : null;
-    VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDirectory, attributes, symlinkTarget, true, children);
+    var event = new VFileCreateEvent(REFRESH_REQUESTOR, this, realName, isDirectory, attributes, symlinkTarget, children);
     RefreshQueue.getInstance().processEvents(false, List.of(event));
     return findChild(realName);
   }
@@ -903,8 +904,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (dir.getFileSystem().isCaseSensitive() != (actualCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
         // fire only when the new case sensitivity is different from the default FS sensitivity,
         // because only in that case the file.isCaseSensitive() value could change
-        return new VFilePropertyChangeEvent(null, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY, FileAttributes.CaseSensitivity.UNKNOWN,
-                                            actualCaseSensitivity, true);
+        return new VFilePropertyChangeEvent(REFRESH_REQUESTOR, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
+                                            FileAttributes.CaseSensitivity.UNKNOWN, actualCaseSensitivity);
       }
       else {
         changeCaseSensitivity(dir, actualCaseSensitivity);
