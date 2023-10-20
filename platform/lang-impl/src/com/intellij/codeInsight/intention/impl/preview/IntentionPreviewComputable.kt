@@ -230,7 +230,7 @@ fun findCopyIntention(project: Project,
                       editorCopy: Editor,
                       psiFileCopy: PsiFile,
                       originalAction: IntentionAction): IntentionAction? {
-  val actionsToShow = ShowIntentionsPass.getActionsToShow(editorCopy, psiFileCopy, false)
+  val actionsToShow = ShowIntentionsPass.getActionsToShow(editorCopy, psiFileCopy)
   val cachedIntentions = CachedIntentions.createAndUpdateActions(project, psiFileCopy, editorCopy, actionsToShow)
   return getFixes(cachedIntentions).find { it.text == originalAction.text }?.action
 }

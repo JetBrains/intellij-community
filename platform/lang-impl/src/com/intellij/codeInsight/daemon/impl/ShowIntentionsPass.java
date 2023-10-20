@@ -273,10 +273,8 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   /**
    * Returns the list of actions to show in the Alt-Enter popup at the caret offset in the given editor.
-   *
-   * @param includeSyncActions whether EDT-only providers should be queried, if {@code true}, this method should be invoked in EDT
    */
-  public static @NotNull IntentionsInfo getActionsToShow(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, boolean includeSyncActions) {
+  public static @NotNull IntentionsInfo getActionsToShow(@NotNull Editor hostEditor, @NotNull PsiFile hostFile) {
     IntentionsInfo result = new IntentionsInfo();
     getActionsToShow(hostEditor, hostFile, result, -1);
     return result;

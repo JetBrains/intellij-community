@@ -888,7 +888,7 @@ public class HtmlHighlightingTest extends BasePlatformTestCase {
   private void doTestHtml5QuickFixShouldBeFirst() {
     myFixture.configureByFile(getTestName(false) + ".html");
     myFixture.doHighlighting();
-    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(myFixture.getEditor(), myFixture.getFile(), false);
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(myFixture.getEditor(), myFixture.getFile());
     assertFalse(intentions.isEmpty());
     CachedIntentions actions = CachedIntentions.createAndUpdateActions(getProject(), myFixture.getFile(), myFixture.getEditor(), intentions);
     assertNotEmpty(actions.getAllActions());

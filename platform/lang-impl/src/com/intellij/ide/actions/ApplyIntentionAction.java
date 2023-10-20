@@ -47,7 +47,7 @@ public final class ApplyIntentionAction extends AnAction {
   }
 
   public static ApplyIntentionAction @Nullable [] getAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
-    ShowIntentionsPass.IntentionsInfo info = ShowIntentionsPass.getActionsToShow(editor, file, false);
+    ShowIntentionsPass.IntentionsInfo info = ShowIntentionsPass.getActionsToShow(editor, file);
     if (info.isEmpty()) return null;
 
     final List<HighlightInfo.IntentionActionDescriptor> actions = new ArrayList<>();
