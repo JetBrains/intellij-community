@@ -12,7 +12,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.update.UiNotifyConnector
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -131,10 +130,6 @@ internal class GitLabReviewTabComponentFactory(
             req.login(account, token)
           }
         }
-      }
-
-      UiNotifyConnector.doWhenFirstShown(selectors) {
-        selectorVm.submitSelection()
       }
 
       selectors
