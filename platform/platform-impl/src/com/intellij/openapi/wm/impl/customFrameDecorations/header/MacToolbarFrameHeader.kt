@@ -22,7 +22,6 @@ import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
-import com.jetbrains.JBR
 import com.jetbrains.WindowDecorations
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -42,7 +41,7 @@ private const val GAP_FOR_BUTTONS = 80
 internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
                                      private val frame: JFrame,
                                      private val rootPane: IdeRootPane)
-  : JPanel(), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
+  : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
   private var view: HeaderView
 
   private val updateRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -61,15 +60,11 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     }
   }
 
-  private val customTitleBar: WindowDecorations.CustomTitleBar?
-
   init {
     // color full toolbar
     isOpaque = false
     background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
 
-    val windowDecorations = JBR.getWindowDecorations()
-    customTitleBar = windowDecorations?.createCustomTitleBar()
 
     layout = object : GridBagLayout() {
       override fun preferredLayoutSize(parent: Container?): Dimension {
