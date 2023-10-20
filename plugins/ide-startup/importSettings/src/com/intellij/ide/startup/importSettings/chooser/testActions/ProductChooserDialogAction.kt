@@ -8,7 +8,7 @@ import com.intellij.openapi.project.DumbAwareAction
 
 class ProductChooserDialogAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    MultiplePageDialog.show(ProductChooserDialog())
+    MultiplePageDialog.show(ProductChooserDialog(), isModal = false)
   }
 }
 

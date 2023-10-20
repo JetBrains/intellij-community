@@ -19,7 +19,10 @@ import javax.swing.SwingUtilities
 
 class MultiplePageDialog private constructor() : DialogWrapper(null) {
   companion object {
-    fun show(page: PageProvider, callback: () -> Unit = {}, isModal: Boolean = true, @NlsContexts.DialogTitle title: String? = null) {
+    fun show(page: PageProvider,
+             callback: () -> Unit = {},
+             isModal: Boolean = true,
+             @NlsContexts.DialogTitle title: String? = null) {
       createDialog(page).apply {
         this.title = title
         this.isModal = isModal

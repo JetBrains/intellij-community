@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction
 
 class ImportProgressDialogAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    MultiplePageDialog.show(ImportProgressDialog(TestJbService.simpleImport))
+    MultiplePageDialog.show(ImportProgressDialog(TestJbService.simpleImport), isModal = false)
   }
 }
 

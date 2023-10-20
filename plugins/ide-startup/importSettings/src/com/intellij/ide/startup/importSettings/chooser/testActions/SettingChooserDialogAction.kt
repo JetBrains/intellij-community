@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAwareAction
 
 class SettingChooserDialogAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    MultiplePageDialog.show(SettingChooserDialog(JBrActionsDataProvider.getInstance(), TestJbService.main))
+    MultiplePageDialog.show(SettingChooserDialog(JBrActionsDataProvider.getInstance(), TestJbService.main), isModal = false)
   }
 }
 
