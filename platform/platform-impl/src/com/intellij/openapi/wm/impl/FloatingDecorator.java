@@ -186,6 +186,12 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   }
 
   @Override
+  public void setLocationRelativeTo(Component c) {
+    super.setLocationRelativeTo(c);
+    myBoundsHelper.setBounds(getBounds());
+  }
+
+  @Override
   public void setBounds(@NotNull Rectangle r) {
     myBoundsHelper.setBounds(r);
     super.setBounds(r);
