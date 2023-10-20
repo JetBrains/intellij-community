@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
@@ -145,7 +146,10 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
 
     override fun addNotify() {
       super.addNotify()
-      check(messageBusConnection == null) { "addNotify() called twice without removeNotify()?!" }
+      if (messageBusConnection != null) {
+        LOG.warn("FilenameToolbarWidgetAction.FilenameToolbarWidget.addNotify: already connected, looks like the component was added without removing it")
+        return
+      }
       val editorListener = object : FileEditorManagerListener {
         override fun selectionChanged(event: FileEditorManagerEvent) {
           ActionToolbar.findToolbarBy(this@FilenameToolbarWidget)?.updateActionsImmediately()
@@ -196,3 +200,4 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
 private val FILE_COLOR: Key<Color> = Key.create("FILENAME_WIDGET_FILE_COLOR")
 private val FILE_FULL_PATH: Key<String?> = Key.create("FILENAME_WIDGET_FILE_PATH")
 private const val isIDEA331002Fixed = false //todo[mikhail.sokolov]
+private val LOG = logger<FilenameToolbarWidgetAction>()
