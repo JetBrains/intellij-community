@@ -140,10 +140,10 @@ class JarPackager private constructor(private val outputDir: Path,
         packager.computeModuleCustomLibrarySources(layout)
 
         val clientModuleFilter = context.jetBrainsClientModuleFilter
-        val libraryToMerge = packager.packProjectLibraries(outputDir = outputDir,
-                                                           layout = layout,
-                                                           copiedFiles = packager.copiedFiles,
-                                                           clientModuleFilter = clientModuleFilter)
+        val libraryToMerge = packager.computeProjectLibrariesSources(outputDir = outputDir,
+                                                                     layout = layout,
+                                                                     copiedFiles = packager.copiedFiles,
+                                                                     clientModuleFilter = clientModuleFilter)
         if (isRootDir) {
           for ((key, value) in predefinedMergeRules) {
             packager.mergeLibsByPredicate(jarName = key,
@@ -329,7 +329,8 @@ class JarPackager private constructor(private val outputDir: Path,
       val libraryReference = element.libraryReference
       if (libraryReference.parentReference !is JpsModuleReference) {
         if (includeProjectLib) {
-          val name = element.library!!.name
+          val library = element.library!!
+          val name = library.name
           if (platformLayout!!.hasLibrary(name) || layout.hasLibrary(name)) {
             continue
           }
@@ -339,6 +340,8 @@ class JarPackager private constructor(private val outputDir: Path,
                                                                      siblings = layout.includedModules)) {
             continue
           }
+
+          libToMetadata.put(library, ProjectLibraryData(name, LibraryPackMode.MERGED, reason = "<- $moduleName"))
           isModuleLevel = false
         }
         else {
@@ -466,10 +469,10 @@ class JarPackager private constructor(private val outputDir: Path,
     }
   }
 
-  private fun packProjectLibraries(outputDir: Path,
-                                   layout: BaseLayout,
-                                   copiedFiles: MutableMap<Path, CopiedFor>,
-                                   clientModuleFilter: JetBrainsClientModuleFilter): MutableMap<JpsLibrary, List<Path>> {
+  private fun computeProjectLibrariesSources(outputDir: Path,
+                                             layout: BaseLayout,
+                                             copiedFiles: MutableMap<Path, CopiedFor>,
+                                             clientModuleFilter: JetBrainsClientModuleFilter): MutableMap<JpsLibrary, List<Path>> {
     val toMerge = LinkedHashMap<JpsLibrary, List<Path>>()
     val projectLibs = if (layout.includedProjectLibraries.isEmpty()) {
       emptyList()
@@ -540,7 +543,7 @@ class JarPackager private constructor(private val outputDir: Path,
                                 )
                               } ?: ProjectLibraryEntry(
                                 path = targetFile,
-                                data = libToMetadata.get(library)!!,
+                                data = libToMetadata.get(library) ?: throw IllegalStateException("Metadata not found for ${library.name}"),
                                 libraryFile = file,
                                 hash = hash,
                                 size = size,
