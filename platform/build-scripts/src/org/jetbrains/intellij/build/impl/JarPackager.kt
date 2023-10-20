@@ -334,7 +334,9 @@ class JarPackager private constructor(private val outputDir: Path,
             continue
           }
 
-          if (helper.hasLibraryInDependencyChainOfModuleDependencies(module, name, layout.includedModules)) {
+          if (helper.hasLibraryInDependencyChainOfModuleDependencies(dependentModule = module,
+                                                                     libraryName = name,
+                                                                     siblings = layout.includedModules)) {
             continue
           }
           isModuleLevel = false

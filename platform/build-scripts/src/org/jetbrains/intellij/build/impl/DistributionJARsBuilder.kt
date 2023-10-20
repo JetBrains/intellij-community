@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.fasterxml.jackson.jr.ob.JSON
@@ -541,10 +543,10 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
   }
 
   val pluginLayouts = productLayout.pluginLayouts
-  val pluginLayoutsByMainModule = pluginLayouts.groupBy { it.mainModule }
+  val pluginLayoutsByMainModule = pluginLayouts.groupByTo(HashMap()) { it.mainModule }
   val result = createPluginLayoutSet(modules.size)
   for (moduleName in modules) {
-    val customLayouts = pluginLayoutsByMainModule[moduleName]
+    val customLayouts = pluginLayoutsByMainModule.get(moduleName)
     if (customLayouts == null) {
       check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.pluginAuto(listOf(moduleName)))) {
         "Plugin layout for module $moduleName is already added (duplicated module name?)"
