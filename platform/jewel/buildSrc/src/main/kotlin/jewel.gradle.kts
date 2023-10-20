@@ -1,8 +1,3 @@
-import io.gitlab.arturbosch.detekt.Detekt
-import org.gradle.api.attributes.Usage
-import org.jmailen.gradle.kotlinter.tasks.FormatTask
-import org.jmailen.gradle.kotlinter.tasks.LintTask
-
 plugins {
     id("jewel-linting")
     kotlin("jvm")
@@ -57,6 +52,11 @@ tasks {
             sarif.outputLocation = sarifOutputFile
         }
     }
+
+    formatKotlinMain {
+        exclude { it.file.absolutePath.contains("build/generated") }
+    }
+
     lintKotlinMain {
         exclude { it.file.absolutePath.contains("build/generated") }
 
