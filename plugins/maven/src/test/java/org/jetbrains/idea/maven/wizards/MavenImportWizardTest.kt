@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.write
@@ -29,6 +28,11 @@ import java.util.List
 
 class MavenImportWizardTest : MavenProjectWizardTestCase() {
   override fun runInDispatchThread() = false
+
+  override fun setUp() {
+    super.setUp()
+    MavenTestCase.assumeTestCanBeReusedForPreimport(this::class.java, name)
+  }
 
   fun testImportModule() = runBlocking {
     val pom = createPom()
@@ -121,7 +125,7 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     manager.waitForImportCompletion()
     importMavenProjects(manager, List.of(file))
     val promise = manager.waitForImportCompletion()
-    runInEdtAndWait{
+    runInEdtAndWait {
       PlatformTestUtil.waitForPromise(promise)
     }
   }

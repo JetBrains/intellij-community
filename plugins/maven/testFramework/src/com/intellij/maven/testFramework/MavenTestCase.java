@@ -136,18 +136,20 @@ public abstract class MavenTestCase extends UsefulTestCase {
     });
   }
 
-  private void assumeThisTestCanBeReusedForPreimport() {
+  public static void assumeTestCanBeReusedForPreimport(Class<?> aClass, String testName) {
     if (!preimportTestMode) return;
     try {
-      Class<? extends MavenTestCase> aClass = this.getClass();
       if (aClass.getDeclaredAnnotation(InstantImportCompatible.class) == null) {
-        String testName = getName();
         Method testMethod = aClass.getMethod(testName);
         Assume.assumeNotNull(testMethod.getDeclaredAnnotation(InstantImportCompatible.class));
       }
     }
     catch (NoSuchMethodException ignore) {
     }
+  }
+
+  protected void assumeThisTestCanBeReusedForPreimport() {
+    assumeTestCanBeReusedForPreimport(this.getClass(), getName());
   }
 
 
