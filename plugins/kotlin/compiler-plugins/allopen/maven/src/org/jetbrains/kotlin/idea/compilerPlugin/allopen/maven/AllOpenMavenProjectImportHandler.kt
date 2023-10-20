@@ -12,10 +12,6 @@ import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundle
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 
 class AllOpenMavenProjectImportHandler : AbstractMavenImportHandler() {
-    private companion object {
-        val ANNOTATION_PARAMETER_PREFIX = "all-open:$ANNOTATION_OPTION_NAME="
-    }
-
     override val compilerPluginId = PLUGIN_ID
     override val pluginName = "allopen"
     override val mavenPluginArtifactName = "kotlin-maven-allopen"
@@ -46,3 +42,5 @@ class AllOpenMavenProjectImportHandler : AbstractMavenImportHandler() {
         return annotations.map { PluginOption(ANNOTATION_OPTION_NAME, it) }
     }
 }
+
+private const val ANNOTATION_PARAMETER_PREFIX = "all-open:$ANNOTATION_OPTION_NAME="

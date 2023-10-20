@@ -325,12 +325,10 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
             }
         }
     }
+}
 
-    companion object {
-        private fun navigateToLibraryRoot(project: Project, root: VirtualFile) {
-            OpenFileDescriptor(project, root).navigate(true)
-        }
-    }
+private fun navigateToLibraryRoot(project: Project, root: VirtualFile) {
+    OpenFileDescriptor(project, root).navigate(true)
 }
 
 private operator fun BinaryVersion.compareTo(other: BinaryVersion): Int {

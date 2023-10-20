@@ -82,48 +82,6 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
         }
     }
 
-    companion object {
-        //TODO should it be visible for anyone outside initializer? Maybe introduce services for naming/routing fragments?
-        private fun calculateFragmentExternalModuleName(gradleModule: IdeaModule, fragment: IdeaKpmFragment): String =
-            "${gradleModule.name}:${fragment.coordinates.module.moduleName}.${fragment.name}"
-
-        private fun calculateFragmentInternalModuleName(
-            gradleModule: IdeaModule,
-            externalProject: ExternalProject,
-            fragment: IdeaKpmFragment,
-            resolverCtx: ProjectResolverContext,
-        ): String {
-            val delimiter: String
-            val moduleName = StringBuilder()
-
-            val buildSrcGroup = resolverCtx.buildSrcGroup
-            if (resolverCtx.isUseQualifiedModuleNames) {
-                delimiter = "."
-                if (StringUtil.isNotEmpty(buildSrcGroup)) {
-                    moduleName.append(buildSrcGroup).append(delimiter)
-                }
-                moduleName.append(gradlePathToQualifiedName(gradleModule.project.name, externalProject.qName))
-            } else {
-                delimiter = "_"
-                if (StringUtil.isNotEmpty(buildSrcGroup)) {
-                    moduleName.append(buildSrcGroup).append(delimiter)
-                }
-                moduleName.append(gradleModule.name)
-            }
-            moduleName.append(delimiter)
-            moduleName.append("${fragment.coordinates.module.moduleName}.${fragment.name}")
-            return PathUtilRt.suggestFileName(moduleName.toString(), true, false)
-        }
-
-        private fun gradlePathToQualifiedName(
-            rootName: String,
-            gradlePath: String
-        ): String = ((if (gradlePath.startsWith(":")) "$rootName." else "")
-                + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
-            .filter { s: String -> s.isNotEmpty() }
-            .collect(Collectors.joining(".")))
-    }
-
     private fun createExternalSourceSet(
         fragment: IdeaKpmFragment,
         gradleSourceSetData: GradleSourceSetData,
@@ -145,3 +103,43 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
         }
     }
 }
+
+//TODO should it be visible for anyone outside initializer? Maybe introduce services for naming/routing fragments?
+private fun calculateFragmentExternalModuleName(gradleModule: IdeaModule, fragment: IdeaKpmFragment): String =
+    "${gradleModule.name}:${fragment.coordinates.module.moduleName}.${fragment.name}"
+
+private fun calculateFragmentInternalModuleName(
+    gradleModule: IdeaModule,
+    externalProject: ExternalProject,
+    fragment: IdeaKpmFragment,
+    resolverCtx: ProjectResolverContext,
+): String {
+    val delimiter: String
+    val moduleName = StringBuilder()
+
+    val buildSrcGroup = resolverCtx.buildSrcGroup
+    if (resolverCtx.isUseQualifiedModuleNames) {
+        delimiter = "."
+        if (StringUtil.isNotEmpty(buildSrcGroup)) {
+            moduleName.append(buildSrcGroup).append(delimiter)
+        }
+        moduleName.append(gradlePathToQualifiedName(gradleModule.project.name, externalProject.qName))
+    } else {
+        delimiter = "_"
+        if (StringUtil.isNotEmpty(buildSrcGroup)) {
+            moduleName.append(buildSrcGroup).append(delimiter)
+        }
+        moduleName.append(gradleModule.name)
+    }
+    moduleName.append(delimiter)
+    moduleName.append("${fragment.coordinates.module.moduleName}.${fragment.name}")
+    return PathUtilRt.suggestFileName(moduleName.toString(), true, false)
+}
+
+private fun gradlePathToQualifiedName(
+    rootName: String,
+    gradlePath: String
+): String = ((if (gradlePath.startsWith(":")) "$rootName." else "")
+        + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
+    .filter { s: String -> s.isNotEmpty() }
+    .collect(Collectors.joining(".")))

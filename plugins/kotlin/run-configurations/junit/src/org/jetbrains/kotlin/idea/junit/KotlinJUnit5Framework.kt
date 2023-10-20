@@ -148,19 +148,17 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
 
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isIgnoredMethod(declaration)
-
-    companion object {
-        private val METHOD_ANNOTATION_FQN = setOf(
-            JUnitUtil.TEST5_ANNOTATION,
-            KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST,
-            "org.junit.jupiter.params.ParameterizedTest",
-            "org.junit.jupiter.api.RepeatedTest",
-            "org.junit.jupiter.api.TestFactory",
-            "org.junit.jupiter.api.TestTemplate"
-        )
-
-        private val setUpAnnotations = setOf(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_BEFORE_TEST)
-        private val tearDownAnnotations = setOf(JUnitUtil.AFTER_EACH_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_AFTER_TEST)
-    }
 }
+
+private val METHOD_ANNOTATION_FQN = setOf(
+    JUnitUtil.TEST5_ANNOTATION,
+    KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST,
+    "org.junit.jupiter.params.ParameterizedTest",
+    "org.junit.jupiter.api.RepeatedTest",
+    "org.junit.jupiter.api.TestFactory",
+    "org.junit.jupiter.api.TestTemplate"
+)
+
+private val setUpAnnotations = setOf(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_BEFORE_TEST)
+private val tearDownAnnotations = setOf(JUnitUtil.AFTER_EACH_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_AFTER_TEST)
 

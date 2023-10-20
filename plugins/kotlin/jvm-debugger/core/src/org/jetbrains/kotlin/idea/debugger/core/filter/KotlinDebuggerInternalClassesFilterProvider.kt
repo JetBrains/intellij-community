@@ -7,17 +7,15 @@ import com.intellij.ui.classFilter.DebuggerClassFilterProvider
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
 
 class KotlinDebuggerInternalClassesFilterProvider : DebuggerClassFilterProvider {
-    private companion object {
-        private val FILTERS = listOf(
-            ClassFilter("kotlin.jvm*"),
-            ClassFilter("kotlin.reflect*"),
-            ClassFilter("kotlin.NoWhenBranchMatchedException"),
-            ClassFilter("kotlin.TypeCastException"),
-            ClassFilter("kotlin.KotlinNullPointerException")
-        )
-    }
-
     override fun getFilters(): List<ClassFilter> {
         return if (KotlinDebuggerSettings.getInstance().disableKotlinInternalClasses) FILTERS else listOf()
     }
 }
+
+private val FILTERS = listOf(
+    ClassFilter("kotlin.jvm*"),
+    ClassFilter("kotlin.reflect*"),
+    ClassFilter("kotlin.NoWhenBranchMatchedException"),
+    ClassFilter("kotlin.TypeCastException"),
+    ClassFilter("kotlin.KotlinNullPointerException")
+)

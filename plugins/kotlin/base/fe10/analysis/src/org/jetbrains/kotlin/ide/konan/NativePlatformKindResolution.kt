@@ -109,16 +109,14 @@ class NativePlatformKindResolution : IdePlatformKindResolution {
     }
 
     object NativeBuiltInsCacheKey : BuiltInsCacheKey
-
-    companion object {
-        private val metadataFactories = KlibMetadataFactories(::KonanBuiltIns, NullFlexibleTypeDeserializer)
-
-        private fun ModuleInfo.findNativeStdlib(): NativeKlibLibraryInfo? =
-            dependencies().lazyClosure { it.dependencies() }
-                .filterIsInstance<NativeKlibLibraryInfo>()
-                .firstOrNull { it.isStdlib && it.compatibilityInfo.isCompatible }
-    }
 }
+
+private val metadataFactories = KlibMetadataFactories(::KonanBuiltIns, NullFlexibleTypeDeserializer)
+
+private fun ModuleInfo.findNativeStdlib(): NativeKlibLibraryInfo? =
+    dependencies().lazyClosure { it.dependencies() }
+        .filterIsInstance<NativeKlibLibraryInfo>()
+        .firstOrNull { it.isStdlib && it.compatibilityInfo.isCompatible }
 
 internal fun KotlinLibrary.createKlibPackageFragmentProvider(
     storageManager: StorageManager,

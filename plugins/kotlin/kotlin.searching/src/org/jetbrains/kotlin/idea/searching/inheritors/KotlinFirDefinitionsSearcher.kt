@@ -60,97 +60,93 @@ class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScoped
             else -> true
         }
     }
+}
 
-    companion object {
+private fun skipDelegatedMethodsConsumer(baseConsumer: Processor<in PsiElement>): Processor<PsiElement> = Processor { element ->
+    if (isDelegated(element)) {
+        return@Processor true
+    }
 
-        private fun skipDelegatedMethodsConsumer(baseConsumer: Processor<in PsiElement>): Processor<PsiElement> = Processor { element ->
-            if (isDelegated(element)) {
-                return@Processor true
-            }
+    baseConsumer.process(element)
+}
 
-            baseConsumer.process(element)
+private fun isDelegated(element: PsiElement): Boolean = element is KtLightMethod && element.isDelegated
+
+private fun isFieldParameter(parameter: KtParameter): Boolean = runReadAction {
+    KtPsiUtil.getClassIfParameterIsProperty(parameter) != null
+}
+
+private fun processClassImplementations(klass: KtClass, consumer: Processor<PsiElement>): Boolean {
+
+    val searchScope = runReadAction { klass.useScope }
+    if (searchScope is LocalSearchScope) {
+        return processLightClassLocalImplementations(klass, searchScope, consumer)
+    }
+
+    return klass.findAllInheritors(searchScope).all { runReadAction { consumer.process(it)} }
+}
+
+private fun processLightClassLocalImplementations(
+    ktClass: KtClass,
+    searchScope: LocalSearchScope,
+    consumer: Processor<PsiElement>
+): Boolean {
+    // workaround for IDEA optimization that uses Java PSI traversal to locate inheritors in local search scope
+    val globalScope = runReadAction {
+        val virtualFiles = searchScope.scope.mapTo(HashSet()) { it.containingFile.virtualFile }
+        GlobalSearchScope.filesScope(ktClass.project, virtualFiles)
+    }
+    return ktClass.findAllInheritors(globalScope).all { candidate ->
+        val candidateOrigin = candidate.unwrapped ?: candidate
+        val inScope = runReadAction { candidateOrigin in searchScope }
+        if (inScope) {
+            consumer.process(candidate)
+        } else {
+            true
         }
-
-        private fun isDelegated(element: PsiElement): Boolean = element is KtLightMethod && element.isDelegated
-
-        private fun isFieldParameter(parameter: KtParameter): Boolean = runReadAction {
-            KtPsiUtil.getClassIfParameterIsProperty(parameter) != null
-        }
-
-        private fun processClassImplementations(klass: KtClass, consumer: Processor<PsiElement>): Boolean {
-
-            val searchScope = runReadAction { klass.useScope }
-            if (searchScope is LocalSearchScope) {
-                return processLightClassLocalImplementations(klass, searchScope, consumer)
-            }
-
-            return klass.findAllInheritors(searchScope).all { runReadAction { consumer.process(it)} }
-        }
-
-        private fun processLightClassLocalImplementations(
-            ktClass: KtClass,
-            searchScope: LocalSearchScope,
-            consumer: Processor<PsiElement>
-        ): Boolean {
-            // workaround for IDEA optimization that uses Java PSI traversal to locate inheritors in local search scope
-            val globalScope = runReadAction {
-                val virtualFiles = searchScope.scope.mapTo(HashSet()) { it.containingFile.virtualFile }
-                GlobalSearchScope.filesScope(ktClass.project, virtualFiles)
-            }
-            return ktClass.findAllInheritors(globalScope).all { candidate ->
-                val candidateOrigin = candidate.unwrapped ?: candidate
-                val inScope = runReadAction { candidateOrigin in searchScope }
-                if (inScope) {
-                    consumer.process(candidate)
-                } else {
-                    true
-                }
-            }
-        }
-
-        private fun processFunctionImplementations(
-            function: KtFunction,
-            scope: SearchScope,
-            consumer: Processor<PsiElement>,
-        ): Boolean =
-            ReadAction.nonBlocking(Callable {
-                if (!function.findAllOverridings(scope).all { consumer.process(it) }) return@Callable false
-
-                val method = function.toPossiblyFakeLightMethods().firstOrNull() ?: return@Callable true
-                FunctionalExpressionSearch.search(method, scope).forEach(consumer)
-            }).executeSynchronously()
-
-        private fun processPropertyImplementations(
-            declaration: KtCallableDeclaration,
-            scope: SearchScope,
-            consumer: Processor<PsiElement>
-        ): Boolean = ReadAction.nonBlocking(Callable {
-            processPropertyImplementationsMethods(declaration, scope, consumer)
-        }).executeSynchronously()
-
-        private fun processActualDeclarations(declaration: KtDeclaration, consumer: Processor<PsiElement>): Boolean = runReadAction {
-            if (!declaration.isExpectDeclaration()) true
-            else declaration.actualsForExpected().all(consumer::process)
-        }
-
-        private fun processPropertyImplementationsMethods(
-            callableDeclaration: KtCallableDeclaration,
-            scope: SearchScope,
-            consumer: Processor<PsiElement>
-        ): Boolean =
-            callableDeclaration.findAllOverridings(scope).all { implementation ->
-                if (isDelegated(implementation)) return@all true
-
-                val elementToProcess = runReadAction {
-                    when (val mirrorElement = (implementation as? KtLightMethod)?.kotlinOrigin) {
-                        is KtProperty, is KtParameter -> mirrorElement
-                        is KtPropertyAccessor -> if (mirrorElement.parent is KtProperty) mirrorElement.parent else implementation
-                        else -> implementation
-                    }
-                }
-
-                consumer.process(elementToProcess)
-            }
-
     }
 }
+
+private fun processFunctionImplementations(
+    function: KtFunction,
+    scope: SearchScope,
+    consumer: Processor<PsiElement>,
+): Boolean =
+    ReadAction.nonBlocking(Callable {
+        if (!function.findAllOverridings(scope).all { consumer.process(it) }) return@Callable false
+
+        val method = function.toPossiblyFakeLightMethods().firstOrNull() ?: return@Callable true
+        FunctionalExpressionSearch.search(method, scope).forEach(consumer)
+    }).executeSynchronously()
+
+private fun processPropertyImplementations(
+    declaration: KtCallableDeclaration,
+    scope: SearchScope,
+    consumer: Processor<PsiElement>
+): Boolean = ReadAction.nonBlocking(Callable {
+    processPropertyImplementationsMethods(declaration, scope, consumer)
+}).executeSynchronously()
+
+private fun processActualDeclarations(declaration: KtDeclaration, consumer: Processor<PsiElement>): Boolean = runReadAction {
+    if (!declaration.isExpectDeclaration()) true
+    else declaration.actualsForExpected().all(consumer::process)
+}
+
+private fun processPropertyImplementationsMethods(
+    callableDeclaration: KtCallableDeclaration,
+    scope: SearchScope,
+    consumer: Processor<PsiElement>
+): Boolean =
+    callableDeclaration.findAllOverridings(scope).all { implementation ->
+        if (isDelegated(implementation)) return@all true
+
+        val elementToProcess = runReadAction {
+            when (val mirrorElement = (implementation as? KtLightMethod)?.kotlinOrigin) {
+                is KtProperty, is KtParameter -> mirrorElement
+                is KtPropertyAccessor -> if (mirrorElement.parent is KtProperty) mirrorElement.parent else implementation
+                else -> implementation
+            }
+        }
+
+        consumer.process(elementToProcess)
+    }
