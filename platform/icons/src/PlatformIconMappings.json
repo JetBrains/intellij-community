@@ -425,7 +425,10 @@
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
       "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg",
-      "localScope.svg": ["ide/localScope.svg", "ide/localScopeAction.svg"]
+      "localScope.svg": [
+        "ide/localScope.svg",
+        "ide/localScopeAction.svg"
+      ]
     },
     "image": {
       "actualZoom.svg": "graph/actualZoom.svg",
@@ -718,13 +721,23 @@
     "status": {
       "error.svg": [
         "general/balloonError.svg",
-        "ide/fatalError.svg"
+        "ide/fatalError.svg",
+        "general/error.svg"
       ],
       "errorOutline.svg": "ide/fatalError-read.svg",
       "failedInProgress.svg": "status/failedInProgress.svg",
-      "info.svg": "general/balloonInformation.svg",
-      "infoOutline.svg": "general/showInfos.svg",
-      "warning.svg": "general/balloonWarning.svg",
+      "info.svg": [
+        "general/balloonInformation.svg",
+        "general/information.svg"
+      ],
+      "infoOutline.svg": [
+        "general/showInfos.svg",
+        "general/note.svg"
+      ],
+      "warning.svg": [
+        "general/balloonWarning.svg",
+        "general/warning.svg"
+      ],
       "warningOutline.svg": "general/showWarning.svg"
     },
     "table": {
