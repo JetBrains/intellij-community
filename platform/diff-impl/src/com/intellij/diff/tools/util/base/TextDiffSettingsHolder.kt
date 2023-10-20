@@ -29,7 +29,10 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES: Boolean = false,
     var MERGE_LST_GUTTER_MARKERS: Boolean = true,
     var ENABLE_ALIGNING_CHANGES_MODE: Boolean = false
-  )
+  ) {
+    @Transient
+    val eventDispatcher: EventDispatcher<TextDiffSettings.Listener> = EventDispatcher.create(TextDiffSettings.Listener::class.java)
+  }
 
   data class PlaceSettings(
     // Diff settings
@@ -58,6 +61,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     constructor() : this(SharedSettings(), PlaceSettings(), null)
 
     fun addListener(listener: Listener, disposable: Disposable) {
+      SHARED_SETTINGS.eventDispatcher.addListener(listener, disposable)
       PLACE_SETTINGS.eventDispatcher.addListener(listener, disposable)
     }
 
@@ -70,7 +74,8 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     var isEnableAligningChangesMode: Boolean
       get() = SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE
-      set(value) { SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE = value }
+      set(value) { SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE = value
+                   SHARED_SETTINGS.eventDispatcher.multicaster.alignModeChanged() }
 
     // Diff settings
 
@@ -160,6 +165,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
       fun breadcrumbsPlacementChanged() {}
       fun foldingChanged() {}
       fun scrollingChanged() {}
+      fun alignModeChanged() {}
 
       abstract class Adapter : Listener
     }
