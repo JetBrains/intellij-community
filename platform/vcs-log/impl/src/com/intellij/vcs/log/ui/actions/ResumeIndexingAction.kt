@@ -95,17 +95,7 @@ class ResumeIndexingAction : DumbAwareAction() {
     val project = e.project ?: return
 
     val data = e.getData(VcsLogInternalDataKeys.LOG_DATA) ?: VcsProjectLog.getInstance(project).dataManager ?: return
-
-    if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
-      val rootsForIndexing = VcsLogPersistentIndex.getAvailableIndexers(data.logProviders).keys
-      rootsForIndexing.forEach { VcsLogBigRepositoriesList.getInstance().removeRepository(it) }
-      VcsLogData.getIndexingRegistryValue().setValue(true)
-    }
-
-    val index = data.index as? VcsLogModifiableIndex ?: return
-    if (index.indexingRoots.isEmpty()) return
-
-    index.toggleIndexing()
+    data.toggleIndexing()
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT

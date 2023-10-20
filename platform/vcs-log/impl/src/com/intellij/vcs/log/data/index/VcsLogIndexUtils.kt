@@ -5,6 +5,10 @@ package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.log.data.VcsLogData
+
+internal fun isIndexingPausedFor(root: VirtualFile): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(root)
+internal fun VcsLogIndex.isScheduledForIndexing(root: VirtualFile): Boolean = isIndexingEnabled(root) && !isIndexed(root)
 
 /**
  * Check if any of [VcsLogIndex.getIndexingRoots] need to be indexed.
@@ -42,13 +46,45 @@ internal fun VcsLogModifiableIndex.toggleIndexing() {
     indexingRoots.filter { !isIndexingPausedFor(it) }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
   }
   else {
-    var resumed = false
-    for (root in indexingRoots.filter { isIndexingPausedFor(it) }) {
-      resumed = resumed or VcsLogBigRepositoriesList.getInstance().removeRepository(root)
-    }
-    if (resumed) scheduleIndex(true)
+    resumeIndexing(indexingRoots.filter { isIndexingPausedFor(it) })
   }
 }
 
-internal fun isIndexingPausedFor(root: VirtualFile): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(root)
-internal fun VcsLogIndex.isScheduledForIndexing(root: VirtualFile): Boolean = isIndexingEnabled(root) && !isIndexed(root)
+private fun VcsLogModifiableIndex.resumeIndexing(roots: Collection<VirtualFile>) {
+  var resumed = false
+  for (root in roots) {
+    resumed = resumed or VcsLogBigRepositoriesList.getInstance().removeRepository(root)
+  }
+  if (resumed) scheduleIndex(true)
+}
+
+/**
+ * Enables indexing in the registry if it is disabled. Toggles indexing otherwise.
+ *
+ * @see [VcsLogModifiableIndex.toggleIndexing]
+ */
+internal fun VcsLogData.toggleIndexing() {
+  enableIndexing(VcsLogPersistentIndex.getAvailableIndexers(logProviders).keys)
+
+  val index = index as? VcsLogModifiableIndex ?: return
+  if (index.indexingRoots.isEmpty()) return
+
+  index.toggleIndexing()
+}
+
+/**
+ * Enables indexing in the registry if it is disabled. Resumes indexing for the provided repositories if it was paused.
+ */
+internal fun VcsLogData.enableAndResumeIndexing(roots: Collection<VirtualFile>) {
+  enableIndexing(roots)
+
+  val index = index as? VcsLogModifiableIndex ?: return
+  index.resumeIndexing(roots)
+}
+
+private fun enableIndexing(roots: Collection<VirtualFile>) {
+  if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
+    roots.forEach { VcsLogBigRepositoriesList.getInstance().removeRepository(it) }
+    VcsLogData.getIndexingRegistryValue().setValue(true)
+  }
+}
