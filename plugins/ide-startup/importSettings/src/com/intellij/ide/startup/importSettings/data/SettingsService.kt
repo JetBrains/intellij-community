@@ -28,7 +28,7 @@ interface SettingsService {
   fun getJbService(): JbService
   fun getExternalService(): ExternalService
 
-  fun skipImport()
+  fun cancelImport()
 
   val error: ISignal<NotificationData>
 
@@ -55,7 +55,7 @@ class SettingsServiceImpl : SettingsService {
     if (shouldUseMockData) TestExternalService()
     else SettingTransferService.getInstance()
 
-  override fun skipImport() = thisLogger().info("$IMPORT_SERVICE skipImport")
+  override fun cancelImport() = thisLogger().info("$IMPORT_SERVICE cancelImport")
 
   override val error = Signal<NotificationData>()
 

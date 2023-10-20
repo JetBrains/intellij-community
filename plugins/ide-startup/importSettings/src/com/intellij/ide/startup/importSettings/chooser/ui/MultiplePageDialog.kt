@@ -1,10 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.ui
 
+import com.intellij.CommonBundle
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
-import java.awt.AWTEvent
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JComponent
@@ -18,30 +21,26 @@ import javax.swing.SwingUtilities
 
 class MultiplePageDialog private constructor() : DialogWrapper(null) {
   companion object {
-    fun show(page: PageProvider, title: String? = null) {
-      createDialog(page, title).apply {
+    fun show(page: PageProvider, callback: () -> Unit = {}, isModal: Boolean = true, @NlsContexts.DialogTitle title: String? = null) {
+      createDialog(page).apply {
+        this.title = title
+        this.isModal = isModal
+        this.callback = callback
+
         show()
         pack()
       }
     }
 
-    fun showAndGet(page: PageProvider, title: String? = null): Boolean {
-      return createDialog(page, title).run {
-        isModal = true
-        pack()
-        showAndGet()
-      }
-    }
-
-    private fun createDialog(page: PageProvider, title: String?): MultiplePageDialog {
+    private fun createDialog(page: PageProvider): MultiplePageDialog {
       val dialog = MultiplePageDialog()
-      dialog.title = title
       dialog.showPage(page)
-      dialog.isModal = false
       dialog.isResizable = false
       return dialog
     }
   }
+
+  private lateinit var callback: () -> Unit
 
   init {
     Disposer.register(disposable) {
@@ -62,6 +61,27 @@ class MultiplePageDialog private constructor() : DialogWrapper(null) {
   private lateinit var southPanel: JComponent
 
   private var current: PageProvider? = null
+
+  override fun doCancelAction() {
+    current?.let {
+      val shouldExit = if(it.confirmationNeeded) showExit() else true
+
+      if (shouldExit) {
+        super.doCancelAction()
+        callback()
+      }
+
+    } ?: run {
+      super.doCancelAction()
+    }
+  }
+
+  private fun showExit() = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"),
+                                                      ApplicationBundle.message("exit.confirm.prompt"))
+    .yesText(ApplicationBundle.message("command.exit"))
+    .noText(CommonBundle.getCancelButtonText())
+    .ask(peer.contentPane)
+
 
   fun showPage(dialog: PageProvider) {
     val gbc = GridBagConstraints()
@@ -111,6 +131,8 @@ class MultiplePageDialog private constructor() : DialogWrapper(null) {
 abstract class PageProvider(val createSouth: Boolean = true) : DialogWrapper(null, null, true, IdeModalityType.IDE, createSouth) {
   var content: JComponent? = null
   var southPanel: JComponent = JPanel()
+  open var confirmationNeeded = true
+
   private var inited = false
   var parentDialog: MultiplePageDialog? = null
     set(value) {
@@ -150,10 +172,6 @@ abstract class PageProvider(val createSouth: Boolean = true) : DialogWrapper(nul
     parentDialog?.close(CANCEL_EXIT_CODE) ?: run {
       close(CANCEL_EXIT_CODE)
     }
-  }
-
-  override fun doCancelAction(source: AWTEvent?) {
-    super.doCancelAction(source)
   }
 
   override fun doCancelAction() {

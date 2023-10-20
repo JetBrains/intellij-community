@@ -5,6 +5,7 @@ import com.intellij.ide.startup.importSettings.chooser.productChooser.ProductCho
 import com.intellij.ide.startup.importSettings.chooser.ui.MultiplePageDialog
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.platform.ide.bootstrap.IdeStartupWizard
 import kotlinx.coroutines.Dispatchers
@@ -22,11 +23,11 @@ internal class IdeStartupWizardImpl : IdeStartupWizard {
   override suspend fun run() {
     coroutineScope {
       // Fire-and-forget call to warm up the external settings transfer
-      async { SettingsService.getInstance().getExternalService().warmUp() }
+      val settingsService = SettingsService.getInstance()
+      async { settingsService.getExternalService().warmUp() }
 
       withContext(Dispatchers.EDT) {
-
-        MultiplePageDialog.showAndGet(ProductChooserDialog())
+        MultiplePageDialog.show(ProductChooserDialog(), { settingsService.cancelImport() })
       }
     }
   }
