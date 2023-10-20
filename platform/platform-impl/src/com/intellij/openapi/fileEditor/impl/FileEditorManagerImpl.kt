@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("OVERRIDE_DEPRECATION", "ReplaceGetOrSet", "LeakingThis")
-@file:OptIn(FlowPreview::class, FlowPreview::class, FlowPreview::class)
+@file:OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 
 package com.intellij.openapi.fileEditor.impl
 
@@ -1072,8 +1072,7 @@ open class FileEditorManagerImpl(
 
         // A file is not opened yet. In this case, we have to create editors and select the created EditorComposite.
         val p = FileEditorProviderManager.getInstance().getProvidersAsync(project, file)
-        val builders = createBuilders(providers = p, file = file, project = project)
-        providers = p.mapIndexed { index, provider -> provider to builders.get(index)?.await() }
+        providers = createBuilders(providers = p, file = file, project = project)
       }
       else {
         providers = emptyList()
@@ -2100,17 +2099,15 @@ open class FileEditorManagerImpl(
 
     // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
     coroutineScope {
-      val builders = createBuilders(providers = newProviders, file = file, project = project)
+      val providerWithBuilderList = async { createBuilders(providers = newProviders, file = file, project = project) }
       val window = windowDeferred.await()
       val existingComposite = withContext(Dispatchers.EDT) { window.getComposite(file) }
-      // ok, now we can await for builders (probably it is already computed as we waited for a window and composite)
-      val providerWithBuilderList = newProviders.mapIndexed { index, provider -> provider to builders.get(index)?.await() }
       openFileInEdt(existingComposite = existingComposite,
                     window = window,
                     file = file,
                     entry = entry,
                     options = options,
-                    providerWithBuilderList = providerWithBuilderList)
+                    providerWithBuilderList = providerWithBuilderList.await())
     }
   }
 
@@ -2381,19 +2378,30 @@ private fun getEffectiveOptions(options: FileEditorOpenOptions, entry: HistoryEn
   return options
 }
 
-private fun CoroutineScope.createBuilders(providers: List<FileEditorProvider>,
+private suspend fun createBuilders(providers: List<FileEditorProvider>,
                                           file: VirtualFile,
-                                          project: Project): List<Deferred<AsyncFileEditorProvider.Builder?>?> {
-  return providers.map { provider ->
-    if (provider !is AsyncFileEditorProvider) {
-      return@map null
+                                          project: Project): List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>> {
+  return coroutineScope {
+    providers.map { provider ->
+      async {
+        if (provider is AsyncFileEditorProvider) {
+          try {
+            provider to provider.createEditorBuilder(project = project, file = file)
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+            null
+          }
+        }
+        else {
+          provider to null
+        }
+      }
     }
-    async {
-      runCatching {
-        provider.createEditorBuilder(project = project, file = file)
-      }.getOrLogException(LOG)
-    }
-  }
+  }.mapNotNull { it.getCompleted() }
 }
 
 internal fun getOpenMode(event: AWTEvent): FileEditorManagerImpl.OpenMode {
