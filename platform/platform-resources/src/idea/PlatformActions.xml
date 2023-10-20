@@ -1324,6 +1324,7 @@
         <action id="TestDndAction" class="com.intellij.internal.validation.TestDnd"/>
         <action id="PositionTrackerTestAction" internal="true" class="com.intellij.internal.ui.PositionTrackerTestAction"/>
         <action id="ShowProgressTestDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowProgressTestDialogAction"/>
+        <action id="TestRubberDuckDebuggerAction" internal="true" class="com.intellij.openapi.wm.impl.status.TestRubberDuckDebuggerAction"/>
         <action id="ShowSouthPanelTestDialogAction" internal="true"
                 class="com.intellij.openapi.wm.impl.status.ShowSouthPanelTestDialogAction"/>
         <action id="TestTextFieldAction" internal="true" class="com.intellij.ui.components.TestTextFieldAction"/>
