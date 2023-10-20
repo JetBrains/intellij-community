@@ -49,8 +49,6 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
 
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
         init_env_vars(&self.launcher_name)?;
-        let project_trust_file = self.init_project_trust_file_if_needed()?;
-        debug!("Project trust file is: {:?}", project_trust_file);
 
         self.default.prepare_for_launch()
     }
@@ -443,45 +441,6 @@ impl RemoteDevLaunchConfiguration {
         Ok(path)
     }
 
-    fn init_project_trust_file_if_needed(&self) -> Result<PathBuf> {
-        let ij_started_command = (&self.ij_starter_command).as_str();
-        match ij_started_command {
-            "cwmHost" | "cwmHostNoLobby" | "remoteDevHost" => {
-                debug!("Running with '{ij_started_command}' command, considering making project trust checks")
-            }
-            _ => { }
-        };
-
-        let ij_host_config_dir = &self.config_dir;
-        let trust_file_path = ij_host_config_dir.join("accepted-trust-warning");
-
-        if trust_file_path.exists() {
-            debug!("{trust_file_path:?} exists, considering project trusted");
-            return Ok(trust_file_path)
-        }
-
-        let vars = [
-            "REMOTE_DEV_TRUST_PROJECTS",
-            "REMOTE_DEV_NON_INTERACTIVE"
-        ];
-
-        for key in vars {
-            match env::var(key) {
-                Ok(_) => {
-                    debug!("{key:?} env var is set, considering project trusted");
-                    return Ok(trust_file_path)
-                }
-                Err(_) => {
-                    debug!("{key:?} env var is not set")
-                }
-            };
-        }
-
-        create_trust_file(&trust_file_path)
-            .context("Failed to create a trust file")?;
-
-        Ok(trust_file_path)
-    }
 
     fn init_eap_registry_file_if_needed(&self) -> Result<File> {
         let ij_host_config_dir = &self.config_dir;
@@ -636,24 +595,6 @@ fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
     }
 
     return Ok(())
-}
-
-fn create_trust_file(trust_file_path: &PathBuf) -> Result<()> {
-    info!(
-            "\nOpening the project with this launcher will trust it and execute build scripts in it.\n\
-            You can read more about this at https://www.jetbrains.com/help/idea/project-security.html\n\
-            This warning is only shown once per project\n\
-            Run ./remote-dev-server --help to see how to automate this check\n\n\
-            Press ENTER to continue, or Ctrl-C to abort execution\n"
-        );
-
-    let mut input = String::new();
-    let _i = std::io::stdin().read_line(&mut input).context("Failed to read from stdin")?;
-
-    let file = File::create(&trust_file_path).context("Failed to create trust file")?;
-    debug!("File '{:?}' has been created", file);
-
-    Ok(())
 }
 
 fn escape_for_idea_properties(path: &Path) -> String {
