@@ -16,12 +16,16 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.Language
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
@@ -45,7 +49,11 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       invocationTracker = InvocationTracker(event).also {
         requestIds[event.request] = it.requestId
         if (application.isEAP) {
-          application.runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
+          runWithModalProgressBlocking(event.request.file.project, "Capture context features") {
+            withContext(Dispatchers.Default) {
+              readAction { it.captureContext(event.request.editor, event.request.endOffset) }
+            }
+          }
         }
       }
     }
