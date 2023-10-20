@@ -63,6 +63,8 @@ internal data class ShowTargetUsagesActionHandler(
 
   override fun findUsages(): Unit = findUsages(project, target, allOptions)
 
+  override fun moreUsages(parameters: ShowUsagesParameters) = parameters.moreUsages()
+
   override fun getSelectedScope(): SearchScope = allOptions.options.searchScope
 
   override fun getMaximalScope(): SearchScope = target.maximalSearchScope ?: GlobalSearchScope.allScope(project)

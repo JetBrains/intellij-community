@@ -389,6 +389,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       }
 
       @Override
+      public @Nullable ShowUsagesParameters moreUsages(@NotNull ShowUsagesParameters parameters) {
+        return parameters.moreUsages();
+      }
+
+      @Override
       public Language getTargetLanguage() {
         return handler.getPsiElement().getLanguage();
       }
@@ -1574,7 +1579,12 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   private static @NotNull Runnable showMoreUsagesRunnable(@NotNull ShowUsagesParameters parameters,
                                                           @NotNull ShowUsagesActionHandler actionHandler) {
-    return () -> showElementUsages(parameters.moreUsages(), actionHandler);
+    return () -> {
+      ShowUsagesParameters moreUsagesParameters = actionHandler.moreUsages(parameters);
+      if (moreUsagesParameters != null) {
+        showElementUsages(moreUsagesParameters, actionHandler);
+      }
+    };
   }
 
   private static @NotNull Runnable showUsagesInMaximalScopeRunnable(@NotNull ShowUsagesParameters parameters,

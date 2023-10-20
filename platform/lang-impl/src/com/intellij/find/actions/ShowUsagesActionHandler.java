@@ -32,6 +32,8 @@ public interface ShowUsagesActionHandler {
 
   @Nullable ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope);
 
+  @Nullable ShowUsagesParameters moreUsages(@NotNull ShowUsagesParameters parameters);
+
   @NotNull SearchScope getSelectedScope();
 
   @NotNull SearchScope getMaximalScope();

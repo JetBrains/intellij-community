@@ -35,8 +35,16 @@ public final class ShowUsagesParameters {
     return editor;
   }
 
+  public int getMaxUsages() {
+    return maxUsages;
+  }
+
   public @NotNull ShowUsagesParameters moreUsages() {
     return new ShowUsagesParameters(project, editor, popupPosition, minWidth, maxUsages + getUsagesPageSize());
+  }
+
+  public @NotNull ShowUsagesParameters withUsages(int maxUsages) {
+    return new ShowUsagesParameters(project, editor, popupPosition, minWidth, maxUsages);
   }
 
   public @NotNull ShowUsagesParameters withEditor(@NotNull Editor editor) {
