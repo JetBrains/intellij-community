@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
+import java.awt.AWTEvent
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JComponent
@@ -172,6 +173,10 @@ abstract class PageProvider(val createSouth: Boolean = true) : DialogWrapper(nul
     parentDialog?.close(CANCEL_EXIT_CODE) ?: run {
       close(CANCEL_EXIT_CODE)
     }
+  }
+
+  override fun doCancelAction(source: AWTEvent?) {
+    super.doCancelAction(source)
   }
 
   override fun doCancelAction() {
