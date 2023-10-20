@@ -14,6 +14,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * A marker interface for type forms that can be "unpacked" into a series of types.
+ * Normally, such constructs cannot be used on their own in type hints, and can appear only inside other generic types.
+ * Two variants of such types described in <a href="https://peps.python.org/pep-0646/">PEP 646 – Variadic Generics</a> are 
+ * TypeVarTuples and unpacked tuple types.
+ *
+ * @see PyTypeVarTupleType
+ * @see PyUnpackedTupleType
+ */
 @ApiStatus.Experimental
 public interface PyVariadicType extends PyType {
   @Override
