@@ -52,7 +52,7 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
     if (!needsPackageInfo) {
       return null;
     }
-    if (PsiUtil.isLanguageLevel5OrHigher(aPackage)) {
+    if (aPackage != null && PsiUtil.isLanguageLevel5OrHigher(aPackage)) {
       return new CommonProblemDescriptor[] {
         inspectionManager.createProblemDescriptor(InspectionGadgetsBundle.message("missing.package.info.problem.descriptor", packageName))};
     }
