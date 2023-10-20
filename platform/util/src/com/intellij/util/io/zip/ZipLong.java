@@ -21,7 +21,7 @@ package com.intellij.util.io.zip;
 
 /**
  * Utility class that represents a four byte integer with conversion
- * rules for the big endian byte order of ZIP files.
+ * rules for the little endian byte order of ZIP files.
  */
 public final class ZipLong implements Cloneable {
 
@@ -72,9 +72,9 @@ public final class ZipLong implements Cloneable {
   }
 
   /**
-   * Get value as four bytes in big endian byte order.
+   * Get value as four bytes in little endian byte order.
    *
-   * @return value as four bytes in big endian order
+   * @return value as four bytes in little endian order
    */
   public byte[] getBytes() {
     return ZipLong.getBytes(value);
@@ -90,10 +90,10 @@ public final class ZipLong implements Cloneable {
   }
 
   /**
-   * Get value as four bytes in big endian byte order.
+   * Get value as four bytes in little endian byte order.
    *
    * @param value the value to convert
-   * @return value as four bytes in big endian byte order
+   * @return value as four bytes in little endian byte order
    */
   public static byte[] getBytes(long value) {
     byte[] result = new byte[WORD];

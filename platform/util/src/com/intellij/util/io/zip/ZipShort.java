@@ -21,7 +21,7 @@ package com.intellij.util.io.zip;
 
 /**
  * Utility class that represents a two byte integer with conversion
- * rules for the big endian byte order of ZIP files.
+ * rules for the little endian byte order of ZIP files.
  */
 public final class ZipShort implements Cloneable {
   private static final int BYTE_MASK = 0xFF;
@@ -59,9 +59,9 @@ public final class ZipShort implements Cloneable {
   }
 
   /**
-   * Get value as two bytes in big endian byte order.
+   * Get value as two bytes in little endian byte order.
    *
-   * @return the value as a a two byte array in big endian byte order
+   * @return the value as a a two byte array in little endian byte order
    */
   public byte[] getBytes() {
     byte[] result = new byte[2];
@@ -80,10 +80,10 @@ public final class ZipShort implements Cloneable {
   }
 
   /**
-   * Get value as two bytes in big endian byte order.
+   * Get value as two bytes in little endian byte order.
    *
    * @param value the Java int to convert to bytes
-   * @return the converted int as a byte array in big endian byte order
+   * @return the converted int as a byte array in little endian byte order
    */
   public static byte[] getBytes(int value) {
     byte[] result = new byte[2];
@@ -93,7 +93,7 @@ public final class ZipShort implements Cloneable {
   }
 
   /**
-   * Helper method to get the value as a java int from two bytes starting at given array offset
+   * Helper method to get the value as a java int from two bytes starting at given array offset (little endian)
    *
    * @param bytes  the array of bytes
    * @param offset the offset to start
