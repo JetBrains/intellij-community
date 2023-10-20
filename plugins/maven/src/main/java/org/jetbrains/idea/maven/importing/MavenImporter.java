@@ -110,13 +110,13 @@ public abstract class MavenImporter {
   /**
    * @deprecated this API is not supported anymore, and there is no replacement
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void getSupportedDependencyScopes(Collection<? super String> result) { }
 
   /**
    * @deprecated this API is not supported anymore, and there is no replacement
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Pair<String, String> getExtraArtifactClassifierAndExtension(MavenArtifact artifact, MavenExtraArtifactType type) {
     return null;
   }

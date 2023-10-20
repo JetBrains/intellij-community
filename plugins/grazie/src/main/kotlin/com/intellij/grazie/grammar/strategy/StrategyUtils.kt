@@ -12,6 +12,7 @@ import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
+import org.jetbrains.annotations.ApiStatus
 
 
 object StrategyUtils {
@@ -81,6 +82,7 @@ object StrategyUtils {
    * @param types possible types of siblings
    * @return sequence of siblings with whitespace tokens
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use com.intellij.grazie.utils.getNotSoDistantSimilarSiblings")
   fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, types: Set<IElementType>) =
     getNotSoDistantSiblingsOfTypes(strategy, element) { type -> type in types }

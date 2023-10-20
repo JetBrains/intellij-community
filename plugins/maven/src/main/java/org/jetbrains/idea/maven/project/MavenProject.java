@@ -1112,7 +1112,7 @@ public class MavenProject {
    * @deprecated this API was intended for internal use and will be removed after migration to WorkpsaceModel API
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull ModuleType<? extends ModuleBuilder> getModuleType() {
     final List<MavenImporter> importers = MavenImporter.getSuitableImporters(this);
     // getSuitableImporters() guarantees that all returned importers require the same module type

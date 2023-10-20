@@ -6,6 +6,7 @@ import git4idea.remote.hosting.HostedGitRepositoryMapping
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitRepositoryMappingData
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubServerPath
 
@@ -50,6 +51,7 @@ class GHGitRepositoryMapping(override val repository: GHRepositoryCoordinates,
       return GHGitRepositoryMapping(repository, remote)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("remote extracted to collab")
     fun create(server: GithubServerPath, remote: org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates): GHGitRepositoryMapping? {
       val repositoryPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remote.url) ?: return null

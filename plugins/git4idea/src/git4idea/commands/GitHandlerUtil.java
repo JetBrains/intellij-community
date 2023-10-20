@@ -32,7 +32,7 @@ public final class GitHandlerUtil {
     });
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void runInCurrentThread(@NotNull GitHandler handler, @Nullable Runnable postStartAction) {
     handler.runInCurrentThread(postStartAction);
   }

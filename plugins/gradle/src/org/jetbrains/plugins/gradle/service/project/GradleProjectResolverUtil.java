@@ -321,7 +321,7 @@ public final class GradleProjectResolverUtil {
   /**
    * @deprecated Use getGradleIdentityPathOrNull instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static String getGradlePath(final Module module) {
     return getGradleIdentityPathOrNull(module);
@@ -940,7 +940,7 @@ public final class GradleProjectResolverUtil {
   /**
    * @deprecated use {@link GradleProjectResolverUtil#linkProjectLibrary(DataNode, LibraryData)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean linkProjectLibrary(/*@NotNull*/ ProjectResolverContext context,
                                                         @Nullable DataNode<ProjectData> ideProject,
                                                         @NotNull final LibraryData library) {

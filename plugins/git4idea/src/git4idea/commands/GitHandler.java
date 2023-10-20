@@ -384,7 +384,7 @@ public abstract class GitHandler {
    *
    * @deprecated Do not use, each ENV may have its own escaping rules.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void addCustomEnvironmentVariable(@NotNull @NonNls String name, @NotNull File file) {
     myCustomEnv.put(name, myExecutable.convertFilePath(file));
   }
@@ -617,7 +617,7 @@ public abstract class GitHandler {
    * @param ex an error to add to the list
    * @deprecated remove together with {@link GitHandlerUtil}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void addError(VcsException ex) {
     myErrors.add(ex);
   }
