@@ -17,7 +17,7 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
   private final List<PyType> myElementTypes;
   private final boolean myIsHomogeneous;
 
-  public PyUnpackedTupleTypeImpl(@NotNull List<PyType> elementTypes, boolean isUnbound) {
+  public PyUnpackedTupleTypeImpl(@NotNull List<? extends PyType> elementTypes, boolean isUnbound) {
     if (isUnbound) {
       if (elementTypes.size() != 1) {
         throw new IllegalArgumentException("Unbounded unpacked tuple type can have only one type parameter");
@@ -30,7 +30,7 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
     myIsHomogeneous = isUnbound;
   }
 
-  public static @NotNull PyUnpackedTupleType create(@NotNull List<PyType> elementTypes) {
+  public static @NotNull PyUnpackedTupleType create(@NotNull List<? extends PyType> elementTypes) {
     return new PyUnpackedTupleTypeImpl(elementTypes, false);
   }
 
