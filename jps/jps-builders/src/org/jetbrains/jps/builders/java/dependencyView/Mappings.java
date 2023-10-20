@@ -1266,7 +1266,7 @@ public final class Mappings {
               debug("Current method overrides the added method");
 
               final Iterable<File> files = classToSourceFileGet(methodClass.name);
-              if (files != null && !containsAll(myCompiledFiles, files)) {
+              if (files != null && !containsAll(myFilesToCompile, files)) {
                 ContainerUtil.addAll(myAffectedFiles, files);
                 if (myDebugS.isDebugEnabled()) {
                   for (File file : files) {
@@ -1351,7 +1351,7 @@ public final class Mappings {
 
         for (final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
           final Iterable<File> fNames = classToSourceFileGet(p.second.name);
-          if (fNames != null && !containsAll(myCompiledFiles, fNames)) {
+          if (fNames != null && !containsAll(myFilesToCompile, fNames)) {
             ContainerUtil.addAll(myAffectedFiles, fNames);
             if (myDebugS.isDebugEnabled()) {
               for (File fName : fNames) {
@@ -1394,7 +1394,7 @@ public final class Mappings {
 
                 if (allAbstract && visited) {
                   final Iterable<File> sources = classToSourceFileGet(p);
-                  if (sources != null && !containsAll(myCompiledFiles, sources)) {
+                  if (sources != null && !containsAll(myFilesToCompile, sources)) {
                     ContainerUtil.addAll(myAffectedFiles, sources);
                     debug("Removed method is not abstract & overrides some abstract method which is not then over-overridden in subclass ", p);
                     for (File source : sources) {
@@ -3170,6 +3170,9 @@ public final class Mappings {
   }
 
   private static <T> boolean containsAll(final Collection<? extends T> collection, Iterable<? extends T> it) {
+    if (collection == null || collection.isEmpty()) {
+      return false;
+    }
     for (T file : it) {
       if (!collection.contains(file)) {
         return false;
