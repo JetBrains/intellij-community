@@ -273,7 +273,7 @@ context(KtAnalysisSession)
 internal fun nullability(ktType: KtType?): KtTypeNullability? {
     if (ktType == null) return null
     if (ktType is KtErrorType) return null
-    return if (ktType.canBeNull)
+    return if (ktType.fullyExpandedType.canBeNull)
         KtTypeNullability.NULLABLE
     else
         KtTypeNullability.NON_NULLABLE
