@@ -124,7 +124,7 @@ class SettingTransferService : ExternalService {
                               size: IconProductSize): Icon? {
     return logger.runAndLogException {
       val version = loadIdeVersions()[itemId] ?: return null
-      return version.transferableId.icon
+      return version.transferableId.icon(size)
     }
   }
 
