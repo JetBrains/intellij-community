@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="kotlin.coverage.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.old.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jps.graphImplementationTests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.i18n.tests" scope="RUNTIME" />
