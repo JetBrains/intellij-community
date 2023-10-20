@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.source.html;
 
 import com.intellij.lang.HtmlScriptContentProvider;
-import com.intellij.lexer.HtmlHighlightingLexer;
+import com.intellij.lexer.HtmlLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
@@ -19,6 +19,6 @@ public class TemplateHtmlScriptContentProvider implements HtmlScriptContentProvi
 
   @Override
   public @Nullable Lexer getHighlightingLexer() {
-    return new HtmlHighlightingLexer();
+    return new HtmlLexer(true);
   }
 }

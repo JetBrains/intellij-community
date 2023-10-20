@@ -15,25 +15,17 @@
  */
 package com.intellij.lexer;
 
-import com.intellij.html.embedding.HtmlEmbeddedContentProvider;
-import org.jetbrains.annotations.NotNull;
+/**
+ * @deprecated Use or extend {@link XHtmlLexer} directly with {@code highlightMode} set to {@code true}
+ */
+@Deprecated
+public class XHtmlHighlightingLexer extends XHtmlLexer {
 
-public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
   public XHtmlHighlightingLexer() {
-    this(new XmlLexer(true));
+    super(true);
   }
 
   public XHtmlHighlightingLexer(Lexer baseLexer) {
-    super(baseLexer, false);
-  }
-
-  @Override
-  protected boolean isHtmlTagState(int state) {
-    return state == __XmlLexer.TAG || state == __XmlLexer.END_TAG;
-  }
-
-  @Override
-  protected boolean acceptEmbeddedContentProvider(@NotNull HtmlEmbeddedContentProvider provider) {
-    return !(provider instanceof HtmlRawTextTagContentProvider);
+    super(baseLexer, true);
   }
 }

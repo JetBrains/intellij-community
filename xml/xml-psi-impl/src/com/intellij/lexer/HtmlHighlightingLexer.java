@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @deprecated Use {@link HtmlLexer} with {@code highlightMode} set to {@code true}.
+ * @deprecated Use or extend {@link HtmlLexer} with {@code highlightMode} set to {@code true}.
  */
 @Deprecated
 public class HtmlHighlightingLexer extends HtmlLexer {

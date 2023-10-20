@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XHtmlHighlightingLexer;
+import com.intellij.lexer.XHtmlLexer;
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +14,7 @@ public class XHtmlIdIndexer extends LexerBasedIdIndexer {
   }
 
   static XHtmlFilterLexer createIndexingLexer(OccurrenceConsumer consumer) {
-    return new XHtmlFilterLexer(new XHtmlHighlightingLexer(), consumer);
+    return new XHtmlFilterLexer(new XHtmlLexer(true), consumer);
   }
 
   @Override
