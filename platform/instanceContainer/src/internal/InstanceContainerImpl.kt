@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.internal
 
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.instanceContainer.InstanceContainer
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
 import kotlinx.collections.immutable.PersistentMap
@@ -107,7 +108,7 @@ class InstanceContainerImpl(
       }.name
     }
     val debugString = if (scopeName == null) containerName else "($containerName x $scopeName)"
-    LOG.trace("$debugString : registration start")
+    LOG.trace { "$debugString : registration start" }
     val existingKeys = state().keys
     return InstanceRegistrarImpl(debugString, existingKeys) { actions ->
       register(debugString, registrationScope, actions)
@@ -120,10 +121,10 @@ class InstanceContainerImpl(
     actions: Map<String, RegistrationAction>,
   ): UnregisterHandle? {
     if (actions.isEmpty()) {
-      LOG.trace("$debugString : registration empty")
+      LOG.trace { "$debugString : registration empty" }
       return null
     }
-    LOG.trace("$debugString : registration")
+    LOG.trace { "$debugString : registration" }
     val parentScope = if (registrationScope == null) {
       scopeHolder.containerScope
     }
@@ -131,7 +132,7 @@ class InstanceContainerImpl(
       scopeHolder.intersectScope(registrationScope)
     }
     return register(parentScope = parentScope, actions).also {
-      LOG.trace("$debugString : registration completed")
+      LOG.trace { "$debugString : registration completed" }
     }
   }
 
