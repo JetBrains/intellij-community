@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.vfs.readText
@@ -24,15 +25,25 @@ internal fun reportErrorWithAttachments(
 
     val sessionName = suspendContext.debugProcess.session.sessionName
 
+    fun frameToLocation(it: StackFrameProxyImpl): String {
+        val location = it.location()
+        return "${location.method()} at line ${location.lineNumber()}"
+    }
+
+    val selectedFrame = executionContext.frameProxy
     val debuggerContext = """
             project: $projectName
             session: $sessionName
-            location: ${suspendContext.location} at ${file?.path}
+            location: ${frameToLocation(selectedFrame)}
         """.trimIndent()
 
-    val suspendStackTrace = suspendContext.thread?.frames()?.joinToString(System.lineSeparator()) {
-        val location = it.location()
-        "${location.method()} at line ${location.lineNumber()}"
+    val suspendStackTrace = suspendContext.thread?.frames()?.joinToString(System.lineSeparator()) { frame ->
+        buildString {
+            if (frame === selectedFrame) {
+                append("(*) ")
+            }
+            append(frameToLocation(frame))
+        }
     }
 
     val attachments = buildList {
