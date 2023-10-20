@@ -57,7 +57,7 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
                      index: Int,
                      isSelected: Boolean,
                      cellHasFocus: Boolean) {
-    val text = getText(value)
+    val text = if (value == null) "" else getText(value)
     item.append(text)
 
     val secondaryText = getSecondaryText(value)
