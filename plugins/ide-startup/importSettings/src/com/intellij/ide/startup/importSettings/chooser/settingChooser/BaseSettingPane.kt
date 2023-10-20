@@ -58,7 +58,7 @@ open class BaseSettingPane(val item: SettingItem) {
             if (item.configurable) {
               checkBox("")
                 .selected(item.selected)
-                .whenStateChangedFromUi { item.selected = it }
+                .onChanged { cb -> item.selected = cb.isSelected }
                 .customize(UnscaledGaps(0, 0, 2, 0))
             }
           }
