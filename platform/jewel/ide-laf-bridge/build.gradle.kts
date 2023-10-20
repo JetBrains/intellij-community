@@ -3,6 +3,7 @@ import SupportedIJVersion.*
 plugins {
     jewel
     `jewel-ij-publish`
+    `jewel-check-public-api`
     alias(libs.plugins.composeDesktop)
 }
 

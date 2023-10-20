@@ -185,13 +185,13 @@ internal class TitleBarMeasurePolicy(
             var headUsedSpace = leftInset
             var trailerUsedSpace = rightInset
 
-            placeableGroups[Alignment.Start]?.forEach { (measurable, placeable) ->
+            placeableGroups[Alignment.Start]?.forEach { (_, placeable) ->
                 val x = headUsedSpace
                 val y = Alignment.CenterVertically.align(placeable.height, boxHeight)
                 placeable.placeRelative(x, y)
                 headUsedSpace += placeable.width
             }
-            placeableGroups[Alignment.End]?.forEach { (measurable, placeable) ->
+            placeableGroups[Alignment.End]?.forEach { (_, placeable) ->
                 val x = boxWidth - placeable.width - trailerUsedSpace
                 val y = Alignment.CenterVertically.align(placeable.height, boxHeight)
                 placeable.placeRelative(x, y)
@@ -213,7 +213,7 @@ internal class TitleBarMeasurePolicy(
                     centerX = minX
                 }
 
-                centerPlaceable.forEach { (measurable, placeable) ->
+                centerPlaceable.forEach { (_, placeable) ->
                     val x = centerX
                     val y = Alignment.CenterVertically.align(placeable.height, boxHeight)
                     placeable.placeRelative(x, y)

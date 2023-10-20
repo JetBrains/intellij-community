@@ -1,0 +1,8 @@
+public final class org/jetbrains/jewel/bridge/BridgeIconData$Companion {
+	public final fun readFromLaF ()Lorg/jetbrains/jewel/bridge/BridgeIconData;
+}
+
+public final class org/jetbrains/jewel/bridge/BridgePainterHintsProvider$Companion {
+	public final fun invoke (Z)Lorg/jetbrains/jewel/intui/core/IntUiPainterHintsProvider;
+}
+

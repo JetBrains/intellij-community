@@ -29,7 +29,7 @@ import org.jetbrains.jewel.window.styling.TitleBarStyle
         modifier.customTitleBarMouseEventHandler(titleBar),
         gradientStartColor,
         style,
-        { height, state ->
+        { height, _ ->
             titleBar.height = height.value
             titleBar.putProperty("controls.dark", style.colors.background.isDark())
             JBR.getWindowDecorations().setCustomTitleBar(window, titleBar)

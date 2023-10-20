@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
@@ -22,7 +23,8 @@ import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.styling.SubmenuMetrics
 
 @Stable
-data class IntUiMenuStyle(
+@GenerateDataFunctions
+class IntUiMenuStyle(
     override val colors: IntUiMenuColors,
     override val metrics: IntUiMenuMetrics,
     override val icons: IntUiMenuIcons,
@@ -47,7 +49,8 @@ data class IntUiMenuStyle(
 }
 
 @Immutable
-data class IntUiMenuColors(
+@GenerateDataFunctions
+class IntUiMenuColors(
     override val background: Color,
     override val border: Color,
     override val shadow: Color,
@@ -75,7 +78,8 @@ data class IntUiMenuColors(
 }
 
 @Immutable
-data class IntUiMenuItemColors(
+@GenerateDataFunctions
+class IntUiMenuItemColors(
     override val background: Color,
     override val backgroundDisabled: Color,
     override val backgroundFocused: Color,
@@ -173,7 +177,8 @@ data class IntUiMenuItemColors(
 }
 
 @Stable
-data class IntUiMenuMetrics(
+@GenerateDataFunctions
+class IntUiMenuMetrics(
     override val cornerSize: CornerSize = CornerSize(8.dp),
     override val menuMargin: PaddingValues = PaddingValues(vertical = 6.dp),
     override val contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
@@ -185,7 +190,8 @@ data class IntUiMenuMetrics(
 ) : MenuMetrics
 
 @Stable
-data class IntUiMenuItemMetrics(
+@GenerateDataFunctions
+class IntUiMenuItemMetrics(
     override val selectionCornerSize: CornerSize = CornerSize(4.dp),
     override val outerPadding: PaddingValues = PaddingValues(horizontal = 4.dp),
     override val contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
@@ -194,12 +200,14 @@ data class IntUiMenuItemMetrics(
 ) : MenuItemMetrics
 
 @Stable
-data class IntUiSubmenuMetrics(
+@GenerateDataFunctions
+class IntUiSubmenuMetrics(
     override val offset: DpOffset = DpOffset(0.dp, (-8).dp),
 ) : SubmenuMetrics
 
 @Immutable
-data class IntUiMenuIcons(
+@GenerateDataFunctions
+class IntUiMenuIcons(
     override val submenuChevron: PainterProvider,
 ) : MenuIcons {
 

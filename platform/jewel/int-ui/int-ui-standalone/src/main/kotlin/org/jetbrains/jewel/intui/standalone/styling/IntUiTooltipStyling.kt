@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.styling.TooltipColors
@@ -18,7 +19,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @Stable
-data class IntUiTooltipStyle(
+@GenerateDataFunctions
+class IntUiTooltipStyle(
     override val colors: IntUiTooltipColors,
     override val metrics: IntUiTooltipMetrics,
 ) : TooltipStyle {
@@ -46,7 +48,8 @@ data class IntUiTooltipStyle(
 }
 
 @Stable
-data class IntUiTooltipColors(
+@GenerateDataFunctions
+class IntUiTooltipColors(
     override val content: Color,
     override val background: Color,
     override val border: Color,
@@ -74,7 +77,8 @@ data class IntUiTooltipColors(
 }
 
 @Stable
-data class IntUiTooltipMetrics(
+@GenerateDataFunctions
+class IntUiTooltipMetrics(
     override val contentPadding: PaddingValues = PaddingValues(vertical = 9.dp, horizontal = 12.dp),
     override val showDelay: Duration = 0.milliseconds,
     override val cornerSize: CornerSize = CornerSize(5.dp),

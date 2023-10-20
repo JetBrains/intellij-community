@@ -44,7 +44,7 @@ class BridgePainterHintsProvider private constructor(
 
             val iconColorPalette = uiTheme.iconColorPalette
             val keyPalette = UITheme.getColorPalette()
-            val themeColors = uiTheme.colors.orEmpty().mapValues { (k, v) ->
+            val themeColors = uiTheme.colors.orEmpty().mapValues { (_, v) ->
                 when (v) {
                     is Int -> Color(v)
                     is String -> Color.fromRGBAHexString(v)

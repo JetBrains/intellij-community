@@ -2,6 +2,7 @@
 
 import io.gitlab.arturbosch.detekt.Detekt
 import org.gradle.api.attributes.Usage
+import org.jmailen.gradle.kotlinter.tasks.FormatTask
 import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
@@ -48,7 +49,7 @@ detekt {
     buildUponDefaultConfig = true
 }
 
-val sarif by configurations.creating {
+val sarif: Configuration by configurations.creating {
     isCanBeConsumed = true
     attributes {
         attribute(Usage.USAGE_ATTRIBUTE, objects.named("sarif"))
@@ -69,6 +70,11 @@ tasks {
             }
         }
     }
+
+    withType<FormatTask> {
+        exclude { it.file.absolutePath.contains("build/generated") }
+    }
+
     withType<LintTask> {
         exclude { it.file.absolutePath.contains("build/generated") }
 

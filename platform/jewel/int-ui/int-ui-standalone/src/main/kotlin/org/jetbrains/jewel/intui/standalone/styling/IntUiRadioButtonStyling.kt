@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
@@ -16,7 +17,8 @@ import org.jetbrains.jewel.styling.RadioButtonMetrics
 import org.jetbrains.jewel.styling.RadioButtonStyle
 
 @Immutable
-data class IntUiRadioButtonStyle(
+@GenerateDataFunctions
+class IntUiRadioButtonStyle(
     override val colors: IntUiRadioButtonColors,
     override val metrics: IntUiRadioButtonMetrics,
     override val icons: IntUiRadioButtonIcons,
@@ -41,7 +43,8 @@ data class IntUiRadioButtonStyle(
 }
 
 @Immutable
-data class IntUiRadioButtonColors(
+@GenerateDataFunctions
+class IntUiRadioButtonColors(
     override val content: Color,
     override val contentHovered: Color,
     override val contentDisabled: Color,
@@ -89,13 +92,15 @@ data class IntUiRadioButtonColors(
 }
 
 @Immutable
-data class IntUiRadioButtonMetrics(
+@GenerateDataFunctions
+class IntUiRadioButtonMetrics(
     override val radioButtonSize: DpSize = DpSize(19.dp, 19.dp),
     override val iconContentGap: Dp = 8.dp,
 ) : RadioButtonMetrics
 
 @Immutable
-data class IntUiRadioButtonIcons(
+@GenerateDataFunctions
+class IntUiRadioButtonIcons(
     override val radioButton: PainterProvider,
 ) : RadioButtonIcons {
 

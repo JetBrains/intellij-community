@@ -3,8 +3,8 @@ import org.jetbrains.compose.ComposeBuildConfig
 plugins {
     jewel
     `jewel-publish`
+    `jewel-check-public-api`
     alias(libs.plugins.composeDesktop)
-    alias(libs.plugins.kotlinSerialization)
 }
 
 private val composeVersion get() = ComposeBuildConfig.composeVersion

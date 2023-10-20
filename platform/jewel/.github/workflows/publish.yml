@@ -1,9 +1,11 @@
 name: Publish artifacts in Space
+
 on:
   release:
     types: [ published ]
   push:
     branches: [ main ]
+
 jobs:
   publish-core:
     name: Publish Jewel Core

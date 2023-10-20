@@ -9,6 +9,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.IntUiTheme
@@ -21,7 +22,8 @@ import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LinkTextStyles
 
 @Immutable
-data class IntUiLinkStyle(
+@GenerateDataFunctions
+class IntUiLinkStyle(
     override val colors: IntUiLinkColors,
     override val metrics: IntUiLinkMetrics,
     override val icons: IntUiLinkIcons,
@@ -49,7 +51,8 @@ data class IntUiLinkStyle(
 }
 
 @Immutable
-data class IntUiLinkColors(
+@GenerateDataFunctions
+class IntUiLinkColors(
     override val content: Color,
     override val contentDisabled: Color,
     override val contentFocused: Color,
@@ -97,14 +100,16 @@ data class IntUiLinkColors(
 }
 
 @Immutable
-data class IntUiLinkMetrics(
+@GenerateDataFunctions
+class IntUiLinkMetrics(
     override val focusHaloCornerSize: CornerSize = CornerSize(2.dp),
     override val textIconGap: Dp = 0.dp,
     override val iconSize: DpSize = DpSize(16.dp, 16.dp),
 ) : LinkMetrics
 
 @Immutable
-data class IntUiLinkIcons(
+@GenerateDataFunctions
+class IntUiLinkIcons(
     override val dropdownChevron: PainterProvider,
     override val externalLink: PainterProvider,
 ) : LinkIcons {
@@ -130,7 +135,8 @@ fun intUiLinkIcons(
 ) = IntUiLinkIcons(dropdownChevron, externalLink)
 
 @Immutable
-data class IntUiLinkTextStyles(
+@GenerateDataFunctions
+class IntUiLinkTextStyles(
     override val normal: TextStyle,
     override val disabled: TextStyle,
     override val focused: TextStyle,

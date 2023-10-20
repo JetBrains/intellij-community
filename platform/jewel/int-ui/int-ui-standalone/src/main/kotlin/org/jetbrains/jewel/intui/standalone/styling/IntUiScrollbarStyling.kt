@@ -8,6 +8,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.styling.ScrollbarColors
 import org.jetbrains.jewel.styling.ScrollbarMetrics
 import org.jetbrains.jewel.styling.ScrollbarStyle
@@ -15,7 +16,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @Stable
-data class IntUiScrollbarStyle(
+@GenerateDataFunctions
+class IntUiScrollbarStyle(
     override val colors: IntUiScrollbarColors,
     override val metrics: IntUiScrollbarMetrics,
     override val hoverDuration: Duration,
@@ -40,7 +42,8 @@ data class IntUiScrollbarStyle(
 }
 
 @Immutable
-data class IntUiScrollbarColors(
+@GenerateDataFunctions
+class IntUiScrollbarColors(
     override val thumbBackground: Color,
     override val thumbBackgroundHovered: Color,
 ) : ScrollbarColors {
@@ -62,7 +65,8 @@ data class IntUiScrollbarColors(
 }
 
 @Stable
-data class IntUiScrollbarMetrics(
+@GenerateDataFunctions
+class IntUiScrollbarMetrics(
     override val thumbCornerSize: CornerSize = CornerSize(100),
     override val thumbThickness: Dp = 8.dp,
     override val minThumbLength: Dp = 16.dp,

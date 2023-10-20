@@ -50,9 +50,7 @@ import java.awt.event.WindowEvent
         },
         gradientStartColor,
         style,
-        { size, state ->
-            PaddingValues(0.dp)
-        },
+        { _, _ -> PaddingValues(0.dp) },
     ) { state ->
         CloseButton({
             window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))

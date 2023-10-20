@@ -3,9 +3,11 @@ package org.jetbrains.jewel.intui.standalone.styling
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
@@ -16,7 +18,9 @@ import org.jetbrains.jewel.styling.TabIcons
 import org.jetbrains.jewel.styling.TabMetrics
 import org.jetbrains.jewel.styling.TabStyle
 
-data class IntUiTabStyle(
+@Stable
+@GenerateDataFunctions
+class IntUiTabStyle(
     override val colors: TabColors,
     override val metrics: TabMetrics,
     override val icons: TabIcons,
@@ -63,7 +67,8 @@ data class IntUiTabStyle(
 }
 
 @Immutable
-data class IntUiTabColors(
+@GenerateDataFunctions
+class IntUiTabColors(
     override val background: Color,
     override val backgroundDisabled: Color,
     override val backgroundFocused: Color,
@@ -253,8 +258,9 @@ data class IntUiTabColors(
     }
 }
 
-@Immutable
-data class IntUiTabMetrics(
+@Stable
+@GenerateDataFunctions
+class IntUiTabMetrics(
     override val underlineThickness: Dp = 3.dp,
     override val tabPadding: PaddingValues = PaddingValues(horizontal = 8.dp),
     override val closeContentGap: Dp = 8.dp,
@@ -262,7 +268,8 @@ data class IntUiTabMetrics(
 ) : TabMetrics
 
 @Immutable
-data class IntUiTabContentAlpha(
+@GenerateDataFunctions
+class IntUiTabContentAlpha(
     override val iconNormal: Float,
     override val iconDisabled: Float,
     override val iconFocused: Float,
@@ -338,7 +345,9 @@ data class IntUiTabContentAlpha(
     }
 }
 
-data class IntUiTabIcons(
+@Immutable
+@GenerateDataFunctions
+class IntUiTabIcons(
     override val close: PainterProvider,
 ) : TabIcons {
 

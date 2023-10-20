@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.jewel.GenerateDataFunctions
 
 sealed class Stroke {
     @Immutable
@@ -15,7 +16,8 @@ sealed class Stroke {
     }
 
     @Immutable
-    data class Solid internal constructor(
+    @GenerateDataFunctions
+    class Solid internal constructor(
         val width: Dp,
         val color: Color,
         val alignment: Alignment,
@@ -23,7 +25,8 @@ sealed class Stroke {
     ) : Stroke()
 
     @Immutable
-    data class Brush internal constructor(
+    @GenerateDataFunctions
+    class Brush internal constructor(
         val width: Dp,
         val brush: androidx.compose.ui.graphics.Brush,
         val alignment: Alignment,

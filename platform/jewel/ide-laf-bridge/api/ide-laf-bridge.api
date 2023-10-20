@@ -1,0 +1,91 @@
+public final class org/jetbrains/jewel/bridge/BridgeResourceResolverKt {
+	public static final fun bridgePainterProvider (Ljava/lang/String;)Lorg/jetbrains/jewel/painter/ResourcePainterProvider;
+}
+
+public final class org/jetbrains/jewel/bridge/BridgeThemeColorPalette : org/jetbrains/jewel/intui/core/IntUiThemeColorPalette {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/bridge/BridgeThemeColorPalette$Companion;
+	public synthetic fun <init> (Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun blue ()Ljava/util/List;
+	public fun blue-vNxB06k (I)J
+	public fun getRawMap ()Ljava/util/Map;
+	public fun green ()Ljava/util/List;
+	public fun green-vNxB06k (I)J
+	public fun grey ()Ljava/util/List;
+	public fun grey-vNxB06k (I)J
+	public fun lookup-ijrfgN4 (Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
+	public fun orange ()Ljava/util/List;
+	public fun orange-vNxB06k (I)J
+	public fun purple ()Ljava/util/List;
+	public fun purple-vNxB06k (I)J
+	public fun red ()Ljava/util/List;
+	public fun red-vNxB06k (I)J
+	public fun teal ()Ljava/util/List;
+	public fun teal-vNxB06k (I)J
+	public fun yellow ()Ljava/util/List;
+	public fun yellow-vNxB06k (I)J
+}
+
+public final class org/jetbrains/jewel/bridge/BridgeThemeColorPalette$Companion {
+	public final fun readFromLaF ()Lorg/jetbrains/jewel/bridge/BridgeThemeColorPalette;
+}
+
+public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
+	public static final fun createVerticalBrush-8A-3gB4 (Ljava/util/List;FFI)Landroidx/compose/ui/graphics/Brush;
+	public static synthetic fun createVerticalBrush-8A-3gB4$default (Ljava/util/List;FFIILjava/lang/Object;)Landroidx/compose/ui/graphics/Brush;
+	public static final fun getDp (Lcom/intellij/util/ui/JBValue;)F
+	public static final fun retrieveArcAsCornerSize (Ljava/lang/String;)Landroidx/compose/foundation/shape/CornerSize;
+	public static final fun retrieveArcAsCornerSizeWithFallbacks ([Ljava/lang/String;)Landroidx/compose/foundation/shape/CornerSize;
+	public static final fun retrieveColorOrNull (Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
+	public static final fun retrieveColorOrUnspecified (Ljava/lang/String;)J
+	public static final fun retrieveColorsOrUnspecified ([Ljava/lang/String;)Ljava/util/List;
+	public static final fun retrieveInsetsAsPaddingValues (Ljava/lang/String;)Landroidx/compose/foundation/layout/PaddingValues;
+	public static final fun retrieveIntAsDp (Ljava/lang/String;)F
+	public static final fun retrieveIntAsDpOrUnspecified (Ljava/lang/String;)F
+	public static final fun retrieveTextStyle (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun retrieveTextStyle$default (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun retrieveTextStyle-_Wfy91w (Ljava/lang/String;JJZIJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun retrieveTextStyle-_Wfy91w$default (Ljava/lang/String;JJZIJLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun toComposeColor (Ljava/awt/Color;)J
+	public static final fun toComposeColorOrUnspecified (Ljava/awt/Color;)J
+	public static final fun toDpSize (Lcom/intellij/util/ui/JBDimension;)J
+	public static final fun toDpSize (Ljava/awt/Dimension;)J
+	public static final fun toFontFamily (Ljava/awt/Font;)Landroidx/compose/ui/text/font/FontFamily;
+	public static final fun toPaddingValues (Lcom/intellij/util/ui/JBInsets;)Landroidx/compose/foundation/layout/PaddingValues;
+	public static final fun toPaddingValues (Ljava/awt/Insets;)Landroidx/compose/foundation/layout/PaddingValues;
+}
+
+public abstract class org/jetbrains/jewel/bridge/JewelBridgeException : java/lang/RuntimeException {
+	public static final field $stable I
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getMessage ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/bridge/JewelBridgeException$KeyNotFoundException : org/jetbrains/jewel/bridge/JewelBridgeException {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class org/jetbrains/jewel/bridge/JewelBridgeException$KeysNotFoundException : org/jetbrains/jewel/bridge/JewelBridgeException {
+	public static final field $stable I
+	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
+}
+
+public final class org/jetbrains/jewel/bridge/SwingBridgeThemeKt {
+	public static final fun SwingBridgeTheme (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+}
+
+public abstract interface annotation class org/jetbrains/jewel/bridge/SwingLafKey : java/lang/annotation/Annotation {
+	public abstract fun key ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/bridge/ToolWindowExtensionsKt {
+	public static final fun addComposeTab (Lcom/intellij/openapi/wm/ToolWindow;Ljava/lang/String;ZZLkotlin/jvm/functions/Function2;)V
+	public static synthetic fun addComposeTab$default (Lcom/intellij/openapi/wm/ToolWindow;Ljava/lang/String;ZZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+}
+
+public final class org/jetbrains/jewel/bridge/actionSystem/ProvideDataKt {
+	public static final fun ComponentDataProviderBridge (Ljavax/swing/JComponent;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun provideData (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
+}
+

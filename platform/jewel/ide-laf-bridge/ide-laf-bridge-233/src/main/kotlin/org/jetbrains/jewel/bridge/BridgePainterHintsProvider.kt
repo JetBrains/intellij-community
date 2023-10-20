@@ -49,9 +49,8 @@ class BridgePainterHintsProvider private constructor(
                 }
             }
             val keyPalette = UITheme.getColorPalette()
-            val themeColors = bean.colors.mapValues { (k, v) ->
-                Color(v)
-            }
+            val themeColors = bean.colors
+                .mapValues { (_, v) -> Color(v) }
 
             return BridgePainterHintsProvider(isDark, keyPalette, iconColorPalette, themeColors)
         }

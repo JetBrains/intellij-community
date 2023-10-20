@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.IntUiTheme
@@ -20,7 +21,8 @@ import org.jetbrains.jewel.styling.LabelledTextFieldStyle
 import org.jetbrains.jewel.styling.LabelledTextFieldTextStyles
 
 @Stable
-data class IntUiLabelledTextFieldStyle(
+@GenerateDataFunctions
+class IntUiLabelledTextFieldStyle(
     override val colors: IntUiLabelledTextFieldColors,
     override val metrics: IntUiLabelledTextFieldMetrics,
     override val textStyle: TextStyle,
@@ -48,7 +50,8 @@ data class IntUiLabelledTextFieldStyle(
 }
 
 @Immutable
-data class IntUiLabelledTextFieldColors(
+@GenerateDataFunctions
+class IntUiLabelledTextFieldColors(
     override val background: Color,
     override val backgroundDisabled: Color,
     override val backgroundFocused: Color,
@@ -181,7 +184,8 @@ data class IntUiLabelledTextFieldColors(
 }
 
 @Stable
-data class IntUiLabelledTextFieldMetrics(
+@GenerateDataFunctions
+class IntUiLabelledTextFieldMetrics(
     override val cornerSize: CornerSize = CornerSize(4.dp),
     override val contentPadding: PaddingValues = PaddingValues(horizontal = 9.dp, vertical = 6.dp),
     override val minSize: DpSize = DpSize(49.dp, 24.dp),
@@ -191,7 +195,8 @@ data class IntUiLabelledTextFieldMetrics(
 ) : LabelledTextFieldMetrics
 
 @Immutable
-data class IntUiLabelledTextFieldTextStyles(
+@GenerateDataFunctions
+class IntUiLabelledTextFieldTextStyles(
     override val label: TextStyle,
     override val hint: TextStyle,
 ) : LabelledTextFieldTextStyles {

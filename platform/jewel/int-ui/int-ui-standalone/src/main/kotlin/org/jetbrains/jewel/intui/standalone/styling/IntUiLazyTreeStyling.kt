@@ -8,6 +8,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
@@ -18,7 +19,8 @@ import org.jetbrains.jewel.styling.LazyTreeMetrics
 import org.jetbrains.jewel.styling.LazyTreeStyle
 
 @Stable
-data class IntUiLazyTreeStyle(
+@GenerateDataFunctions
+class IntUiLazyTreeStyle(
     override val colors: IntUiLazyTreeColors,
     override val metrics: IntUiLazyTreeMetrics,
     override val icons: IntUiLazyTreeIcons,
@@ -43,7 +45,8 @@ data class IntUiLazyTreeStyle(
 }
 
 @Immutable
-data class IntUiLazyTreeColors(
+@GenerateDataFunctions
+class IntUiLazyTreeColors(
     override val content: Color,
     override val contentFocused: Color,
     override val contentSelected: Color,
@@ -96,7 +99,8 @@ data class IntUiLazyTreeColors(
 }
 
 @Stable
-data class IntUiLazyTreeMetrics(
+@GenerateDataFunctions
+class IntUiLazyTreeMetrics(
     override val indentSize: Dp = 7.dp + 16.dp,
     override val elementBackgroundCornerSize: CornerSize = CornerSize(2.dp),
     override val elementPadding: PaddingValues = PaddingValues(horizontal = 12.dp),
@@ -106,7 +110,8 @@ data class IntUiLazyTreeMetrics(
 ) : LazyTreeMetrics
 
 @Immutable
-data class IntUiLazyTreeIcons(
+@GenerateDataFunctions
+class IntUiLazyTreeIcons(
     override val chevronCollapsed: PainterProvider,
     override val chevronExpanded: PainterProvider,
     override val chevronSelectedCollapsed: PainterProvider,

@@ -1,13 +1,17 @@
+@file:Suppress("MatchingDeclarationName", "ktlint:standard:filename") // Going for consistency with other files
+
 package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.styling.CircularProgressStyle
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @Stable
-data class IntUiCircularProgressStyle(
+@GenerateDataFunctions
+class IntUiCircularProgressStyle(
     override val frameTime: Duration,
     override val color: Color,
 ) : CircularProgressStyle {

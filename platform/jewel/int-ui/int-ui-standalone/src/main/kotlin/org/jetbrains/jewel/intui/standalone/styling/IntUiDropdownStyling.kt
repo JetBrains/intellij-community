@@ -10,6 +10,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.IntUiTheme
@@ -22,7 +23,8 @@ import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.MenuStyle
 
 @Stable
-data class IntUiDropdownStyle(
+@GenerateDataFunctions
+class IntUiDropdownStyle(
     override val colors: IntUiDropdownColors,
     override val metrics: IntUiDropdownMetrics,
     override val icons: IntUiDropdownIcons,
@@ -62,7 +64,8 @@ data class IntUiDropdownStyle(
 }
 
 @Immutable
-data class IntUiDropdownColors(
+@GenerateDataFunctions
+class IntUiDropdownColors(
     override val background: Color,
     override val backgroundDisabled: Color,
     override val backgroundFocused: Color,
@@ -211,7 +214,8 @@ data class IntUiDropdownColors(
 }
 
 @Stable
-data class IntUiDropdownMetrics(
+@GenerateDataFunctions
+class IntUiDropdownMetrics(
     override val arrowMinSize: DpSize = DpSize((23 + 3).dp, 24.dp),
     override val minSize: DpSize = DpSize((49 + 23 + 6).dp, 24.dp),
     override val cornerSize: CornerSize = CornerSize(4.dp),
@@ -220,7 +224,8 @@ data class IntUiDropdownMetrics(
 ) : DropdownMetrics
 
 @Immutable
-data class IntUiDropdownIcons(
+@GenerateDataFunctions
+class IntUiDropdownIcons(
     override val chevronDown: PainterProvider,
 ) : DropdownIcons {
 
