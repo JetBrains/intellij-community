@@ -12,12 +12,16 @@ use log::{debug, info};
 use crate::*;
 use crate::docker::is_running_in_docker;
 
-pub struct RemoteDevLaunchConfiguration {
-    default: DefaultLaunchConfiguration,
-    launcher_name: String,
+struct PerProjectPathOverrides {
     config_dir: PathBuf,
     system_dir: PathBuf,
     logs_dir: Option<PathBuf>,
+}
+
+pub struct RemoteDevLaunchConfiguration {
+    default: DefaultLaunchConfiguration,
+    launcher_name: String,
+    path_overrides: Option<PerProjectPathOverrides>,
     ij_starter_command: String,
 }
 
@@ -54,7 +58,31 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     }
 }
 
+fn legacy_per_project_configs() -> bool {
+    if let Ok(legacy_var) = env::var("REMOTE_DEV_LEGACY_PER_PROJECT_CONFIGS") {
+        legacy_var == "1" || legacy_var == "true"
+    } else {
+        true
+    }
+}
+
 impl DefaultLaunchConfiguration {
+    fn prepare_path_overrides(&self, per_project_config_dir_name: &str) -> Result<Option<PerProjectPathOverrides>> {
+        if legacy_per_project_configs() {
+            let config_dir = self.prepare_host_config_dir(&per_project_config_dir_name)?;
+            let system_dir = self.prepare_host_system_dir(&per_project_config_dir_name)?;
+            let logs_dir = self.prepare_host_logs_dir(&per_project_config_dir_name)?;
+
+            Ok(Some(PerProjectPathOverrides {
+                config_dir,
+                system_dir,
+                logs_dir,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
     fn prepare_host_config_dir(&self, per_project_config_dir_name: &str) -> Result<PathBuf> {
         self.prepare_project_specific_dir(
             "IDE config directory",
@@ -151,13 +179,8 @@ impl RemoteDevLaunchConfiguration {
 
         let default_cfg = DefaultLaunchConfiguration::new(exe_path, default_cfg_args)?;
 
-        match project_path {
-            Some(project_path) => {
-                let configuration = Self::create(exe_path, &project_path, default_cfg)?;
-                Ok(Box::new(configuration))
-            }
-            None => Ok(Box::new(default_cfg))
-        }
+        let configuration = Self::create(exe_path, project_path, default_cfg)?;
+        Ok(Box::new(configuration))
     }
 
     // remote-dev-server.exe ij_command_name /path/to/project args
@@ -187,7 +210,11 @@ impl RemoteDevLaunchConfiguration {
         if remote_dev_starter_command == "help" {
             print_help();
             std::process::exit(0)
+        } else if remote_dev_starter_command == "registerBackendLocationForGateway" {
+            bail!("registerBackendLocationForGateway is not implemented")
         }
+
+        let should_parse_project_path = legacy_per_project_configs() || ij_starter_command.ij_command == "warmup";
 
         let project_path = if args.len() > 2 {
             let arg = args[2].as_str();
@@ -200,7 +227,11 @@ impl RemoteDevLaunchConfiguration {
                 return Ok((None, args));
             }
 
-            Some(Self::get_project_path(arg)?)
+            if should_parse_project_path {
+                Some(Self::get_project_path(arg)?)
+            } else {
+                None
+            }
         } else {
             None
         };
@@ -244,23 +275,27 @@ impl RemoteDevLaunchConfiguration {
         return Ok(project_path);
     }
 
-    fn create(exe_path: &Path, project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
-        // prevent opening of 2 backends for the same directory via symlinks
-        let canonical_project_path = project_path.canonicalize()?.strip_ns_prefix()?;
+    fn create(exe_path: &Path, project_path: Option<PathBuf>, default: DefaultLaunchConfiguration) -> Result<Self> {
+        let path_overrides = match project_path {
+            None => None,
+            Some(project_path) => {
+                // prevent opening of 2 backends for the same directory via symlinks
+                let canonical_project_path = project_path.canonicalize()?.strip_ns_prefix()?;
 
-        if project_path != canonical_project_path {
-            info!("Will use canonical form '{canonical_project_path:?}' of '{project_path:?}' to avoid concurrent IDE instances on the same project");
-        }
+                if project_path != canonical_project_path {
+                    info!("Will use canonical form '{canonical_project_path:?}' of '{project_path:?}' to avoid concurrent IDE instances on the same project");
+                }
 
-        let per_project_config_dir_name = canonical_project_path.to_string_lossy()
-            .replace("/", "_")
-            .replace("\\", "_")
-            .replace(":", "_");
-        debug!("Per-project config dir name: '{per_project_config_dir_name}'");
+                let per_project_config_dir_name = canonical_project_path.to_string_lossy()
+                    .replace("/", "_")
+                    .replace("\\", "_")
+                    .replace(":", "_");
+                debug!("Per-project config dir name: '{per_project_config_dir_name}'");
 
-        let config_dir = default.prepare_host_config_dir(&per_project_config_dir_name)?;
-        let system_dir = default.prepare_host_system_dir(&per_project_config_dir_name)?;
-        let logs_dir = default.prepare_host_logs_dir(&per_project_config_dir_name)?;
+                default.prepare_path_overrides(&per_project_config_dir_name)?
+            }
+        };
+
         let ij_starter_command = default.args[0].to_string();
 
         let launcher_name = exe_path.file_name()
@@ -270,9 +305,7 @@ impl RemoteDevLaunchConfiguration {
         let config = RemoteDevLaunchConfiguration {
             default,
             launcher_name,
-            config_dir,
-            system_dir,
-            logs_dir,
+            path_overrides,
             ij_starter_command,
         };
 
@@ -280,21 +313,25 @@ impl RemoteDevLaunchConfiguration {
     }
 
     fn get_remote_dev_properties(&self) -> Result<Vec<IdeProperty>> {
-        let config_path_string = escape_for_idea_properties(&self.config_dir);
-        let plugins_path_string = escape_for_idea_properties(&self.config_dir.join("plugins"));
-        let system_path_string = escape_for_idea_properties(&self.system_dir);
+        let mut extra_properties = Vec::new();
 
-        let logs_path_string = match &self.logs_dir {
-            None => escape_for_idea_properties(&self.system_dir.join("log")),
-            Some(x) => escape_for_idea_properties(x)
-        };
+        if let Some(overrides) = &self.path_overrides {
+            let config_path_string = escape_for_idea_properties(&overrides.config_dir);
+            let plugins_path_string = escape_for_idea_properties(&overrides.config_dir.join("plugins"));
+            let system_path_string = escape_for_idea_properties(&overrides.system_dir);
+
+            let logs_path_string = match &overrides.logs_dir {
+                None => escape_for_idea_properties(&overrides.system_dir.join("log")),
+                Some(x) => escape_for_idea_properties(x)
+            };
+
+            extra_properties.push(("idea.config.path", config_path_string));
+            extra_properties.push(("idea.plugins.path", plugins_path_string));
+            extra_properties.push(("idea.system.path", system_path_string));
+            extra_properties.push(("idea.log.path", logs_path_string));
+        }
 
         let mut remote_dev_properties = vec![
-            ("idea.config.path", config_path_string.as_str()),
-            ("idea.plugins.path", plugins_path_string.as_str()),
-            ("idea.system.path", system_path_string.as_str()),
-            ("idea.log.path", logs_path_string.as_str()),
-
             // TODO: remove once all of this is disabled for remote dev
             ("jb.privacy.policy.text", "<!--999.999-->"),
             ("jb.consents.confirmation.enabled", "false"),
@@ -319,6 +356,10 @@ impl RemoteDevLaunchConfiguration {
             // TODO: CWM-5782 figure out why posix_spawn / jspawnhelper does not work in tests
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
+
+        for x in &extra_properties {
+            remote_dev_properties.push((x.0, &x.1.as_str()));
+        }
 
         let remote_dev_server_jcef_enabled = env::var("REMOTE_DEV_SERVER_JCEF_ENABLED").unwrap_or_default();
 
@@ -387,10 +428,35 @@ impl RemoteDevLaunchConfiguration {
         Ok(result)
     }
 
+    fn get_temp_system_like_path(&self) -> Result<PathBuf> {
+        let temp_path = match &self.path_overrides {
+            None => { RemoteDevLaunchConfiguration::get_os_specific_temp()? }
+            Some(overrides) => { overrides.system_dir.clone() }
+        };
+
+        Ok(temp_path)
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn get_os_specific_temp() -> Result<PathBuf> {
+        let temp_path = if let Some(temp_dir) = env::var("TMPDIR")
+            .ok().filter(|x| !x.is_empty()) {
+            PathBuf::from(temp_dir)
+        } else {
+            PathBuf::from("/tmp")
+        };
+        Ok(temp_path)
+    }
+
+    #[cfg(target_os = "windows")]
+    fn get_os_specific_temp() -> Result<PathBuf> {
+        Ok(PathBuf::from(env::var("TEMP")))
+    }
+
     fn write_merged_properties_file(&self, remote_dev_properties: &[IdeProperty]) -> Result<PathBuf> {
         let pid = std::process::id();
         let filename = format!("pid.{pid}.temp.remote-dev.properties");
-        let path = self.system_dir.join(filename);
+        let path = self.get_temp_system_like_path()?.join(filename);
 
         if let Some(dir) = path.parent() {
             fs::create_dir_all(dir)
@@ -461,17 +527,18 @@ impl std::fmt::Display for IjStarterCommand {
 }
 
 fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
+    let would_use_project_for_configs = legacy_per_project_configs();
     std::collections::HashMap::from([
-        ("run", IjStarterCommand {ij_command: "remoteDevHost".to_string(), is_project_path_required: true, is_arguments_required: true}),
+        ("run", IjStarterCommand {ij_command: "remoteDevHost".to_string(), is_project_path_required: would_use_project_for_configs, is_arguments_required: true}),
         ("status", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("cwmHostStatus", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("remoteDevStatus", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("dumpLaunchParameters", IjStarterCommand {ij_command: "dump-launch-parameters".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("warmup", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
         ("warm-up", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
-        ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: true, is_arguments_required: false}),
+        ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: would_use_project_for_configs, is_arguments_required: false}),
         ("installPlugins", IjStarterCommand {ij_command: "installPlugins".to_string(), is_project_path_required: false, is_arguments_required: true}),
-        ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: true, is_arguments_required: false}),
+        ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: would_use_project_for_configs, is_arguments_required: false}),
         ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("help", IjStarterCommand{ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
     ])
@@ -513,6 +580,7 @@ fn get_remote_dev_env_vars() -> RemoteDevEnvVars {
         RemoteDevEnvVar {name: "REMOTE_DEV_TRUST_PROJECTS".to_string(), description: "set to any value to skip project trust warning (will execute build scripts automatically)".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_NEW_UI_ENABLED".to_string(), description: "set to '1' to start with forced enabled new UI".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_NON_INTERACTIVE".to_string(), description: "set to any value to skip all interactive shell prompts (set automatically if running without TTY)".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_LEGACY_PER_PROJECT_CONFIGS".to_string(), description: "set to '1' to keep the per-project config/system directories as in 2023.2 and earlier".to_string()},
     ])
 }
 
