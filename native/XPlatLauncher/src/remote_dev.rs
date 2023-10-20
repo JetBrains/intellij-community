@@ -540,8 +540,6 @@ fn print_help() {
 fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
     let remote_dev_env_var_values = vec![
         ("IDEA_RESTART_VIA_EXIT_CODE", "88"),
-        ("ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_SERVER", "false"),
-        ("ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE", "false"),
         ("REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE", launcher_name_for_usage)
     ];
 
