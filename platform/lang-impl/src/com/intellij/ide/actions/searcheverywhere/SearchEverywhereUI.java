@@ -157,9 +157,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
                             @NotNull Function<? super String, String> shortcutSupplier,
                             @Nullable SearchEverywhereSpellingCorrector spellingCorrector) {
     super(project);
-    myListFactory = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
-                    ? new MixedListFactory()
-                    : new GroupedListFactory();
 
     mySpellingCorrector = spellingCorrector;
 
@@ -171,10 +168,17 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
                                           shortcutSupplier, project == null ? null : new ShowInFindToolWindowAction(), this);
 
     myMlService = SearchEverywhereMlService.getInstance();
+
+    if (Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")) {
+      myListFactory =
+        (myMlService != null && !myMlService.getShouldAllTabPrioritizeRecentFiles()) ?
+        new MixedListFactory(true) : new MixedListFactory();
+    }
+    else {
+      myListFactory = new GroupedListFactory();
+    }
+
     if (myMlService != null) {
-      if (myListFactory instanceof MixedListFactory && !myMlService.shouldAllTabPrioritizeRecentFiles(myHeader.getSelectedTab().getID())) {
-        ((MixedListFactory)myListFactory).remove(RecentFilesSEContributor.class.getSimpleName());
-      }
       myMlService.onSessionStarted(myProject, new SearchEverywhereMixedListInfo(myListFactory));
     }
 
