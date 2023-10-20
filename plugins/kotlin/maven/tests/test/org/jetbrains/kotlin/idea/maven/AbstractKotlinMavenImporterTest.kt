@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.facet.FacetManager
+import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.notification.Notification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -25,6 +26,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.execution.MavenRunner
+import org.jetbrains.idea.maven.project.MavenImportListener
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
@@ -67,9 +70,13 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assume
 import org.junit.Test
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
 abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolders: Boolean = true) : KotlinMavenImportingTestCase() {
     protected val kotlinVersion = "1.1.3"
+
+    private val artifactDownloadingScheduled = AtomicInteger()
+    private val artifactDownloadingFinished = AtomicInteger()
 
     private annotation class MppGoal
 
@@ -81,12 +88,39 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             Assume.assumeFalse("Disable MPP import tests because Workspace model does not support it yet", this.javaClass.isAnnotationPresent(MppGoal::class.java))
         }
         if (createStdProjectFolders) createStdProjectFolders()
+        myProject.messageBus.connect(testRootDisposable)
+            .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
+                override fun artifactDownloadingScheduled() {
+                    artifactDownloadingScheduled.incrementAndGet()
+                }
+
+                override fun artifactDownloadingFinished() {
+                    artifactDownloadingFinished.incrementAndGet()
+                }
+
+                override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
+                }
+            })
     }
 
-    override fun tearDown() = runAll(
-        ThrowableRunnable { resetCodeStyle(myProject) },
-        ThrowableRunnable { super.tearDown() },
-    )
+    override fun tearDown() = runBlocking {
+        try {
+            waitForScheduledArtifactDownloads()
+        } finally {
+            runAll(
+                ThrowableRunnable { resetCodeStyle(myProject) },
+                ThrowableRunnable { super.tearDown() },
+            )
+        }
+    }
+
+    private suspend fun waitForScheduledArtifactDownloads() {
+        assertWithinTimeout {
+            val scheduled = artifactDownloadingScheduled.get()
+            val finished = artifactDownloadingFinished.get()
+            Assert.assertEquals("Expected $scheduled artifact downloads, but finished $finished", scheduled, finished)
+        }
+    }
 
     protected suspend fun checkStableModuleName(projectName: String, expectedName: String, platform: TargetPlatform, isProduction: Boolean) = readAction {
         val module = getModule(projectName)
