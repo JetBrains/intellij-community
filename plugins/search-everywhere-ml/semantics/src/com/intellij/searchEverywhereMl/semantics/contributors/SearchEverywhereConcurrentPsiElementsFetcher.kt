@@ -12,15 +12,16 @@ import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereCo
 
 @ApiStatus.Experimental
 interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurrentElementsFetcher<PsiItemWithSimilarity<*>, Any> {
-
   val psiElementsRenderer: SearchEverywherePsiRenderer
 
-  override val useReadAction: Boolean
+  override val useReadAction
     get() = true
 
-  override fun getDesiredResultsCount() = DESIRED_RESULTS_COUNT
+  override val desiredResultsCount
+    get() = DESIRED_RESULTS_COUNT
 
-  override fun getPriorityThresholds() = PRIORITY_THRESHOLDS
+  override val priorityThresholds
+    get() = PRIORITY_THRESHOLDS
 
   override fun prepareStandardDescriptor(descriptor: FoundItemDescriptor<Any>,
                                          knownItems: MutableList<FoundItemDescriptor<PsiItemWithSimilarity<*>>>): () -> FoundItemDescriptor<Any> {
@@ -68,7 +69,7 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
   }
 
   override fun FoundItemDescriptor<PsiItemWithSimilarity<*>>.findPriority(): DescriptorPriority {
-    return ORDERED_PRIORITIES.first { item.similarityScore!! > getPriorityThresholds()[it]!! }
+    return ORDERED_PRIORITIES.first { item.similarityScore!! > priorityThresholds[it]!! }
   }
 
   companion object {

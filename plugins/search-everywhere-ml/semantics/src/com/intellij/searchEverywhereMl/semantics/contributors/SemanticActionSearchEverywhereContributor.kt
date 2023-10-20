@@ -8,8 +8,11 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.Companion.ORDERED_PRIORITIES
@@ -20,6 +23,13 @@ import com.intellij.searchEverywhereMl.semantics.providers.ServerSemanticActions
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.ui.JBColor
 import com.intellij.util.Processor
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.ListCellRenderer
 
@@ -39,9 +49,11 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
     if (getUseRemoteActionsServer()) ServerSemanticActionsProvider(model) else LocalSemanticActionsProvider(model)
   }
 
-  override fun getDesiredResultsCount() = DESIRED_RESULTS_COUNT
+  override val desiredResultsCount
+    get() = DESIRED_RESULTS_COUNT
 
-  override fun getPriorityThresholds() = PRIORITY_THRESHOLDS
+  override val priorityThresholds
+    get() = PRIORITY_THRESHOLDS
 
   override fun isElementSemantic(element: Any): Boolean {
     return (element is MatchedValue && element.type == GotoActionModel.MatchedValueType.SEMANTIC)
@@ -79,15 +91,68 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
     }
   }
 
+  @RequiresBackgroundThread
+  override fun fetchElementsConcurrently(pattern: String,
+                                         progressIndicator: ProgressIndicator,
+                                         consumer: Processor<in FoundItemDescriptor<MatchedValue>>): Unit = runBlockingCancellable {
+    syncSearchSettings()
+    val knownItems = mutableListOf<FoundItemDescriptor<MatchedValue>>()
+
+    val mutex = Mutex()
+    val readyChannel = Channel<Unit>()
+    val standardContributorFinishedChannel = Channel<Unit>()
+
+    val searchStart = System.nanoTime()
+    launch {
+      var foundItemsCount = 0
+      val cachedDescriptors = mutableListOf<FoundItemDescriptor<MatchedValue>>()
+
+      val semanticMatches = itemsProvider.streamSearch(pattern, priorityThresholds[DescriptorPriority.LOW]).toList()
+      standardContributorFinishedChannel.receiveCatching()
+      for (priority in ORDERED_PRIORITIES) {
+        val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
+        else cachedDescriptors.filter { it.findPriority() == priority }.iterator()
+
+        while (iterator.hasNext()) {
+          ensureActive()
+          val descriptor = iterator.next()
+          if (priority == DescriptorPriority.HIGH && descriptor.findPriority() != priority) {
+            cachedDescriptors.add(descriptor)
+            continue
+          }
+
+          val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
+          mutex.withLock { prepareDescriptor() }?.let {
+            consumer.process(it)
+            foundItemsCount++
+          }
+          if (priority != DescriptorPriority.HIGH && foundItemsCount >= desiredResultsCount) break
+        }
+        if (progressIndicator.isCanceled || foundItemsCount >= desiredResultsCount) break
+      }
+      readyChannel.close()
+    }
+
+    coroutineToIndicator {
+      defaultFetchElements(pattern, progressIndicator) {
+        val prepareDescriptor = prepareStandardDescriptor(it, knownItems)
+        val descriptor = runBlockingCancellable { mutex.withLock { prepareDescriptor() } }
+        consumer.process(descriptor)
+      }
+    }
+    standardContributorFinishedChannel.close()
+    readyChannel.receiveCatching()
+  }
+
   private fun mergeOrSkipAction(newItem: FoundItemDescriptor<MatchedValue>,
                                 existingItem: FoundItemDescriptor<MatchedValue>,
                                 durationMs: Long): FoundItemDescriptor<MatchedValue>? {
     if (durationMs > 70) {
       // elements are frozen after 100ms delay and shouldn't be re-ordered
-      logger.debug("Skip merge for '${newItem.item ?: "unknown"}', because duration is $durationMs")
+      logger.debug { "Skip merge for '${newItem.item ?: "unknown"}', because duration is $durationMs" }
       return null
     }
-    logger.debug("Merge semantic action '${newItem.item ?: "unknown"}', because duration: $durationMs")
+    logger.debug { "Merge semantic action '${newItem.item ?: "unknown"}', because duration: $durationMs" }
     val mergedElement = existingItem.item.mergeWith(newItem.item) as MatchedValue
     return FoundItemDescriptor(mergedElement, existingItem.weight + 1)
   }
@@ -117,7 +182,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   }
 
   override fun FoundItemDescriptor<MatchedValue>.findPriority(): DescriptorPriority {
-    return ORDERED_PRIORITIES.first { item.similarityScore!! > getPriorityThresholds()[it]!! }
+    return ORDERED_PRIORITIES.first { item.similarityScore!! > priorityThresholds[it]!! }
   }
 
   override fun syncSearchSettings() {

@@ -10,6 +10,7 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -20,9 +21,9 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
   val useReadAction: Boolean
     get() = false
 
-  fun getDesiredResultsCount(): Int
+  val desiredResultsCount: Int
 
-  fun getPriorityThresholds(): Map<DescriptorPriority, Double>
+  val priorityThresholds: Map<DescriptorPriority, Double>
 
   fun defaultFetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in FoundItemDescriptor<E>>)
 
@@ -38,7 +39,7 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
   @RequiresBackgroundThread
   fun fetchElementsConcurrently(pattern: String,
                                 progressIndicator: ProgressIndicator,
-                                consumer: Processor<in FoundItemDescriptor<E>>) = runBlockingCancellable {
+                                consumer: Processor<in FoundItemDescriptor<E>>): Unit = runBlockingCancellable {
     syncSearchSettings()
     val knownItems = mutableListOf<FoundItemDescriptor<I>>()
 
@@ -52,13 +53,13 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
       val cachedDescriptors = mutableListOf<FoundItemDescriptor<I>>()
 
       suspend fun iterate() = coroutineScope {
-        val semanticMatches = itemsProvider.streamSearch(pattern, getPriorityThresholds()[DescriptorPriority.LOW])
+        val semanticMatches = itemsProvider.streamSearch(pattern, priorityThresholds[DescriptorPriority.LOW])
         for (priority in ORDERED_PRIORITIES) {
           val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
           else cachedDescriptors.filter { it.findPriority() == priority }.iterator()
 
           while (iterator.hasNext()) {
-            checkCancelled()
+            ensureActive()
             val descriptor = iterator.next()
             if (priority == DescriptorPriority.HIGH && descriptor.findPriority() != priority) {
               cachedDescriptors.add(descriptor)
@@ -70,9 +71,9 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
               consumer.process(it)
               foundItemsCount++
             }
-            if (priority != DescriptorPriority.HIGH && foundItemsCount >= getDesiredResultsCount()) break
+            if (priority != DescriptorPriority.HIGH && foundItemsCount >= desiredResultsCount) break
           }
-          if (progressIndicator.isCanceled || foundItemsCount >= getDesiredResultsCount()) break
+          if (progressIndicator.isCanceled || foundItemsCount >= desiredResultsCount) break
         }
       }
 
