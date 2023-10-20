@@ -48,25 +48,30 @@ class ProductChooserRenderer() : ListCellRenderer<PopupFactoryImpl.ActionItem> {
     var icon: Icon? = null
 
     init {
-      if(action is ConfigAction) {
-        //TODO implement properly
-      } else if(action is SettingChooserItemAction) {
+      if (action is ConfigAction) {
+        name = action.templatePresentation.text
+        icon = action.templatePresentation.icon
+      }
+      else if (action is SettingChooserItemAction) {
 
         val product = action.product
         val provider = action.provider
 
         name = product.name
         comment = provider.getComment(product)
-        icon  = provider.getProductIcon(product.id)
+        icon = provider.getProductIcon(product.id)
       }
     }
   }
 
-  private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem, isSelected: Boolean, separator: ListSeparator?, hideLine: Boolean): JComponent {
+  private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem,
+                                      isSelected: Boolean,
+                                      separator: ListSeparator?,
+                                      hideLine: Boolean): JComponent {
     val action = Obj(value.action)
 
     lateinit var nameLbl: JLabel
-    lateinit var pathLbl: JLabel
+    var pathLbl: JLabel? = null
 
     val content = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
@@ -80,14 +85,14 @@ class ProductChooserRenderer() : ListCellRenderer<PopupFactoryImpl.ActionItem> {
           panel {
             row {
               nameLbl = label(action.name ?: "")
-                .customize(UnscaledGaps(bottom = 4))
                 .applyToComponent {
                   foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
                 }.component
             }
-            row {
-              action.comment?.let {
-                pathLbl = label(it)
+            action.comment?.let { txt ->
+              row {
+                pathLbl = label(txt)
+                  .customize(UnscaledGaps(top = 4))
                   .applyToComponent {
                     font = JBFont.smallOrNewUiMedium()
                     foreground = UIUtil.getLabelInfoForeground()
@@ -95,7 +100,7 @@ class ProductChooserRenderer() : ListCellRenderer<PopupFactoryImpl.ActionItem> {
 
               }
             }
-          }
+          }.align(AlignY.CENTER).customize(UnscaledGaps(top = 1))
         }
       }
     }.apply {
@@ -109,8 +114,10 @@ class ProductChooserRenderer() : ListCellRenderer<PopupFactoryImpl.ActionItem> {
       result.selectionColor = ListPluginComponent.SELECTION_COLOR
     }
 
-    AccessibleContextUtil.setCombinedName(result, nameLbl, " - ", pathLbl)
-    AccessibleContextUtil.setCombinedDescription(result, nameLbl, " - ", pathLbl)
+    pathLbl?.let {
+      AccessibleContextUtil.setCombinedName(result, nameLbl, " - ", it)
+      AccessibleContextUtil.setCombinedDescription(result, nameLbl, " - ", it)
+    }
 
     if (separator == null) {
       return result
