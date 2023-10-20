@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.cache.TypeInfo.RefTypeInfo;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -140,26 +139,26 @@ class FirstPassData implements SignatureParsing.TypeInfoProvider {
   }
 
   static @NotNull FirstPassData create(Object classSource) {
-    byte[] bytes = null;
+    ClassReader reader = null;
     if (classSource instanceof ClsFileImpl.FileContentPair) {
-      bytes = ((ClsFileImpl.FileContentPair)classSource).getContent();
+      reader = ((ClsFileImpl.FileContentPair)classSource).getContent();
     }
     else if (classSource instanceof VirtualFile) {
       try {
-        bytes = ((VirtualFile)classSource).contentsToByteArray(false);
+        reader = new ClassReader(((VirtualFile)classSource).contentsToByteArray(false));
       }
       catch (IOException ignored) {
       }
     }
 
-    if (bytes != null) {
-      return fromClassBytes(bytes);
+    if (reader != null) {
+      return fromReader(reader);
     }
 
     return NO_DATA;
   }
 
-  private static @NotNull FirstPassData fromClassBytes(byte[] classBytes) {
+  private static @NotNull FirstPassData fromReader(@NotNull ClassReader reader) {
     
     class FirstPassVisitor extends ClassVisitor {
       final Map<String, InnerClassEntry> mapping = new HashMap<>();
@@ -246,7 +245,7 @@ class FirstPassData implements SignatureParsing.TypeInfoProvider {
 
     FirstPassVisitor visitor = new FirstPassVisitor();
     try {
-      new ClassReader(classBytes).accept(visitor, ClsFileImpl.EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+      reader.accept(visitor, ClsFileImpl.EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
     }
     catch (Exception ex) {
       LOG.debug(ex);
