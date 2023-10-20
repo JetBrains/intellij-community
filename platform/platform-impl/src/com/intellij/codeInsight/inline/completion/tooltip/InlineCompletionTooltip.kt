@@ -115,7 +115,7 @@ internal object InlineCompletionTooltip {
         cell(session.provider.providerPresentation.getTooltip(session.context.editor.project))
       }
     }.apply {
-      border = JBUI.Borders.empty(2)
+      border = JBUI.Borders.empty(1, 4)
     }
     return panel
   }
