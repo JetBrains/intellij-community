@@ -55,21 +55,20 @@ final class RefreshSessionImpl extends RefreshSession {
     myIsAsync = async;
     myIsRecursive = recursive;
     myFinishRunnable = finishRunnable;
-    myModality = modality;
-    TransactionGuard.getInstance().assertWriteSafeContext(modality);
+    myModality = getSaneModalityState(modality);
+    TransactionGuard.getInstance().assertWriteSafeContext(myModality);
     var app = ApplicationManager.getApplication();
     myStartTrace = app.isUnitTestMode() && (async || !app.isDispatchThread()) ? new Throwable() : null;
   }
 
   RefreshSessionImpl(boolean async, List<? extends VFileEvent> events) {
-    this(async, false, null, getSafeModalityState());
+    this(async, false, null, getSaneModalityState(ModalityState.defaultModalityState()));
     var filtered = events.stream().filter(Objects::nonNull).toList();
     if (filtered.size() < events.size()) LOG.error("The list of events must not contain null elements");
     myEvents.addAll(filtered);
   }
 
-  private static ModalityState getSafeModalityState() {
-    var state = ModalityState.defaultModalityState();
+  private static ModalityState getSaneModalityState(ModalityState state) {
     return state != ModalityState.any() ? state : ModalityState.nonModal();
   }
 
