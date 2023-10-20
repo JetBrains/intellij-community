@@ -29,11 +29,15 @@ import com.intellij.util.text.nullize
 import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.Property
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.completeWith
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import javax.swing.Icon
+import kotlin.time.Duration.Companion.seconds
 
 @Service
 class SettingTransferService : ExternalService {
@@ -51,9 +55,12 @@ class SettingTransferService : ExternalService {
     ),
     shouldDisplayFailedVersions = false
   )
-  private val ideVersions = CompletableDeferred<Map<String, IdeVersion>>()
-  override suspend fun warmUp() {
-    ideVersions.completeWith(runCatching {
+  @Volatile
+  private var ideVersions: Deferred<Map<String, IdeVersion>>? = null
+  private fun CoroutineScope.loadIdeVersionsAsync(): Deferred<Map<String, IdeVersion>> {
+    ideVersions?.let { return it }
+    logger.info("Refreshing the transfer settings data provider.")
+    var versions = async {
       config.dataProvider.run {
         refresh()
         orderedIdeVersions
@@ -61,18 +68,30 @@ class SettingTransferService : ExternalService {
           .map { version -> version.id to version }
           .toMap()
       }
-    })
+    }
+    ideVersions = versions
+    return versions
+  }
+
+  override suspend fun warmUp() {
+    coroutineScope {
+      loadIdeVersionsAsync()
+    }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun loadIdeVersions(): Map<String, IdeVersion> {
-    if (ideVersions.isCompleted) return ideVersions.getCompleted()
+    ideVersions?.let { if (it.isCompleted) return it.getCompleted() }
 
     @Suppress("RAW_RUN_BLOCKING")
     return runBlocking {
+      val ideVersions = loadIdeVersionsAsync()
+
       logger.warn("Started waiting for transfer provider initialization.")
       try {
-        ideVersions.await()
+        withTimeout(10.seconds) {
+          ideVersions.await()
+        }
       }
       finally {
         logger.warn("Finished waiting for transfer provider initialization.")
