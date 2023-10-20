@@ -43,6 +43,7 @@ class KotlinWizardVersionState() : IdeVersionedDataState() {
         this.kotlinForComposeVersion = kotlinForComposeVersion
         this.composeCompilerExtension = composeCompilerExtension
         this.minGradleFoojayVersion = minGradleFoojayVersion
+        this.minKotlinFoojayVersion = minKotlinFoojayVersion
         this.foojayVersion = foojayVersion
         this.failsafeVersion = failsafeVersion
         this.surefireVersion = surefireVersion
