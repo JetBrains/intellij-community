@@ -7,7 +7,7 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTrac
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
-import com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionOnboardingListener
+import com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingListener
 import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExecutor
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable

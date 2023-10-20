@@ -34,7 +34,7 @@ internal class InlineCompletionMouseMotionListener : EditorMouseMotionListener {
     Disposer.register(newHoveredSession) {
       exitHover()
     }
-    InlineCompletionTooltip.enterHover(newHoveredSession)
+    InlineCompletionTooltip.show(newHoveredSession)
   }
 
   private fun exitHover() {

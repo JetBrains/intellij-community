@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.inline.completion.tooltip
+package com.intellij.codeInsight.inline.completion.tooltip.onboarding
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
+import com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionTooltip
 import com.intellij.openapi.editor.Editor
 
 internal class InlineCompletionOnboardingListener(private val editor: Editor) : InlineCompletionEventAdapter {
@@ -21,8 +22,8 @@ internal class InlineCompletionOnboardingListener(private val editor: Editor) : 
   override fun onCompletion(event: InlineCompletionEventType.Completion) {
     if (state?.isEmpty == false) {
       InlineCompletionSession.getOrNull(editor)?.let { session ->
-        if (InlineCompletionOnboardingComponent.getInstance().shouldDisplayTooltip()) {
-          InlineCompletionTooltip.enterHover(session)
+        if (InlineCompletionOnboardingComponent.getInstance().shouldExplicitlyDisplayTooltip()) {
+          InlineCompletionTooltip.show(session)
         }
       }
     }

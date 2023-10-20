@@ -5,6 +5,7 @@ import com.intellij.application.options.schemes.SchemeNameGenerator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
+import com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ShowSettingsUtilImpl
@@ -37,7 +38,7 @@ import java.awt.event.MouseEvent
 internal object InlineCompletionTooltip {
   private val tooltipKey = Key<Unit>("EDITOR_HAS_INLINE_TOOLTIP")
   @RequiresEdt
-  fun enterHover(session: InlineCompletionSession) {
+  fun show(session: InlineCompletionSession) {
     val editor = session.context.editor
     if (tooltipKey.isIn(editor)) {
       return
