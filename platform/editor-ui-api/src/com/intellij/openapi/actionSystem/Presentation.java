@@ -326,7 +326,7 @@ public final class Presentation implements Cloneable {
 
     Icon oldIcon = getIcon();
     this.icon = () -> icon;
-    fireObjectPropertyChange(PROP_ICON, oldIcon, this.icon);
+    fireObjectPropertyChange(PROP_ICON, oldIcon, this.icon.get());
   }
 
   // event is not fired - use for init

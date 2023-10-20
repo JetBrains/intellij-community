@@ -6,7 +6,6 @@ import java.awt.Insets
 import kotlin.properties.Delegates
 
 open class ToolbarComboButton(val model: ToolbarComboButtonModel): AbstractToolbarCombo() {
-
   var margin: Insets by Delegates.observable(JBInsets.emptyInsets(), this::fireUpdateEvents)
 
   override fun getUIClassID(): String = "ToolbarComboButtonUI"

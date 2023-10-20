@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.AbstractToolbarCombo
@@ -114,7 +115,7 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
       //pain expand button
       paintRect.cutLeft(button.rightPartMargin.left)
       JBInsets.removeFrom(paintRect, button.rightPartMargin.getTopBottom())
-      paintIcons(listOf(EXPAND_ICON), button, g2, paintRect)
+      paintIcons(listOf(AllIcons.General.ChevronDown), button, g2, paintRect)
     }
     finally {
       g2.dispose()
@@ -155,8 +156,8 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
     val sMargin = button.separatorMargin
     res.width += sMargin.left + SEPARATOR_WIDTH + sMargin.right
 
-    res.width += rMargin.left + EXPAND_ICON.iconWidth + rMargin.right
-    res.height = max(res.height, EXPAND_ICON.iconHeight + rMargin.top + rMargin.bottom)
+    res.width += rMargin.left + AllIcons.General.ChevronDown.iconWidth + rMargin.right
+    res.height = max(res.height, AllIcons.General.ChevronDown.iconHeight + rMargin.top + rMargin.bottom)
 
     val insets = c.getInsets()
 
@@ -178,7 +179,7 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
     otherElementsWidth += right
 
     val sMargin = button.separatorMargin
-    otherElementsWidth += sMargin.left + SEPARATOR_WIDTH + sMargin.right + EXPAND_ICON.iconWidth
+    otherElementsWidth += sMargin.left + SEPARATOR_WIDTH + sMargin.right + AllIcons.General.ChevronDown.iconWidth
 
     val lMargin = button.leftPartMargin
     val rMargin = button.rightPartMargin
@@ -219,9 +220,9 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
     val rightPartMargin = button.rightPartMargin
 
     val zoneHeight = button.height - insets.top - insets.bottom
-    val expandZoneStart = button.width - insets.right - rightPartMargin.right - EXPAND_ICON.iconWidth - rightPartMargin.left
+    val expandZoneStart = button.width - insets.right - rightPartMargin.right - AllIcons.General.ChevronDown.iconWidth - rightPartMargin.left
     val expandRect = Rectangle(expandZoneStart, insets.top,
-                               EXPAND_ICON.iconWidth + rightPartMargin.left + rightPartMargin.right, zoneHeight)
+                               AllIcons.General.ChevronDown.iconWidth + rightPartMargin.left + rightPartMargin.right, zoneHeight)
 
     val actionZoneWidth = button.width - expandRect.width - separatorMargin.right - SEPARATOR_WIDTH - separatorMargin.left - insets.left - insets.right
     val actionRect = Rectangle(insets.left, insets.top, actionZoneWidth, zoneHeight)

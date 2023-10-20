@@ -1379,22 +1379,26 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private void addLoadingIcon() {
-    AnimatedIcon icon = AnimatedIcon.Default.INSTANCE;
     JLabel label = new JLabel();
     label.setName(LOADING_LABEL);
     label.setBorder(getActionButtonBorder());
     if (this instanceof PopupToolbar) {
-      label.setIcon(icon);
+      label.setIcon(AnimatedIcon.Default.INSTANCE);
     }
     else {
-      label.setIcon(EmptyIcon.create(icon.getIconWidth(), icon.getIconHeight()));
       boolean suppressLoading = ActionPlaces.MAIN_TOOLBAR.equals(myPlace) ||
                                 ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(myPlace) ||
                                 ActionPlaces.TOOLWINDOW_TITLE.equals(myPlace) ||
                                 ActionPlaces.WELCOME_SCREEN.equals(myPlace);
-      if (!suppressLoading) {
-        EdtScheduledExecutorService.getInstance().schedule(
-          () -> label.setIcon(icon), Registry.intValue("actionSystem.toolbar.progress.icon.delay", 500), TimeUnit.MILLISECONDS);
+      if (suppressLoading) {
+        label.setIcon(EmptyIcon.create(16, 16));
+      }
+      else {
+        AnimatedIcon icon = AnimatedIcon.Default.INSTANCE;
+        label.setIcon(EmptyIcon.create(icon.getIconWidth(), icon.getIconHeight()));
+        EdtScheduledExecutorService.getInstance().schedule(() -> {
+          label.setIcon(icon);
+        }, Registry.intValue("actionSystem.toolbar.progress.icon.delay", 500), TimeUnit.MILLISECONDS);
       }
     }
     myForcedUpdateRequested = true;

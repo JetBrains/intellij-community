@@ -2,7 +2,6 @@
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.ide.ui.laf.darcula.ui
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.AbstractToolbarCombo
 import com.intellij.ui.JBColor
@@ -23,11 +22,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 open class AbstractToolbarComboUI : ComponentUI(), PropertyChangeListener {
-
-  protected val ICON_TEXT_GAP = 6
-  protected val BETWEEN_ICONS_GAP = 0
-
-  protected val EXPAND_ICON = AllIcons.General.ChevronDown
+  protected val ICON_TEXT_GAP: Int = 6
+  protected val BETWEEN_ICONS_GAP: Int = 0
 
   protected open fun setUIDefaults(c: AbstractToolbarCombo) {
     c.setForeground(JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground()))

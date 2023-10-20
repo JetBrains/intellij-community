@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.AbstractToolbarCombo
@@ -20,14 +21,14 @@ import kotlin.math.max
 
 private const val BEFORE_CHEVRON_GAP = 2
 
-class ToolbarComboButtonUI: AbstractToolbarComboUI() {
-
+internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
   private val clickListener = MyClickListener()
   private val hoverListener = MyHoverListener()
 
   companion object {
+    // JvmStatic for Swing - used as a component UI.
     @JvmStatic
-    fun createUI(c: JComponent): ToolbarComboButtonUI = ToolbarComboButtonUI()
+    fun createUI(@Suppress("UNUSED_PARAMETER") ignored: JComponent): ToolbarComboButtonUI = ToolbarComboButtonUI()
   }
 
   override fun setUIDefaults(c: AbstractToolbarCombo) {
@@ -73,10 +74,10 @@ class ToolbarComboButtonUI: AbstractToolbarComboUI() {
         paintRect.cutLeft(iconsRect.width)
       }
 
-      if (!StringUtil.isEmpty(text) && maxTextWidth > 0) {
+      if (!text.isNullOrEmpty() && maxTextWidth > 0) {
         if (!leftIcons.isEmpty()) paintRect.cutLeft(ICON_TEXT_GAP)
         val textRect = Rectangle(paintRect.x, paintRect.y, maxTextWidth, paintRect.height)
-        drawText(c, text!!, g2, textRect)
+        drawText(c, text, g2, textRect)
         paintRect.cutLeft(maxTextWidth)
       }
 
@@ -87,7 +88,7 @@ class ToolbarComboButtonUI: AbstractToolbarComboUI() {
       }
 
       paintRect.cutLeft(BEFORE_CHEVRON_GAP)
-      paintIcons(listOf(EXPAND_ICON), combo, g2, paintRect)
+      paintIcons(listOf(AllIcons.General.ChevronDown), combo, g2, paintRect)
     }
     finally {
       g2.dispose()
@@ -96,41 +97,45 @@ class ToolbarComboButtonUI: AbstractToolbarComboUI() {
 
   override fun getPreferredSize(c: JComponent): Dimension {
     val combo = c as ToolbarComboButton
-    val res = Dimension()
+    val result = Dimension()
 
     val leftIcons = combo.leftIcons
     val rightIcons = combo.rightIcons
     val text = combo.text
-    assert(!StringUtil.isEmpty(text) || rightIcons.isEmpty()) {"Right icons are only allowed when text is not empty"}
-
-    if (!leftIcons.isEmpty()) {
-      res.width += calcIconsWidth(leftIcons, BETWEEN_ICONS_GAP)
-      res.height = leftIcons.stream().mapToInt{ it.iconHeight }.max().orElse(0)
+    assert(!text.isNullOrEmpty() || rightIcons.isEmpty()) {
+      "Right icons are only allowed when text is not empty"
     }
 
-    if (!StringUtil.isEmpty(combo.text)) {
-      if (!leftIcons.isEmpty()) res.width += ICON_TEXT_GAP
+    if (!leftIcons.isEmpty()) {
+      result.width += calcIconsWidth(leftIcons, BETWEEN_ICONS_GAP)
+      result.height = leftIcons.stream().mapToInt{ it.iconHeight }.max().orElse(0)
+    }
+
+    if (!combo.text.isNullOrEmpty()) {
+      if (!leftIcons.isEmpty()) {
+        result.width += ICON_TEXT_GAP
+      }
       val metrics = c.getFontMetrics(c.getFont())
       val text = getText(combo)
-      res.width += metrics.stringWidth(text)
-      res.height = max(res.height, metrics.height)
+      result.width += metrics.stringWidth(text)
+      result.height = max(result.height, metrics.height)
     }
 
     if (!rightIcons.isEmpty()) {
-      res.width += ICON_TEXT_GAP
-      res.width += calcIconsWidth(rightIcons, BETWEEN_ICONS_GAP)
-      res.height = max(res.height, rightIcons.stream().mapToInt{ it.iconHeight }.max().orElse(0))
+      result.width += ICON_TEXT_GAP
+      result.width += calcIconsWidth(rightIcons, BETWEEN_ICONS_GAP)
+      result.height = max(result.height, rightIcons.stream().mapToInt{ it.iconHeight }.max().orElse(0))
     }
 
-    res.width += BEFORE_CHEVRON_GAP + EXPAND_ICON.iconWidth
-    res.height = max(res.height, EXPAND_ICON.iconHeight)
+    result.width += BEFORE_CHEVRON_GAP + AllIcons.General.ChevronDown.iconWidth
+    result.height = max(result.height, AllIcons.General.ChevronDown.iconHeight)
 
     val insets = c.getInsets()
     val margin = c.margin
-    res.height += insets.top + insets.bottom + margin.top + margin.bottom
-    res.width += insets.left + insets.right + margin.left + margin.right
+    result.height += insets.top + insets.bottom + margin.top + margin.bottom
+    result.width += insets.left + insets.right + margin.left + margin.right
 
-    return res
+    return result
   }
 
   private fun calcMaxTextWidth(c: ToolbarComboButton, paintRect: Rectangle): Int {
@@ -144,7 +149,7 @@ class ToolbarComboButtonUI: AbstractToolbarComboUI() {
     if (right > 0) right += ICON_TEXT_GAP
     otherElementsWidth += right
 
-    otherElementsWidth += BEFORE_CHEVRON_GAP + EXPAND_ICON.iconWidth
+    otherElementsWidth += BEFORE_CHEVRON_GAP + AllIcons.General.ChevronDown.iconWidth
 
     return paintRect.width - otherElementsWidth
   }

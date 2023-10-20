@@ -114,7 +114,7 @@ class MainToolbar(
       flavor.addWidget()
 
       val widgets = actionGroups.map { (actionGroup, position) ->
-        createActionBar(actionGroup, customizationGroup) to position
+        createActionBar(group = actionGroup, customizationGroup = customizationGroup) to position
       }
       for ((widget, position) in widgets) {
         addWidget(widget = widget.component, parent = this@MainToolbar, position = position)
@@ -303,7 +303,7 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
   }
 
   fun updateActions() {
-    updateActionsWithoutLoadingIcon(false)
+    updateActionsWithoutLoadingIcon(/* includeInvisible = */ false)
   }
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
