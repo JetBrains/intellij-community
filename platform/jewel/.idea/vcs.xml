@@ -7,6 +7,9 @@
       <inspection_tool class="SubjectLimit" enabled="true" level="WARNING" enabled_by_default="true" />
     </profile>
   </component>
+  <component name="GitSharedSettings">
+    <option name="synchronizeBranchProtectionRules" value="false" />
+  </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
   </component>
