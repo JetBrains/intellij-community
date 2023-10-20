@@ -1271,4 +1271,12 @@ public final class EditorUtil {
            && !UISettings.getInstance().getPresentationMode()
            && !Registry.is("editor.distraction.free.mode");
   }
+
+  public static boolean isBlockLikeCaret(@NotNull final Caret caret) {
+    return switch (caret.getVisualAttributes().getShape()) {
+      case DEFAULT -> caret.getEditor().isInsertMode() == caret.getEditor().getSettings().isBlockCursor();
+      case BLOCK, BOX, UNDERSCORE -> true;
+      case BAR -> caret.getVisualAttributes().getThickness() > 0.5f;
+    };
+  }
 }

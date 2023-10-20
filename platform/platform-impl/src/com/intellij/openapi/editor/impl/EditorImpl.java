@@ -2381,8 +2381,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       y = visualLineToY(Math.max(0, visualLineCount - 1));
     }
     VisualPosition visualPosition = xyToVisualPosition(new Point(x, y));
-    if (myState.isInsertMode() == mySettings.isBlockCursor() && !visualPosition.leansRight && visualPosition.column > 0) {
-      // adjustment for block caret
+    if (EditorUtil.isBlockLikeCaret(getCaretModel().getPrimaryCaret()) && !visualPosition.leansRight && visualPosition.column > 0) {
+      // Adjustment for block caret when clicking in the second half of the character
       visualPosition = new VisualPosition(visualPosition.line, visualPosition.column - 1, true);
     }
     if (trimToLineWidth && !mySettings.isVirtualSpace()) {
@@ -2672,7 +2672,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 oldVisLeadSelectionStart = selectionModel.getSelectionEndPosition();
               }
             }
-            else if (mySettings.isBlockCursor() && Registry.is("editor.block.caret.selection.vim-like")) {
+            else if (EditorUtil.isBlockLikeCaret(getCaretModel().getPrimaryCaret()) && Registry.is("editor.block.caret.selection.vim-like")) {
               // adjust selection range, so that it covers caret location
               if (mySelectionModel.hasSelection() && oldVisLeadSelectionStart.equals(mySelectionModel.getSelectionEndPosition())) {
                 oldVisLeadSelectionStart = prevSelectionVisualPosition(oldVisLeadSelectionStart);
