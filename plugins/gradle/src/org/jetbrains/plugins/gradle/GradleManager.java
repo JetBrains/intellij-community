@@ -145,7 +145,12 @@ public final class GradleManager
         LOG.info("Instructing gradle to use java from " + javaHome);
       }
       result.setJavaHome(javaHome);
-      result.setDownloadSources(settings.isDownloadSources());
+      String vmOptions = Objects.requireNonNullElse(settings.getGradleVmOptions(), "");
+      if (vmOptions.contains("-Didea.gradle.download.sources.force=false")) {
+        result.setDownloadSources(false);
+      } else {
+        result.setDownloadSources(settings.isDownloadSources());
+      }
       result.setParallelModelFetch(settings.isParallelModelFetch());
       String ideProjectPath;
       if (project.getBasePath() == null ||

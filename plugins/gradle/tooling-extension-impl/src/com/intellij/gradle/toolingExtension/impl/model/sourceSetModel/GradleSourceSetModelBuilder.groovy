@@ -203,8 +203,8 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     def ideaResourceDirs = null
     def ideaTestSourceDirs = null
     def ideaTestResourceDirs = null
-    final downloadSources = GradleDependencyArtifactPolicyUtil.shouldDownloadSources(ideaPlugin)
-    final downloadJavadoc = GradleDependencyArtifactPolicyUtil.shouldDownloadJavadoc(ideaPlugin)
+    final downloadSources = GradleDependencyArtifactPolicyUtil.shouldDownloadSources(project)
+    final downloadJavadoc = GradleDependencyArtifactPolicyUtil.shouldDownloadJavadoc(project)
 
     def testSourceSets = []
 
