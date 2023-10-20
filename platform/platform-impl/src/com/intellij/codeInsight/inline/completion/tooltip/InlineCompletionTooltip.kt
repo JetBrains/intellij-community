@@ -6,7 +6,9 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.keymap.KeymapManager
@@ -96,7 +98,11 @@ internal object InlineCompletionTooltip {
     IdeBundle.message("inline.completion.tooltip.shortcuts.accept.select.custom"),
   ), DumbAware, LightEditCompatible {
     override fun actionPerformed(e: AnActionEvent) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(e.project, KeymapPanel::class.java)
+      ShowSettingsUtilImpl.showSettingsDialog(
+        e.project,
+        "preferences.keymap",
+        ActionsBundle.message("action.InsertInlineCompletionAction.text")
+      )
     }
   }
 
