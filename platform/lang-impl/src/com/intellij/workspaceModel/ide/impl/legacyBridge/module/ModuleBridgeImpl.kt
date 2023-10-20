@@ -49,31 +49,11 @@ internal class ModuleBridgeImpl(
   virtualFileUrl: VirtualFileUrl?,
   override var entityStorage: VersionedEntityStorage,
   override var diff: MutableEntityStorage?
-) : ModuleImpl(name = name, project = project, virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
+) : ModuleImpl(name = name, project = project, virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge, WorkspaceModelChangeListener {
   init {
     // default project doesn't have modules
     if (!project.isDefault && !project.isDisposed) {
-      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
-          val start = System.currentTimeMillis()
-
-          event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
-            if (it.entity.symbolicId != moduleEntityId) return@forEach
-
-            if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
-
-            val currentStore = entityStorage.current
-            entityStorage = VersionedEntityStorageOnSnapshot(currentStore.toSnapshot())
-            assert(moduleEntityId in entityStorage.current) {
-              // If we ever get this assertion, replace use `event.storeBefore` instead of current
-              // As it made in ArtifactBridge
-              "Cannot resolve module $moduleEntityId. Current store: $currentStore"
-            }
-          }
-
-          moduleBridgeBeforeChangedTimeMs.addElapsedTimeMs(start)
-        }
-      })
+      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, this)
     }
 
     // This is a temporary solution and should be removed after full migration to [TestModulePropertiesBridge]
@@ -88,6 +68,26 @@ internal class ModuleBridgeImpl(
       val implClass = classLoader.loadClass("com.intellij.openapi.roots.impl.TestModulePropertiesImpl")
       registerService(TestModuleProperties::class.java, implClass, corePluginDescriptor, false)
     }
+  }
+
+  override fun beforeChanged(event: VersionedStorageChange) {
+    val start = System.currentTimeMillis()
+
+    event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
+      if (it.entity.symbolicId != moduleEntityId) return@forEach
+
+      if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
+
+      val currentStore = entityStorage.current
+      entityStorage = VersionedEntityStorageOnSnapshot(currentStore.toSnapshot())
+      assert(moduleEntityId in entityStorage.current) {
+        // If we ever get this assertion, replace use `event.storeBefore` instead of current
+        // As it made in ArtifactBridge
+        "Cannot resolve module $moduleEntityId. Current store: $currentStore"
+      }
+    }
+
+    moduleBridgeBeforeChangedTimeMs.addElapsedTimeMs(start)
   }
 
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
