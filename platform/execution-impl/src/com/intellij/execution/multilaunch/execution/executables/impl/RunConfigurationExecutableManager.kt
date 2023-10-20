@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -52,7 +53,12 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  class RunConfigurationExecutable(private val configuration: MultiLaunchConfiguration, private val project: Project, val settings: RunnerAndConfigurationSettings, template: RunConfigurationExecutableManager) : Executable(
+  class RunConfigurationExecutable(
+    private val configuration: MultiLaunchConfiguration,
+    private val project: Project,
+    val settings: RunnerAndConfigurationSettings,
+    template: RunConfigurationExecutableManager
+  ) : Executable(
     settings.uniqueID,
     settings.configuration.name,
     settings.configuration.icon,
@@ -93,12 +99,14 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
           executionEnvironment.putUserData(ExecutionManagerImpl.PARENT_PROFILE_IDE_ACTIVITY, activity)
           val oldCallback = executionEnvironment.callback
           executionEnvironment.callback = object : ProgramRunner.Callback {
-            override fun processStarted(rcd: RunContentDescriptor) {
-              rcd.isActivateToolWindowWhenAdded = configuration.parameters.activateToolWindows
-              rcd.isAutoFocusContent = configuration.parameters.activateToolWindows
-              //rcd.contentToolWindowId = "Services"
-              cont.resume(rcd, null)
-              oldCallback?.processStarted(rcd)
+            override fun processStarted(runContentDescriptor: RunContentDescriptor?) {
+              runContentDescriptor?.apply {
+                isActivateToolWindowWhenAdded = configuration.parameters.activateToolWindows
+                isAutoFocusContent = configuration.parameters.activateToolWindows
+              }
+
+              cont.resume(runContentDescriptor, null)
+              oldCallback?.processStarted(runContentDescriptor)
             }
             override fun processNotStarted() {
               cont.cancel() // TODO: figure out if this is cancel or error or what
@@ -112,15 +120,34 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
         ExecutionManagerImpl.stopProcess(runContentDescriptor)
       }
 
-      suspendCancellableCoroutine { cont ->
-        runContentDescriptor.processHandler?.addProcessListener(object : ProcessAdapter() {
-          override fun processTerminated(event: ProcessEvent) {
-            cont.resume(Unit, null)
+      when (runContentDescriptor) {
+        null -> {
+          val message = HtmlBuilder()
+            .append(HtmlChunk
+              .text(ExecutionBundle.message ("run.configurations.multilaunch.notification.title.incompatible.configuration.type", settings.configuration.type.displayName))
+              .wrapWith("b"))
+            .br()
+            .append(ExecutionBundle.message("run.configurations.multilaunch.notification.description.incompatible.configuration.type"))
+            .toString()
+
+          ToolWindowManager.getInstance(project).notifyByBalloon(
+            ToolWindowId.SERVICES,
+            MessageType.WARNING,
+            message
+          )
+        }
+        else -> {
+          suspendCancellableCoroutine { cont ->
+            runContentDescriptor.processHandler?.addProcessListener(object : ProcessAdapter() {
+              override fun processTerminated(event: ProcessEvent) {
+                cont.resume(Unit, null)
+              }
+              override fun processNotStarted() {
+                cont.cancel()
+              }
+            })
           }
-          override fun processNotStarted() {
-            cont.cancel()
-          }
-        })
+        }
       }
 
       return runContentDescriptor
