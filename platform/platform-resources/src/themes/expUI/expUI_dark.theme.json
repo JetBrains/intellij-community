@@ -940,7 +940,12 @@
       }
     },
 
-    "DataSummary.Chart.background": "Blue6"
+    "DataSummary.Chart.background": "Blue6",
+
+    "ManagedIdeBadgeBorder": "Grey5",
+    "ManagedIdeBadgeBackground": "Grey3",
+    "ManagedIdeBadgeBackgroundHover": "Grey4",
+    "ManagedIdeMenuItemHover": "Grey4"
   },
 
   "icons": {
