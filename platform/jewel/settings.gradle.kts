@@ -25,6 +25,10 @@ dependencyResolutionManagement {
     }
 }
 
+plugins {
+    id("com.gradle.enterprise") version "3.15.1"
+}
+
 include(
     ":core",
     ":decorated-window",
@@ -37,3 +41,11 @@ include(
     ":int-ui:int-ui-decorated-window",
     ":int-ui:int-ui-standalone",
 )
+
+gradleEnterprise {
+    buildScan {
+        publishAlwaysIf(System.getenv("CI") == "true")
+        termsOfServiceUrl = "https://gradle.com/terms-of-service"
+        termsOfServiceAgree = "yes"
+    }
+}

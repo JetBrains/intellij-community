@@ -53,22 +53,8 @@ jobs:
       - name: Run :check task
         run: ./gradlew check -Psupported.ij.version=${{ matrix.supported-ij-version }} --continue
 
-      - name: Merge SARIF reports
-        # Necessary because upload-sarif only takes up to 15 SARIF files and we have more
-        run: ./gradlew :mergeSarifReports -Psupported.ij.version=${{ matrix.supported-ij-version }}
-        if: ${{ always() }}
-
       - uses: github/codeql-action/upload-sarif@v2
         if: ${{ always() }}
         with:
           sarif_file: ${{ github.workspace }}/build/reports/static-analysis.sarif
           checkout_path: ${{ github.workspace }}
-
-      - name: Upload reports for manual analysis
-        uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: Static analysis SARIF reports
-          path: ${{ github.workspace }}/build/reports/*.sarif
-          retention-days: 7
-          if-no-files-found: error

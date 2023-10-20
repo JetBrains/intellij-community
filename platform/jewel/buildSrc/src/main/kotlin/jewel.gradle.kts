@@ -1,13 +1,10 @@
-@file:Suppress("UnstableApiUsage")
-
 import io.gitlab.arturbosch.detekt.Detekt
 import org.gradle.api.attributes.Usage
 import org.jmailen.gradle.kotlinter.tasks.FormatTask
 import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
-    id("io.gitlab.arturbosch.detekt")
-    id("org.jmailen.kotlinter")
+    id("jewel-linting")
     kotlin("jvm")
 }
 
@@ -49,36 +46,20 @@ detekt {
     buildUponDefaultConfig = true
 }
 
-val sarif: Configuration by configurations.creating {
-    isCanBeConsumed = true
-    attributes {
-        attribute(Usage.USAGE_ATTRIBUTE, objects.named("sarif"))
-    }
-}
+val sarifReport = layout.buildDirectory.file("reports/ktlint-${project.name}.sarif")
 
 tasks {
-    withType<Detekt> {
+    detektMain {
         val sarifOutputFile = layout.buildDirectory.file("reports/detekt-${project.name}.sarif")
         exclude { it.file.absolutePath.startsWith(layout.buildDirectory.asFile.get().absolutePath) }
         reports {
             sarif.required = true
             sarif.outputLocation = sarifOutputFile
         }
-        sarif.outgoing {
-            artifact(sarifOutputFile) {
-                builtBy(this@withType)
-            }
-        }
     }
-
-    withType<FormatTask> {
-        exclude { it.file.absolutePath.contains("build/generated") }
-    }
-
-    withType<LintTask> {
+    lintKotlinMain {
         exclude { it.file.absolutePath.contains("build/generated") }
 
-        val sarifReport = layout.buildDirectory.file("reports/ktlint-${project.name}.sarif")
         reports = provider {
             mapOf(
                 "plain" to layout.buildDirectory.file("reports/ktlint-${project.name}.txt").get().asFile,
@@ -86,11 +67,25 @@ tasks {
                 "sarif" to sarifReport.get().asFile
             )
         }
+    }
+}
 
-        sarif.outgoing {
-            artifact(sarifReport) {
-                builtBy(this@withType)
-            }
+configurations.named("sarif") {
+    outgoing {
+        artifact(tasks.detektMain.flatMap { it.sarifReportFile }) {
+            builtBy(tasks.detektMain)
+        }
+        artifact(sarifReport) {
+            builtBy(tasks.lintKotlinMain)
         }
     }
+}
+
+fun Task.removeAssembleDependency() {
+    setDependsOn(dependsOn.filter {
+        when {
+            it is Task && it.name == "assemble" -> false
+            else -> true
+        }
+    })
 }
