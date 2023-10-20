@@ -1,14 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
+import com.intellij.ide.customize.transferSettings.models.DummyKeyboardShortcut
 import com.intellij.ide.customize.transferSettings.models.ILookAndFeel
 import com.intellij.ide.customize.transferSettings.models.Keymap
+import com.intellij.ide.customize.transferSettings.models.PatchedKeymap
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.BaseSetting
+import com.intellij.ide.startup.importSettings.data.ChildSetting
+import com.intellij.ide.startup.importSettings.data.Multiple
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.keymap.MacKeymapUtil
+import com.intellij.openapi.util.SystemInfo
 import javax.swing.Icon
+import javax.swing.KeyStroke
 
-class TransferableSetting(
+open class TransferableSetting(
   override val id: String,
   override val name: String,
   override val icon: Icon,
@@ -32,12 +42,27 @@ class TransferableSetting(
       )
     }
 
-    fun keymap(keymap: Keymap): TransferableSetting {
-      return TransferableSetting(
+    fun keymap(keymap: Keymap): BaseSetting {
+      val customShortcuts = (keymap as? PatchedKeymap)?.overrides
+      val customShortcutCount = customShortcuts?.size ?: 0
+      val title = if (customShortcutCount == 0)
+        keymap.displayName
+      else ImportSettingsBundle.message("transfer.settings.keymap-with-custom-shortcuts", keymap.displayName, customShortcutCount)
+      val examples = keymap.demoShortcuts.map { DemoShortcut(it.humanName, it.defaultShortcut) }
+      val custom = customShortcuts?.flatMap {
+        val name = it.originalId ?: it.actionId
+        it.shortcuts.map { DemoShortcut(name, it) }
+      }
+      val items = buildList {
+        add(examples)
+        custom?.let(::add)
+      }
+      return TransferableSettingGroup(
         KEYMAP_ID,
         ImportSettingsBundle.message("transfer.settings.keymap"),
         StartupImportIcons.Icons.Keyboard,
-        keymap.displayName
+        title,
+        items
       )
     }
 
@@ -54,5 +79,44 @@ class TransferableSetting(
       StartupImportIcons.Icons.Recent,
       null
     )
+  }
+}
+
+private class TransferableSettingGroup(
+  override val id: String,
+  override val name: String,
+  override val icon: Icon,
+  override val comment: String?,
+  override val list: List<List<ChildSetting>>
+) : Multiple
+
+private class DemoShortcut(override val name: String, shortcut: Any) : ChildSetting {
+  override val id = ""
+  override val leftComment = null
+  override val rightComment = run {
+    fun getKeyStrokeText(keyStroke: KeyStroke) =
+      if (SystemInfo.isMac) MacKeymapUtil.getKeyStrokeText(keyStroke)
+      else KeymapUtil.getKeystrokeText(keyStroke)
+
+    when (shortcut) {
+      is KeyboardShortcut -> buildString {
+        append(getKeyStrokeText(shortcut.firstKeyStroke))
+        shortcut.secondKeyStroke?.let {
+          if (!SystemInfo.isMac) append("+")
+          append(getKeyStrokeText(it))
+        }
+      }
+      is DummyKeyboardShortcut -> buildString {
+        append(shortcut.firstKeyStroke)
+        shortcut.secondKeyStroke?.let {
+          if (!SystemInfo.isMac) append("+")
+          append(shortcut.secondKeyStroke)
+        }
+      }
+      else -> {
+        thisLogger().error("Cannot extract keyboard shortcut from object $shortcut")
+        null
+      }
+    }
   }
 }
