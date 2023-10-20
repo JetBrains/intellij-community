@@ -48,11 +48,9 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     override fun onRequest(event: InlineCompletionEventType.Request) = lock.withLock {
       invocationTracker = InvocationTracker(event).also {
         requestIds[event.request] = it.requestId
-        if (application.isEAP) {
-          runWithModalProgressBlocking(event.request.file.project, "Capture context features") {
-            withContext(Dispatchers.Default) {
-              readAction { it.captureContext(event.request.editor, event.request.endOffset) }
-            }
+        runWithModalProgressBlocking(event.request.file.project, "Capture context features") {
+          withContext(Dispatchers.Default) {
+            readAction { it.captureContext(event.request.editor, event.request.endOffset) }
           }
         }
       }
@@ -242,7 +240,9 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       data.add(EventFields.CurrentFile.with(fileLanguage))
       data.add(ShownEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
       data.add(ShownEvents.PROVIDER.with(provider))
-      data.add(triggerFeatures)
+      if (application.isEAP) {
+        data.add(triggerFeatures)
+      }
       nextShown(element)
       assert(!shownLogSent)
     }
