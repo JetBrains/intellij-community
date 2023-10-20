@@ -137,7 +137,7 @@ private fun <T> doFindConstructorAndArguments(
   round: Int,
 ): DependencyResolutionResult<T> {
   var greediest: DependencyResolutionResult.Resolved<T>? = null
-  var unsatisfiableConstructors: MutableList<ConstructorAndParameterType<T>>? = null
+  var unsatisfiableConstructors: MutableList<UnsatisfiedConstructorParameterType<T>>? = null
 
   val singleConstructor = constructors.size == 1
 
@@ -166,7 +166,7 @@ private fun <T> doFindConstructorAndArguments(
         if (unsatisfiableConstructors == null) {
           unsatisfiableConstructors = ArrayList()
         }
-        unsatisfiableConstructors.add(ConstructorAndParameterType(constructor, result.parameterType))
+        unsatisfiableConstructors.add(UnsatisfiedConstructorParameterType(constructor, result.parameterType))
         continue@constructors // unsatisfiable constructor
       }
       is ResolutionResult.Resolved -> {

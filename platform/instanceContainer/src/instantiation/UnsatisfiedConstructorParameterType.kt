@@ -3,7 +3,7 @@ package com.intellij.platform.instanceContainer.instantiation
 
 import java.lang.reflect.Constructor
 
-internal data class ConstructorAndParameterType<T>(
+internal data class UnsatisfiedConstructorParameterType<T>(
   val constructor: Constructor<T>,
   val parameterType: Class<*>,
 )

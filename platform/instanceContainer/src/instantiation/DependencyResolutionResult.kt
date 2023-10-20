@@ -16,6 +16,6 @@ internal sealed interface DependencyResolutionResult<T> {
   ) : DependencyResolutionResult<T>
 
   data class Failed<T>(
-    val unsatisfiableConstructors: List<ConstructorAndParameterType<T>>,
+    val unsatisfiableConstructors: List<UnsatisfiedConstructorParameterType<T>>,
   ) : DependencyResolutionResult<T>
 }
