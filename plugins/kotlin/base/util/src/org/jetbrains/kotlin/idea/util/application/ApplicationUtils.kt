@@ -65,6 +65,7 @@ fun <T> runWithCancellationCheck(block: () -> T): T = CancellationCheck.runWithC
 inline fun executeOnPooledThread(crossinline action: () -> Unit) =
     ApplicationManager.getApplication().executeOnPooledThread { action() }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("use com.intellij.openapi.application.invokeLater", ReplaceWith("com.intellij.openapi.application.invokeLater"))
 inline fun invokeLater(crossinline action: () -> Unit) =
     ApplicationManager.getApplication().invokeLater { action() }

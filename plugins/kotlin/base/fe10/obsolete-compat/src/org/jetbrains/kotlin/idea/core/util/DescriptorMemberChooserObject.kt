@@ -3,11 +3,13 @@ package org.jetbrains.kotlin.idea.core.util
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import javax.swing.Icon
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject as DescriptorMemberChooserObjectNew
 
 @Suppress("unused")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use 'org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject' instead")
 open class DescriptorMemberChooserObject(
     psiElement: PsiElement,

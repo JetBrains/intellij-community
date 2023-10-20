@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.project
 
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -31,6 +32,8 @@ val Module.platform: TargetPlatform
 val KtElement.platform: TargetPlatform
     get() = platformNew
 
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated("Use 'org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings' instead")
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings' instead",
     ReplaceWith("languageVersionSettings", "org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings"),

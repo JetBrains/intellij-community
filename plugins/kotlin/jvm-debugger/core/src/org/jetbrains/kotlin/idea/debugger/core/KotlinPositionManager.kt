@@ -44,6 +44,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
@@ -572,6 +573,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use 'ClassNameProvider' directly")
     fun originalClassNamesForPosition(position: SourcePosition): List<String> {
         return runReadAction {

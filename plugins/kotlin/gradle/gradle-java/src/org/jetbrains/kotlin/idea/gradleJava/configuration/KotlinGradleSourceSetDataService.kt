@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -218,6 +219,7 @@ fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKin
 }
 
 @Suppress("DEPRECATION_ERROR")
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use detectPlatformKindByPlugin() instead",
     replaceWith = ReplaceWith("detectPlatformKindByPlugin(moduleNode)"),
