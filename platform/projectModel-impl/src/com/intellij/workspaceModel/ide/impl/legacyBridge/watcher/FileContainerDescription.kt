@@ -20,10 +20,10 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, private val jarDi
   private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
 
   @Volatile
-  private var timestampOfCachedFiles = -1L
+  private var timestampOfCachedFiles: Long = -1L
 
   @Volatile
-  private var cachedFilesList = arrayOf<VirtualFile>()
+  private var cachedFilesList: Array<VirtualFile> = VirtualFile.EMPTY_ARRAY
 
   @Volatile
   private var cachedUrlsList: Array<String>? = null
