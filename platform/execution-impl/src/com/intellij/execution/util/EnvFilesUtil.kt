@@ -13,7 +13,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.EnvReader
 import com.intellij.util.PathUtilRt
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Experimental
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -33,7 +33,7 @@ fun checkEnvFiles(configuration: CommonProgramRunConfigurationParameters?) {
 }
 
 @Throws(ParametersConfiguratorException::class)
-@Internal
+@Experimental
 fun configureEnvsFromFiles(configuration: EnvFilesOptions, parse: Boolean = true): Map<String, String> {
   val result: MutableMap<String, String> = HashMap()
   for (path in configuration.envFilePaths) {
