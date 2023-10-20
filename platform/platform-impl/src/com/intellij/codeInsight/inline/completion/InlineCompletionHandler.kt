@@ -3,12 +3,11 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventListener
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
+import com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionOnboardingListener
 import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExecutor
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
@@ -50,6 +49,7 @@ class InlineCompletionHandler(
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
+    addEventListener(InlineCompletionOnboardingListener(editor))
   }
 
   fun addEventListener(listener: InlineCompletionEventListener) {

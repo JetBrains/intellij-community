@@ -31,6 +31,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import java.awt.Insets
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 
 
 internal object InlineCompletionTooltip {
@@ -80,6 +81,8 @@ internal object InlineCompletionTooltip {
     Disposer.register(session) {
       hint.hide()
     }
+
+    InlineCompletionOnboardingComponent.getInstance().fireTooltipShown()
   }
 
   private class InplaceChangeInlineCompletionShortcutAction(@NlsActions.ActionText text: String, private val shortcut: Shortcut) :
@@ -168,6 +171,10 @@ internal object InlineCompletionTooltip {
       override fun shallPaintDownArrow() = true
       override fun update() {
         presentation.text = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_INSERT_INLINE_COMPLETION).ifEmpty { " " }
+      }
+
+      override fun onMousePressed(e: MouseEvent) {
+        InlineCompletionOnboardingComponent.getInstance().fireTooltipUsed()
       }
     }.also {
       it.isFocusable = false
