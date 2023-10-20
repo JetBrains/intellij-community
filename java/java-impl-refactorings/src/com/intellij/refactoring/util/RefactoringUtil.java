@@ -487,7 +487,7 @@ public final class RefactoringUtil {
   /**
    * @deprecated use CommonJavaRefactoringUtil.convertInitializerToNormalExpression instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Contract("null, _ -> null")
   public static PsiExpression convertInitializerToNormalExpression(PsiExpression expression, PsiType forcedReturnType) throws IncorrectOperationException {
     return CommonJavaRefactoringUtil.convertInitializerToNormalExpression(expression, forcedReturnType);
