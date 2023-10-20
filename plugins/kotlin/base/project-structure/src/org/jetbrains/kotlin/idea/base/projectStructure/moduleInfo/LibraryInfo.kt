@@ -11,14 +11,18 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
-import org.jetbrains.kotlin.analyzer.*
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.analyzer.LibraryModuleInfo
+import org.jetbrains.kotlin.analyzer.TrackableModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.KotlinModificationTrackerProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.PoweredLibraryScopeBase
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.*
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 
 /**
@@ -121,7 +125,7 @@ private class ResolutionAnchorAwareLibraryModificationTracker(libraryInfo: Libra
 private class LibraryWithoutSourceScope(
     project: Project,
     private val library: Library
-) : PoweredLibraryScopeBase(project, library.getFiles(OrderRootType.CLASSES), arrayOf()) {
+) : PoweredLibraryScopeBase(project, library.getFiles(OrderRootType.CLASSES), VirtualFile.EMPTY_ARRAY) {
 
     override fun getFileRoot(file: VirtualFile): VirtualFile? = myIndex.getClassRootForFile(file)
 

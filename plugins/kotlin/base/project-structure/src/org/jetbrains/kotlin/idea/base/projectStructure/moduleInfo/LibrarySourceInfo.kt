@@ -45,7 +45,7 @@ data class LibrarySourceInfo(override val project: Project, val library: Library
 private class LibrarySourceScope(
     project: Project,
     private val library: Library
-) : PoweredLibraryScopeBase(project, arrayOf(), library.getFiles(OrderRootType.SOURCES)) {
+) : PoweredLibraryScopeBase(project, VirtualFile.EMPTY_ARRAY, library.getFiles(OrderRootType.SOURCES)) {
     override fun getFileRoot(file: VirtualFile): VirtualFile? = myIndex.getSourceRootForFile(file)
 
     override fun equals(other: Any?) = other is LibrarySourceScope && library == other.library
