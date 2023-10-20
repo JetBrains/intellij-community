@@ -144,6 +144,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     }
 
     override fun addNotify() {
+      super.addNotify()
       check(messageBusConnection == null) { "addNotify() called twice without removeNotify()?!" }
       val editorListener = object : FileEditorManagerListener {
         override fun selectionChanged(event: FileEditorManagerEvent) {
@@ -155,6 +156,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     }
 
     override fun removeNotify() {
+      super.removeNotify()
       messageBusConnection?.disconnect()
       messageBusConnection = null
     }
