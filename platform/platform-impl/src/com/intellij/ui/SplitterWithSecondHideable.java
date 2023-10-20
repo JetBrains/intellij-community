@@ -25,7 +25,7 @@ import static com.intellij.icons.AllIcons.General.ArrowRight;
  * @deprecated This component confuses users, because it's not obvious that it allows to change size like by a splitter.
  * Commit form (the only place it's used) is going to be revised/removed in the future. After that this component will be removed
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @ApiStatus.Internal
 public abstract class SplitterWithSecondHideable {
   public interface OnOffListener {

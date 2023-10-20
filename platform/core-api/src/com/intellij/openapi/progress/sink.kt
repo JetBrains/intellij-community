@@ -31,6 +31,7 @@ import kotlin.coroutines.CoroutineContext
  * ```
  */
 @Suppress("DeprecatedCallableAddReplaceWith")
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Migrate to `ProgressReporter`")
 fun ProgressSink.asContextElement(): CoroutineContext.Element {
   return ProgressSinkElement(this)

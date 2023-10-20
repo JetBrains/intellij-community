@@ -718,6 +718,7 @@ fun Project.executeOnPooledThread(task: Runnable) {
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
+@ScheduledForRemoval
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledIoThread(task: Runnable) {
   @Suppress("DEPRECATION")

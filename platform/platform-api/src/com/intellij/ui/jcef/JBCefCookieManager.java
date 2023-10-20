@@ -113,7 +113,7 @@ public final class JBCefCookieManager {
    *
    * @deprecated use {@link #getCookies(String, Boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull List<JBCefCookie> getCookies(@Nullable String url, @Nullable Boolean includeHttpOnly, @Nullable Integer maxTimeToWait) {
     boolean httpOnly = notNull(includeHttpOnly, Boolean.FALSE);
     JBCookieVisitor cookieVisitor = new JBCookieVisitor();
@@ -192,7 +192,7 @@ public final class JBCefCookieManager {
    *
    * @deprecated use {@link #setCookie(String, JBCefCookie)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean setCookie(@NotNull String url, @NotNull JBCefCookie jbCefCookie, @Nullable Integer maxTimeToWait) {
     if (!checkArgs(url, jbCefCookie)) return false;
 

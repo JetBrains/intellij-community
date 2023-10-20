@@ -6,7 +6,7 @@ import com.intellij.util.messages.Topic;
 /**
  * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface NavBarModelListener {
   @Topic.ProjectLevel
   Topic<NavBarModelListener> NAV_BAR = new Topic<>(NavBarModelListener.class, Topic.BroadcastDirection.NONE);

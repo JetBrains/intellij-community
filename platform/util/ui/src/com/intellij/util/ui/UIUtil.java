@@ -315,7 +315,7 @@ public final class UIUtil {
    * @return the property value from the specified component or {@code null}
    * @deprecated use {@link ClientProperty#get(Component, Object)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
     return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
   }

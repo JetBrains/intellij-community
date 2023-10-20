@@ -150,6 +150,7 @@ public interface ApplicationEx extends Application {
   /**
    * @deprecated Use {@link #assertIsNonDispatchThread()}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   void assertTimeConsuming();
 

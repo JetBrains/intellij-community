@@ -64,7 +64,7 @@ public final class StatisticsUploadAssistant {
   /**
    * @deprecated see {@link ExternalEventLogSettings#isSendAllowedOverride()}
    */
-  @Deprecated(since = "2023.1")
+  @Deprecated(since = "2023.1", forRemoval = true)
   public static boolean getSendAllowedOverride() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     if (externalEventLogSettings != null)
@@ -76,7 +76,7 @@ public final class StatisticsUploadAssistant {
   /**
    * @deprecated see {@link ExternalEventLogSettings#isCollectAllowedOverride()}
    * */
-  @Deprecated(since = "2023.1")
+  @Deprecated(since = "2023.1", forRemoval = true)
   public static boolean getCollectAllowedOverride() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     return externalEventLogSettings != null && externalEventLogSettings.isCollectAllowedOverride();

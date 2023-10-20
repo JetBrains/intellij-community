@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.config.StatisticsStringUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 
@@ -9,6 +10,7 @@ import java.nio.file.Path
  * @deprecated Use {@link EventLogInternalSendConfig} because it contains both information about recorder and device
  * Kept for compatibility with TBE.
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message="Use EventLogSendConfig")
 interface EventLogRecorderConfig {
   fun getRecorderId(): String

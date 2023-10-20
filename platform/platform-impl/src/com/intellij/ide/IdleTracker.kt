@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.debounce
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import kotlin.time.Duration
@@ -86,6 +87,7 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
    * Use coroutines and [events].
    */
   @OptIn(FlowPreview::class)
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use coroutines and [events]. " +
               "Or at least method that returns close handler: `addIdleListener(delayInMs, listener): AccessToken`")
   fun addIdleListener(runnable: Runnable, timeoutMillis: Int) {
@@ -107,6 +109,7 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use coroutines and [events]. " +
               "Or at least method that returns close handler: `addIdleListener(delayInMs, listener): AccessToken`")
   fun removeIdleListener(runnable: Runnable) {

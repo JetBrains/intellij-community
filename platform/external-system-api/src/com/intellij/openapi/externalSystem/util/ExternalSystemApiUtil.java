@@ -278,7 +278,7 @@ public final class ExternalSystemApiUtil {
   /**
    * @deprecated Use findParentRecursively instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable <T> DataNode<T> findParent(
     @NotNull DataNode<?> node,
     @NotNull Key<T> key,

@@ -4,7 +4,10 @@ package com.intellij.openapi.rd.util
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.jetbrains.rd.framework.util.*
+import com.jetbrains.rd.framework.util.launch
+import com.jetbrains.rd.framework.util.startAsync
+import com.jetbrains.rd.framework.util.synchronizeWith
+import com.jetbrains.rd.framework.util.withContext
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isEternal
 import kotlinx.coroutines.*
@@ -124,6 +127,7 @@ fun <T> Lifetime.startIOBackgroundAsync(
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = startAsync(processIODispatcher + context, start, action)
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use startBackgroundAsync", ReplaceWith("startBackgroundAsync(start, action)"))
 fun <T> Lifetime.startLongBackgroundAsync(
   context: CoroutineContext = EmptyCoroutineContext,

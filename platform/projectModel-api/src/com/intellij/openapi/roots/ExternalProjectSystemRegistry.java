@@ -22,7 +22,7 @@ public interface ExternalProjectSystemRegistry {
   /**
    * @deprecated use {@link org.jetbrains.jps.model.serialization.SerializationConstants#MAVEN_EXTERNAL_SOURCE_ID} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   String MAVEN_EXTERNAL_SOURCE_ID = "Maven";
 
   String EXTERNAL_SYSTEM_ID_KEY = "external.system.id";
@@ -30,6 +30,6 @@ public interface ExternalProjectSystemRegistry {
   /**
    * @deprecated use {@link org.jetbrains.jps.model.serialization.SerializationConstants#IS_MAVEN_MODULE_IML_ATTRIBUTE} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   String IS_MAVEN_MODULE_KEY = "org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule";
 }

@@ -7,13 +7,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ide.progress.withModalProgress
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Deprecated(
@@ -151,6 +152,7 @@ suspend fun <T> withBackgroundProgressIndicator(
   return withBackgroundProgressIndicator(project, title, cancellable = true, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "This function installs `RawProgressReporter` into action context. " +
             "Migrate to `ProgressReporter` via `withBackgroundProgress`, " +
@@ -168,6 +170,7 @@ suspend fun <T> withBackgroundProgressIndicator(
   return withBackgroundProgressIndicator(project, title, cancellation, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "This function installs `RawProgressReporter` into action context. " +
             "Migrate to `ProgressReporter` via `withBackgroundProgress`, " +
@@ -185,6 +188,7 @@ suspend fun <T> withBackgroundProgressIndicator(
   }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "This function installs `RawProgressReporter` into action context. " +
             "Migrate to `ProgressReporter` via `withModalProgress`, " +
@@ -200,6 +204,7 @@ suspend fun <T> withModalProgressIndicator(
   return withModalProgressIndicator(owner = ModalTaskOwner.project(project), title = title, action = action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "This function installs `RawProgressReporter` into action context. " +
             "Migrate to `ProgressReporter` via `withModalProgress`, " +

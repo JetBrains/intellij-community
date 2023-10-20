@@ -86,7 +86,7 @@ public final class FilenameIndex {
   }
 
   /** @deprecated Use {@link #processFilesByName(String, boolean, GlobalSearchScope, Processor)} **/
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean processFilesByName(@NotNull String name,
                                            boolean directories,
                                            @NotNull Processor<? super PsiFileSystemItem> processor,

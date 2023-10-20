@@ -334,7 +334,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     /**
      * @deprecated Do not use or override this method. Use {@link ActionGroupPopup#handleToggleAction(InputEvent)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected void handleToggleAction() {
       handleToggleAction(null);
     }

@@ -161,7 +161,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   /**
    * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull Collection<? extends Change> included,
                                       @Nullable LocalChangeList initialChangeList,
@@ -176,7 +176,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   /**
    * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull List<? extends Change> included,
                                       @Nullable LocalChangeList initialChangeList,
@@ -208,7 +208,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   /**
    * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean commitChanges(@NotNull Project project,
                                       @SuppressWarnings("unused") @Nullable List<? extends Change> ignored_parameter,
                                       @NotNull Collection<?> included,

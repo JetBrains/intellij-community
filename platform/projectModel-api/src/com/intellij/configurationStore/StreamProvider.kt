@@ -29,10 +29,12 @@ interface StreamProvider {
 
   fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType = RoamingType.DEFAULT)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use #write(fileSpec, content, roamingType) without the 'size' parameter")
   fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType = RoamingType.DEFAULT) : Unit =
     write(fileSpec, content, roamingType)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use #write(fileSpec, content, roamingType) with ByteArray parameter")
   fun write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT): Unit =
     write(path, content.toByteArray(), roamingType)

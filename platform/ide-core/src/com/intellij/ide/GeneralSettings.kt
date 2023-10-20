@@ -9,8 +9,11 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemDependent
 
 private const val SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY = "ide.show.tips.on.startup.default.value"
@@ -79,6 +82,7 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
   //fun propertyChangedFlow()
 
   @get:Deprecated("Use {@link GeneralLocalSettings#getUseDefaultBrowser()} instead.")
+  @get:ApiStatus.ScheduledForRemoval
   val isUseDefaultBrowser: Boolean
     get() = state.useDefaultBrowser
 
@@ -198,7 +202,9 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
   @Suppress("UNUSED_PARAMETER")
   @get:Deprecated("unused")
   @get:Transient
+  @get:ApiStatus.ScheduledForRemoval
   @set:Deprecated("unused")
+  @set:ApiStatus.ScheduledForRemoval
   var isConfirmExtractFiles: Boolean
     get() = true
     set(value) {}

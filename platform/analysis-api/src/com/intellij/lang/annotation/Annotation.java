@@ -442,7 +442,7 @@ public final class Annotation implements Segment {
    *
    * @param problemGroup the problem group
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setProblemGroup(@Nullable ProblemGroup problemGroup) {
     myProblemGroup = problemGroup;
   }
@@ -459,7 +459,7 @@ public final class Annotation implements Segment {
    * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setUnresolvedReference(PsiReference reference) {
     unresolvedReference = reference;
   }
@@ -467,7 +467,7 @@ public final class Annotation implements Segment {
    * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PsiReference getUnresolvedReference() {
     return unresolvedReference;
   }

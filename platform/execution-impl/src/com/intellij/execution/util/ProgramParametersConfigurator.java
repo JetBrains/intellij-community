@@ -48,7 +48,7 @@ public class ProgramParametersConfigurator {
     ExtensionPointName.create("com.intellij.module.workingDirectoryProvider");
 
   /** @deprecated use {@link PathMacroUtil#MODULE_WORKING_DIR} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static final String MODULE_WORKING_DIR = "%MODULE_WORKING_DIR%";
   private static final DataKey<Boolean> VALIDATION_MODE = DataKey.create("validation.mode");

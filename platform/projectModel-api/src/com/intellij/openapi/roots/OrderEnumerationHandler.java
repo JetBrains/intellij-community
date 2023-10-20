@@ -83,7 +83,7 @@ public abstract class OrderEnumerationHandler {
   /**
    * @deprecated override {@link #addCustomRootsForLibraryOrSdk(LibraryOrSdkOrderEntry, OrderRootType, Collection)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean addCustomRootsForLibrary(@NotNull OrderEntry forOrderEntry,
                                           @NotNull OrderRootType type,
                                           @NotNull Collection<String> urls) {

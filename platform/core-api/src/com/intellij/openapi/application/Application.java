@@ -660,6 +660,7 @@ public interface Application extends ComponentManager {
   }
 
   /** @deprecated bad name, use {@link #assertWriteIntentLockAcquired()} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @ApiStatus.Experimental
   default void assertIsWriteThread() {
