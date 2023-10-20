@@ -23,9 +23,15 @@ import static com.intellij.util.BitUtil.isSet;
 class FirstPassData implements SignatureParsing.TypeInfoProvider {
   private static final Logger LOG = Logger.getInstance(FirstPassData.class);
 
-  private abstract static class InnerClassEntry {}
+  private abstract static class ClassEntry {}
   
-  private static class StringInnerClassEntry extends InnerClassEntry {
+  private static final class RegularClassEntry extends ClassEntry {
+    final @NotNull String myName;
+
+    private RegularClassEntry(@NotNull String name) { myName = name; }
+  }
+  
+  private static final class StringInnerClassEntry extends ClassEntry {
     final @NotNull String myOuterName;
     final @NotNull String myInnerName;
     final boolean myStatic;
@@ -37,7 +43,7 @@ class FirstPassData implements SignatureParsing.TypeInfoProvider {
     }
   }
 
-  private static class TypeInfoInnerClassEntry extends InnerClassEntry {
+  private static final class TypeInfoInnerClassEntry extends ClassEntry {
     private final RefTypeInfo myOuterType;
     private final String myInnerName;
 
@@ -48,14 +54,14 @@ class FirstPassData implements SignatureParsing.TypeInfoProvider {
   }
 
   private static final FirstPassData NO_DATA = new FirstPassData(Collections.emptyMap(), "", null, Collections.emptySet(), true, false);
-  private final @NotNull Map<String, InnerClassEntry> myMap;
+  private final @NotNull Map<String, ClassEntry> myMap;
   private final @NotNull Set<ObjectMethod> mySyntheticMethods;
   private final @NotNull String myTopLevelName;
   private final @Nullable String myVarArgRecordComponent;
   private final boolean myTrustInnerClasses;
   private final boolean mySealed;
 
-  private FirstPassData(@NotNull Map<String, InnerClassEntry> map,
+  private FirstPassData(@NotNull Map<String, ClassEntry> map,
                         @NotNull String topLevelName,
                         @Nullable String component,
                         @NotNull Set<ObjectMethod> syntheticMethods,
@@ -118,24 +124,26 @@ class FirstPassData implements SignatureParsing.TypeInfoProvider {
    * @return Java class name like java.util.Map.Entry
    */
   @NotNull RefTypeInfo toTypeInfo(@NotNull String jvmName, boolean useGuesser) {
-    if (jvmName.indexOf('$') >= 0) {
-      InnerClassEntry p = myMap.get(jvmName);
-      if (p != null) {
-        if (p instanceof StringInnerClassEntry) {
-          StringInnerClassEntry entry = (StringInnerClassEntry)p;
-          RefTypeInfo outer = toTypeInfo(entry.myOuterName, false);
-          p = new TypeInfoInnerClassEntry(outer, entry.myInnerName);
-          myMap.put(jvmName, p);
-        }
-        assert p instanceof TypeInfoInnerClassEntry;
-        return new RefTypeInfo(((TypeInfoInnerClassEntry)p).myInnerName, ((TypeInfoInnerClassEntry)p).myOuterType);
+    ClassEntry p = myMap.get(jvmName);
+    if (p != null) {
+      if (p instanceof RegularClassEntry) {
+        return new RefTypeInfo(((RegularClassEntry)p).myName);
       }
-      else if (!jvmName.equals(myTopLevelName) && (useGuesser || !myTrustInnerClasses)) {
-        return StubBuildingVisitor.GUESSING_PROVIDER.toTypeInfo(jvmName);
+      if (p instanceof StringInnerClassEntry) {
+        StringInnerClassEntry entry = (StringInnerClassEntry)p;
+        RefTypeInfo outer = toTypeInfo(entry.myOuterName, false);
+        p = new TypeInfoInnerClassEntry(outer, entry.myInnerName);
+        myMap.put(jvmName, p);
       }
+      assert p instanceof TypeInfoInnerClassEntry;
+      return new RefTypeInfo(((TypeInfoInnerClassEntry)p).myInnerName, ((TypeInfoInnerClassEntry)p).myOuterType);
     }
-
-    return new RefTypeInfo(jvmName.replace('/', '.'));
+    else if (jvmName.indexOf('$') >= 0 && !jvmName.equals(myTopLevelName) && (useGuesser || !myTrustInnerClasses)) {
+      return StubBuildingVisitor.GUESSING_PROVIDER.toTypeInfo(jvmName);
+    }
+    String name = jvmName.replace('/', '.');
+    myMap.put(jvmName, new RegularClassEntry(name));
+    return new RefTypeInfo(name);
   }
 
   static @NotNull FirstPassData create(Object classSource) {
@@ -161,7 +169,7 @@ class FirstPassData implements SignatureParsing.TypeInfoProvider {
   private static @NotNull FirstPassData fromReader(@NotNull ClassReader reader) {
     
     class FirstPassVisitor extends ClassVisitor {
-      final Map<String, InnerClassEntry> mapping = new HashMap<>();
+      final Map<String, ClassEntry> mapping = new HashMap<>();
       Set<String> varArgConstructors;
       Set<ObjectMethod> syntheticSignatures;
       StringBuilder canonicalSignature;
