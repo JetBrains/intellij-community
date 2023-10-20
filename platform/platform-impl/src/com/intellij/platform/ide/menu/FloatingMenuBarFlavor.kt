@@ -45,6 +45,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeJMenuBar) : IdeMenu
       else if (activationWatcher.isRunning && (value == IdeMenuBarState.EXPANDED || value == IdeMenuBarState.COLLAPSED)) {
         activationWatcher.stop()
       }
+      menuBar.isOpaque = value != IdeMenuBarState.COLLAPSED
     }
 
   init {
