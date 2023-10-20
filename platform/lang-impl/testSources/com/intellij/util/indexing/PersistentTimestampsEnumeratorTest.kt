@@ -69,6 +69,18 @@ class PersistentTimestampsEnumeratorTest {
   }
 
   @Test
+  fun emptyTimestamps_CouldBeEnumerated_AndReadBackByEnumeratedId() {
+    val emptyTimestamps = TimestampsImmutable.EMPTY
+    val id = enumerator.enumerate(emptyTimestamps)
+    val emptyTimestampsReadBack = enumerator.valueOf(id)
+    assertEquals(
+      "Empty Timestamps must be read back by assigned id",
+      emptyTimestamps,
+      emptyTimestampsReadBack
+    )
+  }
+
+  @Test
   fun testConcurrentReadWrite() {
     val idx = ID.create<Any, Any>("testConcurrentReadWrite.1")
     val stored = ConcurrentHashMap<TimestampsImmutable, Int>()
