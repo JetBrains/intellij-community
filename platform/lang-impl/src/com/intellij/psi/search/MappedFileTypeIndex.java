@@ -684,7 +684,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
     @Override
     public void close() {
-      //storage is closed by FSRecordsImpl
+      try {
+        storage.close();
+      } catch (IOException e) {
+        LOG.error("failed to close forward index storage", e);
+      }
     }
 
     private void writeImpl(int inputId,
