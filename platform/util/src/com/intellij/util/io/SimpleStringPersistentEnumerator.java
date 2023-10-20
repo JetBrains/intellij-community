@@ -221,7 +221,7 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
       }
 
       Object2IntMap<String> nameToIdRegistry = new Object2IntOpenHashMap<>(lines.size());
-      String[] idToNameRegistry = new String[lines.size()];
+      String[] idToNameRegistry = lines.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : new String[lines.size()];
       for (int i = 0; i < lines.size(); i++) {
         String name = lines.get(i);
         int id = i + 1;
