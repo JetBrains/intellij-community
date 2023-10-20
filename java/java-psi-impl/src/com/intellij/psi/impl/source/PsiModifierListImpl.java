@@ -329,10 +329,10 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   }
 
   private static class ModifierCache {
-    static final Interner<List<String>> ourInterner = Interner.createWeakInterner();
-    final PsiFile file;
-    final List<String> modifiers;
-    final long modCount;
+    private static final Interner<List<String>> ourInterner = Interner.createWeakInterner();
+    private final PsiFile file;
+    private final List<String> modifiers;
+    private final int modCount;
 
     ModifierCache(@NotNull PsiFile file, @NotNull Set<String> modifiers) {
       this.file = file;
@@ -341,8 +341,8 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       this.modCount = getModCount();
     }
 
-    private long getModCount() {
-      return file.getManager().getModificationTracker().getModificationCount() + file.getModificationStamp();
+    private int getModCount() {
+      return (int)(file.getManager().getModificationTracker().getModificationCount() + file.getModificationStamp());
     }
 
     boolean isUpToDate() {
