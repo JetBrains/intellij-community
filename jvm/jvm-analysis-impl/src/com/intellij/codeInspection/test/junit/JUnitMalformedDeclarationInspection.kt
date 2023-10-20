@@ -230,7 +230,7 @@ private class JUnitMalformedSignatureVisitor(
     val hasAnnotation = MetaAnnotationUtil.findMetaAnnotationsInHierarchy(this, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
       .asSequence()
       .any { annotation ->
-        annotation?.nestedAttributeValues("value")?.any {
+        annotation?.flattenedAttributeValues("value")?.any {
           val uClassLiteral = it.toUElementOfType<UClassLiteralExpression>()
           uClassLiteral != null && InheritanceUtil.isInheritor(uClassLiteral.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
         } == true
@@ -532,8 +532,8 @@ private class JUnitMalformedSignatureVisitor(
   private fun checkMethodSource(method: UMethod, methodSource: PsiAnnotation) {
     val psiMethod = method.javaPsi
     val containingClass = psiMethod.containingClass ?: return
-    val annotationMemberValue = methodSource.findDeclaredAttributeValue("value")
-    if (annotationMemberValue == null) {
+    val annotationMemberValue = methodSource.flattenedAttributeValues("value")
+    if (annotationMemberValue.isEmpty()) {
       if (methodSource.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME) == null) return
       val foundMethod = containingClass.findMethodsByName(method.name, true).singleOrNull { it.parameters.isEmpty() }
       val uFoundMethod = foundMethod.toUElementOfType<UMethod>()
@@ -545,7 +545,7 @@ private class JUnitMalformedSignatureVisitor(
       }
     }
     else {
-      annotationMemberValue.nestedValues().forEach { attributeValue ->
+      annotationMemberValue.forEach { attributeValue ->
         for (reference in attributeValue.references) {
           if (reference is MethodSourceReference) {
             val resolve = reference.resolve()
@@ -800,7 +800,7 @@ private class JUnitMalformedSignatureVisitor(
     )
 
     possibleValues.keys.forEach { valueKey ->
-      valuesSource.nestedAttributeValues(valueKey)?.forEach { value ->
+      valuesSource.flattenedAttributeValues(valueKey).forEach { value ->
         possibleValues[valueKey]?.let { checkSourceTypeAndParameterTypeAgree(method, value, it) }
       }
     }
@@ -833,7 +833,7 @@ private class JUnitMalformedSignatureVisitor(
         .map { it.name }
         .toSet()
       val definedConstants = mutableSetOf<String>()
-      enumSource.nestedAttributeValues("names")?.forEach { name ->
+      enumSource.flattenedAttributeValues("names").forEach { name ->
         if (name is PsiLiteralExpression) {
           val value = name.value
           if (value is String) {
@@ -854,7 +854,7 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun checkCsvSource(methodSource: PsiAnnotation) {
-    methodSource.nestedAttributeValues("resources")?.forEach { attributeValue ->
+    methodSource.flattenedAttributeValues("resources").forEach { attributeValue ->
       for (ref in attributeValue.references) {
         if (ref.isSoft) continue
         if (ref is FileReference && ref.multiResolve(false).isEmpty()) {
@@ -863,12 +863,6 @@ private class JUnitMalformedSignatureVisitor(
         }
       }
     }
-  }
-
-  private fun PsiAnnotation.nestedAttributeValues(value: String) = findAttributeValue(value)?.nestedValues()
-
-  private fun PsiAnnotationMemberValue.nestedValues(): List<PsiAnnotationMemberValue> {
-    return if (this is PsiArrayInitializerMemberValue) initializers.flatMap { it.nestedValues() } else listOf(this)
   }
 
   class AnnotatedSignatureProblem(
