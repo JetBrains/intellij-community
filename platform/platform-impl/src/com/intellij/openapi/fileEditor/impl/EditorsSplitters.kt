@@ -8,6 +8,7 @@ import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.IdeActions
@@ -63,6 +64,7 @@ import java.awt.*
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.event.FocusEvent
+import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
 import java.lang.ref.Reference
 import java.nio.file.InvalidPathException
@@ -1060,12 +1062,12 @@ private fun getSplittersToFocus(suggestedProject: Project?): EditorsSplitters? {
     return getSplittersForProject(activeWindow = activeWindow, project = project)
   }
   if (activeWindow is IdeFrame.Child) {
-    return getLastFocusedSplittersForProject(activeWindow, project ?: (activeWindow as IdeFrame).project)
+    return getSplittersToActivate(activeWindow, project ?: (activeWindow as IdeFrame).project)
   }
 
   val frame = FocusManagerImpl.getInstance().lastFocusedFrame
   if (frame is IdeFrameImpl && frame.isActive) {
-    return activeWindow?.let { getLastFocusedSplittersForProject(activeWindow = it, project = frame.getProject()) }
+    return activeWindow?.let { getSplittersToActivate(activeWindow = it, project = frame.getProject()) }
   }
 
   // getSplitters is not implemented in unit test mode
@@ -1080,10 +1082,17 @@ private fun getSplittersForProject(activeWindow: Window, project: Project?): Edi
   return fileEditorManager.getSplittersFor(activeWindow) ?: fileEditorManager.splitters
 }
 
-private fun getLastFocusedSplittersForProject(activeWindow: Window, project: Project?): EditorsSplitters? {
-  val fileEditorManager = (if (project == null || project.isDisposed) null else FileEditorManagerEx.getInstanceEx(project))
-                          ?: return null
-  return (fileEditorManager as? FileEditorManagerImpl)?.getLastFocusedSplitters() ?: getSplittersForProject(activeWindow, project)
+// When tool window is hidden by a shortcut, we want focus to return to previously focused splitters.
+// When it's hidden by clicking on stripe button, we want focus to stay in the current window.
+private fun getSplittersToActivate(activeWindow: Window, project: Project?): EditorsSplitters? {
+  if (project == null || project.isDisposed) return null
+  if (IdeEventQueue.getInstance().trueCurrentEvent is KeyEvent) {
+    val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+    if (fileEditorManager is FileEditorManagerImpl) {
+      return fileEditorManager.getLastFocusedSplitters()
+    }
+  }
+  return getSplittersForProject(activeWindow, project)
 }
 
 internal fun createSplitter(isVertical: Boolean, proportion: Float, minProp: Float, maxProp: Float): Splitter {
