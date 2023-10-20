@@ -1087,9 +1087,8 @@ private fun getSplittersForProject(activeWindow: Window, project: Project?): Edi
 private fun getSplittersToActivate(activeWindow: Window, project: Project?): EditorsSplitters? {
   if (project == null || project.isDisposed) return null
   if (IdeEventQueue.getInstance().trueCurrentEvent is KeyEvent) {
-    val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-    if (fileEditorManager is FileEditorManagerImpl) {
-      return fileEditorManager.getLastFocusedSplitters()
+    (FileEditorManagerEx.getInstanceEx(project) as? FileEditorManagerImpl)?.getLastFocusedSplitters()?.let {
+      return it
     }
   }
   return getSplittersForProject(activeWindow, project)
