@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.ui
 
-import com.intellij.CommonBundle
-import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.Disposer
@@ -64,9 +62,9 @@ class MultiplePageDialog private constructor() : DialogWrapper(null) {
 
   override fun doCancelAction() {
     current?.let {
-      val shouldExit = if(it.confirmationNeeded) showExit() else true
+      val shouldExit = it.showExit()?.ask(peer.contentPane)
 
-      if (shouldExit) {
+      if (shouldExit != false) {
         super.doCancelAction()
         callback()
       }
@@ -75,12 +73,6 @@ class MultiplePageDialog private constructor() : DialogWrapper(null) {
       super.doCancelAction()
     }
   }
-
-  private fun showExit() = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"),
-                                                      ApplicationBundle.message("exit.confirm.prompt"))
-    .yesText(ApplicationBundle.message("command.exit"))
-    .noText(CommonBundle.getCancelButtonText())
-    .ask(peer.contentPane)
 
 
   fun showPage(dialog: PageProvider) {
@@ -150,6 +142,8 @@ abstract class PageProvider(val createSouth: Boolean = true) : DialogWrapper(nul
       parentDialog = null
     }
   }
+
+  open fun showExit(): MessageDialogBuilder.YesNo? = null
 
   override fun getStyle(): DialogStyle {
     return DialogStyle.COMPACT

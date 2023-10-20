@@ -1,12 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
+import com.intellij.CommonBundle
 import com.intellij.ide.startup.importSettings.chooser.productChooser.ProductChooserDialog
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.IconProductSize
 import com.intellij.ide.startup.importSettings.data.SettingsContributor
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.rd.createLifetime
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.ui.JBColor
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.SeparatorOrientation
@@ -39,6 +42,12 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
       doClose()
     }
   }
+
+  override fun showExit(): MessageDialogBuilder.YesNo? = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"),
+                                                                                    ApplicationBundle.message("exit.confirm.prompt"))
+    .yesText(ApplicationBundle.message("command.exit"))
+    .noText(CommonBundle.getCancelButtonText())
+
 
   private val pane = JPanel(BorderLayout()).apply {
     add(panel {

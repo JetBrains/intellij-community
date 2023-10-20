@@ -17,7 +17,6 @@ import java.awt.*
 import javax.swing.*
 
 class ProductChooserDialog : PageProvider() {
-  override var confirmationNeeded = false
 
   private val accountLabel = JLabel("user.name").apply {
     icon = AllIcons.General.User

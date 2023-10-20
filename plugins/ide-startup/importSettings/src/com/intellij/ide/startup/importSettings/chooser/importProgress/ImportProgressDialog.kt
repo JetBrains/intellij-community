@@ -1,12 +1,15 @@
 package com.intellij.ide.startup.importSettings.chooser.importProgress
 
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.BannerOverlay
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.ImportFromProduct
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.rd.createLifetime
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.minimumWidth
@@ -23,6 +26,12 @@ import java.awt.GridBagLayout
 import javax.swing.*
 
 class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(false) {
+  override fun showExit(): MessageDialogBuilder.YesNo = MessageDialogBuilder.yesNo(ImportSettingsBundle.message("exit.confirm.title"),
+                                                                                   ImportSettingsBundle.message("exit.confirm.prompt"))
+    .yesText(ImportSettingsBundle.message("stop.import"))
+    .noText(CommonBundle.getCancelButtonText())
+
+
   private val panel = JPanel(VerticalLayout(JBUI.scale(8))).apply {
     add(JPanel(VerticalLayout(JBUI.scale(8))).apply {
       add(JLabel("Importing settings...").apply {
