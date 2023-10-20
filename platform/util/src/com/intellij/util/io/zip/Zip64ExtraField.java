@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.zip;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.zip.ZipException;
@@ -9,8 +10,6 @@ import static com.intellij.util.io.zip.JBZipFile.DWORD;
 
 public final class Zip64ExtraField implements JBZipExtraField {
   static final ZipShort HEADER_ID = new ZipShort(0x0001);
-
-  private static final byte[] EMPTY = new byte[0];
 
   private ZipUInt64 mySize;
   private ZipUInt64 myCompressedSize;
@@ -53,12 +52,12 @@ public final class Zip64ExtraField implements JBZipExtraField {
       addSizes(data);
       return data;
     }
-    return EMPTY;
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   @Override
   public byte @NotNull [] getCentralDirectoryData() {
-    final byte[] data = new byte[getCentralDirectoryLength().getValue()];
+    final byte[] data = ArrayUtil.newByteArray(getCentralDirectoryLength().getValue());
     int off = addSizes(data);
     if (myHeaderOffset != null) {
       System.arraycopy(myHeaderOffset.getBytes(), 0, data, off, DWORD);
