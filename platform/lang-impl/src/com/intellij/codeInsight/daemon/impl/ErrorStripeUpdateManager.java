@@ -16,7 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.psi.PsiDocumentManager;
@@ -46,7 +46,6 @@ public final class ErrorStripeUpdateManager implements Disposable {
         }
       }
     }, this);
-    RegistryManager.getInstance().get("ide.highlighting.mode.essential").addListener(new EssentialHighlightingModeListener(), this);
   }
 
   @Override
@@ -103,23 +102,34 @@ public final class ErrorStripeUpdateManager implements Disposable {
     return new TrafficLightRenderer(myProject, editor);
   }
   
-  private final class EssentialHighlightingModeListener implements RegistryValueListener {
+  static final class EssentialHighlightingModeListener implements RegistryValueListener {
     @Override
     public void afterValueChanged(@NotNull RegistryValue value) {
-      HighlightingSettingsPerFile.getInstance(myProject).incModificationCount();
-      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
-      for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
-        if (fileEditor instanceof TextEditor textEditor) {
-          Editor editor = textEditor.getEditor();
-          PsiFile file = psiDocumentManager.getCachedPsiFile(editor.getDocument());
-          repaintErrorStripePanel(editor, file);
-        }
+      if (!"ide.highlighting.mode.essential".equals(value.getKey())) {
+        return;
       }
-      
-      // Run all checks after disabling essential highlighting
-      if (!value.asBoolean()) {
-        DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-        codeAnalyzer.restartToCompleteEssentialHighlighting();
+
+      for (Project project : ProjectManagerEx.Companion.getOpenProjects()) {
+        HighlightingSettingsPerFile.getInstance(project).incModificationCount();
+
+        FileEditor[] allEditors = FileEditorManager.getInstance(project).getAllEditors();
+        if (allEditors.length == 0) {
+          return;
+        }
+
+        PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+        ErrorStripeUpdateManager stripeUpdateManager = getInstance(project);
+        for (FileEditor fileEditor : allEditors) {
+          if (fileEditor instanceof TextEditor textEditor) {
+            Editor editor = textEditor.getEditor();
+            stripeUpdateManager.repaintErrorStripePanel(editor, psiDocumentManager.getCachedPsiFile(editor.getDocument()));
+          }
+        }
+
+        // Run all checks after disabling essential highlighting
+        if (!value.asBoolean()) {
+          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).restartToCompleteEssentialHighlighting();
+        }
       }
     }
   }
