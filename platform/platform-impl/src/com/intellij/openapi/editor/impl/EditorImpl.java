@@ -344,7 +344,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myScrollingToCaret;
 
-  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project, @NotNull EditorKind kind, @Nullable VirtualFile file) {
+  EditorImpl(@NotNull Document document,
+             boolean viewer,
+             @Nullable Project project,
+             @NotNull EditorKind kind,
+             @Nullable VirtualFile file,
+             @Nullable EditorHighlighter highlighter) {
     assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
@@ -465,8 +470,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     });
 
-    EditorHighlighter highlighter = new NullEditorHighlighter();
-    setHighlighter(highlighter);
+    setHighlighter(highlighter == null ? new NullEditorHighlighter() : highlighter);
 
     new FoldingPopupManager(this);
 
@@ -4824,7 +4828,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       reinitFonts();
-      reinitSettings();
+      reinitSettings(true, false);
     }
 
     void resetEditorFontSize() {

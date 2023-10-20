@@ -129,16 +129,13 @@ final class HighlightingMarkupGrave implements Disposable {
     }
   }
 
-  void resurrectZombies(@NotNull Document document, @NotNull VirtualFile file) {
-    if (!(file instanceof VirtualFileWithId fileWithId)) {
+  void resurrectZombies(@NotNull Document document, @NotNull VirtualFileWithId file) {
+    if (myResurrectedZombies.containsKey(file.getId())) {
       return;
     }
-    if (myResurrectedZombies.containsKey(fileWithId.getId())) {
-      return;
-    }
-    FileMarkupInfo markupInfo = myMarkupStore.getMarkup(fileWithId);
+    FileMarkupInfo markupInfo = myMarkupStore.getMarkup(file);
     if (markupInfo == null) {
-      myResurrectedZombies.put(fileWithId.getId(), true);
+      myResurrectedZombies.put(file.getId(), true);
       return;
     }
 
@@ -147,8 +144,8 @@ final class HighlightingMarkupGrave implements Disposable {
       if (LOG.isDebugEnabled()) {
         LOG.debug("restore canceled hash mismatch " + markupInfo.size() + " for " + file);
       }
-      myMarkupStore.removeMarkup(fileWithId);
-      myResurrectedZombies.put(fileWithId.getId(), true);
+      myMarkupStore.removeMarkup(file);
+      myResurrectedZombies.put(file.getId(), true);
       return;
     }
 
@@ -194,7 +191,7 @@ final class HighlightingMarkupGrave implements Disposable {
     if (LOG.isDebugEnabled()) {
       LOG.debug("restored " + markupInfo.size() + " for " + file);
     }
-    myResurrectedZombies.put(fileWithId.getId(), false);
+    myResurrectedZombies.put(file.getId(), false);
   }
 
   private void putInGrave(@NotNull FileEditorManager editorManager, @NotNull VirtualFile file) {
@@ -433,9 +430,10 @@ final class HighlightingMarkupGrave implements Disposable {
   }
 
   static boolean isEnabled() {
-    return Registry.is("cache.highlighting.markup.on.disk");
+    return Registry.is("cache.highlighting.markup.on.disk", true);
   }
 
+  @TestOnly
   static void runInEnabled(@NotNull Runnable runnable) {
     boolean wasEnabled = isEnabled();
     Registry.get("cache.highlighting.markup.on.disk").setValue(true);

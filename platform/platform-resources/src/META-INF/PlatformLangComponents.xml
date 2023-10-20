@@ -117,7 +117,7 @@
     <!--suppress PluginXmlDynamicPlugin -->
     <actionConfigurationCustomizer implementation="com.intellij.ide.actionMacro.ActionMacroManager$MyActionTuner"/>
 
-    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.HighlighterTextEditorInitializer"/>
+    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.HighlighterTextEditorInitializer" order="first"/>
     <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.FoldingTextEditorInitializer"/>
     <textEditorInitializer implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionTextEditorInitializer"/>
     <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.InlayHintsEditorInitializer"/>

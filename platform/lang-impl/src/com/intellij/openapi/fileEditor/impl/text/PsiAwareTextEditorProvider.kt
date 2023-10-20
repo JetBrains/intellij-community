@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -14,7 +13,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.*
@@ -44,15 +45,14 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
     val asyncLoader = createAsyncEditorLoader(provider = this, project = project)
 
-    val fileDocumentManager = FileDocumentManager.getInstance()
-    val document = fileDocumentManager.getCachedDocument(file) ?: readAction {
+    val fileDocumentManager = serviceAsync<FileDocumentManager>()
+    val document = fileDocumentManager.getCachedDocument(file) ?: readActionBlocking {
       fileDocumentManager.getDocument(file, project)!!
     }
 
     val editorDeferred = CompletableDeferred<EditorEx>()
     val editorSupplier = suspend { editorDeferred.await() }
 
-    val factory = EditorFactory.getInstance() as EditorFactoryImpl
     val task = asyncLoader.coroutineScope.async(CoroutineName("TextEditorInitializer")) {
       coroutineScope {
         for (item in EDITOR_LOADER_EP.filterableLazySequence()) {
@@ -79,9 +79,23 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       }
     }
 
+    val highlighter = span("editor highlighter creating") {
+      val scheme = serviceAsync<EditorColorsManager>().globalScheme
+      val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
+      readActionBlocking {
+        val highlighter = editorHighlighterFactory.createEditorHighlighter(file = file, editorColorScheme = scheme, project = project)
+        // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
+        // (the document text is compared, so, double work is not performed)
+        highlighter.setText(document.immutableCharSequence)
+        highlighter
+      }
+    }
+
+    val factory = serviceAsync<EditorFactory>() as EditorFactoryImpl
+
     return object : AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
-        val editor = factory.createMainEditor(document, project, file)
+        val editor = factory.createMainEditor(document, project, file, highlighter)
         val textEditor = PsiAwareTextEditorImpl(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
         editorDeferred.complete(textEditor.editor)
         asyncLoader.start(textEditor = textEditor, tasks = listOf(task))
@@ -135,7 +149,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
   override fun getStateImpl(project: Project?, editor: Editor, level: FileEditorStateLevel): TextEditorState {
     val state = super.getStateImpl(project, editor, level)
-    // Save folding only on FULL level. It's very expensive to commit a document on every type (caused by undo).
+    // Save folding only on FULL level. It's costly to commit a document on every type (caused by undo).
     if (FileEditorStateLevel.FULL == level) {
       // Folding
       if (project != null && !project.isDisposed && !editor.isDisposed && project.isInitialized) {

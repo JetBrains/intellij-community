@@ -19,10 +19,12 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.project.Project;
@@ -198,23 +200,26 @@ public final class EditorFactoryImpl extends EditorFactory {
 
   private @NotNull EditorImpl createEditor(@NotNull Document document, boolean isViewer, @Nullable Project project, @NotNull EditorKind kind) {
     Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
-    return doCreateEditor(project, hostDocument, isViewer, kind, null);
+    return doCreateEditor(project, hostDocument, isViewer, kind, null, null);
   }
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public @NotNull EditorImpl createMainEditor(@NotNull Document document, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull EditorImpl createMainEditor(@NotNull Document document,
+                                              @NotNull Project project,
+                                              @NotNull VirtualFile file,
+                                              @Nullable EditorHighlighter highlighter) {
     assert !(document instanceof DocumentWindow);
-    return doCreateEditor(project, document, false, EditorKind.MAIN_EDITOR, file);
+    return doCreateEditor(project, document, false, EditorKind.MAIN_EDITOR, file, highlighter);
   }
 
-  @NotNull
-  private EditorImpl doCreateEditor(@Nullable Project project,
-                                    @NotNull Document document,
-                                    boolean isViewer,
-                                    @NotNull EditorKind kind,
-                                    @Nullable VirtualFile file) {
-    EditorImpl editor = new EditorImpl(document, isViewer, project, kind, file);
+  private @NotNull EditorImpl doCreateEditor(@Nullable Project project,
+                                             @NotNull Document document,
+                                             boolean isViewer,
+                                             @NotNull EditorKind kind,
+                                             @Nullable VirtualFile file,
+                                             @Nullable EditorHighlighter highlighter) {
+    EditorImpl editor = new EditorImpl(document, isViewer, project, kind, file, highlighter);
     ClientEditorManager editorManager = ClientEditorManager.getCurrentInstance();
     editorManager.editorCreated(editor);
     myEditorEventMulticaster.registerEditor(editor);
