@@ -193,7 +193,7 @@ class GitLabMergeRequestDraftNoteImpl(
         }
       }
       // Order of following operations: first start reload so that there's minimal delay between removing and re-adding the note.
-      mr.requestDiscussionsReload()
+      mr.reloadDiscussions()
       eventSink(GitLabNoteEvent.Deleted(id))
     }
   }

@@ -50,6 +50,13 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
 
   fun refreshData()
 
+  /**
+   * Sends a signal to reload data on all submitted discussions within the container.
+   * This should be used after a draft note is submitted, as there is no surefire way to turn a draft note
+   * into a fully featured discussion without this.
+   */
+  fun reloadDiscussions()
+
   suspend fun merge(commitMessage: String)
 
   suspend fun squashAndMerge(commitMessage: String)
@@ -164,6 +171,8 @@ internal class LoadedGitLabMergeRequest(
       }.distinctUntilChanged().filterNotNull().collectLatest {
         if (!it) {
           mergeRequestRefreshRequest.emit(Unit)
+          // hashes in discussions will change on push
+          discussionsContainer.requestDiscussionsReload()
         }
       }
     }
@@ -187,13 +196,14 @@ internal class LoadedGitLabMergeRequest(
       stateEventsLoader.checkForUpdates()
       labelEventsLoader.checkForUpdates()
       milestoneEventsLoader.checkForUpdates()
+      discussionsContainer.requestDiscussionsReload()
     }
-    // TODO: make suspending
-    requestDiscussionsReload()
   }
 
-  override fun requestDiscussionsReload() {
-    discussionsContainer.requestDiscussionsReload()
+  override fun reloadDiscussions() {
+    cs.launch {
+      discussionsContainer.requestDiscussionsReload()
+    }
   }
 
   private suspend fun updateData() {
