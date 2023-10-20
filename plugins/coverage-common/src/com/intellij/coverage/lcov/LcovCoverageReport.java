@@ -136,6 +136,15 @@ public class LcovCoverageReport {
     public void addHits(int hitCount) {
       myHits += hitCount;
     }
+
+    @Override
+    public String toString() {
+      return "{" +
+             "line=" + myLineNumber +
+             ", hits=" + myHits +
+             ", method='" + myFunctionName + '\'' +
+             '}';
+    }
   }
 }
 
