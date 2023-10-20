@@ -78,14 +78,16 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   override fun readSettings(node: Element) {
     val element = node.getChild(EFFECTIVE_LL)
     if (element != null) {
-      effectiveLanguageLevel = element.getAttributeValue("value")?.let { LanguageLevel.valueOf(it) }
+      effectiveLanguageLevel = element.getAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)?.let {
+        LanguageLevel.valueOf(it)
+      }
     }
   }
 
   override fun writeSettings(node: Element) {
     if (effectiveLanguageLevel != null) {
       val llElement = Element(EFFECTIVE_LL)
-      llElement.setAttribute("value", effectiveLanguageLevel.toString())
+      llElement.setAttribute(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, effectiveLanguageLevel.toString())
       node.addContent(llElement)
     }
   }

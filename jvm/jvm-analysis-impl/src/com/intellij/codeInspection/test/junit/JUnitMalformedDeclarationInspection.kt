@@ -230,7 +230,7 @@ private class JUnitMalformedSignatureVisitor(
     val hasAnnotation = MetaAnnotationUtil.findMetaAnnotationsInHierarchy(this, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
       .asSequence()
       .any { annotation ->
-        annotation?.flattenedAttributeValues("value")?.any {
+        annotation?.flattenedAttributeValues(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)?.any {
           val uClassLiteral = it.toUElementOfType<UClassLiteralExpression>()
           uClassLiteral != null && InheritanceUtil.isInheritor(uClassLiteral.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
         } == true
@@ -337,7 +337,10 @@ private class JUnitMalformedSignatureVisitor(
       val list = super.getActions(project).toMutableList()
       list.add { owner ->
         val outerClass = owner.sourceElement?.toUElementOfType<UClass>()?.nestedClassHierarchy()?.last()!!
-        val request = annotationRequest(ORG_JUNIT_RUNNER_RUN_WITH, classAttribute("value", ORG_JUNIT_EXPERIMENTAL_RUNNERS_ENCLOSED))
+        val request = annotationRequest(ORG_JUNIT_RUNNER_RUN_WITH, classAttribute(
+          PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME,
+          ORG_JUNIT_EXPERIMENTAL_RUNNERS_ENCLOSED
+        ))
         createAddAnnotationActions(outerClass.javaPsi, request)
       }
       return list
@@ -466,7 +469,7 @@ private class JUnitMalformedSignatureVisitor(
 
   private fun checkRepeatedTestNonPositive(method: UMethod) {
     val repeatedAnno = method.findAnnotation(ORG_JUNIT_JUPITER_API_REPEATED_TEST) ?: return
-    val repeatedNumber = repeatedAnno.findDeclaredAttributeValue("value") ?: return
+    val repeatedNumber = repeatedAnno.findDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME) ?: return
     val repeatedSrcPsi = repeatedNumber.sourcePsi ?: return
     val constant = repeatedNumber.evaluate()
     if (constant is Int && constant <= 0) {
@@ -532,7 +535,7 @@ private class JUnitMalformedSignatureVisitor(
   private fun checkMethodSource(method: UMethod, methodSource: PsiAnnotation) {
     val psiMethod = method.javaPsi
     val containingClass = psiMethod.containingClass ?: return
-    val annotationMemberValue = methodSource.flattenedAttributeValues("value")
+    val annotationMemberValue = methodSource.flattenedAttributeValues(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
     if (annotationMemberValue.isEmpty()) {
       if (methodSource.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME) == null) return
       val foundMethod = containingClass.findMethodsByName(method.name, true).singleOrNull { it.parameters.isEmpty() }
@@ -604,7 +607,10 @@ private class JUnitMalformedSignatureVisitor(
       if (value != null) {
         actions.addAll(createAddAnnotationActions(
           containingClass,
-          annotationRequest(ORG_JUNIT_JUPITER_API_TEST_INSTANCE, constantAttribute("value", value.text))
+          annotationRequest(
+            ORG_JUNIT_JUPITER_API_TEST_INSTANCE,
+            constantAttribute(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, value.text)
+          )
         ))
       }
       actions.addAll(createModifierActions(sourceProvider, modifierRequest(JvmModifier.STATIC, true)))
@@ -891,7 +897,7 @@ private class JUnitMalformedSignatureVisitor(
         val containingClass = element.getContainingUClass()?.javaPsi ?: return false
         val annotation = AnnotationUtil.findAnnotationInHierarchy(containingClass, setOf(ORG_JUNIT_RUNNER_RUN_WITH))
         if (annotation != null) {
-          val runnerType = annotation.findAttributeValue("value")
+          val runnerType = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
             .toUElement()?.asSafely<UClassLiteralExpression>()
             ?.type ?: return false
           return checkableRunners.any(runnerType::equalsToText)
