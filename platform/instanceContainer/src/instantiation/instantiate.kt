@@ -12,6 +12,16 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.Constructor
 
+/**
+ * Instantiates [instanceClass] using [resolver] to find instances for constructor parameter types.
+ * This function searches for a constructor which matches one of [supportedSignatures].
+ *
+ * @param parentScope a scope which is used as a parent for instance scope
+ * if [instanceClass] defines a constructor with a parameter of [CoroutineScope] type
+ * @param supportedSignatures a list of constructor signatures which are looked up in the class.
+ * @throws InstantiationException if none class does not define any constructor with one of [supportedSignatures],
+ * or [resolver] cannot find an instance for constructor parameter type
+ */
 suspend fun <T> instantiate(
   resolver: DependencyResolver,
   parentScope: CoroutineScope,
@@ -47,6 +57,16 @@ private fun findConstructor(instanceClass: Class<*>, signatures: List<MethodType
   throw InstantiationException("Class '$instanceClass' does not define any of supported signatures '$signatures'")
 }
 
+/**
+ * Instantiates [instanceClass] using [resolver] to find instances for constructor parameter types.
+ * This function searches for the greediest constructor, i.e. a constructor with most parameters which is satisfiable.
+ *
+ * @param parentScope a scope which is used as a parent for instance scope
+ * if [instanceClass] defines a constructor with a parameter of [CoroutineScope] type
+ * @throws InstantiationException if there are no constructors,
+ * or more than one satisfiable constructor,
+ * or [resolver] cannot find an instance for constructor parameter type
+ */
 suspend fun <T> instantiate(resolver: DependencyResolver, parentScope: CoroutineScope, instanceClass: Class<T>): T {
   val (constructor, lazyArgs) = findConstructorAndArguments(resolver, instanceClass)
   return instantiate(parentScope, instanceClass, lazyArgs) {
