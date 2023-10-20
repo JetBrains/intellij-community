@@ -543,6 +543,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/iteratorOperator.before.Main.kt");
         }
 
+        @TestMetadata("ktij27440.test")
+        public void testKtij27440() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/ktij27440.test");
+        }
+
         @TestMetadata("memberImportFunction.test")
         public void testMemberImportFunction() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/memberImportFunction.test");
