@@ -683,11 +683,12 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     }
 
     @Override
-    public void close() {
+    public void close() throws StorageException {
       try {
         storage.close();
-      } catch (IOException e) {
-        LOG.error("failed to close forward index storage", e);
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
       }
     }
 
