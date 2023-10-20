@@ -203,7 +203,7 @@ private suspend fun preInitApp(app: ApplicationImpl,
                                initLafJob: Job,
                                euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?,
                                loadIconMapping: Job?) {
-  coroutineScope {
+  val cssInit = coroutineScope {
     if (!app.isHeadlessEnvironment) {
       asyncScope.launch(CoroutineName("FUS class preloading")) {
         // preload FUS classes (IDEA-301206)
@@ -235,16 +235,21 @@ private suspend fun preInitApp(app: ApplicationImpl,
         lafManager.applyInitState()
       }
     }
+
+    if (app.isHeadlessEnvironment) {
+      null
+    }
+    else {
+      asyncScope.launch {
+        // preload EditorColorsManager only when LafManager is ready - that's why out of coroutineScope
+        initGlobalStyleSheet()
+      }
+    }
   }
 
   if (!app.isHeadlessEnvironment) {
-    val cssInit = asyncScope.launch {
-      // preload EditorColorsManager only when LafManager is ready - that's why out of coroutineScope
-      initGlobalStyleSheet()
-    }
-
     euaTaskDeferred?.await()?.let {
-      cssInit.join()
+      cssInit?.join()
       it()
     }
   }
