@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class JavaChainLookupElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
@@ -159,10 +160,12 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     return true;
   }
 
-  @NotNull
+  @Nullable
   private LookupElement getComparableQualifier() {
     final CastingLookupElementDecorator casting = myQualifier.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY);
-    return casting == null ? myQualifier : casting.getDelegate();
+    LookupElement qualifier = casting == null ? myQualifier : casting.getDelegate();
+    if (qualifier.getObject() instanceof PsiClass) return null;
+    return qualifier;
   }
 
   @Override
@@ -170,13 +173,13 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
-
-    return getComparableQualifier().equals(((JavaChainLookupElement)o).getComparableQualifier());
+    if (!mySeparator.equals(((JavaChainLookupElement)o).mySeparator)) return false;
+    return Objects.equals(getComparableQualifier(), ((JavaChainLookupElement)o).getComparableQualifier());
   }
 
   @Override
   public int hashCode() {
-    return 31 * super.hashCode() + getComparableQualifier().hashCode();
+    return 31 * super.hashCode() + Objects.hashCode(getComparableQualifier());
   }
 
   @Override
