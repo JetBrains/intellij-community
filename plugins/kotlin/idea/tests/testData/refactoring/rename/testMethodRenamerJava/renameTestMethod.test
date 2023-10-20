@@ -1,0 +1,8 @@
+{
+  "type": "JAVA_METHOD",
+  "classId": "/A",
+  "methodSignature": "void foo()",
+  "newName": "bar",
+  "mainFile": "A.java",
+  "enabledInK2": "true"
+}
