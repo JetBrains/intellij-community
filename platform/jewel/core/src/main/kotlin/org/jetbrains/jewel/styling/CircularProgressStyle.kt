@@ -1,15 +1,19 @@
 package org.jetbrains.jewel.styling
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import kotlin.time.Duration
 
-interface CircularProgressStyle {
+@Immutable
+class CircularProgressStyle(
+    val frameTime: Duration,
+    val color: Color,
+) {
 
-    val frameTime: Duration
-    val color: Color
+    companion object
 }
 
 val LocalCircularProgressStyle = staticCompositionLocalOf<CircularProgressStyle> {
-    error("No CircularProgressIndicatorStyle provided")
+    error("No CircularProgressStyle provided")
 }

@@ -38,20 +38,20 @@ interface TitleBarColors {
     val fullscreenControlButtonsBackground: Color
 
     // The hover and press background color for window control buttons(minimize, maximize) in Linux
-    val titlePaneButtonHoverBackground: Color
-    val titlePaneButtonPressBackground: Color
+    val titlePaneButtonHoveredBackground: Color
+    val titlePaneButtonPressedBackground: Color
 
     // The hover and press background color for window close button in Linux
-    val titlePaneCloseButtonHoverBackground: Color
-    val titlePaneCloseButtonPressBackground: Color
+    val titlePaneCloseButtonHoveredBackground: Color
+    val titlePaneCloseButtonPressedBackground: Color
 
     // The hover and press background color for IconButtons in title bar content
-    val iconButtonHoverBackground: Color
-    val iconButtonPressBackground: Color
+    val iconButtonHoveredBackground: Color
+    val iconButtonPressedBackground: Color
 
     // The hover and press background color for Dropdown in title bar content
-    val dropdownPressBackground: Color
-    val dropdownHoverBackground: Color
+    val dropdownPressedBackground: Color
+    val dropdownHoveredBackground: Color
 
     @Composable
     fun backgroundFor(state: DecoratedWindowState) = rememberUpdatedState(

@@ -60,8 +60,10 @@ class ResourcePainterProvider(
 
     @Composable
     override fun getPainter(vararg hints: PainterHint): State<Painter> {
-        val resolvedHints = (hints.toList() + LocalPainterHintsProvider.current.hints(basePath))
-            .filter { it.canApplyTo(basePath) }
+        val currentHintsProvider = LocalPainterHintsProvider.current
+        val providedHints =
+            currentHintsProvider.priorityHints(basePath) + hints.toList() + currentHintsProvider.hints(basePath)
+        val resolvedHints = providedHints.filter { it.canApplyTo(basePath) }
 
         val cacheKey = resolvedHints.hashCode()
 
@@ -81,22 +83,22 @@ class ResourcePainterProvider(
 
     @Composable
     private fun loadPainter(hints: List<PainterHint>): Painter {
-        val pathStack = buildSet {
-            var path = basePath
+        var paths = setOf(basePath)
 
-            add(path)
-
-            for (hint in hints) {
-                path = when (hint) {
-                    is PainterResourcePathHint -> hint.patch(path, contextClassLoaders)
-                    is PainterPathHint -> hint.patch(path)
-                    else -> continue
+        for (hint in hints) {
+            if (hint !is PainterResourcePathHint && hint !is PainterPathHint) continue
+            paths = paths.flatMap {
+                val patched = when (hint) {
+                    is PainterResourcePathHint -> hint.patch(it, contextClassLoaders)
+                    is PainterPathHint -> hint.patch(it)
+                    else -> return@flatMap listOf(it)
                 }
-                add(path)
-            }
-        }.reversed()
 
-        val url = pathStack.firstNotNullOfOrNull { resolveResource(it) }
+                setOf(patched, it)
+            }.toSet()
+        }
+
+        val url = paths.firstNotNullOfOrNull { resolveResource(it) }
 
         @Suppress("UrlHashCode") // It's ok when comparing a URL to null
         if (url == null) {

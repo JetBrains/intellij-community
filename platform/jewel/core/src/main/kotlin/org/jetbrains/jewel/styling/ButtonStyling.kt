@@ -12,22 +12,37 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.ButtonState
+import org.jetbrains.jewel.GenerateDataFunctions
 
 @Stable
-interface ButtonStyle {
+@GenerateDataFunctions
+class ButtonStyle(
+    val colors: ButtonColors,
+    val metrics: ButtonMetrics,
+) {
 
-    val colors: ButtonColors
-    val metrics: ButtonMetrics
+    companion object
 }
 
 @Immutable
-interface ButtonColors {
-
-    val background: Brush
-    val backgroundDisabled: Brush
-    val backgroundFocused: Brush
-    val backgroundPressed: Brush
-    val backgroundHovered: Brush
+@GenerateDataFunctions
+class ButtonColors(
+    val background: Brush,
+    val backgroundDisabled: Brush,
+    val backgroundFocused: Brush,
+    val backgroundPressed: Brush,
+    val backgroundHovered: Brush,
+    val content: Color,
+    val contentDisabled: Color,
+    val contentFocused: Color,
+    val contentPressed: Color,
+    val contentHovered: Color,
+    val border: Brush,
+    val borderDisabled: Brush,
+    val borderFocused: Brush,
+    val borderPressed: Brush,
+    val borderHovered: Brush,
+) {
 
     @Composable
     fun backgroundFor(state: ButtonState) = rememberUpdatedState(
@@ -41,12 +56,6 @@ interface ButtonColors {
         ),
     )
 
-    val content: Color
-    val contentDisabled: Color
-    val contentFocused: Color
-    val contentPressed: Color
-    val contentHovered: Color
-
     @Composable
     fun contentFor(state: ButtonState) = rememberUpdatedState(
         state.chooseValue(
@@ -59,12 +68,6 @@ interface ButtonColors {
         ),
     )
 
-    val border: Brush
-    val borderDisabled: Brush
-    val borderFocused: Brush
-    val borderPressed: Brush
-    val borderHovered: Brush
-
     @Composable
     fun borderFor(state: ButtonState) = rememberUpdatedState(
         state.chooseValue(
@@ -76,15 +79,20 @@ interface ButtonColors {
             active = border,
         ),
     )
+
+    companion object
 }
 
 @Stable
-interface ButtonMetrics {
+@GenerateDataFunctions
+class ButtonMetrics(
+    val cornerSize: CornerSize,
+    val padding: PaddingValues,
+    val minSize: DpSize,
+    val borderWidth: Dp,
+) {
 
-    val cornerSize: CornerSize
-    val padding: PaddingValues
-    val minSize: DpSize
-    val borderWidth: Dp
+    companion object
 }
 
 val LocalDefaultButtonStyle = staticCompositionLocalOf<ButtonStyle> {

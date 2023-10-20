@@ -12,26 +12,46 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.DropdownState
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.painter.PainterProvider
 
 @Stable
-interface DropdownStyle {
+@GenerateDataFunctions
+class DropdownStyle(
+    val colors: DropdownColors,
+    val metrics: DropdownMetrics,
+    val icons: DropdownIcons,
+    val textStyle: TextStyle,
+    val menuStyle: MenuStyle,
+) {
 
-    val colors: DropdownColors
-    val metrics: DropdownMetrics
-    val icons: DropdownIcons
-    val textStyle: TextStyle
-    val menuStyle: MenuStyle
+    companion object
 }
 
 @Immutable
-interface DropdownColors {
-
-    val background: Color
-    val backgroundDisabled: Color
-    val backgroundFocused: Color
-    val backgroundPressed: Color
-    val backgroundHovered: Color
+@GenerateDataFunctions
+class DropdownColors(
+    val background: Color,
+    val backgroundDisabled: Color,
+    val backgroundFocused: Color,
+    val backgroundPressed: Color,
+    val backgroundHovered: Color,
+    val content: Color,
+    val contentDisabled: Color,
+    val contentFocused: Color,
+    val contentPressed: Color,
+    val contentHovered: Color,
+    val border: Color,
+    val borderDisabled: Color,
+    val borderFocused: Color,
+    val borderPressed: Color,
+    val borderHovered: Color,
+    val iconTint: Color,
+    val iconTintDisabled: Color,
+    val iconTintFocused: Color,
+    val iconTintPressed: Color,
+    val iconTintHovered: Color,
+) {
 
     @Composable
     fun backgroundFor(state: DropdownState) = rememberUpdatedState(
@@ -45,12 +65,6 @@ interface DropdownColors {
         },
     )
 
-    val content: Color
-    val contentDisabled: Color
-    val contentFocused: Color
-    val contentPressed: Color
-    val contentHovered: Color
-
     @Composable
     fun contentFor(state: DropdownState) = rememberUpdatedState(
         state.chooseValue(
@@ -62,12 +76,6 @@ interface DropdownColors {
             active = content,
         ),
     )
-
-    val border: Color
-    val borderDisabled: Color
-    val borderFocused: Color
-    val borderPressed: Color
-    val borderHovered: Color
 
     @Composable
     fun borderFor(state: DropdownState) = rememberUpdatedState(
@@ -81,12 +89,6 @@ interface DropdownColors {
         ),
     )
 
-    val iconTint: Color
-    val iconTintDisabled: Color
-    val iconTintFocused: Color
-    val iconTintPressed: Color
-    val iconTintHovered: Color
-
     @Composable
     fun iconTintFor(state: DropdownState) = rememberUpdatedState(
         state.chooseValue(
@@ -98,24 +100,34 @@ interface DropdownColors {
             active = iconTint,
         ),
     )
+
+    companion object
 }
 
 @Stable
-interface DropdownMetrics {
+@GenerateDataFunctions
+class DropdownMetrics(
+    val arrowMinSize: DpSize,
+    val minSize: DpSize,
+    val cornerSize: CornerSize,
+    val contentPadding: PaddingValues,
+    val borderWidth: Dp,
+) {
 
-    val arrowMinSize: DpSize
-    val minSize: DpSize
-    val cornerSize: CornerSize
-    val contentPadding: PaddingValues
-    val borderWidth: Dp
+    companion object
 }
 
 @Immutable
-interface DropdownIcons {
+@GenerateDataFunctions
+class DropdownIcons(val chevronDown: PainterProvider) {
 
-    val chevronDown: PainterProvider
+    companion object
 }
 
-val LocalDropdownStyle = staticCompositionLocalOf<DropdownStyle> {
-    error("No DropdownStyle provided")
+val LocalDefaultDropdownStyle = staticCompositionLocalOf<DropdownStyle> {
+    error("No DefaultDropdownStyle provided")
+}
+
+val LocalUndecoratedDropdownStyle = staticCompositionLocalOf<DropdownStyle> {
+    error("No UndecoratedDropdownStyle provided")
 }

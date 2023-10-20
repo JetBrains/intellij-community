@@ -13,18 +13,26 @@ import org.jetbrains.jewel.GenerateDataFunctions
 
 @Stable
 @GenerateDataFunctions
-class TextFieldStyle(
-    override val colors: TextFieldColors,
-    override val metrics: TextFieldMetrics,
+class LabelledTextFieldStyle(
+    override val colors: LabelledTextFieldColors,
+    override val metrics: LabelledTextFieldMetrics,
     override val textStyle: TextStyle,
+    val textStyles: LabelledTextFieldTextStyles,
 ) : InputFieldStyle {
+
+    fun asTextFieldStyle(): TextFieldStyle =
+        TextFieldStyle(
+            colors = colors.asTextFieldColors(),
+            metrics = metrics.asTextFieldMetrics(),
+            textStyle = textStyle,
+        )
 
     companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-class TextFieldColors(
+class LabelledTextFieldColors(
     override val background: Color,
     override val backgroundDisabled: Color,
     override val backgroundFocused: Color,
@@ -46,23 +54,65 @@ class TextFieldColors(
     override val caretPressed: Color,
     override val caretHovered: Color,
     val placeholder: Color,
+    val label: Color,
+    val hint: Color,
 ) : InputFieldColors {
+
+    fun asTextFieldColors() =
+        TextFieldColors(
+            background,
+            backgroundDisabled,
+            backgroundFocused,
+            backgroundPressed,
+            backgroundHovered,
+            content,
+            contentDisabled,
+            contentFocused,
+            contentPressed,
+            contentHovered,
+            border,
+            borderDisabled,
+            borderFocused,
+            borderPressed,
+            borderHovered,
+            caret,
+            caretDisabled,
+            caretFocused,
+            caretPressed,
+            caretHovered,
+            placeholder,
+        )
 
     companion object
 }
 
 @Stable
 @GenerateDataFunctions
-class TextFieldMetrics(
+class LabelledTextFieldMetrics(
     override val borderWidth: Dp,
     override val contentPadding: PaddingValues,
     override val cornerSize: CornerSize,
     override val minSize: DpSize,
+    val labelSpacing: Dp,
+    val hintSpacing: Dp,
 ) : InputFieldMetrics {
+
+    fun asTextFieldMetrics() =
+        TextFieldMetrics(borderWidth, contentPadding, cornerSize, minSize)
 
     companion object
 }
 
-val LocalTextFieldStyle = staticCompositionLocalOf<TextFieldStyle> {
-    error("No TextFieldStyle provided")
+@Immutable
+@GenerateDataFunctions
+class LabelledTextFieldTextStyles(
+    val label: TextStyle,
+    val hint: TextStyle,
+) {
+
+    companion object
+}
+
+val LocalLabelledTextFieldStyle = staticCompositionLocalOf<LabelledTextFieldStyle> {
+    error("No LabelledTextFieldStyle provided")
 }

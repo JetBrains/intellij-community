@@ -11,36 +11,27 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.CheckboxState
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.painter.PainterProvider
 
 @Immutable
-interface CheckboxStyle {
+@GenerateDataFunctions
+class CheckboxStyle(
+    val colors: CheckboxColors,
+    val metrics: CheckboxMetrics,
+    val icons: CheckboxIcons,
+) {
 
-    val colors: CheckboxColors
-    val metrics: CheckboxMetrics
-    val icons: CheckboxIcons
+    companion object
 }
 
-// TODO these should be used to tint the SVGs
 @Immutable
-interface CheckboxColors {
-
-    val checkboxBackground: Color
-    val checkboxBackgroundDisabled: Color
-    val checkboxBackgroundSelected: Color
-
-    @Composable
-    fun backgroundFor(state: CheckboxState) = rememberUpdatedState(
-        when {
-            !state.isEnabled -> checkboxBackgroundDisabled
-            state.toggleableState == ToggleableState.On -> checkboxBackgroundSelected
-            else -> checkboxBackground
-        },
-    )
-
-    val content: Color
-    val contentDisabled: Color
-    val contentSelected: Color
+@GenerateDataFunctions
+class CheckboxColors(
+    val content: Color,
+    val contentDisabled: Color,
+    val contentSelected: Color,
+) {
 
     @Composable
     fun contentFor(state: CheckboxState) = rememberUpdatedState(
@@ -50,22 +41,28 @@ interface CheckboxColors {
             else -> content
         },
     )
+
+    companion object
 }
 
 @Immutable
-interface CheckboxMetrics {
+@GenerateDataFunctions
+class CheckboxMetrics(
+    val checkboxSize: DpSize,
+    val checkboxCornerSize: CornerSize,
+    val outlineSize: DpSize,
+    val outlineOffset: DpOffset,
+    val iconContentGap: Dp,
+) {
 
-    val checkboxSize: DpSize
-    val checkboxCornerSize: CornerSize
-    val outlineSize: DpSize
-    val outlineOffset: DpOffset
-    val iconContentGap: Dp
+    companion object
 }
 
 @Immutable
-interface CheckboxIcons {
+@GenerateDataFunctions
+class CheckboxIcons(val checkbox: PainterProvider) {
 
-    val checkbox: PainterProvider
+    companion object
 }
 
 val LocalCheckboxStyle = staticCompositionLocalOf<CheckboxStyle> {

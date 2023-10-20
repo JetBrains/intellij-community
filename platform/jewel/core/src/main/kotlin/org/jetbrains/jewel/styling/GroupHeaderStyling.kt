@@ -4,25 +4,33 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.jewel.GenerateDataFunctions
 
 @Immutable
-interface GroupHeaderStyle {
+@GenerateDataFunctions
+class GroupHeaderStyle(
+    val colors: GroupHeaderColors,
+    val metrics: GroupHeaderMetrics,
+) {
 
-    val colors: GroupHeaderColors
-    val metrics: GroupHeaderMetrics
+    companion object
 }
 
 @Immutable
-interface GroupHeaderColors {
+@GenerateDataFunctions
+class GroupHeaderColors(val divider: Color) {
 
-    val divider: Color
+    companion object
 }
 
 @Immutable
-interface GroupHeaderMetrics {
+@GenerateDataFunctions
+class GroupHeaderMetrics(
+    val dividerThickness: Dp,
+    val indent: Dp,
+) {
 
-    val dividerThickness: Dp
-    val indent: Dp
+    companion object
 }
 
 val LocalGroupHeaderStyle = staticCompositionLocalOf<GroupHeaderStyle> {

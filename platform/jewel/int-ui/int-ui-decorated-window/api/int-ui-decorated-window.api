@@ -60,16 +60,16 @@ public final class org/jetbrains/jewel/intui/window/styling/IntUiTitleBarColors 
 	public fun getBackground-0d7_KjU ()J
 	public fun getBorder-0d7_KjU ()J
 	public fun getContent-0d7_KjU ()J
-	public fun getDropdownHoverBackground-0d7_KjU ()J
-	public fun getDropdownPressBackground-0d7_KjU ()J
+	public fun getDropdownHoveredBackground-0d7_KjU ()J
+	public fun getDropdownPressedBackground-0d7_KjU ()J
 	public fun getFullscreenControlButtonsBackground-0d7_KjU ()J
-	public fun getIconButtonHoverBackground-0d7_KjU ()J
-	public fun getIconButtonPressBackground-0d7_KjU ()J
+	public fun getIconButtonHoveredBackground-0d7_KjU ()J
+	public fun getIconButtonPressedBackground-0d7_KjU ()J
 	public fun getInactiveBackground-0d7_KjU ()J
-	public fun getTitlePaneButtonHoverBackground-0d7_KjU ()J
-	public fun getTitlePaneButtonPressBackground-0d7_KjU ()J
-	public fun getTitlePaneCloseButtonHoverBackground-0d7_KjU ()J
-	public fun getTitlePaneCloseButtonPressBackground-0d7_KjU ()J
+	public fun getTitlePaneButtonHoveredBackground-0d7_KjU ()J
+	public fun getTitlePaneButtonPressedBackground-0d7_KjU ()J
+	public fun getTitlePaneCloseButtonHoveredBackground-0d7_KjU ()J
+	public fun getTitlePaneCloseButtonPressedBackground-0d7_KjU ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

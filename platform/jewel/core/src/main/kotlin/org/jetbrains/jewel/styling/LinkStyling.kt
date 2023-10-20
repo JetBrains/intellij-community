@@ -9,27 +9,32 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.LinkState
 import org.jetbrains.jewel.painter.PainterProvider
 
 @Immutable
-interface LinkStyle {
+@GenerateDataFunctions
+class LinkStyle(
+    val colors: LinkColors,
+    val metrics: LinkMetrics,
+    val icons: LinkIcons,
+    val textStyles: LinkTextStyles,
+) {
 
-    val colors: LinkColors
-    val metrics: LinkMetrics
-    val icons: LinkIcons
-    val textStyles: LinkTextStyles
+    companion object
 }
 
 @Immutable
-interface LinkColors {
-
-    val content: Color
-    val contentDisabled: Color
-    val contentFocused: Color
-    val contentPressed: Color
-    val contentHovered: Color
-    val contentVisited: Color
+@GenerateDataFunctions
+class LinkColors(
+    val content: Color,
+    val contentDisabled: Color,
+    val contentFocused: Color,
+    val contentPressed: Color,
+    val contentHovered: Color,
+    val contentVisited: Color,
+) {
 
     @Composable
     fun contentFor(state: LinkState) = rememberUpdatedState(
@@ -43,32 +48,41 @@ interface LinkColors {
             active = content,
         ),
     )
+
+    companion object
 }
 
 @Immutable
-interface LinkMetrics {
+@GenerateDataFunctions
+class LinkMetrics(
+    val focusHaloCornerSize: CornerSize,
+    val textIconGap: Dp,
+    val iconSize: DpSize,
+) {
 
-    val focusHaloCornerSize: CornerSize
-    val textIconGap: Dp
-    val iconSize: DpSize
+    companion object
 }
 
 @Immutable
-interface LinkIcons {
+@GenerateDataFunctions
+class LinkIcons(
+    val dropdownChevron: PainterProvider,
+    val externalLink: PainterProvider,
+) {
 
-    val dropdownChevron: PainterProvider
-    val externalLink: PainterProvider
+    companion object
 }
 
 @Immutable
-interface LinkTextStyles {
-
-    val normal: TextStyle
-    val disabled: TextStyle
-    val focused: TextStyle
-    val pressed: TextStyle
-    val hovered: TextStyle
-    val visited: TextStyle
+@GenerateDataFunctions
+class LinkTextStyles(
+    val normal: TextStyle,
+    val disabled: TextStyle,
+    val focused: TextStyle,
+    val pressed: TextStyle,
+    val hovered: TextStyle,
+    val visited: TextStyle,
+) {
 
     @Composable
     fun styleFor(state: LinkState) = rememberUpdatedState(
@@ -82,6 +96,8 @@ interface LinkTextStyles {
             active = normal,
         ),
     )
+
+    companion object
 }
 
 val LocalLinkStyle = staticCompositionLocalOf<LinkStyle> {

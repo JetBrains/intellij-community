@@ -137,16 +137,16 @@ public abstract interface class org/jetbrains/jewel/window/styling/TitleBarColor
 	public abstract fun getBackground-0d7_KjU ()J
 	public abstract fun getBorder-0d7_KjU ()J
 	public abstract fun getContent-0d7_KjU ()J
-	public abstract fun getDropdownHoverBackground-0d7_KjU ()J
-	public abstract fun getDropdownPressBackground-0d7_KjU ()J
+	public abstract fun getDropdownHoveredBackground-0d7_KjU ()J
+	public abstract fun getDropdownPressedBackground-0d7_KjU ()J
 	public abstract fun getFullscreenControlButtonsBackground-0d7_KjU ()J
-	public abstract fun getIconButtonHoverBackground-0d7_KjU ()J
-	public abstract fun getIconButtonPressBackground-0d7_KjU ()J
+	public abstract fun getIconButtonHoveredBackground-0d7_KjU ()J
+	public abstract fun getIconButtonPressedBackground-0d7_KjU ()J
 	public abstract fun getInactiveBackground-0d7_KjU ()J
-	public abstract fun getTitlePaneButtonHoverBackground-0d7_KjU ()J
-	public abstract fun getTitlePaneButtonPressBackground-0d7_KjU ()J
-	public abstract fun getTitlePaneCloseButtonHoverBackground-0d7_KjU ()J
-	public abstract fun getTitlePaneCloseButtonPressBackground-0d7_KjU ()J
+	public abstract fun getTitlePaneButtonHoveredBackground-0d7_KjU ()J
+	public abstract fun getTitlePaneButtonPressedBackground-0d7_KjU ()J
+	public abstract fun getTitlePaneCloseButtonHoveredBackground-0d7_KjU ()J
+	public abstract fun getTitlePaneCloseButtonPressedBackground-0d7_KjU ()J
 }
 
 public final class org/jetbrains/jewel/window/styling/TitleBarColors$DefaultImpls {

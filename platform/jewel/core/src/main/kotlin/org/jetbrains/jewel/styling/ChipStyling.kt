@@ -11,28 +11,53 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.ChipState
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.IntelliJTheme
 
 @Stable
-interface ChipStyle {
+@GenerateDataFunctions
+class ChipStyle(
+    val colors: ChipColors,
+    val metrics: ChipMetrics,
+) {
 
-    val colors: ChipColors
-    val metrics: ChipMetrics
+    companion object
 }
 
 @Immutable
-interface ChipColors {
-
-    val background: Brush
-    val backgroundDisabled: Brush
-    val backgroundFocused: Brush
-    val backgroundPressed: Brush
-    val backgroundHovered: Brush
-    val backgroundSelected: Brush
-    val backgroundSelectedDisabled: Brush
-    val backgroundSelectedPressed: Brush
-    val backgroundSelectedFocused: Brush
-    val backgroundSelectedHovered: Brush
+@GenerateDataFunctions
+class ChipColors(
+    val background: Brush,
+    val backgroundDisabled: Brush,
+    val backgroundFocused: Brush,
+    val backgroundPressed: Brush,
+    val backgroundHovered: Brush,
+    val backgroundSelected: Brush,
+    val backgroundSelectedDisabled: Brush,
+    val backgroundSelectedPressed: Brush,
+    val backgroundSelectedFocused: Brush,
+    val backgroundSelectedHovered: Brush,
+    val content: Color,
+    val contentDisabled: Color,
+    val contentFocused: Color,
+    val contentPressed: Color,
+    val contentHovered: Color,
+    val contentSelected: Color,
+    val contentSelectedDisabled: Color,
+    val contentSelectedPressed: Color,
+    val contentSelectedFocused: Color,
+    val contentSelectedHovered: Color,
+    val border: Color,
+    val borderDisabled: Color,
+    val borderFocused: Color,
+    val borderPressed: Color,
+    val borderHovered: Color,
+    val borderSelected: Color,
+    val borderSelectedDisabled: Color,
+    val borderSelectedPressed: Color,
+    val borderSelectedFocused: Color,
+    val borderSelectedHovered: Color,
+) {
 
     @Composable
     fun backgroundFor(state: ChipState) = rememberUpdatedState(
@@ -55,17 +80,6 @@ interface ChipColors {
         },
     )
 
-    val content: Color
-    val contentDisabled: Color
-    val contentFocused: Color
-    val contentPressed: Color
-    val contentHovered: Color
-    val contentSelected: Color
-    val contentSelectedDisabled: Color
-    val contentSelectedPressed: Color
-    val contentSelectedFocused: Color
-    val contentSelectedHovered: Color
-
     @Composable
     fun contentFor(state: ChipState) = rememberUpdatedState(
         if (state.isSelected) {
@@ -87,17 +101,6 @@ interface ChipColors {
         },
     )
 
-    val border: Color
-    val borderDisabled: Color
-    val borderFocused: Color
-    val borderPressed: Color
-    val borderHovered: Color
-    val borderSelected: Color
-    val borderSelectedDisabled: Color
-    val borderSelectedPressed: Color
-    val borderSelectedFocused: Color
-    val borderSelectedHovered: Color
-
     @Composable
     fun borderFor(state: ChipState) = rememberUpdatedState(
         if (state.isSelected) {
@@ -118,15 +121,20 @@ interface ChipColors {
             }
         },
     )
+
+    companion object
 }
 
 @Stable
-interface ChipMetrics {
+@GenerateDataFunctions
+class ChipMetrics(
+    val cornerSize: CornerSize,
+    val padding: PaddingValues,
+    val borderWidth: Dp,
+    val borderWidthSelected: Dp,
+) {
 
-    val cornerSize: CornerSize
-    val padding: PaddingValues
-    val borderWidth: Dp
-    val borderWidthSelected: Dp
+    companion object
 }
 
 val LocalChipStyle = staticCompositionLocalOf<ChipStyle> {

@@ -4,19 +4,26 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.jewel.GenerateDataFunctions
 
 @Immutable
-interface DividerStyle {
+@GenerateDataFunctions
+class DividerStyle(
+    val color: Color,
+    val metrics: DividerMetrics,
+) {
 
-    val color: Color
-    val metrics: DividerMetrics
+    companion object
 }
 
 @Immutable
-interface DividerMetrics {
+@GenerateDataFunctions
+class DividerMetrics(
+    val thickness: Dp,
+    val startIndent: Dp,
+) {
 
-    val thickness: Dp
-    val startIndent: Dp
+    companion object
 }
 
 val LocalDividerStyle = staticCompositionLocalOf<DividerStyle> {

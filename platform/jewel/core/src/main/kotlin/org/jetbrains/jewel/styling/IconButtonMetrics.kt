@@ -11,28 +11,32 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.ButtonState
+import org.jetbrains.jewel.GenerateDataFunctions
 
 @Stable
-interface IconButtonStyle {
+@GenerateDataFunctions
+class IconButtonStyle(
+    val colors: IconButtonColors,
+    val metrics: IconButtonMetrics,
+) {
 
-    val colors: IconButtonColors
-    val metrics: IconButtonMetrics
+    companion object
 }
 
 @Immutable
-interface IconButtonColors {
-
-    val background: Color
-    val backgroundDisabled: Color
-    val backgroundFocused: Color
-    val backgroundPressed: Color
-    val backgroundHovered: Color
-
-    val border: Color
-    val borderDisabled: Color
-    val borderFocused: Color
-    val borderPressed: Color
-    val borderHovered: Color
+@GenerateDataFunctions
+class IconButtonColors(
+    val background: Color,
+    val backgroundDisabled: Color,
+    val backgroundFocused: Color,
+    val backgroundPressed: Color,
+    val backgroundHovered: Color,
+    val border: Color,
+    val borderDisabled: Color,
+    val borderFocused: Color,
+    val borderPressed: Color,
+    val borderHovered: Color,
+) {
 
     @Composable
     fun backgroundFor(state: ButtonState) = rememberUpdatedState(
@@ -55,15 +59,20 @@ interface IconButtonColors {
             else -> border
         },
     )
+
+    companion object
 }
 
 @Stable
-interface IconButtonMetrics {
+@GenerateDataFunctions
+class IconButtonMetrics(
+    val cornerSize: CornerSize,
+    val borderWidth: Dp,
+    val padding: PaddingValues,
+    val minSize: DpSize,
+) {
 
-    val cornerSize: CornerSize
-    val borderWidth: Dp
-    val padding: PaddingValues
-    val minSize: DpSize
+    companion object
 }
 
 val LocalIconButtonStyle = staticCompositionLocalOf<IconButtonStyle> {

@@ -8,35 +8,44 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
+import org.jetbrains.jewel.GenerateDataFunctions
 import kotlin.time.Duration
 
 @Stable
-interface TooltipStyle {
+@GenerateDataFunctions
+class TooltipStyle(
+    val colors: TooltipColors,
+    val metrics: TooltipMetrics,
+) {
 
-    val colors: TooltipColors
-    val metrics: TooltipMetrics
+    companion object
 }
 
 @Stable
-interface TooltipColors {
+@GenerateDataFunctions
+class TooltipColors(
+    val background: Color,
+    val content: Color,
+    val border: Color,
+    val shadow: Color,
+) {
 
-    val background: Color
-    val content: Color
-    val border: Color
-    val shadow: Color
+    companion object
 }
 
 @Stable
-interface TooltipMetrics {
+@GenerateDataFunctions
+class TooltipMetrics(
+    val contentPadding: PaddingValues,
+    val showDelay: Duration,
+    val cornerSize: CornerSize,
+    val borderWidth: Dp,
+    val shadowSize: Dp,
+    val tooltipOffset: DpOffset,
+    val tooltipAlignment: Alignment.Horizontal,
+) {
 
-    val contentPadding: PaddingValues
-    val showDelay: Duration
-    val cornerSize: CornerSize
-    val borderWidth: Dp
-    val shadowSize: Dp
-
-    val tooltipOffset: DpOffset
-    val tooltipAlignment: Alignment.Horizontal
+    companion object
 }
 
 val LocalTooltipStyle = staticCompositionLocalOf<TooltipStyle> {

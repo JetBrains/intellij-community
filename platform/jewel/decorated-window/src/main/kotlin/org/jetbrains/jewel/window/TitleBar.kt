@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.offset
 import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.LocalContentColor
 import org.jetbrains.jewel.OverrideDarkMode
-import org.jetbrains.jewel.styling.LocalDropdownStyle
+import org.jetbrains.jewel.styling.LocalDefaultDropdownStyle
 import org.jetbrains.jewel.styling.LocalIconButtonStyle
 import org.jetbrains.jewel.util.isDark
 import org.jetbrains.jewel.window.styling.TitleBarStyle
@@ -104,7 +104,7 @@ internal const val TITLE_BAR_BORDER_LAYOUT_ID = "__TITLE_BAR_BORDER__"
             CompositionLocalProvider(
                 LocalContentColor provides style.colors.content,
                 LocalIconButtonStyle provides style.iconButtonStyle,
-                LocalDropdownStyle provides style.dropdownStyle,
+                LocalDefaultDropdownStyle provides style.dropdownStyle,
             ) {
                 OverrideDarkMode(background.isDark()) {
                     val scope = TitleBarScopeImpl(titleBarInfo.title, titleBarInfo.icon)

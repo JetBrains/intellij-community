@@ -5,31 +5,41 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import kotlin.time.Duration
 
 @Immutable
-interface HorizontalProgressBarStyle {
+@GenerateDataFunctions
+class HorizontalProgressBarStyle(
+    val colors: HorizontalProgressBarColors,
+    val metrics: HorizontalProgressBarMetrics,
+    val indeterminateCycleDuration: Duration,
+) {
 
-    val colors: HorizontalProgressBarColors
-    val metrics: HorizontalProgressBarMetrics
-    val indeterminateCycleDuration: Duration
+    companion object
 }
 
 @Immutable
-interface HorizontalProgressBarColors {
+@GenerateDataFunctions
+class HorizontalProgressBarColors(
+    val track: Color,
+    val progress: Color,
+    val indeterminateBase: Color,
+    val indeterminateHighlight: Color,
+) {
 
-    val track: Color
-    val progress: Color
-    val indeterminateBase: Color
-    val indeterminateHighlight: Color
+    companion object
 }
 
 @Immutable
-interface HorizontalProgressBarMetrics {
+@GenerateDataFunctions
+class HorizontalProgressBarMetrics(
+    val cornerSize: CornerSize,
+    val minHeight: Dp,
+    val indeterminateHighlightWidth: Dp,
+) {
 
-    val cornerSize: CornerSize
-    val minHeight: Dp
-    val indeterminateHighlightWidth: Dp
+    companion object
 }
 
 val LocalHorizontalProgressBarStyle = staticCompositionLocalOf<HorizontalProgressBarStyle> {

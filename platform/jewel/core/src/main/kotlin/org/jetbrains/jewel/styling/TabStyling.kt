@@ -8,56 +8,63 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.TabState
 import org.jetbrains.jewel.painter.PainterProvider
 
 @Stable
-interface TabStyle {
+@GenerateDataFunctions
+class TabStyle(
+    val colors: TabColors,
+    val metrics: TabMetrics,
+    val icons: TabIcons,
+    val contentAlpha: TabContentAlpha,
+) {
 
-    val colors: TabColors
-    val metrics: TabMetrics
-    val icons: TabIcons
-    val contentAlpha: TabContentAlpha
-}
-
-@Immutable
-interface TabIcons {
-
-    val close: PainterProvider
+    companion object
 }
 
 @Stable
-interface TabMetrics {
+@GenerateDataFunctions
+class TabMetrics(
+    val underlineThickness: Dp,
+    val tabPadding: PaddingValues,
+    val tabHeight: Dp,
+    val closeContentGap: Dp,
+) {
 
-    val underlineThickness: Dp
-    val tabPadding: PaddingValues
-    val tabHeight: Dp
-    val closeContentGap: Dp
+    companion object
 }
 
 @Immutable
-interface TabColors {
+@GenerateDataFunctions
+class TabIcons(val close: PainterProvider) {
 
-    val background: Color
-    val backgroundDisabled: Color
-    val backgroundFocused: Color
-    val backgroundPressed: Color
-    val backgroundHovered: Color
-    val backgroundSelected: Color
+    companion object
+}
 
-    val content: Color
-    val contentDisabled: Color
-    val contentFocused: Color
-    val contentPressed: Color
-    val contentHovered: Color
-    val contentSelected: Color
-
-    val underline: Color
-    val underlineDisabled: Color
-    val underlineFocused: Color
-    val underlinePressed: Color
-    val underlineHovered: Color
-    val underlineSelected: Color
+@Immutable
+@GenerateDataFunctions
+class TabColors(
+    val background: Color,
+    val backgroundDisabled: Color,
+    val backgroundFocused: Color,
+    val backgroundPressed: Color,
+    val backgroundHovered: Color,
+    val backgroundSelected: Color,
+    val content: Color,
+    val contentDisabled: Color,
+    val contentFocused: Color,
+    val contentPressed: Color,
+    val contentHovered: Color,
+    val contentSelected: Color,
+    val underline: Color,
+    val underlineDisabled: Color,
+    val underlineFocused: Color,
+    val underlinePressed: Color,
+    val underlineHovered: Color,
+    val underlineSelected: Color,
+) {
 
     @Composable
     fun contentFor(state: TabState) = rememberUpdatedState(
@@ -101,17 +108,26 @@ interface TabColors {
             )
         },
     )
+
+    companion object
 }
 
 @Immutable
-interface TabContentAlpha {
-
-    val iconNormal: Float
-    val iconDisabled: Float
-    val iconFocused: Float
-    val iconPressed: Float
-    val iconHovered: Float
-    val iconSelected: Float
+@GenerateDataFunctions
+class TabContentAlpha(
+    val iconNormal: Float,
+    val iconDisabled: Float,
+    val iconFocused: Float,
+    val iconPressed: Float,
+    val iconHovered: Float,
+    val iconSelected: Float,
+    val labelNormal: Float,
+    val labelDisabled: Float,
+    val labelFocused: Float,
+    val labelPressed: Float,
+    val labelHovered: Float,
+    val labelSelected: Float,
+) {
 
     @Composable
     fun iconFor(state: TabState) = rememberUpdatedState(
@@ -128,13 +144,6 @@ interface TabContentAlpha {
         },
     )
 
-    val labelNormal: Float
-    val labelDisabled: Float
-    val labelFocused: Float
-    val labelPressed: Float
-    val labelHovered: Float
-    val labelSelected: Float
-
     @Composable
     fun labelFor(state: TabState) = rememberUpdatedState(
         when {
@@ -149,6 +158,8 @@ interface TabContentAlpha {
             )
         },
     )
+
+    companion object
 }
 
 // Tabs are the only components that handle hover states

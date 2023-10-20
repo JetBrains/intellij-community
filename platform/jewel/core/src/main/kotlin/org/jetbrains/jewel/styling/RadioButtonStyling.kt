@@ -7,26 +7,31 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.RadioButtonState
 import org.jetbrains.jewel.painter.PainterProvider
 
 @Immutable
-interface RadioButtonStyle {
+@GenerateDataFunctions
+class RadioButtonStyle(
+    val colors: RadioButtonColors,
+    val metrics: RadioButtonMetrics,
+    val icons: RadioButtonIcons,
+) {
 
-    val colors: RadioButtonColors
-    val metrics: RadioButtonMetrics
-    val icons: RadioButtonIcons
+    companion object
 }
 
 @Immutable
-interface RadioButtonColors {
-
-    val content: Color
-    val contentHovered: Color
-    val contentDisabled: Color
-    val contentSelected: Color
-    val contentSelectedHovered: Color
-    val contentSelectedDisabled: Color
+@GenerateDataFunctions
+class RadioButtonColors(
+    val content: Color,
+    val contentHovered: Color,
+    val contentDisabled: Color,
+    val contentSelected: Color,
+    val contentSelectedHovered: Color,
+    val contentSelectedDisabled: Color,
+) {
 
     @Composable
     fun contentFor(state: RadioButtonState) = rememberUpdatedState(
@@ -39,19 +44,25 @@ interface RadioButtonColors {
             else -> content
         },
     )
+
+    companion object
 }
 
 @Immutable
-interface RadioButtonMetrics {
+@GenerateDataFunctions
+class RadioButtonMetrics(
+    val radioButtonSize: DpSize,
+    val iconContentGap: Dp,
+) {
 
-    val radioButtonSize: DpSize
-    val iconContentGap: Dp
+    companion object
 }
 
 @Immutable
-interface RadioButtonIcons {
+@GenerateDataFunctions
+class RadioButtonIcons(val radioButton: PainterProvider) {
 
-    val radioButton: PainterProvider
+    companion object
 }
 
 val LocalRadioButtonStyle = staticCompositionLocalOf<RadioButtonStyle> {

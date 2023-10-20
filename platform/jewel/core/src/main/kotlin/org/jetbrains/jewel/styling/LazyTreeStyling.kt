@@ -9,28 +9,32 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.tree.TreeElementState
 import org.jetbrains.jewel.painter.PainterProvider
 
 @Stable
-interface LazyTreeStyle {
+@GenerateDataFunctions
+class LazyTreeStyle(
+    val colors: LazyTreeColors,
+    val metrics: LazyTreeMetrics,
+    val icons: LazyTreeIcons,
+) {
 
-    val colors: LazyTreeColors
-    val metrics: LazyTreeMetrics
-    val icons: LazyTreeIcons
+    companion object
 }
 
 @Immutable
-interface LazyTreeColors {
-
-    val elementBackgroundFocused: Color
-    val elementBackgroundSelected: Color
-    val elementBackgroundSelectedFocused: Color
-
-    val content: Color
-    val contentFocused: Color
-    val contentSelected: Color
-    val contentSelectedFocused: Color
+@GenerateDataFunctions
+class LazyTreeColors(
+    val elementBackgroundFocused: Color,
+    val elementBackgroundSelected: Color,
+    val elementBackgroundSelectedFocused: Color,
+    val content: Color,
+    val contentFocused: Color,
+    val contentSelected: Color,
+    val contentSelectedFocused: Color,
+) {
 
     @Composable
     fun contentFor(state: TreeElementState) = rememberUpdatedState(
@@ -41,26 +45,32 @@ interface LazyTreeColors {
             else -> content
         },
     )
+
+    companion object
 }
 
 @Stable
-interface LazyTreeMetrics {
+@GenerateDataFunctions
+class LazyTreeMetrics(
+    val indentSize: Dp,
+    val elementBackgroundCornerSize: CornerSize,
+    val elementPadding: PaddingValues,
+    val elementContentPadding: PaddingValues,
+    val elementMinHeight: Dp,
+    val chevronContentGap: Dp,
+) {
 
-    val indentSize: Dp
-    val elementBackgroundCornerSize: CornerSize
-    val elementPadding: PaddingValues
-    val elementContentPadding: PaddingValues
-    val elementMinHeight: Dp
-    val chevronContentGap: Dp
+    companion object
 }
 
 @Immutable
-interface LazyTreeIcons {
-
-    val chevronCollapsed: PainterProvider
-    val chevronExpanded: PainterProvider
-    val chevronSelectedCollapsed: PainterProvider
-    val chevronSelectedExpanded: PainterProvider
+@GenerateDataFunctions
+class LazyTreeIcons(
+    val chevronCollapsed: PainterProvider,
+    val chevronExpanded: PainterProvider,
+    val chevronSelectedCollapsed: PainterProvider,
+    val chevronSelectedExpanded: PainterProvider,
+) {
 
     @Composable
     fun chevron(isExpanded: Boolean, isSelected: Boolean) =
@@ -70,6 +80,8 @@ interface LazyTreeIcons {
             !isSelected && isExpanded -> chevronExpanded
             else -> chevronCollapsed
         }
+
+    companion object
 }
 
 val LocalLazyTreeStyle = staticCompositionLocalOf<LazyTreeStyle> {

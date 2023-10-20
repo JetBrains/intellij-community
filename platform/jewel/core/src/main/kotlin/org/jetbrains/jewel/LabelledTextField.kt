@@ -134,7 +134,7 @@ fun LabelledTextField(
                 keyboardOptions = keyboardOptions,
                 keyboardActions = keyboardActions,
                 onTextLayout = onTextLayout,
-                style = style,
+                style = style.asTextFieldStyle(),
                 textStyle = textStyle,
                 interactionSource = interactionSource,
             )

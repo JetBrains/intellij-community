@@ -1,26 +1,25 @@
 package org.jetbrains.jewel.intui.window.styling
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownColors
-import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownMetrics
-import org.jetbrains.jewel.intui.standalone.styling.IntUiDropdownStyle
-import org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonColors
-import org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonMetrics
-import org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonStyle
-import org.jetbrains.jewel.intui.standalone.styling.IntUiMenuStyle
+import org.jetbrains.jewel.intui.standalone.styling.Undecorated
+import org.jetbrains.jewel.intui.standalone.styling.dark
+import org.jetbrains.jewel.intui.standalone.styling.defaults
+import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.intui.window.decoratedWindowPainterProvider
 import org.jetbrains.jewel.painter.PainterProvider
+import org.jetbrains.jewel.styling.DropdownColors
 import org.jetbrains.jewel.styling.DropdownStyle
+import org.jetbrains.jewel.styling.IconButtonColors
+import org.jetbrains.jewel.styling.IconButtonMetrics
 import org.jetbrains.jewel.styling.IconButtonStyle
 import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.window.styling.TitleBarColors
@@ -28,8 +27,8 @@ import org.jetbrains.jewel.window.styling.TitleBarIcons
 import org.jetbrains.jewel.window.styling.TitleBarMetrics
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 
-@Stable
 @Immutable
+@GenerateDataFunctions
 class IntUiTitleBarStyle(
     override val colors: IntUiTitleBarColors,
     override val metrics: IntUiTitleBarMetrics,
@@ -40,75 +39,20 @@ class IntUiTitleBarStyle(
     override val paneCloseButtonStyle: IconButtonStyle,
 ) : TitleBarStyle {
 
-    override fun hashCode(): Int {
-        var result = colors.hashCode()
-        result = 31 * result + metrics.hashCode()
-        result = 31 * result + icons.hashCode()
-        result = 31 * result + dropdownStyle.hashCode()
-        result = 31 * result + iconButtonStyle.hashCode()
-        result = 31 * result + paneButtonStyle.hashCode()
-        result = 31 * result + paneCloseButtonStyle.hashCode()
-        return result
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is IntUiTitleBarStyle) return false
-
-        if (colors != other.colors) return false
-        if (metrics != other.metrics) return false
-        if (icons != other.icons) return false
-        if (dropdownStyle != other.dropdownStyle) return false
-        if (iconButtonStyle != other.iconButtonStyle) return false
-
-        return true
-    }
-
-    override fun toString(): String = "IntUiTitleBarStyle(colors=$colors, " +
-        "metrics=$metrics, " +
-        "icons=$icons, " +
-        "dropdownStyle=$dropdownStyle, " +
-        "iconButtonStyle=$iconButtonStyle, " +
-        "paneButtonStyle=$paneButtonStyle, " +
-        "paneCloseButtonStyle=$paneCloseButtonStyle)"
-
     companion object {
 
         @Composable
-        private fun titleBarDropdownStyle(
-            content: Color,
-            hoverBackground: Color,
-            pressBackground: Color,
-            menuStyle: MenuStyle,
-        ) = IntUiDropdownStyle.undecorated(
-            IntUiDropdownColors.undecorated(
-                backgroundHovered = hoverBackground,
-                backgroundPressed = pressBackground,
-                content = content,
-                iconTint = Color.Unspecified,
-            ),
-            metrics = IntUiDropdownMetrics(
-                arrowMinSize = DpSize(30.dp, 30.dp),
-                cornerSize = CornerSize(6.dp),
-                minSize = DpSize((23 + 6).dp, 30.dp),
-                contentPadding = PaddingValues(top = 3.dp, bottom = 3.dp, start = 6.dp, end = 0.dp),
-                borderWidth = 0.dp,
-            ),
-            menuStyle = menuStyle,
-        )
-
-        @Composable
         private fun titleBarIconButtonStyle(
-            hoverBackground: Color,
-            pressBackground: Color,
-            metrics: IntUiIconButtonMetrics,
-        ) = IntUiIconButtonStyle(
-            IntUiIconButtonColors(
+            hoveredBackground: Color,
+            pressedBackground: Color,
+            metrics: IconButtonMetrics,
+        ) = IconButtonStyle(
+            IconButtonColors(
                 background = Color.Transparent,
                 backgroundDisabled = Color.Transparent,
                 backgroundFocused = Color.Transparent,
-                backgroundPressed = hoverBackground,
-                backgroundHovered = pressBackground,
+                backgroundPressed = hoveredBackground,
+                backgroundHovered = pressedBackground,
                 border = Color.Transparent,
                 borderDisabled = Color.Transparent,
                 borderFocused = Color.Transparent,
@@ -127,26 +71,32 @@ class IntUiTitleBarStyle(
             colors = colors,
             metrics = metrics,
             icons = icons,
-            dropdownStyle = titleBarDropdownStyle(
-                colors.content,
-                colors.dropdownHoverBackground,
-                colors.dropdownPressBackground,
-                IntUiMenuStyle.light(),
+            dropdownStyle = DropdownStyle.Undecorated.light(
+                colors = DropdownColors.Undecorated.light(
+                    content = colors.content,
+                    contentFocused = colors.content,
+                    contentHovered = colors.content,
+                    contentPressed = colors.content,
+                    contentDisabled = colors.content,
+                    backgroundHovered = colors.dropdownHoveredBackground,
+                    backgroundPressed = colors.dropdownPressedBackground,
+                ),
+                menuStyle = MenuStyle.light(),
             ),
             iconButtonStyle = titleBarIconButtonStyle(
-                colors.iconButtonHoverBackground,
-                colors.iconButtonPressBackground,
-                IntUiIconButtonMetrics(borderWidth = 0.dp),
+                colors.iconButtonHoveredBackground,
+                colors.iconButtonPressedBackground,
+                IconButtonMetrics.defaults(borderWidth = 0.dp),
             ),
             paneButtonStyle = titleBarIconButtonStyle(
-                colors.titlePaneButtonHoverBackground,
-                colors.titlePaneButtonPressBackground,
-                IntUiIconButtonMetrics(CornerSize(0.dp), borderWidth = 0.dp),
+                colors.titlePaneButtonHoveredBackground,
+                colors.titlePaneButtonPressedBackground,
+                IconButtonMetrics.defaults(cornerSize = CornerSize(0.dp), borderWidth = 0.dp),
             ),
             paneCloseButtonStyle = titleBarIconButtonStyle(
-                colors.titlePaneCloseButtonHoverBackground,
-                colors.titlePaneCloseButtonPressBackground,
-                IntUiIconButtonMetrics(CornerSize(0.dp), borderWidth = 0.dp),
+                colors.titlePaneCloseButtonHoveredBackground,
+                colors.titlePaneCloseButtonPressedBackground,
+                IconButtonMetrics.defaults(cornerSize = CornerSize(0.dp), borderWidth = 0.dp),
             ),
         )
 
@@ -159,26 +109,32 @@ class IntUiTitleBarStyle(
             colors = colors,
             metrics = metrics,
             icons = icons,
-            dropdownStyle = titleBarDropdownStyle(
-                colors.content,
-                colors.dropdownHoverBackground,
-                colors.dropdownPressBackground,
-                IntUiMenuStyle.light(),
+            dropdownStyle = DropdownStyle.Undecorated.light(
+                colors = DropdownColors.Undecorated.light(
+                    content = colors.content,
+                    contentFocused = colors.content,
+                    contentHovered = colors.content,
+                    contentPressed = colors.content,
+                    contentDisabled = colors.content,
+                    backgroundHovered = colors.dropdownHoveredBackground,
+                    backgroundPressed = colors.dropdownPressedBackground,
+                ),
+                menuStyle = MenuStyle.light(),
             ),
             iconButtonStyle = titleBarIconButtonStyle(
-                colors.iconButtonHoverBackground,
-                colors.iconButtonPressBackground,
-                IntUiIconButtonMetrics(borderWidth = 0.dp),
+                colors.iconButtonHoveredBackground,
+                colors.iconButtonPressedBackground,
+                IconButtonMetrics.defaults(borderWidth = 0.dp),
             ),
             paneButtonStyle = titleBarIconButtonStyle(
-                colors.titlePaneButtonHoverBackground,
-                colors.titlePaneButtonPressBackground,
-                IntUiIconButtonMetrics(CornerSize(0.dp), borderWidth = 0.dp),
+                colors.titlePaneButtonHoveredBackground,
+                colors.titlePaneButtonPressedBackground,
+                IconButtonMetrics.defaults(cornerSize = CornerSize(0.dp), borderWidth = 0.dp),
             ),
             paneCloseButtonStyle = titleBarIconButtonStyle(
-                colors.titlePaneCloseButtonHoverBackground,
-                colors.titlePaneCloseButtonPressBackground,
-                IntUiIconButtonMetrics(CornerSize(0.dp), borderWidth = 0.dp),
+                colors.titlePaneCloseButtonHoveredBackground,
+                colors.titlePaneCloseButtonPressedBackground,
+                IconButtonMetrics.defaults(cornerSize = CornerSize(0.dp), borderWidth = 0.dp),
             ),
         )
 
@@ -191,102 +147,54 @@ class IntUiTitleBarStyle(
             colors = colors,
             metrics = metrics,
             icons = icons,
-            dropdownStyle = titleBarDropdownStyle(
-                colors.content,
-                colors.dropdownHoverBackground,
-                colors.dropdownPressBackground,
-                IntUiMenuStyle.dark(),
+            dropdownStyle = DropdownStyle.Undecorated.dark(
+                colors = DropdownColors.Undecorated.dark(
+                    content = colors.content,
+                    contentFocused = colors.content,
+                    contentHovered = colors.content,
+                    contentPressed = colors.content,
+                    contentDisabled = colors.content,
+                    backgroundHovered = colors.dropdownHoveredBackground,
+                    backgroundPressed = colors.dropdownPressedBackground,
+                ),
+                menuStyle = MenuStyle.dark(),
             ),
             iconButtonStyle = titleBarIconButtonStyle(
-                colors.iconButtonHoverBackground,
-                colors.iconButtonPressBackground,
-                IntUiIconButtonMetrics(borderWidth = 0.dp),
+                colors.iconButtonHoveredBackground,
+                colors.iconButtonPressedBackground,
+                IconButtonMetrics.defaults(borderWidth = 0.dp),
             ),
             paneButtonStyle = titleBarIconButtonStyle(
-                colors.titlePaneButtonHoverBackground,
-                colors.titlePaneButtonPressBackground,
-                IntUiIconButtonMetrics(CornerSize(0.dp), borderWidth = 0.dp),
+                colors.titlePaneButtonHoveredBackground,
+                colors.titlePaneButtonPressedBackground,
+                IconButtonMetrics.defaults(cornerSize = CornerSize(0.dp), borderWidth = 0.dp),
             ),
             paneCloseButtonStyle = titleBarIconButtonStyle(
-                colors.titlePaneCloseButtonHoverBackground,
-                colors.titlePaneCloseButtonPressBackground,
-                IntUiIconButtonMetrics(CornerSize(0.dp), borderWidth = 0.dp),
+                colors.titlePaneCloseButtonHoveredBackground,
+                colors.titlePaneCloseButtonPressedBackground,
+                IconButtonMetrics.defaults(cornerSize = CornerSize(0.dp), borderWidth = 0.dp),
             ),
         )
     }
 }
 
-@Stable
 @Immutable
+@GenerateDataFunctions
 class IntUiTitleBarColors(
     override val background: Color,
     override val inactiveBackground: Color,
     override val content: Color,
     override val border: Color,
     override val fullscreenControlButtonsBackground: Color,
-    override val titlePaneButtonHoverBackground: Color,
-    override val titlePaneButtonPressBackground: Color,
-    override val titlePaneCloseButtonHoverBackground: Color,
-    override val titlePaneCloseButtonPressBackground: Color,
-    override val iconButtonHoverBackground: Color,
-    override val iconButtonPressBackground: Color,
-    override val dropdownHoverBackground: Color,
-    override val dropdownPressBackground: Color,
+    override val titlePaneButtonHoveredBackground: Color,
+    override val titlePaneButtonPressedBackground: Color,
+    override val titlePaneCloseButtonHoveredBackground: Color,
+    override val titlePaneCloseButtonPressedBackground: Color,
+    override val iconButtonHoveredBackground: Color,
+    override val iconButtonPressedBackground: Color,
+    override val dropdownHoveredBackground: Color,
+    override val dropdownPressedBackground: Color,
 ) : TitleBarColors {
-
-    override fun hashCode(): Int {
-        var result = background.hashCode()
-        result = 31 * result + inactiveBackground.hashCode()
-        result = 31 * result + content.hashCode()
-        result = 31 * result + border.hashCode()
-        result = 31 * result + fullscreenControlButtonsBackground.hashCode()
-        result = 31 * result + titlePaneButtonHoverBackground.hashCode()
-        result = 31 * result + titlePaneButtonPressBackground.hashCode()
-        result = 31 * result + titlePaneCloseButtonHoverBackground.hashCode()
-        result = 31 * result + titlePaneCloseButtonPressBackground.hashCode()
-        result = 31 * result + iconButtonHoverBackground.hashCode()
-        result = 31 * result + iconButtonPressBackground.hashCode()
-        result = 31 * result + dropdownHoverBackground.hashCode()
-        result = 31 * result + dropdownPressBackground.hashCode()
-        return result
-    }
-
-    override fun toString(): String {
-        return "IntUiTitleBarColors(background=$background, " +
-            "inactiveBackground=$inactiveBackground, " +
-            "content=$content, " +
-            "border=$border, " +
-            "fullscreenControlButtonsBackground=$fullscreenControlButtonsBackground, " +
-            "titlePaneButtonHoverBackground=$titlePaneButtonHoverBackground, " +
-            "titlePaneButtonPressBackground=$titlePaneButtonPressBackground, " +
-            "titlePaneCloseButtonHoverBackground=$titlePaneCloseButtonHoverBackground, " +
-            "titlePaneCloseButtonPressBackground=$titlePaneCloseButtonPressBackground, " +
-            "iconButtonHoverBackground=$iconButtonHoverBackground, " +
-            "iconButtonPressBackground=$iconButtonPressBackground, " +
-            "dropdownHoverBackground=$dropdownHoverBackground, " +
-            "dropdownPressBackground=$dropdownPressBackground)"
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is IntUiTitleBarColors) return false
-
-        if (background != other.background) return false
-        if (inactiveBackground != other.inactiveBackground) return false
-        if (content != other.content) return false
-        if (border != other.border) return false
-        if (fullscreenControlButtonsBackground != other.fullscreenControlButtonsBackground) return false
-        if (titlePaneButtonHoverBackground != other.titlePaneButtonHoverBackground) return false
-        if (titlePaneButtonPressBackground != other.titlePaneButtonPressBackground) return false
-        if (titlePaneCloseButtonHoverBackground != other.titlePaneCloseButtonHoverBackground) return false
-        if (titlePaneCloseButtonPressBackground != other.titlePaneCloseButtonPressBackground) return false
-        if (iconButtonHoverBackground != other.iconButtonHoverBackground) return false
-        if (iconButtonPressBackground != other.iconButtonPressBackground) return false
-        if (dropdownHoverBackground != other.dropdownHoverBackground) return false
-        if (dropdownPressBackground != other.dropdownPressBackground) return false
-
-        return true
-    }
 
     companion object {
 
@@ -298,41 +206,41 @@ class IntUiTitleBarColors(
             borderColor: Color = IntUiLightTheme.colors.grey(4),
             fullscreenControlButtonsBackground: Color = Color(0xFF7A7B80),
             // Color hex from
-            // com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations.titlePaneButtonHoverBackground
-            titlePaneButtonHoverBackground: Color = Color(0x1AFFFFFF),
+            // com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations.titlePaneButtonHoveredBackground
+            titlePaneButtonHoveredBackground: Color = Color(0x1AFFFFFF),
             // Same as
-            // com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations.titlePaneButtonPressBackground
-            titlePaneButtonPressBackground: Color = titlePaneButtonHoverBackground,
+            // com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations.titlePaneButtonPressedBackground
+            titlePaneButtonPressedBackground: Color = titlePaneButtonHoveredBackground,
             // Color hex from
             // com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons.closeStyleBuilder
-            titlePaneCloseButtonHoverBackground: Color = Color(0xFFE81123),
-            titlePaneCloseButtonPressBackground: Color = Color(0xFFF1707A),
+            titlePaneCloseButtonHoveredBackground: Color = Color(0xFFE81123),
+            titlePaneCloseButtonPressedBackground: Color = Color(0xFFF1707A),
 
-            iconButtonHoverBackground: Color = IntUiLightTheme.colors.grey(3),
-            iconButtonPressBackground: Color = IntUiLightTheme.colors.grey(3),
+            iconButtonHoveredBackground: Color = IntUiLightTheme.colors.grey(3),
+            iconButtonPressedBackground: Color = IntUiLightTheme.colors.grey(3),
 
-            // There are two fields in theme.json: transparentHoverBackground and hoverBackground,
+            // There are two fields in theme.json: transparentHoveredBackground and hoveredBackground,
             // but in com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI#paintBackground,
-            // transparentHoverBackground is used first, which is guessed to be due to the gradient background
+            // transparentHoveredBackground is used first, which is guessed to be due to the gradient background
             // caused by the project color of the titlebar, which makes the pure color background look strange
-            // in the area. In order to simplify the use in Jewel, here directly use transparentHoverBackground
-            // as hoverBackground.
-            dropdownHoverBackground: Color = Color(0x1AFFFFFF),
-            dropdownPressBackground: Color = dropdownHoverBackground,
+            // in the area. In order to simplify the use in Jewel, here directly use transparentHoveredBackground
+            // as hoveredBackground.
+            dropdownHoveredBackground: Color = Color(0x1AFFFFFF),
+            dropdownPressedBackground: Color = dropdownHoveredBackground,
         ) = IntUiTitleBarColors(
             background = backgroundColor,
             inactiveBackground = inactiveBackground,
             content = contentColor,
             border = borderColor,
             fullscreenControlButtonsBackground = fullscreenControlButtonsBackground,
-            titlePaneButtonHoverBackground = titlePaneButtonHoverBackground,
-            titlePaneButtonPressBackground = titlePaneButtonPressBackground,
-            titlePaneCloseButtonHoverBackground = titlePaneCloseButtonHoverBackground,
-            titlePaneCloseButtonPressBackground = titlePaneCloseButtonPressBackground,
-            iconButtonHoverBackground = iconButtonHoverBackground,
-            iconButtonPressBackground = iconButtonPressBackground,
-            dropdownHoverBackground = dropdownHoverBackground,
-            dropdownPressBackground = dropdownPressBackground,
+            titlePaneButtonHoveredBackground = titlePaneButtonHoveredBackground,
+            titlePaneButtonPressedBackground = titlePaneButtonPressedBackground,
+            titlePaneCloseButtonHoveredBackground = titlePaneCloseButtonHoveredBackground,
+            titlePaneCloseButtonPressedBackground = titlePaneCloseButtonPressedBackground,
+            iconButtonHoveredBackground = iconButtonHoveredBackground,
+            iconButtonPressedBackground = iconButtonPressedBackground,
+            dropdownHoveredBackground = dropdownHoveredBackground,
+            dropdownPressedBackground = dropdownPressedBackground,
         )
 
         @Composable
@@ -342,28 +250,28 @@ class IntUiTitleBarColors(
             fullscreenControlButtonsBackground: Color = Color(0xFF7A7B80),
             contentColor: Color = IntUiLightTheme.colors.grey(1),
             borderColor: Color = IntUiLightTheme.colors.grey(11),
-            titlePaneButtonHoverBackground: Color = Color(0x1A000000),
-            titlePaneButtonPressBackground: Color = titlePaneButtonHoverBackground,
-            titlePaneCloseButtonHoverBackground: Color = Color(0xFFE81123),
-            titlePaneCloseButtonPressBackground: Color = Color(0xFFF1707A),
-            iconButtonHoverBackground: Color = IntUiLightTheme.colors.grey(12),
-            iconButtonPressBackground: Color = IntUiLightTheme.colors.grey(11),
-            dropdownHoverBackground: Color = Color(0x0D000000),
-            dropdownPressBackground: Color = dropdownHoverBackground,
+            titlePaneButtonHoveredBackground: Color = Color(0x1A000000),
+            titlePaneButtonPressedBackground: Color = titlePaneButtonHoveredBackground,
+            titlePaneCloseButtonHoveredBackground: Color = Color(0xFFE81123),
+            titlePaneCloseButtonPressedBackground: Color = Color(0xFFF1707A),
+            iconButtonHoveredBackground: Color = IntUiLightTheme.colors.grey(12),
+            iconButtonPressedBackground: Color = IntUiLightTheme.colors.grey(11),
+            dropdownHoveredBackground: Color = Color(0x0D000000),
+            dropdownPressedBackground: Color = dropdownHoveredBackground,
         ) = IntUiTitleBarColors(
             background = backgroundColor,
             inactiveBackground = inactiveBackground,
             content = contentColor,
             border = borderColor,
             fullscreenControlButtonsBackground = fullscreenControlButtonsBackground,
-            titlePaneButtonHoverBackground = titlePaneButtonHoverBackground,
-            titlePaneButtonPressBackground = titlePaneButtonPressBackground,
-            titlePaneCloseButtonHoverBackground = titlePaneCloseButtonHoverBackground,
-            titlePaneCloseButtonPressBackground = titlePaneCloseButtonPressBackground,
-            iconButtonHoverBackground = iconButtonHoverBackground,
-            iconButtonPressBackground = iconButtonPressBackground,
-            dropdownHoverBackground = dropdownHoverBackground,
-            dropdownPressBackground = dropdownPressBackground,
+            titlePaneButtonHoveredBackground = titlePaneButtonHoveredBackground,
+            titlePaneButtonPressedBackground = titlePaneButtonPressedBackground,
+            titlePaneCloseButtonHoveredBackground = titlePaneCloseButtonHoveredBackground,
+            titlePaneCloseButtonPressedBackground = titlePaneCloseButtonPressedBackground,
+            iconButtonHoveredBackground = iconButtonHoveredBackground,
+            iconButtonPressedBackground = iconButtonPressedBackground,
+            dropdownHoveredBackground = dropdownHoveredBackground,
+            dropdownPressedBackground = dropdownPressedBackground,
         )
 
         @Composable
@@ -373,98 +281,49 @@ class IntUiTitleBarColors(
             fullscreenControlButtonsBackground: Color = Color(0xFF575A5C),
             contentColor: Color = IntUiDarkTheme.colors.grey(12),
             borderColor: Color = IntUiDarkTheme.colors.grey(4),
-            titlePaneButtonHoverBackground: Color = Color(0x1AFFFFFF),
-            titlePaneButtonPressBackground: Color = titlePaneButtonHoverBackground,
-            titlePaneCloseButtonHoverBackground: Color = Color(0xFFE81123),
-            titlePaneCloseButtonPressBackground: Color = Color(0xFFF1707A),
-            iconButtonHoverBackground: Color = IntUiLightTheme.colors.grey(3),
-            iconButtonPressBackground: Color = IntUiLightTheme.colors.grey(3),
-            dropdownHoverBackground: Color = Color(0x1AFFFFFF),
-            dropdownPressBackground: Color = dropdownHoverBackground,
+            titlePaneButtonHoveredBackground: Color = Color(0x1AFFFFFF),
+            titlePaneButtonPressedBackground: Color = titlePaneButtonHoveredBackground,
+            titlePaneCloseButtonHoveredBackground: Color = Color(0xFFE81123),
+            titlePaneCloseButtonPressedBackground: Color = Color(0xFFF1707A),
+            iconButtonHoveredBackground: Color = IntUiLightTheme.colors.grey(3),
+            iconButtonPressedBackground: Color = IntUiLightTheme.colors.grey(3),
+            dropdownHoveredBackground: Color = Color(0x1AFFFFFF),
+            dropdownPressedBackground: Color = dropdownHoveredBackground,
         ) = IntUiTitleBarColors(
             background = backgroundColor,
             inactiveBackground = inactiveBackground,
             content = contentColor,
             border = borderColor,
             fullscreenControlButtonsBackground = fullscreenControlButtonsBackground,
-            titlePaneButtonHoverBackground = titlePaneButtonHoverBackground,
-            titlePaneButtonPressBackground = titlePaneButtonPressBackground,
-            titlePaneCloseButtonHoverBackground = titlePaneCloseButtonHoverBackground,
-            titlePaneCloseButtonPressBackground = titlePaneCloseButtonPressBackground,
-            iconButtonHoverBackground = iconButtonHoverBackground,
-            iconButtonPressBackground = iconButtonPressBackground,
-            dropdownHoverBackground = dropdownHoverBackground,
-            dropdownPressBackground = dropdownPressBackground,
+            titlePaneButtonHoveredBackground = titlePaneButtonHoveredBackground,
+            titlePaneButtonPressedBackground = titlePaneButtonPressedBackground,
+            titlePaneCloseButtonHoveredBackground = titlePaneCloseButtonHoveredBackground,
+            titlePaneCloseButtonPressedBackground = titlePaneCloseButtonPressedBackground,
+            iconButtonHoveredBackground = iconButtonHoveredBackground,
+            iconButtonPressedBackground = iconButtonPressedBackground,
+            dropdownHoveredBackground = dropdownHoveredBackground,
+            dropdownPressedBackground = dropdownPressedBackground,
         )
     }
 }
 
-@Stable
 @Immutable
+@GenerateDataFunctions
 class IntUiTitleBarMetrics(
     override val height: Dp = 40.dp,
     override val gradientStartX: Dp = (-100).dp,
     override val gradientEndX: Dp = 400.dp,
     override val titlePaneButtonSize: DpSize = DpSize(40.dp, 40.dp),
-) : TitleBarMetrics {
+) : TitleBarMetrics
 
-    override fun hashCode(): Int {
-        var result = height.hashCode()
-        result = 31 * result + gradientStartX.hashCode()
-        result = 31 * result + gradientEndX.hashCode()
-        result = 31 * result + titlePaneButtonSize.hashCode()
-        return result
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is IntUiTitleBarMetrics) return false
-
-        if (height != other.height) return false
-        if (gradientStartX != other.gradientStartX) return false
-        if (gradientEndX != other.gradientEndX) return false
-        if (titlePaneButtonSize != other.titlePaneButtonSize) return false
-
-        return true
-    }
-
-    override fun toString(): String = "IntUiTitleBarMetrics(height=$height, " +
-        "gradientStartX=$gradientStartX, " +
-        "gradientEndX=$gradientEndX, " +
-        "titlePaneButtonSize=$titlePaneButtonSize)"
-}
-
+@Immutable
+@GenerateDataFunctions
 class IntUiTitleBarIcons(
     override val minimizeButton: PainterProvider,
     override val maximizeButton: PainterProvider,
     override val restoreButton: PainterProvider,
     override val closeButton: PainterProvider,
 ) : TitleBarIcons {
-
-    override fun hashCode(): Int {
-        var result = minimizeButton.hashCode()
-        result = 31 * result + maximizeButton.hashCode()
-        result = 31 * result + restoreButton.hashCode()
-        result = 31 * result + closeButton.hashCode()
-        return result
-    }
-
-    override fun toString(): String = "IntUiTitleBarIcons(minimizeButton=$minimizeButton, " +
-        "maximizeButton=$maximizeButton, " +
-        "restoreButton=$restoreButton, " +
-        "closeButton=$closeButton)"
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is IntUiTitleBarIcons) return false
-
-        if (minimizeButton != other.minimizeButton) return false
-        if (maximizeButton != other.maximizeButton) return false
-        if (restoreButton != other.restoreButton) return false
-        if (closeButton != other.closeButton) return false
-
-        return true
-    }
 
     companion object {
 

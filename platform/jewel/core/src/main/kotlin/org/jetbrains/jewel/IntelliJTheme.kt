@@ -22,9 +22,9 @@ import org.jetbrains.jewel.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.styling.LocalChipStyle
 import org.jetbrains.jewel.styling.LocalCircularProgressStyle
 import org.jetbrains.jewel.styling.LocalDefaultButtonStyle
+import org.jetbrains.jewel.styling.LocalDefaultDropdownStyle
 import org.jetbrains.jewel.styling.LocalDefaultTabStyle
 import org.jetbrains.jewel.styling.LocalDividerStyle
-import org.jetbrains.jewel.styling.LocalDropdownStyle
 import org.jetbrains.jewel.styling.LocalEditorTabStyle
 import org.jetbrains.jewel.styling.LocalGroupHeaderStyle
 import org.jetbrains.jewel.styling.LocalHorizontalProgressBarStyle
@@ -127,7 +127,7 @@ interface IntelliJTheme {
         val dropdownStyle: DropdownStyle
             @Composable
             @ReadOnlyComposable
-            get() = LocalDropdownStyle.current
+            get() = LocalDefaultDropdownStyle.current
 
         val groupHeaderStyle: GroupHeaderStyle
             @Composable

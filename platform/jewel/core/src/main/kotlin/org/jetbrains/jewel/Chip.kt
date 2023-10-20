@@ -148,10 +148,16 @@ private fun ChipImpl(
     val colors = style.colors
     val borderColor by colors.borderFor(chipState)
 
+    val borderWidth = if (chipState.isSelected) {
+        style.metrics.borderWidthSelected
+    } else {
+        style.metrics.borderWidth
+    }
+
     Row(
         modifier = modifier
             .background(colors.backgroundFor(chipState).value, shape)
-            .border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
+            .border(Stroke.Alignment.Center, borderWidth, borderColor, shape)
             .focusOutline(chipState, shape)
             .padding(style.metrics.padding),
         verticalAlignment = Alignment.CenterVertically,
