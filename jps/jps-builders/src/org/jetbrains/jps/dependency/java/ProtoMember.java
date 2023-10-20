@@ -44,5 +44,13 @@ public abstract class ProtoMember extends Proto {
     public boolean valueChanged() {
       return !Objects.equals(myPast.getValue(), getValue());
     }
+
+    public boolean valueAdded() {
+      return myPast.getValue() == null && getValue() != null;
+    }
+
+    public boolean valueRemoved() {
+      return myPast.getValue() != null && getValue() == null;
+    }
   }
 }

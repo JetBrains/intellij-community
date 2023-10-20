@@ -118,6 +118,18 @@ public class Proto {
       return getFlags().deriveRemoved(myPast.getFlags());
     }
 
+    public boolean becamePackageLocal() {
+      return !myPast.isPackageLocal() && isPackageLocal();
+    }
+
+    public boolean accessRestricted() {
+      return getFlags().isWeakerAccess(myPast.getFlags());
+    }
+
+    public boolean accessExpanded() {
+      return myPast.getFlags().isWeakerAccess(getFlags());
+    }
+
     public boolean signatureChanged() {
       return !Objects.equals(myPast.getSignature(), getSignature());
     }

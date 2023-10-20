@@ -99,14 +99,14 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
 
     @Override
     public boolean unchanged() {
-      return super.unchanged() && paramAnnotationsChanged().unchanged() && exceptionsChanged().unchanged();
+      return super.unchanged() && paramAnnotations().unchanged() && exceptions().unchanged();
     }
 
-    public Specifier<ParamAnnotation, ?> paramAnnotationsChanged() {
+    public Specifier<ParamAnnotation, ?> paramAnnotations() {
       return Difference.diff(myPast.getParamAnnotations(), getParamAnnotations());
     }
 
-    public Specifier<TypeRepr.ClassType, ?> exceptionsChanged() {
+    public Specifier<TypeRepr.ClassType, ?> exceptions() {
       return Difference.diff(myPast.getExceptions(), getExceptions());
     }
   }
