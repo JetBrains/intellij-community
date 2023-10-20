@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
+import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
@@ -62,8 +64,11 @@ public final class MacFileSaverDialog implements FileSaverDialog {
     myFileDialog.setFilenameFilter(FileChooser.safeInvokeFilter((dir, name) -> {
       return myDescriptor.isFileSelectable(PathChooserDialogHelper.Companion.fileToCoreLocalVirtualFile(dir, name));
     }, false));
-
-    myFileDialog.setVisible(true);
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      // during `setVisible`, the event queue starts to be processed synchronously.
+      // We must preserve the invariant that event dispatch occurrs in empty context.
+      myFileDialog.setVisible(true);
+    }
 
     String file = myFileDialog.getFile();
     return file == null ? null : new VirtualFileWrapper(new File(myFileDialog.getDirectory() + File.separator + file));
