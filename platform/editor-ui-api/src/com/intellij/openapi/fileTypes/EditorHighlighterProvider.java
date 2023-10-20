@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *  Low level API for customizing language's file syntax highlighting in editor component.
+ *  Low-level API for customizing language's file syntax highlighting in editor component.
  *  Override to provide {@link EditorHighlighter} which creates {@link HighlighterIterator}
  *  which returns a stream of {@link com.intellij.psi.tree.IElementType}s with their {@link com.intellij.openapi.editor.markup.TextAttributes}
  *

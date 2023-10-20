@@ -1,92 +1,78 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.highlighter;
+package com.intellij.openapi.editor.highlighter
 
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.SlowOperations;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.lang.LanguageUtil
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
+import com.intellij.openapi.fileTypes.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.SlowOperations
 
-
-public final class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
-  private static final Logger LOG = Logger.getInstance(EditorHighlighterFactoryImpl.class);
-
-  @Override
-  public @NotNull EditorHighlighter createEditorHighlighter(SyntaxHighlighter highlighter, final @NotNull EditorColorsScheme colors) {
-    if (highlighter == null) {
-      highlighter = new PlainSyntaxHighlighter();
-    }
-    return new LexerEditorHighlighter(highlighter, colors);
+class EditorHighlighterFactoryImpl : EditorHighlighterFactory() {
+  override fun createEditorHighlighter(highlighter: SyntaxHighlighter?, colors: EditorColorsScheme): EditorHighlighter {
+    return LexerEditorHighlighter(highlighter ?: PlainSyntaxHighlighter(), colors)
   }
 
-  @Override
-  public @NotNull EditorHighlighter createEditorHighlighter(final @NotNull FileType fileType, final @NotNull EditorColorsScheme settings, final Project project) {
-    if (fileType instanceof LanguageFileType) {
-      return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, fileType, null, settings);
+  override fun createEditorHighlighter(fileType: FileType, settings: EditorColorsScheme, project: Project): EditorHighlighter {
+    if (fileType is LanguageFileType) {
+      return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, fileType, null, settings)
     }
 
-    SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, null);
-    return createEditorHighlighter(highlighter, settings);
+    val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, null)
+    return createEditorHighlighter(highlighter, settings)
   }
 
-  @Override
-  public @NotNull EditorHighlighter createEditorHighlighter(final Project project, final @NotNull FileType fileType) {
-    return createEditorHighlighter(fileType, EditorColorsManager.getInstance().getGlobalScheme(), project);
+  override fun createEditorHighlighter(project: Project, fileType: FileType): EditorHighlighter {
+    return createEditorHighlighter(fileType = fileType, settings = EditorColorsManager.getInstance().globalScheme, project = project)
   }
 
-  @Override
-  public @NotNull EditorHighlighter createEditorHighlighter(@NotNull VirtualFile vFile, @NotNull EditorColorsScheme settings, @Nullable Project project) {
-    FileType fileType = vFile.getFileType();
-    if (fileType instanceof LanguageFileType) {
-      Language substLang = project == null ? null : LanguageUtil.getLanguageForPsi(project, vFile, fileType);
-      LanguageFileType substFileType = substLang != null && substLang != ((LanguageFileType)fileType).getLanguage() ?
-                                       substLang.getAssociatedFileType() : null;
+  override fun createEditorHighlighter(virtualFile: VirtualFile, settings: EditorColorsScheme, project: Project?): EditorHighlighter {
+    val fileType = virtualFile.fileType
+    if (fileType is LanguageFileType) {
+      val substLang = if (project == null) null else LanguageUtil.getLanguageForPsi(project, virtualFile, fileType)
+      val substFileType = if (substLang != null && substLang !== fileType.language) substLang.associatedFileType else null
       if (substFileType != null) {
-        EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(substFileType);
-        EditorHighlighter editorHighlighter = provider.getEditorHighlighter(project, substFileType, vFile, settings);
-        boolean isPlain = editorHighlighter.getClass() == LexerEditorHighlighter.class &&
-                          ((LexerEditorHighlighter) editorHighlighter).isPlain();
+        val provider = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(substFileType)
+        val editorHighlighter = provider.getEditorHighlighter(project, substFileType, virtualFile, settings)
+        val isPlain = editorHighlighter.javaClass == LexerEditorHighlighter::class.java &&
+                      (editorHighlighter as LexerEditorHighlighter).isPlain
         if (!isPlain) {
-          return editorHighlighter;
+          return editorHighlighter
         }
       }
-      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333907, EA-821093")) {
-        return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(project, fileType, vFile, settings);
+
+      try {
+        SlowOperations.knownIssue("IDEA-333907, EA-821093").use {
+          return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType)
+            .getEditorHighlighter(project, fileType, virtualFile, settings)
+        }
       }
-      catch (ProcessCanceledException e) {
-        throw e;
+      catch (e: ProcessCanceledException) {
+        throw e
       }
-      catch (Exception e) {
-        LOG.error(e);
+      catch (e: Exception) {
+        thisLogger().error(e)
       }
     }
 
-    SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, vFile);
-    return createEditorHighlighter(highlighter, settings);
+    val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, virtualFile)
+    return createEditorHighlighter(highlighter = highlighter, colors = settings)
   }
 
-  @Override
-  public @NotNull EditorHighlighter createEditorHighlighter(final Project project, final @NotNull VirtualFile file) {
-    return createEditorHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), project);
+  override fun createEditorHighlighter(project: Project, file: VirtualFile): EditorHighlighter {
+    return createEditorHighlighter(virtualFile = file, settings = EditorColorsManager.getInstance().globalScheme, project = project)
   }
 
-  @Override
-  public @NotNull EditorHighlighter createEditorHighlighter(final Project project, final @NotNull String fileName) {
-    return createEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme(), fileName, project);
+  override fun createEditorHighlighter(project: Project, fileName: String): EditorHighlighter {
+    return createEditorHighlighter(settings = EditorColorsManager.getInstance().globalScheme, fileName = fileName, project = project)
   }
 
-  @Override
-  public @NotNull EditorHighlighter createEditorHighlighter(final @NotNull EditorColorsScheme settings, final @NotNull String fileName, final @Nullable Project project) {
-    return createEditorHighlighter(new LightVirtualFile(fileName), settings, project);
+  override fun createEditorHighlighter(settings: EditorColorsScheme, fileName: String, project: Project?): EditorHighlighter {
+    return createEditorHighlighter(virtualFile = LightVirtualFile(fileName), settings = settings, project = project)
   }
 }
