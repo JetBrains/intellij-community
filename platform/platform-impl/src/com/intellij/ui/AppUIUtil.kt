@@ -170,7 +170,8 @@ fun findAppIcon(): String? {
   return if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) URLUtil.urlToFile(url).absolutePath else null
 }
 
-internal fun isWindowIconAlreadyExternallySet(): Boolean {
+// used in Rider
+fun isWindowIconAlreadyExternallySet(): Boolean {
   return when {
     SystemInfoRt.isWindows -> java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
     SystemInfoRt.isMac -> isMacDocIconSet || !PlatformUtils.isJetBrainsClient()
