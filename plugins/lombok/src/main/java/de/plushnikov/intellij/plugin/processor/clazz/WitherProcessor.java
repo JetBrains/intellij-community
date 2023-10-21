@@ -1,10 +1,9 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
@@ -18,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@Service
 public final class WitherProcessor extends AbstractClassProcessor {
   private static final String BUILDER_DEFAULT_ANNOTATION = LombokClassNames.BUILDER_DEFAULT;
 
@@ -27,7 +25,7 @@ public final class WitherProcessor extends AbstractClassProcessor {
   }
 
   private static WitherFieldProcessor getWitherFieldProcessor() {
-    return ApplicationManager.getApplication().getService(WitherFieldProcessor.class);
+    return LombokProcessorManager.getInstance().getWitherFieldProcessor();
   }
 
   @Override

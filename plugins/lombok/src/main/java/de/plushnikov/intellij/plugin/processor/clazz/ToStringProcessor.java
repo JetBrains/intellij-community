@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -30,7 +29,6 @@ import static de.plushnikov.intellij.plugin.LombokClassNames.TO_STRING_INCLUDE;
  *
  * @author Plushnikov Michail
  */
-@Service
 public final class ToStringProcessor extends AbstractClassProcessor {
   public static final String TO_STRING_METHOD_NAME = "toString";
 

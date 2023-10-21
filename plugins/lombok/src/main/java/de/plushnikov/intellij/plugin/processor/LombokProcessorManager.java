@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
@@ -28,111 +28,335 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+@Service
 public final class LombokProcessorManager {
+  private final Map<String, Collection<Processor>> PROCESSOR_CACHE = new ConcurrentHashMap<>();
 
-  private static final Map<String, Collection<Processor>> PROCESSOR_CACHE = new ConcurrentHashMap<>();
-
-  private static Collection<Processor> getWithCache(String key, Supplier<Collection<Processor>> function) {
+  private Collection<Processor> getWithCache(String key, Supplier<Collection<Processor>> function) {
     return PROCESSOR_CACHE.computeIfAbsent(key, s -> function.get());
   }
 
-  private static final Set<String> ourSupportedShortNames = getAllProcessors()
+  private final AllArgsConstructorProcessor myAllArgsConstructorProcessor = new AllArgsConstructorProcessor();
+  private final NoArgsConstructorProcessor myNoArgsConstructorProcessor = new NoArgsConstructorProcessor();
+  private final RequiredArgsConstructorProcessor myRequiredArgsConstructorProcessor = new RequiredArgsConstructorProcessor();
+  private final LogProcessor myLogProcessor = new LogProcessor();
+  private final Log4jProcessor myLog4jProcessor = new Log4jProcessor();
+  private final Log4j2Processor myLog4j2Processor = new Log4j2Processor();
+  private final Slf4jProcessor mySlf4jProcessor = new Slf4jProcessor();
+  private final XSlf4jProcessor myXSlf4jProcessor = new XSlf4jProcessor();
+  private final CommonsLogProcessor myCommonsLogProcessor = new CommonsLogProcessor();
+  private final JBossLogProcessor myJBossLogProcessor = new JBossLogProcessor();
+  private final FloggerProcessor myFloggerProcessor = new FloggerProcessor();
+  private final CustomLogProcessor myCustomLogProcessor = new CustomLogProcessor();
+  private final DataProcessor myDataProcessor = new DataProcessor();
+  private final EqualsAndHashCodeProcessor myEqualsAndHashCodeProcessor = new EqualsAndHashCodeProcessor();
+  private final GetterProcessor myGetterProcessor = new GetterProcessor();
+  private final SetterProcessor mySetterProcessor = new SetterProcessor();
+  private final ToStringProcessor myToStringProcessor = new ToStringProcessor();
+  private final WitherProcessor myWitherProcessor = new WitherProcessor();
+  private final BuilderPreDefinedInnerClassFieldProcessor myBuilderPreDefinedInnerClassFieldProcessor =
+    new BuilderPreDefinedInnerClassFieldProcessor();
+  private final BuilderPreDefinedInnerClassMethodProcessor myBuilderPreDefinedInnerClassMethodProcessor =
+    new BuilderPreDefinedInnerClassMethodProcessor();
+  private final BuilderClassProcessor myBuilderClassProcessor = new BuilderClassProcessor();
+  private final BuilderProcessor myBuilderProcessor = new BuilderProcessor();
+  private final BuilderClassMethodProcessor myBuilderClassMethodProcessor = new BuilderClassMethodProcessor();
+  private final BuilderMethodProcessor myBuilderMethodProcessor = new BuilderMethodProcessor();
+  private final SuperBuilderPreDefinedInnerClassFieldProcessor mySuperBuilderPreDefinedInnerClassFieldProcessor =
+    new SuperBuilderPreDefinedInnerClassFieldProcessor();
+  private final SuperBuilderPreDefinedInnerClassMethodProcessor mySuperBuilderPreDefinedInnerClassMethodProcessor =
+    new SuperBuilderPreDefinedInnerClassMethodProcessor();
+  private final SuperBuilderClassProcessor mySuperBuilderClassProcessor = new SuperBuilderClassProcessor();
+  private final SuperBuilderProcessor mySuperBuilderProcessor = new SuperBuilderProcessor();
+  private final ValueProcessor myValueProcessor = new ValueProcessor();
+  private final UtilityClassProcessor myUtilityClassProcessor = new UtilityClassProcessor();
+  private final StandardExceptionProcessor myStandardExceptionProcessor = new StandardExceptionProcessor();
+  private final FieldNameConstantsOldProcessor myFieldNameConstantsOldProcessor = new FieldNameConstantsOldProcessor();
+  private final FieldNameConstantsFieldProcessor myFieldNameConstantsFieldProcessor = new FieldNameConstantsFieldProcessor();
+  private final FieldNameConstantsProcessor myFieldNameConstantsProcessor = new FieldNameConstantsProcessor();
+  private final FieldNameConstantsPredefinedInnerClassFieldProcessor myFieldNameConstantsPredefinedInnerClassFieldProcessor =
+    new FieldNameConstantsPredefinedInnerClassFieldProcessor();
+  private final DelegateFieldProcessor myDelegateFieldProcessor = new DelegateFieldProcessor();
+  private final GetterFieldProcessor myGetterFieldProcessor = new GetterFieldProcessor();
+  private final SetterFieldProcessor mySetterFieldProcessor = new SetterFieldProcessor();
+  private final WitherFieldProcessor myWitherFieldProcessor = new WitherFieldProcessor();
+  private final DelegateMethodProcessor myDelegateMethodProcessor = new DelegateMethodProcessor();
+  private final CleanupProcessor myCleanupProcessor = new CleanupProcessor();
+  private final SynchronizedProcessor mySynchronizedProcessor = new SynchronizedProcessor();
+  private final JacksonizedProcessor myJacksonizedProcessor = new JacksonizedProcessor();
+
+  private final Set<String> ourSupportedShortNames = getAllProcessors()
     .stream().flatMap(p -> Arrays.stream(p.getSupportedAnnotationClasses()))
     .map(StringUtil::getShortName)
     .collect(Collectors.toSet());
 
-  @NotNull
-  private static Collection<Processor> getAllProcessors() {
-    Application application = ApplicationManager.getApplication();
-    return Arrays.asList(
-      application.getService(AllArgsConstructorProcessor.class),
-      application.getService(NoArgsConstructorProcessor.class),
-      application.getService(RequiredArgsConstructorProcessor.class),
+  public static LombokProcessorManager getInstance() {
+    return ApplicationManager.getApplication().getService(LombokProcessorManager.class);
+  }
 
-      application.getService(LogProcessor.class),
-      application.getService(Log4jProcessor.class),
-      application.getService(Log4j2Processor.class),
-      application.getService(Slf4jProcessor.class),
-      application.getService(XSlf4jProcessor.class),
-      application.getService(CommonsLogProcessor.class),
-      application.getService(JBossLogProcessor.class),
-      application.getService(FloggerProcessor.class),
-      application.getService(CustomLogProcessor.class),
+  public AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
+    return myAllArgsConstructorProcessor;
+  }
 
-      application.getService(DataProcessor.class),
-      application.getService(EqualsAndHashCodeProcessor.class),
-      application.getService(GetterProcessor.class),
-      application.getService(SetterProcessor.class),
-      application.getService(ToStringProcessor.class),
-      application.getService(WitherProcessor.class),
+  public NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
+    return myNoArgsConstructorProcessor;
+  }
 
-      application.getService(BuilderPreDefinedInnerClassFieldProcessor.class),
-      application.getService(BuilderPreDefinedInnerClassMethodProcessor.class),
-      application.getService(BuilderClassProcessor.class),
-      application.getService(BuilderProcessor.class),
-      application.getService(BuilderClassMethodProcessor.class),
-      application.getService(BuilderMethodProcessor.class),
+  public RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
+    return myRequiredArgsConstructorProcessor;
+  }
 
-      application.getService(SuperBuilderPreDefinedInnerClassFieldProcessor.class),
-      application.getService(SuperBuilderPreDefinedInnerClassMethodProcessor.class),
-      application.getService(SuperBuilderClassProcessor.class),
-      application.getService(SuperBuilderProcessor.class),
+  public LogProcessor getLogProcessor() {
+    return myLogProcessor;
+  }
 
-      application.getService(ValueProcessor.class),
+  public Log4jProcessor getLog4jProcessor() {
+    return myLog4jProcessor;
+  }
 
-      application.getService(UtilityClassProcessor.class),
-      application.getService(StandardExceptionProcessor.class),
+  public Log4j2Processor getLog4j2Processor() {
+    return myLog4j2Processor;
+  }
 
-      application.getService(FieldNameConstantsOldProcessor.class),
-      application.getService(FieldNameConstantsFieldProcessor.class),
+  public Slf4jProcessor getSlf4jProcessor() {
+    return mySlf4jProcessor;
+  }
 
-      application.getService(FieldNameConstantsProcessor.class),
-      application.getService(FieldNameConstantsPredefinedInnerClassFieldProcessor.class),
+  public XSlf4jProcessor getXSlf4jProcessor() {
+    return myXSlf4jProcessor;
+  }
 
-      application.getService(DelegateFieldProcessor.class),
-      application.getService(GetterFieldProcessor.class),
-      application.getService(SetterFieldProcessor.class),
-      application.getService(WitherFieldProcessor.class),
+  public CommonsLogProcessor getCommonsLogProcessor() {
+    return myCommonsLogProcessor;
+  }
 
-      application.getService(DelegateMethodProcessor.class),
+  public JBossLogProcessor getJBossLogProcessor() {
+    return myJBossLogProcessor;
+  }
 
-      application.getService(CleanupProcessor.class),
-      application.getService(SynchronizedProcessor.class),
-      application.getService(JacksonizedProcessor.class)
-    );
+  public FloggerProcessor getFloggerProcessor() {
+    return myFloggerProcessor;
+  }
+
+  public CustomLogProcessor getCustomLogProcessor() {
+    return myCustomLogProcessor;
+  }
+
+  public DataProcessor getDataProcessor() {
+    return myDataProcessor;
+  }
+
+  public EqualsAndHashCodeProcessor getEqualsAndHashCodeProcessor() {
+    return myEqualsAndHashCodeProcessor;
+  }
+
+  public GetterProcessor getGetterProcessor() {
+    return myGetterProcessor;
+  }
+
+  public SetterProcessor getSetterProcessor() {
+    return mySetterProcessor;
+  }
+
+  public ToStringProcessor getToStringProcessor() {
+    return myToStringProcessor;
+  }
+
+  public WitherProcessor getWitherProcessor() {
+    return myWitherProcessor;
+  }
+
+  public BuilderPreDefinedInnerClassFieldProcessor getBuilderPreDefinedInnerClassFieldProcessor() {
+    return myBuilderPreDefinedInnerClassFieldProcessor;
+  }
+
+  public BuilderPreDefinedInnerClassMethodProcessor getBuilderPreDefinedInnerClassMethodProcessor() {
+    return myBuilderPreDefinedInnerClassMethodProcessor;
+  }
+
+  public BuilderClassProcessor getBuilderClassProcessor() {
+    return myBuilderClassProcessor;
+  }
+
+  public BuilderProcessor getBuilderProcessor() {
+    return myBuilderProcessor;
+  }
+
+  public BuilderClassMethodProcessor getBuilderClassMethodProcessor() {
+    return myBuilderClassMethodProcessor;
+  }
+
+  public BuilderMethodProcessor getBuilderMethodProcessor() {
+    return myBuilderMethodProcessor;
+  }
+
+  public SuperBuilderPreDefinedInnerClassFieldProcessor getSuperBuilderPreDefinedInnerClassFieldProcessor() {
+    return mySuperBuilderPreDefinedInnerClassFieldProcessor;
+  }
+
+  public SuperBuilderPreDefinedInnerClassMethodProcessor getSuperBuilderPreDefinedInnerClassMethodProcessor() {
+    return mySuperBuilderPreDefinedInnerClassMethodProcessor;
+  }
+
+  public SuperBuilderClassProcessor getSuperBuilderClassProcessor() {
+    return mySuperBuilderClassProcessor;
+  }
+
+  public SuperBuilderProcessor getSuperBuilderProcessor() {
+    return mySuperBuilderProcessor;
+  }
+
+  public ValueProcessor getValueProcessor() {
+    return myValueProcessor;
+  }
+
+  public UtilityClassProcessor getUtilityClassProcessor() {
+    return myUtilityClassProcessor;
+  }
+
+  public StandardExceptionProcessor getStandardExceptionProcessor() {
+    return myStandardExceptionProcessor;
+  }
+
+  public FieldNameConstantsOldProcessor getFieldNameConstantsOldProcessor() {
+    return myFieldNameConstantsOldProcessor;
+  }
+
+  public FieldNameConstantsFieldProcessor getFieldNameConstantsFieldProcessor() {
+    return myFieldNameConstantsFieldProcessor;
+  }
+
+  public FieldNameConstantsProcessor getFieldNameConstantsProcessor() {
+    return myFieldNameConstantsProcessor;
+  }
+
+  public FieldNameConstantsPredefinedInnerClassFieldProcessor getFieldNameConstantsPredefinedInnerClassFieldProcessor() {
+    return myFieldNameConstantsPredefinedInnerClassFieldProcessor;
+  }
+
+  public DelegateFieldProcessor getDelegateFieldProcessor() {
+    return myDelegateFieldProcessor;
+  }
+
+  public GetterFieldProcessor getGetterFieldProcessor() {
+    return myGetterFieldProcessor;
+  }
+
+  public SetterFieldProcessor getSetterFieldProcessor() {
+    return mySetterFieldProcessor;
+  }
+
+  public WitherFieldProcessor getWitherFieldProcessor() {
+    return myWitherFieldProcessor;
+  }
+
+  public DelegateMethodProcessor getDelegateMethodProcessor() {
+    return myDelegateMethodProcessor;
+  }
+
+  public CleanupProcessor getCleanupProcessor() {
+    return myCleanupProcessor;
+  }
+
+  public SynchronizedProcessor getSynchronizedProcessor() {
+    return mySynchronizedProcessor;
+  }
+
+  public JacksonizedProcessor getJacksonizedProcessor() {
+    return myJacksonizedProcessor;
   }
 
   @NotNull
-  public static Collection<ModifierProcessor> getLombokModifierProcessors() {
+  private Collection<Processor> getAllProcessors() {
+    return Arrays.asList(
+      myAllArgsConstructorProcessor,
+      myNoArgsConstructorProcessor,
+      myRequiredArgsConstructorProcessor,
+
+      myLogProcessor,
+      myLog4jProcessor,
+      myLog4j2Processor,
+      mySlf4jProcessor,
+      myXSlf4jProcessor,
+      myCommonsLogProcessor,
+      myJBossLogProcessor,
+      myFloggerProcessor,
+      myCustomLogProcessor,
+
+      myDataProcessor,
+      myEqualsAndHashCodeProcessor,
+      myGetterProcessor,
+      mySetterProcessor,
+      myToStringProcessor,
+      myWitherProcessor,
+
+      myBuilderPreDefinedInnerClassFieldProcessor,
+      myBuilderPreDefinedInnerClassMethodProcessor,
+      myBuilderClassProcessor,
+      myBuilderProcessor,
+      myBuilderClassMethodProcessor,
+      myBuilderMethodProcessor,
+
+      mySuperBuilderPreDefinedInnerClassFieldProcessor,
+      mySuperBuilderPreDefinedInnerClassMethodProcessor,
+      mySuperBuilderClassProcessor,
+      mySuperBuilderProcessor,
+
+      myValueProcessor,
+
+      myUtilityClassProcessor,
+      myStandardExceptionProcessor,
+
+      myFieldNameConstantsOldProcessor,
+      myFieldNameConstantsFieldProcessor,
+
+      myFieldNameConstantsProcessor,
+      myFieldNameConstantsPredefinedInnerClassFieldProcessor,
+
+      myDelegateFieldProcessor,
+      myGetterFieldProcessor,
+      mySetterFieldProcessor,
+      myWitherFieldProcessor,
+
+      myDelegateMethodProcessor,
+
+      myCleanupProcessor,
+      mySynchronizedProcessor,
+      myJacksonizedProcessor
+    );
+  }
+
+  public static @NotNull Collection<ModifierProcessor> getLombokModifierProcessors() {
     return Arrays.asList(new FieldDefaultsModifierProcessor(),
                          new UtilityClassModifierProcessor(),
                          new ValModifierProcessor(),
                          new ValueModifierProcessor());
   }
 
-  @NotNull
-  public static Collection<Processor> getProcessors(@NotNull Class<? extends PsiElement> supportedClass) {
-    return getWithCache("bySupportedClass_" + supportedClass.getName(),
-                        () -> ContainerUtil.filter(getAllProcessors(), p -> p.isSupportedClass(supportedClass))
+  public static @NotNull Collection<Processor> getProcessors(@NotNull Class<? extends PsiElement> supportedClass) {
+    LombokProcessorManager manager = getInstance();
+    return manager.getWithCache("bySupportedClass_" + supportedClass.getName(),
+                                () -> ContainerUtil.filter(manager.getAllProcessors(), p -> p.isSupportedClass(supportedClass))
     );
   }
 
-  @NotNull
-  public static Collection<Processor> getProcessors(@NotNull PsiAnnotation psiAnnotation) {
+  public static @NotNull Collection<Processor> getProcessors(@NotNull PsiAnnotation psiAnnotation) {
+    LombokProcessorManager manager = getInstance();
+
     PsiJavaCodeReferenceElement nameReferenceElement = psiAnnotation.getNameReferenceElement();
     if (nameReferenceElement == null) {
       return Collections.emptyList();
     }
     String referenceName = nameReferenceElement.getReferenceName();
-    if (referenceName == null || !ourSupportedShortNames.contains(referenceName)) {
+    if (referenceName == null || !manager.ourSupportedShortNames.contains(referenceName)) {
       return Collections.emptyList();
     }
     final String qualifiedName = psiAnnotation.getQualifiedName();
     if (StringUtil.isEmpty(qualifiedName) || !qualifiedName.contains("lombok")) {
       return Collections.emptyList();
     }
-    return getWithCache("byAnnotationFQN_" + qualifiedName,
-                        () -> ContainerUtil.filter(getAllProcessors(), p -> p.isSupportedAnnotationFQN(qualifiedName))
+    return manager.getWithCache("byAnnotationFQN_" + qualifiedName,
+                                () -> ContainerUtil.filter(manager.getAllProcessors(), p -> p.isSupportedAnnotationFQN(qualifiedName))
     );
   }
 }

@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
@@ -18,7 +17,6 @@ import java.util.List;
 /**
  * @author Plushnikov Michail
  */
-@Service
 public final class NoArgsConstructorProcessor extends AbstractConstructorClassProcessor {
   public NoArgsConstructorProcessor() {
     super(LombokClassNames.NO_ARGS_CONSTRUCTOR, PsiMethod.class);

@@ -1,12 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AbstractConstructorClassProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
@@ -23,7 +22,6 @@ import java.util.List;
 /**
  * @author twillouer
  */
-@Service
 public final class ValueProcessor extends AbstractClassProcessor {
 
   public ValueProcessor() {
@@ -31,23 +29,23 @@ public final class ValueProcessor extends AbstractClassProcessor {
   }
 
   private static ToStringProcessor getToStringProcessor() {
-    return ApplicationManager.getApplication().getService(ToStringProcessor.class);
+    return LombokProcessorManager.getInstance().getToStringProcessor();
   }
 
   private static AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
-    return ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class);
+    return LombokProcessorManager.getInstance().getAllArgsConstructorProcessor();
   }
 
   private static NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
-    return ApplicationManager.getApplication().getService(NoArgsConstructorProcessor.class);
+    return LombokProcessorManager.getInstance().getNoArgsConstructorProcessor();
   }
 
   private static GetterProcessor getGetterProcessor() {
-    return ApplicationManager.getApplication().getService(GetterProcessor.class);
+    return LombokProcessorManager.getInstance().getGetterProcessor();
   }
 
   private static EqualsAndHashCodeProcessor getEqualsAndHashCodeProcessor() {
-    return ApplicationManager.getApplication().getService(EqualsAndHashCodeProcessor.class);
+    return LombokProcessorManager.getInstance().getEqualsAndHashCodeProcessor();
   }
 
   @Override

@@ -1,12 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
@@ -22,7 +21,6 @@ import java.util.List;
 /**
  * @author Plushnikov Michail
  */
-@Service
 public final class DataProcessor extends AbstractClassProcessor {
 
   public DataProcessor() {
@@ -30,27 +28,27 @@ public final class DataProcessor extends AbstractClassProcessor {
   }
 
   private static ToStringProcessor getToStringProcessor() {
-    return ApplicationManager.getApplication().getService(ToStringProcessor.class);
+    return LombokProcessorManager.getInstance().getToStringProcessor();
   }
 
   private static NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
-    return ApplicationManager.getApplication().getService(NoArgsConstructorProcessor.class);
+    return LombokProcessorManager.getInstance().getNoArgsConstructorProcessor();
   }
 
   private static GetterProcessor getGetterProcessor() {
-    return ApplicationManager.getApplication().getService(GetterProcessor.class);
+    return LombokProcessorManager.getInstance().getGetterProcessor();
   }
 
   private static SetterProcessor getSetterProcessor() {
-    return ApplicationManager.getApplication().getService(SetterProcessor.class);
+    return LombokProcessorManager.getInstance().getSetterProcessor();
   }
 
   private static EqualsAndHashCodeProcessor getEqualsAndHashCodeProcessor() {
-    return ApplicationManager.getApplication().getService(EqualsAndHashCodeProcessor.class);
+    return LombokProcessorManager.getInstance().getEqualsAndHashCodeProcessor();
   }
 
   private static RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
-    return ApplicationManager.getApplication().getService(RequiredArgsConstructorProcessor.class);
+    return LombokProcessorManager.getInstance().getRequiredArgsConstructorProcessor();
   }
 
   @Override

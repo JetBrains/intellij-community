@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -22,7 +21,6 @@ import java.util.Optional;
  *
  * @author alanachtenberg
  */
-@Service
 public final class FieldNameConstantsProcessor extends AbstractFieldNameConstantsProcessor {
 
   public FieldNameConstantsProcessor() {

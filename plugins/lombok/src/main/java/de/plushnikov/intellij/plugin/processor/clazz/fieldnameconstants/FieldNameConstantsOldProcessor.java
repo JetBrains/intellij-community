@@ -1,12 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProcessor;
@@ -27,7 +26,6 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-@Service
 public final class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
 
   public FieldNameConstantsOldProcessor() {
@@ -35,7 +33,7 @@ public final class FieldNameConstantsOldProcessor extends AbstractClassProcessor
   }
 
   private static FieldNameConstantsFieldProcessor getFieldNameConstantsFieldProcessor() {
-    return ApplicationManager.getApplication().getService(FieldNameConstantsFieldProcessor.class);
+    return LombokProcessorManager.getInstance().getFieldNameConstantsFieldProcessor();
   }
 
   @Override

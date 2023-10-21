@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -12,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-@Service
 public final class DelegateMethodProcessor extends AbstractMethodProcessor {
 
   public DelegateMethodProcessor() {

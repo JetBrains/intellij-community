@@ -1,10 +1,9 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -26,14 +25,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-@Service
 public final class WitherFieldProcessor extends AbstractFieldProcessor {
   public WitherFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.WITHER, LombokClassNames.WITH);
   }
 
   private static RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
-    return ApplicationManager.getApplication().getService(RequiredArgsConstructorProcessor.class);
+    return LombokProcessorManager.getInstance().getRequiredArgsConstructorProcessor();
   }
 
   @Override

@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -12,6 +11,7 @@ import de.plushnikov.intellij.plugin.lombokconfig.LombokNullAnnotationLibrary;
 import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.JacksonizedProcessor;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.singular.AbstractSingularHandler;
@@ -823,10 +823,10 @@ public class BuilderHandler {
   }
 
   private static NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
-    return ApplicationManager.getApplication().getService(NoArgsConstructorProcessor.class);
+    return LombokProcessorManager.getInstance().getNoArgsConstructorProcessor();
   }
 
   private static ToStringProcessor getToStringProcessor() {
-    return ApplicationManager.getApplication().getService(ToStringProcessor.class);
+    return LombokProcessorManager.getInstance().getToStringProcessor();
   }
 }

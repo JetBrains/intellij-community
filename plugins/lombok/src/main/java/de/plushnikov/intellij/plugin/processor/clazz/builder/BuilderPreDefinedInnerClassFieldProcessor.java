@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
@@ -17,7 +16,6 @@ import java.util.stream.Collectors;
  *
  * @author Michail Plushnikov
  */
-@Service
 public final class BuilderPreDefinedInnerClassFieldProcessor extends AbstractBuilderPreDefinedInnerClassProcessor {
 
   public BuilderPreDefinedInnerClassFieldProcessor() {

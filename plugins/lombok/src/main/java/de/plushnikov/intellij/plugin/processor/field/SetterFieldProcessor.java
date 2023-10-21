@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -28,9 +27,8 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-@Service
 public final class SetterFieldProcessor extends AbstractFieldProcessor {
-  SetterFieldProcessor() {
+  public SetterFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.SETTER);
   }
 

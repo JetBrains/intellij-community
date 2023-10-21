@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -20,10 +19,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-@Service
 public final class StandardExceptionProcessor extends AbstractClassProcessor {
 
-  private StandardExceptionProcessor() {
+  public StandardExceptionProcessor() {
     super(PsiMethod.class, LombokClassNames.STANDARD_EXCEPTION);
   }
 

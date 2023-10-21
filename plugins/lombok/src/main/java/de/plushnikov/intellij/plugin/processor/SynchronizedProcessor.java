@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -21,7 +20,6 @@ import java.util.Collections;
  *
  * @author Plushnikov Michail
  */
-@Service
 public final class SynchronizedProcessor extends AbstractProcessor {
 
   public SynchronizedProcessor() {
