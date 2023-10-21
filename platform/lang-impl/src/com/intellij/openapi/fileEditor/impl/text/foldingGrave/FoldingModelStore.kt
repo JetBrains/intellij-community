@@ -16,6 +16,7 @@ import java.nio.file.Path
 internal class FoldingModelStore(
   private val storeName: String,
   private val scope: CoroutineScope,
+  private val dispatcher: CoroutineDispatcher,
   @Volatile private var persistentMap: CachingPersistentMap<Int, FoldingState>?,
   @Volatile private var flushingJob: Job?,
 ) {
@@ -88,7 +89,7 @@ internal class FoldingModelStore(
     val path = storePath(storeName)
     IOUtil.deleteAllFilesStartingWith(path)
     persistentMap = createPersistentMap(path)
-    flushingJob = startFlushingJob(persistentMap, scope)
+    flushingJob = startFlushingJob(persistentMap, scope, dispatcher)
   }
 
   companion object {
@@ -100,20 +101,27 @@ internal class FoldingModelStore(
       ShutDownTracker.getInstance().registerCacheShutdownTask { allStores.forEach { it.close(isAppShutDown=true) } }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val blockingDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1)
-
-    fun create(project: Project, scope: CoroutineScope): FoldingModelStore {
+    fun create(project: Project, scope: CoroutineScope, dispatcher: CoroutineDispatcher): FoldingModelStore {
       val storeName = project.name.trimLongString() + "-" + project.locationHash.trimLongString()
       val persistentMap = createPersistentMap(storePath(storeName))
-      val store = FoldingModelStore(storeName, scope, persistentMap, startFlushingJob(persistentMap, scope))
+      val store = FoldingModelStore(
+        storeName,
+        scope,
+        dispatcher,
+        persistentMap,
+        startFlushingJob(persistentMap, scope, dispatcher)
+      )
       allStores.add(store)
       return store
     }
 
-    private fun startFlushingJob(cache: CachingPersistentMap<Int, FoldingState>?, scope: CoroutineScope): Job? {
+    private fun startFlushingJob(
+      cache: CachingPersistentMap<Int, FoldingState>?,
+      scope: CoroutineScope,
+      dispatcher: CoroutineDispatcher,
+    ): Job? {
       return if (cache != null) {
-        scope.launch(blockingDispatcher) {
+        scope.launch(dispatcher) {
           val timeToFlush: Long = 1_000
           delay(timeToFlush)
           while (isActive) {
@@ -131,7 +139,7 @@ internal class FoldingModelStore(
         path,
         EnumeratorIntegerDescriptor.INSTANCE,
         FoldingState.Companion.FoldingStateExternalizer
-      )
+      ).withVersion(FoldingState.SERDE_VERSION)
       var map: PersistentMapImpl<Int, FoldingState>? = null
       var exception: IOException? = null
       val retryAttempts = 5
@@ -154,7 +162,7 @@ internal class FoldingModelStore(
     }
 
     private fun String.trimLongString(): String = StringUtil.shortenTextWithEllipsis(this, 50, 10, "")
-      .replace(Regex("[^\\p{IsAlphabetic}\\p{IsDigit}]"), "")
+      .replace(Regex("[^\\p{IsAlphabetic}\\d]"), "")
       .replace(" ", "")
       .replace(StringUtil.NON_BREAK_SPACE, "")
 

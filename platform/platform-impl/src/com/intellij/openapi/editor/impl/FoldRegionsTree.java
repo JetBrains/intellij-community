@@ -30,15 +30,6 @@ abstract class FoldRegionsTree {
     myMarkerTree.clear();
   }
 
-  void removeIntervals(@NotNull Collection<? extends FoldRegion> regions) {
-    for (FoldRegion region : regions) {
-      if (region instanceof FoldRegionImpl r) {
-        myMarkerTree.removeInterval(r);
-      }
-    }
-    myCachedData = rebuild();
-  }
-
   void clearCachedValues() {
     myCachedData = new CachedData();
   }

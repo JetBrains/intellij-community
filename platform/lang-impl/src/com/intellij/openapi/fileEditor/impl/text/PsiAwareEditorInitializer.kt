@@ -3,25 +3,19 @@ package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.codeInsight.documentation.render.DocRenderPassFactory
-import com.intellij.codeInsight.documentation.render.DocRenderPassFactory.Items
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.util.PsiModificationTracker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicLong
 
 private class DocRenderTextEditorInitializer : TextEditorInitializer {
-  private data class DocRenderResult(val items: Items, val psiCounter: Long, val foldingCounter: Long)
-
   override suspend fun initializeEditor(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
     val editor = editorSupplier.invoke()
     if (!DocRenderManager.isDocRenderingEnabled(editor)) {
@@ -29,16 +23,13 @@ private class DocRenderTextEditorInitializer : TextEditorInitializer {
     }
 
     val psiManager = project.serviceAsync<PsiManager>()
-    val result = readActionBlocking {
+    val items = readActionBlocking {
       val psiFile = psiManager.findFile(file) ?: return@readActionBlocking null
-
-      val psiModificationCounter = PsiModificationTracker.getInstance(psiFile.getProject()).modificationCount
-      val foldingOperationCounter = FoldingModelImpl.getFoldingOperationCounter(editor)
-      DocRenderResult(DocRenderPassFactory.calculateItemsToRender(editor, psiFile), psiModificationCounter, foldingOperationCounter)
+      DocRenderPassFactory.calculateItemsToRender(editor, psiFile)
     } ?: return
 
     withContext(Dispatchers.EDT) {
-      DocRenderPassFactory.applyItemsToRender(editor, result.items, result.psiCounter, result.foldingCounter, true)
+      DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
     }
   }
 }

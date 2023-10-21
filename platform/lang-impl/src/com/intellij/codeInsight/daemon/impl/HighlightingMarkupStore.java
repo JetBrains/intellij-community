@@ -257,7 +257,7 @@ final class HighlightingMarkupStore {
 
   private static @NotNull String trimLongString(@NotNull String string) {
     return StringUtil.shortenTextWithEllipsis(string, 50, 10, "")
-      .replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]", "")
+      .replaceAll("[^\\p{IsAlphabetic}\\d]", "")
       .replace(" ", "")
       .replace(StringUtil.NON_BREAK_SPACE, "");
   }

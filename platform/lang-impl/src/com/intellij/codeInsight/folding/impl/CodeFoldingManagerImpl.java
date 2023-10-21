@@ -3,6 +3,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.folding.impl.FoldingUpdate.RegionInfo;
 import com.intellij.lang.folding.CustomFoldingProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.LanguageFolding;
@@ -43,8 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.codeInsight.documentation.render.DocRenderPassFactory.forceRefreshOnNextPass;
 
 public final class CodeFoldingManagerImpl extends CodeFoldingManager implements Disposable {
   private final Project myProject;
@@ -148,7 +147,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
     VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
     FoldingState fileFoldingState = myFoldingGrave.getFoldingState(vFile);
-    List<FoldingUpdate.RegionInfo> regionInfos = fileFoldingState == null
+    List<RegionInfo> regionInfos = fileFoldingState == null
                                                  ? FoldingUpdate.getFoldingsFor(file, true)
                                                  : Collections.emptyList();
 
@@ -162,14 +161,18 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       if (isFoldingsInitializedInEditor(editor)) return;
       if (DumbService.isDumb(myProject) && !supportsDumbModeFolding) return;
       if (fileFoldingState != null) {
-        file.putUserData(CodeFoldingPass.CodeFoldingReevaluator, () -> {
-          return FoldingUpdate.getFoldingsFor(file, true);
-        });
-        file.putUserData(CodeFoldingPass.CodeFoldingApplier, infos -> {
-          updateAndInitFolding(editor, foldingModel, file, infos);
-        });
         fileFoldingState.applyState(document, foldingModel);
-        forceRefreshOnNextPass(editor);
+        file.putUserData(CodeFoldingPass.BeforePass.KEY, new CodeFoldingPass.BeforePass() {
+          @Override
+          public List<RegionInfo> collectRegionInfo() {
+            return FoldingUpdate.getFoldingsFor(file, true);
+          }
+
+          @Override
+          public void applyRegionInfo(List<RegionInfo> regionInfos) {
+            updateAndInitFolding(editor, foldingModel, file, regionInfos);
+          }
+        });
       }
       else {
         updateAndInitFolding(editor, foldingModel, file, regionInfos);
@@ -178,7 +181,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     };
   }
 
-  private void updateAndInitFolding(Editor editor, FoldingModelEx foldingModel, PsiFile file, List<FoldingUpdate.RegionInfo> regionInfos) {
+  private void updateAndInitFolding(Editor editor, FoldingModelEx foldingModel, PsiFile file, List<RegionInfo> regionInfos) {
     foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, regionInfos,
                                                                                            UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
                                                                                            false, false));

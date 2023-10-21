@@ -6,8 +6,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.FoldRegion
-import com.intellij.openapi.editor.FoldingGroup
 import com.intellij.openapi.editor.ex.FoldingModelEx
+import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.DataExternalizer
@@ -24,7 +24,6 @@ internal class FoldingState(private val contentHash: Int, private val regions: L
     val startOffset: Int,
     val endOffset: Int,
     val placeholderText: String,
-    val group: FoldingGroup?,
     val neverExpands: Boolean,
     val isExpanded: Boolean,
   ) {
@@ -33,7 +32,6 @@ internal class FoldingState(private val contentHash: Int, private val regions: L
         region.startOffset,
         region.endOffset,
         region.placeholderText,
-        region.group,
         region.shouldNeverExpand(),
         region.isExpanded,
       )
@@ -42,10 +40,9 @@ internal class FoldingState(private val contentHash: Int, private val regions: L
         val start = readINT(input)
         val end = readINT(input)
         val placeholder = readUTF(input)
-        val group = if (input.readBoolean()) FoldingGroup.newGroup(readUTF(input)) else null
         val neverExpands = input.readBoolean()
         val isExpanded = input.readBoolean()
-        return RegionState(start, end, placeholder, group, neverExpands, isExpanded)
+        return RegionState(start, end, placeholder, neverExpands, isExpanded)
       }
     }
 
@@ -53,28 +50,28 @@ internal class FoldingState(private val contentHash: Int, private val regions: L
       writeINT(output, startOffset)
       writeINT(output, endOffset)
       writeUTF(output, placeholderText)
-      val isGroup = group != null
-      output.writeBoolean(isGroup)
-      if (isGroup) {
-        writeUTF(output, group.toString())
-      }
       output.writeBoolean(neverExpands)
       output.writeBoolean(isExpanded)
     }
 
-    override fun toString() = "($startOffset-$endOffset, '$placeholderText', $group, ${(if (isExpanded) "-" else "+")})"
+    override fun toString() = "($startOffset-$endOffset, '$placeholderText', ${(if (isExpanded) "-" else "+")})"
   }
 
   @RequiresEdt
   fun applyState(document: Document, foldingModel: FoldingModelEx) {
     if (contentHash == contentHash(document)) {
       foldingModel.runBatchFoldingOperationDoNotCollapseCaret {
-        for ((start, end, placeholder, group, neverExpands, isExpanded) in regions) {
-          val region = foldingModel.createFoldRegion(start, end, placeholder, group, neverExpands)
+        var zombieRaised = false
+        for ((start, end, placeholder, neverExpands, isExpanded) in regions) {
+          val region = foldingModel.createFoldRegion(start, end, placeholder, null, neverExpands)
           if (region != null) {
             region.isExpanded = isExpanded
             region.putUserData(ZOMBIE_REGION_KEY, true)
+            zombieRaised = true
           }
+        }
+        if (zombieRaised && foldingModel is FoldingModelImpl) {
+          foldingModel.isZombieRaised.set(true)
         }
       }
       logger.debug { "restored $this for $document" }
@@ -85,6 +82,8 @@ internal class FoldingState(private val contentHash: Int, private val regions: L
 
   companion object {
     private val logger: Logger = Logger.getInstance(FoldingState::class.java)
+
+    const val SERDE_VERSION = 2
 
     fun create(document: Document, foldRegions: Array<FoldRegion>): FoldingState {
       val contentHash = contentHash(document)

@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl.text.foldingGrave
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -15,8 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import com.intellij.util.awaitCancellationAndInvoke
+import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 
 internal interface FoldingModelGrave : Disposable {
@@ -41,10 +40,14 @@ internal interface FoldingModelGrave : Disposable {
   }
 
   @Service(Service.Level.PROJECT)
-  class FoldingModelGraveImpl(private val project: Project) : FoldingModelGrave {
-    private val scope: CoroutineScope = ApplicationManager.getApplication().coroutineScope
-    private val fileToState: FoldingModelStore = FoldingModelStore.create(project, scope)
+  class FoldingModelGraveImpl(private val project: Project, private val scope: CoroutineScope) : FoldingModelGrave {
+    private val fileToState: FoldingModelStore = FoldingModelStore.create(project, scope, dispatcher)
     private val fileToModel: MutableMap<Int, FoldingModelEx> = ConcurrentHashMap()
+
+    companion object {
+      @OptIn(ExperimentalCoroutinesApi::class)
+      private val dispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1)
+    }
 
     override fun getFoldingState(file: VirtualFile?): FoldingState? {
       return if (file is VirtualFileWithId) fileToState[file.id] else null
@@ -66,8 +69,10 @@ internal interface FoldingModelGrave : Disposable {
     }
 
     override fun dispose() {
-      scope.launch(FoldingModelStore.blockingDispatcher) {
-        fileToState.close(isAppShutDown=false)
+      scope.awaitCancellationAndInvoke {
+        withContext(dispatcher) {
+          fileToState.close(isAppShutDown=false)
+        }
       }
     }
 
@@ -78,7 +83,7 @@ internal interface FoldingModelGrave : Disposable {
           val document = FileDocumentManager.getInstance().getCachedDocument(file)
           if (document != null) {
             val foldingState = FoldingState.create(document, model.allFoldRegions)
-            scope.launch(FoldingModelStore.blockingDispatcher) {
+            scope.launch(dispatcher) {
               fileToState[file.id] = foldingState
               logger.debug { "stored folding state ${foldingState} for $file" }
             }
