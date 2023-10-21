@@ -25,8 +25,8 @@ fun timeoutRunBlocking(timeout: Duration = DEFAULT_TEST_TIMEOUT, action: suspend
         }
       }
       catch (e: TimeoutCancellationException) {
-        job.cancel(e)
         println(dumpCoroutines())
+        job.cancel(e)
         error = e
       }
     }
