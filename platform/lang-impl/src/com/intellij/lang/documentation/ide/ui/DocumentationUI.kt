@@ -29,6 +29,7 @@ import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
 import com.intellij.ui.PopupHandler
 import com.intellij.util.flow.collectLatestUndispatched
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
@@ -51,6 +52,7 @@ internal class DocumentationUI(
   val scrollPane: JScrollPane
   val editorPane: DocumentationHintEditorPane
   val fontSize: DocumentationFontSizeModel = DocumentationFontSizeModel()
+  val switcherToolbarComponent: JComponent?
 
   private val icons = mutableMapOf<String, Icon>()
   private var imageResolver: DocumentationImageResolver? = null
@@ -70,6 +72,9 @@ internal class DocumentationUI(
     scrollPane.setViewportView(editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
+    switcherToolbarComponent = createSwitcherIfNeeded()?.createToolbar()?.component?.apply {
+      border = JBUI.Borders.emptyTop(5)
+    }
 
     browser.ui = this
     Disposer.register(this, browser)
@@ -263,10 +268,10 @@ internal class DocumentationUI(
     }
   }
 
-  fun createSwitcherIfNeeded(component: JComponent): DefinitionSwitcher<DocumentationRequest>? {
+  private fun createSwitcherIfNeeded(): DefinitionSwitcher<DocumentationRequest>? {
     val requests = browser.page.requests
     if (requests.size < 2) return null
-    return DefinitionSwitcher(requests.toTypedArray(), component) {
+    return DefinitionSwitcher(requests.toTypedArray(), scrollPane) {
       browser.resetBrowser(it)
     }
   }

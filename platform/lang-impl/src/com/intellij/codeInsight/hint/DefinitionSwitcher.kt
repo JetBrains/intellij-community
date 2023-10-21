@@ -16,8 +16,8 @@ import javax.swing.KeyStroke
 private const val NAVIGATION_PLACE = "DefinitionChooser"
 
 class DefinitionSwitcher<T>(var elements: Array<T>,
-                            val component: JComponent,
-                            val onUpdate: (T)-> Unit) {
+                            private val component: JComponent,
+                            private val onUpdate: (T)-> Unit) {
   var index = 0
   fun getCurrentElement() = elements[index]
 
