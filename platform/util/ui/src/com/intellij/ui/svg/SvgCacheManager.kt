@@ -181,10 +181,11 @@ class SvgCacheManager private constructor(private val map: PersistentMapBase<Lon
   }
 
   fun storeLoadedImage(key: LongArray, image: BufferedImage) {
-    val value = IconValue(image.width, image.height, writeImage(image))
+    val w = image.width
+    val h = image.height
     // don't save large images
-    if (value.w <= 255 && value.h <= 255) {
-      map.put(key, value)
+    if (w <= 255 && h <= 255) {
+      map.put(key, IconValue(w = w, h = h, data = writeImage(image)))
     }
   }
 }
