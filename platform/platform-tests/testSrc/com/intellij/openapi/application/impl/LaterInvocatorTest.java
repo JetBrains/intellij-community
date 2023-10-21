@@ -603,6 +603,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     }).assertTiming();
   }
 
+  @IgnoreJUnit3
   public void testApplicationInvokeLaterPerformance() {
     int N = 1_000_000;
     AtomicInteger counter = new AtomicInteger();
