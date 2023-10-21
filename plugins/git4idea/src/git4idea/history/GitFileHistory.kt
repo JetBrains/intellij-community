@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.project.Project
@@ -58,7 +58,7 @@ import java.util.function.Consumer
 class GitFileHistory internal constructor(private val project: Project,
                                           private val root: VirtualFile,
                                           path: FilePath,
-                                          private val startingRevision: VcsRevisionNumber,
+                                          private val startingRevisions: List<String>,
                                           private val fullHistory: Boolean = false) {
   private val path = VcsUtil.getLastCommitPath(project, path)
 
@@ -67,11 +67,11 @@ class GitFileHistory internal constructor(private val project: Project,
     val logParser = createLogParser(project)
 
     val visitedCommits = mutableSetOf<String>()
-    val starts = ContainerUtil.newLinkedList(FileHistoryStart(startingRevision.asString(), path))
+    val starts = ContainerUtil.newLinkedList(FileHistoryStart(startingRevisions, path))
     while (starts.isNotEmpty()) {
-      val (startRevision, startPath) = starts.removeFirst()
+      val (startRevisions, startPath) = starts.removeFirst()
 
-      val lastCommits = runGitLog(logParser, startPath, startRevision, visitedCommits, consumer, *parameters)
+      val lastCommits = runGitLog(logParser, startPath, visitedCommits, consumer, parameters.toList() + startRevisions)
       if (lastCommits.isEmpty()) return
 
       for (lastCommit in lastCommits) {
@@ -83,11 +83,10 @@ class GitFileHistory internal constructor(private val project: Project,
   @Throws(VcsException::class)
   private fun runGitLog(logParser: GitLogParser<GitLogFullRecord>,
                         startPath: FilePath,
-                        startRevision: String,
                         visitedCommits: MutableSet<String>,
                         consumer: (GitFileRevision) -> Unit,
-                        vararg parameters: String): List<String> {
-    val handler = createLogHandler(logParser, startPath, startRevision, *parameters)
+                        parameters: List<String>): List<String> {
+    val handler = createLogHandler(logParser, startPath, parameters)
     var skipFurtherOutput = false
     val lastCommits = mutableListOf<String>()
     val splitter = GitLogOutputSplitter(handler, logParser) { record ->
@@ -143,26 +142,27 @@ class GitFileHistory internal constructor(private val project: Project,
     return renames.map { (parent, status) -> FileHistoryStart(parent, GitContentRevision.createPath(root, status.firstPath)) }
   }
 
-  private fun createLogHandler(parser: GitLogParser<GitLogFullRecord>,
-                               path: FilePath,
-                               lastCommit: @NonNls String,
-                               vararg parameters: String): GitLineHandler {
+  private fun createLogHandler(parser: GitLogParser<GitLogFullRecord>, path: FilePath, parameters: List<String>): GitLineHandler {
     val h = GitLineHandler(project, root, GitCommand.LOG)
     h.setStdoutSuppressed(true)
-    h.addParameters("--name-status", parser.pretty, "--encoding=UTF-8", lastCommit)
+    h.addParameters("--name-status", parser.pretty, "--encoding=UTF-8")
     if (GitVersionSpecialty.FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY.existsIn(project) && Registry.`is`("git.file.history.full")) {
       h.addParameters("--full-history", "--simplify-merges")
     }
-    if (parameters.isNotEmpty()) {
-      h.addParameters(*parameters)
-    }
+    h.addParameters(parameters)
     h.endOptions()
     h.addRelativePaths(path)
     return h
   }
 
   companion object {
-    private data class FileHistoryStart(val revision: String, val path: FilePath)
+    /**
+     * Starting conditions for computing file history: target path and a list of commit hashes,
+     * branch names or parameters such as "--branches", "--remotes" or "--tags".
+     */
+    private data class FileHistoryStart(val revisions: List<String>, val path: FilePath) {
+      constructor(revision: String, path: FilePath) : this(listOf(revision), path)
+    }
 
     private fun GitLogFullRecord.filePath(root: VirtualFile): FilePath? {
       val statusInfo = statusInfos.firstOrNull() ?: return null
@@ -196,8 +196,8 @@ class GitFileHistory internal constructor(private val project: Project,
                             vararg parameters: String) {
       val detectedRoot = GitUtil.getRootForFile(project, path)
       val repositoryRoot = GitLogProvider.getCorrectedVcsRoot(GitRepositoryManager.getInstance(project), detectedRoot, path)
-      val revision = startingFrom ?: GitRevisionNumber.HEAD
-      GitFileHistory(project, repositoryRoot, path, revision).load(consumer, *parameters)
+      val revision = startingFrom?.asString() ?: GitUtil.HEAD
+      GitFileHistory(project, repositoryRoot, path, listOf(revision)).load(consumer, *parameters)
     }
 
     /**

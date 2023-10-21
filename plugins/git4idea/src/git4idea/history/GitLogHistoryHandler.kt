@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.execution.process.ProcessOutputTypes
@@ -16,9 +16,9 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogFileHistoryHandler
 import com.intellij.vcs.log.VcsLogFileHistoryHandler.Rename
 import com.intellij.vcs.log.impl.VcsFileStatusInfo
-import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitRevisionNumber
+import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -53,8 +53,8 @@ open class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistor
   @Throws(VcsException::class)
   override fun collectHistory(root: VirtualFile, filePath: FilePath, hash: Hash?, consumer: (VcsFileRevision) -> Unit) {
     val args = GitHistoryProvider.getHistoryLimitArgs(project)
-    val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else GitRevisionNumber.HEAD
-    GitFileHistory(project, root, filePath, revisionNumber, true).load(consumer, *args)
+    val revisionNumber = hash?.asString() ?: GitUtil.HEAD
+    GitFileHistory(project, root, filePath, listOf(revisionNumber), true).load(consumer, *args)
   }
 
   @Throws(VcsException::class)

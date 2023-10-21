@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.dvcs.DvcsUtil
@@ -11,7 +11,7 @@ import com.intellij.util.CollectConsumer
 import com.intellij.util.ExceptionUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
-import git4idea.GitRevisionNumber
+import git4idea.GitUtil
 import git4idea.test.*
 import junit.framework.TestCase
 import org.apache.commons.lang3.RandomStringUtils
@@ -319,10 +319,69 @@ class GitFileHistoryTest : GitSingleRepoTest() {
                       collectFileHistory(repo2MovedFile, full = true).sortedBy { it.revisionNumber.asString() })
   }
 
+  @Throws(VcsException::class, IOException::class)
+  fun `test branches history`() {
+    val commonCommits = ArrayList<TestCommit>()
+    val masterCommits = ArrayList<TestCommit>()
+    val branchCommits = ArrayList<TestCommit>()
+
+    val fileName = "a.txt"
+    commonCommits.add(add(fileName, ourCurrentDir()))
+    val file = commonCommits.last().file
+
+    commonCommits.add(modify(file))
+
+    val branchingPoint = commonCommits.last().hash
+
+    add("b.txt", ourCurrentDir())
+    masterCommits.add(modify(file))
+
+    repo.checkoutNew("newBranch", branchingPoint)
+    add("c.txt", ourCurrentDir())
+    branchCommits.add(modify(file))
+
+    commonCommits.reverse()
+    masterCommits.reverse()
+    branchCommits.reverse()
+
+    assertSameHistory(branchCommits + masterCommits + commonCommits, collectFileHistory(file, GitLogUtil.LOG_ALL, true))
+    assertSameHistory(masterCommits + commonCommits, collectFileHistory(file, listOf("master"), true))
+    assertSameHistory(branchCommits + commonCommits, collectFileHistory(file, listOf("newBranch"), true))
+    assertSameHistory(commonCommits, collectFileHistory(file, listOf(branchingPoint), true))
+  }
+
+  @Throws(VcsException::class, IOException::class)
+  fun `test branches history with rename`() {
+    val commitsBeforeRename = ArrayList<TestCommit>()
+    val commitsAfterRename = ArrayList<TestCommit>()
+
+    commitsBeforeRename.add(add("a.txt", ourCurrentDir()))
+    commitsBeforeRename.add(modify(commitsBeforeRename.last().file))
+
+    val pointBeforeRename = commitsBeforeRename.last().hash
+    val fileBeforeRename = commitsBeforeRename.last().file
+
+    commitsAfterRename.add(rename(fileBeforeRename, File(mkdir("dir"), "b.txt")))
+    commitsAfterRename.add(modify(commitsAfterRename.last().file))
+
+    val fileAfterRename = commitsAfterRename.last().file
+
+    commitsBeforeRename.reverse()
+    commitsAfterRename.reverse()
+
+    assertSameHistory(commitsAfterRename + commitsBeforeRename, collectFileHistory(fileAfterRename, listOf("master"), true))
+    assertSameHistory(emptyList(), collectFileHistory(fileAfterRename, listOf(pointBeforeRename), true))
+    assertSameHistory(commitsBeforeRename, collectFileHistory(fileBeforeRename, listOf(pointBeforeRename), true))
+  }
+
   private fun collectFileHistory(file: File, full: Boolean = false): List<VcsFileRevision> {
+    return collectFileHistory(file, listOf(GitUtil.HEAD), full)
+  }
+
+  private fun collectFileHistory(file: File, startingRevisions: List<String>, full: Boolean): List<VcsFileRevision> {
     val path = VcsUtil.getFilePath(file, false)
     return buildList {
-      GitFileHistory(myProject, repo.root, path, GitRevisionNumber.HEAD, full).load(::add)
+      GitFileHistory(myProject, repo.root, path, startingRevisions, full).load(::add)
     }
   }
 
