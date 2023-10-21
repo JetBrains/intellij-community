@@ -9,17 +9,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.openapi.wm.ex.ToolWindowEx
 import training.lang.LangManager
 import training.util.LEARNING_PANEL_OPENED_IN
 import training.util.findLanguageSupport
 
 internal class LearnToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(toolWindow: ToolWindow) {
-    super.init(toolWindow)
-
-    val project = (toolWindow as? ToolWindowEx)?.project ?: return
-    toolWindow.isShowStripeButton = findLanguageSupport(project) != null
+    toolWindow.isShowStripeButton = findLanguageSupport(toolWindow.project) != null
   }
 
   override val anchor: ToolWindowAnchor?
@@ -40,6 +36,6 @@ internal class LearnToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   companion object {
-    const val LEARN_TOOL_WINDOW = "Learn"
+    const val LEARN_TOOL_WINDOW: String = "Learn"
   }
 }
