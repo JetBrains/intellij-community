@@ -1086,7 +1086,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       if (preparedTask.isButtonNeeded) {
         // we must allocate order - otherwise, on drag-n-drop, we cannot move some tool windows to the end
         // because sibling's order is equal to -1, so, always in the end
-        info.order = layout.getMaxOrder(info.safeToolWindowPaneId, task.anchor)
+        info.order = layout.getMaxOrder(paneId = info.safeToolWindowPaneId, anchor = task.anchor)
         layout.addInfo(task.id, info)
       }
     }
