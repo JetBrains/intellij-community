@@ -634,10 +634,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     activateToolWindow(idToEntry.get(id)!!, getRegisteredMutableInfoOrLogError(id), autoFocusContents, source)
 
-    ApplicationManager.getApplication().invokeLater({
-                                                      runnable?.run()
-                                                      UiActivityMonitor.getInstance().removeActivity(project, activity)
-                                                    }, project.disposed)
+    coroutineScope.launch(Dispatchers.EDT) {
+      runnable?.run()
+      UiActivityMonitor.getInstance().removeActivity(project, activity)
+    }
   }
 
   internal fun activateToolWindow(entry: ToolWindowEntry,

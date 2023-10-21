@@ -30,6 +30,7 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
@@ -997,7 +998,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         activity.end()
       }
 
-      if (focusedFile == null) {
+      if (focusedFile == null && !isNotificationSilentMode(splitters.manager.project)) {
         val manager = splitters.manager.project.serviceAsync<ToolWindowManager>()
         manager.invokeLater {
           if (manager.activeToolWindowId == null) {

@@ -291,7 +291,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun activate(runnable: Runnable?, autoFocusContents: Boolean, forced: Boolean) {
-    toolWindowManager.activateToolWindow(id, runnable, autoFocusContents)
+    toolWindowManager.activateToolWindow(id = id, runnable = runnable, autoFocusContents = autoFocusContents)
   }
 
   override fun isActive(): Boolean {
