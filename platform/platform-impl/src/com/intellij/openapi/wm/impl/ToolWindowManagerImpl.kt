@@ -1065,10 +1065,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       paneId = existingInfo?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID,
       buttonManager = buttonManager,
     )
-    return registerToolWindow(preparedTask = preparedTask, layout = layout)
+    val result = registerToolWindow(preparedTask = preparedTask, layout = layout, ensureToolWindowActionRegistered = true)
+    result.postTask?.invoke()
+    return result.entry
   }
 
-  internal fun registerToolWindow(preparedTask: PreparedRegisterToolWindowTask, layout: DesktopLayout): ToolWindowEntry {
+  internal fun registerToolWindow(preparedTask: PreparedRegisterToolWindowTask,
+                                  layout: DesktopLayout,
+                                  ensureToolWindowActionRegistered: Boolean): RegisterToolWindowResult {
     val task = preparedTask.task
 
     LOG.debug { "registerToolWindow($task)" }
@@ -1132,7 +1136,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
     }
 
-    ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
+    if (ensureToolWindowActionRegistered) {
+      ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
+    }
 
     val stripeButton = if (preparedTask.isButtonNeeded) {
       preparedTask.buttonManager.createStripeButton(toolWindow, infoSnapshot, task)
@@ -1153,17 +1159,19 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     // mode. But if a tool window was active but its mode doesn't allow to activate it again
     // (for example, a tool window is in auto hide mode), then we just activate an editor component.
     if (stripeButton != null && factory != null /* not null on an init tool window from EP */ && infoSnapshot.isVisible) {
-      showToolWindowImpl(entry = entry, toBeShownInfo = info, dirtyMode = false)
+      return RegisterToolWindowResult(entry = entry, postTask = {
+        showToolWindowImpl(entry = entry, toBeShownInfo = info, dirtyMode = false)
 
-      // do not activate a tool window that is the part of the project frame - default component should be focused
-      if (infoSnapshot.isActiveOnStart &&
-          (infoSnapshot.type == ToolWindowType.WINDOWED || infoSnapshot.type == ToolWindowType.FLOATING) &&
-          ApplicationManager.getApplication().isActive) {
-        entry.toolWindow.requestFocusInToolWindow()
-      }
+        // do not activate a tool window that is the part of the project frame - default component should be focused
+        if (infoSnapshot.isActiveOnStart &&
+            (infoSnapshot.type == ToolWindowType.WINDOWED || infoSnapshot.type == ToolWindowType.FLOATING) &&
+            ApplicationManager.getApplication().isActive) {
+          entry.toolWindow.requestFocusInToolWindow()
+        }
+      })
     }
 
-    return entry
+    return RegisterToolWindowResult(entry = entry, postTask = null)
   }
 
   internal fun isButtonNeeded(task: RegisterToolWindowTask, info: WindowInfoImpl?, stripeManager: ToolWindowStripeManager): Boolean {

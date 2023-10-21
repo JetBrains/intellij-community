@@ -169,16 +169,26 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     manager.registerEpListeners()
   }
 
-  private suspend fun postEntryProcessing(entries: List<ToolWindowEntry>, suffix: String = "") {
+  private suspend fun postEntryProcessing(entries: List<RegisterToolWindowResult>, suffix: String = "") {
     // dispatch event not in EDT
     span("toolWindowsRegistered event executing$suffix") {
-      manager.project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries.map { it.id }, manager)
+      manager.project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries.map { it.entry.id }, manager)
     }
 
     span("ensureToolWindowActionRegistered executing$suffix") {
-      val actionManager = ApplicationManager.getApplication().serviceAsync<ActionManager>()
-      for (entry in entries) {
-        ActivateToolWindowAction.ensureToolWindowActionRegistered(entry.toolWindow, actionManager)
+      val actionManager = serviceAsync<ActionManager>()
+      for (result in entries) {
+        ActivateToolWindowAction.ensureToolWindowActionRegistered(result.entry.toolWindow, actionManager)
+      }
+    }
+
+    span("postTask executing$suffix") {
+      for (result in entries) {
+        if (result.postTask != null) {
+          withContext(Dispatchers.EDT) {
+            result.postTask.invoke()
+          }
+        }
       }
     }
   }
@@ -191,18 +201,24 @@ internal class PreparedRegisterToolWindowTask(
 
   @JvmField val paneId: String,
   @JvmField val buttonManager: ToolWindowButtonManager,
+
+)
+
+internal data class RegisterToolWindowResult(
+  @JvmField val entry: ToolWindowEntry,
+  @JvmField val postTask: (() -> Unit)?
 )
 
 private fun registerToolWindows(tasks: List<PreparedRegisterToolWindowTask>,
                                 manager: ToolWindowManagerImpl,
                                 layout: DesktopLayout,
-                                shouldRegister: (String) -> Boolean): List<ToolWindowEntry> {
-  val entries = ArrayList<ToolWindowEntry>(tasks.size)
+                                shouldRegister: (String) -> Boolean): List<RegisterToolWindowResult> {
+  val entries = ArrayList<RegisterToolWindowResult>(tasks.size)
   for (task in tasks) {
     try {
       val paneId = task.paneId
       if (shouldRegister(paneId)) {
-        entries.add(manager.registerToolWindow(preparedTask = task, layout = layout))
+        entries.add(manager.registerToolWindow(preparedTask = task, layout = layout, ensureToolWindowActionRegistered = false))
       }
     }
     catch (e: CancellationException) {
