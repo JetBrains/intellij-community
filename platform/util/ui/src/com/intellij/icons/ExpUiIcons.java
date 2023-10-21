@@ -321,6 +321,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon PreviewOnly = load("expui/general/previewOnly.svg", 784372708, 2);
     /** 16x16 */ public static final @NotNull Icon PreviewVertically = load("expui/general/previewVertically.svg", -1158915095, 2);
     /** 16x16 */ public static final @NotNull Icon Print = load("expui/general/print.svg", -1069373447, 2);
+    /** 9x9 */ public static final @NotNull Icon ProjectConfigurable = load("expui/general/projectConfigurable.svg", 1144622144, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectStructure = load("expui/general/projectStructure.svg", 200874544, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOff = load("expui/general/projectWideAnalysisOff.svg", 1505013057, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOn = load("expui/general/projectWideAnalysisOn.svg", 103110158, 2);

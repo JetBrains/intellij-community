@@ -374,6 +374,7 @@
       "undo.svg": "actions/undo.svg",
       "save.svg": "actions/menu-saveall.svg",
       "print.svg": "general/print.svg",
+      "projectConfigurable.svg": "general/projectConfigurable.svg",
       "projectWideAnalysisOff.svg": "actions/projectWideAnalysisOff.svg",
       "projectWideAnalysisOn.svg": "actions/projectWideAnalysisOn.svg",
       "softWrap.svg": "actions/toggleSoftWrap.svg",
