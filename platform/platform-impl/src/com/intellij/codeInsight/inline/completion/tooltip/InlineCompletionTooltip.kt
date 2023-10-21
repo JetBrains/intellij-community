@@ -56,6 +56,7 @@ internal object InlineCompletionTooltip {
       }
     }.apply {
       setForceShowAsPopup(true)
+      setBelongsToGlobalPopupStack(false)
     }
 
     val location = HintManagerImpl.getHintPosition(
