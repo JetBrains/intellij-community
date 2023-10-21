@@ -120,8 +120,8 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAn
     final boolean historyCacheSupported = historyProvider instanceof VcsCacheableHistorySessionFactory;
     if (historyCacheSupported) {
       final VcsCacheableHistorySessionFactory cacheableHistorySessionFactory = (VcsCacheableHistorySessionFactory)historyProvider;
-      final VcsAbstractHistorySession cachedSession =
-        myCache.getMaybePartial(filePath, myVcs.getKeyInstanceMethod(), cacheableHistorySessionFactory);
+      final VcsAbstractHistorySession cachedSession = myCache.getSession(filePath, myVcs.getKeyInstanceMethod(),
+                                                                         cacheableHistorySessionFactory, true);
       if (cachedSession != null && !cachedSession.getRevisionList().isEmpty()) {
         final VcsFileRevision recentRevision = cachedSession.getRevisionList().get(0);
         if (recentRevision.getRevisionNumber().compareTo(revision) >= 0 && (firstRevision == null || cachedSession.getHistoryAsMap().containsKey(firstRevision))) {

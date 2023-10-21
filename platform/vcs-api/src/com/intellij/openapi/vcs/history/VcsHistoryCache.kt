@@ -23,11 +23,20 @@ class VcsHistoryCache {
     lastRevisionCache = Caffeine.newBuilder().maximumSize(50).build()
   }
 
-  fun <C : Serializable, T : VcsAbstractHistorySession> put(filePath: FilePath, correctedPath: FilePath?, vcsKey: VcsKey,
-                                                            session: T, factory: VcsCacheableHistorySessionFactory<C, T>, isFull: Boolean) {
+  fun <C : Serializable, T : VcsAbstractHistorySession> put(filePath: FilePath, correctedPath: FilePath?, vcsKey: VcsKey, session: T,
+                                                            factory: VcsCacheableHistorySessionFactory<C, T>, isFull: Boolean) {
     val cachedHistory = CachedHistory(correctedPath ?: filePath, session.revisionList, session.currentRevisionNumber,
                                       factory.getAdditionallyCachedData(session), isFull)
     historyCache.put(HistoryCacheBaseKey(filePath, vcsKey), cachedHistory)
+  }
+
+  fun <C : Serializable, T : VcsAbstractHistorySession> getSession(filePath: FilePath, vcsKey: VcsKey,
+                                                                   factory: VcsCacheableHistorySessionFactory<C, T>,
+                                                                   allowPartial: Boolean): T? {
+    val cachedHistory = historyCache.getIfPresent(HistoryCacheBaseKey(filePath, vcsKey))?.takeIf { it.isFull || allowPartial }
+                        ?: return null
+    val customData = cachedHistory.customData as C?
+    return factory.createFromCachedData(customData, cachedHistory.revisions, cachedHistory.path, cachedHistory.currentRevision)
   }
 
   fun editCached(filePath: FilePath, vcsKey: VcsKey, consumer: Consumer<in List<VcsFileRevision>>) {
@@ -35,20 +44,6 @@ class VcsHistoryCache {
     if (cachedHistory != null) {
       consumer.accept(cachedHistory.revisions)
     }
-  }
-
-  fun <C : Serializable, T : VcsAbstractHistorySession> getFull(filePath: FilePath, vcsKey: VcsKey,
-                                                                factory: VcsCacheableHistorySessionFactory<C, T>): T? {
-    val cachedHistory = historyCache.getIfPresent(HistoryCacheBaseKey(filePath, vcsKey))?.takeIf { it.isFull } ?: return null
-    val customData = cachedHistory.customData as C?
-    return factory.createFromCachedData(customData, cachedHistory.revisions, cachedHistory.path, cachedHistory.currentRevision)
-  }
-
-  fun <C : Serializable, T : VcsAbstractHistorySession> getMaybePartial(filePath: FilePath, vcsKey: VcsKey,
-                                                                        factory: VcsCacheableHistorySessionFactory<C, T>): T? {
-    val cachedHistory = historyCache.getIfPresent(HistoryCacheBaseKey(filePath, vcsKey)) ?: return null
-    val customData = cachedHistory.customData as C?
-    return factory.createFromCachedData(customData, cachedHistory.revisions, cachedHistory.path, cachedHistory.currentRevision)
   }
 
   fun clearHistory() {
