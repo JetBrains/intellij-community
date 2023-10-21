@@ -1171,7 +1171,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           public void dragOver(@NotNull DropTargetDragEvent e) {
             Point location = e.getLocation();
 
-            getCaretModel().moveToVisualPosition(getTargetPosition(location.x, location.y, true));
+            final CaretImpl caret = getCaretModel().getCurrentCaret();
+            caret.moveToVisualPosition(getTargetPosition(location.x, location.y, true, caret));
             getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
             requestFocus();
           }
@@ -2366,7 +2367,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return lineIndex;
   }
 
-  private @NotNull VisualPosition getTargetPosition(int x, int y, boolean trimToLineWidth) {
+  private @NotNull VisualPosition getTargetPosition(int x, int y, boolean trimToLineWidth, @Nullable Caret targetCaret) {
     if (myDocument.getLineCount() == 0) {
       return new VisualPosition(0, 0);
     }
@@ -2381,7 +2382,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       y = visualLineToY(Math.max(0, visualLineCount - 1));
     }
     VisualPosition visualPosition = xyToVisualPosition(new Point(x, y));
-    if (EditorUtil.isBlockLikeCaret(getCaretModel().getPrimaryCaret()) && !visualPosition.leansRight && visualPosition.column > 0) {
+    Caret caret = targetCaret != null ? targetCaret : getCaretModel().getPrimaryCaret();
+    if (EditorUtil.isBlockLikeCaret(caret) && !visualPosition.leansRight && visualPosition.column > 0) {
       // Adjustment for block caret when clicking in the second half of the character
       visualPosition = new VisualPosition(visualPosition.line, visualPosition.column - 1, true);
     }
@@ -2622,7 +2624,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       VisualPosition oldVisLeadSelectionStart = leadCaret.getLeadSelectionPosition();
       int oldCaretOffset = getCaretModel().getOffset();
       boolean multiCaretSelection = columnSelectionDrag || toggleCaretEvent;
-      VisualPosition newVisualCaret = getTargetPosition(x, y, !multiCaretSelection);
+      VisualPosition newVisualCaret = getTargetPosition(x, y, !multiCaretSelection, leadCaret);
       LogicalPosition newLogicalCaret = visualToLogicalPosition(newVisualCaret);
       if (multiCaretSelection) {
         myMultiSelectionInProgress = true;
@@ -4279,7 +4281,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                           isInsideGutterWhitespaceArea(e) ||
                           eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
       if (moveCaret) {
-        VisualPosition visualPosition = getTargetPosition(x, y, true);
+        // We don't know which caret we want to work with yet
+        VisualPosition visualPosition = getTargetPosition(x, y, true, null);
         LogicalPosition pos = visualToLogicalPosition(visualPosition);
         if (toggleCaret) {
           Caret caret = getCaretModel().getCaretAt(visualPosition);
