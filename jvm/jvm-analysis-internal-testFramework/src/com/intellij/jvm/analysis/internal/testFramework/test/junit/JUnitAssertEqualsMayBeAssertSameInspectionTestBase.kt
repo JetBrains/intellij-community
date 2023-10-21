@@ -31,5 +31,5 @@ abstract class JUnitAssertEqualsMayBeAssertSameInspectionTestBase : JvmInspectio
     """.trimIndent())
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
 }

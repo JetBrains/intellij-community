@@ -2,9 +2,7 @@ package com.intellij.jvm.analysis.internal.testFramework
 
 import com.intellij.codeInspection.ObsoleteApiUsageInspection
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
 abstract class ObsoleteApiUsageInspectionTestBase : JvmInspectionTestBase() {
@@ -22,10 +20,5 @@ abstract class ObsoleteApiUsageInspectionTestBase : JvmInspectionTestBase() {
     )
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(languageLevel) {
-    override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-      super.configureModule(module, model, contentEntry)
-      model.addJavaAnnotationsLibrary()
-    }
-  }
+  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST, true) { }
 }

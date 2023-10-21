@@ -34,7 +34,7 @@ abstract class JUnitMalformedDeclarationInspectionTestBase(protected val junit5V
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel, junit5Version)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, junit5Version)
 
   protected fun addAutomaticExtension(service: String) {
     val servicesDir = createServiceResourceDir()

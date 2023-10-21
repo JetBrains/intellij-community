@@ -5,6 +5,7 @@ import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
@@ -16,7 +17,7 @@ import java.io.File
 @Ignore
 @RunWith(BlockJUnit4ClassRunner::class)
 class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetweenInconvertibleTypesInspectionTestBase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : AssertJProjectDescriptor(languageLevel) {
+  override fun getProjectDescriptor(): LightProjectDescriptor = object : AssertJProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))

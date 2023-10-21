@@ -11,7 +11,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 abstract class TestCaseWithoutTestsInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: TestCaseWithoutTestsInspection = TestCaseWithoutTestsInspection()
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
 
   private class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {

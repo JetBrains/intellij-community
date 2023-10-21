@@ -5,6 +5,7 @@ import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
@@ -17,7 +18,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest {
   abstract class KotlinJUnitMalformedDeclarationInspectionTestBase(
     junit5Version: String
   ) : JUnitMalformedDeclarationInspectionTestBase(junit5Version) {
-    override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(sdkLevel, junit5Version) {
+    override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(LanguageLevel.HIGHEST, junit5Version) {
       override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
         super.configureModule(module, model, contentEntry)
         val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))

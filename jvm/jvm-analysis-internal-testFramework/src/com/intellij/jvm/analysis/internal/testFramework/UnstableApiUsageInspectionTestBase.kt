@@ -2,22 +2,15 @@ package com.intellij.jvm.analysis.internal.testFramework
 
 import com.intellij.codeInspection.UnstableApiUsageInspection
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 abstract class UnstableApiUsageInspectionTestBase : JvmInspectionTestBase() {
   override val inspection by lazy { UnstableApiUsageInspection() } // lazy because inspection needs service in initialization
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(languageLevel) {
-    override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-      super.configureModule(module, model, contentEntry)
-      model.addJavaAnnotationsLibrary()
-    }
-  }
+  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST, true) { }
 
   override fun setUp() {
     super.setUp()

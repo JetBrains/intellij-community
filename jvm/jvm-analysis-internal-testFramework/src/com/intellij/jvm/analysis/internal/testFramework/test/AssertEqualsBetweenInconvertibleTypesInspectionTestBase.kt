@@ -20,5 +20,5 @@ abstract class AssertEqualsBetweenInconvertibleTypesInspectionTestBase : JvmInsp
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = AssertJProjectDescriptor(sdkLevel)
+  override fun getProjectDescriptor(): LightProjectDescriptor = AssertJProjectDescriptor(LanguageLevel.HIGHEST)
 }
