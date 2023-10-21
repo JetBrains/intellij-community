@@ -146,36 +146,7 @@ object IconUtil {
    */
   @JvmStatic
   fun computeFileIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon {
-    return computeFileIconImpl(BackedVirtualFile.getOriginFileIfBacked(file), project, flags)
-  }
-
-  private fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int): Icon {
-    if (!file.isValid || project != null && (project.isDisposed || !wasEverInitialized(project))) {
-      return AllIcons.FileTypes.Unknown
-    }
-
-    @Suppress("NAME_SHADOWING") val flags = filterFileIconFlags(file, flags)
-    val providerIcon = getProviderIcon(file, flags, project)
-    var icon = providerIcon ?: computeFileTypeIcon(file, false)
-    val dumb = project != null && DumbService.getInstance(project).isDumb
-    for (patcher in FileIconPatcher.EP_NAME.extensionList) {
-      if (dumb && !DumbService.isDumbAware(patcher)) {
-        continue
-      }
-
-      // render without a locked icon patch since we are going to apply it later anyway
-      icon = patcher.patchIcon(icon, file, flags and Iconable.ICON_FLAG_READ_STATUS.inv(), project)
-    }
-    if (file.`is`(VFileProperty.SYMLINK)) {
-      icon = LayeredIcon.layeredIcon(arrayOf(icon, PlatformIcons.SYMLINK_ICON))
-    }
-    if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
-        Registry.`is`("ide.locked.icon.enabled", false) &&
-        (!file.isWritable || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
-      icon = LayeredIcon.layeredIcon(arrayOf(icon, PlatformIcons.LOCKED_ICON))
-    }
-    LastComputedIconCache.put(file, icon, flags)
-    return icon
+    return computeFileIconImpl(file = BackedVirtualFile.getOriginFileIfBacked(file), project = project, flags = flags)
   }
 
   /**
@@ -200,23 +171,6 @@ object IconUtil {
    */
   @JvmStatic
   fun computeBaseFileIcon(vFile: VirtualFile): Icon = computeFileTypeIcon(vFile, true)
-
-  private fun computeFileTypeIcon(vFile: VirtualFile, onlyFastChecks: Boolean): Icon {
-    var icon = TypePresentationService.getService().getIcon(vFile)
-    if (icon != null) {
-      return icon
-    }
-    val fileType = if (onlyFastChecks) FileTypeRegistry.getInstance().getFileTypeByFileName(vFile.name) else vFile.fileType
-    if (vFile.isDirectory && fileType !is DirectoryFileType) {
-      return IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON)
-    }
-    icon = fileType.icon
-    return icon ?: getEmptyIcon(false)
-  }
-
-  private fun getProviderIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon? {
-    return FileIconProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getIcon(file, flags, project) }
-  }
 
   @JvmStatic
   fun getEmptyIcon(showVisibility: Boolean): Icon {
@@ -597,6 +551,52 @@ object IconUtil {
   fun rowIcon(left: Icon?, right: Icon?): Icon? {
     return if (left != null && right != null) RowIcon(left, right) else left ?: right
   }
+}
+
+private fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int): Icon {
+  if (!file.isValid || project != null && (project.isDisposed || !wasEverInitialized(project))) {
+    return AllIcons.FileTypes.Unknown
+  }
+
+  @Suppress("NAME_SHADOWING") val flags = filterFileIconFlags(file, flags)
+  val providerIcon = getProviderIcon(file, flags, project)
+  var icon = providerIcon ?: computeFileTypeIcon(vFile = file, onlyFastChecks = false)
+  val dumb = project != null && DumbService.getInstance(project).isDumb
+  for (patcher in FileIconPatcher.EP_NAME.extensionList) {
+    if (dumb && !DumbService.isDumbAware(patcher)) {
+      continue
+    }
+
+    // render without a locked icon patch since we are going to apply it later anyway
+    icon = patcher.patchIcon(icon, file, flags and Iconable.ICON_FLAG_READ_STATUS.inv(), project)
+  }
+  if (file.`is`(VFileProperty.SYMLINK)) {
+    icon = LayeredIcon.layeredIcon(arrayOf(icon, PlatformIcons.SYMLINK_ICON))
+  }
+  if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
+      Registry.`is`("ide.locked.icon.enabled", false) &&
+      (!file.isWritable || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
+    icon = LayeredIcon.layeredIcon(arrayOf(icon, PlatformIcons.LOCKED_ICON))
+  }
+  LastComputedIconCache.put(file, icon, flags)
+  return icon
+}
+
+private fun getProviderIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon? {
+  return FileIconProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getIcon(file, flags, project) }
+}
+
+private fun computeFileTypeIcon(vFile: VirtualFile, onlyFastChecks: Boolean): Icon {
+  var icon = TypePresentationService.getService().getIcon(vFile)
+  if (icon != null) {
+    return icon
+  }
+  val fileType = if (onlyFastChecks) FileTypeRegistry.getInstance().getFileTypeByFileName(vFile.name) else vFile.fileType
+  if (vFile.isDirectory && fileType !is DirectoryFileType) {
+    return IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON)
+  }
+  icon = fileType.icon
+  return icon ?: IconUtil.getEmptyIcon(false)
 }
 
 private class IconSizeWrapper(private val icon: Icon?, private val width: Int, private val height: Int) : Icon {
