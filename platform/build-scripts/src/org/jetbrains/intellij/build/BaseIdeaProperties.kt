@@ -67,7 +67,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.junit",
   "intellij.testng",
   "intellij.java.i18n",
-  "intellij.ant",
   "intellij.java.guiForms.designer",
   "intellij.java.byteCodeViewer",
   "intellij.java.coverage",
