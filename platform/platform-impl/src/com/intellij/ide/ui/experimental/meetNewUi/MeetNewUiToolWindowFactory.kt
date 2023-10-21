@@ -3,6 +3,7 @@ package com.intellij.ide.ui.experimental.meetNewUi
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
@@ -14,7 +15,11 @@ import com.intellij.ui.ExperimentalUI
 
 private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   override suspend fun isApplicableAsync(project: Project): Boolean {
-    return ExperimentalUI.isNewUI() && Registry.`is`("ide.experimental.ui.meetNewUi")
+    return ExperimentalUI.isNewUI() &&
+           Registry.`is`("ide.experimental.ui.meetNewUi", true) &&
+           serviceAsync<PropertiesComponent>().getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH) &&
+           //MeetNewUiCustomization.firstOrNull()?.showToolWindowOnStartup() == true &&
+           !isNotificationSilentMode(project)
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -27,17 +32,8 @@ private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun init(toolWindow: ToolWindow) {
-    val project = toolWindow.project
-    val propertyComponent = PropertiesComponent.getInstance()
-    if (isNotificationSilentMode(project) ||
-        !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH) ||
-        MeetNewUiCustomization.firstOrNull()?.showToolWindowOnStartup() == false) {
-      return
-    }
-
-    propertyComponent.unsetValue(ExperimentalUI.NEW_UI_FIRST_SWITCH)
-    val manager = ToolWindowManager.getInstance(project)
-    manager.invokeLater {
+    PropertiesComponent.getInstance().unsetValue(ExperimentalUI.NEW_UI_FIRST_SWITCH)
+    ToolWindowManager.getInstance(toolWindow.project).invokeLater {
       toolWindow.activate(null)
     }
   }
