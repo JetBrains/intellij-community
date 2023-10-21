@@ -109,9 +109,10 @@ abstract class HoverChangesTree(val tree: ChangesTree) {
                                  tree.getBackground(row, selected), false)
 
       val icon = if (hovered && hoverData!!.isOverOperationIcon) {
+        val hoverBackground = JBUI.CurrentTheme.ActionButton.hoverBackground()
+        val hoverBorder = JBUI.CurrentTheme.ActionButton.hoverBorder().takeIf { it != hoverBackground }
         val highlight = ColorIcon(foreground.iconWidth, componentHeight, foreground.iconWidth, foreground.iconHeight,
-                                  JBUI.CurrentTheme.ActionButton.hoverBackground(),
-                                  JBUI.CurrentTheme.ActionButton.hoverBorder(), JBUI.scale(4))
+                                  hoverBackground, hoverBorder, JBUI.scale(4))
         createLayeredIcon(background, highlight, foreground)
       }
       else {
