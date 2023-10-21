@@ -524,12 +524,11 @@ private fun append(result: StringBuilder, text: String, level: Int) {
 
 private fun generateIconFieldName(file: Path): CharSequence {
   val imageFileName = file.fileName.toString()
-  val path = file.toString()
   when {
-    path.contains("$androidIcons/icons") -> {
+    file.startsWith("$androidIcons/icons") -> {
       return toCamelCaseJavaIdentifier(imageFileName, imageFileName.lastIndexOf('.'))
     }
-    path.contains("$androidIcons") -> {
+    file.startsWith("$androidIcons") -> {
       return toStreamingSnakeCaseJavaIdentifier(imageFileName, imageFileName.lastIndexOf('.'))
     }
     else -> {
