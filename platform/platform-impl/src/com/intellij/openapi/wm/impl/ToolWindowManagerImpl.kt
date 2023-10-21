@@ -13,7 +13,7 @@ import com.intellij.ide.UiActivity
 import com.intellij.ide.UiActivityMonitor
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.MaximizeActiveDialogAction
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
 import com.intellij.notification.impl.NotificationsManagerImpl
@@ -1142,14 +1142,17 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   private fun isToolwindowOfBundledPlugin(task: RegisterToolWindowTask): Boolean {
-    if (ToolWindowId.BUILD_DEPENDENCIES == task.id) return true // platform toolwindow but registered dynamically
+    // platform toolwindow but registered dynamically
+    if (ToolWindowId.BUILD_DEPENDENCIES == task.id) {
+      return true
+    }
 
-    val taskPlugin = task.pluginDescriptor
-    if (taskPlugin != null) return taskPlugin.isBundled
+    task.pluginDescriptor?.let {
+      return it.isBundled
+    }
 
-    val contentFactoryClass = task.contentFactory?.javaClass?.canonicalName ?: return false
     // check content factory, Service View, and Endpoints View goes here
-    val pluginDescriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(contentFactoryClass)
+    val pluginDescriptor = PluginManager.getPluginByClass(task.contentFactory?.javaClass ?: return false)
     return pluginDescriptor == null || pluginDescriptor.isBundled
   }
 
