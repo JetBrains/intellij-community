@@ -3,14 +3,17 @@
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.notification.Notification
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.notification.asText
-import org.jetbrains.kotlin.idea.notification.catchNotifications
+import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class MavenMigrateTest : KotlinMavenImportingTestCase() {
-    fun testMigrateApiAndLanguageVersions() {
+    override fun runInDispatchThread() = false
+
+    fun testMigrateApiAndLanguageVersions() = runBlocking {
         val notifications = doMigrationTest(
             before = """
                 <groupId>test</groupId>
@@ -78,8 +81,8 @@ class MavenMigrateTest : KotlinMavenImportingTestCase() {
         )
     }
 
-    private fun doMigrationTest(before: String, after: String): List<Notification> = catchNotifications(myProject) {
-        importProject(before)
-        importProject(after)
+    private suspend fun doMigrationTest(before: String, after: String): List<Notification> = catchNotificationsAsync(myProject) {
+        importProjectAsync(before)
+        importProjectAsync(after)
     }
 }
