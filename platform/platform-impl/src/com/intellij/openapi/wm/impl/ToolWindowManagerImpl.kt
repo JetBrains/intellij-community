@@ -1141,21 +1141,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     return entry
   }
 
-  private fun isToolwindowOfBundledPlugin(task: RegisterToolWindowTask): Boolean {
-    // platform toolwindow but registered dynamically
-    if (ToolWindowId.BUILD_DEPENDENCIES == task.id) {
-      return true
-    }
-
-    task.pluginDescriptor?.let {
-      return it.isBundled
-    }
-
-    // check content factory, Service View, and Endpoints View goes here
-    val pluginDescriptor = PluginManager.getPluginByClass(task.contentFactory?.javaClass ?: return false)
-    return pluginDescriptor == null || pluginDescriptor.isBundled
-  }
-
   @Deprecated("Use ToolWindowFactory and toolWindow extension point")
   @Suppress("OverridingDeprecatedMember")
   override fun unregisterToolWindow(id: String) {
@@ -2264,9 +2249,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       val dockingAreaWeight = getAdjustedWeight(toolWindowPane, anchor, dockingAreaComponent)
       info.weight = toolWindowWeight
       layoutState.setUnifiedAnchorWeight(anchor, dockingAreaWeight)
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Moved/resized tool window ${info.id}, updated weight=${toolWindowWeight}, docking area weight=${dockingAreaWeight}")
-      }
+      LOG.debug { "Moved/resized tool window ${info.id}, updated weight=${toolWindowWeight}, docking area weight=${dockingAreaWeight}" }
     }
     fireStateChanged(MovedOrResized, toolWindow)
   }
@@ -2498,4 +2481,19 @@ private fun windowInfoChanges(oldInfo: WindowInfo, newInfo: WindowInfo): String 
     }
   }
   return sb.toString()
+}
+
+private fun isToolwindowOfBundledPlugin(task: RegisterToolWindowTask): Boolean {
+  // platform toolwindow but registered dynamically
+  if (ToolWindowId.BUILD_DEPENDENCIES == task.id) {
+    return true
+  }
+
+  task.pluginDescriptor?.let {
+    return it.isBundled
+  }
+
+  // check content factory, Service View, and Endpoints View goes here
+  val pluginDescriptor = PluginManager.getPluginByClass(task.contentFactory?.javaClass ?: return false)
+  return pluginDescriptor == null || pluginDescriptor.isBundled
 }
