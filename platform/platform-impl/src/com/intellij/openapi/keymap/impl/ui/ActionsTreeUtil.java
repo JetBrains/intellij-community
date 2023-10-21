@@ -83,7 +83,7 @@ public final class ActionsTreeUtil {
   }
 
   private static @NotNull Group createPluginsActionsGroup(Condition<? super AnAction> filtered) {
-    Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), (String)null);
+    Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null);
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     JBIterable<IdeaPluginDescriptor> plugins = JBIterable.of(PluginManagerCore.getPlugins())
       .sort(Comparator.comparing(IdeaPluginDescriptor::getName));
@@ -114,7 +114,7 @@ public final class ActionsTreeUtil {
                                                          String[] pluginActions,
                                                          Condition<? super AnAction> filtered) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    Group pluginGroup = new Group(name, (String)null);
+    Group pluginGroup = new Group(name, null);
     Arrays.sort(pluginActions, Comparator.comparing(ActionsTreeUtil::getTextToCompare));
     for (String actionId : pluginActions) {
       AnAction action = actionManager.getActionOrStub(actionId);
