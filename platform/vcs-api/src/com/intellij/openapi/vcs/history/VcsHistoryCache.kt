@@ -1,161 +1,90 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.history;
+package com.intellij.openapi.vcs.history
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsKey;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsKey
+import java.io.Serializable
+import java.util.function.Consumer
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.function.Consumer;
+class VcsHistoryCache {
+  private val historyCache: Cache<HistoryCacheBaseKey, CachedHistory>
+  private val annotationCache: Cache<HistoryCacheWithRevisionKey, Any>
+  private val lastRevisionCache: Cache<HistoryCacheWithRevisionKey, VcsRevisionNumber>
 
-public final class VcsHistoryCache {
-  private final Cache<HistoryCacheBaseKey, CachedHistory> historyCache;
-  private final Cache<HistoryCacheWithRevisionKey, Object> annotationCache;
-  private final Cache<HistoryCacheWithRevisionKey, VcsRevisionNumber> lastRevisionCache;
-
-  public VcsHistoryCache() {
+  init {
     // increase cache size when preload enabled
-    boolean preloadEnabled = AdvancedSettings.getBoolean("vcs.annotations.preload") || Registry.is("vcs.code.author.inlay.hints");
-    historyCache = Caffeine.newBuilder().maximumSize(preloadEnabled ? 50 : 10).build();
-    annotationCache = Caffeine.newBuilder().maximumSize(preloadEnabled ? 50 : 10).build();
-    lastRevisionCache = Caffeine.newBuilder().maximumSize(50).build();
+    val preloadEnabled = getBoolean("vcs.annotations.preload") || Registry.`is`("vcs.code.author.inlay.hints")
+    historyCache = Caffeine.newBuilder().maximumSize((if (preloadEnabled) 50 else 10).toLong()).build()
+    annotationCache = Caffeine.newBuilder().maximumSize((if (preloadEnabled) 50 else 10).toLong()).build()
+    lastRevisionCache = Caffeine.newBuilder().maximumSize(50).build()
   }
 
-  public <C extends Serializable, T extends VcsAbstractHistorySession> void put(
-    @NotNull FilePath filePath,
-    @Nullable FilePath correctedPath,
-    @NotNull VcsKey vcsKey,
-    @NotNull T session,
-    @NotNull VcsCacheableHistorySessionFactory<C, T> factory,
-    boolean isFull
-  ) {
-    historyCache.put(new HistoryCacheBaseKey(filePath, vcsKey), new CachedHistory(correctedPath == null ? filePath : correctedPath,
-                                                                                  session.getRevisionList(),
-                                                                                  session.getCurrentRevisionNumber(),
-                                                                                  factory.getAdditionallyCachedData(session),
-                                                                                  isFull));
+  fun <C : Serializable, T : VcsAbstractHistorySession> put(filePath: FilePath, correctedPath: FilePath?, vcsKey: VcsKey,
+                                                            session: T, factory: VcsCacheableHistorySessionFactory<C, T>, isFull: Boolean) {
+    val cachedHistory = CachedHistory(correctedPath ?: filePath, session.revisionList, session.currentRevisionNumber,
+                                      factory.getAdditionallyCachedData(session), isFull)
+    historyCache.put(HistoryCacheBaseKey(filePath, vcsKey), cachedHistory)
   }
 
-  public void editCached(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull Consumer<? super List<VcsFileRevision>> consumer) {
-    CachedHistory cachedHistory = historyCache.getIfPresent(new HistoryCacheBaseKey(filePath, vcsKey));
+  fun editCached(filePath: FilePath, vcsKey: VcsKey, consumer: Consumer<in List<VcsFileRevision>>) {
+    val cachedHistory = historyCache.getIfPresent(HistoryCacheBaseKey(filePath, vcsKey))
     if (cachedHistory != null) {
-      consumer.accept(cachedHistory.getRevisions());
+      consumer.accept(cachedHistory.revisions)
     }
   }
 
-  public @Nullable <C extends Serializable, T extends VcsAbstractHistorySession> T getFull(
-    @NotNull FilePath filePath,
-    @NotNull VcsKey vcsKey,
-    @NotNull VcsCacheableHistorySessionFactory<C, T> factory
-  ) {
-    CachedHistory cachedHistory = historyCache.getIfPresent(new HistoryCacheBaseKey(filePath, vcsKey));
-    if (cachedHistory == null || !cachedHistory.isIsFull()) {
-      return null;
-    }
-
-    //noinspection unchecked
-    C customData = (C)cachedHistory.getCustomData();
-    return factory.createFromCachedData(customData, cachedHistory.getRevisions(), cachedHistory.getPath(),
-                                        cachedHistory.getCurrentRevision());
+  fun <C : Serializable, T : VcsAbstractHistorySession> getFull(filePath: FilePath, vcsKey: VcsKey,
+                                                                factory: VcsCacheableHistorySessionFactory<C, T>): T? {
+    val cachedHistory = historyCache.getIfPresent(HistoryCacheBaseKey(filePath, vcsKey))?.takeIf { it.isFull } ?: return null
+    val customData = cachedHistory.customData as C?
+    return factory.createFromCachedData(customData, cachedHistory.revisions, cachedHistory.path, cachedHistory.currentRevision)
   }
 
-  public @Nullable <C extends Serializable, T extends VcsAbstractHistorySession> T getMaybePartial(
-    @NotNull FilePath filePath,
-    @NotNull VcsKey vcsKey,
-    @NotNull VcsCacheableHistorySessionFactory<C, T> factory
-  ) {
-    CachedHistory cachedHistory = historyCache.getIfPresent(new HistoryCacheBaseKey(filePath, vcsKey));
-    if (cachedHistory == null) {
-      return null;
-    }
-
-    //noinspection unchecked
-    C customData = (C)cachedHistory.getCustomData();
-    return factory.createFromCachedData(customData, cachedHistory.getRevisions(), cachedHistory.getPath(),
-                                        cachedHistory.getCurrentRevision());
+  fun <C : Serializable, T : VcsAbstractHistorySession> getMaybePartial(filePath: FilePath, vcsKey: VcsKey,
+                                                                        factory: VcsCacheableHistorySessionFactory<C, T>): T? {
+    val cachedHistory = historyCache.getIfPresent(HistoryCacheBaseKey(filePath, vcsKey)) ?: return null
+    val customData = cachedHistory.customData as C?
+    return factory.createFromCachedData(customData, cachedHistory.revisions, cachedHistory.path, cachedHistory.currentRevision)
   }
 
-  public void clearAll() {
-    clearHistory();
-    clearAnnotations();
-    clearLastRevisions();
+  fun clearHistory() {
+    historyCache.asMap().keys.removeIf { !it.filePath.isNonLocal }
   }
 
-  public void clearHistory() {
-    historyCache.asMap().keySet().removeIf(it -> !it.getFilePath().isNonLocal());
+  fun putAnnotation(filePath: FilePath, vcsKey: VcsKey, number: VcsRevisionNumber, vcsAnnotation: Any) {
+    annotationCache.put(HistoryCacheWithRevisionKey(filePath, vcsKey, number), vcsAnnotation)
   }
 
-  public void putAnnotation(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber number,
-                            @NotNull Object vcsAnnotation) {
-    annotationCache.put(new HistoryCacheWithRevisionKey(filePath, vcsKey, number), vcsAnnotation);
+  fun getAnnotation(filePath: FilePath, vcsKey: VcsKey, number: VcsRevisionNumber): Any? {
+    return annotationCache.getIfPresent(HistoryCacheWithRevisionKey(filePath, vcsKey, number))
   }
 
-  public @Nullable Object getAnnotation(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber number) {
-    return annotationCache.getIfPresent(new HistoryCacheWithRevisionKey(filePath, vcsKey, number));
+  fun clearAnnotations() {
+    annotationCache.invalidateAll()
   }
 
-  public void clearAnnotations() {
-    annotationCache.invalidateAll();
+  fun putLastRevision(filePath: FilePath, vcsKey: VcsKey, currentRevision: VcsRevisionNumber, lastRevision: VcsRevisionNumber) {
+    lastRevisionCache.put(HistoryCacheWithRevisionKey(filePath, vcsKey, currentRevision), lastRevision)
   }
 
-  public void putLastRevision(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber currentRevision,
-                              @NotNull VcsRevisionNumber lastRevision) {
-    lastRevisionCache.put(new HistoryCacheWithRevisionKey(filePath, vcsKey, currentRevision), lastRevision);
+  fun getLastRevision(filePath: FilePath, vcsKey: VcsKey, currentRevision: VcsRevisionNumber): VcsRevisionNumber? {
+    return lastRevisionCache.getIfPresent(HistoryCacheWithRevisionKey(filePath, vcsKey, currentRevision))
   }
 
-  public @Nullable VcsRevisionNumber getLastRevision(@NotNull FilePath filePath,
-                                                     @NotNull VcsKey vcsKey,
-                                                     @NotNull VcsRevisionNumber currentRevision) {
-    return lastRevisionCache.getIfPresent(new HistoryCacheWithRevisionKey(filePath, vcsKey, currentRevision));
+  fun clearLastRevisions() {
+    lastRevisionCache.invalidateAll()
   }
 
-  public void clearLastRevisions() {
-    lastRevisionCache.invalidateAll();
+  fun clearAll() {
+    clearHistory()
+    clearAnnotations()
+    clearLastRevisions()
   }
 
-  private static final class CachedHistory {
-    private final FilePath myPath;
-    private final List<VcsFileRevision> myRevisions;
-    private final VcsRevisionNumber myCurrentRevision;
-    private final Object myCustomData;
-    private final boolean myIsFull;
-
-    CachedHistory(FilePath path,
-                  List<VcsFileRevision> revisions,
-                  VcsRevisionNumber currentRevision,
-                  Object customData,
-                  boolean isFull) {
-      myPath = path;
-      myRevisions = revisions;
-      myCurrentRevision = currentRevision;
-      myCustomData = customData;
-      myIsFull = isFull;
-    }
-
-    public FilePath getPath() {
-      return myPath;
-    }
-
-    public List<VcsFileRevision> getRevisions() {
-      return myRevisions;
-    }
-
-    public VcsRevisionNumber getCurrentRevision() {
-      return myCurrentRevision;
-    }
-
-    public Object getCustomData() {
-      return myCustomData;
-    }
-
-    public boolean isIsFull() {
-      return myIsFull;
-    }
-  }
+  private data class CachedHistory(val path: FilePath, val revisions: List<VcsFileRevision>, val currentRevision: VcsRevisionNumber?,
+                                   val customData: Any?, val isFull: Boolean)
 }
