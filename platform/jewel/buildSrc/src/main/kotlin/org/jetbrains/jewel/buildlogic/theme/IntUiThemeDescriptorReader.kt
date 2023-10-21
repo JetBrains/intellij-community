@@ -115,9 +115,9 @@ internal object IntUiThemeDescriptorReader {
             PropertySpec.builder("iconData", iconDataClassName, KModifier.OVERRIDE)
                 .initializer(
                     CodeBlock.of(
-                        "ThemeIconData(\n%L,\n%L,\n%L\n)",
-                        colorPalette.toMapCodeBlock(),
+                        "ThemeIconData(iconOverrides = \n%L,colorPalette = \n%L,\nselectionColorPalette = %L\n)",
                         iconOverridesBlock,
+                        colorPalette.toMapCodeBlock(),
                         selectionColorPaletteBlock,
                     )
                 )
