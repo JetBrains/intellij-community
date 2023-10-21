@@ -1,7 +1,5 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
-import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
-import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -10,10 +8,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.InMemoryEmbeddingSearchIndex
@@ -46,7 +47,7 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
   fun prepareForSearch(project: Project) = SemanticSearchCoroutineScope.getScope(project).launch {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       // In unit tests you have to manually download artifacts when needed
-      LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
+      serviceAsync<LocalArtifactsManager>().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
     }
     index.loadFromDisk()
     generateEmbeddingsIfNecessary(project)
@@ -69,7 +70,7 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
       }
     }
     catch (e: CancellationException) {
-      logger.debug("Actions embedding indexing was cancelled")
+      LOG.debug("Actions embedding indexing was cancelled")
       throw e
     }
     finally {
@@ -79,19 +80,24 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
 
   @RequiresBackgroundThread
   override suspend fun searchNeighboursIfEnabled(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
-    if (!checkSearchEnabled()) return emptyList()
+    if (!checkSearchEnabled()) {
+      return emptyList()
+    }
     return searchNeighbours(text, topK, similarityThreshold)
   }
 
   @RequiresBackgroundThread
   override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     val embedding = generateEmbedding(text) ?: return emptyList()
-    return index.findClosest(embedding, topK, similarityThreshold)
+    return index.findClosest(searchEmbedding = embedding, topK = topK, similarityThreshold = similarityThreshold)
   }
 
   @RequiresBackgroundThread
   suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Sequence<ScoredText> {
-    if (!checkSearchEnabled()) return emptySequence()
+    if (!checkSearchEnabled()) {
+      return emptySequence()
+    }
+
     val embedding = generateEmbedding(text) ?: return emptySequence()
     return index.streamFindClose(embedding, similarityThreshold)
   }
@@ -99,19 +105,19 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
   companion object {
     private const val INDEX_DIR = "actions"
 
-    private val logger = Logger.getInstance(ActionEmbeddingsStorage::class.java)
+    private val LOG = logger<ActionEmbeddingsStorage>()
 
     fun getInstance(): ActionEmbeddingsStorage = service()
 
-    private fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInActionsTab
+    private suspend fun checkSearchEnabled() = serviceAsync<SemanticSearchSettings>().enabledInActionsTab
 
     private fun shouldIndexAction(action: AnAction?): Boolean {
-      return action != null && !(action is ActionGroup && !action.isSearchable) && action.templateText != null
+      return action != null && !(action is ActionGroup && !action.isSearchable) && action.templatePresentation.hasText()
     }
 
-    internal fun getIndexableActionIds(): Set<String> {
-      val actionManager = (ActionManager.getInstance() as ActionManagerImpl)
-      return actionManager.actionIds.filter { shouldIndexAction(actionManager.getActionOrStub(it)) }.toSet()
+    internal suspend fun getIndexableActionIds(): Set<String> {
+      val actionManager = (serviceAsync<ActionManager>() as ActionManagerImpl)
+      return actionManager.actionIds.filterTo(LinkedHashSet()) { shouldIndexAction(actionManager.getActionOrStub(it)) }
     }
   }
 }

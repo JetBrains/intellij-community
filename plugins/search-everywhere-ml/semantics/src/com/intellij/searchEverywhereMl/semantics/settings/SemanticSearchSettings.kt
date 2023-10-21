@@ -1,6 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.settings
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 
 interface SemanticSearchSettings {
   var enabledInActionsTab: Boolean
@@ -23,6 +23,6 @@ interface SemanticSearchSettings {
   fun getActionsAPIToken(): String
 
   companion object {
-    fun getInstance(): SemanticSearchSettings = ApplicationManager.getApplication().getService(SemanticSearchSettings::class.java)
+    fun getInstance(): SemanticSearchSettings = service<SemanticSearchSettings>()
   }
 }
