@@ -615,7 +615,8 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       }
       return
     }
-    val customTitleBar = ((helper as? DecoratedHelper)?.customFrameTitlePane as? CustomHeader)?.customTitleBar ?: return
+    val titlePane = (helper as? DecoratedHelper)?.customFrameTitlePane
+    val customTitleBar = (titlePane as? CustomHeader)?.customTitleBar ?: (titlePane as? MacToolbarFrameHeader)?.customTitleBar ?: return
 
     val listener = HeaderClickTransparentListener(customTitleBar)
     component.addMouseListener(listener)

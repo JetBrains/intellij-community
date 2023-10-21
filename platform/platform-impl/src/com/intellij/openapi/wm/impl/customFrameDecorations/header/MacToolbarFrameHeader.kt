@@ -61,7 +61,7 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     }
   }
 
-  private val customTitleBar: WindowDecorations.CustomTitleBar?
+  val customTitleBar: WindowDecorations.CustomTitleBar?
 
   init {
     // color full toolbar
