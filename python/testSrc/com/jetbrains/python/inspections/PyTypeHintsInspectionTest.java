@@ -1364,19 +1364,21 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
   // PY-53105
   public void testTypeVarTupleNameAsLiteral() {
-    doTestByText("from typing import TypeVarTuple\n" +
-                 "\n" +
-                 "name = 'Ts'\n" +
-                 "Ts = TypeVarTuple(<warning descr=\"'TypeVarTuple()' expects a string literal as first argument\">name</warning>)\n" +
-                 "Ts1 = TypeVarTuple('Ts1')");
+    doTestByText("""
+                   from typing import TypeVarTuple
+
+                   name = 'Ts'
+                   Ts = TypeVarTuple(<warning descr="'TypeVarTuple()' expects a string literal as first argument">name</warning>)
+                   Ts1 = TypeVarTuple('Ts1')""");
   }
 
   // PY-53105
   public void testTypeVarTupleNameAndTargetNameEquality() {
-    doTestByText("from typing import TypeVarTuple\n" +
-                 "\n" +
-                 "Ts = TypeVarTuple(<warning descr=\"The argument to 'TypeVarTuple()' must be a string equal to the variable name to which it is assigned\">'T'</warning>)\n" +
-                 "Ts1 = TypeVarTuple('Ts1')");
+    doTestByText("""
+                   from typing import TypeVarTuple
+
+                   Ts = TypeVarTuple(<warning descr="The argument to 'TypeVarTuple()' must be a string equal to the variable name to which it is assigned">'T'</warning>)
+                   Ts1 = TypeVarTuple('Ts1')""");
   }
 
   // PY-53105

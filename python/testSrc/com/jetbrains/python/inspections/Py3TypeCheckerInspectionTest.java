@@ -1258,85 +1258,93 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-53105
   public void testVariadicGenericInFunction() {
-    doTestByText("from typing import Tuple, TypeVarTuple, TypeVar\n" +
-                 "\n" +
-                 "T = TypeVar('T')\n" +
-                 "Ts = TypeVarTuple('Ts')\n" +
-                 "\n" +
-                 "\n" +
-                 "def foo(x: T, y: Tuple[*Ts]):\n" +
-                 "    pass\n" +
-                 "\n" +
-                 "\n" +
-                 "foo(10, (1, '1', [1]))\n");
+    doTestByText("""
+                   from typing import Tuple, TypeVarTuple, TypeVar
+
+                   T = TypeVar('T')
+                   Ts = TypeVarTuple('Ts')
+
+
+                   def foo(x: T, y: Tuple[*Ts]):
+                       pass
+
+
+                   foo(10, (1, '1', [1]))
+                   """);
   }
 
   // PY-53105
   public void testVariadicGenericArgumentByCallableInFunction() {
-    doTestByText("from typing import Callable, TypeVarTuple, Tuple\n" +
-                 "\n" +
-                 "Ts = TypeVarTuple('Ts')\n" +
-                 "\n" +
-                 "\n" +
-                 "def foo(a: int, f: Callable[[*Ts], None], args: Tuple[*Ts]) -> None: ...\n" +
-                 "def bar(a: int, b: str) -> None: ...\n" +
-                 "\n" +
-                 "\n" +
-                 "foo(1, bar, args=(0, 'foo'))\n" +
-                 "\n" +
-                 "foo(1, bar, <warning descr=\"Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[LiteralString, int]' instead\">args=('foo', 0)</warning>)\n");
+    doTestByText("""
+                   from typing import Callable, TypeVarTuple, Tuple
+
+                   Ts = TypeVarTuple('Ts')
+
+
+                   def foo(a: int, f: Callable[[*Ts], None], args: Tuple[*Ts]) -> None: ...
+                   def bar(a: int, b: str) -> None: ...
+
+
+                   foo(1, bar, args=(0, 'foo'))
+
+                   foo(1, bar, <warning descr="Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[LiteralString, int]' instead">args=('foo', 0)</warning>)
+                   """);
   }
 
   // PY-53105
   public void testVariadicGenericCheckCallableInFunction() {
-    doTestByText("from typing import TypeVar, TypeVarTuple, Callable, Tuple\n" +
-                 "\n" +
-                 "T = TypeVar('T')\n" +
-                 "Ts = TypeVarTuple('Ts')\n" +
-                 "\n" +
-                 "\n" +
-                 "def foo(f: Callable[[int, *Ts, T], Tuple[T, *Ts]]) -> None: ...\n" +
-                 "\n" +
-                 "\n" +
-                 "def ok1(a: int, b: str, c: bool, d: list[int]) -> Tuple[list[int], str, bool]: ...\n" +
-                 "def ok2(a: int, b: str) -> Tuple[str]: ...\n" +
-                 "\n" +
-                 "\n" +
-                 "foo(ok1)\n" +
-                 "foo(ok2)\n" +
-                 "\n" +
-                 "\n" +
-                 "def err1(a: int, b: str, c: bool, d: list[int]) -> Tuple[list[int], str, str]: ...\n" +
-                 "def err2(a: int, b: str) -> Tuple[str, str]: ...\n" +
-                 "\n" +
-                 "\n" +
-                 "foo(<warning descr=\"Expected type '(int, str, bool, list[int]) -> tuple[list[int], str, bool]' (matched generic type '(int, *Ts, T) -> tuple[T, *Ts]'), got '(a: int, b: str, c: bool, d: list[int]) -> tuple[list[int], str, str]' instead\">err1</warning>)\n" +
-                 "foo(<warning descr=\"Expected type '(int, str) -> tuple[str]' (matched generic type '(int, *Ts, T) -> tuple[T, *Ts]'), got '(a: int, b: str) -> tuple[str, str]' instead\">err2</warning>)\n");
+    doTestByText("""
+                   from typing import TypeVar, TypeVarTuple, Callable, Tuple
+
+                   T = TypeVar('T')
+                   Ts = TypeVarTuple('Ts')
+
+
+                   def foo(f: Callable[[int, *Ts, T], Tuple[T, *Ts]]) -> None: ...
+
+
+                   def ok1(a: int, b: str, c: bool, d: list[int]) -> Tuple[list[int], str, bool]: ...
+                   def ok2(a: int, b: str) -> Tuple[str]: ...
+
+
+                   foo(ok1)
+                   foo(ok2)
+
+
+                   def err1(a: int, b: str, c: bool, d: list[int]) -> Tuple[list[int], str, str]: ...
+                   def err2(a: int, b: str) -> Tuple[str, str]: ...
+
+
+                   foo(<warning descr="Expected type '(int, str, bool, list[int]) -> tuple[list[int], str, bool]' (matched generic type '(int, *Ts, T) -> tuple[T, *Ts]'), got '(a: int, b: str, c: bool, d: list[int]) -> tuple[list[int], str, str]' instead">err1</warning>)
+                   foo(<warning descr="Expected type '(int, str) -> tuple[str]' (matched generic type '(int, *Ts, T) -> tuple[T, *Ts]'), got '(a: int, b: str) -> tuple[str, str]' instead">err2</warning>)
+                   """);
   }
 
   // PY-53105
   public void testVariadicGenericTwoTsInFunction() {
-    doTestByText("from typing import TypeVarTuple, Generic\n" +
-                 "\n" +
-                 "Ts = TypeVarTuple('Ts')\n" +
-                 "\n" +
-                 "\n" +
-                 "class Array(Generic[*Ts]):\n" +
-                 "    ...\n" +
-                 "\n" +
-                 "\n" +
-                 "def foo(x: Array[*Ts], y: Array[*Ts]) -> Array[*Ts]:\n" +
-                 "    ...\n" +
-                 "\n" +
-                 "\n" +
-                 "x: Array[int]\n" +
-                 "y: Array[str]\n" +
-                 "z: Array[int, str]\n" +
-                 "\n" +
-                 "foo(x, x)\n" +
-                 "\n" +
-                 "foo(x, <warning descr=\"Expected type 'Array[int]' (matched generic type 'Array[*Ts]'), got 'Array[str]' instead\">y</warning>)\n" +
-                 "foo(x, <warning descr=\"Expected type 'Array[int]' (matched generic type 'Array[*Ts]'), got 'Array[int, str]' instead\">z</warning>)\n");
+    doTestByText("""
+                   from typing import TypeVarTuple, Generic
+
+                   Ts = TypeVarTuple('Ts')
+
+
+                   class Array(Generic[*Ts]):
+                       ...
+
+
+                   def foo(x: Array[*Ts], y: Array[*Ts]) -> Array[*Ts]:
+                       ...
+
+
+                   x: Array[int]
+                   y: Array[str]
+                   z: Array[int, str]
+
+                   foo(x, x)
+
+                   foo(x, <warning descr="Expected type 'Array[int]' (matched generic type 'Array[*Ts]'), got 'Array[str]' instead">y</warning>)
+                   foo(x, <warning descr="Expected type 'Array[int]' (matched generic type 'Array[*Ts]'), got 'Array[int, str]' instead">z</warning>)
+                   """);
   }
 
   // PY-53105
@@ -1583,7 +1591,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    
                    y: Float32Array[Height] = Array()
-                   takes_float_array_of_specific_shape(<warning descr=\"Expected type 'Array[float, Height, Width]', got 'Array[float, Height]' instead\">y</warning>)
+                   takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float, Height, Width]', got 'Array[float, Height]' instead">y</warning>)
                     """);
   }
 
@@ -1612,7 +1620,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    
                    y: Float32Array[Height, Width] = Array()
-                   takes_float_array_of_specific_shape(<warning descr=\"Expected type 'Array[float, Height]', got 'Array[float, Height, Width]' instead\">y</warning>)
+                   takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float, Height]', got 'Array[float, Height, Width]' instead">y</warning>)
                     """);
   }
 
