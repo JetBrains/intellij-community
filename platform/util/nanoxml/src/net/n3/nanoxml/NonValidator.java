@@ -455,12 +455,7 @@ public abstract class NonValidator implements IXMLValidator {
   @Override
   public void elementAttributesProcessed(String name, Properties extraAttributes, String systemId, int lineNr) {
     Properties props = currentElements.pop();
-    Enumeration<Object> enumeration = props.keys();
-
-    while (enumeration.hasMoreElements()) {
-      String key = (String)enumeration.nextElement();
-      extraAttributes.put(key, props.get(key));
-    }
+    extraAttributes.putAll(props);
   }
 
   /**
