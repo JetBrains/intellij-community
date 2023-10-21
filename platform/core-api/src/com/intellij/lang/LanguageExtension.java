@@ -6,7 +6,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -35,7 +38,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   @Override
-  protected @NotNull String keyToString(final @NotNull Language key) {
+  protected @NotNull String keyToString(@NotNull Language key) {
     return key.getID();
   }
 
