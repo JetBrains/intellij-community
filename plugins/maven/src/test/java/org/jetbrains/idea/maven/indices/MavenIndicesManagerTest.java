@@ -66,7 +66,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   @Test
   public void testAddingArchetypes() {
     MavenArchetype mavenArchetype = new MavenArchetype("myGroup", "myArtifact", "666", null, null);
-    myIndicesFixture.getIndicesManager().addArchetype(mavenArchetype);
+    MavenIndicesManager.addArchetype(mavenArchetype);
 
     assertArchetypeExists("myGroup:myArtifact:666");
   }

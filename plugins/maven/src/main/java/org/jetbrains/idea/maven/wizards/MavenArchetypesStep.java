@@ -288,7 +288,7 @@ public final class MavenArchetypesStep extends ModuleWizardStep implements Dispo
 
     MavenArchetype archetype = dialog.getArchetype();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      MavenIndicesManager.getInstance(findProject()).addArchetype(archetype);
+      MavenIndicesManager.addArchetype(archetype);
       ApplicationManager.getApplication().invokeLater(() -> updateArchetypesList(archetype));
     });
   }

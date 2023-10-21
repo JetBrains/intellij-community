@@ -117,7 +117,7 @@ final class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTyp
   }
 
   @Override
-  protected final GrTypeDefinition doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
+  protected GrTypeDefinition doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
     final String fileName = className + NewGroovyActionBase.GROOVY_EXTENSION;
     final PsiFile fromTemplate = GroovyTemplatesFactory.createFromTemplate(dir, className, fileName, templateName, true);
     if (fromTemplate instanceof GroovyFile) {

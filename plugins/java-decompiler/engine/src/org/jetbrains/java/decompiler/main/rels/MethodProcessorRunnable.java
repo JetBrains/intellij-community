@@ -157,10 +157,8 @@ public class MethodProcessorRunnable implements Runnable {
 
     SequenceHelper.condenseSequences(root);
 
-    StackVarsProcessor stackProc = new StackVarsProcessor();
-
     do {
-      stackProc.simplifyStackVars(root, mt, cl);
+      StackVarsProcessor.simplifyStackVars(root, mt, cl);
       varProc.setVarVersions(root);
     }
     while (new PPandMMHelper().findPPandMM(root));
@@ -178,7 +176,7 @@ public class MethodProcessorRunnable implements Runnable {
       if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
         if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
           SequenceHelper.condenseSequences(root);
-          stackProc.simplifyStackVars(root, mt, cl);
+          StackVarsProcessor.simplifyStackVars(root, mt, cl);
           varProc.setVarVersions(root);
         }
       }
