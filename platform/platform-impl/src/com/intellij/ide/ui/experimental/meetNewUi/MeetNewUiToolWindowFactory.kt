@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.experimental.meetNewUi
 
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.DumbAware
@@ -28,17 +27,15 @@ private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun init(toolWindow: ToolWindow) {
-    toolWindow.setIcon(ExpUiIcons.Toolwindow.MeetNewUi)
-
     val project = toolWindow.project
-    val propertiesComponent = PropertiesComponent.getInstance()
-    if (isNotificationSilentMode(project)
-        || !propertiesComponent.getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH)
-        || MeetNewUiCustomization.firstOrNull()?.showToolWindowOnStartup() == false) {
+    val propertyComponent = PropertiesComponent.getInstance()
+    if (isNotificationSilentMode(project) ||
+        !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH) ||
+        MeetNewUiCustomization.firstOrNull()?.showToolWindowOnStartup() == false) {
       return
     }
 
-    propertiesComponent.unsetValue(ExperimentalUI.NEW_UI_FIRST_SWITCH)
+    propertyComponent.unsetValue(ExperimentalUI.NEW_UI_FIRST_SWITCH)
     val manager = ToolWindowManager.getInstance(project)
     manager.invokeLater {
       toolWindow.activate(null)

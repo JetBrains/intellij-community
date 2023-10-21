@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.ActionToolbarApp
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
@@ -51,9 +52,12 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Consumer
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SingleAlarm
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.Color
@@ -62,6 +66,7 @@ import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
+import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.math.abs
@@ -75,7 +80,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                               windowInfo: WindowInfo,
                               private var contentFactory: ToolWindowFactory?,
                               private var isAvailable: Boolean = true,
-                              @NlsContexts.TabTitle private var stripeTitle: String) : ToolWindowEx {
+                              private var stripeTitleProvider: Supplier<@NlsContexts.TabTitle String>) : ToolWindowEx {
   var windowInfoDuringInit: WindowInfoImpl? = null
 
   private val focusTask by lazy { FocusTask(this) }
@@ -100,7 +105,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   private var hideOnEmptyContent = false
   var isPlaceholderMode: Boolean = false
 
-  private var pendingContentManagerListeners: MutableList<ContentManagerListener>? = null
+  private var pendingContentManagerListeners: PersistentList<ContentManagerListener> = persistentListOf()
 
   private val showing = object : BusyObject.Impl() {
     override fun isReady(): Boolean {
@@ -116,7 +121,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   internal var icon: ToolWindowIcon? = null
 
-  private val contentManager = lazy {
+  private val contentManager = SynchronizedClearableLazy {
     val result = createContentManager()
     if (toolWindowManager.isNewUi) {
       result.addContentManagerListener(UpdateBackgroundContentManager(decorator))
@@ -125,18 +130,14 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   private val moveOrResizeAlarm = SingleAlarm(Runnable {
-    val decorator = this@ToolWindowImpl.decorator
+    val decorator = decorator
     if (decorator != null) {
-      if (toolWindowManager.log().isDebugEnabled) {
-        toolWindowManager.log().debug("Invoking scheduled tool window $id bounds update")
-      }
+      toolWindowManager.log().debug { "Invoking scheduled tool window $id bounds update" }
       toolWindowManager.movedOrResized(decorator)
     }
     val updatedWindowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
     this@ToolWindowImpl.windowInfo = updatedWindowInfo
-    if (toolWindowManager.log().isDebugEnabled) {
-      toolWindowManager.log().debug("Updated window info: $updatedWindowInfo")
-    }
+    toolWindowManager.log().debug { "Updated window info: $updatedWindowInfo" }
   }, 100, disposable)
 
   init {
@@ -222,12 +223,11 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       }
     })
 
-    // after init, as it was before contentManager creation was changed to be lazy
-    pendingContentManagerListeners?.let { list ->
-      pendingContentManagerListeners = null
-      for (listener in list) {
-        contentManager.addContentManagerListener(listener)
-      }
+    // after init, as it was before, contentManager creation was changed to be lazy
+    val pendingContentManagerListeners = pendingContentManagerListeners
+    this.pendingContentManagerListeners = persistentListOf()
+    for (listener in pendingContentManagerListeners) {
+      contentManager.addContentManagerListener(listener)
     }
 
     return contentManager
@@ -450,12 +450,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   fun getComponentIfInitialized(): JComponent? {
-    return if (contentManager.isInitialized()) contentManager.value.takeIf { !it.isDisposed }?.component else null
+    return contentManager.valueIfInitialized?.takeIf { !it.isDisposed }?.component
   }
 
-  override fun getContentManagerIfCreated(): ContentManager? {
-    return if (contentManager.isInitialized()) contentManager.value else null
-  }
+  override fun getContentManagerIfCreated() = contentManager.valueIfInitialized
 
   override fun getContentManager(): ContentManager {
     createContentIfNeeded()
@@ -467,10 +465,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       contentManager.value.addContentManagerListener(listener)
     }
     else {
-      if (pendingContentManagerListeners == null) {
-        pendingContentManagerListeners = mutableListOf()
-      }
-      pendingContentManagerListeners!!.add(listener)
+      pendingContentManagerListeners = pendingContentManagerListeners.add(listener)
     }
   }
 
@@ -480,7 +475,9 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun getTitle(): String? = contentManager.value.selectedContent?.displayName
 
-  override fun getStripeTitle(): String = stripeTitle
+  override fun getStripeTitle(): String = stripeTitleProvider.get()
+
+  override fun getStripeTitleProvider() = stripeTitleProvider
 
   override fun setIcon(newIcon: Icon) {
     EDT.assertIsEdt()
@@ -508,17 +505,21 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun setStripeTitle(value: String) {
-    if (value == stripeTitle) {
+    if (value == stripeTitleProvider.get()) {
       return
     }
 
-    stripeTitle = value
+    stripeTitleProvider = Supplier { value }
     contentUi?.update()
 
     if (windowInfoDuringInit == null) {
       EDT.assertIsEdt()
       toolWindowManager.toolWindowPropertyChanged(toolWindow = this, property = ToolWindowProperty.STRIPE_TITLE)
     }
+  }
+
+  override fun setStripeTitleProvider(title: Supplier<String>) {
+    stripeTitleProvider = title
   }
 
   override fun updateContentUi() {
@@ -592,8 +593,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
 
     if (toolWindowManager.isNewUi) {
-      setBackgroundRecursively(contentManager.value.component, JBUI.CurrentTheme.ToolWindow.background())
-      addAdjustListener(decorator, contentManager.value.component)
+      setBackgroundRecursively(component = contentManager.value.component, bg = JBUI.CurrentTheme.ToolWindow.background())
+      addAdjustListener(decorator = decorator, component = contentManager.value.component)
     }
   }
 
@@ -677,7 +678,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       }
       group.add(ActionManager.getInstance().getAction(SpeedSearchAction.ID))
       group.addSeparator()
-      getContentManagerIfCreated()?.let {
+      contentManager.valueIfInitialized?.let {
         group.add(TabbedContentAction.CloseAllAction(it))
       }
       val toggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(toolWindowManager.project, this@ToolWindowImpl)

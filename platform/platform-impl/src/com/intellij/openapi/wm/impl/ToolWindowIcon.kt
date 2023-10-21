@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.util.ScalableIcon
@@ -14,16 +14,17 @@ import javax.swing.Icon
 /**
  * @author Konstantin Bulenkov
  */
-internal class ToolWindowIcon(private val icon: Icon,
-                              private val toolWindowId: String) : RetrievableIcon, MenuBarIconProvider, ScalableIcon {
-
+internal class ToolWindowIcon(private val icon: Icon, private val toolWindowId: String)
+  : RetrievableIcon, MenuBarIconProvider, ScalableIcon {
   override fun replaceBy(replacer: IconReplacer): ToolWindowIcon {
     return ToolWindowIcon(replacer.replaceIcon(icon), toolWindowId)
   }
 
   override fun retrieveIcon(): Icon = icon
 
-  override fun getMenuBarIcon(isDark: Boolean): ToolWindowIcon = ToolWindowIcon(icon = getMenuBarIcon(icon, isDark), toolWindowId = toolWindowId)
+  override fun getMenuBarIcon(isDark: Boolean): ToolWindowIcon {
+    return ToolWindowIcon(icon = getMenuBarIcon(icon = icon, dark = isDark), toolWindowId = toolWindowId)
+  }
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     icon.paintIcon(c, g, x, y)
@@ -35,5 +36,7 @@ internal class ToolWindowIcon(private val icon: Icon,
 
   override fun getScale(): Float = if (icon is ScalableIcon) icon.scale else 1f
 
-  override fun scale(scaleFactor: Float): ToolWindowIcon = ToolWindowIcon(scaleIconOrLoadCustomVersion(icon = icon, scale = scaleFactor), toolWindowId)
+  override fun scale(scaleFactor: Float): ToolWindowIcon {
+    return ToolWindowIcon(scaleIconOrLoadCustomVersion(icon = icon, scale = scaleFactor), toolWindowId)
+  }
 }

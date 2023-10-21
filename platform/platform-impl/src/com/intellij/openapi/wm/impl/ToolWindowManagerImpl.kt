@@ -86,6 +86,7 @@ import java.beans.PropertyChangeListener
 import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
@@ -567,7 +568,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         canWorkInDumbMode = DumbService.isDumbAware(factory),
         shouldBeAvailable = factory.shouldBeAvailable(project),
         contentFactory = factory,
-        stripeTitle = getStripeTitleSupplier(bean.id, project, plugin)
+        stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin)
       ).apply {
         pluginDescriptor = plugin
       }
@@ -1104,7 +1105,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       infoSnapshot.isVisible = false
     }
 
-    val stripeTitle = task.stripeTitle?.get() ?: task.id
     val toolWindow = ToolWindowImpl(toolWindowManager = this,
                                     id = task.id,
                                     canCloseContent = task.canCloseContent,
@@ -1114,7 +1114,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
                                     windowInfo = infoSnapshot,
                                     contentFactory = factory,
                                     isAvailable = task.shouldBeAvailable,
-                                    stripeTitle = stripeTitle)
+                                    stripeTitleProvider = task.stripeTitle ?: Supplier { task.id } )
     if (task.hideOnEmptyContent) {
       toolWindow.setToHideOnEmptyContent(true)
     }

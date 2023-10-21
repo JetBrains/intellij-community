@@ -282,7 +282,7 @@ private fun beanToTask(project: Project,
                        factory: ToolWindowFactory): RegisterToolWindowTask {
   val task = RegisterToolWindowTask(
     id = bean.id,
-    icon = findIconFromBean(bean, factory, plugin),
+    icon = findIconFromBean(bean = bean, factory = factory, pluginDescriptor = plugin),
     anchor = getToolWindowAnchor(factory, bean),
     sideTool = bean.secondary || (@Suppress("DEPRECATION") bean.side),
     canCloseContent = bean.canCloseContents,

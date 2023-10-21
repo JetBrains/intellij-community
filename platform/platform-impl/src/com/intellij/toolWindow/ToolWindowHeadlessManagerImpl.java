@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -31,6 +32,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 // not final for android
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
@@ -297,7 +299,16 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public @NotNull Supplier<@NlsContexts.TabTitle String> getStripeTitleProvider() {
+      return () -> "";
+    }
+
+    @Override
     public void setStripeTitle(@NotNull String title) {
+    }
+
+    @Override
+    public void setStripeTitleProvider(@NotNull Supplier<@NlsContexts.TabTitle @NotNull String> title) {
     }
 
     @Override

@@ -15,8 +15,7 @@
     <searchEverywhereMl.searchEverywhereSessionPropertyProvider
       implementation="com.intellij.searchEverywhereMl.semantics.SearchEverywhereSemanticPropertyProvider"/>
 
-    <postStartupActivity
-      implementation="com.intellij.searchEverywhereMl.semantics.services.SemanticSearchInitializer"/>
+    <postStartupActivity implementation="com.intellij.searchEverywhereMl.semantics.services.SemanticSearchInitializer"/>
 
     <applicationService
       serviceInterface="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"

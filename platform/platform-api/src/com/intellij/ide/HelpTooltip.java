@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -40,10 +40,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.HtmlChunk.html;
 
@@ -116,7 +116,7 @@ public class HelpTooltip {
   private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
   private static final String TOOLTIP_DISABLED_PROPERTY = "JComponent.helpTooltipDisabled";
 
-  private @TooltipTitle String title;
+  private Supplier<@TooltipTitle String> title;
   private @NlsSafe String shortcut;
   private @Tooltip String description;
   private ActionLink link;
@@ -199,6 +199,11 @@ public class HelpTooltip {
    * @return {@code this}
    */
   public HelpTooltip setTitle(@Nullable @TooltipTitle String title) {
+    this.title = () -> title;
+    return this;
+  }
+
+  public HelpTooltip setTitle(@Nullable Supplier<@NotNull @TooltipTitle String> title) {
     this.title = title;
     return this;
   }
@@ -427,7 +432,8 @@ public class HelpTooltip {
     tipPanel.setLayout(new VerticalLayout(JBUI.getInt("HelpTooltip.verticalGap", 4)));
     tipPanel.setBackground(UIUtil.getToolTipBackground());
 
-    boolean hasTitle = Strings.isNotEmpty(title);
+    String currentTitle = title.get();
+    boolean hasTitle = Strings.isNotEmpty(currentTitle);
     boolean hasDescription = Strings.isNotEmpty(description);
 
     if (hasTitle) {
@@ -437,7 +443,12 @@ public class HelpTooltip {
     if (hasDescription) {
       @Nls String[] pa = description.split(PARAGRAPH_SPLITTER);
       isMultiline = pa.length > 1;
-      Arrays.stream(pa).filter(p -> !p.isEmpty()).forEach(p -> tipPanel.add(new Paragraph(p, hasTitle), VerticalLayout.TOP));
+      for (String p : pa) {
+        if (!p.isEmpty()) {
+          //noinspection HardCodedStringLiteral
+          tipPanel.add(new Paragraph(p, hasTitle), VerticalLayout.TOP);
+        }
+      }
     }
 
     if (!hasTitle && Strings.isNotEmpty(shortcut)) {
@@ -454,7 +465,7 @@ public class HelpTooltip {
       tipPanel.add(link, VerticalLayout.TOP);
     }
 
-    isMultiline = isMultiline || Strings.isNotEmpty(description) && (Strings.isNotEmpty(title) || link != null);
+    isMultiline = isMultiline || Strings.isNotEmpty(description) && (Strings.isNotEmpty(currentTitle) || link != null);
     tipPanel.setBorder(textBorder(isMultiline));
 
     return tipPanel;
@@ -683,20 +694,21 @@ public class HelpTooltip {
       setFont(deriveHeaderFont(getFont()));
       setForeground(UIUtil.getToolTipForeground());
 
-      if (obeyWidth || title.length() > MAX_WIDTH.get()) {
-        View v = BasicHTML.createHTMLView(this, String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
+      String currentTitle = title.get();
+      if (obeyWidth || currentTitle.length() > MAX_WIDTH.get()) {
+        View v = BasicHTML.createHTMLView(this, String.format("<html>%s%s</html>", currentTitle, getShortcutAsHTML()));
         float width = v.getPreferredSpan(View.X_AXIS);
         isMultiline = isMultiline || width > MAX_WIDTH.get();
         HtmlChunk.Element div = width > MAX_WIDTH.get() ? HtmlChunk.div().attr("width", MAX_WIDTH.get()) : HtmlChunk.div();
-        setText(div.children(HtmlChunk.raw(title), HtmlChunk.raw(getShortcutAsHTML()))
+        setText(div.children(HtmlChunk.raw(currentTitle), HtmlChunk.raw(getShortcutAsHTML()))
                   .wrapWith(html())
                   .toString());
         setSizeForWidth(width);
       }
       else {
-        setText(BasicHTML.isHTMLString(title) ?
-                title :
-                HtmlChunk.div().addRaw(title).addRaw(getShortcutAsHTML()).wrapWith(html()).toString());
+        setText(BasicHTML.isHTMLString(currentTitle) ?
+                currentTitle :
+                HtmlChunk.div().addRaw(currentTitle).addRaw(getShortcutAsHTML()).wrapWith(html()).toString());
       }
     }
 

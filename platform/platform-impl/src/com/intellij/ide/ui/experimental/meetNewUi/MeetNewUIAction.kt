@@ -9,33 +9,34 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ExperimentalUI
 
-class MeetNewUIAction : AnAction(), DumbAware {
-
+private class MeetNewUIAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     getToolWindow(e)?.activate(null)
   }
 
   override fun update(e: AnActionEvent) {
-    val toolWindow = getToolWindow(e)
-    if (ExperimentalUI.isNewUI() && Registry.`is`("ide.experimental.ui.meetNewUi") && toolWindow != null) {
-      e.presentation.isEnabledAndVisible = true
-      e.presentation.icon = if (SystemInfoRt.isMac) null else toolWindow.icon
+    if (ExperimentalUI.isNewUI() && Registry.`is`("ide.experimental.ui.meetNewUi")) {
+      val toolWindow = getToolWindow(e)
+      if (toolWindow == null) {
+        e.presentation.isEnabledAndVisible = false
+      }
+      else {
+        e.presentation.isEnabledAndVisible = true
+        e.presentation.icon = if (SystemInfoRt.isMac) null else toolWindow.icon
+      }
     }
     else {
       e.presentation.isEnabledAndVisible = false
     }
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   private fun getToolWindow(e: AnActionEvent): ToolWindow? {
     val project = getEventProject(e) ?: return null
-    val windowManager = getInstance(project)
-    return windowManager.getToolWindow(ToolWindowId.MEET_NEW_UI)
+    return ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MEET_NEW_UI)
   }
 }

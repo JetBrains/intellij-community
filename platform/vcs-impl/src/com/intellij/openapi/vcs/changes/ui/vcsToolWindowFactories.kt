@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.icons.AllIcons
@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.StatusText
+import java.util.function.Supplier
 import javax.swing.JComponent
 
 private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
@@ -50,8 +51,10 @@ private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
       toolWindow.isShowStripeButton = showInStripeWithoutActiveVcs(toolWindow.project)
     }
 
-    toolWindow.stripeTitle = ProjectLevelVcsManager.getInstance(toolWindow.project).allActiveVcss.singleOrNull()?.displayName
-                             ?: IdeBundle.message("toolwindow.stripe.Version_Control")
+    toolWindow.stripeTitleProvider = Supplier {
+      ProjectLevelVcsManager.getInstance(toolWindow.project).allActiveVcss.singleOrNull()?.displayName
+      ?: IdeBundle.message("toolwindow.stripe.Version_Control")
+    }
   }
 
   override fun isAvailable(project: Project) = project.isTrusted()
