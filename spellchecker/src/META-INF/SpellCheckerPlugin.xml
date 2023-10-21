@@ -6,7 +6,7 @@
     <extensionPoint name="spellchecker.bundledDictionaryProvider" interface="com.intellij.spellchecker.BundledDictionaryProvider" dynamic="true"/>
     <extensionPoint name="spellchecker.dictionary.customDictionaryProvider" interface="com.intellij.spellchecker.dictionary.CustomDictionaryProvider" dynamic="true"/>
     <extensionPoint name="spellchecker.dictionary.runtimeDictionaryProvider" interface="com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider" dynamic="true"/>
-    <extensionPoint name="spellchecker.dictionary.checker" interface="com.intellij.spellchecker.dictionary.DictionaryCheckerProvider" dynamic="true"/>
+    <extensionPoint name="spellchecker.dictionary.checker" interface="com.intellij.spellchecker.dictionary.DictionaryChecker" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
