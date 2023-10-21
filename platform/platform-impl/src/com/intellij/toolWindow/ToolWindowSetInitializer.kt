@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -23,6 +24,7 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -110,10 +112,24 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
                                                  reopeningEditorJob: Job) {
     val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
       .getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider")
-    val list = addExtraTasks(tasks, project, ep)
+
+    val layout = pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout")
+    val stripeManager = project.service<ToolWindowStripeManager>()
+    val list = span("toolwindow creating preparation") {
+      addExtraTasks(tasks = tasks, project = project, ep = ep).map { task ->
+        val existingInfo = layout.getInfo(task.id)
+        val paneId = existingInfo?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+        PreparedRegisterToolWindowTask(
+          task = task,
+          existingInfo = existingInfo,
+          paneId = paneId,
+          isButtonNeeded = manager.isButtonNeeded(task = task, info = existingInfo, stripeManager = stripeManager),
+          buttonManager = manager.getToolWindowPane(paneId).buttonManager
+        )
+      }
+    }
 
     val entries = withContext(Dispatchers.EDT) {
-      val layout = pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout")
       @Suppress("TestOnlyProblems")
       manager.setLayoutOnInit(layout)
 
@@ -168,23 +184,32 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
   }
 }
 
-private fun registerToolWindows(tasks: List<RegisterToolWindowTask>,
+internal class PreparedRegisterToolWindowTask(
+  @JvmField val task: RegisterToolWindowTask,
+  @JvmField val isButtonNeeded: Boolean,
+  @JvmField val existingInfo: WindowInfoImpl?,
+
+  @JvmField val paneId: String,
+  @JvmField val buttonManager: ToolWindowButtonManager,
+)
+
+private fun registerToolWindows(tasks: List<PreparedRegisterToolWindowTask>,
                                 manager: ToolWindowManagerImpl,
                                 layout: DesktopLayout,
                                 shouldRegister: (String) -> Boolean): List<ToolWindowEntry> {
   val entries = ArrayList<ToolWindowEntry>(tasks.size)
   for (task in tasks) {
     try {
-      val paneId = layout.getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+      val paneId = task.paneId
       if (shouldRegister(paneId)) {
-        entries.add(manager.registerToolWindow(task = task, buttonManager = manager.getToolWindowPane(paneId).buttonManager))
+        entries.add(manager.registerToolWindow(preparedTask = task, layout = layout))
       }
     }
     catch (e: CancellationException) {
       throw e
     }
     catch (e: Throwable) {
-      LOG.error(PluginException("Cannot init toolwindow ${task.contentFactory}", e, task.pluginDescriptor?.pluginId))
+      LOG.error(PluginException("Cannot init toolwindow ${task.task.contentFactory}", e, task.task.pluginDescriptor?.pluginId))
     }
   }
   return entries
