@@ -58,10 +58,6 @@ import com.intellij.openapi.project.Project
  */
 abstract class MarkupBasedActivityInProgressWitness : ActivityInProgressWitness {
 
-  companion object {
-    fun foo() {}
-  }
-
   open fun getClassMarker(): Class<out MarkupBasedActivityInProgressWitness> = this.javaClass
 
   override suspend fun isInProgress(project: Project): Boolean {
