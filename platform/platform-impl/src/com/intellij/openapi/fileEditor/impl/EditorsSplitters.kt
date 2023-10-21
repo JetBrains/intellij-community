@@ -394,8 +394,8 @@ open class EditorsSplitters internal constructor(
   }
 
   internal suspend fun doUpdateFileIcon(file: VirtualFile) {
-    val icon = readAction {
-      IconUtil.computeFileIcon(file, Iconable.ICON_FLAG_READ_STATUS, manager.project)
+    val icon = readActionBlocking {
+      IconUtil.computeFileIcon(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = manager.project)
     }
     withContext(Dispatchers.EDT) {
       updateFileIconImmediately(file, icon)
@@ -417,7 +417,7 @@ open class EditorsSplitters internal constructor(
       manager.getFileColor(file) to getForegroundColorForFile(manager.project, file)
     }
 
-    val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
+    val colorScheme = serviceAsync<EditorColorsManager>().schemeForCurrentUITheme
     withContext(Dispatchers.EDT) {
       windows.asSequence()
         .mapNotNull { window ->
