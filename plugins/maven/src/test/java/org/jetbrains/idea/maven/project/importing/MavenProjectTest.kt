@@ -306,7 +306,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                       </plugins>
                     </build>
                     """.trimIndent())
-    projectsManager.waitForPluginResolution()
+    projectsManager.waitForAfterImportJobs()
 
     assertNull(findPluginConfig("group", "id1", "one.two"))
     assertNull(findPluginConfig("group", "id2", "one.two"))
@@ -354,7 +354,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                       </plugins>
                     </build>
                     """.trimIndent())
-    projectsManager.waitForPluginResolution()
+    projectsManager.waitForAfterImportJobs()
 
     assertNull(findPluginGoalConfig("group", "id", "package", "one.two"))
     assertEquals("a", findPluginGoalConfig("group", "id", "compile", "one.two"))

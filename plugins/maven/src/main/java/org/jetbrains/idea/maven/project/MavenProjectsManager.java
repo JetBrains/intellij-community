@@ -128,7 +128,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @ApiStatus.Internal
-  public abstract void waitForPluginResolution();
+  public abstract void waitForAfterImportJobs();
 
   @TestOnly
   public void setProgressListener(BuildProgressListener testViewManager) {
@@ -837,7 +837,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @ApiStatus.Internal
   public Promise<?> waitForImportCompletion() {
 
-    waitForPluginResolution();
+    waitForAfterImportJobs();
 
     AsyncPromise<?> promise = new AsyncPromise<>();
     promise.setResult(null);

@@ -387,7 +387,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         }
       }
     }
-    pluginResolutionJobs.add(pluginResolutionJob)
+    afterImportJobs.add(pluginResolutionJob)
     scheduleDownloadArtifacts(projectsToImport.map { it.key },
                               null,
                               importingSettings.isDownloadSourcesAutomatically,
@@ -397,11 +397,12 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return importMavenProjects(projectsToImport, modelsProvider, syncActivity)
   }
 
-  private val pluginResolutionJobs = JobSet()
+  private val afterImportJobs = JobSet()
 
   @TestOnly
-  override fun waitForPluginResolution() {
-    pluginResolutionJobs.waitFor()
+  // plugin resolution, artifact downloading
+  override fun waitForAfterImportJobs() {
+    afterImportJobs.waitFor()
   }
 
   private suspend fun readMavenProjectsActivity(parentActivity: StructuredIdeActivity,
@@ -494,7 +495,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     if (!sources && !docs) return
 
     project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingScheduled()
-    cs.launch { downloadArtifacts(projects, artifacts, sources, docs) }
+
+    val downloadArtifactJob = cs.launch { downloadArtifacts(projects, artifacts, sources, docs) }
+    afterImportJobs.add(downloadArtifactJob)
   }
 
   override suspend fun downloadArtifacts(projects: Collection<MavenProject>,

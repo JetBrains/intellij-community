@@ -94,7 +94,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       ThrowableRunnable<Throwable> { TestDialogManager.setTestDialog(TestDialog.DEFAULT) },
       ThrowableRunnable<Throwable> { removeFromLocalRepository("test") },
       ThrowableRunnable<Throwable> { CompilerTestUtil.deleteBuildSystemDirectory(myProject) },
-      ThrowableRunnable<Throwable> { projectsManager?.waitForPluginResolution() },
+      ThrowableRunnable<Throwable> { projectsManager?.waitForAfterImportJobs() },
       ThrowableRunnable<Throwable> { myProjectsManager = null },
       ThrowableRunnable<Throwable> { super.tearDown() },
       ThrowableRunnable<Throwable> {
@@ -405,7 +405,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     else {
       initProjectsManager(false)
       projectsManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
-      projectsManager.waitForPluginResolution()
+      projectsManager.waitForAfterImportJobs()
     }
 
 
@@ -550,7 +550,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected suspend fun updateAllProjects() {
     projectsManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
-    projectsManager.waitForPluginResolution()
+    projectsManager.waitForAfterImportJobs()
   }
 
   protected fun waitForReadingCompletion() {

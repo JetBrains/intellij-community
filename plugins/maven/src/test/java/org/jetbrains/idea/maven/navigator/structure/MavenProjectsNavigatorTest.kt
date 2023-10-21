@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.navigator.structure
 import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
@@ -23,7 +22,6 @@ import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorState
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
-import java.util.concurrent.TimeUnit
 
 class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
   private var myNavigator: MavenProjectsNavigator? = null
@@ -264,7 +262,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       """.trimIndent())
     readFiles(myProjectPom, m)
 
-    projectsManager.waitForPluginResolution()
+    projectsManager.waitForAfterImportJobs()
 
     projectsManager.projectsTree.ignoredFilesPaths = listOf(m.getPath())
 
