@@ -56,9 +56,9 @@ fun Checkbox(
     enabled: Boolean = true,
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    colors: CheckboxColors = IntelliJTheme.checkboxStyle.colors,
-    metrics: CheckboxMetrics = IntelliJTheme.checkboxStyle.metrics,
-    icons: CheckboxIcons = IntelliJTheme.checkboxStyle.icons,
+    colors: CheckboxColors = JewelTheme.checkboxStyle.colors,
+    metrics: CheckboxMetrics = JewelTheme.checkboxStyle.metrics,
+    icons: CheckboxIcons = JewelTheme.checkboxStyle.icons,
     textStyle: TextStyle = LocalTextStyle.current,
 ) {
     val state by remember { mutableStateOf(ToggleableState(checked)) }

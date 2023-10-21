@@ -8,9 +8,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.defaultTextStyle
 import org.jetbrains.jewel.styling.TextFieldColors
 import org.jetbrains.jewel.styling.TextFieldMetrics
 import org.jetbrains.jewel.styling.TextFieldStyle
@@ -19,14 +20,14 @@ import org.jetbrains.jewel.styling.TextFieldStyle
 fun TextFieldStyle.Companion.light(
     colors: TextFieldColors = TextFieldColors.light(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
-    textStyle: TextStyle = IntUiTheme.defaultTextStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
 ) = TextFieldStyle(colors, metrics, textStyle)
 
 @Composable
 fun TextFieldStyle.Companion.dark(
     colors: TextFieldColors = TextFieldColors.dark(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
-    textStyle: TextStyle = IntUiTheme.defaultTextStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
 ) = TextFieldStyle(colors, metrics, textStyle)
 
 @Composable

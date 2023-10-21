@@ -28,7 +28,7 @@ fun IconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    style: IconButtonStyle = IntelliJTheme.iconButtonStyle,
+    style: IconButtonStyle = JewelTheme.iconButtonStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable (BoxScope.(ButtonState) -> Unit),
 ) {

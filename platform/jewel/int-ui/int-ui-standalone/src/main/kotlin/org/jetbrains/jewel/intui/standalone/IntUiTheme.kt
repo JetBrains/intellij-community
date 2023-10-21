@@ -9,16 +9,16 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import org.jetbrains.jewel.ComponentStyling
 import org.jetbrains.jewel.GlobalColors
 import org.jetbrains.jewel.GlobalMetrics
-import org.jetbrains.jewel.IntelliJComponentStyling
-import org.jetbrains.jewel.IntelliJThemeIconData
+import org.jetbrains.jewel.JewelTheme
+import org.jetbrains.jewel.ThemeColorPalette
+import org.jetbrains.jewel.ThemeDefinition
+import org.jetbrains.jewel.ThemeIconData
 import org.jetbrains.jewel.intui.core.BaseIntUiTheme
-import org.jetbrains.jewel.intui.core.IntUiThemeColorPalette
-import org.jetbrains.jewel.intui.core.IntUiThemeDefinition
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.IntUiTheme.defaultComponentStyling
 import org.jetbrains.jewel.intui.standalone.styling.Default
 import org.jetbrains.jewel.intui.standalone.styling.Editor
 import org.jetbrains.jewel.intui.standalone.styling.Outlined
@@ -46,148 +46,146 @@ import org.jetbrains.jewel.styling.TextAreaStyle
 import org.jetbrains.jewel.styling.TextFieldStyle
 import org.jetbrains.jewel.styling.TooltipStyle
 
-object IntUiTheme : BaseIntUiTheme {
-
-    val defaultTextStyle = TextStyle.Default.copy(
+val JewelTheme.Companion.defaultTextStyle
+    get() = TextStyle.Default.copy(
         fontFamily = FontFamily.Inter,
         fontSize = 13.sp,
         fontWeight = FontWeight.Normal,
         fontStyle = FontStyle.Normal,
     )
 
-    @Composable
-    fun lightThemeDefinition(
-        colors: GlobalColors = IntUiGlobalColors.light(),
-        metrics: GlobalMetrics = IntUiGlobalMetrics(),
-        palette: IntUiThemeColorPalette = IntUiLightTheme.colors,
-        icons: IntelliJThemeIconData = IntUiLightTheme.icons,
-        defaultTextStyle: TextStyle = this.defaultTextStyle,
-        contentColor: Color = IntUiLightTheme.colors.grey(1),
-    ) = IntUiThemeDefinition(isDark = false, colors, palette, icons, metrics, defaultTextStyle, contentColor)
+@Composable
+fun JewelTheme.Companion.lightThemeDefinition(
+    colors: GlobalColors = GlobalColors.light(),
+    metrics: GlobalMetrics = GlobalMetrics.defaults(),
+    palette: ThemeColorPalette = IntUiLightTheme.colors,
+    iconData: ThemeIconData = IntUiLightTheme.iconData,
+    defaultTextStyle: TextStyle = JewelTheme.defaultTextStyle,
+    contentColor: Color = IntUiLightTheme.colors.grey(1),
+) = ThemeDefinition(isDark = false, colors, metrics, defaultTextStyle, contentColor, palette, iconData)
 
-    @Composable
-    fun darkThemeDefinition(
-        colors: GlobalColors = IntUiGlobalColors.dark(),
-        metrics: GlobalMetrics = IntUiGlobalMetrics(),
-        palette: IntUiThemeColorPalette = IntUiDarkTheme.colors,
-        icons: IntelliJThemeIconData = IntUiDarkTheme.icons,
-        defaultTextStyle: TextStyle = this.defaultTextStyle,
-        contentColor: Color = IntUiDarkTheme.colors.grey(12),
-    ) = IntUiThemeDefinition(isDark = true, colors, palette, icons, metrics, defaultTextStyle, contentColor)
+@Composable
+fun JewelTheme.Companion.darkThemeDefinition(
+    colors: GlobalColors = GlobalColors.dark(),
+    metrics: GlobalMetrics = GlobalMetrics.defaults(),
+    palette: ThemeColorPalette = IntUiDarkTheme.colors,
+    iconData: ThemeIconData = IntUiDarkTheme.iconData,
+    defaultTextStyle: TextStyle = JewelTheme.defaultTextStyle,
+    contentColor: Color = IntUiDarkTheme.colors.grey(12),
+) = ThemeDefinition(isDark = true, colors, metrics, defaultTextStyle, contentColor, palette, iconData)
 
-    @Composable
-    fun defaultComponentStyling(theme: IntUiThemeDefinition): IntelliJComponentStyling =
-        if (theme.isDark) darkComponentStyling() else lightComponentStyling()
+@Composable
+fun JewelTheme.Companion.defaultComponentStyling(theme: ThemeDefinition): ComponentStyling =
+    if (theme.isDark) darkComponentStyling() else lightComponentStyling()
 
-    @Composable
-    fun darkComponentStyling(
-        checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
-        chipStyle: ChipStyle = ChipStyle.dark(),
-        circularProgressStyle: CircularProgressStyle = CircularProgressStyle.dark(),
-        defaultButtonStyle: ButtonStyle = ButtonStyle.Default.dark(),
-        defaultTabStyle: TabStyle = TabStyle.Default.dark(),
-        dividerStyle: DividerStyle = DividerStyle.dark(),
-        dropdownStyle: DropdownStyle = DropdownStyle.Default.dark(),
-        editorTabStyle: TabStyle = TabStyle.Editor.dark(),
-        groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.dark(),
-        horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.dark(),
-        iconButtonStyle: IconButtonStyle = IconButtonStyle.dark(),
-        labelledTextFieldStyle: LabelledTextFieldStyle = LabelledTextFieldStyle.dark(),
-        lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.dark(),
-        linkStyle: LinkStyle = LinkStyle.dark(),
-        menuStyle: MenuStyle = MenuStyle.dark(),
-        outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
-        radioButtonStyle: RadioButtonStyle = RadioButtonStyle.dark(),
-        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.dark(),
-        textAreaStyle: TextAreaStyle = TextAreaStyle.dark(),
-        textFieldStyle: TextFieldStyle = TextFieldStyle.dark(),
-        tooltipStyle: TooltipStyle = TooltipStyle.dark(),
-        undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.dark(),
-    ) = IntelliJComponentStyling(
-        checkboxStyle = checkboxStyle,
-        chipStyle = chipStyle,
-        circularProgressStyle = circularProgressStyle,
-        defaultButtonStyle = defaultButtonStyle,
-        defaultDropdownStyle = dropdownStyle,
-        defaultTabStyle = defaultTabStyle,
-        dividerStyle = dividerStyle,
-        editorTabStyle = editorTabStyle,
-        groupHeaderStyle = groupHeaderStyle,
-        horizontalProgressBarStyle = horizontalProgressBarStyle,
-        iconButtonStyle = iconButtonStyle,
-        labelledTextFieldStyle = labelledTextFieldStyle,
-        lazyTreeStyle = lazyTreeStyle,
-        linkStyle = linkStyle,
-        menuStyle = menuStyle,
-        outlinedButtonStyle = outlinedButtonStyle,
-        radioButtonStyle = radioButtonStyle,
-        scrollbarStyle = scrollbarStyle,
-        textAreaStyle = textAreaStyle,
-        textFieldStyle = textFieldStyle,
-        tooltipStyle = tooltipStyle,
-        undecoratedDropdownStyle = undecoratedDropdownStyle,
-    )
+@Composable
+fun JewelTheme.Companion.darkComponentStyling(
+    checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
+    chipStyle: ChipStyle = ChipStyle.dark(),
+    circularProgressStyle: CircularProgressStyle = CircularProgressStyle.dark(),
+    defaultButtonStyle: ButtonStyle = ButtonStyle.Default.dark(),
+    defaultTabStyle: TabStyle = TabStyle.Default.dark(),
+    dividerStyle: DividerStyle = DividerStyle.dark(),
+    dropdownStyle: DropdownStyle = DropdownStyle.Default.dark(),
+    editorTabStyle: TabStyle = TabStyle.Editor.dark(),
+    groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.dark(),
+    horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.dark(),
+    iconButtonStyle: IconButtonStyle = IconButtonStyle.dark(),
+    labelledTextFieldStyle: LabelledTextFieldStyle = LabelledTextFieldStyle.dark(),
+    lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.dark(),
+    linkStyle: LinkStyle = LinkStyle.dark(),
+    menuStyle: MenuStyle = MenuStyle.dark(),
+    outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
+    radioButtonStyle: RadioButtonStyle = RadioButtonStyle.dark(),
+    scrollbarStyle: ScrollbarStyle = ScrollbarStyle.dark(),
+    textAreaStyle: TextAreaStyle = TextAreaStyle.dark(),
+    textFieldStyle: TextFieldStyle = TextFieldStyle.dark(),
+    tooltipStyle: TooltipStyle = TooltipStyle.dark(),
+    undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.dark(),
+) = ComponentStyling(
+    checkboxStyle = checkboxStyle,
+    chipStyle = chipStyle,
+    circularProgressStyle = circularProgressStyle,
+    defaultButtonStyle = defaultButtonStyle,
+    defaultDropdownStyle = dropdownStyle,
+    defaultTabStyle = defaultTabStyle,
+    dividerStyle = dividerStyle,
+    editorTabStyle = editorTabStyle,
+    groupHeaderStyle = groupHeaderStyle,
+    horizontalProgressBarStyle = horizontalProgressBarStyle,
+    iconButtonStyle = iconButtonStyle,
+    labelledTextFieldStyle = labelledTextFieldStyle,
+    lazyTreeStyle = lazyTreeStyle,
+    linkStyle = linkStyle,
+    menuStyle = menuStyle,
+    outlinedButtonStyle = outlinedButtonStyle,
+    radioButtonStyle = radioButtonStyle,
+    scrollbarStyle = scrollbarStyle,
+    textAreaStyle = textAreaStyle,
+    textFieldStyle = textFieldStyle,
+    tooltipStyle = tooltipStyle,
+    undecoratedDropdownStyle = undecoratedDropdownStyle,
+)
 
-    @Composable
-    fun lightComponentStyling(
-        checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
-        chipStyle: ChipStyle = ChipStyle.light(),
-        circularProgressStyle: CircularProgressStyle = CircularProgressStyle.light(),
-        defaultButtonStyle: ButtonStyle = ButtonStyle.Default.light(),
-        defaultTabStyle: TabStyle = TabStyle.Default.light(),
-        dividerStyle: DividerStyle = DividerStyle.light(),
-        dropdownStyle: DropdownStyle = DropdownStyle.Default.light(),
-        editorTabStyle: TabStyle = TabStyle.Editor.light(),
-        groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.light(),
-        horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.light(),
-        iconButtonStyle: IconButtonStyle = IconButtonStyle.light(),
-        labelledTextFieldStyle: LabelledTextFieldStyle = LabelledTextFieldStyle.light(),
-        lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.light(),
-        linkStyle: LinkStyle = LinkStyle.light(),
-        menuStyle: MenuStyle = MenuStyle.light(),
-        outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
-        radioButtonStyle: RadioButtonStyle = RadioButtonStyle.light(),
-        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.light(),
-        textAreaStyle: TextAreaStyle = TextAreaStyle.light(),
-        textFieldStyle: TextFieldStyle = TextFieldStyle.light(),
-        tooltipStyle: TooltipStyle = TooltipStyle.light(),
-        undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.light(),
-    ) = IntelliJComponentStyling(
-        checkboxStyle = checkboxStyle,
-        chipStyle = chipStyle,
-        circularProgressStyle = circularProgressStyle,
-        defaultButtonStyle = defaultButtonStyle,
-        defaultDropdownStyle = dropdownStyle,
-        defaultTabStyle = defaultTabStyle,
-        dividerStyle = dividerStyle,
-        editorTabStyle = editorTabStyle,
-        groupHeaderStyle = groupHeaderStyle,
-        horizontalProgressBarStyle = horizontalProgressBarStyle,
-        iconButtonStyle = iconButtonStyle,
-        labelledTextFieldStyle = labelledTextFieldStyle,
-        lazyTreeStyle = lazyTreeStyle,
-        linkStyle = linkStyle,
-        menuStyle = menuStyle,
-        outlinedButtonStyle = outlinedButtonStyle,
-        radioButtonStyle = radioButtonStyle,
-        scrollbarStyle = scrollbarStyle,
-        textAreaStyle = textAreaStyle,
-        textFieldStyle = textFieldStyle,
-        tooltipStyle = tooltipStyle,
-        undecoratedDropdownStyle = undecoratedDropdownStyle,
-    )
-}
+@Composable
+fun JewelTheme.Companion.lightComponentStyling(
+    checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
+    chipStyle: ChipStyle = ChipStyle.light(),
+    circularProgressStyle: CircularProgressStyle = CircularProgressStyle.light(),
+    defaultButtonStyle: ButtonStyle = ButtonStyle.Default.light(),
+    defaultTabStyle: TabStyle = TabStyle.Default.light(),
+    dividerStyle: DividerStyle = DividerStyle.light(),
+    dropdownStyle: DropdownStyle = DropdownStyle.Default.light(),
+    editorTabStyle: TabStyle = TabStyle.Editor.light(),
+    groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.light(),
+    horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.light(),
+    iconButtonStyle: IconButtonStyle = IconButtonStyle.light(),
+    labelledTextFieldStyle: LabelledTextFieldStyle = LabelledTextFieldStyle.light(),
+    lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.light(),
+    linkStyle: LinkStyle = LinkStyle.light(),
+    menuStyle: MenuStyle = MenuStyle.light(),
+    outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
+    radioButtonStyle: RadioButtonStyle = RadioButtonStyle.light(),
+    scrollbarStyle: ScrollbarStyle = ScrollbarStyle.light(),
+    textAreaStyle: TextAreaStyle = TextAreaStyle.light(),
+    textFieldStyle: TextFieldStyle = TextFieldStyle.light(),
+    tooltipStyle: TooltipStyle = TooltipStyle.light(),
+    undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.light(),
+) = ComponentStyling(
+    checkboxStyle = checkboxStyle,
+    chipStyle = chipStyle,
+    circularProgressStyle = circularProgressStyle,
+    defaultButtonStyle = defaultButtonStyle,
+    defaultDropdownStyle = dropdownStyle,
+    defaultTabStyle = defaultTabStyle,
+    dividerStyle = dividerStyle,
+    editorTabStyle = editorTabStyle,
+    groupHeaderStyle = groupHeaderStyle,
+    horizontalProgressBarStyle = horizontalProgressBarStyle,
+    iconButtonStyle = iconButtonStyle,
+    labelledTextFieldStyle = labelledTextFieldStyle,
+    lazyTreeStyle = lazyTreeStyle,
+    linkStyle = linkStyle,
+    menuStyle = menuStyle,
+    outlinedButtonStyle = outlinedButtonStyle,
+    radioButtonStyle = radioButtonStyle,
+    scrollbarStyle = scrollbarStyle,
+    textAreaStyle = textAreaStyle,
+    textFieldStyle = textFieldStyle,
+    tooltipStyle = tooltipStyle,
+    undecoratedDropdownStyle = undecoratedDropdownStyle,
+)
 
 @Composable
 fun IntUiTheme(
-    theme: IntUiThemeDefinition,
+    theme: ThemeDefinition,
     componentStyling: @Composable () -> Array<ProvidedValue<*>>,
     swingCompatMode: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     BaseIntUiTheme(
         theme,
-        componentStyling = { defaultComponentStyling(theme).providedStyles() + componentStyling() },
+        componentStyling = { JewelTheme.defaultComponentStyling(theme).providedStyles() + componentStyling() },
         swingCompatMode,
     ) {
         CompositionLocalProvider(

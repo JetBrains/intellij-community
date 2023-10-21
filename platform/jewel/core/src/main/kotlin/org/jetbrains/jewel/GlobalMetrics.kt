@@ -5,10 +5,13 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 
 @Immutable
-interface GlobalMetrics {
+@GenerateDataFunctions
+class GlobalMetrics(
+    val outlineWidth: Dp,
+    val rowHeight: Dp,
+) {
 
-    val outlineWidth: Dp
-    val rowHeight: Dp
+    companion object
 }
 
 val LocalGlobalMetrics = staticCompositionLocalOf<GlobalMetrics> {

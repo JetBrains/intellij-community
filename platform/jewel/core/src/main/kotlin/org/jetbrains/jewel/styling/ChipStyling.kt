@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.ChipState
 import org.jetbrains.jewel.GenerateDataFunctions
-import org.jetbrains.jewel.IntelliJTheme
+import org.jetbrains.jewel.JewelTheme
 
 @Stable
 @GenerateDataFunctions
@@ -106,17 +106,17 @@ class ChipColors(
         if (state.isSelected) {
             when {
                 !state.isEnabled -> borderSelectedDisabled
-                state.isPressed && !IntelliJTheme.isSwingCompatMode -> borderSelectedPressed
+                state.isPressed && !JewelTheme.isSwingCompatMode -> borderSelectedPressed
                 state.isFocused -> borderSelectedFocused
-                state.isHovered && !IntelliJTheme.isSwingCompatMode -> borderSelectedHovered
+                state.isHovered && !JewelTheme.isSwingCompatMode -> borderSelectedHovered
                 else -> borderSelected
             }
         } else {
             when {
                 !state.isEnabled -> borderDisabled
-                state.isPressed && !IntelliJTheme.isSwingCompatMode -> borderPressed
+                state.isPressed && !JewelTheme.isSwingCompatMode -> borderPressed
                 state.isFocused -> borderFocused
-                state.isHovered && !IntelliJTheme.isSwingCompatMode -> borderHovered
+                state.isHovered && !JewelTheme.isSwingCompatMode -> borderHovered
                 else -> border
             }
         },

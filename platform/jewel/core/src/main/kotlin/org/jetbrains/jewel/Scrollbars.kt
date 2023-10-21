@@ -24,7 +24,7 @@ fun VerticalScrollbar(
     modifier: Modifier = Modifier,
     reverseLayout: Boolean = false,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: ScrollbarStyle = IntelliJTheme.scrollbarStyle,
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
 ) {
     val shape by remember { mutableStateOf(RoundedCornerShape(style.metrics.thumbCornerSize)) }
     val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.inWholeMilliseconds) }
@@ -55,7 +55,7 @@ fun HorizontalScrollbar(
     modifier: Modifier = Modifier,
     reverseLayout: Boolean = false,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: ScrollbarStyle = IntelliJTheme.scrollbarStyle,
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
 ) {
     val shape by remember { mutableStateOf(RoundedCornerShape(style.metrics.thumbCornerSize)) }
     val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.toInt(DurationUnit.MILLISECONDS)) }
@@ -86,7 +86,7 @@ fun TabStripHorizontalScrollbar(
     modifier: Modifier = Modifier,
     reverseLayout: Boolean = false,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: ScrollbarStyle = IntelliJTheme.scrollbarStyle,
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
 ) {
     val shape by remember { mutableStateOf(RoundedCornerShape(style.metrics.thumbCornerSize)) }
     val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.inWholeMilliseconds.toInt()) }

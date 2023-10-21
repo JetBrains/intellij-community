@@ -35,7 +35,7 @@ fun Text(
     softWrap: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = IntelliJTheme.textStyle,
+    style: TextStyle = JewelTheme.textStyle,
 ) {
     Text(
         AnnotatedString(text),
@@ -76,7 +76,7 @@ fun Text(
     maxLines: Int = Int.MAX_VALUE,
     inlineContent: Map<String, InlineTextContent> = emptyMap(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = IntelliJTheme.textStyle,
+    style: TextStyle = JewelTheme.textStyle,
 ) {
     val textColor = color.takeOrElse {
         LocalContentColor.current.takeOrElse {

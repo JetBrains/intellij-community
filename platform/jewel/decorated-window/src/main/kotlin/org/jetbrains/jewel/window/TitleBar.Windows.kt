@@ -13,14 +13,14 @@ import com.jetbrains.JBR
 import com.jetbrains.WindowDecorations.CustomTitleBar
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
-import org.jetbrains.jewel.IntelliJTheme
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.util.isDark
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 
 @Composable internal fun DecoratedWindowScope.TitleBarOnWindows(
     modifier: Modifier = Modifier,
     gradientStartColor: Color = Color.Unspecified,
-    style: TitleBarStyle = IntelliJTheme.defaultTitleBarStyle,
+    style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
     content: @Composable TitleBarScope.(DecoratedWindowState) -> Unit,
 ) {
     val titleBar = remember { JBR.getWindowDecorations().createCustomTitleBar() }

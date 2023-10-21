@@ -2,24 +2,25 @@ package org.jetbrains.jewel.intui.window
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
-import org.jetbrains.jewel.intui.core.IntUiThemeDefinition
-import org.jetbrains.jewel.intui.window.styling.IntUiDecoratedWindowStyle
-import org.jetbrains.jewel.intui.window.styling.IntUiTitleBarStyle
+import org.jetbrains.jewel.ThemeDefinition
+import org.jetbrains.jewel.intui.window.styling.dark
+import org.jetbrains.jewel.intui.window.styling.light
+import org.jetbrains.jewel.window.styling.DecoratedWindowStyle
 import org.jetbrains.jewel.window.styling.LocalDecoratedWindowStyle
 import org.jetbrains.jewel.window.styling.LocalTitleBarStyle
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 
 @Composable
-fun IntUiThemeDefinition.decoratedWindowComponentStyling(
-    windowStyle: IntUiDecoratedWindowStyle = if (isDark) {
-        IntUiDecoratedWindowStyle.dark()
+fun ThemeDefinition.decoratedWindowComponentStyling(
+    windowStyle: DecoratedWindowStyle = if (isDark) {
+        DecoratedWindowStyle.dark()
     } else {
-        IntUiDecoratedWindowStyle.light()
+        DecoratedWindowStyle.light()
     },
     titleBarStyle: TitleBarStyle = if (isDark) {
-        IntUiTitleBarStyle.dark()
+        TitleBarStyle.dark()
     } else {
-        IntUiTitleBarStyle.light()
+        TitleBarStyle.light()
     },
 ): Array<ProvidedValue<*>> = arrayOf(
     LocalDecoratedWindowStyle provides windowStyle,

@@ -47,8 +47,8 @@ fun LabelledTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: LabelledTextFieldStyle = IntelliJTheme.labelledTextFieldStyle,
-    textStyle: TextStyle = IntelliJTheme.textStyle,
+    style: LabelledTextFieldStyle = JewelTheme.labelledTextFieldStyle,
+    textStyle: TextStyle = JewelTheme.textStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
@@ -111,8 +111,8 @@ fun LabelledTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: LabelledTextFieldStyle = IntelliJTheme.labelledTextFieldStyle,
-    textStyle: TextStyle = IntelliJTheme.textStyle,
+    style: LabelledTextFieldStyle = JewelTheme.labelledTextFieldStyle,
+    textStyle: TextStyle = JewelTheme.textStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     LabelledTextFieldLayout(

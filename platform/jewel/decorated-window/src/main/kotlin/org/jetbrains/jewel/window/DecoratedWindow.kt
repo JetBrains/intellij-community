@@ -31,7 +31,7 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.rememberWindowState
 import com.jetbrains.JBR
-import org.jetbrains.jewel.IntelliJTheme
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.window.styling.DecoratedWindowStyle
@@ -53,7 +53,7 @@ import java.awt.event.WindowEvent
     alwaysOnTop: Boolean = false,
     onPreviewKeyEvent: (KeyEvent) -> Boolean = { false },
     onKeyEvent: (KeyEvent) -> Boolean = { false },
-    style: DecoratedWindowStyle = IntelliJTheme.defaultDecoratedWindowStyle,
+    style: DecoratedWindowStyle = JewelTheme.defaultDecoratedWindowStyle,
     content: @Composable DecoratedWindowScope.() -> Unit,
 ) {
     remember {

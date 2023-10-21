@@ -22,7 +22,7 @@ fun Divider(
     color: Color = Color.Unspecified,
     thickness: Dp = Dp.Unspecified,
     startIndent: Dp = Dp.Unspecified,
-    style: DividerStyle = IntelliJTheme.dividerStyle,
+    style: DividerStyle = JewelTheme.dividerStyle,
 ) {
     val indentMod = if (startIndent.value != 0f) {
         Modifier.padding(start = startIndent.takeOrElse { style.metrics.startIndent })

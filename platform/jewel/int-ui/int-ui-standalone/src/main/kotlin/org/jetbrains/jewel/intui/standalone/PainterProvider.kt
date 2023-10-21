@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.intui.standalone
 
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.painter.ResourcePainterProvider
 
 /**
@@ -7,4 +8,4 @@ import org.jetbrains.jewel.painter.ResourcePainterProvider
  * resource from the classpath.
  */
 fun standalonePainterProvider(path: String) =
-    ResourcePainterProvider(path, IntUiTheme::class.java.classLoader)
+    ResourcePainterProvider(path, JewelTheme::class.java.classLoader)

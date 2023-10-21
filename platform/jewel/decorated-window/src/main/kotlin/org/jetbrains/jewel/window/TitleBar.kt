@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
-import org.jetbrains.jewel.IntelliJTheme
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.LocalContentColor
 import org.jetbrains.jewel.OverrideDarkMode
 import org.jetbrains.jewel.styling.LocalDefaultDropdownStyle
@@ -59,7 +59,7 @@ internal const val TITLE_BAR_BORDER_LAYOUT_ID = "__TITLE_BAR_BORDER__"
 @Composable fun DecoratedWindowScope.TitleBar(
     modifier: Modifier = Modifier,
     gradientStartColor: Color = Color.Unspecified,
-    style: TitleBarStyle = IntelliJTheme.defaultTitleBarStyle,
+    style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
     content: @Composable TitleBarScope.(DecoratedWindowState) -> Unit,
 ) {
     when (DesktopPlatform.Current) {
@@ -73,7 +73,7 @@ internal const val TITLE_BAR_BORDER_LAYOUT_ID = "__TITLE_BAR_BORDER__"
 @Composable internal fun DecoratedWindowScope.TitleBarImpl(
     modifier: Modifier = Modifier,
     gradientStartColor: Color = Color.Unspecified,
-    style: TitleBarStyle = IntelliJTheme.defaultTitleBarStyle,
+    style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
     applyTitleBar: (Dp, DecoratedWindowState) -> PaddingValues,
     content: @Composable TitleBarScope.(DecoratedWindowState) -> Unit,
 ) {

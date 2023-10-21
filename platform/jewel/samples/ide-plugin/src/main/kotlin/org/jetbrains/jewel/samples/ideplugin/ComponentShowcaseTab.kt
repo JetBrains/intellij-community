@@ -32,6 +32,7 @@ import org.jetbrains.jewel.CircularProgressIndicatorBig
 import org.jetbrains.jewel.DefaultButton
 import org.jetbrains.jewel.Icon
 import org.jetbrains.jewel.IconButton
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.LazyTree
 import org.jetbrains.jewel.OutlinedButton
 import org.jetbrains.jewel.RadioButtonRow
@@ -41,11 +42,10 @@ import org.jetbrains.jewel.Tooltip
 import org.jetbrains.jewel.bridge.SwingBridgeTheme
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.tree.buildTree
-import org.jetbrains.jewel.intui.standalone.IntUiTheme
 
 @Composable internal fun ComponentShowcaseTab() {
     SwingBridgeTheme {
-        val bgColor by remember(IntUiTheme.isDark) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
+        val bgColor by remember(JewelTheme.isDark) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
 
         val scrollState = rememberScrollState()
         Row(
@@ -159,7 +159,7 @@ import org.jetbrains.jewel.intui.standalone.IntUiTheme
                 }
             }) {
                 Text(
-                    modifier = Modifier.border(1.dp, IntUiTheme.globalColors.borders.normal).padding(12.dp, 8.dp),
+                    modifier = Modifier.border(1.dp, JewelTheme.globalColors.borders.normal).padding(12.dp, 8.dp),
                     text = "Hover Me!",
                 )
             }

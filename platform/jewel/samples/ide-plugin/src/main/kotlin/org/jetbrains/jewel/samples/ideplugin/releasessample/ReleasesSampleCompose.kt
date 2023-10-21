@@ -75,6 +75,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.toJavaLocalDate
 import org.jetbrains.jewel.HorizontalSplitLayout
 import org.jetbrains.jewel.Icon
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.PopupMenu
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.TextField
@@ -89,10 +90,9 @@ import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.jewel.foundation.lazy.items
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.onHover
-import org.jetbrains.jewel.foundation.utils.thenIf
-import org.jetbrains.jewel.intui.standalone.IntUiTheme
 import org.jetbrains.jewel.items
 import org.jetbrains.jewel.painter.rememberResourcePainterProvider
+import org.jetbrains.jewel.util.thenIf
 import org.jetbrains.skiko.DependsOnJBR
 import java.awt.Font
 import java.time.format.DateTimeFormatter
@@ -208,7 +208,7 @@ private fun ContentItemRow(
         else -> Transparent
     }
     Row(
-        modifier = Modifier.height(IntUiTheme.globalMetrics.rowHeight)
+        modifier = Modifier.height(JewelTheme.globalMetrics.rowHeight)
             .background(color)
             .padding(start = 4.dp, end = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -398,7 +398,7 @@ private fun OverflowMenu(
                     onItemClick = onContentSourceChange,
                 ) {
                     Row(
-                        modifier = Modifier.height(IntUiTheme.globalMetrics.rowHeight),
+                        modifier = Modifier.height(JewelTheme.globalMetrics.rowHeight),
                         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {

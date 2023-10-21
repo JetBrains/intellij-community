@@ -3,23 +3,18 @@ package org.jetbrains.jewel.buildlogic.theme
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.joinToCode
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import org.gradle.util.internal.GUtil
 
 internal object IntUiThemeDescriptorReader {
 
     private val colorGroups = setOf("Grey", "Blue", "Green", "Red", "Yellow", "Orange", "Purple", "Teal")
-    private val list = List::class.asClassName()
     private val colorClassName = ClassName("androidx.compose.ui.graphics", "Color")
 
     fun readThemeFrom(
@@ -34,8 +29,10 @@ internal object IntUiThemeDescriptorReader {
             addFileComment("Generated from the IntelliJ Platform version $ideaVersion\n")
             addFileComment("Source: $descriptorUrl")
 
+            addImport(colorClassName.packageName, colorClassName.simpleName)
+
             addType(TypeSpec.objectBuilder(className).apply {
-                addSuperinterface(ClassName.bestGuess("org.jetbrains.jewel.IntelliJThemeDescriptor"))
+                addSuperinterface(ClassName.bestGuess("org.jetbrains.jewel.ThemeDescriptor"))
 
                 addProperty(
                     PropertySpec.builder("isDark", Boolean::class, KModifier.OVERRIDE)
@@ -49,146 +46,89 @@ internal object IntUiThemeDescriptorReader {
                         .build()
                 )
 
-                readColors(className, themeDescriptor.colors)
+                readColors(themeDescriptor.colors)
                 readIcons(themeDescriptor)
             }.build())
         }.build()
 
     private val colorPaletteClassName =
-        ClassName.bestGuess("org.jetbrains.jewel.intui.core.IntUiThemeColorPalette")
+        ClassName.bestGuess("org.jetbrains.jewel.ThemeColorPalette")
     private val iconDataClassName =
-        ClassName.bestGuess("org.jetbrains.jewel.IntelliJThemeIconData")
+        ClassName.bestGuess("org.jetbrains.jewel.ThemeIconData")
 
-    private fun TypeSpec.Builder.readColors(
-        className: ClassName,
-        colors: Map<String, String>
-    ) {
-        addType(TypeSpec.objectBuilder("Colors").apply {
-            addSuperinterface(colorPaletteClassName)
+    private fun TypeSpec.Builder.readColors(colors: Map<String, String>) {
+        val colorGroups = colors.entries.groupBy {
+            it.key.replace("""\d+""".toRegex(), "")
+        }.filterKeys {
+            colorGroups.contains(it)
+        }.map { (groupName, colors) ->
+            // We assume color lists are in the same order as in colorGroups
+            colors
+                .map { (_, value) ->
+                    val colorHexString = value.replace("#", "0xFF")
+                    CodeBlock.of("Color(%L)", colorHexString)
+                }
+                .joinToCode(prefix = "\n${groupName.lowercase()} = listOf(\n", separator = ",\n", suffix = "\n)")
+        }
 
-            colors.forEach { (name, value) ->
-                readColor(name, value)
+        val rawMap = colors
+            .map { (key, value) ->
+                val colorHexString = value.replace("#", "0xFF")
+                CodeBlock.of("%S to Color(%L)", key, colorHexString)
             }
-
-            colors.entries.groupBy {
-                it.key.replace("""\d+""".toRegex(), "")
-            }.filterKeys {
-                colorGroups.contains(it)
-            }.forEach { (group, colors) ->
-                readColorGroup(className, group, colors)
-            }
-
-            val rawMapProperty = PropertySpec
-                .builder(
-                    "rawMap",
-                    Map::class.asClassName().parameterizedBy(String::class.asClassName(), colorClassName),
-                    KModifier.OVERRIDE
-                )
-                .initializer(
-                    colors
-                        .map { (key, value) ->
-                            val colorHexString = value.replace("#", "0xFF")
-                            CodeBlock.of("%S to Color(%L)", key, colorHexString)
-                        }
-                        .joinToCode(prefix = "mapOf(", separator = ",\n", suffix = ")")
-                )
-                .build()
-            addProperty(rawMapProperty)
-        }.build())
+            .joinToCode(prefix = "\nrawMap = mapOf(\n", separator = ",\n", suffix = "\n)")
 
         addProperty(
             PropertySpec.builder("colors", colorPaletteClassName, KModifier.OVERRIDE)
-                .initializer("Colors")
+                .initializer(
+                    "ThemeColorPalette(%L,\n%L\n)",
+                    colorGroups.joinToCode(","),
+                    rawMap
+                )
                 .build()
         )
-    }
-
-    private fun TypeSpec.Builder.readColor(name: String, value: String) {
-        addProperty(PropertySpec.builder(GUtil.toLowerCamelCase(name), colorClassName).apply {
-            initializer("Color(%L)", value.replace("#", "0xFF"))
-        }.build())
-    }
-
-    private fun TypeSpec.Builder.readColorGroup(
-        paletteClassName: ClassName,
-        group: String,
-        colors: List<Map.Entry<String, String>>
-    ) {
-        val funcName = paletteClassName.member(GUtil.toLowerCamelCase(group))
-
-        addFunction(FunSpec.builder(funcName).apply {
-            returns(list.parameterizedBy(colorClassName))
-            addModifiers(KModifier.OVERRIDE)
-            addCode(CodeBlock.builder().apply {
-                when {
-                    colors.isEmpty() -> addStatement("return emptyList()")
-                    colors.size <= 5 -> {
-                        add("return listOf(")
-                        colors.forEachIndexed { index, (name, _) ->
-                            if (index != 0) add(",")
-                            add("%N", paletteClassName.member(GUtil.toLowerCamelCase(name)))
-                        }
-                        add(")")
-                    }
-
-                    else -> {
-                        add("return listOf(\n").indent()
-                        colors.forEach { (name, _) ->
-                            add("%N,\n", paletteClassName.member(GUtil.toLowerCamelCase(name)))
-                        }
-                        unindent().add(")")
-                    }
-                }
-            }.build())
-        }.build())
-
-        addFunction(FunSpec.builder(funcName).apply {
-            returns(colorClassName)
-            addModifiers(KModifier.OVERRIDE)
-            addParameter("index", Int::class)
-            addCode(CodeBlock.builder().apply {
-                addStatement("return %N()[index - 1]", funcName)
-            }.build())
-        }.build())
     }
 
     private fun TypeSpec.Builder.readIcons(theme: IntellijThemeDescriptor) {
-        addType(TypeSpec.objectBuilder("Icons").apply {
-            addSuperinterface(iconDataClassName)
+        val iconOverrides = mutableMapOf<String, String>()
+        val colorPalette = mutableMapOf<String, String>()
 
-            val iconOverrides = mutableMapOf<String, String>()
-
-            for ((key, value) in theme.icons) {
-                if (value is JsonPrimitive && value.isString) {
-                    iconOverrides += key to value.content
-                } else if (value is JsonObject && key == "ColorPalette") {
-                    val colorPalette = value.entries
-                        .mapNotNull {
-                            val pairValue = it.value
-                            if (pairValue is JsonPrimitive && pairValue.isString) {
-                                it.key to pairValue.content
-                            } else null
-                        }.toMap()
-
-                    addProperty(createOverrideStringMapProperty("colorPalette", colorPalette))
-                }
+        for ((key, value) in theme.icons) {
+            if (value is JsonPrimitive && value.isString) {
+                iconOverrides += key to value.content
+            } else if (value is JsonObject && key == "ColorPalette") {
+                value.entries
+                    .mapNotNull {
+                        val pairValue = it.value
+                        if (pairValue is JsonPrimitive && pairValue.isString) {
+                            it.key to pairValue.content
+                        } else null
+                    }
+                    .forEach { colorPalette[it.first] = it.second }
             }
+        }
 
-            addProperty(createOverrideStringMapProperty("iconOverrides", iconOverrides))
-            addProperty(
-                createOverrideStringMapProperty(
-                    "selectionColorPalette",
-                    theme.iconColorsOnSelection
-                )
-            )
-        }.build())
+        val iconOverridesBlock = iconOverrides.toMapCodeBlock()
+        val selectionColorPaletteBlock = theme.iconColorsOnSelection.toMapCodeBlock()
 
         addProperty(
-            PropertySpec.builder("icons", iconDataClassName, KModifier.OVERRIDE)
-                .initializer("Icons")
+            PropertySpec.builder("iconData", iconDataClassName, KModifier.OVERRIDE)
+                .initializer(
+                    CodeBlock.of(
+                        "ThemeIconData(\n%L,\n%L,\n%L\n)",
+                        colorPalette.toMapCodeBlock(),
+                        iconOverridesBlock,
+                        selectionColorPaletteBlock,
+                    )
+                )
                 .build()
         )
     }
+
+    private inline fun <reified K, reified V> Map<K, V>.toMapCodeBlock() =
+        entries
+            .map { (key, value) -> CodeBlock.of("\"%L\" to \"%L\"", key, value) }
+            .joinToCode(prefix = "mapOf(", separator = ",\n", suffix = ")")
 
     private inline fun <reified K, reified V> createOverrideStringMapProperty(name: String, values: Map<K, V>) =
         PropertySpec.builder(

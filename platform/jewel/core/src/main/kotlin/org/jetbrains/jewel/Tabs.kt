@@ -52,8 +52,8 @@ internal fun TabImpl(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     val tabStyle = when (tabData) {
-        is TabData.Default -> IntelliJTheme.defaultTabStyle
-        is TabData.Editor -> IntelliJTheme.editorTabStyle
+        is TabData.Default -> JewelTheme.defaultTabStyle
+        is TabData.Editor -> JewelTheme.editorTabStyle
     }
 
     var tabState by remember { mutableStateOf(TabState.of(selected = tabData.selected, active = isActive)) }

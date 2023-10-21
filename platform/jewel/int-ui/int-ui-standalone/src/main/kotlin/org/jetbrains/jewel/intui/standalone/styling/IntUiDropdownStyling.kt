@@ -8,9 +8,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.defaultTextStyle
 import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
 import org.jetbrains.jewel.painter.PainterProvider
 import org.jetbrains.jewel.styling.DropdownColors
@@ -29,7 +30,7 @@ object IntUiDefaultDropdownStyleFactory {
         colors: DropdownColors = DropdownColors.Default.light(),
         metrics: DropdownMetrics = DropdownMetrics.default(),
         icons: DropdownIcons = DropdownIcons.defaults(),
-        textStyle: TextStyle = IntUiTheme.defaultTextStyle,
+        textStyle: TextStyle = JewelTheme.defaultTextStyle,
         menuStyle: MenuStyle = MenuStyle.light(),
     ) = DropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 
@@ -38,7 +39,7 @@ object IntUiDefaultDropdownStyleFactory {
         colors: DropdownColors = DropdownColors.Default.dark(),
         metrics: DropdownMetrics = DropdownMetrics.default(),
         icons: DropdownIcons = DropdownIcons.defaults(),
-        textStyle: TextStyle = IntUiTheme.defaultTextStyle,
+        textStyle: TextStyle = JewelTheme.defaultTextStyle,
         menuStyle: MenuStyle = MenuStyle.dark(),
     ) = DropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 }
@@ -53,7 +54,7 @@ object IntUiUndecoratedDropdownStyleFactory {
         colors: DropdownColors = DropdownColors.Undecorated.light(),
         metrics: DropdownMetrics = DropdownMetrics.undecorated(),
         icons: DropdownIcons = DropdownIcons.defaults(),
-        textStyle: TextStyle = IntUiTheme.defaultTextStyle,
+        textStyle: TextStyle = JewelTheme.defaultTextStyle,
         menuStyle: MenuStyle = MenuStyle.light(),
     ) = DropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 
@@ -62,7 +63,7 @@ object IntUiUndecoratedDropdownStyleFactory {
         colors: DropdownColors = DropdownColors.Undecorated.dark(),
         metrics: DropdownMetrics = DropdownMetrics.undecorated(),
         icons: DropdownIcons = DropdownIcons.defaults(),
-        textStyle: TextStyle = IntUiTheme.defaultTextStyle,
+        textStyle: TextStyle = JewelTheme.defaultTextStyle,
         menuStyle: MenuStyle = MenuStyle.dark(),
     ) = DropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 }

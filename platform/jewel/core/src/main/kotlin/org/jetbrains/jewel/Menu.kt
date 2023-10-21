@@ -80,7 +80,7 @@ fun PopupMenu(
     onDismissRequest: (InputMode) -> Boolean,
     horizontalAlignment: Alignment.Horizontal,
     modifier: Modifier = Modifier,
-    style: MenuStyle = IntelliJTheme.menuStyle,
+    style: MenuStyle = JewelTheme.menuStyle,
     content: MenuScope.() -> Unit,
 ) {
     val density = LocalDensity.current
@@ -127,7 +127,7 @@ fun PopupMenu(
 @Composable
 internal fun MenuContent(
     modifier: Modifier = Modifier,
-    style: MenuStyle = IntelliJTheme.menuStyle,
+    style: MenuStyle = JewelTheme.menuStyle,
     content: MenuScope.() -> Unit,
 ) {
     val items by remember(content) {
@@ -288,8 +288,8 @@ private data class SubmenuItem(
 @Composable
 fun MenuSeparator(
     modifier: Modifier = Modifier,
-    metrics: MenuItemMetrics = IntelliJTheme.menuStyle.metrics.itemMetrics,
-    colors: MenuItemColors = IntelliJTheme.menuStyle.colors.itemColors,
+    metrics: MenuItemMetrics = JewelTheme.menuStyle.metrics.itemMetrics,
+    colors: MenuItemColors = JewelTheme.menuStyle.colors.itemColors,
 ) {
     Divider(
         orientation = Orientation.Horizontal,
@@ -306,7 +306,7 @@ fun MenuItem(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: MenuStyle = IntelliJTheme.menuStyle,
+    style: MenuStyle = JewelTheme.menuStyle,
     content: @Composable () -> Unit,
 ) {
     var itemState by remember(interactionSource) {
@@ -388,7 +388,7 @@ fun MenuSubmenuItem(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: MenuStyle = IntelliJTheme.menuStyle,
+    style: MenuStyle = JewelTheme.menuStyle,
     submenu: MenuScope.() -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -517,7 +517,7 @@ private fun Size.subtract(paddingValues: PaddingValues, density: Density, layout
 internal fun Submenu(
     onDismissRequest: (InputMode) -> Boolean,
     modifier: Modifier = Modifier,
-    style: MenuStyle = IntelliJTheme.menuStyle,
+    style: MenuStyle = JewelTheme.menuStyle,
     content: MenuScope.() -> Unit,
 ) {
     val density = LocalDensity.current

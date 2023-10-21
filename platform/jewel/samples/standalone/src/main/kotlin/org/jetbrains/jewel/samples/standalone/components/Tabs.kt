@@ -26,12 +26,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.Icon
-import org.jetbrains.jewel.IntelliJTheme
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.NoIndication
 import org.jetbrains.jewel.TabData
 import org.jetbrains.jewel.TabStrip
 import org.jetbrains.jewel.Text
-import org.jetbrains.jewel.intui.standalone.IntUiTheme
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import kotlin.math.max
 
@@ -140,13 +139,13 @@ private fun TabStripWithAddButton(
 
         // TODO create an IconButton instead of this hack
         val backgroundColor = if (isHovered) {
-            IntUiTheme.defaultTabStyle.colors.backgroundHovered
+            JewelTheme.defaultTabStyle.colors.backgroundHovered
         } else {
-            IntUiTheme.defaultTabStyle.colors.background
+            JewelTheme.defaultTabStyle.colors.background
         }
 
         Box(
-            modifier = Modifier.size(IntelliJTheme.defaultTabStyle.metrics.tabHeight)
+            modifier = Modifier.size(JewelTheme.defaultTabStyle.metrics.tabHeight)
                 .clickable(
                     onClick = onAddClick,
                     onClickLabel = "Add a tab",
@@ -157,7 +156,11 @@ private fun TabStripWithAddButton(
                 .background(backgroundColor),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(resource = "expui/general/add.svg", contentDescription = "Add a tab", StandaloneSampleIcons::class.java)
+            Icon(
+                resource = "expui/general/add.svg",
+                contentDescription = "Add a tab",
+                StandaloneSampleIcons::class.java,
+            )
         }
     }
 }

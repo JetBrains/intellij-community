@@ -47,7 +47,7 @@ import org.jetbrains.jewel.styling.TextAreaStyle
 import org.jetbrains.jewel.styling.TextFieldStyle
 import org.jetbrains.jewel.styling.TooltipStyle
 
-interface IntelliJTheme {
+interface JewelTheme {
 
     companion object {
 
@@ -85,12 +85,12 @@ interface IntelliJTheme {
             @ReadOnlyComposable
             get() = LocalSwingCompatMode.current
 
-        val colorPalette: IntelliJThemeColorPalette
+        val colorPalette: ThemeColorPalette
             @Composable
             @ReadOnlyComposable
             get() = LocalColorPalette.current
 
-        val iconData: IntelliJThemeIconData
+        val iconData: ThemeIconData
             @Composable
             @ReadOnlyComposable
             get() = LocalIconData.current
@@ -198,6 +198,7 @@ interface IntelliJTheme {
             @Composable
             @ReadOnlyComposable
             get() = LocalTooltipStyle.current
+
         val iconButtonStyle: IconButtonStyle
             @Composable
             @ReadOnlyComposable
@@ -206,18 +207,18 @@ interface IntelliJTheme {
 }
 
 @Composable
-fun IntelliJTheme(
-    theme: IntelliJThemeDefinition,
+fun JewelTheme(
+    theme: ThemeDefinition,
     swingCompatMode: Boolean,
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(LocalSwingCompatMode provides swingCompatMode) {
-        IntelliJTheme(theme, content)
+        JewelTheme(theme, content)
     }
 }
 
 @Composable
-fun IntelliJTheme(theme: IntelliJThemeDefinition, content: @Composable () -> Unit) {
+fun JewelTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalIsDarkTheme provides theme.isDark,
         LocalContentColor provides theme.contentColor,
@@ -229,7 +230,7 @@ fun IntelliJTheme(theme: IntelliJThemeDefinition, content: @Composable () -> Uni
 }
 
 internal val LocalIsDarkTheme = staticCompositionLocalOf<Boolean> {
-    error("No InDarkTheme provided")
+    error("No IsDarkTheme provided")
 }
 
 internal val LocalSwingCompatMode = staticCompositionLocalOf {
@@ -237,17 +238,15 @@ internal val LocalSwingCompatMode = staticCompositionLocalOf {
     false
 }
 
-val LocalColorPalette = staticCompositionLocalOf<IntelliJThemeColorPalette> {
-    EmptyThemeColorPalette
+val LocalColorPalette = staticCompositionLocalOf<ThemeColorPalette> {
+    ThemeColorPalette.Empty
 }
 
-val LocalIconData = staticCompositionLocalOf<IntelliJThemeIconData> {
-    EmptyThemeIconData
+val LocalIconData = staticCompositionLocalOf<ThemeIconData> {
+    ThemeIconData.Empty
 }
 
-/**
- * Overrides the dark mode of the current area.
- */
+/** Overrides the dark mode for the current composition scope. */
 @Composable
 fun OverrideDarkMode(isDark: Boolean, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalIsDarkTheme provides isDark, content = content)

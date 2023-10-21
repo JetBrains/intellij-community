@@ -23,7 +23,7 @@ import org.jetbrains.jewel.util.toRgbaHexString
 @Composable
 fun CircularProgressIndicator(
     modifier: Modifier = Modifier,
-    style: CircularProgressStyle = IntelliJTheme.circularProgressStyle,
+    style: CircularProgressStyle = JewelTheme.circularProgressStyle,
 ) {
     CircularProgressIndicatorImpl(
         modifier = modifier,
@@ -36,7 +36,7 @@ fun CircularProgressIndicator(
 @Composable
 fun CircularProgressIndicatorBig(
     modifier: Modifier = Modifier,
-    style: CircularProgressStyle = IntelliJTheme.circularProgressStyle,
+    style: CircularProgressStyle = JewelTheme.circularProgressStyle,
 ) {
     CircularProgressIndicatorImpl(
         modifier = modifier,
@@ -53,7 +53,7 @@ private fun CircularProgressIndicatorImpl(
     style: CircularProgressStyle,
     frameRetriever: (Color) -> List<String>,
 ) {
-    val defaultColor = if (IntelliJTheme.isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD)
+    val defaultColor = if (JewelTheme.isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD)
     var isFrameReady by remember { mutableStateOf(false) }
     var currentFrame: Painter? by remember { mutableStateOf(null) }
     val currentPainter = currentFrame

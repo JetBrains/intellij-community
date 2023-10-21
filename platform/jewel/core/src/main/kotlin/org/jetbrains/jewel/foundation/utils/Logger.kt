@@ -37,20 +37,11 @@ internal interface Logger {
     }
 }
 
+// TODO remove and replace with real logger
 internal object Log : Logger {
 
     override var currentLogLevel: LogLevel = LogLevel.Off
     override fun log(level: LogLevel, msg: String) {
         if (currentLogLevel.ordinal <= level.ordinal) println(msg)
     }
-}
-
-fun main() {
-    Log.currentLogLevel = LogLevel.Trace
-    Log.e(Log.currentLogLevel.name)
-    Log.t("this is a trace message")
-    Log.d("this is a debug message")
-    Log.i("this is an info message")
-    Log.w("this is a warning message")
-    Log.e("this is a severe message")
 }

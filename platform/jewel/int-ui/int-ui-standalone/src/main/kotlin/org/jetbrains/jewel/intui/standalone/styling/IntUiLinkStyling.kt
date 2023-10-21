@@ -8,9 +8,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.defaultTextStyle
 import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
 import org.jetbrains.jewel.painter.PainterProvider
 import org.jetbrains.jewel.styling.LinkColors
@@ -82,8 +83,8 @@ fun LinkIcons.Companion.defaults(
 
 @Composable
 fun LinkTextStyles.Companion.light(
-    normal: TextStyle = IntUiTheme.defaultTextStyle.copy(textDecoration = TextDecoration.Underline),
-    disabled: TextStyle = IntUiTheme.defaultTextStyle,
+    normal: TextStyle = JewelTheme.defaultTextStyle.copy(textDecoration = TextDecoration.Underline),
+    disabled: TextStyle = JewelTheme.defaultTextStyle,
     focused: TextStyle = normal,
     pressed: TextStyle = normal,
     hovered: TextStyle = normal,
@@ -92,8 +93,8 @@ fun LinkTextStyles.Companion.light(
 
 @Composable
 fun LinkTextStyles.Companion.dark(
-    normal: TextStyle = IntUiTheme.defaultTextStyle.copy(textDecoration = TextDecoration.Underline),
-    disabled: TextStyle = IntUiTheme.defaultTextStyle,
+    normal: TextStyle = JewelTheme.defaultTextStyle.copy(textDecoration = TextDecoration.Underline),
+    disabled: TextStyle = JewelTheme.defaultTextStyle,
     focused: TextStyle = normal,
     pressed: TextStyle = normal,
     hovered: TextStyle = normal,

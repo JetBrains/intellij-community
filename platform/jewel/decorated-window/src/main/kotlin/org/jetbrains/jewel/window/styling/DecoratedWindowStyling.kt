@@ -1,24 +1,30 @@
 package org.jetbrains.jewel.window.styling
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.jewel.GenerateDataFunctions
 import org.jetbrains.jewel.window.DecoratedWindowState
 
-interface DecoratedWindowStyle {
+@Immutable
+@GenerateDataFunctions
+class DecoratedWindowStyle(
+    val colors: DecoratedWindowColors,
+    val metrics: DecoratedWindowMetrics,
+) {
 
-    val colors: DecoratedWindowColors
-    val metrics: DecoratedWindowMetrics
+    companion object
 }
 
-@Stable
-interface DecoratedWindowColors {
-
-    val border: Color
-    val borderInactive: Color
+@Immutable
+@GenerateDataFunctions
+class DecoratedWindowColors(
+    val border: Color,
+    val borderInactive: Color,
+) {
 
     @Composable
     fun borderFor(state: DecoratedWindowState) = rememberUpdatedState(
@@ -27,12 +33,15 @@ interface DecoratedWindowColors {
             else -> border
         },
     )
+
+    companion object
 }
 
-@Stable
-interface DecoratedWindowMetrics {
+@Immutable
+@GenerateDataFunctions
+class DecoratedWindowMetrics(val borderWidth: Dp) {
 
-    val borderWidth: Dp
+    companion object
 }
 
 val LocalDecoratedWindowStyle = staticCompositionLocalOf<DecoratedWindowStyle> {

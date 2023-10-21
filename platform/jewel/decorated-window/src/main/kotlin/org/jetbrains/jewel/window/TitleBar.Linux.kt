@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.jetbrains.JBR
 import org.jetbrains.jewel.Icon
 import org.jetbrains.jewel.IconButton
-import org.jetbrains.jewel.IntelliJTheme
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.painter.PainterHint
 import org.jetbrains.jewel.painter.PainterProvider
 import org.jetbrains.jewel.painter.PainterSuffixHint
@@ -29,7 +29,7 @@ import java.awt.event.WindowEvent
 @Composable internal fun DecoratedWindowScope.TitleBarOnLinux(
     modifier: Modifier = Modifier,
     gradientStartColor: Color = Color.Unspecified,
-    style: TitleBarStyle = IntelliJTheme.defaultTitleBarStyle,
+    style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
     content: @Composable TitleBarScope.(DecoratedWindowState) -> Unit,
 ) {
     var lastPress = 0L
@@ -75,7 +75,7 @@ import java.awt.event.WindowEvent
 @Composable private fun TitleBarScope.CloseButton(
     onClick: () -> Unit,
     state: DecoratedWindowState,
-    style: TitleBarStyle = IntelliJTheme.defaultTitleBarStyle,
+    style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
 ) {
     ControlButton(onClick, state, style.icons.closeButton, "Close", style, style.paneCloseButtonStyle)
 }
@@ -85,7 +85,7 @@ import java.awt.event.WindowEvent
     state: DecoratedWindowState,
     painterProvider: PainterProvider,
     description: String,
-    style: TitleBarStyle = IntelliJTheme.defaultTitleBarStyle,
+    style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
     iconButtonStyle: IconButtonStyle = style.paneButtonStyle,
 ) {
     IconButton(

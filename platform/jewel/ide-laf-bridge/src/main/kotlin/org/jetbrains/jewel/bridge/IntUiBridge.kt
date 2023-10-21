@@ -21,8 +21,12 @@ import com.intellij.util.ui.DirProvider
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.StatusText
-import org.jetbrains.jewel.IntelliJComponentStyling
-import org.jetbrains.jewel.intui.core.IntUiThemeDefinition
+import org.jetbrains.jewel.ComponentStyling
+import org.jetbrains.jewel.GlobalColors
+import org.jetbrains.jewel.GlobalMetrics
+import org.jetbrains.jewel.ThemeColorPalette
+import org.jetbrains.jewel.ThemeDefinition
+import org.jetbrains.jewel.ThemeIconData
 import org.jetbrains.jewel.intui.core.styling.defaults
 import org.jetbrains.jewel.styling.ButtonColors
 import org.jetbrains.jewel.styling.ButtonMetrics
@@ -105,31 +109,31 @@ private val iconsBasePath
     get() = DirProvider().dir()
 
 @OptIn(DependsOnJBR::class)
-internal suspend fun createBridgeIntUiDefinition(): IntUiThemeDefinition {
+internal suspend fun createBridgeThemeDefinition(): ThemeDefinition {
     val textStyle = retrieveTextStyle("Label.font", "Label.foreground")
-    return createBridgeIntUiDefinition(textStyle)
+    return createBridgeThemeDefinition(textStyle)
 }
 
-internal fun createBridgeIntUiDefinition(textStyle: TextStyle): IntUiThemeDefinition {
+internal fun createBridgeThemeDefinition(textStyle: TextStyle): ThemeDefinition {
     val isDark = !JBColor.isBright()
 
-    logger.debug("Obtaining Int UI theme definition from Swing...")
+    logger.debug("Obtaining theme definition from Swing...")
 
-    return IntUiThemeDefinition(
+    return ThemeDefinition(
         isDark = isDark,
-        globalColors = BridgeGlobalColors.readFromLaF(),
-        colorPalette = BridgeThemeColorPalette.readFromLaF(),
-        iconData = BridgeIconData.readFromLaF(),
-        globalMetrics = BridgeGlobalMetrics.readFromLaF(),
+        globalColors = GlobalColors.readFromLaF(),
+        colorPalette = ThemeColorPalette.readFromLaF(),
+        iconData = ThemeIconData.readFromLaF(),
+        globalMetrics = GlobalMetrics.readFromLaF(),
         defaultTextStyle = textStyle,
         contentColor = JBColor.foreground().toComposeColor(),
     )
 }
 
 @OptIn(DependsOnJBR::class)
-internal suspend fun createSwingIntUiComponentStyling(
-    theme: IntUiThemeDefinition,
-): IntelliJComponentStyling = createSwingIntUiComponentStyling(
+internal suspend fun createBridgeComponentStyling(
+    theme: ThemeDefinition,
+): ComponentStyling = createBridgeComponentStyling(
     theme = theme,
     textAreaTextStyle = retrieveTextStyle("TextArea.font", "TextArea.foreground"),
     textFieldTextStyle = retrieveTextStyle("TextField.font", "TextField.foreground"),
@@ -138,20 +142,20 @@ internal suspend fun createSwingIntUiComponentStyling(
     linkTextStyle = retrieveTextStyle("Label.font"),
 )
 
-internal fun createSwingIntUiComponentStyling(
-    theme: IntUiThemeDefinition,
+internal fun createBridgeComponentStyling(
+    theme: ThemeDefinition,
     textFieldTextStyle: TextStyle,
     textAreaTextStyle: TextStyle,
     dropdownTextStyle: TextStyle,
     labelTextStyle: TextStyle,
     linkTextStyle: TextStyle,
-): IntelliJComponentStyling {
+): ComponentStyling {
     logger.debug("Obtaining Int UI component styling from Swing...")
 
     val textFieldStyle = readTextFieldStyle(textFieldTextStyle)
     val menuStyle = readMenuStyle()
 
-    return IntelliJComponentStyling(
+    return ComponentStyling(
         checkboxStyle = readCheckboxStyle(),
         chipStyle = readChipStyle(),
         circularProgressStyle = readCircularProgressStyle(theme.isDark),

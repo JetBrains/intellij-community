@@ -32,8 +32,8 @@ import org.jetbrains.jewel.util.isDark
 fun Tooltip(
     tooltip: @Composable () -> Unit,
     modifier: Modifier = Modifier,
-    style: TooltipStyle = IntelliJTheme.tooltipStyle,
-    tooltipPlacement: TooltipPlacement = IntellijTooltipPlacement(
+    style: TooltipStyle = JewelTheme.tooltipStyle,
+    tooltipPlacement: TooltipPlacement = TooltipPlacement(
         contentOffset = style.metrics.tooltipOffset,
         alignment = style.metrics.tooltipAlignment,
         density = LocalDensity.current,
@@ -77,7 +77,7 @@ fun Tooltip(
     )
 }
 
-class IntellijTooltipPlacement(
+class TooltipPlacement(
     private val contentOffset: DpOffset,
     private val alignment: Alignment.Horizontal,
     private val density: Density,
@@ -91,19 +91,18 @@ class IntellijTooltipPlacement(
     }
 
     @Composable
-    override fun positionProvider(cursorPosition: Offset): PopupPositionProvider {
-        return rememberIntellijTooltipPositionProvider(
+    override fun positionProvider(cursorPosition: Offset): PopupPositionProvider =
+        rememberTooltipPositionProvider(
             cursorPosition = cursorPosition,
             contentOffset = contentOffset,
             alignment = alignment,
             density = density,
             windowMargin = windowMargin,
         )
-    }
 }
 
 @Composable
-private fun rememberIntellijTooltipPositionProvider(
+private fun rememberTooltipPositionProvider(
     cursorPosition: Offset,
     contentOffset: DpOffset,
     alignment: Alignment.Horizontal,
@@ -115,7 +114,7 @@ private fun rememberIntellijTooltipPositionProvider(
     density,
     windowMargin,
 ) {
-    IntellijTooltipPositionProvider(
+    TooltipPositionProvider(
         cursorPosition = cursorPosition,
         contentOffset = contentOffset,
         alignment = alignment,
@@ -124,7 +123,7 @@ private fun rememberIntellijTooltipPositionProvider(
     )
 }
 
-private class IntellijTooltipPositionProvider(
+private class TooltipPositionProvider(
     private val cursorPosition: Offset,
     private val contentOffset: DpOffset,
     private val alignment: Alignment.Horizontal,

@@ -16,12 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.GroupHeader
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.OutlinedButton
 import org.jetbrains.jewel.RadioButtonRow
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
-import org.jetbrains.jewel.intui.standalone.IntUiTheme
 
 @Composable
 internal fun Borders() {
@@ -84,7 +84,7 @@ internal fun Borders() {
                 .border(
                     borderAlignment,
                     width,
-                    IntUiTheme.colorPalette.blue(4),
+                    JewelTheme.colorPalette.blue(4),
                     CircleShape,
                     expand,
                 ),
@@ -94,7 +94,7 @@ internal fun Borders() {
                 .border(
                     borderAlignment,
                     width,
-                    IntUiTheme.colorPalette.blue(4),
+                    JewelTheme.colorPalette.blue(4),
                     RectangleShape,
                     expand,
                 ),
@@ -104,7 +104,7 @@ internal fun Borders() {
                 .border(
                     borderAlignment,
                     width,
-                    IntUiTheme.colorPalette.blue(4),
+                    JewelTheme.colorPalette.blue(4),
                     RoundedCornerShape(4.dp),
                     expand,
                 ),
@@ -114,7 +114,7 @@ internal fun Borders() {
                 .border(
                     borderAlignment,
                     width,
-                    IntUiTheme.colorPalette.blue(4),
+                    JewelTheme.colorPalette.blue(4),
                     RoundedCornerShape(4.dp, 0.dp, 4.dp, 0.dp),
                     expand,
                 ),

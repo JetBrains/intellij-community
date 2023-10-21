@@ -36,13 +36,18 @@ import org.jetbrains.jewel.Divider
 import org.jetbrains.jewel.Dropdown
 import org.jetbrains.jewel.Icon
 import org.jetbrains.jewel.IconButton
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.Tooltip
 import org.jetbrains.jewel.VerticalScrollbar
 import org.jetbrains.jewel.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.darkThemeDefinition
+import org.jetbrains.jewel.intui.standalone.lightThemeDefinition
 import org.jetbrains.jewel.intui.window.decoratedWindowComponentStyling
-import org.jetbrains.jewel.intui.window.styling.IntUiTitleBarStyle
+import org.jetbrains.jewel.intui.window.styling.dark
+import org.jetbrains.jewel.intui.window.styling.light
+import org.jetbrains.jewel.intui.window.styling.lightWithLightHeader
 import org.jetbrains.jewel.samples.standalone.components.Borders
 import org.jetbrains.jewel.samples.standalone.components.Buttons
 import org.jetbrains.jewel.samples.standalone.components.Checkboxes
@@ -60,6 +65,7 @@ import org.jetbrains.jewel.separator
 import org.jetbrains.jewel.window.DecoratedWindow
 import org.jetbrains.jewel.window.TitleBar
 import org.jetbrains.jewel.window.newFullscreenControls
+import org.jetbrains.jewel.window.styling.TitleBarStyle
 import java.awt.Desktop
 import java.io.InputStream
 import java.net.URI
@@ -67,12 +73,18 @@ import java.net.URI
 fun main() {
     val icon = svgResource("icons/jewel-logo.svg")
     application {
-        var intUiTheme by remember { mutableStateOf(IntUiThemes.Light) }
+        var theme by remember { mutableStateOf(IntUiThemes.Light) }
 
         var swingCompat by remember { mutableStateOf(false) }
-        val theme = if (intUiTheme.isDark()) IntUiTheme.darkThemeDefinition() else IntUiTheme.lightThemeDefinition()
+        val themeDefinition =
+            if (theme.isDark()) {
+                JewelTheme.darkThemeDefinition()
+            } else {
+                JewelTheme.lightThemeDefinition()
+            }
+
         val projectColor by rememberUpdatedState(
-            if (intUiTheme.isLightHeader()) {
+            if (theme.isLightHeader()) {
                 Color(0xFFF5D4C1)
             } else {
                 Color(0xFF654B40)
@@ -80,13 +92,13 @@ fun main() {
         )
 
         IntUiTheme(
-            theme,
-            {
-                theme.decoratedWindowComponentStyling(
-                    titleBarStyle = when (intUiTheme) {
-                        IntUiThemes.Light -> IntUiTitleBarStyle.light()
-                        IntUiThemes.LightWithLightHeader -> IntUiTitleBarStyle.lightWithLightHeader()
-                        IntUiThemes.Dark -> IntUiTitleBarStyle.dark()
+            themeDefinition,
+            componentStyling = {
+                themeDefinition.decoratedWindowComponentStyling(
+                    titleBarStyle = when (theme) {
+                        IntUiThemes.Light -> TitleBarStyle.light()
+                        IntUiThemes.LightWithLightHeader -> TitleBarStyle.lightWithLightHeader()
+                        IntUiThemes.Dark -> TitleBarStyle.dark()
                     },
                 )
             },
@@ -97,10 +109,10 @@ fun main() {
                 title = "Jewel component catalog",
                 icon = icon,
             ) {
-                val windowBackground = if (intUiTheme.isDark()) {
-                    IntUiTheme.colorPalette.grey(1)
+                val windowBackground = if (theme.isDark()) {
+                    JewelTheme.colorPalette.grey(1)
                 } else {
-                    IntUiTheme.colorPalette.grey(14)
+                    JewelTheme.colorPalette.grey(14)
                 }
                 TitleBar(Modifier.newFullscreenControls(), gradientStartColor = projectColor) {
                     Row(Modifier.align(Alignment.Start)) {
@@ -144,20 +156,20 @@ fun main() {
                         }
 
                         Tooltip({
-                            when (intUiTheme) {
+                            when (theme) {
                                 IntUiThemes.Light -> Text("Switch to light theme with light header")
                                 IntUiThemes.LightWithLightHeader -> Text("Switch to dark theme")
                                 IntUiThemes.Dark -> Text("Switch to light theme")
                             }
                         }) {
                             IconButton({
-                                intUiTheme = when (intUiTheme) {
+                                theme = when (theme) {
                                     IntUiThemes.Light -> IntUiThemes.LightWithLightHeader
                                     IntUiThemes.LightWithLightHeader -> IntUiThemes.Dark
                                     IntUiThemes.Dark -> IntUiThemes.Light
                                 }
                             }, Modifier.size(40.dp).padding(5.dp)) {
-                                if (intUiTheme.isDark()) {
+                                if (theme.isDark()) {
                                     Icon("icons/darkTheme@20x20.svg", "Themes", StandaloneSampleIcons::class.java)
                                 } else {
                                     Icon("icons/lightTheme@20x20.svg", "Themes", StandaloneSampleIcons::class.java)

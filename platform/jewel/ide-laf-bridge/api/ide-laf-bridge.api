@@ -1,33 +1,20 @@
+public final class org/jetbrains/jewel/bridge/BridgeGlobalColorsKt {
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/BorderColors$Companion;)Lorg/jetbrains/jewel/BorderColors;
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/GlobalColors$Companion;)Lorg/jetbrains/jewel/GlobalColors;
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/OutlineColors$Companion;)Lorg/jetbrains/jewel/OutlineColors;
+}
+
+public final class org/jetbrains/jewel/bridge/BridgeGlobalMetricsKt {
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/GlobalMetrics$Companion;)Lorg/jetbrains/jewel/GlobalMetrics;
+}
+
 public final class org/jetbrains/jewel/bridge/BridgeResourceResolverKt {
 	public static final fun bridgePainterProvider (Ljava/lang/String;)Lorg/jetbrains/jewel/painter/ResourcePainterProvider;
 }
 
-public final class org/jetbrains/jewel/bridge/BridgeThemeColorPalette : org/jetbrains/jewel/intui/core/IntUiThemeColorPalette {
-	public static final field $stable I
-	public static final field Companion Lorg/jetbrains/jewel/bridge/BridgeThemeColorPalette$Companion;
-	public synthetic fun <init> (Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun blue ()Ljava/util/List;
-	public fun blue-vNxB06k (I)J
-	public fun getRawMap ()Ljava/util/Map;
-	public fun green ()Ljava/util/List;
-	public fun green-vNxB06k (I)J
-	public fun grey ()Ljava/util/List;
-	public fun grey-vNxB06k (I)J
-	public fun lookup-ijrfgN4 (Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
-	public fun orange ()Ljava/util/List;
-	public fun orange-vNxB06k (I)J
-	public fun purple ()Ljava/util/List;
-	public fun purple-vNxB06k (I)J
-	public fun red ()Ljava/util/List;
-	public fun red-vNxB06k (I)J
-	public fun teal ()Ljava/util/List;
-	public fun teal-vNxB06k (I)J
-	public fun yellow ()Ljava/util/List;
-	public fun yellow-vNxB06k (I)J
-}
-
-public final class org/jetbrains/jewel/bridge/BridgeThemeColorPalette$Companion {
-	public final fun readFromLaF ()Lorg/jetbrains/jewel/bridge/BridgeThemeColorPalette;
+public final class org/jetbrains/jewel/bridge/BridgeThemeColorPaletteKt {
+	public static final fun getWindowsPopupBorder (Lorg/jetbrains/jewel/ThemeColorPalette;)Landroidx/compose/ui/graphics/Color;
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/ThemeColorPalette$Companion;)Lorg/jetbrains/jewel/ThemeColorPalette;
 }
 
 public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {

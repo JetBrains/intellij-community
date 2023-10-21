@@ -46,8 +46,8 @@ fun RadioButton(
     enabled: Boolean = true,
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: RadioButtonStyle = IntelliJTheme.radioButtonStyle,
-    textStyle: TextStyle = IntelliJTheme.textStyle,
+    style: RadioButtonStyle = JewelTheme.radioButtonStyle,
+    textStyle: TextStyle = JewelTheme.textStyle,
 ) {
     RadioButtonImpl(
         selected = selected,
@@ -71,8 +71,8 @@ fun RadioButtonRow(
     enabled: Boolean = true,
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: RadioButtonStyle = IntelliJTheme.radioButtonStyle,
-    textStyle: TextStyle = IntelliJTheme.textStyle,
+    style: RadioButtonStyle = JewelTheme.radioButtonStyle,
+    textStyle: TextStyle = JewelTheme.textStyle,
 ) {
     RadioButtonImpl(
         selected = selected,
@@ -96,8 +96,8 @@ fun RadioButtonRow(
     enabled: Boolean = true,
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: RadioButtonStyle = IntelliJTheme.radioButtonStyle,
-    textStyle: TextStyle = IntelliJTheme.textStyle,
+    style: RadioButtonStyle = JewelTheme.radioButtonStyle,
+    textStyle: TextStyle = JewelTheme.textStyle,
     content: @Composable RowScope.() -> Unit,
 ) {
     RadioButtonImpl(

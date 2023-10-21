@@ -9,9 +9,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.defaultTextStyle
 import org.jetbrains.jewel.styling.LabelledTextFieldColors
 import org.jetbrains.jewel.styling.LabelledTextFieldMetrics
 import org.jetbrains.jewel.styling.LabelledTextFieldStyle
@@ -21,7 +22,7 @@ import org.jetbrains.jewel.styling.LabelledTextFieldTextStyles
 fun LabelledTextFieldStyle.Companion.light(
     colors: LabelledTextFieldColors = LabelledTextFieldColors.light(),
     metrics: LabelledTextFieldMetrics = LabelledTextFieldMetrics.defaults(),
-    textStyle: TextStyle = IntUiTheme.defaultTextStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
     textStyles: LabelledTextFieldTextStyles = LabelledTextFieldTextStyles.light(),
 ) = LabelledTextFieldStyle(colors, metrics, textStyle, textStyles)
 
@@ -29,7 +30,7 @@ fun LabelledTextFieldStyle.Companion.light(
 fun LabelledTextFieldStyle.Companion.dark(
     colors: LabelledTextFieldColors = LabelledTextFieldColors.dark(),
     metrics: LabelledTextFieldMetrics = LabelledTextFieldMetrics.defaults(),
-    textStyle: TextStyle = IntUiTheme.defaultTextStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
     textStyles: LabelledTextFieldTextStyles = LabelledTextFieldTextStyles.dark(),
 ) = LabelledTextFieldStyle(colors, metrics, textStyle, textStyles)
 
@@ -145,16 +146,16 @@ fun LabelledTextFieldMetrics.Companion.defaults(
 ) = LabelledTextFieldMetrics(borderWidth, contentPadding, cornerSize, minSize, labelSpacing, hintSpacing)
 
 fun LabelledTextFieldTextStyles.Companion.light(
-    label: TextStyle = IntUiTheme.defaultTextStyle,
-    hint: TextStyle = IntUiTheme.defaultTextStyle.copy(
+    label: TextStyle = JewelTheme.defaultTextStyle,
+    hint: TextStyle = JewelTheme.defaultTextStyle.copy(
         fontSize = 12.sp,
         lineHeight = 16.sp,
     ),
 ) = LabelledTextFieldTextStyles(label, hint)
 
 fun LabelledTextFieldTextStyles.Companion.dark(
-    label: TextStyle = IntUiTheme.defaultTextStyle,
-    hint: TextStyle = IntUiTheme.defaultTextStyle.copy(
+    label: TextStyle = JewelTheme.defaultTextStyle,
+    hint: TextStyle = JewelTheme.defaultTextStyle.copy(
         fontSize = 12.sp,
         lineHeight = 16.sp,
     ),

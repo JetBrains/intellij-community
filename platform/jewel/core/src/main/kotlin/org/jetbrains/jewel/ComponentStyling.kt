@@ -48,7 +48,7 @@ import org.jetbrains.jewel.styling.TooltipStyle
 
 @Stable
 @GenerateDataFunctions
-class IntelliJComponentStyling(
+class ComponentStyling(
     val checkboxStyle: CheckboxStyle,
     val chipStyle: ChipStyle,
     val circularProgressStyle: CircularProgressStyle,
@@ -78,7 +78,7 @@ class IntelliJComponentStyling(
         LocalCheckboxStyle provides checkboxStyle,
         LocalChipStyle provides chipStyle,
         LocalCircularProgressStyle provides circularProgressStyle,
-        LocalContextMenuRepresentation provides IntelliJContextMenuRepresentation,
+        LocalContextMenuRepresentation provides ContextMenuRepresentation,
         LocalDefaultButtonStyle provides defaultButtonStyle,
         LocalDefaultDropdownStyle provides defaultDropdownStyle,
         LocalDefaultTabStyle provides defaultTabStyle,

@@ -30,7 +30,7 @@ import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
 fun HorizontalProgressBar(
     progress: Float, // from 0 to 1
     modifier: Modifier = Modifier,
-    style: HorizontalProgressBarStyle = IntelliJTheme.horizontalProgressBarStyle,
+    style: HorizontalProgressBarStyle = JewelTheme.horizontalProgressBarStyle,
 ) {
     val colors = style.colors
     val shape = RoundedCornerShape(style.metrics.cornerSize)
@@ -59,7 +59,7 @@ fun HorizontalProgressBar(
 @Composable
 fun IndeterminateHorizontalProgressBar(
     modifier: Modifier = Modifier,
-    style: HorizontalProgressBarStyle = IntelliJTheme.horizontalProgressBarStyle,
+    style: HorizontalProgressBarStyle = JewelTheme.horizontalProgressBarStyle,
 ) {
     val infiniteTransition = rememberInfiniteTransition()
 

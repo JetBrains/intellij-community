@@ -5,39 +5,39 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 @Immutable
-interface GlobalColors {
+@GenerateDataFunctions
+class GlobalColors(
+    val borders: BorderColors,
+    val outlines: OutlineColors,
+    val infoContent: Color,
+    val paneBackground: Color,
+) {
 
-    val borders: BorderColors
-
-    val outlines: OutlineColors
-
-    val infoContent: Color
-
-    val paneBackground: Color
+    companion object
 }
 
 @Immutable
-interface BorderColors {
+@GenerateDataFunctions
+class BorderColors(
+    val normal: Color,
+    val focused: Color,
+    val disabled: Color,
+) {
 
-    val normal: Color
-
-    val focused: Color
-
-    val disabled: Color
+    companion object
 }
 
 @Immutable
-interface OutlineColors {
+@GenerateDataFunctions
+class OutlineColors(
+    val focused: Color,
+    val focusedWarning: Color,
+    val focusedError: Color,
+    val warning: Color,
+    val error: Color,
+) {
 
-    val focused: Color
-
-    val focusedWarning: Color
-
-    val focusedError: Color
-
-    val warning: Color
-
-    val error: Color
+    companion object
 }
 
 val LocalGlobalColors = staticCompositionLocalOf<GlobalColors> {

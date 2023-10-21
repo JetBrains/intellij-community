@@ -8,9 +8,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.IntUiTheme
+import org.jetbrains.jewel.intui.standalone.defaultTextStyle
 import org.jetbrains.jewel.styling.TextAreaColors
 import org.jetbrains.jewel.styling.TextAreaMetrics
 import org.jetbrains.jewel.styling.TextAreaStyle
@@ -19,14 +20,14 @@ import org.jetbrains.jewel.styling.TextAreaStyle
 fun TextAreaStyle.Companion.light(
     colors: TextAreaColors = TextAreaColors.light(),
     metrics: TextAreaMetrics = TextAreaMetrics.defaults(),
-    textStyle: TextStyle = IntUiTheme.defaultTextStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
 ) = TextAreaStyle(colors, metrics, textStyle)
 
 @Composable
 fun TextAreaStyle.Companion.dark(
     colors: TextAreaColors = TextAreaColors.dark(),
     metrics: TextAreaMetrics = TextAreaMetrics.defaults(),
-    textStyle: TextStyle = IntUiTheme.defaultTextStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
 ) = TextAreaStyle(colors, metrics, textStyle)
 
 @Composable

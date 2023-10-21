@@ -11,7 +11,7 @@ import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.dp
 import com.jetbrains.JBR
-import org.jetbrains.jewel.IntelliJTheme
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 import org.jetbrains.jewel.window.utils.macos.MacUtil
 
@@ -58,7 +58,7 @@ private class NewFullscreenControlsNode(
 @Composable internal fun DecoratedWindowScope.TitleBarOnMacOs(
     modifier: Modifier = Modifier,
     gradientStartColor: Color = Color.Unspecified,
-    style: TitleBarStyle = IntelliJTheme.defaultTitleBarStyle,
+    style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
     content: @Composable TitleBarScope.(DecoratedWindowState) -> Unit,
 ) {
     val newFullscreenControls = modifier.foldOut(false) { e, r ->

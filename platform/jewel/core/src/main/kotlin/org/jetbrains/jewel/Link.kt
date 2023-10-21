@@ -39,7 +39,7 @@ import org.jetbrains.jewel.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.CommonStateBitMask.Focused
 import org.jetbrains.jewel.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.CommonStateBitMask.Pressed
-import org.jetbrains.jewel.IntelliJTheme.Companion.isSwingCompatMode
+import org.jetbrains.jewel.JewelTheme.Companion.isSwingCompatMode
 import org.jetbrains.jewel.foundation.onHover
 import org.jetbrains.jewel.painter.PainterProvider
 import org.jetbrains.jewel.painter.hints.Stateful
@@ -47,7 +47,7 @@ import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LocalLinkStyle
 import org.jetbrains.jewel.styling.LocalMenuStyle
 import org.jetbrains.jewel.styling.MenuStyle
-import org.jetbrains.jewel.util.appendIf
+import org.jetbrains.jewel.util.thenIf
 import java.awt.Cursor
 
 @Composable
@@ -252,7 +252,7 @@ private fun LinkImpl(
 
     Row(
         modifier = modifier
-            .appendIf(linkState.isEnabled) { pointerChangeModifier }
+            .thenIf(linkState.isEnabled) { pointerChangeModifier }
             .clickable(
                 onClick = {
                     linkState = linkState.copy(visited = true)

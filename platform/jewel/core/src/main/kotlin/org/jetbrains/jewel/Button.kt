@@ -42,8 +42,8 @@ fun DefaultButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: ButtonStyle = IntelliJTheme.defaultButtonStyle,
-    textStyle: TextStyle = IntelliJTheme.textStyle,
+    style: ButtonStyle = JewelTheme.defaultButtonStyle,
+    textStyle: TextStyle = JewelTheme.textStyle,
     content: @Composable RowScope.() -> Unit,
 ) {
     ButtonImpl(
@@ -63,8 +63,8 @@ fun OutlinedButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: ButtonStyle = IntelliJTheme.outlinedButtonStyle,
-    textStyle: TextStyle = IntelliJTheme.textStyle,
+    style: ButtonStyle = JewelTheme.outlinedButtonStyle,
+    textStyle: TextStyle = JewelTheme.textStyle,
     content: @Composable RowScope.() -> Unit,
 ) {
     ButtonImpl(

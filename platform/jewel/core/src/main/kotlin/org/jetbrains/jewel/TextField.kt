@@ -47,7 +47,7 @@ fun TextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextFieldStyle = IntelliJTheme.textFieldStyle,
+    style: TextFieldStyle = JewelTheme.textFieldStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
@@ -103,8 +103,8 @@ fun TextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextFieldStyle = IntelliJTheme.textFieldStyle,
-    textStyle: TextStyle = IntelliJTheme.textStyle,
+    style: TextFieldStyle = JewelTheme.textFieldStyle,
+    textStyle: TextStyle = JewelTheme.textStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     InputField(

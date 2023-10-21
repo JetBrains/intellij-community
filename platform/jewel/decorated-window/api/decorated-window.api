@@ -90,8 +90,8 @@ public final class org/jetbrains/jewel/window/DecoratedWindowState$Companion {
 }
 
 public final class org/jetbrains/jewel/window/ThemeKt {
-	public static final fun getDefaultDecoratedWindowStyle (Lorg/jetbrains/jewel/IntelliJTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/window/styling/DecoratedWindowStyle;
-	public static final fun getDefaultTitleBarStyle (Lorg/jetbrains/jewel/IntelliJTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/window/styling/TitleBarStyle;
+	public static final fun getDefaultDecoratedWindowStyle (Lorg/jetbrains/jewel/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/window/styling/DecoratedWindowStyle;
+	public static final fun getDefaultTitleBarStyle (Lorg/jetbrains/jewel/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/window/styling/TitleBarStyle;
 }
 
 public final class org/jetbrains/jewel/window/TitleBarKt {
@@ -109,72 +109,127 @@ public final class org/jetbrains/jewel/window/TitleBar_MacOSKt {
 	public static synthetic fun newFullscreenControls$default (Landroidx/compose/ui/Modifier;ZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
 }
 
-public abstract interface class org/jetbrains/jewel/window/styling/DecoratedWindowColors {
-	public abstract fun borderFor-3hEOMOc (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
-	public abstract fun getBorder-0d7_KjU ()J
-	public abstract fun getBorderInactive-0d7_KjU ()J
+public final class org/jetbrains/jewel/window/styling/DecoratedWindowColors {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/window/styling/DecoratedWindowColors$Companion;
+	public synthetic fun <init> (JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun borderFor-3hEOMOc (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBorder-0d7_KjU ()J
+	public final fun getBorderInactive-0d7_KjU ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
-public final class org/jetbrains/jewel/window/styling/DecoratedWindowColors$DefaultImpls {
-	public static fun borderFor-3hEOMOc (Lorg/jetbrains/jewel/window/styling/DecoratedWindowColors;JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+public final class org/jetbrains/jewel/window/styling/DecoratedWindowColors$Companion {
 }
 
-public abstract interface class org/jetbrains/jewel/window/styling/DecoratedWindowMetrics {
-	public abstract fun getBorderWidth-D9Ej5fM ()F
+public final class org/jetbrains/jewel/window/styling/DecoratedWindowMetrics {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/window/styling/DecoratedWindowMetrics$Companion;
+	public synthetic fun <init> (FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBorderWidth-D9Ej5fM ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
-public abstract interface class org/jetbrains/jewel/window/styling/DecoratedWindowStyle {
-	public abstract fun getColors ()Lorg/jetbrains/jewel/window/styling/DecoratedWindowColors;
-	public abstract fun getMetrics ()Lorg/jetbrains/jewel/window/styling/DecoratedWindowMetrics;
+public final class org/jetbrains/jewel/window/styling/DecoratedWindowMetrics$Companion {
+}
+
+public final class org/jetbrains/jewel/window/styling/DecoratedWindowStyle {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/window/styling/DecoratedWindowStyle$Companion;
+	public fun <init> (Lorg/jetbrains/jewel/window/styling/DecoratedWindowColors;Lorg/jetbrains/jewel/window/styling/DecoratedWindowMetrics;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColors ()Lorg/jetbrains/jewel/window/styling/DecoratedWindowColors;
+	public final fun getMetrics ()Lorg/jetbrains/jewel/window/styling/DecoratedWindowMetrics;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/window/styling/DecoratedWindowStyle$Companion {
 }
 
 public final class org/jetbrains/jewel/window/styling/DecoratedWindowStylingKt {
 	public static final fun getLocalDecoratedWindowStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
-public abstract interface class org/jetbrains/jewel/window/styling/TitleBarColors {
-	public abstract fun backgroundFor-3hEOMOc (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
-	public abstract fun getBackground-0d7_KjU ()J
-	public abstract fun getBorder-0d7_KjU ()J
-	public abstract fun getContent-0d7_KjU ()J
-	public abstract fun getDropdownHoveredBackground-0d7_KjU ()J
-	public abstract fun getDropdownPressedBackground-0d7_KjU ()J
-	public abstract fun getFullscreenControlButtonsBackground-0d7_KjU ()J
-	public abstract fun getIconButtonHoveredBackground-0d7_KjU ()J
-	public abstract fun getIconButtonPressedBackground-0d7_KjU ()J
-	public abstract fun getInactiveBackground-0d7_KjU ()J
-	public abstract fun getTitlePaneButtonHoveredBackground-0d7_KjU ()J
-	public abstract fun getTitlePaneButtonPressedBackground-0d7_KjU ()J
-	public abstract fun getTitlePaneCloseButtonHoveredBackground-0d7_KjU ()J
-	public abstract fun getTitlePaneCloseButtonPressedBackground-0d7_KjU ()J
+public final class org/jetbrains/jewel/window/styling/TitleBarColors {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/window/styling/TitleBarColors$Companion;
+	public synthetic fun <init> (JJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun backgroundFor-3hEOMOc (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackground-0d7_KjU ()J
+	public final fun getBorder-0d7_KjU ()J
+	public final fun getContent-0d7_KjU ()J
+	public final fun getDropdownHoveredBackground-0d7_KjU ()J
+	public final fun getDropdownPressedBackground-0d7_KjU ()J
+	public final fun getFullscreenControlButtonsBackground-0d7_KjU ()J
+	public final fun getIconButtonHoveredBackground-0d7_KjU ()J
+	public final fun getIconButtonPressedBackground-0d7_KjU ()J
+	public final fun getInactiveBackground-0d7_KjU ()J
+	public final fun getTitlePaneButtonHoveredBackground-0d7_KjU ()J
+	public final fun getTitlePaneButtonPressedBackground-0d7_KjU ()J
+	public final fun getTitlePaneCloseButtonHoveredBackground-0d7_KjU ()J
+	public final fun getTitlePaneCloseButtonPressedBackground-0d7_KjU ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
-public final class org/jetbrains/jewel/window/styling/TitleBarColors$DefaultImpls {
-	public static fun backgroundFor-3hEOMOc (Lorg/jetbrains/jewel/window/styling/TitleBarColors;JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+public final class org/jetbrains/jewel/window/styling/TitleBarColors$Companion {
 }
 
-public abstract interface class org/jetbrains/jewel/window/styling/TitleBarIcons {
-	public abstract fun getCloseButton ()Lorg/jetbrains/jewel/painter/PainterProvider;
-	public abstract fun getMaximizeButton ()Lorg/jetbrains/jewel/painter/PainterProvider;
-	public abstract fun getMinimizeButton ()Lorg/jetbrains/jewel/painter/PainterProvider;
-	public abstract fun getRestoreButton ()Lorg/jetbrains/jewel/painter/PainterProvider;
+public final class org/jetbrains/jewel/window/styling/TitleBarIcons {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/window/styling/TitleBarIcons$Companion;
+	public fun <init> (Lorg/jetbrains/jewel/painter/PainterProvider;Lorg/jetbrains/jewel/painter/PainterProvider;Lorg/jetbrains/jewel/painter/PainterProvider;Lorg/jetbrains/jewel/painter/PainterProvider;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCloseButton ()Lorg/jetbrains/jewel/painter/PainterProvider;
+	public final fun getMaximizeButton ()Lorg/jetbrains/jewel/painter/PainterProvider;
+	public final fun getMinimizeButton ()Lorg/jetbrains/jewel/painter/PainterProvider;
+	public final fun getRestoreButton ()Lorg/jetbrains/jewel/painter/PainterProvider;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
-public abstract interface class org/jetbrains/jewel/window/styling/TitleBarMetrics {
-	public abstract fun getGradientEndX-D9Ej5fM ()F
-	public abstract fun getGradientStartX-D9Ej5fM ()F
-	public abstract fun getHeight-D9Ej5fM ()F
-	public abstract fun getTitlePaneButtonSize-MYxV2XQ ()J
+public final class org/jetbrains/jewel/window/styling/TitleBarIcons$Companion {
 }
 
-public abstract interface class org/jetbrains/jewel/window/styling/TitleBarStyle {
-	public abstract fun getColors ()Lorg/jetbrains/jewel/window/styling/TitleBarColors;
-	public abstract fun getDropdownStyle ()Lorg/jetbrains/jewel/styling/DropdownStyle;
-	public abstract fun getIconButtonStyle ()Lorg/jetbrains/jewel/styling/IconButtonStyle;
-	public abstract fun getIcons ()Lorg/jetbrains/jewel/window/styling/TitleBarIcons;
-	public abstract fun getMetrics ()Lorg/jetbrains/jewel/window/styling/TitleBarMetrics;
-	public abstract fun getPaneButtonStyle ()Lorg/jetbrains/jewel/styling/IconButtonStyle;
-	public abstract fun getPaneCloseButtonStyle ()Lorg/jetbrains/jewel/styling/IconButtonStyle;
+public final class org/jetbrains/jewel/window/styling/TitleBarMetrics {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/window/styling/TitleBarMetrics$Companion;
+	public synthetic fun <init> (FFFJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGradientEndX-D9Ej5fM ()F
+	public final fun getGradientStartX-D9Ej5fM ()F
+	public final fun getHeight-D9Ej5fM ()F
+	public final fun getTitlePaneButtonSize-MYxV2XQ ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/window/styling/TitleBarMetrics$Companion {
+}
+
+public final class org/jetbrains/jewel/window/styling/TitleBarStyle {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/window/styling/TitleBarStyle$Companion;
+	public fun <init> (Lorg/jetbrains/jewel/window/styling/TitleBarColors;Lorg/jetbrains/jewel/window/styling/TitleBarMetrics;Lorg/jetbrains/jewel/window/styling/TitleBarIcons;Lorg/jetbrains/jewel/styling/DropdownStyle;Lorg/jetbrains/jewel/styling/IconButtonStyle;Lorg/jetbrains/jewel/styling/IconButtonStyle;Lorg/jetbrains/jewel/styling/IconButtonStyle;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColors ()Lorg/jetbrains/jewel/window/styling/TitleBarColors;
+	public final fun getDropdownStyle ()Lorg/jetbrains/jewel/styling/DropdownStyle;
+	public final fun getIconButtonStyle ()Lorg/jetbrains/jewel/styling/IconButtonStyle;
+	public final fun getIcons ()Lorg/jetbrains/jewel/window/styling/TitleBarIcons;
+	public final fun getMetrics ()Lorg/jetbrains/jewel/window/styling/TitleBarMetrics;
+	public final fun getPaneButtonStyle ()Lorg/jetbrains/jewel/styling/IconButtonStyle;
+	public final fun getPaneCloseButtonStyle ()Lorg/jetbrains/jewel/styling/IconButtonStyle;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/window/styling/TitleBarStyle$Companion {
 }
 
 public final class org/jetbrains/jewel/window/styling/TitleBarStylingKt {

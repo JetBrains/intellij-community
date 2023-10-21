@@ -30,7 +30,7 @@ import org.jetbrains.jewel.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.styling.InputFieldStyle
-import org.jetbrains.jewel.util.appendIf
+import org.jetbrains.jewel.util.thenIf
 
 @Composable
 internal fun InputField(
@@ -71,13 +71,13 @@ internal fun InputField(
     val backgroundColor by colors.backgroundFor(inputState)
     val shape = RoundedCornerShape(style.metrics.cornerSize)
 
-    val backgroundModifier = Modifier.appendIf(!undecorated && backgroundColor.isSpecified) {
+    val backgroundModifier = Modifier.thenIf(!undecorated && backgroundColor.isSpecified) {
         background(backgroundColor, shape)
     }
 
     val borderColor by style.colors.borderFor(inputState)
     val hasNoOutline = outline == Outline.None
-    val borderModifier = Modifier.appendIf(!undecorated && borderColor.isSpecified && hasNoOutline) {
+    val borderModifier = Modifier.thenIf(!undecorated && borderColor.isSpecified && hasNoOutline) {
         Modifier.border(
             alignment = Stroke.Alignment.Center,
             width = style.metrics.borderWidth,
@@ -94,7 +94,7 @@ internal fun InputField(
         value = value,
         modifier = modifier.then(backgroundModifier)
             .then(borderModifier)
-            .appendIf(!undecorated && hasNoOutline) { focusOutline(inputState, shape) }
+            .thenIf(!undecorated && hasNoOutline) { focusOutline(inputState, shape) }
             .outline(inputState, outline, shape, Stroke.Alignment.Center),
         onValueChange = onValueChange,
         enabled = enabled,

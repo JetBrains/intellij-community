@@ -24,13 +24,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.Chip
 import org.jetbrains.jewel.GroupHeader
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.LazyTree
 import org.jetbrains.jewel.RadioButtonChip
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.ToggleableChip
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.tree.buildTree
-import org.jetbrains.jewel.intui.standalone.IntUiTheme
 
 @Composable
 fun ChipsAndTree() {
@@ -171,10 +171,10 @@ fun TreeSample(modifier: Modifier = Modifier) {
     }
 
     val borderColor =
-        if (IntUiTheme.isDark) {
-            IntUiTheme.colorPalette.grey(3)
+        if (JewelTheme.isDark) {
+            JewelTheme.colorPalette.grey(3)
         } else {
-            IntUiTheme.colorPalette.grey(12)
+            JewelTheme.colorPalette.grey(12)
         }
 
     Box(modifier.border(1.dp, borderColor, RoundedCornerShape(2.dp))) {

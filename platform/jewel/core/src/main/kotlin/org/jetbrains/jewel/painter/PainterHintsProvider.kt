@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalDensity
-import org.jetbrains.jewel.IntelliJTheme
+import org.jetbrains.jewel.JewelTheme
 import org.jetbrains.jewel.painter.hints.Dark
 import org.jetbrains.jewel.painter.hints.HiDpi
 
@@ -40,7 +40,7 @@ object CommonPainterHintsProvider : PainterHintsProvider {
     @Composable
     override fun hints(path: String): List<PainterHint> = listOf(
         HiDpi(LocalDensity.current),
-        Dark(IntelliJTheme.isDark),
+        Dark(JewelTheme.isDark),
     )
 }
 

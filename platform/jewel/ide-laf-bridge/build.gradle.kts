@@ -1,4 +1,5 @@
-import SupportedIJVersion.*
+import SupportedIJVersion.IJ_232
+import SupportedIJVersion.IJ_233
 
 plugins {
     jewel
@@ -8,7 +9,7 @@ plugins {
 }
 
 dependencies {
-    api(projects.intUi.intUiStandalone) {
+    api(projects.intUi.intUiCore) {
         exclude(group = "org.jetbrains.kotlinx")
     }
     when (supportedIJVersion()) {

@@ -41,7 +41,7 @@ fun Chip(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     enabled: Boolean = true,
     selected: Boolean = false,
-    style: ChipStyle = IntelliJTheme.chipStyle,
+    style: ChipStyle = JewelTheme.chipStyle,
     onClick: () -> Unit = {},
     content: @Composable () -> Unit,
 ) {
@@ -68,7 +68,7 @@ fun ToggleableChip(
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     enabled: Boolean = true,
-    style: ChipStyle = IntelliJTheme.chipStyle,
+    style: ChipStyle = JewelTheme.chipStyle,
     content: @Composable () -> Unit,
 ) {
     ChipImpl(
@@ -95,7 +95,7 @@ fun RadioButtonChip(
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     enabled: Boolean = true,
-    style: ChipStyle = IntelliJTheme.chipStyle,
+    style: ChipStyle = JewelTheme.chipStyle,
     content: @Composable () -> Unit,
 ) {
     ChipImpl(
