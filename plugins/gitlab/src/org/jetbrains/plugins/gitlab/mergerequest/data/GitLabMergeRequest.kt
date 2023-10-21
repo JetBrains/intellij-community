@@ -4,11 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.collaboration.async.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.actions.VcsContextFactory
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
-import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitStandardRemoteBranch
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.changesSignalFlow
@@ -85,9 +81,6 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   suspend fun setReviewers(reviewers: List<GitLabUserDTO>)
 
   suspend fun reviewerRereview(reviewers: Collection<GitLabReviewerDTO>)
-
-  // not the best place for it
-  fun getRelativeFilePath(virtualFile: VirtualFile): FilePath?
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -380,15 +373,5 @@ internal class LoadedGitLabMergeRequest(
     return GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest, commits).also {
       mergeRequestDetailsState.value = it
     }
-  }
-
-  override fun getRelativeFilePath(virtualFile: VirtualFile): FilePath? {
-    val path = try {
-      VcsFileUtil.relativePath(projectMapping.remote.repository.root, virtualFile)
-    }
-    catch (iae: IllegalArgumentException) {
-      return null
-    }
-    return VcsContextFactory.getInstance().createFilePath(path, false)
   }
 }
