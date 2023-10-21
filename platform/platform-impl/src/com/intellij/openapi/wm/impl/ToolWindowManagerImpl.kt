@@ -67,10 +67,7 @@ import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.BitUtil
-import com.intellij.util.EventDispatcher
-import com.intellij.util.SingleAlarm
-import com.intellij.util.SystemProperties
+import com.intellij.util.*
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
@@ -1118,15 +1115,22 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     if (task.hideOnEmptyContent) {
       toolWindow.setToHideOnEmptyContent(true)
     }
-    toolWindow.windowInfoDuringInit = infoSnapshot
-    try {
-      factory?.init(toolWindow)
-    }
-    catch (e: IllegalStateException) {
-      LOG.error(PluginException(e, task.pluginDescriptor?.pluginId))
-    }
-    finally {
-      toolWindow.windowInfoDuringInit = null
+
+    if (factory != null) {
+      toolWindow.windowInfoDuringInit = infoSnapshot
+      try {
+        factory.init(toolWindow)
+      }
+      catch (e: IllegalStateException) {
+        LOG.error(PluginException(e, task.pluginDescriptor?.pluginId))
+      }
+      finally {
+        toolWindow.windowInfoDuringInit = null
+      }
+
+      coroutineScope.launch {
+        factory.manage(toolWindow = toolWindow, toolWindowManager = this@ToolWindowManagerImpl)
+      }.cancelOnDispose(toolWindow.disposable)
     }
 
     // contentFactory.init can set icon
@@ -1151,7 +1155,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       null
     }
 
-    val entry = ToolWindowEntry(stripeButton, toolWindow, disposable)
+    val entry = ToolWindowEntry(stripeButton = stripeButton, toolWindow = toolWindow, disposable = disposable)
     idToEntry.put(task.id, entry)
 
     // If preloaded info is visible or active, then we have to show/activate the installed

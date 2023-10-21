@@ -4,6 +4,8 @@ package com.intellij.openapi.wm
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.Icon
 
 /**
@@ -33,6 +35,12 @@ interface ToolWindowFactory {
    * Perform additional initialization routine here.
    */
   fun init(toolWindow: ToolWindow) {}
+
+  // todo it acts like ProjectActivity.execute - we should find a better name for this method
+  @Experimental
+  @Internal
+  suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {
+  }
 
   /**
    * Check if tool window (and its stripe button) should be visible after startup.

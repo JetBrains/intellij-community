@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.openapi.wm.RegisterToolWindowTask
@@ -168,11 +168,12 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
 
       override fun getComponent() = squareStripeButton
 
-      override fun toString(): String {
-        return "SquareStripeButtonManager(windowInfo=${toolWindow.windowInfo})"
-      }
+      override fun toString() = "SquareStripeButtonManager(windowInfo=${toolWindow.windowInfo})"
     }
-    findToolbar(toolWindow.anchor, toolWindow.isSplitMode).getStripeFor(toolWindow.windowInfo.anchor).addButton(manager)
+
+    findToolbar(anchor = toolWindow.anchor, isSplit = toolWindow.isSplitMode)
+      .getStripeFor(toolWindow.windowInfo.anchor)
+      .addButton(manager)
     return manager
   }
 

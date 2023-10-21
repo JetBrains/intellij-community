@@ -81,6 +81,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                               private var contentFactory: ToolWindowFactory?,
                               private var isAvailable: Boolean = true,
                               private var stripeTitleProvider: Supplier<@NlsContexts.TabTitle String>) : ToolWindowEx {
+  @JvmField
   var windowInfoDuringInit: WindowInfoImpl? = null
 
   private val focusTask by lazy { FocusTask(this) }

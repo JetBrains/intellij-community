@@ -31,9 +31,9 @@ private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
     contentManager.addContent(content)
   }
 
-  override fun init(toolWindow: ToolWindow) {
-    PropertiesComponent.getInstance().unsetValue(ExperimentalUI.NEW_UI_FIRST_SWITCH)
-    ToolWindowManager.getInstance(toolWindow.project).invokeLater {
+  override suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {
+    serviceAsync<PropertiesComponent>().unsetValue(ExperimentalUI.NEW_UI_FIRST_SWITCH)
+    toolWindowManager.invokeLater {
       toolWindow.activate(null)
     }
   }
