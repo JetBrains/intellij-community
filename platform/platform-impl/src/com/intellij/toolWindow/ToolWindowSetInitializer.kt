@@ -120,7 +120,10 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       span("toolwindow creating") {
         // Register all tool windows for the default tool window pane.
         // If there are any tool windows for other panes, we'll register them after the reopening editors job has created the panes.
-        val entries = registerToolWindows(list, manager, layout) { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
+        val entries = registerToolWindows(tasks = list,
+                                          manager = manager,
+                                          layout = layout,
+                                          shouldRegister = { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID })
         for (toolWindowPane in manager.getToolWindowPanes()) {
           toolWindowPane.buttonManager.initMoreButton()
           toolWindowPane.buttonManager.revalidateNotEmptyStripes()
@@ -139,7 +142,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       reopeningEditorJob.join()
       postEntryProcessing(withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         span("secondary frames toolwindow creation") {
-          registerToolWindows(registerTasks = list,
+          registerToolWindows(tasks = list,
                               manager = manager,
                               layout = manager.getLayout(),
                               shouldRegister = { it != WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID })
@@ -165,12 +168,12 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
   }
 }
 
-private fun registerToolWindows(registerTasks: List<RegisterToolWindowTask>,
+private fun registerToolWindows(tasks: List<RegisterToolWindowTask>,
                                 manager: ToolWindowManagerImpl,
                                 layout: DesktopLayout,
                                 shouldRegister: (String) -> Boolean): List<ToolWindowEntry> {
-  val entries = ArrayList<ToolWindowEntry>(registerTasks.size)
-  for (task in registerTasks) {
+  val entries = ArrayList<ToolWindowEntry>(tasks.size)
+  for (task in tasks) {
     try {
       val paneId = layout.getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
       if (shouldRegister(paneId)) {

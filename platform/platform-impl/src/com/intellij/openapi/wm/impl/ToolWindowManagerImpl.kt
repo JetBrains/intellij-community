@@ -42,7 +42,6 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -63,6 +62,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.MoreButtonUpdated
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.MovedOrResized
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
 import com.intellij.ui.*
@@ -103,8 +103,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   private val coroutineScope: CoroutineScope,
 ) : ToolWindowManagerEx(), Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
-
-  private val stripeManager = ToolWindowStripeManager.getInstance(project)
 
   private val state: ToolWindowManagerState by lazy(LazyThreadSafetyMode.NONE) { project.service() }
 
@@ -1054,7 +1052,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     var info = layoutState.getInfo(task.id)
     val isButtonNeeded = task.shouldBeAvailable
                          && (info?.isShowStripeButton ?: !(isNewUi && isToolwindowOfBundledPlugin(task)))
-                         && stripeManager.allowToShowOnStripe(task.id, info == null, isNewUi)
+                         && project.service<ToolWindowStripeManager>().allowToShowOnStripe(task.id, info == null, isNewUi)
     // do not create layout for New UI - button is not created for toolwindow by default
     if (info == null) {
       info = layoutState.create(task)
@@ -1130,7 +1128,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     // mode. But if a tool window was active but its mode doesn't allow to activate it again
     // (for example, a tool window is in auto hide mode), then we just activate an editor component.
     if (stripeButton != null && factory != null /* not null on an init tool window from EP */ && infoSnapshot.isVisible) {
-      showToolWindowImpl(entry, info, dirtyMode = false)
+      showToolWindowImpl(entry = entry, toBeShownInfo = info, dirtyMode = false)
 
       // do not activate a tool window that is the part of the project frame - default component should be focused
       if (infoSnapshot.isActiveOnStart &&
