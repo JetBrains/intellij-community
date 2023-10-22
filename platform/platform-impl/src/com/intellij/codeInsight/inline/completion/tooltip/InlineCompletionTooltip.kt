@@ -11,6 +11,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.idea.ActionsBundle
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.keymap.KeyMapBundle
@@ -40,7 +41,7 @@ internal object InlineCompletionTooltip {
   @RequiresEdt
   fun show(session: InlineCompletionSession) {
     val editor = session.context.editor
-    if (tooltipKey.isIn(editor)) {
+    if (tooltipKey.isIn(editor) || AppMode.isRemoteDevHost()) {
       return
     }
     val activeLookup = LookupManager.getActiveLookup(editor)
