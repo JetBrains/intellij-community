@@ -4,6 +4,7 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.lang.annotation.HighlightSeverity.ERROR
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -11,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.problems.ProblemListener
 
@@ -47,7 +49,7 @@ open class HighlightingErrorsProvider(final override val project: Project) : Hig
       return
     }
 
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return
+    val document = ReadAction.compute(ThrowableComputable { FileDocumentManager.getInstance().getDocument(file) }) ?: return
     synchronized(watchers) {
       watchers.computeIfAbsent(file) { file ->
         ProblemsViewHighlightingWatcher(provider = this,
