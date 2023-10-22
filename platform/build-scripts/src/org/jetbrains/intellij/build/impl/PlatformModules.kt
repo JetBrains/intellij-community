@@ -213,6 +213,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   // make sure that all ktor libraries bundled into the platform
   layout.withProjectLibrary(libraryName = "ktor-client-content-negotiation")
   layout.withProjectLibrary(libraryName = "ktor-client-logging")
+  layout.withProjectLibrary(libraryName = "ktor-serialization-kotlinx-json")
 
   // used by intellij.database.jdbcConsole - put to a small util module
   layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
