@@ -1216,6 +1216,7 @@ public class AllIcons {
   public static final class Ultimate {
     /** 16x16 */ public static final @NotNull Icon Lock = load("ultimate/lock.svg", 2079176291, 2);
     /** 16x16 */ public static final @NotNull Icon LockWhite = load("ultimate/lockWhite.svg", -1751542808, 0);
+    /** 16x16 */ public static final @NotNull Icon PycharmLock = load("ultimate/pycharmLock.svg", 1201180026, 2);
   }
 
   public static final class Vcs {
