@@ -10,12 +10,15 @@ open class ValidatePublicApiTask : SourceTask() {
 
     init {
         group = "verification"
+
+        // The output is never really used, it is here for cacheability reasons only
+        outputs.file(project.layout.buildDirectory.file("apiValidationRun"))
     }
 
     private val classFqnRegex = "public (?:\\w+ )*class (\\S+)\\b".toRegex()
 
     @Suppress("ConvertToStringTemplate") // The odd concatenation is needed because of $; escapes get confused
-    private val copyMethodRegex = ("public static synthetic fun copy(-\\w+)" + "\\$" + "default\\b").toRegex()
+    private val copyMethodRegex = ("public static synthetic fun copy(-\\w+)?" + "\\$" + "default\\b").toRegex()
 
     @TaskAction
     fun validatePublicApi() {
