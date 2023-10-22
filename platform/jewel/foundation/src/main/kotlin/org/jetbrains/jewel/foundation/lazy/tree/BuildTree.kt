@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.foundation.lazy.tree
 
+import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import java.io.File
 import java.nio.file.Path
 
@@ -11,8 +12,11 @@ class TreeBuilder<T> : TreeGeneratorScope<T> {
 
         abstract val id: Any?
 
-        data class Leaf<T>(val data: T, override val id: Any?) : Element<T>()
-        data class Node<T>(
+        @GenerateDataFunctions
+        class Leaf<T>(val data: T, override val id: Any?) : Element<T>()
+
+        @GenerateDataFunctions
+        class Node<T>(
             val data: T,
             override val id: Any?,
             val childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit,
@@ -130,7 +134,8 @@ interface TreeGeneratorScope<T> {
 
 class ChildrenGeneratorScope<T>(private val parentElement: Tree.Element.Node<T>) : TreeGeneratorScope<T> {
 
-    data class ParentInfo<T>(val data: T, val depth: Int, val index: Int)
+    @GenerateDataFunctions
+    class ParentInfo<T>(val data: T, val depth: Int, val index: Int)
 
     val parent by lazy { ParentInfo(parentElement.data, parentElement.depth, parentElement.childIndex) }
 

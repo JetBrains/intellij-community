@@ -349,11 +349,6 @@ public final class org/jetbrains/jewel/foundation/lazy/tree/ChildrenGeneratorSco
 public final class org/jetbrains/jewel/foundation/lazy/tree/ChildrenGeneratorScope$ParentInfo {
 	public static final field $stable I
 	public fun <init> (Ljava/lang/Object;II)V
-	public final fun component1 ()Ljava/lang/Object;
-	public final fun component2 ()I
-	public final fun component3 ()I
-	public final fun copy (Ljava/lang/Object;II)Lorg/jetbrains/jewel/foundation/lazy/tree/ChildrenGeneratorScope$ParentInfo;
-	public static synthetic fun copy$default (Lorg/jetbrains/jewel/foundation/lazy/tree/ChildrenGeneratorScope$ParentInfo;Ljava/lang/Object;IIILjava/lang/Object;)Lorg/jetbrains/jewel/foundation/lazy/tree/ChildrenGeneratorScope$ParentInfo;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getData ()Ljava/lang/Object;
 	public final fun getDepth ()I
@@ -558,10 +553,6 @@ public abstract class org/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Eleme
 public final class org/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Element$Leaf : org/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Element {
 	public static final field $stable I
 	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;)V
-	public final fun component1 ()Ljava/lang/Object;
-	public final fun component2 ()Ljava/lang/Object;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;)Lorg/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Element$Leaf;
-	public static synthetic fun copy$default (Lorg/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Element$Leaf;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Lorg/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Element$Leaf;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getData ()Ljava/lang/Object;
 	public fun getId ()Ljava/lang/Object;
@@ -572,11 +563,6 @@ public final class org/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Element$
 public final class org/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Element$Node : org/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Element {
 	public static final field $stable I
 	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
-	public final fun component1 ()Ljava/lang/Object;
-	public final fun component2 ()Ljava/lang/Object;
-	public final fun component3 ()Lkotlin/jvm/functions/Function1;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Lorg/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Element$Node;
-	public static synthetic fun copy$default (Lorg/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Element$Node;Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/jetbrains/jewel/foundation/lazy/tree/TreeBuilder$Element$Node;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getChildrenGenerator ()Lkotlin/jvm/functions/Function1;
 	public final fun getData ()Ljava/lang/Object;
