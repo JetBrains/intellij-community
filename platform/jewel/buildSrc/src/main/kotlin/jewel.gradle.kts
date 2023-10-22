@@ -25,12 +25,12 @@ kotlin {
         }
         sourceSets.all {
             languageSettings {
-                optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
-                optIn("kotlin.experimental.ExperimentalTypeInference")
-                optIn("androidx.compose.ui.ExperimentalComposeUiApi")
                 optIn("androidx.compose.foundation.ExperimentalFoundationApi")
-                optIn("org.jetbrains.jewel.ExperimentalJewelApi")
-                optIn("org.jetbrains.jewel.InternalJewelApi")
+                optIn("androidx.compose.ui.ExperimentalComposeUiApi")
+                optIn("kotlin.experimental.ExperimentalTypeInference")
+                optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
+                optIn("org.jetbrains.jewel.foundation.ExperimentalJewelApi")
+                optIn("org.jetbrains.jewel.foundation.InternalJewelApi")
             }
         }
     }
