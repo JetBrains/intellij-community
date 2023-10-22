@@ -194,10 +194,6 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
  * [ProcessCanceledException] thrown from `ProgressManager.checkCanceled()` inside the [action] is rethrown as [CancellationException],
  * so the calling code could continue working in the coroutine framework terms.
  *
- * This function is expected to be rarely needed because if some code needs [ProgressManager.checkCanceled],
- * then it, most probably, should work inside a [com.intellij.openapi.application.readAction],
- * which already performs the switch to the blocking context.
- *
  * @see com.intellij.concurrency.currentThreadContext
  */
 suspend fun <T> blockingContext(action: () -> T): T {
