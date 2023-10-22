@@ -15,10 +15,17 @@ import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpda
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.editor.*
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.EditorMouseEventArea
+import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.IterationState
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -26,6 +33,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HintHint
 import com.intellij.ui.JBColor
@@ -81,7 +89,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
   @RequiresEdt
   fun reshowInlayRunToCursor(editor: Editor) {
-    currentEditor = WeakReference(null)
+    currentEditor.clear()
     currentLineNumber = -1
     showInlayRunToCursorIfNeeded(editor, null)
   }
@@ -111,8 +119,18 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       return true
     }
     IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = true
-    val lineNumber = if (e != null) XDebuggerManagerImpl.getLineNumber(e) else lineFromCurrentMouse(editor) ?: return false
+    val (lineNumber, x) = if (e != null) {
+      XDebuggerManagerImpl.getLineNumber(e) to (if (e.area == EditorMouseEventArea.EDITING_AREA) e.mouseEvent.x else 0)
+    } else {
+      val location = locationOnEditor(editor) ?: return false
+      lineFromCurrentMouse(editor, location) to location.x
+    }
     if (lineNumber < 0) {
+      return true
+    }
+    if (lineNumber != editor.getCaretModel().logicalPosition.line && x > showInlayPopupWidth(editor)) {
+      currentEditor.clear()
+      currentLineNumber = -1
       return true
     }
     if (currentEditor.get() === editor && currentLineNumber == lineNumber) {
@@ -120,19 +138,27 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     }
     currentEditor = WeakReference(editor)
     currentLineNumber = lineNumber
-    scheduleInlayRunToCursor(editor, lineNumber, session)
+
+    val isAtExecution = session.currentPosition?.let { it.getFile() == editor.virtualFile && it.getLine() == lineNumber } ?: false
+    scheduleInlayRunToCursor(editor, lineNumber, isAtExecution)
     return true
   }
 
-  private fun lineFromCurrentMouse(editor: Editor): Int? {
-    val location = MouseInfo.getPointerInfo().location
+  private fun showInlayPopupWidth(editor: Editor) = EditorUtil.getSpaceWidth(Font.PLAIN, editor) *
+                                                    Registry.intValue("debugger.inlayRunToCursor.hover.area", 4)
+
+  private fun locationOnEditor(editor: Editor): Point? {
+    val location: Point = MouseInfo.getPointerInfo().location ?: return null
     SwingUtilities.convertPointFromScreen(location, editor.getContentComponent())
 
     val editorGutterComponentEx = editor.gutter as? EditorGutterComponentEx ?: return null
     if (!editor.getContentComponent().bounds.contains(location) && !editorGutterComponentEx.bounds.contains(location)) {
       return null
     }
+    return location
+  }
 
+  private fun lineFromCurrentMouse(editor: Editor, location: Point): Int {
     val logicalPosition: LogicalPosition = editor.xyToLogicalPosition(location)
     if (logicalPosition.line >= editor.document.getLineCount()) {
       return -1
@@ -142,14 +168,14 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   }
 
   @RequiresEdt
-  private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
+  private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int, isAtExecution: Boolean) {
     currentJob?.cancel()
     if (editor !is EditorImpl) return
     coroutineScope.launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
       val job = coroutineContext.job
       job.cancelOnDispose(editor.disposable)
       currentJob = job
-      scheduleInlayRunToCursorAsync(editor, lineNumber, session)
+      scheduleInlayRunToCursorAsync(editor, lineNumber, isAtExecution)
       currentJob = null
     }
   }
@@ -177,14 +203,13 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   }
 
   @RequiresEdt
-  private suspend fun scheduleInlayRunToCursorAsync(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
+  private suspend fun scheduleInlayRunToCursorAsync(editor: Editor, lineNumber: Int, isAtExecution: Boolean) {
     val firstNonSpacePos = getFirstNonSpacePos(editor, lineNumber) ?: return
 
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
 
     val group = DefaultActionGroup()
-    val pausePosition = session.currentPosition
-    if (pausePosition != null && pausePosition.getFile() == editor.virtualFile && pausePosition.getLine() == lineNumber) {
+    if (isAtExecution) {
       group.add(ActionManager.getInstance().getAction(XDebuggerActions.RESUME))
       showHint(editor, lineNumber, firstNonSpacePos, group, lineY)
     }
@@ -281,10 +306,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     initIsCompleted.lock()
 
-    val flags = HintManager.HIDE_BY_ANY_KEY or HintManager.HIDE_BY_TEXT_CHANGE or
-      HintManager.HIDE_IF_OUT_OF_EDITOR or HintManager.DONT_CONSUME_ESCAPE
-
-    HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, flags, questionAction, HintManager.RIGHT)
+    HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, questionAction, HintManager.RIGHT)
   }
 
   private fun calculateEffectiveHoverColorAndStroke(needShowOnGutter: Boolean, editor: Editor, lineNumber: Int): Pair<Color, Color?> {

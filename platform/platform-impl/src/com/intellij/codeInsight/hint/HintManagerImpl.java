@@ -621,14 +621,14 @@ public class HintManagerImpl extends HintManager {
     showQuestionHint(editor, p, offset1, offset2, hint, action, constraint);
   }
 
-  public void showQuestionHint(final @NotNull Editor editor,
-                               final @NotNull Point p,
-                               final int offset1,
-                               final int offset2,
-                               final @NotNull LightweightHint hint,
-                               int flags,
-                               final @NotNull QuestionAction action,
-                               @PositionFlags short constraint) {
+  private static void showQuestionHint(final @NotNull Editor editor,
+                                       final @NotNull Point p,
+                                       final int offset1,
+                                       final int offset2,
+                                       final @NotNull LightweightHint hint,
+                                       int flags,
+                                       final @NotNull QuestionAction action,
+                                       @PositionFlags short constraint) {
     getClientManager(editor).showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
   }
 
