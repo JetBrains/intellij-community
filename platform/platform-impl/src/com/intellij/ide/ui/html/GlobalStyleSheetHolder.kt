@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus.Internal
-import javax.swing.UIManager
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
 import kotlin.time.Duration.Companion.milliseconds
@@ -45,8 +44,9 @@ object GlobalStyleSheetHolder {
 /**
  * Returns a global style sheet dynamically updated when LAF changes
  */
-private fun createGlobalStyleSheet(): StyleSheet {
-  val result = StyleSheet() // return a linked sheet to avoid mutation of a global variable
+internal fun createGlobalStyleSheet(): StyleSheet {
+  // return a linked sheet to avoid mutation of a global variable
+  val result = StyleSheet()
   result.addStyleSheet(globalStyleSheet)
   return result
 }
@@ -76,20 +76,13 @@ internal suspend fun initGlobalStyleSheet() {
     }
 
     withContext(RawSwingDispatcher) {
-      val uiDefaults = span("app-specific laf state initialization") { UIManager.getDefaults() }
-      span("html style patching") { // create a separate copy for each case
-        val globalStyleSheet = createGlobalStyleSheet()
-        uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
-        uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
+      span("global styleSheet updating") {
+        val kit = HTMLEditorKit()
+        val defaultSheet = kit.styleSheet
+        globalStyleSheet.addStyleSheet(defaultSheet)
 
-        span("global styleSheet updating") {
-          val kit = HTMLEditorKit()
-          val defaultSheet = kit.styleSheet
-          globalStyleSheet.addStyleSheet(defaultSheet)
-
-          // ... set a new default sheet
-          kit.styleSheet = createGlobalStyleSheet()
-        }
+        // ... set a new default sheet
+        kit.styleSheet = createGlobalStyleSheet()
       }
     }
 

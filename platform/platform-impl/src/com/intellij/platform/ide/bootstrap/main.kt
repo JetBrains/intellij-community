@@ -131,7 +131,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val initAwtToolkitJob = scheduleInitAwtToolkit(lockSystemDirsJob, busyThread)
-  val initLafJob = launch {
+  val initBaseLafJob = launch {
     initUi(initAwtToolkitJob = initAwtToolkitJob, isHeadless = isHeadless, asyncScope = this@startApplication)
   }
   if (!isHeadless) {
@@ -144,7 +144,7 @@ fun CoroutineScope.startApplication(args: List<String>,
         // A splash instance must not be created before base LaF is created.
         // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
         // https://youtrack.jetbrains.com/issue/IDEA-286544
-        initLafJob.join()
+        initBaseLafJob.join()
       }
     }
 
@@ -154,7 +154,14 @@ fun CoroutineScope.startApplication(args: List<String>,
                                                                appInfoDeferred = appInfoDeferred)
   }
 
-  val zipFilePoolDeferred = async(Dispatchers.IO) {
+  val initLafJob = launch {
+    initBaseLafJob.join()
+    if (!isHeadless) {
+      configureCssUiDefaults()
+    }
+  }
+
+  val zipFilePoolDeferred = async {
     val result = ZipFilePoolImpl()
     ZipFilePool.POOL = result
     result
@@ -166,17 +173,18 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   launch {
     initLafJob.join()
-    if (isImplicitReadOnEDTDisabled && !isAutomaticIWLOnDirtyUIDisabled) {
-      span("Write Intent Lock UI class transformer loading") {
-        WriteIntentLockInstrumenter.instrument()
-      }
-    }
 
     if (!isHeadless) {
       // preload native lib
       JBR.getWindowDecorations()
       if (SystemInfoRt.isMac) {
         Menu.isJbScreenMenuEnabled()
+      }
+    }
+
+    if (isImplicitReadOnEDTDisabled && !isAutomaticIWLOnDirtyUIDisabled) {
+      span("Write Intent Lock UI class transformer loading") {
+        WriteIntentLockInstrumenter.instrument()
       }
     }
   }
@@ -265,7 +273,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val appLoaded = launch {
-    val initEventQueueJob = scheduleInitIdeEventQueue(initAwtToolkitJob, isHeadless)
+    val initEventQueueJob = scheduleInitIdeEventQueue(initAwtToolkit = initAwtToolkitJob, isHeadless = isHeadless)
 
     checkSystemDirJob.join()
 
@@ -277,6 +285,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     val app = span("app instantiation") {
       // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the job
+      @Suppress("SSBasedInspection")
       ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job).namedChildScope("Application"), isInternal)
     }
 

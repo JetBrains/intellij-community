@@ -8,6 +8,7 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.ide.AssertiveRepaintManager
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.ui.html.createGlobalStyleSheet
 import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.idea.AppExitCodes
@@ -38,6 +39,7 @@ import java.lang.invoke.MethodType
 import javax.swing.JOptionPane
 import javax.swing.LookAndFeel
 import javax.swing.RepaintManager
+import javax.swing.UIManager
 import javax.swing.plaf.basic.BasicLookAndFeel
 import kotlin.system.exitProcess
 
@@ -61,6 +63,18 @@ internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncSc
   // SwingDispatcher must be used after Toolkit init
   span("initUi", RawSwingDispatcher) {
     initLafAndScale(isHeadless = isHeadless, preloadFontJob = preloadFontJob)
+  }
+}
+
+internal suspend fun configureCssUiDefaults() {
+  withContext(RawSwingDispatcher) {
+    val uiDefaults = span("app-specific laf state initialization") { UIManager.getDefaults() }
+    span("html style patching") {
+      // create a separate copy for each case
+      val globalStyleSheet = createGlobalStyleSheet()
+      uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
+      uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
+    }
   }
 }
 

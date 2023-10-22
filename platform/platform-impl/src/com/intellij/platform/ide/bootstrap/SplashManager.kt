@@ -80,8 +80,6 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
     //  return@launch
     //}
 
-    initUiScale.join()
-
     /*
     Wayland doesn't have the concept of splash screens at all, so they may not appear centered.
     Avoid showing the splash screen at all in this case up until this is solved (as, for example,
@@ -91,6 +89,8 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
     if (SystemInfoRt.isLinux && StartupUiUtil.isWaylandToolkit()) {
       return@launch
     }
+
+    initUiScale.join()
 
     val appInfo = appInfoDeferred.await()
     val image = span("splash preparation") {
