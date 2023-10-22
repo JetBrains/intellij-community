@@ -4,7 +4,9 @@ import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContribut
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettings
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -66,8 +68,21 @@ class SearchEverywhereMlExperiment {
   }
 
   fun getExperimentForTab(tab: SearchEverywhereTabWithMlRanking): ExperimentType {
-    if (!isAllowed || isDisableExperiments(tab)) return ExperimentType.NO_EXPERIMENT
-    return tabExperiments[tab]?.getExperimentByGroup(experimentGroup) ?: ExperimentType.NO_EXPERIMENT
+    val settings = service<SearchEverywhereMlSettings>()
+    if (!isAllowed || isDisableExperiments(tab)) {
+      settings.disableExperiment(tab)
+      return ExperimentType.NO_EXPERIMENT
+    }
+
+    val experimentByGroup = tabExperiments[tab]?.getExperimentByGroup(experimentGroup)
+    if (experimentByGroup == null || experimentByGroup == ExperimentType.NO_EXPERIMENT) {
+      settings.disableExperiment(tab)
+      return ExperimentType.NO_EXPERIMENT
+    }
+
+    val enabledMlRanking = experimentByGroup != ExperimentType.NO_ML && experimentByGroup != ExperimentType.NO_ML_FEATURES
+    val isExperimentAllowed = settings.updateExperimentStateIfAllowed(tab, enabledMlRanking)
+    return if (isExperimentAllowed) experimentByGroup else ExperimentType.NO_EXPERIMENT
   }
 
   @TestOnly
