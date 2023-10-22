@@ -49,7 +49,7 @@ class InlineCompletionHandler(
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
-    addEventListener(InlineCompletionOnboardingListener(editor))
+    InlineCompletionOnboardingListener.createIfOnboarding(editor)?.let(::addEventListener)
   }
 
   fun addEventListener(listener: InlineCompletionEventListener) {

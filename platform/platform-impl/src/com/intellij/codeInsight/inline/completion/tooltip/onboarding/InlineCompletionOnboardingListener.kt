@@ -7,7 +7,7 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionTooltip
 import com.intellij.openapi.editor.Editor
 
-internal class InlineCompletionOnboardingListener(private val editor: Editor) : InlineCompletionEventAdapter {
+internal class InlineCompletionOnboardingListener private constructor(private val editor: Editor) : InlineCompletionEventAdapter {
 
   private var state: State? = null
 
@@ -30,4 +30,13 @@ internal class InlineCompletionOnboardingListener(private val editor: Editor) : 
   }
 
   private class State(var isEmpty: Boolean = false)
+
+  companion object {
+    fun createIfOnboarding(editor: Editor): InlineCompletionOnboardingListener? {
+      return if (InlineCompletionOnboardingComponent.getInstance().shouldExplicitlyDisplayTooltip()) {
+        InlineCompletionOnboardingListener(editor)
+      }
+      else null
+    }
+  }
 }
