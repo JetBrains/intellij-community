@@ -54,6 +54,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
         }
       }
     });
+    getTextField().getEmptyText().setText(ExecutionBundle.message("status.text.environment.variables"));
   }
 
   private void addEnvFilesExtension() {
@@ -61,6 +62,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     myEnvFilesExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
                                              ExecutionBundle.message("tooltip.browse.for.environment.files"), () -> browseForEnvFile());
     getTextField().addExtension(myEnvFilesExtension);
+    getTextField().getEmptyText().setText(ExecutionBundle.message("status.text.environment.variables.or.env.files"));
   }
 
   private void browseForEnvFile() {

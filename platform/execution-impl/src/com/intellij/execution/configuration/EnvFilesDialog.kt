@@ -21,7 +21,7 @@ class EnvFilesDialog(parentComponent: JComponent,
   private val model = CollectionListModel(envFilePaths)
   private val list = JBList(model)
   init {
-    title = ExecutionBundle.message("dialog.title.var.files")
+    title = ExecutionBundle.message("dialog.title.env.files")
     init()
     list.selectedIndex = 0
   }
