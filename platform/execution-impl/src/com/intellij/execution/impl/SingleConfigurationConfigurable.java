@@ -248,8 +248,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         return new RunConfigurationSelector() {
           @Override
           public void select(@NotNull RunConfiguration configuration) {
+            RunnerAndConfigurationSettingsImpl settings = RunManagerImpl.getInstanceImpl(myProject).getSettings(configuration);
             RunDialog.editConfiguration(myProject,
-                                        new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), configuration),
+                                        Objects.requireNonNull(settings),
                                         ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
           }
         };
