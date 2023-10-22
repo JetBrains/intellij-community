@@ -537,7 +537,7 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <action id="KotlinConfigureUpdates" class="org.jetbrains.kotlin.idea.actions.ConfigurePluginUpdatesAction">
+    <action id="KotlinConfigurePlugin" class="org.jetbrains.kotlin.idea.actions.ConfigurePluginAction">
       <add-to-group group-id="KotlinToolsGroup"/>
     </action>
 

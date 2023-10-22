@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.kotlin.idea.configuration.KotlinLanguageConfiguration
 
-class ConfigurePluginUpdatesAction : DumbAwareAction() {
+class ConfigurePluginAction : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.getData(CommonDataKeys.PROJECT)
         ShowSettingsUtilImpl.showSettingsDialog(project, KotlinLanguageConfiguration.ID, "")
