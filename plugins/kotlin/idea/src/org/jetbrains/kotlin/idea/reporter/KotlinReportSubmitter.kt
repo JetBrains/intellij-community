@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.reporter
 import com.intellij.diagnostic.IdeaReportingEvent
 import com.intellij.diagnostic.ReportMessages
 import com.intellij.ide.DataManager
-import com.intellij.ide.plugins.PluginUpdateStatus
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -163,9 +162,6 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         }
     }
 
-    private var hasUpdate = false
-    private var hasLatestVersion = false
-
     override fun showErrorInRelease(event: IdeaLoggingEvent): Boolean {
         if (isApplicationInternalMode()) {
             // Reporting is always enabled for internal mode in the platform
@@ -174,10 +170,6 @@ class KotlinReportSubmitter : ITNReporterCompat() {
 
         if (isUnitTestMode()) {
             return true
-        }
-
-        if (hasUpdate) {
-            return false
         }
 
         val kotlinNotificationEnabled = DISABLED_VALUE != System.getProperty(KOTLIN_FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE)
@@ -218,19 +210,6 @@ class KotlinReportSubmitter : ITNReporterCompat() {
             else -> events
         }
 
-        if (hasUpdate) {
-            if (isApplicationInternalMode()) {
-                return super.submitCompat(effectiveEvents, additionalInfo, parentComponent, consumer)
-            }
-
-            // TODO: What happens here? User clicks report but no report is send?
-            return true
-        }
-
-        if (hasLatestVersion) {
-            return super.submitCompat(effectiveEvents, additionalInfo, parentComponent, consumer)
-        }
-
         val project: Project? = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
         if (KotlinIdePlugin.hasPatchedVersion) {
             ReportMessages.GROUP
@@ -240,37 +219,7 @@ class KotlinReportSubmitter : ITNReporterCompat() {
             return true
         }
 
-        KotlinPluginUpdater.getInstance().runUpdateCheck { status ->
-            if (status is PluginUpdateStatus.Update) {
-                hasUpdate = true
-
-                if (isApplicationInternalMode()) {
-                    super.submitCompat(effectiveEvents, additionalInfo, parentComponent, consumer)
-                }
-
-                val rc = showDialog(
-                    parentComponent,
-                    KotlinBundle.message(
-                        "reporter.message.text.you.re.running.kotlin.plugin.version",
-                        KotlinIdePlugin.version,
-                        status.pluginDescriptor.version
-                    ),
-                    KotlinBundle.message("reporter.title.update.kotlin.plugin"),
-                    arrayOf(KotlinBundle.message("reporter.button.text.update"), KotlinBundle.message("reporter.button.text.ignore")),
-                    0, Messages.getInformationIcon()
-                )
-
-                if (rc == 0) {
-                    KotlinPluginUpdater.getInstance().installPluginUpdate(status)
-                }
-            } else {
-                hasLatestVersion = true
-                super.submitCompat(effectiveEvents, additionalInfo, parentComponent, consumer)
-            }
-            false
-        }
-
-        return true
+        return super.submitCompat(effectiveEvents, additionalInfo, parentComponent, consumer)
     }
 
     private fun markEventForK2(event: IdeaLoggingEvent): IdeaLoggingEvent {
