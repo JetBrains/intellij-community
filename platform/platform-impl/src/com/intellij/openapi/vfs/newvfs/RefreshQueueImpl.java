@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.EDT;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -178,12 +179,17 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   @Override
   public @NotNull RefreshSession createSession(boolean async, boolean recursively, @Nullable Runnable finishRunnable, @NotNull ModalityState state) {
-    return new RefreshSessionImpl(async, recursively, finishRunnable, state);
+    return new RefreshSessionImpl(async, recursively, false, finishRunnable, state);
   }
 
   @Override
   public void processEvents(boolean async, @NotNull List<? extends @NotNull VFileEvent> events) {
     new RefreshSessionImpl(async, events).launch();
+  }
+
+  @ApiStatus.Internal
+  public @NotNull RefreshSession createBackgroundRefreshSession(@NotNull List<@NotNull VirtualFile> files) {
+    return new RefreshSessionImpl(files);
   }
 
   @Override

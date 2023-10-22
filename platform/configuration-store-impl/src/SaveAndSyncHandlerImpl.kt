@@ -24,9 +24,11 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.openapi.vfs.newvfs.RefreshSession
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -55,7 +57,8 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
 
-  private val refreshSession = AtomicReference<RefreshSession>()
+  private val refreshSession = AtomicReference<RefreshSession?>()
+  private var bgRefreshJob: Job? = null
 
   private val saveAppAndProjectsSettingsTask = SaveTask()
   private val saveQueue = ArrayDeque<SaveTask>()
@@ -117,6 +120,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     }
 
     coroutineScope.awaitCancellationAndInvoke {
+      bgRefreshJob?.cancel()
       refreshSession.get()?.cancel()
     }
   }
@@ -179,19 +183,24 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       .subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
         override fun applicationDeactivated(ideFrame: IdeFrame) {
           externalChangesModificationTracker.incModificationCount()
-          if (!settings.isSaveOnFrameDeactivation || !canSyncOrSave()) {
-            return
+
+          if (settings.isSaveOnFrameDeactivation && canSyncOrSave()) {
+            // for many tasks (compilation, web development, etc.), it is important to save documents on frame deactivation ASAP
+            (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+            if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
+              requestSave()
+            }
           }
 
-          // for web development, it is crucially important to save documents on frame deactivation as early as possible
-          (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
-
-          if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
-            requestSave()
+          if (settings.isBackgroundSync) {
+            bgRefreshJob = startBackgroundSync()
           }
         }
 
         override fun applicationActivated(ideFrame: IdeFrame) {
+          bgRefreshJob?.cancel()
+          bgRefreshJob = null
+
           if (settings.isSyncOnFrameActivation) {
             scheduleRefresh()
           }
@@ -302,6 +311,27 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   private fun canSyncOrSave(): Boolean =
     !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator()
+
+  private fun startBackgroundSync(): Job {
+    LOG.debug("starting background VFS sync")
+    val bgRefreshSession = AtomicReference<RefreshSession?>()
+    val job = coroutineScope.launch(CoroutineName("background sync")) {
+      val roots = listOf(*ManagingFS.getInstance().localRoots)
+      val queue = RefreshQueue.getInstance() as RefreshQueueImpl
+      val interval = Registry.intValue("vfs.background.refresh.interval", 15).coerceIn(0, Int.MAX_VALUE).seconds
+      while (true) {
+        if (roots.any { it is NewVirtualFile && it.isDirty }) {
+          val session = queue.createBackgroundRefreshSession(roots)
+          bgRefreshSession.set(session)
+          session.launch()
+          bgRefreshSession.set(null)
+        }
+        delay(interval)
+      }
+    }
+    job.invokeOnCompletion { if (it is CancellationException) bgRefreshSession.getAndSet(null)?.cancel() }
+    return job
+  }
 
   override fun scheduleRefresh() {
     externalChangesModificationTracker.incModificationCount()

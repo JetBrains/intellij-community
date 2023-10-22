@@ -40,6 +40,7 @@ final class RefreshSessionImpl extends RefreshSession {
 
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
+  private final boolean myIsBackground;
   private final Runnable myFinishRunnable;
   private final ModalityState myModality;
   private final @Nullable Throwable myStartTrace;
@@ -51,9 +52,10 @@ final class RefreshSessionImpl extends RefreshSession {
   private volatile boolean myCancelled;
   private volatile boolean myLaunched;
 
-  RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState modality) {
+  RefreshSessionImpl(boolean async, boolean recursive, boolean background, @Nullable Runnable finishRunnable, @NotNull ModalityState modality) {
     myIsAsync = async;
     myIsRecursive = recursive;
+    myIsBackground = background;
     myFinishRunnable = finishRunnable;
     myModality = getSaneModalityState(modality);
     TransactionGuard.getInstance().assertWriteSafeContext(myModality);
@@ -61,8 +63,13 @@ final class RefreshSessionImpl extends RefreshSession {
     myStartTrace = app.isUnitTestMode() && (async || !app.isDispatchThread()) ? new Throwable() : null;
   }
 
+  RefreshSessionImpl(List<VirtualFile> files) {
+    this(false, true, true, null, getSaneModalityState(ModalityState.defaultModalityState()));
+    addAllFiles(files);
+  }
+
   RefreshSessionImpl(boolean async, List<? extends VFileEvent> events) {
-    this(async, false, null, getSaneModalityState(ModalityState.defaultModalityState()));
+    this(async, false, false, null, getSaneModalityState(ModalityState.defaultModalityState()));
     var filtered = events.stream().filter(Objects::nonNull).toList();
     if (filtered.size() < events.size()) LOG.error("The list of events must not contain null elements");
     myEvents.addAll(filtered);
@@ -168,7 +175,7 @@ final class RefreshSessionImpl extends RefreshSession {
       count++;
       if (LOG.isTraceEnabled()) LOG.trace("events=" + events.size());
     }
-    while (myIsRecursive && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
+    while (myIsRecursive && !myIsBackground && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
 
     t = NANOSECONDS.toMillis(System.nanoTime() - t);
     int localRoots = 0, archiveRoots = 0, otherRoots = 0;
