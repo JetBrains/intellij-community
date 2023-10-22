@@ -368,7 +368,7 @@ public final class CodeFormatterFacade {
   }
 
 
-  private static boolean shouldDelegateToTopLevel(@NotNull PsiFile file) {
+  static boolean shouldDelegateToTopLevel(@NotNull PsiFile file) {
     for (var provider: InjectedFormattingOptionsProvider.EP_NAME.getExtensions()) {
       var result = provider.shouldDelegateToTopLevel(file);
       if (result == null) continue;
