@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.io.*
 import kotlinx.coroutines.*
 import java.io.IOException
@@ -45,14 +46,27 @@ internal class FoldingModelStore(
     if (persistentMap == null) {
       return
     }
-    try {
-      persistentMap[fileId] = state
-    } catch (e: IOException) {
-      logger.info("cannot store folding state $state for file $fileId", e)
+    scope.launch(dispatcher) {
+      try {
+        persistentMap[fileId] = state
+      } catch (e: IOException) {
+        logger.info("cannot store folding state $state for file $fileId", e)
+      }
     }
   }
 
-  fun close(isAppShutDown: Boolean) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+    other as FoldingModelStore
+    return storeName == other.storeName
+  }
+
+  override fun hashCode() = storeName.hashCode()
+
+  override fun toString(): String = "FoldingModelStore($storeName, $persistentMap)"
+
+  private fun close(isAppShutDown: Boolean) {
     val persistentMap = persistentMap
     if (persistentMap == null) {
       return
@@ -69,19 +83,6 @@ internal class FoldingModelStore(
     }
   }
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-    other as FoldingModelStore
-    return storeName == other.storeName
-  }
-
-  override fun hashCode() = storeName.hashCode()
-
-  override fun toString(): String {
-    return "FoldingModelStore($storeName, $persistentMap)"
-  }
-
   private fun recreateCache() {
     try {
       close(isAppShutDown=false)
@@ -95,13 +96,16 @@ internal class FoldingModelStore(
   companion object {
     private val logger = Logger.getInstance(FoldingModelStore::class.java)
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1)
+
     private val allStores: MutableSet<FoldingModelStore> = ConcurrentCollectionFactory.createConcurrentSet()
 
     init {
       ShutDownTracker.getInstance().registerCacheShutdownTask { allStores.forEach { it.close(isAppShutDown=true) } }
     }
 
-    fun create(project: Project, scope: CoroutineScope, dispatcher: CoroutineDispatcher): FoldingModelStore {
+    fun create(project: Project, scope: CoroutineScope): FoldingModelStore {
       val storeName = project.name.trimLongString() + "-" + project.locationHash.trimLongString()
       val persistentMap = createPersistentMap(storePath(storeName))
       val store = FoldingModelStore(
@@ -111,6 +115,11 @@ internal class FoldingModelStore(
         persistentMap,
         startFlushingJob(persistentMap, scope, dispatcher)
       )
+      scope.awaitCancellationAndInvoke {
+        withContext(dispatcher) {
+          store.close(isAppShutDown=false)
+        }
+      }
       allStores.add(store)
       return store
     }
