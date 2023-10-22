@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
+import org.jetbrains.jewel.ui.painter.hints.Badge
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 
 @Composable
@@ -38,5 +40,8 @@ internal fun Icons() {
             ColorFilter.tint(Color.Magenta, BlendMode.Multiply),
             Modifier.size(128.dp),
         )
+
+        val badged by iconProvider.getPainter(Badge(Color.Red, DotBadgeShape.Default))
+        Icon(badged, "Jewel Logo", Modifier.size(20.dp))
     }
 }

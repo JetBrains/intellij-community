@@ -113,11 +113,18 @@ class ResourcePainterProvider(
 
         val extension = basePath.substringAfterLast(".").lowercase()
 
-        return when (extension) {
+        var painter = when (extension) {
             "svg" -> createSvgPainter(url, density, hints)
             "xml" -> createVectorDrawablePainter(url, density)
             else -> createBitmapPainter(url, density)
         }
+
+        for (hint in hints) {
+            if (hint !is PainterWrapperHint) continue
+            painter = hint.wrap(painter)
+        }
+
+        return painter
     }
 
     private fun resolveResource(path: String): URL? {

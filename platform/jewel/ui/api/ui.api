@@ -2010,6 +2010,11 @@ public final class org/jetbrains/jewel/ui/component/styling/TooltipStylingKt {
 	public static final fun getLocalTooltipStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
+public final class org/jetbrains/jewel/ui/painter/BadgePainter : org/jetbrains/jewel/ui/painter/DelegatePainter {
+	public static final field $stable I
+	public synthetic fun <init> (Landroidx/compose/ui/graphics/painter/Painter;JLorg/jetbrains/jewel/ui/painter/badge/BadgeShape;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
 public abstract class org/jetbrains/jewel/ui/painter/BasePainterHintsProvider : org/jetbrains/jewel/ui/painter/PainterHintsProvider {
 	public static final field $stable I
 	public fun <init> (ZLjava/util/Map;Ljava/util/Map;Ljava/util/Map;)V
@@ -2030,6 +2035,23 @@ public final class org/jetbrains/jewel/ui/painter/CommonPainterHintsProvider : o
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/painter/CommonPainterHintsProvider;
 	public fun hints (Ljava/lang/String;Landroidx/compose/runtime/Composer;I)Ljava/util/List;
 	public fun priorityHints (Ljava/lang/String;Landroidx/compose/runtime/Composer;I)Ljava/util/List;
+}
+
+public class org/jetbrains/jewel/ui/painter/DelegatePainter : androidx/compose/ui/graphics/painter/Painter {
+	public static final field $stable I
+	public fun <init> (Landroidx/compose/ui/graphics/painter/Painter;)V
+	protected fun applyAlpha (F)Z
+	protected fun applyColorFilter (Landroidx/compose/ui/graphics/ColorFilter;)Z
+	protected fun applyLayoutDirection (Landroidx/compose/ui/unit/LayoutDirection;)Z
+	protected final fun drawDelegate (Landroidx/compose/ui/graphics/drawscope/DrawScope;)V
+	protected final fun getAlpha ()F
+	protected final fun getFilter ()Landroidx/compose/ui/graphics/ColorFilter;
+	public fun getIntrinsicSize-NH-jbRc ()J
+	protected final fun getLayoutDirection ()Landroidx/compose/ui/unit/LayoutDirection;
+	protected fun onDraw (Landroidx/compose/ui/graphics/drawscope/DrawScope;)V
+	protected final fun setAlpha (F)V
+	protected final fun setFilter (Landroidx/compose/ui/graphics/ColorFilter;)V
+	protected final fun setLayoutDirection (Landroidx/compose/ui/unit/LayoutDirection;)V
 }
 
 public abstract interface class org/jetbrains/jewel/ui/painter/PainterHint {
@@ -2103,6 +2125,14 @@ public final class org/jetbrains/jewel/ui/painter/PainterSvgPatchHint$DefaultImp
 	public static fun canApplyTo (Lorg/jetbrains/jewel/ui/painter/PainterSvgPatchHint;Ljava/lang/String;)Z
 }
 
+public abstract interface class org/jetbrains/jewel/ui/painter/PainterWrapperHint : org/jetbrains/jewel/ui/painter/PainterHint {
+	public abstract fun wrap (Landroidx/compose/ui/graphics/painter/Painter;)Landroidx/compose/ui/graphics/painter/Painter;
+}
+
+public final class org/jetbrains/jewel/ui/painter/PainterWrapperHint$DefaultImpls {
+	public static fun canApplyTo (Lorg/jetbrains/jewel/ui/painter/PainterWrapperHint;Ljava/lang/String;)Z
+}
+
 public final class org/jetbrains/jewel/ui/painter/ResourcePainterProvider : org/jetbrains/jewel/ui/painter/PainterProvider {
 	public static final field $stable I
 	public fun <init> (Ljava/lang/String;[Ljava/lang/ClassLoader;)V
@@ -2127,6 +2157,35 @@ public abstract interface class org/jetbrains/jewel/ui/painter/XmlPainterHint : 
 
 public final class org/jetbrains/jewel/ui/painter/XmlPainterHint$DefaultImpls {
 	public static fun canApplyTo (Lorg/jetbrains/jewel/ui/painter/XmlPainterHint;Ljava/lang/String;)Z
+}
+
+public abstract interface class org/jetbrains/jewel/ui/painter/badge/BadgeShape : androidx/compose/ui/graphics/Shape {
+	public abstract fun createHoleOutline-Pq9zytI (JLandroidx/compose/ui/unit/LayoutDirection;Landroidx/compose/ui/unit/Density;)Landroidx/compose/ui/graphics/Outline;
+}
+
+public final class org/jetbrains/jewel/ui/painter/badge/DotBadgeShape : org/jetbrains/jewel/ui/painter/badge/BadgeShape {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/ui/painter/badge/DotBadgeShape$Companion;
+	public fun <init> ()V
+	public fun <init> (FFFF)V
+	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun createHoleOutline-Pq9zytI (JLandroidx/compose/ui/unit/LayoutDirection;Landroidx/compose/ui/unit/Density;)Landroidx/compose/ui/graphics/Outline;
+	public fun createOutline-Pq9zytI (JLandroidx/compose/ui/unit/LayoutDirection;Landroidx/compose/ui/unit/Density;)Landroidx/compose/ui/graphics/Outline;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBorder ()F
+	public final fun getRadius ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/painter/badge/DotBadgeShape$Companion {
+	public final fun getDefault ()Lorg/jetbrains/jewel/ui/painter/badge/DotBadgeShape;
+}
+
+public final class org/jetbrains/jewel/ui/painter/hints/BadgeKt {
+	public static final fun Badge-DxMtmZc (JLorg/jetbrains/jewel/ui/painter/badge/BadgeShape;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 }
 
 public final class org/jetbrains/jewel/ui/painter/hints/DarkKt {

@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.ui.painter
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.graphics.painter.Painter
 import org.w3c.dom.Element
 
 /**
@@ -100,6 +101,12 @@ interface PainterSvgPatchHint : SvgPainterHint {
      * Patch the SVG content.
      */
     fun patch(element: Element)
+}
+
+@Immutable
+interface PainterWrapperHint : PainterHint {
+
+    fun wrap(painter: Painter): Painter
 }
 
 /**
