@@ -10,7 +10,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
-import org.jetbrains.jewel.foundation.tree.TreeElementState
+import org.jetbrains.jewel.foundation.lazy.tree.TreeElementState
 import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Stable

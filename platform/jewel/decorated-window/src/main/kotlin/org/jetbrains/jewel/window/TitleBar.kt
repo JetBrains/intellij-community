@@ -70,7 +70,8 @@ internal const val TITLE_BAR_BORDER_LAYOUT_ID = "__TITLE_BAR_BORDER__"
     }
 }
 
-@Composable internal fun DecoratedWindowScope.TitleBarImpl(
+@Composable
+internal fun DecoratedWindowScope.TitleBarImpl(
     modifier: Modifier = Modifier,
     gradientStartColor: Color = Color.Unspecified,
     style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
@@ -224,7 +225,8 @@ internal class TitleBarMeasurePolicy(
     }
 }
 
-@Composable internal fun rememberTitleBarMeasurePolicy(
+@Composable
+internal fun rememberTitleBarMeasurePolicy(
     window: Window,
     state: DecoratedWindowState,
     applyTitleBar: (Dp, DecoratedWindowState) -> PaddingValues,

@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.foundation
+package org.jetbrains.jewel.foundation.modifier
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +36,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.takeOrElse
 import androidx.compose.ui.unit.toSize
+import org.jetbrains.jewel.foundation.Stroke
+import org.jetbrains.jewel.foundation.grow
+import org.jetbrains.jewel.foundation.hasAtLeastOneNonRoundedCorner
+import org.jetbrains.jewel.foundation.shrink
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min

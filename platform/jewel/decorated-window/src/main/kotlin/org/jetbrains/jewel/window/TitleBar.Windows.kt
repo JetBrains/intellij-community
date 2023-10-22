@@ -17,7 +17,8 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.util.isDark
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 
-@Composable internal fun DecoratedWindowScope.TitleBarOnWindows(
+@Composable
+internal fun DecoratedWindowScope.TitleBarOnWindows(
     modifier: Modifier = Modifier,
     gradientStartColor: Color = Color.Unspecified,
     style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,

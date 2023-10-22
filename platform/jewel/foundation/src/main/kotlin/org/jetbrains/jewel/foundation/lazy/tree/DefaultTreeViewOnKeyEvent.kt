@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.foundation.tree
+package org.jetbrains.jewel.foundation.lazy.tree
 
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState

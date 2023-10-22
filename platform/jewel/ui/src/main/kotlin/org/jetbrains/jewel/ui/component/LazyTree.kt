@@ -7,15 +7,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.takeOrElse
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
+import org.jetbrains.jewel.foundation.lazy.tree.BasicLazyTree
+import org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeyActions
+import org.jetbrains.jewel.foundation.lazy.tree.KeyBindingActions
+import org.jetbrains.jewel.foundation.lazy.tree.Tree
+import org.jetbrains.jewel.foundation.lazy.tree.TreeElementState
+import org.jetbrains.jewel.foundation.lazy.tree.TreeState
+import org.jetbrains.jewel.foundation.lazy.tree.rememberTreeState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
-import org.jetbrains.jewel.foundation.tree.BasicLazyTree
-import org.jetbrains.jewel.foundation.tree.DefaultTreeViewKeyActions
-import org.jetbrains.jewel.foundation.tree.KeyBindingActions
-import org.jetbrains.jewel.foundation.tree.Tree
-import org.jetbrains.jewel.foundation.tree.TreeElementState
-import org.jetbrains.jewel.foundation.tree.TreeState
-import org.jetbrains.jewel.foundation.tree.rememberTreeState
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.theme.treeStyle
 

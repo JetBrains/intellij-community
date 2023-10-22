@@ -37,7 +37,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.jewel.foundation.Stroke
-import org.jetbrains.jewel.foundation.border
+import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Focused

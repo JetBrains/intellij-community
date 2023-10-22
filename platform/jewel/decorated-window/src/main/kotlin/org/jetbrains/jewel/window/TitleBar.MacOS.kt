@@ -55,7 +55,8 @@ private class NewFullscreenControlsNode(
     var newControls: Boolean,
 ) : Modifier.Node()
 
-@Composable internal fun DecoratedWindowScope.TitleBarOnMacOs(
+@Composable
+internal fun DecoratedWindowScope.TitleBarOnMacOs(
     modifier: Modifier = Modifier,
     gradientStartColor: Color = Color.Unspecified,
     style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,

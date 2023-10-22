@@ -320,7 +320,7 @@ public final class org/jetbrains/jewel/ui/component/LabelledTextFieldKt {
 }
 
 public final class org/jetbrains/jewel/ui/component/LazyTreeKt {
-	public static final fun LazyTree (Lorg/jetbrains/jewel/foundation/tree/Tree;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/foundation/tree/TreeState;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/foundation/tree/KeyBindingActions;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
+	public static final fun LazyTree (Lorg/jetbrains/jewel/foundation/lazy/tree/Tree;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/foundation/lazy/tree/TreeState;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/foundation/lazy/tree/KeyBindingActions;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/LinearProgressBarKt {
@@ -1298,7 +1298,7 @@ public final class org/jetbrains/jewel/ui/component/styling/LazyTreeColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/LazyTreeColors$Companion;
 	public synthetic fun <init> (JJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun contentFor-iZdlh1w (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public final fun contentFor-EWxiZrY (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getContent-0d7_KjU ()J
 	public final fun getContentFocused-0d7_KjU ()J

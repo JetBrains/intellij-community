@@ -180,6 +180,27 @@ fun JewelTheme.Companion.lightComponentStyling(
 
 @Composable
 fun IntUiTheme(
+    isDark: Boolean = false,
+    swingCompatMode: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    val themeDefinition =
+        if (isDark) {
+            JewelTheme.darkThemeDefinition()
+        } else {
+            JewelTheme.lightThemeDefinition()
+        }
+
+    IntUiTheme(
+        theme = themeDefinition,
+        componentStyling = { emptyArray() },
+        swingCompatMode = swingCompatMode,
+        content = content,
+    )
+}
+
+@Composable
+fun IntUiTheme(
     theme: ThemeDefinition,
     componentStyling: @Composable () -> Array<ProvidedValue<*>>,
     swingCompatMode: Boolean = false,

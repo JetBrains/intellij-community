@@ -1,6 +1,6 @@
-package org.jetbrains.jewel.foundation.tree
+package org.jetbrains.jewel.foundation.lazy.tree
 
-import org.jetbrains.jewel.foundation.tree.Tree.Element.Node
+import org.jetbrains.jewel.foundation.lazy.tree.Tree.Element.Node
 
 @Suppress("UNCHECKED_CAST")
 fun <T> emptyTree() = Tree.EMPTY as Tree<T>

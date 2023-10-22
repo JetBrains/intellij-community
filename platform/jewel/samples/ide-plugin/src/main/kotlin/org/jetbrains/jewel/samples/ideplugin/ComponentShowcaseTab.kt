@@ -28,8 +28,8 @@ import com.intellij.ui.JBColor
 import icons.JewelIcons
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.bridge.toComposeColor
+import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.foundation.tree.buildTree
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.CircularProgressIndicator
 import org.jetbrains.jewel.ui.component.CircularProgressIndicatorBig
@@ -43,7 +43,8 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Tooltip
 
-@Composable internal fun ComponentShowcaseTab() {
+@Composable
+internal fun ComponentShowcaseTab() {
     SwingBridgeTheme {
         val bgColor by remember(JewelTheme.isDark) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
 
@@ -58,7 +59,8 @@ import org.jetbrains.jewel.ui.component.Tooltip
     }
 }
 
-@Composable private fun RowScope.ColumnOne() {
+@Composable
+private fun RowScope.ColumnOne() {
     Column(
         Modifier.weight(1f),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -167,7 +169,8 @@ import org.jetbrains.jewel.ui.component.Tooltip
     }
 }
 
-@Composable private fun RowScope.ColumnTwo() {
+@Composable
+private fun RowScope.ColumnTwo() {
     Column(
         Modifier.weight(1f),
         verticalArrangement = Arrangement.spacedBy(16.dp),

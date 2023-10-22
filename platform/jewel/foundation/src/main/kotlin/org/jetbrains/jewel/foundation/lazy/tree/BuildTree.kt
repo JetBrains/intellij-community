@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.foundation.tree
+package org.jetbrains.jewel.foundation.lazy.tree
 
 import java.io.File
 import java.nio.file.Path

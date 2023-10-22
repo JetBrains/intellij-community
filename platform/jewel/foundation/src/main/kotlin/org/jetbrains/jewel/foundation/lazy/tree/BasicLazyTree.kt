@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.foundation.tree
+package org.jetbrains.jewel.foundation.lazy.tree
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

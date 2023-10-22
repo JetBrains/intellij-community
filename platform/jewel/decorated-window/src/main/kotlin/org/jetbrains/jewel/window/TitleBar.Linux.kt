@@ -26,7 +26,8 @@ import java.awt.Frame
 import java.awt.event.MouseEvent
 import java.awt.event.WindowEvent
 
-@Composable internal fun DecoratedWindowScope.TitleBarOnLinux(
+@Composable
+internal fun DecoratedWindowScope.TitleBarOnLinux(
     modifier: Modifier = Modifier,
     gradientStartColor: Color = Color.Unspecified,
     style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
@@ -72,7 +73,8 @@ import java.awt.event.WindowEvent
     }
 }
 
-@Composable private fun TitleBarScope.CloseButton(
+@Composable
+private fun TitleBarScope.CloseButton(
     onClick: () -> Unit,
     state: DecoratedWindowState,
     style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
@@ -80,7 +82,8 @@ import java.awt.event.WindowEvent
     ControlButton(onClick, state, style.icons.closeButton, "Close", style, style.paneCloseButtonStyle)
 }
 
-@Composable private fun TitleBarScope.ControlButton(
+@Composable
+private fun TitleBarScope.ControlButton(
     onClick: () -> Unit,
     state: DecoratedWindowState,
     painterProvider: PainterProvider,

@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.foundation.tree
+package org.jetbrains.jewel.foundation.lazy.tree
 
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType

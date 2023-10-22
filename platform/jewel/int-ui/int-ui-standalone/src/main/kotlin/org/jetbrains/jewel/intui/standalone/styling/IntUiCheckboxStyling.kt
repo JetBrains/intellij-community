@@ -60,14 +60,10 @@ fun CheckboxMetrics.Companion.defaults(
 
 @Composable
 fun CheckboxIcons.Companion.light(
-    checkbox: PainterProvider = checkbox("com/intellij/ide/ui/laf/icons/intellij/checkBox.svg"),
+    checkbox: PainterProvider = standalonePainterProvider("com/intellij/ide/ui/laf/icons/intellij/checkBox.svg"),
 ) = CheckboxIcons(checkbox)
 
 @Composable
 fun CheckboxIcons.Companion.dark(
-    checkbox: PainterProvider = checkbox("com/intellij/ide/ui/laf/icons/darcula/checkBox.svg"),
+    checkbox: PainterProvider = standalonePainterProvider("com/intellij/ide/ui/laf/icons/darcula/checkBox.svg"),
 ) = CheckboxIcons(checkbox)
-
-@Composable
-private fun checkbox(basePath: String): PainterProvider =
-    standalonePainterProvider(basePath)

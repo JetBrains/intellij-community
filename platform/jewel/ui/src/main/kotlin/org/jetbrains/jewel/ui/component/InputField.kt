@@ -23,7 +23,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import org.jetbrains.jewel.foundation.Stroke
-import org.jetbrains.jewel.foundation.border
+import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Focused

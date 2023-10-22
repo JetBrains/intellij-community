@@ -25,10 +25,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListScopeContainer.Entry
-import org.jetbrains.jewel.foundation.tree.DefaultSelectableLazyColumnEventAction
-import org.jetbrains.jewel.foundation.tree.DefaultSelectableLazyColumnKeyActions
-import org.jetbrains.jewel.foundation.tree.KeyBindingActions
-import org.jetbrains.jewel.foundation.tree.PointerEventActions
+import org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnEventAction
+import org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyActions
+import org.jetbrains.jewel.foundation.lazy.tree.KeyBindingActions
+import org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions
 
 /**
  * A composable that displays a scrollable and selectable list of items in
