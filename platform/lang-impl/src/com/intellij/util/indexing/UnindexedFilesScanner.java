@@ -445,7 +445,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myFutureScanningRequestToken.markSuccessful();
     projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken);
 
-    List<IndexableFileScanner.ScanSession> sessions =
+    List<IndexableFileScanner.@NotNull ScanSession> sessions =
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
 
     IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
@@ -458,7 +458,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     // And some scanning statistics may be tried to be added to the [scanningHistory],
     // leading to ConcurrentModificationException in the statistics' processor.
     Ref<Boolean> allTasksFinished = Ref.create(false);
-    final IndexingReasonExplanationLogger sharedExplanationLogger = new IndexingReasonExplanationLogger();
+    IndexingReasonExplanationLogger sharedExplanationLogger = new IndexingReasonExplanationLogger();
     List<Runnable> tasks = ContainerUtil.map(providers, provider -> {
       ScanningStatistics scanningStatistics = new ScanningStatistics(provider.getDebugName());
       scanningStatistics.setProviderRoots(provider, project);

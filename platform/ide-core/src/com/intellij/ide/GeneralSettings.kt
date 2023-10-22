@@ -19,7 +19,6 @@ import org.jetbrains.annotations.SystemDependent
 private const val SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY = "ide.show.tips.on.startup.default.value"
 private const val CONFIGURED_PROPERTY = "GeneralSettings.initiallyConfigured"
 
-@Suppress("unused", "EnumEntryName")
 @State(name = "GeneralSettings", storages = [Storage(GeneralSettings.IDE_GENERAL_XML)], category = SettingsCategory.SYSTEM)
 class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
   private var state = GeneralSettingsState()
@@ -29,10 +28,7 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     get() = state.browserPath
 
   var isShowTipsOnStartup: Boolean
-    get() {
-      return state.showTipsOnStartup
-             ?: java.lang.Boolean.parseBoolean(System.getProperty(SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY, "true"))
-    }
+    get() = state.showTipsOnStartup ?: System.getProperty(SHOW_TIPS_ON_STARTUP_DEFAULT_VALUE_PROPERTY, "true").toBoolean()
     set(value) {
       state.showTipsOnStartup = value
     }
@@ -47,6 +43,12 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     get() = state.autoSyncFiles
     set(value) {
       state.autoSyncFiles = value
+    }
+
+  var isBackgroundSync: Boolean
+    get() = state.backgroundSyncFiles
+    set(value) {
+      state.backgroundSyncFiles = value
     }
 
   var isSaveOnFrameDeactivation: Boolean
@@ -74,13 +76,10 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
       state.isUseSafeWrite = value
     }
 
-  private val _propertyChangedFlow = MutableSharedFlow<PropertyNames>(extraBufferCapacity = 16,
-                                                                      onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
+  private val _propertyChangedFlow = MutableSharedFlow<PropertyNames>(extraBufferCapacity = 16, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   val propertyChangedFlow: Flow<PropertyNames> = _propertyChangedFlow.asSharedFlow()
 
-  //fun propertyChangedFlow()
-
+  @Suppress("unused")
   @get:Deprecated("Use {@link GeneralLocalSettings#getUseDefaultBrowser()} instead.")
   @get:ApiStatus.ScheduledForRemoval
   val isUseDefaultBrowser: Boolean
@@ -105,10 +104,10 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     }
 
   /**
-   * [GeneralSettings.OPEN_PROJECT_NEW_WINDOW] if a new project should be opened in new window
-   * [GeneralSettings.OPEN_PROJECT_SAME_WINDOW] if a new project should be opened in same window
-   * [GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH] if a new project should be attached
-   * [GeneralSettings.OPEN_PROJECT_ASK] if a confirmation dialog should be shown
+   * [OPEN_PROJECT_NEW_WINDOW] if a new project should be opened in new window
+   * [OPEN_PROJECT_SAME_WINDOW] if a new project should be opened in same window
+   * [OPEN_PROJECT_SAME_WINDOW_ATTACH] if a new project should be attached
+   * [OPEN_PROJECT_ASK] if a confirmation dialog should be shown
    */
   @get:OpenNewProjectOption
   var confirmOpenNewProject: Int
@@ -116,7 +115,6 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     set(value) {
       state.confirmOpenNewProject2 = value
     }
-
 
   var processCloseConfirmation: ProcessCloseConfirmation
     get() = state.processCloseConfirmation
@@ -158,6 +156,7 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     fun defaultConfirmNewProject(): Int = OPEN_PROJECT_ASK
   }
 
+  @Suppress("EnumEntryName")
   enum class PropertyNames {
     inactiveTimeout,
     autoSaveIfInactive,
@@ -199,7 +198,7 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     this.state = state
   }
 
-  @Suppress("UNUSED_PARAMETER")
+  @Suppress("unused")
   @get:Deprecated("unused")
   @get:Transient
   @get:ApiStatus.ScheduledForRemoval
@@ -207,7 +206,7 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
   @set:ApiStatus.ScheduledForRemoval
   var isConfirmExtractFiles: Boolean
     get() = true
-    set(value) {}
+    set(_) {}
 
   @MagicConstant(intValues = [OPEN_PROJECT_ASK.toLong(), OPEN_PROJECT_NEW_WINDOW.toLong(), OPEN_PROJECT_SAME_WINDOW.toLong(), OPEN_PROJECT_SAME_WINDOW_ATTACH.toLong()])
   internal annotation class OpenNewProjectOption
@@ -221,26 +220,22 @@ data class GeneralSettingsState(
   @field:OptionTag("myDefaultProjectDirectory")
   @JvmField
   var defaultProjectDirectory: String? = "",
-
   @JvmField
   var browserPath: String? = "",
-
   @JvmField
   var showTipsOnStartup: Boolean? = null,
   @JvmField
   var reopenLastProject: Boolean = true,
-
   @JvmField
   var autoSyncFiles: Boolean = true,
-
+  @JvmField
+  var backgroundSyncFiles: Boolean = false,
   @JvmField
   var autoSaveFiles: Boolean = true,
   @JvmField
   var autoSaveIfInactive: Boolean = false,
-
   @JvmField
   var isUseSafeWrite: Boolean = true,
-
   @JvmField
   var useDefaultBrowser: Boolean = true,
   @JvmField
@@ -249,17 +244,13 @@ data class GeneralSettingsState(
   var confirmExit: Boolean = true,
   @JvmField
   var isShowWelcomeScreen: Boolean = true,
-
   @ReportValue
   @JvmField
   var confirmOpenNewProject2: Int? = null,
-
   @JvmField
   var processCloseConfirmation: ProcessCloseConfirmation = ProcessCloseConfirmation.ASK,
-
   @JvmField
   var inactiveTimeout: Int = 15,
-
   @JvmField
   var supportScreenReaders: Boolean = false
 )

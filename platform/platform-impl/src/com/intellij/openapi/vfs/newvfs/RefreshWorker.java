@@ -37,7 +37,6 @@ import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -63,27 +62,28 @@ final class RefreshWorker {
   private final Set<NewVirtualFile> myRoots;
   private final Queue<NewVirtualFile> myRefreshQueue;
   private final Semaphore mySemaphore;
+  private final Object myRequestor;
   private final PersistentFS myPersistence = PersistentFS.getInstance();
   private final FSRecordsImpl myPersistencePeer = ((PersistentFSImpl)myPersistence).peer();
-  private final Object myRequestor = VFileEvent.REFRESH_REQUESTOR;
   private volatile boolean myCancelled;
 
   private final AtomicInteger myFullScans = new AtomicInteger(), myPartialScans = new AtomicInteger(), myProcessed = new AtomicInteger();
   private final AtomicLong myVfsTime = new AtomicLong(), myIoTime = new AtomicLong();
 
-  RefreshWorker(@NotNull Collection<@NotNull NewVirtualFile> refreshRoots, boolean isRecursive) {
+  RefreshWorker(Collection<NewVirtualFile> refreshRoots, boolean isRecursive) {
     myIsRecursive = isRecursive;
     myParallel = isRecursive && ourParallelism > 1 && !ApplicationManager.getApplication().isWriteIntentLockAcquired();
     myRoots = new HashSet<>(refreshRoots);
     myRefreshQueue = new LinkedBlockingQueue<>(refreshRoots);
     mySemaphore = new Semaphore(refreshRoots.size());
+    myRequestor = VFileEvent.REFRESH_REQUESTOR;
   }
 
   void cancel() {
     myCancelled = true;
   }
 
-  @NotNull List<VFileEvent> scan() {
+  List<VFileEvent> scan() {
     var t = System.nanoTime();
     try {
       var events = new ArrayList<VFileEvent>();

@@ -184,7 +184,7 @@ public final class VfsImplUtil {
 
   public record PathFromRoot(@NotNull NewVirtualFile root, @NotNull String pathFromRoot) {}
   /**
-   * @return (file system root, relative path inside that root) or null if the path is invalid or the root is not found
+   * Returns a (file system root, relative path inside that root) pair, or {@code null} when the path is invalid or the root is not found.
    * For example, {@code extractRootFromPath(LocalFileSystem.getInstance, "C:/temp")} -> ("C:", "/temp")
    * {@code extractRootFromPath(JarFileSystem.getInstance, "/temp/temp.jar!/com/foo/bar")} -> ("/temp/temp.jar!/", "/com/foo/bar")
    */

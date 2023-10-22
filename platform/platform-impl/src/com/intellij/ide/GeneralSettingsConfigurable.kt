@@ -25,6 +25,8 @@ private val myConfirmExit: CheckboxDescriptor
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"), model::isConfirmExit)
 private val myChkSyncOnFrameActivation
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"), model::isSyncOnFrameActivation)
+private val myChkSyncInBackground
+  get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.in.background"), model::isBackgroundSync)
 private val myChkSaveOnFrameDeactivation
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.on.frame.deactivation"), model::isSaveOnFrameDeactivation)
 private val myChkAutoSaveIfInactive
@@ -33,36 +35,36 @@ private val myChkUseSafeWrite
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.safe.write"), model::isUseSafeWrite)
 
 internal val allOptionDescriptors: List<BooleanOptionDescription>
-  get() {
-    return sequenceOf(
+  get() =
+    listOf(
       myChkReopenLastProject,
       myConfirmExit,
       myChkSyncOnFrameActivation,
+      myChkSyncInBackground,
       myChkSaveOnFrameDeactivation,
       myChkAutoSaveIfInactive,
       myChkUseSafeWrite
     )
-      .map { it.asUiOptionDescriptor() }
-      .toList()
-  }
+    .map(CheckboxDescriptor::asUiOptionDescriptor)
 
 /**
- * To provide additional options in General section register implementation of {@link SearchableConfigurable} in the plugin.xml:
- * <p/>
- * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
- * &nbsp;&nbsp;&lt;generalOptionsProvider instance="class-name"/&gt;<br>
- * &lt;/extensions&gt;
- * <p>
- * A new instance of the specified class will be created each time then the Settings dialog is opened
+ * To provide additional options in General section register implementation of [SearchableConfigurable] in the 'plugin.xml':
+ * ```
+ * <extensions defaultExtensionNs="com.intellij">
+ *   <generalOptionsProvider instance="class-name"/>
+ * </extensions>
+ * ```
+ * A new instance of the specified class will be created each time then the Settings dialog is opened.
  */
-private class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<SearchableConfigurable>(
-  IdeBundle.message("title.general"),
-  "preferences.general"
-), SearchableConfigurable {
+@Suppress("unused")
+private class GeneralSettingsConfigurable :
+  BoundCompositeSearchableConfigurable<SearchableConfigurable>(IdeBundle.message("title.general"), "preferences.general"),
+  SearchableConfigurable
+{
   private val model = GeneralSettings.getInstance().state
 
-  override fun createPanel(): DialogPanel {
-    return panel {
+  override fun createPanel(): DialogPanel =
+    panel {
       row {
         checkBox(myConfirmExit)
       }
@@ -124,6 +126,9 @@ private class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<
           checkBox(myChkSyncOnFrameActivation)
         }
         row {
+          checkBox(myChkSyncInBackground)
+        }
+        row {
           comment(IdeBundle.message("label.autosave.comment")) {
             HelpManager.getInstance().invokeHelp("autosave")
           }
@@ -134,13 +139,10 @@ private class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<
         appendDslConfigurable(configurable)
       }
     }
-  }
 
   override fun getId(): String = helpTopic!!
 
-  override fun createConfigurables(): List<SearchableConfigurable> {
-    return ConfigurableWrapper.createConfigurables(EP_NAME)
-  }
+  override fun createConfigurables(): List<SearchableConfigurable> = ConfigurableWrapper.createConfigurables(EP_NAME)
 }
 
 private val EP_NAME = ExtensionPointName<GeneralSettingsConfigurableEP>("com.intellij.generalOptionsProvider")

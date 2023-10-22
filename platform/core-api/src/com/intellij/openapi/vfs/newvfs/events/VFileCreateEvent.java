@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class VFileCreateEvent extends VFileEvent {
-  private final @NotNull VirtualFile myParent;
+  private final VirtualFile myParent;
   private final boolean myDirectory;
   private final FileAttributes myAttributes;
   private final String mySymlinkTarget;
@@ -72,7 +72,7 @@ public final class VFileCreateEvent extends VFileEvent {
     return mySymlinkTarget;
   }
 
-  /** @return true if the newly created file is a directory which has no children. */
+  /** @return {@code true} if the newly created file is a directory that has no children. */
   public boolean isEmptyDirectory() {
     return isDirectory() && myChildren != null && myChildren.length == 0;
   }

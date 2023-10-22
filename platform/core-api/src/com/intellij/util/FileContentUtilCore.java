@@ -18,7 +18,7 @@ public final class FileContentUtilCore {
   public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtilCore.saveOrReload";
 
   /**
-   * Forces a reparse of the specified array of files.
+   * Forces reparsing the specified files.
    *
    * @param files the files to reparse.
    */
@@ -27,7 +27,7 @@ public final class FileContentUtilCore {
   }
 
   /**
-   * Forces a reparse of the specified collection of files.
+   * Forces reparsing the specified files.
    *
    * @param files the files to reparse.
    */

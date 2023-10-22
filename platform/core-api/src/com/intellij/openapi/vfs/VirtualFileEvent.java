@@ -17,7 +17,6 @@ public class VirtualFileEvent extends EventObject {
   private final Object myRequestor;
   private final VirtualFile myFile;
   private final VirtualFile myParent;
-
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;
 
@@ -49,7 +48,7 @@ public class VirtualFileEvent extends EventObject {
   }
 
   /**
-   * Returns the parent of the virtual file, or {@code null} if the file is a root directory
+   * Returns the parent of the virtual file, or {@code null} if the file is a root directory,
    * or it was not possible to determine the parent (depends on the specific VFS implementation).
    */
   public @Nullable VirtualFile getParent() {

@@ -70,52 +70,52 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   private val forceExecuteImmediatelyState = AtomicBoolean()
 
   init {
+    coroutineScope.launch(CoroutineName("refresh requests flow processing") + ModalityState.nonModal().asContextElement()) {
+      // not collectLatest - wait for previous execution
+      refreshRequests
+        .debounce(300.milliseconds)
+        .collect {
+          val eventPublisher = eventPublisher
+          withContext(Dispatchers.EDT) {
+            blockingContext {
+              eventPublisher.beforeRefresh()
+              refreshOpenFiles()
+              maybeRefresh(ModalityState.nonModal())
+            }
+          }
+        }
+    }
+
+    coroutineScope.launch(CoroutineName("save requests flow processing")) {
+      // not collectLatest - wait for previous execution
+      saveRequests
+        .collect {
+          val forceExecuteImmediately = forceExecuteImmediatelyState.compareAndSet(true, false)
+          if (!forceExecuteImmediately) {
+            delay(300.milliseconds)
+          }
+
+          if (blockSaveOnFrameDeactivationCount.get() != 0) {
+            return@collect
+          }
+
+          val job = currentJob.updateAndGet { oldJob ->
+            oldJob?.cancel()
+            launch(start = CoroutineStart.LAZY) { processTasks(forceExecuteImmediately = forceExecuteImmediately) }
+          }!!
+          try {
+            if (job.start()) {
+              job.join()
+            }
+          }
+          catch (_: CancellationException) { }
+          finally {
+            currentJob.compareAndSet(job, null)
+          }
+        }
+    }
+
     coroutineScope.launch {
-      launch(CoroutineName("refresh requests flow processing") + ModalityState.nonModal().asContextElement()) {
-        // not collectLatest - wait for previous execution
-        refreshRequests
-          .debounce(300.milliseconds)
-          .collect {
-            val eventPublisher = eventPublisher
-            withContext(Dispatchers.EDT) {
-              blockingContext {
-                eventPublisher.beforeRefresh()
-                refreshOpenFiles()
-                maybeRefresh(ModalityState.nonModal())
-              }
-            }
-          }
-      }
-
-      launch(CoroutineName("save requests flow processing")) {
-        // not collectLatest - wait for previous execution
-        saveRequests
-          .collect {
-            val forceExecuteImmediately = forceExecuteImmediatelyState.compareAndSet(true, false)
-            if (!forceExecuteImmediately) {
-              delay(300.milliseconds)
-            }
-
-            if (blockSaveOnFrameDeactivationCount.get() != 0) {
-              return@collect
-            }
-
-            val job = currentJob.updateAndGet { oldJob ->
-              oldJob?.cancel()
-              launch(start = CoroutineStart.LAZY) { processTasks(forceExecuteImmediately = forceExecuteImmediately) }
-            }!!
-            try {
-              if (job.start()) {
-                job.join()
-              }
-            }
-            catch (_: CancellationException) { }
-            finally {
-              currentJob.compareAndSet(job, null)
-            }
-          }
-      }
-
       listenIdleAndActivate()
     }
 
@@ -351,7 +351,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     session.addAllFiles(*ManagingFS.getInstance().localRoots)
     refreshSession.getAndSet(session)?.cancel()
     session.launch()
-    LOG.debug("vfs refreshed")
+    LOG.debug("VFS refresh started")
   }
 
   override fun refreshOpenFiles() {

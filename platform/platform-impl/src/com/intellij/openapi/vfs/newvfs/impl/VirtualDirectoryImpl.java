@@ -288,8 +288,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       child.markDirty();
     }
     if (isDirectory && child instanceof VirtualDirectoryImpl && isEmptyDirectory) {
-      // When creating an empty directory, we need to make sure that every file created inside will fire "file created" event
-      // in order to virtual file pointer manager get those events to update its pointers properly
+      // When creating an empty directory, we need to make sure that every file created inside it will fire a "file created" event
+      // for virtual file pointer manager to update its pointers properly
       // (because currently VirtualFilePointerManager ignores empty directory creation events for performance reasons).
       ((VirtualDirectoryImpl)child).setAllChildrenLoaded();
     }
@@ -550,8 +550,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     //We come here only from PersistentFSImpl.findFileById(), on a descend phase, there we resolve fileIds to
     // VFiles. Hence, it must be a child with childId -- because 'this' was collected as .parent during an
-    // ascend phase. If that is not the case -- either something was changed in between (e.g. children were
-    // refreshed), or there is an inconsistency in VFS (e.g. children and .parent fall out of sync):
+    // ascend phase. If that is not the case -- either something was changed in between (e.g., children were
+    // refreshed), or there is an inconsistency in VFS (e.g., children and .parent fall out of sync):
 
     //Actually, after this point we're already in a gray area: even if we manage to find a child by name
     // with same id, this is already suspicious: how could we miss it while looking by id beforehand?
@@ -567,7 +567,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       boolean deleted = FSRecords.isDeleted(id);
       if (!deleted) {
         THROTTLED_LOG.info(() -> {
-          int parentId = FSRecords.getParent(id);
+          @SuppressWarnings("removal") int parentId = FSRecords.getParent(id);
           IntOpenHashSet childrenInPersistence = new IntOpenHashSet(FSRecords.listIds(id));
           IntOpenHashSet childrenInMemory = new IntOpenHashSet(myData.myChildrenIds);
           int[] childrenNotInPersistent = childrenInMemory.intStream()
@@ -597,7 +597,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     throw new IOException("Cannot get content of directory: " + this);
   }
 
-  // optimisation: works faster than added.forEach(this::addChild)
+  // optimization: works faster than added.forEach(this::addChild)
   @ApiStatus.Internal
   public void createAndAddChildren(@NotNull List<ChildInfo> added,
                                    boolean markAllChildrenLoaded,
@@ -606,8 +606,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
         assert info.getId() > 0 : info;
-        @PersistentFS.Attributes
-        int attributes = info.getFileAttributeFlags();
+        @SuppressWarnings("MagicConstant") @PersistentFS.Attributes int attributes = info.getFileAttributeFlags();
         boolean isEmptyDirectory = info.getChildren() != null && info.getChildren().length == 0;
         synchronized (myData) {
           int[] oldIds = myData.myChildrenIds;
@@ -649,8 +648,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       ContainerUtil.processSortedListsInOrder(existingChildren, added, byName, true, (nextInfo, mergeResult) -> {
         if (mergeResult != ContainerUtil.MergeResult.COPIED_FROM_LIST1) {
           assert nextInfo.getId() > 0 : nextInfo;
-          @PersistentFS.Attributes
-          int attributes = nextInfo.getFileAttributeFlags();
+          @SuppressWarnings("MagicConstant") @PersistentFS.Attributes int attributes = nextInfo.getFileAttributeFlags();
           boolean isEmptyDirectory = nextInfo.getChildren() != null && nextInfo.getChildren().length == 0;
           myData.removeAdoptedName(nextInfo.getName());
           VirtualFileSystemEntry file = createChildImpl(nextInfo.getId(), nextInfo.getNameId(), attributes, isEmptyDirectory);
@@ -823,7 +821,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     markDirtyRecursivelyInternal();
   }
 
-  // optimisation: do not travel up unnecessary
+  // optimization: do not travel up unnecessary
   private void markDirtyRecursivelyInternal() {
     for (VirtualFileSystemEntry child : getArraySafely(true)) {
       child.markDirtyInternal();

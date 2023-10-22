@@ -52,11 +52,11 @@ public abstract class VFileEvent {
   protected abstract @NotNull String computePath();
 
   /**
-   * Returns the VirtualFile which this event belongs to.
-   * In some cases it may be null - it is not guaranteed that there is such file.
+   * Returns the {@link VirtualFile} which this event belongs to.
+   * In some cases, it may be {@code null} - it is not guaranteed that the file exists.
    * <p/>
    * NB: Use this method with caution, because {@link VFileCreateEvent#getFile()} needs
-   * {@link VirtualFile#findChild(String)} which may be a performance leak.
+   * {@link VirtualFile#findChild(String)} which may be a performance hit.
    */
   public abstract @Nullable VirtualFile getFile();
 
