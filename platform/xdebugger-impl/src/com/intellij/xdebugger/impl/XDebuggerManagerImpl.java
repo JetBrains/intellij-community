@@ -174,8 +174,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       myNewRunToCursorListener = new InlayRunToCursorEditorListener(myProject, coroutineScope);
       eventMulticaster.addEditorMouseMotionListener(myNewRunToCursorListener, this);
       eventMulticaster.addEditorMouseListener(myNewRunToCursorListener, this);
-
-      myNewRunToCursorListener.installScrollListeners(this);
     }
   }
 

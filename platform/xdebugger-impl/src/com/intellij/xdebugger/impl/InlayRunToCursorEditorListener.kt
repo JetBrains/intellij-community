@@ -72,17 +72,6 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   private var currentEditor = WeakReference<Editor?>(null)
   private var currentLineNumber = -1
 
-  fun installScrollListeners(debuggerManagerImpl: XDebuggerManagerImpl) {
-    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
-      override fun editorCreated(event: EditorFactoryEvent) {
-        val editor = event.editor
-        editor.getScrollingModel().addVisibleAreaListener(VisibleAreaListener {
-          showInlayRunToCursorIfNeeded(editor, null)
-        })
-      }
-    }, debuggerManagerImpl)
-  }
-
   override fun mouseMoved(e: EditorMouseEvent) {
     showInlayRunToCursorIfNeeded(e.editor, e)
   }
