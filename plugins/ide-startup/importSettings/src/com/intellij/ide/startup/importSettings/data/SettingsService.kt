@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.StartupImportIcons
+import com.intellij.ide.startup.importSettings.jb.JbImportServiceImpl
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
 import com.intellij.ide.startup.importSettings.transfer.SettingTransferService
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -49,7 +50,9 @@ class SettingsServiceImpl : SettingsService {
     if (shouldUseMockData) TestSyncService()
     else SyncServiceImpl.getInstance()
 
-  override fun getJbService() = TestJbService()
+  override fun getJbService() =
+    if (shouldUseMockData) TestJbService()
+    else JbImportServiceImpl.getInstance()
 
   override fun getExternalService(): ExternalService =
     if (shouldUseMockData) TestExternalService()

@@ -756,7 +756,7 @@ public final class ConfigImportHelper {
     }
   }
 
-  static final class ConfigImportOptions {
+  public static final class ConfigImportOptions {
     final Logger log;
     boolean headless;
     @Nullable ConfigImportSettings importSettings;
@@ -766,8 +766,16 @@ public final class ConfigImportHelper {
     @Nullable Map<PluginId, Set<String>> brokenPluginVersions = null;
     boolean mergeVmOptions = false;
 
-    ConfigImportOptions(Logger log) {
+    public ConfigImportOptions(Logger log) {
       this.log = log;
+    }
+
+    public boolean isHeadless() {
+      return headless;
+    }
+
+    public void setHeadless(boolean headless) {
+      this.headless = headless;
     }
   }
 
@@ -848,7 +856,7 @@ public final class ConfigImportHelper {
     return List.of();
   }
 
-  private static void migratePlugins(Path oldPluginsDir,
+  public static void migratePlugins(Path oldPluginsDir,
                                      Path oldConfigDir,
                                      Path newPluginsDir,
                                      Path newConfigDir,

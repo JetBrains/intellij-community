@@ -35,6 +35,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.time.LocalDate
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
@@ -832,6 +833,13 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
     )
   }, isMainProcess()), overrideUseIfCompatible = false, productBuildNumber = buildNumber)
   return result.enabledPlugins
+}
+
+fun loadCustomDescriptorsFromDir(scope: CoroutineScope,
+                                 dir: Path,
+                                 context: DescriptorListLoadingContext,
+                                 pool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>> {
+  return scope.loadDescriptorsFromDir(dir, context, false, pool)
 }
 
 internal fun CoroutineScope.loadDescriptorsFromDir(dir: Path,

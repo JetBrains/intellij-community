@@ -14,5 +14,9 @@
     <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="library" name="rd-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
+    <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
+    <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
   </component>
 </module>
