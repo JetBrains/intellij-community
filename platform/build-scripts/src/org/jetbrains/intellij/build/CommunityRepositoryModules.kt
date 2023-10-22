@@ -5,9 +5,12 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.BundledMavenDownloader
+import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
+import org.jetbrains.intellij.build.impl.SupportedDistribution
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -295,7 +298,6 @@ object CommunityRepositoryModules {
     plugin(
       "intellij.turboComplete",
     ) { spec ->
-      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
       spec.withModule("intellij.turboComplete.languages.kotlin")
     }
   )

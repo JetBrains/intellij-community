@@ -2,6 +2,7 @@ package com.intellij.turboComplete
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutorProvider
@@ -15,6 +16,8 @@ data class CompletionPerformanceParameters(
     const val PROPERTY_EXECUTE_IMMEDIATELY = "ml.completion.performance.executeImmediately"
 
     private fun parametrizeNoPerformance() = CompletionPerformanceParameters(false, true)
+
+    private fun parametrizeWithPerformance() = CompletionPerformanceParameters(true, false)
 
     private enum class Experiment(val number: Int) {
       PERFORMANCE_LOOKUP_RANKING(17),
@@ -53,10 +56,10 @@ data class CompletionPerformanceParameters(
       )
     }
 
-    private fun experimentParameters(parameters: CompletionParameters): CompletionPerformanceParameters {
+    private fun experimentParameters(parameters: CompletionParameters): CompletionPerformanceParameters? {
       val status = ExperimentStatus.getInstance().forLanguage(parameters.position.language)
       if (!status.inExperiment || status.version !in Experiment.numbers()) {
-        return parametrizeNoPerformance()
+        return null
       }
 
       return when (Experiment.fromVersion(status.version)) {
@@ -81,15 +84,29 @@ data class CompletionPerformanceParameters(
       return hasKindExecutorProvider
     }
 
+    private var lastLoggedPerformanceStatus: CompletionPerformanceParameters? = null
+
+    private fun updateLoggedPerformanceStatus(currentPerformanceParameters: CompletionPerformanceParameters) {
+      if (currentPerformanceParameters != lastLoggedPerformanceStatus) {
+        thisLogger().info("Turbo Completion will is using the following parameters: ${currentPerformanceParameters}")
+        lastLoggedPerformanceStatus = currentPerformanceParameters
+      }
+    }
+
     fun fromCompletionPreferences(parameters: CompletionParameters): CompletionPerformanceParameters {
       if (!canEnablePerformance(parameters)) {
         return parametrizeNoPerformance()
       }
 
-      return systemParameters()
+      val currentPerformanceStatus = systemParameters()
              ?: unitTestingParameters(parameters)
              ?: registryParameters()
              ?: experimentParameters(parameters)
+             ?: parametrizeWithPerformance()
+
+      updateLoggedPerformanceStatus(currentPerformanceStatus)
+
+      return currentPerformanceStatus
     }
   }
 }
