@@ -382,7 +382,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
         TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
-        onHighlighterChanged(highlighter, myGutterComponent.canImpactSize(highlighter),
+        onHighlighterChanged(highlighter,
+                             myGutterComponent.canImpactSize(highlighter),
                              EditorUtil.attributesImpactFontStyle(attributes),
                              EditorUtil.attributesImpactForegroundColor(attributes));
       }
@@ -402,73 +403,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    myMarkupModel.addErrorMarkerListener(new ErrorStripeListener() {
-      @Override
-      public void errorMarkerChanged(@NotNull ErrorStripeEvent e) {
-        errorStripeMarkerChanged((RangeHighlighterEx)e.getHighlighter());
-      }
-    }, myCaretModel);
-
-    myDocumentMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
-    myMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
-    myDocument.addDocumentListener(myFoldingModel, myCaretModel);
-    myDocument.addDocumentListener(myCaretModel, myCaretModel);
-
-    myDocument.addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
-    myDocument.addDocumentListener(mySoftWrapModel, myCaretModel);
-    myDocument.addDocumentListener(myMarkupModel, myCaretModel);
-
-    myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
-
-    myInlayModel.addListener(myFoldingModel, myCaretModel);
-    myInlayModel.addListener(myCaretModel, myCaretModel);
-
     myIndentsModel = new IndentsModelImpl(this);
-    myCaretModel.addCaretListener(new IndentsModelCaretListener(this));
-    myCaretModel.addCaretListener(new CaretListener() {
-      @Override
-      public void caretPositionChanged(@NotNull CaretEvent e) {
-        if (myState.isStickySelection()) {
-          int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength());
-          mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
-        }
-      }
-
-      @Override
-      public void caretAdded(@NotNull CaretEvent e) {
-        if (myPrimaryCaret != null) {
-          myPrimaryCaret.updateVisualPosition(); // repainting old primary caret's row background
-        }
-        repaintCaretRegion(e);
-        myPrimaryCaret = myCaretModel.getPrimaryCaret();
-      }
-
-      @Override
-      public void caretRemoved(@NotNull CaretEvent e) {
-        repaintCaretRegion(e);
-        myPrimaryCaret = myCaretModel.getPrimaryCaret(); // repainting new primary caret's row background
-        myPrimaryCaret.updateVisualPosition();
-      }
-    });
-
-    myCaretModel.addCaretListener(myMarkupModel, myCaretModel);
-
     myCaretCursor = new CaretCursor();
 
     myState.setVerticalScrollBarOrientation(VERTICAL_SCROLLBAR_RIGHT);
-    mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
-      @Override
-      public void recalculationEnds() {
-        if (myCaretModel.isUpToDate()) {
-          myCaretModel.updateVisualPosition();
-        }
-      }
-
-      @Override
-      public void softWrapsChanged() {
-        myGutterComponent.clearLineToGutterRenderersCache();
-      }
-    });
 
     setHighlighter(highlighter == null ? new NullEditorHighlighter() : highlighter);
 
@@ -498,6 +436,97 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myView = new EditorView(this);
     myView.reinitSettings();
 
+    myScheme.setEditorFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
+
+    myGutterComponent.updateSize();
+    myEditorComponent.setSize(getPreferredSize());
+
+    updateCaretCursor();
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && SystemInfoRt.isMac && SystemInfo.isJetBrainsJvm) {
+      MacGestureSupportInstaller.installOnComponent(getComponent(), e -> myForcePushHappened = true);
+    }
+
+    myFocusModeModel = new FocusModeModel(this);
+    Disposer.register(myDisposable, myFocusModeModel);
+
+    myPopupHandlers.add(new DefaultPopupHandler());
+    PopupMenuPreloader.install(myEditorComponent, ActionPlaces.EDITOR_POPUP, null, () -> {
+      return ContextMenuPopupHandler.getGroupForId(myState.getContextMenuGroupId());
+    });
+
+    myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
+    Disposer.register(myDisposable, myScrollingPositionKeeper);
+
+    addListeners();
+  }
+
+  private void addListeners() {
+    myMarkupModel.addErrorMarkerListener(new ErrorStripeListener() {
+      @Override
+      public void errorMarkerChanged(@NotNull ErrorStripeEvent e) {
+        errorStripeMarkerChanged((RangeHighlighterEx)e.getHighlighter());
+      }
+    }, myCaretModel);
+
+    myDocumentMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
+    myMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
+    myDocument.addDocumentListener(myFoldingModel, myCaretModel);
+    myDocument.addDocumentListener(myCaretModel, myCaretModel);
+
+    myDocument.addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
+    myDocument.addDocumentListener(mySoftWrapModel, myCaretModel);
+    myDocument.addDocumentListener(myMarkupModel, myCaretModel);
+
+    myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
+
+    myInlayModel.addListener(myFoldingModel, myCaretModel);
+    myInlayModel.addListener(myCaretModel, myCaretModel);
+
+    myCaretModel.addCaretListener(new IndentsModelCaretListener(this));
+
+    myCaretModel.addCaretListener(new CaretListener() {
+      @Override
+      public void caretPositionChanged(@NotNull CaretEvent e) {
+        if (myState.isStickySelection()) {
+          int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength());
+          mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
+        }
+      }
+
+      @Override
+      public void caretAdded(@NotNull CaretEvent e) {
+        if (myPrimaryCaret != null) {
+          myPrimaryCaret.updateVisualPosition(); // repainting old primary caret's row background
+        }
+        repaintCaretRegion(e);
+        myPrimaryCaret = myCaretModel.getPrimaryCaret();
+      }
+
+      @Override
+      public void caretRemoved(@NotNull CaretEvent e) {
+        repaintCaretRegion(e);
+        myPrimaryCaret = myCaretModel.getPrimaryCaret(); // repainting new primary caret's row background
+        myPrimaryCaret.updateVisualPosition();
+      }
+    });
+
+    myCaretModel.addCaretListener(myMarkupModel, myCaretModel);
+
+    mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
+      @Override
+      public void recalculationEnds() {
+        if (myCaretModel.isUpToDate()) {
+          myCaretModel.updateVisualPosition();
+        }
+      }
+
+      @Override
+      public void softWrapsChanged() {
+        myGutterComponent.clearLineToGutterRenderersCache();
+      }
+    });
+
     myInlayModel.addListener(new InlayModel.SimpleAdapter() {
       @Override
       public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
@@ -509,18 +538,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         onInlayBatchModeFinish();
       }
     }, myCaretModel);
-
-    myScheme.setEditorFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
-
-    myGutterComponent.updateSize();
-    Dimension preferredSize = getPreferredSize();
-    myEditorComponent.setSize(preferredSize);
-
-    updateCaretCursor();
-
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
-      MacGestureSupportInstaller.installOnComponent(getComponent(), e -> myForcePushHappened = true);
-    }
 
     myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
     myScrollingModel.addVisibleAreaListener(myMarkupModel);
@@ -534,15 +551,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
 
     CodeStyleSettingsManager.getInstance(myProject).subscribe(this, myDisposable);
-
-    myFocusModeModel = new FocusModeModel(this);
-    Disposer.register(myDisposable, myFocusModeModel);
-    myPopupHandlers.add(new DefaultPopupHandler());
-    PopupMenuPreloader.install(myEditorComponent, ActionPlaces.EDITOR_POPUP, null,
-                               () -> ContextMenuPopupHandler.getGroupForId(myState.getContextMenuGroupId()));
-
-    myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
-    Disposer.register(myDisposable, myScrollingPositionKeeper);
 
     myState.addPropertyChangeListener((event) -> {
       switch (event.getPropertyName()) {
