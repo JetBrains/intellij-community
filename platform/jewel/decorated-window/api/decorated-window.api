@@ -90,8 +90,8 @@ public final class org/jetbrains/jewel/window/DecoratedWindowState$Companion {
 }
 
 public final class org/jetbrains/jewel/window/ThemeKt {
-	public static final fun getDefaultDecoratedWindowStyle (Lorg/jetbrains/jewel/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/window/styling/DecoratedWindowStyle;
-	public static final fun getDefaultTitleBarStyle (Lorg/jetbrains/jewel/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/window/styling/TitleBarStyle;
+	public static final fun getDefaultDecoratedWindowStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/window/styling/DecoratedWindowStyle;
+	public static final fun getDefaultTitleBarStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/window/styling/TitleBarStyle;
 }
 
 public final class org/jetbrains/jewel/window/TitleBarKt {
@@ -184,12 +184,12 @@ public final class org/jetbrains/jewel/window/styling/TitleBarColors$Companion {
 public final class org/jetbrains/jewel/window/styling/TitleBarIcons {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/window/styling/TitleBarIcons$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/painter/PainterProvider;Lorg/jetbrains/jewel/painter/PainterProvider;Lorg/jetbrains/jewel/painter/PainterProvider;Lorg/jetbrains/jewel/painter/PainterProvider;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/painter/PainterProvider;Lorg/jetbrains/jewel/ui/painter/PainterProvider;Lorg/jetbrains/jewel/ui/painter/PainterProvider;Lorg/jetbrains/jewel/ui/painter/PainterProvider;)V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getCloseButton ()Lorg/jetbrains/jewel/painter/PainterProvider;
-	public final fun getMaximizeButton ()Lorg/jetbrains/jewel/painter/PainterProvider;
-	public final fun getMinimizeButton ()Lorg/jetbrains/jewel/painter/PainterProvider;
-	public final fun getRestoreButton ()Lorg/jetbrains/jewel/painter/PainterProvider;
+	public final fun getCloseButton ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public final fun getMaximizeButton ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public final fun getMinimizeButton ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public final fun getRestoreButton ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -216,15 +216,15 @@ public final class org/jetbrains/jewel/window/styling/TitleBarMetrics$Companion 
 public final class org/jetbrains/jewel/window/styling/TitleBarStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/window/styling/TitleBarStyle$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/window/styling/TitleBarColors;Lorg/jetbrains/jewel/window/styling/TitleBarMetrics;Lorg/jetbrains/jewel/window/styling/TitleBarIcons;Lorg/jetbrains/jewel/styling/DropdownStyle;Lorg/jetbrains/jewel/styling/IconButtonStyle;Lorg/jetbrains/jewel/styling/IconButtonStyle;Lorg/jetbrains/jewel/styling/IconButtonStyle;)V
+	public fun <init> (Lorg/jetbrains/jewel/window/styling/TitleBarColors;Lorg/jetbrains/jewel/window/styling/TitleBarMetrics;Lorg/jetbrains/jewel/window/styling/TitleBarIcons;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColors ()Lorg/jetbrains/jewel/window/styling/TitleBarColors;
-	public final fun getDropdownStyle ()Lorg/jetbrains/jewel/styling/DropdownStyle;
-	public final fun getIconButtonStyle ()Lorg/jetbrains/jewel/styling/IconButtonStyle;
+	public final fun getDropdownStyle ()Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;
+	public final fun getIconButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;
 	public final fun getIcons ()Lorg/jetbrains/jewel/window/styling/TitleBarIcons;
 	public final fun getMetrics ()Lorg/jetbrains/jewel/window/styling/TitleBarMetrics;
-	public final fun getPaneButtonStyle ()Lorg/jetbrains/jewel/styling/IconButtonStyle;
-	public final fun getPaneCloseButtonStyle ()Lorg/jetbrains/jewel/styling/IconButtonStyle;
+	public final fun getPaneButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;
+	public final fun getPaneCloseButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

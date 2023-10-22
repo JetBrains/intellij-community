@@ -71,7 +71,7 @@ internal object MacUtil {
 
     fun updateColors(w: Window) {
         SwingUtilities.invokeLater {
-            val window = MacUtil.getWindowFromJavaWindow(w)
+            val window = getWindowFromJavaWindow(w)
             val delegate = Foundation.invoke(window, "delegate")
             if (Foundation.invoke(delegate, "respondsToSelector:", Foundation.createSelector("updateColors"))
                     .booleanValue()

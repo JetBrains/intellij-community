@@ -4,11 +4,10 @@ plugins {
 }
 
 dependencies {
-    sarif(projects.core)
+    sarif(projects.ui)
     sarif(projects.samples.standalone)
     sarif(projects.intUi.intUiStandalone)
     sarif(projects.intUi.intUiDecoratedWindow)
-    sarif(projects.intUi.intUiCore)
     sarif(projects.ideLafBridge)
     sarif(projects.ideLafBridge.ideLafBridge232)
     sarif(projects.ideLafBridge.ideLafBridge233)

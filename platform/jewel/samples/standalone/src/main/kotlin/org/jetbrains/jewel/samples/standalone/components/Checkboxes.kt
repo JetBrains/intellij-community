@@ -10,9 +10,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.GroupHeader
-import org.jetbrains.jewel.Outline
-import org.jetbrains.jewel.TriStateCheckboxRow
+import org.jetbrains.jewel.ui.Outline
+import org.jetbrains.jewel.ui.component.GroupHeader
+import org.jetbrains.jewel.ui.component.TriStateCheckboxRow
 
 @Composable
 fun Checkboxes() {

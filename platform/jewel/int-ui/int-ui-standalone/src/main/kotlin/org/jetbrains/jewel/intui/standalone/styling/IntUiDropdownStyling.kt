@@ -8,17 +8,17 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.JewelTheme
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.defaultTextStyle
 import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
-import org.jetbrains.jewel.painter.PainterProvider
-import org.jetbrains.jewel.styling.DropdownColors
-import org.jetbrains.jewel.styling.DropdownIcons
-import org.jetbrains.jewel.styling.DropdownMetrics
-import org.jetbrains.jewel.styling.DropdownStyle
-import org.jetbrains.jewel.styling.MenuStyle
+import org.jetbrains.jewel.intui.standalone.theme.defaultTextStyle
+import org.jetbrains.jewel.ui.component.styling.DropdownColors
+import org.jetbrains.jewel.ui.component.styling.DropdownIcons
+import org.jetbrains.jewel.ui.component.styling.DropdownMetrics
+import org.jetbrains.jewel.ui.component.styling.DropdownStyle
+import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.painter.PainterProvider
 
 val DropdownStyle.Companion.Default: IntUiDefaultDropdownStyleFactory
     get() = IntUiDefaultDropdownStyleFactory
@@ -256,7 +256,13 @@ fun DropdownMetrics.Companion.default(
     cornerSize: CornerSize = CornerSize(4.dp),
     contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 3.dp),
     borderWidth: Dp = 1.dp,
-) = DropdownMetrics(arrowMinSize, minSize, cornerSize, contentPadding, borderWidth)
+) = DropdownMetrics(
+    arrowMinSize,
+    minSize,
+    cornerSize,
+    contentPadding,
+    borderWidth,
+)
 
 fun DropdownMetrics.Companion.undecorated(
     arrowMinSize: DpSize = DpSize((23 + 3).dp, 24.dp),
@@ -264,7 +270,13 @@ fun DropdownMetrics.Companion.undecorated(
     cornerSize: CornerSize = CornerSize(4.dp),
     contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 3.dp),
     borderWidth: Dp = 0.dp,
-) = DropdownMetrics(arrowMinSize, minSize, cornerSize, contentPadding, borderWidth)
+) = DropdownMetrics(
+    arrowMinSize,
+    minSize,
+    cornerSize,
+    contentPadding,
+    borderWidth,
+)
 
 fun DropdownIcons.Companion.defaults(
     chevronDown: PainterProvider = standalonePainterProvider("expui/general/chevronDown.svg"),

@@ -10,11 +10,11 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
-import org.jetbrains.jewel.painter.PainterProvider
-import org.jetbrains.jewel.styling.CheckboxColors
-import org.jetbrains.jewel.styling.CheckboxIcons
-import org.jetbrains.jewel.styling.CheckboxMetrics
-import org.jetbrains.jewel.styling.CheckboxStyle
+import org.jetbrains.jewel.ui.component.styling.CheckboxColors
+import org.jetbrains.jewel.ui.component.styling.CheckboxIcons
+import org.jetbrains.jewel.ui.component.styling.CheckboxMetrics
+import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
+import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Composable
 fun CheckboxStyle.Companion.light(
@@ -50,7 +50,13 @@ fun CheckboxMetrics.Companion.defaults(
     outlineSize: DpSize = DpSize(15.dp, 15.dp),
     outlineOffset: DpOffset = DpOffset(2.5.dp, 1.5.dp),
     iconContentGap: Dp = 5.dp,
-) = CheckboxMetrics(checkboxSize, checkboxCornerSize, outlineSize, outlineOffset, iconContentGap)
+) = CheckboxMetrics(
+    checkboxSize,
+    checkboxCornerSize,
+    outlineSize,
+    outlineOffset,
+    iconContentGap,
+)
 
 @Composable
 fun CheckboxIcons.Companion.light(

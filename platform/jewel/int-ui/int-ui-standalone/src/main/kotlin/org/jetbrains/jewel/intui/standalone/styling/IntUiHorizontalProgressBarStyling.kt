@@ -7,9 +7,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.styling.HorizontalProgressBarColors
-import org.jetbrains.jewel.styling.HorizontalProgressBarMetrics
-import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
+import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarColors
+import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarMetrics
+import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -33,7 +33,12 @@ fun HorizontalProgressBarColors.Companion.light(
     progress: Color = IntUiLightTheme.colors.blue(4),
     indeterminateBase: Color = IntUiLightTheme.colors.blue(9),
     indeterminateHighlight: Color = IntUiLightTheme.colors.blue(4),
-) = HorizontalProgressBarColors(track, progress, indeterminateBase, indeterminateHighlight)
+) = HorizontalProgressBarColors(
+    track,
+    progress,
+    indeterminateBase,
+    indeterminateHighlight,
+)
 
 @Composable
 fun HorizontalProgressBarColors.Companion.dark(
@@ -41,10 +46,19 @@ fun HorizontalProgressBarColors.Companion.dark(
     progress: Color = IntUiDarkTheme.colors.blue(7),
     indeterminateBase: Color = IntUiDarkTheme.colors.blue(9),
     indeterminateHighlight: Color = IntUiDarkTheme.colors.blue(5),
-) = HorizontalProgressBarColors(track, progress, indeterminateBase, indeterminateHighlight)
+) = HorizontalProgressBarColors(
+    track,
+    progress,
+    indeterminateBase,
+    indeterminateHighlight,
+)
 
 fun HorizontalProgressBarMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(100),
     minHeight: Dp = 4.dp,
     indeterminateHighlightWidth: Dp = 140.dp,
-) = HorizontalProgressBarMetrics(cornerSize, minHeight, indeterminateHighlightWidth)
+) = HorizontalProgressBarMetrics(
+    cornerSize,
+    minHeight,
+    indeterminateHighlightWidth,
+)

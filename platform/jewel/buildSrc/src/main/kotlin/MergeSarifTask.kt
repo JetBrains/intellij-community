@@ -39,7 +39,7 @@ open class MergeSarifTask : SourceTask() {
                 .values
                 .asSequence()
                 .filter { it.isNotEmpty() }
-                .map { it.first().copy(results = it.flatMap { it.results ?: emptyList() }) }
+                .map { run -> run.first().copy(results = run.flatMap { it.results ?: emptyList() }) }
                 .toList()
         )
         logger.lifecycle("Merged SARIF file contains ${merged.runs.size} run(s)")

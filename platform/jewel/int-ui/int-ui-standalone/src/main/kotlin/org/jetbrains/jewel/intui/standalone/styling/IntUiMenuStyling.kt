@@ -10,14 +10,14 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
-import org.jetbrains.jewel.painter.PainterProvider
-import org.jetbrains.jewel.styling.MenuColors
-import org.jetbrains.jewel.styling.MenuIcons
-import org.jetbrains.jewel.styling.MenuItemColors
-import org.jetbrains.jewel.styling.MenuItemMetrics
-import org.jetbrains.jewel.styling.MenuMetrics
-import org.jetbrains.jewel.styling.MenuStyle
-import org.jetbrains.jewel.styling.SubmenuMetrics
+import org.jetbrains.jewel.ui.component.styling.MenuColors
+import org.jetbrains.jewel.ui.component.styling.MenuIcons
+import org.jetbrains.jewel.ui.component.styling.MenuItemColors
+import org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
+import org.jetbrains.jewel.ui.component.styling.MenuMetrics
+import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.component.styling.SubmenuMetrics
+import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Composable
 fun MenuStyle.Companion.light(
@@ -132,7 +132,16 @@ fun MenuMetrics.Companion.defaults(
     borderWidth: Dp = 1.dp,
     itemMetrics: MenuItemMetrics = MenuItemMetrics.defaults(),
     submenuMetrics: SubmenuMetrics = SubmenuMetrics.defaults(),
-) = MenuMetrics(cornerSize, menuMargin, contentPadding, offset, shadowSize, borderWidth, itemMetrics, submenuMetrics)
+) = MenuMetrics(
+    cornerSize,
+    menuMargin,
+    contentPadding,
+    offset,
+    shadowSize,
+    borderWidth,
+    itemMetrics,
+    submenuMetrics,
+)
 
 fun MenuItemMetrics.Companion.defaults(
     selectionCornerSize: CornerSize = CornerSize(4.dp),
@@ -140,7 +149,13 @@ fun MenuItemMetrics.Companion.defaults(
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
     separatorPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
     separatorThickness: Dp = 1.dp,
-) = MenuItemMetrics(selectionCornerSize, outerPadding, contentPadding, separatorPadding, separatorThickness)
+) = MenuItemMetrics(
+    selectionCornerSize,
+    outerPadding,
+    contentPadding,
+    separatorPadding,
+    separatorThickness,
+)
 
 fun SubmenuMetrics.Companion.defaults(
     offset: DpOffset = DpOffset(0.dp, (-8).dp),

@@ -11,9 +11,9 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.styling.ButtonColors
-import org.jetbrains.jewel.styling.ButtonMetrics
-import org.jetbrains.jewel.styling.ButtonStyle
+import org.jetbrains.jewel.ui.component.styling.ButtonColors
+import org.jetbrains.jewel.ui.component.styling.ButtonMetrics
+import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 
 val ButtonStyle.Companion.Default: IntUiDefaultButtonStyleFactory
     get() = IntUiDefaultButtonStyleFactory

@@ -8,17 +8,17 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.JewelTheme
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.defaultTextStyle
 import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
-import org.jetbrains.jewel.painter.PainterProvider
-import org.jetbrains.jewel.styling.LinkColors
-import org.jetbrains.jewel.styling.LinkIcons
-import org.jetbrains.jewel.styling.LinkMetrics
-import org.jetbrains.jewel.styling.LinkStyle
-import org.jetbrains.jewel.styling.LinkTextStyles
+import org.jetbrains.jewel.intui.standalone.theme.defaultTextStyle
+import org.jetbrains.jewel.ui.component.styling.LinkColors
+import org.jetbrains.jewel.ui.component.styling.LinkIcons
+import org.jetbrains.jewel.ui.component.styling.LinkMetrics
+import org.jetbrains.jewel.ui.component.styling.LinkStyle
+import org.jetbrains.jewel.ui.component.styling.LinkTextStyles
+import org.jetbrains.jewel.ui.painter.PainterProvider
 
 @Composable
 fun LinkStyle.Companion.light(
@@ -89,7 +89,8 @@ fun LinkTextStyles.Companion.light(
     pressed: TextStyle = normal,
     hovered: TextStyle = normal,
     visited: TextStyle = normal,
-): LinkTextStyles = LinkTextStyles(normal, disabled, focused, pressed, hovered, visited)
+): LinkTextStyles =
+    LinkTextStyles(normal, disabled, focused, pressed, hovered, visited)
 
 @Composable
 fun LinkTextStyles.Companion.dark(
@@ -99,4 +100,5 @@ fun LinkTextStyles.Companion.dark(
     pressed: TextStyle = normal,
     hovered: TextStyle = normal,
     visited: TextStyle = normal,
-): LinkTextStyles = LinkTextStyles(normal, disabled, focused, pressed, hovered, visited)
+): LinkTextStyles =
+    LinkTextStyles(normal, disabled, focused, pressed, hovered, visited)

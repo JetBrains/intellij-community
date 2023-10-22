@@ -1,20 +1,5 @@
-public final class org/jetbrains/jewel/bridge/BridgeGlobalColorsKt {
-	public static final fun readFromLaF (Lorg/jetbrains/jewel/BorderColors$Companion;)Lorg/jetbrains/jewel/BorderColors;
-	public static final fun readFromLaF (Lorg/jetbrains/jewel/GlobalColors$Companion;)Lorg/jetbrains/jewel/GlobalColors;
-	public static final fun readFromLaF (Lorg/jetbrains/jewel/OutlineColors$Companion;)Lorg/jetbrains/jewel/OutlineColors;
-}
-
-public final class org/jetbrains/jewel/bridge/BridgeGlobalMetricsKt {
-	public static final fun readFromLaF (Lorg/jetbrains/jewel/GlobalMetrics$Companion;)Lorg/jetbrains/jewel/GlobalMetrics;
-}
-
 public final class org/jetbrains/jewel/bridge/BridgeResourceResolverKt {
-	public static final fun bridgePainterProvider (Ljava/lang/String;)Lorg/jetbrains/jewel/painter/ResourcePainterProvider;
-}
-
-public final class org/jetbrains/jewel/bridge/BridgeThemeColorPaletteKt {
-	public static final fun getWindowsPopupBorder (Lorg/jetbrains/jewel/ThemeColorPalette;)Landroidx/compose/ui/graphics/Color;
-	public static final fun readFromLaF (Lorg/jetbrains/jewel/ThemeColorPalette$Companion;)Lorg/jetbrains/jewel/ThemeColorPalette;
+	public static final fun bridgePainterProvider (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/painter/ResourcePainterProvider;
 }
 
 public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
@@ -58,10 +43,6 @@ public final class org/jetbrains/jewel/bridge/JewelBridgeException$KeysNotFoundE
 	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
 }
 
-public final class org/jetbrains/jewel/bridge/SwingBridgeThemeKt {
-	public static final fun SwingBridgeTheme (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
-}
-
 public abstract interface annotation class org/jetbrains/jewel/bridge/SwingLafKey : java/lang/annotation/Annotation {
 	public abstract fun key ()Ljava/lang/String;
 }
@@ -74,5 +55,24 @@ public final class org/jetbrains/jewel/bridge/ToolWindowExtensionsKt {
 public final class org/jetbrains/jewel/bridge/actionSystem/ProvideDataKt {
 	public static final fun ComponentDataProviderBridge (Ljavax/swing/JComponent;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun provideData (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
+}
+
+public final class org/jetbrains/jewel/bridge/theme/BridgeGlobalColorsKt {
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/BorderColors$Companion;)Lorg/jetbrains/jewel/foundation/BorderColors;
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/GlobalColors$Companion;)Lorg/jetbrains/jewel/foundation/GlobalColors;
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/OutlineColors$Companion;)Lorg/jetbrains/jewel/foundation/OutlineColors;
+}
+
+public final class org/jetbrains/jewel/bridge/theme/BridgeGlobalMetricsKt {
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/GlobalMetrics$Companion;)Lorg/jetbrains/jewel/foundation/GlobalMetrics;
+}
+
+public final class org/jetbrains/jewel/bridge/theme/BridgeThemeColorPaletteKt {
+	public static final fun getWindowsPopupBorder (Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;)Landroidx/compose/ui/graphics/Color;
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette$Companion;)Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;
+}
+
+public final class org/jetbrains/jewel/bridge/theme/SwingBridgeThemeKt {
+	public static final fun SwingBridgeTheme (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 }
 

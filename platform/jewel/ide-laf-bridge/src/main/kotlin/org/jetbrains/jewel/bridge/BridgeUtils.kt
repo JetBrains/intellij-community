@@ -113,7 +113,7 @@ fun Insets.toPaddingValues() =
 /**
  * Converts a [JBInsets] to [PaddingValues], in a scaling-aware way. This
  * means that the resulting [PaddingValues] will be constructed from the
- * [JBInsets.unscaled] values, treated as [Dp]. This avoids double scaling.
+ * [JBInsets.getUnscaled] values, treated as [Dp]. This avoids double scaling.
  */
 fun JBInsets.toPaddingValues() =
     PaddingValues(unscaled.left.dp, unscaled.top.dp, unscaled.right.dp, unscaled.bottom.dp)

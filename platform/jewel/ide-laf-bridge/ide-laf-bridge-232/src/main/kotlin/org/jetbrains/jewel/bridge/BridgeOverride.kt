@@ -1,7 +1,7 @@
 package org.jetbrains.jewel.bridge
 
 import com.intellij.util.ui.DirProvider
-import org.jetbrains.jewel.painter.PainterResourcePathHint
+import org.jetbrains.jewel.ui.painter.PainterResourcePathHint
 
 internal object BridgeOverride : PainterResourcePathHint {
 

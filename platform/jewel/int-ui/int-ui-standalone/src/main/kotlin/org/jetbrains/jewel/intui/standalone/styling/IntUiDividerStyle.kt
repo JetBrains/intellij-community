@@ -2,11 +2,10 @@ package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import org.jetbrains.jewel.intui.core.styling.defaults
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.styling.DividerMetrics
-import org.jetbrains.jewel.styling.DividerStyle
+import org.jetbrains.jewel.ui.component.styling.DividerMetrics
+import org.jetbrains.jewel.ui.component.styling.DividerStyle
 
 @Composable
 fun DividerStyle.Companion.light(

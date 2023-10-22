@@ -2,7 +2,7 @@ package org.jetbrains.jewel.intui.window
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
-import org.jetbrains.jewel.ThemeDefinition
+import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.intui.window.styling.dark
 import org.jetbrains.jewel.intui.window.styling.light
 import org.jetbrains.jewel.window.styling.DecoratedWindowStyle

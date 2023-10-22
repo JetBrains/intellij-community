@@ -30,16 +30,16 @@ plugins {
 }
 
 include(
-    ":core",
+    ":ui",
+    ":foundation",
     ":decorated-window",
+    ":int-ui:int-ui-decorated-window",
+    ":int-ui:int-ui-standalone",
     ":ide-laf-bridge",
     ":ide-laf-bridge:ide-laf-bridge-232",
     ":ide-laf-bridge:ide-laf-bridge-233",
     ":samples:standalone",
     ":samples:ide-plugin",
-    ":int-ui:int-ui-core",
-    ":int-ui:int-ui-decorated-window",
-    ":int-ui:int-ui-standalone",
 )
 
 gradleEnterprise {

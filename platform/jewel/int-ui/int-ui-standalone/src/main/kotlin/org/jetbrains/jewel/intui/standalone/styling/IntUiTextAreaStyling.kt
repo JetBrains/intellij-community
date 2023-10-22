@@ -8,13 +8,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.JewelTheme
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.defaultTextStyle
-import org.jetbrains.jewel.styling.TextAreaColors
-import org.jetbrains.jewel.styling.TextAreaMetrics
-import org.jetbrains.jewel.styling.TextAreaStyle
+import org.jetbrains.jewel.intui.standalone.theme.defaultTextStyle
+import org.jetbrains.jewel.ui.component.styling.TextAreaColors
+import org.jetbrains.jewel.ui.component.styling.TextAreaMetrics
+import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 
 @Composable
 fun TextAreaStyle.Companion.light(

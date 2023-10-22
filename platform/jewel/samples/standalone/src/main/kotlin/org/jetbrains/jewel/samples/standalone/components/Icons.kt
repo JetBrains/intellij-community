@@ -12,10 +12,10 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.GroupHeader
-import org.jetbrains.jewel.Icon
-import org.jetbrains.jewel.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
+import org.jetbrains.jewel.ui.component.GroupHeader
+import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 
 @Composable
 internal fun Icons() {

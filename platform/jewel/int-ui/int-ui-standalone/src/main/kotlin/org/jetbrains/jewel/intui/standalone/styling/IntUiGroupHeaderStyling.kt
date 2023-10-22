@@ -6,9 +6,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.styling.GroupHeaderColors
-import org.jetbrains.jewel.styling.GroupHeaderMetrics
-import org.jetbrains.jewel.styling.GroupHeaderStyle
+import org.jetbrains.jewel.ui.component.styling.GroupHeaderColors
+import org.jetbrains.jewel.ui.component.styling.GroupHeaderMetrics
+import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
 
 @Composable
 fun GroupHeaderStyle.Companion.light(

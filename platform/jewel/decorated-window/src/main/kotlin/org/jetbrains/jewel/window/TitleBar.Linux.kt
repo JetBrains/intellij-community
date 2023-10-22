@@ -14,13 +14,13 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.unit.dp
 import com.jetbrains.JBR
-import org.jetbrains.jewel.Icon
-import org.jetbrains.jewel.IconButton
-import org.jetbrains.jewel.JewelTheme
-import org.jetbrains.jewel.painter.PainterHint
-import org.jetbrains.jewel.painter.PainterProvider
-import org.jetbrains.jewel.painter.PainterSuffixHint
-import org.jetbrains.jewel.styling.IconButtonStyle
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.component.IconButton
+import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.painter.PainterHint
+import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.painter.PainterSuffixHint
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 import java.awt.Frame
 import java.awt.event.MouseEvent
@@ -95,7 +95,7 @@ import java.awt.event.WindowEvent
             .size(style.metrics.titlePaneButtonSize),
         style = iconButtonStyle,
     ) {
-        Icon(painterProvider.getPainter(if (state.isActive) PainterHint.None else Inactive).value, description)
+        Icon(painterProvider.getPainter(if (state.isActive) PainterHint else Inactive).value, description)
     }
 }
 

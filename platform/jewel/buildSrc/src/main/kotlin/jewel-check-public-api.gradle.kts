@@ -13,7 +13,7 @@ apiValidation {
 }
 
 poko {
-    pokoAnnotation.set("org.jetbrains.jewel.GenerateDataFunctions")
+    pokoAnnotation.set("org.jetbrains.jewel.foundation.GenerateDataFunctions")
 }
 
 tasks {

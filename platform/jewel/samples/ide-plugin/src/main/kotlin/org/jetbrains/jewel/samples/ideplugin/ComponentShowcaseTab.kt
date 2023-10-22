@@ -26,22 +26,22 @@ import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
 import com.intellij.ui.JBColor
 import icons.JewelIcons
-import org.jetbrains.jewel.CheckboxRow
-import org.jetbrains.jewel.CircularProgressIndicator
-import org.jetbrains.jewel.CircularProgressIndicatorBig
-import org.jetbrains.jewel.DefaultButton
-import org.jetbrains.jewel.Icon
-import org.jetbrains.jewel.IconButton
-import org.jetbrains.jewel.JewelTheme
-import org.jetbrains.jewel.LazyTree
-import org.jetbrains.jewel.OutlinedButton
-import org.jetbrains.jewel.RadioButtonRow
-import org.jetbrains.jewel.Text
-import org.jetbrains.jewel.TextField
-import org.jetbrains.jewel.Tooltip
-import org.jetbrains.jewel.bridge.SwingBridgeTheme
+import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.bridge.toComposeColor
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.tree.buildTree
+import org.jetbrains.jewel.ui.component.CheckboxRow
+import org.jetbrains.jewel.ui.component.CircularProgressIndicator
+import org.jetbrains.jewel.ui.component.CircularProgressIndicatorBig
+import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.component.IconButton
+import org.jetbrains.jewel.ui.component.LazyTree
+import org.jetbrains.jewel.ui.component.OutlinedButton
+import org.jetbrains.jewel.ui.component.RadioButtonRow
+import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.TextField
+import org.jetbrains.jewel.ui.component.Tooltip
 
 @Composable internal fun ComponentShowcaseTab() {
     SwingBridgeTheme {

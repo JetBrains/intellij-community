@@ -9,17 +9,16 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.styling.Undecorated
-import org.jetbrains.jewel.intui.standalone.styling.dark
 import org.jetbrains.jewel.intui.standalone.styling.defaults
 import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.intui.window.decoratedWindowPainterProvider
-import org.jetbrains.jewel.painter.PainterProvider
-import org.jetbrains.jewel.styling.DropdownColors
-import org.jetbrains.jewel.styling.DropdownStyle
-import org.jetbrains.jewel.styling.IconButtonColors
-import org.jetbrains.jewel.styling.IconButtonMetrics
-import org.jetbrains.jewel.styling.IconButtonStyle
-import org.jetbrains.jewel.styling.MenuStyle
+import org.jetbrains.jewel.ui.component.styling.DropdownColors
+import org.jetbrains.jewel.ui.component.styling.DropdownStyle
+import org.jetbrains.jewel.ui.component.styling.IconButtonColors
+import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
+import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.painter.PainterProvider
 import org.jetbrains.jewel.window.styling.TitleBarColors
 import org.jetbrains.jewel.window.styling.TitleBarIcons
 import org.jetbrains.jewel.window.styling.TitleBarMetrics
@@ -123,7 +122,6 @@ fun TitleBarStyle.Companion.dark(
                 backgroundHovered = colors.dropdownHoveredBackground,
                 backgroundPressed = colors.dropdownPressedBackground,
             ),
-            menuStyle = MenuStyle.dark(),
         ),
         iconButtonStyle = titleBarIconButtonStyle(
             colors.iconButtonHoveredBackground,

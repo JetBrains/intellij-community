@@ -4,7 +4,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.jewel.InternalJewelApi
+import org.jetbrains.jewel.foundation.InternalJewelApi
 import java.lang.reflect.Field
 
 private val logger = Logger.getInstance("UiThemeExtensions")
@@ -25,8 +25,8 @@ val UITheme.icons: Map<String, String>
 
 // TODO #116 replace with public API access once it's made available (IJP 233?)
 internal val UITheme.iconColorPalette: Map<String, String>
-    get() = readMapField<Map<String, String>>(classUITheme.getDeclaredField("icons"))
-        .get("ColorPalette").orEmpty()
+    get() = readMapField<Map<String, String>>(classUITheme.getDeclaredField("icons"))["ColorPalette"]
+        .orEmpty()
 
 // TODO #116 replace with public API access once it's made available (IJP 233?)
 internal val UITheme.selectedIconColorPalette: Map<String, String>

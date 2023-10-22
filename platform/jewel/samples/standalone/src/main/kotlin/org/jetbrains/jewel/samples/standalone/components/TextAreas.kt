@@ -12,10 +12,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.GroupHeader
-import org.jetbrains.jewel.Outline
-import org.jetbrains.jewel.Text
-import org.jetbrains.jewel.TextArea
+import org.jetbrains.jewel.ui.Outline
+import org.jetbrains.jewel.ui.component.GroupHeader
+import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.TextArea
 
 @Suppress("SpellCheckingInspection")
 private const val LOREM_IPSUM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n" +

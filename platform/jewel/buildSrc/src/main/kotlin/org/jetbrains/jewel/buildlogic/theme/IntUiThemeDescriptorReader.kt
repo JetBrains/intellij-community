@@ -32,7 +32,7 @@ internal object IntUiThemeDescriptorReader {
             addImport(colorClassName.packageName, colorClassName.simpleName)
 
             addType(TypeSpec.objectBuilder(className).apply {
-                addSuperinterface(ClassName.bestGuess("org.jetbrains.jewel.ThemeDescriptor"))
+                addSuperinterface(ClassName.bestGuess("org.jetbrains.jewel.foundation.theme.ThemeDescriptor"))
 
                 addProperty(
                     PropertySpec.builder("isDark", Boolean::class, KModifier.OVERRIDE)
@@ -52,9 +52,9 @@ internal object IntUiThemeDescriptorReader {
         }.build()
 
     private val colorPaletteClassName =
-        ClassName.bestGuess("org.jetbrains.jewel.ThemeColorPalette")
+        ClassName.bestGuess("org.jetbrains.jewel.foundation.theme.ThemeColorPalette")
     private val iconDataClassName =
-        ClassName.bestGuess("org.jetbrains.jewel.ThemeIconData")
+        ClassName.bestGuess("org.jetbrains.jewel.foundation.theme.ThemeIconData")
 
     private fun TypeSpec.Builder.readColors(colors: Map<String, String>) {
         val colorGroups = colors.entries.groupBy {

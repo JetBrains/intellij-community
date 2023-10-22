@@ -41,7 +41,8 @@ detekt {
     buildUponDefaultConfig = true
 }
 
-val sarifReport = layout.buildDirectory.file("reports/ktlint-${project.name}.sarif")
+val sarifReport: Provider<RegularFile> = layout.buildDirectory
+    .file("reports/ktlint-${project.name}.sarif")
 
 tasks {
     detektMain {

@@ -10,9 +10,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.styling.ChipColors
-import org.jetbrains.jewel.styling.ChipMetrics
-import org.jetbrains.jewel.styling.ChipStyle
+import org.jetbrains.jewel.ui.component.styling.ChipColors
+import org.jetbrains.jewel.ui.component.styling.ChipMetrics
+import org.jetbrains.jewel.ui.component.styling.ChipStyle
 
 @Composable
 fun ChipStyle.Companion.light(

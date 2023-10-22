@@ -8,10 +8,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
-import org.jetbrains.jewel.GenerateDataFunctions
-import org.jetbrains.jewel.painter.PainterProvider
-import org.jetbrains.jewel.styling.DropdownStyle
-import org.jetbrains.jewel.styling.IconButtonStyle
+import org.jetbrains.jewel.foundation.GenerateDataFunctions
+import org.jetbrains.jewel.ui.component.styling.DropdownStyle
+import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.painter.PainterProvider
 import org.jetbrains.jewel.window.DecoratedWindowState
 
 @Stable

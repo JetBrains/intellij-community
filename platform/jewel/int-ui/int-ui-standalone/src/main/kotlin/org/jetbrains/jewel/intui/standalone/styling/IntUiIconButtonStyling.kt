@@ -9,9 +9,9 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.styling.IconButtonColors
-import org.jetbrains.jewel.styling.IconButtonMetrics
-import org.jetbrains.jewel.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.IconButtonColors
+import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
+import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 
 @Composable
 fun IconButtonStyle.Companion.light(

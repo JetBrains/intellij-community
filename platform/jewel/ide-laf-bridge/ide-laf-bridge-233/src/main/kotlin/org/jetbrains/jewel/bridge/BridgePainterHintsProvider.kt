@@ -5,12 +5,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import com.intellij.ide.ui.UITheme
 import com.intellij.openapi.diagnostic.thisLogger
-import org.jetbrains.jewel.InternalJewelApi
-import org.jetbrains.jewel.JewelTheme
-import org.jetbrains.jewel.intui.core.IntUiPainterHintsProvider
-import org.jetbrains.jewel.painter.PainterHint
-import org.jetbrains.jewel.painter.hints.Dark
-import org.jetbrains.jewel.painter.hints.HiDpi
+import org.jetbrains.jewel.foundation.InternalJewelApi
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.painter.BasePainterHintsProvider
+import org.jetbrains.jewel.ui.painter.PainterHint
+import org.jetbrains.jewel.ui.painter.hints.Dark
+import org.jetbrains.jewel.ui.painter.hints.HiDpi
 
 @InternalJewelApi
 class BridgePainterHintsProvider private constructor(
@@ -18,7 +18,7 @@ class BridgePainterHintsProvider private constructor(
     intellijIconPalette: Map<String, String?> = emptyMap(),
     themeIconPalette: Map<String, String?> = emptyMap(),
     themeColorPalette: Map<String, Color?> = emptyMap(),
-) : IntUiPainterHintsProvider(
+) : BasePainterHintsProvider(
     isDark,
     intellijIconPalette,
     themeIconPalette,
@@ -37,7 +37,7 @@ class BridgePainterHintsProvider private constructor(
 
         private val logger = thisLogger()
 
-        operator fun invoke(isDark: Boolean): IntUiPainterHintsProvider {
+        operator fun invoke(isDark: Boolean): BasePainterHintsProvider {
             val uiTheme = currentUiThemeOrNull() ?: return BridgePainterHintsProvider(isDark)
             logger.info("Parsing theme info from theme ${uiTheme.name} (id: ${uiTheme.id}, isDark: ${uiTheme.isDark})")
 
