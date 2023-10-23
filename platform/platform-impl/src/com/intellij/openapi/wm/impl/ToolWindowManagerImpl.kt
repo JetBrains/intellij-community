@@ -90,6 +90,7 @@ import javax.swing.event.HyperlinkListener
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<ToolWindowManagerImpl>()
+private val performShowInSeparateTask = System.getProperty("idea.toolwindow.show.separate.task", "false").toBoolean()
 
 private typealias Mutation = ((WindowInfoImpl) -> Unit)
 
@@ -1163,7 +1164,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     // mode. But if a tool window was active but its mode doesn't allow to activate it again
     // (for example, a tool window is in auto hide mode), then we just activate an editor component.
     if (stripeButton != null && factory != null /* not null on an init tool window from EP */ && infoSnapshot.isVisible) {
-      return RegisterToolWindowResult(entry = entry, postTask = {
+      val postTask = {
         showToolWindowImpl(entry = entry, toBeShownInfo = info, dirtyMode = false)
 
         // do not activate a tool window that is the part of the project frame - default component should be focused
@@ -1172,7 +1173,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
             ApplicationManager.getApplication().isActive) {
           entry.toolWindow.requestFocusInToolWindow()
         }
-      })
+      }
+      if (performShowInSeparateTask) {
+        return RegisterToolWindowResult(entry = entry, postTask = postTask)
+      }
+      else {
+        postTask()
+      }
     }
 
     return RegisterToolWindowResult(entry = entry, postTask = null)
