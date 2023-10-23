@@ -5,6 +5,7 @@ import com.intellij.collaboration.util.HashingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.childScope
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
@@ -53,6 +54,12 @@ fun CoroutineScope.nestedDisposable(): Disposable {
       Disposer.dispose(it)
     })
   }
+}
+
+fun CoroutineScope.cancelledWith(disposable: Disposable): CoroutineScope = apply {
+  val job = coroutineContext[Job]
+  requireNotNull(job) { "Coroutine scope without a parent job $this" }
+  job.cancelOnDispose(disposable)
 }
 
 fun CoroutineScope.launchNow(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job =
