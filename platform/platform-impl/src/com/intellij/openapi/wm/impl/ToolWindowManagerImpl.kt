@@ -1062,14 +1062,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       existingInfo = existingInfo,
       // not used by registerToolWindow - makes sense only for `registerToolWindows` in ToolWindowSetInitializer
       paneId = existingInfo?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID,
-      buttonManager = buttonManager,
     )
-    val result = registerToolWindow(preparedTask = preparedTask, layout = layout, ensureToolWindowActionRegistered = true)
+    val result = registerToolWindow(preparedTask = preparedTask, buttonManager = buttonManager, layout = layout, ensureToolWindowActionRegistered = true)
     result.postTask?.invoke()
     return result.entry
   }
 
   internal fun registerToolWindow(preparedTask: PreparedRegisterToolWindowTask,
+                                  buttonManager: ToolWindowButtonManager,
                                   layout: DesktopLayout,
                                   ensureToolWindowActionRegistered: Boolean): RegisterToolWindowResult {
     val task = preparedTask.task
@@ -1146,7 +1146,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     val stripeButton = if (preparedTask.isButtonNeeded) {
-      preparedTask.buttonManager.createStripeButton(toolWindow, infoSnapshot, task)
+      buttonManager.createStripeButton(toolWindow = toolWindow, info = infoSnapshot, task = task)
     }
     else {
       LOG.debug {

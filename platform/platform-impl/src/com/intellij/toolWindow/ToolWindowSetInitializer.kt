@@ -127,7 +127,6 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
           existingInfo = existingInfo,
           paneId = paneId,
           isButtonNeeded = manager.isButtonNeeded(task = task, info = existingInfo, stripeManager = stripeManager),
-          buttonManager = manager.getToolWindowPane(paneId).buttonManager
         )
       }
     }
@@ -197,14 +196,12 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
   }
 }
 
-internal class PreparedRegisterToolWindowTask(
+internal data class PreparedRegisterToolWindowTask(
   @JvmField val task: RegisterToolWindowTask,
   @JvmField val isButtonNeeded: Boolean,
   @JvmField val existingInfo: WindowInfoImpl?,
 
   @JvmField val paneId: String,
-  @JvmField val buttonManager: ToolWindowButtonManager,
-
 )
 
 internal data class RegisterToolWindowResult(
@@ -221,7 +218,12 @@ private fun registerToolWindows(tasks: List<PreparedRegisterToolWindowTask>,
     try {
       val paneId = task.paneId
       if (shouldRegister(paneId)) {
-        entries.add(manager.registerToolWindow(preparedTask = task, layout = layout, ensureToolWindowActionRegistered = false))
+        // https://youtrack.jetbrains.com/issue/IDEA-335869/Tool-window-stripes-are-not-shown-for-detached-IDE-window-after-IDE-restart
+        // we must compute button manager when pane is available
+        entries.add(manager.registerToolWindow(preparedTask = task,
+                                               buttonManager = manager.getToolWindowPane(task.paneId).buttonManager,
+                                               layout = layout,
+                                               ensureToolWindowActionRegistered = false))
       }
     }
     catch (e: CancellationException) {
