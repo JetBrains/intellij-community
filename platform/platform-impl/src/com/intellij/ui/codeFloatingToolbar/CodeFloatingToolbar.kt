@@ -78,11 +78,8 @@ class CodeFloatingToolbar(
   }
 
   override fun isEnabled(): Boolean {
-    val selection = editor.selectionModel
-    if (!selection.hasSelection()) return false
-    val range = editor.calculateVisibleRange()
-    if (selection.selectionStart !in range && selection.selectionEnd !in range) return false
-    return editor.document.isWritable && !AdvancedSettings.getBoolean("floating.codeToolbar.hide") && !TEMPORARILY_DISABLED
+    return editor.selectionModel.hasSelection() && !AdvancedSettings.getBoolean("floating.codeToolbar.hide")
+           && editor.document.isWritable && !TEMPORARILY_DISABLED
   }
 
   override fun disableForDoubleClickSelection(): Boolean = true
@@ -95,12 +92,15 @@ class CodeFloatingToolbar(
     get() = hint?.component
 
   override fun getHintPosition(hint: LightweightHint): Point {
+    val range = editor.calculateVisibleRange()
     val selectionEnd = editor.selectionModel.selectionEnd
     val selectionStart = editor.selectionModel.selectionStart
     val isOneLineSelection = isOneLineSelection(editor)
     val isBelow = shouldBeUnderSelection(selectionEnd)
+    val areEdgesOutsideOfVisibleArea = editor.selectionModel.selectionStart !in range && editor.selectionModel.selectionEnd !in range
     val offsetForHint = when {
       isOneLineSelection -> selectionStart
+      areEdgesOutsideOfVisibleArea -> getOffsetForLine(editor, getLineByVisualStart(editor, editor.caretModel.offset, true))
       isBelow -> getOffsetForLine(editor, getLineByVisualStart(editor, selectionEnd, true))
       else -> getOffsetForLine(editor, getLineByVisualStart(editor, selectionStart, false))
     }

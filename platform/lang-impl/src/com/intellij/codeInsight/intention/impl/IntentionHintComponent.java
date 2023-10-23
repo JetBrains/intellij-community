@@ -239,7 +239,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       return;
     }
     CodeFloatingToolbar toolbar = getFloatingToolbar();
-    if (toolbar != null && toolbar.isEnabled() && toolbar.canBeShownAtCurrentSelection()) {
+    if (toolbar != null && toolbar.canBeShownAtCurrentSelection()) {
       showPopupFromToolbar(toolbar);
       return;
     }
@@ -502,7 +502,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       setBorder(LightBulbUtil.createInactiveBorder(editor));
       CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
       boolean isIntegrated = !Registry.is("floating.codeToolbar.hideIntentionsButton");
-      if (isIntegrated && floatingToolbar != null && floatingToolbar.isEnabled() && floatingToolbar.canBeShownAtCurrentSelection()) {
+      if (isIntegrated && floatingToolbar != null && floatingToolbar.canBeShownAtCurrentSelection()) {
         setVisible(false);
       }
     }

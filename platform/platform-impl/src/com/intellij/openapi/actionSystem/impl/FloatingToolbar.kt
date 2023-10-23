@@ -200,8 +200,8 @@ abstract class FloatingToolbar(
 
   @RequiresReadLock
   fun canBeShownAtCurrentSelection(): Boolean {
+    if (!isEnabled()) return false
     val selectionModel = editor.selectionModel
-    if (!selectionModel.hasSelection()) return false
     val file = PsiEditorUtil.getPsiFile(editor)
     val document = editor.document
     if (!PsiDocumentManager.getInstance(file.project).isCommitted(document)) {
