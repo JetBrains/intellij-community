@@ -10,17 +10,18 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static kotlinx.collections.immutable.ExtensionsKt.toPersistentList;
 
 /**
  * A language represents a programming language such as Java,
@@ -34,19 +35,19 @@ import java.util.concurrent.ConcurrentMap;
  * There should be exactly one instance of each Language.
  * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
  * <p>
- * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}.
+ * The language coming from a file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}.
  */
 public abstract class Language extends UserDataHolderBase {
   public static final Language[] EMPTY_ARRAY = new Language[0];
-  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new ConcurrentHashMap<>();
-  private static final ConcurrentMap<String, List<Language>> ourRegisteredMimeTypes = new ConcurrentHashMap<>();
+  private static final Map<Class<? extends Language>, Language> registeredLanguages = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, List<Language>> registeredMimeTypes = new ConcurrentHashMap<>();
   private static final Map<String, Language> ourRegisteredIDs = new ConcurrentHashMap<>();
 
   private final Language myBaseLanguage;
   private final String myID;
   private final String[] myMimeTypes;
   private final List<Language> myDialects = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Set<@NotNull Language> myTransitiveDialects = ContainerUtil.newConcurrentSet();
+  private final Set<@NotNull Language> transitiveDialects = ContainerUtil.newConcurrentSet();
 
   public static final Language ANY = new Language("") {
     @Override
@@ -82,7 +83,7 @@ public abstract class Language extends UserDataHolderBase {
     myMimeTypes = mimeTypes.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : mimeTypes;
 
     Class<? extends Language> langClass = getClass();
-    Language prev = ourRegisteredLanguages.putIfAbsent(langClass, this);
+    Language prev = registeredLanguages.putIfAbsent(langClass, this);
     if (prev != null) {
       throw new ImplementationConflictException("Language of '" + langClass + "' is already registered: " + prev, null, prev, this);
     }
@@ -93,20 +94,16 @@ public abstract class Language extends UserDataHolderBase {
     }
 
     for (String mimeType : mimeTypes) {
-      if (StringUtil.isEmpty(mimeType)) {
+      if (Strings.isEmpty(mimeType)) {
         continue;
       }
-      List<Language> languagesByMimeType = ourRegisteredMimeTypes.get(mimeType);
-      if (languagesByMimeType == null) {
-        languagesByMimeType = ConcurrencyUtil.cacheOrGet(ourRegisteredMimeTypes, mimeType, ContainerUtil.createConcurrentList());
-      }
-      languagesByMimeType.add(this);
+      registeredMimeTypes.computeIfAbsent(mimeType, __ -> ContainerUtil.createConcurrentList()).add(this);
     }
 
     if (baseLanguage != null) {
       baseLanguage.myDialects.add(this);
       while (baseLanguage != null) {
-        baseLanguage.myTransitiveDialects.add(this);
+        baseLanguage.transitiveDialects.add(this);
         baseLanguage = baseLanguage.getBaseLanguage();
       }
     }
@@ -116,13 +113,12 @@ public abstract class Language extends UserDataHolderBase {
    * @return collection of all languages registered so far.
    */
   public static @NotNull Collection<Language> getRegisteredLanguages() {
-    Collection<Language> languages = ourRegisteredLanguages.values();
-    return Collections.unmodifiableCollection(new ArrayList<>(languages));
+    return toPersistentList(registeredLanguages.values());
   }
 
   @ApiStatus.Internal
   public static void unregisterAllLanguagesIn(@NotNull ClassLoader classLoader, @NotNull PluginDescriptor pluginDescriptor) {
-    for (Map.Entry<Class<? extends Language>, Language> e : new ArrayList<>(ourRegisteredLanguages.entrySet())) {
+    for (Map.Entry<Class<? extends Language>, Language> e : new ArrayList<>(registeredLanguages.entrySet())) {
       Class<? extends Language> clazz = e.getKey();
       Language language = e.getValue();
       if (clazz.getClassLoader() == classLoader) {
@@ -140,10 +136,10 @@ public abstract class Language extends UserDataHolderBase {
     if (referenceProvidersRegistry != null) {
       referenceProvidersRegistry.unloadProvidersFor(this);
     }
-    ourRegisteredLanguages.remove(getClass());
+    registeredLanguages.remove(getClass());
     ourRegisteredIDs.remove(getID());
     for (String mimeType : getMimeTypes()) {
-      ourRegisteredMimeTypes.remove(mimeType);
+      registeredMimeTypes.remove(mimeType);
     }
     Language baseLanguage = getBaseLanguage();
     if (baseLanguage != null) {
@@ -155,26 +151,25 @@ public abstract class Language extends UserDataHolderBase {
   public void unregisterDialect(@NotNull Language language) {
     myDialects.remove(language);
     for (Language baseLanguage = this; baseLanguage != null; baseLanguage = baseLanguage.getBaseLanguage()) {
-      baseLanguage.myTransitiveDialects.remove(language);
+      baseLanguage.transitiveDialects.remove(language);
     }
   }
 
   /**
-   * @param klass {@code java.lang.Class} of the particular language. Serves key purpose.
+   * @param klass {@code java.lang.Class} of the particular language. Serves a key purpose.
    * @return instance of the {@code klass} language registered if any.
    */
   public static <T extends Language> T findInstance(@NotNull Class<T> klass) {
     //noinspection unchecked
-    return (T)ourRegisteredLanguages.get(klass);
+    return (T)registeredLanguages.get(klass);
   }
 
   /**
    * @param mimeType of the particular language.
    * @return unmodifiable collection of all languages for the given {@code mimeType}.
    */
-  @Unmodifiable
-  public static @NotNull Collection<Language> findInstancesByMimeType(@Nullable String mimeType) {
-    List<Language> result = mimeType == null ? null : ourRegisteredMimeTypes.get(mimeType);
+  public static @Unmodifiable @NotNull Collection<Language> findInstancesByMimeType(@Nullable String mimeType) {
+    List<Language> result = mimeType == null ? null : registeredMimeTypes.get(mimeType);
     return result == null ? Collections.emptyList() : Collections.unmodifiableCollection(result);
   }
 
@@ -266,8 +261,7 @@ public abstract class Language extends UserDataHolderBase {
     return false;
   }
 
-  @Unmodifiable
-  public @NotNull List<Language> getDialects() {
+  public @Unmodifiable @NotNull List<Language> getDialects() {
     return Collections.unmodifiableList(myDialects);
   }
 
@@ -289,23 +283,21 @@ public abstract class Language extends UserDataHolderBase {
   /**
    * Mark {@code dialect} as a language dialect of this language.
    * Please don't forget to call {@link #unregisterDialect(Language)} later,
-   * because this dialect won't de-register itself automatically on dispose because it doesn't know about this language being its parent,
-   * which can cause memory leaks.
+   * because this dialect won't deregister itself automatically on dispose
+   * because it doesn't know about this language being its parent, which can cause memory leaks.
    */
   @ApiStatus.Internal
   protected void registerDialect(@NotNull Language dialect) {
     myDialects.add(dialect);
     for (Language baseLanguage = this; baseLanguage != null; baseLanguage = baseLanguage.getBaseLanguage()) {
-      baseLanguage.myTransitiveDialects.add(dialect);
+      baseLanguage.transitiveDialects.add(dialect);
     }
   }
 
   /**
    * @return this language dialects and their dialects transitively
    */
-  @Unmodifiable
-  @NotNull
-  public Collection<@NotNull Language> getTransitiveDialects() {
-    return Collections.unmodifiableSet(myTransitiveDialects);
+  public @Unmodifiable @NotNull Collection<@NotNull Language> getTransitiveDialects() {
+    return Collections.unmodifiableSet(transitiveDialects);
   }
 }
