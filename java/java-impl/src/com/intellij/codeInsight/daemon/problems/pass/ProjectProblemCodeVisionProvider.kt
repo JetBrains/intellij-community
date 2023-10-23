@@ -63,7 +63,7 @@ internal class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     if (!CodeVisionSettings.instance().isProviderEnabled(PlatformCodeVisionIds.PROBLEMS.key)) {
       if (!problems.isEmpty()) {
         ProjectProblemUtils.reportProblems(editor, emptyMap())
-        updateHighlighters(project, psiFile, editor, SmartList())
+        updateHighlighters(project, editor, SmartList())
       }
       return emptyList()
     }
@@ -97,7 +97,7 @@ internal class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
       highlighters.add(ProjectProblemUtils.createHighlightInfo(editor, psiMember, identifier))
     }
 
-    updateHighlighters(project = project, psiFile = psiFile, editor = editor, highlighters = highlighters)
+    updateHighlighters(project = project, editor = editor, highlighters = highlighters)
     return lenses
   }
 
@@ -116,13 +116,10 @@ internal class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     editor.putUserData(PREVIEW_PROBLEMS_KEY, setOf(Problem(method, method)))
   }
 
-  private fun updateHighlighters(project: Project, psiFile: PsiFile, editor: Editor, highlighters: MutableList<HighlightInfo>) {
+  private fun updateHighlighters(project: Project, editor: Editor, highlighters: MutableList<HighlightInfo>) {
     ApplicationManager.getApplication().invokeLater(
       {
-        if (!psiFile.isValid) {
-          return@invokeLater
-        }
-        val fileTextLength = psiFile.textLength
+        val fileTextLength = editor.document.textLength
         val colorsScheme = editor.colorsScheme
         UpdateHighlightersUtil.setHighlightersToEditor(project, editor.document, 0, fileTextLength, highlighters, colorsScheme, -1)
       },
