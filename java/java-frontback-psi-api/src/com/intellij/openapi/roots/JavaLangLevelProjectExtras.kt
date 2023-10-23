@@ -5,35 +5,34 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectExtras
 import com.intellij.openapi.roots.LanguageLevelProjectExtension.LanguageLevelChangeListener
 import com.intellij.pom.java.LanguageLevel
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.modules.SerializersModuleBuilder
-import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
-// TODO: register
 class JavaLangLevelProjectExtras : ProjectExtras<LanguageLevelHolder> {
 
   override val id: String = "projectLangLevel"
 
+  override val dataType: KType
+    get() = typeOf<LanguageLevelHolder>()
+
   override fun getValues(project: Project): Flow<LanguageLevelHolder> {
     return callbackFlow {
-      trySend(LanguageLevelHolder(LanguageLevelProjectExtension.getInstance(project).languageLevel))
+      val languageLevel = LanguageLevelProjectExtension.getInstance(project).languageLevel
+      val element = LanguageLevelHolder(languageLevel)
+      trySend(element)
       project.messageBus.connect(this).subscribe(LanguageLevelProjectExtension.LANGUAGE_LEVEL_CHANGED_TOPIC, LanguageLevelChangeListener {
         trySend(LanguageLevelHolder(LanguageLevelProjectExtension.getInstance(project).languageLevel))
       })
+      awaitClose()
     }
   }
 
-  override fun emitValue(project: Project, value: LanguageLevelHolder) {
+  override fun consumeValue(project: Project, value: LanguageLevelHolder) {
     LanguageLevelProjectExtension.getInstance(project).languageLevel = value.languageLevel
-  }
-
-  override val dataClass: KClass<LanguageLevelHolder>
-    get() = LanguageLevelHolder::class
-
-  override fun registerSerializers(moduleBuilder: SerializersModuleBuilder) {
-    moduleBuilder.contextual(LanguageLevelHolder::class, LanguageLevelHolder.serializer())
   }
 }
 

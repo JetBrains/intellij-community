@@ -21,6 +21,7 @@
 
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <xi:include href="intellij.java.frontback.psi.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="intellij.java.frontback.impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JvmAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaIndexingPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -2445,6 +2446,8 @@
     <java.effectively.final.fixer implementation="com.intellij.codeInspection.streamMigration.ConvertToStreamFixer"/>
     <postStartupActivity implementation="com.intellij.ide.FileNotInSourceRootChecker"/>
 
+    <virtualFile.extras.provider implementation="com.intellij.openapi.roots.impl.JavaLangLevelVirtualFileExtrasProvider"/>
+
     <spellchecker.dictionary.checker implementation="com.intellij.java.frameworks.MavenDictionaryChecker"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.compilation.InvalidCompilationStatistics"/>
@@ -2488,10 +2491,6 @@
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileInlaySelectionListenerSettingsListener"
               topic="com.intellij.codeInsight.hints.InlayHintsSettings$SettingsListener"/>
-    <listener class="com.intellij.openapi.roots.impl.ProjectJavaLevelPusher"
-              topic="com.intellij.lang.ProjectExtraDataPusher"/>
-    <listener class="com.intellij.openapi.roots.impl.VirtualFileJavaLevelInfoPusher"
-              topic="com.intellij.lang.VirtualFileExtraDataPusher"/>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileRefactoringEventListener"
               topic="com.intellij.refactoring.listeners.RefactoringEventListener"/>
     <listener class="com.intellij.ide.compilation.InvalidCompilationListener"
