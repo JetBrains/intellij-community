@@ -257,6 +257,10 @@ public interface ApplicationEx extends Application {
     runnable.run();
   }
 
+  /**
+   * @deprecated Use {@link IdeEventQueue#flushNativeEventQueue}
+   */
   @ApiStatus.Internal
+  @Deprecated
   default void flushNativeEventQueue() {}
 }
