@@ -261,29 +261,34 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
     return builders
   }
 
-  fun addIteratorsFromRoots(iterators: MutableList<IndexableFilesIterator>,
-                            libraryOriginsToFilterDuplicates: MutableSet<IndexableSetOrigin>,
-                            storage: EntityStorage) {
-    val initialIterators = ArrayList<IndexableFilesIterator>()
+  data class Iterators(val contentIterators: List<IndexableFilesIterator>,
+                       val externalIterators: List<IndexableFilesIterator>,
+                       val customIterators: List<IndexableFilesIterator>)
+
+  fun getIteratorsFromRoots(libraryOriginsToFilterDuplicates: MutableSet<IndexableSetOrigin>,
+                            storage: EntityStorage): Iterators {
+    val contentIterators = mutableListOf<IndexableFilesIterator>()
     for ((module, roots) in moduleRoots.entries) {
-      initialIterators.addAll(IndexableEntityProviderMethods.createIterators(module, roots))
+      contentIterators.addAll(IndexableEntityProviderMethods.createIterators(module, roots))
     }
+    val externalIterators = mutableListOf<IndexableFilesIterator>()
+    val customIterators = mutableListOf<IndexableFilesIterator>()
     for (description in descriptions) {
       when (description) {
-        is EntityContentRootsCustomizedModuleAwareDescription<*> -> iterators.addAll(description.createIterators())
-        is EntityGenericContentRootsDescription<*> -> iterators.addAll(description.createIterators())
+        is EntityContentRootsCustomizedModuleAwareDescription<*> -> contentIterators.addAll(description.createIterators())
+        is EntityGenericContentRootsDescription<*> -> contentIterators.addAll(description.createIterators())
         is LibraryRootsDescription -> {
           description.createIterators(storage).forEach { iterator ->
             if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
-              initialIterators.add(iterator)
+              externalIterators.add(iterator)
             }
           }
         }
-        is EntityExternalRootsDescription<*> -> iterators.addAll(description.createIterators())
-        is EntityCustomKindRootsDescription<*> -> iterators.addAll(description.createIterators())
+        is EntityExternalRootsDescription<*> -> externalIterators.addAll(description.createIterators())
+        is EntityCustomKindRootsDescription<*> -> customIterators.addAll(description.createIterators())
       }
     }
-    iterators.addAll(0, initialIterators)
+    return Iterators(contentIterators, externalIterators, customIterators)
   }
 
   fun <E : WorkspaceEntity> registerEntitiesFromContributor(contributor: WorkspaceFileIndexContributor<E>,
