@@ -19,6 +19,7 @@ import com.intellij.util.io.MeasurableIndexStore;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -247,10 +248,18 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   @Override
   public void cleanupMemoryStorage() {
     myIndexChangeNotifier.clearPending();
+    myId2FileTypeCache.clear();
   }
 
   @Override
+  @TestOnly
   public void cleanupForNextTest() {
+    processPendingNotifications();
+    myId2FileTypeCache.clear();
+  }
+
+  @TestOnly
+  public void processPendingNotifications() {
     myIndexChangeNotifier.notifyPending();
   }
 
@@ -261,6 +270,6 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
 
   @Override
   public void clear() throws StorageException {
-    myIndexChangeNotifier.clearPending();
+    cleanupMemoryStorage();
   }
 }
