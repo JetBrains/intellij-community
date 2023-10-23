@@ -1,8 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
-import com.intellij.diff.tools.combined.*
+import com.intellij.diff.tools.combined.CombinedDiffModelBuilder
+import com.intellij.diff.tools.combined.CombinedDiffModelImpl
+import com.intellij.diff.tools.combined.CombinedDiffVirtualFile
 import com.intellij.ide.actions.SplitAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
@@ -18,7 +21,8 @@ internal class GitLabMergeRequestCombinedDiffFile(
     GitLabVirtualFile,
     CombinedDiffModelBuilder {
 
-  override fun createModel(id: String): CombinedDiffModelImpl = createGitLabCombinedDiffModel(connectionId, project, mergeRequestIid)
+  override fun createModel(id: String): CombinedDiffModelImpl =
+    project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffModel(connectionId, mergeRequestIid)
 
   init {
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)

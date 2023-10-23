@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 import com.intellij.diff.editor.DiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.ide.actions.SplitAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
@@ -38,9 +39,7 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
 
   override fun createProcessor(project: Project): DiffRequestProcessor {
     val projectVm = findProjectVm(project, connectionId) ?: error("Missing project view model for $this")
-    return createMergeRequestDiffRequestProcessor(project,
-                                                  projectVm,
-                                                  mergeRequestIid)
+    return project.service<GitLabMergeRequestDiffService>().createDiffRequestProcessor(projectVm, mergeRequestIid)
   }
 
   override fun getFileSystem(): VirtualFileSystem = GitLabVirtualFileSystem.getInstance()
