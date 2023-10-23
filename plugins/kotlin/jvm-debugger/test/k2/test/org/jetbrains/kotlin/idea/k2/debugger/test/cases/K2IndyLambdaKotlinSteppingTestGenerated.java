@@ -1315,6 +1315,16 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/idea334404.kt");
         }
 
+        @TestMetadata("idea335187.kt")
+        public void testIdea335187() throws Exception {
+            runTest("../testData/stepping/custom/idea335187.kt");
+        }
+
+        @TestMetadata("idea335188.kt")
+        public void testIdea335188() throws Exception {
+            runTest("../testData/stepping/custom/idea335188.kt");
+        }
+
         @TestMetadata("initBlocks.kt")
         public void testInitBlocks() throws Exception {
             runTest("../testData/stepping/custom/initBlocks.kt");
