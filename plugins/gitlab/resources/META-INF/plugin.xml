@@ -221,6 +221,9 @@
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$UpdateAction"
               icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabWarning">
       </action>
+      <action id="GitLab.MergeRequest.Review.Mode.Toggle"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$ToggleReviewAction">
+      </action>
       <add-to-group group-id="Git.Experimental.Branch.Popup.Actions"/>
     </group>
 

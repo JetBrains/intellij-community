@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.withLocation
@@ -156,6 +157,17 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
       val details = mergeRequest.refreshDataNow()
       GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(projectMapping, details)
     }
+  }
+
+  fun toggleReviewMode() {
+    val currentOption = discussionsViewOption.value
+    val newOption = if(currentOption != DiscussionsViewOption.DONT_SHOW) {
+      DiscussionsViewOption.DONT_SHOW
+    }
+    else {
+      DiscussionsViewOption.UNRESOLVED_ONLY
+    }
+    setDiscussionsViewOption(newOption)
   }
 
   /**

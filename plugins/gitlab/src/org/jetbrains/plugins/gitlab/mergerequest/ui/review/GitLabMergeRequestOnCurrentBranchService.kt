@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -105,6 +107,26 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
       e.presentation.isEnabledAndVisible = action != null
       // required for thread safety
       e.presentation.putClientProperty(actionKey, action)
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      e.presentation.getClientProperty(actionKey)?.invoke()
+    }
+  }
+
+  class ToggleReviewAction : DumbAwareAction(), Toggleable {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      val vm = e.project?.serviceIfCreated<GitLabMergeRequestOnCurrentBranchService>()?.mergeRequestReviewVmState?.value
+      if (vm == null || vm.localRepositorySyncStatus.value?.incoming == true) {
+        e.presentation.isEnabledAndVisible = false
+        e.presentation.putClientProperty(actionKey, null)
+        return
+      }
+
+      Toggleable.setSelected(e.presentation, vm.discussionsViewOption.value != DiscussionsViewOption.DONT_SHOW)
+      e.presentation.putClientProperty(actionKey) { vm.toggleReviewMode() }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
