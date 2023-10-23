@@ -40,7 +40,7 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   private final @NotNull ConcurrentIntObjectMap<Ref<FileType>> myId2FileTypeCache =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap(); // Ref is here to store nulls
   protected final @NotNull AtomicBoolean myInMemoryMode = new AtomicBoolean();
-  protected final @NotNull FileTypeIndex.IndexChangeListener myIndexChangedPublisher;
+  protected final @NotNull FileTypeIndexChangeNotifier myIndexChangeNotifier;
 
   public FileTypeIndexImplBase(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException {
     myExtension = extension;
@@ -49,7 +49,8 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     }
     myIndexId = extension.getName();
     myFileTypeEnumerator = new SimpleStringPersistentEnumerator(getStorageFile().resolveSibling("fileType.enum"));
-    myIndexChangedPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(FileTypeIndex.INDEX_CHANGE_TOPIC);
+    var syncPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(FileTypeIndex.INDEX_CHANGE_TOPIC);
+    myIndexChangeNotifier = new FileTypeIndexChangeNotifier(syncPublisher);
   }
 
   protected abstract int getIndexedFileTypeId(int fileId) throws StorageException;
@@ -213,12 +214,6 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   }
 
   @Override
-  public void cleanupMemoryStorage() { }
-
-  @Override
-  public void cleanupForNextTest() { }
-
-  @Override
   public @NotNull Computable<Boolean> prepareUpdate(int inputId, @NotNull InputData<FileType, Void> data) {
     throw new UnsupportedOperationException();
   }
@@ -245,7 +240,27 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     }
     var fileType = getFileTypeById(id);
     if (fileType != null) {
-      myIndexChangedPublisher.onChangedForFileType(fileType);
+      myIndexChangeNotifier.enqueueNotification(fileType);
     }
+  }
+
+  @Override
+  public void cleanupMemoryStorage() {
+    myIndexChangeNotifier.clearPending();
+  }
+
+  @Override
+  public void cleanupForNextTest() {
+    myIndexChangeNotifier.notifyPending();
+  }
+
+  @Override
+  public void dispose() {
+    myIndexChangeNotifier.close();
+  }
+
+  @Override
+  public void clear() throws StorageException {
+    myIndexChangeNotifier.clearPending();
   }
 }

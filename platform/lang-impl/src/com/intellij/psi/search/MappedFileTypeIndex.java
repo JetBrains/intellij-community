@@ -163,7 +163,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
   @Override
   public void clear() throws StorageException {
-    myDataController.clear();
+    try {
+      myDataController.clear();
+    } finally {
+      super.clear();
+    }
   }
 
   @Override
@@ -173,6 +177,9 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     }
     catch (StorageException e) {
       throw new RuntimeException(e);
+    }
+    finally {
+      super.dispose();
     }
   }
 
