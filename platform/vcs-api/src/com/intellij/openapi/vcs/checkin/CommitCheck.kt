@@ -54,7 +54,7 @@ interface CommitCheck : PossiblyDumbAware {
    * Consider using explicit context (e.g. [kotlinx.coroutines.Dispatchers.Default]) for potentially long operations,
    * that can be performed on pooled thread.
    *
-   * Use [com.intellij.platform.util.progress.rawProgressReporter] to report progress state.
+   * Use [com.intellij.openapi.progress.progressStep] to report progress state.
    *
    * @return a commit problem found by the commit check or `null` if no problems found
    */

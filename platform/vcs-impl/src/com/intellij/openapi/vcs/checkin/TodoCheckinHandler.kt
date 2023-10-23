@@ -15,7 +15,8 @@ import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YesNoCancelResult
-import com.intellij.openapi.util.NlsContexts.*
+import com.intellij.openapi.util.NlsContexts.Button
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -26,9 +27,8 @@ import com.intellij.openapi.vcs.checkin.TodoCheckinHandler.Companion.showDialog
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.wm.ToolWindowId.TODO_VIEW
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.platform.util.progress.asContextElement
-import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.progressStep
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.psi.search.TodoItem
 import com.intellij.util.text.DateFormatUtil.formatDateTime
 import com.intellij.util.ui.UIUtil.getWarningIcon
@@ -36,9 +36,6 @@ import com.intellij.vcs.commit.isPostCommitCheck
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.coroutineContext
 
 class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
@@ -71,20 +68,20 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
   override fun isEnabled(): Boolean = settings.CHECK_NEW_TODO
 
   override suspend fun runCheck(commitInfo: CommitInfo): TodoCommitProblem? {
-    val reporter = coroutineContext.rawProgressReporter
-    reporter?.text(message("progress.text.checking.for.todo"))
-
     val isPostCommit = commitInfo.isPostCommitCheck
     val todoFilter = settings.myTodoPanelSettings.todoFilterName?.let { TodoConfiguration.getInstance().getTodoFilter(it) }
-    val changes = commitInfo.committedChanges
+    val changes = commitInfo.committedChanges // must be on EDT
     val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
 
-    withContext(Dispatchers.Default + textToDetailsSinkContext(reporter)) {
-      coroutineToIndicator {
-        worker.execute()
+    withContext(Dispatchers.Default) {
+      progressStep(endFraction = 1.0, message("progress.text.checking.for.todo")) {
+        withRawProgressReporter {
+          coroutineToIndicator {
+            worker.execute()
+          }
+        }
       }
     }
-
     val noTodo = worker.inOneList().isEmpty()
     val noSkipped = worker.skipped.isEmpty()
     if (noTodo && noSkipped) return null
@@ -167,26 +164,6 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
         }
       }
     }
-  }
-}
-
-internal fun textToDetailsSinkContext(reporter: RawProgressReporter?): CoroutineContext {
-  if (reporter == null) {
-    return EmptyCoroutineContext
-  }
-  else {
-    return TextToDetailsProgressReporter(reporter).asContextElement()
-  }
-}
-
-internal class TextToDetailsProgressReporter(private val original: RawProgressReporter) : RawProgressReporter {
-
-  override fun text(text: @ProgressText String?) {
-    original.details(text) // incoming text will be shown as details in the original sink
-  }
-
-  override fun fraction(fraction: Double?) {
-    original.fraction(fraction)
   }
 }
 
