@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -131,6 +132,7 @@ private class IdeKotlinDeclarationProvider(
     override fun computePackageSetWithTopLevelCallableDeclarations(): Set<String>? =
         when (contextualModule) {
             is KtSourceModuleByModuleInfo -> computeSourceModulePackageSet(contextualModule)
+            is SdkKtModuleByModuleInfo -> computeSdkModulePackageSet(contextualModule)
             is KtLibraryModuleByModuleInfo -> computeLibraryModulePackageSet(contextualModule)
             is KtBuiltinsModule -> StandardClassIds.builtInsPackages.mapTo(mutableSetOf()) { it.asString() }
             else -> null
@@ -138,9 +140,13 @@ private class IdeKotlinDeclarationProvider(
 
     private fun computeSourceModulePackageSet(module: KtSourceModuleByModuleInfo): Set<String>? = null // KTIJ-27450
 
-    private fun computeLibraryModulePackageSet(module: KtLibraryModuleByModuleInfo): Set<String>? {
-        val binaryRoots = module.libraryInfo.library.getFiles(OrderRootType.CLASSES)
+    private fun computeSdkModulePackageSet(module: SdkKtModuleByModuleInfo): Set<String>? =
+        computePackageSetFromBinaryRoots(module.moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES))
 
+    private fun computeLibraryModulePackageSet(module: KtLibraryModuleByModuleInfo): Set<String>? =
+        computePackageSetFromBinaryRoots(module.libraryInfo.library.getFiles(OrderRootType.CLASSES))
+
+    private fun computePackageSetFromBinaryRoots(binaryRoots: Array<VirtualFile>): Set<String>? {
         if (binaryRoots.any { !it.isSupportedByBinaryRootToPackageIndex }) {
             return null
         }

@@ -184,7 +184,8 @@ class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleByModu
     override val project: Project get() = libraryInfo.project
 }
 
-internal class SdkKtModuleByModuleInfo(private val moduleInfo: SdkInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSdkModule {
+@ApiStatus.Internal
+class SdkKtModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSdkModule {
     override val sdkName: String
         get() = moduleInfo.sdk.name
 

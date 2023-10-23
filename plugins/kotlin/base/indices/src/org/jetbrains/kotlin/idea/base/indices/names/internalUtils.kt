@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.base.indices.names
 
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.jrt.JrtFileSystem
 import com.intellij.util.indexing.FileContent
 import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
@@ -77,3 +79,14 @@ internal val KotlinJvmBinaryClass.packageName: FqName
 
 internal fun FileContent.toCompatibleFileWithMetadata(): FileWithMetadata.Compatible? =
     FileWithMetadata.forPackageFragment(file) as? FileWithMetadata.Compatible
+
+/**
+ * Returns the JRT module root (e.g. `jrt://jdk_home!/module.name`) for the given [VirtualFile].
+ */
+internal fun VirtualFile.getJrtModuleRoot(): VirtualFile? {
+    var currentFile = this
+    while (!JrtFileSystem.isModuleRoot(currentFile)) {
+        currentFile = currentFile.parent ?: return null
+    }
+    return currentFile
+}
