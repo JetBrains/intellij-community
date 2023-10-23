@@ -25,7 +25,6 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
    */
   private static final List<String> WIP_INSPECTIONS =
     List.of("ExtensionClassShouldBeFinalAndNonPublic",
-            "ActionPresentationInstantiatedInCtor",
             "CancellationCheckInLoops",
             "ThreadingConcurrency",
             "CallingMethodShouldBeRequiresBlockingContext",
