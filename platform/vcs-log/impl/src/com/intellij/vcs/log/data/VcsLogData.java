@@ -178,7 +178,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     synchronized (myLock) {
       if (myState.equals(State.CREATED)) {
         myState = State.INITIALIZED;
-        Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.Initialize.getName()).startSpan();
+        Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.Initializing.getName()).startSpan();
         Task.Backgroundable backgroundable = new Task.Backgroundable(myProject,
                                                                      VcsLogBundle.message("vcs.log.initial.loading.process"),
                                                                      false) {
@@ -239,7 +239,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   private void readCurrentUser() {
-    Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.ReadCurrentUser.getName()).startSpan();
+    Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.ReadingCurrentUser.getName()).startSpan();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
       VirtualFile root = entry.getKey();
       try {

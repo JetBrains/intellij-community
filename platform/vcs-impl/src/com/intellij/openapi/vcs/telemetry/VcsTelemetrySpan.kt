@@ -23,52 +23,61 @@ interface VcsTelemetrySpan {
   }
 
   enum class LogData : VcsTelemetrySpan {
-    BuildingGraph {
-      override fun getName() = "vcs-log-building-graph"
+
+    // Top-level tasks
+
+    Initializing {
+      override fun getName() = "vcs-log-initializing"
     },
 
-    LoadingCommits {
-      override fun getName() = "vcs-log-loading-commits"
+    Refreshing {
+      override fun getName() = "vcs-log-refreshing"
+    },
+
+    LoadingFullLog {
+      override fun getName() = "vcs-log-loading-full-log"
+    },
+
+    // Reading information from the VcsLogProvider
+
+    ReadingRecentCommits {
+      override fun getName() = "vcs-log-reading-recent-commits"
+    },
+
+    ReadingAllCommits {
+      override fun getName() = "vcs-log-reading-all-commits"
+    },
+
+    ReadingAllCommitsInRoot {
+      override fun getName() = "vcs-log-reading-all-commits-in-root"
+    },
+
+    ReadingCurrentUser {
+      override fun getName() = "vcs-log-reading-current-user"
+    },
+
+    // Building new DataPack
+
+    BuildingGraph {
+      override fun getName() = "vcs-log-building-graph"
     },
 
     CompactingCommits {
       override fun getName() = "vcs-log-compacting-commits"
     },
 
-    JoiningNewCommits {
-      override fun getName() = "vcs-log-joining-new-commits"
+    JoiningNewAndOldCommits {
+      override fun getName() = "vcs-log-joining-new-and-old-commits"
     },
 
-    Refresh {
-      override fun getName() = "vcs-log-refresh"
+    JoiningMultiRepoCommits {
+      override fun getName() = "vcs-log-joining-multi-repo-commits"
     },
 
-    FullLogReload {
-      override fun getName() = "vcs-log-full-log-reload"
-    },
+    // Other
 
-    ReadFullLogFromVcs {
-      override fun getName() = "vcs-log-read-full-log-from-vcs"
-    },
-
-    ReadFullLogFromVcsForRoot {
-      override fun getName() = "vcs-log-read-full-log-from-vcs-for-root"
-    },
-
-    GetContainingBranches {
-      override fun getName() = "vcs-log-get-containing-branches"
-    },
-
-    Initialize {
-      override fun getName() = "vcs-log-initialize"
-    },
-
-    ReadCurrentUser {
-      override fun getName() = "vcs-log-read-current-user"
-    },
-
-    MultiRepoJoin {
-      override fun getName() = "vcs-log-multi-repo-join"
+    GettingContainingBranches {
+      override fun getName() = "vcs-log-getting-containing-branches"
     },
 
     Indexing {
