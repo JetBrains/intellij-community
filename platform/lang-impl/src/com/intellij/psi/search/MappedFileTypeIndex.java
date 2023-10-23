@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
@@ -47,6 +48,8 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   /** Use experimental forward-index implementation over fast (mapped) file attributes? */
   private static final boolean FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE =
     getBooleanProperty("mapped-file-type-index.forward-index-over-mapped-attribute", true);
+  private static final boolean USE_UNMAP_FOR_INDEX_DISPOSAL = // reduce the risk of JVM crash for linux and macOS
+    getBooleanProperty("mapped-file-type-index.use-unmap-for-dispose", SystemInfo.isWindows);
 
   private final @NotNull MappedFileTypeIndex.IndexDataController myDataController;
 
@@ -685,7 +688,13 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     @Override
     public void close() throws StorageException {
       try {
-        storage.closeAndUnsafelyUnmap(); // unmap is required for index re-instantiation on windows
+        if (USE_UNMAP_FOR_INDEX_DISPOSAL) {
+          // unmap is required for correct index re-instantiation on windows,
+          // but may result in JVM crash if we are not careful enough
+          storage.closeAndUnsafelyUnmap();
+        } else {
+          storage.close();
+        }
       }
       catch (IOException e) {
         throw new StorageException(e);
