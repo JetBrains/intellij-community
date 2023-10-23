@@ -76,7 +76,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  *
  * <h2>Timeouts</h2>
  *
- * <p>Single line tooltips autoclose in 10 seconds, multiline in 30 seconds. You can optionally disable autoclosing by
+ * <p>Single line tooltips auto close in 10 seconds, multiline in 30 seconds. You can optionally disable auto closing by
  * setting {@link HelpTooltip#setNeverHideOnTimeout(boolean)} to {@code true}. By default tooltips don't close after a timeout on help buttons
  * (those having a round icon with question mark). Before setting this option to true you should contact designers first.</p>
  *
@@ -87,12 +87,13 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  * </ul></p>
  *
  * <h2>Avoiding multiple popups</h2>
- * <p>Some actions may open a popup menu. Current design is that the action's popup menu should take over the help tooltip.
+ * <p>Some actions may open a popup menu.
+ * The current design is that the action's popup menu should take over the help tooltip.
  * This is partly implemented in {@code AbstractPopup} class to track such cases. But this doesn't always work.
- * If help tooltip shows up over the component's popup menu you should make sure you set the master popup for the help tooltip.
- * This will prevent help tooltip from showing when the popup menu is opened. The best way to do it is to take source component
- * from an {@code InputEvent} and pass the source component along with the popup menu reference to
- * {@link HelpTooltip#setMasterPopup(Component, JBPopup)} static method.
+ * If the help tooltip shows up over the component's popup menu, you should make sure you set the master popup for the help tooltip.
+ * This will prevent help tooltip from showing when the popup menu is opened.
+ * The best way to do it is to take a source component from an {@code InputEvent}
+ * and pass the source component along with the popup menu reference to {@link HelpTooltip#setMasterPopup(Component, JBPopup)} static method.
  *
  * <p>If you're handling {@code DumbAware.actionPerformed(AnActionEvent e)}, it has {@code InputEvent}in {@code AnActionEvent} which you can use to get the source.</p>
  *
@@ -695,7 +696,7 @@ public class HelpTooltip {
       setFont(deriveHeaderFont(getFont()));
       setForeground(UIUtil.getToolTipForeground());
 
-      String currentTitle = title.get();
+      String currentTitle = Objects.requireNonNullElse(title != null ? title.get() : null, "");
       if (obeyWidth || currentTitle.length() > MAX_WIDTH.get()) {
         View v = BasicHTML.createHTMLView(this, String.format("<html>%s%s</html>", currentTitle, getShortcutAsHTML()));
         float width = v.getPreferredSpan(View.X_AXIS);
