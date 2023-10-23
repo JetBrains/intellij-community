@@ -714,11 +714,11 @@ public final class JBUI {
       }
 
       public static float unselectedAlpha() {
-        return getFloat("EditorTabs.unselectedAlpha", 0.75f);
+        return getFloat("EditorTabs.unselectedAlpha", 1.0f);
       }
 
       public static float unselectedBlend() {
-        return getFloat("EditorTabs.unselectedBlend", StartupUiUtil.isUnderDarcula() ? 0.7f : 0.9f);
+        return getFloat("EditorTabs.unselectedBlend", 1.0f);
       }
     }
 

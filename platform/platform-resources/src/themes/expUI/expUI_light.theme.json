@@ -251,6 +251,7 @@
     "EditorTabs": {
       "underlineArc": 4,
       "underlineHeight": 4,
+      "unselectedAlpha": 0.75,
       "unselectedBlend": 0.9,
       "background": "Grey14",
       "hoverBackground": "#FFFFFF00",
