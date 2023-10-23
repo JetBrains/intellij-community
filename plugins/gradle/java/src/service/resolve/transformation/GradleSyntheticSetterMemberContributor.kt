@@ -5,6 +5,7 @@ import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PropertyUtilBase.*
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.gradle.config.isGradleFile
@@ -67,7 +68,8 @@ private fun processSetter(method: PsiMethod, simpleName : String, processor: Psi
   val returnType = method.returnType.asSafely<PsiClassType>() ?: return
   val resolvedResult = returnType.resolveGenerics()
   val resolvedClass = resolvedResult.element ?: return
-  if (resolvedClass.qualifiedName !in assignmentPermittedClasses && !hasGeneratedAssignmentInKotlin(resolvedClass)) {
+  if (!assignmentPermittedClasses.any { InheritanceUtil.isInheritor(resolvedClass, it) } && !hasGeneratedAssignmentInKotlin(
+      resolvedClass)) {
     return
   }
   val setterName = getAccessorName(simpleName, PropertyKind.SETTER)
