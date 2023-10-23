@@ -129,11 +129,10 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         states[i] = editor.getState(FileEditorStateLevel.FULL)
       }
     }
-
+    val entry = HistoryEntry.createHeavy(project, file, providers.asList(), states.asList(), providers[selectedProviderIndex]!!,
+                                               editorComposite != null && editorComposite.isPreview)
     synchronized(this) {
-      entries.add(
-        HistoryEntry.createHeavy(project, file, providers.asList(), states.asList(), providers[selectedProviderIndex]!!,
-                                 editorComposite != null && editorComposite.isPreview))
+      entries.add(entry)
     }
     trimToSize()
   }
@@ -285,7 +284,6 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     }
   }
 
-  @Synchronized
   override fun loadState(state: Element) {
     // each HistoryEntry contains myDisposable that must be disposed to dispose a corresponding virtual file pointer
     removeAllFiles()
@@ -298,16 +296,20 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       // the last is the winner
       fileToElement.put(file, e)
     }
-    for (e in fileToElement.values) SlowOperations.knownIssue("IDEA-333919, EA-831462").use {
-      try {
-        entries.add(HistoryEntry.createHeavy(project, e))
-      }
-      catch (ignored: ProcessCanceledException) {
-      }
-      catch (anyException: Exception) {
-        LOG.error(anyException)
-      }
+    val list = fileToElement.values.mapNotNull { createEntry(it) }
+    synchronized(this) { entries.addAll(list) }
+  }
+
+  private fun createEntry(element: Element): HistoryEntry? {
+    try {
+      return SlowOperations.knownIssue("IDEA-333919, EA-831462").use { HistoryEntry.createHeavy(project, element) }
     }
+    catch (ignored: ProcessCanceledException) {
+    }
+    catch (anyException: Exception) {
+      LOG.error(anyException)
+    }
+    return null
   }
 
   @Synchronized
