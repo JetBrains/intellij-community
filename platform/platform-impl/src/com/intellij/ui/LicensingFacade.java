@@ -23,6 +23,7 @@ public final class LicensingFacade {
   public Map<String, Date> expirationDates;
   public Map<String, String> confirmationStamps;
   public String metadata;
+  public boolean ai_enabled;
   public static volatile boolean isUnusedSignalled;
 
   public static volatile LicensingFacade INSTANCE;
