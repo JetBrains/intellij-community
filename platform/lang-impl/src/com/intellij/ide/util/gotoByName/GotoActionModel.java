@@ -682,6 +682,19 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       myActionText = GotoActionItemProvider.getActionText(action);
     }
 
+    public ActionWrapper(@NotNull AnAction action,
+                         @Nullable GroupMapping groupMapping,
+                         @NotNull MatchMode mode,
+                         @NotNull GotoActionModel model,
+                         @NotNull Presentation presentation) {
+      myAction = action;
+      myMode = mode;
+      myGroupMapping = groupMapping;
+      myModel = model;
+      myPresentation = presentation;
+      myActionText = GotoActionItemProvider.getActionText(action);
+    }
+
     public String getActionText() {
       return myActionText;
     }

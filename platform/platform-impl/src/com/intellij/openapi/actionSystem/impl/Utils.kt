@@ -877,6 +877,17 @@ object Utils {
     checkAsyncDataContext(asyncDataContext, "rearrangeByPromotersNonAsync")
     rearrangeByPromoters(actions, asyncDataContext)
   }
+
+  fun <R> CoroutineScope.runUpdateSessionForActionSearch(dataContext: DataContext,
+                                                         place: String,
+                                                         block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R): Deferred<R> {
+    val updater = ActionUpdater(PresentationFactory(), dataContext, place, true, false, CoroutineScope(Dispatchers.EDT))
+    return async(contextMenuDispatcher + ModalityState.any().asContextElement()) {
+      block {
+        updater.presentation(it)
+      }
+    }
+  }
 }
 
 suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataContext): List<AnAction> {
