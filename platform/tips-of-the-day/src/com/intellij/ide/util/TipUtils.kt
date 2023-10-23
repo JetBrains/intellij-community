@@ -187,8 +187,10 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
     val langBundleLoader = langBundle.pluginDescriptor
     if (langBundleLoader != null) tipLoader = langBundleLoader.pluginClassLoader
   }
-  if (tipLoader == null && pluginDescriptor != null && pluginDescriptor.pluginClassLoader != null) {
-    tipLoader = pluginDescriptor.pluginClassLoader
+  val pluginClassLoader = pluginDescriptor.pluginClassLoader
+
+  if (tipLoader == null && pluginClassLoader != null) {
+    tipLoader = pluginClassLoader
   }
   if (tipLoader == null) tipLoader = fallbackLoader
   var ideCode = ApplicationInfoEx.getInstanceEx().apiVersionAsNumber.productCode.lowercase()
@@ -199,7 +201,7 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
   val retrievers: MutableList<TipRetriever> = ArrayList()
 
   listOf(ideCode, fallbackIdeCode, "db_pl", "bdt", "misc", "").forEach { retrievers.add(TipRetriever(tipLoader, "tips", it)) }
-  val fallbackRetriever = TipRetriever(fallbackLoader, "tips", "")
+  val fallbackRetriever = TipRetriever(if (pluginClassLoader == null) fallbackLoader else pluginClassLoader, "tips", "")
   retrievers.add(fallbackRetriever)
   return TipRetrieversInfo(fallbackRetriever, retrievers)
 }
