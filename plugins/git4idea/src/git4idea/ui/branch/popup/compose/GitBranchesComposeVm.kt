@@ -72,6 +72,10 @@ internal class GitBranchesComposeVm(
     return awtEvent.isConsumed
   }
 
+  fun createBranchVm(viewScope: CoroutineScope, branch: GitBranch): GitBranchComposeVm {
+    return GitBranchComposeVm(viewScope, branch, text, speedSearch)
+  }
+
   companion object {
     private const val TEXT_DEBOUNCE = 100L
   }
