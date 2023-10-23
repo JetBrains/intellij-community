@@ -196,14 +196,18 @@ internal fun createBridgeComponentStyling(
 
 private fun readDefaultButtonStyle(): ButtonStyle {
     val normalBackground =
-        retrieveColorsOrUnspecified(
-            "Button.default.startBackground",
-            "Button.default.endBackground",
+        listOf(
+            JBUI.CurrentTheme.Button.defaultButtonColorStart().toComposeColor(),
+            JBUI.CurrentTheme.Button.defaultButtonColorEnd().toComposeColor(),
         ).createVerticalBrush()
+
     val normalContent = retrieveColorOrUnspecified("Button.default.foreground")
+
     val normalBorder =
-        retrieveColorsOrUnspecified("Button.default.startBorderColor", "Button.default.endBorderColor")
-            .createVerticalBrush()
+        listOf(
+            JBUI.CurrentTheme.Button.buttonOutlineColorStart(true).toComposeColor(),
+            JBUI.CurrentTheme.Button.buttonOutlineColorEnd(true).toComposeColor(),
+        ).createVerticalBrush()
 
     val colors = ButtonColors(
         background = normalBackground,
@@ -212,12 +216,12 @@ private fun readDefaultButtonStyle(): ButtonStyle {
         backgroundPressed = normalBackground,
         backgroundHovered = normalBackground,
         content = normalContent,
-        contentDisabled = retrieveColorOrUnspecified("Button.default.disabledText"),
+        contentDisabled = retrieveColorOrUnspecified("Button.disabledText"),
         contentFocused = normalContent,
         contentPressed = normalContent,
         contentHovered = normalContent,
         border = normalBorder,
-        borderDisabled = SolidColor(retrieveColorOrUnspecified("Button.default.disabledBorderColor")),
+        borderDisabled = SolidColor(JBUI.CurrentTheme.Button.disabledOutlineColor().toComposeColor()),
         borderFocused = SolidColor(retrieveColorOrUnspecified("Button.default.focusedBorderColor")),
         borderPressed = normalBorder,
         borderHovered = normalBorder,
@@ -236,12 +240,18 @@ private fun readDefaultButtonStyle(): ButtonStyle {
 
 private fun readOutlinedButtonStyle(): ButtonStyle {
     val normalBackground =
-        retrieveColorsOrUnspecified("Button.startBackground", "Button.endBackground")
-            .createVerticalBrush()
+        listOf(
+            JBUI.CurrentTheme.Button.buttonColorStart().toComposeColor(),
+            JBUI.CurrentTheme.Button.buttonColorEnd().toComposeColor(),
+        ).createVerticalBrush()
+
     val normalContent = retrieveColorOrUnspecified("Button.foreground")
+
     val normalBorder =
-        retrieveColorsOrUnspecified("Button.startBorderColor", "Button.endBorderColor")
-            .createVerticalBrush()
+        listOf(
+            JBUI.CurrentTheme.Button.buttonOutlineColorStart(false).toComposeColor(),
+            JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false).toComposeColor(),
+        ).createVerticalBrush()
 
     val colors = ButtonColors(
         background = normalBackground,
@@ -255,8 +265,8 @@ private fun readOutlinedButtonStyle(): ButtonStyle {
         contentPressed = normalContent,
         contentHovered = normalContent,
         border = normalBorder,
-        borderDisabled = SolidColor(retrieveColorOrUnspecified("Button.disabledBorderColor")),
-        borderFocused = SolidColor(retrieveColorOrUnspecified("Button.focusedBorderColor")),
+        borderDisabled = SolidColor(JBUI.CurrentTheme.Button.disabledOutlineColor().toComposeColor()),
+        borderFocused = SolidColor(JBUI.CurrentTheme.Button.focusBorderColor(false).toComposeColor()),
         borderPressed = normalBorder,
         borderHovered = normalBorder,
     )
