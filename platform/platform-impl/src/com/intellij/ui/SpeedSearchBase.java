@@ -679,6 +679,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected final class SearchField extends ExtendableTextField {
     SearchField() {
       setFocusable(false);
+      getCaret().setVisible(true); // we still want it blinking even though the field isn't focusable
       ExtendableTextField.Extension leftExtension = new Extension() {
         @Override
         public Icon getIcon(boolean hovered) {
@@ -759,6 +760,13 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (i == KeyEvent.VK_BACK_SPACE) {
         e.consume();
       }
+    }
+
+    @Override
+    protected void processFocusEvent(FocusEvent e) {
+      super.processFocusEvent(e);
+      getCaret().setVisible(true); // we want to keep it blinking even if the focus is lost
+      // (never happens in practice, though, as the field isn't focusable, so this is just a precaution)
     }
   }
 
