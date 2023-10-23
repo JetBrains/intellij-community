@@ -19,14 +19,14 @@ internal class JBTerminalSchemeColorPalette(private val colorsScheme: EditorColo
   else ColoredOutputTypeRegistryImpl.getAnsiColorKeys()
 
   private val defaultForegroundGetter: () -> java.awt.Color? = if (isBlockTerminalEnabled) {
-    { colorsScheme.getColor(BlockTerminalColors.BLOCK_TERMINAL_DEFAULT_FOREGROUND) }
+    { colorsScheme.getColor(BlockTerminalColors.DEFAULT_FOREGROUND) }
   }
   else {
     { colorsScheme.getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY).foregroundColor }
   }
 
   private val defaultBackgroundKey: ColorKey = if (isBlockTerminalEnabled) {
-    BlockTerminalColors.BLOCK_TERMINAL_DEFAULT_BACKGROUND
+    BlockTerminalColors.DEFAULT_BACKGROUND
   }
   else ConsoleViewContentType.CONSOLE_BACKGROUND_KEY
 
