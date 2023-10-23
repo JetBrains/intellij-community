@@ -16,7 +16,10 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-@ApiStatus.Experimental
+/**
+ * Prefer creating a service to supply a parent scope
+ */
+@ApiStatus.Obsolete
 @Suppress("FunctionName")
 fun DisposingMainScope(parentDisposable: Disposable): CoroutineScope {
   return MainScope().also {
@@ -26,21 +29,21 @@ fun DisposingMainScope(parentDisposable: Disposable): CoroutineScope {
   }
 }
 
-@ApiStatus.Experimental
+/**
+ * Prefer creating a service to supply a parent scope
+ */
+@ApiStatus.Obsolete
 fun Disposable.disposingMainScope(): CoroutineScope = DisposingMainScope(this)
 
-@ApiStatus.Experimental
-@Suppress("FunctionName")
-fun DisposingScope(parentDisposable: Disposable, context: CoroutineContext = SupervisorJob()): CoroutineScope {
-  return CoroutineScope(context).also {
-    Disposer.register(parentDisposable) {
-      it.cancel()
-    }
+/**
+ * Prefer creating a service to supply a parent scope
+ */
+@ApiStatus.Obsolete
+fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope = CoroutineScope(context).also {
+  Disposer.register(this) {
+    it.cancel()
   }
 }
-
-@ApiStatus.Experimental
-fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope = DisposingScope(this, context)
 
 @OptIn(InternalCoroutinesApi::class)
 @ApiStatus.Experimental
