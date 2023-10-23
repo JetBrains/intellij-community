@@ -399,6 +399,10 @@
                  description="Allows ResolveElementCache to reuse analysis results of PerFileCache"
                  defaultValue="true"
                  restartRequired="true"/>
+
+    <registryKey key="kotlin.multiline.function.parameters.info"
+                 description="Activates the mode of line-by-line display of the function parameters info, if there are more than three of them"
+                 defaultValue="false" />
   </extensions>
 
   <!-- Tips and Tricks -->
