@@ -112,7 +112,13 @@ private fun loadAndParseTip(tip: TipAndTrickBean?, contextComponent: Component?,
   val currentTip = loadTip(tip = tip, isStrict = isStrict)
   val tipHtml = Jsoup.parse(currentTip.tipContent)
   val tipContent = tipHtml.body()
-  val icons = loadImages(tipContent, currentTip.tipImagesLoader, currentTip.imagesLocation, contextComponent, isStrict)
+
+  val icons = loadImages(tipContent,
+                         currentTip.tipImagesLoader,
+                         currentTip.tipContentLoader,
+                         currentTip.imagesLocation,
+                         contextComponent,
+                         isStrict)
   inlineProductInfo(tipContent)
   val paragraphs = TipContentConverter(tipContent, icons, isStrict).convert()
   if (paragraphs.isEmpty()) {
@@ -198,8 +204,11 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
   return TipRetrieversInfo(fallbackRetriever, retrievers)
 }
 
+//Because images are not localized, we're always loading them from main classloader, but some of the images might not be present there
+//so we're providing a secondary loader as backup to try plugin resources (e.g. Kotlin) that might have brought these images along.
 private fun loadImages(tipContent: Element,
-                       loader: ClassLoader?,
+                       primaryImagesLoader: ClassLoader?,
+                       secondaryImagesLoader: ClassLoader?,
                        tipsPath: String?,
                        contextComponent: Component?,
                        isStrict: Boolean): Map<String, Icon> {
@@ -216,7 +225,7 @@ private fun loadImages(tipContent: Element,
 
     val path = imgElement.attr("src")
     var image: Image? = null
-    if (loader == null) {
+    if (primaryImagesLoader == null) {
       // This case is required only for testing by opening tip from the file (see TipDialog.OpenTipsAction)
       try {
         val imageUrl = File(tipsPath, path).toURI().toURL()
@@ -237,7 +246,13 @@ private fun loadImages(tipContent: Element,
       }
     }
     else {
-      image = loadImageByClassLoader(path = "$tipsPath$path", classLoader = loader, scaleContext = ScaleContext.create(contextComponent))
+      image = loadImageByClassLoader(path = "$tipsPath$path",
+                                     classLoader = primaryImagesLoader,
+                                     scaleContext = ScaleContext.create(contextComponent))
+      if (image == null && secondaryImagesLoader != null)
+        image = loadImageByClassLoader(path = "$tipsPath$path",
+                                       classLoader = secondaryImagesLoader,
+                                       scaleContext = ScaleContext.create(contextComponent))
     }
     if (image != null) {
       var icon: Icon = JBImageIcon(image)
