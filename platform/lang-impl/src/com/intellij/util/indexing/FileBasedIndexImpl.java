@@ -92,6 +92,7 @@ import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -430,8 +431,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     IndexVersion.IndexVersionDiff diff = IndexVersion.versionDiffers(name, version);
     versionRegistrationStatusSink.setIndexVersionDiff(name, diff);
     if (diff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
-      FileUtil.deleteWithRenamingIfExists(IndexInfrastructure.getPersistentIndexRootDir(name));
-      FileUtil.deleteWithRenamingIfExists(IndexInfrastructure.getIndexRootDir(name));
+      deleteIndexFiles(extension);
       IndexVersion.rewriteVersion(name, version);
 
       try {
@@ -445,6 +445,22 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     initIndexStorage(extension, version, state, versionRegistrationStatusSink, staleInputIdSink, dirtyFiles);
+  }
+
+  private static <K, V> void deleteIndexFiles(@NotNull final FileBasedIndexExtension<K, V> extension) throws IOException {
+    ID<K, V> name = extension.getName();
+    var persistentIndexRootDir = IndexInfrastructure.getPersistentIndexRootDir(name);
+    if (Files.exists(persistentIndexRootDir)) {
+      if (!FileUtil.deleteWithRenaming(persistentIndexRootDir)) {
+        LOG.warn("failed to delete persistent index files at " + persistentIndexRootDir);
+      }
+    }
+    var indexRootDir = IndexInfrastructure.getIndexRootDir(name);
+    if (Files.exists(indexRootDir)) {
+      if (!FileUtil.deleteWithRenaming(indexRootDir)) {
+        LOG.warn("failed to delete index files at " + indexRootDir);
+      }
+    }
   }
 
   private static <K, V> void initIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension,
