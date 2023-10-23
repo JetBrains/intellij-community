@@ -44,6 +44,10 @@ interface VcsTelemetrySpan {
       override fun getName() = "vcs-log-reading-recent-commits"
     },
 
+    ReadingRecentCommitsInRoot {
+      override fun getName() = "vcs-log-reading-recent-commits-in-root"
+    },
+
     ReadingAllCommits {
       override fun getName() = "vcs-log-reading-all-commits"
     },

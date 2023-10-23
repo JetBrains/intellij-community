@@ -124,7 +124,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       for (Map.Entry<VirtualFile, VcsLogProvider> entry : getProvidersForRoots(requirements.keySet()).entrySet()) {
         VirtualFile root = entry.getKey();
         VcsLogProvider provider = entry.getValue();
-        runWithSpanThrows(myTracer, LogData.ReadingRecentCommits.getName(), spanForRoot -> {
+        runWithSpanThrows(myTracer, LogData.ReadingRecentCommitsInRoot.getName(), spanForRoot -> {
           spanForRoot.setAttribute("rootName", root.getName());
           VcsLogProvider.DetailedLogData data = provider.readFirstBlock(root, requirements.get(root));
           logInfo.put(root, compactCommits(data.getCommits(), root));
