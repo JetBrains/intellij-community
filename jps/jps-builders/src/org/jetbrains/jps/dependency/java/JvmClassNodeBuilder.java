@@ -375,7 +375,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       flags = flags.deriveIsGenerated();
     }
     if (myIsModule) {
-      return new JvmModule(flags, myVersion, myFileName, myName, myModuleRequires, myModuleExports, myUsages);
+      return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myUsages);
     }
     return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myUsages);
   }

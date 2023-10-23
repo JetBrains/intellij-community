@@ -273,9 +273,9 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
       }
 
       Predicate<JvmMethod> lessSpecificCond = future.lessSpecific(addedMethod);
-      for (JvmMethod lessSpecific : Iterators.filter(changedClass.getMethods(), m -> !Iterators.contains(methodsDiff.removed(), m) && lessSpecificCond.test(m))) {
+      for (JvmMethod lessSpecific : Iterators.filter(changedClass.getMethods(), lessSpecificCond::test)) {
         debug("Found less specific method, affecting method usages; " + lessSpecific.getName() + lessSpecific.getDescriptor());
-        affectMethodUsages(context, changedClass, lessSpecific, propagated);
+        affectMethodUsages(context, changedClass, lessSpecific, present.collectSubclassesWithoutMethod(changedClass.getReferenceID(), lessSpecific));
       }
 
       debug("Processing affected by specificity methods");

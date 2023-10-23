@@ -15,7 +15,7 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
   public JvmModule(JVMFlags flags, String name, String outFilePath, String version, @NotNull Iterable<ModuleRequires> requires, @NotNull Iterable<ModulePackage> exports, @NotNull Iterable<Usage> usages) {
     super(flags, "", name, outFilePath, Collections.emptyList(), usages);
-    myVersion = version;
+    myVersion = version == null? "" : version;
     myRequires = requires;
     myExports = exports;
   }
