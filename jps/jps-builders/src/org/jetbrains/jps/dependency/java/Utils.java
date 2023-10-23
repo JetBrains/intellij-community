@@ -67,11 +67,9 @@ public final class Utils {
 
   // return all methods of this class including all inherited methods recursively
   public Iterable<JvmMethod> allMethodsRecursively(JvmClass cls) {
-    return Iterators.flat(collectRecursively(cls, c -> c.getMethods()));
-  }
-
-  private <T> Iterable<T> collectRecursively(JvmClass cls, Function<? super JvmClass, ? extends T> mapper) {
-    return Iterators.map(Iterators.recurse(cls, c -> Iterators.flat(Iterators.map(c.getSuperTypes(), st -> getClassesByName(st))), true), mapper::apply);
+    return Iterators.flat(
+      Iterators.map(Iterators.recurse(cls, c -> Iterators.flat(Iterators.map(c.getSuperTypes(), st -> getClassesByName(st))), true), c -> c.getMethods())
+    );
   }
 
   /**
@@ -143,9 +141,8 @@ public final class Utils {
       Iterators.map(Iterators.filter(cl.getMethods(), m -> searchCond.test(m) && isVisibleIn(cl, m, fromCls)), mm -> Pair.create(cl, mm)),
       new SmartList<>()
     );
-    // todo: previous implementation also added a mock pair(null, null), if no nodes were found in the graph for a given superclass name
     return Iterators.flat(
-      collectNodeData(fromCls, cl -> Iterators.flat(Iterators.map(cl.getSuperTypes(), st -> getNodes(new JvmNodeReferenceID(st), JvmClass.class))), dataGetter, result -> Iterators.isEmpty(result), false, new SmartList<>())
+      collectNodeData(fromCls, cl -> Iterators.flat(Iterators.map(cl.getSuperTypes(), st -> getClassesByName(st))), dataGetter, result -> Iterators.isEmpty(result), false, new SmartList<>())
     );
   }
 
@@ -313,19 +310,6 @@ public final class Utils {
     return true;
   }
 
-  private void debug(String message) {
-    // todo
-  }
-
-  private static <T> Predicate<T> cachingPredicate(Predicate<? super T> pred) {
-    return new Predicate<>() {
-      private final Map<T, Boolean> cache = new HashMap<>();
-      @Override
-      public boolean test(T obj) {
-        return cache.computeIfAbsent(obj, pred::test);
-      }
-    };
-  }
   private static <K, V> Function<K, V> cachingFunction(Function<K, V> f) {
     return new Function<>() {
       private final Map<K, V> cache = new HashMap<>();
@@ -334,5 +318,9 @@ public final class Utils {
         return cache.computeIfAbsent(k, f);
       }
     };
+  }
+
+  private void debug(String message) {
+    // todo
   }
 }
