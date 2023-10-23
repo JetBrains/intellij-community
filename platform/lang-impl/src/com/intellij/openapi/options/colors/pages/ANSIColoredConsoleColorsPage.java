@@ -194,6 +194,10 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
                           BlockTerminalColors.getDEFAULT_FOREGROUND(), ColorDescriptor.Kind.FOREGROUND),
       new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.defaultBackground"),
                           BlockTerminalColors.getDEFAULT_BACKGROUND(), ColorDescriptor.Kind.BACKGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.blockBackground.start"),
+                          BlockTerminalColors.getBLOCK_BACKGROUND_START(), ColorDescriptor.Kind.BACKGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.blockBackground.end"),
+                          BlockTerminalColors.getBLOCK_BACKGROUND_END(), ColorDescriptor.Kind.BACKGROUND),
     };
   }
 

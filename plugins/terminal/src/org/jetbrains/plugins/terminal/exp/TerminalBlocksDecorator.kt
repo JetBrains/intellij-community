@@ -54,7 +54,7 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
 
     val decoration = BlockDecoration(bgHighlighter, cornersHighlighter, topInlay, bottomInlay, commandToOutputInlay)
     outputModel.putDecoration(block, decoration)
-    outputModel.addBlockState(block, DefaultBlockDecorationState())
+    outputModel.addBlockState(block, DefaultBlockDecorationState(editor.colorsScheme))
   }
 
   override fun blockDecorationStateChanged(block: CommandBlock,

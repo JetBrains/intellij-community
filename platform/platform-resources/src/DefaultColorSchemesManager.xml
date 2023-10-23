@@ -78,6 +78,8 @@
 
       <option name="BLOCK_TERMINAL_DEFAULT_FOREGROUND" value="000000"/>
       <option name="BLOCK_TERMINAL_DEFAULT_BACKGROUND" value="FFFFFF"/>
+      <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_START" value="F0F2F5"/>
+      <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_END" value="FAFAFA"/>
 
       <option name="Table.hoverBackground" value="EDF5FC"/>
 
@@ -1507,6 +1509,8 @@
 
       <option name="BLOCK_TERMINAL_DEFAULT_FOREGROUND" value="DFE1E5"/>
       <option name="BLOCK_TERMINAL_DEFAULT_BACKGROUND" value="1E1F22"/>
+      <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_START" value="2B2D30"/>
+      <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_END" value="212329"/>
 
       <option name="Table.hoverBackground" value="464A4D"/>
 
