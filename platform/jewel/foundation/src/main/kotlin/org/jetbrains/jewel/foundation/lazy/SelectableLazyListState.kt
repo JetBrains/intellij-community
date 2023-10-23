@@ -35,7 +35,7 @@ class SelectableLazyListState(
     internal var lastKeyEventUsedMouse: Boolean = false
 
     override var selectedKeys by mutableStateOf(emptyList<Any>())
-    internal var lastActiveItemIndex: Int? = null
+    var lastActiveItemIndex: Int? = null
 
     /**
      *
