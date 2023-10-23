@@ -50,27 +50,35 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
 
   @Override
   @Nullable
-  public final String getDirCoverageInformationString(@NotNull final PsiDirectory directory,
-                                                @NotNull final CoverageSuitesBundle currentSuite,
-                                                @NotNull final CoverageDataManager coverageDataManager) {
-    final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(directory);
+  public final @Nls String getDirCoverageInformationString(@NotNull PsiDirectory psiDirectory,
+                                                           @NotNull CoverageSuitesBundle currentSuite,
+                                                           @NotNull CoverageDataManager coverageDataManager) {
+    final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
     if (psiPackage == null) return null;
 
-    final VirtualFile virtualFile = directory.getVirtualFile();
+    final VirtualFile virtualFile = psiDirectory.getVirtualFile();
 
-    final boolean isInTestContent = TestSourcesFilter.isTestSources(virtualFile, directory.getProject());
-    if (!currentSuite.isTrackTestFolders() && isInTestContent) {
-      return null;
-    }
-    return getCoverageInformationString(myDirCoverageInfos.get(virtualFile), coverageDataManager.isSubCoverageActive());
-
+    return getDirCoverageInformationString(psiDirectory.getProject(), virtualFile, currentSuite, coverageDataManager);
   }
 
   @Override
   @Nullable
-  public final String getFileCoverageInformationString(@NotNull PsiFile file, @NotNull CoverageSuitesBundle currentSuite, @NotNull CoverageDataManager manager) {
+  public final @Nls String getDirCoverageInformationString(@NotNull Project project, @NotNull VirtualFile virtualFile,
+                                                           @NotNull CoverageSuitesBundle currentSuite,
+                                                           @NotNull CoverageDataManager coverageDataManager) {
+    if (!currentSuite.isTrackTestFolders() && TestSourcesFilter.isTestSources(virtualFile, project)) {
+      return null;
+    }
+    return getCoverageInformationString(myDirCoverageInfos.get(virtualFile), coverageDataManager.isSubCoverageActive());
+  }
+
+  @Override
+  @Nullable
+  public final String getFileCoverageInformationString(@NotNull PsiFile psiFile,
+                                                       @NotNull CoverageSuitesBundle currentSuite,
+                                                       @NotNull CoverageDataManager manager) {
     for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
-      final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(this, file);
+      final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(this, psiFile);
       if (info != null) {
         return getCoverageInformationString(info, manager.isSubCoverageActive());
       }

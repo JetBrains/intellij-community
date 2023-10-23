@@ -38,25 +38,14 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public String getPercentage(int columnIdx, @NotNull AbstractTreeNode<?> node) {
-    if (myAnnotator instanceof SimpleCoverageAnnotator annotator) {
-      // A fast path to avoid long-running 'getValue' call
-      VirtualFile file = extractFile(node);
-      if (file == null) return null;
-      if (file.isDirectory()) {
-        return annotator.getDirCoverageInformationString(file, mySuitesBundle, myCoverageDataManager);
-      }
-      else {
-        return annotator.getFileCoverageInformationString(file, myCoverageDataManager);
-      }
+    VirtualFile file = extractFile(node);
+    if (file == null) return null;
+    if (file.isDirectory()) {
+      return myAnnotator.getDirCoverageInformationString(myProject, file, mySuitesBundle, myCoverageDataManager);
     }
-    final Object value = node.getValue();
-    if (value instanceof PsiFile file) {
-      return myAnnotator.getFileCoverageInformationString(file, mySuitesBundle, myCoverageDataManager);
+    else {
+      return myAnnotator.getFileCoverageInformationString(myProject, file, mySuitesBundle, myCoverageDataManager);
     }
-    else if (value instanceof PsiDirectory dir) {
-      return myAnnotator.getDirCoverageInformationString(dir, mySuitesBundle, myCoverageDataManager);
-    }
-    return null;
   }
 
   @Nullable
