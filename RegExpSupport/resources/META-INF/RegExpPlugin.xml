@@ -29,6 +29,7 @@
     <lang.parserDefinition language="JSUnicodeRegexp" implementationClass="org.intellij.lang.regexp.ecmascript.EcmaScriptUnicodeRegexpParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JSRegexp"
                                    implementationClass="org.intellij.lang.regexp.ecmascript.EcmaScriptRegExpSyntaxHighlighterFactory"/>
+    <inspectionProfileActionProvider implementation="org.intellij.lang.regexp.inspection.custom.RegExpProfileActionProvider" />
 
     <intentionAction>
       <className>org.intellij.lang.regexp.intention.CheckRegExpIntentionAction</className>

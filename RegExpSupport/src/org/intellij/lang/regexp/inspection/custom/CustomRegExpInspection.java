@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ui.CustomInspectionActions;
 import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -42,32 +43,8 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
   public final List<RegExpInspectionConfiguration> myConfigurations = new SmartList<>();
   private InspectionProfileImpl mySessionProfile;
 
-  public CustomRegExpInspection() {
-    /*
-    final FileType javaFileType = FileTypeManager.getInstance().getStdFileType("JAVA");
-    final RegExpInspectionConfiguration one = new RegExpInspectionConfiguration("No spaces within parentheses");
-    one.patterns.add(new RegExpInspectionConfiguration.InspectionPattern("(\\()\\s+|\\s+(\\))", null, FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS, "$1"));
-    one.suppressId = "NoSpaces";
-    one.description = "We don't like spaces within parentheses in our code style";
-    myConfigurations.add(one);
-
-    final RegExpInspectionConfiguration two = new RegExpInspectionConfiguration("No more than one empty line in Java");
-    two.patterns.add(new RegExpInspectionConfiguration.InspectionPattern("\\n\\n\\n+", javaFileType, FindModel.SearchContext.EXCEPT_STRING_LITERALS, "\n\n"));
-    two.suppressId = "EmptyLines";
-    two.description = "One empty line should be enough for everybody";
-    myConfigurations.add(two);
-
-    final RegExpInspectionConfiguration three = new RegExpInspectionConfiguration("Trailing whitespace");
-    three.patterns.add(new RegExpInspectionConfiguration.InspectionPattern(" +\\n", PlainTextFileType.INSTANCE, FindModel.SearchContext.ANY, ""));
-    three.patterns.add(new RegExpInspectionConfiguration.InspectionPattern("\t+\\n", PlainTextFileType.INSTANCE, FindModel.SearchContext.ANY, ""));
-    three.description = "Trailing whitespace is unnecessary";
-    myConfigurations.add(three);
-
-    final RegExpInspectionConfiguration four = new RegExpInspectionConfiguration("Multiple spaces in Java");
-    four.patterns.add(new RegExpInspectionConfiguration.InspectionPattern("(?<=\\S) {2,}", javaFileType, FindModel.SearchContext.EXCEPT_COMMENTS, " "));
-    four.description = "Double spaced";
-    myConfigurations.add(four);
-    */
+  public static CustomRegExpInspection getCustomRegExpInspection(@NotNull InspectionProfile profile) {
+    return (CustomRegExpInspection)CustomInspectionActions.getInspection(profile, SHORT_NAME);
   }
 
   @Override

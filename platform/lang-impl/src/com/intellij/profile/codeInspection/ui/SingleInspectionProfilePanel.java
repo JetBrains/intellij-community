@@ -495,6 +495,11 @@ public class SingleInspectionProfilePanel extends JPanel {
         postProcessModification();
       }
     });
+    final var customAdd = CustomInspectionActions.getAddActionGroup(this);
+    if (customAdd != null) {
+      actions.add(customAdd);
+      actions.add(new CustomInspectionActions.RemoveInspectionAction(this));
+    }
     for (InspectionProfileActionProvider provider : InspectionProfileActionProvider.EP_NAME.getExtensionList()) {
       for (AnAction action : provider.getActions(this)) {
         actions.add(action);
