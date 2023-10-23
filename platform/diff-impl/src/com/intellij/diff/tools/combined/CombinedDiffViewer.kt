@@ -140,6 +140,7 @@ class CombinedDiffViewer(
     createDiffBlock.updateBlockContent(newContent)
     val newViewer = newContent.viewer
     configureEditorForCombinedDiff(newViewer)
+    scrollSupport.setupEditorsScrollingListener(newViewer)
     installCombinedDiffViewer(newViewer, this)
 
     val blockId = newContent.blockId
@@ -553,6 +554,15 @@ class CombinedDiffViewer(
     val currentPrevNextIterable = CombinedDiffPrevNextDifferenceIterable()
 
     val combinedEditorsScrollingModel = ScrollingModelImpl(CombinedEditorsScrollingModelHelper(project, viewer))
+
+    fun setupEditorsScrollingListener(newViewer: DiffViewer) {
+      viewer.editors.forEach { editor ->
+        (editor.scrollingModel as? ScrollingModelImpl)
+          ?.addScrollRequestListener({ _, scrollType ->
+                                       combinedEditorsScrollingModel.scrollToCaret(scrollType)
+                                     }, newViewer)
+      }
+    }
 
     fun scroll(scrollPolicy: ScrollPolicy?,
                combinedBlockId: CombinedBlockId,
