@@ -31,15 +31,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.compose.JBComposePanel
-import com.intellij.ui.speedSearch.SpeedSearch
-import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitBranch
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.createDataContext
-import git4idea.ui.branch.tree.localBranchesOrCurrent
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.bridge.toComposeColor
@@ -48,8 +45,6 @@ import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
-import java.beans.PropertyChangeEvent
-import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
 internal fun createComposeBranchesPopup(project: Project, repository: GitRepository): JBPopup {
@@ -79,27 +74,9 @@ private fun createBranchesPopupComposeComponent(
   closePopup: () -> Unit
 ): JComponent {
   val composePanel = JBComposePanel {
-    val speedSearch = remember {
-      SpeedSearch(true).apply {
-        setEnabled(true)
-      }
-    }
-    val text = remember { mutableStateOf("") }
-
-    DisposableEffect(speedSearch) {
-      val listener = object : PropertyChangeListener {
-        override fun propertyChange(evt: PropertyChangeEvent?) {
-          if (evt?.propertyName != SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME) {
-            return
-          }
-          text.value = evt.newValue as String
-        }
-      }
-      speedSearch.addChangeListener(listener)
-      onDispose {
-        speedSearch.removeChangeListener(listener)
-      }
-    }
+    val coroutineScope = rememberCoroutineScope()
+    val branchesVm = remember(coroutineScope, project, repository) { GitBranchesComposeVm(coroutineScope, repository) }
+    val text by branchesVm.text.collectAsState()
 
     Box(modifier = Modifier
       .fillMaxSize()
@@ -107,27 +84,16 @@ private fun createBranchesPopupComposeComponent(
       .padding(start = 12.dp, end = 3.dp, top = 5.dp, bottom = 5.dp)
       .onPreviewKeyEvent {
         val awtEvent = it.nativeKeyEvent as java.awt.event.KeyEvent
-        speedSearch.processKeyEvent(awtEvent)
-        awtEvent.isConsumed
+        branchesVm.handleKeyBySpeedSearch(awtEvent)
       }
     ) {
       Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        DummySearchTextField(text.value)
+        DummySearchTextField(text)
         Divider(orientation = Orientation.Horizontal, color = UIUtil.getTooltipSeparatorColor().toComposeColor())
-        val allLocalBranches = repository.localBranchesOrCurrent
-        val allRemoteBranches = repository.branches.remoteBranches
-
-        val localBranches = remember(text.value) {
-          allLocalBranches.filter { speedSearch.shouldBeShowing(it.name) }
-        }
-        val remoteBranches = remember(text.value) {
-          allRemoteBranches.filter { speedSearch.shouldBeShowing(it.name) }
-        }
 
         val focusRequester = remember { FocusRequester() }
         Branches(
-          defaultSelectedLocalBranch = localBranches.find { it.name.contains("master") } ?: localBranches.firstOrNull(),
-          localBranches.toList(), remoteBranches.toList(),
+          branchesVm,
           modifier = Modifier.focusRequester(focusRequester),
           dataContextProvider = { branch ->
             createDataContext(project, repository, listOf(repository), branch)
@@ -168,13 +134,14 @@ private fun DummySearchTextField(
 
 @Composable
 private fun Branches(
-  defaultSelectedLocalBranch: GitBranch?,
-  local: List<GitBranch>,
-  remote: List<GitBranch>,
+  branchesVm: GitBranchesComposeVm,
   modifier: Modifier = Modifier,
   dataContextProvider: (branch: GitBranch) -> DataContext,
   closePopup: () -> Unit
 ) {
+  val local by branchesVm.localBranches.collectAsState()
+  val remote by branchesVm.remoteBranches.collectAsState()
+
   val columnState = rememberSelectableLazyListState()
   val adapter = rememberScrollbarAdapter(columnState.lazyListState)
   val scrollbarWidth = LocalScrollbarStyle.current.thickness
@@ -184,16 +151,29 @@ private fun Branches(
       selectionMode = SelectionMode.Single,
       modifier = Modifier.padding(end = scrollbarWidth + 6.dp)
     ) {
-      group(columnState, startingIndex = 0, "Local", local, dataContextProvider, closePopup)
-      group(columnState, startingIndex = local.size + 1, "Remote", remote, dataContextProvider, closePopup)
+      if (local.isNotEmpty()) {
+        group(columnState, startingIndex = 0, "Local", local, dataContextProvider, closePopup)
+      }
+      if (remote.isNotEmpty()) {
+        group(columnState, startingIndex = local.size + 1, "Remote", remote, dataContextProvider, closePopup)
+      }
     }
 
+    val preferredBranch by branchesVm.preferredBranch.collectAsState()
     // select default branch
-    LaunchedEffect(Unit) {
+    LaunchedEffect(preferredBranch) {
       if (local.isNotEmpty()) {
-        val selectedIndex = local.indexOfFirst { it == defaultSelectedLocalBranch }.takeIf { it != -1 } ?: 0
+        val selectedIndex = local.indexOfFirst { it == preferredBranch }.takeIf { it != -1 } ?: 0
         columnState.selectedKeys = listOf(local[selectedIndex])
         columnState.scrollToItem(selectedIndex + 1)
+        return@LaunchedEffect
+      }
+      // TODO: write it cleaner
+      if (remote.isNotEmpty()) {
+        val selectedIndex = remote.indexOfFirst { it == preferredBranch }.takeIf { it != -1 } ?: return@LaunchedEffect
+        columnState.selectedKeys = listOf(remote[selectedIndex])
+        columnState.scrollToItem(selectedIndex + 1)
+        return@LaunchedEffect
       }
     }
 
