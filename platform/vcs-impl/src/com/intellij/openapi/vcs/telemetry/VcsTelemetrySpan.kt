@@ -84,10 +84,12 @@ interface VcsTelemetrySpan {
       override fun getName() = "vcs-log-getting-containing-branches"
     },
 
+  }
+
+  enum class LogIndex : VcsTelemetrySpan {
     Indexing {
       override fun getName() = "vcs-log-indexing"
-    },
-
+    }
   }
 
   enum class Shelve : VcsTelemetrySpan {
