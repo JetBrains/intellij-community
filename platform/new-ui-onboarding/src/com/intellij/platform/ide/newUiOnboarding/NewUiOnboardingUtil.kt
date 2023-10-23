@@ -3,6 +3,7 @@ package com.intellij.platform.ide.newUiOnboarding
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DistractionFreeModeController
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Toggleable
@@ -23,6 +24,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.WebAnimationUtils
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.AbstractPopup
@@ -53,9 +55,18 @@ object NewUiOnboardingUtil {
   private const val DARK_SUFFIX = "_dark"
 
   val isOnboardingEnabled: Boolean
-    get() = Registry.`is`("ide.experimental.ui.onboarding")
+    get() = Registry.`is`("ide.experimental.ui.onboarding", true)
             && !DistractionFreeModeController.shouldMinimizeCustomHeader()
             && NewUiOnboardingBean.isPresent
+
+  fun shouldProposeOnboarding(): Boolean {
+    val propertiesComponent = PropertiesComponent.getInstance()
+    return ExperimentalUI.isNewUI()
+           && propertiesComponent.getBoolean(ExperimentalUI.NEW_UI_SWITCH)
+           && !propertiesComponent.getBoolean(NEW_UI_ON_FIRST_STARTUP)
+           && !propertiesComponent.isValueSet(ONBOARDING_PROPOSED_VERSION)
+           && isOnboardingEnabled
+  }
 
   fun getHelpLink(topic: String): String {
     val ideHelpName = NewUiOnboardingBean.getInstance().ideHelpName

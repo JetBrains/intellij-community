@@ -10,6 +10,8 @@ import org.jetbrains.annotations.ApiStatus
 interface MeetNewUiCustomization {
   fun addButtons(project: Project, row: Row)
 
+  fun shouldCreateToolWindow(): Boolean = false
+
   fun showToolWindowOnStartup(): Boolean
 
   companion object {

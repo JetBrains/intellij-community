@@ -21,6 +21,10 @@ private class MeetNewUiOnboardingCustomization : MeetNewUiCustomization {
     }
   }
 
+  override fun shouldCreateToolWindow(): Boolean {
+    return NewUiOnboardingUtil.shouldProposeOnboarding()
+  }
+
   override fun showToolWindowOnStartup(): Boolean {
     return !NewUiOnboardingUtil.isOnboardingEnabled
   }

@@ -17,8 +17,8 @@ private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   override suspend fun isApplicableAsync(project: Project): Boolean {
     return ExperimentalUI.isNewUI() &&
            Registry.`is`("ide.experimental.ui.meetNewUi", true) &&
-           serviceAsync<PropertiesComponent>().getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH) &&
-           MeetNewUiCustomization.firstOrNull()?.showToolWindowOnStartup() == true &&
+           (serviceAsync<PropertiesComponent>().getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH) ||
+            MeetNewUiCustomization.firstOrNull()?.shouldCreateToolWindow() == true) &&
            !isNotificationSilentMode(project)
   }
 
@@ -32,9 +32,11 @@ private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {
-    serviceAsync<PropertiesComponent>().unsetValue(ExperimentalUI.NEW_UI_FIRST_SWITCH)
-    toolWindowManager.invokeLater {
-      toolWindow.activate(null)
+    if (MeetNewUiCustomization.firstOrNull()?.showToolWindowOnStartup() != false) {
+      toolWindowManager.invokeLater {
+        toolWindow.activate(null)
+      }
     }
+    serviceAsync<PropertiesComponent>().unsetValue(ExperimentalUI.NEW_UI_FIRST_SWITCH)
   }
 }

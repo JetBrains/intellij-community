@@ -22,11 +22,7 @@ class NewUiOnboardingStartupActivity : ProjectActivity {
       propertiesComponent.setValue(NEW_UI_ON_FIRST_STARTUP, ExperimentalUI.isNewUI().toString())
     }
 
-    if (NewUiOnboardingUtil.isOnboardingEnabled
-        && ExperimentalUI.isNewUI()
-        && propertiesComponent.getBoolean(ExperimentalUI.NEW_UI_SWITCH)
-        && !propertiesComponent.getBoolean(NEW_UI_ON_FIRST_STARTUP)
-        && !propertiesComponent.isValueSet(ONBOARDING_PROPOSED_VERSION)) {
+    if (NewUiOnboardingUtil.shouldProposeOnboarding()) {
       propertiesComponent.unsetValue(ExperimentalUI.NEW_UI_SWITCH)
       val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
       propertiesComponent.setValue(ONBOARDING_PROPOSED_VERSION, version)
