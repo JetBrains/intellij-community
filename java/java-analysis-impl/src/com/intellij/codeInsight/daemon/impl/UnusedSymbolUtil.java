@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.find.findUsages.*;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -209,7 +210,9 @@ public final class UnusedSymbolUtil {
     SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(member);
     // some classes may have references from within XML outside dependent modules, e.g. our actions
     if (useScope instanceof GlobalSearchScope globalUseScope && member instanceof PsiClass) {
-      useScope = GlobalSearchScope.projectScope(project).uniteWith(globalUseScope);
+      GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+      GlobalSearchScope xmlFilesScope = GlobalSearchScope.getScopeRestrictedByFileTypes(projectScope, XmlFileType.INSTANCE);
+      useScope = globalUseScope.uniteWith(xmlFilesScope);
     }
     return useScope;
   }
