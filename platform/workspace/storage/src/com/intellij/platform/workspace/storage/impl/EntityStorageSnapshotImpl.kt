@@ -29,7 +29,6 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.containers.ConcurrentLongObjectHashMap
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -74,7 +73,7 @@ internal open class EntityStorageSnapshotImpl(
 
   // I suppose that we can use some kind of array of arrays to get a quicker access (just two accesses by-index)
   // However, it's not implemented currently because I'm not sure about threading.
-  private val entitiesCache = ConcurrentLongObjectHashMap<WorkspaceEntity>()
+  private val entitiesCache = ConcurrentHashMap<EntityId, WorkspaceEntity>()
 
   override fun <T> cached(query: StorageQuery<T>): T {
     return snapshotCache.cached(query)
@@ -95,7 +94,7 @@ internal open class EntityStorageSnapshotImpl(
       return found as T
     }
     val newData = newInstance()
-    entitiesCache.put(entityId, newData)
+    entitiesCache[entityId] = newData
     return newData
   }
 
