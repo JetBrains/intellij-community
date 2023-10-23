@@ -516,6 +516,11 @@
         <option name="FOREGROUND" value="56A8F5" />
       </value>
     </option>
+    <option name="JS.JSX_CLIENT_COMPONENT">
+      <value>
+        <option name="FOREGROUND" value="9C9CFF" />
+      </value>
+    </option>
     <option name="JS.REGEXP">
       <value>
         <option name="FOREGROUND" value="42c3d4" />

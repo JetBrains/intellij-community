@@ -366,6 +366,11 @@
         <option name="FOREGROUND" value="830091" />
       </value>
     </option>
+    <option name="JS.JSX_CLIENT_COMPONENT">
+      <value>
+        <option name="FOREGROUND" value="AD6339" />
+      </value>
+    </option>
     <option name="JS.LOCAL_VARIABLE">
       <value>
         <option name="FOREGROUND" value="248f8f" />
@@ -455,6 +460,11 @@
     <option name="WRONG_REFERENCES_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="f50000" />
+      </value>
+    </option>
+    <option name="XML_CUSTOM_TAG_NAME">
+      <value>
+        <option name="FOREGROUND" value="008077" />
       </value>
     </option>
     <option name="XPATH.FUNCTION">
