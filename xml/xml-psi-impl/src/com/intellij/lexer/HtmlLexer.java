@@ -78,7 +78,8 @@ public class HtmlLexer extends BaseHtmlLexer {
           tryCreateEmbeddedLexer();
         }
       }
-    } else {
+    }
+    else {
       myTokenType = null;
       super.advance();
     }
@@ -123,7 +124,8 @@ public class HtmlLexer extends BaseHtmlLexer {
         if (state == _HtmlLexer.COMMENT) return XmlTokenType.XML_COMMENT_CHARACTERS;
       }
       return tokenType;
-    } else {
+    }
+    else {
       IElementType tokenType = super.getTokenType();
 
       myTokenStart = super.getTokenStart();
@@ -146,9 +148,11 @@ public class HtmlLexer extends BaseHtmlLexer {
   public int getTokenStart() {
     if (myTokenType != null) {
       return myTokenStart;
-    } else if (embeddedLexer != null) {
+    }
+    else if (embeddedLexer != null) {
       return embeddedLexer.getTokenStart();
-    } else {
+    }
+    else {
       return super.getTokenStart();
     }
   }
@@ -157,9 +161,11 @@ public class HtmlLexer extends BaseHtmlLexer {
   public int getTokenEnd() {
     if (myTokenType != null) {
       return myTokenEnd;
-    } else if (embeddedLexer != null) {
+    }
+    else if (embeddedLexer != null) {
       return embeddedLexer.getTokenEnd();
-    } else {
+    }
+    else {
       return super.getTokenEnd();
     }
   }
@@ -209,5 +215,4 @@ public class HtmlLexer extends BaseHtmlLexer {
       }
     }
   }
-
 }
