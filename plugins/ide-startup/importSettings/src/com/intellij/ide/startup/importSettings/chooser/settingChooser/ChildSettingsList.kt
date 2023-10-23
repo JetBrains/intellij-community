@@ -14,11 +14,15 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 
 class ChildSettingsList(val settings: List<ChildItem>, val configurable: Boolean) : JBList<ChildItem>(createDefaultListModel(settings)) {
+  companion object {
+    const val SCROLL_PANE_INSETS = 7
+  }
+
 
   init {
     cellRenderer = CBRenderer(configurable)
 
-    if(configurable) {
+    if (configurable) {
       addMouseListener(object : MouseAdapter() {
         override fun mousePressed(e: MouseEvent) {
           val index = locationToIndex(e.point)
@@ -45,14 +49,14 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
   private val hg = 3
   private val wg = 5
 
-  private val gaps = UnscaledGaps(wg, hg, wg, hg)
+  private val gaps = UnscaledGaps(hg, wg, hg, wg)
 
   val line = panel {
     row {
       ch = checkBox("").customize(gaps).component
       txt = text("").customize(gaps).component
       addTxt = comment("").resizableColumn().customize(gaps).component
-      rightTxt = comment("").customize(UnscaledGaps(wg, 10, wg, hg)).component
+      rightTxt = comment("").customize(UnscaledGaps(hg, wg, hg, wg + ChildSettingsList.SCROLL_PANE_INSETS)).component
     }
   }
 
@@ -87,4 +91,4 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
   }
 }
 
-data class ChildItem(val child: ChildSetting, var separatorNeeded: Boolean = false, var selected: Boolean = true )
+data class ChildItem(val child: ChildSetting, var separatorNeeded: Boolean = false, var selected: Boolean = true)

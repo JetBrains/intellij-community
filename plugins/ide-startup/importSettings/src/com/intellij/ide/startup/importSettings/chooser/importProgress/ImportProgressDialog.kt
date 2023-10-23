@@ -10,6 +10,7 @@ import com.intellij.ide.startup.importSettings.data.ImportFromProduct
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.minimumWidth
@@ -34,7 +35,7 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
 
   private val panel = JPanel(VerticalLayout(JBUI.scale(8))).apply {
     add(JPanel(VerticalLayout(JBUI.scale(8))).apply {
-      add(JLabel("Importing settings...").apply {
+      add(JLabel(ImportSettingsBundle.message("import.settings.title")).apply {
         font = Font(font.getFontName(), Font.PLAIN, JBUIScale.scaleFontSize(24f))
         horizontalAlignment = SwingConstants.CENTER
       })
@@ -146,7 +147,7 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
   }
 
   private class HLabel(txt: String) {
-    var text: String = ""
+    var text: @NlsContexts.Label String = ""
       set(value) {
         if (field == value) return
         lbl.text = "<html><center>${value}</center></html>"

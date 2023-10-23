@@ -50,12 +50,7 @@ abstract class SettingChooserAction : DumbAwareAction(), CustomComponentAction {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private fun createPopup(step: ListPopupStep<Any>): ListPopup {
-    val result = object : ListPopupImpl(null, step) {
-      override fun getListElementRenderer(): ListCellRenderer<*> {
-        return super.getListElementRenderer()
-      }
-
-    }
+    val result = ListPopupImpl(null, step)
     result.setRequestFocus(false)
     return result
   }

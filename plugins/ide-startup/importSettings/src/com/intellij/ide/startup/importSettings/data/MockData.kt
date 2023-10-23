@@ -73,7 +73,18 @@ class TestJbService : JbService {
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
     )
 
+    val settings1 = listOf(
+      TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = children),
+      )
+
     val settings = listOf(
+      TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = children),
+      TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
+
       TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
@@ -90,7 +101,6 @@ class TestJbService : JbService {
       TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Plugins",
                           "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
-
       )
 
     val testChildConfig = TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
@@ -133,7 +143,7 @@ class TestJbService : JbService {
   }
 
   override fun getSettings(itemId: String): List<BaseSetting> {
-    return settings
+    return if(itemId == main.id) settings1 else settings
   }
 
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
@@ -250,7 +260,7 @@ class TestMultipleSetting(override val icon: Icon,
 
 class TestConfigurableSetting(override val icon: Icon,
                               override val name: String,
-                              override val comment: String?,
+                              override val comment: String? = null,
                               override val list: List<List<ChildSetting>>,
                               override val id: String = UUID.randomUUID().toString()) : Configurable
 

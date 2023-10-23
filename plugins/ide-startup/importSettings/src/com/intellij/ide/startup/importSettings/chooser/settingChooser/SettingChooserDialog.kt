@@ -27,7 +27,6 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import javax.swing.Action
-import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
@@ -81,19 +80,17 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
     }, BorderLayout.WEST)
 
     val productService = provider.productService
-
-    val listPane = JPanel().apply {
+    val listPane = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
-      layout = BoxLayout(this, BoxLayout.Y_AXIS)
       productService.getSettings(product.id).forEach {
         val st = createSettingPane(it, configurable)
         settingPanes.add(st)
         add(st.component())
       }
     }
+
     add(
       JBScrollPane(listPane).apply {
-        isOpaque = false
         viewport.isOpaque = false
         isOpaque = true
         background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))

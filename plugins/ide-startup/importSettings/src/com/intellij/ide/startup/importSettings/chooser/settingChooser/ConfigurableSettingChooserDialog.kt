@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.importProgress.ImportProgressDialog
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.*
@@ -22,7 +23,7 @@ class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDat
 
   override fun getOKAction(): Action {
     return super.getOKAction().apply {
-      putValue(Action.NAME, "Import Settings")
+      putValue(Action.NAME, ImportSettingsBundle.message("choose.settings.title"))
     }
   }
 

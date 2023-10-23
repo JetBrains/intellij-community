@@ -18,6 +18,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.jetbrains.rd.swing.proxyProperty
 import com.jetbrains.rd.util.reactive.*
+import org.jetbrains.annotations.Nls
 import java.time.LocalDate
 import javax.swing.Icon
 
@@ -25,6 +26,7 @@ interface SettingsService {
   companion object {
     fun getInstance(): SettingsService = service()
   }
+
   fun getSyncService(): SyncService
   fun getJbService(): JbService
   fun getExternalService(): ExternalService
@@ -83,7 +85,9 @@ class SettingsServiceImpl : SettingsService {
   override val isSyncEnabled = jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
 
   init {
-    jbAccount.set(JBAccountInfoService.JBAData("Aleksey Ivanovskii", "alex.ivanovskii", "alex.ivanovskii@gmail.com"))
+    if (shouldUseMockData) {
+      jbAccount.set(JBAccountInfoService.JBAData("Aleksey Ivanovskii", "alex.ivanovskii", "alex.ivanovskii@gmail.com"))
+    }
   }
 }
 
@@ -110,7 +114,8 @@ interface SyncService : JbService {
 interface ExternalService : BaseService {
   suspend fun warmUp()
 }
-interface JbService: BaseService {
+
+interface JbService : BaseService {
   fun getOldProducts(): List<Product>
 }
 
@@ -153,8 +158,8 @@ interface SettingsContributor {
 interface BaseSetting {
   val id: String
   val icon: Icon
-  val name: String
-  val comment: String?
+  val name: @Nls String
+  val comment: @Nls String?
 }
 
 interface Configurable : Multiple {
@@ -166,25 +171,25 @@ interface Multiple : BaseSetting {
 
 interface ChildSetting {
   val id: String
-  val name: String
-  val leftComment: String?
-  val rightComment: String?
+  val name: @Nls String
+  val leftComment: @Nls String?
+  val rightComment: @Nls String?
 }
 
 data class DataForSave(val id: String, val childIds: List<String>? = null)
 
-interface  ImportFromProduct: DialogImportData {
+interface ImportFromProduct : DialogImportData {
   val from: DialogImportItem
   val to: DialogImportItem
 }
 
 interface DialogImportData {
-  val message: String?
-  val progress : ImportProgress
+  val message: @Nls String?
+  val progress: ImportProgress
 }
 
 interface ImportProgress {
-  val progressMessage: IPropertyView<String?>
+  val progressMessage: IPropertyView<@Nls String?>
   val progress: IOptPropertyView<Int>
 }
 

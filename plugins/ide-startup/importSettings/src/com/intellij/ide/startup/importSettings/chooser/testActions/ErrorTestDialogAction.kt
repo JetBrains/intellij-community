@@ -28,7 +28,7 @@ class ErrorTestDialogAction : DumbAwareAction() {
 
         val pane = panel {
           row {
-            button("Error With Actions", { error.fire(object : NotificationData {
+            button( "Error With Actions", { error.fire(object : NotificationData {
               override val status: NotificationData.NotificationStatus = NotificationData.NotificationStatus.ERROR
               override val message: String = s
 

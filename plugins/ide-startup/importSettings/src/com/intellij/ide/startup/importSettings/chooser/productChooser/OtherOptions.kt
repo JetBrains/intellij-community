@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
@@ -14,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.SwingConstants
@@ -28,8 +30,7 @@ class OtherOptions(val callback: (PageProvider) -> Unit) : ProductChooserAction(
   private val config = ConfigAction(callback)
 
   init {
-    templatePresentation.text = "Other Options"
-
+    templatePresentation.text = ImportSettingsBundle.message("choose.product.other.options")
   }
 
   override fun displayTextInToolbar(): Boolean {
@@ -42,11 +43,11 @@ class OtherOptions(val callback: (PageProvider) -> Unit) : ProductChooserAction(
 
     val arr = mutableListOf<AnAction>()
     if (jb == null && jbProducts != null) {
-      jb = addActionList(jbProducts, jbDataProvider, "Installed")
+      jb = addActionList(jbProducts, jbDataProvider, ImportSettingsBundle.message("other.options.sub.title.installed"))
     }
 
     if (sync == null && syncProducts != null) {
-      sync = addActionList(syncProducts, syncDataProvider, "Setting Sync")
+      sync = addActionList(syncProducts, syncDataProvider, ImportSettingsBundle.message("other.options.sub.title.setting.sync"))
     }
 
     sync?.let {
@@ -69,7 +70,7 @@ class OtherOptions(val callback: (PageProvider) -> Unit) : ProductChooserAction(
     return arr.toTypedArray()
   }
 
-  private fun addActionList(products: List<Product>, provider: ActionsDataProvider<*>, title: String? = null): MutableList<AnAction> {
+  private fun addActionList(products: List<Product>, provider: ActionsDataProvider<*>, title: @Nls String? = null): MutableList<AnAction> {
     val list = mutableListOf<AnAction>()
     if (products.isNotEmpty()) {
       title?.let {
@@ -95,7 +96,7 @@ class OtherOptions(val callback: (PageProvider) -> Unit) : ProductChooserAction(
     }
 
     e.presentation.isVisible = true
-    e.presentation.text = "Other Options"
+    e.presentation.text = ImportSettingsBundle.message("choose.product.other.options")
     e.presentation.icon = AllIcons.General.LinkDropTriangle
     e.presentation.isPopupGroup = true
   }
@@ -112,7 +113,7 @@ class OtherOptions(val callback: (PageProvider) -> Unit) : ProductChooserAction(
     }
   }
 
-  override fun createButton(presentation: Presentation): JButton {
+  override fun createButton(): JButton {
     return OnboardingDialogButtons.createLinkButton().apply {
       icon = AllIcons.General.LinkDropTriangle
     }
