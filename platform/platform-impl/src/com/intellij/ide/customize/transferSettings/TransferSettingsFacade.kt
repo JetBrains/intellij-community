@@ -35,7 +35,7 @@ class TransferSettingsFacade(private val project: Project?) {
 
     button.addActionListener {
       val selectedIde = view.selectedIde as? IdeVersion ?: error("Selected ide is null or not IdeVersion")
-      config.controller.performImport(project, selectedIde, true, progressBase)
+      config.controller.performImport(project, selectedIde, progressBase)
     }
 
     config.controller.addListener(object : TransferSettingsListener {

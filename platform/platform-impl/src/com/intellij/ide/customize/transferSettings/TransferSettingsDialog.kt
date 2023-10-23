@@ -12,7 +12,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.ClientProperty
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -35,7 +34,7 @@ class TransferSettingsDialog(val project: Project,
         close(13)
       }
       val selectedIde = view.selectedIde as? IdeVersion ?: error("Selected ide is null or not IdeVersion")
-      config.controller.performImport(project, selectedIde, true, progressBase)
+      config.controller.performImport(project, selectedIde, progressBase)
     }
   }
 

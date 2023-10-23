@@ -132,13 +132,11 @@ class SettingTransferService : ExternalService {
     try {
       val ideVersion = loadIdeVersions()[productId] ?: error(ImportSettingsBundle.message("transfer.error.product-not-found", productId))
       applyPreferences(ideVersion, data)
-      val withPlugins = ideVersion.settingsCache.preferences.plugins
       val importData = TransferSettingsProgress(ideVersion)
       config.controller.addListener(TransferSettingsWizardListener())
       config.controller.performImport(
         null,
         ideVersion,
-        withPlugins,
         importData.createProgressIndicatorAdapter()
       )
       return importData
