@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionFinishType
 import java.util.*
 
 sealed class InlineCompletionEventType {
