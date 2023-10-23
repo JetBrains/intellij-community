@@ -8,13 +8,13 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +76,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   private int getColumn(XLineBreakpoint<P> breakpoint) {
-    if (!Registry.is("debugger.show.breakpoints.inline")) return -1;
+    if (!XDebuggerUtil.areInlineBreakpointsEnabled()) return -1;
 
     return ReadAction.compute(() -> {
       var range = breakpoint.getType().getHighlightRange(breakpoint);
