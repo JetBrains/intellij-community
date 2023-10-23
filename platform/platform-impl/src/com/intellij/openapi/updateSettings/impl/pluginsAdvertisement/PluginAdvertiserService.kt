@@ -3,7 +3,6 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
@@ -19,6 +18,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.DEPENDENCY_SUPPORT_TYPE
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.EXECUTABLE_DEPENDENCY_KIND
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
@@ -92,6 +93,9 @@ sealed interface PluginAdvertiserService {
       "RM" to "ruby",
       "AS" to "androidstudio"
     )
+
+    internal const val EXECUTABLE_DEPENDENCY_KIND: String = "executable"
+    internal const val DEPENDENCY_SUPPORT_TYPE: String = "dependencySupport"
   }
 
   suspend fun run(
@@ -130,6 +134,8 @@ open class PluginAdvertiserServiceImpl(
     cs.launch(Dispatchers.IO) {
       val (plugins, featuresMap) = fetchFeatures(unknownFeatures, includeIgnored)
 
+      removeNonProjectSuggestions(plugins, featuresMap)
+
       val descriptorsById = PluginManagerCore.buildPluginIdMap()
       val disabledDescriptors = plugins.asSequence()
         .map { it.pluginId }
@@ -159,6 +165,29 @@ open class PluginAdvertiserServiceImpl(
         )
       }
     }
+  }
+
+  private fun removeNonProjectSuggestions(plugins: MutableSet<PluginData>, featuresMap: MultiMap<PluginId, UnknownFeature>) {
+    // here we filter out suggestions that do not depend on Project contents, such as suggestions based on installed executable
+    // we do not show notifications for them
+
+    val nonProjectSuggestions = mutableListOf<Pair<PluginId, UnknownFeature>>()
+    for (plugin in featuresMap.entrySet()) {
+      for (feature in plugin.value) {
+        if (feature.featureType == DEPENDENCY_SUPPORT_TYPE) {
+          val kind = feature.implementationName.substringBefore(":")
+          if (kind == EXECUTABLE_DEPENDENCY_KIND) {
+            nonProjectSuggestions.add(plugin.key to feature)
+          }
+        }
+      }
+    }
+
+    for (suggestion in nonProjectSuggestions) {
+      featuresMap.remove(suggestion.first, suggestion.second)
+    }
+
+    plugins.removeIf { !featuresMap.containsKey(it.pluginId) }
   }
 
   /**
@@ -257,7 +286,7 @@ open class PluginAdvertiserServiceImpl(
       val features = featuresMap[descriptor.pluginId]
       if (features.isNotEmpty()) {
         val suggestedFeatures = features
-          .filter { "dependency" == it.featureDisplayName }
+          .filter { it.featureType == DEPENDENCY_SUPPORT_TYPE }
           .map { getSuggestionReason(it) }
 
         if (suggestedFeatures.isNotEmpty()) {
@@ -271,7 +300,7 @@ open class PluginAdvertiserServiceImpl(
 
   private fun getSuggestionReason(it: UnknownFeature): @Nls String {
     val kind = it.implementationName.substringBefore(":")
-    if (kind == "executable") {
+    if (kind == EXECUTABLE_DEPENDENCY_KIND) {
       val executableName = it.implementationName.substringAfter(":")
       if (executableName.isNotBlank()) {
         return IdeBundle.message("plugins.configurable.suggested.features.executable", executableName)
