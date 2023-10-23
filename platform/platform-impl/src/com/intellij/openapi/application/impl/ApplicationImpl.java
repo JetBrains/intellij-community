@@ -55,7 +55,6 @@ import kotlin.jvm.functions.Function0;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.*;
-import sun.awt.SunToolkit;
 
 import javax.swing.*;
 import java.awt.*;
@@ -1147,7 +1146,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void flushNativeEventQueue() {
-    SunToolkit.flushPendingEvents();
+    IdeEventQueue.getInstance().flushNativeEventQueue();
   }
 
   @Override
