@@ -10227,6 +10227,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantOverride/dataClassToString.kt");
         }
 
+        @TestMetadata("dataClassWithOverriddenToStringCall.kt")
+        public void testDataClassWithOverriddenToStringCall() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/dataClassWithOverriddenToStringCall.kt");
+        }
+
         @TestMetadata("dataObject.kt")
         public void testDataObject() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/dataObject.kt");
