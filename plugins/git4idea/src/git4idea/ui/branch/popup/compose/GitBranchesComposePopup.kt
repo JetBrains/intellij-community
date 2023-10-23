@@ -11,6 +11,8 @@ import androidx.compose.ui.Alignment.Companion.CenterEnd
 import androidx.compose.ui.Alignment.Companion.CenterStart
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -82,13 +84,22 @@ private fun createBranchesPopupComposeComponent(
         Divider(orientation = Orientation.Horizontal, color = UIUtil.getTooltipSeparatorColor().toComposeColor())
         val localBranches = repository.localBranchesOrCurrent
         val remoteBranches = repository.branches.remoteBranches
+
+        val focusRequester = remember { FocusRequester() }
         Branches(
-          localBranches.toList(), remoteBranches.toList(), modifier = Modifier,
+          defaultSelectedLocalBranch = localBranches.find { it.name.contains("master") } ?: localBranches.firstOrNull(),
+          localBranches.toList(), remoteBranches.toList(),
+          modifier = Modifier.focusRequester(focusRequester),
           dataContextProvider = { branch ->
             createDataContext(project, repository, listOf(repository), branch)
           },
           closePopup
         )
+
+        // focus Branches tree by default
+        LaunchedEffect(Unit) {
+          focusRequester.requestFocus()
+        }
       }
     }
   }
@@ -116,6 +127,7 @@ private fun DummySearchTextField() {
 
 @Composable
 private fun Branches(
+  defaultSelectedLocalBranch: GitBranch?,
   local: List<GitBranch>,
   remote: List<GitBranch>,
   modifier: Modifier = Modifier,
@@ -133,6 +145,15 @@ private fun Branches(
     ) {
       group(columnState, startingIndex = 0, "Local", local, dataContextProvider, closePopup)
       group(columnState, startingIndex = local.size + 1, "Remote", remote, dataContextProvider, closePopup)
+    }
+
+    // select default branch
+    LaunchedEffect(Unit) {
+      if (local.isNotEmpty()) {
+        val selectedIndex = local.indexOfFirst { it == defaultSelectedLocalBranch }.takeIf { it != -1 } ?: 0
+        columnState.selectedKeys = listOf(local[selectedIndex])
+        columnState.scrollToItem(selectedIndex + 1)
+      }
     }
 
     VerticalScrollbar(
