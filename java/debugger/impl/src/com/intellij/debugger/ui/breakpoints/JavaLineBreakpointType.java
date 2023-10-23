@@ -216,7 +216,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       }
     }
     RetFinder finder = new RetFinder();
-    new XDebuggerUtilImpl().iterateLine(project, document, line, finder);
+    XDebuggerUtil.getInstance().iterateLine(project, document, line, finder);
     return finder.singleReturn;
   }
 
