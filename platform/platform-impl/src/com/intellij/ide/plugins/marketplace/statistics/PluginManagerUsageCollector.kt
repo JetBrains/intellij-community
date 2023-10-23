@@ -7,12 +7,13 @@ import com.intellij.ide.plugins.enums.PluginsGroupType
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.SignatureVerificationResult
+import com.intellij.ide.plugins.marketplace.statistics.features.*
 import com.intellij.ide.plugins.newui.PluginsGroup
+import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.events.BaseEventId
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
+import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.mp.MP_RECORDER_ID
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.internal.statistic.utils.getPluginInfoById
@@ -23,7 +24,7 @@ import com.intellij.openapi.project.Project
 internal object PluginManagerUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = EVENT_GROUP
 
-  private val EVENT_GROUP = EventLogGroup("plugin.manager", 8)
+  private val EVENT_GROUP = EventLogGroup("plugin.manager", 8, MP_RECORDER_ID)
   private val PLUGINS_GROUP_TYPE = EventFields.Enum<PluginsGroupType>("group")
   private val ENABLE_DISABLE_ACTION = EventFields.Enum<PluginEnabledState>("enabled_state")
   private val ACCEPTANCE_RESULT = EventFields.Enum<DialogAcceptanceResultEnum>("acceptance_result")
@@ -49,6 +50,65 @@ internal object PluginManagerUsageCollector : CounterUsagesCollector() {
   )
   private val PLUGIN_INSTALLATION_FINISHED = EVENT_GROUP.registerEvent("plugin.installation.finished", EventFields.PluginInfo)
   private val PLUGIN_REMOVED = EVENT_GROUP.registerEvent("plugin.was.removed", EventFields.PluginInfo)
+
+  // Search
+  private val USER_QUERY_FEATURES_DATA_KEY = ObjectEventField(
+    "userQueryFeatures", *PluginManagerUserQueryFeatureProvider.getFeaturesDefinition().toTypedArray()
+  )
+  private val MARKETPLACE_SEARCH_FEATURES_DATA_KEY = ObjectEventField(
+    "marketplaceSearchFeatures", *PluginManagerMarketplaceSearchFeatureProvider.getFeaturesDefinition().toTypedArray()
+  )
+  private val LOCAL_SEARCH_FEATURES_DATA_KEY = ObjectEventField(
+    "localSearchFeatures", *PluginManagerLocalSearchFeatureProvider.getFeaturesDefinition().toTypedArray()
+  )
+  private val SEARCH_RESULTS_FEATURES_DATA_KEY = ObjectEventField(
+    "resultsFeatures", *PluginManagerSearchResultsFeatureProvider.getFeaturesDefinition().toTypedArray()
+  )
+
+  private val MARKETPLACE_TAB_SEARCH_PERFORMED = EVENT_GROUP.registerVarargEvent(
+    "marketplace.tab.search", USER_QUERY_FEATURES_DATA_KEY, MARKETPLACE_SEARCH_FEATURES_DATA_KEY, SEARCH_RESULTS_FEATURES_DATA_KEY
+  )
+
+  private val INSTALLED_TAB_SEARCH_PERFORMED = EVENT_GROUP.registerVarargEvent(
+    "installed.tab.search", USER_QUERY_FEATURES_DATA_KEY, LOCAL_SEARCH_FEATURES_DATA_KEY, SEARCH_RESULTS_FEATURES_DATA_KEY
+  )
+
+  private val SEARCH_RESET = EVENT_GROUP.registerEvent("search.reset")
+
+  @JvmStatic
+  fun performMarketplaceSearch(project: Project?, query: SearchQueryParser.Marketplace, results: List<IdeaPluginDescriptor>) {
+    MARKETPLACE_TAB_SEARCH_PERFORMED.getIfInitializedOrNull()?.log(project) {
+      add(USER_QUERY_FEATURES_DATA_KEY.with(ObjectEventData(
+        PluginManagerUserQueryFeatureProvider().getSearchStateFeatures(query.searchQuery)
+      )))
+      add(MARKETPLACE_SEARCH_FEATURES_DATA_KEY.with(ObjectEventData(
+        PluginManagerMarketplaceSearchFeatureProvider().getSearchStateFeatures(query)
+      )))
+      add(SEARCH_RESULTS_FEATURES_DATA_KEY.with(ObjectEventData(
+        PluginManagerSearchResultsFeatureProvider().getSearchStateFeatures(query.searchQuery, results)
+      )))
+    }
+  }
+
+  @JvmStatic
+  fun performInstalledTabSearch(project: Project?, query: SearchQueryParser.Installed, results: List<IdeaPluginDescriptor>) {
+    INSTALLED_TAB_SEARCH_PERFORMED.getIfInitializedOrNull()?.log(project) {
+      add(USER_QUERY_FEATURES_DATA_KEY.with(ObjectEventData(
+        PluginManagerUserQueryFeatureProvider().getSearchStateFeatures(query.searchQuery)
+      )))
+      add(LOCAL_SEARCH_FEATURES_DATA_KEY.with(ObjectEventData(
+        PluginManagerLocalSearchFeatureProvider().getSearchStateFeatures(query)
+      )))
+      add(SEARCH_RESULTS_FEATURES_DATA_KEY.with(ObjectEventData(
+        PluginManagerSearchResultsFeatureProvider().getSearchStateFeatures(query.searchQuery, results)
+      )))
+    }
+  }
+
+  @JvmStatic
+  fun searchReset() {
+    SEARCH_RESET.log()
+  }
 
   @JvmStatic
   fun pluginCardOpened(descriptor: IdeaPluginDescriptor, group: PluginsGroup?): Unit? = group?.let {

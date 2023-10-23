@@ -9,6 +9,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
+import java.net.URL
 
 internal object MarketplaceUrls {
   private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().pluginCompatibleBuild)
@@ -18,6 +19,10 @@ internal object MarketplaceUrls {
 
   private val pluginManagerUrl by lazy(LazyThreadSafetyMode.PUBLICATION) {
     ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')
+  }
+
+  val pluginManagerHost: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    URL(pluginManagerUrl).host
   }
 
   private val downloadUrl by lazy(LazyThreadSafetyMode.PUBLICATION) {
