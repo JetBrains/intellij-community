@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.disposingScope
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /**
@@ -13,7 +14,7 @@ import kotlinx.coroutines.launch
  *
  * @param A - account type
  */
-abstract class PersistentDefaultAccountHolder<A : Account>(protected val project: Project)
+abstract class PersistentDefaultAccountHolder<A : Account>
   : PersistentStateComponent<PersistentDefaultAccountHolder.AccountState>, Disposable, DefaultAccountHolder<A> {
 
   @Volatile
@@ -22,7 +23,20 @@ abstract class PersistentDefaultAccountHolder<A : Account>(protected val project
   private val accountManager: AccountManager<A, *>
     get() = accountManager()
 
-  init {
+  protected val project: Project
+
+  constructor(project: Project, cs: CoroutineScope) {
+    this.project = project
+    cs.launch {
+      accountManager.accountsState.collect {
+        if (!it.contains(account)) account = null
+      }
+    }
+  }
+
+  @Deprecated("A service coroutine scope should be provided")
+  constructor(project: Project) {
+    this.project = project
     disposingScope().launch {
       accountManager.accountsState.collect {
         if (!it.contains(account)) account = null

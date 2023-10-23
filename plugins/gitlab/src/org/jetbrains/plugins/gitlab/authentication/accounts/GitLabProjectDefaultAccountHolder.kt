@@ -4,10 +4,13 @@ package org.jetbrains.plugins.gitlab.authentication.accounts
 import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.util.childScope
+import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
 @State(name = "GitLabDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
-internal class GitLabProjectDefaultAccountHolder(project: Project) : PersistentDefaultAccountHolder<GitLabAccount>(project) {
+internal class GitLabProjectDefaultAccountHolder(project: Project, parentCs: CoroutineScope)
+  : PersistentDefaultAccountHolder<GitLabAccount>(project, parentCs.childScope()) {
   override fun accountManager() = service<GitLabAccountManager>()
   override fun notifyDefaultAccountMissing() {
 
