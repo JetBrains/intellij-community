@@ -359,6 +359,10 @@ open class PluginAdvertiserServiceImpl(
     dependencies: PluginFeatureMap?,
     includeIgnored: Boolean,
   ) {
+    for (plugin in suggestionPlugins) {
+      FUSEventSource.NOTIFICATION.logPluginSuggested(project, plugin.id)
+    }
+
     val (notificationMessage, notificationActions) = if (suggestionPlugins.isNotEmpty() || disabledDescriptors.isNotEmpty()) {
       val action = if (disabledDescriptors.isEmpty()) {
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
