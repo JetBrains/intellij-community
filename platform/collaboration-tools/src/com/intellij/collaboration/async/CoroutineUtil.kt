@@ -135,6 +135,15 @@ fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> {
 @ApiStatus.Experimental
 fun <T, R> Flow<T?>.mapNullable(mapper: (T) -> R): Flow<R?> = map { it?.let(mapper) }
 
+/**
+ * Performs mapping only if the source value is not null
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+@ApiStatus.Experimental
+fun <T, R> Flow<T?>.mapNullableLatest(mapper: suspend (T) -> R): Flow<R?> = mapLatest {
+  if (it != null) mapper(it) else null
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Experimental
 fun <T, R> Flow<T?>.mapNullableScoped(mapper: CoroutineScope.(T) -> R): Flow<R?> {

@@ -165,18 +165,19 @@ private constructor(parentCs: CoroutineScope,
     }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   val mergeRequestOnCurrentBranch: Flow<String?> = run {
-    val remote = connection.repo.remote.remote
-    val gitRepo = connection.repo.remote.repository
+    val projectMapping = connection.repo
+    val remote = projectMapping.remote.remote
+    val gitRepo = projectMapping.remote.repository
+    val targetProjectPath = projectMapping.repository.projectPath.fullPath()
     gitRepo.changesSignalFlow().withInitial(Unit).map {
       val currentBranch = gitRepo.currentBranch ?: return@map null
       gitRepo.branchTrackInfos.find { it.localBranch == currentBranch && it.remote == remote }
         ?.remoteBranch?.nameForRemoteOperations
-    }.distinctUntilChanged().mapLatest { currentRemoteBranch ->
-      currentRemoteBranch?.let {
-        connection.projectData.mergeRequests.findByBranches(it).firstOrNull()?.iid
-      }
+    }.distinctUntilChanged().mapNullableLatest { currentRemoteBranch ->
+      connection.projectData.mergeRequests.findByBranches(currentRemoteBranch).find {
+        it.targetProject.fullPath == targetProjectPath && it.sourceProject?.fullPath == targetProjectPath
+      }?.iid
     }.catch {
       LOG.warn("Could not lookup a merge request for current branch", it)
     }
