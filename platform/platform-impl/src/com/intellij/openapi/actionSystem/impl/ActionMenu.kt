@@ -67,6 +67,9 @@ class ActionMenu constructor(private val context: DataContext?,
 
   private var specialMenu: JPopupMenu? = null
 
+  internal var isTryingToShowPopupMenu = false
+    private set
+
   override fun removeNotify() {
     super.removeNotify()
     if (disposable != null) {
@@ -346,6 +349,7 @@ class ActionMenu constructor(private val context: DataContext?,
   }
 
   override fun setPopupMenuVisible(value: Boolean) {
+    isTryingToShowPopupMenu = value
     if (value && !(SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == place)) {
       fillMenu()
       if (!isSelected) {
