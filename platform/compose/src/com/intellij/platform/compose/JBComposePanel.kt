@@ -8,9 +8,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.awt.ComposePanel
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.jewel.ExperimentalJewelApi
-import org.jetbrains.jewel.bridge.SwingBridgeTheme
 import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
+import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.skiko.ExperimentalSkikoApi
 import org.jetbrains.skiko.GraphicsApi
 import org.jetbrains.skiko.OS

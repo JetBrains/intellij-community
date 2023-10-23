@@ -8,11 +8,11 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.jetbrains.jewel.*
+import org.jetbrains.jewel.ui.Orientation
+import org.jetbrains.jewel.ui.component.*
 
 @Composable
 internal fun ComposeShowcase() {
@@ -49,7 +49,6 @@ private fun Title() {
   Divider(orientation = Orientation.Horizontal, modifier = Modifier.fillMaxWidth())
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun CheckBox() {
   var checkedState by remember { mutableStateOf(false) }
@@ -61,7 +60,6 @@ private fun CheckBox() {
     CheckboxRow(
       "checkBox",
       checkedState,
-      LocalResourceLoader.current,
       onCheckedChange = {
         checkedState = it
       }
@@ -70,11 +68,9 @@ private fun CheckBox() {
 }
 
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun RadioButton() {
   var selectedRadioButton by remember { mutableStateOf(1) }
-  val resourceLoader = LocalResourceLoader.current
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -83,7 +79,6 @@ private fun RadioButton() {
     RadioButtonRow(
       "Value 1",
       selected = selectedRadioButton == 0,
-      resourceLoader,
       onClick = {
         selectedRadioButton = 0
       }
@@ -91,7 +86,6 @@ private fun RadioButton() {
     RadioButtonRow(
       "Value 2",
       selected = selectedRadioButton == 1,
-      resourceLoader,
       onClick = {
         selectedRadioButton = 1
       }
@@ -162,17 +156,14 @@ private fun Tabs() {
   TabStrip(tabs)
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun LinkLabels() {
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(5.dp),
   ) {
-    val resourceLoader = LocalResourceLoader.current
-
     Text("Labels:")
-    Link("Link", resourceLoader, onClick = {
+    Link("Link", onClick = {
       // do nothing
     })
   }
