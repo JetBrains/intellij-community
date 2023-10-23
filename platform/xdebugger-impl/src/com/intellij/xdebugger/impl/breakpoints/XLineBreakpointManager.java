@@ -43,6 +43,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -93,15 +94,14 @@ public final class XLineBreakpointManager {
       EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
         @Override
         public void editorCreated(@NotNull EditorFactoryEvent event) {
-          if (!Registry.is("debugger.show.breakpoints.inline")) return;
           getInlineBreakpointInlayManager().initializeInNewEditor(event.getEditor());
         }
       }, project);
 
-      Registry.get("debugger.show.breakpoints.inline").addListener(new RegistryValueListener() {
+      Registry.get(XDebuggerUtil.INLINE_BREAKPOINTS_KEY).addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
-          if (!Registry.is("debugger.show.breakpoints.inline")) {
+          if (!XDebuggerUtil.areInlineBreakpointsEnabled()) {
             // Multiple breakpoints on the single line should be joined in this case.
             for (String fileUrl : myBreakpoints.keySet()) {
               var file = VirtualFileManager.getInstance().findFileByUrl(fileUrl);
@@ -172,7 +172,7 @@ public final class XLineBreakpointManager {
     List<XLineBreakpoint> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
-      if (!breakpoint.isValid() || !positions.add(Registry.is("debugger.show.breakpoints.inline") ? breakpoint.getOffset() : breakpoint.getLine())) {
+      if (!breakpoint.isValid() || !positions.add(XDebuggerUtil.areInlineBreakpointsEnabled() ? breakpoint.getOffset() : breakpoint.getLine())) {
         toRemove.add(breakpoint);
       }
     }
@@ -252,7 +252,7 @@ public final class XLineBreakpointManager {
           }
         });
 
-        if (Registry.is("debugger.show.breakpoints.inline")) {
+        if (XDebuggerUtil.areInlineBreakpointsEnabled()) {
           var file = FileDocumentManager.getInstance().getFile(document);
           if (file != null) {
             var inlineInlaysManager = getInlineBreakpointInlayManager();

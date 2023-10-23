@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -20,6 +19,7 @@ import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
@@ -36,13 +36,15 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     300, true, null, project, null, false
   ).setRestartTimerOnAdd(true)
 
+  private fun areInlineBreakpointsEnabled() = XDebuggerUtil.areInlineBreakpointsEnabled()
+
   /**
    * Refresh inlays for the given [document] at given [line].
    *
    * Try to do it as soon as possible.
    */
   fun redrawLine(document: Document, line: Int) {
-    if (!Registry.`is`("debugger.show.breakpoints.inline")) return
+    if (!areInlineBreakpointsEnabled()) return
     scope.launch {
       redraw(document, line, null)
     }
@@ -54,7 +56,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
    * This request might be merged with subsequent requests for the same location.
    */
   fun redrawLineQueued(document: Document, line: Int) {
-    if (!Registry.`is`("debugger.show.breakpoints.inline")) return
+    if (!areInlineBreakpointsEnabled()) return
     redrawQueue.queue(Update.create(Pair(document, line)) {
       redrawLine(document, line)
     })
@@ -64,7 +66,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
    * Refresh all inlays in the editor.
    */
   fun initializeInNewEditor(editor: Editor) {
-    if (!Registry.`is`("debugger.show.breakpoints.inline")) return
+    if (!areInlineBreakpointsEnabled()) return
     scope.launch {
       val document = editor.document
       redraw(document, null, editor)
@@ -75,7 +77,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
    * Refresh inlays in all editors.
    */
   fun reinitializeAll() {
-    val enabled = Registry.`is`("debugger.show.breakpoints.inline")
+    val enabled = areInlineBreakpointsEnabled()
     for (editor in EditorFactory.getInstance().allEditors) {
       val document = editor.document
       if (enabled) {
