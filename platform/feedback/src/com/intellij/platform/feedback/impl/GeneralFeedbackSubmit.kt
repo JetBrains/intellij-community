@@ -176,6 +176,9 @@ internal fun getProductTag(): String {
     PlatformUtils.isGoIde() -> "ij_goland"
     PlatformUtils.isJetBrainsClient() -> "ij_code_with_me"
     PlatformUtils.isDataSpell() -> "ij_dataspell"
+    PlatformUtils.isRider() -> "ij_rider"
+    PlatformUtils.isRustRover() -> "ij_rustrover"
+    PlatformUtils.isAqua() -> "ij_aqua"
     else -> "undefined"
   }
 }
