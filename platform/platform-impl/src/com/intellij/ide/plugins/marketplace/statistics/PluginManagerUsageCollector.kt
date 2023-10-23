@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project
 internal object PluginManagerUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = EVENT_GROUP
 
-  private val EVENT_GROUP = EventLogGroup("plugin.manager", 7)
+  private val EVENT_GROUP = EventLogGroup("plugin.manager", 8)
   private val PLUGINS_GROUP_TYPE = EventFields.Enum<PluginsGroupType>("group")
   private val ENABLE_DISABLE_ACTION = EventFields.Enum<PluginEnabledState>("enabled_state")
   private val ACCEPTANCE_RESULT = EventFields.Enum<DialogAcceptanceResultEnum>("acceptance_result")
