@@ -426,12 +426,6 @@
             key="kotlin.external.compiler.updates.notification.group.name"
     />
     <notificationGroup
-            id="Kotlin plugin updates"
-            displayType="STICKY_BALLOON"
-            bundle="messages.KotlinPluginUpdaterBundle"
-            key="plugin.updater.notification.group"
-    />
-    <notificationGroup
             id="Kotlin Migration"
             displayType="STICKY_BALLOON"
             key="configuration.migration.group.name"

@@ -78,10 +78,13 @@ sealed class PluginUpdateStatus {
   }
 }
 
+/**
+ * When [notificationGroup] is null, [StandalonePluginUpdateChecker] doesn't create any notifications about available plugin updates.
+ */
 open class StandalonePluginUpdateChecker(
   val pluginId: PluginId,
   private val updateTimestampProperty: String,
-  private val notificationGroup: NotificationGroup,
+  private val notificationGroup: NotificationGroup?,
   private val notificationIcon: Icon?
 ): Disposable {
 
@@ -248,6 +251,8 @@ open class StandalonePluginUpdateChecker(
   }
 
   private fun notifyPluginUpdateAvailable(update: PluginUpdateStatus.Update) {
+    if (notificationGroup == null) return
+
     val pluginName = findPluginDescriptor().name
     notificationGroup
       .createNotification(
@@ -318,6 +323,8 @@ open class StandalonePluginUpdateChecker(
   }
 
   private fun notifyNotInstalled(message: String?) {
+    if (notificationGroup == null) return
+
     val content = when (message) {
       null -> IdeBundle.message("plugin.updater.not.installed")
       else -> IdeBundle.message("plugin.updater.not.installed.misc", message)

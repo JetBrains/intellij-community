@@ -6,7 +6,6 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonIOException
 import com.google.gson.JsonSyntaxException
 import com.intellij.ide.plugins.*
-import com.intellij.notification.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.HttpRequests
@@ -22,7 +21,7 @@ import java.time.ZoneOffset
 class KotlinPluginUpdater : StandalonePluginUpdateChecker(
     KotlinIdePlugin.id,
     PROPERTY_NAME,
-    NotificationGroupManager.getInstance().getNotificationGroup("Kotlin plugin updates"),
+    notificationGroup = null,
     KotlinIcons.SMALL_LOGO
 ) {
     override val currentVersion: String
