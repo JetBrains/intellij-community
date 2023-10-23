@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @deprecated Use or extend {@link HtmlLexer} with {@code highlightMode} set to {@code true}.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class HtmlHighlightingLexer extends HtmlLexer {
 
   public HtmlHighlightingLexer() {
