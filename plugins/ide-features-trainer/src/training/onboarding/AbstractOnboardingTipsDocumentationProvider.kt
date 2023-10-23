@@ -22,7 +22,7 @@ abstract class AbstractOnboardingTipsDocumentationProvider(private val commentTo
   override fun collectDocComments(file: PsiFile, sink: Consumer<in PsiDocCommentBase>) {
     if (!isEnabledForFile(file)) return
 
-    val filePath = file.virtualFile.path
+    val filePath = file.virtualFile?.path ?: return
     val onboardingTipsDebugPath = file.project.filePathWithOnboardingTips
     if (filePath != onboardingTipsDebugPath) {
       return
