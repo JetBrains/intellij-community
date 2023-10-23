@@ -30,7 +30,7 @@ class GradleDependencySourcesImportingTest : GradleImportingTestCase() {
 
   companion object {
 
-    private const val FORCE_ARGUMENT_KEY_NAME = "idea.gradle.download.sources.force"
+    private const val FORCE_ARGUMENT_PROPERTY_NAME = "idea.gradle.download.sources.force"
 
     private const val DEPENDENCY = "junit:junit:4.12"
     private const val DEPENDENCY_NAME = "Gradle: $DEPENDENCY"
@@ -109,7 +109,6 @@ class GradleDependencySourcesImportingTest : GradleImportingTestCase() {
         .project(":projectB") { project ->
           project
             .withJavaPlugin()
-            .withIdeaPlugin()
             .withMavenCentral()
             .addTestImplementationDependency(DEPENDENCY)
         }
@@ -127,7 +126,7 @@ class GradleDependencySourcesImportingTest : GradleImportingTestCase() {
                        "The test locks native library files in test directory and can not be torn down properly.", SystemInfo.isWindows)
     GradleSettings.getInstance(myProject).isDownloadSources = settings.ideaSettingsValue
     if (settings.forceFlagValue != null) {
-      GradleSystemSettings.getInstance().setGradleVmOptions("-D$FORCE_ARGUMENT_KEY_NAME=${settings.forceFlagValue}")
+      GradleSystemSettings.getInstance().setGradleVmOptions("-D$FORCE_ARGUMENT_PROPERTY_NAME=${settings.forceFlagValue}")
     }
     test.run()
     assertDependencyInGradleCache(settings.sourcesExpected)

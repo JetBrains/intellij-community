@@ -205,6 +205,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     def ideaTestResourceDirs = null
     final downloadSources = GradleDependencyArtifactPolicyUtil.shouldDownloadSources(project)
     final downloadJavadoc = GradleDependencyArtifactPolicyUtil.shouldDownloadJavadoc(project)
+    GradleDependencyArtifactPolicyUtil.setPolicy(project, downloadSources, downloadJavadoc)
 
     def testSourceSets = []
 
@@ -237,8 +238,6 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         ideaTestResourceDirs =
           ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
       }
-      ideaPluginModule.downloadSources = downloadSources
-      ideaPluginModule.downloadJavadoc = downloadJavadoc
     }
 
     def projectSourceCompatibility = JavaPluginUtil.getSourceCompatibility(project)

@@ -20,7 +20,7 @@ public final class GradleDependencyArtifactPolicyUtil {
       return Boolean.parseBoolean(forcePropertyValue);
     }
     // we should respect project level settings declared in the 'build.gradle' file
-    IdeaPlugin ideaPlugin = findRootIdeaPlugin(project);
+    IdeaPlugin ideaPlugin = findIdeaPlugin(project);
     if (ideaPlugin != null) {
       return ideaPlugin.getModel().getModule().isDownloadSources();
     }
@@ -29,7 +29,7 @@ public final class GradleDependencyArtifactPolicyUtil {
   }
 
   public static boolean shouldDownloadJavadoc(@NotNull Project project) {
-    IdeaPlugin ideaPlugin = findRootIdeaPlugin(project);
+    IdeaPlugin ideaPlugin = findIdeaPlugin(project);
     if (ideaPlugin != null) {
       final IdeaModule ideaModule = ideaPlugin.getModel().getModule();
       return ideaModule.isDownloadJavadoc();
@@ -37,10 +37,25 @@ public final class GradleDependencyArtifactPolicyUtil {
     return false;
   }
 
-  private static @Nullable IdeaPlugin findRootIdeaPlugin(@NotNull Project project) {
-    if (project.getParent() == null) {
-      return project.getPlugins().findPlugin(IdeaPlugin.class);
+  public static void setPolicy(@NotNull Project project, boolean downloadSources, boolean downloadJavadocs) {
+    project.getPlugins()
+      .withType(IdeaPlugin.class, plugin -> {
+        IdeaModule module = plugin.getModel().getModule();
+        module.setDownloadSources(downloadSources);
+        module.setDownloadJavadoc(downloadJavadocs);
+      });
+  }
+
+  private static @Nullable IdeaPlugin findIdeaPlugin(@NotNull Project project) {
+    IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
+    if (ideaPlugin != null) {
+      return ideaPlugin;
     }
-    return findRootIdeaPlugin(project.getParent());
+    else if (project.getParent() != null) {
+      return findIdeaPlugin(project.getParent());
+    }
+    else {
+      return null;
+    }
   }
 }

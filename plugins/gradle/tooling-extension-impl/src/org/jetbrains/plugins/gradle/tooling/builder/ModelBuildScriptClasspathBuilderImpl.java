@@ -5,8 +5,6 @@ import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleDependencyArtifactPolicyUtil;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.plugins.ide.idea.IdeaPlugin;
-import org.gradle.plugins.ide.idea.model.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,16 +48,9 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
     buildScriptClasspath.setGradleHomeDir(gradleHomeDir);
     buildScriptClasspath.setGradleVersion(GradleVersion.current().getVersion());
 
-    final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
-
     final boolean downloadJavadoc = GradleDependencyArtifactPolicyUtil.shouldDownloadJavadoc(project);
     final boolean downloadSources = GradleDependencyArtifactPolicyUtil.shouldDownloadSources(project);
-
-    if (ideaPlugin != null) {
-      IdeaModule ideaModule = ideaPlugin.getModel().getModule();
-      ideaModule.setDownloadJavadoc(downloadJavadoc);
-      ideaModule.setDownloadSources(downloadSources);
-    }
+    GradleDependencyArtifactPolicyUtil.setPolicy(project, downloadSources, downloadJavadoc);
 
     Project parent = project.getParent();
     if (parent != null) {
