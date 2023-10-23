@@ -54,9 +54,18 @@ internal object InlineCompletionTooltip {
     val panel = createPanel(session)
 
     val hint = object : LightweightHint(panel) {
+      private val hintShownMs = System.currentTimeMillis()
+      private var hintTimeRegistered = false
+
       override fun onPopupCancel() {
         // on hint hide
         editor.putUserData(tooltipKey, null)
+
+        if (!hintTimeRegistered) { // This method might be called several times
+          val hintHiddenMs = System.currentTimeMillis()
+          InlineCompletionOnboardingComponent.getInstance().fireTooltipLivedFor(hintHiddenMs - hintShownMs)
+          hintTimeRegistered = true
+        }
       }
     }.apply {
       setForceShowAsPopup(true)
@@ -84,8 +93,6 @@ internal object InlineCompletionTooltip {
     Disposer.register(session) {
       hint.hide()
     }
-
-    InlineCompletionOnboardingComponent.getInstance().fireTooltipShown()
   }
 
   private class InplaceChangeInlineCompletionShortcutAction(@NlsActions.ActionText text: String, private val shortcut: Shortcut) :

@@ -10,7 +10,7 @@ import com.intellij.util.xmlb.annotations.Property
 internal class InlineCompletionOnboardingComponent : PersistentStateComponent<InlineCompletionOnboardingComponent> {
 
   @Property
-  private var shownTimes = 0
+  private var shownTimeMs = 0L
 
   @Property
   private var tooltipUsedExplicitly = false
@@ -24,19 +24,21 @@ internal class InlineCompletionOnboardingComponent : PersistentStateComponent<In
   }
 
   fun shouldExplicitlyDisplayTooltip(): Boolean {
-    return !tooltipUsedExplicitly && shownTimes < MAX_SHOW_TIMES
+    return !tooltipUsedExplicitly && shownTimeMs < MAX_SHOWN_TIME_MS
   }
 
   fun fireTooltipUsed() {
     tooltipUsedExplicitly = true
   }
 
-  fun fireTooltipShown() {
-    shownTimes = minOf(shownTimes + 1, MAX_SHOW_TIMES)
+  fun fireTooltipLivedFor(ms: Long) {
+    if (shouldExplicitlyDisplayTooltip()) {
+      shownTimeMs += ms
+    }
   }
 
   companion object {
-    private const val MAX_SHOW_TIMES = 6
+    private const val MAX_SHOWN_TIME_MS = 10_000L
 
     fun getInstance(): InlineCompletionOnboardingComponent = service()
   }
