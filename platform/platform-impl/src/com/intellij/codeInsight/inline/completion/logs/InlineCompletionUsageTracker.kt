@@ -104,7 +104,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val requestId = Random.nextLong()
     private var finished = false
     private val data = mutableListOf<EventPair<*>>()
-    private val contextFeatures = mutableListOf<EventPair<*>>()
+    private val contextFeatures = ContainerUtil.createConcurrentList<EventPair<*>>()
     private var hasSuggestions: Boolean? = null
     private var canceled: Boolean = false
     private var exception: Boolean = false
