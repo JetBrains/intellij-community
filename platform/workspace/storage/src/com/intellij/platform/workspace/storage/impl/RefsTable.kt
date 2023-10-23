@@ -195,7 +195,6 @@ internal class MutableRefsTable(
   }
 
   fun removeRefsByParent(connectionId: ConnectionId, parentId: ParentEntityId) {
-    @Suppress("IMPLICIT_CAST_TO_ANY")
     when (connectionId.connectionType) {
       ConnectionType.ONE_TO_MANY -> getOneToManyMutableMap(connectionId).removeValue(parentId.id.arrayId)
       ConnectionType.ONE_TO_ONE -> getOneToOneMutableMap(connectionId).removeValue(parentId.id.arrayId)
