@@ -9,6 +9,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -701,6 +702,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (rightExtension != null) {
         addExtension(rightExtension);
       }
+      getEmptyText().setText(ApplicationBundle.message("editorsearch.search.hint"));
     }
 
     @Override
@@ -712,7 +714,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     public Dimension getPreferredSize() {
       Dimension dim = super.getPreferredSize();
       Insets m = getMargin();
-      dim.width = getFontMetrics(getFont()).stringWidth(getText()) + 10 + m.left + m.right;
+      var fm = getFontMetrics(getFont());
+      var text = getText();
+      var emptyText = getEmptyText().getText();
+      dim.width = Math.max(fm.stringWidth(text), fm.stringWidth(emptyText)) + 10 + m.left + m.right;
       return dim;
     }
 
