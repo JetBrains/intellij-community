@@ -235,7 +235,7 @@ class CodeFloatingToolbar(
     val component = hintComponent ?: return
     val rootPane = UIUtil.getRootPane(component) ?: return
     popup.setMinimumSize(Dimension(rootPane.width, 0))
-    val verticalGap = 2
+    val verticalGap = 1
     val point = AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, rootPane, Point(0, verticalGap)).screenPoint
     val screenRectangle = ScreenUtil.getScreenRectangle(point)
     val popupSize = PopupImplUtil.getPopupSize(popup)
