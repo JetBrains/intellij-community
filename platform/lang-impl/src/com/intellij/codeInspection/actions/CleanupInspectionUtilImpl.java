@@ -5,14 +5,20 @@ import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
+import com.intellij.lang.LangBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandBatchQuickFix;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.SequentialModalProgressTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,10 +91,24 @@ public final class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
           LOG.assertTrue(representative.getFixes() != null);
           for (QuickFix<?> fix : representative.getFixes()) {
             if (fix.getClass().isAssignableFrom(myQuickfixClass)) {
-              ((BatchQuickFix)fix).applyFix(myProject,
-                  myBatchModeDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY),
-                  new ArrayList<>(),
-                  null);
+              BatchQuickFix batchFix = (BatchQuickFix)fix;
+              if (batchFix instanceof ModCommandBatchQuickFix modCommandBatchQuickFix) {
+                ThrowableComputable<ModCommand, RuntimeException> actionComputable =
+                  () -> ReadAction.nonBlocking(() -> modCommandBatchQuickFix.perform(myProject, myBatchModeDescriptors))
+                    .expireWhen(() -> myProject.isDisposed())
+                    .executeSynchronously();
+                ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                  actionComputable, LangBundle.message("apply.fixes"), true, myProject);
+                if (command == null) return false;
+                ModCommandExecutor.BatchExecutionResult result =
+                  ModCommandExecutor.getInstance().executeInBatch(ActionContext.from(representative), command);
+                myResultCount.merge(result, 1, Integer::sum);
+              } else {
+                batchFix.applyFix(myProject,
+                                  myBatchModeDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY),
+                                  new ArrayList<>(),
+                                  null);
+              }
               break;
             }
           }
