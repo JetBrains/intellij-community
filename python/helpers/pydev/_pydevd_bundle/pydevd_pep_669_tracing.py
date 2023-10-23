@@ -531,11 +531,14 @@ class PyReturnCallback(PEP669CallbackBase):
                 if back is not None:
                     _, back_filename, base \
                         = get_abs_path_real_path_and_base_from_frame(back)
-                    if (base, back.f_code.co_name) in (DEBUG_START, DEBUG_START_PY3K):
+                    back_code = back.f_code
+                    if (base, back_code.co_name) in (DEBUG_START, DEBUG_START_PY3K):
                         back = None
                     self.py_db.set_suspend(thread, step_cmd)
                     self.py_db.do_wait_suspend(thread, back, 'return', retval)
-                    PyLineCallback.start_monitoring(back.f_code)
+                    PyLineCallback.start_monitoring(back_code)
+                    if back_code.co_name != '<module>':
+                        PyReturnCallback.start_monitoring(back_code)
 
     @staticmethod
     def start_monitoring(code):
