@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 ## 0.0.16
-- [MERMAID-140](https://youtrack.jetbrains.com/issue/MERMAID-140) Updated Mermaid.js version to `10.5.0`
+- [MERMAID-140](https://youtrack.jetbrains.com/issue/MERMAID-140) Updated Mermaid.js version to `10.5.1`
 - [MERMAID-141](https://youtrack.jetbrains.com/issue/MERMAID-141) Fixed incorrect parsing of generics with leading and nested tilde characters in class diagrams
 - [MERMAID-142](https://youtrack.jetbrains.com/issue/MERMAID-142) Fixed parsing of leading underscore characters in ER diagrams
 - [MERMAID-143](https://youtrack.jetbrains.com/issue/MERMAID-143) Added support for entity alias in ER diagram
