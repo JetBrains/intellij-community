@@ -172,13 +172,11 @@ public final class NameSuggester {
         if (matches.containsKey(first)) {
           propertyWordToInsertBefore = matches.get(first);
         }
+        else if (matches.containsValue(last) || (matches.containsKey(last) && matches.size() == 1)) {
+          propertyWordToInsertBefore = matches.get(last) + 1;
+        }
         else {
-          if (matches.containsValue(last)) {
-            propertyWordToInsertBefore = matches.get(last) + 1;
-          }
-          else {
-            propertyWordToInsertBefore = propertyWords.length;
-          }
+          propertyWordToInsertBefore = propertyWords.length;
         }
         replacements.put(Pair.create(propertyWordToInsertBefore, propertyWordToInsertBefore - 1), newString);
       }

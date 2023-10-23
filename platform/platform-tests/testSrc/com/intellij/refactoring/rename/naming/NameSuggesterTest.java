@@ -125,8 +125,20 @@ public class NameSuggesterTest extends TestCase {
     doSuggestionTest("Foo", "TaskFoo", "fooImpl", "taskFooImpl");
   }
 
-   public void testSuggestions21() {
+  public void testSuggestions21() {
     doSuggestionTest("Foo", "TaskFoo", "implFoo", "implTaskFoo");
+  }
+
+  public void testSuggestions22() {
+    doSuggestionTest("Foo", "FooBar", "someFooAwesome", "someFooBarAwesome");
+  }
+
+  public void testSuggestions23() {
+    doSuggestionTest("Foo", "FooBarBaz", "someFooAwesome", "someFooBarBazAwesome");
+  }
+
+  public void testSuggestions24() {
+    doSuggestionTest("FooBar", "FooBarBaz", "someFooBarAwesome", "someFooBarBazAwesome");
   }
 
   private void doChangesTest(final String oldClassName, final String newClassName, final String changes) {

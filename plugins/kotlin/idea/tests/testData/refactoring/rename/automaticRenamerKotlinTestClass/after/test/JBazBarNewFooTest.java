@@ -2,7 +2,7 @@ package test;
 
 import org.junit.Test;
 
-public class JBazBarFooTestNew {
+public class JBazBarNewFooTest {
     @Test
     void testFoo() {
 
