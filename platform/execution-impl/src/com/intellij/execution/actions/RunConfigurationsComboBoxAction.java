@@ -205,7 +205,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @Override
-  public @NotNull JComponent createCustomComponent(final @NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     ComboBoxButton button = new RunConfigurationsComboBoxButton(presentation);
     if (isNoWrapping(place)) return button;
 

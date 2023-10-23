@@ -120,7 +120,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   private var helpId: String? = null
 
-  internal var icon: ToolWindowIcon? = null
+  internal var icon: Icon? = null
 
   private val contentManager = SynchronizedClearableLazy {
     val result = createContentManager()
@@ -472,7 +472,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun canCloseContents(): Boolean = canCloseContent
 
-  override fun getIcon(): ToolWindowIcon? = icon
+  override fun getIcon(): Icon? = icon
 
   override fun getTitle(): String? = contentManager.value.selectedContent?.displayName
 
@@ -482,7 +482,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun setIcon(newIcon: Icon) {
     EDT.assertIsEdt()
-    if (newIcon !== icon?.retrieveIcon()) {
+    if (newIcon !== icon) {
       doSetIcon(newIcon)
       toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.ICON)
     }
@@ -496,7 +496,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
         (abs(newIcon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(newIcon.iconWidth - JBUIScale.scale(13f)) >= 1)) {
       logger<ToolWindowImpl>().warn("ToolWindow icons should be 13x13, but got: ${newIcon.iconWidth}x${newIcon.iconHeight}. Please fix ToolWindow (ID:  $id) or icon $newIcon")
     }
-    icon = ToolWindowIcon(newIcon, id)
+    icon = newIcon
   }
 
   override fun setTitle(title: String) {
