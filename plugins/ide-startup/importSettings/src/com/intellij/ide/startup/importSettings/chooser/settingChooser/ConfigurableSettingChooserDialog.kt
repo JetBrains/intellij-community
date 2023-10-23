@@ -23,7 +23,7 @@ class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDat
 
   override fun getOKAction(): Action {
     return super.getOKAction().apply {
-      putValue(Action.NAME, ImportSettingsBundle.message("choose.settings.title"))
+      putValue(Action.NAME, ImportSettingsBundle.message("import.settings.ok"))
     }
   }
 
@@ -50,7 +50,7 @@ class SyncSettingDialog(val provider: SyncActionsDataProvider, product: Settings
 
   override fun getOKAction(): Action {
     return super.getOKAction().apply {
-      putValue(Action.NAME, "Sync Settings")
+      putValue(Action.NAME, ImportSettingsBundle.message("import.settings.sync.ok"))
     }
   }
 
@@ -60,7 +60,7 @@ class SyncSettingDialog(val provider: SyncActionsDataProvider, product: Settings
   }
 
   private fun getImportAction(): Action {
-    return object : DialogWrapperAction("Import Once") {
+    return object : DialogWrapperAction(ImportSettingsBundle.message("import.settings.sync.import.once")) {
 
       override fun doAction(e: ActionEvent?) {
         val importSyncSettings = provider.productService.importSyncSettings()

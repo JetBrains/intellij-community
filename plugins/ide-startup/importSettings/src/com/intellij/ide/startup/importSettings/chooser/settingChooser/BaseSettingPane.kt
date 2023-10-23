@@ -11,7 +11,6 @@ import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
-import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout

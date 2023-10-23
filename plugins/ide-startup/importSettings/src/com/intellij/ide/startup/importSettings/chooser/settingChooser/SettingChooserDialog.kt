@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
 import com.intellij.CommonBundle
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.productChooser.ProductChooserDialog
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
@@ -51,7 +52,7 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
   private val pane = JPanel(BorderLayout()).apply {
     add(panel {
       row {
-        text("Import<br>Settings From").apply {
+        text(ImportSettingsBundle.message("choose.settings.title")).apply {
           this.component.font = JBFont.h1()
         }.align(AlignY.TOP).customize(UnscaledGaps(0, 0, 17, 0))
       }
