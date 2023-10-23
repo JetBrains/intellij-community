@@ -14,11 +14,12 @@ class GotoNextFloatingToolbarMenu: AnAction() {
   companion object {
     fun showNextMenu(floatingToolbar: CodeFloatingToolbar?, isForwardDirection: Boolean){
       val hintComponent = floatingToolbar?.hintComponent ?: return
-      val components = UIUtil.findComponentsOfType(hintComponent, ActionButton::class.java).filter { it.presentation.isPopupGroup }
-      val selectedIndex = components.indexOfFirst { component -> Toggleable.isSelected(component.presentation) }
+      val allButtons = UIUtil.findComponentsOfType(hintComponent, ActionButton::class.java)
+      val navigatableButtons = allButtons.filter { it.presentation.isPopupGroup && it.presentation.isEnabledAndVisible }
+      val selectedIndex = navigatableButtons.indexOfFirst { button -> Toggleable.isSelected(button.presentation) }
       if (selectedIndex < 0) return
       val nextIndex = if (isForwardDirection) selectedIndex + 1 else selectedIndex - 1
-      val button = components[nextIndex.mod(components.size)]
+      val button = navigatableButtons[nextIndex.mod(navigatableButtons.size)]
       button.click()
     }
 
