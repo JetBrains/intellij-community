@@ -92,7 +92,7 @@ class KotlinFirStructureViewElement(
             else -> emptyList()
         }
 
-        return children.map { KotlinFirStructureViewElement(it, it, isInherited = false) }
+        return children.map { KotlinFirStructureViewElement(it.originalElement as KtElement, it, isInherited = false) }
     }
 
     private fun PsiElement.collectLocalDeclarations(): List<KtDeclaration> {

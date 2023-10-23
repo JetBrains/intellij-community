@@ -53,7 +53,6 @@ internal class KotlinFirStructureElementPresentation(
             }
 
             superTypesFilter = KtSuperTypesFilter.NONE
-            parameterDefaultValueRenderer = KtParameterDefaultValueRenderer.THREE_DOTS
             typeParametersRenderer = KtTypeParametersRenderer.NO_TYPE_PARAMETERS
             keywordsRenderer = KtKeywordsRenderer.AS_WORD.with {
                 keywordFilter = KtRendererKeywordFilter.onlyWith(
