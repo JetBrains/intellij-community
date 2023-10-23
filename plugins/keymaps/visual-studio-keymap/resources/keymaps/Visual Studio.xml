@@ -586,6 +586,7 @@
   <action id="EditorIncreaseFontSizeGlobal"/>
   <action id="ZoomInIdeAction"/>
   <action id="ZoomOutIdeAction"/>
+  <action id="Console.Open"/>
 
 
   <!--KNOWN CONFLICTS: https://youtrack.jetbrains.com/issue/IDEA-268674-->
