@@ -68,47 +68,80 @@ def get_value_counts(table):
     return ""
 
 
-def get_value_occurrences_count(table):
-    # type: (Union[pl.DataFrame, pl.Series]) -> str
-    class ColumnVisualisationType:
-        HISTOGRAM = "histogram"
-        UNIQUE = "unique"
-        PERCENTAGE = "percentage"
+class ColumnVisualisationType:
+    HISTOGRAM = "histogram"
+    UNIQUE = "unique"
+    PERCENTAGE = "percentage"
 
+
+class ColumnVisualisationUtils:
+    NUM_BINS = 5
+    MAX_UNIQUE_VALUES = 3
+    UNIQUE_VALUES_PERCENT = 70
+
+    TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR = '__pydev_table_occurrences_count_next_column__'
+    TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR = '__pydev_table_occurrences_count_next_value__'
+    TABLE_OCCURRENCES_COUNT_DICT_SEPARATOR = '__pydev_table_occurrences_count_dict__'
+
+
+def get_value_occurrences_count(table):
     bin_counts = []
-    num_bins = 5
 
     def calculate_occurrences(col_name, column):
         col_type = column.dtype
-        column_visualisation_type = ColumnVisualisationType.HISTOGRAM
-        res = {}
+        res = []
+        column_visualisation_type = None
         if col_type == pl.Boolean and not column.is_null().any():
-            counts = column.value_counts().sort(by = col_name).to_dict()
-            res = {label: count for label, count in zip(counts[col_name], counts["counts"])}
+            column_visualisation_type = ColumnVisualisationType.HISTOGRAM
+            counts = column.value_counts().sort(by=col_name).to_dict()
+            res = add_custom_key_value_separator(zip(counts[col_name], counts["counts"]))
 
-        elif column.is_numeric():
+        elif column.is_numeric() and not column.is_null().all():
+            column_visualisation_type = ColumnVisualisationType.HISTOGRAM
             column = column.drop_nulls()
             unique_values = column.n_unique()
-            if unique_values > num_bins:
-                counts, bin_edges = np.histogram(column, bins=num_bins)
-
+            if unique_values > ColumnVisualisationUtils.NUM_BINS:
+                counts, bin_edges = np.histogram(column, bins=ColumnVisualisationUtils.NUM_BINS)
                 format_function = int if column.is_integer() else lambda x: round(x, 1)
-                bin_labels = ['{} — {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i + 1])) for i in range(num_bins)]
+                bin_labels = ['{} — {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i + 1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
+                res = add_custom_key_value_separator(zip(bin_labels, counts))
 
-                res = {label: count for label, count in zip(bin_labels, counts)}
             else:
                 counts = column.value_counts().sort(by=col_name).to_dict()
-                res = {label: count for label, count in zip(counts[col_name], counts["counts"])}
-        return str({column_visualisation_type: res})
+                res = add_custom_key_value_separator(zip(counts[col_name], counts["counts"]))
+
+        elif col_type == pl.Boolean or col_type == pl.Object or col_type == pl.Utf8 or column.is_temporal() or column.is_null().all():
+            value_counts = column.value_counts()
+            all_values = len(column)
+            if len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
+                column_visualisation_type = ColumnVisualisationType.PERCENTAGE
+                counts = value_counts[:ColumnVisualisationUtils.MAX_UNIQUE_VALUES - 1]
+                top_values_counts = counts["counts"].apply(lambda count: int(count / all_values * 100))
+                top_values = {label: count for label, count in zip(counts[col_name], top_values_counts)}
+                others_count = value_counts[ColumnVisualisationUtils.MAX_UNIQUE_VALUES - 1:]["counts"].sum()
+                top_values["Other"] = int(others_count / all_values * 100)
+                res = add_custom_key_value_separator(top_values.items())
+
+            else:
+                column_visualisation_type = ColumnVisualisationType.UNIQUE
+                counts = len(value_counts)
+
+        if column_visualisation_type != ColumnVisualisationType.UNIQUE:
+            counts = ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR.join(res)
+
+        return str({column_visualisation_type: counts})
+
+    def add_custom_key_value_separator(pairs_list):
+        return [str(label) + ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_DICT_SEPARATOR + str(count) for label, count in pairs_list]
 
     if isinstance(table, pl.DataFrame):
         for col in table.columns:
             bin_counts.append(calculate_occurrences(col, table[col]))
-
     elif isinstance(table, pl.Series):
         bin_counts.append(calculate_occurrences(table.name, table))
 
-    return ';'.join(bin_counts)
+    return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR.join(bin_counts)
+
 
 def __get_describe(table):
     # type: (Union[pl.DataFrame, pl.Series]) -> Union[pl.DataFrame, None]
@@ -124,5 +157,5 @@ def __get_describe(table):
         return described_df
     # If DataFrame/Series have unsupported type for describe
     # then Polars will raise TypeError exception. We should catch them.
-    except TypeError:
+    except:
         return

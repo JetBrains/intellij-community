@@ -971,7 +971,7 @@
       }
     },
 
-    "DataSummary.Chart.background": "Blue4",
+    "DataSummary.Chart.barColor": "Blue4",
 
     "ManagedIdeBadgeBorder": "Grey5",
     "ManagedIdeBadgeBackground": "Grey3",

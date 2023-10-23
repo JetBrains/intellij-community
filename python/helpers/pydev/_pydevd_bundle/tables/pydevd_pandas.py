@@ -99,7 +99,7 @@ def __get_describe(table):
     try:
         described_ = table.describe(percentiles=[.05, .25, .5, .75, .95],
                                     exclude=[np.complex64, np.complex128])
-    except (TypeError, OverflowError):
+    except (TypeError, OverflowError, ValueError):
         return
 
     if type(table) is pd.Series:
@@ -113,41 +113,94 @@ def __get_counts(table):
     return __convert_to_df(table).count().to_frame().transpose()
 
 
-def get_value_occurrences_count(table):
-    # type: (Union[pd.DataFrame, pd.Series, np.ndarray, pd.Categorical]) -> str
-    class ColumnVisualisationType:
-        HISTOGRAM = "histogram"
-        UNIQUE = "unique"
-        PERCENTAGE = "percentage"
+class ColumnVisualisationType:
+    HISTOGRAM = "histogram"
+    UNIQUE = "unique"
+    PERCENTAGE = "percentage"
 
+class ColumnVisualisationUtils:
+    NUM_BINS = 5
+    MAX_UNIQUE_VALUES = 3
+    UNIQUE_VALUES_PERCENT = 70
+
+    TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR = '__pydev_table_occurrences_count_next_column__'
+    TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR = '__pydev_table_occurrences_count_next_value__'
+    TABLE_OCCURRENCES_COUNT_DICT_SEPARATOR = '__pydev_table_occurrences_count_dict__'
+
+def get_value_occurrences_count(table):
     df = __convert_to_df(table)
-    num_bins = 5
     bin_counts = []
-    column_visualisation_type = ColumnVisualisationType.HISTOGRAM
 
     for col_name in df.columns:
-        column = df[col_name].dropna()
-        col_type = column.dtype
-        res = {}
-        if col_type == bool:
-            res = df[col_name].value_counts().sort_index().to_dict()
-        elif col_type.kind in ['i', 'f']:
-            unique_values = column.nunique()
-            if unique_values <= num_bins:
-                res = df[col_name].value_counts().sort_index().to_dict()
-            else:
-                counts, bin_edges = np.histogram(column, bins=num_bins)
-                if col_type.kind == 'i':
-                    format_function = lambda x: int(x)
-                else:
-                    format_function = lambda x: round(x, 1)
+        column_visualisation_type, result = analyze_column(df[col_name])
 
-                bin_labels = ['{} — {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i+1])) for i in range(num_bins)]
-                bin_count_dict = {label: count for label, count in zip(bin_labels, counts)}
-                res = bin_count_dict
-        bin_counts.append(str({column_visualisation_type: res}))
+        bin_counts.append(str({column_visualisation_type: result}))
+    return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR.join(bin_counts)
 
-    return ';'.join(bin_counts)
+
+def analyze_column(column):
+    col_type = column.dtype
+
+    if col_type == bool:
+        return ColumnVisualisationType.HISTOGRAM, analyze_boolean_column(column)
+    elif col_type.kind in ['O', 'S', 'U', 'M', 'c'] or column.isna().all():
+        value_counts = column.value_counts(dropna=False)
+        all_values = len(column)
+        if len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
+            return ColumnVisualisationType.PERCENTAGE, analyze_categorical_column(column)
+        else:
+            return ColumnVisualisationType.UNIQUE, len(value_counts)
+    elif col_type.kind in ['i', 'f']:
+        return ColumnVisualisationType.HISTOGRAM, analyze_numeric_column(column)
+
+
+def analyze_boolean_column(column):
+    res = column.value_counts().sort_index().to_dict()
+    return add_custom_key_value_separator(res.items())
+
+
+def analyze_categorical_column(column):
+    value_counts = column.value_counts(dropna=False)
+    all_values = len(column)
+    if len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
+        top_values = value_counts.iloc[:ColumnVisualisationUtils.MAX_UNIQUE_VALUES - 1].apply(lambda count: int(count / all_values * 100)).to_dict()
+        others_count = value_counts.iloc[ColumnVisualisationUtils.MAX_UNIQUE_VALUES - 1:].sum()
+        top_values["Other"] = int(others_count / all_values * 100)
+        result = ""
+        index = 0
+        for key, val in top_values.items():
+            index += 1
+            result += '{}{}{}'.format(key, ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_DICT_SEPARATOR, val)
+            if index < len(top_values):
+                result += ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR
+    else:
+        top_values = len(value_counts)
+        result = top_values
+    return result
+
+
+def analyze_numeric_column(column):
+    unique_values = column.nunique()
+    if unique_values <= ColumnVisualisationUtils.NUM_BINS:
+        res = column.value_counts().sort_index().to_dict()
+    else:
+        counts, bin_edges = np.histogram(column.dropna(), bins=ColumnVisualisationUtils.NUM_BINS)
+        if column.dtype.kind == 'i':
+            format_function = lambda x: int(x)
+        else:
+            format_function = lambda x: round(x, 1)
+
+        bin_labels = ['{} — {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
+        bin_count_dict = {label: count for label, count in zip(bin_labels, counts)}
+        res = bin_count_dict
+    return add_custom_key_value_separator(res.items())
+
+
+def add_custom_key_value_separator(pairs_list):
+    return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR.join(
+        ['{}{}{}'.format(key, ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_DICT_SEPARATOR, value) for key, value in pairs_list]
+    )
+
 
 # noinspection PyUnresolvedReferences
 def __convert_to_df(table):

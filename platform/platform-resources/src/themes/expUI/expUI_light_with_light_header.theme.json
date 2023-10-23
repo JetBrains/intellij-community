@@ -198,6 +198,7 @@
       }
     },
 
+    "DataSummary.Chart.barColor": "Blue4",
     "PresentationAssistant": {
       "Pale": {
         "Popup": {
