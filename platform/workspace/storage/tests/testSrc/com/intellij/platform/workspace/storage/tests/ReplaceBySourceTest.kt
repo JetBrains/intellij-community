@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepetitionInfo
@@ -111,7 +110,7 @@ class ReplaceBySourceTest {
     val parent1 = builder add NamedEntity("data1", MySource)
     val parent2 = builder add NamedEntity("data2", MySource)
     resetChanges()
-    val originalStorage = builder.toSnapshot()
+    builder.toSnapshot()
 
     builder.replaceBySource({ true }, createEmptyBuilder())
     val collectChanges = builder.collectChanges()
