@@ -2,7 +2,7 @@
 package com.intellij.collaboration.auth
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.openapi.Disposable
+import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -11,8 +11,14 @@ import java.util.concurrent.ConcurrentHashMap
 class AccountUrlAuthenticationFailuresHolder<A : Account>(
   private val cs: CoroutineScope,
   private val accountManager: () -> AccountManager<A, *>
-) : Disposable {
+) {
   private val storeMap = ConcurrentHashMap<A, MutableSet<String>>()
+
+  init {
+    cs.awaitCancellationAndInvoke {
+      storeMap.clear()
+    }
+  }
 
   fun markFailed(account: A, url: String) {
     storeMap.computeIfAbsent(account) {
@@ -25,8 +31,4 @@ class AccountUrlAuthenticationFailuresHolder<A : Account>(
   }
 
   fun isFailed(account: A, url: String): Boolean = storeMap[account]?.contains(url) ?: false
-
-  override fun dispose() {
-    storeMap.clear()
-  }
 }
