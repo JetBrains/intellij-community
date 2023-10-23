@@ -464,7 +464,10 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
     // indicator is canceled
     // => CompletionHandler was actually invoked
     // => current Job is canceled
-    check(job.isCancelled)
+    if (!job.isCancelled) {
+      LOG.error("Indicator should be cancelled only by cancellation of the calling coroutine")
+      throw PceCancellationException(e)
+    }
     @OptIn(InternalCoroutinesApi::class)
     throw job.getCancellationException()
   }
