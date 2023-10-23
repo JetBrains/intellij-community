@@ -29,7 +29,6 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
             "ThreadingConcurrency",
             "CallingMethodShouldBeRequiresBlockingContext",
             "IncorrectProcessCanceledExceptionHandling",
-            "StaticInitializationInExtensions",
             "UsePlatformProcessAwaitExit");
 
   /**
