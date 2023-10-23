@@ -11,8 +11,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
+import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
+import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
@@ -36,6 +38,18 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
     companion object {
         private const val DEFAULT_GROUP_ID = "me.user"
+
+        private fun Context.Reader.getWizardKotlinVersion(): WizardKotlinVersion {
+            return KotlinPlugin.version.propertyValue
+        }
+
+        fun getKotlinWizardVersion(newProjectWizardModuleBuilder: NewProjectWizardModuleBuilder): WizardKotlinVersion {
+            var wizardKotlinVersion: WizardKotlinVersion
+            newProjectWizardModuleBuilder.apply {
+                wizardKotlinVersion = wizard.context.Reader().getWizardKotlinVersion()
+            }
+            return wizardKotlinVersion
+        }
 
         fun generateProject(
             project: Project,

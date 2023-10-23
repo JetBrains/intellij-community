@@ -30,7 +30,7 @@ import org.junit.jupiter.api.*
 import java.io.File
 
 /**
- * A test case for the Kotlin new project/module wizard.
+ * A test case for the Kotlin Gradle new project/module wizard.
  * Test cases can either generate a new project, or a new module in an existing projects.
  * Existing projects can be defined using the [projectInfo] DSL.
  * The tests work by asserting that certain generated files are created with the correct content,

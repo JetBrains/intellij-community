@@ -59,5 +59,6 @@ object Versions {
     object MAVEN_PLUGINS {
         val SUREFIRE = loadVersion("2.22.2") { surefireVersion }
         val FAILSAFE = loadVersion("2.22.2") { failsafeVersion }
+        val CODEHAUS_MOJO_EXEC = loadVersion("1.6.0") { codehausMojoExecVersion }
     }
 }

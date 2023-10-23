@@ -45,9 +45,9 @@ import java.util.List;
 import java.util.Map;
 
 public class MavenModuleBuilderHelper {
-  private final MavenId myProjectId;
+  protected final MavenId myProjectId;
 
-  private final MavenProject myAggregatorProject;
+  protected final MavenProject myAggregatorProject;
   private final MavenProject myParentProject;
 
   private final boolean myInheritGroupId;
@@ -56,7 +56,7 @@ public class MavenModuleBuilderHelper {
   private final MavenArchetype myArchetype;
   private final Map<String, String> myPropertiesToCreateByArtifact;
 
-  @NlsContexts.Command private final String myCommandName;
+  @NlsContexts.Command protected final String myCommandName;
 
   public MavenModuleBuilderHelper(@NotNull MavenId projectId,
                                   MavenProject aggregatorProject,
@@ -105,14 +105,7 @@ public class MavenModuleBuilderHelper {
       }
 
       if (myAggregatorProject != null) {
-        VirtualFile aggregatorProjectFile = myAggregatorProject.getFile();
-        MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, aggregatorProjectFile);
-        if (model != null) {
-          model.getPackaging().setStringValue("pom");
-          MavenDomModule module = model.getModules().addModule();
-          module.setValue(getPsiFile(project, file));
-          unblockAndSaveDocuments(project, aggregatorProjectFile);
-        }
+        setPomPackagingForAggregatorProject(project, file);
       }
       return file;
     });
@@ -149,7 +142,18 @@ public class MavenModuleBuilderHelper {
     });
   }
 
-  private void updateProjectPom(final Project project, final VirtualFile pom) {
+  protected void setPomPackagingForAggregatorProject(Project project, VirtualFile file) {
+    VirtualFile aggregatorProjectFile = myAggregatorProject.getFile();
+    MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, aggregatorProjectFile);
+    if (model != null) {
+      model.getPackaging().setStringValue("pom");
+      MavenDomModule module = model.getModules().addModule();
+      module.setValue(getPsiFile(project, file));
+      unblockAndSaveDocuments(project, aggregatorProjectFile);
+    }
+  }
+
+  protected void updateProjectPom(final Project project, final VirtualFile pom) {
     if (myParentProject == null) return;
 
     WriteCommandAction.writeCommandAction(project).withName(myCommandName).run(() -> {
@@ -183,7 +187,7 @@ public class MavenModuleBuilderHelper {
     });
   }
 
-  private static void unblockAndSaveDocuments(@NotNull Project project, VirtualFile @NotNull ... files) {
+  protected static void unblockAndSaveDocuments(@NotNull Project project, VirtualFile @NotNull ... files) {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     for (VirtualFile file : files) {
@@ -194,7 +198,7 @@ public class MavenModuleBuilderHelper {
     }
   }
 
-  private static PsiFile getPsiFile(Project project, VirtualFile pom) {
+  protected static PsiFile getPsiFile(Project project, VirtualFile pom) {
     return PsiManager.getInstance(project).findFile(pom);
   }
 
@@ -258,7 +262,7 @@ public class MavenModuleBuilderHelper {
     }
   }
 
-  private static void showError(Project project, Throwable e) {
+  protected static void showError(Project project, Throwable e) {
     MavenUtil.showError(project, MavenProjectBundle.message("notification.title.failed.to.create.maven.project"), e);
   }
 }

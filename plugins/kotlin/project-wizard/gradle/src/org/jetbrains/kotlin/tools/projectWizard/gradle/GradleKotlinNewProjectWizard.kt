@@ -35,6 +35,11 @@ import org.jetbrains.kotlin.idea.configuration.getGradleKotlinVersion
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.*
+import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard.Companion.DEFAULT_KOTLIN_VERSION
+import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_MAIN_KOTLIN_PATH
+import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_MAIN_RESOURCES_PATH
+import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_KOTLIN_PATH
+import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_RESOURCES_PATH
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
@@ -171,11 +176,11 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             canUseFoojay = currentGradleVersion >= minGradleFoojayVersion
         }
 
-        // The default value of 1.9.0 is actually never used, it is just here to avoid the variable being nullable.
-        private var kotlinVersionToUse: String = "1.9.0"
+        // The default value is actually never used, it is just here to avoid the variable being nullable.
+        private var kotlinVersionToUse: String = DEFAULT_KOTLIN_VERSION
 
         private fun findKotlinVersionToUse(project: Project) {
-            val latestKotlinVersion = KotlinWizardVersionStore.getInstance().state?.kotlinPluginVersion ?: "1.9.0"
+            val latestKotlinVersion = KotlinWizardVersionStore.getInstance().state?.kotlinPluginVersion ?: DEFAULT_KOTLIN_VERSION
             kotlinVersionToUse = latestKotlinVersion
             if (isCreatingNewRootModule()) {
                 return
@@ -260,10 +265,10 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
     private class AssetsStep(private val parent: Step) : AssetsKotlinNewProjectWizardStep(parent) {
         private fun createKotlinContentRoots() {
             val directories = listOf(
-                "$outputDirectory/src/main/kotlin",
-                "$outputDirectory/src/main/resources",
-                "$outputDirectory/src/test/kotlin",
-                "$outputDirectory/src/test/resources",
+                "$outputDirectory$SRC_MAIN_KOTLIN_PATH",
+                "$outputDirectory$SRC_MAIN_RESOURCES_PATH",
+                "$outputDirectory$SRC_TEST_KOTLIN_PATH",
+                "$outputDirectory$SRC_TEST_RESOURCES_PATH",
             )
             directories.forEach {
                 Path.of(it).createDirectories()

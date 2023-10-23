@@ -17,5 +17,6 @@ internal val DEFAULT_KOTLIN_WIZARD_VERSIONS = KotlinWizardVersionState(
     foojayVersion = "0.5.0",
     failsafeVersion = "2.22.2",
     surefireVersion = "2.22.2",
-    gradleAndroidVersion = "8.1.0"
+    gradleAndroidVersion = "8.1.0",
+    codehausMojoExecVersion = "1.6.0"
 )
