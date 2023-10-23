@@ -326,7 +326,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         return result
       }
       else {
-        val readingResult = readMavenProjectsActivity(syncActivity) { read() }
+        readMavenProjectsActivity(syncActivity) { read() }
       }
       return emptyList()
     }

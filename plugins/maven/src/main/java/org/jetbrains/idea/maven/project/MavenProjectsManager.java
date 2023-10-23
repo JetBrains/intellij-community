@@ -789,6 +789,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return doForceUpdateProjects(projects);
   }
 
+  /**
+   * @deprecated TODO: explain
+   */
   @Deprecated
   protected abstract AsyncPromise<Void> doForceUpdateProjects(@NotNull Collection<@NotNull MavenProject> projects);
 

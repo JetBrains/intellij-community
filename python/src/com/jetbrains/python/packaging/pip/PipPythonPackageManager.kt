@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 class PipPythonPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(project, sdk) {
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
-    private set
+    set
 
   override val repositoryManager: PipRepositoryManager = PipRepositoryManager(project, sdk)
 
