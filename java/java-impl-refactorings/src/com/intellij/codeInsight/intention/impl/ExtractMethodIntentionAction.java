@@ -18,6 +18,7 @@ import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,8 @@ public class ExtractMethodIntentionAction implements IntentionAction, Iconable {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+    if (floatingToolbar != null && (floatingToolbar.isShown() || floatingToolbar.canBeShownAtCurrentSelection())) return false;
     if (file instanceof PsiCodeFragment || !file.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       return false;
     }
