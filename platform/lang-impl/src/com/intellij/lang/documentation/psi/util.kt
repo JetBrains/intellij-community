@@ -18,8 +18,13 @@ fun psiDocumentationTarget(element: PsiElement, originalElement: PsiElement?): D
 }
 
 fun psiDocumentationTargets(element: PsiElement, originalElement: PsiElement?): List<DocumentationTarget> {
-  val targets = PsiDocumentationTargetProvider.EP_NAME.extensionList.flatMap { it.documentationTargets(element, originalElement) }
-  return targets.ifEmpty { listOf(PsiElementDocumentationTarget (element.project, element, originalElement)) }
+  for (ext in PsiDocumentationTargetProvider.EP_NAME.extensionList) {
+    val targets = ext.documentationTargets(element, originalElement)
+    if (targets.isNotEmpty()) return targets
+  }
+  return listOf(PsiElementDocumentationTarget (element.project, element, originalElement))
+  //val targets = PsiDocumentationTargetProvider.EP_NAME.extensionList.flatMap { it.documentationTargets(element, originalElement) }
+  //return targets.ifEmpty { listOf(PsiElementDocumentationTarget (element.project, element, originalElement)) }
 }
 
 fun createPsiDocumentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget =
