@@ -5,6 +5,7 @@ import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsL
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.customize.transferSettings.models.TransferSettingsModel
+import com.intellij.ide.customize.transferSettings.providers.TransferSettingsPerformContext
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransferSettingsProvider
 import com.intellij.ide.customize.transferSettings.ui.TransferSettingsProgressIndicatorBase
 import com.intellij.ide.customize.transferSettings.ui.TransferSettingsView
@@ -50,7 +51,7 @@ class TransferSettingsFacade(private val project: Project?) {
         button.isEnabled = true
       }
 
-      override fun importPerformed(ideVersion: IdeVersion, settings: Settings) {
+      override fun importPerformed(ideVersion: IdeVersion, settings: Settings, context: TransferSettingsPerformContext) {
         successOrFailureLabel.isVisible = true
         successOrFailureLabel.text = "Success"
         progressBar.isVisible = false

@@ -6,15 +6,21 @@ import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.util.application
 
-open class TransferSettingsPerformImportTask(project: Project?,
-                                             private val performer: ImportPerformer,
-                                             private var settings: Settings,
-                                             private val shouldInstallPlugins: Boolean) : Task.Backgroundable(project,
-                                                                                                              IdeBundle.message("transfersettings.task.progress.title.importing.settings"),
-                                                                                                              false) {
+open class TransferSettingsPerformImportTask(
+  project: Project?,
+  private val performer: ImportPerformer,
+  private var settings: Settings,
+  private val shouldInstallPlugins: Boolean,
+  private val context: TransferSettingsPerformContext? = null
+) : Task.Backgroundable(
+  project,
+  IdeBundle.message("transfersettings.task.progress.title.importing.settings"),
+  false
+) {
   override fun run(indicator: ProgressIndicator) {
     indicator.isIndeterminate = true
     indicator.text2 = IdeBundle.message("transfersettings.task.progress.details.starting.up")
@@ -23,16 +29,23 @@ open class TransferSettingsPerformImportTask(project: Project?,
     indicator.fraction = 0.0
 
     if (shouldInstallPlugins) {
-      performer.installPlugins(project, requiredPlugins, indicator)
+      runBlockingCancellable {
+        val installationResult = performer.installPlugins(project, requiredPlugins, indicator)
+        context?.pluginInstallationState = installationResult
+      }
     }
 
     settings = performer.patchSettingsAfterPluginInstallation(settings, PluginManagerCore.plugins.map { it.pluginId.idString }.toSet())
 
     performer.perform(project, settings, indicator)
-    indicator.isIndeterminate = true
-    indicator.text2 = IdeBundle.message("transfersettings.task.progress.details.finishing.up")
+    indicator.fraction = 0.99
+    indicator.text = IdeBundle.message("transfersettings.task.progress.details.finishing.up")
+    indicator.text2 = null
     application.invokeAndWait({ performer.performEdt(project, settings) }, indicator.modalityState)
 
-    indicator.text2 = IdeBundle.message("transfersettings.task.progress.details.complete")
+    indicator.fraction = 1.0
+    indicator.text = IdeBundle.message("transfersettings.task.progress.details.complete")
   }
 }
+
+data class TransferSettingsPerformContext(var pluginInstallationState: PluginInstallationState = PluginInstallationState.NoPlugins)

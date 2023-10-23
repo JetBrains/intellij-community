@@ -7,6 +7,8 @@ import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsL
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.customize.transferSettings.models.SettingsPreferencesKind
+import com.intellij.ide.customize.transferSettings.providers.PluginInstallationState
+import com.intellij.ide.customize.transferSettings.providers.TransferSettingsPerformContext
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransferSettingsProvider
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.BaseSetting
@@ -18,6 +20,7 @@ import com.intellij.ide.startup.importSettings.data.ImportProgress
 import com.intellij.ide.startup.importSettings.data.NotificationData
 import com.intellij.ide.startup.importSettings.data.Product
 import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -174,9 +177,12 @@ internal class TransferSettingsWizardListener : TransferSettingsListener {
     showImportErrorNotification(throwable)
   }
 
-  override fun importPerformed(ideVersion: IdeVersion, settings: Settings) {
-    thisLogger().info("Setting import error from ${ideVersion.name} has been finished.")
+  override fun importPerformed(ideVersion: IdeVersion, settings: Settings, context: TransferSettingsPerformContext) {
+    thisLogger().info("Setting import error from ${ideVersion.name} has been finished, plugin state: ${context.pluginInstallationState}.")
     SettingsService.getInstance().doClose.fire(Unit)
+    if (context.pluginInstallationState == PluginInstallationState.RestartRequired) {
+      ApplicationManagerEx.getApplicationEx().restart(/* exitConfirmed = */ true)
+    }
   }
 }
 

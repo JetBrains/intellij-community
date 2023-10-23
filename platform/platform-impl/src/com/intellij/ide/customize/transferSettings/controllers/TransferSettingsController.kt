@@ -6,6 +6,7 @@ import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.customize.transferSettings.providers.ImportPerformer
+import com.intellij.ide.customize.transferSettings.providers.TransferSettingsPerformContext
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import java.util.*
@@ -29,7 +30,7 @@ interface TransferSettingsListener : EventListener {
 
   fun importStarted(ideVersion: IdeVersion, settings: Settings) {}
   fun importFailed(ideVersion: IdeVersion, settings: Settings, throwable: Throwable) {}
-  fun importPerformed(ideVersion: IdeVersion, settings: Settings) {}
+  fun importPerformed(ideVersion: IdeVersion, settings: Settings, context: TransferSettingsPerformContext) {}
 
   fun itemSelected(ideVersion: BaseIdeVersion) {}
 }
