@@ -5,13 +5,13 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Service
@@ -75,8 +75,10 @@ internal class InlineContextFeatures(val coroutineScope: CoroutineScope) {
   companion object {
     fun capture(editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
       val instance = getInstance()
-      instance.coroutineScope.launch(Dispatchers.Default) {
-        instance.capture(editor, offset, contextFeatures)
+      instance.coroutineScope.launch {
+        readAction {
+          instance.capture(editor, offset, contextFeatures)
+        }
       }
     }
 
