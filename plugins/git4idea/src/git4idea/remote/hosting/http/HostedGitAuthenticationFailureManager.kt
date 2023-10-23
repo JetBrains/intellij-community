@@ -7,12 +7,21 @@ import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.AccountUrlAuthenticationFailuresHolder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-abstract class HostedGitAuthenticationFailureManager<A : Account>(accountManager: () -> AccountManager<A, *>) : Disposable {
-  private val holder = AccountUrlAuthenticationFailuresHolder(disposingScope(), accountManager).also {
-    Disposer.register(this, it)
+abstract class HostedGitAuthenticationFailureManager<A : Account> : Disposable {
+
+  private val holder: AccountUrlAuthenticationFailuresHolder<A>
+
+  constructor(accountManager: () -> AccountManager<A, *>, cs: CoroutineScope) {
+    holder = AccountUrlAuthenticationFailuresHolder(cs, accountManager)
+  }
+
+  @Deprecated("A service coroutine scope should be provided")
+  constructor(accountManager: () -> AccountManager<A, *>) {
+    holder = AccountUrlAuthenticationFailuresHolder(disposingScope(), accountManager)
   }
 
   fun ignoreAccount(url: String, account: A) {
@@ -20,4 +29,6 @@ abstract class HostedGitAuthenticationFailureManager<A : Account>(accountManager
   }
 
   fun isAccountIgnored(url: String, account: A): Boolean = holder.isFailed(account, url)
+
+  override fun dispose() = Unit
 }
