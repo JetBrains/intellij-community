@@ -71,8 +71,9 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
                 && functionParams.zip(superCallFunctionParams).any { it.first.type != it.second.type }
             ) return
 
-            val superCallFqName = superCallDescriptor.fqNameSafe
-            if (function.containingClassOrObject?.isData() == true && superCallFqName in Holder.METHODS_OF_ANY) return
+            if (function.containingClassOrObject?.isData() == true &&
+                (superCallDescriptor.isMethodOfAny() || superCallDescriptor.isOverridingMethodOfAny())
+            ) return
 
             if (function.hasDerivedProperty(functionDescriptor, context)) return
             var overriddenDescriptors = functionDescriptor.original.overriddenDescriptors
@@ -88,7 +89,7 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
 
             if (overriddenDescriptors.any { it is JavaMethodDescriptor && it.visibility == JavaDescriptorVisibilities.PACKAGE_VISIBILITY }) return
             if (overriddenDescriptors.any { it.modality == Modality.ABSTRACT }) {
-                if (superCallFqName in Holder.METHODS_OF_ANY) return
+                if (superCallDescriptor.isMethodOfAny()) return
                 if (superCallDescriptor.isOverridingMethodOfAny() && !superCallDescriptor.isImplementedInContainingClass()) return
             }
             if (function.isAmbiguouslyDerived(overriddenDescriptors, context)) return
@@ -118,8 +119,10 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
         return function.name == superCallMethodName
     }
 
+    private fun CallableDescriptor.isMethodOfAny() = fqNameSafe in Holder.METHODS_OF_ANY
+
     private fun CallableDescriptor.isOverridingMethodOfAny() =
-        (this as? CallableMemberDescriptor)?.getDeepestSuperDeclarations().orEmpty().any { it.fqNameSafe in Holder.METHODS_OF_ANY }
+        (this as? CallableMemberDescriptor)?.getDeepestSuperDeclarations().orEmpty().any { it.isMethodOfAny() }
 
     private fun CallableDescriptor.isImplementedInContainingClass() =
         (containingDeclaration as? LazyClassDescriptor)?.declaredCallableMembers.orEmpty().any { it == this }
