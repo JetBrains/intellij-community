@@ -18,7 +18,7 @@ private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
     return ExperimentalUI.isNewUI() &&
            Registry.`is`("ide.experimental.ui.meetNewUi", true) &&
            serviceAsync<PropertiesComponent>().getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH) &&
-           //MeetNewUiCustomization.firstOrNull()?.showToolWindowOnStartup() == true &&
+           MeetNewUiCustomization.firstOrNull()?.showToolWindowOnStartup() == true &&
            !isNotificationSilentMode(project)
   }
 
