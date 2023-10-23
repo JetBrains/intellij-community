@@ -16,6 +16,7 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.namedChildScope
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -330,7 +331,7 @@ fun <T> Cell<ComboBox<T>>.bindSelectedItemIn(scope: CoroutineScope, flow: Mutabl
 
 private typealias Block = CoroutineScope.() -> Unit
 
-class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { SupervisorJob() + Dispatchers.Main })
+class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { Dispatchers.Main })
   : Activatable {
 
   private var scope: CoroutineScope? = null
@@ -349,8 +350,9 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
     }
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   override fun showNotify() {
-    scope = CoroutineScope(context()).apply {
+    scope = GlobalScope.namedChildScope("ActivatableCoroutineScopeProvider", context(), true).apply {
       for (block in blocks) {
         launch { block() }
       }
