@@ -8,6 +8,8 @@ import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.JBrActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 
 class ConfigAction(val callback: (PageProvider) -> Unit) : DumbAwareAction() {

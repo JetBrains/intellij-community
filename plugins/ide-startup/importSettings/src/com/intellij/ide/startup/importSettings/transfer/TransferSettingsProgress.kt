@@ -9,6 +9,8 @@ import com.intellij.ide.startup.importSettings.data.IconProductSize
 import com.intellij.ide.startup.importSettings.data.ImportFromProduct
 import com.intellij.ide.startup.importSettings.data.ImportProgress
 import com.intellij.ide.startup.importSettings.data.SettingsContributor
+import com.intellij.ide.startup.importSettings.jb.JbProductInfo
+import com.intellij.ide.startup.importSettings.jb.NameMappings
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NlsContexts.ProgressDetails
@@ -18,15 +20,20 @@ import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.compose
 
-internal class TransferSettingsProgress(sourceIdeVersion: IdeVersion) : ImportFromProduct {
+class TransferSettingsProgress(override val from: DialogImportItem) : ImportFromProduct {
+
+  constructor(sourceIdeVersion: IdeVersion) : this(DialogImportItem(
+      TransferSettingsContributor(sourceIdeVersion),
+      sourceIdeVersion.transferableId.icon(IconProductSize.LARGE) ?: AllIcons.Actions.Stub
+    ))
+  constructor(productInfo: JbProductInfo)  : this(DialogImportItem(
+    productInfo, NameMappings.getIcon(productInfo.codeName, IconProductSize.LARGE) ?: AllIcons.Actions.Stub
+  ))
+
 
   override val message = null
   override val progress = TransferSettingsProgressIndicator()
 
-  override val from = DialogImportItem(
-    TransferSettingsContributor(sourceIdeVersion),
-    sourceIdeVersion.transferableId.icon(IconProductSize.LARGE) ?: AllIcons.Actions.Stub
-  )
   override val to = DialogImportItem.self()
 
   fun createProgressIndicatorAdapter(): ProgressIndicator = ProgressIndicatorAdapter(progress)
@@ -44,7 +51,7 @@ private class TransferSettingsContributor(ideVersion: BaseIdeVersion) : Settings
   override val name = ideVersion.name
 }
 
-private class ProgressIndicatorAdapter(private val backend: TransferSettingsProgressIndicator) : ProgressIndicator {
+class ProgressIndicatorAdapter(private val backend: TransferSettingsProgressIndicator) : ProgressIndicator {
   override fun start() {}
   override fun stop() {}
   override fun isRunning() = true

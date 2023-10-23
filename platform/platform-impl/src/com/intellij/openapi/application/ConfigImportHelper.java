@@ -766,6 +766,9 @@ public final class ConfigImportHelper {
     @Nullable Map<PluginId, Set<String>> brokenPluginVersions = null;
     boolean mergeVmOptions = false;
 
+    @Nullable
+    ProgressIndicator headlessProgressIndicator = null;
+
     public ConfigImportOptions(Logger log) {
       this.log = log;
     }
@@ -776,6 +779,23 @@ public final class ConfigImportHelper {
 
     public void setHeadless(boolean headless) {
       this.headless = headless;
+    }
+
+    @Nullable
+    public ProgressIndicator getHeadlessProgressIndicator() {
+      return headlessProgressIndicator;
+    }
+
+    public void setHeadlessProgressIndicator(@Nullable ProgressIndicator headlessProgressIndicator) {
+      this.headlessProgressIndicator = headlessProgressIndicator;
+    }
+
+    public ConfigImportSettings getImportSettings() {
+      return importSettings;
+    }
+
+    public void setImportSettings(ConfigImportSettings importSettings) {
+      this.importSettings = importSettings;
     }
   }
 
@@ -990,7 +1010,9 @@ public final class ConfigImportHelper {
   private static void downloadUpdatesForIncompatiblePlugins(Path newPluginsDir,  ConfigImportOptions options, List<IdeaPluginDescriptor> incompatiblePlugins) {
     if (options.headless) {
       PluginDownloader.runSynchronouslyInBackground(() -> {
-        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, new EmptyProgressIndicator());
+        ProgressIndicator progressIndicator =
+          options.headlessProgressIndicator == null ? new EmptyProgressIndicator() : options.headlessProgressIndicator;
+        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, progressIndicator);
       });
     }
     else {

@@ -3,12 +3,15 @@ package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.ConfigImportSettings
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.io.systemIndependentPath
@@ -24,15 +27,16 @@ import kotlin.io.path.*
 class JbSettingsImporter(private val configDirPath: Path, private val pluginsPath: Path) {
   private val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
 
-  fun importOptions() {
-    val files2load = arrayListOf<String>()
+  fun importOptions(categories: Set<SettingsCategory>) {
+    val allFiles = mutableSetOf<String>()
     val optionsPath = configDirPath / PathManager.OPTIONS_DIRECTORY
-    optionsPath.listDirectoryEntries("*.xml").map { it.name }.forEach { files2load.add(it) }
+    optionsPath.listDirectoryEntries("*.xml").map { it.name }.forEach { allFiles.add(it) }
     for (optionsEntry in optionsPath.listDirectoryEntries()) {
       if (optionsEntry.name.lowercase().endsWith(".xml") && optionsEntry.name.lowercase() != StoragePathMacros.NON_ROAMABLE_FILE) {
-        files2load.add(optionsEntry.name)
-      } else if (optionsEntry.isDirectory()) {
-        files2load.addAll(filesFromFolder(optionsEntry))
+        allFiles.add(optionsEntry.name)
+      }
+      else if (optionsEntry.isDirectory() && optionsEntry.name.lowercase() == getPerOsSettingsStorageFolderName()) {
+        allFiles.addAll(filesFromFolder(optionsEntry, ""))
       }
     }
     // ensure CodeStyleSchemes manager is created
@@ -42,18 +46,21 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
     val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
     schemeManagerFactory.process {
       val dirPath = configDirPath / it.fileSpec
-      if (dirPath.isDirectory()){
-        files2load.addAll(filesFromFolder(dirPath))
+      if (dirPath.isDirectory()) {
+        allFiles.addAll(filesFromFolder(dirPath))
       }
     }
+
+    val files2process = filterFiles(allFiles, categories)
+
     val storageManager = componentStore.storageManager as StateStorageManagerImpl
     val provider = ImportStreamProvider(configDirPath)
     storageManager.addStreamProvider(provider)
-    componentStore.reloadComponents(files2load, emptyList())
+    componentStore.reloadComponents(files2process, emptyList())
     storageManager.removeStreamProvider(provider::class.java)
   }
 
-  private fun filesFromFolder(dir: Path, prefix: String = dir.name) : Collection<String> {
+  private fun filesFromFolder(dir: Path, prefix: String = dir.name): Collection<String> {
     val retval = ArrayList<String>()
     for (entry in dir.listDirectoryEntries()) {
       if (entry.isRegularFile()) {
@@ -63,26 +70,38 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
     return retval
   }
 
-  private fun findComponentClasses(fileSpec: Set<String>): List<Class<PersistentStateComponent<Any>>> {
+
+  private fun filterFiles(allFiles: Set<String>, categories: Set<SettingsCategory>): List<String> {
     val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
-    val componentClasses = ArrayList<Class<PersistentStateComponent<Any>>>()
+    val retval = hashSetOf<String>()
     componentManager.processAllImplementationClasses { aClass, _ ->
       if (PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
-        val state = aClass.getAnnotation(State::class.java)
-        state?.storages?.forEach { storage ->
-          if (!storage.deprecated && fileSpec.contains(storage.value)) {
+        val state = aClass.getAnnotation(State::class.java) ?: return@processAllImplementationClasses
+        if (!categories.contains(state.category))
+          return@processAllImplementationClasses
+        state.storages.forEach { storage ->
+          if (!storage.deprecated && allFiles.contains(storage.value)) {
             @Suppress("UNCHECKED_CAST")
-            componentClasses.add(aClass as Class<PersistentStateComponent<Any>>)
+            retval.add(storage.value)
           }
         }
       }
     }
-    return componentClasses
+    return retval.toList()
   }
 
-  fun installPlugins() {
+  fun installPlugins(progressIndicator: ProgressIndicator, pluginIds: List<String>) {
     val importOptions = ConfigImportHelper.ConfigImportOptions(LOG)
     importOptions.isHeadless = true
+    importOptions.headlessProgressIndicator = progressIndicator
+    importOptions.importSettings = object : ConfigImportSettings {
+      override fun processPluginsToMigrate(newConfigDir: Path,
+                                           oldConfigDir: Path,
+                                           bundledPlugins: MutableList<IdeaPluginDescriptor>,
+                                           nonBundledPlugins: MutableList<IdeaPluginDescriptor>) {
+        nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId.idString) }
+      }
+    }
     ConfigImportHelper.migratePlugins(
       pluginsPath,
       configDirPath,
@@ -147,7 +166,8 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
     }
 
   }
-  companion object{
-      val LOG = logger<JbSettingsImporter>()
+
+  companion object {
+    val LOG = logger<JbSettingsImporter>()
   }
 }
