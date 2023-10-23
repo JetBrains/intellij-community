@@ -157,6 +157,7 @@ public final class GistStorageImpl extends GistStorage {
               LOG.info("Can't delete old huge-gists dir [" + outdatedHugeGistsDir.toAbsolutePath() + "]", e);
             }
           });
+        LOG.info("Cleaning old huge-gists dirs finished");
       }
       catch (IOException e) {
         LOG.info("Can't list huge-gists dir [" + hugeGistsParentDir.toAbsolutePath() + "] children", e);
