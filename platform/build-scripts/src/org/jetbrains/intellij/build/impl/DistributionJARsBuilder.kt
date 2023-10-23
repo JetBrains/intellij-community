@@ -590,6 +590,7 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
       launch {
         patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher = moduleOutputPatcher, context = context)
       }
+/* Android Studio (b/307356412): don't patch ApplicationNamesInfo yet
       launch {
         spanBuilder("write patched app info").useWithScope {
           val moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
@@ -598,6 +599,7 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
           moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
         }
       }
+Android Studio (b/307356412): don't patch ApplicationNamesInfo yet */
     }
   }
 
