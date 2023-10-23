@@ -218,6 +218,10 @@
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
     </extensionPoint>
 
+    <extensionPoint name="project.extras" interface="com.intellij.openapi.project.ProjectExtras" dynamic="true"/>
+    <extensionPoint name="virtualFile.extras.provider" interface="com.intellij.openapi.vfs.VirtualFileExtrasProvider" dynamic="true"/>
+    <extensionPoint name="virtualFile.extras.consumer" interface="com.intellij.openapi.vfs.VirtualFileExtrasConsumer" dynamic="true"/>
+
     <extensionPoint name="statusBarWidgetProvider" interface="com.intellij.openapi.wm.StatusBarWidgetProvider" dynamic="true"/>
     <extensionPoint name="statusBarWidgetFactory" interface="com.intellij.openapi.wm.StatusBarWidgetFactory" dynamic="true"/>
 

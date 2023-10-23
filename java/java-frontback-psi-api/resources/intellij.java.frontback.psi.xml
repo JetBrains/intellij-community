@@ -1,0 +1,8 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <project.extras implementation="com.intellij.openapi.roots.JavaLangLevelProjectExtras"/>
+
+    <virtualFile.extras.consumer implementation="com.intellij.openapi.roots.JavaLangLevelVirtualFileExtrasConsumer"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.JavaLevelPerVirtualFileHolder"/>
+  </extensions>
+</idea-plugin>
