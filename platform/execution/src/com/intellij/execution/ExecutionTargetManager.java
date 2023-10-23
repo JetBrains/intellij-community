@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -15,13 +15,11 @@ import java.util.List;
 public abstract class ExecutionTargetManager {
   public static final Topic<ExecutionTargetListener> TOPIC = Topic.create("ExecutionTarget topic", ExecutionTargetListener.class);
 
-  @NotNull
-  public static ExecutionTargetManager getInstance(@NotNull Project project) {
+  public static @NotNull ExecutionTargetManager getInstance(@NotNull Project project) {
     return project.getService(ExecutionTargetManager.class);
   }
 
-  @NotNull
-  public static ExecutionTarget getActiveTarget(@NotNull Project project) {
+  public static @NotNull ExecutionTarget getActiveTarget(@NotNull Project project) {
     return getInstance(project).getActiveTarget();
   }
 
@@ -29,10 +27,12 @@ public abstract class ExecutionTargetManager {
     getInstance(project).setActiveTarget(target);
   }
 
-  @NotNull
-  public static List<ExecutionTarget> getTargetsToChooseFor(@NotNull Project project, @Nullable RunConfiguration configuration) {
+  public static @NotNull List<ExecutionTarget> getTargetsToChooseFor(@NotNull Project project, @Nullable RunConfiguration configuration) {
     List<ExecutionTarget> result = getInstance(project).getTargetsFor(configuration);
-    if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) return Collections.emptyList();
+    if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) {
+      return Collections.emptyList();
+    }
+
     result = ContainerUtil.filter(result, target -> !target.isExternallyManaged());
     if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) {
       return Collections.emptyList();
@@ -68,19 +68,19 @@ public abstract class ExecutionTargetManager {
     getInstance(project).update();
   }
 
-  @NotNull
-  public abstract ExecutionTarget getActiveTarget();
+  public abstract @NotNull ExecutionTarget getActiveTarget();
 
   public abstract void setActiveTarget(@NotNull ExecutionTarget target);
 
-  @NotNull
-  public abstract List<ExecutionTarget> getTargetsFor(@Nullable RunConfiguration configuration);
+  public abstract @NotNull List<ExecutionTarget> getTargetsFor(@Nullable RunConfiguration configuration);
 
   public abstract void update();
 
   public ExecutionTarget findTarget(RunConfiguration configuration) {
     ExecutionTarget target = getActiveTarget();
-    if (canRun(configuration, target)) return target;
+    if (canRun(configuration, target)) {
+      return target;
+    }
 
     List<ExecutionTarget> targets = getTargetsFor(configuration);
     return ContainerUtil.getFirstItem(targets);
