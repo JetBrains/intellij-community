@@ -557,6 +557,11 @@ object PluginManagerCore {
         missing.add(id.idString)
       }
     }
+    // Android Studio: In unit test mode, the Android plugin may not be present, even though it is marked as "essential".
+    if (missing != null && PlatformUtils.isAndroidStudio() && (isUnitTestMode || GraphicsEnvironment.isHeadless())) {
+      missing.removeAll { id -> id == "org.jetbrains.android" || id == "com.android.tools.design" }
+      if (missing.isEmpty()) missing = null
+    }
     if (missing != null) {
       throw EssentialPluginMissingException(missing)
     }
