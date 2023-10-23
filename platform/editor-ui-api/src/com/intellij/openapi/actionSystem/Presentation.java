@@ -329,9 +329,18 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_ICON, oldIcon, this.icon.get());
   }
 
-  // event is not fired - use for init
   public void setIconSupplier(@Nullable Supplier<? extends @Nullable Icon> icon) {
+    Supplier<? extends @Nullable Icon> oldIcon = this.icon;
     this.icon = icon;
+
+    PropertyChangeSupport support = changeSupport;
+    if (support != null) {
+      Icon icon1 = oldIcon == null ? null : oldIcon.get();
+      Icon icon2 = icon == null ? null : icon.get();
+      if (!Objects.equals(icon1, icon2)) {
+        support.firePropertyChange(PROP_ICON, icon1, icon2);
+      }
+    }
   }
 
   public Icon getDisabledIcon() {
