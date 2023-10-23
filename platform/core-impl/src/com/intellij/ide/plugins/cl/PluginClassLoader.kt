@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.util.Java11Shim
 import com.intellij.util.lang.ClassPath
 import com.intellij.util.lang.ClasspathCache
 import com.intellij.util.lang.Resource
@@ -54,6 +55,7 @@ private val defaultResolveScopeManager = object : ResolveScopeManager {
 }
 
 private val EMPTY_CLASS_LOADER_ARRAY = arrayOfNulls<ClassLoader>(0)
+private val KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = computeKotlinStdlibClassesUsedInSignatures()
 
 private var logStream: Writer? = null
 private val parentListCacheIdCounter = AtomicInteger()
@@ -506,8 +508,79 @@ private class DeepEnumeration(private val list: List<Enumeration<URL>>) : Enumer
   }
 }
 
+// only `kotlin.` and not `kotlinx.` classes here (see mustBeLoadedByPlatform - name.startsWith("kotlin."))
+private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
+  val result = mutableListOf(
+    "kotlin.Function",
+    "kotlin.sequences.Sequence",
+    "kotlin.ranges.IntRange",
+    "kotlin.ranges.IntRange\$Companion",
+    "kotlin.ranges.IntProgression",
+    "kotlin.ranges.ClosedRange",
+    "kotlin.ranges.IntProgressionIterator",
+    "kotlin.ranges.IntProgression\$Companion",
+    "kotlin.ranges.IntProgression",
+    "kotlin.collections.IntIterator",
+    "kotlin.Lazy", "kotlin.Unit",
+    "kotlin.Pair", "kotlin.Triple",
+    "kotlin.jvm.internal.DefaultConstructorMarker",
+    "kotlin.jvm.internal.ClassBasedDeclarationContainer",
+    "kotlin.properties.ReadWriteProperty",
+    "kotlin.properties.ReadOnlyProperty",
+    "kotlin.coroutines.ContinuationInterceptor",
+    "kotlin.coroutines.Continuation",
+
+    "kotlin.coroutines.CoroutineContext",
+    "kotlin.coroutines.CoroutineContext\$Element",
+    "kotlin.coroutines.CoroutineContext\$Key",
+    "kotlin.coroutines.EmptyCoroutineContext",
+
+    "kotlin.Result",
+    "kotlin.Result\$Failure",
+    "kotlin.Result\$Companion",  // even though it's an internal class, it can leak (and it does) into API surface because it's exposed by public
+    // `kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED` property
+    "kotlin.coroutines.intrinsics.CoroutineSingletons",
+    "kotlin.coroutines.AbstractCoroutineContextElement",
+    "kotlin.coroutines.AbstractCoroutineContextKey",
+    "kotlin.coroutines.jvm.internal.ContinuationImpl", // IDEA-295189
+    "kotlin.coroutines.jvm.internal.BaseContinuationImpl", // IDEA-295189
+    "kotlin.coroutines.jvm.internal.CoroutineStackFrame", // IDEA-295189
+    "kotlin.time.Duration",
+    "kotlin.time.Duration\$Companion",
+    "kotlin.jvm.internal.ReflectionFactory",
+    "kotlin.jvm.internal.Reflection",
+    "kotlin.jvm.internal.Lambda",
+  )
+  System.getProperty("idea.kotlin.classes.used.in.signatures")?.let {
+    result.addAll(it.splitToSequence(',').map(String::trim))
+  }
+  return Java11Shim.INSTANCE.copyOf(result)
+}
+
 private fun mustBeLoadedByPlatform(name: @NonNls String): Boolean {
-  return name.startsWith("java.")
+  if (name.startsWith("java.")) {
+    return true
+  }
+
+  // Some commonly used classes from kotlin-runtime must be loaded by the platform classloader.
+  // Otherwise, if a plugin bundles its own version
+  // of kotlin-runtime.jar, it won't be possible to call the platform's methods with these types in a signatures from such a plugin.
+  // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from the platform's kotlin-runtime.
+  return name.startsWith("kotlin.") &&
+         (name.startsWith("kotlin.jvm.functions.") ||
+          // Those are kotlin-reflect related classes, but unfortunately, they are placed in kotlin-stdlib.
+          // Since we always want to load reflect from platform, we should force those classes with platform classloader as well.
+          name.startsWith("kotlin.reflect.") ||
+          name.startsWith("kotlin.jvm.internal.CallableReference") ||
+          name.startsWith("kotlin.jvm.internal.ClassReference") ||
+          name.startsWith("kotlin.jvm.internal.FunInterfaceConstructorReference") ||
+          name.startsWith("kotlin.jvm.internal.FunctionReference") ||
+          name.startsWith("kotlin.jvm.internal.MutablePropertyReference") ||
+          name.startsWith("kotlin.jvm.internal.PropertyReference") ||
+          name.startsWith("kotlin.jvm.internal.TypeReference") ||
+          name.startsWith("kotlin.jvm.internal.LocalVariableReference") ||
+          name.startsWith("kotlin.jvm.internal.MutableLocalVariableReference") ||
+          KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(name))
 }
 
 private fun flushDebugLog() {
