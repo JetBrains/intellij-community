@@ -82,7 +82,8 @@ object GitLabLoginUtil {
   ): LoginModel.LoginState {
     TokenLoginDialog(project, parentComponent, model) {
       val cs = this
-      TokenLoginInputPanelFactory(model).create(
+      TokenLoginInputPanelFactory(model).createIn(
+        cs,
         serverFieldDisabled,
         tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES),
         footer = {

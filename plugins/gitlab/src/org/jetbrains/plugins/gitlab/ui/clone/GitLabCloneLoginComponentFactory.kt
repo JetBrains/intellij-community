@@ -52,7 +52,8 @@ internal object GitLabCloneLoginComponentFactory {
     val backLink = LinkLabel<Unit>(IdeBundle.message("button.back"), null) { _, _ -> cloneVm.switchToRepositoryList() }.apply {
       bindVisibilityIn(cs, loginVm.accounts.map { it.isNotEmpty() })
     }
-    val loginInputPanel = TokenLoginInputPanelFactory(loginModel).create(
+    val loginInputPanel = TokenLoginInputPanelFactory(loginModel).createIn(
+      cs,
       serverFieldDisabled = false,
       tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES),
       footer = {
