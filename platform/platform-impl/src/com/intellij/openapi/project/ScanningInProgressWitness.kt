@@ -2,7 +2,7 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.observable.ActivityInProgressWitness
+import com.intellij.platform.backend.observation.api.ActivityInProgressWitness
 import kotlinx.coroutines.flow.first
 
 class ScanningInProgressWitness : ActivityInProgressWitness {

@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.observable.trackActivity
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -29,6 +28,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.observation.api.trackActivity
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.childScope

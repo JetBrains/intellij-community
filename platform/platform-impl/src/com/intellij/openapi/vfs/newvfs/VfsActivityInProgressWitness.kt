@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs
 
-import com.intellij.openapi.observable.ActivityInProgressWitness
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.observation.api.ActivityInProgressWitness
 import kotlinx.coroutines.delay
 import org.jetbrains.annotations.Nls
 

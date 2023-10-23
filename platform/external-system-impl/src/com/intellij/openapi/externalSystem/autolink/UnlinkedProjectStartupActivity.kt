@@ -16,7 +16,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
 import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressWitness
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.observable.trackActivity
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -32,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isConfiguredByPlatformProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
+import com.intellij.platform.backend.observation.api.trackActivity
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

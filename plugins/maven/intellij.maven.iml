@@ -103,6 +103,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
   </component>
   <component name="copyright">
     <Base>

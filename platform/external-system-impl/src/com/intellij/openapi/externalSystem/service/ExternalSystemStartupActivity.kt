@@ -14,11 +14,11 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
 import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressWitness
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.observable.trackActivity
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.platform.backend.observation.api.trackActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

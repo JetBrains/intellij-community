@@ -88,5 +88,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
   </component>
 </module>

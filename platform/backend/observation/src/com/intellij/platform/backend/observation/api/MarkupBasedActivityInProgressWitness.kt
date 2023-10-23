@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.observable
+package com.intellij.platform.backend.observation.api
 
 import com.intellij.openapi.project.Project
 
@@ -49,7 +49,7 @@ import com.intellij.openapi.project.Project
  * - [com.intellij.openapi.startup.ProjectActivity]. This is the code that runs on project open and most likely starts configuration,
  *   so there is a high change that you need to mark it with [trackActivity].
  * - [com.intellij.util.messages.MessageBus]. This is the core of IntelliJ message passing,
- *   and a way of defining a reactive dependency on another subsystem actions.
+ *   and a way of defining a reactive dependency on another subsystem's actions.
  *   The context propagation intentionally does not work across message delivery,
  *   so you should mark the configuration that starts in the listener methods with [trackActivity].
  * - [kotlinx.coroutines.flow.SharedFlow]. This is a way to implement message passing in Kotlin coroutines fashion,

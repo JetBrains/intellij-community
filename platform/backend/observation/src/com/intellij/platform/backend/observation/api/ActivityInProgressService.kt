@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.observable
+package com.intellij.platform.backend.observation.api
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
@@ -18,9 +18,9 @@ import java.util.concurrent.ConcurrentHashMap
  * Allows to track subsystem activities and get a "dumb mode" w.r.t. tracked computations.
  * @see MarkupBasedActivityInProgressWitness for high-level explanations
  */
-@Internal
 @Service(Service.Level.PROJECT)
-class ActivityInProgressService(private val scope: CoroutineScope) {
+@Internal
+internal class ActivityInProgressService(private val scope: CoroutineScope) {
 
   companion object {
     suspend fun getInstanceAsync(project: Project): ActivityInProgressService = project.serviceAsync<ActivityInProgressService>()

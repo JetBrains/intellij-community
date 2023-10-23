@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("RedundantUnitReturnType")
 
-package com.intellij.openapi.observable
+package com.intellij.platform.backend.observation.api
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nls
  *
  * If your subsystem does not already have a way to detect configuration process,
  * you may consider using the platform solution of the configuration process markup,
- * which is available under [com.intellij.openapi.observable.MarkupBasedActivityInProgressWitness].
+ * which is available under [MarkupBasedActivityInProgressWitness].
  */
 @Experimental
 interface ActivityInProgressWitness {
@@ -32,8 +32,7 @@ interface ActivityInProgressWitness {
   }
 
   /**
-   * The name of this predicate.
-   * This identifier is user-visible.
+   * The user-visible name of this predicate.
    */
   val presentableName: @Nls String
 
@@ -60,5 +59,5 @@ interface ActivityInProgressWitness {
    *
    * @param project the project which is configured
    */
-  suspend fun awaitConfiguration(project: Project): Unit {}
+  suspend fun awaitConfiguration(project: Project): Unit
 }

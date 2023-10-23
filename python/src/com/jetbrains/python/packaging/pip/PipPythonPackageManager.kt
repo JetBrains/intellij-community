@@ -2,9 +2,9 @@
 package com.jetbrains.python.packaging.pip
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.observable.trackActivity
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.backend.observation.api.trackActivity
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 class PipPythonPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(project, sdk) {
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
-    private set
+    set
 
   override val repositoryManager: PipRepositoryManager = PipRepositoryManager(project, sdk)
 
