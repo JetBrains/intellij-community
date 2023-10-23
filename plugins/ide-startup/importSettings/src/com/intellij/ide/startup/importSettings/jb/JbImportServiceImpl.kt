@@ -21,6 +21,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.*
@@ -30,7 +31,7 @@ import javax.swing.Icon
 import kotlin.io.path.*
 
 data class JbProductInfo(override val version: String,
-                         override val lastUsage: LocalDate,
+                         val lastUsageTime: FileTime,
                          override val id: String,
                          override val name: String,
                          internal val codeName: String,
@@ -62,6 +63,9 @@ data class JbProductInfo(override val version: String,
     }
     return retval
   }
+
+  private val _lastUsage = LocalDate.ofInstant(lastUsageTime.toInstant(), ZoneId.systemDefault())
+  override val lastUsage: LocalDate = _lastUsage
 
 }
 
@@ -97,8 +101,6 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     doListProducts()
   }
 
-  private var settingsCategories: Map<String, JbSettingsCategory> = hashMapOf()
-
   override fun getOldProducts(): List<Product> {
     return filterProducts(old = true)
   }
@@ -111,6 +113,8 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     val products = productsLazy.value.values.toList()
     val newProducts = hashMapOf<String, String>()
     for (product in products) {
+      if (ConfigImportHelper.isConfigOld(product.lastUsageTime))
+        continue
       val version = newProducts[product.codeName]
       if (version == null || version < product.version) {
         newProducts[product.codeName] = product.version
@@ -136,28 +140,36 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       if (!confDir.isDirectory()) {
         continue
       }
+      LOG.info("Found ${confDir.name} under ${parentDir.pathString}")
       val pluginsDir = Path.of(PathManager.getDefaultPluginPathFor(confDir.name))
       val dirName = confDir.name
       val matcher = IDE_NAME_PATTERN.matcher(dirName)
       if (!matcher.matches()) {
+        LOG.info("${confDir.name} doesn't match IDE_NAME_PATTERN, skipping it")
         continue
       }
       val optionsDir = confDir / PathManager.OPTIONS_DIRECTORY
       if (!optionsDir.isDirectory()) {
+        LOG.info("${confDir.name} doesn't contain options directory, skipping it")
         continue
       }
       val optionsEntries = optionsDir.listDirectoryEntries("*.xml")
+      if (optionsEntries.isEmpty()) {
+        LOG.info("${confDir.name}/options has no xml files, skipping it")
+        continue
+      }
       var lastModified = FileTime.fromMillis(0)
       for (optionXml in optionsEntries) {
         if (optionXml.getLastModifiedTime() > lastModified) {
           lastModified = optionXml.getLastModifiedTime()
         }
       }
+
+      LOG.info("${confDir.name}/options' newest file is dated $lastModified")
       val ideName = matcher.group(1)
       val ideVersion = matcher.group(2)
       val fullName = "${NameMappings.getFullName(ideName)} $ideVersion"
-      val lastUsageLocalDate = LocalDate.ofInstant(lastModified.toInstant(), ZoneId.systemDefault())
-      val jbProductInfo = JbProductInfo(ideVersion, lastUsageLocalDate, dirName, fullName, ideName,
+      val jbProductInfo = JbProductInfo(ideVersion, lastModified, dirName, fullName, ideName,
                                         confDir, pluginsDir)
       jbProductInfo.prefetchPluginDescriptors(coroutineScope, context)
       retval[dirName] = jbProductInfo
@@ -166,17 +178,20 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   }
 
   override fun getSettings(itemId: String): List<JbSettingsCategory> {
+    LOG.info("User has selected $itemId")
     val productInfo = productsLazy.value[itemId] ?: error("Can't find product")
-    val pluginNames = arrayListOf<ChildSetting>()
+    val plugins = arrayListOf<ChildSetting>()
+    val pluginNames = arrayListOf<String>()
     for (descriptor in productInfo.getPluginsDescriptors()) {
-      pluginNames.add(JbChildSetting(descriptor.pluginId.idString, descriptor.name))
+      plugins.add(JbChildSetting(descriptor.pluginId.idString, descriptor.name))
+      pluginNames.add(descriptor.name)
     }
-
+    LOG.info("Found ${pluginNames.size} custom plugins: ${pluginNames.joinToString()}")
     val pluginsCategory = JbSettingsCategoryConfigurable(SettingsCategory.PLUGINS, StartupImportIcons.Icons.Plugin,
                                                          ImportSettingsBundle.message("settings.category.plugins.name"),
                                                          ImportSettingsBundle.message("settings.category.plugins.description"),
                                                          listOf(
-                                                           pluginNames
+                                                           plugins
                                                          )
     )
     return listOf(UI_CATEGORY,
@@ -202,25 +217,35 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         // plugins category must be added as well, some PSC's use it, for instance KotlinNotebookApplicationOptionsProvider
         filteredCategories.add(SettingsCategory.PLUGINS)
         plugins2import = data.childIds
+        LOG.info("Will import ${plugins2import?.size} custom plugins: ${plugins2import?.joinToString()}")
       }
       else {
         val category = DEFAULT_SETTINGS_CATEGORIES[data.id] ?: continue
         filteredCategories.add(category.settingsCategory)
       }
     }
+    LOG.info("Will import the following categories: ${filteredCategories.joinToString()}")
 
     val importData = TransferSettingsProgress(productInfo)
     val importer = JbSettingsImporter(productInfo.configDirPath, productInfo.pluginsDirPath)
     val progressIndicator = importData.createProgressIndicatorAdapter()
     val modalityState = ModalityState.current()
 
+    val startTime = System.currentTimeMillis()
     coroutineScope.async(modalityState.asContextElement()) {
       progressIndicator.text2 = "Migrating options"
+      LOG.info("Starting migration...")
       importer.importOptions(filteredCategories)
+      LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
       progressIndicator.fraction = 0.1
       ApplicationManager.getApplication().saveSettings()
       if (plugins2import != null) {
+        LOG.info("Started importing plugins...")
+        val pluginsImportStart = System.currentTimeMillis()
         importer.installPlugins(progressIndicator, plugins2import)
+        LOG.info("Plugins imported in ${System.currentTimeMillis() - pluginsImportStart} ms. " +
+                 "Migration completed in ${System.currentTimeMillis() - startTime} ms.")
+        LOG.info("Calling restart...")
         // restart if we install plugins
         withContext(Dispatchers.EDT) {
           ApplicationManager.getApplication().invokeLater({
@@ -230,6 +255,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       }
       else {
         //close the dialog and start IDE
+        LOG.info("Migration complete. Showing welcome screen")
         withContext(Dispatchers.EDT) {
           SettingsService.getInstance().doClose.fire(Unit)
         }

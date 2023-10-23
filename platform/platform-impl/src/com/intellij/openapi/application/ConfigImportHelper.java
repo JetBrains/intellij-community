@@ -268,7 +268,7 @@ public final class ConfigImportHelper {
     return null;
   }
 
-  private static boolean isConfigOld(FileTime time) {
+  public static boolean isConfigOld(FileTime time) {
     Instant deadline = Instant.now().minus(180, ChronoUnit.DAYS);
     return time.toInstant().compareTo(deadline) < 0;
   }

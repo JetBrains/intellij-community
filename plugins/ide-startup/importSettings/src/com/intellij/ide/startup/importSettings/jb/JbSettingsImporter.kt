@@ -50,9 +50,10 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
         allFiles.addAll(filesFromFolder(dirPath))
       }
     }
-
+    LOG.info("Detected ${allFiles.size} files to import: ${allFiles.joinToString()}")
     val files2process = filterFiles(allFiles, categories)
 
+    LOG.info("After filtering we have ${files2process.size} files to import: ${files2process.joinToString()}")
     val storageManager = componentStore.storageManager as StateStorageManagerImpl
     val provider = ImportStreamProvider(configDirPath)
     storageManager.addStreamProvider(provider)
@@ -87,6 +88,23 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
         }
       }
     }
+    val schemeCategories = hashSetOf<String>()
+    // fileSpec is e.g. keymaps/mykeymap.xml
+    (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
+      if (categories.contains(it.getSettingsCategory())) {
+        schemeCategories.add(it.fileSpec)
+      }
+    }
+    for (file in allFiles) {
+      val split = file.split('/')
+      if (split.size != 2)
+        continue
+
+      if (schemeCategories.contains(split[0])){
+        retval.add(file)
+      }
+    }
+
     return retval.toList()
   }
 
