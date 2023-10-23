@@ -52,7 +52,7 @@ abstract class AbstractCustomHighlightUsageHandlerTest : KotlinLightCodeInsightF
         }
 
         val ranges = editor.markupModel.allHighlighters
-            .filter { it.textAttributesKey == EditorColors.SEARCH_RESULT_ATTRIBUTES }
+            .filter { it.textAttributesKey == EditorColors.SEARCH_RESULT_ATTRIBUTES || it.textAttributesKey == EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES }
             .mapNotNull { it.range }
 
         val infos = ranges.toHashSet()

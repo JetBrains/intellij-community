@@ -800,6 +800,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("exitPoints")
         }
 
+        testClass<AbstractCustomHighlightUsageHandlerTest>("KotlinHighlightUsagesTestGenerated") {
+            model("highlightUsages")
+        }
+
         testClass<AbstractKotlinReceiverUsageHighlightingTest>("KotlinReceiverUsageHighlightingTestGenerated") {
             model("receiverUsageHighlighting")
         }
