@@ -1,8 +1,11 @@
 package org.jetbrains.idea.maven.performancePlugin
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.OpenFileCommand.Companion.findFile
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class UnlinkMavenProjectCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
@@ -22,7 +25,9 @@ class UnlinkMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
       throw IllegalArgumentException("File not found: $filePath")
     }
     val projectsManager = MavenProjectsManager.getInstance(project)
-    projectsManager.unlinkProject(listOf(projectPomFile), project, null, null)
+    withContext(Dispatchers.EDT) {
+      projectsManager.unlinkProject(listOf(projectPomFile), project, null, null)
+    }
   }
 
   override fun getName(): String {

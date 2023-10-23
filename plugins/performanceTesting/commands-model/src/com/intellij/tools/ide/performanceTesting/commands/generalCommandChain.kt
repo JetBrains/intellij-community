@@ -483,6 +483,18 @@ fun <T : CommandChain> T.linkMavenProject(projectPath: Path): T = apply {
   addCommand("${CMD_PREFIX}linkMavenProject ${projectPath}")
 }
 
+fun <T : CommandChain> T.linkGradleProject(projectPath: Path): T = apply {
+  addCommand("${CMD_PREFIX}linkGradleProject ${projectPath}")
+}
+
+fun <T : CommandChain> T.unlinkGradleProject(projectPath: Path): T = apply {
+  addCommand("${CMD_PREFIX}unlinkGradleProject ${projectPath}")
+}
+
+fun <T : CommandChain> T.unlinkMavenProject(projectPath: Path): T = apply {
+  addCommand("${CMD_PREFIX}unlinkMavenProject ${projectPath}")
+}
+
 fun <T : CommandChain> T.inlineRename(to: String): T = apply {
   startInlineRename()
   delayType(150, to)

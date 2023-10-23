@@ -12,6 +12,9 @@ final class MavenCommandProvider implements CommandProvider {
     return Map.of(ImportMavenProjectCommand.PREFIX, ImportMavenProjectCommand::new,
                   SetMavenSettingsXmlFilePathCommand.PREFIX, SetMavenSettingsXmlFilePathCommand::new,
                   ExecuteMavenGoalCommand.PREFIX, ExecuteMavenGoalCommand::new,
-                  LinkMavenProjectCommand.PREFIX, LinkMavenProjectCommand::new);
+                  LinkMavenProjectCommand.PREFIX, LinkMavenProjectCommand::new,
+                  UnlinkMavenProjectCommand.PREFIX, UnlinkMavenProjectCommand::new,
+                  LinkGradleProjectCommand.PREFIX, LinkGradleProjectCommand::new,
+                  UnlinkGradleProjectCommand.PREFIX, UnlinkGradleProjectCommand::new);
   }
 }
