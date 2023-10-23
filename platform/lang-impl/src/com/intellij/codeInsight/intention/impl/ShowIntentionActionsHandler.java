@@ -7,7 +7,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
-import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -94,8 +93,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     IntentionsUI.getInstance(project).hide();
 
-    if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction() &&
-        !IntentionsUIImpl.DISABLE_INTENTION_BULB.get(project, false)) {
+    if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) {
       return;
     }
 

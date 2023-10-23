@@ -3,10 +3,9 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl
+import com.intellij.codeInsight.hint.ClientHintManager
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
-import com.intellij.codeInsight.hint.PriorityQuestionAction
-import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -95,7 +94,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     if (editor.project != project) return true
 
     if (!isInlayRunToCursorEnabled) {
-      IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = false
+      IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE[project] = 0
       return true
     }
 
@@ -104,10 +103,11 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     }
     val session = XDebuggerManager.getInstance(project).getCurrentSession() as XDebugSessionImpl?
     if (session == null || !session.isPaused || session.isReadOnly) {
-      IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = false
+      IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE[project] = 0
       return true
     }
-    IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = true
+    // It can be improved to dynamically detect the necessary offset
+    IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE[project] = ACTION_BUTTON_SIZE + ACTION_BUTTON_GAP
     val (lineNumber, x) = if (e != null) {
       XDebuggerManagerImpl.getLineNumber(e) to (if (e.area == EditorMouseEventArea.EDITING_AREA) e.mouseEvent.x else 0)
     } else {
@@ -222,6 +222,8 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
   @RequiresEdt
   private suspend fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, group: DefaultActionGroup, lineY: Int) {
+    if (group.childrenCount == 0) return
+
     val rootPane = editor.getComponent().rootPane
     if (rootPane == null) {
       return
@@ -237,13 +239,6 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     if (gutterRenderer != null) {
       return
     }
-
-    val caretLine = editor.getCaretModel().logicalPosition.line
-    val minimalOffsetBeforeText = MINIMAL_TEXT_OFFSET + (ACTION_BUTTON_GAP * 2 + ACTION_BUTTON_SIZE) * group.childrenCount
-    if (editor.getSettings().isShowIntentionBulb() && caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(minimalOffsetBeforeText)) {
-      group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS))
-    }
-    if (group.childrenCount == 0) return
 
     val editorContentComponent = editor.contentComponent
     val position = SwingUtilities.convertPoint(
@@ -282,20 +277,15 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     justPanel.preferredSize = JBDimension((2 * ACTION_BUTTON_GAP + ACTION_BUTTON_SIZE) * group.childrenCount, ACTION_BUTTON_SIZE)
     justPanel.add(toolbarImpl.component)
     val hint = RunToCursorHint(justPanel, this)
-    val questionAction: QuestionAction = object : PriorityQuestionAction {
-      override fun execute(): Boolean {
-        return true
-      }
-
-      override fun getPriority(): Int {
-        return PriorityQuestionAction.INTENTION_BULB_PRIORITY
-      }
-    }
-    val offset = editor.getCaretModel().offset
-
     initIsCompleted.lock()
 
-    HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, questionAction, HintManager.RIGHT)
+    val clientHintManager = ClientHintManager.getCurrentInstance()
+
+    val flags = HintManager.HIDE_BY_ANY_KEY or HintManager.HIDE_BY_TEXT_CHANGE or HintManager.UPDATE_BY_SCROLLING or
+      HintManager.HIDE_IF_OUT_OF_EDITOR or HintManager.DONT_CONSUME_ESCAPE
+
+    val hintInfo = HintManagerImpl.createHintHint(editor, position, hint, HintManager.RIGHT)
+    clientHintManager.showEditorHint(hint, editor, hintInfo, position, flags, 0, true) { }
   }
 
   private fun calculateEffectiveHoverColorAndStroke(needShowOnGutter: Boolean, editor: Editor, lineNumber: Int): Pair<Color, Color?> {

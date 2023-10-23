@@ -17,7 +17,7 @@ import java.awt.*;
 
 public class IntentionsUIImpl extends IntentionsUI {
   @ApiStatus.Internal
-  public static final Key<Boolean> DISABLE_INTENTION_BULB = Key.create("IntentionsUIImpl.DISABLE_INTENTION_BULB");
+  public static final Key<Integer> SHOW_INTENTION_BULB_ON_ANOTHER_LINE = Key.create("IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE");
 
   private volatile IntentionHintComponent myLastIntentionHint;
 
@@ -44,10 +44,6 @@ public class IntentionsUIImpl extends IntentionsUI {
     }
 
     Project project = cachedIntentions.getProject();
-
-    if (DISABLE_INTENTION_BULB.get(project, false)) {
-      return;
-    }
 
     LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
