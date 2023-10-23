@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.IdeActivityDefinition
@@ -84,8 +84,9 @@ class EventLogGroup @JvmOverloads constructor(val id: String, val version: Int, 
   fun registerIdeActivity(activityName: String?,
                           startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
                           finishEventAdditionalFields: Array<EventField<*>> = emptyArray(),
-                          parentActivity: IdeActivityDefinition? = null): IdeActivityDefinition {
-    return IdeActivityDefinition(this, parentActivity, activityName, startEventAdditionalFields, finishEventAdditionalFields)
+                          parentActivity: IdeActivityDefinition? = null,
+                          subStepWithStepId: Boolean = false): IdeActivityDefinition {
+    return IdeActivityDefinition(this, parentActivity, activityName, startEventAdditionalFields, finishEventAdditionalFields, subStepWithStepId)
   }
 
   internal fun validateEventId(eventId: String) {
