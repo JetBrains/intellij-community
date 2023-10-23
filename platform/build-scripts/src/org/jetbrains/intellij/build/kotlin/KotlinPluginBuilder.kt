@@ -127,6 +127,7 @@ object KotlinPluginBuilder {
     "kotlin.j2k.old",
     "kotlin.j2k.old.post-processing",
     "kotlin.j2k.new",
+    "kotlin.onboarding",
     "kotlin.plugin-updater",
     "kotlin.preferences",
     "kotlin.project-configuration",

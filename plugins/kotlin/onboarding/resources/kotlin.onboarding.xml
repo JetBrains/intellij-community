@@ -1,0 +1,14 @@
+<idea-plugin package="org.jetbrains.kotlin.onboarding">
+  <dependencies>
+    <plugin id="com.intellij.stats.completion"/>
+  </dependencies>
+
+  <projectListeners>
+    <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
+              class="org.jetbrains.kotlin.onboarding.KotlinNewUserTrackerFileListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.KotlinNewUserTracker"/>
+  </extensions>
+</idea-plugin>

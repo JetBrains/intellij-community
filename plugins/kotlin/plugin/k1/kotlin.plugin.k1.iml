@@ -154,5 +154,6 @@
     <orderEntry type="module" module-name="kotlin.j2k.old.post-processing" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.injection" />
+    <orderEntry type="module" module-name="kotlin.onboarding" scope="RUNTIME" />
   </component>
 </module>

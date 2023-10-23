@@ -108,5 +108,6 @@
     <orderEntry type="module" module-name="kotlin.i18n" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.injection-k2" />
     <orderEntry type="module" module-name="kotlin.base.injection" />
+    <orderEntry type="module" module-name="kotlin.onboarding" scope="RUNTIME" />
   </component>
 </module>
