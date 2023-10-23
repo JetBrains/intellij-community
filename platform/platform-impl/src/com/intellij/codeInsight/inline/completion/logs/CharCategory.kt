@@ -1,5 +1,8 @@
 package com.intellij.codeInsight.inline.completion.logs
 
+import org.jetbrains.annotations.ApiStatus.Internal
+
+@Internal
 enum class CharCategory(val chars: CharSequence) {
   LETTER(('a'..'z').joinToString("")),
   CAPITAL_LETTER(('A'..'Z').joinToString("")),
