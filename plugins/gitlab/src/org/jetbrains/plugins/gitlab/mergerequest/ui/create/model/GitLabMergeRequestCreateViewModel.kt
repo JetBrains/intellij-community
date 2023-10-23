@@ -87,10 +87,15 @@ internal class GitLabMergeRequestCreateViewModelImpl(
 
   override val existingMergeRequest: Flow<String?> = branchState.map { state ->
     state ?: return@map null
+    val sourceProject = state.headRepo
     val sourceBranch = state.headBranch.name
+    val targetProject = state.baseRepo
     val targetBranch = state.baseBranch.nameForRemoteOperations
 
-    return@map projectData.mergeRequests.findByBranch(sourceBranch, targetBranch).firstOrNull()
+    projectData.mergeRequests.findByBranches(sourceBranch, targetBranch).find {
+      it.targetProject.fullPath == targetProject.repository.projectPath.fullPath() &&
+      it.sourceProject?.fullPath == sourceProject.repository.projectPath.fullPath()
+    }?.iid
   }
 
   override val commits: SharedFlow<Result<List<VcsCommitMetadata>>?> = branchState.transformLatest { model ->

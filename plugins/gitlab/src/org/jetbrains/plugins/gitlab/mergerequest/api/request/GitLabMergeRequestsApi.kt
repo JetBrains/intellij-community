@@ -12,8 +12,8 @@ import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestByBranchDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestIidDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestRebaseDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
@@ -52,7 +52,7 @@ suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(
   project: GitLabProjectCoordinates,
   sourceBranch: String,
   targetBranch: String? = null
-): HttpResponse<out GraphQLConnectionDTO<GitLabMergeRequestIidDTO>?> {
+): HttpResponse<out GraphQLConnectionDTO<GitLabMergeRequestByBranchDTO>?> {
   val parameters = mutableMapOf(
     "projectId" to project.projectPath.fullPath(),
     "sourceBranches" to listOf(sourceBranch),
@@ -60,12 +60,12 @@ suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(
   )
   val request = gitLabQuery(GitLabGQLQuery.FIND_MERGE_REQUESTS, parameters)
   return withErrorStats(GitLabGQLQuery.FIND_MERGE_REQUESTS) {
-    loadResponse<MergeRequestsConnection>(request, "project", "mergeRequests")
+    loadResponse<MergeRequestsByBranchConnection>(request, "project", "mergeRequests")
   }
 }
 
-private class MergeRequestsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabMergeRequestIidDTO>)
-  : GraphQLConnectionDTO<GitLabMergeRequestIidDTO>(pageInfo, nodes)
+private class MergeRequestsByBranchConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabMergeRequestByBranchDTO>)
+  : GraphQLConnectionDTO<GitLabMergeRequestByBranchDTO>(pageInfo, nodes)
 
 @SinceGitLab("13.2")
 fun getMergeRequestStateEventsUri(project: GitLabProjectCoordinates, mrIid: String): URI =

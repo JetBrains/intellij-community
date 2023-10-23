@@ -175,7 +175,7 @@ private constructor(parentCs: CoroutineScope,
         ?.remoteBranch?.nameForRemoteOperations
     }.distinctUntilChanged().mapLatest { currentRemoteBranch ->
       currentRemoteBranch?.let {
-        connection.projectData.mergeRequests.findByBranch(it).firstOrNull()
+        connection.projectData.mergeRequests.findByBranches(it).firstOrNull()?.iid
       }
     }.catch {
       LOG.warn("Could not lookup a merge request for current branch", it)
