@@ -685,7 +685,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     @Override
     public void close() throws StorageException {
       try {
-        storage.close();
+        storage.closeAndUnsafelyUnmap(); // unmap is required for index re-instantiation on windows
       }
       catch (IOException e) {
         throw new StorageException(e);
