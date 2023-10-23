@@ -31,6 +31,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.util.preferredHeight
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
+import java.awt.FlowLayout
 import java.awt.Insets
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -140,6 +141,7 @@ internal object InlineCompletionTooltip {
       }
     }.apply {
       border = JBUI.Borders.empty(1, 4)
+      layout = FlowLayout(FlowLayout.CENTER, 4, 1)
     }
     return panel
   }
