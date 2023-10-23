@@ -116,7 +116,7 @@ public class HelpTooltip {
   private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
   private static final String TOOLTIP_DISABLED_PROPERTY = "JComponent.helpTooltipDisabled";
 
-  private Supplier<@TooltipTitle String> title;
+  private @Nullable Supplier<@TooltipTitle String> title;
   private @NlsSafe String shortcut;
   private @Tooltip String description;
   private ActionLink link;
@@ -192,8 +192,9 @@ public class HelpTooltip {
   }
 
   /**
-   * Sets tooltip title. If it's longer than 2 lines (fitting in 250 pixels each) then
-   * the text is automatically stripped to the word boundary and dots are added to the end.
+   * Sets tooltip title.
+   * If it's longer than two lines (fitting in 250 pixels each),
+   * then the text is automatically stripped to the word boundary and dots are added to the end.
    *
    * @param title text for title.
    * @return {@code this}
@@ -325,7 +326,7 @@ public class HelpTooltip {
   }
 
   /**
-   * Toggles whether to hide tooltip automatically on timeout. For default behaviour just don't call this method.
+   * Toggles whether to hide tooltip automatically on timeout. For default behavior just don't call this method.
    *
    * @param neverHide {@code true} don't hide, {@code false} otherwise.
    * @return {@code this}
@@ -432,7 +433,7 @@ public class HelpTooltip {
     tipPanel.setLayout(new VerticalLayout(JBUI.getInt("HelpTooltip.verticalGap", 4)));
     tipPanel.setBackground(UIUtil.getToolTipBackground());
 
-    String currentTitle = title.get();
+    String currentTitle = title != null ? title.get() : null;
     boolean hasTitle = Strings.isNotEmpty(currentTitle);
     boolean hasDescription = Strings.isNotEmpty(description);
 
@@ -526,7 +527,7 @@ public class HelpTooltip {
 
   /**
    * Sets master popup for the current {@code HelpTooltip}. Master popup takes over the help tooltip,
-   * so when the master popup is about to be shown help tooltip hides.
+   * so when the master popup is about to be shown, help tooltip hides.
    *
    * @param owner possible owner
    * @param master master popup
