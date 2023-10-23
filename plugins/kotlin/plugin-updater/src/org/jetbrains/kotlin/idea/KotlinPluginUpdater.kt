@@ -7,11 +7,8 @@ import com.google.gson.JsonIOException
 import com.google.gson.JsonSyntaxException
 import com.intellij.ide.plugins.*
 import com.intellij.notification.*
-import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.update.verify
@@ -37,29 +34,9 @@ class KotlinPluginUpdater : StandalonePluginUpdateChecker(
         return verify(status)
     }
 
-    fun runUpdateCheck(callback: (PluginUpdateStatus) -> Boolean) {
-        ApplicationManager.getApplication().executeOnPooledThread {
-            updateCheck(callback)
-        }
-    }
-
-    fun runCachedUpdate(callback: (PluginUpdateStatus) -> Boolean) {
-        ThreadingAssertions.assertEventDispatchThread()
-        val cachedStatus = lastUpdateStatus
-        if (cachedStatus != null && System.currentTimeMillis() - cachedStatus.timestamp < CACHED_REQUEST_DELAY) {
-            if (cachedStatus !is PluginUpdateStatus.CheckFailed) {
-                callback(cachedStatus)
-                return
-            }
-        }
-
-        queueUpdateCheck(callback)
-    }
-
     companion object {
 
         private const val PROPERTY_NAME = "kotlin.lastUpdateCheck"
-        private val LOG = Logger.getInstance(KotlinPluginUpdater::class.java)
 
         fun getInstance(): KotlinPluginUpdater = service()
 
