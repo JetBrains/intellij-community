@@ -13,8 +13,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
@@ -1161,19 +1159,17 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void logPositionReached(@Nullable XSourcePosition topFramePosition) {
-    if (myUserRequestStart > 0 && myUserRequestAction != null) {
+    FileType fileType = topFramePosition != null ? topFramePosition.getFile().getFileType() : null;
+    if (myUserRequestAction != null) {
       long durationMs = System.currentTimeMillis() - myUserRequestStart;
       if (PERFORMANCE_LOG.isDebugEnabled()) {
         PERFORMANCE_LOG.debug("Position reached in " + durationMs + "ms");
       }
-      FileType fileType = topFramePosition != null ? topFramePosition.getFile().getFileType() : null;
-      XDebuggerPerformanceCollector.EXECUTION_POINT_REACHED.log(
-        myProject,
-        EventFields.FileType.with(fileType),
-        ActionsEventLogGroup.ACTION_ID.with(myUserRequestAction),
-        EventFields.DurationMs.with(durationMs)
-      );
+      XDebuggerPerformanceCollector.logExecutionPointReached(myProject, fileType, myUserRequestAction, durationMs);
       myUserRequestAction = null;
+    }
+    else {
+      XDebuggerPerformanceCollector.logBreakpointReached(myProject, fileType);
     }
   }
 }
