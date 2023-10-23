@@ -7,14 +7,14 @@ import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogFilter
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogHistory
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_NAME
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.IS_INITIAL_HISTORY_COMPUTING
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.TYPE_HISTORY_COMPUTING
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.FILE_HISTORY_IS_INITIAL
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.FILE_HISTORY_TYPE
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_FILTERED_COMMIT_COUNT
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_FILTERS_LIST
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_FILTER_KIND
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_REPOSITORY_COMMIT_COUNT
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_SORT_TYPE
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_VCS_LIST
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LIST
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
 import com.intellij.util.indexing.diagnostic.dto.toMillis
@@ -46,8 +46,8 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
             val vcsName = span.attributes[VCS_NAME].orEmpty()
             when (historySpan) {
               LogHistory.Computing -> {
-                val indexComputing = "index" == span.attributes[TYPE_HISTORY_COMPUTING]
-                if (span.attributes[IS_INITIAL_HISTORY_COMPUTING] == true) {
+                val indexComputing = "index" == span.attributes[FILE_HISTORY_TYPE]
+                if (span.attributes[FILE_HISTORY_IS_INITIAL] == true) {
                   FILE_HISTORY_COMPUTING.log(vcsName, indexComputing, span.valueInMillis)
                 }
               }
@@ -66,7 +66,7 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
         val filtersList = span.attributes[VCS_LOG_FILTERS_LIST]?.toStringList()
         if (filtersList.isNullOrEmpty()) continue
 
-        val vcsList = span.attributes[VCS_LOG_VCS_LIST]?.toStringList() ?: continue
+        val vcsList = span.attributes[VCS_LIST]?.toStringList() ?: continue
         val sortType = span.attributes[VCS_LOG_SORT_TYPE] ?: continue
         val commitCount = span.attributes[VCS_LOG_FILTERED_COMMIT_COUNT] ?: continue
         val repositoryCommitCount = span.attributes[VCS_LOG_REPOSITORY_COMMIT_COUNT]

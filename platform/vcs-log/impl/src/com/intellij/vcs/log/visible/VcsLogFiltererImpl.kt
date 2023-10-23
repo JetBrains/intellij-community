@@ -454,7 +454,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                              sortType: PermanentGraph.SortType,
                              commitCount: CommitCountStage,
                              filterKind: FilterKind) {
-    setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_VCS_LIST.key,
+    setAttribute(VcsTelemetrySpanAttribute.VCS_LIST.key,
                  logProviders.values.toSet().map { it.supportedVcs }.vcsToStringPresentation())
     setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_FILTERS_LIST.key, filters.keysToSet.filtersToStringPresentation())
     setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_SORT_TYPE.key, sortType.getName())

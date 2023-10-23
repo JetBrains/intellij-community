@@ -140,7 +140,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
         val isInitial = commitCount == CommitCountStage.INITIAL
 
         scope.setAttribute("filePath", filePath.toString())
-        scope.setAttribute(VcsTelemetrySpanAttribute.IS_INITIAL_HISTORY_COMPUTING.key, isInitial)
+        scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_IS_INITIAL.key, isInitial)
         scope.setAttribute(VcsTelemetrySpanAttribute.VCS_NAME.key, VcsLogRepoSizeCollector.getVcsKeySafe(vcsKey))
 
         val indexDataGetter = index.dataGetter
@@ -148,7 +148,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
           cancelLastTask(false)
           val visiblePack = filterWithIndex(indexDataGetter, dataPack, oldVisiblePack, sortType, filters, isInitial)
           LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
-          scope.setAttribute(VcsTelemetrySpanAttribute.TYPE_HISTORY_COMPUTING.key, "index")
+          scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_TYPE.key, "index")
           if (checkNotEmpty(dataPack, visiblePack, true)) {
             return Pair(visiblePack, commitCount)
           }
