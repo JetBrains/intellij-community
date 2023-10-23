@@ -11,9 +11,10 @@ import org.jetbrains.annotations.VisibleForTesting
 @VisibleForTesting
 class JavaElementFeaturesProvider : ElementFeatureProvider {
 
-  private val POPULAR_MODIFIERS: List<JvmModifier> =
-    listOf(JvmModifier.PUBLIC, JvmModifier.PRIVATE, JvmModifier.PROTECTED,
-           JvmModifier.ABSTRACT, JvmModifier.FINAL, JvmModifier.STATIC)
+  private inline val POPULAR_MODIFIERS: List<JvmModifier>
+    get() =
+      listOf(JvmModifier.PUBLIC, JvmModifier.PRIVATE, JvmModifier.PROTECTED,
+             JvmModifier.ABSTRACT, JvmModifier.FINAL, JvmModifier.STATIC)
 
   override fun getName(): String = "java"
 

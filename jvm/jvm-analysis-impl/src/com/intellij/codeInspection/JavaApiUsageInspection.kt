@@ -28,17 +28,9 @@ import org.jdom.Element
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
 
-private val overrideModifierLanguages = listOf("kotlin", "scala")
-
 private val logger = logger<JavaApiUsageInspection>()
 
 private const val EFFECTIVE_LL = "effectiveLL"
-
-private val ignored6ClassesApi = setOf("java.awt.geom.GeneralPath")
-
-private val generifiedClasses = setOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
-
-private val defaultMethods = setOf("java.util.Iterator#remove()")
 
 /**
  * In order to add the support for new API in the most recent JDK execute:
@@ -74,7 +66,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       { value -> effectiveLanguageLevel = if (value == "null") null else LanguageLevel.valueOf(value) }
     )
   }
-  
+
   override fun readSettings(node: Element) {
     val element = node.getChild(EFFECTIVE_LL)
     if (element != null) {
@@ -100,6 +92,10 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     private val holder: ProblemsHolder,
     private val isOnTheFly: Boolean
   ) : ApiUsageUastVisitor(apiUsageProcessor) {
+
+    private inline val defaultMethods get() = setOf("java.util.Iterator#remove()")
+    private inline val overrideModifierLanguages get() = listOf("kotlin", "scala")
+
     override fun visitClass(node: UClass): Boolean {
       val javaPsi = node.javaPsi
       if (!javaPsi.hasModifierProperty(PsiModifier.ABSTRACT) && javaPsi !is PsiTypeParameter) { // Don't go into classes (anonymous, locals).
@@ -151,6 +147,10 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   inner class JavaApiUsageProcessor(private val isOnTheFly: Boolean, private val holder: ProblemsHolder) : ApiUsageProcessor {
+
+    private inline val ignored6ClassesApi get() = setOf("java.awt.geom.GeneralPath")
+    private inline val generifiedClasses get() = setOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
+
     override fun processConstructorInvocation(
       sourceNode: UElement, instantiatedClass: PsiClass, constructor: PsiMethod?, subclassDeclaration: UClass?
     ) {

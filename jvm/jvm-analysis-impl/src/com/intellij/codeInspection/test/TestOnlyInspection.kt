@@ -17,7 +17,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
 import kotlin.math.min
 
-private val visibleForTestingAnnotations = listOf(
+private inline val visibleForTestingAnnotations get() = listOf(
   "com.google.common.annotations.VisibleForTesting",
   "com.android.annotations.VisibleForTesting",
   "org.jetbrains.annotations.VisibleForTesting"

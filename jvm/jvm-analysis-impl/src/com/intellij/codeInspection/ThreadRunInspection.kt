@@ -31,6 +31,6 @@ class ThreadRunInspection : AbstractBaseUastLocalInspectionTool() {
     }
   }
 
-  private val THREAD_RUN = CallMatcher.instanceCall("java.lang.Thread", "run").parameterCount(0)
+  private inline val THREAD_RUN get() = CallMatcher.instanceCall("java.lang.Thread", "run").parameterCount(0)
 
 }

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 
-private val ANNOTATION_NAME = ApiStatus.OverrideOnly::class.java.canonicalName!!
+private inline val ANNOTATION_NAME get() = ApiStatus.OverrideOnly::class.java.canonicalName!!
 
 /**
  * UAST-based inspection checking that no API method, which is marked with [ApiStatus.OverrideOnly] annotation,
@@ -28,7 +28,8 @@ class OverrideOnlyInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
     if (AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(ANNOTATION_NAME, holder.file)) {
       ApiUsageUastVisitor.createPsiElementVisitor(OverrideOnlyProcessor(holder))
-    } else {
+    }
+    else {
       PsiElementVisitor.EMPTY_VISITOR
     }
 

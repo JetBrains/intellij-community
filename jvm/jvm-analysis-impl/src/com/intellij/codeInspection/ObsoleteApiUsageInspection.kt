@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
 
-private val OBSOLETE_ANNOTATION_NAME = ApiStatus.Obsolete::class.java.canonicalName
+private inline val OBSOLETE_ANNOTATION_NAME get() = ApiStatus.Obsolete::class.java.canonicalName
 
 @VisibleForTesting
 class ObsoleteApiUsageInspection : LocalInspectionTool() {

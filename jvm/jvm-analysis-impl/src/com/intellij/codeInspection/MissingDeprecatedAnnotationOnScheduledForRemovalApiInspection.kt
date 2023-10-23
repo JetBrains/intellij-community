@@ -11,7 +11,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-private val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME = ApiStatus.ScheduledForRemoval::class.java.canonicalName
+private inline val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME get() = ApiStatus.ScheduledForRemoval::class.java.canonicalName
 
 /**
  * Reports declarations (classes, methods, fields) marked with [ApiStatus.ScheduledForRemoval] annotation

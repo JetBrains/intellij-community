@@ -25,7 +25,7 @@ import org.jetbrains.uast.*
 @VisibleForTesting
 class UnstableApiUsageInspection : LocalInspectionTool() {
 
-  private val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME: String = ApiStatus.ScheduledForRemoval::class.java.canonicalName
+  private inline val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME: String get() = ApiStatus.ScheduledForRemoval::class.java.canonicalName
 
   private val knownAnnotationMessageProviders = mapOf(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME to ScheduledForRemovalMessageProvider())
 
