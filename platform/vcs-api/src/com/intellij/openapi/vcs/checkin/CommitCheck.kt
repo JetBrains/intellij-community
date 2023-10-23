@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.ide.plugins.PluginUtil
@@ -54,7 +54,7 @@ interface CommitCheck : PossiblyDumbAware {
    * Consider using explicit context (e.g. [kotlinx.coroutines.Dispatchers.Default]) for potentially long operations,
    * that can be performed on pooled thread.
    *
-   * Use [com.intellij.openapi.progress.progressSink] to report progress state.
+   * Use [com.intellij.platform.util.progress.rawProgressReporter] to report progress state.
    *
    * @return a commit problem found by the commit check or `null` if no problems found
    */

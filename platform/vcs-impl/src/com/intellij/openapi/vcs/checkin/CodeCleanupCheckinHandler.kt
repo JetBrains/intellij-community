@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.checkin
 
@@ -16,9 +16,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.ProgressSink
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -27,6 +25,8 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.util.SequentialModalProgressTask
@@ -60,12 +60,12 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
   override fun isEnabled(): Boolean = settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
-    val sink = coroutineContext.progressSink
-    sink?.text(message("progress.text.inspecting.code"))
+    val reporter = coroutineContext.rawProgressReporter
+    reporter?.text(message("progress.text.inspecting.code"))
     val cleanupProblems = findProblems(commitInfo.committedVirtualFiles)
 
-    sink?.text(message("progress.text.applying.fixes"))
-    sink?.details("")
+    reporter?.text(message("progress.text.applying.fixes"))
+    reporter?.details("")
     applyFixes(cleanupProblems)
 
     return null
@@ -74,7 +74,7 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
   private suspend fun findProblems(committedFiles: List<VirtualFile>): CleanupProblems {
     val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextImpl
     val profile = getProfile()
-    return withContext(Dispatchers.Default + textToDetailsSinkContext(coroutineContext.progressSink)) {
+    return withContext(Dispatchers.Default + textToDetailsSinkContext(coroutineContext.rawProgressReporter)) {
       val files = readAction { filterOutGeneratedAndExcludedFiles(committedFiles, project) }
       val scope = AnalysisScope(project, files)
       coroutineToIndicator {
@@ -103,7 +103,7 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
     commandProcessor.executeCommand {
       if (cleanupProblems.isGlobalScope) commandProcessor.markCurrentCommandAsGlobal(project)
 
-      val sink = coroutineContext.progressSink
+      val sink = coroutineContext.rawProgressReporter
       val runner = SequentialModalProgressTask(project, "", true)
       runner.setMinIterationTime(200)
       runner.setTask(ApplyFixesTask(project, cleanupProblems.problemDescriptors(), sink))
@@ -128,10 +128,10 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
   }
 }
 
-private class ApplyFixesTask(project: Project, descriptors: List<CommonProblemDescriptor>, private val sink: ProgressSink?) :
+private class ApplyFixesTask(project: Project, descriptors: List<CommonProblemDescriptor>, private val reporter: RawProgressReporter?) :
   PerformFixesTask(project, descriptors, null) {
 
   override fun beforeProcessing(descriptor: CommonProblemDescriptor) {
-    sink?.update(details = getPresentableText(descriptor))
+    reporter?.details(getPresentableText(descriptor))
   }
 }

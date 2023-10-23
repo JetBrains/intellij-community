@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.icons.AllIcons
@@ -12,8 +12,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressSink
-import com.intellij.openapi.progress.asContextElement
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.util.Disposer
@@ -28,6 +26,8 @@ import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.asContextElement
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.components.JBLabel
@@ -149,7 +149,7 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
     })
     indicator.start()
     try {
-      return withContext(IndeterminateProgressSink(indicator).asContextElement(), block = action)
+      return withContext(IndeterminateProgressReporter(indicator).asContextElement(), block = action)
     }
     finally {
       indicator.stop()
@@ -414,15 +414,19 @@ private class RerunCommitChecksAction :
   }
 }
 
-private class IndeterminateProgressSink(private val indicator: ProgressIndicator) : ProgressSink {
+private class IndeterminateProgressReporter(private val indicator: ProgressIndicator) : RawProgressReporter {
 
-  override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
+  override fun text(text: @ProgressText String?) {
     if (text != null) {
       indicator.text = text
     }
+  }
+
+  override fun details(details: @ProgressDetails String?) {
     if (details != null) {
       indicator.text2 = details
     }
-    // ignore fraction updates
   }
+
+  // ignore fraction updates
 }

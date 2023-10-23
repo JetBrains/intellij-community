@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.vcs
 
 import com.intellij.build.BuildView
@@ -31,8 +31,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressSink
-import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
@@ -46,6 +44,8 @@ import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isNonModalCommit
@@ -131,7 +131,7 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
     if (configurationSettings == null) {
       return createCommitProblem(listOf(FailureDescription("", 0, 0, configuration = null, configurationBean.name)))
     }
-    coroutineContext.progressSink?.text(SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name))
+    coroutineContext.rawProgressReporter?.text(SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name))
 
     return withContext(Dispatchers.IO) {
       val problems = ArrayList<FailureDescription>()
@@ -160,7 +160,7 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
     val executionTarget = ExecutionTargetManager.getInstance(project).findTarget(configurationSettings.configuration)
     val environment = environmentBuilder.target(executionTarget).build()
     environment.setHeadless()
-    val sink = coroutineContext.progressSink
+    val reporter = coroutineContext.rawProgressReporter
     val formDescriptor = suspendCancellableCoroutine<TestResultsFormDescriptor?> { continuation ->
       val messageBus = project.messageBus
       messageBus.connect(environment).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
@@ -174,7 +174,7 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
       })
       ProgramRunnerUtil.executeConfigurationAsync(environment, false, true) {
         if (it != null) {
-          onProcessStarted(sink, it, continuation)
+          onProcessStarted(reporter, it, continuation)
         }
       }
     } ?: return
@@ -191,7 +191,7 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
     disposeConsole(formDescriptor.executionConsole)
   }
 
-  private fun onProcessStarted(sink: ProgressSink?, descriptor: RunContentDescriptor, continuation: CancellableContinuation<TestResultsFormDescriptor?>) {
+  private fun onProcessStarted(reporter: RawProgressReporter?, descriptor: RunContentDescriptor, continuation: CancellableContinuation<TestResultsFormDescriptor?>) {
     val handler = descriptor.processHandler
     if (handler != null) {
       val executionConsole = descriptor.console
@@ -202,9 +202,9 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
       }
 
       handler.addProcessListener(processListener)
-      if (sink != null) {
+      if (reporter != null) {
         resultsForm?.addEventsListener(object : TestResultsViewer.EventsListener {
-          override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) = sink.details(test.getFullName())
+          override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) = reporter.details(test.getFullName())
         })
       }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.target.conda
 
 import com.intellij.execution.target.FullPathOnTarget
@@ -10,11 +10,11 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.progress.ProgressSink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.validationErrorIf
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.isMutableTarget
@@ -143,9 +143,9 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
    * Result may contain an error
    */
   suspend fun onLoadEnvsClicked(uiContext: CoroutineContext,
-                                progressSink: ProgressSink? = null): Result<List<PyCondaEnv>> = withContext(uiContext) {
+                                reporter: RawProgressReporter? = null): Result<List<PyCondaEnv>> = withContext(uiContext) {
     val path = condaPathTextBoxRwProp.get()
-    progressSink?.text(PyBundle.message("python.sdk.conda.getting.list.envs"))
+    reporter?.text(PyBundle.message("python.sdk.conda.getting.list.envs"))
     PyCondaEnv.getEnvs(targetCommandExecutor, path.trim())
       .onFailure {
         condaEnvs = Result.failure(it)
@@ -180,7 +180,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   /**
    * Detects condas in well-known locations so user doesn't have to provide conda path
    */
-  suspend fun detectConda(uiContext: CoroutineContext, progressSink: ProgressSink? = null) {
+  suspend fun detectConda(uiContext: CoroutineContext, reporter: RawProgressReporter? = null) {
     if (withContext(uiContext) {
         // Already set, no need to detect
         condaPathTextBoxRwProp.get().isNotBlank()
@@ -195,7 +195,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
     withContext(uiContext) {
       condaPathTextBoxRwProp.set(condaPath)
       // Since path is set, lets click button on behalf of user
-      onLoadEnvsClicked(uiContext, progressSink)
+      onLoadEnvsClicked(uiContext, reporter)
     }
   }
 
@@ -224,13 +224,13 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
 
   /**
    * User clicked on "OK" after choosing either create new or use existing env.
-   * The process of creation reported to [progressSink]. Result is SDK or error.
+   * The process of creation reported to [reporter]. Result is SDK or error.
    *
    * @param targetConfiguration the target configuration with the corresponding data saved, it must *not* implement
    * [com.intellij.execution.target.IncompleteTargetEnvironmentConfiguration]
    */
   suspend fun onCondaCreateSdkClicked(uiContext: CoroutineContext,
-                                      progressSink: ProgressSink?,
+                                      reporter: RawProgressReporter?,
                                       targetConfiguration: TargetEnvironmentConfiguration?): Result<Sdk> {
 
     val pyCondaCommand = PyCondaCommand(condaPathTextBoxRwProp.get(), targetConfiguration, project)
@@ -247,7 +247,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
         uiContext,
         existingSdks,
         project,
-        progressSink)
+        reporter)
     }
   }
 

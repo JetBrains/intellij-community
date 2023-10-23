@@ -7,10 +7,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressSink
-import com.intellij.openapi.progress.asContextElement
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
@@ -29,6 +26,9 @@ import com.intellij.openapi.vcs.checkin.TodoCheckinHandler.Companion.showDialog
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.wm.ToolWindowId.TODO_VIEW
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.asContextElement
+import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.psi.search.TodoItem
 import com.intellij.util.text.DateFormatUtil.formatDateTime
 import com.intellij.util.ui.UIUtil.getWarningIcon
@@ -71,15 +71,15 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
   override fun isEnabled(): Boolean = settings.CHECK_NEW_TODO
 
   override suspend fun runCheck(commitInfo: CommitInfo): TodoCommitProblem? {
-    val sink = coroutineContext.progressSink
-    sink?.text(message("progress.text.checking.for.todo"))
+    val reporter = coroutineContext.rawProgressReporter
+    reporter?.text(message("progress.text.checking.for.todo"))
 
     val isPostCommit = commitInfo.isPostCommitCheck
     val todoFilter = settings.myTodoPanelSettings.todoFilterName?.let { TodoConfiguration.getInstance().getTodoFilter(it) }
     val changes = commitInfo.committedChanges
     val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
 
-    withContext(Dispatchers.Default + textToDetailsSinkContext(sink)) {
+    withContext(Dispatchers.Default + textToDetailsSinkContext(reporter)) {
       coroutineToIndicator {
         worker.execute()
       }
@@ -170,23 +170,23 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
   }
 }
 
-internal fun textToDetailsSinkContext(sink: ProgressSink?): CoroutineContext {
-  if (sink == null) {
+internal fun textToDetailsSinkContext(reporter: RawProgressReporter?): CoroutineContext {
+  if (reporter == null) {
     return EmptyCoroutineContext
   }
   else {
-    return TextToDetailsProgressSink(sink).asContextElement()
+    return TextToDetailsProgressReporter(reporter).asContextElement()
   }
 }
 
-internal class TextToDetailsProgressSink(private val original: ProgressSink) : ProgressSink {
+internal class TextToDetailsProgressReporter(private val original: RawProgressReporter) : RawProgressReporter {
 
-  override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
-    original.update(
-      text = null,
-      details = text, // incoming text will be shown as details in the original sink
-      fraction = fraction,
-    )
+  override fun text(text: @ProgressText String?) {
+    original.details(text) // incoming text will be shown as details in the original sink
+  }
+
+  override fun fraction(fraction: Double?) {
+    original.fraction(fraction)
   }
 }
 

@@ -1,16 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.ProgressDetails
-import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.asContextElement
+import com.intellij.platform.util.progress.rawProgressReporter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
@@ -30,14 +33,14 @@ abstract class CodeProcessorCheckinHandler(
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
-    val sink = coroutineContext.progressSink
+    val reporter = coroutineContext.rawProgressReporter
     getProgressMessage()?.let {
-      sink?.text(it)
+      reporter?.text(it)
     }
 
     val affectedFiles = commitInfo.committedVirtualFiles
 
-    withContext(Dispatchers.Default + noTextSinkContext(sink)) {
+    withContext(Dispatchers.Default + noTextSinkContext(reporter)) {
       // TODO suspending code processor
       val processor = readAction { createCodeProcessor(affectedFiles) }
       coroutineToIndicator {
@@ -50,18 +53,22 @@ abstract class CodeProcessorCheckinHandler(
   }
 }
 
-internal fun noTextSinkContext(sink: ProgressSink?): CoroutineContext {
-  if (sink == null) {
+internal fun noTextSinkContext(reporter: RawProgressReporter?): CoroutineContext {
+  if (reporter == null) {
     return EmptyCoroutineContext
   }
   else {
-    return NoTextProgressSink(sink).asContextElement()
+    return NoTextProgressReporter(reporter).asContextElement()
   }
 }
 
-internal class NoTextProgressSink(private val sink: ProgressSink) : ProgressSink {
+internal class NoTextProgressReporter(private val reporter: RawProgressReporter) : RawProgressReporter {
 
-  override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
-    sink.update(text = null, details, fraction)
+  override fun details(details: @ProgressDetails String?) {
+    reporter.details(details)
+  }
+
+  override fun fraction(fraction: Double?) {
+    reporter.fraction(fraction)
   }
 }

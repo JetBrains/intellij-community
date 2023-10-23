@@ -14,7 +14,10 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.StandardProgressIndicator
+import com.intellij.openapi.progress.jobToIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -39,6 +42,8 @@ import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.isGeneratedOrExcluded
 import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler.Companion.processFoundCodeSmells
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
@@ -99,8 +104,8 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
   override fun isEnabled(): Boolean = settings.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT
 
   override suspend fun runCheck(commitInfo: CommitInfo): CodeAnalysisCommitProblem? {
-    val sink = coroutineContext.progressSink
-    sink?.text(message("progress.text.analyzing.code"))
+    val reporter = coroutineContext.rawProgressReporter
+    reporter?.text(message("progress.text.analyzing.code"))
 
     val isPostCommit = commitInfo.isPostCommitCheck
     val changes = commitInfo.committedChanges
@@ -109,11 +114,11 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
     lateinit var codeSmells: List<CodeSmellInfo>
-    val text2DetailsSink = sink?.let(::TextToDetailsProgressSink)
+    val text2DetailsSink = reporter?.let(::TextToDetailsProgressReporter)
     withContext(Dispatchers.Default) {
       val changesByFile = groupChangesByFile(changes)
       // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
-      val progressIndicatorEx = ProgressSinkIndicatorEx(text2DetailsSink, coroutineContext.contextModality() ?: ModalityState.nonModal())
+      val progressIndicatorEx = RawProgressReporterIndicatorEx(text2DetailsSink, coroutineContext.contextModality() ?: ModalityState.nonModal())
       jobToIndicator(coroutineContext.job, progressIndicatorEx) {
         // TODO suspending [findCodeSmells]
         codeSmells = findCodeSmells(changesByFile, isPostCommit)
@@ -322,8 +327,8 @@ private fun getDescription(codeSmells: List<CodeSmellInfo>): String {
   return message("before.commit.files.contain.code.smells.edit.them.confirm.text", virtualFiles.size, errorCount, warningCount)
 }
 
-private class ProgressSinkIndicatorEx(
-  private val sink: ProgressSink?,
+private class RawProgressReporterIndicatorEx(
+  private val reporter: RawProgressReporter?,
   private val contextModality: ModalityState,
 ) : AbstractProgressIndicatorExBase(), StandardProgressIndicator {
 
@@ -332,14 +337,14 @@ private class ProgressSinkIndicatorEx(
   }
 
   override fun setText(text: String?) {
-    sink?.update(text = text)
+    reporter?.text(text)
   }
 
   override fun setText2(text: String?) {
-    sink?.update(details = text)
+    reporter?.details(text)
   }
 
   override fun setFraction(fraction: Double) {
-    sink?.update(fraction = fraction)
+    reporter?.fraction(fraction)
   }
 }

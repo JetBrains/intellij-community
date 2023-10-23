@@ -8,8 +8,8 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.platform.util.progress.rawProgressReporter
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
 
@@ -26,7 +26,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
     }
     else {
       LOG.info("Wait for auto sync future")
-      coroutineContext.progressSink?.text(IcsBundle.message("autosync.progress.text"))
+      coroutineContext.rawProgressReporter?.text(IcsBundle.message("autosync.progress.text"))
       autoFuture.join()
     }
   }

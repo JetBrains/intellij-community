@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.target.conda
 
 import com.intellij.execution.Platform
@@ -8,11 +8,11 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.*
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressSink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
@@ -68,9 +68,9 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(newCondaEnvInfo: NewCon
                                                          uiContext: CoroutineContext,
                                                          existingSdks: List<Sdk>,
                                                          project: Project,
-                                                         sink: ProgressSink? = null): Result<Sdk> {
+                                                         reporter: RawProgressReporter? = null): Result<Sdk> {
   val process = PyCondaEnv.createEnv(this, newCondaEnvInfo).getOrElse { return Result.failure(it) }
-  val error = ProcessHandlerReader(process).runProcessAndGetError(uiContext, sink)
+  val error = ProcessHandlerReader(process).runProcessAndGetError(uiContext, reporter)
 
   return error?.let { Result.failure(Exception(it)) }
          ?: Result.success(

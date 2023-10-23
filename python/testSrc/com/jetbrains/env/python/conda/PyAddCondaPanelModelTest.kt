@@ -4,8 +4,8 @@ package com.jetbrains.env.python.conda
 import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressSink
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.PyBundle
@@ -87,11 +87,11 @@ class PyAddCondaPanelModelTest {
     Assert.assertNotNull("Bad conda name didn't lead to validation", model.getValidationError())
     model.newEnvNameRwProperty.set(condaName)
 
-    val mockSink = MockSink()
-    val sdk = model.onCondaCreateSdkClicked(coroutineContext, mockSink, targetConfiguration = null).getOrThrow()
+    val mockReporter = MockReporter()
+    val sdk = model.onCondaCreateSdkClicked(coroutineContext, mockReporter, targetConfiguration = null).getOrThrow()
     val newName = ((sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.envIdentity as PyCondaEnvIdentity.NamedEnv).envName
     Assert.assertEquals("Wrong conda name", condaName, newName)
-    Assert.assertTrue("No output provided for sink", mockSink.out.toString().isNotEmpty())
+    Assert.assertTrue("No output provided for sink", mockReporter.out.toString().isNotEmpty())
   }
 
   @Test
@@ -165,9 +165,9 @@ class PyAddCondaPanelModelTest {
   /**
    * Mock doesn't work with Kotlin, hence mock manually
    */
-  private class MockSink : ProgressSink {
+  private class MockReporter : RawProgressReporter {
     val out = StringBuilder()
-    override fun update(text: String?, details: String?, fraction: Double?) {
+    override fun text(text: String?) {
       text?.let { out.append(it) }
     }
   }
