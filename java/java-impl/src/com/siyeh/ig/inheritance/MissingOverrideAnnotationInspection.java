@@ -2,7 +2,6 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -62,15 +61,14 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
-    final PsiMethod method = (PsiMethod)infos[0];
-    final boolean annotateMethod = (boolean)infos[1];
-    final boolean annotateHierarchy = (boolean)infos[2];
-    return createAnnotateFix(method, annotateMethod, annotateHierarchy);
+    final boolean annotateMethod = (boolean)infos[0];
+    final boolean annotateHierarchy = (boolean)infos[1];
+    return createAnnotateFix(annotateMethod, annotateHierarchy);
   }
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
-    final boolean annotateMethod = (boolean)infos[1];
+    final boolean annotateMethod = (boolean)infos[0];
     return InspectionGadgetsBundle.message(annotateMethod
                                            ? "missing.override.annotation.problem.descriptor"
                                            : "missing.override.annotation.in.overriding.problem.descriptor");
@@ -114,9 +112,9 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
         }
 
         final boolean annotateMethod = isMissingOverride(method);
-        final boolean annotateHierarchy = warnInSuper && isOnTheFly() && isMissingOverrideInOverriders(method);
+        final boolean annotateHierarchy = warnInSuper && isMissingOverrideInOverriders(method);
         if (annotateMethod || annotateHierarchy) {
-          registerMethodError(method, method, annotateMethod, annotateHierarchy);
+          registerMethodError(method, annotateMethod, annotateHierarchy);
         }
       }
 
@@ -175,7 +173,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
         return !annotations.isEmpty();
       }
 
-      private boolean isJdk6Override(PsiMethod method, PsiClass methodClass) {
+      private static boolean isJdk6Override(PsiMethod method, PsiClass methodClass) {
         final PsiMethod[] superMethods = method.findSuperMethods();
         boolean hasSupers = false;
         for (PsiMethod superMethod : superMethods) {
@@ -194,7 +192,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
         return hasSupers && !methodClass.isInterface();
       }
 
-      private boolean isJdk5Override(PsiMethod method, PsiClass methodClass) {
+      private static boolean isJdk5Override(PsiMethod method, PsiClass methodClass) {
         final PsiMethod[] superMethods = method.findSuperMethods();
         for (PsiMethod superMethod : superMethods) {
           final PsiClass superClass = superMethod.getContainingClass();
@@ -223,21 +221,8 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
   }
 
   @NotNull
-  private static LocalQuickFix createAnnotateFix(@NotNull PsiMethod method, boolean annotateMethod, boolean annotateHierarchy) {
-    if (!annotateHierarchy) {
-      return new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_OVERRIDE, method);
-    }
-    return new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE) {
-      @Override
-      protected boolean annotateSelf() {
-        return annotateMethod;
-      }
-
-      @Override
-      protected boolean annotateOverriddenMethods() {
-        return true;
-      }
-    };
+  private static LocalQuickFix createAnnotateFix(boolean annotateMethod, boolean annotateHierarchy) {
+    return new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE, annotateHierarchy, annotateMethod);
   }
 
   @Nullable

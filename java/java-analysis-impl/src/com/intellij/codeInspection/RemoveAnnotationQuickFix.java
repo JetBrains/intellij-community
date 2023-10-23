@@ -79,12 +79,12 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
       Consumer<PsiModifierListOwner> inheritorProcessor = owner -> {
         registerAnnotation(AnnotationUtil.findAnnotation(owner, qualifiedName), owner, physical, externalOwners);
       };
-      if (listOwner instanceof PsiMethod &&
-          !AnnotateMethodFix.processModifiableInheritorsUnderProgress((PsiMethod)listOwner, inheritorProcessor)) {
+      if (listOwner instanceof PsiMethod method &&
+          !AnnotateOverriddenMethodParameterFix.processModifiableInheritorsUnderProgress(method, inheritorProcessor)) {
         return;
       }
-      if (listOwner instanceof PsiParameter &&
-               !AnnotateOverriddenMethodParameterFix.processParameterInheritorsUnderProgress((PsiParameter)listOwner, inheritorProcessor)) {
+      if (listOwner instanceof PsiParameter parameter &&
+          !AnnotateOverriddenMethodParameterFix.processParameterInheritorsUnderProgress(parameter, inheritorProcessor)) {
         return;
       }
     }
