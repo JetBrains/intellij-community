@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="Slf4j" type="repository">
+  <library name="slf4j-api" type="repository">
     <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.slf4j:slf4j-api:2.0.9">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar">

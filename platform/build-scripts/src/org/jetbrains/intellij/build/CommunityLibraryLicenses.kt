@@ -1030,7 +1030,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Skiko Runtime", libraryName = "jetbrains.skiko.awt.runtime.all",
                    url = "https://github.com/JetBrains/skiko/")
       .apache("https://github.com/JetBrains/skiko/blob/master/LICENSE"),
-    LibraryLicense(libraryName = "Slf4j", url = "https://slf4j.org/")
+    LibraryLicense(libraryName = "slf4j-api", url = "https://slf4j.org/")
       .mit("https://www.slf4j.org/license.html")
       .suppliedByOrganizations("QOS.ch Sarl"),
     LibraryLicense(libraryName = "slf4j-jdk14", url = "https://slf4j.org/")
