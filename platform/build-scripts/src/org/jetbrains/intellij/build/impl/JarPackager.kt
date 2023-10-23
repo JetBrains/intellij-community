@@ -42,7 +42,7 @@ private val libsThatUsedInJps = java.util.Set.of(
   "netty-handler-proxy",
   "gson",
   "Log4J",
-  "Slf4j",
+  "slf4j-api",
   "slf4j-jdk14",
   // see getBuildProcessApplicationClasspath - used in JPS
   "lz4-java",
