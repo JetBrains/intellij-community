@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -30,6 +31,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.compose.JBComposePanel
+import com.intellij.ui.speedSearch.SpeedSearch
+import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -45,6 +48,8 @@ import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
 internal fun createComposeBranchesPopup(project: Project, repository: GitRepository): JBPopup {
@@ -74,16 +79,50 @@ private fun createBranchesPopupComposeComponent(
   closePopup: () -> Unit
 ): JComponent {
   val composePanel = JBComposePanel {
+    val speedSearch = remember {
+      SpeedSearch(true).apply {
+        setEnabled(true)
+      }
+    }
+    val text = remember { mutableStateOf("") }
+
+    DisposableEffect(speedSearch) {
+      val listener = object : PropertyChangeListener {
+        override fun propertyChange(evt: PropertyChangeEvent?) {
+          if (evt?.propertyName != SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME) {
+            return
+          }
+          text.value = evt.newValue as String
+        }
+      }
+      speedSearch.addChangeListener(listener)
+      onDispose {
+        speedSearch.removeChangeListener(listener)
+      }
+    }
+
     Box(modifier = Modifier
       .fillMaxSize()
       .background(JBUI.CurrentTheme.Popup.BACKGROUND.toComposeColor())
       .padding(start = 12.dp, end = 3.dp, top = 5.dp, bottom = 5.dp)
+      .onPreviewKeyEvent {
+        val awtEvent = it.nativeKeyEvent as java.awt.event.KeyEvent
+        speedSearch.processKeyEvent(awtEvent)
+        awtEvent.isConsumed
+      }
     ) {
       Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        DummySearchTextField()
+        DummySearchTextField(text.value)
         Divider(orientation = Orientation.Horizontal, color = UIUtil.getTooltipSeparatorColor().toComposeColor())
-        val localBranches = repository.localBranchesOrCurrent
-        val remoteBranches = repository.branches.remoteBranches
+        val allLocalBranches = repository.localBranchesOrCurrent
+        val allRemoteBranches = repository.branches.remoteBranches
+
+        val localBranches = remember(text.value) {
+          allLocalBranches.filter { speedSearch.shouldBeShowing(it.name) }
+        }
+        val remoteBranches = remember(text.value) {
+          allRemoteBranches.filter { speedSearch.shouldBeShowing(it.name) }
+        }
 
         val focusRequester = remember { FocusRequester() }
         Branches(
@@ -108,14 +147,16 @@ private fun createBranchesPopupComposeComponent(
 }
 
 @Composable
-private fun DummySearchTextField() {
+private fun DummySearchTextField(
+  text: String
+) {
   Box(modifier = Modifier.offset(x = 6.dp).pointerHoverIcon(PointerIcon.Text).padding(vertical = 8.dp)) {
     Row(
       horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
       Icon("expui/general/search.svg", "Search", ExpUiIcons::class.java)
       Text(
-        text = "Search branch",
+        text = text.takeIf { it.isNotEmpty() } ?: "Search branch",
         style = TextStyle(
           fontSize = 13.sp,
           color = UIUtil.getContextHelpForeground().toComposeColor(),
