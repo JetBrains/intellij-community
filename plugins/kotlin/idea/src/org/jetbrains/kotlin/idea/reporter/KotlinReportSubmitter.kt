@@ -18,7 +18,7 @@ import com.intellij.util.Consumer
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinPluginUpdater
+import org.jetbrains.kotlin.idea.KotlinPluginReleaseDateProvider
 import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
@@ -79,11 +79,11 @@ class KotlinReportSubmitter : ITNReporterCompat() {
             ApplicationManager.getApplication().executeOnPooledThread {
                 val releaseDate =
                     try {
-                        KotlinPluginUpdater.fetchPluginReleaseDate(KotlinIdePlugin.id, KotlinIdePlugin.version, null)
+                        KotlinPluginReleaseDateProvider.fetchPluginReleaseDate(KotlinIdePlugin.id, KotlinIdePlugin.version, null)
                     } catch (e: IOException) {
                         LOG.warn(e)
                         null
-                    } catch (e: KotlinPluginUpdater.Companion.ResponseParseException) {
+                    } catch (e: KotlinPluginReleaseDateProvider.ResponseParseException) {
                         // Exception won't be shown, but will be logged
                         LOG.error(e)
                         return@executeOnPooledThread

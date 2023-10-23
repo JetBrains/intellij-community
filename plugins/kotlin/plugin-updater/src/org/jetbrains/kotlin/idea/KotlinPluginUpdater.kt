@@ -39,49 +39,51 @@ class KotlinPluginUpdater : StandalonePluginUpdateChecker(
         private const val PROPERTY_NAME = "kotlin.lastUpdateCheck"
 
         fun getInstance(): KotlinPluginUpdater = service()
+    }
+}
 
-        class ResponseParseException(message: String, cause: Exception? = null) : IllegalStateException(message, cause)
+object KotlinPluginReleaseDateProvider {
+    class ResponseParseException(message: String, cause: Exception? = null) : IllegalStateException(message, cause)
 
-        @Suppress("SpellCheckingInspection")
-        private class PluginDTO {
-            var cdate: String? = null
-            var channel: String? = null
+    @Suppress("SpellCheckingInspection")
+    private class PluginDTO {
+        var cdate: String? = null
+        var channel: String? = null
 
-            // `true` if the version is seen in plugin site and available for download.
-            // Maybe be `false` if author requested version deletion.
-            var listed: Boolean = true
+        // `true` if the version is seen in plugin site and available for download.
+        // Maybe be `false` if author requested version deletion.
+        var listed: Boolean = true
 
-            // `true` if version is approved and verified
-            var approve: Boolean = true
+        // `true` if version is approved and verified
+        var approve: Boolean = true
+    }
+
+    @Throws(IOException::class, ResponseParseException::class)
+    fun fetchPluginReleaseDate(pluginId: PluginId, version: String, channel: String?): LocalDate? {
+        val url = "https://plugins.jetbrains.com/api/plugins/${pluginId.idString}/updates?version=$version"
+
+        val pluginDTOs: Array<PluginDTO> = try {
+            HttpRequests.request(url).connect {
+                GsonBuilder().create().fromJson(it.inputStream.reader(), Array<PluginDTO>::class.java)
+            }
+        } catch (ioException: JsonIOException) {
+            throw IOException(ioException)
+        } catch (syntaxException: JsonSyntaxException) {
+            throw ResponseParseException("Can't parse json response", syntaxException)
         }
 
-        @Throws(IOException::class, ResponseParseException::class)
-        fun fetchPluginReleaseDate(pluginId: PluginId, version: String, channel: String?): LocalDate? {
-            val url = "https://plugins.jetbrains.com/api/plugins/${pluginId.idString}/updates?version=$version"
+        val selectedPluginDTO = pluginDTOs.firstOrNull {
+            it.listed && it.approve && (it.channel == channel || (it.channel == "" && channel == null))
+        } ?: return null
 
-            val pluginDTOs: Array<PluginDTO> = try {
-                HttpRequests.request(url).connect {
-                    GsonBuilder().create().fromJson(it.inputStream.reader(), Array<PluginDTO>::class.java)
-                }
-            } catch (ioException: JsonIOException) {
-                throw IOException(ioException)
-            } catch (syntaxException: JsonSyntaxException) {
-                throw ResponseParseException("Can't parse json response", syntaxException)
-            }
-
-            val selectedPluginDTO = pluginDTOs.firstOrNull {
-                it.listed && it.approve && (it.channel == channel || (it.channel == "" && channel == null))
-            } ?: return null
-
-            val dateString = selectedPluginDTO.cdate ?: throw ResponseParseException("Empty cdate")
-            return try {
-                val dateLong = dateString.toLong()
-                Instant.ofEpochMilli(dateLong).atZone(ZoneOffset.UTC).toLocalDate()
-            } catch (e: NumberFormatException) {
-                throw ResponseParseException("Can't parse long date", e)
-            } catch (e: DateTimeException) {
-                throw ResponseParseException("Can't convert to date", e)
-            }
+        val dateString = selectedPluginDTO.cdate ?: throw ResponseParseException("Empty cdate")
+        return try {
+            val dateLong = dateString.toLong()
+            Instant.ofEpochMilli(dateLong).atZone(ZoneOffset.UTC).toLocalDate()
+        } catch (e: NumberFormatException) {
+            throw ResponseParseException("Can't parse long date", e)
+        } catch (e: DateTimeException) {
+            throw ResponseParseException("Can't convert to date", e)
         }
     }
 }
