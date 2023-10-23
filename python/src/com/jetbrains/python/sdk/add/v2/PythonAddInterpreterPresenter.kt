@@ -3,6 +3,8 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.UserDataHolder
@@ -11,6 +13,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.flow.mapStateIn
+import com.intellij.util.text.nullize
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.add.LocalContext
 import com.jetbrains.python.sdk.add.ProjectLocationContext
@@ -23,6 +26,7 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.prepareSdkList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
 
@@ -57,6 +61,12 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
   private val _projectLocationContext: StateFlow<ProjectLocationContext> =
     _projectWithContextFlow.mapStateIn(scope + uiContext, SharingStarted.Lazily) { it.context }
 
+  private val _detectingSdks = MutableStateFlow(value = false)
+  val detectingSdks: StateFlow<Boolean> = _detectingSdks.asStateFlow()
+
+  private val _detectingCondaExecutable = MutableStateFlow(value = false)
+  val detectingCondaExecutable: StateFlow<Boolean> = _detectingCondaExecutable.asStateFlow()
+
   /**
    * Prefer using this flow over [PythonAddInterpreterState.projectPath] of the [state] when reacting to the changes of the new project
    * location (either with background computations or UI).
@@ -72,8 +82,14 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
   private val detectedSdksFlow: StateFlow<Pair<ProjectLocationContext, List<Sdk>>> =
     _projectLocationContext
       .mapLatest { context ->
-        context to detectSystemWideSdksSuspended(module = null, context.targetEnvironmentConfiguration, emptyContext)
+        _detectingSdks.value = true
+        val sdks = runCatching {
+          detectSystemWideSdksSuspended(module = null, context.targetEnvironmentConfiguration, emptyContext)
+        }.getOrLogException(LOG) ?: emptyList()
+        _detectingSdks.value = false
+        context to sdks
       }
+      .logException(LOG)
       .stateIn(scope + uiContext, started = SharingStarted.Lazily, LocalContext to emptyList())
 
   private val manuallyAddedSdksFlow = MutableStateFlow<List<Sdk>>(emptyList())
@@ -85,7 +101,9 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
       }
       state.basePythonSdks.set(sdkList)
       sdkList
-    }.stateIn(scope + uiContext, started = SharingStarted.Lazily, initialValue = emptyList())
+    }
+      .logException(LOG)
+      .stateIn(scope + uiContext, started = SharingStarted.Lazily, initialValue = emptyList())
 
   val basePythonHomePath = state.basePythonVersion.transform(
     map = { sdk -> sdk?.homePath ?: "" },
@@ -95,6 +113,9 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
     get() = projectLocationContext.targetEnvironmentConfiguration
   var baseConda: PyCondaEnv? = null
 
+  private val _currentCondaExecutableFlow = MutableStateFlow<Path?>(value = null)
+  val currentCondaExecutableFlow: StateFlow<Path?> = _currentCondaExecutableFlow.asStateFlow()
+
   init {
     state.projectPath.afterChange { projectPath ->
       val context = projectLocationContexts.getProjectLocationContextFor(projectPath)
@@ -102,21 +123,36 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
     }
 
     state.allExistingSdks.afterChange { _allExistingSdksFlow.tryEmit(it) }
+    state.condaExecutable.afterChange { _currentCondaExecutableFlow.tryEmit(it.tryConvertToPath()) }
 
-    state.scope.launch(start = CoroutineStart.UNDISPATCHED) {
-      // process Conda executable and existing envs
-      _projectWithContextFlow.collectLatest { (_, context) ->
-        withContext(uiContext) {
-          val executor = context.targetEnvironmentConfiguration.toExecutor()
-          val suggestedCondaPath = suggestCondaPath(targetCommandExecutor = executor)
-          val suggestedCondaLocalPath = suggestedCondaPath?.toLocalPathOn(context.targetEnvironmentConfiguration)
-          state.condaExecutable.set(suggestedCondaLocalPath?.toString().orEmpty())
-          val environments = if (suggestedCondaPath != null) PyCondaEnv.getEnvs(executor, suggestedCondaPath) else null
-          baseConda = environments?.getOrThrow()?.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
+    scope.launch(start = CoroutineStart.UNDISPATCHED) {
+      _projectLocationContext
+        .mapLatest { context ->
+          withContext(uiContext) {
+            _detectingCondaExecutable.value = true
+            val executor = context.targetEnvironmentConfiguration.toExecutor()
+            val suggestedCondaPath = runCatching { suggestCondaPath(targetCommandExecutor = executor) }.getOrLogException(LOG)
+            val suggestedCondaLocalPath = suggestedCondaPath?.toLocalPathOn(context.targetEnvironmentConfiguration)
+            state.condaExecutable.set(suggestedCondaLocalPath?.toString().orEmpty())
+            val environments = suggestedCondaPath?.let { PyCondaEnv.getEnvs(executor, suggestedCondaPath).getOrLogException(LOG) }
+            baseConda = environments?.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
+            _detectingCondaExecutable.value = false
+          }
         }
-      }
+        .logException(LOG)
+        .collect()
     }
   }
+
+  private fun String.tryConvertToPath(): Path? =
+    nullize(nullizeSpaces = true)?.let {
+      try {
+        Path.of(it)
+      }
+      catch (e: InvalidPathException) {
+        null
+      }
+    }
 
   /**
    * Adds SDK specified by its path if it is not present in the list and selects it.
@@ -132,4 +168,8 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
     ProjectPathWithContext(projectPath = this, projectLocationContexts.getProjectLocationContextFor(projectPath = this))
 
   data class ProjectPathWithContext(val projectPath: String, val context: ProjectLocationContext)
+
+  companion object {
+    private val LOG = logger<PythonAddInterpreterPresenter>()
+  }
 }
