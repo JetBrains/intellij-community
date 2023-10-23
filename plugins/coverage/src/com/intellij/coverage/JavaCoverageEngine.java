@@ -491,6 +491,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final PsiClass[] classes = ReadAction.compute(() -> ((PsiClassOwner)srcFile).getClasses());
     for (final PsiClass psiClass : classes) {
       final String className = ReadAction.compute(() -> psiClass.getName());
+      if (className == null) continue;
       for (File child : children) {
         if (FileUtilRt.extensionEquals(child.getName(), JavaClassFileType.INSTANCE.getDefaultExtension())) {
           final String childName = FileUtilRt.getNameWithoutExtension(child.getName());
