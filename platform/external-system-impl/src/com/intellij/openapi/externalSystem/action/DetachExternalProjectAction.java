@@ -66,7 +66,13 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
 
     final ProjectNode projectNode = e.getData(ExternalSystemDataKeys.SELECTED_PROJECT_NODE);
     assert projectNode != null;
+    detachProject(project, projectSystemId, projectData, projectNode);
+  }
 
+  public static void detachProject(@NotNull final Project project,
+                                   @NotNull ProjectSystemId projectSystemId,
+                                   @NotNull ProjectData projectData,
+                                   ProjectNode projectNode) {
     ExternalSystemApiUtil.getLocalSettings(project, projectSystemId).
       forgetExternalProjects(Collections.singleton(projectData.getLinkedExternalProjectPath()));
     ExternalSystemApiUtil.getSettings(project, projectSystemId).unlinkExternalProject(projectData.getLinkedExternalProjectPath());
@@ -85,7 +91,9 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
     }
 
     if (!orphanModules.isEmpty()) {
-      projectNode.getGroup().remove(projectNode);
+      if (projectNode != null) {
+        projectNode.getGroup().remove(projectNode);
+      }
       ProjectDataManagerImpl.getInstance().removeData(
         ProjectKeys.MODULE, orphanModules, Collections.emptyList(), projectData, project, false);
     }
