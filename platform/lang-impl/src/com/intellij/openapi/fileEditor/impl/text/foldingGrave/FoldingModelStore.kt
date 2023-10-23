@@ -156,8 +156,12 @@ internal class FoldingModelStore(
         try {
           map = PersistentMapImpl(mapBuilder)
           break
+        } catch (e: VersionUpdatedException) {
+          logger.info("folding persistent map ${e.message}, attempt $i")
+          exception = e
+          IOUtil.deleteAllFilesStartingWith(path)
         } catch (e: IOException) {
-          logger.info("error while creating persistent map, attempting $i", e)
+          logger.info("error while creating persistent map, attempt $i", e)
           exception = e
           IOUtil.deleteAllFilesStartingWith(path)
         }

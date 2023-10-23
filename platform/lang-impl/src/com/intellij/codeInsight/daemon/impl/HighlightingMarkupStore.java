@@ -235,8 +235,13 @@ final class HighlightingMarkupStore {
         map = new PersistentMapImpl<>(mapBuilder);
         break;
       }
+      catch (VersionUpdatedException e) {
+        LOG.info("markup persistent map " + e.getMessage() + ", attempt " + i);
+        exception = e;
+        IOUtil.deleteAllFilesStartingWith(path);
+      }
       catch (IOException e) {
-        LOG.info("error while creating persistent map, attempting " + i, e);
+        LOG.info("error while creating persistent map, attempt " + i, e);
         exception = e;
         IOUtil.deleteAllFilesStartingWith(path);
       }
