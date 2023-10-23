@@ -641,6 +641,7 @@ abstract class ComponentStoreImpl : IComponentStore {
    */
   open fun reload(changedStorages: Set<StateStorage>): Collection<String>? {
     if (changedStorages.isEmpty()) {
+      LOG.debug("There is no changed storages to reload")
       return emptySet()
     }
 
@@ -656,6 +657,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     if (componentNames.isEmpty()) {
       return emptySet()
     }
+    LOG.debug { "Reload components: $componentNames" }
 
     val notReloadableComponents = getNotReloadableComponents(componentNames)
     reinitComponents(componentNames, changedStorages, notReloadableComponents)

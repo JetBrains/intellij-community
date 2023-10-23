@@ -69,6 +69,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private void queueSession(RefreshSessionImpl session, ModalityState modality) {
+    LOG.debug("Queue session with id ", session.getId());
     var queuedAt = System.nanoTime();
     myQueue.execute(() -> {
       long timeInQueue = NANOSECONDS.toMillis(System.nanoTime() - queuedAt);
@@ -87,13 +88,17 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
           startIndicator(IdeCoreBundle.message("async.events.progress"));
           ReadAction
             .nonBlocking(() -> {
+              LOG.debug("Start non-blocking action for session with id ", session.getId());
               evTimeInQueue.compareAndSet(-1, NANOSECONDS.toMillis(System.nanoTime() - evQueuedAt));
               evRetries.incrementAndGet();
               var t = System.nanoTime();
               try {
-                return runAsyncListeners(session);
+                Pair<List<CompoundVFileEvent>, List<AsyncFileListener.ChangeApplier>> result = runAsyncListeners(session);
+                LOG.debug("Successful finish of non-blocking read action for session with id ", session.getId());
+                return result;
               }
               finally {
+                LOG.debug("Final block of non-blocking read action for  session with id ", session.getId());
                 evListenerTime.addAndGet(System.nanoTime() - t);
               }
             })

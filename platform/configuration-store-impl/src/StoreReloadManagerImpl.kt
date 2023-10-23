@@ -75,6 +75,7 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
 
     val projectsToReload = LinkedHashSet<Project>()
     withContext(Dispatchers.EDT) {
+      LOG.debug("Dispatch to EDT")
       applyProjectChanges(projectsToReload)
 
       if (projectsToReload.isNotEmpty()) {

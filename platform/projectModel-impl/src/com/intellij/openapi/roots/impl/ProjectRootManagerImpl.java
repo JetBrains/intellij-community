@@ -347,6 +347,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public void loadState(@NotNull Element element) {
+    LOG.debug("Loading state into element");
     boolean changed = false;
     for (ProjectExtension extension : EP_NAME.getExtensions(myProject)) {
       changed |= extension.readExternalElement(element);
@@ -358,6 +359,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     if (!Objects.equals(oldName, myProjectSdkName)) changed = true;
     if (!Objects.equals(oldType, myProjectSdkType)) changed = true;
 
+    LOG.debug("State of ProjectRootManagerImpl was changed: ", changed);
     Application app = ApplicationManager.getApplication();
     if (app != null && changed) {
       Runnable runnable = myStateLoaded ?
