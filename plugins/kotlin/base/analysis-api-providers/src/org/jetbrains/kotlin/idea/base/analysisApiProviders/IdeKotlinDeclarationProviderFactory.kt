@@ -130,7 +130,10 @@ private class IdeKotlinDeclarationProvider(
         return KotlinFileFacadeClassByPackageIndex[packageFqName.asString(), project, scope]
     }
 
-    override fun computePackageSetWithTopLevelCallableDeclarations(): Set<String>? = computePackageNames(contextualModule)
+    override val hasSpecificClassifierPackageNamesComputation: Boolean get() = false
+    override val hasSpecificCallablePackageNamesComputation: Boolean get() = false
+
+    override fun computePackageNames(): Set<String>? = computePackageNames(contextualModule)
 
     private fun computePackageNames(module: KtModule?): Set<String>? = when (module) {
         is KtSourceModuleByModuleInfo -> computeSourceModulePackageSet(module)
