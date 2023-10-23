@@ -32,6 +32,7 @@ import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
+import org.jetbrains.kotlin.asJava.classes.runReadAction
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import java.nio.file.Paths
 
@@ -90,7 +91,7 @@ fun TestApplicationManager.closeProject(project: Project) {
 
     logMessage { "project '$name' is about to be closed" }
     dispatchAllInvocationEvents()
-    ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+    runInEdtAndWait { ProjectManagerEx.getInstanceEx().forceCloseProject(project) }
 
     logMessage { "project '$name' successfully closed" }
 }
@@ -128,19 +129,18 @@ fun projectFileByName(project: Project, name: String): PsiFile {
     val baseFileName = baseName(name)
     val projectBaseName = baseName(project.name)
 
-    val virtualFiles = FilenameIndex.getVirtualFilesByName(
-        project,
-        baseFileName, true,
-        GlobalSearchScope.projectScope(project)
-    )
-        .filter { it.canonicalPath?.contains("/$projectBaseName/$name") ?: false }.toList()
+    val virtualFiles = runReadAction {
+        FilenameIndex.getVirtualFilesByName(
+            baseFileName, true, GlobalSearchScope.projectScope(project)
+        )
+    }
 
     TestCase.assertEquals(
         "expected the only file with name '$name'\n, it were: [${virtualFiles.map { it.canonicalPath }.joinToString("\n")}]",
         1,
         virtualFiles.size
     )
-    return virtualFiles.iterator().next().toPsiFile(project)!!
+    return runReadAction { virtualFiles.iterator().next().toPsiFile(project)!! }
 }
 
 fun Project.relativePath(file: VirtualFile): String {
