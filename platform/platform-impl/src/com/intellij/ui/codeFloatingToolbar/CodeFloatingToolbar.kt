@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FloatingToolbar
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.editor.VisualPosition
@@ -30,9 +31,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -51,6 +50,8 @@ class CodeFloatingToolbar(
     private val FLOATING_TOOLBAR = Key<CodeFloatingToolbar>("floating.codeToolbar")
 
     private var TEMPORARILY_DISABLED = false
+
+    private var activeMenuPopup: JBPopup? = null
 
     @JvmStatic
     fun getToolbar(editor: Editor?): CodeFloatingToolbar? {
@@ -169,13 +170,9 @@ class CodeFloatingToolbar(
   override suspend fun createHint(): LightweightHint {
     val hint = super.createHint()
     val buttons = UIUtil.findComponentsOfType(hint.component, ActionButton::class.java)
-    buttons.filter { button -> button.presentation.isPopupGroup }.forEach { button ->
+    buttons.forEach { button ->
       button.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
-      button.addMouseEnteredListener(300) {
-        ApplicationManager.getApplication().invokeLater {
-          button.click()
-        }
-      }
+      showMenuPopupOnMouseHover(button)
     }
     return hint
   }
@@ -201,11 +198,13 @@ class CodeFloatingToolbar(
     popup.addListener(object : JBPopupListener {
 
       override fun beforeShown(event: LightweightWindowEvent) {
+        activeMenuPopup = popup
         alignButtonPopup(popup)
         toggleButton(button, true)
       }
 
       override fun onClosed(event: LightweightWindowEvent) {
+        activeMenuPopup = null
         toggleButton(button, false)
       }
     })
@@ -250,15 +249,20 @@ class CodeFloatingToolbar(
     popup.setLocation(point)
   }
 
-  private fun JComponent.addMouseEnteredListener(delayMs: Long, listener: (e: MouseEvent?) -> Unit) {
+  private fun showMenuPopupOnMouseHover(button: ActionButton) {
     var mouseWasOutsideOfComponent: Boolean
-    addMouseListener(object : java.awt.event.MouseListener{
+    val isPopupButton = button.presentation.isPopupGroup
+    button.addMouseListener(object : java.awt.event.MouseListener {
       override fun mouseEntered(e: MouseEvent?) {
         coroutineScope.launch {
           mouseWasOutsideOfComponent = false
+          val delayMs = if (isPopupButton && activeMenuPopup != null) 40L else 300L
           delay(delayMs)
-          if (!mouseWasOutsideOfComponent) {
-            listener.invoke(e)
+          if (mouseWasOutsideOfComponent) {
+            cancel()
+          }
+          withContext(Dispatchers.EDT) {
+            if (isPopupButton) button.click() else activeMenuPopup?.cancel()
           }
         }
       }
