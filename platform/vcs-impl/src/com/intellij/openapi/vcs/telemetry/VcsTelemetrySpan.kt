@@ -10,66 +10,65 @@ interface VcsTelemetrySpan {
 
   enum class LogHistory : VcsTelemetrySpan {
     Computing {
-      override fun getName() = "computing history"
+      override fun getName() = "file-history-computing"
     },
 
     CollectingRenames {
-      override fun getName() = "collecting renames"
+      override fun getName() = "file-history-collecting-renames"
     }
   }
 
   object LogFilter : VcsTelemetrySpan {
-    private const val NAME = "filter"
-    override fun getName() = NAME
+    override fun getName() = "vcs-log-filtering"
   }
 
   enum class LogData : VcsTelemetrySpan {
     BuildingGraph {
-      override fun getName() = "building graph"
+      override fun getName() = "vcs-log-building-graph"
     },
 
     LoadingCommits {
-      override fun getName() = "loading commits"
+      override fun getName() = "vcs-log-loading-commits"
     },
 
     CompactingCommits {
-      override fun getName() = "compacting commits"
+      override fun getName() = "vcs-log-compacting-commits"
     },
 
     JoiningNewCommits {
-      override fun getName() = "joining new commits"
+      override fun getName() = "vcs-log-joining-new-commits"
     },
 
     Refresh {
-      override fun getName() = "refresh"
+      override fun getName() = "vcs-log-refresh"
     },
 
     FullLogReload {
-      override fun getName() = "full log reload"
+      override fun getName() = "vcs-log-full-log-reload"
     },
 
     ReadFullLogFromVcs {
-      override fun getName() = "read full log from VCS"
+      override fun getName() = "vcs-log-read-full-log-from-vcs"
     },
 
     ReadFullLogFromVcsForRoot {
-      override fun getName() = "read full log from VCS for root"
+      override fun getName() = "vcs-log-read-full-log-from-vcs-for-root"
     },
 
     GetContainingBranches {
-      override fun getName() = "get containing branches"
+      override fun getName() = "vcs-log-get-containing-branches"
     },
 
     Initialize {
-      override fun getName() = "initialize"
+      override fun getName() = "vcs-log-initialize"
     },
 
     ReadCurrentUser {
-      override fun getName() = "readCurrentUser"
+      override fun getName() = "vcs-log-read-current-user"
     },
 
     MultiRepoJoin {
-      override fun getName() = "multi-repo join"
+      override fun getName() = "vcs-log-multi-repo-join"
     },
 
     Indexing {
@@ -80,31 +79,31 @@ interface VcsTelemetrySpan {
 
   enum class Shelve : VcsTelemetrySpan {
     TotalShelving {
-      override fun getName() = "total shelving"
+      override fun getName() = "shelf-total-shelving"
     },
 
     StoringBaseRevision {
-      override fun getName() = "storing base revisions"
+      override fun getName() = "shelf-storing-base-revisions"
     },
 
     StoringPathFile {
-      override fun getName() = "saving patch file"
+      override fun getName() = "shelf-saving-patch-file"
     },
 
     BatchShelving {
-      override fun getName() = "batch shelving"
+      override fun getName() = "shelf-batch-shelving"
     },
 
     PreloadingBaseRevisions {
-      override fun getName() = "preloading base revisions"
+      override fun getName() = "shelf-preloading-base-revisions"
     },
 
     BuildingPatches {
-      override fun getName() = "building patches"
+      override fun getName() = "shelf-building-patches"
     },
 
     RollbackAfterShelve {
-      override fun getName() = "rollback after shelve"
+      override fun getName() = "shelf-rollback-after-shelve"
     }
   }
 
