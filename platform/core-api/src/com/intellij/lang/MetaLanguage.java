@@ -4,16 +4,16 @@ package com.intellij.lang;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 /**
- * Allows to register a language extension for a group of languages defined by a certain criterion.
+ * Allows registering a language extension for a group of languages defined by a certain criterion.
  * To use this, specify the ID of a meta-language in the "{@code language}" attribute of an extension in {@code plugin.xml}.
  */
 public abstract class MetaLanguage extends Language {
@@ -47,7 +47,13 @@ public abstract class MetaLanguage extends Language {
    * Returns the list of all languages matching this meta-language.
    */
   public @NotNull Collection<Language> getMatchingLanguages() {
-    return ContainerUtil.filter(Language.getRegisteredLanguages(), language -> matchesLanguage(language));
+    List<Language> result = new ArrayList<>();
+    for (Language t : Language.getRegisteredLanguages()) {
+      if (matchesLanguage(t)) {
+        result.add(t);
+      }
+    }
+    return result;
   }
 
   @ApiStatus.Internal
