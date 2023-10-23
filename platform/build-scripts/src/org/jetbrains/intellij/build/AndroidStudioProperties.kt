@@ -70,7 +70,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
 
   init {
     platformPrefix = "AndroidStudio"
-    productCode = "AI"
     applicationInfoModule = "intellij.android.adt.branding"
     useSplash = true
     additionalIDEPropertiesFilePaths = listOf(home.resolve("build/conf/ideaCE.properties"))
@@ -232,12 +231,12 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
       }
 
-      override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path) {
+      override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
         FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win/x64"))
           .includeAll()
-          .copyToDir(targetDirectory.resolve("plugins/c-clangd-plugin/bin/clang/win/x64"))
+          .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/win/x64"))
 
-        GameTools(context, OsFamily.WINDOWS, JvmArchitecture.x64).copyAdditionalFiles(targetDirectory.resolve("bin"))
+        GameTools(context, OsFamily.WINDOWS, JvmArchitecture.x64).copyAdditionalFiles(targetDir.resolve("bin"))
       }
     }
   }
@@ -245,15 +244,14 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
   override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer {
     return object : LinuxDistributionCustomizer() {
       init {
-        buildTarGzWithoutBundledRuntime = true
-        buildOnlyBareTarGz = true
+        buildArtifactWithoutRuntime = true
         iconPngPath = "$projectHome/adt-branding/src/artwork/icon_AS_128.png"
         iconPngPathForEAP = "$projectHome/adt-branding/src/artwork/preview/icon_AS_128.png"
       }
 
       override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "android-studio"
 
-      override fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
+      override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
         FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/linux/x64"))
           .includeAll()
           .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/linux/x64"))
@@ -280,10 +278,10 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       return if (appInfo.isEAP) "Android Studio Preview.app" else "Android Studio.app"
     }
 
-    override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
+    override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
       FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
         .includeAll()
-        .copyToDir(targetDirectory.resolve("plugins/c-clangd-plugin/bin/clang/mac"))
+        .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/mac"))
     }
   }
 
