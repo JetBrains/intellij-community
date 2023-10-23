@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="Slf4j" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.slf4j:slf4j-api:1.7.36">
+    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.slf4j:slf4j-api:2.0.9">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar">
-          <sha256sum>d3ef575e3e4979678dc01bf1dcce51021493b4d11fb7f1be8ad982877c16a1c0</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar">
+          <sha256sum>0818930dc8d7debb403204611691da58e49d42c50b6ffcfdce02dadb7c3c2b6c</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -11,11 +11,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
