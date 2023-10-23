@@ -47,6 +47,7 @@ class CondaNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Pyt
                                   FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor())
           .align(Align.FILL)
           .bindText(state.condaExecutable)
+          .displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
       }
     }
   }

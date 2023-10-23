@@ -4,6 +4,8 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
@@ -63,7 +65,10 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
       presenter.projectWithContextFlow.collectLatest { (projectPath, projectLocationContext) ->
         withContext(presenter.uiContext) {
           if (!locationModified) {
-            location.set(suggestVirtualEnvPath(projectPath, projectLocationContext))
+            val suggestedVirtualEnvPath = runCatching {
+              suggestVirtualEnvPath(projectPath, projectLocationContext)
+            }.getOrLogException(LOG)
+            location.set(suggestedVirtualEnvPath.orEmpty())
           }
         }
       }
@@ -93,6 +98,8 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
   }
 
   companion object {
+    private val LOG = logger<PythonNewVirtualenvCreator>()
+
     /**
      * We assume this is the default name of the directory that is located in user home and which contains user virtualenv Python
      * environments.

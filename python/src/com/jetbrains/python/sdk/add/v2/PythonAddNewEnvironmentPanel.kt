@@ -21,9 +21,7 @@ import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -79,8 +77,10 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
 
 
       row(message("sdk.create.python.version")) {
-        pythonBaseVersionComboBox = comboBox<Sdk?>(emptyList(), PythonSdkComboBoxListCellRenderer())
+        pythonBaseVersionComboBox = nonEditablePythonInterpreterComboBox(presenter, presenter.basePythonSdksFlow)
           .bindItem(pythonBaseVersion)
+          .displayLoaderWhen(presenter.detectingSdks, makeTemporaryEditable = true, scope = presenter.scope,
+                             uiContext = presenter.uiContext)
           .align(AlignX.FILL)
           .component
       }.visibleIf(_projectVenv)
@@ -88,6 +88,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
       row(message("sdk.create.conda.executable.path")) {
         textFieldWithBrowseButton()
           .bindText(condaExecutable)
+          .displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
           .validationOnInput {
             if (!Paths.get(it.text).exists()) error("Executable does not exist") else null
           }
@@ -122,15 +123,6 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
         }
         allExistingSdks.set(allValidSdks)
         updateVenvLocationHint()
-      }
-
-      state.scope.launch(start = CoroutineStart.UNDISPATCHED) {
-        presenter.basePythonSdksFlow.collectLatest { baseSdks ->
-          withContext(presenter.uiContext) {
-            pythonBaseVersionComboBox.removeAllItems()
-            baseSdks.forEach { sdk -> pythonBaseVersionComboBox.addItem(sdk) }
-          }
-        }
       }
 
       custom.onShown()
