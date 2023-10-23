@@ -4,7 +4,6 @@ package com.intellij.psi.search
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.util.flow.throttle
-import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -12,12 +11,12 @@ import kotlinx.coroutines.flow.collectLatest
 import java.util.concurrent.ConcurrentLinkedQueue
 
 internal class FileTypeIndexChangeNotifier(private val syncPublisher: FileTypeIndex.IndexChangeListener) : AutoCloseable {
-  @OptIn(DelicateCoroutinesApi::class)
-  private val coroutineScope = GlobalScope.namedChildScope("FileTypeIndex change notificator", Dispatchers.Default)
   private val sendNotificationsFlow = MutableSharedFlow<Unit>(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val queue = ConcurrentLinkedQueue<FileType>()
 
-  private val worker = coroutineScope.launch {
+  // TODO maybe inject coroutine scope through indexes
+  @OptIn(DelicateCoroutinesApi::class)
+  private val worker = GlobalScope.launch(CoroutineName("FileTypeIndex change notificator")) {
     sendNotificationsFlow
       .throttle(1)
       .collectLatest {
@@ -50,9 +49,8 @@ internal class FileTypeIndexChangeNotifier(private val syncPublisher: FileTypeIn
   }
 
   override fun close() {
-    coroutineScope.cancel("dispose")
     runBlocking {
-      worker.join()
+      worker.cancelAndJoin()
     }
     notifyPending()
   }
