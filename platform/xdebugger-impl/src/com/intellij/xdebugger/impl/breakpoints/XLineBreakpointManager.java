@@ -101,6 +101,16 @@ public final class XLineBreakpointManager {
       Registry.get("debugger.show.breakpoints.inline").addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
+          if (!Registry.is("debugger.show.breakpoints.inline")) {
+            // Multiple breakpoints on the single line should be joined in this case.
+            for (String fileUrl : myBreakpoints.keySet()) {
+              var file = VirtualFileManager.getInstance().findFileByUrl(fileUrl);
+              if (file == null) continue;
+              var document = FileDocumentManager.getInstance().getDocument(file);
+              if (document == null) continue;
+              updateBreakpoints(document);
+            }
+          }
           getInlineBreakpointInlayManager().reinitializeAll();
         }
       }, project);
