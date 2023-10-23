@@ -91,7 +91,7 @@
     <registryKey key="vcs.gitlab.connect.silently"
                  description="Connect to GitLab repository without an explicit user action"
                  defaultValue="true"/>
-    <registryKey defaultValue="false" description="Enable all-in-one diff for GitLab merge requests" key="gitlab.enable.combined.diff"/>
+    <registryKey defaultValue="true" description="Enable all-in-one diff for GitLab merge requests" key="gitlab.enable.combined.diff"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
