@@ -269,22 +269,27 @@ public final class ConsoleViewUtil {
     }
   }
 
+  public static Filter[] computeConsoleFilters(@NotNull ConsoleFilterProvider provider,
+                                               @NotNull Project project,
+                                               @Nullable ConsoleView consoleView,
+                                               @NotNull GlobalSearchScope searchScope) {
+    if (consoleView != null && provider instanceof ConsoleDependentFilterProvider) {
+      return ((ConsoleDependentFilterProvider)provider).getDefaultFilters(consoleView, project, searchScope);
+    }
+    else if (provider instanceof ConsoleFilterProviderEx) {
+      return ((ConsoleFilterProviderEx)provider).getDefaultFilters(project, searchScope);
+    }
+    else {
+      return provider.getDefaultFilters(project);
+    }
+  }
+
   public static @NotNull List<Filter> computeConsoleFilters(@NotNull Project project,
                                                             @Nullable ConsoleView consoleView,
                                                             @NotNull GlobalSearchScope searchScope) {
     List<Filter> result = new ArrayList<>();
     for (ConsoleFilterProvider eachProvider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
-      Filter[] filters;
-      if (consoleView != null && eachProvider instanceof ConsoleDependentFilterProvider) {
-        filters = ((ConsoleDependentFilterProvider)eachProvider).getDefaultFilters(consoleView, project, searchScope);
-      }
-      else if (eachProvider instanceof ConsoleFilterProviderEx) {
-        filters = ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope);
-      }
-      else {
-        filters = eachProvider.getDefaultFilters(project);
-      }
-      Collections.addAll(result, filters);
+      Collections.addAll(result, computeConsoleFilters(eachProvider, project, consoleView, searchScope));
     }
     return result;
   }
