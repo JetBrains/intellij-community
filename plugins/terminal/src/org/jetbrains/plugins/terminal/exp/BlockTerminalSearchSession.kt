@@ -317,9 +317,9 @@ class BlockTerminalSearchSession(
     private val SEARCH_IN_BLOCK_KEY: Key<Boolean> = Key.create("SearchInBlock")
 
     var FindModel.isSearchInBlock: Boolean
-      get() = getUserData(SEARCH_IN_BLOCK_KEY) == true
+      get() = getCopyableUserData(SEARCH_IN_BLOCK_KEY) == true
       set(value) {
-        putUserData(SEARCH_IN_BLOCK_KEY, value)
+        putCopyableUserData(SEARCH_IN_BLOCK_KEY, value)
       }
   }
 }
