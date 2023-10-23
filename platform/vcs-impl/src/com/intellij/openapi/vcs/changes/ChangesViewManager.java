@@ -812,8 +812,8 @@ public class ChangesViewManager implements ChangesViewEx,
       invokeLaterIfNeeded(() -> {
         if (myDisposed) return;
         List<? extends @Nullable JComponent> components = ContainerUtil.mapNotNull(progress, it -> it.get());
-        JComponent component = DiffUtil.createStackedComponents(components, DiffUtil.TITLE_GAP);
-        if (component != null) {
+        if (!components.isEmpty()) {
+          JComponent component = DiffUtil.createStackedComponents(components, DiffUtil.TITLE_GAP);
           myProgressLabel.setContent(new FixedSizeScrollPanel(component, new JBDimension(400, 100)));
         }
         else {
