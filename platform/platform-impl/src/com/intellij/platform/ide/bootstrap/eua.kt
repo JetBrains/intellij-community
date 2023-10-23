@@ -63,9 +63,11 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
   appInfoDeferred.await()
   if (ConsentOptions.needToShowUsageStatsConsent()) {
     return {
+/* Android Studio: b/200625563
       prepareAndExecuteInEdt {
         showDataSharingAgreement()
       }
+Android Studio: b/200625563 */
       false
     }
   }
