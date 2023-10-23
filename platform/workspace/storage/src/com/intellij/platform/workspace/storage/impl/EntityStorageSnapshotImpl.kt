@@ -807,7 +807,7 @@ internal class MutableEntityStorageImpl(
       return false
     }
 
-    accumulateEntitiesToRemove(idx, accumulator, entityFilter)
+    accumulateEntitiesToRemoveAndUnlinkReferences(idx, accumulator, entityFilter)
 
     @Suppress("UNCHECKED_CAST")
     val originals = accumulator.associateWith {
@@ -863,14 +863,16 @@ internal class MutableEntityStorageImpl(
   /**
    * Cleanup references and accumulate hard linked entities in [accumulator]
    */
-  private fun accumulateEntitiesToRemove(id: EntityId, accumulator: MutableSet<EntityId>, entityFilter: (EntityId) -> Boolean) {
+  private fun accumulateEntitiesToRemoveAndUnlinkReferences(id: EntityId,
+                                                            accumulator: MutableSet<EntityId>,
+                                                            entityFilter: (EntityId) -> Boolean) {
     val children = refs.getChildrenRefsOfParentBy(id.asParent())
     for ((connectionId, childrenIds) in children) {
       for (childId in childrenIds) {
         if (childId.id in accumulator) continue
         if (!entityFilter(childId.id)) continue
         accumulator.add(childId.id)
-        accumulateEntitiesToRemove(childId.id, accumulator, entityFilter)
+        accumulateEntitiesToRemoveAndUnlinkReferences(childId.id, accumulator, entityFilter)
         refs.removeRefsByParent(connectionId, id.asParent())
       }
     }
