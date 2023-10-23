@@ -76,7 +76,9 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
 
   val basePythonSdksFlow: StateFlow<List<Sdk>> =
     combine(_allExistingSdksFlow, manuallyAddedSdksFlow, detectedSdksFlow) { existingSdks, manuallyAddedSdks, (context, detectedSdks) ->
-      val sdkList = manuallyAddedSdks + prepareSdkList(detectedSdks, existingSdks, context.targetEnvironmentConfiguration)
+      val sdkList = manuallyAddedSdks + withContext(Dispatchers.IO) {
+        prepareSdkList(detectedSdks, existingSdks, context.targetEnvironmentConfiguration)
+      }
       state.basePythonSdks.set(sdkList)
       sdkList
     }.stateIn(scope + uiContext, started = SharingStarted.Lazily, initialValue = emptyList())
