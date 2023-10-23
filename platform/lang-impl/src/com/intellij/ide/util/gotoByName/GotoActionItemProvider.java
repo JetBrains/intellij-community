@@ -294,7 +294,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     return true;
   }
 
-  private static @Nullable Integer calcElementWeight(Object element, String pattern, MinusculeMatcher matcher) {
+  static @Nullable Integer calcElementWeight(Object element, String pattern, MinusculeMatcher matcher) {
     Integer degree = calculateDegree(matcher, getActionText(element));
     if (degree == null) return null;
 
@@ -310,7 +310,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
   }
 
   @Nullable
-  private static Integer calculateDegree(MinusculeMatcher matcher, @Nullable String text) {
+  static Integer calculateDegree(MinusculeMatcher matcher, @Nullable String text) {
     if (text == null) return null;
     return matcher.matchingDegree(text);
   }

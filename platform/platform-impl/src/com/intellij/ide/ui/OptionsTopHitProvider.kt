@@ -75,7 +75,7 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
 
   // ours ProjectLevelProvider registered in ours projectOptionsTopHitProvider extension point,
   // not in common topHitProvider, so, this adapter is required to expose ours project level providers.
-  internal class ProjectLevelProvidersAdapter : SearchTopHitProvider {
+  class ProjectLevelProvidersAdapter : SearchTopHitProvider {
     override fun consumeTopHits(pattern: String, collector: Consumer<Any>, project: Project?) {
       if (project == null) {
         return
