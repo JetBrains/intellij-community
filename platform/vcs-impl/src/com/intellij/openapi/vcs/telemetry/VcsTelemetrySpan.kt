@@ -76,9 +76,6 @@ interface VcsTelemetrySpan {
       override fun getName() = "vcs-log-indexing"
     },
 
-    StoreDetail {
-      override fun getName() = "store detail"
-    }
   }
 
   enum class Shelve : VcsTelemetrySpan {

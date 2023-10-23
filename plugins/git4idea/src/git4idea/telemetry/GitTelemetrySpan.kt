@@ -23,10 +23,6 @@ interface GitTelemetrySpan : VcsTelemetrySpan {
       override fun getName() = "loading details"
     },
 
-    ProcessingDetails {
-      override fun getName() = "processing details"
-    },
-
     LoadingCommitMetadata {
       override fun getName() = "loading commit metadata"
     }
