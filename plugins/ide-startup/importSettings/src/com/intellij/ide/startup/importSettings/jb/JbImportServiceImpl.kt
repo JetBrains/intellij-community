@@ -5,17 +5,12 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.*
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.OptProperty
-import com.jetbrains.rd.util.reactive.Property
-import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.*
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
@@ -40,10 +35,10 @@ data class JbProductInfo(override val version: String,
 
   internal fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
     JbImportServiceImpl.LOG.debug("Prefetching plugin descriptors from $pluginsDirPath")
-    val descriptorDefferreds = loadCustomDescriptorsFromDir(coroutineScope, pluginsDirPath, context, null)
-    descriptors2ProcessCnt = descriptorDefferreds.size
-    JbImportServiceImpl.LOG.debug("There are ${descriptorDefferreds.size} plugins in $pluginsDirPath")
-    for (def in descriptorDefferreds) {
+    val descriptorDeferreds = loadCustomDescriptorsFromDir(coroutineScope, pluginsDirPath, context, null)
+    descriptors2ProcessCnt = descriptorDeferreds.size
+    JbImportServiceImpl.LOG.debug("There are ${descriptorDeferreds.size} plugins in $pluginsDirPath")
+    for (def in descriptorDeferreds) {
       def.invokeOnCompletion {
         coroutineScope.async {
           val descr = def.await() ?: return@async
@@ -92,11 +87,29 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   }
 
   override fun getOldProducts(): List<Product> {
-    return emptyList()
+    return filterProducts(old = true)
   }
 
   override fun products(): List<Product> {
-    return productsLazy.value.values.toList()
+    return filterProducts(old = false)
+  }
+
+  private fun filterProducts(old: Boolean): List<Product> {
+    val products = productsLazy.value.values.toList()
+    val newProducts = hashMapOf<String, String> ()
+    for (product in products) {
+      val version = newProducts[product.codeName]
+      if (version == null || version < product.version) {
+        newProducts[product.codeName] = product.version
+      }
+    }
+    if (old) {
+      return products.filter {
+        newProducts[it.codeName] != it.version
+      }
+    } else {
+      return products.filter { newProducts[it.codeName] == it.version  }
+    }
   }
 
   private fun doListProducts(): Map<String, JbProductInfo> {
@@ -115,7 +128,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       if (!matcher.matches()) {
         continue
       }
-      val optionsDir = confDir / "options"
+      val optionsDir = confDir / PathManager.OPTIONS_DIRECTORY
       if (!optionsDir.isDirectory()) {
         continue
       }
@@ -128,7 +141,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       }
       val ideName = matcher.group(1)
       val ideVersion = matcher.group(2)
-      val fullName = NameMappings.getFullName(ideName)
+      val fullName = "${NameMappings.getFullName(ideName)} $ideVersion"
       val lastUsageLocalDate = LocalDate.ofInstant(lastModified.toInstant(), ZoneId.systemDefault())
       val jbProductInfo = JbProductInfo(ideVersion, lastUsageLocalDate, dirName, fullName, ideName,
                                         confDir, pluginsDir)
@@ -168,34 +181,22 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
     val productInfo = productsLazy.value[productId] ?: error("Can't find product")
-    val progressProperty = OptProperty<Int>()
-    val progressMessageProperty = Property("Initializing import")
-    val importProgress = object : ImportProgress {
-      override val progressMessage = progressMessageProperty
-      override val progress = progressProperty
-    }
-    val appInfo = ApplicationInfo.getInstance()
-    return object : DialogImportData {
-      override val message: String = "Importing from ${productInfo.name} to ${appInfo.versionName}..."
-      override val progress: ImportProgress = importProgress
-      private var progressCnt = 0
+    val importData = JbImportDataDialog(productInfo)
+    val importer = JbSettingsImporter(productInfo.configDirPath, productInfo.pluginsDirPath)
 
-      init {
-        Lifetime.Eternal.launch {
-          launch(Dispatchers.Default) {
-            val importer = JbSettingsImporter(productInfo.configDirPath, productInfo.pluginsDirPath)
-            importer.importOptions()
-            progressCnt = 50
-            progressProperty.set(progressCnt)
-            importer.installPlugins()
-            progressCnt = 100
-            progressProperty.set(progressCnt)
-            delay(200)
-            ApplicationManager.getApplication().restart()
-          }
-        }
+    coroutineScope.async(Dispatchers.EDT + ModalityState.current().asContextElement()) {
+        importer.importOptions()
+        importData.progress.progress.set(20)
+        importer.installPlugins()
+        importData.progress.progress.set(100)
+        ApplicationManager.getApplication().saveSettings()
+        SettingsService.getInstance().doClose.fire(Unit)
+
+      (ApplicationManager.getApplication() as ApplicationEx).invokeLater {
+        (ApplicationManager.getApplication() as ApplicationEx).restart(true)
       }
     }
+    return importData
   }
 
   companion object {

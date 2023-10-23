@@ -32,7 +32,7 @@ internal class TransferSettingsProgress(sourceIdeVersion: IdeVersion) : ImportFr
   fun createProgressIndicatorAdapter(): ProgressIndicator = ProgressIndicatorAdapter(progress)
 }
 
-internal class TransferSettingsProgressIndicator : ImportProgress {
+class TransferSettingsProgressIndicator : ImportProgress {
 
   override val progressMessage = Property<String?>(null)
   override val progress = OptProperty<Int>()

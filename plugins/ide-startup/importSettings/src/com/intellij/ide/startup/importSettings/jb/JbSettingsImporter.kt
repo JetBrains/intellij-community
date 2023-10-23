@@ -50,6 +50,7 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
     val provider = ImportStreamProvider(configDirPath)
     storageManager.addStreamProvider(provider)
     componentStore.reloadComponents(files2load, emptyList())
+    storageManager.removeStreamProvider(provider::class.java)
   }
 
   private fun filesFromFolder(dir: Path, prefix: String = dir.name) : Collection<String> {
