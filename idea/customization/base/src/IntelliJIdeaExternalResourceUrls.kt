@@ -19,7 +19,7 @@ class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrl
   override val shortProductNameUsedInForms: String
     get() = "IDEA"
 
-  override val useInIdeFeedback: Boolean
+  override val useInIdeGeneralFeedback: Boolean
     get() = true
 
   override val youTubeChannelUrl: Url

@@ -12,7 +12,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class JetBrainsFeedbackReporter(private val productName: String,
-                                private val useInIdeFeedback: Boolean) : FeedbackReporter {
+                                private val useInIdeGeneralFeedback: Boolean,
+                                private val useInIdeEvaluationFeedback: Boolean) : FeedbackReporter {
   override val destinationDescription: String
     get() = "jetbrains.com"
 
@@ -30,15 +31,15 @@ class JetBrainsFeedbackReporter(private val productName: String,
   }
 
   override fun showFeedbackForm(project: Project?, requestedForEvaluation: Boolean): Boolean {
-    if (useInIdeFeedback) {
+    if (requestedForEvaluation && useInIdeEvaluationFeedback) {
       val feedbackDialogs = PlatformFeedbackDialogs.getInstance()
+      val evaluationFeedbackDialog = feedbackDialogs.createEvaluationFeedbackDialog(project) ?: return false
+      evaluationFeedbackDialog.show()
+      return true
+    }
 
-      if (requestedForEvaluation) {
-        val evaluationFeedbackDialog = feedbackDialogs.createEvaluationFeedbackDialog(project) ?: return false
-        evaluationFeedbackDialog.show()
-        return true
-      }
-
+    if (!requestedForEvaluation && useInIdeGeneralFeedback) {
+      val feedbackDialogs = PlatformFeedbackDialogs.getInstance()
       val generalFeedbackDialog = feedbackDialogs.createGeneralFeedbackDialog(project) ?: return false
       generalFeedbackDialog.show()
       return true

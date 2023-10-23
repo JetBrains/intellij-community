@@ -50,11 +50,16 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   open val intellijSupportFormId: Int
     get() = 66731
 
+  /**
+   * Use in-product form for `Help | Submit Feedback...`
+   */
+  open val useInIdeGeneralFeedback: Boolean
+    get() = false
 
   /**
-   * Use in-product forms for Help | Submit Feedback... and evaluation feedback
+   * Use in-product form for evaluation feedback
    */
-  open val useInIdeFeedback: Boolean
+  open val useInIdeEvaluationFeedback: Boolean
     get() = false
 
   override val updateMetadataUrl: Url
@@ -94,7 +99,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 
   override val feedbackReporter: FeedbackReporter?
     get() = shortProductNameUsedInForms?.let { productName ->
-      JetBrainsFeedbackReporter(productName, useInIdeFeedback)
+      JetBrainsFeedbackReporter(productName, useInIdeGeneralFeedback, useInIdeEvaluationFeedback)
     }
 
   override val downloadPageUrl: Url?
