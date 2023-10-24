@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions
 
 import com.intellij.openapi.Disposable
@@ -6,8 +6,8 @@ import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.computeSaf
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.findFirstSafe
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import java.util.function.BiConsumer
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.stream.Stream
@@ -26,7 +26,9 @@ class ProjectExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPo
 
   fun getExtensions(areaInstance: AreaInstance): List<T> = getPointImpl(areaInstance).extensionList
 
-  @Deprecated("Use {@link #getExtensions(AreaInstance)}", ReplaceWith("getExtensions(areaInstance).stream()"))
+  @Deprecated("Use {@link #getExtensions(AreaInstance)}",
+              ReplaceWith("getExtensions(areaInstance).stream()"),
+              level = DeprecationLevel.ERROR)
   fun extensions(areaInstance: AreaInstance): Stream<T> = getPointImpl(areaInstance).extensionList.stream()
 
   fun <V : T> findExtension(instanceOf: Class<V>, areaInstance: AreaInstance): V? {
@@ -55,7 +57,8 @@ class ProjectExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPo
     getPointImpl(areaInstance).addChangeListener(listener, parentDisposable)
   }
 
-  fun processWithPluginDescriptor(areaInstance: AreaInstance, consumer: BiConsumer<in T, in PluginDescriptor?>) {
+  @Internal
+  fun processWithPluginDescriptor(areaInstance: AreaInstance, consumer:  (T, PluginDescriptor) -> Unit) {
     getPointImpl(areaInstance).processWithPluginDescriptor(true, consumer)
   }
 

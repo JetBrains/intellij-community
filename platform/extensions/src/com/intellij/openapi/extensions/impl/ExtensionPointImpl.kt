@@ -34,12 +34,12 @@ import kotlin.concurrent.Volatile
 private val LOG: Logger = logger<ExtensionPointImpl<*>>()
 
 @ApiStatus.Internal
-abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String,
-                                                          val className: String,
-                                                          protected val pluginDescriptor: PluginDescriptor,
-                                                          val componentManager: ComponentManager,
-                                                          private var extensionClass: Class<T>?,
-                                                          private val isDynamic: Boolean) : ExtensionPoint<T>, Iterable<T> {
+sealed class ExtensionPointImpl<T : Any>(val name: String,
+                                         val className: String,
+                                         private val pluginDescriptor: PluginDescriptor,
+                                         val componentManager: ComponentManager,
+                                         private var extensionClass: Class<T>?,
+                                         private val isDynamic: Boolean) : ExtensionPoint<T>, Iterable<T> {
   // immutable list, never modified in-place, only swapped atomically
   @Volatile
   private var cachedExtensions: PersistentList<T>? = null
@@ -171,12 +171,10 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
   @Synchronized
   private fun doRegisterExtensions(extensions: List<T>): List<ExtensionComponentAdapter> {
     val newAdapters = extensions.map {
-      ObjectComponentAdapter(instance = it,
-                             pluginDescriptor = getPluginDescriptor(),
-                             loadingOrder = LoadingOrder.ANY)
+      ObjectComponentAdapter(instance = it, pluginDescriptor = getPluginDescriptor(), loadingOrder = LoadingOrder.ANY)
     }
 
-    adapters = adapters.addAll(newAdapters)
+    adapters = adapters.addAll(findInsertionIndexForAnyOrder(adapters), newAdapters)
     clearCache()
     return newAdapters
   }
@@ -271,7 +269,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
 
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (adapter in if (shouldBeSorted) sortedAdapters else adapters) {
-      consumer(Supplier { adapter.createInstance<T>(componentManager) }, adapter.pluginDescriptor)
+      consumer(Supplier { adapter.createInstance(componentManager) }, adapter.pluginDescriptor)
     }
   }
 
@@ -441,7 +439,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
 
   /**
    * Put extension point in read-only mode and replace existing extensions by supplied.
-   * For tests this method is more preferable than [)][.registerExtension] because makes registration more isolated and strict
+   * For tests this method is more preferable than [.registerExtension] because makes registration more isolated and strict
    * (no one can modify extension point until `parentDisposable` is not disposed).
    *
    *
@@ -592,8 +590,8 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
    */
   @Synchronized
   fun unregisterExtensions(stopAfterFirstMatch: Boolean,
-                           priorityListenerCallbacks: MutableList<Runnable>,
-                           listenerCallbacks: MutableList<Runnable>,
+                           priorityListenerCallbacks: MutableList<in Runnable>,
+                           listenerCallbacks: MutableList<in Runnable>,
                            extensionToKeepFilter: Predicate<in ExtensionComponentAdapter>): Boolean {
     val listeners = this.listeners
     var removedAdapters = persistentListOf<ExtensionComponentAdapter>()
@@ -640,8 +638,8 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
 
   abstract fun unregisterExtensions(componentManager: ComponentManager,
                                     pluginDescriptor: PluginDescriptor,
-                                    priorityListenerCallbacks: List<Runnable?>,
-                                    listenerCallbacks: List<Runnable?>)
+                                    priorityListenerCallbacks: MutableList<in Runnable>,
+                                    listenerCallbacks: MutableList<in Runnable>)
 
   private fun notifyListeners(isRemoved: Boolean,
                               adapters: List<ExtensionComponentAdapter>,
@@ -762,7 +760,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
     return extensionClass
   }
 
-  override fun toString() = name
+  override fun toString(): String = name
 
   // private, internal only for tests
   @Synchronized
@@ -792,7 +790,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
     }
   }
 
-  abstract fun createAdapter(extensionElement: ExtensionDescriptor,
+  abstract fun createAdapter(descriptor: ExtensionDescriptor,
                              pluginDescriptor: PluginDescriptor,
                              componentManager: ComponentManager): ExtensionComponentAdapter
 
@@ -801,15 +799,15 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
    * `adapters` is modified directly without copying - method must be called only during start-up.
    */
   @Synchronized
-  fun registerExtensions(extensionElements: List<ExtensionDescriptor>,
+  fun registerExtensions(descriptors: List<ExtensionDescriptor>,
                          pluginDescriptor: PluginDescriptor,
-                         listenerCallbacks: MutableList<in Runnable?>?) {
+                         listenerCallbacks: MutableList<in Runnable>?) {
     adaptersAreSorted = false
 
     val oldSize = adapters.size
-    for (extensionElement in extensionElements) {
+    for (extensionElement in descriptors) {
       if (extensionElement.os == null || componentManager.isSuitableForOs(extensionElement.os)) {
-        adapters = adapters.add(createAdapter(extensionElement = extensionElement,
+        adapters = adapters.add(createAdapter(descriptor = extensionElement,
                                               pluginDescriptor = pluginDescriptor,
                                               componentManager = componentManager))
       }
@@ -1008,5 +1006,8 @@ private fun checkThatClassloaderIsActive(adapter: ExtensionComponentAdapter): Bo
 
 
 private fun isInsideClassInitializer(trace: Array<StackTraceElement>): Boolean {
-  return trace.any { "<clinit>" == it.methodName }
+  return trace.any {
+    @Suppress("SpellCheckingInspection")
+    "<clinit>" == it.methodName
+  }
 }

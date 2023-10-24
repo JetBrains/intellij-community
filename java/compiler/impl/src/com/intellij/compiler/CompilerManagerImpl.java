@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -269,6 +270,7 @@ public class CompilerManagerImpl extends CompilerManager {
       if (ext.executionPhase == phase) {
         list.add(ext.getInstance(myProject, pluginDescriptor));
       }
+      return Unit.INSTANCE;
     });
     return list;
   }

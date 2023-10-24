@@ -350,7 +350,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       if (!it.isEmpty()) {
         @Suppress("JavaMapForEach")
         it.forEach { name, list ->
-          nameToPoint.get(name)?.registerExtensions(list, this, listenerCallbacks)
+          nameToPoint.get(name)?.registerExtensions(descriptors = list, pluginDescriptor = this, listenerCallbacks = listenerCallbacks)
         }
       }
       return

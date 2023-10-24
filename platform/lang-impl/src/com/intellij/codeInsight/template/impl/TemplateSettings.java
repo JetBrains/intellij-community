@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.DynamicBundle;
@@ -32,6 +32,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import kotlin.Lazy;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -503,7 +504,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
         String file = ep.file;
         if (file == null) {
-          return;
+          return Unit.INSTANCE;
         }
 
         try {
@@ -514,6 +515,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         catch (Exception e) {
           LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
         }
+        return Unit.INSTANCE;
       });
     }
     catch (ProcessCanceledException e) {

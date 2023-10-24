@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
 import com.intellij.openapi.wm.impl.WindowInfoImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +72,10 @@ public final class ToolWindowCollector {
   }
 
   private ToolWindowCollector() {
-    EP_NAME.processWithPluginDescriptor(ToolWindowCollector::addToolwindowToWhitelist);
+    EP_NAME.processWithPluginDescriptor((extension, pluginDescriptor) -> {
+      addToolwindowToWhitelist(extension, pluginDescriptor);
+      return Unit.INSTANCE;
+    });
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ToolWindowAllowlistEP extension, @NotNull PluginDescriptor pluginDescriptor) {

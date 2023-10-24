@@ -18,8 +18,10 @@ import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
-import java.util.function.*
+import java.util.function.Consumer
 import java.util.function.Function
+import java.util.function.Predicate
+import java.util.function.Supplier
 import java.util.stream.Stream
 
 /**
@@ -136,8 +138,8 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   }
 
   @ApiStatus.Internal
-  fun processWithPluginDescriptor(consumer: BiConsumer<in T, in PluginDescriptor>) {
-    getPointImpl(null).processWithPluginDescriptor( /* shouldBeSorted = */true, consumer)
+  fun processWithPluginDescriptor(consumer: (T, PluginDescriptor) -> Unit) {
+    getPointImpl(null).processWithPluginDescriptor(shouldBeSorted = true, consumer = consumer)
   }
 
   fun addExtensionPointListener(listener: ExtensionPointListener<T>, parentDisposable: Disposable?) {

@@ -33,7 +33,7 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
   private volatile boolean myRunSleepHook; // optimization: to avoid adding/removing mySleepHook to myHooks constantly this flag is used
 
   public ProgressManagerImpl() {
-    ExtensionPointImpl.setCheckCanceledAction(ProgressManager::checkCanceled);
+    ExtensionPointImpl.Companion.setCheckCanceledAction(ProgressManager::checkCanceled);
     IOCancellationCallbackHolder.INSTANCE.setIoCancellationCallback(new IdeIOCancellationCallback());
   }
 

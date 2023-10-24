@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.extensions.impl
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -40,7 +41,7 @@ object ExtensionProcessingHelper {
         throw e
       }
       catch (e: Throwable) {
-        ExtensionPointImpl.LOG.error(e)
+        logger<ExtensionPointImpl<*>>().error(e)
       }
     }
   }
@@ -67,7 +68,7 @@ object ExtensionProcessingHelper {
         throw e
       }
       catch (e: Throwable) {
-        ExtensionPointImpl.LOG.error(e)
+        logger<ExtensionPointImpl<*>>().error(e)
       }
     }
     return null

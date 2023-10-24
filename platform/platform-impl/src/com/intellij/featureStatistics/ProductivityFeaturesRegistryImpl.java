@@ -10,6 +10,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.Function;
 import com.intellij.util.ResourceUtil;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -122,6 +123,8 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
       if (applicabilityFilters != null) {
         myApplicabilityFilters.add(new ApplicabilityFiltersData(provider, applicabilityFilters));
       }
+
+      return Unit.INSTANCE;
     });
   }
 

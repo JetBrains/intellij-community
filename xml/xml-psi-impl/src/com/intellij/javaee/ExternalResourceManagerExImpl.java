@@ -27,6 +27,7 @@ import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlUtil;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -94,6 +95,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
     StandardResourceEP.EP_NAME.processWithPluginDescriptor((extension, pluginDescriptor) -> {
       registrar.addStdResource(extension.url, extension.version, extension.resourcePath, null, pluginDescriptor.getPluginClassLoader());
+      return Unit.INSTANCE;
     });
 
     myStandardIgnoredResources.clear();

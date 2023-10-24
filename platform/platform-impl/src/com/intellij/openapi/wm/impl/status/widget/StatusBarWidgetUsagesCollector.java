@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -41,6 +42,7 @@ final class StatusBarWidgetUsagesCollector extends ApplicationUsagesCollector {
       if (enabled != factory.isEnabledByDefault()) {
         result.add(WIDGET.metric(pluginInfo, factory.getId(), enabled));
       }
+      return Unit.INSTANCE;
     });
     return result;
   }

@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +87,7 @@ public final class FUCounterUsageLogger {
       if (ep.implementationClass != null) {
         result.add(createCounterCollector(ep, pluginDescriptor));
       }
+      return Unit.INSTANCE;
     });
     return result;
   }
