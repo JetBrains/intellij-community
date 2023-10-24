@@ -335,12 +335,7 @@ object CommunityLibraryLicenses {
       .simplifiedBsd("https://github.com/fb55/entities/blob/master/LICENSE"),
     LibraryLicense(name = "epydoc", attachedTo = "intellij.python", version = "3.0.1",
                    url = "https://epydoc.sourceforge.net/").mit(),
-    LibraryLicense(name = "error-prone-annotations", libraryName = "error-prone-annotations",
-                   url = "https://github.com/google/error-prone")
-      .apache("https://github.com/google/error-prone/blob/master/COPYING")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
-    LibraryLicense(name = "fastutil", libraryName = "fastutil-min",
-                   url = "https://github.com/vigna/fastutil")
+    LibraryLicense(name = "fastutil", libraryName = "fastutil-min", url = "https://github.com/vigna/fastutil")
       .apache("https://github.com/vigna/fastutil/blob/master/LICENSE-2.0")
       .suppliedByPersons("Sebastiano Vigna"),
     ffmpegLibraryLicense("ffmpeg"),
@@ -422,6 +417,10 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Groovy XML", libraryName = "org.codehaus.groovy:groovy-xml",
                    url = "https://groovy-lang.org/")
       .apache("https://github.com/apache/groovy/blob/master/LICENSE"),
+
+    LibraryLicense(libraryName = "grpc-inprocess", url = "https://grpc.io/")
+      .apache("https://github.com/grpc/grpc-java/blob/master/LICENSE")
+      .suppliedByOrganizations("gRPC Authors"),
     LibraryLicense(name = "gRPC Kotlin: Stub", libraryName = "grpc-kotlin-stub", url = "https://grpc.io/")
       .apache("https://github.com/grpc/grpc-java/blob/master/LICENSE")
       .suppliedByOrganizations("gRPC Authors"),
@@ -437,6 +436,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "gRPC: Stub", libraryName = "grpc-stub", url = "https://grpc.io/")
       .apache("https://github.com/grpc/grpc-java/blob/master/LICENSE")
       .suppliedByOrganizations("gRPC Authors"),
+
     LibraryLicense(name = "Gson", libraryName = "gson", url = "https://github.com/google/gson")
       .apache("https://github.com/google/gson/blob/master/LICENSE"),
     LibraryLicense(libraryName = "Guava", url = "https://github.com/google/guava")

@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="grpc-stub" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.grpc:grpc-stub:1.57.2">
+    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="io.grpc:grpc-stub:1.59.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.57.2/grpc-stub-1.57.2.jar">
-          <sha256sum>84d2af12719168f76375f2afdfd6eb5133a865edba9244d40e6b968e3adde1d3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.59.0/grpc-stub-1.59.0.jar">
+          <sha256sum>7cc797303968d369ec48c3e8dcc966b68fd2763494a39203bd05a8f33730bcf3</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.57.2/grpc-stub-1.57.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.59.0/grpc-stub-1.59.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.57.2/grpc-stub-1.57.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.59.0/grpc-stub-1.59.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
