@@ -8,12 +8,13 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.lang.Language
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.containers.ContainerUtil
 import kotlin.random.Random
+import kotlin.system.measureNanoTime
 
 /**
  * This tracker lives from the moment the inline completion is invoked until the end of generation.
@@ -50,8 +51,10 @@ internal class InlineCompletionInvocationTracker(
     fileLanguage = psiFile.language
     data.add(EventFields.Language.with(language))
     data.add(EventFields.CurrentFile.with(fileLanguage))
-    logger<InlineCompletionUsageTracker>()
-    InlineContextFeatures.capture(editor, offset, contextFeatures)
+    val time = measureNanoTime {
+      InlineContextFeatures.capture(editor, offset, contextFeatures)
+    }
+    LOG.info("Context features computation time is $time ns")
     assert(!finished)
   }
 
@@ -124,4 +127,8 @@ internal class InlineCompletionInvocationTracker(
     InvokedEvents.TIME_TO_COMPUTE,
     InvokedEvents.OUTCOME,
   )
+
+  companion object {
+    val LOG = thisLogger()
+  }
 }
