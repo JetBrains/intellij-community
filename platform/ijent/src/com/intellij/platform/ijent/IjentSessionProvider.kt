@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.util.attachAsChildTo
 import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 import java.io.InputStream
 import java.io.OutputStream
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit
  * Given that there is some IJent process launched, this extension gets handles to stdin+stdout of the process and returns
  * an [IjentApi] instance for calling procedures on IJent side.
  */
+@ApiStatus.Experimental
 interface IjentSessionProvider {
   @get:OverrideOnly
   val epCoroutineScope: CoroutineScope

@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.fs
 
 import com.intellij.platform.ijent.IjentId
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * This interface deliberately mimics API of [java.nio.file.Path].
@@ -13,6 +14,7 @@ import com.intellij.platform.ijent.IjentId
  *
  * There were no plan to have any other implementation except [IjentPathImpl]. They are split only to ease code reading.
  */
+@ApiStatus.Experimental
 interface IjentPath : Comparable<IjentPath>, Iterable<IjentPath> {
   companion object {
     @JvmStatic

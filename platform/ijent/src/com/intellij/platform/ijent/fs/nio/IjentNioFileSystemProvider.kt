@@ -5,6 +5,7 @@ import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.IjentSessionRegistry
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.FileInfo.Type.*
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
@@ -15,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
+@ApiStatus.Experimental
 class IjentNioFileSystemProvider : FileSystemProvider() {
   private val registeredFileSystems = ConcurrentHashMap<IjentId, IjentNioFileSystem>()
 

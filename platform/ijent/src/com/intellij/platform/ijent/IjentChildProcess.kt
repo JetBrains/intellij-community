@@ -4,7 +4,12 @@ package com.intellij.platform.ijent
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Represents some process which was launched by IJent via [IjentApi.executeProcess].
+ */
+@ApiStatus.Experimental
 interface IjentChildProcess {
   val pid: Int
   val stdin: SendChannel<ByteArray>

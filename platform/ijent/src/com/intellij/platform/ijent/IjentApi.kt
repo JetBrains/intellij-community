@@ -7,7 +7,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Provides access to an IJent process running on some machine. An instance of this interface gives ability to run commands
+ * on a local or a remote machine. Every instance corresponds to a single machine, i.e. unlike Run Targets, if IJent is launched
+ * in a Docker container, every call to [executeProcess] runs a command in the same Docker container.
+ *
+ * Usually, [IjentSessionProvider] creates instances of [IjentApi].
+ */
+@ApiStatus.Experimental
 interface IjentApi : AutoCloseable {
   val id: IjentId
 
@@ -21,6 +30,9 @@ interface IjentApi : AutoCloseable {
    */
   val coroutineScope: CoroutineScope
 
+  /**
+   * Explicitly terminates the process on the remote machine.
+   */
   override fun close() {
     coroutineScope.cancel(CancellationException("Closed via Closeable interface"))
     // The javadoc of the method doesn't clarify if the method supposed to wait for the resource destruction.
@@ -28,6 +40,19 @@ interface IjentApi : AutoCloseable {
 
   val fs: IjentFileSystemApi
 
+  /**
+   * Starts a process on a remote machine. Right now, the child process may outlive the instance of IJent.
+   * stdin, stdout and stderr of the process are always forwarded, if there are.
+   *
+   * Beware that processes with [pty] don't have stderr.
+   *
+   * By default, environment is always inherited from the running IJent instance, which may be unwanted. [env] allows to alter
+   * some environment variables, it doesn't clear the variables from the parent. When the process should be started in an environment like
+   * in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [env].
+   *
+   * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
+   * [workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
+   */
   suspend fun executeProcess(
     exe: String,
     vararg args: String,
@@ -36,6 +61,9 @@ interface IjentApi : AutoCloseable {
     workingDirectory: String? = null,
   ): ExecuteProcessResult
 
+  /**
+   * Gets the same environment variables on the remote machine as the user would get if they run the shell.
+   */
   suspend fun fetchLoginShellEnvVariables(): Map<String, String>
 
   /**
@@ -80,5 +108,6 @@ interface IjentApi : AutoCloseable {
     data class MkTemp(val directory: String = "", val prefix: String = "", val suffix: String = "") : CreateFilePath
   }
 
+  /** [echo] must be true in general and must be false when the user is asked for a password. */
   data class Pty(val columns: Int, val rows: Int, val echo: Boolean)
 }
