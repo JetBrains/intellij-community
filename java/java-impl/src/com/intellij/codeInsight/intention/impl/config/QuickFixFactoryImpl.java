@@ -213,7 +213,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddExceptionToThrowsFix(@NotNull PsiElement element) {
-    return new AddExceptionToThrowsFix(element);
+    return new AddExceptionToThrowsFix(element).asIntention();
   }
 
   @NotNull
