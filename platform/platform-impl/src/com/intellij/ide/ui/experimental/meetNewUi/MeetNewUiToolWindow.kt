@@ -96,7 +96,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           val gap = JBUI.scale(8)
           val themesPanel = JPanel(WrapLayout(FlowLayout.LEADING, gap, gap))
           // Remove gaps around of the panel
-          themesPanel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(gap, gap, gap, gap))
+          themesPanel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(gap))
           for (theme in themes) {
             themesPanel.add(theme.button)
           }
