@@ -58,8 +58,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -78,7 +76,6 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NonNls;
@@ -99,23 +96,16 @@ public final class DaemonListeners implements Disposable {
   private boolean myEscPressed;
   volatile boolean cutOperationJustHappened;
   private List<Editor> myActiveEditors = Collections.emptyList();
-  private static final Key<Boolean> DAEMON_INITIALIZED = Key.create("DAEMON_INITIALIZED");
 
   DaemonListeners(@NotNull Project project, @NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
 
-    boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, null, Boolean.TRUE);
-    if (!replaced) {
-      LOG.error("Daemon listeners already initialized for the project " + myProject);
-    }
-
-    MessageBus messageBus = myProject.getMessageBus();
     if (project.isDefault()) {
       return;
     }
 
-    SimpleMessageBusConnection connection = messageBus.simpleConnect();
+    SimpleMessageBusConnection connection = myProject.getMessageBus().simpleConnect();
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
@@ -490,8 +480,6 @@ public final class DaemonListeners implements Disposable {
   @Override
   public void dispose() {
     stopDaemonAndRestartAllFiles("Project closed");
-    boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, Boolean.TRUE, Boolean.FALSE);
-    LOG.assertTrue(replaced, "Daemon listeners already disposed for the project "+myProject);
   }
 
   /**
