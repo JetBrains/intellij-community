@@ -110,3 +110,11 @@ fun IKotlinFacetSettings.noVersionAutoAdvance() {
         it.autoAdvanceApiVersion = false
     }
 }
+
+@Deprecated("Use IKotlinFacetSettings.noVersionAutoAdvance() instead")
+fun KotlinFacet.noVersionAutoAdvance() {
+    configuration.settings.compilerArguments?.let {
+        it.autoAdvanceLanguageVersion = false
+        it.autoAdvanceApiVersion = false
+    }
+}
