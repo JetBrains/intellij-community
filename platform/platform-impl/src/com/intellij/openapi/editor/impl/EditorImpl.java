@@ -358,6 +358,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myState.refreshAll();
     myScheme = createBoundColorSchemeDelegate(null);
     myScrollPane = new MyScrollPane(); // create UI after scheme initialization
+    myScrollPane.setBackground(JBColor.lazy(this::getBackgroundColor));
     myState.setViewer(viewer);
     myKind = kind;
     mySettings = new SettingsImpl(this, kind, project);
@@ -560,7 +561,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         case EditorState.isEmbeddedIntoDialogWrapperPropertyName -> isEmbeddedIntoDialogWrapperChanged(event);
         case EditorState.verticalScrollBarOrientationPropertyName -> verticalScrollBarOrientationChanged(event);
         case EditorState.isStickySelectionPropertyName -> isStickySelectionChanged(event);
-        case EditorState.myForcedBackgroundPropertyName -> forcedBackgroundChanged(event);
         case EditorState.myBorderPropertyName -> borderChanged(event);
       }
     }, myDisposable);
@@ -2087,10 +2087,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myState.setMyForcedBackground(color);
     }
-  }
-
-  private void forcedBackgroundChanged(ObservableStateListener.PropertyChangeEvent event) {
-    myScrollPane.setBackground(getBackgroundColor());
   }
 
   @NotNull
