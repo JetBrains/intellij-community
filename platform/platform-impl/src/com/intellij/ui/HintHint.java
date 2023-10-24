@@ -218,8 +218,9 @@ public final class HintHint {
     myTextBg = component.getBackground();
     myFont = component.getFont();
     boolean setDefaultStatus = true;
-    if (component instanceof HintUtil.HintLabel) {
-      HintHint componentHintLabel = ((HintUtil.HintLabel)component).getHintHint();
+    HintUtil.HintLabel label = UIUtil.findComponentOfType(component, HintUtil.HintLabel.class);
+    if (label != null) {
+      HintHint componentHintLabel = label.getHintHint();
       if (componentHintLabel != null) {
         setBorderColor(componentHintLabel.getBorderColor());
         setBorderInsets(componentHintLabel.getBorderInsets());
