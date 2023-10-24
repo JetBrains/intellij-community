@@ -122,6 +122,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   public static final String CLOSE_REASON_PREVIEW = "Preview";
   @ApiStatus.Internal
   public static final String CLOSE_REASON_CHANGE_SCOPE = "ChangeScope";
+  @ApiStatus.Internal
+  public static final String CLOSE_REASON_RESET_FILTERS = "ResetFilters";
 
   private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
   private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
@@ -579,6 +581,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                            UsageViewBundle.message("usages.were.filtered.out.tooltip")) {
           @Override
           public void onSelected() {
+            actionHandler.beforeClose(CLOSE_REASON_RESET_FILTERS);
+
             // toggle back unselected toggle actions
             toggleFilters(unselectedActions);
             // and restart show usages in hope it will show filtered out items now
