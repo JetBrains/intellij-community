@@ -653,6 +653,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Try2.after.kt");
             }
 
+            @TestMetadata("WhenEntryArrow.after.kt")
+            public void testWhenEntryArrow() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhenEntryArrow.after.kt");
+            }
+
             @TestMetadata("WhenWithCondition.after.kt")
             public void testWhenWithCondition() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhenWithCondition.after.kt");
