@@ -14,7 +14,7 @@ fun foo(x: Any) {
     when (x) {
         Comparable::class, Iterable::class,
         String::class, /*// trailing comma*/
-        -> println(1)
+            -> println(1)
 
         else -> println(3)
     }
@@ -22,7 +22,7 @@ fun foo(x: Any) {
     when (x) {
         Comparable::class, Iterable::class,
         String::class, /*// trailing comma*/
-        -> println(1)
+            -> println(1)
 
         else -> println(3)
     }
@@ -60,7 +60,7 @@ fun foo(x: Any) {
     when (x) {
         1, 2,
         3, /**/
-        -> {
+            -> {
 
         }
 
@@ -70,7 +70,7 @@ fun foo(x: Any) {
     when (val c = x) {
         1, 2,
         3, /**/
-        -> {
+            -> {
 
         }
 
