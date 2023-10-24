@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import com.intellij.ide.startup.importSettings.data.Configurable
 import com.intellij.ide.startup.importSettings.data.Multiple
@@ -20,9 +21,10 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 fun createSettingPane(setting: BaseSetting, configurable: Boolean): BaseSettingPane {
-  return if(setting is Multiple) {
+  return if (setting is Multiple) {
     MultipleSettingPane(createMultipleItem(setting, configurable))
-  } else {
+  }
+  else {
     BaseSettingPane(SettingItem(setting, configurable))
   }
 }
@@ -41,7 +43,7 @@ private fun createMultipleItem(setting: Multiple, configurable: Boolean): Settin
     }
   }
 
-  return SettingItem(setting, configurable, childItems = list )
+  return SettingItem(setting, configurable, childItems = list)
 }
 
 open class BaseSettingPane(val item: SettingItem) {
@@ -63,8 +65,10 @@ open class BaseSettingPane(val item: SettingItem) {
           }
 
           setting.comment?.let { addTxt ->
-            row {
-              comment(addTxt).customize(UnscaledGaps(0)).resizableColumn()
+            if (addTxt.isNotEmpty()) {
+              row {
+                comment(addTxt).customize(UnscaledGaps(0)).resizableColumn()
+              }
             }
           }
 
@@ -87,9 +91,9 @@ open class BaseSettingPane(val item: SettingItem) {
 }
 
 
-class MultipleSettingPane(item: SettingItem): BaseSettingPane(item) {
+class MultipleSettingPane(item: SettingItem) : BaseSettingPane(item) {
 
-  val configurable = item.configurable && setting is Configurable
+  private val configurable = item.configurable && setting is Configurable
 
   private lateinit var actionLink: ActionLink
 
@@ -99,10 +103,10 @@ class MultipleSettingPane(item: SettingItem): BaseSettingPane(item) {
     if (item.childItems.isNotEmpty()) {
       pn.row {
         val text = if (configurable) {
-          "Configure"
+          ImportSettingsBundle.message("choose.settings.configure")
         }
         else {
-          "Show all"
+          ImportSettingsBundle.message("choose.settings.show_all")
         }
 
         actionLink = ActionLink(object : AbstractAction(text) {
@@ -128,10 +132,14 @@ class MultipleSettingPane(item: SettingItem): BaseSettingPane(item) {
 
     val scrollPane = JBScrollPane(component)
     panel.add(scrollPane, BorderLayout.CENTER)
-    scrollPane.border = JBUI.Borders.empty(ChildSettingsList.SCROLL_PANE_INSETS, ChildSettingsList.SCROLL_PANE_INSETS, ChildSettingsList.SCROLL_PANE_INSETS, 0)
+    scrollPane.border = JBUI.Borders.empty(ChildSettingsList.SCROLL_PANE_INSETS, ChildSettingsList.SCROLL_PANE_INSETS,
+                                           ChildSettingsList.SCROLL_PANE_INSETS, 0)
     val chooserBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component)
     chooserBuilder.createPopup().showUnderneathOf(actionLink)
   }
 }
 
-data class SettingItem(val setting: BaseSetting, val configurable: Boolean, var selected: Boolean = true, val childItems: List<ChildItem>? = null)
+data class SettingItem(val setting: BaseSetting,
+                       val configurable: Boolean,
+                       var selected: Boolean = true,
+                       val childItems: List<ChildItem>? = null)

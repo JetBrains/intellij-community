@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import javax.swing.Icon
 
-open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<T>, val callback: (PageProvider) -> Unit) : ProductChooserAction() {
+open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<T>, private val callback: (PageProvider) -> Unit) : ProductChooserAction() {
   private var array: Array<AnAction> = emptyArray()
 
   override fun displayTextInToolbar(): Boolean {

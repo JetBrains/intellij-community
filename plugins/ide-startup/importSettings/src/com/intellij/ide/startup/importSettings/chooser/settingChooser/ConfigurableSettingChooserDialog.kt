@@ -32,7 +32,7 @@ class ConfigurableSettingChooserDialog<T : BaseService>(val provider: ActionsDat
 
 
     val dataForSaves = settingPanes.map { it.item }.filter { it.configurable && it.selected }.map {
-      val chs = it.childItems?.filter { it.selected }?.map { it.child.id }?.toList()
+      val chs = it.childItems?.filter { item -> item.selected }?.map { item -> item.child.id }?.toList()
       DataForSave(it.setting.id, chs)
     }.toList()
 

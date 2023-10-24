@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DuplicatedCode")
+
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.ide.plugins.newui.ListPluginComponent
@@ -20,11 +22,13 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.*
 
-class ProductChooserRenderer() : ListCellRenderer<PopupFactoryImpl.ActionItem> {
+@Suppress("DuplicatedCode")
+class ProductChooserRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
   override fun getListCellRendererComponent(list: JList<out PopupFactoryImpl.ActionItem>,
                                             value: PopupFactoryImpl.ActionItem,
                                             index: Int,
@@ -43,8 +47,8 @@ class ProductChooserRenderer() : ListCellRenderer<PopupFactoryImpl.ActionItem> {
   }
 
   data class Obj(val action: AnAction) {
-    var name: String? = null
-    var comment: String? = null
+    var name: @Nls String? = null
+    var comment: @Nls String? = null
     var icon: Icon? = null
 
     init {

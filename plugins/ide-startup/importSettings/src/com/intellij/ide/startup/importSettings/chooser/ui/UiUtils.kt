@@ -4,7 +4,7 @@ package com.intellij.ide.startup.importSettings.chooser.ui
 import com.intellij.openapi.util.Key
 
 object UiUtils {
-  val DEFAULT_BUTTON_WIDTH: Int = 280
-  val DEFAULT_BUTTON_HEIGHT: Int = 40
+  const val DEFAULT_BUTTON_WIDTH: Int = 280
+  const val DEFAULT_BUTTON_HEIGHT: Int = 40
   val POPUP = Key<Boolean>("OtherOptions_POPUP")
 }

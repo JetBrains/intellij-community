@@ -76,10 +76,10 @@ interface ActionsDataProvider<T : BaseService> {
 
   val productService: T
   fun getProductIcon(productId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
-  fun getText(contributor: SettingsContributor): String
+  fun getText(contributor: SettingsContributor): @Nls String
   val title: String
 
-  fun getComment(contributor: SettingsContributor): String?
+  fun getComment(contributor: SettingsContributor): @Nls String?
   val main: List<Product>?
   val other: List<Product>?
 }

@@ -36,7 +36,7 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
   private val panel = JPanel(VerticalLayout(JBUI.scale(8))).apply {
     add(JPanel(VerticalLayout(JBUI.scale(8))).apply {
       add(JLabel(ImportSettingsBundle.message("import.settings.title")).apply {
-        font = Font(font.getFontName(), Font.PLAIN, JBUIScale.scaleFontSize(24f))
+        font = Font(font.fontName, Font.PLAIN, JBUIScale.scaleFontSize(24f))
         horizontalAlignment = SwingConstants.CENTER
       })
 
@@ -95,13 +95,12 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
         preferredWidth = JBUI.scale(280)
       })
 
-      val cmnt = HLabel("")
+      val hLabel = HLabel("")
       importFromProduct.progress.progressMessage.advise(Lifetime.Eternal) {
-        cmnt.text = if (it != null) "<center>$it</center>" else "&nbsp"
+        hLabel.text = if (it != null) "<center>$it</center>" else "&nbsp"
       }
 
-      add(cmnt.label.apply {
-        //font = Font(font.getFontName(), Font.PLAIN, JBUIScale.scaleFontSize(24f))
+      add(hLabel.label.apply {
         font = JBFont.medium()
         foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
       })

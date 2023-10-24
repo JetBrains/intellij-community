@@ -52,6 +52,7 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
   private val pane = JPanel(BorderLayout()).apply {
     add(panel {
       row {
+        @Suppress("DialogTitleCapitalization")
         text(ImportSettingsBundle.message("choose.settings.title")).apply {
           this.component.font = JBFont.h1()
         }.align(AlignY.TOP).customize(UnscaledGaps(0, 0, 17, 0))
@@ -115,7 +116,7 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
   }
 
   protected fun getBackAction(): Action {
-    return object : DialogWrapperAction("Back") {
+    return object : DialogWrapperAction(ImportSettingsBundle.message("import.settings.back")) {
 
       override fun doAction(e: ActionEvent?) {
         val dialog = ProductChooserDialog()
@@ -126,7 +127,7 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
 
   override fun getOKAction(): Action {
     return super.getOKAction().apply {
-      putValue(Action.NAME, "Import Settings")
+      putValue(Action.NAME, ImportSettingsBundle.message("import.settings.ok"))
     }
   }
 }

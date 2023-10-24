@@ -36,7 +36,7 @@ abstract class ChooseProductActionButton(text: @NlsActions.ActionText String? = 
     return ButtonHolder(button)
   }
 
-  protected fun performAction(component: JComponent, place: String, presentation: Presentation) {
+  private fun performAction(component: JComponent, place: String, presentation: Presentation) {
     val dataContext = ActionToolbar.getDataContextFor(component)
     val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
 
