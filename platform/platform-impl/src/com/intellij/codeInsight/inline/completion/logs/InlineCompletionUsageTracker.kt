@@ -28,7 +28,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.random.Random
 
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 10)
+  private val GROUP = EventLogGroup("inline.completion", 11)
 
   override fun getGroup() = GROUP
 
@@ -113,6 +113,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     fun createShowTracker() = ShowTracker(
       requestId,
+      provider,
       invocationTime,
       InlineContextFeatures.getEventPair(contextFeatures),
       language,
@@ -206,6 +207,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
    */
   private class ShowTracker(
     private val requestId: Long,
+    private val provider: Class<out InlineCompletionProvider>,
     private val invocationTime: Long,
     private val triggerFeatures: EventPair<*>,
     private val language: Language?,
@@ -229,6 +231,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       data.add(EventFields.Language.with(language))
       data.add(EventFields.CurrentFile.with(fileLanguage))
       data.add(ShownEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
+      data.add(ShownEvents.PROVIDER.with(provider))
       data.add(triggerFeatures)
       nextShown(element)
       assert(!shownLogSent)
@@ -277,6 +280,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   private object ShownEvents {
     val REQUEST_ID = Long("request_id")
 
+    val PROVIDER = EventFields.Class("provider")
+
     val LINES = Int("lines")
     val LENGTH = Int("length")
     val TYPING_DURING_SHOW = Int("typing_during_show")
@@ -293,6 +298,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     ShownEvents.REQUEST_ID,
     EventFields.Language,
     EventFields.CurrentFile,
+    ShownEvents.PROVIDER,
     ShownEvents.LINES,
     ShownEvents.LENGTH,
     ShownEvents.TYPING_DURING_SHOW,
