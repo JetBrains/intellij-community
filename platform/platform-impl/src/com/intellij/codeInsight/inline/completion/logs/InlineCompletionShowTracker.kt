@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
+import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -14,6 +15,7 @@ import com.intellij.util.application
  */
 internal class InlineCompletionShowTracker(
   private val requestId: Long,
+  private val provider: Class<out InlineCompletionProvider>,
   private val invocationTime: Long,
   private val triggerFeatures: EventPair<*>,
   private val language: Language?,
@@ -37,6 +39,7 @@ internal class InlineCompletionShowTracker(
     data.add(EventFields.Language.with(language))
     data.add(EventFields.CurrentFile.with(fileLanguage))
     data.add(ShownEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
+    data.add(ShownEvents.PROVIDER.with(provider))
     if (application.isEAP) {
       data.add(triggerFeatures)
     }
@@ -85,7 +88,7 @@ internal class InlineCompletionShowTracker(
 
   private object ShownEvents {
     val REQUEST_ID = EventFields.Long("request_id")
-
+    val PROVIDER = EventFields.Class("provider")
     val LINES = EventFields.Int("lines")
     val LENGTH = EventFields.Int("length")
     val TYPING_DURING_SHOW = EventFields.Int("typing_during_show")
@@ -100,6 +103,7 @@ internal class InlineCompletionShowTracker(
     ShownEvents.REQUEST_ID,
     EventFields.Language,
     EventFields.CurrentFile,
+    ShownEvents.PROVIDER,
     ShownEvents.LINES,
     ShownEvents.LENGTH,
     ShownEvents.TYPING_DURING_SHOW,

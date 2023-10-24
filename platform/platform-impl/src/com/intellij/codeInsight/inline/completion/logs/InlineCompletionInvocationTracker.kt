@@ -39,6 +39,7 @@ internal class InlineCompletionInvocationTracker(
 
   fun createShowTracker() = InlineCompletionShowTracker(
     requestId,
+    provider,
     invocationTime,
     InlineContextFeatures.getEventPair(contextFeatures),
     language,
