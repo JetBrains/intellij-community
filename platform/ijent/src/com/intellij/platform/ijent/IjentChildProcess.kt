@@ -22,4 +22,16 @@ interface IjentChildProcess {
 
   suspend fun terminate()
   suspend fun kill()
+
+  @Throws(ResizePtyError::class)  // Can't use @CheckReturnValue: KTIJ-7061
+  suspend fun resizePty(columns: Int, rows: Int)
+
+  sealed class ResizePtyError : Exception {
+    constructor() : super()
+    constructor(msg: String) : super(msg)
+
+    class ProcessExited : ResizePtyError()
+    class NoPty : ResizePtyError()
+    data class Errno(val errno: Int, override val message: String) : ResizePtyError("[$errno] $message")
+  }
 }
