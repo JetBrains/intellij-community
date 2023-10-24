@@ -390,20 +390,21 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
   internal data class Appearance(val titleFontSize: Float,
                                  val subtitleFontSize: Float,
-                                 val titleInsets: JBInsets,
-                                 val subtitleInsets: JBInsets,
+                                 val popupInsets: Insets,
+                                 val subtitleHorizontalInset: Int,
                                  val spaceBetweenPopups: Int,
                                  val titleSubtitleGap: Int,
                                  val settingsButtonWidth: Int,
                                  val theme: PresentationAssistantTheme)
 
   companion object {
+    @Suppress("UseDPIAwareInsets") // Values from insets will be scaled at the usage place
     private fun appearanceFromSize(popupSize: PresentationAssistantPopupSize,
                                    theme: PresentationAssistantTheme): Appearance = when(popupSize) {
       PresentationAssistantPopupSize.SMALL -> Appearance(22f,
                                                          12f,
-                                                         JBInsets(6, 12, 0, 12),
-                                                         JBInsets(0, 14, 6, 14),
+                                                         Insets(6, 12, 6, 12),
+                                                         2,
                                                          8,
                                                          1,
                                                          25,
@@ -411,8 +412,8 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
       PresentationAssistantPopupSize.MEDIUM -> Appearance(32f,
                                                           13f,
-                                                          JBInsets(6, 16, 0, 16),
-                                                          JBInsets(0, 18, 8, 18),
+                                                          Insets(6, 16, 8, 16),
+                                                          2,
                                                           12,
                                                           -2,
                                                           30,
@@ -420,8 +421,8 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
       PresentationAssistantPopupSize.LARGE -> Appearance(40f,
                                                          14f,
-                                                         JBInsets(6, 16, 0, 16),
-                                                         JBInsets(0, 18, 8, 18),
+                                                         Insets(6, 16, 8, 16),
+                                                         2,
                                                          12,
                                                          -2,
                                                          34,
