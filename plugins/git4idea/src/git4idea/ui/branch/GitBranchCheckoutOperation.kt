@@ -23,7 +23,11 @@ internal class GitBranchCheckoutOperation(private val project: Project, private 
     assert(repositories.isNotEmpty())
   }
 
-  fun perform(startPoint: String, options: GitNewBranchOptions, callInAwtLater: Runnable? = null) {
+  fun perform(startPoint: String, options: GitNewBranchOptions) {
+    perform(startPoint, options, null)
+  }
+
+  fun perform(startPoint: String, options: GitNewBranchOptions, callInAwtLater: Runnable?) {
     val checkout = options.checkout
     val name = options.name
     val reset = options.reset
