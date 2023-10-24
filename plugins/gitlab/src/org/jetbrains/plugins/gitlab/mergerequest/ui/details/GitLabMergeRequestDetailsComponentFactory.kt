@@ -34,7 +34,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeReq
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
-import org.jetbrains.plugins.gitlab.mergerequest.ui.issues.IssuesUtil
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -128,7 +128,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       add(CodeReviewDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit,
                                                              commitPresentation = { commit ->
                                                                createCommitInfoPresenter(commit) {
-                                                                 IssuesUtil.convertMarkdownToHtmlWithIssues(project, it)
+                                                                 GitLabUIUtil.convertToHtml(project, it)
                                                                }
                                                              },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),

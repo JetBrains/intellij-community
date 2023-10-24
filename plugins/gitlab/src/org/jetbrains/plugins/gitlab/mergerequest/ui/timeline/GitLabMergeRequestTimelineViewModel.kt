@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.issues.IssuesUtil
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.forNewNote
@@ -50,10 +50,10 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   override val number: String = "!${mergeRequest.iid}"
   override val author: GitLabUserDTO = mergeRequest.author
   override val title: SharedFlow<String> = mergeRequest.details.map { it.title }.map { title ->
-    IssuesUtil.convertMarkdownToHtmlWithIssues(project, title)
+    GitLabUIUtil.convertToHtml(project, title)
   }.modelFlow(cs, LOG)
   override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map { description ->
-    IssuesUtil.convertMarkdownToHtmlWithIssues(project, description)
+    GitLabUIUtil.convertToHtml(project, description)
   }.modelFlow(cs, LOG)
   override val url: String = mergeRequest.url
 
