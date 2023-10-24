@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
@@ -74,10 +73,9 @@ internal class ActionUpdater @JvmOverloads constructor(
   val place: String,
   private val contextMenuAction: Boolean,
   private val toolbarAction: Boolean,
-  edtScope: CoroutineScope,
+  private val edtDispatcher: CoroutineDispatcher,
   private val eventTransform: ((AnActionEvent) -> AnActionEvent)? = null) {
 
-  private val edtScope = edtScope + SupervisorJob()
   @Volatile private var bgtScope: CoroutineScope? = null
 
   private val application: Application = com.intellij.util.application
@@ -339,7 +337,7 @@ internal class ActionUpdater @JvmOverloads constructor(
                              else EmptyCoroutineContext) {
       children
         .map {
-          async(Context.current().asContextElement()) {
+          async {
             expandGroupChild(it, hideDisabled)
           }
         }
@@ -457,11 +455,11 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   private suspend fun <T> computeOnEdt(supplier: () -> T): T {
-    return edtScope.async(Context.current().asContextElement()) {
+    return withContext(edtDispatcher) {
       blockingContext {
         supplier()
       }
-    }.await()
+    }
   }
 
   fun asUpdateSession(): UpdateSession {
@@ -531,20 +529,26 @@ internal class ActionUpdater @JvmOverloads constructor(
   @Suppress("UNCHECKED_CAST")
   fun <T : Any?> getSessionDataDeferred(key: Pair<String, Any?>, supplier: suspend () -> T): Deferred<T> {
     sessionData[key]?.let { return it as Deferred<T> }
-    val result = CompletableDeferred<T>()
-    sessionData.putIfAbsent(key, result)?.let { return it as Deferred<T> }
-    bgtScope?.async(Context.current().asContextElement()) {
-      runWithSpan(Utils.getTracer(true), "${key.first}@$place") {
-        result.completeWith(runCatching {
-          supplier()
+    val bgtScope = bgtScope
+    return if (bgtScope != null) {
+      sessionData.computeIfAbsent(key) {
+        bgtScope.async(Context.current().asContextElement()) {
+          computeWithSpan(Utils.getTracer(true), "${key.first}@$place") {
+            supplier()
+          }
+        }
+      } as Deferred<T>
+    }
+    else {
+      // not a good branch to be in, seek ways to get bgtScope
+      CompletableDeferred<T>().apply {
+        completeWith(runCatching {
+          runBlockingForActionExpand {
+            supplier()
+          }
         })
       }
-    } ?: result.completeWith(runCatching {
-      runBlockingForActionExpand {
-        supplier()
-      }
-    })
-    return result
+    }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
