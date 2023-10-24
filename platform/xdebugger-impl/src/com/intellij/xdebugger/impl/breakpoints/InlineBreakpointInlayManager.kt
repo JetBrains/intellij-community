@@ -69,6 +69,13 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     if (!areInlineBreakpointsEnabled()) return
     scope.launch {
       val document = editor.document
+      if (allBreakpointsIn(document).isEmpty()) {
+        // No need to clear inlays in new editor, so we can just skip whole redraw.
+        // FIXME[inline-bp]: test DaemonRespondToChangesTest.testLocalInspectionMustReceiveCorrectVisibleRangeViaItsHighlightingSession
+        //                   fails if you remove this fast-path,
+        //                   it's really strange, investigate it
+        return@launch
+      }
       redraw(document, null, editor)
     }
   }
@@ -119,8 +126,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
       return
     }
 
-    val lineBreakpointManager = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).lineBreakpointManager
-    val allBreakpoints = lineBreakpointManager.getDocumentBreakpoints(document)
+    val allBreakpoints = allBreakpointsIn(document)
 
     val inlays = mutableListOf<SingleInlayDatum>()
     if (onlyLine != null) {
@@ -144,6 +150,11 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
 
       insertInlays(document, onlyEditor, onlyLine, inlays)
     }
+  }
+
+  private fun allBreakpointsIn(document: Document): Collection<XLineBreakpointImpl<*>> {
+    val lineBreakpointManager = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).lineBreakpointManager
+    return lineBreakpointManager.getDocumentBreakpoints(document)
   }
 
   private data class SingleInlayDatum(
