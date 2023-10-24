@@ -1634,6 +1634,11 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
             runTest("../testData/intentions/removeUnnecessaryParentheses/condition2.kt");
         }
 
+        @TestMetadata("condition3.kt")
+        public void testCondition3() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/condition3.kt");
+        }
+
         @TestMetadata("elvisRhs.kt")
         public void testElvisRhs() throws Exception {
             runTest("../testData/intentions/removeUnnecessaryParentheses/elvisRhs.kt");
