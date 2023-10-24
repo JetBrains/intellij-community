@@ -242,6 +242,35 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
   }
 
   @RepeatedTest(REPETITIONS)
+  fun `read action is cancelled by write and restarted with blockingContextToIndicator`(): Unit = timeoutRunBlocking {
+    var attempts = 0
+    val result = readAction {
+      when (attempts++) {
+        0 -> {
+          throw assertThrows<CeProcessCanceledException> {
+            blockingContextToIndicator {
+              waitForPendingWrite().up()
+              throw assertThrows<ProcessCanceledException> {
+                ProgressManager.checkCanceled()
+              }
+            }
+          }
+        }
+        1 -> {
+          assertDoesNotThrow {
+            ProgressManager.checkCanceled()
+          }
+          42
+        }
+        else -> {
+          fail()
+        }
+      }
+    }
+    assertEquals(42, result)
+  }
+
+  @RepeatedTest(REPETITIONS)
   fun `read action with constraints is cancelled by write and restarted`(): Unit = timeoutRunBlocking {
     val constraintScheduled = KSemaphore(1, 1)
     lateinit var constraintContinuation: Continuation<Unit>

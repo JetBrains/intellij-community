@@ -11,11 +11,7 @@ import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.platform.util.progress.ProgressReporter
-import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.platform.util.progress.progressReporter
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.*
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -402,9 +398,15 @@ suspend fun <T> coroutineToIndicator(action: () -> T): T {
 @RequiresBlockingContext
 fun <T> blockingContextToIndicator(action: () -> T): T {
   val ctx = currentThreadContext()
-  return contextToIndicator(ctx, action)
+  return try {
+    contextToIndicator(ctx, action)
+  }
+  catch (ce: CancellationException) {
+    throw CeProcessCanceledException(ce)
+  }
 }
 
+@Throws(CancellationException::class)
 private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
   val job = ctx.job
   job.ensureActive()
@@ -433,6 +435,7 @@ private fun CoroutineContext.createIndicator(): ProgressIndicator {
   }
 }
 
+@Throws(CancellationException::class)
 @Internal
 fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T): T {
   try {
@@ -456,20 +459,11 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
     }, indicator)
   }
   catch (e: ProcessCanceledException) {
-    if (!indicator.isCanceled) {
-      // means the exception was thrown manually
-      // => treat it as any other exception
-      throw e
+    if (job.isCancelled) {
+      @OptIn(InternalCoroutinesApi::class)
+      throw job.getCancellationException()
     }
-    // indicator is canceled
-    // => CompletionHandler was actually invoked
-    // => current Job is canceled
-    if (!job.isCancelled) {
-      LOG.error("Indicator should be cancelled only by cancellation of the calling coroutine")
-      throw PceCancellationException(e)
-    }
-    @OptIn(InternalCoroutinesApi::class)
-    throw job.getCancellationException()
+    throw PceCancellationException(e)
   }
 }
 
