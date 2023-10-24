@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.performancePlugin
+package org.jetbrains.plugins.gradle.performanceTesting
 
 import com.intellij.ide.actions.ImportModuleAction
 import com.intellij.ide.actions.ImportModuleAction.Companion.doImport
@@ -10,6 +10,7 @@ import com.jetbrains.performancePlugin.commands.OpenFileCommand.Companion.findFi
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class LinkGradleProjectCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
@@ -30,7 +31,7 @@ class LinkGradleProjectCommand(text: String, line: Int) : PerformanceCommandCoro
 
     val projectImportProvider = ProjectImportProvider.PROJECT_IMPORT_PROVIDER
       .findFirstSafe { it: ProjectImportProvider? ->
-        it is AbstractExternalProjectImportProvider && "GRADLE" == it.externalSystemId.id
+        it is AbstractExternalProjectImportProvider && GradleConstants.SYSTEM_ID == it.externalSystemId
       }!!
 
     withContext(Dispatchers.EDT) {

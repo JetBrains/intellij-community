@@ -11,6 +11,8 @@ final class GradleCommandProvider implements CommandProvider {
   @Override
   public @NotNull Map<String, CreateCommand> getCommands() {
     return Map.of(ImportGradleProjectCommand.PREFIX, ImportGradleProjectCommand::new,
-                  ExecuteGradleTaskCommand.PREFIX, ExecuteGradleTaskCommand::new);
+                  ExecuteGradleTaskCommand.PREFIX, ExecuteGradleTaskCommand::new,
+                  LinkGradleProjectCommand.PREFIX, LinkGradleProjectCommand::new,
+                  UnlinkGradleProjectCommand.PREFIX, UnlinkGradleProjectCommand::new);
   }
 }
