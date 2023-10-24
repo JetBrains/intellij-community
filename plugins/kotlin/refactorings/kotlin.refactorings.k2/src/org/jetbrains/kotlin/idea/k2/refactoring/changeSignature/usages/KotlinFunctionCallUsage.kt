@@ -20,15 +20,19 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 
 internal class KotlinFunctionCallUsage(
@@ -186,6 +190,7 @@ internal class KotlinFunctionCallUsage(
         }
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)//under potemkin progress
     private fun updateArgumentsAndReceiver(
         changeInfo: KotlinChangeInfoBase,
         element: KtCallElement,
@@ -283,14 +288,8 @@ internal class KotlinFunctionCallUsage(
 
         val lastOldArgument = oldArguments.lastOrNull()
         val lastNewParameter = newParameters.lastOrNull()
-        val lastNewArgument = newArgumentList.arguments.lastOrNull()
         val oldLastResolvedArgument = argumentMapping[lastNewParameter?.oldIndex ?: -1]?.element
         val lambdaArgumentNotTouched = lastOldArgument is KtLambdaArgument && oldLastResolvedArgument == lastOldArgument
-        val newLambdaArgumentAddedLast = lastNewParameter != null
-                && lastNewParameter.isNewParameter
-                && lastNewParameter.defaultValueForCall is KtLambdaExpression
-                && lastNewArgument?.getArgumentExpression() is KtLambdaExpression
-                && !lastNewArgument.isNamed()
 
         if (lambdaArgumentNotTouched) {
             newArgumentList.removeArgument(newArgumentList.arguments.last())
@@ -317,11 +316,11 @@ internal class KotlinFunctionCallUsage(
             newElement = fullCallElement.replace(replacingElement) as KtElement
         }
 
-        //val newCallExpression = newElement.safeAs<KtExpression>()?.getPossiblyQualifiedCallExpression()
-        //if (!lambdaArgumentNotTouched && newLambdaArgumentAddedLast) {
-        //    newCallExpression?.moveFunctionLiteralOutsideParentheses()
-        //}
-        //
+        val newCallExpression = newElement.safeAs<KtExpression>()?.getPossiblyQualifiedCallExpression()
+        if (newCallExpression != null && allowAnalysisFromWriteAction { allowAnalysisOnEdt { newCallExpression.canMoveLambdaOutsideParentheses(false) } }) {
+            newCallExpression.moveFunctionLiteralOutsideParentheses()
+        }
+
         //if (!skipRedundantArgumentList) {
         //    newCallExpression?.valueArgumentList?.let(::removeEmptyArgumentListIfApplicable)
         //}

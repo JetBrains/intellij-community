@@ -673,9 +673,9 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     //------------ remove parameters ------------
 
-    fun testRemoveLastNonLambdaParameter() = doTest { removeParameter(0) }//move outside lambda
+    fun testRemoveLastNonLambdaParameter() = doTest { removeParameter(0) }
 
-    fun testRemoveLastNonLambdaParameter2() = doTest { removeParameter(1) }//move outside lambda
+    fun testRemoveLastNonLambdaParameter2() = doTest { removeParameter(1) }
 
     fun testRemoveParameterPreserveReceiver() = doTest { removeParameter(1) }
 
@@ -713,7 +713,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         clearParameters()
     }
 
-    fun testRemoveParameterBeforeLambda() = doTest { removeParameter(1) }//move outside lambda
+    fun testRemoveParameterBeforeLambda() = doTest { removeParameter(1) }
 
     fun testRemoveParameterKeepFormat1() = doTest { removeParameter(0) }
 
@@ -723,7 +723,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     fun testRemoveLambdaParameter2() = doTest { removeParameter(0) }
 
-    fun testRemoveDefaultParameterBeforeLambda() = doTest { removeParameter(1) }//move outside lambda
+    fun testRemoveDefaultParameterBeforeLambda() = doTest { removeParameter(1) }
     fun testRemoveParameterKeepOtherComments() = doTest { removeParameter(1) }
 
     //----------- receivers ---------------
@@ -946,7 +946,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     fun testSwapParametersKeepFormat() = doTest { swapParameters(0, 2) }
 
-    fun testMoveLambdaParameterToLast() = doTest { swapParameters(0, 1) }//move outside lambda
+    fun testMoveLambdaParameterToLast() = doTest { swapParameters(0, 1) }
 
 
     fun testMoveLambdaParameter() = doTest {
