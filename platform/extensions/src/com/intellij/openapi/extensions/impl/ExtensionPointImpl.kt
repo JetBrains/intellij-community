@@ -430,13 +430,12 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
             break
           }
         }
-        assert(result != null)
         LOG.error("""Duplicate extension found:
                    $extension;
   prev extension:  $duplicate;
   adapter:         $adapter;
   extension class: $extensionClassForCheck;
-  result:          ${result.joinToString()};
+  result:          ${result!!.joinToString()};
   adapters:        $adapters"""
         )
       }
@@ -682,8 +681,8 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
 
   abstract fun unregisterExtensions(componentManager: ComponentManager,
                                     pluginDescriptor: PluginDescriptor,
-                                    priorityListenerCallbacks: List<in Runnable?>,
-                                    listenerCallbacks: List<in Runnable?>)
+                                    priorityListenerCallbacks: List<Runnable?>,
+                                    listenerCallbacks: List<Runnable?>)
 
   private fun notifyListeners(isRemoved: Boolean,
                               adapters: List<ExtensionComponentAdapter>,
@@ -987,7 +986,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
   }
 
   private fun findExtensionByExactClass(aClass: Class<out T>): T? {
-    val cachedExtensions = this.cachedExtensionsAsArray
+    val cachedExtensions = cachedExtensionsAsArray
     if (cachedExtensions == null) {
       for (adapter in sortedAdapters) {
         val classOrName = adapter.implementationClassOrName
@@ -1007,23 +1006,24 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
     return null
   }
 
-  private class ObjectComponentAdapter<T : Any>(@JvmField val instance: T,
-                                                pluginDescriptor: PluginDescriptor,
-                                                loadingOrder: LoadingOrder) : ExtensionComponentAdapter(
-    instance::class.java.getName(),
-    pluginDescriptor, null, loadingOrder,
-    ImplementationClassResolver { `__`: ComponentManager?, `___`: ExtensionComponentAdapter? -> extension.javaClass }) {
-    val `isInstanceCreated$intellij_platform_extensions`: Boolean
-      get() = true
-
-    override fun <I> createInstance(componentManager: ComponentManager?): I {
-      return instance as I
-    }
-  }
-
   @get:Synchronized
   private val isInReadOnlyMode: Boolean
     get() = POINTS_IN_READONLY_MODE != null && POINTS_IN_READONLY_MODE!!.contains(this)
+}
+
+private class ObjectComponentAdapter<T : Any>(@JvmField val instance: T, pluginDescriptor: PluginDescriptor, loadingOrder: LoadingOrder)
+  : ExtensionComponentAdapter(
+  implementationClassName = instance.javaClass.getName(),
+  pluginDescriptor = pluginDescriptor, orderId = null, order = loadingOrder,
+  implementationClassResolver = ImplementationClassResolver { _, _ -> instance.javaClass }
+) {
+  override val isInstanceCreated: Boolean
+    get() = true
+
+  override fun <T : Any> createInstance(componentManager: ComponentManager): T? {
+    @Suppress("UNCHECKED_CAST")
+    return instance as T?
+  }
 }
 
 // test-only
