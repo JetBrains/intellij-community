@@ -232,6 +232,9 @@ public class StructClass extends StructMember {
   public boolean hasPatternsInInstanceofSupport() {
     return isVersion16() || (isVersion14() && isPreviewVersion());
   }
+  public boolean hasEnhancedSwitchSupport() {
+    return isVersion14();
+  }
 
   @Override
   public String toString() {

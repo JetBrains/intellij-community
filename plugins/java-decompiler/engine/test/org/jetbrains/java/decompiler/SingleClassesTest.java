@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -145,6 +145,7 @@ public class SingleClassesTest {
   @Test public void testIntVarMerge() { doTest("pkg/TestIntVarMerge"); }
   @Test public void testSwitchOnStringsJavac() { doTest("pkg/TestSwitchOnStringsJavac"); }
   @Test public void testSwitchOnStringsEcj() { doTest("pkg/TestSwitchOnStringsEcj"); }
+  @Test public void testSwitchRules() { doTest("pkg/TestSwitchRules"); }
 
   // TODO: fix all below
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }

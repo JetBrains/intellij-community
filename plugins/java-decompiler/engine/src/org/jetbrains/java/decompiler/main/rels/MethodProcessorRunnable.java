@@ -213,6 +213,7 @@ public class MethodProcessorRunnable implements Runnable {
 
     PatternHelper.replaceAssignmentsWithPatternVariables(root, cl);
     SwitchHelper.simplifySwitchesOnString(root);
+    SwitchHelper.prepareForRules(root, cl);
     cancellationManager.checkCanceled();
 
     mt.releaseResources();

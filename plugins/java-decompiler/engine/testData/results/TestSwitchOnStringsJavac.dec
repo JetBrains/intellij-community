@@ -23,11 +23,8 @@ public class TestSwitchOnStringsJavac {
    void oneCaseWithDefault() {
       System.out.println(1);// 23
       switch (this.s) {// 24
-         case "xxx":
-            System.out.println(2);// 26
-            break;// 27
-         default:
-            System.out.println(3);// 29
+         case "xxx" -> System.out.println(2);// 26
+         default -> System.out.println(3);// 29
       }
 
       System.out.println(4);// 32
@@ -36,11 +33,8 @@ public class TestSwitchOnStringsJavac {
    void multipleCases1() {
       System.out.println(1);// 36
       switch ("") {// 37
-         case "xxx":
-            System.out.println(2);// 39
-            break;// 40
-         case "yyy":
-            System.out.println(3);// 42
+         case "xxx" -> System.out.println(2);// 39
+         case "yyy" -> System.out.println(3);// 42
       }
 
       System.out.println(4);// 45
@@ -49,14 +43,9 @@ public class TestSwitchOnStringsJavac {
    void multipleCasesWithDefault1() {
       System.out.println(1);// 49
       switch (this.getStr()) {// 50
-         case "xxx":
-            System.out.println(2);// 52
-            break;// 53
-         case "yyy":
-            System.out.println(3);// 55
-            break;// 56
-         default:
-            System.out.println(4);// 58
+         case "xxx" -> System.out.println(2);// 52
+         case "yyy" -> System.out.println(3);// 55
+         default -> System.out.println(4);// 58
       }
 
       System.out.println(5);// 61
@@ -65,14 +54,9 @@ public class TestSwitchOnStringsJavac {
    void multipleCases2() {
       System.out.println(1);// 65
       switch ("") {// 66
-         case "xxx":
-            System.out.println(2);// 68
-            break;// 69
-         case "yyy":
-            System.out.println(3);// 71
-            break;// 72
-         case "zzz":
-            System.out.println(4);// 74
+         case "xxx" -> System.out.println(2);// 68
+         case "yyy" -> System.out.println(3);// 71
+         case "zzz" -> System.out.println(4);// 74
       }
 
       System.out.println(5);// 77
@@ -81,17 +65,10 @@ public class TestSwitchOnStringsJavac {
    void multipleCasesWithDefault2() {
       System.out.println(1);// 81
       switch (this.getStr()) {// 82
-         case "xxx":
-            System.out.println(2);// 84
-            break;// 85
-         case "yyy":
-            System.out.println(3);// 87
-            break;// 88
-         case "zzz":
-            System.out.println(4);// 90
-            break;// 91
-         default:
-            System.out.println(5);// 93
+         case "xxx" -> System.out.println(2);// 84
+         case "yyy" -> System.out.println(3);// 87
+         case "zzz" -> System.out.println(4);// 90
+         default -> System.out.println(5);// 93
       }
 
       System.out.println(6);// 96
@@ -102,20 +79,11 @@ public class TestSwitchOnStringsJavac {
       if (this.s.length() > 0) {// 102
          System.out.println();// 103
          switch (this.s) {// 104
-            case "b":
-               System.out.println(1);// 105
-               break;
-            case "d":
-               System.out.println(2);// 106
-               break;
-            case "a":
-               System.out.println(3);// 107
-               break;
-            case "f":
-               System.out.println(4);// 108
-               break;
-            default:
-               System.out.println(Math.random());// 109
+            case "b" -> System.out.println(1);// 105
+            case "d" -> System.out.println(2);// 106
+            case "a" -> System.out.println(3);// 107
+            case "f" -> System.out.println(4);// 108
+            default -> System.out.println(Math.random());// 109
          }
 
          System.out.println(this.s);// 111
@@ -157,11 +125,8 @@ public class TestSwitchOnStringsJavac {
 
             while(i < 10) {
                switch (this.getStr()) {// 137
-                  case "":
-                     System.out.println(8);// 138
-                     break;
-                  default:
-                     System.out.println(e.getMessage());// 139
+                  case "" -> System.out.println(8);// 138
+                  default -> System.out.println(e.getMessage());// 139
                }
 
                ++i;// 136
@@ -206,197 +171,183 @@ class 'pkg/TestSwitchOnStringsJavac' {
       4      23
       8      24
       30      24
-      44      26
-      47      26
-      48      26
-      4b      27
-      4e      29
-      51      29
-      52      29
-      55      32
-      58      32
-      59      32
-      5c      33
+      44      25
+      47      25
+      48      25
+      4e      26
+      51      26
+      52      26
+      55      29
+      58      29
+      59      29
+      5c      30
    }
 
    method 'multipleCases1 ()V' {
-      0      36
-      3      36
-      4      36
-      7      37
-      46      37
-      60      39
-      63      39
-      64      39
-      67      40
-      6a      42
-      6d      42
-      6e      42
-      71      45
-      74      45
-      75      45
-      78      46
+      0      33
+      3      33
+      4      33
+      7      34
+      46      34
+      60      35
+      63      35
+      64      35
+      6a      36
+      6d      36
+      6e      36
+      71      39
+      74      39
+      75      39
+      78      40
    }
 
    method 'multipleCasesWithDefault1 ()V' {
-      0      49
-      3      49
-      4      49
-      8      50
-      46      50
-      60      52
-      63      52
-      64      52
-      67      53
-      6a      55
-      6d      55
-      6e      55
-      71      56
-      74      58
-      77      58
-      78      58
-      7b      61
-      7e      61
-      7f      61
-      82      62
+      0      43
+      3      43
+      4      43
+      8      44
+      46      44
+      60      45
+      63      45
+      64      45
+      6a      46
+      6d      46
+      6e      46
+      74      47
+      77      47
+      78      47
+      7b      50
+      7e      50
+      7f      50
+      82      51
    }
 
    method 'multipleCases2 ()V' {
-      0      65
-      3      65
-      4      65
-      7      66
-      5c      66
-      78      68
-      7b      68
-      7c      68
-      7f      69
-      82      71
-      85      71
-      86      71
-      89      72
-      8c      74
-      8f      74
-      90      74
-      93      77
-      96      77
-      97      77
-      9a      78
+      0      54
+      3      54
+      4      54
+      7      55
+      5c      55
+      78      56
+      7b      56
+      7c      56
+      82      57
+      85      57
+      86      57
+      8c      58
+      8f      58
+      90      58
+      93      61
+      96      61
+      97      61
+      9a      62
    }
 
    method 'multipleCasesWithDefault2 ()V' {
-      0      81
-      3      81
-      4      81
-      8      82
-      5c      82
-      78      84
-      7b      84
-      7c      84
-      7f      85
-      82      87
-      85      87
-      86      87
-      89      88
-      8c      90
-      8f      90
-      90      90
-      93      91
-      96      93
-      99      93
-      9a      93
-      9d      96
-      a0      96
-      a2      96
-      a5      97
+      0      65
+      3      65
+      4      65
+      8      66
+      5c      66
+      78      67
+      7b      67
+      7c      67
+      82      68
+      85      68
+      86      68
+      8c      69
+      8f      69
+      90      69
+      96      70
+      99      70
+      9a      70
+      9d      73
+      a0      73
+      a2      73
+      a5      74
    }
 
    method 'combined ()V' {
-      0      100
-      3      100
-      5      100
-      9      101
-      c      101
-      f      101
-      12      102
-      15      102
-      19      103
-      7e      103
-      9c      105
-      9f      105
-      a0      105
-      a3      106
-      a6      108
-      a9      108
-      aa      108
-      ad      109
-      b0      111
-      b3      111
-      b4      111
-      b7      112
-      ba      114
-      bd      114
-      be      114
-      c1      115
-      c4      117
-      c7      117
-      ca      117
-      cd      120
-      d1      120
-      d4      120
-      d8      121
-      df      125
-      142      125
-      161      129
-      164      129
-      168      135
-      16b      135
-      16e      135
-      16f      135
-      172      136
-      176      136
-      179      136
-      17f      138
-      180      139
-      184      139
-      187      139
-      18d      130
-      190      130
-      191      130
-      194      150
-      197      150
-      199      150
-      19c      151
-      19d      146
-      1a0      146
-      1a2      146
-      1a8      153
-      1a9      155
-      1aa      155
-      1ac      157
-      1ae      157
-      1b2      158
-      1de      158
-      1f0      160
-      1f3      160
-      1f5      160
-      1f8      161
-      1fb      163
-      1ff      163
-      202      163
-      205      166
-      20b      169
-      20e      169
-      210      169
-      213      173
-      216      173
-      218      173
-      21b      174
+      0      77
+      3      77
+      5      77
+      9      78
+      c      78
+      f      78
+      12      79
+      15      79
+      19      80
+      7e      80
+      9c      81
+      9f      81
+      a0      81
+      a6      82
+      a9      82
+      aa      82
+      b0      83
+      b3      83
+      b4      83
+      ba      84
+      bd      84
+      be      84
+      c4      85
+      c7      85
+      ca      85
+      cd      88
+      d1      88
+      d4      88
+      d8      89
+      df      93
+      142      93
+      161      97
+      164      97
+      168      103
+      16b      103
+      16e      103
+      16f      103
+      172      104
+      176      104
+      179      104
+      17f      106
+      180      107
+      184      107
+      187      107
+      18d      98
+      190      98
+      191      98
+      194      118
+      197      118
+      199      118
+      19c      119
+      19d      114
+      1a0      114
+      1a2      114
+      1a8      121
+      1a9      123
+      1aa      123
+      1ac      125
+      1ae      125
+      1b2      126
+      1de      126
+      1f0      127
+      1f3      127
+      1f5      127
+      1fb      128
+      1ff      128
+      202      128
+      205      131
+      20b      134
+      20e      134
+      210      134
+      213      138
+      216      138
+      218      138
+      21b      139
    }
 
    method 'getStr ()Ljava/lang/String;' {
-      0      177
-      2      177
+      0      142
+      2      142
    }
 }
 
@@ -410,77 +361,77 @@ Lines mapping:
 20 <-> 21
 23 <-> 24
 24 <-> 25
-26 <-> 27
-27 <-> 28
-29 <-> 30
-32 <-> 33
-33 <-> 34
-36 <-> 37
-37 <-> 38
-39 <-> 40
-40 <-> 41
-42 <-> 43
-45 <-> 46
-46 <-> 47
-49 <-> 50
-50 <-> 51
-52 <-> 53
-53 <-> 54
-55 <-> 56
-56 <-> 57
-58 <-> 59
-61 <-> 62
-62 <-> 63
-65 <-> 66
-66 <-> 67
-68 <-> 69
-69 <-> 70
-71 <-> 72
-72 <-> 73
-74 <-> 75
-77 <-> 78
-78 <-> 79
-81 <-> 82
-82 <-> 83
-84 <-> 85
-85 <-> 86
-87 <-> 88
-88 <-> 89
-90 <-> 91
-91 <-> 92
-93 <-> 94
-96 <-> 97
-97 <-> 98
-101 <-> 101
-102 <-> 102
-103 <-> 103
-104 <-> 104
-105 <-> 106
-106 <-> 109
-107 <-> 112
-108 <-> 115
-109 <-> 118
-111 <-> 121
-112 <-> 122
-115 <-> 126
-118 <-> 130
-120 <-> 136
-121 <-> 137
-123 <-> 139
-124 <-> 140
-127 <-> 131
-130 <-> 151
-131 <-> 152
-133 <-> 147
-135 <-> 154
-136 <-> 167
-137 <-> 159
-138 <-> 161
-139 <-> 164
-142 <-> 170
-145 <-> 174
-146 <-> 175
-150 <-> 178
+26 <-> 26
+29 <-> 27
+32 <-> 30
+33 <-> 31
+36 <-> 34
+37 <-> 35
+39 <-> 36
+42 <-> 37
+45 <-> 40
+46 <-> 41
+49 <-> 44
+50 <-> 45
+52 <-> 46
+55 <-> 47
+58 <-> 48
+61 <-> 51
+62 <-> 52
+65 <-> 55
+66 <-> 56
+68 <-> 57
+71 <-> 58
+74 <-> 59
+77 <-> 62
+78 <-> 63
+81 <-> 66
+82 <-> 67
+84 <-> 68
+87 <-> 69
+90 <-> 70
+93 <-> 71
+96 <-> 74
+97 <-> 75
+101 <-> 78
+102 <-> 79
+103 <-> 80
+104 <-> 81
+105 <-> 82
+106 <-> 83
+107 <-> 84
+108 <-> 85
+109 <-> 86
+111 <-> 89
+112 <-> 90
+115 <-> 94
+118 <-> 98
+120 <-> 104
+121 <-> 105
+123 <-> 107
+124 <-> 108
+127 <-> 99
+130 <-> 119
+131 <-> 120
+133 <-> 115
+135 <-> 122
+136 <-> 132
+137 <-> 127
+138 <-> 128
+139 <-> 129
+142 <-> 135
+145 <-> 139
+146 <-> 140
+150 <-> 143
 Not mapped:
+27
+40
+53
+56
+69
+72
+85
+88
+91
 125
 143

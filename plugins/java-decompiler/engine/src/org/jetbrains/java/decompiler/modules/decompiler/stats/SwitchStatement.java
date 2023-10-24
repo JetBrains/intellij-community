@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +29,7 @@ public final class SwitchStatement extends Statement {
   private List<List<@Nullable Exprent>> caseValues = new ArrayList<>();
   private StatEdge defaultEdge;
   private Exprent headExprent;
+  private boolean canBeRule = false;
 
   private SwitchStatement() {
     super(StatementType.SWITCH);
@@ -49,6 +50,10 @@ public final class SwitchStatement extends Statement {
     for (Statement successor : regularSuccessors) {
       stats.addWithKey(successor, successor.id);
     }
+  }
+
+  public void setCanBeRule(boolean canBeRule) {
+    this.canBeRule = canBeRule;
   }
 
   @Nullable
@@ -90,7 +95,12 @@ public final class SwitchStatement extends Statement {
       List<Exprent> values = caseValues.get(i);
       for (int j = 0; j < edges.size(); j++) {
         if (edges.get(j) == defaultEdge) {
-          buf.appendIndent(indent + 1).append("default:").appendLineSeparator();
+          if (!canBeRule) {
+            buf.appendIndent(indent + 1).append("default:").appendLineSeparator();
+          }
+          else {
+            buf.appendIndent(indent + 1).append("default -> ");
+          }
         }
         else {
           buf.appendIndent(indent + 1).append("case ");
@@ -105,11 +115,26 @@ public final class SwitchStatement extends Statement {
           else {
             buf.append(value.toJava(indent, tracer));
           }
-          buf.append(":").appendLineSeparator();
+          if (!canBeRule) {
+            buf.append(":").appendLineSeparator();
+          }
+          else {
+            buf.append(" -> ");
+          }
         }
+        if (!canBeRule) {
+          tracer.incrementCurrentSourceLine();
+        }
+      }
+      //example:
+      //case 0: break
+      if (canBeRule && stat instanceof BasicBlockStatement blockStatement && blockStatement.getBlock().getSeq().isEmpty()) {
+        buf.append("{ }").appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }
-      buf.append(ExprProcessor.jmpWrapper(stat, indent + 2, false, tracer));
+      else {
+        buf.append(ExprProcessor.jmpWrapper(stat, canBeRule ? 0 : indent + 2, false, tracer));
+      }
     }
     buf.appendIndent(indent).append("}").appendLineSeparator();
     tracer.incrementCurrentSourceLine();

@@ -12,6 +12,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
+import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.*;
@@ -196,6 +197,63 @@ public final class SwitchHelper {
         }
         if (removed) break;
         parent = parent.getParent();
+      }
+    }
+  }
+
+  public static void prepareForRules(@NotNull Statement statement, @NotNull StructClass cl) {
+    if (!cl.hasEnhancedSwitchSupport()) {
+      return;
+    }
+    if (statement instanceof SwitchStatement switchStatement) {
+      if (canBeRules(switchStatement)) {
+        switchStatement.setCanBeRule(true);
+        prepareForRules(switchStatement);
+      }
+    }
+    for (Statement child : statement.getStats()) {
+      prepareForRules(child, cl);
+    }
+  }
+
+  private static boolean canBeRules(@NotNull SwitchStatement statement) {
+    if (statement.isLabeled()) {
+      return false;
+    }
+    //only for simplification
+    for (List<Exprent> value : statement.getCaseValues()) {
+      if (value.size() != 1) {
+        return false;
+      }
+    }
+
+    for (Statement caseStatement : statement.getCaseStatements()) {
+      //only for simplification and not to create long rules
+      if (caseStatement instanceof SequenceStatement) {
+        return false;
+      }
+      List<StatEdge> successorEdges = caseStatement.getSuccessorEdges(EdgeType.DIRECT_ALL);
+      if (successorEdges.size() != 1) {
+        return false;
+      }
+      StatEdge edge = successorEdges.get(0);
+      //it is a fallthrough branch
+      if (edge.getType() == EdgeType.REGULAR) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static void prepareForRules(@NotNull SwitchStatement statement) {
+    for (Statement caseStatement : statement.getCaseStatements()) {
+      List<StatEdge> successorEdges = caseStatement.getSuccessorEdges(EdgeType.DIRECT_ALL);
+      if (successorEdges.size() != 1) {
+        continue;
+      }
+      StatEdge edge = successorEdges.get(0);
+      if (edge.getType() == EdgeType.BREAK && edge.explicit) {
+        edge.explicit = false;
       }
     }
   }
