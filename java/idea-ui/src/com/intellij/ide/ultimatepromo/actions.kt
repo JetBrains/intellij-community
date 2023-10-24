@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import com.intellij.openapi.util.registry.Registry
 import javax.swing.Icon
 
 internal abstract class UltimatePromoAction(private val pluginId: String): AnAction(), PromoAction {
@@ -20,7 +21,7 @@ internal abstract class UltimatePromoAction(private val pluginId: String): AnAct
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = true
+    e.presentation.isEnabledAndVisible = Registry.`is`("idea.ultimate.features.hints.enabled")
   }
 
   override fun actionPerformed(e: AnActionEvent) {

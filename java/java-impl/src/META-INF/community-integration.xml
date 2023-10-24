@@ -9,6 +9,10 @@
                              key="promo.configurable.database"/>
 
     <moduleBuilder builderClass="com.intellij.ide.ultimatepromo.PromoSpringModuleBuilder"/>
+
+    <registryKey key="idea.ultimate.features.hints.enabled"
+                 defaultValue="true"
+                 description="IntelliJ IDEA Ultimate features in UI"/>
   </extensions>
 
   <actions resource-bundle="messages.JavaUiBundle">
