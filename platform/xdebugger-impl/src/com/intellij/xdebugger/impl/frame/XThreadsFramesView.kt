@@ -20,6 +20,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
+import com.intellij.xdebugger.impl.frame.XFramesView.addFramesNavigationAd
 import com.intellij.xdebugger.impl.util.SequentialDisposables
 import com.intellij.xdebugger.impl.util.isNotAlive
 import com.intellij.xdebugger.impl.util.onTermination
@@ -125,10 +126,17 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       splitterProportionDefaultValue,
       this@XThreadsFramesView, project), OccurenceNavigator by myFramesList {}
 
+    val minimumDimension = Dimension(JBUI.scale(26), 0)
     splitter.firstComponent = myThreadsList.withSpeedSearch().toScrollPane().apply {
-      minimumSize = Dimension(JBUI.scale(26), 0)
+      minimumSize = minimumDimension
     }
-    splitter.secondComponent = myFramesList.withSpeedSearch().toScrollPane()
+
+    val frameListWrapper = JPanel(BorderLayout(0, 0))
+    addFramesNavigationAd(frameListWrapper)
+    frameListWrapper.add(myFramesList.withSpeedSearch().toScrollPane(), BorderLayout.CENTER)
+    frameListWrapper.minimumSize = minimumDimension
+
+    splitter.secondComponent = frameListWrapper
 
     mySplitter = splitter
 
