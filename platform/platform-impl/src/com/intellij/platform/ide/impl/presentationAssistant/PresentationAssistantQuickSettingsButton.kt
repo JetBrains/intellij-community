@@ -133,6 +133,7 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
 
   private fun createSettingsButtonPopup(): JBPopup {
     val popup = with(JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)) {
+      setShowBorder(false)
       setFocusable(true)
       setBelongsToGlobalPopupStack(false)
       setCancelKeyEnabled(false)

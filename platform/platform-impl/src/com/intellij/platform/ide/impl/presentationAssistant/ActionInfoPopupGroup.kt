@@ -121,6 +121,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
   private fun createPopup(panel: ActionInfoPanel, hiddenInitially: Boolean): JBPopup {
     val popup = with(JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel)) {
       if (hiddenInitially) setAlpha(1.0.toFloat())
+      setShowBorder(false)
       setFocusable(false)
       setBelongsToGlobalPopupStack(false)
       setCancelKeyEnabled(false)
