@@ -10,14 +10,18 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.EditorMouseFixture
 import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.Dispatchers
@@ -35,94 +39,134 @@ import kotlin.time.Duration
 @ApiStatus.Experimental
 class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   @ICUtil
-  fun init(fileType: FileType, text: String = "") {
-    fixture.configureByText(fileType, text)
+  suspend fun init(fileType: FileType, text: String = "") {
+    coroutineToIndicator {
+      fixture.configureByText(fileType, text)
+    }
   }
 
   // Requests
   @ICRequest
-  fun createLookup(type: CompletionType = CompletionType.BASIC) {
-    fixture.complete(type)
+  suspend fun createLookup(type: CompletionType = CompletionType.BASIC) {
+    coroutineToIndicator {
+      fixture.complete(type)
+    }
   }
 
   @ICRequest
-  fun pickLookupElement(element: String) = application.invokeAndWait {
-    assertNotNull(fixture.lookup)
-    assertInstanceOf(LookupImpl::class.java, fixture.lookup)
-    assertNotNull(fixture.lookupElementStrings)
+  suspend fun pickLookupElement(element: String) {
+    withContext(Dispatchers.EDT) {
+      assertNotNull(fixture.lookup)
+      assertInstanceOf(LookupImpl::class.java, fixture.lookup)
+      assertNotNull(fixture.lookupElementStrings)
 
-    val lookupElement = fixture.lookupElements!!.find { it.lookupString == element }
-    assertNotNull(lookupElement)
-    fixture.lookup.currentItem = lookupElement
+      val lookupElement = fixture.lookupElements!!.find { it.lookupString == element }
+      assertNotNull(lookupElement)
+      fixture.lookup.currentItem = lookupElement
+    }
   }
 
   @ICRequest
-  fun insertLookupElement() = application.invokeAndWait {
-    val lookup = fixture.lookup as? LookupImpl
-    assertNotNull(lookup?.currentItem)
-    lookup!!.finishLookup('\n')
+  suspend fun insertLookupElement() {
+    withContext(Dispatchers.EDT) {
+      val lookup = fixture.lookup as? LookupImpl
+      assertNotNull(lookup?.currentItem)
+      lookup!!.finishLookup('\n')
+    }
   }
 
   @ICRequest
-  fun hideLookup() = application.invokeAndWait {
-    val lookup = fixture.lookup as? LookupImpl
-    assertNotNull(lookup)
-    lookup!!.hideLookup(false)
+  suspend fun hideLookup() {
+    withContext(Dispatchers.EDT) {
+      val lookup = fixture.lookup as? LookupImpl
+      assertNotNull(lookup)
+      lookup!!.hideLookup(false)
+    }
   }
 
   @ICRequest
-  fun typeChar(char: Char = '\n') {
-    fixture.type(char)
+  suspend fun typeChar(char: Char = '\n') {
+    coroutineToIndicator {
+      fixture.type(char)
+    }
   }
 
   @ICUtil
-  fun navigateTo(position: Int) = application.invokeAndWait {
-    fixture.editor.caretModel.moveToOffset(position)
-    val pos = fixture.editor.caretModel.visualPosition
+  suspend fun navigateTo(position: Int) {
+    withContext(Dispatchers.EDT) {
+      fixture.editor.caretModel.moveToOffset(position)
+      val pos = fixture.editor.caretModel.visualPosition
 
-    EditorMouseFixture(fixture.editor as EditorImpl).pressAt(pos.line, pos.column)
+      EditorMouseFixture(fixture.editor as EditorImpl).pressAt(pos.line, pos.column)
+    }
   }
 
   @ICUtil
-  fun navigateOnlyCaretTo(position: Int) = application.invokeAndWait {
-    fixture.editor.caretModel.moveToOffset(position)
+  suspend fun navigateOnlyCaretTo(position: Int) {
+    withContext(Dispatchers.EDT) {
+      fixture.editor.caretModel.moveToOffset(position)
+    }
   }
 
   @ICUtil
-  fun loseFocus(cause: FocusEvent.Cause = FocusEvent.Cause.UNKNOWN) = application.invokeAndWait {
-    val ev = FocusEvent(fixture.editor.component, 0, false, null, cause)
-    (fixture.editor as FocusListener).focusLost(ev)
+  suspend fun loseFocus(cause: FocusEvent.Cause = FocusEvent.Cause.UNKNOWN) {
+    withContext(Dispatchers.EDT) {
+      val ev = FocusEvent(fixture.editor.component, 0, false, null, cause)
+      (fixture.editor as FocusListener).focusLost(ev)
+    }
   }
 
   @ICRequest
-  fun callAction(actionId: String) {
-    fixture.performEditorAction(actionId)
+  suspend fun callAction(actionId: String) {
+    coroutineToIndicator {
+      fixture.performEditorAction(actionId)
+    }
   }
 
   @ICUtil
-  fun insert() = application.invokeAndWait {
-    callAction(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
-    PsiDocumentManager.getInstance(fixture.project).commitDocument(fixture.editor.document)
+  suspend fun insert() {
+    withContext(Dispatchers.EDT) {
+      callAction(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
+      PsiDocumentManager.getInstance(fixture.project).commitDocument(fixture.editor.document)
+    }
   }
 
   @ICUtil
-  fun insertWithTab() = application.invokeAndWait {
-    val tabKeyEvent = KeyEvent(
-      fixture.editor.component, KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
-      0, KeyEvent.VK_TAB, KeyEvent.CHAR_UNDEFINED
-    )
-    IdeEventQueue.getInstance().dispatchEvent(tabKeyEvent)
-    PsiDocumentManager.getInstance(fixture.project).commitDocument(fixture.editor.document)
+  suspend fun insertWithTab() {
+    withContext(Dispatchers.EDT) {
+      val tabKeyEvent = KeyEvent(
+        fixture.editor.component, KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
+        0, KeyEvent.VK_TAB, KeyEvent.CHAR_UNDEFINED
+      )
+      IdeEventQueue.getInstance().dispatchEvent(tabKeyEvent)
+      PsiDocumentManager.getInstance(fixture.project).commitDocument(fixture.editor.document)
+    }
   }
 
   @ICUtil
-  fun escape() = callAction("EditorEscape")
+  suspend fun escape() {
+    callAction("EditorEscape")
+  }
 
   @ICUtil
-  fun callInlineCompletion() = callAction(IdeActions.ACTION_CALL_INLINE_COMPLETION)
+  suspend fun callInlineCompletion() {
+    callAction(IdeActions.ACTION_CALL_INLINE_COMPLETION)
+  }
 
   @ICUtil
-  fun backSpace() = callAction("EditorBackSpace")
+  suspend fun backSpace() {
+    callAction("EditorBackSpace")
+  }
+
+  @ICUtil
+  suspend fun editorCopy() {
+    callAction("EditorCopy")
+  }
+
+  @ICUtil
+  suspend fun editorPaste() {
+    callAction("EditorPaste")
+  }
 
   @ICUtil
   suspend fun delay() {
@@ -138,71 +182,75 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
 
   @ICUtil
   inline fun caret(block: Caret.() -> Unit) {
-    Caret().apply(block)
+    Caret().apply { block() }
   }
 
   @ICUtil
-  fun editorCopy() {
-    callAction("EditorCopy")
-  }
-
-  @ICUtil
-  fun editorPaste() {
-    callAction("EditorPaste")
+  suspend fun <T> withWriteAction(block: () -> T): T {
+    return withContext(Dispatchers.EDT) {
+      writeAction(block)
+    }
   }
 
   @ICAssert
-  fun assertNoLookup() = application.runReadAction {
+  suspend fun assertNoLookup() = readAction {
     assertNull(fixture.lookup)
   }
 
   @ICAssert
-  fun assertFileContent(context: String) = application.runReadAction {
-    compareContents(context)
-    compareCaretPosition(context)
-  }
-
-  @ICAssert
-  fun assertInlineRender(context: String) = application.invokeAndWait {
-    val ctx = assertContextExists()
-    assertEquals(context, ctx.textToInsert()) {
-      "Expected and actual inline is shown and visible."
+  suspend fun assertFileContent(context: String) {
+    coroutineToIndicator {
+      application.runReadAction {
+        compareContents(context)
+        compareCaretPosition(context)
+      }
     }
   }
 
   @ICAssert
-  fun assertInlineElements(builder: ExpectedInlineCompletionElementsBuilder.() -> Unit) = application.invokeAndWait {
-    val expected = ExpectedInlineCompletionElementsBuilderImpl().apply(builder).build()
-    assertInlineRender(expected.joinToString("") { it.text })
-    val actual = assertContextExists().state.elements
-    assertEquals(expected.size, actual.size) {
-      "Unexpected number of inline elements. Expected: ${expected.map { it.text }}, found: ${actual.map { it.element.text }}."
+  suspend fun assertInlineRender(context: String) {
+    withContext(Dispatchers.EDT) {
+      val ctx = assertContextExists()
+      assertEquals(context, ctx.textToInsert()) {
+        "Expected and actual inline is shown and visible."
+      }
     }
-    (expected zip actual).forEach { (elem1, elem2) ->
-      elem1.assertMatches(elem2)
+  }
+
+  @ICAssert
+  suspend fun assertInlineElements(builder: ExpectedInlineCompletionElementsBuilder.() -> Unit) {
+    withContext(Dispatchers.EDT) {
+      val expected = ExpectedInlineCompletionElementsBuilderImpl().apply(builder).build()
+      assertInlineRender(expected.joinToString("") { it.text })
+      val actual = assertContextExists().state.elements
+      assertEquals(expected.size, actual.size) {
+        "Unexpected number of inline elements. Expected: ${expected.map { it.text }}, found: ${actual.map { it.element.text }}."
+      }
+      (expected zip actual).forEach { (elem1, elem2) ->
+        elem1.assertMatches(elem2)
+      }
     }
   }
 
   @RequiresEdt
   @ICAssert
-  fun assertContextExists(): InlineCompletionContext {
-    lateinit var context: InlineCompletionContext
-    application.invokeAndWait {
-      val contextOrNull = InlineCompletionContext.getOrNull(fixture.editor)
-      assertNotNull(contextOrNull) { "There are no inline completion context." }
-      context = contextOrNull!!
-    }
-    return context
+  suspend fun assertContextExists(): InlineCompletionContext = withContext(Dispatchers.EDT) {
+    val contextOrNull = InlineCompletionContext.getOrNull(fixture.editor)
+    assertNotNull(contextOrNull) { "There are no inline completion context." }
+    contextOrNull!!
   }
 
   @ICAssert
-  fun assertInlineHidden() = application.invokeAndWait {
-    val ctx = InlineCompletionContext.getOrNull(fixture.editor)
-    Assertions.assertNull(ctx)
+  suspend fun assertInlineHidden() {
+    withContext(Dispatchers.EDT) {
+      val ctx = InlineCompletionContext.getOrNull(fixture.editor)
+      Assertions.assertNull(ctx)
+    }
   }
 
   //TODO: also check for fixture.file.text
   @RequiresReadLock
+  @RequiresBlockingContext
   private fun compareContents(expectedLine: String) {
     assertEquals(expectedLine.removeCaret(), fixture.editor.document.text.removeCaret()) {
       "Expected and actual contents are different."
@@ -210,6 +258,7 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   }
 
   @RequiresReadLock
+  @RequiresBlockingContext
   private fun compareCaretPosition(expectedLine: String) {
     val actualLineWithCaret = StringBuilder(fixture.editor.document.text).insert(fixture.caretOffset, "<caret>").toString()
     assertEquals(expectedLine, actualLineWithCaret) {
@@ -232,16 +281,24 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   inner class Caret {
 
     @ICUtil
-    fun moveUp() = callAction("EditorUp")
+    suspend fun moveUp() {
+      callAction("EditorUp")
+    }
 
     @ICUtil
-    fun moveDown() = callAction("EditorDown")
+    suspend fun moveDown() {
+      callAction("EditorDown")
+    }
 
     @ICUtil
-    fun moveRight() = callAction("EditorRight")
+    suspend fun moveRight() {
+      callAction("EditorRight")
+    }
 
     @ICUtil
-    fun moveLeft() = callAction("EditorLeft")
+    suspend fun moveLeft() {
+      callAction("EditorLeft")
+    }
   }
 
   @ICUtil
