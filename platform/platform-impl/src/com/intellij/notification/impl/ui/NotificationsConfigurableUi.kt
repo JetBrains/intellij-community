@@ -22,6 +22,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.Nullable
+import javax.accessibility.AccessibleContext
 import javax.swing.JCheckBox
 import javax.swing.ListSelectionModel
 
@@ -114,7 +115,16 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
       .apply {
         cellRenderer = textListCellRenderer { it.toString() }
         selectionModel.addListSelectionListener {
-          selectedValue?.let { notificationSettings.updateUi(it) }
+          selectedValue?.let {
+            notificationSettings.updateUi(it)
+            if (SystemInfo.isMac) {
+              // On Mac, the selection change event is processed with a delay, and every new such event cancels the currently queued one.
+              // notificationSettings.updateUi triggers the selection event for ComboBox, which cancels the event for the notification list.
+              // As a result, the list selection change is not announced, so we fire another event manually.
+              accessibleContext.firePropertyChange(AccessibleContext.ACCESSIBLE_SELECTION_PROPERTY,
+                                                   false, true)
+            }
+          }
         }
         selectionMode = ListSelectionModel.SINGLE_SELECTION
       }
