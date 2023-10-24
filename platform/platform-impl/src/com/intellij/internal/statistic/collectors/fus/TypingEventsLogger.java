@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.utils.EventRateThrottleResult;
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -70,11 +71,14 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
           pairs.add(TOOL_WINDOW.with(toolWindow.getId()));
         }
 
-        VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-        if (virtualFile != null) {
-          FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.getNameSequence());
-          if (fileType instanceof LanguageFileType) {
-            pairs.add(EventFields.Language.with(((LanguageFileType)fileType).getLanguage()));
+        FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
+        if (fileEditor != null) {
+          VirtualFile virtualFile = fileEditor.getFile();
+          if (virtualFile != null) {
+            FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.getNameSequence());
+            if (fileType instanceof LanguageFileType) {
+              pairs.add(EventFields.Language.with(((LanguageFileType)fileType).getLanguage()));
+            }
           }
         }
 
