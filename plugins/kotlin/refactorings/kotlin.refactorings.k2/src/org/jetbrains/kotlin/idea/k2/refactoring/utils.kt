@@ -8,12 +8,23 @@ import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
+import org.jetbrains.kotlin.idea.refactoring.isComplexCallWithLambdaArgument
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 fun PsiElement?.canDeleteElement(): Boolean {
     if (this is KtObjectDeclaration && isObjectLiteral()) return false
@@ -79,4 +90,55 @@ fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>
         Messages.NO -> listOf(declaration)
         else -> emptyList()
     }
+}
+
+fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean = true): Boolean {
+    if (skipComplexCalls && isComplexCallWithLambdaArgument()) {
+        return false
+    }
+
+    if (getStrictParentOfType<KtDelegatedSuperTypeEntry>() != null) {
+        return false
+    }
+    val lastLambdaExpression = getLastLambdaExpression() ?: return false
+
+    fun KtExpression.parentLabeledExpression(): KtLabeledExpression? {
+        return getStrictParentOfType<KtLabeledExpression>()?.takeIf { it.baseExpression == this }
+    }
+
+    if (lastLambdaExpression.parentLabeledExpression()?.parentLabeledExpression() != null) {
+        return false
+    }
+
+    val callee = calleeExpression
+    if (callee !is KtNameReferenceExpression) return true
+
+    analyze(callee) {
+        val resolveCall = callee.resolveCall() ?: return false
+        val call = resolveCall.successfulFunctionCallOrNull()
+
+        fun KtType.isFunctionalType(): Boolean = this is KtTypeParameterType || isSuspendFunctionType || isFunctionType ||  isFunctionalInterfaceType
+
+        if (call == null) {
+            val paramType = resolveCall.successfulVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.returnType
+            if (paramType != null && paramType.isFunctionalType()) {
+                return true
+            }
+            val calls = (resolveCall as KtErrorCallInfo).candidateCalls.filterIsInstance<KtSimpleFunctionCall>()
+
+            return calls.isEmpty() || calls.all { functionalCall ->
+                val lastParameter = functionalCall.partiallyAppliedSymbol.signature.valueParameters.lastOrNull()
+                val lastParameterType = lastParameter?.returnType
+                lastParameterType != null && lastParameterType.isFunctionalType()
+            }
+        }
+
+        val lastParameter = call.argumentMapping[lastLambdaExpression] ?: return false
+        if (lastParameter.symbol != call.partiallyAppliedSymbol.signature.valueParameters.lastOrNull()?.symbol) {
+            return false
+        }
+
+        return lastParameter.returnType.isFunctionalType()
+    }
+    return false
 }

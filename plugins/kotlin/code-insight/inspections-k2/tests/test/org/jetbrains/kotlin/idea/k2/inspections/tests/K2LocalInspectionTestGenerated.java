@@ -2768,6 +2768,149 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses")
+    public static class MoveLambdaOutsideParentheses extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ambigousOverload.kt")
+        public void testAmbigousOverload() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/ambigousOverload.kt");
+        }
+
+        @TestMetadata("delegation.kt")
+        public void testDelegation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/delegation.kt");
+        }
+
+        @TestMetadata("functionalValueCall.kt")
+        public void testFunctionalValueCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/functionalValueCall.kt");
+        }
+
+        @TestMetadata("hasComments.kt")
+        public void testHasComments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/hasComments.kt");
+        }
+
+        @TestMetadata("hasComments2.kt")
+        public void testHasComments2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/hasComments2.kt");
+        }
+
+        @TestMetadata("inapplicable1.kt")
+        public void testInapplicable1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/inapplicable1.kt");
+        }
+
+        @TestMetadata("inapplicable2.kt")
+        public void testInapplicable2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/inapplicable2.kt");
+        }
+
+        @TestMetadata("inapplicable3.kt")
+        public void testInapplicable3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/inapplicable3.kt");
+        }
+
+        @TestMetadata("inapplicableAlreadyHasFunctionLiteral.kt")
+        public void testInapplicableAlreadyHasFunctionLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/inapplicableAlreadyHasFunctionLiteral.kt");
+        }
+
+        @TestMetadata("inapplicableMultiFunctionTypeParameters.kt")
+        public void testInapplicableMultiFunctionTypeParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/inapplicableMultiFunctionTypeParameters.kt");
+        }
+
+        @TestMetadata("inapplicableMultiFunctionTypeParameters2.kt")
+        public void testInapplicableMultiFunctionTypeParameters2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/inapplicableMultiFunctionTypeParameters2.kt");
+        }
+
+        @TestMetadata("inapplicableOptionalParametersAfter.kt")
+        public void testInapplicableOptionalParametersAfter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/inapplicableOptionalParametersAfter.kt");
+        }
+
+        @TestMetadata("labeledLambda.kt")
+        public void testLabeledLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/labeledLambda.kt");
+        }
+
+        @TestMetadata("lambdaWithCommas.kt")
+        public void testLambdaWithCommas() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/lambdaWithCommas.kt");
+        }
+
+        @TestMetadata("lambdaWithCommas2.kt")
+        public void testLambdaWithCommas2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/lambdaWithCommas2.kt");
+        }
+
+        @TestMetadata("lambdaWithCommas3.kt")
+        public void testLambdaWithCommas3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/lambdaWithCommas3.kt");
+        }
+
+        @TestMetadata("moveLambda1.kt")
+        public void testMoveLambda1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/moveLambda1.kt");
+        }
+
+        @TestMetadata("moveLambda2.kt")
+        public void testMoveLambda2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/moveLambda2.kt");
+        }
+
+        @TestMetadata("moveLambda3.kt")
+        public void testMoveLambda3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/moveLambda3.kt");
+        }
+
+        @TestMetadata("moveLambda4.kt")
+        public void testMoveLambda4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/moveLambda4.kt");
+        }
+
+        @TestMetadata("moveLambda5.kt")
+        public void testMoveLambda5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/moveLambda5.kt");
+        }
+
+        @TestMetadata("moveLambda6.kt")
+        public void testMoveLambda6() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/moveLambda6.kt");
+        }
+
+        @TestMetadata("noTwoConsequentLambdas.kt")
+        public void testNoTwoConsequentLambdas() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/noTwoConsequentLambdas.kt");
+        }
+
+        @TestMetadata("suspendLambda.kt")
+        public void testSuspendLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/suspendLambda.kt");
+        }
+
+        @TestMetadata("twoLabels.kt")
+        public void testTwoLabels() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/twoLabels.kt");
+        }
+
+        @TestMetadata("typeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/typeParameter.kt");
+        }
+
+        @TestMetadata("typeParameter2.kt")
+        public void testTypeParameter2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/moveLambdaOutsideParentheses/typeParameter2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
