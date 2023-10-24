@@ -807,30 +807,45 @@ internal class MutableEntityStorageImpl(
       return false
     }
 
-    accumulateEntitiesToRemoveAndUnlinkReferences(idx, accumulator, entityFilter)
+    accumulateEntitiesToRemove(idx, accumulator, entityFilter)
 
-    @Suppress("UNCHECKED_CAST")
-    val originals = accumulator.associateWith {
-      this.getOriginalEntityData(it) as WorkspaceEntityData<WorkspaceEntity>
+    accumulator.forEach { id ->
+      removeSingleEntity(id)
     }
 
-    for (id in accumulator) {
-      val entityData = entityDataById(id)
-      if (entityData is SoftLinkable) indexes.removeFromSoftLinksIndex(entityData)
-      entitiesByType.remove(id.arrayId, id.clazz)
+    return true
+  }
+
+  /**
+   * Remove single entity, update indexes, and generate remove event
+   *
+   * This operation does not perform cascade removal of children. The children must be removed separately,
+   *   to avoid leaving storage in an inconsistent state.
+   */
+  @Suppress("UNCHECKED_CAST")
+  internal fun removeSingleEntity(id: EntityId) {
+    // Unlink children
+    val originalEntityData = this.getOriginalEntityData(id) as WorkspaceEntityData<WorkspaceEntity>
+    val children = refs.getChildrenRefsOfParentBy(id.asParent())
+    children.keys.forEach { connectionId ->
+      refs.removeRefsByParent(connectionId, id.asParent())
     }
 
-    // Update index
-    //   Please don't join it with the previous loop
-    for (id in accumulator) indexes.entityRemoved(id)
-
-    accumulator.forEach {
-      LOG.debug { "Cascade removing: ${ClassToIntConverter.getInstance().getClassOrDie(it.clazz)}-${it.arrayId}" }
-      this.changeLog.addRemoveEvent(it, originals[it]!!)
+    // Unlink parents
+    val parents = refs.getParentRefsOfChild(id.asChild())
+    parents.forEach { (connectionId, parentId) ->
+      refs.removeParentToChildRef(connectionId, parentId, id.asChild())
     }
+
+    // Update indexes and generate changelog entry
+    val entityData = entityDataByIdOrDie(id)
+    if (entityData is SoftLinkable) indexes.removeFromSoftLinksIndex(entityData)
+    indexes.entityRemoved(id)
+    this.changeLog.addRemoveEvent(id, originalEntityData)
+
+    entitiesByType.remove(id.arrayId, id.clazz)
 
     updateCalculationCache()
-    return true
   }
 
   private fun lockWrite() {
@@ -861,25 +876,24 @@ internal class MutableEntityStorageImpl(
   }
 
   /**
-   * Cleanup references and accumulate hard linked entities in [accumulator]
+   * Accumulate hard linked entities in [accumulator].
+   *
+   * The builder is not modified
    */
-  private fun accumulateEntitiesToRemoveAndUnlinkReferences(id: EntityId,
-                                                            accumulator: MutableSet<EntityId>,
-                                                            entityFilter: (EntityId) -> Boolean) {
+  private fun accumulateEntitiesToRemove(id: EntityId,
+                                         accumulator: MutableSet<EntityId>,
+                                         entityFilter: (EntityId) -> Boolean) {
     val children = refs.getChildrenRefsOfParentBy(id.asParent())
-    for ((connectionId, childrenIds) in children) {
+    for ((_, childrenIds) in children) {
       for (childId in childrenIds) {
         if (childId.id in accumulator) continue
         if (!entityFilter(childId.id)) continue
+        // Let's keep the recursive call above adding an entity to the accumulator.
+        //   In this way, the acc will be populated from children to parents direction, and we'll be able to easily remove
+        //   entities by iterating from the start.
+        accumulateEntitiesToRemove(childId.id, accumulator, entityFilter)
         accumulator.add(childId.id)
-        accumulateEntitiesToRemoveAndUnlinkReferences(childId.id, accumulator, entityFilter)
-        refs.removeRefsByParent(connectionId, id.asParent())
       }
-    }
-
-    val parents = refs.getParentRefsOfChild(id.asChild())
-    for ((connectionId, parent) in parents) {
-      refs.removeParentToChildRef(connectionId, parent, id.asChild())
     }
   }
 
