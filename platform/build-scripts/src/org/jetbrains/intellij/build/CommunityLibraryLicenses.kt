@@ -269,6 +269,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "classgraph", libraryName = "classgraph", license = "codehaus",
                    url = "https://github.com/classgraph/classgraph",
                    licenseUrl = "https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
+    LibraryLicense(name = "Clikt", libraryName = "clikt", url = "https://github.com/ajalt/clikt")
+      .apache("https://github.com/ajalt/clikt/blob/master/LICENSE.txt")
+      .suppliedByOrganizations("AJ Alt"),
     LibraryLicense(name = "Command Line Interface Parser for Java", libraryName = "cli-parser",
                    url = "https://code.google.com/p/cli-parser/").apache(),
     LibraryLicense(name = "Common Annotations for the JavaTM Platform API", libraryName = "javax.annotation-api",
