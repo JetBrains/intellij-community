@@ -89,10 +89,17 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     )
 
     embeddedJetBrainsClientMainModule = null // Overrides org.jetbrains.intellij.build.configureJetBrainsProduct().
-    productLayout.productImplementationModules =
-      listOf("intellij.idea.community.resources", "intellij.platform.duplicates.analysis", "intellij.platform.main", "intellij.platform.structuralSearch") -
-      listOf("intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization")
+    productLayout.productImplementationModules = listOf(
+      // From IdeaCommunityProperties:
+      "intellij.platform.main",
+      "intellij.idea.customization.base",
+      "intellij.idea.community.customization",
+    )
     productLayout.addPlatformSpec { layout, _ ->
+      // From IdeaCommunityProperties:
+      layout.withModule("intellij.platform.duplicates.analysis")
+      layout.withModule("intellij.platform.structuralSearch")
+
       layout.withModule("intellij.android.adt.branding", "resources.jar")
       layout.withModule("intellij.cidr.common.testFramework.core", TEST_FRAMEWORK_JAR)
       layout.withProjectLibrary("assertJ", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
