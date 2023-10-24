@@ -93,6 +93,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/funWithExpressionBody.kt");
     }
 
+    @TestMetadata("idea335207.kt")
+    public void testIdea335207() throws Exception {
+        runTest("testData/smartStepInto/idea335207.kt");
+    }
+
     @TestMetadata("if.kt")
     public void testIf() throws Exception {
         runTest("testData/smartStepInto/if.kt");
