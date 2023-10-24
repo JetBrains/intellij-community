@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.containers.ContainerUtil
 import kotlin.random.Random
 import kotlin.system.measureNanoTime
 
@@ -30,7 +29,7 @@ internal class InlineCompletionInvocationTracker(
   val requestId = Random.nextLong()
   private var finished = false
   private val data = mutableListOf<EventPair<*>>()
-  private val contextFeatures = ContainerUtil.createConcurrentList<EventPair<*>>()
+  private val contextFeatures = mutableListOf<EventPair<*>>()
   private var hasSuggestions: Boolean? = null
   private var canceled: Boolean = false
   private var exception: Boolean = false
