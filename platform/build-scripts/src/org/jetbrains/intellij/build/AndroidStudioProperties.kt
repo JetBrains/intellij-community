@@ -44,6 +44,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.cidr.base.plugin",
       "intellij.cidr.clangConfig.plugin",
       "intellij.cidr.clangFormat.plugin",
+      "intellij.rml.dfa.ide",
     )
 
     private val EXCLUDED_PLUGINS = listOf(
@@ -137,7 +138,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         spec.withModule("intellij.cidr.util.execution", spec.mainJarName)
       },
       plugin("intellij.cidr.base.plugin") { spec ->
-        spec.withModule("intellij.c.dfa", spec.mainJarName)
         spec.withModule("intellij.cidr.base", spec.mainJarName)
         spec.withModule("intellij.cidr.projectModel", spec.mainJarName)
         spec.withModule("intellij.cidr.workspaceModel", spec.mainJarName)
@@ -179,6 +179,9 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       },
       plugin("intellij.cidr.clangFormat.plugin") { spec ->
         spec.withModule("intellij.cidr.clangFormat")
+      },
+      plugin("intellij.rml.dfa.ide") { spec ->
+        spec.withModule("intellij.rml.dfa")
       },
     ))
 

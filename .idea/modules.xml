@@ -583,7 +583,8 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/clangdBridge/intellij.c.clangdBridge.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/clangdBridge/intellij.c.clangdBridge.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/clangdBridge/plugin/intellij.c.clangdBridge.plugin.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/clangdBridge/plugin/intellij.c.clangdBridge.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/debugger/intellij.c.debugger.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/debugger/intellij.c.debugger.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang-dfa/intellij.c.dfa.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang-dfa/intellij.c.dfa.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa.api/intellij.rml.dfa.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa.api/intellij.rml.dfa.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa.ide/intellij.rml.dfa.ide.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa.ide/intellij.rml.dfa.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/doxygen/intellij.c.doxygen.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/doxygen/intellij.c.doxygen.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/plugin/intellij.c.plugin.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/plugin/intellij.c.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/testing/intellij.c.testing.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/testing/intellij.c.testing.iml" />
