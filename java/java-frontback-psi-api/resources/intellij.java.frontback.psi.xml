@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.intellij">
   <extensions defaultExtensionNs="com.intellij">
     <project.extras implementation="com.intellij.openapi.roots.JavaLangLevelProjectExtras"/>
 
