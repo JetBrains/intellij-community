@@ -8,6 +8,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
+/**
+ * The command unlinks a maven project by project pom.xml path
+ * Syntax: %unlinkMavenProject [project_pom_path]
+ * Example: %unlinkGradleProject /opt/user/gradle-projects/gradle-project-with-sources/pom.xml
+ */
 class UnlinkMavenProjectCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {

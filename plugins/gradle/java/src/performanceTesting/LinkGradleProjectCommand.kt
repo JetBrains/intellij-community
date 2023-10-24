@@ -12,6 +12,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
+
+/**
+ * The command links a gradle project by project_path
+ * Syntax: %linkGradleProject [project_path]
+ * Example: %linkGradleProject /opt/user/gradle-projects/gradle-project-with-sources
+ */
 class LinkGradleProjectCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {

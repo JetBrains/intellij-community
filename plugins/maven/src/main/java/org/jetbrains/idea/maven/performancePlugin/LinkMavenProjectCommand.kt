@@ -5,6 +5,11 @@ import com.jetbrains.performancePlugin.commands.OpenFileCommand.Companion.findFi
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 
+/**
+ * The command links a maven project by project pom.xml path
+ * Syntax: %linkMavenProject [project_pom_path]
+ * Example: %linkGradleProject /opt/user/gradle-projects/gradle-project-with-sources/pom.xml
+ */
 class LinkMavenProjectCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
