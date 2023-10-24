@@ -74,7 +74,7 @@ class StructuredIdeActivity internal constructor(private val projectOrNullForApp
     parentActivity?.addInnerActivity(this)
     startedTimestamp = System.nanoTime()
 
-    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityDefinition.activityId.with(id))
+    val data: MutableList<EventPair<*>> = createDataWithIDs()
 
     dataSupplier().then { additionalData ->
       data.addAll(additionalData)
