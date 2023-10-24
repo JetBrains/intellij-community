@@ -343,6 +343,14 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   }
 }
 
+/**
+ * This is **Experimental API**.
+ *
+ * If you use this DSL to write a test in JUnit3 or JUnit4 test classes, **please set `runInDispatchThread` to `false`**, otherwise, you'll
+ * get a deadlock.
+ *
+ * Example: [com.intellij.codeInsight.inline.completion.SimpleInlineCompletionTest]
+ */
 @ApiStatus.Experimental
 fun CodeInsightTestFixture.testInlineCompletion(
   timeout: Duration = DEFAULT_TEST_TIMEOUT,

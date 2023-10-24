@@ -245,7 +245,7 @@ class InlineCompletionHandler(
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     if (application.isUnitTestMode && testProvider != null) {
-      return testProvider
+      return testProvider?.takeIf { it.isEnabled(event) }
     }
 
     return InlineCompletionProvider.extensions().firstOrNull {
@@ -333,6 +333,12 @@ class InlineCompletionHandler(
     @TestOnly
     fun registerTestHandler(provider: InlineCompletionProvider) {
       testProvider = provider
+    }
+
+    @TestOnly
+    fun registerTestHandler(provider: InlineCompletionProvider, disposable: Disposable) {
+      registerTestHandler(provider)
+      disposable.whenDisposed { unRegisterTestHandler() }
     }
 
     @TestOnly
