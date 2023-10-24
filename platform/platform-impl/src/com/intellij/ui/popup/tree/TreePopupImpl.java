@@ -354,7 +354,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     public @NotNull Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       if (ExperimentalUI.isNewUI()) {
-        size.height = JBUI.CurrentTheme.Tree.rowHeight();
+        size.height = JBUI.scale(JBUI.CurrentTheme.Tree.rowHeight());
       }
       return size;
     }

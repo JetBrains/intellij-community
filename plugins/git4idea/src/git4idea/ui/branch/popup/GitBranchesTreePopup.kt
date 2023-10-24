@@ -723,7 +723,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     internal val POPUP_KEY = DataKey.create<GitBranchesTreePopup>("GIT_BRANCHES_TREE_POPUP")
 
     internal val treeRowHeight: Int
-      get() = if (isNewUI) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
+      get() = if (isNewUI) JBUI.scale(JBUI.CurrentTheme.List.rowHeight()) else JBUIScale.scale(22)
 
     /**
      * @param selectedRepository - Selected repository:

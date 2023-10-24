@@ -207,7 +207,7 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
             selectionInsets = JBInsets.create(0, 12)
             border = JBUI.Borders.empty(0, 20)
           }
-          preferredHeight = JBUI.CurrentTheme.List.rowHeight()
+          preferredHeight = JBUI.scale(JBUI.CurrentTheme.List.rowHeight())
 
           background = list.background
           selectionColor = selectionBg

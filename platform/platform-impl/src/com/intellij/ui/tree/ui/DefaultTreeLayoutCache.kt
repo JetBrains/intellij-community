@@ -22,7 +22,7 @@ class DefaultTreeLayoutCache(
   private val autoExpandHandler: (TreePath) -> Unit,
 ) : AbstractLayoutCache() {
 
-  constructor(autoExpandHandler: (TreePath) -> Unit) : this(JBUI.CurrentTheme.Tree.rowHeight(), autoExpandHandler)
+  constructor(autoExpandHandler: (TreePath) -> Unit) : this(JBUI.scale(JBUI.CurrentTheme.Tree.rowHeight()), autoExpandHandler)
 
   private var root: Node? = null
   private val rows = NodeList(onUpdate = {

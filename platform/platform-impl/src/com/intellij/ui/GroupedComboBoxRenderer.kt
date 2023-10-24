@@ -79,7 +79,7 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
       override fun getPreferredSize(): Dimension {
         return super.getPreferredSize().let {
           if (maxWidth > 0) it.width = maxWidth
-          it.height = JBUI.CurrentTheme.List.rowHeight()
+          it.height = JBUI.scale(JBUI.CurrentTheme.List.rowHeight())
           if (!ExperimentalUI.isNewUI()) {
             val insets = ComboBoxPopup.COMBO_ITEM_BORDER.borderInsets
             it.height += insets.bottom + insets.top
