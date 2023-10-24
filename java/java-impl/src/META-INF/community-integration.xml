@@ -12,6 +12,11 @@
                              provider="com.intellij.ide.ultimatepromo.PromoKubernetesConfigurableProvider"
                              bundle="messages.FeaturePromoBundle"
                              key="promo.configurable.kubernetes"/>
+    <applicationConfigurable id="promo.profiler"
+                             groupId="build"
+                             provider="com.intellij.ide.ultimatepromo.PromoProfilerConfigurableProvider"
+                             bundle="messages.JavaUiBundle"
+                             key="promo.configurable.profiler"/>
 
     <moduleBuilder builderClass="com.intellij.ide.ultimatepromo.PromoSpringModuleBuilder"/>
 
