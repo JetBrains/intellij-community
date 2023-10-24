@@ -10,12 +10,11 @@ import java.awt.event.MouseEvent
 class WithCursorOnHoverPresentation(
   presentation: InlayPresentation,
   val cursor: Cursor,
-  private val editor: Editor,
-  private val onHoverPredicate: (MouseEvent) -> Boolean = { true }) : StaticDelegatePresentation(presentation) {
+  private val editor: Editor) : StaticDelegatePresentation(presentation) {
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
     super.mouseMoved(event, translated)
-    (editor as? EditorImpl)?.setCustomCursor(this::class, if (onHoverPredicate(event)) cursor else null)
+    (editor as? EditorImpl)?.setCustomCursor(this::class, cursor)
   }
 
   override fun mouseExited() {
