@@ -9,7 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.semantics.utils.RequestResult
 import com.intellij.searchEverywhereMl.semantics.utils.sendRequest
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 
 private val LOG = logger<ServerSemanticActionsProvider>()
 
@@ -42,7 +42,11 @@ class ServerSemanticActionsProvider(model: GotoActionModel) : SemanticActionsPro
   }
 
   override suspend fun streamSearch(pattern: String, similarityThreshold: Double?): Sequence<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
-    return search(pattern, similarityThreshold).asSequence()
+    return searchIfEnabled(pattern, similarityThreshold).asSequence()
+  }
+
+  override fun isEnabled(): Boolean {
+    return SemanticSearchSettings.getInstance().enabledInActionsTab
   }
 
   companion object {

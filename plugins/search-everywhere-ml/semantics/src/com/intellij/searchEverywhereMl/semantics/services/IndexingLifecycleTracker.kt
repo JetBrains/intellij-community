@@ -4,8 +4,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.searchEverywhereMl.semantics.listeners.SemanticIndexingFinishListener
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
+import com.intellij.platform.ml.embeddings.search.listeners.SemanticIndexingFinishListener
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 

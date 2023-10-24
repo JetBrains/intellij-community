@@ -6,10 +6,10 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileContentListener
 import com.intellij.searchEverywhereMl.semantics.services.IndexingLifecycleTracker
-import com.intellij.searchEverywhereMl.semantics.services.SemanticSearchFileContentListener
-import com.intellij.searchEverywhereMl.semantics.services.SemanticSearchFileNameListener
-import com.intellij.searchEverywhereMl.semantics.utils.ScoredText
+import com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileNameListener
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 abstract class SemanticSearchBaseTestCase : LightJavaCodeInsightFixtureTestCase() {

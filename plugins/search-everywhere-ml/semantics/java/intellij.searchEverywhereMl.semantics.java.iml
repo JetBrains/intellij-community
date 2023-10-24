@@ -11,5 +11,6 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics" />
     <orderEntry type="module" module-name="intellij.java.psi" />
+    <orderEntry type="module" module-name="intellij.platform.ml.embeddings" />
   </component>
 </module>

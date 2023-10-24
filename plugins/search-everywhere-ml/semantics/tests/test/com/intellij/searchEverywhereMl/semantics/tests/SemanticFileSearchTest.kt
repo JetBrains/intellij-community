@@ -4,13 +4,13 @@ import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.platform.ml.embeddings.search.services.FileEmbeddingsStorage
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticFileSearchEverywhereContributor
-import com.intellij.searchEverywhereMl.semantics.services.FileEmbeddingsStorage
-import com.intellij.searchEverywhereMl.semantics.services.IndexableClass
-import com.intellij.searchEverywhereMl.semantics.services.SemanticSearchFileNameListener
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
+import com.intellij.platform.ml.embeddings.search.services.IndexableClass
+import com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileNameListener
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil

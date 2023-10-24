@@ -3,7 +3,7 @@ package com.intellij.searchEverywhereMl.semantics.contributors
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

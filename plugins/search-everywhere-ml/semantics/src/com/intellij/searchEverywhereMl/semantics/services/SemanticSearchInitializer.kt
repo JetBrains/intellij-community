@@ -6,9 +6,10 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.ml.embeddings.search.services.*
 import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments
 import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments.SemanticSearchFeature
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 
 private class SemanticSearchInitializer : ProjectActivity {
   /**

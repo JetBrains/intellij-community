@@ -2,7 +2,8 @@ package com.intellij.searchEverywhereMl.semantics.providers
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.util.gotoByName.GotoActionModel
-import com.intellij.searchEverywhereMl.semantics.services.ActionEmbeddingsStorage
+import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 
 class LocalSemanticActionsProvider(model: GotoActionModel) : SemanticActionsProvider(model) {
   override suspend fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
@@ -17,6 +18,10 @@ class LocalSemanticActionsProvider(model: GotoActionModel) : SemanticActionsProv
     return ActionEmbeddingsStorage.getInstance()
       .streamSearchNeighbours(pattern, similarityThreshold)
       .mapNotNull { createItemDescriptor(it.text, it.similarity, pattern) }
+  }
+
+  override fun isEnabled(): Boolean {
+    return SemanticSearchSettings.getInstance().enabledInActionsTab
   }
 
   companion object {

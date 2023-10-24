@@ -2,7 +2,7 @@ package com.intellij.searchEverywhereMl.semantics.testCommands
 
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.searchEverywhereMl.semantics.services.IndexingLifecycleTracker
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import org.jetbrains.annotations.NonNls
 
