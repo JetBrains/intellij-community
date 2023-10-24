@@ -4,12 +4,10 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBFont
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -30,7 +28,11 @@ class PromoFeatureListItem(
 )
 
 object PromoPages {
-  fun build(page: PromoFeaturePage): JComponent {
+  fun build(page: PromoFeaturePage): DialogPanel {
+    return build(page, FUSEventSource.SETTINGS)
+  }
+
+  fun build(page: PromoFeaturePage, source: FUSEventSource): DialogPanel {
     val panel = panel {
       row {
         icon(page.productIcon)
@@ -45,7 +47,7 @@ object PromoPages {
         cell()
 
         text(page.descriptionHtml) {
-          FUSEventSource.SETTINGS.learnMoreAndLog(null, it.url.toExternalForm(), page.pluginId?.let(PluginId::getId))
+          source.learnMoreAndLog(null, it.url.toExternalForm(), page.pluginId?.let(PluginId::getId))
         }
       }.layout(RowLayout.PARENT_GRID)
 
