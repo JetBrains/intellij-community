@@ -12,6 +12,16 @@
                              provider="com.intellij.ide.ultimatepromo.PromoKubernetesConfigurableProvider"
                              bundle="messages.FeaturePromoBundle"
                              key="promo.configurable.kubernetes"/>
+    <applicationConfigurable id="promo.javascript"
+                             groupId="language"
+                             provider="com.intellij.ide.ultimatepromo.PromoJSConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.javascript"/>
+    <applicationConfigurable id="promo.typescript"
+                             groupId="language"
+                             provider="com.intellij.ide.ultimatepromo.PromoTSConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.typescript"/>
     <applicationConfigurable id="promo.profiler"
                              groupId="build"
                              provider="com.intellij.ide.ultimatepromo.PromoProfilerConfigurableProvider"
