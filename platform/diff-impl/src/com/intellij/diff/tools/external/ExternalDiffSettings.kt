@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 
 @State(name = "ExternalDiffSettings", storages = [Storage(DiffUtil.DIFF_CONFIG)], category = SettingsCategory.TOOLS)
 class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffSettings> {
@@ -47,8 +48,8 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
     var mergeToolName: @NlsSafe String = BUILTIN_TOOL
   ) {
     companion object {
-      val DEFAULT_TOOL_NAME = DiffBundle.message("settings.external.diff.table.filetype.default")
-      val BUILTIN_TOOL = DiffBundle.message("settings.external.diff.table.tool.default")
+      const val DEFAULT_TOOL_NAME: @NonNls String = "Default"
+      const val BUILTIN_TOOL: @NonNls String = "Built-in"
 
       val builtinInstance = ExternalToolConfiguration()
     }
