@@ -248,7 +248,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if (state != null && !state.isFinished()) {
+    if (state != null && !state.isFinished() || myEditor.isDisposed()) {
       return;
     }
     IntentionsInfo intentionsInfo = new IntentionsInfo();
@@ -265,7 +265,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     CachedIntentions cachedIntentions = myCachedIntentions;
     boolean actionsChanged = myActionsChanged;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if ((state == null || state.isFinished()) && cachedIntentions != null) {
+    if ((state == null || state.isFinished()) && cachedIntentions != null && !myEditor.isDisposed()) {
       IntentionsUI.getInstance(myProject).update(cachedIntentions, actionsChanged);
     }
   }
