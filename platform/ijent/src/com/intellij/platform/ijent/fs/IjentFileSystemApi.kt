@@ -3,6 +3,7 @@ package com.intellij.platform.ijent.fs
 
 import com.intellij.platform.ijent.IjentId
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
 // TODO Integrate case-(in)sensitiveness into the interface.
 
@@ -11,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
  *
  * This class is significantly inspired by `fleet.api.FsApi` and related classes. Most names remain the same.
  */
+@ApiStatus.Experimental
 interface IjentFileSystemApi {
   /**
    * The same [IjentId] as in the corresponding [com.intellij.platform.ijent.IjentApi].

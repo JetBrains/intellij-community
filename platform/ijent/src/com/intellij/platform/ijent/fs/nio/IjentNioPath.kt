@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.fs.nio
 
 import com.intellij.platform.ijent.fs.IjentPath
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.*
 
@@ -14,6 +15,7 @@ import java.nio.file.*
  * val path: Path = ijent.fs.asNioFileSystem().getPath("/usr/bin/cowsay")
  * ```
  */
+@ApiStatus.Experimental
 class IjentNioPath internal constructor(
   val ijentPath: IjentPath,
   private val nioFs: IjentNioFileSystem,

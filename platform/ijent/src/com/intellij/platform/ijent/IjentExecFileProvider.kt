@@ -7,6 +7,10 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+/**
+ * Gets the path to the IJent binary. See [getIjentBinary].
+ */
+@ApiStatus.Experimental
 interface IjentExecFileProvider {
   companion object {
     val EP_NAME: ExtensionPointName<IjentExecFileProvider> = ExtensionPointName.create("com.intellij.platform.ijent.ijentExecFileProvider")

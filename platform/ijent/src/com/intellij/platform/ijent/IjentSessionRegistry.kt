@@ -6,9 +6,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
+@ApiStatus.Experimental
 @Service(Service.Level.APP)
 class IjentSessionRegistry {
   val ijents: Map<IjentId, IjentApi> get() = ijentsInternal
