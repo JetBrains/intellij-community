@@ -40,6 +40,11 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   private static final BiPredicate<MatchedValue, MatchedValue> MATCH_EQUALITY =
     { MatchedValue item1, MatchedValue item2 -> item1 == item2 } as BiPredicate<MatchedValue, MatchedValue>
 
+  @Override
+  protected boolean runInDispatchThread() {
+    false
+  }
+
   void "test shorter actions first despite ellipsis"() {
     def pattern = 'Rebas'
     def fork = 'Sync Fork'
