@@ -547,7 +547,7 @@ public final class JBUI {
       }
 
       public static int underlineHeight() {
-        return getInt("DefaultTabs.underlineHeight", JBUIScale.scale(3));
+        return getInt("DefaultTabs.underlineHeight", 3);
       }
 
       public static @NotNull Color inactiveUnderlineColor() {
@@ -584,7 +584,7 @@ public final class JBUI {
 
     public static final class DebuggerTabs {
       public static int underlineHeight() {
-        return getInt("DebuggerTabs.underlineHeight", JBUIScale.scale(2));
+        return getInt("DebuggerTabs.underlineHeight", 2);
       }
 
       public static Color underlinedTabBackground() {

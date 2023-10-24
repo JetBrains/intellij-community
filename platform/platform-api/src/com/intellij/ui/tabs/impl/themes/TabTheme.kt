@@ -43,7 +43,7 @@ open class DefaultTabTheme : TabTheme {
   override val hoverBackground: Color get() = JBUI.CurrentTheme.DefaultTabs.hoverBackground()
   override val underlinedTabBackground: Color? get() = JBUI.CurrentTheme.DefaultTabs.underlinedTabBackground()
   override val underlinedTabForeground: Color get() = JBUI.CurrentTheme.DefaultTabs.underlinedTabForeground()
-  override val underlineHeight: Int get()= JBUI.CurrentTheme.DefaultTabs.underlineHeight()
+  override val underlineHeight: Int get() = JBUI.scale(JBUI.CurrentTheme.DefaultTabs.underlineHeight())
   override val hoverInactiveBackground: Color?
     get() = hoverBackground
   override val underlinedTabInactiveBackground: Color?
@@ -80,7 +80,7 @@ class EditorTabTheme : TabTheme {
     get() = globalScheme.getAttributes(EditorColors.TAB_SELECTED).foregroundColor?: JBUI.CurrentTheme.EditorTabs.underlinedTabForeground()
 
   override val underlineHeight: Int
-    get() = JBUI.CurrentTheme.EditorTabs.underlineHeight()
+    get() = JBUI.scale(JBUI.CurrentTheme.EditorTabs.underlineHeight())
 
   override val underlineArc: Int
     get() = JBUI.CurrentTheme.EditorTabs.underlineArc()
@@ -123,7 +123,7 @@ internal class ToolWindowTabTheme : DefaultTabTheme() {
   override val underlinedTabForeground: Color
     get() = JBUI.CurrentTheme.ToolWindow.underlinedTabForeground()
   override val underlineHeight: Int
-    get() = JBUI.CurrentTheme.ToolWindow.underlineHeight()
+    get() = JBUI.scale(JBUI.CurrentTheme.ToolWindow.underlineHeight())
   override val underlineArc: Int
     get() = JBUI.CurrentTheme.ToolWindow.headerTabUnderlineArc()
 
@@ -137,7 +137,7 @@ internal class ToolWindowTabTheme : DefaultTabTheme() {
 
 internal class DebuggerTabTheme : DefaultTabTheme() {
   override val underlineHeight: Int
-    get() = JBUI.CurrentTheme.DebuggerTabs.underlineHeight()
+    get() = JBUI.scale(JBUI.CurrentTheme.DebuggerTabs.underlineHeight())
   override val underlinedTabBackground: Color?
     get() = JBUI.CurrentTheme.DebuggerTabs.underlinedTabBackground()
 }
