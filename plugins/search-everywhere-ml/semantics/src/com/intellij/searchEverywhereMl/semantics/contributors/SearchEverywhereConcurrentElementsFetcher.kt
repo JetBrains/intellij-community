@@ -53,7 +53,7 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
       val cachedDescriptors = mutableListOf<FoundItemDescriptor<I>>()
 
       suspend fun iterate() = coroutineScope {
-        val semanticMatches = itemsProvider.streamSearch(pattern, priorityThresholds[DescriptorPriority.LOW])
+        val semanticMatches = itemsProvider.streamSearchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW])
         for (priority in ORDERED_PRIORITIES) {
           val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
           else cachedDescriptors.filter { it.findPriority() == priority }.iterator()

@@ -20,7 +20,7 @@ import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereCo
 import com.intellij.searchEverywhereMl.semantics.providers.LocalSemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.SemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.ServerSemanticActionsProvider
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.ui.JBColor
 import com.intellij.util.Processor
 import com.intellij.util.TimeoutUtil
@@ -37,7 +37,7 @@ import javax.swing.ListCellRenderer
 /**
  * Contributor that adds semantic search functionality when searching for actions in Search Everywhere.
  * For search logic refer to [SemanticActionsProvider].
- * For indexing logic refer to [com.intellij.searchEverywhereMl.semantics.services.ActionEmbeddingsStorage].
+ * For indexing logic refer to [com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage].
  * Delegates rendering and data retrieval functionality to [ActionSearchEverywhereContributor].
  * Can work with two types of action providers: server-based and local
  */
@@ -107,7 +107,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
       var foundItemsCount = 0
       val cachedDescriptors = mutableListOf<FoundItemDescriptor<MatchedValue>>()
 
-      val semanticMatches = itemsProvider.streamSearch(pattern, priorityThresholds[DescriptorPriority.LOW]).toList()
+      val semanticMatches = itemsProvider.streamSearchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW]).toList()
       standardContributorFinishedChannel.receiveCatching()
       for (priority in ORDERED_PRIORITIES) {
         val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()

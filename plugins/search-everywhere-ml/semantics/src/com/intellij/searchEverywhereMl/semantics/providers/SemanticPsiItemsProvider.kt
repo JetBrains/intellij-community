@@ -3,7 +3,7 @@ package com.intellij.searchEverywhereMl.semantics.providers
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel
-import com.intellij.searchEverywhereMl.semantics.services.DiskSynchronizedEmbeddingsStorage
+import com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddingsStorage
 import com.intellij.util.concurrency.ThreadingAssertions
 
 interface SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimilarity<*>> {
