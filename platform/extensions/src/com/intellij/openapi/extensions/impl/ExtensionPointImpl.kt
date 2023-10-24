@@ -1,170 +1,152 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.extensions.impl;
+@file:Suppress("ReplaceGetOrSet", "OVERRIDE_DEPRECATION")
 
-import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
-import kotlinx.collections.immutable.PersistentList;
-import org.jetbrains.annotations.*;
+package com.intellij.openapi.extensions.impl
 
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.*;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.ThreadDumper
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.LoadingOrder.Companion.sort
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.ArrayUtil
+import com.intellij.util.SmartList
+import com.intellij.util.ThreeState
+import com.intellij.util.containers.ContainerUtil
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentList.add
+import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.Unmodifiable
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.*
+import java.util.stream.Stream
+import java.util.stream.StreamSupport
+import kotlin.concurrent.Volatile
 
-import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
+private val LOG: Logger = logger<ExtensionPointImpl<*>>()
 
 @ApiStatus.Internal
-public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterable<@Nullable T> {
-  static final Logger LOG = Logger.getInstance(ExtensionPointImpl.class);
-
-  // test-only
-  // guarded by this
-  private static Set<ExtensionPointImpl<?>> POINTS_IN_READONLY_MODE;
-
-  private final String name;
-  private final String className;
-
+abstract class ExtensionPointImpl<T> internal constructor(val name: String,
+                                                          val className: String,
+                                                          protected val pluginDescriptor: PluginDescriptor,
+                                                          val componentManager: ComponentManager,
+                                                          private var extensionClass: Class<T>?,
+                                                          private val isDynamic: Boolean) : ExtensionPoint<T>, Iterable<T> {
   // immutable list, never modified in-place, only swapped atomically
-  private volatile List<T> cachedExtensions;
+  @Volatile
+  private var cachedExtensions: List<T>? = null
+
   // Since JDK 9, Arrays.ArrayList.toArray() returns {@code Object[]} instead of {@code T[]}
   // (https://bugs.openjdk.org/browse/JDK-6260652), so we cannot use it anymore.
   // Only array.clone should be used because of performance reasons (https://youtrack.jetbrains.com/issue/IDEA-198172).
-  private volatile T @Nullable [] cachedExtensionsAsArray;
-
-  private final ComponentManager componentManager;
-
-  protected final @NotNull PluginDescriptor pluginDescriptor;
+  @Volatile
+  private var cachedExtensionsAsArray: Array<T>? = null
 
   // guarded by this
-  private volatile @NotNull List<ExtensionComponentAdapter> adapters = Collections.emptyList();
-  private volatile boolean adaptersAreSorted = true;
+  @Volatile
+  private var adapters = emptyList<ExtensionComponentAdapter>()
+
+  @Volatile
+  private var adaptersAreSorted = true
 
   // guarded by this
-  private @NotNull PersistentList<ExtensionPointListener<T>> listeners = persistentListOf();
+  private var listeners = persistentListOf<ExtensionPointListener<T>>()
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private @Nullable Class<T> extensionClass;
+  private val keyMapperToCacheRef = AtomicReference<ConcurrentMap<*, Map<*, *>>>()
 
-  private final boolean isDynamic;
-
-  private final AtomicReference<ConcurrentMap<?, Map<?, ?>>> keyMapperToCacheRef = new AtomicReference<>();
-
-  ExtensionPointImpl(@NotNull String name,
-                     @NotNull String className,
-                     @NotNull PluginDescriptor pluginDescriptor,
-                     @NotNull ComponentManager componentManager,
-                     @Nullable Class<T> extensionClass,
-                     boolean dynamic) {
-    this.name = name;
-    this.className = className;
-    this.pluginDescriptor = pluginDescriptor;
-    this.componentManager = componentManager;
-    this.extensionClass = extensionClass;
-    isDynamic = dynamic;
-  }
-
-  final <CACHE_KEY extends @NotNull Object, V extends @NotNull Object> @NotNull ConcurrentMap<CACHE_KEY, V> getCacheMap() {
-    ConcurrentMap<?, ?> keyMapperToCache = keyMapperToCacheRef.get();
-    if (keyMapperToCache == null) {
-      keyMapperToCache = keyMapperToCacheRef.updateAndGet(prev -> prev == null ? new ConcurrentHashMap<>() : prev);
+  companion object {
+    fun setCheckCanceledAction(checkCanceled: Runnable) {
+      CHECK_CANCELED = {
+        try {
+          checkCanceled.run()
+        }
+        catch (e: ProcessCanceledException) {
+          // otherwise ExceptionInInitializerError happens and the class is screwed forever
+          if (!isInsideClassInitializer(e.stackTrace)) {
+            throw e
+          }
+        }
+      }
     }
-    //noinspection unchecked
-    return (ConcurrentMap<CACHE_KEY, V>)keyMapperToCache;
   }
 
-  public final @NotNull String getName() {
-    return name;
+  fun <CACHE_KEY : Any?, V : Any?> getCacheMap(): ConcurrentMap<CACHE_KEY, V> {
+    var keyMapperToCache = keyMapperToCacheRef.get()
+    if (keyMapperToCache == null) {
+      keyMapperToCache = keyMapperToCacheRef.updateAndGet { prev -> prev ?: ConcurrentHashMap<Any?, Map<*, *>>() }
+    }
+    @Suppress("UNCHECKED_CAST")
+    return keyMapperToCache as ConcurrentMap<CACHE_KEY, V>
   }
 
-  public final @NotNull String getClassName() {
-    return className;
+  override fun isDynamic(): Boolean = isDynamic
+
+  override fun registerExtension(extension: T) {
+    doRegisterExtension(extension = extension, order = LoadingOrder.ANY, pluginDescriptor = pluginDescriptor, parentDisposable = null)
   }
 
-  @Override
-  public final boolean isDynamic() {
-    return isDynamic;
+  override fun registerExtension(extension: T, parentDisposable: Disposable) {
+    registerExtension(extension = extension, pluginDescriptor = pluginDescriptor, parentDisposable = parentDisposable)
   }
 
-  @Override
-  public final void registerExtension(@NotNull T extension) {
-    doRegisterExtension(extension, LoadingOrder.ANY, getPluginDescriptor(), null);
+  override fun registerExtension(extension: T, pluginDescriptor: PluginDescriptor, parentDisposable: Disposable) {
+    doRegisterExtension(extension = extension,
+                        order = LoadingOrder.ANY,
+                        pluginDescriptor = pluginDescriptor,
+                        parentDisposable = parentDisposable)
   }
 
-  @Override
-  public final void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable) {
-    registerExtension(extension, getPluginDescriptor(), parentDisposable);
+  override fun getPluginDescriptor(): PluginDescriptor = pluginDescriptor
+
+  override fun registerExtension(extension: T, order: LoadingOrder, parentDisposable: Disposable) {
+    doRegisterExtension(extension = extension, order = order, pluginDescriptor = getPluginDescriptor(), parentDisposable = parentDisposable)
   }
 
-  @Override
-  public final void registerExtension(@NotNull T extension,
-                                      @NotNull PluginDescriptor pluginDescriptor, @NotNull Disposable parentDisposable) {
-    doRegisterExtension(extension, LoadingOrder.ANY, pluginDescriptor, parentDisposable);
-  }
+  @Synchronized
+  private fun doRegisterExtension(extension: T,
+                                  order: LoadingOrder,
+                                  pluginDescriptor: PluginDescriptor,
+                                  parentDisposable: Disposable?) {
+    assertNotReadOnlyMode()
+    checkExtensionType(extension, getExtensionClass(), null)
 
-  @Override
-  public final @NotNull PluginDescriptor getPluginDescriptor() {
-    return pluginDescriptor;
-  }
-
-  @Override
-  public final void registerExtension(@NotNull T extension, @NotNull LoadingOrder order, @NotNull Disposable parentDisposable) {
-    doRegisterExtension(extension, order, getPluginDescriptor(), parentDisposable);
-  }
-
-  public final ComponentManager getComponentManager() {
-    return componentManager;
-  }
-
-  private synchronized void doRegisterExtension(@NotNull T extension,
-                                                @NotNull LoadingOrder order,
-                                                @NotNull PluginDescriptor pluginDescriptor,
-                                                @Nullable Disposable parentDisposable) {
-    assertNotReadOnlyMode();
-    checkExtensionType(extension, getExtensionClass(), null);
-
-    for (ExtensionComponentAdapter adapter : adapters) {
-      if (adapter instanceof ObjectComponentAdapter && ((ObjectComponentAdapter<?>)adapter).componentInstance == extension) {
-        LOG.error("Extension was already added: " + extension);
-        return;
+    for (adapter in adapters) {
+      if (adapter is ObjectComponentAdapter<*> && adapter.componentInstance === extension) {
+        LOG.error("Extension was already added: $extension")
+        return
       }
     }
 
-    ObjectComponentAdapter<T> adapter = new ObjectComponentAdapter<>(extension, pluginDescriptor, order);
-    addExtensionAdapter(adapter);
-    notifyListeners(false, persistentListOf(adapter), listeners);
+    val adapter = ObjectComponentAdapter(extension, pluginDescriptor, order)
+    addExtensionAdapter(adapter)
+    notifyListeners(false, persistentListOf(adapter), listeners)
 
     if (parentDisposable != null) {
-      Disposer.register(parentDisposable, () -> {
-        synchronized (this) {
-          int index = ContainerUtil.indexOfIdentity(adapters, adapter);
+      Disposer.register(parentDisposable) {
+        synchronized(this) {
+          val index = ContainerUtil.indexOfIdentity(adapters, adapter)
           if (index < 0) {
-            LOG.error("Extension to be removed not found: " + adapter.componentInstance);
+            LOG.error("Extension to be removed not found: " + adapter.componentInstance)
           }
 
-          List<ExtensionComponentAdapter> list = new ArrayList<>(adapters);
-          list.remove(index);
-          adapters = list;
-          clearCache();
-          notifyListeners(true, persistentListOf(adapter), listeners);
+          val list: List<ExtensionComponentAdapter> = ArrayList(adapters)
+          list.removeAt(index)
+          adapters = list
+          clearCache()
+          notifyListeners(true, persistentListOf(adapter), listeners)
         }
-      });
+      }
     }
   }
 
@@ -172,961 +154,928 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
    * There are valid cases where we need to register a lot of extensions programmatically,
    * e.g., see SqlDialectTemplateRegistrar, so, special method for bulk insertion is introduced.
    */
-  public final void registerExtensions(@NotNull List<? extends T> extensions) {
-    for (ExtensionComponentAdapter adapter : adapters) {
-      if (adapter instanceof ObjectComponentAdapter) {
+  fun registerExtensions(extensions: List<T>) {
+    for (adapter in adapters) {
+      if (adapter is ObjectComponentAdapter<*>) {
         if (ContainerUtil.containsIdentity(extensions, adapter)) {
-          LOG.error("Extension was already added: " + ((ObjectComponentAdapter<?>)adapter).componentInstance);
-          return;
+          LOG.error("Extension was already added: " + adapter.componentInstance)
+          return
         }
       }
     }
 
-    List<ExtensionComponentAdapter> newAdapters = doRegisterExtensions(extensions);
+    val newAdapters = doRegisterExtensions(extensions)
     // do not call notifyListeners under lock
-    PersistentList<ExtensionPointListener<T>> listeners;
-    synchronized (this) {
-      listeners = this.listeners;
+    var listeners: PersistentList<ExtensionPointListener<T>>
+    synchronized(this) {
+      listeners = this.listeners
     }
-    notifyListeners(false, newAdapters, listeners);
+    notifyListeners(false, newAdapters, listeners)
   }
 
-  private synchronized @NotNull List<ExtensionComponentAdapter> doRegisterExtensions(@NotNull List<? extends T> extensions) {
-    List<ExtensionComponentAdapter> newAdapters = new ArrayList<>(extensions.size());
-    for (T extension : extensions) {
-      newAdapters.add(new ObjectComponentAdapter<>(extension, getPluginDescriptor(), LoadingOrder.ANY));
+  @Synchronized
+  private fun doRegisterExtensions(extensions: List<T>): List<ExtensionComponentAdapter> {
+    val newAdapters: MutableList<ExtensionComponentAdapter> = ArrayList(extensions.size)
+    for (extension in extensions) {
+      newAdapters.add(ObjectComponentAdapter(extension, getPluginDescriptor(), LoadingOrder.ANY))
     }
 
-    if (adapters == Collections.<ExtensionComponentAdapter>emptyList()) {
-      adapters = newAdapters;
+    if (adapters === emptyList<ExtensionComponentAdapter>()) {
+      adapters = newAdapters
     }
     else {
-      List<ExtensionComponentAdapter> list = new ArrayList<>(adapters.size() + newAdapters.size());
-      list.addAll(adapters);
-      list.addAll(findInsertionIndexForAnyOrder(adapters), newAdapters);
-      adapters = list;
+      val list: MutableList<ExtensionComponentAdapter> = ArrayList(adapters.size + newAdapters.size)
+      list.addAll(adapters)
+      list.addAll(findInsertionIndexForAnyOrder(adapters), newAdapters)
+      adapters = list
     }
-    clearCache();
-    return newAdapters;
+    clearCache()
+    return newAdapters
   }
 
-  private static int findInsertionIndexForAnyOrder(@NotNull List<? extends ExtensionComponentAdapter> adapters) {
-    int index = adapters.size();
-    while (index > 0) {
-      ExtensionComponentAdapter lastAdapter = adapters.get(index - 1);
-      if (lastAdapter.getOrder() == LoadingOrder.LAST) {
-        index--;
-      }
-      else {
-        break;
-      }
-    }
-    return index;
-  }
-
-  private void checkExtensionType(@NotNull T extension, @NotNull Class<T> extensionClass, @Nullable ExtensionComponentAdapter adapter) {
+  private fun checkExtensionType(extension: T, extensionClass: Class<T>, adapter: ExtensionComponentAdapter?) {
     if (!extensionClass.isInstance(extension)) {
-      @NonNls String message = "Extension " + extension.getClass().getName() + " does not implement " + extensionClass;
+      var message: @NonNls String = "Extension " + extension.javaClass.getName() + " does not implement " + extensionClass
       if (adapter == null) {
-        throw new RuntimeException(message);
+        throw RuntimeException(message)
       }
       else {
-        message += " (adapter=" + adapter + ")";
-        throw componentManager.createError(message, null, adapter.pluginDescriptor.getPluginId(),
-                                           Collections.singletonMap("threadDump", ThreadDumper.dumpThreadsToString()));
+        message += " (adapter=$adapter)"
+        throw componentManager.createError(message, null, adapter.pluginDescriptor.pluginId,
+                                           Collections.singletonMap("threadDump", ThreadDumper.dumpThreadsToString()))
       }
     }
   }
 
-  @Override
-  public final @NotNull List<T> getExtensionList() {
-    List<T> result = cachedExtensions;
+  override fun getExtensionList(): List<T> {
+    var result = cachedExtensions
     if (result == null) {
-      synchronized (this) {
-        result = cachedExtensions;
+      synchronized(this) {
+        result = cachedExtensions
         if (result == null) {
-          T[] array = processAdapters();
-          cachedExtensionsAsArray = array;
-          //noinspection deprecation
-          cachedExtensions = result = array.length == 0 ? Collections.emptyList() : ContainerUtil.immutableList(array);
+          val array = processAdapters()
+          cachedExtensionsAsArray = array
+          result = if (array.size == 0) emptyList() else ContainerUtil.immutableList(*array)
+          cachedExtensions = result
         }
       }
     }
-    return result;
+    return result!!
   }
 
-  @Override
-  public final T @NotNull [] getExtensions() {
-    T[] array = cachedExtensionsAsArray;
+  override fun getExtensions(): Array<T> {
+    var array = cachedExtensionsAsArray
     if (array == null) {
-      synchronized (this) {
-        array = cachedExtensionsAsArray;
+      synchronized(this) {
+        array = cachedExtensionsAsArray
         if (array == null) {
-          array = processAdapters();
-          cachedExtensionsAsArray = array;
-          //noinspection deprecation
-          cachedExtensions = array.length == 0 ? Collections.emptyList() : ContainerUtil.immutableList(array);
+          array = processAdapters()
+          cachedExtensionsAsArray = array
+          cachedExtensions = if (array!!.size == 0) emptyList<T>() else ContainerUtil.immutableList<T>(*array!!)
         }
       }
     }
-    return array.length == 0 ? array : array.clone();
+    return if (array!!.size == 0) array!! else array!!.clone()
   }
 
   /**
    * Do not use it if there is any extension point listener, because in this case behavior is not predictable:
    * events will be fired during iteration, which is probably not expected.
-   * <p>
+   *
+   *
    * Use only for interface extension points, not for beans.
-   * <p>
+   *
+   *
    * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
    * so, `next` may return `null` (in this case, stop iteration).
    */
-  @Override
   @ApiStatus.Experimental
-  public final @NotNull Iterator<@Nullable T> iterator() {
-    List<T> result = cachedExtensions;
-    return result == null ? createIterator() : result.iterator();
+  override fun iterator(): MutableIterator<T> {
+    val result = cachedExtensions
+    return result?.iterator() ?: createIterator()
   }
 
-  public final void processWithPluginDescriptor(boolean shouldBeSorted, @NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
-    if (isInReadOnlyMode()) {
-      for (T extension : Objects.requireNonNull(cachedExtensionsAsArray)) {
-        consumer.accept(extension, pluginDescriptor /* doesn't matter for tests */);
+  fun processWithPluginDescriptor(shouldBeSorted: Boolean, consumer: BiConsumer<in T, in PluginDescriptor?>) {
+    if (isInReadOnlyMode) {
+      for (extension in Objects.requireNonNull(cachedExtensionsAsArray)) {
+        consumer.accept(extension, pluginDescriptor /* doesn't matter for tests */)
       }
-      return;
+      return
     }
 
-    for (ExtensionComponentAdapter adapter : shouldBeSorted ? getSortedAdapters() : adapters) {
-      T extension = processAdapter(adapter);
+    for (adapter in if (shouldBeSorted) sortedAdapters else adapters) {
+      val extension = processAdapter(adapter)
       if (extension != null) {
-        consumer.accept(extension, adapter.pluginDescriptor);
+        consumer.accept(extension, adapter.pluginDescriptor)
       }
     }
   }
 
-  public final void processImplementations(boolean shouldBeSorted, @NotNull BiConsumer<? super Supplier<? extends @Nullable T>, ? super PluginDescriptor> consumer) {
-    if (isInReadOnlyMode()) {
-      for (T extension : Objects.requireNonNull(cachedExtensionsAsArray)) {
-        consumer.accept((Supplier<T>)() -> extension, pluginDescriptor /* doesn't matter for tests */);
+  fun processImplementations(shouldBeSorted: Boolean, consumer: BiConsumer<in Supplier<out T>?, in PluginDescriptor?>) {
+    if (isInReadOnlyMode) {
+      for (extension in Objects.requireNonNull(cachedExtensionsAsArray)) {
+        consumer.accept(Supplier<T> { extension }, pluginDescriptor /* doesn't matter for tests */)
       }
-      return;
+      return
     }
 
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
-    for (ExtensionComponentAdapter adapter : shouldBeSorted ? getSortedAdapters() : adapters) {
-      consumer.accept((Supplier<@Nullable T>)() -> adapter.createInstance(componentManager), adapter.pluginDescriptor);
+    for (adapter in if (shouldBeSorted) sortedAdapters else adapters) {
+      consumer.accept(
+        Supplier { adapter.createInstance<T>(componentManager) } as Supplier<T>, adapter.pluginDescriptor)
     }
   }
 
   @TestOnly
-  public final void checkImplementations(@NotNull Consumer<? super ExtensionComponentAdapter> consumer) {
-    for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
-      consumer.accept(adapter);
+  fun checkImplementations(consumer: Consumer<in ExtensionComponentAdapter?>) {
+    for (adapter in sortedAdapters) {
+      consumer.accept(adapter)
     }
   }
 
-  private @NotNull Iterator<@Nullable T> createIterator() {
-    int size;
-    List<ExtensionComponentAdapter> adapters = getSortedAdapters();
-    size = adapters.size();
+  private fun createIterator(): MutableIterator<T?> {
+    val size: Int
+    val adapters = sortedAdapters
+    size = adapters.size
     if (size == 0) {
-      return Collections.emptyIterator();
+      return Collections.emptyIterator()
     }
 
-    return new Iterator<T>() {
-      private int currentIndex;
+    return object : MutableIterator<T> {
+      private var currentIndex = 0
 
-      @Override
-      public boolean hasNext() {
-        return currentIndex < size;
+      override fun hasNext(): Boolean {
+        return currentIndex < size
       }
 
-      @Override
-      public @Nullable T next() {
+      override fun next(): T {
         do {
-          @Nullable T extension = processAdapter(adapters.get(currentIndex++));
+          val extension = processAdapter(adapters[currentIndex++])
           if (extension != null) {
-            return extension;
+            return extension
           }
         }
-        while (hasNext());
-        return null;
+        while (hasNext())
+        return null
       }
-    };
-  }
-
-  @Override
-  public final Spliterator<T> spliterator() {
-    return Spliterators.spliterator(iterator(), size(), Spliterator.IMMUTABLE | Spliterator.NONNULL | Spliterator.DISTINCT);
-  }
-
-  @Override
-  public final @NotNull Stream<T> extensions() {
-    T[] result = cachedExtensionsAsArray;
-    return result == null ? StreamSupport.stream(spliterator(), false) : Arrays.stream(result);
-  }
-
-  @Override
-  public final int size() {
-    T[] cache = cachedExtensionsAsArray;
-    return cache == null ? adapters.size() : cache.length;
-  }
-
-  public final @NotNull List<ExtensionComponentAdapter> getSortedAdapters() {
-    if (adaptersAreSorted) {
-      return adapters;
     }
+  }
 
-    synchronized (this) {
+  override fun spliterator(): Spliterator<T> {
+    return Spliterators.spliterator(iterator(), size().toLong(), Spliterator.IMMUTABLE or Spliterator.NONNULL or Spliterator.DISTINCT)
+  }
+
+  override fun extensions(): Stream<T> {
+    val result = cachedExtensionsAsArray
+    return if (result == null) StreamSupport.stream(spliterator(), false) else Arrays.stream(result)
+  }
+
+  override fun size(): Int {
+    val cache = cachedExtensionsAsArray
+    return cache?.size ?: adapters.size
+  }
+
+  val sortedAdapters: List<ExtensionComponentAdapter>
+    get() {
       if (adaptersAreSorted) {
-        return adapters;
+        return adapters
       }
 
-      if (adapters.size() > 1) {
-        List<ExtensionComponentAdapter> list = new ArrayList<>(adapters);
-        LoadingOrder.Companion.sort(list);
-        adapters = list;
+      synchronized(this) {
+        if (adaptersAreSorted) {
+          return adapters
+        }
+        if (adapters.size > 1) {
+          val list: List<ExtensionComponentAdapter> = ArrayList(adapters)
+          sort(list)
+          adapters = list
+        }
+        adaptersAreSorted = true
       }
-      adaptersAreSorted = true;
+      return adapters
     }
-    return adapters;
-  }
 
-  private T @NotNull [] processAdapters() {
-    assertNotReadOnlyMode();
+  private fun processAdapters(): Array<T> {
+    assertNotReadOnlyMode()
 
     // check before to avoid any "restore" work if already canceled
-    CHECK_CANCELED.run();
+    CHECK_CANCELED.run()
 
-    long startTime = System.nanoTime();
+    val startTime = System.nanoTime()
 
-    List<ExtensionComponentAdapter> adapters = getSortedAdapters();
-    int totalSize = adapters.size();
-    Class<T> extensionClass = getExtensionClass();
-    T[] result = ArrayUtil.newArray(extensionClass, totalSize);
+    val adapters = sortedAdapters
+    val totalSize = adapters.size
+    val extensionClass = getExtensionClass()
+    var result = ArrayUtil.newArray(extensionClass, totalSize)
     if (totalSize == 0) {
-      return result;
+      return result
     }
 
-    Set<T> duplicates = this instanceof BeanExtensionPoint ? null : new HashSet<>(totalSize);
-    PersistentList<ExtensionPointListener<T>> listeners = this.listeners;
-    int extensionIndex = 0;
-    for (int i = 0; i < adapters.size(); i++) {
-      T extension = processAdapter(adapters.get(i), listeners, result, duplicates, extensionClass, adapters);
+    val duplicates: MutableSet<T>? = if (this is BeanExtensionPoint<*>) null else HashSet(totalSize)
+    val listeners = this.listeners
+    var extensionIndex = 0
+    for (i in adapters.indices) {
+      val extension = processAdapter(adapters[i], listeners, result, duplicates, extensionClass, adapters)
       if (extension != null) {
-        result[extensionIndex++] = extension;
+        result[extensionIndex++] = extension
       }
     }
 
-    if (extensionIndex != result.length) {
-      result = Arrays.copyOf(result, extensionIndex);
+    if (extensionIndex != result.size) {
+      result = result.copyOf(extensionIndex)
     }
 
     // do not count ProcessCanceledException as a valid action to measure (later special category can be introduced if needed)
-    ActivityCategory category = componentManager.getActivityCategory(true);
-    StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category, /* pluginId = */ null, StartUpMeasurer.MEASURE_THRESHOLD);
-    return result;
+    val category = componentManager.getActivityCategory(true)
+    StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category,  /* pluginId = */null, StartUpMeasurer.MEASURE_THRESHOLD)
+    return result
   }
 
   // This method needs to be synchronized because XmlExtensionAdapter.createInstance takes a lock on itself, and if it's called without
   // EP lock and tries to add an EP listener, we can get a deadlock because of lock ordering violation
   // (EP->adapter in one thread, adapter->EP in the other thread)
-  private synchronized @Nullable T processAdapter(@NotNull ExtensionComponentAdapter adapter) {
+  @Synchronized
+  private fun processAdapter(adapter: ExtensionComponentAdapter): T? {
     try {
       if (!checkThatClassloaderIsActive(adapter)) {
-        return null;
+        return null
       }
-      @Nullable T instance = adapter.createInstance(componentManager);
-      if (instance == null && LOG.isDebugEnabled()) {
-        LOG.debug(adapter + " not loaded because it reported that not applicable");
+      val instance = adapter.createInstance<T?>(componentManager)
+      if (instance == null && LOG.isDebugEnabled) {
+        LOG.debug(
+          "$adapter not loaded because it reported that not applicable")
       }
-      return instance;
+      return instance
     }
-    catch (ProcessCanceledException e) {
-      throw e;
+    catch (e: ProcessCanceledException) {
+      throw e
     }
-    catch (Throwable e) {
-      LOG.error(e);
+    catch (e: Throwable) {
+      LOG.error(e)
     }
-    return null;
+    return null
   }
 
-  private @Nullable T processAdapter(@NotNull ExtensionComponentAdapter adapter,
-                                     @Nullable List<ExtensionPointListener<T>> listeners,
-                                     T @Nullable [] result,
-                                     @Nullable Set<T> duplicates,
-                                     @NotNull Class<T> extensionClassForCheck,
-                                     @NotNull List<? extends ExtensionComponentAdapter> adapters) {
+  private fun processAdapter(adapter: ExtensionComponentAdapter,
+                             listeners: List<ExtensionPointListener<T>>?,
+                             result: Array<T>?,
+                             duplicates: MutableSet<T>?,
+                             extensionClassForCheck: Class<T>,
+                             adapters: List<ExtensionComponentAdapter>): T? {
     try {
       if (!checkThatClassloaderIsActive(adapter)) {
-        return null;
+        return null
       }
 
-      boolean isNotifyThatAdded = listeners != null && !listeners.isEmpty() && !adapter.isInstanceCreated$intellij_platform_extensions() &&
-                                  !isDynamic;
+      val isNotifyThatAdded = listeners != null && !listeners.isEmpty() && !adapter.isInstanceCreated &&
+                              !isDynamic
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
-      @Nullable T extension = adapter.createInstance(componentManager);
+      val extension = adapter.createInstance<T?>(componentManager)
       if (extension == null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(adapter + " not loaded because it reported that not applicable");
+        if (LOG.isDebugEnabled) {
+          LOG.debug(
+            "$adapter not loaded because it reported that not applicable")
         }
-        return null;
+        return null
       }
 
       if (duplicates != null && !duplicates.add(extension)) {
-        @Nullable T duplicate = null;
-        for (T value : duplicates) {
-          if (value.equals(extension)) {
-            duplicate = value;
-            break;
+        var duplicate: T? = null
+        for (value in duplicates) {
+          if (value == extension) {
+            duplicate = value
+            break
           }
         }
-        assert result != null;
-
-        LOG.error("Duplicate extension found:\n" +
-                  "                   " + extension + ";\n" +
-                  "  prev extension:  " + duplicate + ";\n" +
-                  "  adapter:         " + adapter + ";\n" +
-                  "  extension class: " + extensionClassForCheck + ";\n" +
-                  "  result:          " + Arrays.asList(result) + ";\n" +
-                  "  adapters:        " + adapters
-        );
+        assert(result != null)
+        LOG.error("""Duplicate extension found:
+                   $extension;
+  prev extension:  $duplicate;
+  adapter:         $adapter;
+  extension class: $extensionClassForCheck;
+  result:          ${Arrays.asList(*result)};
+  adapters:        $adapters"""
+        )
       }
       else {
-        checkExtensionType(extension, extensionClassForCheck, adapter);
+        checkExtensionType(extension, extensionClassForCheck, adapter)
         if (isNotifyThatAdded) {
-          notifyListeners(false, Collections.singletonList(adapter), listeners);
+          notifyListeners(false, listOf(adapter), listeners!!)
         }
-        return extension;
+        return extension
       }
     }
-    catch (ProcessCanceledException e) {
-      throw e;
+    catch (e: ProcessCanceledException) {
+      throw e
     }
-    catch (Throwable e) {
-      LOG.error(e);
+    catch (e: Throwable) {
+      LOG.error(e)
     }
-    return null;
-  }
-
-  private static boolean checkThatClassloaderIsActive(@NotNull ExtensionComponentAdapter adapter) {
-    ClassLoader classLoader = adapter.pluginDescriptor.getPluginClassLoader();
-    if (classLoader instanceof PluginAwareClassLoader &&
-        ((PluginAwareClassLoader)classLoader).getState() != PluginAwareClassLoader.ACTIVE) {
-      LOG.warn(adapter + " not loaded because classloader is being unloaded");
-      return false;
-    }
-    return true;
+    return null
   }
 
   /**
    * Put extension point in read-only mode and replace existing extensions by supplied.
-   * For tests this method is more preferable than {@link #registerExtension)} because makes registration more isolated and strict
+   * For tests this method is more preferable than [)][.registerExtension] because makes registration more isolated and strict
    * (no one can modify extension point until `parentDisposable` is not disposed).
-   * <p>
-   * Please use {@link com.intellij.testFramework.ExtensionTestUtil#maskExtensions(ExtensionPointName, List, Disposable)}
+   *
+   *
+   * Please use [com.intellij.testFramework.ExtensionTestUtil.maskExtensions]
    * instead of direct usage.
    */
   @TestOnly
   @ApiStatus.Internal
-  public final synchronized void maskAll(@NotNull List<? extends T> newList, @NotNull Disposable parentDisposable, boolean fireEvents) {
+  @Synchronized
+  fun maskAll(newList: List<T>, parentDisposable: Disposable, fireEvents: Boolean) {
     if (POINTS_IN_READONLY_MODE == null) {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      POINTS_IN_READONLY_MODE = Collections.newSetFromMap(new IdentityHashMap<>());
+      POINTS_IN_READONLY_MODE = Collections.newSetFromMap(IdentityHashMap())
     }
     else {
-      assertNotReadOnlyMode();
+      assertNotReadOnlyMode()
     }
 
-    List<T> oldList = cachedExtensions;
-    T[] oldArray = cachedExtensionsAsArray;
-    List<ExtensionComponentAdapter> oldAdapters = adapters;
-    boolean oldAdaptersAreSorted = adaptersAreSorted;
+    val oldList = cachedExtensions
+    val oldArray = cachedExtensionsAsArray
+    val oldAdapters = adapters
+    val oldAdaptersAreSorted = adaptersAreSorted
 
-    //noinspection unchecked
-    T[] newArray = newList.toArray((T[])Array.newInstance(getExtensionClass(), 0));
-    cachedExtensionsAsArray = newArray;
-    //noinspection deprecation
-    cachedExtensions = ContainerUtil.immutableList(newArray);
-    @Unmodifiable @NotNull List<ExtensionComponentAdapter> result;
-    if (((Collection<? extends T>)newList).isEmpty()) {
-      result = Collections.emptyList();
+    val newArray = newList.toArray<T>(java.lang.reflect.Array.newInstance(getExtensionClass(), 0) as Array<T>)
+    cachedExtensionsAsArray = newArray
+    cachedExtensions = ContainerUtil.immutableList(*newArray)
+    val result: @Unmodifiable MutableList<ExtensionComponentAdapter>
+    if ((newList as Collection<T>).isEmpty()) {
+      result = emptyList<ExtensionComponentAdapter>()
     }
     else {
-      result = new ArrayList<>(newList.size());
-      for (T t : newList) {
-        result.add(new ObjectComponentAdapter<>((Object)t, pluginDescriptor, LoadingOrder.ANY));
+      result = ArrayList(newList.size)
+      for (t in newList) {
+        result.add(ObjectComponentAdapter(t as Any, pluginDescriptor, LoadingOrder.ANY))
       }
     }
-    adapters = result;
-    adaptersAreSorted = true;
+    adapters = result
+    adaptersAreSorted = true
 
-    POINTS_IN_READONLY_MODE.add(this);
+    POINTS_IN_READONLY_MODE!!.add(this)
 
-    PersistentList<ExtensionPointListener<T>> listeners = this.listeners;
+    val listeners = this.listeners
     if (fireEvents && !listeners.isEmpty()) {
       if (oldList != null) {
-        doNotifyListeners(true, oldList, listeners);
+        doNotifyListeners(true, oldList, listeners)
       }
-      doNotifyListeners(false, newList, this.listeners);
+      doNotifyListeners(false, newList, this.listeners)
     }
 
-    clearUserCache();
+    clearUserCache()
 
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
+    Disposer.register(parentDisposable, object : Disposable {
       @TestOnly
-      public void dispose() {
-        synchronized (this) {
-          POINTS_IN_READONLY_MODE.remove(ExtensionPointImpl.this);
-          cachedExtensions = oldList;
-          cachedExtensionsAsArray = oldArray;
-          adapters = oldAdapters;
-          adaptersAreSorted = oldAdaptersAreSorted;
+      override fun dispose() {
+        synchronized(this) {
+          POINTS_IN_READONLY_MODE!!.remove(this@ExtensionPointImpl)
+          cachedExtensions = oldList
+          cachedExtensionsAsArray = oldArray
+          adapters = oldAdapters
+          adaptersAreSorted = oldAdaptersAreSorted
 
-          PersistentList<ExtensionPointListener<T>> listeners = ExtensionPointImpl.this.listeners;
+          val listeners = this@ExtensionPointImpl.listeners
           if (fireEvents && !listeners.isEmpty()) {
-            doNotifyListeners(true, newList, listeners);
+            doNotifyListeners(true, newList, listeners)
             if (oldList != null) {
-              doNotifyListeners(false, oldList, listeners);
+              doNotifyListeners(false, oldList, listeners)
             }
           }
-
-          clearUserCache();
+          clearUserCache()
         }
       }
-    });
+    })
   }
 
   @TestOnly
-  private void doNotifyListeners(boolean isRemoved,
-                                 @NotNull List<? extends T> extensions,
-                                 @NotNull List<ExtensionPointListener<T>> listeners) {
-    for (ExtensionPointListener<T> listener : listeners) {
-      if (listener instanceof ExtensionPointAdapter) {
+  private fun doNotifyListeners(isRemoved: Boolean,
+                                extensions: List<T>,
+                                listeners: List<ExtensionPointListener<T>>) {
+    for (listener in listeners) {
+      if (listener is ExtensionPointAdapter<*>) {
         try {
-          ((ExtensionPointAdapter<T>)listener).extensionListChanged();
+          (listener as ExtensionPointAdapter<T>).extensionListChanged()
         }
-        catch (ProcessCanceledException e) {
-          throw e;
+        catch (e: ProcessCanceledException) {
+          throw e
         }
-        catch (Throwable e) {
-          LOG.error(e);
+        catch (e: Throwable) {
+          LOG.error(e)
         }
       }
       else {
-        for (T extension : extensions) {
+        for (extension in extensions) {
           try {
             if (isRemoved) {
-              listener.extensionRemoved(extension, pluginDescriptor);
+              listener.extensionRemoved(extension, pluginDescriptor)
             }
             else {
-              listener.extensionAdded(extension, pluginDescriptor);
+              listener.extensionAdded(extension, pluginDescriptor)
             }
           }
-          catch (ProcessCanceledException e) {
-            throw e;
+          catch (e: ProcessCanceledException) {
+            throw e
           }
-          catch (Throwable e) {
-            LOG.error(e);
+          catch (e: Throwable) {
+            LOG.error(e)
           }
         }
       }
     }
   }
 
-  @Override
-  public final synchronized void unregisterExtension(@NotNull T extension) {
-    if (!unregisterExtensions((__, adapter) ->
-                                !adapter.isInstanceCreated$intellij_platform_extensions() ||
-                                adapter.createInstance(componentManager) != extension, true)) {
+  @Synchronized
+  override fun unregisterExtension(extension: T) {
+    if (!unregisterExtensions(
+        { `__`: String?, adapter: ExtensionComponentAdapter ->
+          !adapter.isInstanceCreated ||
+          adapter.createInstance<Any>(
+            componentManager) !== extension
+        }, true)) {
       // there is a possible case that a particular extension was replaced in a particular environment
       // (e.g., Upsource replaces some platform extensions important for CoreApplicationEnvironment),
       // so just log an error instead of throwing
-      LOG.warn("Extension to be removed not found: " + extension);
+      LOG.warn("Extension to be removed not found: $extension")
     }
   }
 
-  @Override
-  public final void unregisterExtension(@NotNull Class<? extends T> extensionClass) {
-    String classNameToUnregister = extensionClass.getCanonicalName();
-    if (!unregisterExtensions((cls, adapter) -> !cls.equals(classNameToUnregister), /* stopAfterFirstMatch = */ true)) {
-      LOG.warn("Extension to be removed not found: " + extensionClass);
+  override fun unregisterExtension(extensionClass: Class<out T>) {
+    val classNameToUnregister = extensionClass.canonicalName
+    if (!unregisterExtensions(
+        { cls: String, adapter: ExtensionComponentAdapter? -> cls != classNameToUnregister },  /* stopAfterFirstMatch = */true)) {
+      LOG.warn("Extension to be removed not found: $extensionClass")
     }
   }
 
-  @Override
-  public final boolean unregisterExtensions(@NotNull BiPredicate<String, ExtensionComponentAdapter> extensionClassNameFilter, boolean stopAfterFirstMatch) {
-    List<Runnable> listenerCallbacks = new ArrayList<>();
-    List<Runnable> priorityListenerCallbacks = new ArrayList<>();
-    boolean result = unregisterExtensions(stopAfterFirstMatch, priorityListenerCallbacks, listenerCallbacks,
-                                          adapter -> extensionClassNameFilter.test(adapter.getAssignableToClassName(), adapter));
-    for (Runnable callback : priorityListenerCallbacks) {
-      callback.run();
+  override fun unregisterExtensions(extensionClassNameFilter: BiPredicate<String, ExtensionComponentAdapter>,
+                                    stopAfterFirstMatch: Boolean): Boolean {
+    val listenerCallbacks: MutableList<Runnable> = ArrayList()
+    val priorityListenerCallbacks: MutableList<Runnable> = ArrayList()
+    val result = unregisterExtensions(stopAfterFirstMatch, priorityListenerCallbacks, listenerCallbacks
+    ) { adapter: ExtensionComponentAdapter -> extensionClassNameFilter.test(adapter.assignableToClassName, adapter) }
+    for (callback in priorityListenerCallbacks) {
+      callback.run()
     }
-    for (Runnable callback : listenerCallbacks) {
-      callback.run();
+    for (callback in listenerCallbacks) {
+      callback.run()
     }
-    return result;
+    return result
   }
 
   /**
    * Unregisters extensions for which the specified predicate returns false and collects the runnables for listener invocation into the given list
    * so that listeners can be called later.
    */
-  final synchronized boolean unregisterExtensions(boolean stopAfterFirstMatch,
-                                                  @NotNull List<? super Runnable> priorityListenerCallbacks,
-                                                  @NotNull List<? super Runnable> listenerCallbacks,
-                                                  @NotNull Predicate<? super ExtensionComponentAdapter> extensionToKeepFilter) {
-    PersistentList<ExtensionPointListener<T>> listeners = this.listeners;
-    List<ExtensionComponentAdapter> removedAdapters = null;
-    List<ExtensionComponentAdapter> adapters = this.adapters;
-    for (int i = adapters.size() - 1; i >= 0; i--) {
-      ExtensionComponentAdapter adapter = adapters.get(i);
+  @Synchronized
+  fun unregisterExtensions(stopAfterFirstMatch: Boolean,
+                           priorityListenerCallbacks: MutableList<in Runnable>,
+                           listenerCallbacks: MutableList<in Runnable>,
+                           extensionToKeepFilter: Predicate<in ExtensionComponentAdapter>): Boolean {
+    val listeners = this.listeners
+    var removedAdapters: MutableList<ExtensionComponentAdapter>? = null
+    var adapters = this.adapters
+    for (i in adapters.indices.reversed()) {
+      val adapter = adapters[i]
       if (extensionToKeepFilter.test(adapter)) {
-        continue;
+        continue
       }
 
-      if (adapters == this.adapters) {
-        adapters = new ArrayList<>(adapters);
+      if (adapters === this.adapters) {
+        adapters = ArrayList(adapters)
       }
-      adapters.remove(i);
+      adapters.removeAt(i)
 
       if (!listeners.isEmpty()) {
         if (removedAdapters == null) {
-          removedAdapters = new ArrayList<>();
+          removedAdapters = ArrayList()
         }
-        removedAdapters.add(adapter);
+        removedAdapters.add(adapter)
       }
 
       if (stopAfterFirstMatch) {
-        break;
+        break
       }
     }
 
-    if (adapters == this.adapters) {
-      return false;
+    if (adapters === this.adapters) {
+      return false
     }
 
-    clearCache();
-    this.adapters = adapters;
+    clearCache()
+    this.adapters = adapters
 
     if (removedAdapters == null) {
-      return true;
+      return true
     }
 
-    List<ExtensionPointListener<T>> priorityListeners = new SmartList<>();
-    for (ExtensionPointListener<T> t : listeners) {
-      if (t instanceof ExtensionPointPriorityListener) {
-        priorityListeners.add(t);
+    var priorityListeners: MutableList<ExtensionPointListener<T>> = SmartList()
+    for (t in listeners) {
+      if (t is ExtensionPointPriorityListener) {
+        priorityListeners.add(t)
       }
     }
-    priorityListeners = Collections.unmodifiableList(priorityListeners);
+    priorityListeners = Collections.unmodifiableList(priorityListeners)
 
-    List<ExtensionPointListener<T>> regularListeners = new ArrayList<>();
-    for (ExtensionPointListener<T> t : listeners) {
-      if (!(t instanceof ExtensionPointPriorityListener)) {
-        regularListeners.add(t);
+    var regularListeners: MutableList<ExtensionPointListener<T>> = ArrayList()
+    for (t in listeners) {
+      if (t !is ExtensionPointPriorityListener) {
+        regularListeners.add(t)
       }
     }
-    regularListeners = Collections.unmodifiableList(regularListeners);
+    regularListeners = Collections.unmodifiableList(regularListeners)
 
-    List<ExtensionComponentAdapter> finalRemovedAdapters = removedAdapters;
+    val finalRemovedAdapters: List<ExtensionComponentAdapter> = removedAdapters
     if (!priorityListeners.isEmpty()) {
-      List<ExtensionPointListener<T>> finalPriorityListeners = priorityListeners;
-      priorityListenerCallbacks.add((Runnable)() ->
-        notifyListeners(true, finalRemovedAdapters, finalPriorityListeners)
-      );
+      val finalPriorityListeners: List<ExtensionPointListener<T>> = priorityListeners
+      priorityListenerCallbacks.add(Runnable { notifyListeners(true, finalRemovedAdapters, finalPriorityListeners) }
+      )
     }
     if (!regularListeners.isEmpty()) {
-      List<ExtensionPointListener<T>> finalRegularListeners = regularListeners;
-      listenerCallbacks.add((Runnable)() ->
-        notifyListeners(true, finalRemovedAdapters, finalRegularListeners)
-      );
+      val finalRegularListeners: List<ExtensionPointListener<T>> = regularListeners
+      listenerCallbacks.add(Runnable { notifyListeners(true, finalRemovedAdapters, finalRegularListeners) }
+      )
     }
-    return true;
+    return true
   }
 
-  abstract void unregisterExtensions(@NotNull ComponentManager componentManager,
-                                     @NotNull PluginDescriptor pluginDescriptor,
-                                     @NotNull List<? super Runnable> priorityListenerCallbacks,
-                                     @NotNull List<? super Runnable> listenerCallbacks);
+  abstract fun unregisterExtensions(componentManager: ComponentManager,
+                                    pluginDescriptor: PluginDescriptor,
+                                    priorityListenerCallbacks: List<in Runnable?>,
+                                    listenerCallbacks: List<in Runnable?>)
 
-  private void notifyListeners(boolean isRemoved,
-                               @NotNull List<? extends ExtensionComponentAdapter> adapters,
-                               @NotNull List<ExtensionPointListener<T>> listeners) {
-    for (ExtensionPointListener<T> listener : listeners) {
-      if (listener instanceof ExtensionPointAdapter) {
+  private fun notifyListeners(isRemoved: Boolean,
+                              adapters: List<ExtensionComponentAdapter>,
+                              listeners: List<ExtensionPointListener<T>>) {
+    for (listener in listeners) {
+      if (listener is ExtensionPointAdapter<*>) {
         try {
-          ((ExtensionPointAdapter<T>)listener).extensionListChanged();
+          (listener as ExtensionPointAdapter<T>).extensionListChanged()
         }
-        catch (ProcessCanceledException e) {
-          throw e;
+        catch (e: ProcessCanceledException) {
+          throw e
         }
-        catch (Throwable e) {
-          LOG.error(e);
+        catch (e: Throwable) {
+          LOG.error(e)
         }
       }
       else {
-        for (ExtensionComponentAdapter adapter : adapters) {
-          if (isRemoved && !adapter.isInstanceCreated$intellij_platform_extensions()) {
-            continue;
+        for (adapter in adapters) {
+          if (isRemoved && !adapter.isInstanceCreated) {
+            continue
           }
 
           try {
-            @Nullable T extension = adapter.createInstance(componentManager);
+            val extension = adapter.createInstance<T?>(componentManager)
             if (extension != null) {
               if (isRemoved) {
-                listener.extensionRemoved(extension, adapter.pluginDescriptor);
+                listener.extensionRemoved(extension, adapter.pluginDescriptor)
               }
               else {
-                listener.extensionAdded(extension, adapter.pluginDescriptor);
+                listener.extensionAdded(extension, adapter.pluginDescriptor)
               }
             }
           }
-          catch (ProcessCanceledException e) {
-            throw e;
+          catch (e: ProcessCanceledException) {
+            throw e
           }
-          catch (Throwable e) {
-            LOG.error(e);
+          catch (e: Throwable) {
+            LOG.error(e)
           }
         }
       }
     }
   }
 
-  @Override
-  public final void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener,
-                                              boolean invokeForLoadedExtensions,
-                                              @Nullable Disposable parentDisposable) {
-    boolean isAdded = addListener(listener);
+  override fun addExtensionPointListener(listener: ExtensionPointListener<T>,
+                                         invokeForLoadedExtensions: Boolean,
+                                         parentDisposable: Disposable?) {
+    val isAdded = addListener(listener)
     if (!isAdded) {
-      return;
+      return
     }
 
     if (invokeForLoadedExtensions) {
-      notifyListeners(false, getSortedAdapters(), Collections.singletonList(listener));
+      notifyListeners(false, sortedAdapters, listOf(listener))
     }
 
     if (parentDisposable != null) {
-      Disposer.register(parentDisposable, () -> removeExtensionPointListener(listener));
+      Disposer.register(parentDisposable) { removeExtensionPointListener(listener) }
     }
   }
 
   // true if added
-  private synchronized boolean addListener(@NotNull ExtensionPointListener<T> listener) {
+  @Synchronized
+  private fun addListener(listener: ExtensionPointListener<T>): Boolean {
     if (listeners.contains(listener)) {
-      return false;
+      return false
     }
 
-    listeners = listener instanceof ExtensionPointPriorityListener ? listeners.add(0, listener) : listeners.add(listener);
-    return true;
+    listeners = if (listener is ExtensionPointPriorityListener) listeners.add(0, listener) else listeners.add(listener)
+    return true
   }
 
-  @Override
-  public synchronized final void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable) {
-    ExtensionPointAdapter<T> listenerAdapter = new ExtensionPointAdapter<T>() {
-      @Override
-      public void extensionListChanged() {
-        listener.run();
+  @Synchronized
+  override fun addChangeListener(listener: Runnable, parentDisposable: Disposable?) {
+    val listenerAdapter: ExtensionPointAdapter<T> = object : ExtensionPointAdapter<T>() {
+      override fun extensionListChanged() {
+        listener.run()
       }
-    };
+    }
 
-    listeners = listeners.add(listenerAdapter);
+    listeners = listeners.add(listenerAdapter)
     if (parentDisposable != null) {
-      Disposer.register(parentDisposable, () -> removeExtensionPointListener(listenerAdapter));
+      Disposer.register(parentDisposable) { removeExtensionPointListener(listenerAdapter) }
     }
   }
 
-  @Override
-  public final synchronized void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
-    listeners = listeners.remove(listener);
+  @Synchronized
+  override fun removeExtensionPointListener(listener: ExtensionPointListener<T>) {
+    listeners = listeners.remove(listener)
   }
 
-  public final synchronized void reset() {
-    List<ExtensionComponentAdapter> adapters = this.adapters;
-    this.adapters = Collections.emptyList();
+  @Synchronized
+  fun reset() {
+    val adapters = this.adapters
+    this.adapters = emptyList()
     // clear cache before notifying listeners to ensure that listeners don't get outdated data
-    clearCache();
+    clearCache()
     if (!adapters.isEmpty() && !listeners.isEmpty()) {
-      notifyListeners(true, adapters, listeners);
+      notifyListeners(true, adapters, listeners)
     }
 
     // help GC
-    listeners = persistentListOf();
-    extensionClass = null;
+    listeners = persistentListOf()
+    extensionClass = null
   }
 
-  public final @NotNull Class<T> getExtensionClass() {
-    Class<T> extensionClass = this.extensionClass;
+  fun getExtensionClass(): Class<T> {
+    var extensionClass = this.extensionClass
     if (extensionClass == null) {
       try {
-        extensionClass = componentManager.loadClass(className, pluginDescriptor);
-        this.extensionClass = extensionClass;
+        extensionClass = componentManager.loadClass(className, pluginDescriptor)
+        this.extensionClass = extensionClass
       }
-      catch (ClassNotFoundException e) {
-        throw componentManager.createError(e, pluginDescriptor.getPluginId());
+      catch (e: ClassNotFoundException) {
+        throw componentManager.createError(e, pluginDescriptor.pluginId)
       }
     }
-    return extensionClass;
+    return extensionClass
   }
 
-  @Override
-  public final String toString() {
-    return getName();
+  override fun toString(): String {
+    return name
   }
 
   // private, internal only for tests
-  final synchronized void addExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
-    List<ExtensionComponentAdapter> list = new ArrayList<>(adapters.size() + 1);
-    list.addAll(adapters);
-    list.add(adapter);
-    adapters = list;
-    clearCache();
+  @Synchronized
+  fun addExtensionAdapter(adapter: ExtensionComponentAdapter) {
+    val list: MutableList<ExtensionComponentAdapter> = ArrayList(adapters.size + 1)
+    list.addAll(adapters)
+    list.add(adapter)
+    adapters = list
+    clearCache()
   }
 
-  final void clearUserCache() {
-    ConcurrentMap<?, Map<?, ?>> map = keyMapperToCacheRef.get();
-    if (map != null) {
-      map.clear();
-    }
+  fun clearUserCache() {
+    val map = keyMapperToCacheRef.get()
+    map?.clear()
   }
 
-  private void clearCache() {
-    cachedExtensions = null;
-    cachedExtensionsAsArray = null;
-    adaptersAreSorted = false;
-    clearUserCache();
+  private fun clearCache() {
+    cachedExtensions = null
+    cachedExtensionsAsArray = null
+    adaptersAreSorted = false
+    clearUserCache()
 
     // asserted here because clearCache is called on any write action
-    assertNotReadOnlyMode();
+    assertNotReadOnlyMode()
   }
 
-  private void assertNotReadOnlyMode() {
-    if (isInReadOnlyMode()) {
-      throw new IllegalStateException(this + " in a read-only mode and cannot be modified");
+  private fun assertNotReadOnlyMode() {
+    if (isInReadOnlyMode) {
+      throw IllegalStateException("$this in a read-only mode and cannot be modified")
     }
   }
 
-  abstract @NotNull ExtensionComponentAdapter createAdapter(@NotNull ExtensionDescriptor extensionElement,
-                                                            @NotNull PluginDescriptor pluginDescriptor,
-                                                            @NotNull ComponentManager componentManager);
+  abstract fun createAdapter(extensionElement: ExtensionDescriptor,
+                             pluginDescriptor: PluginDescriptor,
+                             componentManager: ComponentManager): ExtensionComponentAdapter
 
   /**
-   * {@link #clearCache} is not called.
+   * [.clearCache] is not called.
    * `myAdapters` is modified directly without copying - method must be called only during start-up.
    */
-  public final synchronized void registerExtensions(@NotNull List<ExtensionDescriptor> extensionElements,
-                                                    @NotNull PluginDescriptor pluginDescriptor,
-                                                    @Nullable /* Mutable */ List<? super Runnable> listenerCallbacks) {
-    List<ExtensionComponentAdapter> adapters = this.adapters;
-    if (adapters == Collections.<ExtensionComponentAdapter>emptyList()) {
-      adapters = new ArrayList<>(extensionElements.size());
-      this.adapters = adapters;
-      adaptersAreSorted = false;
+  @Synchronized
+  fun registerExtensions(extensionElements: List<ExtensionDescriptor>,
+                         pluginDescriptor: PluginDescriptor,
+                         listenerCallbacks: MutableList<in Runnable?>?) {
+    var adapters = this.adapters
+    if (adapters === emptyList<ExtensionComponentAdapter>()) {
+      adapters = ArrayList(extensionElements.size)
+      this.adapters = adapters
+      adaptersAreSorted = false
     }
     else {
-      ((ArrayList<ExtensionComponentAdapter>)adapters).ensureCapacity(adapters.size() + extensionElements.size());
+      (adapters as ArrayList<ExtensionComponentAdapter>).ensureCapacity(adapters.size + extensionElements.size)
     }
 
-    int oldSize = adapters.size();
-    for (ExtensionDescriptor extensionElement : extensionElements) {
+    val oldSize = adapters.size
+    for (extensionElement in extensionElements) {
       if (extensionElement.os == null || componentManager.isSuitableForOs(extensionElement.os)) {
-        adapters.add(createAdapter(extensionElement, pluginDescriptor, componentManager));
+        adapters.add(createAdapter(extensionElement, pluginDescriptor, componentManager))
       }
     }
-    int newSize = adapters.size();
+    val newSize = adapters.size
 
-    clearCache();
-    PersistentList<ExtensionPointListener<T>> listeners = this.listeners;
+    clearCache()
+    val listeners = this.listeners
     if (listenerCallbacks == null || listeners.isEmpty()) {
-      return;
+      return
     }
 
-    List<ExtensionComponentAdapter> addedAdapters = Collections.emptyList();
-    for (ExtensionPointListener<T> listener : listeners) {
-      if (!(listener instanceof ExtensionPointAdapter)) {
+    var addedAdapters = emptyList<ExtensionComponentAdapter>()
+    for (listener in listeners) {
+      if (listener !is ExtensionPointAdapter<*>) {
         // must be reported in order
-        List<ExtensionComponentAdapter> newlyAddedUnsortedList = adapters.subList(oldSize, newSize);
-        Set<ExtensionComponentAdapter> newlyAddedSet = Collections.newSetFromMap(new IdentityHashMap<>(newlyAddedUnsortedList.size()));
-        newlyAddedSet.addAll(newlyAddedUnsortedList);
-        addedAdapters = new ArrayList<>(newlyAddedSet.size());
-        for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
+        val newlyAddedUnsortedList = adapters.subList(oldSize, newSize)
+        val newlyAddedSet = Collections.newSetFromMap(
+          IdentityHashMap<ExtensionComponentAdapter, Boolean>(newlyAddedUnsortedList.size))
+        newlyAddedSet.addAll(newlyAddedUnsortedList)
+        addedAdapters = ArrayList(newlyAddedSet.size)
+        for (adapter in sortedAdapters) {
           if (newlyAddedSet.contains(adapter)) {
-            addedAdapters.add(adapter);
+            addedAdapters.add(adapter)
           }
         }
-        break;
+        break
       }
     }
 
-    List<ExtensionComponentAdapter> finalAddedAdapters = addedAdapters;
-    listenerCallbacks.add((Runnable)() -> notifyListeners(false, finalAddedAdapters, listeners));
+    val finalAddedAdapters = addedAdapters
+    listenerCallbacks.add(Runnable { notifyListeners(false, finalAddedAdapters, listeners) })
   }
 
   @TestOnly
-  final synchronized void notifyAreaReplaced(@NotNull ExtensionsArea oldArea) {
-    for (ExtensionPointListener<T> listener : listeners) {
-      if (listener instanceof ExtensionPointAndAreaListener) {
-        ((ExtensionPointAndAreaListener<?>)listener).areaReplaced(oldArea);
+  @Synchronized
+  fun notifyAreaReplaced(oldArea: ExtensionsArea) {
+    for (listener in listeners) {
+      if (listener is ExtensionPointAndAreaListener<*>) {
+        (listener as ExtensionPointAndAreaListener<*>).areaReplaced(oldArea)
       }
     }
   }
 
-  public final <V extends T> @Nullable V findExtension(@NotNull Class<V> aClass, boolean isRequired, @NotNull ThreeState strictMatch) {
+  fun <V : T?> findExtension(aClass: Class<V>, isRequired: Boolean, strictMatch: ThreeState): V? {
     if (strictMatch != ThreeState.NO) {
-      @SuppressWarnings("unchecked")
-      @Nullable V result = (V)findExtensionByExactClass(aClass);
+      val result = findExtensionByExactClass(aClass) as V?
       if (result != null) {
-        return result;
+        return result
       }
       else if (strictMatch == ThreeState.YES) {
-        return null;
+        return null
       }
     }
 
-    T[] extensionCache = cachedExtensionsAsArray;
+    val extensionCache = cachedExtensionsAsArray
     if (extensionCache == null) {
-      for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
+      for (adapter in sortedAdapters) {
         // findExtension is called for a lot of extension points - do not fail if listeners were added (e.g., FacetTypeRegistryImpl)
         try {
-          if (aClass.isAssignableFrom(adapter.getImplementationClass(componentManager))) {
-            //noinspection unchecked
-            return (V)processAdapter(adapter);
+          if (aClass.isAssignableFrom(adapter.getImplementationClass<Any>(componentManager))) {
+            return processAdapter(adapter) as V?
           }
         }
-        catch (ClassNotFoundException e) {
-          componentManager.logError(e, adapter.pluginDescriptor.getPluginId());
+        catch (e: ClassNotFoundException) {
+          componentManager.logError(e, adapter.pluginDescriptor.pluginId)
         }
       }
     }
     else {
-      for (T extension : extensionCache) {
+      for (extension in extensionCache) {
         if (aClass.isInstance(extension)) {
-          //noinspection unchecked
-          return (V)extension;
+          return extension as V
         }
       }
     }
 
     if (isRequired) {
-      @NonNls String message = "cannot find extension implementation " + aClass + "(epName=" + getName() + ", extensionCount=" + size();
-      T[] cache = cachedExtensionsAsArray;
+      var message: @NonNls String = "cannot find extension implementation " + aClass + "(epName=" + name + ", extensionCount=" + size()
+      val cache = cachedExtensionsAsArray
       if (cache != null) {
-        message += ", cachedExtensions";
+        message += ", cachedExtensions"
       }
-      if (isInReadOnlyMode()) {
-        message += ", point in read-only mode";
+      if (isInReadOnlyMode) {
+        message += ", point in read-only mode"
       }
-      message += ")";
-      throw componentManager.createError(message, getPluginDescriptor().getPluginId());
+      message += ")"
+      throw componentManager.createError(message, getPluginDescriptor().pluginId)
     }
-    return null;
+    return null
   }
 
-  public final <V> @NotNull List<@NotNull T> findExtensions(@NotNull Class<V> aClass) {
-    T[] extensionCache = cachedExtensionsAsArray;
+  fun <V> findExtensions(aClass: Class<V>): List<T> {
+    val extensionCache = cachedExtensionsAsArray
     if (extensionCache == null) {
-      List<T> suitableInstances = new ArrayList<>();
-      for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
+      val suitableInstances: MutableList<T> = ArrayList()
+      for (adapter in sortedAdapters) {
         try {
           // this enables us to not trigger Class initialization for all extensions, but only for those instanceof V
-          if (aClass.isAssignableFrom(adapter.getImplementationClass(componentManager))) {
-            @Nullable T instance = processAdapter(adapter);
+          if (aClass.isAssignableFrom(adapter.getImplementationClass<Any>(componentManager))) {
+            val instance = processAdapter(adapter)
             if (instance != null) {
-              suitableInstances.add(instance);
+              suitableInstances.add(instance)
             }
           }
         }
-        catch (ClassNotFoundException e) {
-          componentManager.logError(e, adapter.pluginDescriptor.getPluginId());
+        catch (e: ClassNotFoundException) {
+          componentManager.logError(e, adapter.pluginDescriptor.pluginId)
         }
       }
-      return suitableInstances;
+      return suitableInstances
     }
     else {
-      List<T> result = new ArrayList<>();
-      for (T t : extensionCache) {
+      val result: MutableList<T> = ArrayList()
+      for (t in extensionCache) {
         if (aClass.isInstance(t)) {
-          result.add(t);
+          result.add(t)
         }
       }
-      return result;
+      return result
     }
   }
 
-  private @Nullable T findExtensionByExactClass(@NotNull Class<? extends T> aClass) {
-    T[] cachedExtensions = this.cachedExtensionsAsArray;
+  private fun findExtensionByExactClass(aClass: Class<out T>): T? {
+    val cachedExtensions = this.cachedExtensionsAsArray
     if (cachedExtensions == null) {
-      for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
-        Object classOrName = adapter.implementationClassOrName;
-        if (classOrName instanceof String ? classOrName.equals(aClass.getName()) : classOrName == aClass) {
-          return processAdapter(adapter);
+      for (adapter in sortedAdapters) {
+        val classOrName = adapter.implementationClassOrName
+        if (if (classOrName is String) classOrName == aClass.name else classOrName === aClass) {
+          return processAdapter(adapter)
         }
       }
     }
     else {
-      for (T extension : cachedExtensions) {
-        if (aClass == extension.getClass()) {
-          return extension;
+      for (extension in cachedExtensions) {
+        if (aClass == extension.javaClass) {
+          return extension
         }
       }
     }
 
-    return null;
+    return null
   }
 
-  private static final class ObjectComponentAdapter<T> extends ExtensionComponentAdapter {
-    private final @NotNull T componentInstance;
+  private class ObjectComponentAdapter<T>(@JvmField val componentInstance: T,
+                                          pluginDescriptor: PluginDescriptor,
+                                          loadingOrder: LoadingOrder) : ExtensionComponentAdapter(extension.javaClass.getName(),
+                                                                                                  pluginDescriptor, null, loadingOrder,
+                                                                                                  ImplementationClassResolver { `__`: ComponentManager?, `___`: ExtensionComponentAdapter? -> extension.javaClass }) {
+    val `isInstanceCreated$intellij_platform_extensions`: Boolean
+      get() = true
 
-    private ObjectComponentAdapter(@NotNull T extension,
-                                   @NotNull PluginDescriptor pluginDescriptor,
-                                   @NotNull LoadingOrder loadingOrder) {
-      super(extension.getClass().getName(), pluginDescriptor, null, loadingOrder, (__, ___) -> extension.getClass());
-
-      componentInstance = extension;
-    }
-
-    @Override
-    public boolean isInstanceCreated$intellij_platform_extensions() {
-      return true;
-    }
-
-    @Override
-    public @NotNull <I> I createInstance(@Nullable ComponentManager componentManager) {
-      //noinspection unchecked
-      return (I)componentInstance;
+    override fun <I> createInstance(componentManager: ComponentManager?): I {
+      return componentInstance as I
     }
   }
 
-  private synchronized boolean isInReadOnlyMode() {
-    return POINTS_IN_READONLY_MODE != null && POINTS_IN_READONLY_MODE.contains(this);
-  }
+  @get:Synchronized
+  private val isInReadOnlyMode: Boolean
+    get() = POINTS_IN_READONLY_MODE != null && POINTS_IN_READONLY_MODE!!.contains(this)
+}
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private static Runnable CHECK_CANCELED = EmptyRunnable.getInstance();
+// test-only
+// guarded by this
+private var POINTS_IN_READONLY_MODE: MutableSet<ExtensionPointImpl<*>>? = null
 
-  public static void setCheckCanceledAction(@NotNull Runnable checkCanceled) {
-    CHECK_CANCELED = () -> {
-      try {
-        checkCanceled.run();
-      }
-      catch (ProcessCanceledException e) {
-        // otherwise ExceptionInInitializerError happens and the class is screwed forever
-        if (!isInsideClassInitializer(e.getStackTrace())) {
-          throw e;
-        }
-      }
-    };
-  }
+private var CHECK_CANCELED: (() -> Unit)? = null
 
-  private static boolean isInsideClassInitializer(StackTraceElement @NotNull [] trace) {
-    for (StackTraceElement t : trace) {
-      //noinspection SpellCheckingInspection
-      if ("<clinit>".equals(t.getMethodName())) {
-        return true;
-      }
+private fun findInsertionIndexForAnyOrder(adapters: List<ExtensionComponentAdapter>): Int {
+  var index = adapters.size
+  while (index > 0) {
+    val lastAdapter = adapters.get(index - 1)
+    if (lastAdapter.order === LoadingOrder.LAST) {
+      index--
     }
-    return false;
+    else {
+      break
+    }
   }
+  return index
+}
+
+private fun checkThatClassloaderIsActive(adapter: ExtensionComponentAdapter): Boolean {
+  val classLoader = adapter.pluginDescriptor.pluginClassLoader
+  if (classLoader is PluginAwareClassLoader && classLoader.state != PluginAwareClassLoader.ACTIVE) {
+    LOG.warn("$adapter not loaded because classloader is being unloaded")
+    return false
+  }
+  return true
+}
+
+
+private fun isInsideClassInitializer(trace: Array<StackTraceElement>): Boolean {
+  return trace.any { "<clinit>" == it.methodName }
 }
