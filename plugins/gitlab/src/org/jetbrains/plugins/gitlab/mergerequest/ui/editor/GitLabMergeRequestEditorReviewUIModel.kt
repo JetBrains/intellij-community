@@ -4,13 +4,16 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.Range
+import com.intellij.diff.util.Side
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vcs.ex.DocumentTracker
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource
-import com.intellij.openapi.vcs.ex.LineStatusTrackerListener
+import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 import com.intellij.openapi.vcs.ex.LstRange
-import com.intellij.openapi.vcs.ex.SimpleLineStatusTracker
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -22,19 +25,18 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
  */
 internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   cs: CoroutineScope,
-  project: Project,
   private val fileVm: GitLabMergeRequestEditorReviewFileViewModel,
   document: Document
 ) : LineStatusMarkerRangesSource<LstRange> {
 
-  private val lst = SimpleLineStatusTracker(project, document)
-  private var lstInitialized = false
+  private val reviewHeadDocument = LineStatusTrackerBase.createVcsDocument(document)
+  private val documentTracker = DocumentTracker(reviewHeadDocument, document)
+  private var trackerInitialized = false
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO> = fileVm.avatarIconsProvider
 
-  private val postReviewRanges = MutableStateFlow<List<LstRange>>(emptyList())
+  private val postReviewRanges = MutableStateFlow<List<Range>>(emptyList())
 
-  private val reviewRanges = fileVm.changedRanges.map { LstRange(it.start2, it.end2, it.start1, it.end1) }
   private val _shiftedReviewRanges = MutableStateFlow<List<LstRange>>(emptyList())
   val shiftedReviewRanges: StateFlow<List<LstRange>> get() = _shiftedReviewRanges
 
@@ -42,30 +44,42 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   val nonCommentableRanges: StateFlow<List<LineRange>> get() = _nonCommentableRanges
 
   private fun updateRanges() {
-    if (!lstInitialized) return
-    val ranges = lst.getRanges() ?: return
-    postReviewRanges.value = ranges
-    _shiftedReviewRanges.value = ExcludingApproximateChangedRangesShifter.shift(reviewRanges, postReviewRanges.value)
-    _nonCommentableRanges.value = postReviewRanges.value.map {
-      LineRange(it.line1, it.line2)
+    if (!trackerInitialized) return
+    postReviewRanges.value = documentTracker.blocks.map { it.range }
+    _shiftedReviewRanges.value = ExcludingApproximateChangedRangesShifter
+      .shift(fileVm.changedRanges, postReviewRanges.value).map(Range::asLst)
+    _nonCommentableRanges.value = postReviewRanges.value.map(Range::getAfterLines)
+  }
+
+  private fun setReviewHeadContent(content: CharSequence) {
+    documentTracker.doFrozen(Side.LEFT) {
+      reviewHeadDocument.setReadOnly(false)
+      try {
+        CommandProcessor.getInstance().runUndoTransparentAction {
+          reviewHeadDocument.setText(content)
+        }
+      }
+      finally {
+        reviewHeadDocument.setReadOnly(true)
+      }
     }
+    trackerInitialized = true
   }
 
   init {
     cs.launch {
       val originalContent = fileVm.getOriginalContent()
-      lst.setBaseRevision(originalContent)
-      lstInitialized = true
+      setReviewHeadContent(originalContent)
       updateRanges()
     }
 
-    lst.addListener(object : LineStatusTrackerListener {
-      override fun onRangesChanged() {
+    documentTracker.addHandler(object : DocumentTracker.Handler {
+      override fun afterBulkRangeChange(isDirty: Boolean) {
         updateRanges()
       }
     })
     cs.awaitCancellationAndInvoke {
-      lst.release()
+      Disposer.dispose(documentTracker)
     }
   }
 
@@ -128,36 +142,39 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   }
 }
 
-private fun transferLineToAfter(ranges: List<LstRange>, line: Int): Int {
+private fun transferLineToAfter(ranges: List<Range>, line: Int): Int {
   if (ranges.isEmpty()) return line
   var result = line
   for (range in ranges) {
-    if (line in range.vcsLine1 until range.vcsLine2) {
-      return (range.line2 - 1).coerceAtLeast(0)
+    if (line in range.start1 until range.end1) {
+      return (range.end2 - 1).coerceAtLeast(0)
     }
 
-    if (range.vcsLine2 > line) return result
+    if (range.end1 > line) return result
 
-    val length1 = range.vcsLine2 - range.vcsLine1
-    val length2 = range.line2 - range.line1
+    val length1 = range.end1 - range.start1
+    val length2 = range.end2 - range.start2
     result += length2 - length1
   }
   return result
 }
 
-private fun transferLineFromAfter(ranges: List<LstRange>, line: Int, approximate: Boolean = false): Int? {
+private fun transferLineFromAfter(ranges: List<Range>, line: Int, approximate: Boolean = false): Int? {
   if (ranges.isEmpty()) return line
   var result = line
   for (range in ranges) {
-    if (line < range.line1) return result
+    if (line < range.start2) return result
 
-    if (line in range.line1 until range.line2) {
-      return if (approximate) range.vcsLine2 else null
+    if (line in range.start2 until range.end2) {
+      return if (approximate) range.end1 else null
     }
 
-    val length1 = range.vcsLine2 - range.vcsLine1
-    val length2 = range.line2 - range.line1
+    val length1 = range.end1 - range.start1
+    val length2 = range.end2 - range.start2
     result -= length2 - length1
   }
   return result
 }
+
+private fun Range.getAfterLines(): LineRange = LineRange(start2, end2)
+private fun Range.asLst(): LstRange = LstRange(start2, end2, start1, end1)

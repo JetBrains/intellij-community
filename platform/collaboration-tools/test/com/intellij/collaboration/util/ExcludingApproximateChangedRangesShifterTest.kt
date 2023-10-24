@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.util
 
-import com.intellij.openapi.vcs.ex.Range
+import com.intellij.diff.util.Range
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -14,8 +14,8 @@ class ExcludingApproximateChangedRangesShifterTest {
   @Test
   fun `test unchanged`() {
     val earlyBuilder: RangesCollector.() -> Unit = {
-      r(0, 0, 0, 5)
-      r(1, 5, 5, 10)
+      r(0, 5, 0, 0)
+      r(5, 10, 1, 5)
     }
     test(earlyBuilder, {}, earlyBuilder)
   }
@@ -23,8 +23,8 @@ class ExcludingApproximateChangedRangesShifterTest {
   @Test
   fun `test no early`() {
     test({ }, {
-      r(0, 0, 0, 5)
-      r(1, 5, 5, 10)
+      r(0, 5, 0, 0)
+      r(5, 10, 1, 5)
     }, { })
   }
 
@@ -35,7 +35,7 @@ class ExcludingApproximateChangedRangesShifterTest {
          }, {
            r(4, 7, 4, 7)
          }, {
-           r(5, 10, 7, 10)
+           r(7, 10, 5, 10)
          })
   }
 
@@ -46,7 +46,7 @@ class ExcludingApproximateChangedRangesShifterTest {
          }, {
            r(7, 12, 7, 12)
          }, {
-           r(5, 10, 5, 7)
+           r(5, 7, 5, 10)
          })
   }
 
@@ -65,10 +65,10 @@ class ExcludingApproximateChangedRangesShifterTest {
     test({
            r(5, 10, 5, 10)
          }, {
-           r(6, 8, 6, 6)
+           r(6, 6, 6, 8)
          }, {
-           r(5, 10, 5, 6)
-           r(5, 10, 6, 8)
+           r(5, 6, 5, 10)
+           r(6, 8, 5, 10)
          })
   }
 
@@ -78,11 +78,11 @@ class ExcludingApproximateChangedRangesShifterTest {
            r(5, 10, 5, 10)
            r(25, 30, 25, 30)
          }, {
-           r(6, 8, 6, 6)
+           r(6, 6, 6, 8)
          }, {
-           r(5, 10, 5, 6)
-           r(5, 10, 6, 8)
-           r(25, 30, 23, 28)
+           r(5, 6, 5, 10)
+           r(6, 8, 5, 10)
+           r(23, 28, 25, 30)
          })
   }
 
@@ -92,9 +92,9 @@ class ExcludingApproximateChangedRangesShifterTest {
            r(5, 10, 5, 10)
            r(25, 30, 25, 30)
          }, {
-           r(1, 12, 1, 1)
+           r(1, 1, 1, 12)
          }, {
-           r(25, 30, 14, 19)
+           r(14, 19, 25, 30)
          })
   }
 
@@ -115,37 +115,10 @@ class ExcludingApproximateChangedRangesShifterTest {
     val later = RangesCollector().apply {
       laterBuilder()
     }.ranges
-    val result = ExcludingApproximateChangedRangesShifter.shift(early, later).map { RangeWrapper(it) }
+    val result = ExcludingApproximateChangedRangesShifter.shift(early, later)
     val expectedResult = RangesCollector().apply {
       resultBuilder()
-    }.ranges.map { RangeWrapper(it) }
+    }.ranges
     assertEquals(expectedResult, result)
-  }
-
-  // for equals/hashCode
-  private class RangeWrapper(private val range: Range) {
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (javaClass != other?.javaClass) return false
-
-      other as RangeWrapper
-
-      if (range.line1 != other.range.line1) return false
-      if (range.line2 != other.range.line2) return false
-      if (range.vcsLine1 != other.range.vcsLine1) return false
-      if (range.vcsLine2 != other.range.vcsLine2) return false
-
-      return true
-    }
-
-    override fun hashCode(): Int {
-      var result = range.line1
-      result = 31 * result + range.line2
-      result = 31 * result + range.vcsLine1
-      result = 31 * result + range.vcsLine2
-      return result
-    }
-
-    override fun toString(): String = range.toString()
   }
 }
