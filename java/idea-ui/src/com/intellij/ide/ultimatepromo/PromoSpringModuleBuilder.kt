@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -20,6 +21,8 @@ private const val SPRING_NAME = "Spring"
 private const val SPRING_PLUGIN_ID = "com.intellij.spring"
 
 internal class PromoSpringModuleBuilder: ModuleBuilder(), PromoModuleBuilder {
+  override fun isAvailable(): Boolean = Registry.`is`("idea.ultimate.features.hints.enabled")
+
   override fun getModuleType(): ModuleType<*> = StdModuleTypes.JAVA
   override fun getWeight(): Int = JVM_WEIGHT
 

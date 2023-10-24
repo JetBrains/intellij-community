@@ -7,11 +7,16 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.ConfigurableWithId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
+import com.intellij.openapi.util.registry.Registry
 import javax.swing.Icon
 import javax.swing.JComponent
 
 internal class PromoDatabaseConfigurableProvider : ConfigurableProvider() {
-  override fun createConfigurable(): Configurable = PromoDatabaseConfigurable()
+  override fun createConfigurable(): Configurable? {
+    if (!Registry.`is`("idea.ultimate.features.hints.enabled")) return null
+
+    return PromoDatabaseConfigurable()
+  }
 }
 
 internal class PromoDatabaseConfigurable : ConfigurableWithId, Configurable.Promo {
