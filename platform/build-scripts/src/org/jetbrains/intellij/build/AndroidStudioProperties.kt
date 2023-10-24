@@ -46,10 +46,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
 
     private val EXCLUDED_PLUGINS = listOf(
       "intellij.settingsSync", // Not supported yet in Studio (b/267070185).
-      "intellij.android.design-plugin",
       "intellij.android.gradle.dsl",
-      "intellij.android.plugin",
-      "intellij.ant",
       "intellij.eclipse",
       "intellij.featuresTrainer",
       "intellij.gradle.analysis",
@@ -62,7 +59,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.platform.tracing.ide",
       "intellij.searchEverywhereMl",
       "intellij.statsCollector",
-      "intellij.xpath",
     )
   }
 
@@ -120,17 +116,14 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
 
     val unknownExcludedPlugins = EXCLUDED_PLUGINS - INHERITED_PLUGINS
     check(unknownExcludedPlugins.isEmpty()) { "AndroidStudioProperties.EXCLUDED_PLUGINS contains nonexistent plugins: $unknownExcludedPlugins" }
-    productLayout.bundledPluginModules.clear()
-    productLayout.bundledPluginModules.addAll(INHERITED_PLUGINS + EXTRA_PLUGINS - EXCLUDED_PLUGINS)
+    val bundledPlugins = INHERITED_PLUGINS + EXTRA_PLUGINS - EXCLUDED_PLUGINS.toSet()
+    productLayout.bundledPluginModules = bundledPlugins.toMutableList()
 
     productLayout.mainModules = listOf("intellij.idea.community.main")
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
 
-    val inheritedPluginLayouts = COMMUNITY_REPOSITORY_PLUGINS.removeAll {
-      // Remove plugin layouts that reference modules that do not exist in our fork.
-      it.mainModule in EXCLUDED_PLUGINS || it.mainModule == "intellij.python.community.plugin"
-    }
+    val inheritedPluginLayouts = COMMUNITY_REPOSITORY_PLUGINS.removeAll { it.mainModule !in bundledPlugins }
     productLayout.pluginLayouts = inheritedPluginLayouts.addAll(listOf(
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin(),
