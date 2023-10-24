@@ -4,6 +4,7 @@
     <module name="kotlin.code-insight.inspections-shared"/>
     <module name="kotlin.searching.k2"/>
     <module name="kotlin.highlighting.k2"/>
+    <module name="kotlin.refactorings.k2"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection
