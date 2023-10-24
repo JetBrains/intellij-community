@@ -1569,6 +1569,15 @@ public final class PluginManagerConfigurable
   static void shutdownOrRestartAppAfterInstall(@NotNull @NlsContexts.DialogTitle String title,
                                                @NotNull Function<? super String, @Nls String> message) {
     if (showRestartDialog(title, message) == Messages.YES) {
+      // TODO this function should
+      //  - schedule restart in invokeLater with ModalityState.nonModal();
+      //  - close settings dialog.
+      //  What happens:
+      //  - the settings dialog should be displayed in a service coroutine.
+      //  - restart awaits completion of all service coroutines.
+      //  - calling restart synchronously from this function prevents completion of the service coroutine.
+      //  => deadlock IDEA-335883.
+      //  IDEA-335883 is currently fixed by showing the dialog outside of the container scope.
       ApplicationManagerEx.getApplicationEx().restart(true);
     }
   }
