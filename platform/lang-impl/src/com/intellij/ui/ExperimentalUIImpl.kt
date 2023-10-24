@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
@@ -32,8 +31,6 @@ import com.intellij.platform.feedback.newUi.NewUIInfoService
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.UIDefaults
-import javax.swing.UIManager
 
 private val LOG: Logger
   get() = logger<ExperimentalUI>()
@@ -281,25 +278,12 @@ interface ExperimentalUIJetBrainsClientDelegate {
 }
 
 private fun patchUiDefaultsForNewUi() {
-  val defaults = UIManager.getDefaults()
-  if (defaults.getColor("EditorTabs.hoverInactiveBackground") == null) {
-    // avoid getting EditorColorsManager too early
-    setUIProperty("EditorTabs.hoverInactiveBackground", UIDefaults.LazyValue {
-      val editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme()
-      ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5)
-    }, defaults)
-  }
   if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.getBoolean("ide.experimental.ui.inter.font")) {
     if (UISettings.getInstance().overrideLafFonts) {
       //todo[kb] add RunOnce
       NotRoamableUiSettings.getInstance().overrideLafFonts = false
     }
   }
-}
-
-private fun setUIProperty(@Suppress("SameParameterValue") key: String, value: Any, defaults: UIDefaults) {
-  defaults.remove(key)
-  defaults.put(key, value)
 }
 
 internal class NewUiRegistryListener : RegistryValueListener {
