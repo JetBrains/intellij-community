@@ -823,6 +823,9 @@
       "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",
       "fromVCSTab.svg": "welcome/fromVCSTab.svg",
       "open.svg": "welcome/open.svg"
+    },
+    "ultimate": {
+      "lock.svg": "ultimate/lock.svg"
     }
   }
 }

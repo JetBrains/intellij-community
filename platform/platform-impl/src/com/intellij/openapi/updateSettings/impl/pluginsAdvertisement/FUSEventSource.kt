@@ -17,7 +17,7 @@ class PluginAdvertiserUsageCollector : CounterUsagesCollector() {
 
 private const val FUS_GROUP_ID = "plugins.advertiser"
 
-private val GROUP = EventLogGroup(FUS_GROUP_ID, 8)
+private val GROUP = EventLogGroup(FUS_GROUP_ID, 9)
 
 private val SOURCE_FIELD = EventFields.Enum(
   "source",
@@ -91,6 +91,7 @@ enum class FUSEventSource {
   PLUGINS_SUGGESTED_GROUP,
   ACTIONS,
   SETTINGS,
+  NEW_PROJECT_WIZARD,
 
   @Deprecated("Use PLUGINS_SEARCH instead")
   SEARCH;

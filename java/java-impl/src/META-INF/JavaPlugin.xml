@@ -2449,6 +2449,8 @@
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.compilation.InvalidCompilationStatistics"/>
     <notificationGroup id="Invalid Compilation Errors" displayType="STICKY_BALLOON" hideFromSettings="true" />
+
+    <iconMapper mappingFile="JavaUIIconsMapping.json"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

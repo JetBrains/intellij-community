@@ -701,6 +701,10 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon Web_20x20 = load("expui/toolwindow/web@20x20.svg", 1824952426, 2);
   }
 
+  public static final class Ultimate {
+    /** 16x16 */ public static final @NotNull Icon Lock = load("expui/ultimate/lock.svg", 26662807, 2);
+  }
+
   public static final class Vcs {
     /** 16x16 */ public static final @NotNull Icon BranchLabel = load("expui/vcs/branchLabel.svg", 2143717139, 2);
     /** 16x16 */ public static final @NotNull Icon Changelist = load("expui/vcs/changelist.svg", -1628126378, 2);
