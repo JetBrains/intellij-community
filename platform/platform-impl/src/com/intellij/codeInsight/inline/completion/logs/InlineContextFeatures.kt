@@ -5,17 +5,11 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
-@Service
-internal class InlineContextFeatures(val coroutineScope: CoroutineScope) {
+internal object InlineContextFeatures {
   fun capture(editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
     val logicalPosition = editor.offsetToLogicalPosition(offset)
     val lineNumber = logicalPosition.line
@@ -72,47 +66,34 @@ internal class InlineContextFeatures(val coroutineScope: CoroutineScope) {
 
   private fun Document.getLineText(line: Int) = getText(TextRange(getLineStartOffset(line), getLineEndOffset(line)))
 
-  companion object {
-    fun capture(editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
-      val instance = getInstance()
-      instance.coroutineScope.launch {
-        readAction {
-          instance.capture(editor, offset, contextFeatures)
-        }
-      }
-    }
+  fun getEventPair(triggerFeatures: List<EventPair<*>>) = CONTEXT_FEATURES.with(ObjectEventData(triggerFeatures))
 
-    private fun getInstance(): InlineContextFeatures = service()
+  private val LINE_NUMBER = EventFields.Int("line_number")
+  private val COLUMN_NUMBER = EventFields.Int("column_number")
+  private val SYMBOLS_IN_LINE_BEFORE_CARET = EventFields.Int("symbols_in_line_before_caret")
+  private val SYMBOLS_IN_LINE_AFTER_CARET = EventFields.Int("symbols_in_line_after_caret")
+  private val IS_WHITE_SPACE_BEFORE_CARET = EventFields.Boolean("is_white_space_before_caret")
+  private val IS_WHITE_SPACE_AFTER_CARET = EventFields.Boolean("is_white_space_after_caret")
+  private val NON_SPACE_SYMBOL_BEFORE_CARET = EventFields.Enum("non_space_symbol_before_caret", CharCategory::class.java)
+  private val NON_SPACE_SYMBOL_AFTER_CARET = EventFields.Enum("non_space_symbol_after_caret", CharCategory::class.java)
+  private val PREVIOUS_EMPTY_LINES_COUNT = EventFields.Int("previous_empty_lines_count")
+  private val PREVIOUS_NON_EMPTY_LINE_LENGTH = EventFields.Int("previous_non_empty_line_length")
+  private val FOLLOWING_EMPTY_LINES_COUNT = EventFields.Int("following_empty_lines_count")
+  private val FOLLOWING_NON_EMPTY_LINE_LENGTH = EventFields.Int("following_non_empty_line_length")
 
-    fun getEventPair(triggerFeatures: List<EventPair<*>>) = CONTEXT_FEATURES.with(ObjectEventData(triggerFeatures))
-
-    private val LINE_NUMBER = EventFields.Int("line_number")
-    private val COLUMN_NUMBER = EventFields.Int("column_number")
-    private val SYMBOLS_IN_LINE_BEFORE_CARET = EventFields.Int("symbols_in_line_before_caret")
-    private val SYMBOLS_IN_LINE_AFTER_CARET = EventFields.Int("symbols_in_line_after_caret")
-    private val IS_WHITE_SPACE_BEFORE_CARET = EventFields.Boolean("is_white_space_before_caret")
-    private val IS_WHITE_SPACE_AFTER_CARET = EventFields.Boolean("is_white_space_after_caret")
-    private val NON_SPACE_SYMBOL_BEFORE_CARET = EventFields.Enum("non_space_symbol_before_caret", CharCategory::class.java)
-    private val NON_SPACE_SYMBOL_AFTER_CARET = EventFields.Enum("non_space_symbol_after_caret", CharCategory::class.java)
-    private val PREVIOUS_EMPTY_LINES_COUNT = EventFields.Int("previous_empty_lines_count")
-    private val PREVIOUS_NON_EMPTY_LINE_LENGTH = EventFields.Int("previous_non_empty_line_length")
-    private val FOLLOWING_EMPTY_LINES_COUNT = EventFields.Int("following_empty_lines_count")
-    private val FOLLOWING_NON_EMPTY_LINE_LENGTH = EventFields.Int("following_non_empty_line_length")
-
-    val CONTEXT_FEATURES = ObjectEventField(
-      "context_features",
-      LINE_NUMBER,
-      COLUMN_NUMBER,
-      SYMBOLS_IN_LINE_BEFORE_CARET,
-      SYMBOLS_IN_LINE_AFTER_CARET,
-      IS_WHITE_SPACE_BEFORE_CARET,
-      IS_WHITE_SPACE_AFTER_CARET,
-      NON_SPACE_SYMBOL_BEFORE_CARET,
-      NON_SPACE_SYMBOL_AFTER_CARET,
-      PREVIOUS_EMPTY_LINES_COUNT,
-      PREVIOUS_NON_EMPTY_LINE_LENGTH,
-      FOLLOWING_EMPTY_LINES_COUNT,
-      FOLLOWING_NON_EMPTY_LINE_LENGTH
-    )
-  }
+  val CONTEXT_FEATURES = ObjectEventField(
+    "context_features",
+    LINE_NUMBER,
+    COLUMN_NUMBER,
+    SYMBOLS_IN_LINE_BEFORE_CARET,
+    SYMBOLS_IN_LINE_AFTER_CARET,
+    IS_WHITE_SPACE_BEFORE_CARET,
+    IS_WHITE_SPACE_AFTER_CARET,
+    NON_SPACE_SYMBOL_BEFORE_CARET,
+    NON_SPACE_SYMBOL_AFTER_CARET,
+    PREVIOUS_EMPTY_LINES_COUNT,
+    PREVIOUS_NON_EMPTY_LINE_LENGTH,
+    FOLLOWING_EMPTY_LINES_COUNT,
+    FOLLOWING_NON_EMPTY_LINE_LENGTH
+  )
 }
