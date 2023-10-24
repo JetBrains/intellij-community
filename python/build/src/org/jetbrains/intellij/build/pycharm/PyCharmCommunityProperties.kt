@@ -27,7 +27,6 @@ class PyCharmCommunityProperties(communityHome: Path) : PyCharmPropertiesBase() 
 
     productLayout.mainModules = listOf("intellij.pycharm.community.main")
     productLayout.productApiModules = listOf("intellij.xml.dom")
-    productLayout.compatiblePluginsToIgnore = productLayout.compatiblePluginsToIgnore.add("intellij.evaluationPlugin")
     productLayout.productImplementationModules = listOf(
       "intellij.xml.dom.impl",
       "intellij.platform.main",
