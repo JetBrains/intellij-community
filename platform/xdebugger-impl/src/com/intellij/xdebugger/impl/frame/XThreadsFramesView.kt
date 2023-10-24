@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
+import com.intellij.ide.OccurenceNavigator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -118,12 +119,18 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     myThreadsContainer = ThreadsContainer(myThreadsList, null, disposable)
     myPauseDisposables.terminateCurrent()
 
-    mySplitter = NonProportionalOnePixelSplitter(false, splitterProportionKey, splitterProportionDefaultValue, this, project).apply {
-      firstComponent = myThreadsList.withSpeedSearch().toScrollPane().apply {
-        minimumSize = Dimension(JBUI.scale(26), 0)
-      }
-      secondComponent = myFramesList.withSpeedSearch().toScrollPane()
+    val splitter = object : NonProportionalOnePixelSplitter(
+      false,
+      splitterProportionKey,
+      splitterProportionDefaultValue,
+      this@XThreadsFramesView, project), OccurenceNavigator by myFramesList {}
+
+    splitter.firstComponent = myThreadsList.withSpeedSearch().toScrollPane().apply {
+      minimumSize = Dimension(JBUI.scale(26), 0)
     }
+    splitter.secondComponent = myFramesList.withSpeedSearch().toScrollPane()
+
+    mySplitter = splitter
 
     mainPanel.add(mySplitter, BorderLayout.CENTER)
 
