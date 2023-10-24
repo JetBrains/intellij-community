@@ -24,6 +24,8 @@ abstract class AbstractKotlinSteppingTest : KotlinDescriptorTestCaseWithStepping
     protected fun doSmartStepIntoTest(path: String) = doTest(path, Category.SmartStepInto)
     protected fun doCustomTest(path: String) = doTest(path, Category.Custom)
 
+    override fun useIrBackend(): Boolean = false
+
     override fun setUp() {
         super.setUp()
         atDebuggerTearDown { category = null }

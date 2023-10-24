@@ -173,7 +173,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
 
     fun getTestDataPath(): String = getTestsRoot(this::class.java)
 
-    open fun useIrBackend() = false
+    abstract fun useIrBackend(): Boolean
 
     enum class FragmentCompilerBackend {
         JVM,

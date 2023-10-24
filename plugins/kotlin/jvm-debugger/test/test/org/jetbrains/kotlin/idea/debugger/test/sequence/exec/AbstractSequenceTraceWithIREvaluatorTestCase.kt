@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.debugger.sequence.lib.sequence.KotlinSequenceSu
 
 abstract class AbstractSequenceTraceWithIREvaluatorTestCase : KotlinTraceTestCase() {
     override fun fragmentCompilerBackend() = FragmentCompilerBackend.JVM_IR
+    override fun useIrBackend(): Boolean = false
 
     override val librarySupportProvider: LibrarySupportProvider = KotlinSequenceSupportProvider()
 }
