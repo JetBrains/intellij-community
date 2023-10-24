@@ -45,6 +45,10 @@ sealed class GtwToClientMessage {
    */
   @Serializable
   data class GatewayCapabilities(val clientSelfRestartAware: Boolean): GtwToClientMessage()
+
+  /** @since 2023.3 */
+  @Serializable
+  data class NetworkLatency(val latency: Int) : GtwToClientMessage()
 }
 
 
