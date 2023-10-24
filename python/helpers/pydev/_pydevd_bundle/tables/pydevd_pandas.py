@@ -121,7 +121,7 @@ class ColumnVisualisationType:
 class ColumnVisualisationUtils:
     NUM_BINS = 5
     MAX_UNIQUE_VALUES = 3
-    UNIQUE_VALUES_PERCENT = 70
+    UNIQUE_VALUES_PERCENT = 60
 
     TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR = '__pydev_table_occurrences_count_next_column__'
     TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR = '__pydev_table_occurrences_count_next_value__'
