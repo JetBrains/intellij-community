@@ -19,8 +19,8 @@ interface GitTelemetrySpan : VcsTelemetrySpan {
   }
 
   enum class Log : GitTelemetrySpan {
-    LoadingDetails {
-      override fun getName() = "git-loading-details"
+    LoadingFullCommitDetails {
+      override fun getName() = "git-loading-full-commit-details"
     },
 
     LoadingCommitMetadata {
@@ -45,8 +45,8 @@ interface GitTelemetrySpan : VcsTelemetrySpan {
       override fun getName() = "git-log-loading-commits-on-tagged-branch"
     },
 
-    ReadBranches {
-      override fun getName() = "git-log-read-branches"
+    ReadingBranches {
+      override fun getName() = "git-log-reading-branches"
     }
   }
 }

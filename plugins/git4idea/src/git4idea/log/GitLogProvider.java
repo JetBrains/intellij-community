@@ -333,7 +333,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   }
 
   private @NotNull Set<VcsRef> readBranches(@NotNull GitRepository repository) {
-    return computeWithSpan(myTracer, ReadBranches.getName(), span -> {
+    return computeWithSpan(myTracer, ReadingBranches.getName(), span -> {
       span.setAttribute("rootName", repository.getRoot().getName());
       VirtualFile root = repository.getRoot();
       repository.update();
