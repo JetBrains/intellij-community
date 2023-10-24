@@ -44,6 +44,7 @@ internal class PromoKubernetesConfigurableProvider : UltimateConfigurableProvide
 internal class PromoProfilerConfigurableProvider : UltimateConfigurableProvider(PromoProfilerConfigurable::class)
 internal class PromoJSConfigurableProvider : UltimateConfigurableProvider(PromoJSConfigurable::class)
 internal class PromoTSConfigurableProvider : UltimateConfigurableProvider(PromoTSConfigurable::class)
+internal class PromoSwaggerConfigurableProvider : UltimateConfigurableProvider(PromoSwaggerConfigurable::class)
 
 internal class PromoDatabaseConfigurable : UltimatePromoConfigurable() {
   override fun getId(): String = "promo.database"
@@ -133,12 +134,33 @@ internal class PromoTSConfigurable : UltimatePromoConfigurable() {
   }
 
   override fun createComponent(): JComponent {
+    @Suppress("DialogTitleCapitalization")
     return featurePage(
       FeaturePromoBundle.message("feature.javascript.description.html"),
       listOf(
         PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.javascript.code")),
         PromoFeatureListItem(AllIcons.Actions.SuggestedRefactoringBulb, FeaturePromoBundle.message("feature.javascript.refactor")),
         PromoFeatureListItem(AllIcons.FileTypes.UiForm, FeaturePromoBundle.message("feature.javascript.frameworks"))
+      ),
+      "JavaScript"
+    )
+  }
+}
+
+internal class PromoSwaggerConfigurable : UltimatePromoConfigurable() {
+  override fun getId(): String = "promo.swagger"
+
+  override fun getDisplayName(): String {
+    return FeaturePromoBundle.message("promo.configurable.swagger")
+  }
+
+  override fun createComponent(): JComponent {
+    return featurePage(
+      FeaturePromoBundle.message("feature.swagger.description.html"),
+      listOf(
+        PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.swagger.code")),
+        PromoFeatureListItem(AllIcons.FileTypes.UiForm, FeaturePromoBundle.message("feature.swagger.preview")),
+        PromoFeatureListItem(AllIcons.Actions.RunAll, FeaturePromoBundle.message("feature.swagger.httpclient"))
       ),
       "JavaScript"
     )
