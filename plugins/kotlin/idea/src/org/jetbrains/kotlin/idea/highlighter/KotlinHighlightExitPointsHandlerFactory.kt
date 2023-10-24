@@ -108,7 +108,8 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
                     }
 
                     val bindingContext = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL)
-                    if (bindingContext == BindingContext.EMPTY || !expression.isUsedAsResultOfLambda(bindingContext)) {
+                    // Android Studio (b/306235345): this hotfix can be dropped when we merge commit 3b27581ba3 from IJ 233.
+                    if (bindingContext == BindingContext.EMPTY || bindingContext[BindingContext.USED_AS_RESULT_OF_LAMBDA, expression] != true) {
                         return false
                     }
 
