@@ -12,16 +12,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
-import com.intellij.openapi.extensions.LoadingOrder.Companion.sort
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.ArrayUtil
-import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.ContainerUtil
-import kotlinx.collections.immutable.persistentHashMapOf
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
+import com.intellij.util.containers.toArray
+import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -29,7 +24,9 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.*
+import java.util.function.BiPredicate
+import java.util.function.Predicate
+import java.util.function.Supplier
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
 import kotlin.concurrent.Volatile
@@ -45,7 +42,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
                                                           private val isDynamic: Boolean) : ExtensionPoint<T>, Iterable<T> {
   // immutable list, never modified in-place, only swapped atomically
   @Volatile
-  private var cachedExtensions: List<T>? = null
+  private var cachedExtensions: PersistentList<T>? = null
 
   // Since JDK 9, Arrays.ArrayList.toArray() returns {@code Object[]} instead of {@code T[]}
   // (https://bugs.openjdk.org/browse/JDK-6260652), so we cannot use it anymore.
@@ -55,7 +52,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
 
   // guarded by this
   @Volatile
-  private var adapters = emptyList<ExtensionComponentAdapter>()
+  private var adapters = persistentListOf<ExtensionComponentAdapter>()
 
   @Volatile
   private var adaptersAreSorted = true
@@ -141,9 +138,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
             LOG.error("Extension to be removed not found: ${adapter.instance}")
           }
 
-          val list = ArrayList(adapters)
-          list.removeAt(index)
-          adapters = list
+          adapters = adapters.removeAt(index)
           clearCache()
           notifyListeners(isRemoved = true, adapters = persistentListOf(adapter), listeners = listeners)
         }
@@ -175,37 +170,30 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
 
   @Synchronized
   private fun doRegisterExtensions(extensions: List<T>): List<ExtensionComponentAdapter> {
-    val newAdapters = ArrayList<ExtensionComponentAdapter>(extensions.size)
-    for (extension in extensions) {
-      newAdapters.add(ObjectComponentAdapter(instance = extension,
-                                             pluginDescriptor = getPluginDescriptor(),
-                                             loadingOrder = LoadingOrder.ANY))
+    val newAdapters = extensions.map {
+      ObjectComponentAdapter(instance = it,
+                             pluginDescriptor = getPluginDescriptor(),
+                             loadingOrder = LoadingOrder.ANY)
     }
 
-    if (adapters === emptyList<ExtensionComponentAdapter>()) {
-      adapters = newAdapters
-    }
-    else {
-      val list = ArrayList<ExtensionComponentAdapter>(adapters.size + newAdapters.size)
-      list.addAll(adapters)
-      list.addAll(findInsertionIndexForAnyOrder(adapters), newAdapters)
-      adapters = list
-    }
+    adapters = adapters.addAll(newAdapters)
     clearCache()
     return newAdapters
   }
 
   private fun checkExtensionType(extension: T, extensionClass: Class<T>, adapter: ExtensionComponentAdapter?) {
-    if (!extensionClass.isInstance(extension)) {
-      var message: @NonNls String = "Extension ${extension.javaClass.getName()} does not implement $extensionClass"
-      if (adapter == null) {
-        throw RuntimeException(message)
-      }
-      else {
-        message += " (adapter=$adapter)"
-        throw componentManager.createError(message, null, adapter.pluginDescriptor.pluginId,
-                                           persistentHashMapOf("threadDump" to ThreadDumper.dumpThreadsToString()))
-      }
+    if (extensionClass.isInstance(extension)) {
+      return
+    }
+
+    var message: @NonNls String = "Extension ${extension.javaClass.getName()} does not implement $extensionClass"
+    if (adapter == null) {
+      throw RuntimeException(message)
+    }
+    else {
+      message += " (adapter=$adapter)"
+      throw componentManager.createError(message, null, adapter.pluginDescriptor.pluginId,
+                                         persistentHashMapOf("threadDump" to ThreadDumper.dumpThreadsToString()))
     }
   }
 
@@ -215,10 +203,9 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
       synchronized(this) {
         result = cachedExtensions
         if (result == null) {
-          val array = processAdapters()
-          cachedExtensionsAsArray = array
-          result = if (array.isEmpty()) emptyList() else ContainerUtil.immutableList(*array)
+          result = processAdapters()
           cachedExtensions = result
+          cachedExtensionsAsArray = null
         }
       }
     }
@@ -231,13 +218,14 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
       synchronized(this) {
         array = cachedExtensionsAsArray
         if (array == null) {
-          array = processAdapters()
+          val list = extensionList
+          @Suppress("UNCHECKED_CAST")
+          array = list.toArray(java.lang.reflect.Array.newInstance(getExtensionClass(), list.size) as Array<T>)
           cachedExtensionsAsArray = array
-          cachedExtensions = if (array!!.size == 0) emptyList<T>() else ContainerUtil.immutableList<T>(*array!!)
         }
       }
     }
-    return if (array!!.size == 0) array!! else array!!.clone()
+    return array!!
   }
 
   /**
@@ -328,17 +316,16 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
         if (adaptersAreSorted) {
           return adapters
         }
+
         if (adapters.size > 1) {
-          val list = ArrayList(adapters)
-          sort(list)
-          adapters = list
+          adapters = adapters.mutate { LoadingOrder.sortByLoadingOrder(it) }
         }
         adaptersAreSorted = true
       }
       return adapters
     }
 
-  private fun processAdapters(): Array<T> {
+  private fun processAdapters(): PersistentList<T> {
     assertNotReadOnlyMode()
 
     // check before to avoid any "restore" work if already canceled
@@ -349,28 +336,24 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
     val adapters = sortedAdapters
     val totalSize = adapters.size
     val extensionClass = getExtensionClass()
-    var result = ArrayUtil.newArray(extensionClass, totalSize)
     if (totalSize == 0) {
-      return result
+      return persistentListOf()
     }
 
-    val duplicates: MutableSet<T>? = if (this is BeanExtensionPoint<*>) null else HashSet(totalSize)
-    val listeners = this.listeners
-    var extensionIndex = 0
-    for (i in adapters.indices) {
-      val extension = processAdapter(adapter = adapters[i],
-                                     listeners = listeners,
-                                     result = result,
-                                     duplicates = duplicates,
-                                     extensionClassForCheck = extensionClass,
-                                     adapters = adapters)
-      if (extension != null) {
-        result[extensionIndex++] = extension
+    val duplicates = if (this is BeanExtensionPoint<*>) null else Collections.newSetFromMap<T>(IdentityHashMap(totalSize))
+    val listeners = listeners
+    val result = persistentListOf<T>().mutate { result ->
+      for (adapter in adapters) {
+        val extension = processAdapter(adapter = adapter,
+                                       listeners = listeners,
+                                       result = result,
+                                       duplicates = duplicates,
+                                       extensionClassForCheck = extensionClass,
+                                       adapters = adapters)
+        if (extension != null) {
+          result.add(extension)
+        }
       }
-    }
-
-    if (extensionIndex != result.size) {
-      result = result.copyOf(extensionIndex)
     }
 
     // do not count ProcessCanceledException as a valid action to measure (later special category can be introduced if needed)
@@ -405,7 +388,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
 
   private fun processAdapter(adapter: ExtensionComponentAdapter,
                              listeners: List<ExtensionPointListener<T>>?,
-                             result: Array<T>?,
+                             result: List<T>?,
                              duplicates: MutableSet<T>?,
                              extensionClassForCheck: Class<T>,
                              adapters: List<ExtensionComponentAdapter>): T? {
@@ -435,7 +418,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
   prev extension:  $duplicate;
   adapter:         $adapter;
   extension class: $extensionClassForCheck;
-  result:          ${result!!.joinToString()};
+  result:          $result;
   adapters:        $adapters"""
         )
       }
@@ -604,33 +587,27 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
   }
 
   /**
-   * Unregisters extensions for which the specified predicate returns false and collects the runnables for listener invocation into the given list
-   * so that listeners can be called later.
+   * Unregisters extensions for which the specified predicate returns false
+   * and collects the runnables for listener invocation into the given list so that listeners can be called later.
    */
   @Synchronized
   fun unregisterExtensions(stopAfterFirstMatch: Boolean,
-                           priorityListenerCallbacks: MutableList<in Runnable>,
-                           listenerCallbacks: MutableList<in Runnable>,
+                           priorityListenerCallbacks: MutableList<Runnable>,
+                           listenerCallbacks: MutableList<Runnable>,
                            extensionToKeepFilter: Predicate<in ExtensionComponentAdapter>): Boolean {
     val listeners = this.listeners
-    var removedAdapters: MutableList<ExtensionComponentAdapter>? = null
-    var adapters = this.adapters
+    var removedAdapters = persistentListOf<ExtensionComponentAdapter>()
+    var adapters = adapters
     for (i in adapters.indices.reversed()) {
       val adapter = adapters[i]
       if (extensionToKeepFilter.test(adapter)) {
         continue
       }
 
-      if (adapters === this.adapters) {
-        adapters = ArrayList(adapters)
-      }
-      adapters.removeAt(i)
+      adapters = adapters.removeAt(i)
 
       if (!listeners.isEmpty()) {
-        if (removedAdapters == null) {
-          removedAdapters = ArrayList()
-        }
-        removedAdapters.add(adapter)
+        removedAdapters = removedAdapters.add(adapter)
       }
 
       if (stopAfterFirstMatch) {
@@ -645,36 +622,18 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
     clearCache()
     this.adapters = adapters
 
-    if (removedAdapters == null) {
+    if (removedAdapters.isEmpty()) {
       return true
     }
 
-    var priorityListeners: MutableList<ExtensionPointListener<T>> = SmartList()
-    for (t in listeners) {
-      if (t is ExtensionPointPriorityListener) {
-        priorityListeners.add(t)
-      }
-    }
-    priorityListeners = Collections.unmodifiableList(priorityListeners)
+    val priorityListeners = listeners.filter { it is ExtensionPointPriorityListener }
+    val regularListeners = listeners.filter { it !is ExtensionPointPriorityListener }
 
-    var regularListeners: MutableList<ExtensionPointListener<T>> = ArrayList()
-    for (t in listeners) {
-      if (t !is ExtensionPointPriorityListener) {
-        regularListeners.add(t)
-      }
-    }
-    regularListeners = Collections.unmodifiableList(regularListeners)
-
-    val finalRemovedAdapters: List<ExtensionComponentAdapter> = removedAdapters
     if (!priorityListeners.isEmpty()) {
-      val finalPriorityListeners: List<ExtensionPointListener<T>> = priorityListeners
-      priorityListenerCallbacks.add(Runnable { notifyListeners(true, finalRemovedAdapters, finalPriorityListeners) }
-      )
+      priorityListenerCallbacks.add { notifyListeners(isRemoved = true, adapters = removedAdapters, listeners = priorityListeners) }
     }
     if (!regularListeners.isEmpty()) {
-      val finalRegularListeners: List<ExtensionPointListener<T>> = regularListeners
-      listenerCallbacks.add(Runnable { notifyListeners(true, finalRemovedAdapters, finalRegularListeners) }
-      )
+      listenerCallbacks.add { notifyListeners(isRemoved = true, adapters = removedAdapters, listeners = regularListeners) }
     }
     return true
   }
@@ -706,7 +665,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
           }
 
           try {
-            val extension = adapter.createInstance<T?>(componentManager)
+            val extension = adapter.createInstance<T>(componentManager)
             if (extension != null) {
               if (isRemoved) {
                 listener.extensionRemoved(extension, adapter.pluginDescriptor)
@@ -777,7 +736,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
   @Synchronized
   fun reset() {
     val adapters = this.adapters
-    this.adapters = emptyList()
+    this.adapters = persistentListOf()
     // clear cache before notifying listeners to ensure that listeners don't get outdated data
     clearCache()
     if (!adapters.isEmpty() && !listeners.isEmpty()) {
@@ -803,17 +762,12 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
     return extensionClass
   }
 
-  override fun toString(): String {
-    return name
-  }
+  override fun toString() = name
 
   // private, internal only for tests
   @Synchronized
   fun addExtensionAdapter(adapter: ExtensionComponentAdapter) {
-    val list: MutableList<ExtensionComponentAdapter> = ArrayList(adapters.size + 1)
-    list.addAll(adapters)
-    list.add(adapter)
-    adapters = list
+    adapters = adapters.add(adapter)
     clearCache()
   }
 
@@ -844,26 +798,20 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
 
   /**
    * [.clearCache] is not called.
-   * `myAdapters` is modified directly without copying - method must be called only during start-up.
+   * `adapters` is modified directly without copying - method must be called only during start-up.
    */
   @Synchronized
   fun registerExtensions(extensionElements: List<ExtensionDescriptor>,
                          pluginDescriptor: PluginDescriptor,
                          listenerCallbacks: MutableList<in Runnable?>?) {
-    var adapters = this.adapters
-    if (adapters === emptyList<ExtensionComponentAdapter>()) {
-      adapters = ArrayList(extensionElements.size)
-      this.adapters = adapters
-      adaptersAreSorted = false
-    }
-    else {
-      (adapters as ArrayList<ExtensionComponentAdapter>).ensureCapacity(adapters.size + extensionElements.size)
-    }
+    adaptersAreSorted = false
 
     val oldSize = adapters.size
     for (extensionElement in extensionElements) {
       if (extensionElement.os == null || componentManager.isSuitableForOs(extensionElement.os)) {
-        adapters.add(createAdapter(extensionElement, pluginDescriptor, componentManager))
+        adapters = adapters.add(createAdapter(extensionElement = extensionElement,
+                                              pluginDescriptor = pluginDescriptor,
+                                              componentManager = componentManager))
       }
     }
     val newSize = adapters.size
@@ -876,24 +824,24 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
 
     var addedAdapters = emptyList<ExtensionComponentAdapter>()
     for (listener in listeners) {
-      if (listener !is ExtensionPointAdapter<*>) {
-        // must be reported in order
-        val newlyAddedUnsortedList = adapters.subList(oldSize, newSize)
-        val newlyAddedSet = Collections.newSetFromMap(
-          IdentityHashMap<ExtensionComponentAdapter, Boolean>(newlyAddedUnsortedList.size))
-        newlyAddedSet.addAll(newlyAddedUnsortedList)
-        addedAdapters = ArrayList(newlyAddedSet.size)
-        for (adapter in sortedAdapters) {
-          if (newlyAddedSet.contains(adapter)) {
-            addedAdapters.add(adapter)
-          }
-        }
-        break
+      if (listener is ExtensionPointAdapter<*>) {
+        continue
       }
+
+      // must be reported in order
+      val newlyAddedUnsortedList = adapters.subList(oldSize, newSize)
+      val newlyAddedSet = Collections.newSetFromMap<ExtensionComponentAdapter>(IdentityHashMap(newlyAddedUnsortedList.size))
+      newlyAddedSet.addAll(newlyAddedUnsortedList)
+      addedAdapters = ArrayList(newlyAddedSet.size)
+      for (adapter in sortedAdapters) {
+        if (newlyAddedSet.contains(adapter)) {
+          addedAdapters.add(adapter)
+        }
+      }
+      break
     }
 
-    val finalAddedAdapters = addedAdapters
-    listenerCallbacks.add(Runnable { notifyListeners(false, finalAddedAdapters, listeners) })
+    listenerCallbacks.add { notifyListeners(isRemoved = false, adapters = addedAdapters, listeners = listeners) }
   }
 
   @TestOnly
@@ -906,11 +854,12 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
     }
   }
 
-  fun <V : T?> findExtension(aClass: Class<V>, isRequired: Boolean, strictMatch: ThreeState): V? {
+  fun <V : T> findExtension(aClass: Class<V>, isRequired: Boolean, strictMatch: ThreeState): V? {
     if (strictMatch != ThreeState.NO) {
-      val result = findExtensionByExactClass(aClass) as V?
+      val result = findExtensionByExactClass(aClass)
       if (result != null) {
-        return result
+        @Suppress("UNCHECKED_CAST")
+        return result as V
       }
       else if (strictMatch == ThreeState.YES) {
         return null
@@ -923,6 +872,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
         // findExtension is called for a lot of extension points - do not fail if listeners were added (e.g., FacetTypeRegistryImpl)
         try {
           if (aClass.isAssignableFrom(adapter.getImplementationClass<Any>(componentManager))) {
+            @Suppress("UNCHECKED_CAST")
             return processAdapter(adapter) as V?
           }
         }
@@ -934,6 +884,7 @@ abstract class ExtensionPointImpl<T : Any> internal constructor(val name: String
     else {
       for (extension in extensionCache) {
         if (aClass.isInstance(extension)) {
+          @Suppress("UNCHECKED_CAST")
           return extension as V
         }
       }
