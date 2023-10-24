@@ -11,18 +11,10 @@ import org.jetbrains.annotations.Nullable;
 public abstract class LocalHistory {
   public static final Object VFS_EVENT_REQUESTOR = new Object();
 
-  private static final class LocalHistoryHolder {
-    static final LocalHistory ourInstance = getLocalHistoryInstance();
-
-    private static LocalHistory getLocalHistoryInstance() {
-      LocalHistory service = ApplicationManager.getApplication().getService(LocalHistory.class);
-      return service != null ? service : new Dummy();
-    }
-  }
-
   @NotNull
   public static LocalHistory getInstance() {
-    return LocalHistoryHolder.ourInstance;
+    LocalHistory service = ApplicationManager.getApplication().getService(LocalHistory.class);
+    return service != null ? service : new Dummy();
   }
 
   public abstract LocalHistoryAction startAction(@Nullable @NlsContexts.Label String name);
