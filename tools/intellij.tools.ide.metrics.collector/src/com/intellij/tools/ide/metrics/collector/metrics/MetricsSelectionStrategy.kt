@@ -21,14 +21,14 @@ enum class MetricsSelectionStrategy {
       LATEST -> metrics.maxBy { it.epochNanos }
       MINIMUM -> metrics.minBy { it.value }
       MAXIMUM -> metrics.maxBy { it.value }
-      SUM -> ImmutableLongPointData.create(selectMetric(metrics).startEpochNanos,
-                                           selectMetric(metrics).epochNanos,
+      SUM -> ImmutableLongPointData.create(EARLIEST.selectMetric(metrics).startEpochNanos,
+                                           LATEST.selectMetric(metrics).epochNanos,
                                            Attributes.empty(),
                                            metrics.sumOf { it.value })
-      AVERAGE -> ImmutableLongPointData.create(selectMetric(metrics).startEpochNanos,
-                                               selectMetric(metrics).epochNanos,
+      AVERAGE -> ImmutableLongPointData.create(EARLIEST.selectMetric(metrics).startEpochNanos,
+                                               LATEST.selectMetric(metrics).epochNanos,
                                                Attributes.empty(),
-                                               selectMetric(metrics).value / metrics.size)
+                                               SUM.selectMetric(metrics).value / metrics.size)
     }
   }
 }
