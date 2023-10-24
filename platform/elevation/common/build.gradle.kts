@@ -3,7 +3,7 @@ import com.google.protobuf.gradle.*
 
 val grpcVersion = "1.57.2"
 val grpcKotlinVersion = "0.2.0" // CURRENT_GRPC_KOTLIN_VERSION
-val protobufVersion = "3.24.2"
+val protobufVersion = "3.24.4"
 val coroutinesVersion = "1.3.8"
 
 plugins {
