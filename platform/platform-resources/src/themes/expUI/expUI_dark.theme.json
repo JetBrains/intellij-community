@@ -445,8 +445,11 @@
         "Background.Hover": "Grey4"
       },
       "State": {
-        "Background": "Grey3",
-        "Foreground": "Grey7"
+        "Background": "Grey4",
+        "Foreground": "Grey8"
+      },
+      "ChatItem":{
+        "Hover": "#5A5D6333"
       }
     },
 

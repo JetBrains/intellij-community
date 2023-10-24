@@ -450,6 +450,9 @@
         "Background": "#45494A",
         "Foreground": "#8C8C8C"
       },
+      "ChatItem":{
+        "Hover": "#4B4B4B33"
+      },
       "Timeline.Thread.Diff.AnchorLine": "#544B2D"
     },
 

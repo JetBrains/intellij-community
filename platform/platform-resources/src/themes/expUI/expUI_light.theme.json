@@ -336,6 +336,9 @@
       "State": {
         "Background": "Grey11",
         "Foreground": "Grey6"
+      },
+      "ChatItem":{
+        "Hover": "#DFE1E533"
       }
     },
 
