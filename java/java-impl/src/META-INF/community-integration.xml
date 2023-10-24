@@ -22,6 +22,11 @@
                              provider="com.intellij.ide.ultimatepromo.PromoTSConfigurableProvider"
                              bundle="messages.FeaturePromoBundle"
                              key="promo.configurable.typescript"/>
+    <applicationConfigurable id="promo.swagger"
+                             groupId="language"
+                             provider="com.intellij.ide.ultimatepromo.PromoSwaggerConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.swagger"/>
     <applicationConfigurable id="promo.profiler"
                              groupId="build"
                              provider="com.intellij.ide.ultimatepromo.PromoProfilerConfigurableProvider"
