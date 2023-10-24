@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.util.PatternUtil
+import com.intellij.util.SlowOperations
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -85,7 +86,11 @@ class EditorSettingsState(private val editor: EditorImpl?,
       if (file == null || project == null) {
         CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER
       }
-      else CodeStyle.getIndentOptions(project, file).USE_TAB_CHARACTER
+      else {
+        SlowOperations.knownIssue("IDEA-333523, EA-914853").use {
+          CodeStyle.getIndentOptions(project, file).USE_TAB_CHARACTER
+        }
+      }
     })
   }
   var myWrapWhenTypingReachesRightMargin: Boolean by property {
