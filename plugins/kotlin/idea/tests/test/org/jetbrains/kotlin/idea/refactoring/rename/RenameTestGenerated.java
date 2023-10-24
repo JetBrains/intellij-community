@@ -1043,6 +1043,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameKotlinPrimaryConstructorProperty/renameKotlinPrimaryConstructorProperty.test");
     }
 
+    @TestMetadata("renameKotlinPropertySameNameAsFilename/renameKotlinPropertySameNameAsFilename.test")
+    public void testRenameKotlinPropertySameNameAsFilename_RenameKotlinPropertySameNameAsFilename() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinPropertySameNameAsFilename/renameKotlinPropertySameNameAsFilename.test");
+    }
+
     @TestMetadata("renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef.test")
     public void testRenameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef_RenameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef.test");

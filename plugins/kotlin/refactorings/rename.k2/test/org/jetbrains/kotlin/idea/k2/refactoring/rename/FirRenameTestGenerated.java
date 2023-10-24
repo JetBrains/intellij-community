@@ -1043,6 +1043,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinPrimaryConstructorProperty/renameKotlinPrimaryConstructorProperty.test");
     }
 
+    @TestMetadata("renameKotlinPropertySameNameAsFilename/renameKotlinPropertySameNameAsFilename.test")
+    public void testRenameKotlinPropertySameNameAsFilename_RenameKotlinPropertySameNameAsFilename() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameKotlinPropertySameNameAsFilename/renameKotlinPropertySameNameAsFilename.test");
+    }
+
     @TestMetadata("renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef.test")
     public void testRenameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef_RenameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef.test");
