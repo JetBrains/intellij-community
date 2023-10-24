@@ -12,6 +12,7 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.Objects;
 
+import static com.intellij.ui.paint.RectanglePainter.DRAW;
 import static com.intellij.ui.paint.RectanglePainter.FILL;
 import static com.intellij.util.ui.UIUtil.getLcdContrastValue;
 
@@ -21,8 +22,11 @@ public final class TextIcon implements Icon {
   @SuppressWarnings("UseDPIAwareInsets")
   private final Insets myInsets = new Insets(0, 0, 0, 0);
   private Integer myRound;
+  private Boolean withBoarders;
   private Color myBackground;
   private Color myForeground;
+  private Color myBoarderColor;
+  private int myFillingAlpha;
   private Font myFont;
   private String myText;
   private Rectangle myTextBounds;
@@ -49,6 +53,22 @@ public final class TextIcon implements Icon {
   }
 
   public TextIcon(String text, Color foreground, Color background, int margin) {
+    this(text, foreground, background, margin, false);
+  }
+
+  public TextIcon(String text, Color foreground, Color background, int margin, boolean withBoarders) {
+    this(text, foreground, background, margin, withBoarders, withBoarders ? Math.min(20, background.getAlpha()) : background.getAlpha(),
+         withBoarders ? 255 : 0);
+  }
+
+  public TextIcon(String text, Color foreground, Color background, int margin, boolean withBoarders, int fillingAlpha, int boarderAlpha) {
+    this(text, foreground, background, ColorUtil.toAlpha(background, boarderAlpha), margin, withBoarders, fillingAlpha);
+  }
+
+  public TextIcon(String text, Color foreground, Color background, Color boarderColor, int margin, boolean withBoarders, int fillingAlpha) {
+    setWithBoarders(withBoarders);
+    setFillingAlpha(fillingAlpha);
+    setBoarderColor(boarderColor);
     setInsets(margin, margin, margin, margin);
     setRound(margin * 4);
     setBackground(background);
@@ -72,12 +92,24 @@ public final class TextIcon implements Icon {
     myRound = round;
   }
 
+  public void setWithBoarders(boolean withBoarders) {
+    this.withBoarders = withBoarders;
+  }
+
   public void setBackground(Color background) {
     myBackground = background;
   }
 
   public void setForeground(Color foreground) {
     myForeground = foreground;
+  }
+
+  public void setFillingAlpha(int fillingAlpha) {
+    myFillingAlpha = fillingAlpha;
+  }
+
+  public void setBoarderColor(Color boarderColor) {
+    myBoarderColor = boarderColor;
   }
 
   public void setText(String text) {
@@ -104,9 +136,15 @@ public final class TextIcon implements Icon {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    if (myBackground != null && g instanceof Graphics2D) {
-      g.setColor(myBackground);
-      FILL.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), myRound);
+    if (g instanceof Graphics2D) {
+      if (myBackground != null) {
+        g.setColor(ColorUtil.toAlpha(myBackground, myFillingAlpha));
+        FILL.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), myRound);
+      }
+      if (withBoarders && myBoarderColor != null) {
+        g.setColor(myBoarderColor);
+        DRAW.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), myRound);
+      }
     }
     Rectangle bounds = getTextBounds();
     if (myForeground != null && bounds != null) {
@@ -138,12 +176,16 @@ public final class TextIcon implements Icon {
            Objects.equals(myForeground, icon.myForeground) &&
            Objects.equals(myFont, icon.myFont) &&
            Objects.equals(myText, icon.myText) &&
-           Objects.equals(myTextBounds, icon.myTextBounds);
+           Objects.equals(myTextBounds, icon.myTextBounds) &&
+           Objects.equals(withBoarders, icon.withBoarders) &&
+           Objects.equals(myBoarderColor, icon.myBoarderColor) &&
+           Objects.equals(myFillingAlpha, icon.myFillingAlpha);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds);
+    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds, withBoarders, myBoarderColor,
+                        myFillingAlpha);
   }
 
   private static Rectangle applyTransform(Rectangle srcRect, AffineTransform at) {
