@@ -43,12 +43,12 @@ internal object InlineContextFeatures {
     val document = editor.document
     val (previousNonEmptyLineNumber, previousNonEmptyLineText) = document.findNonBlankLine(lineNumber, false)
     contextFeatures.add(PREVIOUS_EMPTY_LINES_COUNT.with(lineNumber - previousNonEmptyLineNumber - 1))
-    if (!previousNonEmptyLineText.isNullOrBlank()) {
+    if (previousNonEmptyLineText != null) {
       contextFeatures.add(PREVIOUS_NON_EMPTY_LINE_LENGTH.with(previousNonEmptyLineText.length))
     }
     val (followingNonEmptyLineNumber, followingNonEmptyLineText) = document.findNonBlankLine(lineNumber, true)
     contextFeatures.add(FOLLOWING_EMPTY_LINES_COUNT.with(followingNonEmptyLineNumber - lineNumber - 1))
-    if (!followingNonEmptyLineText.isNullOrBlank()) {
+    if (followingNonEmptyLineText != null) {
       contextFeatures.add(FOLLOWING_NON_EMPTY_LINE_LENGTH.with(followingNonEmptyLineText.length))
     }
   }
@@ -57,14 +57,18 @@ internal object InlineContextFeatures {
     val delta = if (following) 1 else -1
     var n = lineNumber
     var text: String? = null
-    while (n in 0..<lineCount && text.isNullOrBlank()) {
+    while (n in 0..<lineCount && text == null) {
       n += delta
-      text = getLineText(n).trim()
+      text = getNonBlankLineOrNull(n)
     }
     return n to text
   }
 
-  private fun Document.getLineText(line: Int) = getText(TextRange(getLineStartOffset(line), getLineEndOffset(line)))
+  private fun Document.getNonBlankLineOrNull(line: Int): String? {
+    if (line !in 0..<lineCount) return null
+    val res = getText(TextRange(getLineStartOffset(line), getLineEndOffset(line)))
+    return res.trim().ifEmpty { null }
+  }
 
   fun getEventPair(triggerFeatures: List<EventPair<*>>) = CONTEXT_FEATURES.with(ObjectEventData(triggerFeatures))
 
