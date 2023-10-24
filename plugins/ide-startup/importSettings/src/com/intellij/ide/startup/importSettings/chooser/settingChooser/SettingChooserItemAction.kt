@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.chooser.settingChooser
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.Product
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
@@ -11,6 +12,10 @@ class SettingChooserItemAction(val product: Product, val provider: ActionsDataPr
 
   override fun displayTextInToolbar(): Boolean {
     return true
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun update(e: AnActionEvent) {

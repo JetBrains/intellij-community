@@ -161,7 +161,7 @@ abstract class PageProvider(val createSouth: Boolean = true) : DialogWrapper(nul
     parentDialog?.performOKAction()
   }
 
-  fun doAction(exitCode: Int) {
+  private fun doAction(exitCode: Int) {
     close(exitCode)
   }
 

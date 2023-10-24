@@ -35,7 +35,7 @@ class BannerOverlay {
     }
   }
 
-  fun clearNotifications() {
+  private fun clearNotifications() {
     container.removeAll()
     container.revalidate()
     container.repaint()

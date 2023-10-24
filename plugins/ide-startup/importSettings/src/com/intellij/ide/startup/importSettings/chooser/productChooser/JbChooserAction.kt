@@ -10,7 +10,7 @@ import java.awt.Graphics
 import javax.swing.Icon
 
 class JbChooserAction(callback: (PageProvider) -> Unit) : MainChooserAction<JbService>(JBrActionsDataProvider.getInstance(), callback) {
-  override fun getIcon(products: List<Product>): Icon? {
+  override fun getIcon(products: List<Product>): Icon {
     return ImportJbIcon(products) { provider.getProductIcon(it) }
   }
 }
@@ -20,7 +20,7 @@ class ExpChooserAction(callback: (PageProvider) -> Unit) : MainChooserAction<Ext
 class SyncChooserAction(callback: (PageProvider) -> Unit) : MainChooserAction<SyncService>(SyncActionsDataProvider.getInstance(), callback) {
   private val service = SettingsService.getInstance()
 
-  override fun getIcon(products: List<Product>): Icon? {
+  override fun getIcon(products: List<Product>): Icon {
     return AllIcons.Actions.Refresh
   }
 

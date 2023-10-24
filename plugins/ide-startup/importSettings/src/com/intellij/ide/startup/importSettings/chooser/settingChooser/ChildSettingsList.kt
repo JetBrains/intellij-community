@@ -13,7 +13,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 
-class ChildSettingsList(val settings: List<ChildItem>, val configurable: Boolean) : JBList<ChildItem>(createDefaultListModel(settings)) {
+class ChildSettingsList(val settings: List<ChildItem>, configurable: Boolean) : JBList<ChildItem>(createDefaultListModel(settings)) {
   companion object {
     const val SCROLL_PANE_INSETS = 7
   }

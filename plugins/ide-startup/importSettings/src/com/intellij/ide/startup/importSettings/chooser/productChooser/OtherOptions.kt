@@ -20,7 +20,7 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
-class OtherOptions(val callback: (PageProvider) -> Unit) : ProductChooserAction() {
+class OtherOptions(private val callback: (PageProvider) -> Unit) : ProductChooserAction() {
 
   private val jbDataProvider = JBrActionsDataProvider.getInstance()
   private val syncDataProvider = SyncActionsDataProvider.getInstance()

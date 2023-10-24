@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.BannerOverlay
 import com.intellij.ide.startup.importSettings.chooser.ui.PageProvider
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
@@ -23,8 +24,8 @@ class ProductChooserDialog : PageProvider() {
   }
 
   private val pane = JPanel(VerticalLayout(JBUI.scale(26), SwingConstants.CENTER)).apply {
-    add(JLabel("Import Settings").apply {
-      font = Font(font.getFontName(), Font.PLAIN, JBUIScale.scaleFontSize(24f))
+    add(JLabel(ImportSettingsBundle.message("choose.product.title")).apply {
+      font = Font(font.fontName, Font.PLAIN, JBUIScale.scaleFontSize(24f))
     })
   }
 

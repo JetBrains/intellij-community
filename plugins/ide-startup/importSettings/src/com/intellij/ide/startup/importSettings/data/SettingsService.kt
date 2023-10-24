@@ -151,7 +151,7 @@ interface Config : SettingsContributor {
 
 interface SettingsContributor {
   val id: String
-  val name: String
+  val name: @Nls String
 }
 
 

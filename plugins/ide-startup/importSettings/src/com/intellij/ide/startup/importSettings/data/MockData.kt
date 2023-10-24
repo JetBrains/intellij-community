@@ -76,6 +76,9 @@ class TestJbService : JbService {
     val settings1 = listOf(
       TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = emptyList()),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = emptyList()),
+
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = children),
       )
 
