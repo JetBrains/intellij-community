@@ -107,8 +107,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     fileVm.requestNewDiscussion(originalLine, focus)
   }
 
-  fun cancelNewDiscussion(lineIdx: Int) {
-    val originalLine = transferLineFromAfter(postReviewRanges.value, lineIdx)?.takeIf { it >= 0 } ?: return
+  fun cancelNewDiscussion(originalLine: Int) {
     fileVm.cancelNewDiscussion(originalLine)
   }
 
