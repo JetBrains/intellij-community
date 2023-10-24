@@ -320,13 +320,13 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       val queue = RefreshQueue.getInstance() as RefreshQueueImpl
       val interval = Registry.intValue("vfs.background.refresh.interval", 15).coerceIn(0, Int.MAX_VALUE).seconds
       while (true) {
+        delay(interval)
         if (roots.any { it is NewVirtualFile && it.isDirty }) {
           val session = queue.createBackgroundRefreshSession(roots)
           bgRefreshSession.set(session)
           session.launch()
           bgRefreshSession.set(null)
         }
-        delay(interval)
       }
     }
     job.invokeOnCompletion { if (it is CancellationException) bgRefreshSession.getAndSet(null)?.cancel() }
