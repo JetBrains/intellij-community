@@ -42,6 +42,8 @@ private fun featurePage(@NlsContexts.Label title: String, items: List<PromoFeatu
 internal class PromoDatabaseConfigurableProvider : UltimateConfigurableProvider(PromoDatabaseConfigurable::class)
 internal class PromoKubernetesConfigurableProvider : UltimateConfigurableProvider(PromoKubernetesConfigurable::class)
 internal class PromoProfilerConfigurableProvider : UltimateConfigurableProvider(PromoProfilerConfigurable::class)
+internal class PromoJSConfigurableProvider : UltimateConfigurableProvider(PromoJSConfigurable::class)
+internal class PromoTSConfigurableProvider : UltimateConfigurableProvider(PromoTSConfigurable::class)
 
 internal class PromoDatabaseConfigurable : UltimatePromoConfigurable() {
   override fun getId(): String = "promo.database"
@@ -99,6 +101,46 @@ internal class PromoProfilerConfigurable : UltimatePromoConfigurable() {
         PromoFeatureListItem(AllIcons.Actions.ProfileRed, JavaUiBundle.message("feature.profiler.hints"))
       ),
       "com.intellij.LineProfiler"
+    )
+  }
+}
+
+internal class PromoJSConfigurable : UltimatePromoConfigurable() {
+  override fun getId(): String = "promo.javascript"
+
+  override fun getDisplayName(): String {
+    return FeaturePromoBundle.message("promo.configurable.javascript")
+  }
+
+  override fun createComponent(): JComponent {
+    return featurePage(
+      FeaturePromoBundle.message("feature.javascript.description.html"),
+      listOf(
+        PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.javascript.code")),
+        PromoFeatureListItem(AllIcons.Actions.SuggestedRefactoringBulb, FeaturePromoBundle.message("feature.javascript.refactor")),
+        PromoFeatureListItem(AllIcons.FileTypes.UiForm, FeaturePromoBundle.message("feature.javascript.frameworks"))
+      ),
+      "JavaScript"
+    )
+  }
+}
+
+internal class PromoTSConfigurable : UltimatePromoConfigurable() {
+  override fun getId(): String = "promo.typescript"
+
+  override fun getDisplayName(): String {
+    return FeaturePromoBundle.message("promo.configurable.typescript")
+  }
+
+  override fun createComponent(): JComponent {
+    return featurePage(
+      FeaturePromoBundle.message("feature.javascript.description.html"),
+      listOf(
+        PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.javascript.code")),
+        PromoFeatureListItem(AllIcons.Actions.SuggestedRefactoringBulb, FeaturePromoBundle.message("feature.javascript.refactor")),
+        PromoFeatureListItem(AllIcons.FileTypes.UiForm, FeaturePromoBundle.message("feature.javascript.frameworks"))
+      ),
+      "JavaScript"
     )
   }
 }
