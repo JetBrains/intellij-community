@@ -44,18 +44,26 @@ internal class MutableIntIntUniqueBiMap private constructor(
     key2Value.put(key, value)
   }
 
-  fun removeKey(key: Int) {
-    if (!key2Value.containsKey(key)) return
+  /**
+   * Returns removed value or null if the key didn't exist in this map
+   */
+  fun removeKey(key: Int): Int? {
+    if (!key2Value.containsKey(key)) return null
     startWrite()
     val value = key2Value.remove(key)
     value2Key.remove(value)
+    return value
   }
 
-  fun removeValue(value: Int) {
-    if (!value2Key.containsKey(value)) return
+  /**
+   * Returns removed key or null if the value didn't exist in this map
+   */
+  fun removeValue(value: Int): Int? {
+    if (!value2Key.containsKey(value)) return null
     startWrite()
     val key = value2Key.remove(value)
     key2Value.remove(key)
+    return key
   }
 
   fun remove(key: Int, value: Int) {

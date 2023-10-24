@@ -754,6 +754,30 @@ class AddDiffTest {
   }
 
   @RepeatedTest(10)
+  fun `replace child by modification second child untouched`() {
+    val parentEntity = target addEntity OoParentEntity("Parent2", MySource) {
+      this.anotherChild = OoChildWithNullableParentEntity(MySource)
+      this.child = OoChildEntity("", MySource)
+    }
+
+    val source = createBuilderFrom(target)
+    source.modifyEntity(parentEntity.from(source)) {
+      this.anotherChild = OoChildWithNullableParentEntity(AnotherSource)
+    }
+
+    // The previous child was not removed because it has optional parent
+    assertEquals(2, source.entities(OoChildWithNullableParentEntity::class.java).toList().size)
+
+    target.addDiff(source)
+
+    target.assertConsistency()
+
+    assertEquals(AnotherSource, target.entities(OoParentEntity::class.java).single().anotherChild!!.entitySource)
+    assertEquals("", target.entities(OoParentEntity::class.java).single().child!!.childProperty)
+    assertEquals(2, target.entities(OoChildWithNullableParentEntity::class.java).toList().size)
+  }
+
+  @RepeatedTest(10)
   fun `add child with parallel update`() {
     val parentEntity = target addEntity OoParentEntity("Parent2", MySource)
 

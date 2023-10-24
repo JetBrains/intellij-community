@@ -183,13 +183,22 @@ internal sealed class MutableNonNegativeIntIntMultiMap(
     return true
   }
 
-  fun remove(key: Int) {
-    if (links.containsKey(key)) {
+  /**
+   * Returns sequence of removed values
+   */
+  fun remove(key: Int): IntSequence {
+    return if (links.containsKey(key)) {
+      val prevValues = get(key)
       startWrite()
       links.remove(key)
+      prevValues
     }
     else if (key in modifiableValues) {
-      modifiableValues.remove(key)
+      val removedValues = modifiableValues.remove(key)
+      removedValues?.toIntArray()?.let { RwIntSequence(it) } ?: EmptyIntSequence
+    }
+    else {
+      EmptyIntSequence
     }
   }
 

@@ -174,7 +174,8 @@ internal class ReplaceBySourceAsTree {
                 val myIndex = replaceWithChildAssociatedWithCurrentElement?.let { replaceWithChildren[it] } ?: index
                 childEntityId to myIndex
               }.sortedBy { it.second }.map { it.first }
-              targetStorage.refs.replaceChildrenOfParent(connectionId, targetParent.asParent(), sortedChildren)
+              val modifications = targetStorage.refs.replaceChildrenOfParent(connectionId, targetParent.asParent(), sortedChildren)
+              targetStorage.createReplaceEventsForUpdates(modifications, connectionId)
             }
           }
         }

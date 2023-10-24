@@ -6,7 +6,6 @@ import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import java.nio.file.Path
 import java.util.*
 
 internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
@@ -134,11 +133,15 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           }
         }
 
-        target.refs.replaceParentOfChild(connectionId, targetEntityId.id.asChild(), targetParentId.id.asParent())
+        val operations = target.refs.replaceParentOfChild(connectionId, targetEntityId.id.asChild(), targetParentId.id.asParent())
+        target.createReplaceEventsForUpdates(operations, connectionId)
       }
     }
   }
 
+  /**
+   * Restore children references and add events for that
+   */
   private fun addRestoreChildren(sourceEntityId: NotThisEntityId, targetEntityId: ThisEntityId) {
     // Restore children references
     val allSourceChildren = diff.refs.getChildrenRefsOfParentBy(sourceEntityId.id.asParent())
@@ -165,15 +168,13 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           }
         }
       }
-      target.refs.replaceChildrenOfParent(connectionId, targetEntityId.id.asParent(), targetChildrenIds)
+      val modifications = target.refs.replaceChildrenOfParent(connectionId, targetEntityId.id.asParent(), targetChildrenIds)
+      target.createReplaceEventsForUpdates(modifications, connectionId)
     }
   }
 
   private fun replaceOperation(entityId: EntityId, change: ChangeEntry.ReplaceEntity) {
     val sourceEntityId = entityId.notThis()
-
-    val beforeChildren = target.refs.getChildrenRefsOfParentBy(sourceEntityId.id.asParent()).flatMap { (key, value) -> value.map { key to it } }
-    val beforeParents = target.refs.getParentRefsOfChild(sourceEntityId.id.asChild())
 
     val targetEntityId = replaceMap.getOrDefault(sourceEntityId, sourceEntityId.id.asThis())
 
@@ -210,8 +211,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
 
     replaceRestoreParents(change, newEntityId)
 
-    MutableEntityStorageImpl.addReplaceEvent(target, sourceEntityId.id, beforeChildren, beforeParents, newTargetEntityData,
-                                             originalEntityData)
+    target.changeLog.addReplaceDataEvent(sourceEntityId.id, newTargetEntityData, originalEntityData, true)
   }
 
   private fun replaceRestoreChildren(
@@ -220,14 +220,24 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     addedChildrenMap: HashMultimap<ConnectionId, ChildEntityId>,
     removedChildrenMap: HashMultimap<ConnectionId, ChildEntityId>,
   ) {
-    val existingChildren = target.refs.getChildrenRefsOfParentBy(newEntityId)
+    // Children from target store with connectionIds of affected references
+    val existingChildrenOfAffectedIds: MutableMap<ConnectionId, List<ChildEntityId>> = HashMap()
+    addedChildrenMap.keys().forEach { connectionId ->
+      val existingChildren = target.refs.getChildrenByParent(connectionId, newEntityId)
+      existingChildrenOfAffectedIds[connectionId] = existingChildren
+    }
+    removedChildrenMap.keys().forEach { connectionId ->
+      val existingChildren = target.refs.getChildrenByParent(connectionId, newEntityId)
+      existingChildrenOfAffectedIds[connectionId] = existingChildren
+    }
 
-    for ((connectionId, children) in existingChildren) {
+    for ((connectionId, children) in existingChildrenOfAffectedIds) {
       if (connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
         val sourceChildren = this.diff.refs.getChildrenRefsOfParentBy(sourceEntityId)[connectionId] ?: emptyList()
         val updatedChildren = sourceChildren.mapNotNull { childrenMapper(it) }
         if (updatedChildren != children) {
-          target.refs.replaceChildrenOfParent(connectionId, newEntityId, updatedChildren)
+          val modifications = target.refs.replaceChildrenOfParent(connectionId, newEntityId, updatedChildren)
+          target.createReplaceEventsForUpdates(modifications, connectionId)
         }
       }
       else {
@@ -252,7 +262,8 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
 
         // .... Update if something changed
         if (children.toSet() != mutableChildren) {
-          target.refs.replaceChildrenOfParent(connectionId, newEntityId, mutableChildren)
+          val modifications = target.refs.replaceChildrenOfParent(connectionId, newEntityId, mutableChildren)
+          target.createReplaceEventsForUpdates(modifications, connectionId)
         }
       }
       addedChildrenMap.removeAll(connectionId)
@@ -265,7 +276,8 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     for ((connectionId, children) in addedChildrenMap.asMap()) {
       val updatedChildren = children.mapNotNull { childrenMapper(it) }
 
-      target.refs.replaceChildrenOfParent(connectionId, newEntityId, updatedChildren)
+      val modifications = target.refs.replaceChildrenOfParent(connectionId, newEntityId, updatedChildren)
+      target.createReplaceEventsForUpdates(modifications, connectionId)
     }
   }
 
@@ -305,7 +317,10 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
         if (!connectionId.canRemoveParent() && connectionId !in newParents) {
           target.addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff)
         }
-        else target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
+        else {
+          val modifications = target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
+          target.createReplaceEventsForUpdates(modifications, connectionId)
+        }
       }
       if (connectionId in newParents) {
         val newParent = newParents[connectionId]!!
@@ -315,16 +330,19 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
             possibleNewParent = target.entitiesByType.book(newParent.id.clazz).asThis()
             replaceMap[newParent.id.notThis()] = possibleNewParent
           }
-          target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.id.asParent())
+          val modifications = target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.id.asParent())
+          target.createReplaceEventsForUpdates(modifications, connectionId)
         }
         else {
           if (target.entityDataById(newParent.id) != null) {
-            target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), newParent)
+            val modifications = target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), newParent)
+            target.createReplaceEventsForUpdates(modifications, connectionId)
           }
           else {
             if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
                                                                          initialStorage, diff)
-            target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
+            val modifications = target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
+            target.createReplaceEventsForUpdates(modifications, connectionId)
           }
         }
         modifiableNewParents.remove(connectionId)
@@ -339,11 +357,13 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           possibleNewParent = target.entitiesByType.book(parentId.id.clazz).asThis()
           replaceMap[parentId.id.notThis()] = possibleNewParent
         }
-        target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.id.asParent())
+        val modifications = target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.id.asParent())
+        target.createReplaceEventsForUpdates(modifications, connectionId)
       }
       else {
         if (target.entityDataById(parentId.id) != null) {
-          target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), parentId)
+          val modifications = target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), parentId)
+          target.createReplaceEventsForUpdates(modifications, connectionId)
         }
       }
     }

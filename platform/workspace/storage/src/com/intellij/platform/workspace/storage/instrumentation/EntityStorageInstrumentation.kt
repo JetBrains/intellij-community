@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.instrumentation
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityId
+import com.intellij.platform.workspace.storage.impl.asString
 
 /**
  * Instrumentation level of the storage.
@@ -42,6 +43,8 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
    *
    * If any of child already has a parent, the link to this child will be removed from the old parent and added to the new one.
    *
+   * This method adds records to the changelog of the builder.
+   *
    * @param connectionId The ID of the connection.
    * @param parent The parent WorkspaceEntity whose children will be replaced.
    * @param newChildren The new list of WorkspaceEntities to replace the children with.
@@ -58,11 +61,27 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
    *
    * If the child already has a parent, the link from this parent to this child will be removed.
    *
+   * This method adds records to the changelog of the builder.
+   *
    * @param connectionId The ConnectionId identifying the connection.
    * @param parent The parent WorkspaceEntity.
    * @param child The WorkspaceEntity to be added as a child.
    */
   public fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity)
+}
+
+internal sealed interface Modification {
+  data class Add(val parent: EntityId, val child: EntityId) : Modification {
+    override fun toString(): String {
+      return "Add(parent=${parent.asString()}, child=${child.asString()})"
+    }
+  }
+
+  data class Remove(val parent: EntityId, val child: EntityId) : Modification {
+    override fun toString(): String {
+      return "Remove(parent=${parent.asString()}, child=${child.asString()})"
+    }
+  }
 }
 
 

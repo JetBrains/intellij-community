@@ -53,13 +53,17 @@ internal class LinkedBidirectionalMap<K, V> : MutableMap<K, V> {
     return myKeyToValueMap.get(key)
   }
 
-  fun removeValue(v: V) {
+  /**
+   * Returns list of removed keys
+   */
+  fun removeValue(v: V): List<K> {
     val ks: List<K>? = myValueToKeysMap.remove(v)
     if (ks != null) {
       for (k in ks) {
         myKeyToValueMap.remove(k)
       }
     }
+    return ks ?: emptyList()
   }
 
   override fun remove(key: K): V? {

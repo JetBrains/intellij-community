@@ -25,9 +25,13 @@ internal class MutableNonNegativeIntIntBiMap private constructor(
   }
   constructor(key2Value: Int2IntMap, value2Keys: MutableNonNegativeIntIntMultiMap.ByList) : this(key2Value, value2Keys, true)
 
-  fun putAll(keys: IntArray, value: Int) {
+  /**
+   * Returns map of removed pairs
+   */
+  fun putAll(keys: IntArray, value: Int): Int2IntMap {
     startWrite()
 
+    val previousValues = Int2IntOpenHashMap()
     var hasDuplicates = false
     val duplicatesFinder = IntOpenHashSet()
     keys.forEach {
@@ -40,27 +44,36 @@ internal class MutableNonNegativeIntIntBiMap private constructor(
       }
       val oldValue = key2Value.put(it, value)
       if (oldValue != DEFAULT_RETURN_VALUE) value2Keys.remove(oldValue, it)
+      if (oldValue != value && oldValue != DEFAULT_RETURN_VALUE) previousValues.put(it, oldValue)
     }
     if (hasDuplicates) {
       value2Keys.putAll(value, duplicatesFinder.toIntArray())
     } else {
       value2Keys.putAll(value, keys)
     }
+    return previousValues
   }
 
-  fun removeKey(key: Int) {
-    if (!key2Value.containsKey(key)) return
+  /**
+   * Returns removed value if any
+   */
+  fun removeKey(key: Int): Int? {
+    if (!key2Value.containsKey(key)) return null
     startWrite()
     val removedValue = key2Value.remove(key)
     value2Keys.remove(removedValue, key)
+    return removedValue
   }
 
-  fun removeValue(value: Int) {
+  /**
+   * Returns sequence of removed keys
+   */
+  fun removeValue(value: Int): NonNegativeIntIntMultiMap.IntSequence {
     startWrite()
     value2Keys.get(value).forEach {
       key2Value.remove(it)
     }
-    value2Keys.remove(value)
+    return value2Keys.remove(value)
   }
 
   fun remove(key: Int, value: Int) {
