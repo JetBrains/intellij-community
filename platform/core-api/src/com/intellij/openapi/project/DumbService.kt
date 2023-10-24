@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -429,9 +430,7 @@ abstract class DumbService {
     }
 
     @JvmStatic
-    fun getInstance(project: Project): DumbService {
-      return project.getService(DumbService::class.java)
-    }
+    fun getInstance(project: Project): DumbService = project.service()
 
     @Suppress("SSBasedInspection")
     @JvmStatic

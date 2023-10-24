@@ -240,7 +240,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       // to put it on the timeline and make clear what's going at the end (avoiding the last "unknown" phase)
       val dumbAwareActivity = StartUpMeasurer.startActivity(StartUpMeasurer.Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES)
       val counter = AtomicInteger()
-      val dumbService = DumbService.getInstance(project)
+      val dumbService = project.serviceAsync<DumbService>()
       val isProjectLightEditCompatible = project is LightEditCompatible
       val traceContext = Context.current()
 
@@ -298,7 +298,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
       coroutineContext.ensureActive()
 
-      StartUpPerformanceService.getInstance().projectDumbAwareActivitiesFinished()
+      serviceAsync<StartUpPerformanceService>().projectDumbAwareActivitiesFinished()
 
       if (!ApplicationManager.getApplication().isUnitTestMode) {
         coroutineContext.ensureActive()
