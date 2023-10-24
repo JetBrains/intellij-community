@@ -40,7 +40,7 @@ public final class HintHint {
   private Icon myStatusIcon;
   private int myCalloutShift;
 
-  private boolean myExplicitClose = true;
+  private boolean myExplicitClose;
   private int myPositionChangeX;
   private int myPositionChangeY;
   private boolean myShowImmediately = false;
