@@ -20,13 +20,13 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.UninitializedReadCollector;
 import org.intellij.lang.annotations.Pattern;
@@ -92,7 +92,8 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiField field = (PsiField)infos[0];
-    return AddToIgnoreIfAnnotatedByListQuickFix.build(field, annotationNames);
+    return SpecialAnnotationsUtilBase.createAddAnnotationToListFixes(field, this, insp -> insp.annotationNames)
+      .toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override

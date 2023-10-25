@@ -21,6 +21,7 @@ import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -33,7 +34,6 @@ import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +75,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     final List<LocalQuickFix> fixes = new ArrayList<>();
     fixes.add(new InnerClassMayBeStaticFix());
     final PsiClass aClass = (PsiClass)infos[0];
-    AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations, fixes);
+    fixes.addAll(SpecialAnnotationsUtilBase.createAddAnnotationToListFixes(aClass, this, insp -> insp.ignorableAnnotations));
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 

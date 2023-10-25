@@ -319,7 +319,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
         if (!field.hasModifierProperty(PsiModifier.FINAL)) {
           quickFixes.add(QuickFixFactory.getInstance().createCreateConstructorParameterFromFieldFix(field));
         }
-        SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName ->
+        SpecialAnnotationsUtilBase.processUnknownAnnotations(field, annoName ->
           quickFixes.add(QuickFixFactory.getInstance().createAddToImplicitlyWrittenFieldsFix(project, annoName)));
       }
     }
@@ -342,7 +342,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
   }
 
   private void suggestionsToMakeFieldUsed(@NotNull PsiField field) {
-    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName ->
+    SpecialAnnotationsUtilBase.processUnknownAnnotations(field, annoName ->
       quickFixes.add(QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(field.getProject(), annoName)));
     quickFixes.add(QuickFixFactory.getInstance().createRemoveUnusedVariableFix(field));
     quickFixes.add(QuickFixFactory.getInstance().createCreateGetterOrSetterFix(true, false, field));
@@ -461,7 +461,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
     String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY, options);
     message = JavaErrorBundle.message(key, symbolName);
     quickFixes.add(QuickFixFactory.getInstance().createSafeDeleteFix(method));
-    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(method, annoName ->
+    SpecialAnnotationsUtilBase.processUnknownAnnotations(method, annoName ->
       quickFixes.add(QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName)));
   }
 
@@ -501,7 +501,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
     String symbolName = member.getName();
     message = JavaErrorBundle.message(pattern, symbolName);
     quickFixes.add(QuickFixFactory.getInstance().createSafeDeleteFix(member));
-    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(member, annoName ->
+    SpecialAnnotationsUtilBase.processUnknownAnnotations(member, annoName ->
       quickFixes.add(QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName)));
   }
 
