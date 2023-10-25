@@ -193,7 +193,9 @@ final class UpdateCheckerService {
     Url url = ExternalProductResourceUrls.getInstance().getWhatIsNewPageUrl();
     if (url != null && WhatsNewUtil.isWhatsNewAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
       if (UpdateSettings.getInstance().isShowWhatsNewEditor()) {
-        ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url.toExternalForm(), true));
+        ApplicationManager.getApplication().invokeLater(
+          () -> WhatsNewAction.openWhatsNewPage(project, url.toExternalForm(), true),
+          project.getDisposed());
         IdeUpdateUsageTriggerCollector.majorUpdateHappened(true);
       }
       else {
