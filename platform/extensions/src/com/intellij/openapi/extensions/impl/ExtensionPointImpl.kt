@@ -15,7 +15,6 @@ import com.intellij.openapi.extensions.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.toArray
 import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -215,8 +214,8 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
         array = cachedExtensionsAsArray
         if (array == null) {
           val list = extensionList
-          @Suppress("UNCHECKED_CAST")
-          array = list.toArray(java.lang.reflect.Array.newInstance(getExtensionClass(), list.size) as Array<T>)
+          @Suppress("UNCHECKED_CAST", "PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+          array = (list as java.util.List<T>).toArray(java.lang.reflect.Array.newInstance(getExtensionClass(), list.size) as Array<T>)
           cachedExtensionsAsArray = array
         }
       }

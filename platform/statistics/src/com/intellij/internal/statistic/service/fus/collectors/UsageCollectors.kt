@@ -26,7 +26,7 @@ object UsageCollectors {
 
     if (!allowedOnStartupOnly) return getAllApplicationCollectors()
 
-    return APPLICATION_EP_NAME.extensions.asSequence()
+    return APPLICATION_EP_NAME.lazySequence()
       .filter { it.allowOnStartup == true }
       .map { it.collector as ApplicationUsagesCollector }
       .filter { isValidCollector(it) }
@@ -34,7 +34,7 @@ object UsageCollectors {
   }
 
   private fun getAllApplicationCollectors(): Collection<ApplicationUsagesCollector> {
-    return APPLICATION_EP_NAME.extensions.asSequence()
+    return APPLICATION_EP_NAME.lazySequence()
       .map { it.collector as ApplicationUsagesCollector }
       .filter { isValidCollector(it) }
       .toList()
