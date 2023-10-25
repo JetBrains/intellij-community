@@ -4,6 +4,8 @@ package git4idea.rebase.log.drop
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.util.ui.UIUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.GitMultipleCommitEditingAction
@@ -17,6 +19,17 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
 
   override fun actionPerformedAfterChecks(commitEditingData: MultipleCommitEditingData) {
     val project = commitEditingData.project
+
+    val selectionSize = commitEditingData.selection.size
+    val canDrop = MessageDialogBuilder
+      .okCancel(GitBundle.message("rebase.log.drop.action.confirmation.title", selectionSize),
+                GitBundle.message("rebase.log.drop.action.confirmation.message", selectionSize))
+      .icon(UIUtil.getWarningIcon())
+      .yesText(GitBundle.message("rebase.log.drop.action.confirmation.yes"))
+      .help(DROP_COMMIT_HELP_ID)
+      .ask(project)
+    if (!canDrop) return
+
     val commitDetails = getOrLoadDetails(project, commitEditingData.logData, commitEditingData.selection)
     object : Task.Backgroundable(project, GitBundle.message("rebase.log.drop.progress.indicator.title", commitDetails.size)) {
       override fun run(indicator: ProgressIndicator) {
@@ -34,4 +47,8 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
   }
 
   override fun getFailureTitle(): String = GitBundle.message("rebase.log.drop.action.failure.title")
+
+  companion object {
+    const val DROP_COMMIT_HELP_ID = "reference.VersionControl.Git.DropCommit"
+  }
 }
