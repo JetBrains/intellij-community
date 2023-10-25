@@ -6,7 +6,7 @@ import com.intellij.ide.startup.importSettings.chooser.ui.MultiplePageDialog
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ide.bootstrap.IdeStartupWizard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -14,13 +14,14 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
 internal class IdeStartupWizardImpl : IdeStartupWizard {
-  init {
-    if (!System.getProperty("intellij.startup.wizard", "false").toBoolean()) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
+
+  private val isEnabledViaSystemProperty
+    get() = System.getProperty("intellij.startup.wizard", "false").toBoolean()
 
   override suspend fun run() {
+    if (!isEnabledViaSystemProperty) return
+
+    logger.info("Initial startup wizard is enabled. Will start the wizard.")
     coroutineScope {
       // Fire-and-forget call to warm up the external settings transfer
       val settingsService = SettingsService.getInstance()
@@ -36,3 +37,5 @@ internal class IdeStartupWizardImpl : IdeStartupWizard {
     }
   }
 }
+
+private val logger = logger<IdeStartupWizardImpl>()

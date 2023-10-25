@@ -17,17 +17,6 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
 
   log.info("Entering startup wizard workflow.")
 
-  span("app manager initial state waiting") {
-    try {
-      withTimeout(2.seconds) {
-        isInitialStart.join()
-      }
-    } catch (_: TimeoutCancellationException) {
-      log.warn("Timeout on waiting for initial start, proceeding without waiting, disabling the startup flow")
-      com.intellij.platform.ide.bootstrap.isInitialStart = null
-    }
-  }
-
   val point = app.extensionArea
     .getExtensionPoint<IdeStartupWizard>("com.intellij.ideStartupWizard") as ExtensionPointImpl<IdeStartupWizard>
   val sortedAdapters = point.sortedAdapters
@@ -40,6 +29,17 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
 
     try {
       val wizard = adapter.createInstance<IdeStartupWizard>(app) ?: continue
+
+      span("app manager initial state waiting") {
+        try {
+          withTimeout(2.seconds) {
+            isInitialStart.join()
+          }
+        } catch (_: TimeoutCancellationException) {
+          log.warn("Timeout on waiting for initial start, proceeding without waiting, disabling the startup flow")
+          com.intellij.platform.ide.bootstrap.isInitialStart = null
+        }
+      }
 
       log.info("Passing execution control to $adapter.")
       span("${adapter.assignableToClassName}.run") {
