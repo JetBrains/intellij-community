@@ -36,8 +36,8 @@ abstract class OAuthCallbackHandlerBase : RestService() {
 
     fun handle(indicator: EmptyProgressIndicator): AcceptCodeHandleResult? =
       ProgressManager.getInstance().runProcess(Computable {
-        val isCodeAccepted = service.handleServerCallback(urlDecoder.path(), urlDecoder.parameters())
-        handleAcceptCode(isCodeAccepted)
+        val oAuthResult = service.handleOAuthServerCallback(urlDecoder.path(), urlDecoder.parameters()) ?: return@Computable null
+        handleOAuthResult(oAuthResult)
       }, indicator)
 
     val executor = AppExecutorUtil.getAppExecutorService()
@@ -69,7 +69,15 @@ abstract class OAuthCallbackHandlerBase : RestService() {
     return null
   }
 
-  protected abstract fun handleAcceptCode(isAccepted: Boolean): AcceptCodeHandleResult
+
+  protected open fun handleOAuthResult(oAuthResult: OAuthService.OAuthResult<*>): AcceptCodeHandleResult {
+    return handleAcceptCode(oAuthResult.isAccepted)
+  }
+
+  @Deprecated("Use handleOAuthResult instead", ReplaceWith("handleOAuthResult"))
+  protected open fun handleAcceptCode(isAccepted: Boolean): AcceptCodeHandleResult {
+    throw UnsupportedOperationException()
+  }
 
   private fun sendRedirect(request: FullHttpRequest, context: ChannelHandlerContext, url: Url) {
     val headers = DefaultHttpHeaders().set(HttpHeaderNames.LOCATION, url.toExternalForm())
