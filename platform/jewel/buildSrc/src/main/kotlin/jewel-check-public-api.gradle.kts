@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 plugins {
     id("org.jetbrains.kotlinx.binary-compatibility-validator")
     id("dev.drewhamilton.poko")
@@ -13,7 +15,7 @@ apiValidation {
 }
 
 poko {
-    pokoAnnotation.set("org.jetbrains.jewel.foundation.GenerateDataFunctions")
+    pokoAnnotation = "org.jetbrains.jewel.foundation.GenerateDataFunctions"
 }
 
 tasks {

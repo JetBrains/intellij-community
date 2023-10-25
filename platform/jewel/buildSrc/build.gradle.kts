@@ -3,19 +3,6 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
 }
 
-gradlePlugin {
-    plugins {
-        register("intellij-theme-generator") {
-            id = "intellij-theme-generator"
-            implementationClass = "org.jetbrains.jewel.buildlogic.theme.IntelliJThemeGeneratorPlugin"
-        }
-        register("android-studio-releases-generator") {
-            id = "android-studio-releases-generator"
-            implementationClass = "org.jetbrains.jewel.buildlogic.demodata.AndroidStudioReleasesGeneratorPlugin"
-        }
-    }
-}
-
 kotlin {
     sourceSets {
         all {
