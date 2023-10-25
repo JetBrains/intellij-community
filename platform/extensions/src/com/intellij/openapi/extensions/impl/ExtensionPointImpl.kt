@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiPredicate
 import java.util.function.Predicate
-import java.util.function.Supplier
 import kotlin.concurrent.Volatile
 
 private val LOG: Logger = logger<ExtensionPointImpl<*>>()
@@ -33,7 +32,7 @@ private val LOG: Logger = logger<ExtensionPointImpl<*>>()
 @ApiStatus.Internal
 sealed class ExtensionPointImpl<T : Any>(val name: String,
                                          val className: String,
-                                         private val pluginDescriptor: PluginDescriptor,
+                                         private val extensionPointPluginDescriptor: PluginDescriptor,
                                          val componentManager: ComponentManager,
                                          private var extensionClass: Class<T>?,
                                          private val isDynamic: Boolean) : ExtensionPoint<T> {
@@ -87,11 +86,11 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
   override fun isDynamic(): Boolean = isDynamic
 
   override fun registerExtension(extension: T) {
-    doRegisterExtension(extension = extension, order = LoadingOrder.ANY, pluginDescriptor = pluginDescriptor, parentDisposable = null)
+    doRegisterExtension(extension = extension, order = LoadingOrder.ANY, pluginDescriptor = extensionPointPluginDescriptor, parentDisposable = null)
   }
 
   override fun registerExtension(extension: T, parentDisposable: Disposable) {
-    registerExtension(extension = extension, pluginDescriptor = pluginDescriptor, parentDisposable = parentDisposable)
+    registerExtension(extension = extension, pluginDescriptor = extensionPointPluginDescriptor, parentDisposable = parentDisposable)
   }
 
   override fun registerExtension(extension: T, pluginDescriptor: PluginDescriptor, parentDisposable: Disposable) {
@@ -101,7 +100,7 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
                         parentDisposable = parentDisposable)
   }
 
-  override fun getPluginDescriptor(): PluginDescriptor = pluginDescriptor
+  override fun getPluginDescriptor(): PluginDescriptor = extensionPointPluginDescriptor
 
   override fun registerExtension(extension: T, order: LoadingOrder, parentDisposable: Disposable) {
     doRegisterExtension(extension = extension, order = order, pluginDescriptor = getPluginDescriptor(), parentDisposable = parentDisposable)
@@ -233,8 +232,8 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
 
   fun processWithPluginDescriptor(shouldBeSorted: Boolean, consumer: (T, PluginDescriptor) -> Unit) {
     if (isInReadOnlyMode) {
-      for (extension in cachedExtensionsAsArray!!) {
-        consumer(extension, pluginDescriptor /* doesn't matter for tests */)
+      for (extension in cachedExtensions!!) {
+        consumer(extension, extensionPointPluginDescriptor /* doesn't matter for tests */)
       }
       return
     }
@@ -248,22 +247,22 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
         throw e
       }
       catch (e: Throwable) {
-        LOG.error(componentManager.createError(e, pluginDescriptor.getPluginId()))
+        LOG.error(componentManager.createError(e, adapter.pluginDescriptor.pluginId))
       }
     }
   }
 
-  fun processImplementations(shouldBeSorted: Boolean, consumer: (Supplier<T?>, PluginDescriptor) -> Unit) {
+  fun processImplementations(shouldBeSorted: Boolean, consumer: (() -> T?, PluginDescriptor) -> Unit) {
     if (isInReadOnlyMode) {
-      for (extension in cachedExtensionsAsArray!!) {
-        consumer(Supplier { extension }, pluginDescriptor /* doesn't matter for tests */)
+      for (extension in cachedExtensions!!) {
+        consumer({ extension }, extensionPointPluginDescriptor /* doesn't matter for tests */)
       }
       return
     }
 
-    // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
+    // no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (adapter in if (shouldBeSorted) sortedAdapters else adapters) {
-      consumer(Supplier { adapter.createInstance(componentManager) }, adapter.pluginDescriptor)
+      consumer({ adapter.createInstance(componentManager) }, adapter.pluginDescriptor)
     }
   }
 
@@ -287,7 +286,7 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
   }
 
   override fun size(): Int {
-    return cachedExtensionsAsArray?.size ?: adapters.size
+    return cachedExtensions?.size ?: adapters.size
   }
 
   val sortedAdapters: List<ExtensionComponentAdapter>
@@ -455,7 +454,7 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
     }
     else {
       newList.map {
-        ObjectComponentAdapter(instance = it, pluginDescriptor = pluginDescriptor, loadingOrder = LoadingOrder.ANY)
+        ObjectComponentAdapter(instance = it, pluginDescriptor = extensionPointPluginDescriptor, loadingOrder = LoadingOrder.ANY)
       }.toPersistentList()
     }
     adapters = result
@@ -516,10 +515,10 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
         for (extension in extensions) {
           try {
             if (isRemoved) {
-              listener.extensionRemoved(extension, pluginDescriptor)
+              listener.extensionRemoved(extension, extensionPointPluginDescriptor)
             }
             else {
-              listener.extensionAdded(extension, pluginDescriptor)
+              listener.extensionAdded(extension, extensionPointPluginDescriptor)
             }
           }
           catch (e: ProcessCanceledException) {
@@ -737,11 +736,11 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
     var extensionClass = this.extensionClass
     if (extensionClass == null) {
       try {
-        extensionClass = componentManager.loadClass(className, pluginDescriptor)
+        extensionClass = componentManager.loadClass(className, extensionPointPluginDescriptor)
         this.extensionClass = extensionClass
       }
       catch (e: ClassNotFoundException) {
-        throw componentManager.createError(e, pluginDescriptor.pluginId)
+        throw componentManager.createError(e, extensionPointPluginDescriptor.pluginId)
       }
     }
     return extensionClass
@@ -851,7 +850,7 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
       }
     }
 
-    val extensionCache = cachedExtensionsAsArray
+    val extensionCache = cachedExtensions
     if (extensionCache == null) {
       for (adapter in sortedAdapters) {
         // findExtension is called for a lot of extension points - do not fail if listeners were added (e.g., FacetTypeRegistryImpl)
@@ -876,10 +875,9 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
     }
 
     if (isRequired) {
-      var message: @NonNls String = "cannot find extension implementation " + aClass + "(epName=" + name + ", extensionCount=" + size()
-      val cache = cachedExtensionsAsArray
-      if (cache != null) {
-        message += ", cachedExtensions"
+      var message: @NonNls String = "cannot find extension implementation $aClass(epName=$name, extensionCount=${size()}"
+      cachedExtensions?.let {
+        message += ", cachedExtensions=$cachedExtensions"
       }
       if (isInReadOnlyMode) {
         message += ", point in read-only mode"
@@ -891,9 +889,9 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
   }
 
   fun <V> findExtensions(aClass: Class<V>): List<T> {
-    val extensionCache = cachedExtensionsAsArray
+    val extensionCache = cachedExtensions
     if (extensionCache == null) {
-      val suitableInstances: MutableList<T> = ArrayList()
+      val suitableInstances = ArrayList<T>()
       for (adapter in sortedAdapters) {
         try {
           // this enables us to not trigger Class initialization for all extensions, but only for those instanceof V
@@ -911,7 +909,7 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
       return suitableInstances
     }
     else {
-      val result: MutableList<T> = ArrayList()
+      val result = ArrayList<T>()
       for (t in extensionCache) {
         if (aClass.isInstance(t)) {
           result.add(t)
@@ -922,7 +920,7 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
   }
 
   private fun findExtensionByExactClass(aClass: Class<out T>): T? {
-    val cachedExtensions = cachedExtensionsAsArray
+    val cachedExtensions = cachedExtensions
     if (cachedExtensions == null) {
       for (adapter in sortedAdapters) {
         val classOrName = adapter.implementationClassOrName

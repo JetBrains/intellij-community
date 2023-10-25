@@ -13,7 +13,7 @@ internal class BeanExtensionPoint<T : Any>(
   dynamic: Boolean,
 ) : ExtensionPointImpl<T>(name = name,
                           className = className,
-                          pluginDescriptor = pluginDescriptor,
+                          extensionPointPluginDescriptor = pluginDescriptor,
                           componentManager = componentManager,
                           extensionClass = null,
                           isDynamic = dynamic), ImplementationClassResolver {
