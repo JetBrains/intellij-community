@@ -187,7 +187,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   /**
    * Build cache by arbitrary key using provided key to value mapper. Return value by key.
    *
-   * To exclude extension from cache, return null key.
+   * To exclude an extension from cache, return a null key.
    */
   @ApiStatus.Experimental
   fun <K : Any, V : Any> getByKey(key: K,
