@@ -176,8 +176,8 @@ internal class PackagesTable(
         setShowGrid(false)
         rowHeight = JBUI.getInt(
             "PackageSearch.PackagesList.rowHeight",
-            JBUI.getInt("List.rowHeight", if (PackageSearchUI.isNewUI) 24 else 20)
-        ).scaled()
+            JBUI.getInt("List.rowHeight", if (PackageSearchUI.isNewUI) 24.scaled() else 20.scaled())
+        )
 
         setExpandableItemsEnabled(false)
         selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION

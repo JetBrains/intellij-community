@@ -1282,7 +1282,7 @@ public final class JBUI {
         }
 
         public static int fontSizeOffset() {
-          return getInt("CompletionPopup.Advertiser.fontSizeOffset", Math.round(CurrentTheme.Advertiser.FONT_SIZE_OFFSET.getUnscaled()));
+          return getInt("CompletionPopup.Advertiser.fontSizeOffset", CurrentTheme.Advertiser.FONT_SIZE_OFFSET.get());
         }
 
         public static @NotNull Border border() {
@@ -1923,7 +1923,7 @@ public final class JBUI {
       }
 
       public static int fieldsSeparatorWidth() {
-        return getInt("NewClass.separatorWidth", 10);
+        return getInt("NewClass.separatorWidth", JBUIScale.scale(10));
       }
     }
 
@@ -1986,9 +1986,8 @@ public final class JBUI {
         return selected ? Selection.foreground(focused) : FOREGROUND;
       }
 
-      /** @return <b>unscaled</b> value */
       static int rowHeight() {
-        int defaultHeight = 24;
+        int defaultHeight = JBUIScale.scale(24);
         int result = getInt("List.rowHeight", defaultHeight);
         // Linux doesn't support rowHeight now, use default value. See IDEA-234112
         return result <= 0 ? defaultHeight : result;
@@ -2107,7 +2106,6 @@ public final class JBUI {
         return selected ? Selection.foreground(focused) : FOREGROUND;
       }
 
-      /** @return <b>unscaled</b> value */
       static int rowHeight() {
         int defaultHeight = defaultRowHeight();
         int result = getInt(rowHeightKey(), defaultHeight);
@@ -2120,7 +2118,7 @@ public final class JBUI {
       }
 
       static int defaultRowHeight() {
-        return 24;
+        return JBUIScale.scale(24);
       }
 
       final class Selection {
@@ -2271,19 +2269,11 @@ public final class JBUI {
     }
   }
 
-  /**
-   * @param defaultValue must be <b>unscaled</b>
-   * @return <b>unscaled</b> value of {@code propertyName} if it is specified, otherwise the {@code defaultValue}
-   */
   public static int getInt(@NonNls @NotNull String propertyName, int defaultValue) {
     Object value = UIManager.get(propertyName);
     return value instanceof Integer ? (Integer)value : defaultValue;
   }
 
-  /**
-   * @param defaultValue must be <b>unscaled</b>
-   * @return <b>unscaled</b> value of {@code propertyName} if it is specified, otherwise the {@code defaultValue}
-   */
   public static float getFloat(@NonNls @NotNull String propertyName, float defaultValue) {
     Object value = UIManager.get(propertyName);
     if (value instanceof Float) return (Float)value;

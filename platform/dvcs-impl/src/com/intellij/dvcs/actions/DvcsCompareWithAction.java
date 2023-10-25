@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.CompareWithLocalDialog;
 import org.jetbrains.annotations.Nls;
@@ -105,7 +104,7 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
       .setAutoselectOnMouseMove(true)
       .setNamerForFiltering(o -> o)
       .setRenderer(BuilderKt.textListCellRenderer((@NlsSafe var name) -> name))
-      .withFixedRendererSize(new JBDimension(350, JBUI.CurrentTheme.List.rowHeight())) // do not freeze on huge lists
+      .withFixedRendererSize(new Dimension(JBUI.scale(350), JBUI.CurrentTheme.List.rowHeight())) // do not freeze on huge lists
       .createPopup();
   }
 

@@ -104,7 +104,8 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
           }
         };
         wrapper.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
-        wrapper.setBorder(JBUI.Borders.emptyTop(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth()));
+        //noinspection UseDPIAwareBorders
+        wrapper.setBorder(new EmptyBorder(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth(), 0, 0, 0));
         wrapper.add(delegate, BorderLayout.CENTER);
         return wrapper;
       }

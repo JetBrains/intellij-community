@@ -253,7 +253,7 @@ public final class PopupUtil {
 
   public static void configListRendererFixedHeight(SelectablePanel selectablePanel) {
     configListRendererFlexibleHeight(selectablePanel);
-    selectablePanel.setPreferredHeight(JBUI.scale(JBUI.CurrentTheme.List.rowHeight()));
+    selectablePanel.setPreferredHeight(JBUI.CurrentTheme.List.rowHeight());
   }
 
   public static void configListRendererFlexibleHeight(SelectablePanel selectablePanel) {

@@ -70,7 +70,7 @@ public class IdeaMenuUI extends BasicMenuUI {
       JBInsets outerInsets = IdeaPopupMenuUI.isPartOfPopupMenu(c)
                              ? JBUI.CurrentTheme.PopupMenu.Selection.outerInsets()
                              : JBUI.CurrentTheme.Menu.Selection.outerInsets();
-      return new Dimension(preferredSize.width, JBUI.scale(JBUI.CurrentTheme.List.rowHeight()) + outerInsets.height());
+      return new Dimension(preferredSize.width, JBUI.CurrentTheme.List.rowHeight() + outerInsets.height());
     }
 
     return preferredSize;
