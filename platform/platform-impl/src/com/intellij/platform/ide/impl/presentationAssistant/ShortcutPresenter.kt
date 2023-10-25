@@ -150,7 +150,10 @@ class ShortcutPresenter : Disposable {
       }
     }
 
-    return fragments
+    return if (fragments.all { it.subtitle == null }) {
+      fragments.map { it.copy(showSubtitle = false) }
+    }
+    else fragments
   }
 
   private fun getCustomShortcut(actionId: String, kind: KeymapKind): Array<KeyboardShortcut> {
@@ -250,4 +253,5 @@ class ShortcutPresenter : Disposable {
 
 internal data class TextData(@NlsSafe val title: String,
                              val titleFont: Font? = null,
-                             @NlsSafe val subtitle: String? = null)
+                             @NlsSafe val subtitle: String? = null,
+                             val showSubtitle: Boolean = true)

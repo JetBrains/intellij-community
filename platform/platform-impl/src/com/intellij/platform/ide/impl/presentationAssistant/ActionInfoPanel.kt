@@ -13,6 +13,7 @@ import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import java.awt.Dimension
 import java.awt.Font
 import java.awt.font.TextAttribute
 import javax.swing.JPanel
@@ -54,8 +55,20 @@ internal class ActionInfoPanel(textData: TextData, private val appearance: Actio
       .deriveFont(JBUIScale.scale (appearance.titleFontSize))
       .deriveFont(mapOf(TextAttribute.WEIGHT to TextAttribute.WEIGHT_BOLD))
 
-    val subtitle = textData.subtitle
-    subtitleLabel.text = subtitle ?: " "
+    subtitleLabel.isVisible = textData.showSubtitle
+    subtitleLabel.text = textData.subtitle ?: " "
+  }
+
+  /** Preferred size of popup when both title and subtitle are shown */
+  fun getFullSize(): Dimension {
+    val oldSubtitleVisible = subtitleLabel.isVisible
+    return try {
+      subtitleLabel.isVisible = true
+      preferredSize
+    }
+    finally {
+      subtitleLabel.isVisible = oldSubtitleVisible
+    }
   }
 
   companion object {
