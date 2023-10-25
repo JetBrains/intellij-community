@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Pass
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
@@ -298,12 +299,22 @@ internal fun PsiElement.renameFileIfSingleDeclaration(
     allRenames: MutableMap<PsiElement, String>
 ) {
     val file = containingFile as? KtFile ?: return
-    if (!isUnitTestMode() && !Registry.`is`("kotlin.rename.file.if.the.only.declaration")) return
 
     if (file.declarations.singleOrNull() == this) {
         file.virtualFile?.let { virtualFile ->
             val nameWithoutExtensions = virtualFile.nameWithoutExtension
             if (nameWithoutExtensions == originalName) {
+                if (!isUnitTestMode() && newName.isNotEmpty() && Messages.showYesNoDialog(
+                        project,
+                        KotlinBundle.message("rename.file.name.0", newName),
+                        KotlinBundle.message("rename.file.name"),
+                        Messages.getYesButton(),
+                        Messages.getCancelButton(),
+                        Messages.getQuestionIcon()
+                    ) == Messages.NO
+                ) {
+                    return
+                }
                 val newFileName = newName + "." + virtualFile.extension
                 allRenames[file] = newFileName
                 RenamePsiElementProcessor.forElement(file).prepareRenaming(file, newFileName, allRenames)
