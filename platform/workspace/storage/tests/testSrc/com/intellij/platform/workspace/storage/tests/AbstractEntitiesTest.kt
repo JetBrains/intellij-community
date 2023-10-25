@@ -229,4 +229,26 @@ class AbstractEntitiesTest {
     assertEquals(oneMoreResult.parentData, anotherResult.parentData)
     assertEquals(oneMoreResult.parentData, resultEntity.parentData)
   }
+
+  @Test
+  fun `add entity with child then steal this child with different entity`() {
+    val builder = MutableEntityStorage.create()
+
+    val child = builder addEntity MiddleEntity("", SampleEntitySource(""))
+    val anotherChild = builder addEntity LeftEntity(MySource) {
+      this.children = listOf(child)
+    }
+
+    builder addEntity LeftEntity(AnotherSource) {
+      this.children = listOf(
+        anotherChild,
+        child,
+      )
+    }
+
+    val children = builder.entities(LeftEntity::class.java).single { it.entitySource is AnotherSource }.children
+    assertEquals(2, children.size)
+    assertEquals(MySource, children[0].entitySource)
+    assertIs<SampleEntitySource>(children[1].entitySource)
+  }
 }
