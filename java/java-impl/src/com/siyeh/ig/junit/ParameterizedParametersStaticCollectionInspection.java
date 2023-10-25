@@ -3,6 +3,7 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -17,7 +18,6 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +29,13 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
   protected static final String PARAMETERS_FQN = "org.junit.runners.Parameterized.Parameters";
 
   @Override
-  protected InspectionGadgetsFix buildFix(final Object... infos) {
+  protected LocalQuickFix buildFix(final Object... infos) {
     if (infos.length == 0) return null;
     if (infos[0] instanceof PsiClass aClass) {
       final String signature = "@" + PARAMETERS_FQN + " public static java.lang.Iterable<java.lang.Object[]> parameters()";
-      return new DelegatingFix(CreateMethodQuickFix.createFix(aClass, signature, "")) {
+      CreateMethodQuickFix fix = CreateMethodQuickFix.createFix(aClass, signature, "");
+      if (fix == null) return null;
+      return new LocalQuickFix() {
         @Override
         public @NotNull String getName() {
           return getFamilyName();
@@ -42,6 +44,11 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
         @Override
         public @NotNull String getFamilyName() {
           return InspectionGadgetsBundle.message("fix.data.provider.create.method.fix.name");
+        }
+
+        @Override
+        public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+          fix.applyFix(project, descriptor);
         }
       };
     }
