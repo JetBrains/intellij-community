@@ -148,12 +148,12 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
   //  }
   //}
 
-  fun getSdk(): Sdk? {
-    return when (selectedMode.get()) {
+  fun getSdk(): Sdk? =
+    when (selectedMode.get()) {
       PROJECT_VENV -> {
         val venvPath = Path.of(projectPath.get(), ".venv")
         val venvPathOnTarget = presenter.getPathOnTarget(venvPath)
-        return createVirtualEnvSynchronously(pythonBaseVersion.get(), basePythonSdks.get(), venvPathOnTarget, projectPath.get(), null, null)
+        createVirtualEnvSynchronously(pythonBaseVersion.get(), basePythonSdks.get(), venvPathOnTarget, projectPath.get(), null, null)
       }
       BASE_CONDA -> {
         runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.conda.select.progress"),
@@ -165,5 +165,4 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
       }
       CUSTOM -> custom.getSdk()
     }
-  }
 }
