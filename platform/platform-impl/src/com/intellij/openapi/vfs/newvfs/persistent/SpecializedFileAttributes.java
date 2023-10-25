@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.Unmappable;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
@@ -381,7 +382,9 @@ public final class SpecializedFileAttributes {
 
     @Override
     public void flush() throws IOException {
-      helper.fsync();
+      if (MMappedFileStorage.FSYNC_ON_FLUSH_BY_DEFAULT) {
+        helper.fsync();
+      }
     }
 
     @Override

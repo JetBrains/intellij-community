@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
+import java.io.Flushable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -17,7 +18,7 @@ import java.nio.ByteBuffer;
  * Thread-safety properties are implementation-specific.
  */
 @ApiStatus.Internal
-public interface AppendOnlyLog extends Closeable, CleanableStorage {
+public interface AppendOnlyLog extends Closeable, Flushable, CleanableStorage {
   /** @return id of appended record */
   long append(@NotNull ByteBufferWriter writer,
               int recordSize) throws IOException;
@@ -40,7 +41,8 @@ public interface AppendOnlyLog extends Closeable, CleanableStorage {
   @Override
   void close() throws IOException;
 
-  void flush(boolean force) throws IOException;
+  @Override
+  void flush() throws IOException;
 
   /** @return true if there are no records in the log */
   boolean isEmpty();

@@ -341,6 +341,7 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
     //         -- state it has undefined behavior in such a context.
   }
 
+  /** It should be used in a rare occasions only: see {@link MMappedFileStorage#FSYNC_ON_FLUSH_BY_DEFAULT} docs */
   public void fsync() throws IOException {
     storage.fsync();
   }

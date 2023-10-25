@@ -545,15 +545,17 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     throw new UnsupportedOperationException("Method not implemented yet");
   }
 
+  @Override
   public void flush() throws IOException {
-    //nothing to do: everything is already in the mapped buffer
+    flush(MMappedFileStorage.FSYNC_ON_FLUSH_BY_DEFAULT);
   }
 
-  @Override
+  /** fsync=true should be used in a rare occasions only: see {@link MMappedFileStorage#FSYNC_ON_FLUSH_BY_DEFAULT} */
   public void flush(boolean fsync) throws IOException {
     if (fsync) {
       storage.fsync();
     }
+    //else: nothing to do -- everything is already in the mapped buffer
   }
 
   @Override
@@ -565,10 +567,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   @Override
   public void close() throws IOException {
     if (storage.isOpen()) {
-      //MAYBE RC: is it better to state that flush(true) should be called
-      //          explicitly, if needed, otherwise leave it to OS to decide
-      //          when to sync the pages?
-      flush(true);
+      flush();
       storage.close();
       headerPage = null;//help GC unmap pages sooner
     }
