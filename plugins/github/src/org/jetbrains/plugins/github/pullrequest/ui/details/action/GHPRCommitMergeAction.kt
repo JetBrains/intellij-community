@@ -18,8 +18,8 @@ internal class GHPRCommitMergeAction(scope: CoroutineScope, private val project:
 
   init {
     scope.launch {
-      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.isMergeAllowed) { isBusy, isMergeAllowed ->
-        isEnabled = !isBusy && isMergeAllowed && reviewFlowVm.userCanMergeReview
+      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.isMergeEnabled) { isBusy, isMergeEnabled ->
+        isEnabled = !isBusy && isMergeEnabled
       }
     }
   }

@@ -29,6 +29,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvi
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.RepositoryRestrictions
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.util.concurrent.CompletableFuture
@@ -92,22 +93,27 @@ class GHPRReviewFlowViewModelImpl internal constructor(
   private val _pendingCommentsState: MutableStateFlow<Int> = MutableStateFlow(0)
   override val pendingComments: Flow<Int> = _pendingCommentsState.asSharedFlow()
 
+  override val repositoryRestrictions = RepositoryRestrictions(securityService)
+
   override val userCanManageReview: Boolean = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) ||
                                               detailsState.value.viewerDidAuthor
 
   override val userCanMergeReview: Boolean = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE) &&
                                              !securityService.isMergeForbiddenForProject()
 
-  override val isMergeAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
-    mergeabilityState?.isRestricted == false && mergeabilityState.canBeMerged && securityService.isMergeAllowed()
+  override val isMergeEnabled: Flow<Boolean> = mergeabilityState.map {
+    it?.isRestricted == false && repositoryRestrictions.isMergeAllowed &&
+    it.canBeMerged && userCanMergeReview
   }
 
-  override val isRebaseAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
-    mergeabilityState?.isRestricted == false && mergeabilityState.canBeRebased && securityService.isRebaseMergeAllowed()
+  override val isSquashMergeEnabled: Flow<Boolean> = mergeabilityState.map {
+    it?.isRestricted == false && repositoryRestrictions.isSquashMergeAllowed &&
+    it.canBeMerged && userCanMergeReview
   }
 
-  override val isSquashMergeAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
-    mergeabilityState?.isRestricted == false && mergeabilityState.canBeMerged && securityService.isSquashMergeAllowed()
+  override val isRebaseEnabled: Flow<Boolean> = mergeabilityState.map {
+    it?.isRestricted == false && repositoryRestrictions.isRebaseAllowed &&
+    it.canBeRebased && userCanMergeReview
   }
 
   override fun mergeReview() = runAction {
