@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
@@ -107,16 +109,19 @@ public class NameSuggestionsField extends JPanel {
   }
 
   public void selectNameWithoutExtension() {
-    SwingUtilities.invokeLater(() -> {
-      Editor editor = getEditor();
-      if (editor == null) return;
-      final int pos = editor.getDocument().getText().lastIndexOf('.');
-      if (pos > 0) {
-        editor.getSelectionModel().setSelection(0, pos);
-        editor.getCaretModel().moveToOffset(pos);
+    addHierarchyListener(new HierarchyListener() { // Use listener to make sure editor in myComponent is initialized
+      @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) == 0 || !isShowing()) return;
+        Editor editor = getEditor();
+        if (editor == null) return;
+        final int pos = editor.getDocument().getText().lastIndexOf('.');
+        if (pos > 0) {
+          editor.getSelectionModel().setSelection(0, pos);
+          editor.getCaretModel().moveToOffset(pos);
+        }
       }
     });
-
   }
 
   public void select(final int start, final int end) {
