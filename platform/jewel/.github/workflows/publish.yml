@@ -15,8 +15,9 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
         with:
-          distribution: temurin
+          distribution: zulu
           java-version: 17
+          cache: gradle
       - name: Setup Gradle
         run: chmod +x gradlew
       - name: Run Gradle
@@ -41,8 +42,9 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
         with:
-          distribution: temurin
+          distribution: zulu
           java-version: 17
+          cache: gradle
       - name: Setup Gradle
         run: chmod +x gradlew
       - name: Run Gradle

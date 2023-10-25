@@ -1,6 +1,7 @@
 plugins {
     jewel
     `jewel-ij-publish`
+    `ide-version-checker`
     alias(libs.plugins.composeDesktop)
 }
 

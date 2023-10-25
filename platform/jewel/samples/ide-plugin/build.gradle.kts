@@ -1,4 +1,5 @@
-import SupportedIJVersion.*
+import SupportedIJVersion.IJ_232
+import SupportedIJVersion.IJ_233
 
 plugins {
     jewel
