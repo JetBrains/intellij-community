@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="kotlinx-serialization-core" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.6.0">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.6.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.6.0/kotlinx-serialization-core-jvm-1.6.0.jar">
           <sha256sum>ec35128c4fb9044e99bbcf07f05ef2543bfa6d42030d7aadabaeacffb16e72c5</sha256sum>

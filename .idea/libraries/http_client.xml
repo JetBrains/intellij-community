@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="http-client" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.apache.httpcomponents:httpmime:4.5.14">
+    <properties maven-id="org.apache.httpcomponents:httpmime:4.5.14">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpmime/4.5.14/httpmime-4.5.14.jar">
           <sha256sum>d401243d5c6eae928a37121b6e819158c8c32ea0584793e7285bb489ab2a3d17</sha256sum>

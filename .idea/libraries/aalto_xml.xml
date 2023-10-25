@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="aalto-xml" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="com.fasterxml:aalto-xml:1.3.2">
+    <properties maven-id="com.fasterxml:aalto-xml:1.3.2">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1.3.2/aalto-xml-1.3.2.jar">
           <sha256sum>dcf2d5f453056c3ce848caff4179021bfb83b5efb3a3d779433c5bd70976068b</sha256sum>

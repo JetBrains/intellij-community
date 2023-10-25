@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="snakeyaml-engine" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.snakeyaml:snakeyaml-engine:2.7">
+    <properties include-transitive-deps="false" maven-id="org.snakeyaml:snakeyaml-engine:2.7">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.7/snakeyaml-engine-2.7.jar">
           <sha256sum>4053f878c171692aab8782f53a3974f43e55e2b6ed12c3682b36a46968c5ded1</sha256sum>

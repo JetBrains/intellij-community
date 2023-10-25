@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="ktor-client-mock" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.ktor:ktor-client-mock-jvm:2.3.5">
+    <properties maven-id="io.ktor:ktor-client-mock-jvm:2.3.5">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/2.3.5/ktor-client-mock-jvm-2.3.5.jar">
           <sha256sum>a1fee10bfea8a605095f029b6332990402f9dd9f162b92efc8f1c8c2b2c945a6</sha256sum>

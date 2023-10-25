@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="proxy-vole" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.bidib.com.github.markusbernhardt:proxy-vole:1.1.0">
+    <properties maven-id="org.bidib.com.github.markusbernhardt:proxy-vole:1.1.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.0/proxy-vole-1.1.0.jar">
           <sha256sum>336cf897cea035f32e16c996e57df4157656c5d919fd11abaab308a4580728af</sha256sum>

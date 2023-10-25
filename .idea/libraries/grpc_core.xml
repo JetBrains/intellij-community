@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="grpc-core" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.grpc:grpc-core:1.57.2">
+    <properties maven-id="io.grpc:grpc-core:1.57.2">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.57.2/grpc-core-1.57.2.jar">
           <sha256sum>5a10070abfeb4966ec4d580961dcc4e7f69fa83ab25242f92c1765efb07b8606</sha256sum>

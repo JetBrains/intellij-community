@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="commons-lang3" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.apache.commons:commons-lang3:3.13.0">
+    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-lang3:3.13.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.13.0/commons-lang3-3.13.0.jar">
           <sha256sum>82f528cf718c7a3c2f30fc5bc784e3c6a0a10b17605dadb9e16c82ede11e6064</sha256sum>

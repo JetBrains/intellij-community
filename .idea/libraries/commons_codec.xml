@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="commons-codec" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="commons-codec:commons-codec:1.16.0">
+    <properties maven-id="commons-codec:commons-codec:1.16.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.16.0/commons-codec-1.16.0.jar">
           <sha256sum>56595fb20b0b85bc91d0d503dad50bb7f1b9afc0eed5dffa6cbb25929000484d</sha256sum>

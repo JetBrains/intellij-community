@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="netty-handler-proxy" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.netty:netty-handler-proxy:4.1.99.Final">
+    <properties maven-id="io.netty:netty-handler-proxy:4.1.99.Final">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler-proxy/4.1.99.Final/netty-handler-proxy-4.1.99.Final.jar">
           <sha256sum>6d0e685aca22fd8444d595989c0d7760238f5878000ba034514cb3ddae92694e</sha256sum>

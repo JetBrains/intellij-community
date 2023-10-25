@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="protobuf" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="com.google.protobuf:protobuf-java:3.24.2">
+    <properties include-transitive-deps="false" maven-id="com.google.protobuf:protobuf-java:3.24.2">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.24.2/protobuf-java-3.24.2.jar">
           <sha256sum>10d89b2fea519626194aecb13b9cd0d84e78cbaad697440016a9315fe595542a</sha256sum>

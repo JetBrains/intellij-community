@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="bouncy-castle-provider" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.bouncycastle:bcpkix-jdk18on:1.76">
+    <properties maven-id="org.bouncycastle:bcpkix-jdk18on:1.76">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.76/bcpkix-jdk18on-1.76.jar">
           <sha256sum>935a388854c329f9a6f32708f30c90045d2f91294fa687281273145d4cf9834a</sha256sum>

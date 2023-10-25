@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="joni" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.jruby.joni:joni:2.2.1">
+    <properties maven-id="org.jruby.joni:joni:2.2.1">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.1/joni-2.2.1.jar">
           <sha256sum>b3e4b657a3ed1d8f684114f6baa462d553a5932a865c1574695498dda8577748</sha256sum>

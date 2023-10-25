@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="miglayout-swing" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="com.miglayout:miglayout-swing:11.1">
+    <properties maven-id="com.miglayout:miglayout-swing:11.1">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.1/miglayout-swing-11.1.jar">
           <sha256sum>53ca6af32b37d8586fb9508765e272df4af2d90e4d59ec0cc7febe269d16d9fd</sha256sum>

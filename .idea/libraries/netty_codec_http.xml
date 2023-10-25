@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="netty-codec-http" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.netty:netty-codec-http2:4.1.99.Final">
+    <properties maven-id="io.netty:netty-codec-http2:4.1.99.Final">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.1.99.Final/netty-codec-http2-4.1.99.Final.jar">
           <sha256sum>a66eb05f321c6f859a10a018ff210754df390b1b83a4a09d5ca603f2e2e7228a</sha256sum>

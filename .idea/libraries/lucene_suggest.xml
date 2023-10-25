@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="lucene-suggest" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.apache.lucene:lucene-suggest:9.8.0">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-suggest:9.8.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/9.8.0/lucene-suggest-9.8.0.jar">
           <sha256sum>e677de7a459889188fd8b5075d9c2bbe7c0180afdee6896e9f30a301b1f84fa7</sha256sum>

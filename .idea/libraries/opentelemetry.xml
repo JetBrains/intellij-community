@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="opentelemetry" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.opentelemetry:opentelemetry-sdk:1.31.0">
+    <properties maven-id="io.opentelemetry:opentelemetry-sdk:1.31.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.31.0/opentelemetry-sdk-1.31.0.jar">
           <sha256sum>b25354f3a3027d3007dea126dd920f7ff82130c32bd5d90094931a59a70de569</sha256sum>

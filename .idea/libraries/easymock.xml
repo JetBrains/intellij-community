@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="easymock" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.easymock:easymock:5.2.0">
+    <properties include-transitive-deps="false" maven-id="org.easymock:easymock:5.2.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/easymock/easymock/5.2.0/easymock-5.2.0.jar">
           <sha256sum>e63a6494b96553cbd0dfde13b5f23dabbd811854410d6ebc53a6a6684a1763b5</sha256sum>

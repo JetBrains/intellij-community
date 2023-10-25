@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="ASM" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="intellij-dependencies" maven-id="org.jetbrains.intellij.deps:asm-all:9.5.3">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:asm-all:9.5.3">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/asm-all/9.5.3/asm-all-9.5.3.jar">
           <sha256sum>ee2763fcf9979a20790cb353a8cf7ad6a5dbacbc35a367ef68796734fa1b963f</sha256sum>

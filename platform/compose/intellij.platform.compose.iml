@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.compose.skikoRuntime" />
     <orderEntry type="module-library" exported="">
       <library name="jetbrains.jewel" type="repository">
-        <properties jar-repository-id="kpm" maven-id="org.jetbrains.jewel:jewel-ide-laf-bridge:0.7.3-ij-233">
+        <properties maven-id="org.jetbrains.jewel:jewel-ide-laf-bridge:0.7.3-ij-233">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge/0.7.3-ij-233/jewel-ide-laf-bridge-0.7.3-ij-233.jar">
               <sha256sum>1d15f555002a43986ac6b4a964aa8941277a969b22dc0baeebabe72f91dafda0</sha256sum>

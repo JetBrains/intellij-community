@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="commons-logging" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="commons-logging:commons-logging:1.2">
+    <properties maven-id="commons-logging:commons-logging:1.2">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.2/commons-logging-1.2.jar">
           <sha256sum>daddea1ea0be0f56978ab3006b8ac92834afeefbd9b7e4e6316fca57df0fa636</sha256sum>

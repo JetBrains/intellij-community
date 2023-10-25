@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="JUnit5Suites" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.junit.platform:junit-platform-suite:1.10.0">
+    <properties maven-id="org.junit.platform:junit-platform-suite:1.10.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.10.0/junit-platform-suite-1.10.0.jar">
           <sha256sum>5982b7b258e031e5cee3f3fb7357e7c1175237559bd812cebcbdcaec74c38d8d</sha256sum>

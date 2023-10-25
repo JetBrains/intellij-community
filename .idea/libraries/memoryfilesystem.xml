@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="memoryfilesystem" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="com.github.marschall:memoryfilesystem:2.6.1">
+    <properties maven-id="com.github.marschall:memoryfilesystem:2.6.1">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/github/marschall/memoryfilesystem/2.6.1/memoryfilesystem-2.6.1.jar">
           <sha256sum>610ff7bcb8ca8ee846040703bb78318e7dd6e8734356584b82d2ef8396639df5</sha256sum>

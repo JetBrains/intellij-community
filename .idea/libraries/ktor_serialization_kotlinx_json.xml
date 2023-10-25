@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="ktor-serialization-kotlinx-json" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.5">
+    <properties maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.5">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/2.3.5/ktor-serialization-kotlinx-json-jvm-2.3.5.jar">
           <sha256sum>04955fd9a5038812f1afde6e715ffbd90e28266b0cb48459db921b4b807125e1</sha256sum>

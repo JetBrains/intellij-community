@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="javaslang" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.javaslang:javaslang:2.0.6">
+    <properties maven-id="io.javaslang:javaslang:2.0.6">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/javaslang/javaslang/2.0.6/javaslang-2.0.6.jar">
           <sha256sum>b92286634df04984ce524e659fcfc270632ff2997190c48a0f7d671c3300568e</sha256sum>
