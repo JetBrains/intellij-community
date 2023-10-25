@@ -17,4 +17,7 @@ data class WebSymbolQualifiedName(
   fun matches(expectedNamespace: SymbolNamespace, expectedKinds: List<SymbolKind>): Boolean {
     return namespace == expectedNamespace && expectedKinds.any { kind == it }
   }
+
+  fun matches(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+    qualifiedKind.kind == kind && qualifiedKind.namespace == namespace
 }
