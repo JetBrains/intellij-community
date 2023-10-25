@@ -26,13 +26,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class CondaExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
-
   private lateinit var envComboBox: ComboBox<PyCondaEnv?>
   private lateinit var condaExecutableComboBox: TextFieldWithBrowseButton
   private var selectedEnvironment = propertyGraph.property<PyCondaEnv?>(null)
   private var lastLoadedConda = propertyGraph.property("")
   private var condaEnvironmentsLoaded = propertyGraph.property(true)
-
 
   override fun buildOptions(panel: Panel) {
     with(panel) {
@@ -62,7 +60,6 @@ class CondaExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter)
           }
         }.visibleIf(!condaEnvironmentsLoaded)
       }
-
     }
   }
 
@@ -104,5 +101,4 @@ class CondaExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter)
                                        ProjectManager.getInstance().defaultProject)
     }
   }
-
 }
