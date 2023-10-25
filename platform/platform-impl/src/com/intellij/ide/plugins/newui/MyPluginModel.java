@@ -556,11 +556,16 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       info.toBackground(myStatusBar);
     }
 
-    boolean result = !myInstallingInfos.isEmpty();
-    if (result) {
-      InstallPluginInfo.showRestart();
+    if (FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI) {
+      return !myInstallingInfos.isEmpty();
+    } else {
+      // FIXME(vadim.salavatov) idk what that does and it's not clear from the surrounding code :(
+      boolean result = !myInstallingInfos.isEmpty();
+      if (result) {
+        InstallPluginInfo.showRestart();
+      }
+      return result;
     }
-    return result;
   }
 
   private void prepareToInstall(@NotNull InstallPluginInfo info) {
