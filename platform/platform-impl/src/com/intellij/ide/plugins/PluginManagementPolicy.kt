@@ -14,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * @see DefaultPluginManagementPolicy
  */
+@ApiStatus.Internal
 @ApiStatus.Experimental
 interface PluginManagementPolicy {
 
