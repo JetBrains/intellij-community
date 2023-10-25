@@ -12,24 +12,24 @@ public interface ReadActionListener extends EventListener {
   /**
    * Is called before the {@code action} is started, when the read-lock is not acquired yet.
    */
-  default void beforeReadActionStart(@NotNull Class<?> action) {
+  default void beforeReadActionStart(@NotNull Object action) {
   }
 
   /**
    * Is called before the {@code action} is started, when the read-lock is acquired.
    */
-  default void readActionStarted(@NotNull Class<?> action) {
+  default void readActionStarted(@NotNull Object action) {
   }
 
   /**
    * Is called after the {@code action} executed, while the read-lock is still acquired.
    */
-  default void readActionFinished(@NotNull Class<?> action) {
+  default void readActionFinished(@NotNull Object action) {
   }
 
   /**
    * Is called after {@code action} is finished and the read-lock is released.
    */
-  default void afterReadActionFinished(@NotNull Class<?> action) {
+  default void afterReadActionFinished(@NotNull Object action) {
   }
 }
