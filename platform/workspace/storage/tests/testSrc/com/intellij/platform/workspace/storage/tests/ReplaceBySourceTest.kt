@@ -1791,6 +1791,22 @@ class ReplaceBySourceTest {
                     builder.entities(ChainedEntity::class.java).single { it.entitySource == AnotherSource }.parent!!.entitySource)
   }
 
+  @RepeatedTest(10)
+  fun `replace child to itself keeps it's order`() {
+    val middleChild = builder addEntity MiddleEntity("", AnotherSource)
+    val rightChild = builder addEntity RightEntity(MySource)
+    builder addEntity LeftEntity(MySource) {
+      this.children = listOf(middleChild, rightChild)
+    }
+
+    val anotherBuilder = builder.toSnapshot().toBuilder()
+
+    builder.replaceBySource({ it is AnotherSource }, anotherBuilder)
+
+    val children = builder.entities(LeftEntity::class.java).single().children
+    assertIs<MiddleEntity>(children[0])
+    assertIs<RightEntity>(children[1])
+  }
 
   private inner class ThisStateChecker {
     infix fun WorkspaceEntity.assert(state: ReplaceState) {

@@ -127,9 +127,18 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
   public fun updateChildToParentReferences(parents: Set<WorkspaceEntity>?) {
     if (diff == null) return
     val childId = getEntityData().createEntityId().asChild()
-    val entityInterfaceToEntity = parents?.associateBy { it.getEntityInterface() } ?: emptyMap()
+    val entityInterfaceToEntity = parents
+                                    ?.associateBy { it.getEntityInterface() }
+                                    ?.toMutableMap() ?: mutableMapOf()
+    val idToInterface = parents?.associate { it.asBase().id to it.getEntityInterface() } ?: emptyMap()
 
-    (diff as MutableEntityStorageImpl).refs.getParentRefsOfChild(childId).forEach { (connectionId, _) ->
+    (diff as MutableEntityStorageImpl).refs.getParentRefsOfChild(childId).forEach { (connectionId, existingParent) ->
+      val interfaceOfParent = idToInterface[existingParent.id]
+      if (interfaceOfParent != null) {
+        // We're trying to add parent that already exists. Skip it
+        entityInterfaceToEntity.remove(interfaceOfParent)
+        return@forEach
+      }
       val parentEntityClass = connectionId.parentClass.findWorkspaceEntity()
       // Remove outdated references
       if (!entityInterfaceToEntity.contains(parentEntityClass)) {
