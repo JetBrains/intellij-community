@@ -112,7 +112,7 @@ fun getGradleTaskExecutionOperation(
   return operation
 }
 
-private fun isResolveTask(id: ExternalSystemTaskId): Boolean {
+fun isResolveTask(id: ExternalSystemTaskId): Boolean {
   if (id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
     val task = ApplicationManager.getApplication()
       .getService(ExternalSystemProcessingManager::class.java)
