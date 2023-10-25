@@ -91,7 +91,7 @@ public class RenameElementAction extends AnAction {
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(renamers)
         .setTitle(RefactoringBundle.message("what.would.you.like.to.do"))
-        .setRenderer(RenamerRenderer.INSTANCE)
+        .setRenderer(new RenamerRenderer())
         .setItemChosenCallback(Renamer::performRename)
         .createPopup()
         .showInBestPositionFor(dataContext);
