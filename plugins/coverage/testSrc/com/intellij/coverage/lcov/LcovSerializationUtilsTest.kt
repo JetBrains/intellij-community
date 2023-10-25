@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.lcov
 
 import com.intellij.testFramework.assertEqualsToFile
@@ -6,9 +7,11 @@ import java.io.File
 import java.util.function.Function
 import com.intellij.openapi.application.PluginPathManager
 
+// test got moved from coverage-common, since tests believe
+// that intellij.appcode.main started to depend on intellij.java.ide.customization
 class LcovSerializationUtilsTest {
 
-  private val DATA_PATH = PluginPathManager.getPluginHomePath("coverage-common")
+  private val DATA_PATH = PluginPathManager.getPluginHomePath("coverage")
 
   @Test
   fun lcovLoadedCorrectly() {
