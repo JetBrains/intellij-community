@@ -7,8 +7,8 @@ import com.intellij.collaboration.auth.services.OAuthService
 internal class GHOAuthCallbackHandler : OAuthCallbackHandlerBase() {
   override fun oauthService(): OAuthService<*> = GHOAuthService.instance
 
-  override fun handleAcceptCode(isAccepted: Boolean): AcceptCodeHandleResult {
-    val redirectUrl = if (isAccepted) {
+  override fun handleOAuthResult(oAuthResult: OAuthService.OAuthResult<*>): AcceptCodeHandleResult {
+    val redirectUrl = if (oAuthResult.isAccepted) {
       GHOAuthService.SERVICE_URL.resolve("complete")
     }
     else {
