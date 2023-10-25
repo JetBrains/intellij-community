@@ -250,13 +250,19 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
         }
 
         try {
-          smallDataPack = optimize && SMALL_DATA_PACK_COMMITS_COUNT >= 0 ? buildSmallDataPack() : DataPack.EMPTY;
+          Collection<VcsLogProvider> providers = ContainerUtil.filter(myProviders, rootsToRefresh::contains).values();
+          boolean supportsIncrementalRefresh = ContainerUtil.all(providers, provider -> {
+            return VcsLogProperties.SUPPORTS_INCREMENTAL_REFRESH.getOrDefault(provider);
+          });
+
+          smallDataPack =
+            optimize && supportsIncrementalRefresh && SMALL_DATA_PACK_COMMITS_COUNT >= 0 ? buildSmallDataPack() : DataPack.EMPTY;
 
           if (smallDataPack != DataPack.EMPTY) {
             myDataPackUpdateHandler.accept(smallDataPack);
           }
 
-          dataPack = doRefresh(rootsToRefresh);
+          dataPack = doRefresh(rootsToRefresh, supportsIncrementalRefresh);
         }
         catch (ProcessCanceledException e) {
           mySingleTaskController.taskCompleted(null);
@@ -277,15 +283,11 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       return rootsToRefresh;
     }
 
-    private @NotNull DataPack doRefresh(@NotNull Collection<? extends VirtualFile> roots) {
+    private @NotNull DataPack doRefresh(@NotNull Collection<? extends VirtualFile> roots, boolean supportsIncrementalRefresh) {
       return computeWithSpanThrows(myTracer, LogData.Refreshing.getName(), span -> {
         try {
           PermanentGraph<Integer> permanentGraph = myCurrentDataPack.isFull() ? myCurrentDataPack.getPermanentGraph() : null;
           Map<VirtualFile, CompressedRefs> currentRefs = myCurrentDataPack.getRefsModel().getAllRefsByRoot();
-          Collection<VcsLogProvider> providers = ContainerUtil.filter(myProviders, roots::contains).values();
-          boolean supportsIncrementalRefresh = ContainerUtil.all(providers, provider -> {
-            return VcsLogProperties.SUPPORTS_INCREMENTAL_REFRESH.getOrDefault(provider);
-          });
           if (permanentGraph != null && supportsIncrementalRefresh) {
             int commitCount = myRecentCommitCount;
             for (int attempt = 0; attempt <= 1; attempt++) {
