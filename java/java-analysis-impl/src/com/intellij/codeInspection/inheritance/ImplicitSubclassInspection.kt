@@ -209,14 +209,16 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
     private val text = when (uDeclaration) {
       is UClass ->
         if (actionsToPerform.size <= MAX_MESSAGES_TO_COMBINE)
-          actionsToPerform.joinToString { it.text }
+          actionsToPerform.filter { it.isAvailable(uDeclaration.project, null, uDeclaration.containingFile) }
+            .joinToString { it.text }
         else JavaAnalysisBundle.message("inspection.implicit.subclass.make.class.extendable",
                                         hintTargetName,
                                         siblings.size,
                                         siblingsDescription())
       else ->
         if (actionsToPerform.size <= MAX_MESSAGES_TO_COMBINE)
-          actionsToPerform.joinToString { it.text }
+          actionsToPerform.filter { it.isAvailable(uDeclaration.project, null, uDeclaration.containingFile) }
+            .joinToString { it.text }
         else
           JavaAnalysisBundle.message("inspection.implicit.subclass.extendable", hintTargetName)
     }
