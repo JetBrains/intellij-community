@@ -6,8 +6,11 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderFactory
+import org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderMerger
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.analysis.providers.impl.KotlinPackageProviderBase
+import org.jetbrains.kotlin.analysis.providers.impl.mergeSpecificProviders
+import org.jetbrains.kotlin.analysis.providers.impl.packageProviders.CompositeKotlinPackageProvider
 import org.jetbrains.kotlin.caches.project.CachedValue
 import org.jetbrains.kotlin.caches.project.getValue
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
@@ -21,9 +24,19 @@ internal class IdeKotlinPackageProviderFactory(private val project: Project) : K
     }
 }
 
+internal class IdeKotlinPackageProviderMerger(private val project: Project) : KotlinPackageProviderMerger() {
+    override fun merge(providers: List<KotlinPackageProvider>): KotlinPackageProvider =
+        providers.mergeSpecificProviders<_, IdeKotlinPackageProvider>(CompositeKotlinPackageProvider.factory) { targetProviders ->
+            IdeKotlinPackageProvider(
+                project,
+                GlobalSearchScope.union(targetProviders.map { it.searchScope })
+            )
+        }
+}
+
 private class IdeKotlinPackageProvider(
     project: Project,
-   searchScope: GlobalSearchScope
+    searchScope: GlobalSearchScope
 ) : KotlinPackageProviderBase(project, searchScope) {
     private val cache by CachedValue(project) {
         CachedValueProvider.Result(

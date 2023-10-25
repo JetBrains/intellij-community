@@ -65,6 +65,7 @@ import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandle
 import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
+import org.jetbrains.kotlin.idea.externalAnnotations.AbstractK1ExternalAnnotationTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
@@ -461,8 +462,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("search/annotations")
         }
 
-        testClass<AbstractExternalAnnotationTest> {
-            model("externalAnnotations")
+        testClass<AbstractK1ExternalAnnotationTest> {
+            model("externalAnnotations", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractQuickFixMultiFileTest> {

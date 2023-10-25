@@ -2,20 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.quickfix
 
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiModuleTest
-import org.jetbrains.kotlin.idea.test.findFileWithCaret
-import org.jetbrains.kotlin.test.utils.IgnoreTests
 
 abstract class AbstractHighLevelQuickFixMultiModuleTest : AbstractQuickFixMultiModuleTest() {
     override fun isFirPlugin(): Boolean = true
-
-    override fun doQuickFixTest(dirPath: String) {
-        val actionFile = project.findFileWithCaret()
-        val actionFilePath = actionFile.virtualFile.toNioPath()
-        IgnoreTests.runTestIfNotDisabledByFileDirective(
-            actionFilePath,
-            disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K2,
-        ) {
-            super.doQuickFixTest(dirPath)
-        }
-    }
 }
