@@ -10,6 +10,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.flow.mapStateIn
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.add.LocalContext
 import com.jetbrains.python.sdk.add.ProjectLocationContext
@@ -53,6 +54,9 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
   private val _projectWithContextFlow: MutableStateFlow<ProjectPathWithContext> =
     MutableStateFlow(state.projectPath.get().associateWithContext())
 
+  private val _projectLocationContext: StateFlow<ProjectLocationContext> =
+    _projectWithContextFlow.mapStateIn(scope + uiContext, SharingStarted.Lazily) { it.context }
+
   /**
    * Prefer using this flow over [PythonAddInterpreterState.projectPath] of the [state] when reacting to the changes of the new project
    * location (either with background computations or UI).
@@ -66,8 +70,8 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
     get() = _projectWithContextFlow.value.context
 
   private val detectedSdksFlow: StateFlow<Pair<ProjectLocationContext, List<Sdk>>> =
-    _projectWithContextFlow
-      .mapLatest { (_, context) ->
+    _projectLocationContext
+      .mapLatest { context ->
         context to detectSystemWideSdksSuspended(module = null, context.targetEnvironmentConfiguration, emptyContext)
       }
       .stateIn(scope + uiContext, started = SharingStarted.Lazily, LocalContext to emptyList())
