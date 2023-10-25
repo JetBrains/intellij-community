@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -111,10 +112,11 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
   }
 
   @ApiStatus.Internal
-  public static void openWhatsNewPage(@NotNull Project project,
-                                      @NotNull String url,
-                                      boolean includePlatformData,
-                                      @Nullable HTMLEditorProvider.JsQueryHandler queryHandler) {
+  @SuppressWarnings("UnusedReturnValue")
+  public static @Nullable FileEditor openWhatsNewPage(@NotNull Project project,
+                                                      @NotNull String url,
+                                                      boolean includePlatformData,
+                                                      @Nullable HTMLEditorProvider.JsQueryHandler queryHandler) {
     if (!JBCefApp.isSupported()) {
       throw new IllegalStateException("JCEF is not supported on this system");
     }
@@ -139,7 +141,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
     request.withQueryHandler(queryHandler);
 
     var title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
-    HTMLEditorProvider.openEditor(project, title, request);
+    return HTMLEditorProvider.openEditor(project, title, request);
   }
 
   private static Map<String, String> getRequestParameters(boolean includePlatformData) {
