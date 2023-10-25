@@ -74,6 +74,7 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_TESTS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_OVERLOADS = true;
 
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_TEST_METHODS = true;
   public boolean EXTRACT_STATIC_METHOD = true;
   public boolean EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = false;
 
@@ -137,5 +138,13 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
 
   public boolean isRenameOverloads() {
     return RENAME_OVERLOADS;
+  }
+
+  public boolean isRenameTestMethods() {
+    return RENAME_TEST_METHODS;
+  }
+
+  public void setRenameTestMethods(boolean renameTestMethods) {
+    RENAME_TEST_METHODS = renameTestMethods;
   }
 }

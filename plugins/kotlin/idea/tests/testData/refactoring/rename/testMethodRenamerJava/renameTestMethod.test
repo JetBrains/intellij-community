@@ -1,6 +1,7 @@
 {
   "type": "JAVA_METHOD",
   "classId": "/A",
+  "libraries": ["JUnit4"],
   "methodSignature": "void foo()",
   "newName": "bar",
   "mainFile": "A.java",
