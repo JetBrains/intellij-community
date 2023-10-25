@@ -2,6 +2,4 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
-abstract class AbstractIrKotlinEvaluateExpressionTest : AbstractKotlinEvaluateExpressionTest() {
-    override fun useIrBackend(): Boolean = true
-}
+abstract class AbstractIrKotlinEvaluateExpressionTest : AbstractKotlinEvaluateExpressionTest()

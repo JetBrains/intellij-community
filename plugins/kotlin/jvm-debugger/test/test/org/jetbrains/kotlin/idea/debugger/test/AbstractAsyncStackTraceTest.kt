@@ -18,8 +18,6 @@ abstract class AbstractAsyncStackTraceTest : KotlinDescriptorTestCaseWithSteppin
         const val MARGIN = "    "
     }
 
-    override fun useIrBackend(): Boolean = true
-
     override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
         doOnBreakpoint {
             val frameProxy = this.frameProxy

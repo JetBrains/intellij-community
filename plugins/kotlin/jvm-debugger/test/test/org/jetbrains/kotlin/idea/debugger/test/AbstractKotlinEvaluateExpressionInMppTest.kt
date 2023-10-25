@@ -83,8 +83,6 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
     private lateinit var perModuleLibraryOutputDirectory: File
     private lateinit var perModuleLibrarySourceDirectory: File
 
-    override fun useIrBackend() = true
-
     override fun fragmentCompilerBackend() =
         FragmentCompilerBackend.JVM_IR
 

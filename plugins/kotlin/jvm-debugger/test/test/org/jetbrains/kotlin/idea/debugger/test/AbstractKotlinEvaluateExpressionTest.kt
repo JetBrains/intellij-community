@@ -58,7 +58,6 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
     private companion object {
         private val ID_PART_REGEX = "id=[0-9]*".toRegex()
         private val NON_WORD_REGEX = "\\W".toRegex()
-        private const val IGNORE_OLD_BACKEND_DIRECTIVE = "// IGNORE_OLD_BACKEND"
     }
 
     override val debuggerContext: DebuggerContextImpl
@@ -97,21 +96,6 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
         isMultipleBreakpointsTest = false
         doTest(path)
     }
-
-    override fun doTest(unused: String) =
-        if (useIrBackend()) {
-            super.doTest(unused)
-        } else {
-            // Consider ignoring old backend tests when testing the
-            // debugger interaction with new language features
-            IgnoreTests.runTestIfNotDisabledByFileDirective(
-                Paths.get(unused),
-                IGNORE_OLD_BACKEND_DIRECTIVE,
-                directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE,
-            ) {
-                super.doTest(unused)
-            }
-        }
 
     fun doJvmMultiModuleTest(path: String) {
         isMultipleBreakpointsTest = false
