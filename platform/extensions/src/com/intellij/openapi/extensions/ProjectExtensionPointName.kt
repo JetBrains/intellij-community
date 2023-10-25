@@ -10,26 +10,20 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.util.function.Function
 import java.util.function.Predicate
-import java.util.stream.Stream
 
 /**
  * Do not use.
  *
  * Provides access to a project-level or module-level extension point. Since extensions are supposed to be stateless, storing different
- * instances of an extension for each project or module just waste the memory and complicates code, so **it's strongly recommended not
+ * instances of an extension for each project or module just wastes the memory and complicates code, so **it's strongly recommended not
  * to introduce new project-level and module-level extension points**. If you need to have [Project][com.intellij.openapi.project.Project]
- * or [Module][com.intellij.openapi.module.Module] instance in some extension's method, just pass it as a parameter and use the default
+ * or [Module][com.intellij.openapi.module.Module] instance in some extension's method, pass it as a parameter and use the default
  * application-level extension point.
  */
 class ProjectExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName<T>(name) {
   fun getPoint(areaInstance: AreaInstance): ExtensionPoint<T> = getPointImpl(areaInstance)
 
   fun getExtensions(areaInstance: AreaInstance): List<T> = getPointImpl(areaInstance).extensionList
-
-  @Deprecated("Use {@link #getExtensions(AreaInstance)}",
-              ReplaceWith("getExtensions(areaInstance).stream()"),
-              level = DeprecationLevel.ERROR)
-  fun extensions(areaInstance: AreaInstance): Stream<T> = getPointImpl(areaInstance).extensionList.stream()
 
   fun <V : T> findExtension(instanceOf: Class<V>, areaInstance: AreaInstance): V? {
     return getPointImpl(areaInstance).findExtension(instanceOf, false, ThreeState.UNSURE)
@@ -42,11 +36,11 @@ class ProjectExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPo
   fun hasAnyExtensions(areaInstance: AreaInstance): Boolean = getPointImpl(areaInstance).size() != 0
 
   fun findFirstSafe(areaInstance: AreaInstance, predicate: Predicate<in T>): T? {
-    return findFirstSafe(predicate, getPointImpl(areaInstance))
+    return findFirstSafe(predicate = predicate, sequence = getPointImpl(areaInstance).asSequence())
   }
 
   fun <R> computeSafeIfAny(areaInstance: AreaInstance, processor: Function<T, R?>): R? {
-    return computeSafeIfAny(processor = processor, iterable = getPointImpl(areaInstance))
+    return computeSafeIfAny(processor = processor::apply, sequence = getPointImpl(areaInstance).asSequence())
   }
 
   fun addExtensionPointListener(areaInstance: AreaInstance, listener: ExtensionPointListener<T>, parentDisposable: Disposable?) {
@@ -59,9 +53,9 @@ class ProjectExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPo
 
   @Internal
   fun processWithPluginDescriptor(areaInstance: AreaInstance, consumer:  (T, PluginDescriptor) -> Unit) {
-    getPointImpl(areaInstance).processWithPluginDescriptor(true, consumer)
+    getPointImpl(areaInstance).processWithPluginDescriptor(shouldBeSorted = true, consumer = consumer)
   }
 
   @ApiStatus.Experimental
-  fun getIterable(areaInstance: AreaInstance): Iterable<T?> = getPointImpl(areaInstance)
+  fun asSequence(areaInstance: AreaInstance): Sequence<T> = getPointImpl(areaInstance).asSequence()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -55,8 +55,10 @@ public class SearchRequestCollector {
         searchScope instanceof GlobalSearchScope &&
         ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
 
-      SearchScope restrictedCodeUsageSearchScope = ReadAction.compute(() -> ScopeOptimizer.calculateOverallRestrictedUseScope(
-        PsiSearchHelper.CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), searchTarget));
+      SearchScope restrictedCodeUsageSearchScope = ReadAction.compute(() -> {
+        return ScopeOptimizer.calculateOverallRestrictedUseScope(PsiSearchHelper.CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensionList(),
+                                                                 searchTarget);
+      });
       if (restrictedCodeUsageSearchScope != null) {
         short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
                                         ? UsageSearchContext.IN_COMMENTS |
@@ -106,7 +108,7 @@ public class SearchRequestCollector {
     }
     // it's assumed that in the general case of unknown language the .getParent() will lead to reparse,
     // (all these Javascript stubbed methods under non-stubbed block statements under stubbed classes - meh)
-    // so just return null instead of refElement.getParent() here to avoid making things worse.
+    // so return null instead of refElement.getParent() here to avoid making things worse.
     return null;
   }
 

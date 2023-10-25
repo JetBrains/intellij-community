@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -309,8 +310,9 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   private static <T> void getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector, @NotNull Consumer<? super T> consumer) {
     ExtensionPointImpl<@NotNull KeyedLazyInstance<T>> point = (ExtensionPointImpl<@NotNull KeyedLazyInstance<T>>)collector.getPoint();
     if (point != null) {
-      for (KeyedLazyInstance<T> instance : point) {
-        consumer.accept(instance.getInstance());
+      Iterator<KeyedLazyInstance<T>> iterator = point.asSequence().iterator();
+      while (iterator.hasNext()) {
+        consumer.accept(iterator.next().getInstance());
       }
     }
   }

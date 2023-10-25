@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.streams.lib.LibrarySupportProvider;
@@ -7,7 +7,7 @@ import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -42,26 +42,6 @@ final class ChainResolver {
     return result.chainsStatus;
   }
 
-  private static void checkChainsExistenceInBackground(@NotNull PsiElement elementAtDebugger,
-                                                       @NotNull ChainsSearchResult searchResult,
-                                                       @NotNull ExecutorService executor) {
-    List<LibrarySupportProvider> extensions = forLanguage(elementAtDebugger.getLanguage());
-    if (extensions.isEmpty()) {
-      searchResult.markUnsupportedLanguage();
-    }
-    else {
-      ReadAction.nonBlocking(() -> {
-        LibrarySupportProvider provider = ExtensionProcessingHelper.INSTANCE
-          .findFirstSafe(p -> p.getChainBuilder().isChainExists(elementAtDebugger), extensions);
-        boolean found = provider != null;
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Chains found:" + found);
-        }
-        searchResult.updateStatus(found);
-      }).inSmartMode(elementAtDebugger.getProject()).submit(executor);
-    }
-  }
-
   @NotNull List<StreamChainWithLibrary> getChains(@NotNull PsiElement elementAtDebugger) {
     ChainsSearchResult result = mySearchResult.get();
     if (!result.isSuitableFor(elementAtDebugger) || !result.chainsStatus.equals(ChainStatus.FOUND)) {
@@ -86,6 +66,40 @@ final class ChainResolver {
     return chains;
   }
 
+  private static void checkChainsExistenceInBackground(@NotNull PsiElement elementAtDebugger,
+                                                       @NotNull ChainsSearchResult searchResult,
+                                                       @NotNull ExecutorService executor) {
+    List<LibrarySupportProvider> extensions = forLanguage(elementAtDebugger.getLanguage());
+    if (extensions.isEmpty()) {
+      searchResult.markUnsupportedLanguage();
+    }
+    else {
+      ReadAction.nonBlocking(() -> {
+          boolean found = false;
+          for (LibrarySupportProvider provider : extensions) {
+            try {
+              if (provider.getChainBuilder().isChainExists(elementAtDebugger)) {
+                found = true;
+                break;
+              }
+            }
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+            }
+          }
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Chains found:" + found);
+          }
+          searchResult.updateStatus(found);
+        })
+        .inSmartMode(elementAtDebugger.getProject())
+        .submit(executor);
+    }
+  }
+
   private static @NotNull List<LibrarySupportProvider> forLanguage(@NotNull Language language) {
     return LibrarySupportProvider.EP_NAME.getByGroupingKey(language.getID(), ChainResolver.class, LibrarySupportProvider::getLanguageId);
   }
@@ -107,7 +121,7 @@ final class ChainResolver {
     }
   }
 
-  private static class ChainsSearchResult {
+  private static final class ChainsSearchResult {
     final long elementHash;
     final long offset;
     final long fileModificationStamp;
@@ -117,14 +131,6 @@ final class ChainResolver {
       this.elementHash = elementHash;
       fileModificationStamp = getModificationStamp(containingFile);
       offset = offsetInFile;
-    }
-
-    private static long getModificationStamp(@Nullable PsiFile file) {
-      return file == null ? -1 : file.getModificationStamp();
-    }
-
-    static @NotNull ChainsSearchResult of(@NotNull PsiElement element) {
-      return new ChainsSearchResult(element.hashCode(), element.getTextOffset(), element.getContainingFile());
     }
 
     void updateStatus(boolean found) {
@@ -141,6 +147,14 @@ final class ChainResolver {
       return elementHash == element.hashCode()
              && offset == element.getTextOffset()
              && fileModificationStamp == getModificationStamp(element.getContainingFile());
+    }
+
+    private static long getModificationStamp(@Nullable PsiFile file) {
+      return file == null ? -1 : file.getModificationStamp();
+    }
+
+    static @NotNull ChainsSearchResult of(@NotNull PsiElement element) {
+      return new ChainsSearchResult(element.hashCode(), element.getTextOffset(), element.getContainingFile());
     }
   }
 }

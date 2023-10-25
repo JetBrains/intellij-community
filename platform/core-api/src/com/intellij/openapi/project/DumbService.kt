@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ProjectExtensionPointName
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.*
@@ -414,10 +413,17 @@ abstract class DumbService {
       if (!getInstance(project).isDumb) {
         return point.extensionList
       }
-      val result: MutableList<T> = ArrayList(size)
-      for (element in point as ExtensionPointImpl<T>) {
-        if (isDumbAware(element)) {
-          result.add(element!!)
+      val result = ArrayList<T>(size)
+      for (item in extensionPoint.filterableLazySequence()) {
+        val aClass = item.implementationClass ?: continue
+        if (DumbAware::class.java.isAssignableFrom(aClass)) {
+          result.add(item.instance ?: continue)
+        }
+        else if (PossiblyDumbAware::class.java.isAssignableFrom(aClass)) {
+          val instance = item.instance ?: continue
+          if ((instance as PossiblyDumbAware).isDumbAware) {
+            result.add(instance)
+          }
         }
       }
       return result

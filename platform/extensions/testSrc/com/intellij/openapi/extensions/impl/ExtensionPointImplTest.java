@@ -201,7 +201,7 @@ public class ExtensionPointImplTest {
 
     extensionPoint.registerExtension("third", disposable);
 
-    Iterator<String> iterator = extensionPoint.iterator();
+    Iterator<String> iterator = extensionPoint.asSequence().iterator();
     assertThat(iterator.hasNext()).isTrue();
     assertThat(iterator.next()).isEqualTo("first");
     assertThat(iterator.hasNext()).isTrue();

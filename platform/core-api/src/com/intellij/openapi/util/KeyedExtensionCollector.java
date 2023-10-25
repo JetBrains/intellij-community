@@ -34,7 +34,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   private PersistentMap<String, PersistentList<T>> explicitExtensions = persistentHashMapOf();
 
   private volatile PersistentMap<String, PersistentList<T>> cache = persistentHashMapOf();
-  private final String myEpName;
+  private final String epName;
   private final SimpleModificationTracker tracker = new SimpleModificationTracker();
 
   protected final AtomicBoolean myEpListenerAdded = new AtomicBoolean();
@@ -44,7 +44,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   public KeyedExtensionCollector(@NotNull String epName) {
-    myEpName = epName;
+    this.epName = epName;
     lock = "lock for KeyedExtensionCollector " + epName;
   }
 
@@ -208,7 +208,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   @ApiStatus.Internal
   public final @Nullable ExtensionPoint<@NotNull KeyedLazyInstance<T>> getPoint() {
     //noinspection deprecation
-    return Extensions.getRootArea().getExtensionPointIfRegistered(myEpName);
+    return Extensions.getRootArea().getExtensionPointIfRegistered(epName);
   }
 
   public boolean hasAnyExtensions() {
@@ -223,7 +223,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   public @NotNull String getName() {
-    return myEpName;
+    return epName;
   }
 
   @Override

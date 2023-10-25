@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByGroup
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByKey
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
 import java.util.function.Consumer
@@ -23,6 +24,7 @@ import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
 import java.util.stream.Stream
+import kotlin.streams.asStream
 
 /**
  * Provides access to an [extension point](https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extension_points.html). Instances of this class can be safely stored in static final fields.
@@ -39,6 +41,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   /**
    * Consider using [.getExtensionList].
    */
+  @get:Obsolete
   val extensions: Array<T>
     get() = getPointImpl(null).extensions
 
@@ -49,15 +52,15 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * Invokes the given consumer for each extension registered in this extension point. Logs exceptions thrown by the consumer.
    */
   fun forEachExtensionSafe(consumer: Consumer<in T>) {
-    forEachExtensionSafe(iterable = getPointImpl(areaInstance = null), extensionConsumer = consumer)
+    forEachExtensionSafe(iterable = getPointImpl(areaInstance = null).asSequence(), extensionConsumer = consumer)
   }
 
   fun findFirstSafe(predicate: Predicate<in T>): T? {
-    return findFirstSafe(predicate, getPointImpl(null))
+    return findFirstSafe(predicate, getPointImpl(null).asSequence())
   }
 
   fun <R> computeSafeIfAny(processor: Function<T, out R>): R? {
-    return computeSafeIfAny(processor = processor, iterable = getPointImpl(null))
+    return computeSafeIfAny(processor = processor::apply, sequence = getPointImpl(null).asSequence())
   }
 
   val extensionsIfPointIsRegistered: List<T>
@@ -70,9 +73,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   }
 
   @Deprecated("Use {@code getExtensionList().stream()}", ReplaceWith("getExtensionList().stream()"), DeprecationLevel.ERROR)
-  fun extensions(): Stream<T> {
-    return getPointImpl(null).extensions()
-  }
+  fun extensions(): Stream<T> = getPointImpl(null).asSequence().asStream()
 
   fun hasAnyExtensions(): Boolean = getPointImpl(null).size() != 0
 
@@ -88,6 +89,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
 
   @Deprecated("Use app-level app extension point.", level = DeprecationLevel.ERROR)
   fun extensions(areaInstance: AreaInstance?): Stream<T> {
+    @Suppress("SSBasedInspection")
     return getPointImpl(areaInstance).extensionList.stream()
   }
 
@@ -130,11 +132,11 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * 2. Iterated only once per application (no need to cache an extension list internally).
    */
   @ApiStatus.Internal
-  fun getIterable(): Iterable<T?> = getPointImpl(null)
+  fun getIterable(): Iterable<T?> = getPointImpl(null).asSequence().asIterable()
 
   @ApiStatus.Internal
   fun lazySequence(): Sequence<T> {
-    return getPointImpl(null).iterator().asSequence().filterNotNull()
+    return getPointImpl(null).asSequence()
   }
 
   @ApiStatus.Internal

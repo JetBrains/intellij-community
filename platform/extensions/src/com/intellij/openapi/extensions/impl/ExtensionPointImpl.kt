@@ -27,8 +27,6 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiPredicate
 import java.util.function.Predicate
 import java.util.function.Supplier
-import java.util.stream.Stream
-import java.util.stream.StreamSupport
 import kotlin.concurrent.Volatile
 
 private val LOG: Logger = logger<ExtensionPointImpl<*>>()
@@ -39,7 +37,7 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
                                          private val pluginDescriptor: PluginDescriptor,
                                          val componentManager: ComponentManager,
                                          private var extensionClass: Class<T>?,
-                                         private val isDynamic: Boolean) : ExtensionPoint<T>, Iterable<T> {
+                                         private val isDynamic: Boolean) : ExtensionPoint<T> {
   // immutable list, never modified in-place, only swapped atomically
   @Volatile
   private var cachedExtensions: PersistentList<T>? = null
@@ -230,18 +228,9 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
    * Do not use it if there is any extension point listener, because in this case behavior is not predictable:
    * events will be fired during iteration, which is probably not expected.
    *
-   *
    * Use only for interface extension points, not for beans.
-   *
-   *
-   * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
-   * so, `next` may return `null` (in this case, stop iteration).
    */
-  @ApiStatus.Experimental
-  override fun iterator(): Iterator<T> {
-    val result = cachedExtensions
-    return result?.iterator() ?: createIterator()
-  }
+  fun asSequence(): Sequence<T> = cachedExtensions?.asSequence() ?: createSequence()
 
   fun processWithPluginDescriptor(shouldBeSorted: Boolean, consumer: (T, PluginDescriptor) -> Unit) {
     if (isInReadOnlyMode) {
@@ -252,9 +241,15 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
     }
 
     for (adapter in if (shouldBeSorted) sortedAdapters else adapters) {
-      val extension = processAdapter(adapter)
-      if (extension != null) {
+      try {
+        val extension = processAdapter(adapter) ?: continue
         consumer(extension, adapter.pluginDescriptor)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(componentManager.createError(e, pluginDescriptor.getPluginId()))
       }
     }
   }
@@ -280,24 +275,16 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
     }
   }
 
-  private fun createIterator(): Iterator<T> {
+  private fun createSequence(): Sequence<T> {
     val size: Int
     val adapters = sortedAdapters
     size = adapters.size
     if (size == 0) {
-      return Collections.emptyIterator()
+      return emptySequence()
     }
-    return adapters.asSequence().mapNotNull(::processAdapter).iterator()
-  }
-
-  override fun spliterator(): Spliterator<T> {
-    return Spliterators.spliterator(iterator(), size().toLong(), Spliterator.IMMUTABLE or Spliterator.NONNULL or Spliterator.DISTINCT)
-  }
-
-  override fun extensions(): Stream<T> {
-    val result = cachedExtensionsAsArray
-    @Suppress("SSBasedInspection")
-    return if (result == null) StreamSupport.stream(spliterator(), false) else Arrays.stream(result)
+    else {
+      return adapters.asSequence().mapNotNull(::processAdapter)
+    }
   }
 
   override fun size(): Int {
@@ -360,7 +347,8 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
     return result
   }
 
-  // This method needs to be synchronized because XmlExtensionAdapter.createInstance takes a lock on itself, and if it's called without
+  // This method needs to be synchronized.
+  // XmlExtensionAdapter.createInstance takes a lock on itself, and if it's called without
   // EP lock and tries to add an EP listener, we can get a deadlock because of lock ordering violation
   // (EP->adapter in one thread, adapter->EP in the other thread)
   @Synchronized
@@ -555,7 +543,7 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
         stopAfterFirstMatch = true)) {
       // there is a possible case that a particular extension was replaced in a particular environment
       // (e.g., Upsource replaces some platform extensions important for CoreApplicationEnvironment),
-      // so just log an error instead of throwing
+      // so log an error instead of throwing
       LOG.warn("Extension to be removed not found: $extension")
     }
   }

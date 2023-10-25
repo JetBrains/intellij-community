@@ -10,7 +10,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.function.BiPredicate;
-import java.util.stream.Stream;
 
 /**
  * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
@@ -41,8 +40,6 @@ public interface ExtensionPoint<T> {
   T @NotNull [] getExtensions();
 
   @NotNull List<T> getExtensionList();
-
-  @NotNull Stream<T> extensions();
 
   int size();
 

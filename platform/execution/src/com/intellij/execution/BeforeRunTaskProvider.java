@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -14,6 +14,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
+import java.util.Iterator;
 
 /**
  * This class is responsible for auxiliary tasks (like build process or project-specific scripts execution)
@@ -82,7 +83,9 @@ public abstract class BeforeRunTaskProvider<@NotNull T extends BeforeRunTask<?>>
   }
 
   public static @Nullable <T extends BeforeRunTask<?>> BeforeRunTaskProvider<T> getProvider(@NotNull Project project, Key<T> key) {
-    for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : EP_NAME.getIterable(project)) {
+    Iterator<BeforeRunTaskProvider<BeforeRunTask<?>>> iterator = EP_NAME.asSequence(project).iterator();
+    while (iterator.hasNext()) {
+      BeforeRunTaskProvider<BeforeRunTask<?>> provider = iterator.next();
       if (provider.getId() == key) {
         //noinspection unchecked
         return (BeforeRunTaskProvider<T>)provider;
