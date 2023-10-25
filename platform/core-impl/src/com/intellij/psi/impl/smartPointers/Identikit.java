@@ -35,7 +35,7 @@ public abstract class Identikit {
   static @Nullable Pair<ByAnchor, PsiElement> withAnchor(@NotNull PsiElement element, @NotNull Language fileLanguage) {
     PsiUtilCore.ensureValid(element);
     if (element.isPhysical()) {
-      for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
+      for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensionList()) {
         PsiElement anchor = provider.getAnchor(element);
         if (anchor != null && anchor.isPhysical() && provider.restoreElement(anchor) == element) {
           ByAnchor anchorKit = new ByAnchor(fromPsi(element, fileLanguage), fromPsi(anchor, fileLanguage), provider);

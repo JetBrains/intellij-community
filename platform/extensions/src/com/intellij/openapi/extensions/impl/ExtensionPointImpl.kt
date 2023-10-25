@@ -40,9 +40,6 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
   @Volatile
   private var cachedExtensions: PersistentList<T>? = null
 
-  // Since JDK 9, Arrays.ArrayList.toArray() returns {@code Object[]} instead of {@code T[]}
-  // (https://bugs.openjdk.org/browse/JDK-6260652), so we cannot use it anymore.
-  // Only array.clone should be used because of performance reasons (https://youtrack.jetbrains.com/issue/IDEA-198172).
   @Volatile
   private var cachedExtensionsAsArray: Array<T>? = null
 

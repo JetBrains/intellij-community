@@ -16,12 +16,16 @@ import java.util.List;
 
 public class HighlightInfoHolder {
   private final PsiFile myContextFile;
-  private final HighlightInfoFilter[] myFilters;
+  private final List<HighlightInfoFilter> myFilters;
   private final AnnotationSession myAnnotationSession;
   private int myErrorCount;
   private final List<HighlightInfo> myInfos;
 
-  public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter @NotNull ... filters) {
+  public HighlightInfoHolder(@NotNull PsiFile contextFile) {
+    this(contextFile, List.of());
+  }
+
+  public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull List<HighlightInfoFilter> filters) {
     myContextFile = contextFile;
     myAnnotationSession = new AnnotationSessionImpl(contextFile);
     myFilters = filters;
