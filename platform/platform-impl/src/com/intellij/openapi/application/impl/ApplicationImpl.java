@@ -1227,6 +1227,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @Override
   public void readActionFinished(@NotNull Class<?> action) {
     myReadActionCacheImpl.clear();
+  }
+
+  @Override
+  public void afterReadActionFinished(@NotNull Class<?> action) {
     otelMonitor.get().readActionExecuted();
   }
 
