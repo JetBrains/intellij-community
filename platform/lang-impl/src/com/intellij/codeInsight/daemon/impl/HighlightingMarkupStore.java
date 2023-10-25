@@ -228,7 +228,7 @@ final class HighlightingMarkupStore {
     var mapBuilder = PersistentMapBuilder.newBuilder(path, EnumeratorIntegerDescriptor.INSTANCE, FileMarkupInfoExternalizer.INSTANCE)
       .withVersion(2);
     PersistentMapImpl<Integer, FileMarkupInfo> map = null;
-    IOException exception = null;
+    Exception exception = null;
     int retryAttempts = 5;
     for (int i = 0; i < retryAttempts; i++) {
       try {
@@ -240,7 +240,7 @@ final class HighlightingMarkupStore {
         exception = e;
         IOUtil.deleteAllFilesStartingWith(path);
       }
-      catch (IOException e) {
+      catch (Exception e) {
         LOG.info("error while creating persistent map, attempt " + i, e);
         exception = e;
         IOUtil.deleteAllFilesStartingWith(path);

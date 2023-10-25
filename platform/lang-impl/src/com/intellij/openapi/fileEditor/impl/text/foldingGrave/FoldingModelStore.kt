@@ -150,7 +150,7 @@ internal class FoldingModelStore(
         FoldingState.Companion.FoldingStateExternalizer
       ).withVersion(FoldingState.SERDE_VERSION)
       var map: PersistentMapImpl<Int, FoldingState>? = null
-      var exception: IOException? = null
+      var exception: Exception? = null
       val retryAttempts = 5
       for (i in 1..retryAttempts) {
         try {
@@ -160,7 +160,7 @@ internal class FoldingModelStore(
           logger.info("folding persistent map ${e.message}, attempt $i")
           exception = e
           IOUtil.deleteAllFilesStartingWith(path)
-        } catch (e: IOException) {
+        } catch (e: Exception) {
           logger.info("error while creating persistent map, attempt $i", e)
           exception = e
           IOUtil.deleteAllFilesStartingWith(path)
