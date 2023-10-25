@@ -15,8 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert
-import org.junit.Assert.assertEquals
+import org.junit.Assert.*
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
@@ -141,6 +140,17 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     closeSuite(suite)
   }
 
+  fun `test restoreCoverageData method causes reload`() {
+    val bundle = loadIJSuite()
+    val suite = bundle.suites[0] as BaseCoverageSuite
+    assertNull(suite.coverageData)
+    assertNotNull(suite.getCoverageData(null))
+    assertNotNull(suite.coverageData)
+
+    suite.restoreCoverageData()
+    assertNotNull(suite.coverageData)
+  }
+
   fun `test xml and ij suites are independent`(): Unit = runBlocking {
     val xmlSuite = loadXMLSuite()
     val ijSuite = loadIJSuite()
@@ -179,7 +189,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
         val psiClass = JavaPsiFacade.getInstance(myProject).findClass(clazz, GlobalSearchScope.projectScope(myProject))
         val psiDir = psiClass!!.containingFile!!.containingDirectory
         val info = annotator.getDirCoverageInformationString(psiDir, bundle, manager)
-        Assert.assertEquals(loaded, info != null)
+        assertEquals(loaded, info != null)
       }
     }
   }
