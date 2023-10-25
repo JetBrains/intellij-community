@@ -883,8 +883,10 @@ object Utils {
                                                          block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R): Deferred<R> {
     val updater = ActionUpdater(PresentationFactory(), dataContext, place, true, false, CoroutineScope(Dispatchers.EDT))
     return async(contextMenuDispatcher + ModalityState.any().asContextElement()) {
-      block {
-        updater.presentation(it)
+      updater.runGenericUpdateBlock {
+        block {
+          updater.presentation(it)
+        }
       }
     }
   }
