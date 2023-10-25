@@ -155,28 +155,24 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
                             params: WebSymbolsListSymbolsQueryParams,
                             scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
       if (params.queryExecutor.allowResolve) {
-        if (qualifiedKind.namespace == WebSymbol.NAMESPACE_HTML) {
-          when (qualifiedKind.kind) {
-            WebSymbol.KIND_HTML_ELEMENTS ->
-              (getStandardHtmlElementDescriptor(tag)?.getElementsDescriptors(tag)
-               ?: getHtmlNSDescriptor(tag.project)?.getAllElementsDescriptors(null)
-               ?: emptyArray())
-                .map { HtmlElementDescriptorBasedSymbol(it, tag) }
-                .toList()
-            WebSymbol.KIND_HTML_ATTRIBUTES ->
-              getStandardHtmlAttributeDescriptors(tag)
-                .map { HtmlAttributeDescriptorBasedSymbol(it, tag) }
-                .toList()
-            else -> emptyList()
-          }
+        when (qualifiedKind) {
+          WebSymbol.HTML_ELEMENTS ->
+            (getStandardHtmlElementDescriptor(tag)?.getElementsDescriptors(tag)
+             ?: getHtmlNSDescriptor(tag.project)?.getAllElementsDescriptors(null)
+             ?: emptyArray())
+              .map { HtmlElementDescriptorBasedSymbol(it, tag) }
+              .toList()
+          WebSymbol.HTML_ATTRIBUTES ->
+            getStandardHtmlAttributeDescriptors(tag)
+              .map { HtmlAttributeDescriptorBasedSymbol(it, tag) }
+              .toList()
+          WebSymbol.JS_EVENTS ->
+            getStandardHtmlAttributeDescriptors(tag)
+              .filter { it.name.startsWith("on") }
+              .map { HtmlEventDescriptorBasedSymbol(it) }
+              .toList()
+          else -> emptyList()
         }
-        else if (qualifiedKind.matches(WebSymbol.NAMESPACE_JS, WebSymbol.KIND_JS_EVENTS)) {
-          getStandardHtmlAttributeDescriptors(tag)
-            .filter { it.name.startsWith("on") }
-            .map { HtmlEventDescriptorBasedSymbol(it) }
-            .toList()
-        }
-        else emptyList()
       }
       else emptyList()
 
@@ -184,25 +180,23 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
                                     params: WebSymbolsNameMatchQueryParams,
                                     scope: Stack<WebSymbolsScope>): List<WebSymbol> {
       if (params.queryExecutor.allowResolve) {
-        if (qualifiedName.namespace == WebSymbol.NAMESPACE_HTML) {
-          when (qualifiedName.kind) {
-            WebSymbol.KIND_HTML_ELEMENTS ->
-              getStandardHtmlElementDescriptor(tag, qualifiedName.name)
-                ?.let { HtmlElementDescriptorBasedSymbol(it, tag) }
-                ?.match(qualifiedName.name, params, scope)
-                ?.let { return it }
-            WebSymbol.KIND_HTML_ATTRIBUTES ->
-              getStandardHtmlAttributeDescriptor(tag, qualifiedName.name)
-                ?.let { HtmlAttributeDescriptorBasedSymbol(it, tag) }
-                ?.match(qualifiedName.name, params, scope)
-                ?.let { return it }
+        when (qualifiedName.qualifiedKind) {
+          WebSymbol.HTML_ELEMENTS ->
+            getStandardHtmlElementDescriptor(tag, qualifiedName.name)
+              ?.let { HtmlElementDescriptorBasedSymbol(it, tag) }
+              ?.match(qualifiedName.name, params, scope)
+              ?.let { return it }
+          WebSymbol.HTML_ATTRIBUTES ->
+            getStandardHtmlAttributeDescriptor(tag, qualifiedName.name)
+              ?.let { HtmlAttributeDescriptorBasedSymbol(it, tag) }
+              ?.match(qualifiedName.name, params, scope)
+              ?.let { return it }
+          WebSymbol.JS_EVENTS -> {
+            getStandardHtmlAttributeDescriptor(tag, "on${qualifiedName.name}")
+              ?.let { HtmlEventDescriptorBasedSymbol(it) }
+              ?.match(qualifiedName.name, params, scope)
+              ?.let { return it }
           }
-        }
-        else if (qualifiedName.matches(WebSymbol.NAMESPACE_JS, WebSymbol.KIND_JS_EVENTS)) {
-          getStandardHtmlAttributeDescriptor(tag, "on${qualifiedName.name}")
-            ?.let { HtmlEventDescriptorBasedSymbol(it) }
-            ?.match(qualifiedName.name, params, scope)
-            ?.let { return it }
         }
       }
       return emptyList()
