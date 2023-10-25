@@ -67,7 +67,7 @@ fun Checkbox(
     icons: CheckboxIcons = JewelTheme.checkboxStyle.icons,
     textStyle: TextStyle = LocalTextStyle.current,
 ) {
-    val state by remember { mutableStateOf(ToggleableState(checked)) }
+    val state by remember(checked) { mutableStateOf(ToggleableState(checked)) }
     CheckboxImpl(
         state = state,
         onClick = { onCheckedChange.invoke(!checked) },
