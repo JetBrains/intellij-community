@@ -61,6 +61,13 @@
     <refactoring.moveClassHandler
             order="first"
             implementation="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinAliasClassHandler"/>
+
+    <registryKey
+            key="kotlin.rename.file.if.the.only.declaration"
+            description="Rename source file if it has the only one name declaration and it has the same name as file"
+            defaultValue="false"
+            restartRequired="false"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
