@@ -508,7 +508,12 @@ class GotItTooltip internal constructor(@NonNls val id: String,
   }
 
   override fun hidePopup() {
-    balloon?.hide(false)
+    val ok = false
+    hidePopup(ok)
+  }
+
+  internal fun hidePopup(ok: Boolean) {
+    balloon?.hide(ok)
     balloon = null
   }
 
