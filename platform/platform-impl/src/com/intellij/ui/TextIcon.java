@@ -22,10 +22,10 @@ public final class TextIcon implements Icon {
   @SuppressWarnings("UseDPIAwareInsets")
   private final Insets myInsets = new Insets(0, 0, 0, 0);
   private Integer myRound;
-  private Boolean withBoarders;
+  private Boolean withBorders;
   private Color myBackground;
   private Color myForeground;
-  private Color myBoarderColor;
+  private Color myBorderColor;
   private Font myFont;
   private String myText;
   private Rectangle myTextBounds;
@@ -55,19 +55,19 @@ public final class TextIcon implements Icon {
     this(text, foreground, background, margin, false);
   }
 
-  public TextIcon(String text, Color foreground, Color background, int margin, boolean withBoarders) {
-    this(text, foreground, background, margin, withBoarders, withBoarders ? 255 : 0);
+  public TextIcon(String text, Color foreground, Color background, int margin, boolean withBorders) {
+    this(text, foreground, background, margin, withBorders, withBorders ? 255 : 0);
   }
 
-  public TextIcon(String text, Color foreground, Color background, int margin, boolean withBoarders, int boarderAlpha) {
-    this(text, foreground, background, ColorUtil.toAlpha(background, boarderAlpha), margin, withBoarders);
+  public TextIcon(String text, Color foreground, Color background, int margin, boolean withBorders, int borderAlpha) {
+    this(text, foreground, background, ColorUtil.toAlpha(background, borderAlpha), margin, withBorders);
   }
 
-  public TextIcon(String text, Color foreground, Color background, Color boarderColor, int margin, boolean withBoarders) {
-    setWithBoarders(withBoarders);
+  public TextIcon(String text, Color foreground, Color background, Color borderColor, int margin, boolean withBorders) {
+    setWithBorders(withBorders);
     setBackground(background);
     setForeground(foreground);
-    setBoarderColor(boarderColor);
+    setBorderColor(borderColor);
     setInsets(margin, margin, margin, margin);
     setRound(margin * 4);
     setText(text);
@@ -89,8 +89,8 @@ public final class TextIcon implements Icon {
     myRound = round;
   }
 
-  public void setWithBoarders(boolean withBoarders) {
-    this.withBoarders = withBoarders;
+  public void setWithBorders(boolean withBorders) {
+    this.withBorders = withBorders;
   }
 
   public void setBackground(Color background) {
@@ -101,8 +101,8 @@ public final class TextIcon implements Icon {
     myForeground = foreground;
   }
 
-  public void setBoarderColor(Color boarderColor) {
-    myBoarderColor = boarderColor;
+  public void setBorderColor(Color borderColor) {
+    myBorderColor = borderColor;
   }
 
   public void setText(String text) {
@@ -134,8 +134,8 @@ public final class TextIcon implements Icon {
         g.setColor(myBackground);
         FILL.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), myRound);
       }
-      if (withBoarders && myBoarderColor != null) {
-        g.setColor(myBoarderColor);
+      if (withBorders && myBorderColor != null) {
+        g.setColor(myBorderColor);
         DRAW.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), myRound);
       }
     }
@@ -170,13 +170,13 @@ public final class TextIcon implements Icon {
            Objects.equals(myFont, icon.myFont) &&
            Objects.equals(myText, icon.myText) &&
            Objects.equals(myTextBounds, icon.myTextBounds) &&
-           Objects.equals(withBoarders, icon.withBoarders) &&
-           Objects.equals(myBoarderColor, icon.myBoarderColor);
+           Objects.equals(withBorders, icon.withBorders) &&
+           Objects.equals(myBorderColor, icon.myBorderColor);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds, withBoarders, myBoarderColor);
+    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds, withBorders, myBorderColor);
   }
 
   private static Rectangle applyTransform(Rectangle srcRect, AffineTransform at) {
