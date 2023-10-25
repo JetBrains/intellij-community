@@ -702,6 +702,9 @@ object DynamicPlugins {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     (ActionManager.getInstance() as ActionManagerImpl).unloadActions(module)
 
+    if (module.pluginId.idString == "com.intellij.jsp") {
+      println("Unloading")
+    }
     val openedProjects = ProjectUtil.getOpenProjects().asList()
     val appExtensionArea = app.extensionArea
     val priorityUnloadListeners = mutableListOf<Runnable>()
@@ -738,20 +741,19 @@ object DynamicPlugins {
       area.unregisterExtensionPoints(points, module)
     }
 
-    val pluginId = module.pluginId
-    app.unloadServices(module.appContainerDescriptor.services, pluginId)
+    app.unloadServices(module, module.appContainerDescriptor.services)
     val appMessageBus = app.messageBus as MessageBusEx
     module.appContainerDescriptor.listeners?.let { appMessageBus.unsubscribeLazyListeners(module, it) }
 
     for (project in openedProjects) {
-      (project as ComponentManagerImpl).unloadServices(module.projectContainerDescriptor.services, pluginId)
+      (project as ComponentManagerImpl).unloadServices(module, module.projectContainerDescriptor.services)
       module.projectContainerDescriptor.listeners?.let {
         ((project as ComponentManagerImpl).messageBus as MessageBusEx).unsubscribeLazyListeners(module, it)
       }
 
       val moduleServices = module.moduleContainerDescriptor.services
       for (ideaModule in ModuleManager.getInstance(project).modules) {
-        (ideaModule as ComponentManagerImpl).unloadServices(moduleServices, pluginId)
+        (ideaModule as ComponentManagerImpl).unloadServices(module, moduleServices)
         createDisposeTreePredicate(module)?.let { Disposer.disposeChildren(ideaModule, it) }
       }
 

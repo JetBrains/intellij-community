@@ -17,10 +17,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
@@ -219,7 +216,7 @@ abstract class ComponentManagerImpl(
     ordered = true,
   )
 
-  private val pluginServices = ConcurrentHashMap<PluginId, UnregisterHandle>()
+  private val pluginServices = ConcurrentHashMap<IdeaPluginDescriptor, UnregisterHandle>()
 
   @Suppress("LeakingThis")
   internal val dependencyResolver = ComponentManagerResolver(this)
@@ -914,8 +911,7 @@ abstract class ComponentManagerImpl(
     }
     val handle: UnregisterHandle? = registrar.complete()
     if (handle != null) {
-      val pluginId = pluginDescriptor.pluginId
-      pluginServices.put(pluginId, handle)
+      pluginServices.put(pluginDescriptor, handle)
     }
   }
 
@@ -1465,9 +1461,9 @@ abstract class ComponentManagerImpl(
     return PluginException(message, error, pluginId, attachments?.map { Attachment(it.key, it.value) } ?: emptyList())
   }
 
-  open fun unloadServices(services: List<ServiceDescriptor>, pluginId: PluginId) {
+  open fun unloadServices(module: IdeaPluginDescriptor, services: List<ServiceDescriptor>) {
     if (useInstanceContainer) {
-      unloadServices2(pluginId)
+      unloadServices2(module)
       return
     }
     checkState()
@@ -1497,7 +1493,7 @@ abstract class ComponentManagerImpl(
       val iterator = componentKeyToAdapter.values.iterator()
       while (iterator.hasNext()) {
         val adapter = iterator.next() as? LightServiceComponentAdapter ?: continue
-        if (adapter.pluginId == pluginId) {
+        if (adapter.pluginId == module.pluginId) {
           adapter.getInitializedInstance()?.let { instance ->
             if (instance is Disposable) {
               Disposer.dispose(instance)
@@ -1510,17 +1506,17 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  private fun unloadServices2(pluginId: PluginId) {
+  private fun unloadServices2(module: IdeaPluginDescriptor) {
     val debugString = debugString(true)
-    val handle = pluginServices.get(pluginId)
+    val handle = pluginServices.get(module)
     if (handle == null) {
-      LOG.debug("$debugString : nothing to unload $pluginId")
+      LOG.debug { "$debugString : nothing to unload ${module.pluginId}:${module.descriptorPath}" }
       return
     }
     val holders = handle.unregister()
     if (holders.isEmpty()) {
       // warn because the handle should not be in the map in the first place
-      LOG.warn("$debugString : nothing unloaded for $pluginId")
+      LOG.warn("$debugString : nothing unloaded for ${module.pluginId}:${module.descriptorPath}")
       return
     }
     val store = componentStore
