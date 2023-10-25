@@ -378,7 +378,7 @@ public final class Mappings {
       };
     }
 
-    private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, IntSet visitedClasses) {
+    private void addOverridingMethods(MethodRepr m, ClassRepr methodClass, final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, IntSet visitedClasses) {
       if (m.name == myInitName) {
         return; // overriding is not defined for constructors
       }
@@ -398,7 +398,7 @@ public final class Mappings {
         if (!Iterators.isEmpty(reprs)) {
           Iterable<Pair<MethodRepr, ClassRepr>> overriding = Iterators.flat(Iterators.map(
             reprs,
-            r -> isVisibleIn(fromClass, m, r)? Iterators.map(r.findMethods(predicate), mm -> Pair.create(mm, r)) : Collections.emptyList())
+            r -> isVisibleIn(methodClass, m, r)? Iterators.map(r.findMethods(predicate), mm -> Pair.create(mm, r)) : Collections.emptyList())
           );
 
           Set<ClassRepr> found = new SmartHashSet<>();
@@ -409,7 +409,7 @@ public final class Mappings {
 
           for (ClassRepr r : Iterators.filter(reprs, r -> !found.contains(r))) {
             // continue with reprs, for those no overriding members were found
-            addOverridingMethods(m, r, predicate, container, _visitedClasses);
+            addOverridingMethods(m, methodClass, r, predicate, container, _visitedClasses);
           }
         }
       });
@@ -420,11 +420,11 @@ public final class Mappings {
         return Collections.emptySet(); // overriding is not defined for constructors
       }
       final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<>();
-      addOverriddenMethods(c, MethodRepr.equalByJavaRules(m), result, null);
+      addOverriddenMethods(c, MethodRepr.equalByJavaRules(m), result, null, c);
       return result;
     }
 
-    private boolean hasOverriddenMethods(final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, IntSet visitedClasses) {
+    private boolean hasOverriddenMethods(final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, IntSet visitedClasses, ClassRepr visibilityScope) {
       if (visitedClasses == null) {
         visitedClasses = new IntOpenHashSet();
         visitedClasses.add(fromClass.name);
@@ -435,11 +435,11 @@ public final class Mappings {
         }
         for (ClassRepr superClass : reprsByName(superName.className, ClassRepr.class)) {
           for (MethodRepr mm : superClass.findMethods(predicate)) {
-            if (isVisibleIn(superClass, mm, fromClass)) {
+            if (isVisibleIn(superClass, mm, visibilityScope)) {
               return true;
             }
           }
-          if (hasOverriddenMethods(superClass, predicate, visitedClasses)) {
+          if (hasOverriddenMethods(superClass, predicate, visitedClasses, visibilityScope)) {
             return true;
           }
         }
@@ -469,7 +469,7 @@ public final class Mappings {
       return false;
     }
 
-    private void addOverriddenMethods(final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, IntSet visitedClasses) {
+    private void addOverriddenMethods(final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, IntSet visitedClasses, final ClassRepr visibilityScope) {
       if (visitedClasses == null) {
         visitedClasses = new IntOpenHashSet();
         visitedClasses.add(fromClass.name);
@@ -480,9 +480,8 @@ public final class Mappings {
         }
         Iterable<ClassRepr> superClasses = Iterators.collect(reprsByName(superName.className, ClassRepr.class), new SmartList<>());
         if (!Iterators.isEmpty(superClasses)) {
-          Iterable<Pair<MethodRepr, ClassRepr>> pairs = Iterators.flat(Iterators.map(
-            superClasses,
-            superClass -> Iterators.filter(Iterators.map(superClass.findMethods(predicate), mm -> isVisibleIn(superClass, mm, fromClass)? Pair.create(mm, superClass) : null), Iterators.notNullFilter()))
+          Iterable<Pair<MethodRepr, ClassRepr>> pairs = Iterators.flat(
+            Iterators.map(superClasses, superClass -> Iterators.map(superClass.findMethods(mm -> predicate.test(mm) && isVisibleIn(superClass, mm, visibilityScope)), mm -> Pair.create(mm, superClass)))
           );
 
           Set<ClassRepr> found = new SmartHashSet<>();
@@ -493,7 +492,7 @@ public final class Mappings {
 
           for (ClassRepr superClass : Iterators.filter(superClasses, superClass -> !found.contains(superClass))) {
             // continue with those, for whom the matching method was not found
-            addOverriddenMethods(superClass, predicate, container, visitedClasses);
+            addOverriddenMethods(superClass, predicate, container, visitedClasses, visibilityScope);
           }
         }
         else {
@@ -502,7 +501,7 @@ public final class Mappings {
       }
     }
 
-    void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<? super Pair<FieldRepr, ClassRepr>> container, IntSet visitedClasses) {
+    void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<? super Pair<FieldRepr, ClassRepr>> container, IntSet visitedClasses, ClassRepr visibilityScope) {
       if (visitedClasses == null) {
         visitedClasses = new IntOpenHashSet();
         visitedClasses.add(fromClass.name);
@@ -513,17 +512,17 @@ public final class Mappings {
         }
         for (ClassRepr superClass : reprsByName(supername.className, ClassRepr.class)) {
           final FieldRepr ff = superClass.findField(f.name);
-          if (ff != null && isVisibleIn(superClass, ff, fromClass)) {
+          if (ff != null && isVisibleIn(superClass, ff, visibilityScope)) {
             container.add(Pair.create(ff, superClass));
           }
           else{
-            addOverriddenFields(f, superClass, container, visitedClasses);
+            addOverriddenFields(f, superClass, container, visitedClasses, visibilityScope);
           }
         }
       }
     }
 
-    boolean hasOverriddenFields(final FieldRepr f, final ClassRepr fromClass, IntSet visitedClasses) {
+    boolean hasOverriddenFields(final FieldRepr f, final ClassRepr fromClass, IntSet visitedClasses, ClassRepr visibilityScope) {
       if (visitedClasses == null) {
         visitedClasses = new IntOpenHashSet();
         visitedClasses.add(fromClass.name);
@@ -534,10 +533,10 @@ public final class Mappings {
         }
         for (ClassRepr superClass : reprsByName(supername.className, ClassRepr.class)) {
           final FieldRepr ff = superClass.findField(f.name);
-          if (ff != null && isVisibleIn(superClass, ff, fromClass)) {
+          if (ff != null && isVisibleIn(superClass, ff, visibilityScope)) {
             return true;
           }
-          if (hasOverriddenFields(f, superClass, visitedClasses)) {
+          if (hasOverriddenFields(f, superClass, visitedClasses, visibilityScope)) {
             return true;
           }
         }
@@ -654,7 +653,7 @@ public final class Mappings {
     }
 
     boolean isMethodVisible(final ClassRepr classRepr, final MethodRepr m) {
-      return !classRepr.findMethods(MethodRepr.equalByJavaRules(m)).isEmpty() || hasOverriddenMethods(classRepr, MethodRepr.equalByJavaRules(m), null);
+      return !classRepr.findMethods(MethodRepr.equalByJavaRules(m)).isEmpty() || hasOverriddenMethods(classRepr, MethodRepr.equalByJavaRules(m), null, classRepr);
     }
 
     boolean isFieldVisible(final int className, final FieldRepr field) {
@@ -667,7 +666,7 @@ public final class Mappings {
         if (r.getFields().contains(field)) {
           return true;
         }
-        if (hasOverriddenFields(field, r, null)) {
+        if (hasOverriddenFields(field, r, null, r)) {
           return true;
         }
       }
@@ -1211,7 +1210,7 @@ public final class Mappings {
 
         final Supplier<IntSet> propagated = lazy(()-> myFuture.propagateMethodAccess(addedMethod, it.name));
 
-        if (!addedMethod.isPrivate() && addedMethod.myArgumentTypes.length > 0 && !myPresent.hasOverriddenMethods(it, MethodRepr.equalByJavaRules(addedMethod), null)) {
+        if (!addedMethod.isPrivate() && addedMethod.myArgumentTypes.length > 0 && !myPresent.hasOverriddenMethods(it, MethodRepr.equalByJavaRules(addedMethod), null, it)) {
           debug("Conservative case on overriding methods, affecting method usages");
           // do not propagate constructors access, since constructors are always concrete and not accessible via references to subclasses
           myFuture.affectMethodUsages(addedMethod, addedMethod.name == myInitName? null : propagated.get(), addedMethod.createMetaUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
@@ -1235,7 +1234,7 @@ public final class Mappings {
           debug("Processing overridden by specificity methods");
 
           final Collection<Pair<MethodRepr, ClassRepr>> overridden = new HashSet<>();
-          myFuture.addOverriddenMethods(it, lessSpecificCond, overridden, null);
+          myFuture.addOverriddenMethods(it, lessSpecificCond, overridden, null, it);
           for (final Pair<MethodRepr, ClassRepr> pair : overridden) {
             final MethodRepr method = pair.first;
             final ClassRepr methodClass = pair.second;
@@ -1254,7 +1253,7 @@ public final class Mappings {
 
           final Predicate<MethodRepr> overrides = MethodRepr.equalByJavaRules(addedMethod);
           final Collection<Pair<MethodRepr, ClassRepr>> overriding = new HashSet<>();
-          myFuture.addOverridingMethods(addedMethod, it, lessSpecificCond, overriding, null);
+          myFuture.addOverridingMethods(addedMethod, it, it, lessSpecificCond, overriding, null);
           for (final Pair<MethodRepr, ClassRepr> pair : overriding) {
             final MethodRepr method = pair.first;
             final ClassRepr methodClass = pair.second;
@@ -1331,7 +1330,15 @@ public final class Mappings {
           myFuture.affectStaticMemberImportUsages(removedMethod.name, it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
         }
 
-        if (overriddenMethods.isEmpty()) {
+        if (removedMethod.isPackageLocal()) {
+          // Sometimes javac cannot find an overridden package local method in superclasses, when superclasses are defined in different packages.
+          // This results in compilation error when the code is compiled from the very beginning.
+          // So even if we correctly find a corresponding overridden method and the bytecode compatibility remains,
+          // we still need to affect package local method usages to behave similar to javac.
+          debug("Removed method is package-local, affecting method usages");
+          myFuture.affectMethodUsages(removedMethod, propagated.get(), removedMethod.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+        }
+        else if (overriddenMethods.isEmpty()) {
           debug("No overridden methods found, affecting method usages");
           myFuture.affectMethodUsages(removedMethod, propagated.get(), removedMethod.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
         }
@@ -1347,7 +1354,7 @@ public final class Mappings {
         }
 
         final Collection<Pair<MethodRepr, ClassRepr>> overridingMethods = new HashSet<>();
-        myFuture.addOverridingMethods(removedMethod, it, MethodRepr.equalByJavaRules(removedMethod), overridingMethods, null);
+        myFuture.addOverridingMethods(removedMethod, it, it, MethodRepr.equalByJavaRules(removedMethod), overridingMethods, null);
 
         for (final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
           final Iterable<File> fNames = classToSourceFileGet(p.second.name);
@@ -1483,7 +1490,7 @@ public final class Mappings {
 
               final List<Pair<MethodRepr, ClassRepr>> overridingMethods = new LinkedList<>();
 
-              myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods, null);
+              myFuture.addOverridingMethods(m, it, it, MethodRepr.equalByJavaRules(m), overridingMethods, null);
 
               for(final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
                 final ClassRepr aClass = p.getSecond();
@@ -1698,7 +1705,7 @@ public final class Mappings {
         }
 
         final Collection<Pair<FieldRepr, ClassRepr>> overriddenFields = new HashSet<>();
-        myFuture.addOverriddenFields(f, classRepr, overriddenFields, null);
+        myFuture.addOverriddenFields(f, classRepr, overriddenFields, null, classRepr);
 
         for (final Pair<FieldRepr, ClassRepr> p : overriddenFields) {
           final FieldRepr ff = p.first;
