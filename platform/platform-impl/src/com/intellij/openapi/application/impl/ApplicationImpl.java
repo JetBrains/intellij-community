@@ -886,44 +886,47 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void runReadAction(@NotNull Runnable action) {
-    IdeEventQueue.getInstance().getRwLockHolder().runReadAction(() -> {
-      try {
-        action.run();
-      } finally {
-        myReadActionCacheImpl.clear();
+    ReadMostlyRWLock lock = myLock;
+    ReadMostlyRWLock.Reader status = lock.startRead();
+    try {
+      action.run();
+    }
+    finally {
+      myReadActionCacheImpl.clear();
+      if (status != null) {
+        lock.endRead(status);
       }
-    });
-    otelMonitor.get().readActionExecuted();
+      otelMonitor.get().readActionExecuted();
+    }
   }
 
   @Override
   public <T> T runReadAction(@NotNull Computable<T> computation) {
+    ReadMostlyRWLock lock = myLock;
+    ReadMostlyRWLock.Reader status = lock.startRead();
     try {
-      return IdeEventQueue.getInstance().getRwLockHolder().runReadAction(() -> {
-        try {
-          return computation.compute();
-        }
-        finally {
-          myReadActionCacheImpl.clear();
-        }
-      });
-    } finally {
+      return computation.compute();
+    }
+    finally {
+      myReadActionCacheImpl.clear();
+      if (status != null) {
+        lock.endRead(status);
+      }
       otelMonitor.get().readActionExecuted();
     }
   }
 
   @Override
   public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+    ReadMostlyRWLock.Reader status = myLock.startRead();
     try {
-      return IdeEventQueue.getInstance().getRwLockHolder().runReadAction(() -> {
-        try {
-          return computation.compute();
-        }
-        finally {
-          myReadActionCacheImpl.clear();
-        }
-      });
-    } finally {
+      return computation.compute();
+    }
+    finally {
+      myReadActionCacheImpl.clear();
+      if (status != null) {
+        myLock.endRead(status);
+      }
       otelMonitor.get().readActionExecuted();
     }
   }
