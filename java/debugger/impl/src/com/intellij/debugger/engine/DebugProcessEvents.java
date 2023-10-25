@@ -13,7 +13,6 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.statistics.BreakpointVisitStatistic;
 import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -558,6 +557,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         getSuspendManager().voteResume(suspendContext);
       }
       else {
+        StatisticsStorage.stepRequestCompleted(this, commandToken);
         showStatusText("");
         stopWatchingMethodReturn();
         getSuspendManager().voteSuspend(suspendContext);
@@ -567,7 +567,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
             String methodName = namedMethodFilter.getMethodName();
             String message = JavaDebuggerBundle.message("notification.method.has.not.been.called", methodName);
             XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.INFO).notify(project);
-            DebuggerStatistics.logMethodSkippedDuringStepping(this, StatisticsStorage.getSteppingStatisticOrNull(commandToken));
+            DebuggerStatistics.logMethodSkippedDuringStepping(project, StatisticsStorage.getSteppingStatisticOrNull(commandToken));
           }
           if (hint.wasStepTargetMethodMatched()) {
             suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);
@@ -637,11 +637,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         boolean resumePreferred = requestor != null && DebuggerSettings.SUSPEND_NONE.equals(requestor.getSuspendPolicy());
         boolean requestHit = false;
-        long startTimeMs = System.currentTimeMillis();
+        long startTimeNs = System.nanoTime();
+        long endTimeNs = 0;
         try {
           requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
         }
         catch (final LocatableEventRequestor.EventProcessingException ex) {
+          // stop timer here to prevent reporting dialog opened time
+          endTimeNs = System.nanoTime();
           if (LOG.isDebugEnabled()) {
             LOG.debug(ex.getMessage());
           }
@@ -661,8 +664,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
           LOG.error(e);
         }
         finally {
-          long timeMs = System.currentTimeMillis() - startTimeMs;
-          StatisticsStorage.add(DebugProcessEvents.this, BreakpointVisitStatistic.INSTANCE, timeMs);
+          if (endTimeNs == 0) {
+            endTimeNs = System.nanoTime();
+          }
+          long timeMs = TimeUnit.NANOSECONDS.toMillis(endTimeNs - startTimeNs);
+          if (requestor instanceof Breakpoint<?> breakpoint) {
+            DebuggerStatistics.logBreakpointVisit(breakpoint, timeMs);
+          }
           if (requestor instanceof OverheadProducer && ((OverheadProducer)requestor).track()) {
             OverheadTimings.add(DebugProcessEvents.this, (OverheadProducer)requestor,
                                 requestHit || requestor instanceof StackCapturingLineBreakpoint ? 1 : 0,
