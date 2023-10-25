@@ -107,7 +107,7 @@ abstract class GitLabApiTestCase {
         override suspend fun checkIsGitLabServer(server: GitLabServerPath): Boolean =
           server == Companion.server
 
-        override suspend fun getMetadataOrNull(api: GitLabApi): GitLabServerMetadata =
+        override suspend fun getMetadata(api: GitLabApi): GitLabServerMetadata =
           GitLabServerMetadata(version, "-", edition)
       }
     }

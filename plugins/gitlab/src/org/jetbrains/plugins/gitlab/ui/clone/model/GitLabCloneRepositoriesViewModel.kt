@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.ui.clone.model
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.openapi.components.service
@@ -178,9 +179,11 @@ internal class GitLabCloneRepositoriesViewModelImpl(
           GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken { switchToLoginAction(account) })
         )
         val apiClient = apiManager.getClient(account.server) { token }
-        val currentUser = apiClient.graphQL.getCurrentUser() ?: return@withContext listOf(
-          GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken { switchToLoginAction(account) })
-        )
+        val currentUser = runCatchingUser { apiClient.graphQL.getCurrentUser() }.getOrElse {
+          return@withContext listOf(
+            GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken { switchToLoginAction(account) })
+          )
+        }
         val accountRepositories = currentUser.projectMemberships.map { projectMember ->
           GitLabCloneListItem.Repository(account, projectMember)
         }
