@@ -336,7 +336,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
   private data class PopupLocationInfo(val popupLocation: RelativePoint, val groupSize: Dimension)
 
   private fun computeLocation(project: Project, index: Int?, ignoreDelta: Boolean = false): PopupLocationInfo {
-    val preferredSizes = actionBlocks.map { it.panel.preferredSize }
+    val preferredSizes = actionBlocks.map { it.panel.getFullSize() }
     val gap = JBUIScale.scale(appearance.spaceBetweenPopups)
     val popupGroupSize: Dimension = if (actionBlocks.isNotEmpty()) {
       val totalWidth = preferredSizes.sumOf { it.width } + (gap * (preferredSizes.size - 1))
