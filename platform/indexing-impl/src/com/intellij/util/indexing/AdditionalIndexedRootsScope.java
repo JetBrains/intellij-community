@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 
 public final class AdditionalIndexedRootsScope extends GlobalSearchScope {
@@ -15,7 +16,7 @@ public final class AdditionalIndexedRootsScope extends GlobalSearchScope {
   }
 
   public AdditionalIndexedRootsScope(@NotNull GlobalSearchScope baseScope, @NotNull Class<? extends IndexableSetContributor> providerClass) {
-    this(baseScope, new AdditionalIndexableFileSet(null, IndexableSetContributor.EP_NAME.findExtension(providerClass)));
+    this(baseScope, new AdditionalIndexableFileSet(null, CollectionsKt.listOfNotNull(IndexableSetContributor.EP_NAME.findExtension(providerClass))));
   }
 
   public AdditionalIndexedRootsScope(@NotNull GlobalSearchScope baseScope, @NotNull IndexableFileSet myFileSet) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dependencytoolwindow
 
 import com.intellij.ide.ui.LafManager
@@ -10,7 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.messages.Topic
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
@@ -19,23 +20,24 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlin.coroutines.CoroutineContext
 
 val <T : Any> ExtensionPointName<T>.extensionsFlow: Flow<List<T>>
-  get() = callbackFlow {
-    val listener = object : ExtensionPointListener<T> {
-      override fun extensionAdded(extension: T, pluginDescriptor: PluginDescriptor) {
-        trySendBlocking(extensions.toList())
-      }
+  get() {
+    return callbackFlow {
+      val listener = object : ExtensionPointListener<T> {
+        override fun extensionAdded(extension: T, pluginDescriptor: PluginDescriptor) {
+          trySendBlocking(extensionList)
+        }
 
-      override fun extensionRemoved(extension: T, pluginDescriptor: PluginDescriptor) {
-        trySendBlocking(extensions.toList())
+        override fun extensionRemoved(extension: T, pluginDescriptor: PluginDescriptor) {
+          trySendBlocking(extensionList)
+        }
       }
+      send(extensionList)
+      addExtensionPointListener(listener)
+      awaitClose { removeExtensionPointListener(listener) }
     }
-    send(extensions.toList())
-    addExtensionPointListener(listener)
-    awaitClose { removeExtensionPointListener(listener) }
   }
 
-internal fun Project.onDispose(action: () -> Unit) =
-  Disposer.register(this, action)
+internal fun Project.onDispose(action: () -> Unit) = Disposer.register(this, action)
 
 internal fun <L : Any, K> Project.messageBusFlow(
   topic: Topic<L>,

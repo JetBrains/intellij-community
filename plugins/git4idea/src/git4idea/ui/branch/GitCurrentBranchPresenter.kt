@@ -25,10 +25,11 @@ import javax.swing.Icon
 @ApiStatus.Internal
 interface GitCurrentBranchPresenter {
   companion object {
-    private val EP_NAME = ExtensionPointName.create<GitCurrentBranchPresenter>("Git4Idea.gitCurrentBranchPresenter")
+    private val EP_NAME = ExtensionPointName<GitCurrentBranchPresenter>("Git4Idea.gitCurrentBranchPresenter")
 
-    fun getPresentation(repository: GitRepository): Presentation =
-      EP_NAME.extensions.firstNotNullOfOrNull { it.getPresentation(repository) } ?: getDefaultPresentation(repository)
+    fun getPresentation(repository: GitRepository): Presentation {
+      return EP_NAME.extensionList.firstNotNullOfOrNull { it.getPresentation(repository) } ?: getDefaultPresentation(repository)
+    }
   }
 
   fun getPresentation(repository: GitRepository): Presentation?

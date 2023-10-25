@@ -6,14 +6,14 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.*;
+import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.HighlightVisitorScope;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 
@@ -116,9 +116,7 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
       for (GeneralHighlightingPass gpass : gpasses) {
         gpass.setHighlightVisitorProducer(() -> {
           gpass.incVisitorUsageCount(1);
-
-          HighlightVisitor visitor = new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true);
-          return new HighlightVisitor[]{visitor};
+          return List.of(new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true));
         });
       }
     }

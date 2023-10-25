@@ -71,7 +71,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
     private val facetEntityChangeListener = getInstance(project)
 
     override fun beforeChanged(event: VersionedStorageChange) {
-      WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
+      for (facetBridgeContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
         facetEntityChangeListener.processBeforeChangeEvents(event, facetBridgeContributor)
       }
     }

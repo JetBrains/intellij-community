@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class CollectHighlightsUtil {
-  static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
+  static final ExtensionPointName<Condition<PsiElement>> EP_NAME = new ExtensionPointName<>("com.intellij.elementsToHighlightFilter");
 
   private static final Logger LOG = Logger.getInstance(CollectHighlightsUtil.class);
 

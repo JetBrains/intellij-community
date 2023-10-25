@@ -180,7 +180,7 @@ abstract class DumbService {
   @Contract(pure = true)
   fun <T> filterByDumbAwareness(collection: Collection<T>): List<T> {
     if (isDumb) {
-      val result: MutableList<T> = ArrayList(collection.size)
+      val result = ArrayList<T>(collection.size)
       for (element in collection) {
         if (isDumbAware(element)) {
           result.add(element)

@@ -530,7 +530,7 @@ open class PluginAdvertiserServiceImpl(
     featuresCollector.getUnknownFeaturesOfType(DEPENDENCY_SUPPORT_FEATURE)
       .forEach { featuresCollector.unregisterUnknownFeature(it) }
 
-    DependencyCollectorBean.EP_NAME.extensions
+    DependencyCollectorBean.EP_NAME.extensionList
       .asSequence()
       .flatMap { dependencyCollectorBean ->
         dependencyCollectorBean.instance.collectDependencies(project).map { coordinate ->

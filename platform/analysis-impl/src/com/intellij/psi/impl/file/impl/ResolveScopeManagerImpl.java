@@ -74,7 +74,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
       if (scope != null) break;
     }
     if (scope == null) scope = getInherentResolveScope(file);
-    for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
+    for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensionList()) {
       SearchScope extra = enlarger.getAdditionalResolveScope(file, myProject);
       if (extra != null) {
         scope = scope.union(extra);

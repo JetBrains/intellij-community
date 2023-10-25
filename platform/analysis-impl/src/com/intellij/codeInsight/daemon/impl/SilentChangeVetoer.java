@@ -20,7 +20,7 @@ public interface SilentChangeVetoer {
   static @NotNull ThreeState extensionsAllowToChangeFileSilently(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     // might access indexes (to determine the relevant VCS) so it must run in BGT
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    for (SilentChangeVetoer extension : EP_NAME.getExtensions()) {
+    for (SilentChangeVetoer extension : EP_NAME.getExtensionList()) {
       ThreeState override = extension.canChangeFileSilently(project, virtualFile);
       if (override == ThreeState.NO || override == ThreeState.YES) {
         return override;
