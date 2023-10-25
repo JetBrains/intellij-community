@@ -3,14 +3,12 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -68,6 +66,9 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
 
   @Override
   public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
+    list = processFastPassItems(list);
+    if (list.isEmpty()) return;
+
     buffer.addElements(list);
     scheduleThrottlingFlush();
     ContainerUtil.map2SetNotNull(list, info -> info.contributor).forEach(this::markContributorArrived);
@@ -93,6 +94,28 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
     scheduleThrottlingFlush();
   }
 
+  /**
+   * Method send results from {@link RecentFilesSEContributor} to results immediately without waiting. And returns the rest of items
+   * from passed {@code list} parameter
+   */
+  private List<? extends SearchEverywhereFoundElementInfo> processFastPassItems(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
+    if (!Registry.is("search.everywhere.recent.at.top")) return list;
+
+    Map<Boolean, Set<SearchEverywhereFoundElementInfo>> map = ContainerUtil.classify(list.iterator(), info -> isFastPassContributor(info.getContributor()));
+    Set<SearchEverywhereFoundElementInfo> fastPassItems = map.get(true);
+    if (fastPassItems != null) {
+      delegateListener.elementsAdded(new ArrayList<>(fastPassItems));
+      listModel.freezeElements();
+    }
+    Set<SearchEverywhereFoundElementInfo> nonFast = map.get(false);
+    return nonFast != null ? new ArrayList<>(nonFast) : Collections.emptyList();
+  }
+
+  private static boolean isFastPassContributor(SearchEverywhereContributor<?> contributor) {
+    if (contributor instanceof RecentFilesSEContributor) return true;
+    if (contributor instanceof PSIPresentationBgRendererWrapper wrapper) return wrapper.getDelegate() instanceof RecentFilesSEContributor;
+    return false;
+  }
 
   private void markContributorArrived(@NotNull SearchEverywhereContributor<?> contributor) {
     if (contributorsMap.get(contributor) != null) {

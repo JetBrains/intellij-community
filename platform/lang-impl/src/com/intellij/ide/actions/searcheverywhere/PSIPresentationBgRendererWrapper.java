@@ -321,4 +321,8 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     if (o instanceof PsiElementNavigationItem) return ((PsiElementNavigationItem)o).getTargetElement();
     return null;
   }
+
+  public AbstractGotoSEContributor getDelegate() {
+    return myDelegate;
+  }
 }

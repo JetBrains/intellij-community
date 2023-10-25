@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public final class RecentFilesSEContributor extends FileSearchEverywhereContributor {
@@ -74,6 +75,8 @@ public final class RecentFilesSEContributor extends FileSearchEverywhereContribu
         if (!StringUtil.isEmptyOrSpaces(searchString)) {
           stream = stream.filter(file -> matcher.matches(file.getName()));
         }
+
+        Comparator<FoundItemDescriptor<?>> comparator = Comparator.comparing(it -> it.getWeight());
         stream.filter(vf -> !opened.contains(vf) && vf.isValid())
           .distinct()
           .map(vf -> {
@@ -82,6 +85,7 @@ public final class RecentFilesSEContributor extends FileSearchEverywhereContribu
             return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(name));
           })
           .nonNull()
+          .sorted(comparator.reversed())
           .into(res);
 
         ContainerUtil.process(res, consumer);
