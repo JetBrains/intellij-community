@@ -106,8 +106,8 @@ internal object GitLabMergeRequestSubmitReviewPopup {
       private val submitButton = JButton(CollaborationToolsBundle.message("review.submit.action")).apply {
         isOpaque = false
         toolTipText = GitLabBundle.message("merge.request.submit.action.tooltip")
-        bindDisabledIn(cs, combine(vm.isBusy, vm.draftCommentsCount) { busy, draftComments ->
-          busy || draftComments <= 0
+        bindDisabledIn(cs, combine(vm.isBusy, vm.text) { busy, text ->
+          busy || text.isEmpty()
         })
         addActionListener {
           vm.submit()
