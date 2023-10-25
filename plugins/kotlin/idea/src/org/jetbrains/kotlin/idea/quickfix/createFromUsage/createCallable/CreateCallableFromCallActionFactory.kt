@@ -15,6 +15,9 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CallableInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.FunctionInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.PropertyInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers

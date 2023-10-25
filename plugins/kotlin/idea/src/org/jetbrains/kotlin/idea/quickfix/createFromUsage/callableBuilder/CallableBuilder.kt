@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.imports.importableFqName
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassKind
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.resolve.frontendService
@@ -169,8 +170,15 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         _currentFileModule = config.currentFile.analyzeWithAllCompilerChecks().moduleDescriptor
     }
 
+    fun computeTypeCandidates(typeInfo: TypeInfoBase): List<TypeCandidate> =
+        if (typeInfo is TypeInfo) computeTypeCandidates(typeInfo) else emptyList()
+
     fun computeTypeCandidates(typeInfo: TypeInfo): List<TypeCandidate> =
         typeCandidates.getOrPut(typeInfo) { typeInfo.getPossibleTypes(this).map { TypeCandidate(it) } }
+
+    private fun computeTypeCandidates(
+        typeInfo: TypeInfoBase, substitutions: List<KotlinTypeSubstitution>, scope: HierarchicalScope
+    ): List<TypeCandidate> = if (typeInfo is TypeInfo) computeTypeCandidates(typeInfo, substitutions, scope) else emptyList()
 
     private fun computeTypeCandidates(
         typeInfo: TypeInfo,
@@ -439,6 +447,12 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 null, null, emptyList(), typeParameters, Collections.emptyList(), null,
                 null, DescriptorVisibilities.INTERNAL
             )
+        }
+
+        private fun renderTypeCandidates(
+            typeInfo: TypeInfoBase, typeParameterNameMap: Map<TypeParameterDescriptor, String>, fakeFunction: FunctionDescriptor?
+        ) {
+            if (typeInfo is TypeInfo) renderTypeCandidates(typeInfo, typeParameterNameMap, fakeFunction)
         }
 
         private fun renderTypeCandidates(
@@ -836,17 +850,18 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
 
             val typeParameters = ArrayList<TypeExpression>()
             for ((parameter, ktParameter) in callableInfo.parameterInfos.zip(parameterList)) {
-                val parameterTypeExpression = TypeExpression.ForTypeReference(typeCandidates[parameter.typeInfo]!!)
+                val typeInfo = parameter.typeInfo as? TypeInfo ?: continue
+                val parameterTypeExpression = TypeExpression.ForTypeReference(typeCandidates[typeInfo]!!)
                 val parameterTypeRef = ktParameter.typeReference!!
                 builder.replaceElement(parameterTypeRef, parameterTypeExpression)
 
                 // add parameter name to the template
-                val possibleNamesFromExpression = parameter.typeInfo.getPossibleNamesFromExpression(currentFileContext)
+                val possibleNamesFromExpression = typeInfo.getPossibleNamesFromExpression(currentFileContext)
                 val possibleNames = arrayOf(*parameter.nameSuggestions.toTypedArray(), *possibleNamesFromExpression)
 
                 // figure out suggested names for each type option
                 val parameterTypeToNamesMap = HashMap<String, Array<String>>()
-                typeCandidates[parameter.typeInfo]!!.forEach { typeCandidate ->
+                typeCandidates[typeInfo]!!.forEach { typeCandidate ->
                     val suggestedNames = Fe10KotlinNameSuggester.suggestNamesByType(typeCandidate.theType, { true })
                     parameterTypeToNamesMap[typeCandidate.renderedTypes.first()] = suggestedNames.toTypedArray()
                 }

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.PropertyInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.PropertyInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.psi.KtElement

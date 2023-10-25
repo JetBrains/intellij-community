@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CallableInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.PropertyInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
@@ -118,7 +120,8 @@ class CreateParameterFromUsageFix<E : KtElement>(
             receiverClassDescriptor.source.getPsi().safeAs<KtClass>()?.takeIf { it.canRefactor() } ?: return null
             val constructorDescriptor = receiverClassDescriptor.unsubstitutedPrimaryConstructor ?: return null
 
-            val paramType = info.returnTypeInfo.getPossibleTypes(builder).firstOrNull()
+            val returnTypeInfo = info.returnTypeInfo as? TypeInfo ?: return null
+            val paramType = returnTypeInfo.getPossibleTypes(builder).firstOrNull()
             if (paramType != null && paramType.hasTypeParametersToAdd(constructorDescriptor, builder.currentFileContext)) return null
 
             return CreateParameterData(

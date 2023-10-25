@@ -7,8 +7,7 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.project.builtIns
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableInfo
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.FunctionInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtForExpression

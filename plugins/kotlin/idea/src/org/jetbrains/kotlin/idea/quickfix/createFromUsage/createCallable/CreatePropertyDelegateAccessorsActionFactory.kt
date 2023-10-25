@@ -11,9 +11,9 @@ import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableInfo
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.FunctionInfo
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.ParameterInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CallableInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.FunctionInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ParameterInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtExpression

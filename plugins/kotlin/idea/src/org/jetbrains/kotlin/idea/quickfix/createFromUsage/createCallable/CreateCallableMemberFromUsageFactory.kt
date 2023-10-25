@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedRe
 import org.jetbrains.kotlin.idea.quickfix.IntentionActionPriority
 import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionFactoryWithDelegate
 import org.jetbrains.kotlin.idea.quickfix.QuickFixWithDelegateFactory
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CallableInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix
 import org.jetbrains.kotlin.psi.KtElement
 

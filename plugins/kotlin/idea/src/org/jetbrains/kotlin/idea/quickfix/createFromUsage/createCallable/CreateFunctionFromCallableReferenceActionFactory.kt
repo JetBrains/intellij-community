@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression

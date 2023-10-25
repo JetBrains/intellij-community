@@ -6,7 +6,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.appendModifier
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.PropertyInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.PropertyInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFactory.Companion.toKotlinTypeInfo
 import org.jetbrains.kotlin.lexer.KtTokens

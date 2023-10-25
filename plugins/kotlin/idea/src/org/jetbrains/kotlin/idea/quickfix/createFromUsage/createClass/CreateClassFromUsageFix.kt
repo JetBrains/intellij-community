@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
 import org.jetbrains.kotlin.idea.quickfix.IntentionActionPriority
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ParameterInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassKind.*
 import org.jetbrains.kotlin.idea.refactoring.canRefactor

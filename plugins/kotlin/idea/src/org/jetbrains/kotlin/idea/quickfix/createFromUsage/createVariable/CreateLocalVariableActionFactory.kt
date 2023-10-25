@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.PropertyInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS

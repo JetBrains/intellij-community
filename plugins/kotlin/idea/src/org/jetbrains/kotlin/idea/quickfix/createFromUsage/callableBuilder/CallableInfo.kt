@@ -9,6 +9,10 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CallableInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CallableKind
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ParameterInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.TypeInfoBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassInfo
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.getResolvableApproximations
@@ -28,7 +32,7 @@ import java.util.*
 /**
  * Represents a concrete type or a set of types yet to be inferred from an expression.
  */
-abstract class TypeInfo(val variance: Variance) {
+abstract class TypeInfo(variance: Variance): TypeInfoBase(variance) {
     object Empty : TypeInfo(Variance.INVARIANT) {
         override fun getPossibleTypes(builder: CallableBuilder): List<KotlinType> = Collections.emptyList()
     }
@@ -97,15 +101,14 @@ abstract class TypeInfo(val variance: Variance) {
 
     class OfThis(delegate: TypeInfo) : DelegatingTypeInfo(delegate)
 
-    val isOfThis: Boolean
-        get() = when (this) {
-            is OfThis -> true
-            is DelegatingTypeInfo -> delegate.isOfThis
-            else -> false
-        }
+    override fun isOfThis(): Boolean = when (this) {
+        is OfThis -> true
+        is DelegatingTypeInfo -> delegate.isOfThis()
+        else -> false
+    }
 
-    open val substitutionsAllowed: Boolean = true
-    open val staticContextRequired: Boolean = false
+    override fun isEmpty(): Boolean = this is Empty
+
     open fun getPossibleNamesFromExpression(bindingContext: BindingContext): Array<String> = ArrayUtil.EMPTY_STRING_ARRAY
     abstract fun getPossibleTypes(builder: CallableBuilder): List<KotlinType>
 
@@ -161,73 +164,6 @@ fun TypeInfo.forceNotNull(): TypeInfo {
 
 fun TypeInfo.ofThis() = TypeInfo.OfThis(this)
 
-/**
- * Encapsulates information about a function parameter that is going to be created.
- */
-class ParameterInfo(
-    val typeInfo: TypeInfo,
-    val nameSuggestions: List<String>
-) {
-    constructor(typeInfo: TypeInfo, preferredName: String? = null) : this(typeInfo, listOfNotNull(preferredName))
-}
-
-enum class CallableKind {
-    FUNCTION,
-    CLASS_WITH_PRIMARY_CONSTRUCTOR,
-    CONSTRUCTOR,
-    PROPERTY
-}
-
-abstract class CallableInfo(
-    val name: String,
-    val receiverTypeInfo: TypeInfo,
-    val returnTypeInfo: TypeInfo,
-    val possibleContainers: List<KtElement>,
-    val typeParameterInfos: List<TypeInfo>,
-    val isForCompanion: Boolean = false,
-    val modifierList: KtModifierList? = null
-) {
-    abstract val kind: CallableKind
-    abstract val parameterInfos: List<ParameterInfo>
-
-    val isAbstract get() = modifierList?.hasModifier(KtTokens.ABSTRACT_KEYWORD) == true
-
-    abstract fun copy(
-        receiverTypeInfo: TypeInfo = this.receiverTypeInfo,
-        possibleContainers: List<KtElement> = this.possibleContainers,
-        modifierList: KtModifierList? = this.modifierList
-    ): CallableInfo
-}
-
-class FunctionInfo(
-    name: String,
-    receiverTypeInfo: TypeInfo,
-    returnTypeInfo: TypeInfo,
-    possibleContainers: List<KtElement> = Collections.emptyList(),
-    override val parameterInfos: List<ParameterInfo> = Collections.emptyList(),
-    typeParameterInfos: List<TypeInfo> = Collections.emptyList(),
-    isForCompanion: Boolean = false,
-    modifierList: KtModifierList? = null,
-    val preferEmptyBody: Boolean = false
-) : CallableInfo(name, receiverTypeInfo, returnTypeInfo, possibleContainers, typeParameterInfos, isForCompanion, modifierList) {
-    override val kind: CallableKind get() = CallableKind.FUNCTION
-
-    override fun copy(
-        receiverTypeInfo: TypeInfo,
-        possibleContainers: List<KtElement>,
-        modifierList: KtModifierList?
-    ) = FunctionInfo(
-        name,
-        receiverTypeInfo,
-        returnTypeInfo,
-        possibleContainers,
-        parameterInfos,
-        typeParameterInfos,
-        isForCompanion,
-        modifierList
-    )
-}
-
 class ClassWithPrimaryConstructorInfo(
     val classInfo: ClassInfo,
     expectedTypeInfo: TypeInfo,
@@ -246,7 +182,7 @@ class ClassWithPrimaryConstructorInfo(
     override val parameterInfos: List<ParameterInfo> get() = classInfo.parameterInfos
 
     override fun copy(
-        receiverTypeInfo: TypeInfo,
+        receiverTypeInfo: TypeInfoBase,
         possibleContainers: List<KtElement>,
         modifierList: KtModifierList?
     ) = throw UnsupportedOperationException()
@@ -263,52 +199,8 @@ class ConstructorInfo(
     override val kind: CallableKind get() = CallableKind.CONSTRUCTOR
 
     override fun copy(
-        receiverTypeInfo: TypeInfo,
+        receiverTypeInfo: TypeInfoBase,
         possibleContainers: List<KtElement>,
         modifierList: KtModifierList?
     ) = throw UnsupportedOperationException()
-}
-
-class PropertyInfo(
-    name: String,
-    receiverTypeInfo: TypeInfo,
-    returnTypeInfo: TypeInfo,
-    val writable: Boolean,
-    possibleContainers: List<KtElement> = Collections.emptyList(),
-    typeParameterInfos: List<TypeInfo> = Collections.emptyList(),
-    val isLateinitPreferred: Boolean = false,
-    val isConst: Boolean = false,
-    isForCompanion: Boolean = false,
-    val annotations: List<KtAnnotationEntry> = emptyList(),
-    modifierList: KtModifierList? = null,
-    val initializer: KtExpression? = null
-) : CallableInfo(name, receiverTypeInfo, returnTypeInfo, possibleContainers, typeParameterInfos, isForCompanion, modifierList) {
-    override val kind: CallableKind get() = CallableKind.PROPERTY
-    override val parameterInfos: List<ParameterInfo> get() = Collections.emptyList()
-
-    override fun copy(
-        receiverTypeInfo: TypeInfo,
-        possibleContainers: List<KtElement>,
-        modifierList: KtModifierList?
-    ) = copyProperty(receiverTypeInfo, possibleContainers, modifierList)
-
-    private fun copyProperty(
-        receiverTypeInfo: TypeInfo = this.receiverTypeInfo,
-        possibleContainers: List<KtElement> = this.possibleContainers,
-        modifierList: KtModifierList? = this.modifierList,
-        isLateinitPreferred: Boolean = this.isLateinitPreferred
-    ) = PropertyInfo(
-        name,
-        receiverTypeInfo,
-        returnTypeInfo,
-        writable,
-        possibleContainers,
-        typeParameterInfos,
-        isConst,
-        isLateinitPreferred,
-        isForCompanion,
-        annotations,
-        modifierList,
-        initializer
-    )
 }

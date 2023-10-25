@@ -2,15 +2,15 @@
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.PropertyInfo
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFixBase
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.PropertyInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFixBaseK1
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtElement
 
 abstract class AbstractPropertyActionCreateCallableFromUsageFix(
   targetContainer: KtElement,
   private val classOrFileName: String?
-) : CreateCallableFromUsageFixBase<KtElement>(targetContainer, false) {
+) : CreateCallableFromUsageFixBaseK1<KtElement>(targetContainer, false) {
 
     protected abstract val propertyInfo: PropertyInfo?
 

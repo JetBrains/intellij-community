@@ -3,8 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableInfo
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.FunctionInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens

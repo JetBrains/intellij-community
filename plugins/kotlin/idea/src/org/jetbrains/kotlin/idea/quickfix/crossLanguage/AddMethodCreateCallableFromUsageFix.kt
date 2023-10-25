@@ -5,8 +5,8 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.FunctionInfo
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.ParameterInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.FunctionInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ParameterInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.AbstractCreateCallableFromUsageFixWithTextAndFamilyName
 import org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFactory.Companion.toKotlinTypeInfo

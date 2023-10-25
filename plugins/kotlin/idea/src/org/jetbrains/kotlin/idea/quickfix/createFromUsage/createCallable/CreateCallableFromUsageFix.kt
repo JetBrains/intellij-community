@@ -18,7 +18,9 @@ import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.quickfix.KotlinCrossLanguageQuickFixAction
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CallableInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateCallableFromUsageFixBase
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.TypeInfoBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
@@ -30,12 +32,11 @@ import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.classValueType
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
-import java.lang.ref.WeakReference
 
 class CreateExtensionCallableFromUsageFix<E : KtElement>(
     originalExpression: E,
     private val callableInfosFactory: (E) -> List<CallableInfo>?
-) : CreateCallableFromUsageFixBase<E>(originalExpression, true), LowPriorityAction {
+) : CreateCallableFromUsageFixBaseK1<E>(originalExpression, true), LowPriorityAction {
 
     init {
         init()
@@ -48,7 +49,7 @@ class CreateExtensionCallableFromUsageFix<E : KtElement>(
 class CreateCallableFromUsageFix<E : KtElement>(
     originalExpression: E,
     private val callableInfosFactory: (E) -> List<CallableInfo>?
-) : CreateCallableFromUsageFixBase<E>(originalExpression, false) {
+) : CreateCallableFromUsageFixBaseK1<E>(originalExpression, false) {
 
     init {
       init()
@@ -63,160 +64,56 @@ abstract class AbstractCreateCallableFromUsageFixWithTextAndFamilyName<E : KtEle
     providedText: String,
     @Nls private val familyName: String,
     originalExpression: E
-): CreateCallableFromUsageFixBase<E>(originalExpression, false) {
+): CreateCallableFromUsageFixBaseK1<E>(originalExpression, false) {
 
     override val calculatedText: String = providedText
 
     override fun getFamilyName(): String = familyName
 }
 
-abstract class CreateCallableFromUsageFixBase<E : KtElement>(
+abstract class CreateCallableFromUsageFixBaseK1<E : KtElement>(
     originalExpression: E,
-    val isExtension: Boolean
-) : KotlinCrossLanguageQuickFixAction<E>(originalExpression) {
+    isExtension: Boolean
+) : CreateCallableFromUsageFixBase<E>(originalExpression, isExtension) {
+    override fun CallableInfo.renderReceiver(
+        element: E,
+        baseCallableReceiverTypeInfo: TypeInfoBase
+    ): String = buildString {
+        val receiverType = if (!baseCallableReceiverTypeInfo.isOfThis()) {
+            CallableBuilderConfiguration(callableInfos, element, isExtension = isExtension)
+                .createBuilder()
+                .computeTypeCandidates(baseCallableReceiverTypeInfo)
+                .firstOrNull { candidate -> if (isAbstract) candidate.theType.isAbstract() else true }
+                ?.theType
+        } else null
 
-    private var callableInfoReference: WeakReference<List<CallableInfo>>? = null
+        val staticContextRequired = baseCallableReceiverTypeInfo.staticContextRequired
 
-    protected open val callableInfos: List<CallableInfo>
-        get() = listOfNotNull(callableInfo)
-
-    protected open val callableInfo: CallableInfo?
-        get() = throw UnsupportedOperationException()
-
-    private fun callableInfos(): List<CallableInfo> =
-        callableInfoReference?.get() ?: callableInfos.also {
-            callableInfoReference = WeakReference(it)
-        }
-
-    private fun notEmptyCallableInfos() = callableInfos().takeIf { it.isNotEmpty() }
-
-    private var initialized: Boolean = false
-
-    protected open val calculatedText: String by lazy(fun(): String {
-        val element = element ?: return ""
-        val callableInfos = notEmptyCallableInfos() ?: return ""
-        val callableInfo = callableInfos.first()
-        val receiverTypeInfo = callableInfo.receiverTypeInfo
-        val renderedCallablesByKind = callableInfos.groupBy({ it.kind }, valueTransform = {
-            buildString {
-                if (it.name.isNotEmpty()) {
-                    val receiverType = if (!receiverTypeInfo.isOfThis) {
-                        CallableBuilderConfiguration(callableInfos, element, isExtension = isExtension)
-                            .createBuilder()
-                            .computeTypeCandidates(receiverTypeInfo)
-                            .firstOrNull { candidate -> if (it.isAbstract) candidate.theType.isAbstract() else true }
-                            ?.theType
-                    } else null
-
-                    val staticContextRequired = receiverTypeInfo.staticContextRequired
-
-                    if (receiverType != null) {
-                        if (isExtension && !staticContextRequired) {
-                            val receiverTypeText = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(receiverType)
-                            val isFunctionType = receiverType.constructor.declarationDescriptor is FunctionClassDescriptor
-                            append(if (isFunctionType) "($receiverTypeText)" else receiverTypeText).append('.')
-                        } else {
-                            receiverType.constructor.declarationDescriptor?.let {
-                                val companionText = if (staticContextRequired && it !is JavaClassDescriptor) ".Companion" else ""
-                                val receiverText =
-                                    IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderClassifierName(it) + companionText
-                                append(receiverText).append('.')
-                            }
-                        }
-                    }
-
-                    append(it.name)
+        if (receiverType != null) {
+            if (isExtension && !staticContextRequired) {
+                val receiverTypeText = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(receiverType)
+                val isFunctionType = receiverType.constructor.declarationDescriptor is FunctionClassDescriptor
+                append(if (isFunctionType) "($receiverTypeText)" else receiverTypeText).append('.')
+            } else {
+                receiverType.constructor.declarationDescriptor?.let {
+                    val companionText = if (staticContextRequired && it !is JavaClassDescriptor) ".Companion" else ""
+                    val receiverText =
+                        IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderClassifierName(it) + companionText
+                    append(receiverText).append('.')
                 }
             }
-        })
-
-        return buildString {
-            append(KotlinBundle.message("text.create"))
-            append(' ')
-
-            val isAbstract = callableInfos.any { it.isAbstract }
-            if (isAbstract) {
-                append(KotlinBundle.message("text.abstract"))
-                append(' ')
-            } else if (isExtension) {
-                append(KotlinBundle.message("text.extension"))
-                append(' ')
-            } else if (receiverTypeInfo != TypeInfo.Empty) {
-                append(KotlinBundle.message("text.member"))
-                append(' ')
-            }
-
-            renderedCallablesByKind.entries.joinTo(this) {
-                val kind = it.key
-                val names = it.value.filter { name -> name.isNotEmpty() }
-                val pluralIndex = if (names.size > 1) 2 else 1
-                val kindText =
-                    when(kind) {
-                        CallableKind.FUNCTION -> KotlinBundle.message("text.function.0", pluralIndex)
-                        CallableKind.CONSTRUCTOR -> KotlinBundle.message("text.secondary.constructor")
-                        CallableKind.PROPERTY -> KotlinBundle.message("text.property.0", pluralIndex)
-                        else -> throw AssertionError("Unexpected callable info: $it")
-                    }
-                if (names.isEmpty()) kindText else "$kindText ${names.joinToString { name -> "'$name'" }}"
-            }
         }
-    })
-
-    protected open val calculatedAvailableImpl: Boolean by lazy(fun(): Boolean {
-        val element = element ?: return false
-
-        val callableInfos = notEmptyCallableInfos() ?: return false
-        val callableInfo = callableInfos.first()
-        val receiverInfo = callableInfo.receiverTypeInfo
-
-        if (receiverInfo == TypeInfo.Empty) {
-            if (callableInfos.any { it is PropertyInfo && it.possibleContainers.isEmpty() }) return false
-            return !isExtension
-        }
-
-        val callableBuilder = CallableBuilderConfiguration(callableInfos, element, isExtension = isExtension).createBuilder()
-        val receiverTypeCandidates = callableBuilder.computeTypeCandidates(receiverInfo)
-        val propertyInfo = callableInfos.firstOrNull { it is PropertyInfo } as PropertyInfo?
-        val isFunction = callableInfos.any { it.kind == CallableKind.FUNCTION }
-        return receiverTypeCandidates.any {
-            val declaration = getDeclarationIfApplicable(element.project, it, receiverInfo.staticContextRequired)
-            val insertToJavaInterface = declaration is PsiClass && declaration.isInterface
-            when {
-                !isExtension && propertyInfo != null && insertToJavaInterface && (!receiverInfo.staticContextRequired || propertyInfo.writable) ->
-                    false
-                isFunction && insertToJavaInterface && receiverInfo.staticContextRequired ->
-                    false
-                !isExtension && declaration is KtTypeParameter -> false
-                propertyInfo != null && !propertyInfo.isAbstract && declaration is KtClass && declaration.isInterface() -> false
-                else ->
-                    declaration != null
-            }
-        }
-    })
-
-    /**
-     * Has to be invoked manually from final class ctor (as all final class properties have to be initialized)
-     */
-    protected fun init() {
-        check(!initialized) { "${javaClass.simpleName} is already initialized" }
-        this.element ?: return
-        val callableInfos = callableInfos()
-        if (callableInfos.size > 1) {
-            val receiverSet = callableInfos.mapTo(HashSet()) { it.receiverTypeInfo }
-            if (receiverSet.size > 1) throw AssertionError("All functions must have common receiver: $receiverSet")
-
-            val possibleContainerSet = callableInfos.mapTo(HashSet()) { it.possibleContainers }
-            if (possibleContainerSet.size > 1) throw AssertionError("All functions must have common containers: $possibleContainerSet")
-        }
-        initializeLazyProperties()
     }
 
-    @Suppress("UNUSED_VARIABLE")
-    private fun initializeLazyProperties() {
-        // enforce lazy properties be calculated as QuickFix is created on a bg thread
-        val text = calculatedText
-        val availableImpl = calculatedAvailableImpl
-        initialized = true
+    override fun anyDeclarationOfReceiverTypeCandidates(receiverInfo: TypeInfoBase, checkReceiverTypeCandidate: (PsiElement?) -> Boolean): Boolean {
+        val element = element ?: return false
+        val callableInfos = notEmptyCallableInfos() ?: return false
+        val callableBuilder = CallableBuilderConfiguration(callableInfos, element, isExtension = isExtension).createBuilder()
+        val receiverTypeCandidates = callableBuilder.computeTypeCandidates(receiverInfo)
+        return receiverTypeCandidates.any {
+            val declaration = getDeclarationIfApplicable(element.project, it, receiverInfo.staticContextRequired)
+            checkReceiverTypeCandidate(declaration)
+        }
     }
 
     private fun getDeclaration(descriptor: ClassifierDescriptor, project: Project): PsiElement? {
@@ -237,30 +134,10 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
         return if ((isExtension && !staticContextRequired) || declaration.canRefactor()) declaration else null
     }
 
-    private fun checkIsInitialized() {
-        check(initialized) { "${javaClass.simpleName} is not initialized" }
-    }
-
-    override fun getText(): String {
-        checkIsInitialized()
-        element ?: return ""
-        return calculatedText
-    }
-
-    override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
-
-    override fun startInWriteAction(): Boolean = false
-
-    override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean {
-        checkIsInitialized()
-        element ?: return false
-        return calculatedAvailableImpl
-    }
-
     override fun invokeImpl(project: Project, editor: Editor?, file: PsiFile) {
         checkIsInitialized()
         val element = element ?: return
-        val callableInfos = callableInfos()
+        val callableInfos = notEmptyCallableInfos() ?: return
         val callableInfo = callableInfos.first()
 
         val fileForBuilder = element.containingKtFile

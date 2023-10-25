@@ -8,9 +8,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.isReadOnlyCollectionOrMap
 import org.jetbrains.kotlin.idea.project.builtIns
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableInfo
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.FunctionInfo
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.ParameterInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
