@@ -146,7 +146,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           testMethod.invoke(testClassObject)
 
           // Advice for processing events
-          session.runNextAction.setSuspendPreserveClientId(Dispatchers.Default) { _, _ ->
+          session.runNextAction.setSuspendPreserveClientId { _, _ ->
             val action = queue.remove()
             val actionTitle = action.title
             val timeout = action.timeout
@@ -200,12 +200,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        session.isResponding.setSuspendPreserveClientId(Dispatchers.Default) { _, _ ->
+        session.isResponding.setSuspendPreserveClientId { _, _ ->
           LOG.info("Answering for session is responding...")
           true
         }
 
-        session.closeProjectIfOpened.setSuspendPreserveClientId(Dispatchers.Default) { _, _ ->
+        session.closeProjectIfOpened.setSuspendPreserveClientId { _, _ ->
           runLogged("Close project if it is opened") {
             projectOrNull?.let {
               withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
@@ -224,13 +224,13 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        session.requestFocus.setSuspendPreserveClientId(Dispatchers.Default) { _, actionTitle ->
+        session.requestFocus.setSuspendPreserveClientId { _, actionTitle ->
           withContext(Dispatchers.EDT) {
             requestFocus(actionTitle)
           }
         }
 
-        session.makeScreenshot.setSuspendPreserveClientId(Dispatchers.Default) { _, fileName ->
+        session.makeScreenshot.setSuspendPreserveClientId { _, fileName ->
           makeScreenshot(fileName)
         }
 
