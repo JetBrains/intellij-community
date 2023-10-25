@@ -4,11 +4,10 @@ package com.intellij.codeInspection.test.junit
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.isInheritorOf
-import com.intellij.codeInspection.nonPreviewElement
+import com.intellij.jvm.analysis.quickFix.CompositeModCommandQuickFix
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.application.ApplicationManager
@@ -215,18 +214,9 @@ class JUnit4ConverterQuickfix : LocalQuickFix {
   }
 
   private fun transformSetUpOrTearDownMethod(method: UMethod) {
-    val project = method.javaPsi.project
-    val nonPreviewElement = method.javaPsi.nonPreviewElement ?: return
-    val actions = createModifierActions(nonPreviewElement, modifierRequest(JvmModifier.PUBLIC, true)) +
-                  createChangeOverrideActions(nonPreviewElement, shouldBePresent = false)
-    actions.forEach {
-      if (IntentionPreviewUtils.isIntentionPreviewActive()) {
-        it.generatePreview(project, IntentionPreviewUtils.getPreviewEditor() ?: return, method.sourcePsi?.containingFile ?: return)
-      }
-      else {
-        it.invoke(project, null, method.sourcePsi?.containingFile ?: return)
-      }
-    }
+    val containingFile = method.sourcePsi?.containingFile ?: return
+    CompositeModCommandQuickFix.performActions(createModifierActions(method.javaPsi, modifierRequest(JvmModifier.PUBLIC, true)), containingFile)
+    CompositeModCommandQuickFix.performActions(createChangeOverrideActions(method.javaPsi, shouldBePresent = false), containingFile)
     method.accept(SuperCallRemoverVisitor(method.name))
   }
 
