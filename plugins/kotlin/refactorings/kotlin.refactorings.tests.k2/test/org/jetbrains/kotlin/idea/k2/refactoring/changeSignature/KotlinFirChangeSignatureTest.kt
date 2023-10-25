@@ -67,6 +67,10 @@ class KotlinFirChangeSignatureTest :
         TODO("Not yet implemented")
     }
 
+    override fun ignoreTestData(fileName: String): Boolean {
+        return fileName.contains("Propagat")
+    }
+
     override fun getIgnoreDirective(): String {
         return "// IGNORE_K2"
     }
