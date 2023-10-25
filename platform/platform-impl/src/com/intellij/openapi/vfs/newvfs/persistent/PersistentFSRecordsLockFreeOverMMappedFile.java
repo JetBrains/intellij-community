@@ -596,8 +596,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   public void force() throws IOException {
     if (dirty.compareAndSet(true, false)) {
       setIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
-      //MAYBE RC: should we do fsync() here -- or we could trust OS will flush mmapped pages to disk?
-      storage.fsync();
+      if (MMappedFileStorage.FSYNC_ON_FLUSH_BY_DEFAULT) {
+        storage.fsync();
+      }
     }
   }
 
@@ -813,5 +814,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   @MagicConstant(flagsFromClass = RecordLayout.class)
   @Target(ElementType.TYPE_USE)
-  public @interface FieldOffset { }
+  public @interface FieldOffset {
+  }
 }

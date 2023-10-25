@@ -112,10 +112,6 @@ public final class FastFileAttributes {
       storageHelper.writeIntField(fileId, 3, 0);
     }
 
-    public void fsync() throws IOException {
-      storageHelper.fsync();
-    }
-
     private static int fieldOffset(int fieldNo) {
       if (fieldNo < 0 || fieldNo >= FIELDS) {
         throw new IllegalArgumentException("fieldNo(=" + fieldNo + ") must be in [0," + FIELDS + ")");
