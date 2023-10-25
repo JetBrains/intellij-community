@@ -416,7 +416,7 @@ class GitLabApiTest : GitLabApiTestCase() {
       val user = api.graphQL.getCurrentUser()
 
       assertNotNull(user)
-      assertEquals(rootUsername, user?.username)
+      assertEquals(rootUsername, user.username)
     }
   }
 

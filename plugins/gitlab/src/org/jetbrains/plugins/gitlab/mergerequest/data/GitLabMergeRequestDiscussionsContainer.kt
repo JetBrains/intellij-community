@@ -176,7 +176,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       }
 
       // we shouldn't get another user's draft notes
-      val currentUser = api.graphQL.getCurrentUser() ?: error("Unable to load current user")
+      val currentUser = api.graphQL.getCurrentUser()
 
       val notesGuard = Mutex()
       val draftNotes = LinkedHashMap<GitLabId, GitLabMergeRequestDraftNoteRestDTO>()

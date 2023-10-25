@@ -26,7 +26,7 @@ internal class GitLabProjectConnectionManager(project: Project, cs: CoroutineSco
   ) { glProject, account, tokenState ->
     val apiClient = service<GitLabApiManager>().getClient(account.server) { tokenState.value }
     val glMetadata = apiClient.getMetadataOrNull()
-    val currentUser = apiClient.graphQL.getCurrentUser() ?: error("Unable to load current user")
+    val currentUser = apiClient.graphQL.getCurrentUser()
     GitLabProjectConnection(project, this, glProject, account, currentUser, apiClient, glMetadata, tokenState)
   }
 

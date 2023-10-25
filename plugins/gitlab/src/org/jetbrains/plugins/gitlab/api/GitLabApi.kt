@@ -7,6 +7,7 @@ import com.intellij.collaboration.api.httpclient.*
 import com.intellij.collaboration.api.json.JsonHttpApiHelper
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadOptionalJsonList
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
 import org.jetbrains.annotations.ApiStatus
@@ -24,7 +25,14 @@ sealed interface GitLabApi : HttpApiHelper {
   val graphQL: GraphQL
   val rest: Rest
 
-  suspend fun getMetadataOrNull(): GitLabServerMetadata?
+  /**
+   * Gets metadata from server or from cache.
+   *
+   * @throws java.net.ConnectException when there is no usable internet connection.
+   * @throws com.intellij.collaboration.api.HttpStatusErrorException when the API request results
+   * in a non-successful status code.
+   */
+  suspend fun getMetadata(): GitLabServerMetadata
 
   interface GraphQL : GraphQLApiHelper, GitLabApi
   interface Rest : JsonHttpApiHelper, GitLabApi
@@ -42,8 +50,8 @@ internal class GitLabApiImpl(
     tokenSupplier: (() -> String)? = null
   ) : this(serversManager, server, tokenSupplier?.let { httpHelper(it) } ?: httpHelper())
 
-  override suspend fun getMetadataOrNull(): GitLabServerMetadata? =
-    serversManager.getMetadataOrNull(this)
+  override suspend fun getMetadata(): GitLabServerMetadata =
+    serversManager.getMetadata(this)
 
   override val graphQL: GitLabApi.GraphQL =
     GraphQLImpl(GraphQLApiHelper(logger<GitLabApi>(),
@@ -68,11 +76,8 @@ internal class GitLabApiImpl(
     JsonHttpApiHelper by helper
 }
 
-suspend fun GitLabApi.getMetadata(): GitLabServerMetadata {
-  val metadata = getMetadataOrNull()
-  requireNotNull(metadata) { "Could not retrieve server metadata for $server" }
-  return metadata
-}
+suspend fun GitLabApi.getMetadataOrNull(): GitLabServerMetadata? =
+  runCatchingUser { getMetadata() }.getOrNull()
 
 suspend fun GitLabApi.GraphQL.gitLabQuery(query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest {
   if (query == GitLabGQLQuery.GET_METADATA) {
