@@ -17,21 +17,20 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.jcef.JBCefApp
 
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
-  override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return file.getUserData(EDITOR_KEY) ?: HTMLFileEditor(project, file as LightVirtualFile,
-                                                          REQUEST_KEY.get(file)!!).also { file.putUserData(EDITOR_KEY, it) }
-  }
+  override fun createEditor(project: Project, file: VirtualFile): FileEditor =
+    file.getUserData(EDITOR_KEY) ?:
+    HTMLFileEditor(project, file as LightVirtualFile, REQUEST_KEY.get(file)!!).also { file.putUserData(EDITOR_KEY, it) }
 
-  override fun accept(project: Project, file: VirtualFile): Boolean {
-    return JBCefApp.isSupported() && file.getUserData(REQUEST_KEY) != null
-  }
+  override fun accept(project: Project, file: VirtualFile): Boolean =
+    JBCefApp.isSupported() && file.getUserData(REQUEST_KEY) != null
 
-  override fun acceptRequiresReadAction() = false
+  override fun acceptRequiresReadAction(): Boolean = false
 
   override fun getEditorTypeId(): String = "html-editor"
 
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
+  @Suppress("CompanionObjectInExtension")
   companion object {
     private val REQUEST_KEY: Key<Request> = Key.create("html.editor.request.key")
     private val EDITOR_KEY: Key<FileEditor> = Key.create("html.editor.component.key")
@@ -74,10 +73,8 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     }
 
     companion object {
-      @JvmStatic
-      fun html(html: String): Request = Request(html, null)
-      @JvmStatic
-      fun url(url: String): Request = Request(null, url)
+      @JvmStatic fun html(html: String): Request = Request(html, null)
+      @JvmStatic fun url(url: String): Request = Request(null, url)
     }
   }
 
