@@ -2,7 +2,6 @@
 package com.intellij.ui.speedSearch
 
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.event.KeyEvent
 import javax.swing.JComponent
 
 @Internal
@@ -14,6 +13,5 @@ interface SpeedSearchActivator {
   val textField: JComponent?
 
   fun activate()
-  fun handleKeyEvent(e: KeyEvent)
 
 }

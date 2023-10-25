@@ -1,19 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.speedSearch
 
-import com.intellij.ide.IdeEventQueue
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.speedSearch.SpeedSearchActivator
 import com.intellij.ui.speedSearch.SpeedSearchSupply
-import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.Point
-import java.awt.event.KeyEvent
 import javax.swing.JComponent
 
 internal class SpeedSearchActionHandler(val targetComponent: JComponent, private val speedSearch: SpeedSearchActivator) {
@@ -49,20 +45,8 @@ internal class SpeedSearchActionHandler(val targetComponent: JComponent, private
       GotItTooltip("speed.search.shown", gotItMessage)
         .withPosition(Balloon.Position.atRight)
         .withFocus()
-        .also { installKeyEventDispatcher(it) }
         .show(component) { c, _ -> Point(c.width, c.height / 2) }
     }
-  }
-
-  private fun installKeyEventDispatcher(parent: Disposable) {
-    IdeEventQueue.getInstance().addDispatcher({ e ->
-      // Catch key typed event and forward them to the speed search field even while the got it tooltip is focused.
-      if (e is KeyEvent && e.id == KeyEvent.KEY_TYPED && UIUtil.isReallyTypedEvent(e)) {
-        speedSearch.handleKeyEvent(e)
-        e.isConsumed
-      }
-      false
-    }, parent)
   }
 
   private fun getActionShortcut(): String? =

@@ -50,11 +50,6 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
            myString.length() == 0 || (myMatcher != null && myMatcher.matches(string));
   }
 
-  @Override
-  public void handleKeyEvent(@NotNull KeyEvent e) {
-    processKeyEvent(e);
-  }
-
   public void processKeyEvent(KeyEvent e) {
     if (e.isConsumed() || !myEnabled) return;
 
