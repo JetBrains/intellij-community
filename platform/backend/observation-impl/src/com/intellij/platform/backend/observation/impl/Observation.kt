@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.observation.impl
 
-import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.api.ActivityInProgressWitness
 
@@ -13,12 +12,13 @@ object Observation {
   suspend fun awaitConfiguration(project: Project, messageCallback: ((String) -> Unit)? = null) {
     while (true) {
       val wasModified = doAwaitConfigurationPredicates(project, messageCallback)
-      if (!wasModified) {
-        messageCallback?.invoke("The project is configured completely.") // NON-NLS
-        break
+      if (wasModified) {
+        messageCallback?.invoke(
+          "Configuration session is completed. Initiating another session to cover possible side effects...") // NON-NLS
       }
       else {
-        messageCallback?.invoke("Modified files are saved. Checking if it triggered configuration process...") // NON-NLS
+        messageCallback?.invoke("The project is configured completely.") // NON-NLS
+        break
       }
     }
   }
@@ -36,9 +36,7 @@ object Observation {
       break
     }
 
-    messageCallback?.invoke("All predicates are completed. Saving files...") // NON-NLS
-
-    saveProjectsAndApp(true)
+    messageCallback?.invoke("Configuration processes are completed.") // NON-NLS
 
     return isModificationOccurred
   }
