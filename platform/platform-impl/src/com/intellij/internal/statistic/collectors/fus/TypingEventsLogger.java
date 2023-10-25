@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.EventRateThrottleResult;
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -52,6 +53,8 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
   public static final class TypingEventsListener implements AnActionListener {
     @Override
     public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
+      if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return;
+
       EventRateThrottleResult result = ourThrottle.tryPass(System.currentTimeMillis());
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (result == EventRateThrottleResult.ACCEPT) {
