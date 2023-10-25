@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
@@ -85,8 +85,7 @@ public final class ProjectJdksConfigurable extends MasterDetailsComponent {
     }
   }
 
-  @Nullable
-  private JBSplitter extractSplitter() {
+  private @Nullable JBSplitter extractSplitter() {
     final Component[] components = myWholePanel.getComponents();
     return components.length == 1 && components[0] instanceof JBSplitter ? (JBSplitter)components[0] : null;
   }
@@ -132,18 +131,20 @@ public final class ProjectJdksConfigurable extends MasterDetailsComponent {
   }
 
   @Override
-  @Nullable
-  protected ArrayList<AnAction> createActions(final boolean fromPopup) {
+  protected @Nullable ArrayList<AnAction> createActions(final boolean fromPopup) {
     if (myProjectJdksModel == null) {
       return null;
     }
     final ArrayList<AnAction> actions = new ArrayList<>();
     DefaultActionGroup group = DefaultActionGroup.createPopupGroup(JavaUiBundle.messagePointer("add.new.jdk.text"));
     group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
-    myProjectJdksModel.createAddActions(group, myTree, projectJdk -> {
-      addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);
-      selectNodeInTree(findNodeByObject(myRoot, projectJdk));
-    }, SimpleJavaSdkType.notSimpleJavaSdkType());
+    myProjectJdksModel.createAddActions(group,
+                                        myTree,
+                                        projectJdk -> {
+                                          addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);
+                                          selectNodeInTree(findNodeByObject(myRoot, projectJdk));
+                                        },
+                                        SimpleJavaSdkType.notSimpleJavaSdkType());
     actions.add(new MyActionGroupWrapper(group));
     actions.add(new MyDeleteAction());
     return actions;
@@ -170,8 +171,7 @@ public final class ProjectJdksConfigurable extends MasterDetailsComponent {
     return myProjectJdksModel.getProjectSdks().containsKey((Sdk)editableObject);
   }
 
-  @Nullable
-  public Sdk getSelectedJdk() {
+  public @Nullable Sdk getSelectedJdk() {
     return (Sdk)getSelectedObject();
   }
 
@@ -180,15 +180,12 @@ public final class ProjectJdksConfigurable extends MasterDetailsComponent {
   }
 
   @Override
-  @Nullable
-  public String getDisplayName() {
+  public @Nullable String getDisplayName() {
     return null;
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     return null;
   }
 
