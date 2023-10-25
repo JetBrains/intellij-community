@@ -62,7 +62,6 @@ import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractJvmDecompiledTex
 import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandlerTest
 import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
-import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractK1ExternalAnnotationTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
@@ -174,9 +173,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("jvm-debugger/test") {
         listOf(
-            AbstractIrKotlinSteppingTest::class,
-            AbstractIndyLambdaKotlinSteppingTest::class,
-            AbstractK1IdeK2CodeKotlinSteppingTest::class,
+          AbstractIrKotlinSteppingTest::class,
+          AbstractIndyLambdaIrKotlinSteppingTest::class,
+          AbstractK1IdeK2CodeKotlinSteppingTest::class,
         ).forEach {
             testClass(it) {
                 model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
@@ -196,9 +195,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         listOf(
-            AbstractIndyLambdaKotlinEvaluateExpressionTest::class,
-            AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest::class,
-            AbstractK1IdeK2CodeKotlinEvaluateExpressionTest::class,
+          AbstractIndyLambdaIrKotlinEvaluateExpressionTest::class,
+          AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest::class,
+          AbstractK1IdeK2CodeKotlinEvaluateExpressionTest::class,
         ).forEach {
             testClass(it) {
                 model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
@@ -208,15 +207,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         listOf(
-            AbstractKotlinScriptEvaluateExpressionTest::class,
-            AbstractK1IdeK2CodeScriptEvaluateExpressionTest::class,
+          AbstractIrKotlinScriptEvaluateExpressionTest::class,
+          AbstractK1IdeK2CodeScriptEvaluateExpressionTest::class,
         ).forEach {
             testClass(it) {
                 model("evaluation/scripts", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             }
         }
 
-        testClass<AbstractKotlinEvaluateExpressionInMppTest> {
+        testClass<AbstractIrKotlinEvaluateExpressionInMppTest> {
             model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)

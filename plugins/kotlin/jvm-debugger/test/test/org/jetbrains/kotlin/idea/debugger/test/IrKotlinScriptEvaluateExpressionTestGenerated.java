@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.test.TargetBackend;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/evaluation/scripts")
-public class KotlinScriptEvaluateExpressionTestGenerated extends AbstractKotlinScriptEvaluateExpressionTest {
+public class IrKotlinScriptEvaluateExpressionTestGenerated extends AbstractIrKotlinScriptEvaluateExpressionTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
     }

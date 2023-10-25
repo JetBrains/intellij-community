@@ -18,16 +18,16 @@ import org.jetbrains.kotlin.test.TargetBackend;
 @TestRoot("jvm-debugger/test")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class KotlinEvaluateExpressionInMppTestGenerated extends AbstractKotlinEvaluateExpressionInMppTest {
+public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/evaluation/singleBreakpoint")
-    public abstract static class SingleBreakpoint extends AbstractKotlinEvaluateExpressionInMppTest {
+    public abstract static class SingleBreakpoint extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator")
-        public abstract static class CompilingEvaluator extends AbstractKotlinEvaluateExpressionInMppTest {
+        public abstract static class CompilingEvaluator extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers")
-            public static class InaccessibleMembers extends AbstractKotlinEvaluateExpressionInMppTest {
+            public static class InaccessibleMembers extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -115,7 +115,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator")
-            public static class Uncategorized extends AbstractKotlinEvaluateExpressionInMppTest {
+            public static class Uncategorized extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -169,7 +169,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/contextReceivers")
-        public static class ContextReceivers extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class ContextReceivers extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -232,7 +232,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/coroutines")
-        public static class Coroutines extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class Coroutines extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -340,7 +340,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/createExpression")
-        public static class CreateExpression extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class CreateExpression extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -363,7 +363,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/extraVariables")
-        public static class ExtraVariables extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class ExtraVariables extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -426,7 +426,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-        public static class Frame extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class Frame extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -724,7 +724,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/funWithDefaultParam")
-        public static class FunWithDefaultParam extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class FunWithDefaultParam extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -752,7 +752,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/implicitClassReceiver")
-        public static class ImplicitClassReceiver extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class ImplicitClassReceiver extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -795,7 +795,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/javaContext")
-        public static class JavaContext extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class JavaContext extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -833,7 +833,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/labels")
-        public static class Labels extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class Labels extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -866,7 +866,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/lambdas")
-        public static class Lambdas extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class Lambdas extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -969,7 +969,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/renderer")
-        public static class Renderer extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class Renderer extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -992,7 +992,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/simpleConstructors")
-        public static class SimpleConstructors extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class SimpleConstructors extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1005,7 +1005,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/simpleLocals")
-        public static class SimpleLocals extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class SimpleLocals extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1083,7 +1083,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/simpleSmartcasts")
-        public static class SimpleSmartcasts extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class SimpleSmartcasts extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1121,7 +1121,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint")
-        public static class Uncategorized extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class Uncategorized extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1700,10 +1700,10 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/evaluation/multipleBreakpoints")
-    public abstract static class MultipleBreakpoints extends AbstractKotlinEvaluateExpressionInMppTest {
+    public abstract static class MultipleBreakpoints extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/multipleBreakpoints/library")
-        public static class Library extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class Library extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1721,7 +1721,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/multipleBreakpoints")
-        public static class Uncategorized extends AbstractKotlinEvaluateExpressionInMppTest {
+        public static class Uncategorized extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1899,65 +1899,19 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/evaluation/multiplatform")
-    public static class Multiplatform extends AbstractKotlinEvaluateExpressionInMppTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-        }
+    @TestMetadata("testData/evaluation/jvmMultiModule")
+    public abstract static class JvmMultiModule extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/jvmMultiModule/delegates")
+        public static class Delegates extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doJvmMultiModuleTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
 
-        @TestMetadata("classMethod.kt")
-        public void testClassMethod() throws Exception {
-            runTest("testData/evaluation/multiplatform/classMethod.kt");
-        }
-
-        @TestMetadata("diamond.kt")
-        public void testDiamond() throws Exception {
-            runTest("testData/evaluation/multiplatform/diamond.kt");
-        }
-
-        @TestMetadata("differentCommons.kt")
-        public void testDifferentCommons() throws Exception {
-            runTest("testData/evaluation/multiplatform/differentCommons.kt");
-        }
-
-        @TestMetadata("evaluateInCommonCode.kt")
-        public void testEvaluateInCommonCode() throws Exception {
-            runTest("testData/evaluation/multiplatform/evaluateInCommonCode.kt");
-        }
-
-        @TestMetadata("evaluateWithIntermediateJvm.kt")
-        public void testEvaluateWithIntermediateJvm() throws Exception {
-            runTest("testData/evaluation/multiplatform/evaluateWithIntermediateJvm.kt");
-        }
-
-        @TestMetadata("funWithDefaultArgument.kt")
-        public void testFunWithDefaultArgument() throws Exception {
-            runTest("testData/evaluation/multiplatform/funWithDefaultArgument.kt");
-        }
-
-        @TestMetadata("functionBreakpointInCommonCode.kt")
-        public void testFunctionBreakpointInCommonCode() throws Exception {
-            runTest("testData/evaluation/multiplatform/functionBreakpointInCommonCode.kt");
-        }
-
-        @TestMetadata("interface.kt")
-        public void testInterface() throws Exception {
-            runTest("testData/evaluation/multiplatform/interface.kt");
-        }
-
-        @TestMetadata("ktij21854.kt")
-        public void testKtij21854() throws Exception {
-            runTest("testData/evaluation/multiplatform/ktij21854.kt");
-        }
-
-        @TestMetadata("object.kt")
-        public void testObject() throws Exception {
-            runTest("testData/evaluation/multiplatform/object.kt");
-        }
-
-        @TestMetadata("typealiasFromCommonCode.kt")
-        public void testTypealiasFromCommonCode() throws Exception {
-            runTest("testData/evaluation/multiplatform/typealiasFromCommonCode.kt");
+            @TestMetadata("multiModuleDelegateInlineAccessor.kt")
+            public void testMultiModuleDelegateInlineAccessor() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/delegates/multiModuleDelegateInlineAccessor.kt");
+            }
         }
     }
 }
