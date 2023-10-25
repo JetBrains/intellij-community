@@ -80,8 +80,7 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
 
     val collisions = SmartList<UsageInfo>()
     checkRedeclarationConflicts(declaration, newName, collisions)
-    renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-    renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
+    renameRefactoringSupport.checkUsagesRetargeting(declaration, newName, result, collisions)
     result += collisions
   }
 

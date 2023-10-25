@@ -3,5 +3,5 @@
   "mainFile": "test/ref.kt",
   "newName": "String",
   "withRuntime": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

@@ -78,8 +78,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         checkConflictsAndReplaceUsageInfos(element, allRenames, result)
         result += SmartList<UsageInfo>().also { collisions ->
           checkRedeclarationConflicts(declaration, newName, collisions)
-          renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-          renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
+          renameRefactoringSupport.checkUsagesRetargeting(declaration, newName, result, collisions)
         }
     }
 

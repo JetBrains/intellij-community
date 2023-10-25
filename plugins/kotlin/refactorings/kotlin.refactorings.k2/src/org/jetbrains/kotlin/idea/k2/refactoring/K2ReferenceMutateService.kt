@@ -77,7 +77,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         shorteningMode: KtSimpleNameReference.ShorteningMode, // not supported in K2, it always does FORCED_SHORTENING
         targetElement: PsiElement?
     ): PsiElement {
-        if (targetElement !is KtElement) operationNotSupportedInK2Error() // TODO fix reference shortener for non-Kotlin target elements
+        if (targetElement != null && targetElement !is KtElement) operationNotSupportedInK2Error() // TODO fix reference shortener for non-Kotlin target elements
         val expression = simpleNameReference.expression
         if (fqName.isRoot) return expression
         val importDirective = expression.parentOfType<KtImportDirective>(withSelf = false)

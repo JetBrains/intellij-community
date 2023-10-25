@@ -51,17 +51,15 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         scope: SearchScope
     ) {}
 
-    override fun checkOriginalUsagesRetargeting(
+    override fun checkUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,
         originalUsages: MutableList<UsageInfo>,
         newUsages: MutableList<UsageInfo>
     ) {
-        // TODO
-    }
-
-    override fun checkNewNameUsagesRetargeting(declaration: KtNamedDeclaration, newName: String, newUsages: MutableList<UsageInfo>) {
-        // TODO
+        if (declaration is KtClassLikeDeclaration) {
+            checkClassNameShadowing(declaration, newName, originalUsages, newUsages)
+        }
     }
 
     override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
