@@ -80,12 +80,13 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
                              scope: List<WebSymbolsScope> = emptyList()): List<WebSymbolCodeCompletionItem> =
     runCodeCompletionQuery(listOf(WebSymbolQualifiedName(namespace, kind, name)), position, virtualSymbols, scope)
 
-  fun runCodeCompletionQuery(qualifiedName: WebSymbolQualifiedName,
+  fun runCodeCompletionQuery(qualifiedKind: WebSymbolQualifiedKind,
+                             name: String,
                              /** Position to complete at in the last segment of the path **/
                              position: Int,
                              virtualSymbols: Boolean = true,
                              scope: List<WebSymbolsScope> = emptyList()): List<WebSymbolCodeCompletionItem> =
-    runCodeCompletionQuery(listOf(qualifiedName), position, virtualSymbols, scope)
+    runCodeCompletionQuery(listOf(qualifiedKind.withName(name)), position, virtualSymbols, scope)
 
   fun runCodeCompletionQuery(path: List<WebSymbolQualifiedName>,
                              /** Position to complete at in the last segment of the path **/

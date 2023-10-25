@@ -4,15 +4,13 @@ package com.intellij.webSymbols.completion
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.SymbolKind
-import com.intellij.webSymbols.SymbolNamespace
+import com.intellij.webSymbols.WebSymbolQualifiedKind
 
 interface WebSymbolCodeCompletionItemCustomizer {
 
   fun customize(item: WebSymbolCodeCompletionItem,
                 framework: FrameworkId?,
-                namespace: SymbolNamespace,
-                kind: SymbolKind,
+                qualifiedKind: WebSymbolQualifiedKind,
                 location: PsiElement): WebSymbolCodeCompletionItem?
 
   companion object {
@@ -21,8 +19,7 @@ interface WebSymbolCodeCompletionItemCustomizer {
 
     internal fun Sequence<WebSymbolCodeCompletionItem>.customizeItems(
       framework: FrameworkId?,
-      namespace: SymbolNamespace,
-      kind: SymbolKind,
+      qualifiedKind: WebSymbolQualifiedKind,
       location: PsiElement
     ): Sequence<WebSymbolCodeCompletionItem> {
       val customizers = EP_NAME.extensionList
@@ -31,7 +28,7 @@ interface WebSymbolCodeCompletionItemCustomizer {
           customizers.foldRight(item) { customizer, acc: WebSymbolCodeCompletionItem? ->
             if (acc == null)
               null
-            else customizer.customize(acc, framework, namespace, kind, location)
+            else customizer.customize(acc, framework, qualifiedKind, location)
           }
         }
       else this
