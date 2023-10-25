@@ -3,16 +3,15 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.cfg.WhenChecker
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.quickFixes.RemoveRedundantUnitFix
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.previousStatement
 import org.jetbrains.kotlin.idea.util.isUnitLiteral
 import org.jetbrains.kotlin.js.descriptorUtils.nameIfStandardType
@@ -28,8 +27,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isDynamic
 import org.jetbrains.kotlin.types.typeUtil.isUnit
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class RedundantUnitExpressionInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = referenceExpressionVisitor(fun(expression) {
@@ -110,15 +107,5 @@ private fun KtExpression.canBeUsedAsValue(context: BindingContext): Boolean {
             entries.lastOrNull()?.elseKeyword != null || WhenChecker.getMissingCases(this, context).isEmpty()
         else ->
             true
-    }
-}
-
-private class RemoveRedundantUnitFix : LocalQuickFix {
-    override fun getName() = KotlinBundle.message("remove.redundant.unit.fix.text")
-
-    override fun getFamilyName() = name
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        (descriptor.psiElement as? KtReferenceExpression)?.delete()
     }
 }
