@@ -10,11 +10,17 @@ import kotlin.math.roundToLong
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 3)
+  private val GROUP = EventLogGroup("java.debugger", 4)
 
   // fields
+
+  /**
+   * These are XBreakpointType IDs related to JVM languages.
+   *
+   * Use [XBreakpointType.EXTENSION_POINT_NAME.extensions.map { it.id }] to get the full list.
+   */
   private val breakpointTypeField = EventFields.String("type", listOf(
-    "java-exception", "java-collection",
+    "java-exception", "java-collection", "java-wildcard-method",
     "java-line", "java-field", "java-method",
     "kotlin-line", "kotlin-field", "kotlin-function",
   ))
