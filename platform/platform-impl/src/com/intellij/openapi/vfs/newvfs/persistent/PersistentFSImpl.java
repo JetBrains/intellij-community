@@ -134,7 +134,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   synchronized public void connect() {
     myIdToDirCache.clear();
     myVfsData = new VfsData(app);
-    LOG.assertTrue(!myConnected.get() && vfsPeer == null);
+    LOG.assertTrue(!myConnected.get());// vfsPeer could be !=null after disconnect
     doConnect();
     PersistentFsConnectionListener.EP_NAME.getExtensionList().forEach(PersistentFsConnectionListener::connectionOpen);
   }
@@ -153,7 +153,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       FSRecordsImpl vfsPeer = this.vfsPeer;
       if (vfsPeer != null && !vfsPeer.isClosed()) {
         vfsPeer.close();
-        this.vfsPeer = null;
+        //better not this.vfsPeer=null, but leave it as-is, since on access instead of NPE we'll get
+        // more understandable AlreadyDisposedException with additional diagnostic info
       }
       LOG.info("VFS dispose completed in " + (System.currentTimeMillis() - ms) + "ms.");
     }
@@ -1778,7 +1779,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           }
 
 
-          //MAYBE RC: i dispite all the efforts the root entry wasn't found/loaded -- it means VFS is corrupted,
+          //MAYBE RC: dispite all the efforts the root entry wasn't found/loaded -- it means VFS is corrupted,
           // and we should throw assertion (VFS rebuild?).
           // But (it seems) the method .findFileById() is used in an assumption it just returns null if 'incorrect'
           // fileId is passed in? -- so I keep that legacy behaviour (just log warning with diagnostic) until I'll
