@@ -203,14 +203,16 @@
       "Pale": {
         "Popup": {
           "background": "Grey14",
-          "foreground": "Grey2"
+          "foreground": "Grey2",
+          "border": "Grey9"
         },
         "keymapLabel": "Grey7"
       },
       "Bright": {
         "Popup": {
           "background": "Grey2",
-          "foreground": "Grey14"
+          "foreground": "Grey14",
+          "border": "Grey2"
         },
         "keymapLabel": "Grey9"
       }
