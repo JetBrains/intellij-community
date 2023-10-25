@@ -22,7 +22,7 @@ public final class PsiQuickFixFactory {
   }
 
   public static LocalQuickFix createModifierListFix(@NotNull PsiModifierListOwner owner, @NotNull String modifier, boolean shouldHave, final boolean showContainingClass) {
-    return new ModifierFix(owner, modifier, shouldHave, showContainingClass);
+    return LocalQuickFix.from(new ModifierFix(owner, modifier, shouldHave, showContainingClass));
   }
 
   public static LocalQuickFix createNewFieldFix(@NotNull PsiClass psiClass, @NotNull String name, @NotNull PsiType psiType, @Nullable String initializerText, String... modifiers) {

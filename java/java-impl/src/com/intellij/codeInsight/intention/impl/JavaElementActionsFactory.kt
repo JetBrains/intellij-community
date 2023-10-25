@@ -13,6 +13,8 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.actions.*
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtilRt
@@ -22,6 +24,7 @@ import com.intellij.psi.impl.light.LightRecordMember
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.util.ThreeState
 import com.intellij.util.asSafely
 import org.jetbrains.uast.UDeclaration
 import java.util.*
@@ -30,7 +33,7 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
     val declaration = if (target is UDeclaration) target.javaPsi as PsiModifierListOwner else target as PsiModifierListOwner
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
-    return listOf(ChangeModifierFix(declaration, request))
+    return listOf(ChangeModifierFix(declaration, request).asIntention())
   }
 
   private open class RemoveAnnotationFix(private val fqn: String,
@@ -84,15 +87,12 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
 
   internal class ChangeModifierFix(declaration: PsiModifierListOwner,
                                    @FileModifier.SafeFieldForPreview val request: ChangeModifierRequest) :
-    ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true, request.processHierarchy()) {
-    override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
-
-    override fun isAvailable(project: Project,
-                             file: PsiFile,
-                             editor: Editor?,
-                             startElement: PsiElement,
-                             endElement: PsiElement): Boolean =
-      request.isValid && super.isAvailable(project, file, editor, startElement, endElement)
+    ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true, 
+                if (request.processHierarchy()) ThreeState.UNSURE else ThreeState.NO) {
+    override fun getPresentation(context: ActionContext, element: PsiModifierListOwner): Presentation? {
+      if (!request.isValid) return null
+      return super.getPresentation(context, element)
+    }
   }
 
   override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {

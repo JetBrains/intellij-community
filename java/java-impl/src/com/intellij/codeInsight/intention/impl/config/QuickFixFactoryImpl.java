@@ -74,7 +74,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                            @NotNull String modifier,
                                                                            boolean shouldHave,
                                                                            boolean showContainingClass) {
-    return new ModifierFix(modifierList, modifier, shouldHave,showContainingClass);
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(new ModifierFix(modifierList, modifier, shouldHave, showContainingClass),
+                                                            modifierList.getParent());
   }
 
   @NotNull
@@ -83,7 +84,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                            @NotNull final String modifier,
                                                                            final boolean shouldHave,
                                                                            final boolean showContainingClass) {
-    return new ModifierFix(owner, modifier, shouldHave, showContainingClass);
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(new ModifierFix(owner, modifier, shouldHave, showContainingClass), owner);
   }
 
   @NotNull
