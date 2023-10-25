@@ -42,6 +42,13 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
                         scope: List<WebSymbolsScope> = emptyList()): List<WebSymbol> =
     runNameMatchQuery(listOf(WebSymbolQualifiedName(namespace, kind, name)), virtualSymbols, abstractSymbols, strictScope, scope)
 
+  fun runNameMatchQuery(qualifiedName: WebSymbolQualifiedName,
+                        virtualSymbols: Boolean = true,
+                        abstractSymbols: Boolean = false,
+                        strictScope: Boolean = false,
+                        scope: List<WebSymbolsScope> = emptyList()): List<WebSymbol> =
+    runNameMatchQuery(listOf(qualifiedName), virtualSymbols, abstractSymbols, strictScope, scope)
+
   fun runNameMatchQuery(path: List<WebSymbolQualifiedName>,
                         virtualSymbols: Boolean = true,
                         abstractSymbols: Boolean = false,
