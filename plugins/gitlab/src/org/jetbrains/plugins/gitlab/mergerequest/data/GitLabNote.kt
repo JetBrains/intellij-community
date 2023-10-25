@@ -192,9 +192,7 @@ class GitLabMergeRequestDraftNoteImpl(
           api.rest.submitSingleDraftNote(project, mr.iid, noteData.id.restId.toLong()).body()
         }
       }
-      // Order of following operations: first start reload so that there's minimal delay between removing and re-adding the note.
       mr.reloadDiscussions()
-      eventSink(GitLabNoteEvent.Deleted(id))
     }
   }
 
