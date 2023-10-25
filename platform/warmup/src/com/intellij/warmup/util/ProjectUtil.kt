@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.backend.observation.impl.Observation
+import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.util.progress.durationStep
 import com.intellij.util.asSafely
 import com.intellij.util.indexing.FileBasedIndex

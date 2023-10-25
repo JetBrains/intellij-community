@@ -843,7 +843,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-api/intellij.platform.analysis.iml" filepath="$PROJECT_DIR$/platform/analysis-api/intellij.platform.analysis.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-impl/intellij.platform.analysis.impl.iml" filepath="$PROJECT_DIR$/platform/analysis-impl/intellij.platform.analysis.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/backend/observation/intellij.platform.backend.observation.iml" filepath="$PROJECT_DIR$/platform/backend/observation/intellij.platform.backend.observation.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/backend/observation-impl/intellij.platform.backend.observation.impl.iml" filepath="$PROJECT_DIR$/platform/backend/observation-impl/intellij.platform.backend.observation.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/backend/workspace/intellij.platform.backend.workspace.iml" filepath="$PROJECT_DIR$/platform/backend/workspace/intellij.platform.backend.workspace.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/benchmarks/intellij.platform.benchmarks.iml" filepath="$PROJECT_DIR$/platform/platform-tests/benchmarks/intellij.platform.benchmarks.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/boot/intellij.platform.boot.iml" filepath="$PROJECT_DIR$/platform/boot/intellij.platform.boot.iml" />
