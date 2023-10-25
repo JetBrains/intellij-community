@@ -64,6 +64,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 import static com.intellij.notification.NotificationType.INFORMATION;
+import static com.intellij.util.SystemProperties.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SuppressWarnings("NonDefaultConstructor")
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
@@ -170,7 +172,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       VFSRecoveryInfo recoveryInfo = _vfsPeer.connection().recoveryInfo();
       List<VFSInitException> recoveredErrors = recoveryInfo.recoveredErrors;
       if (!recoveredErrors.isEmpty()) {
-        if (app != null && !app.isHeadlessEnvironment()) {
+
+        //if there was recovery, and it took long enough for user to notice:
+        VFSInitializationResult initializationResult = _vfsPeer.initializationResult();
+        if (app != null && !app.isHeadlessEnvironment()
+            && initializationResult.totalInitializationDurationNs > NOTIFY_OF_RECOVERY_IF_LONGER_NS) {
           NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("VFS");
           notificationGroup.createNotification(
               IdeBundle.message("notification.vfs.vfs-recovered.notification.title"),
