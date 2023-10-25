@@ -193,7 +193,6 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       }
 
       long timeMs = System.currentTimeMillis() - allStartTime;
-      LOG.info("Data import total finished");
       trace.logPerformance("Data import total", timeMs);
       syncMetrics.endSpan(Phase.DATA_SERVICES.name());
       ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.DATA_SERVICES, timeMs, errorsCount);
