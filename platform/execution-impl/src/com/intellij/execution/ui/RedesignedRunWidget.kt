@@ -151,7 +151,7 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
 
 private val runToolbarDataKey = Key.create<Boolean>("run-toolbar-data")
 
-private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
+open class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
@@ -169,7 +169,7 @@ private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
     e.presentation.putClientProperty(runToolbarDataKey, isSomeRunningNow(e))
   }
 
-  private fun isSomeRunningNow(e: AnActionEvent): Boolean {
+  open fun isSomeRunningNow(e: AnActionEvent): Boolean {
     val project = e.project ?: return false
     val selectedConfiguration: RunnerAndConfigurationSettings? = RunManager.getInstanceIfCreated(project)?.selectedConfiguration
 
@@ -359,7 +359,7 @@ abstract class TogglePopupAction : ToggleAction {
   abstract suspend fun getActionGroup(e: AnActionEvent): ActionGroup?
 }
 
-private abstract class WindowHeaderPlaceholder : DecorativeElement(), DumbAware, CustomComponentAction {
+abstract class WindowHeaderPlaceholder : DecorativeElement(), DumbAware, CustomComponentAction {
   private val NOT_FIRST_UPDATE = Key.create<Boolean>("notFirstUpdate")
   private val PROJECT = Key.create<Project>("justProject")
 
