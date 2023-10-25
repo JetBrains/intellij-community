@@ -52,12 +52,13 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
     WebSymbolsQueryExecutorFactory.create(tag)
       .runListSymbolsQuery(qualifiedKind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
 
-  fun runCodeCompletionQuery(qualifiedName: WebSymbolQualifiedName,
+  fun runCodeCompletionQuery(qualifiedKind: WebSymbolQualifiedKind,
+                             name: String,
                              /** Position to complete at in the last segment of the path **/
                              position: Int,
                              virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> =
     WebSymbolsQueryExecutorFactory.create(tag)
-      .runCodeCompletionQuery(qualifiedName, position, virtualSymbols, listOf(symbol))
+      .runCodeCompletionQuery(qualifiedKind, name, position, virtualSymbols, listOf(symbol))
 
   override fun getQualifiedName(): String {
     return name

@@ -118,17 +118,12 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
   class HtmlSymbolsCodeCompletionItemCustomizer : WebSymbolCodeCompletionItemCustomizer {
     override fun customize(item: WebSymbolCodeCompletionItem,
                            framework: FrameworkId?,
-                           namespace: SymbolNamespace,
-                           kind: SymbolKind,
+                           qualifiedKind: WebSymbolQualifiedKind,
                            location: PsiElement): WebSymbolCodeCompletionItem =
-      item.let {
-        if (namespace == WebSymbol.NAMESPACE_HTML)
-          when (kind) {
-            WebSymbol.KIND_HTML_ELEMENTS -> it.withTypeText(it.symbol?.origin?.library)
-            WebSymbol.KIND_HTML_ATTRIBUTES -> it // TODO - we can figure out the actual type with full match provided
-            else -> it
-          }
-        else it
+      when (qualifiedKind) {
+        WebSymbol.HTML_ELEMENTS -> item.withTypeText(item.symbol?.origin?.library)
+        WebSymbol.HTML_ATTRIBUTES -> item // TODO - we can figure out the actual type with full match provided
+        else -> item
       }
   }
 
