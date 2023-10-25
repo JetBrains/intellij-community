@@ -391,10 +391,14 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean isWritable() {
-    if (myIsReadOnly) return false;
+    if (myIsReadOnly) {
+      return false;
+    }
 
-    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensions()) {
-      if (!guard.isWritable(this).isSuccess()) return false;
+    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensionList()) {
+      if (!guard.isWritable(this).isSuccess()) {
+        return false;
+      }
     }
 
     return true;

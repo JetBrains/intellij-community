@@ -127,14 +127,12 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
   }
 
   companion object {
-
-    internal val EP = ExtensionPointName<VcsCommitExternalStatusProvider<*>>("com.intellij.vcsLogCommitStatusProvider")
+    internal val EP: ExtensionPointName<VcsCommitExternalStatusProvider<*>> = ExtensionPointName("com.intellij.vcsLogCommitStatusProvider")
 
     @JvmStatic
-    fun getExtensionsWithColumns(): List<WithColumn<*>> = EP.extensions.filterIsInstance(WithColumn::class.java)
+    fun getExtensionsWithColumns(): List<WithColumn<*>> = EP.extensionList.filterIsInstance(WithColumn::class.java)
 
     @RequiresEdt
-    @JvmStatic
     fun addProviderListChangeListener(disposable: Disposable, listener: () -> Unit) {
       EP.addChangeListener(listener, disposable)
     }

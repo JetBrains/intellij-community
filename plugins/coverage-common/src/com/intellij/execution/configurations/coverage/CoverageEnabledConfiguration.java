@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.coverage.CoverageEngine;
@@ -135,7 +135,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
       return true;
     }
 
-    for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensions()) {
+    for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensionList()) {
       if (engine.isApplicableTo(runConfiguration)) {
         return true;
       }
