@@ -18,8 +18,8 @@ internal class GHPRSquashMergeAction(scope: CoroutineScope, private val project:
 
   init {
     scope.launch {
-      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.isSquashMergeAllowed) { isBusy, isSquashMergeAllowed ->
-        isEnabled = !isBusy && isSquashMergeAllowed && reviewFlowVm.userCanMergeReview
+      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.isSquashMergeEnabled) { isBusy, isSquashMergeEnabled ->
+        isEnabled = !isBusy && isSquashMergeEnabled
       }
     }
   }
