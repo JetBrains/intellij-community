@@ -41,7 +41,7 @@ import static com.intellij.codeInsight.AnnotationUtil.NULLABLE;
 public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<Element>, ModificationTracker {
   private static final String INSTRUMENTED_NOT_NULLS_TAG = "instrumentedNotNulls";
 
-  private AnnotationPackageSupport[] myAnnotationSupports;
+  private List<AnnotationPackageSupport> myAnnotationSupports;
 
   private Map<String, AnnotationPackageSupport> myDefaultNullables;
   private Map<String, AnnotationPackageSupport> myDefaultNotNulls;
@@ -73,7 +73,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   private void updateDefaults() {
-    myAnnotationSupports = AnnotationPackageSupport.EP_NAME.getExtensions();
+    myAnnotationSupports = AnnotationPackageSupport.EP_NAME.getExtensionList();
     myDefaultNullables = StreamEx.of(myAnnotationSupports)
       .cross(s -> s.getNullabilityAnnotations(Nullability.NULLABLE).stream()).invert().toMap();
     myDefaultNotNulls = StreamEx.of(myAnnotationSupports)

@@ -102,9 +102,11 @@ public class SearchRequestCollector {
   }
 
   private static PsiElement getContainer(@NotNull PsiElement refElement) {
-    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensions()) {
-      final PsiElement container = provider.getContainer(refElement);
-      if (container != null) return container;
+    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensionList()) {
+      PsiElement container = provider.getContainer(refElement);
+      if (container != null) {
+        return container;
+      }
     }
     // it's assumed that in the general case of unknown language the .getParent() will lead to reparse,
     // (all these Javascript stubbed methods under non-stubbed block statements under stubbed classes - meh)

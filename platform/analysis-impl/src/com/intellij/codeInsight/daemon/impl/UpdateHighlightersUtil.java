@@ -354,7 +354,7 @@ public final class UpdateHighlightersUtil {
   private static class InternalLayerSuppliers {
     private static final ExtensionPointName<InternalLayerSupplier> EP_NAME = ExtensionPointName.create("com.intellij.internalHighlightingLayerSupplier");
     private static int getLayerFromSuppliers(@NotNull HighlightInfo info) {
-      for (InternalLayerSupplier extension : EP_NAME.getExtensions()) {
+      for (InternalLayerSupplier extension : EP_NAME.getExtensionList()) {
         int layer = extension.getLayer(info);
         if (layer > 0) {
           return layer;

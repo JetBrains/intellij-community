@@ -85,6 +85,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   /**
    * Consider using [ProjectExtensionPointName.getExtensions]
    */
+  @Obsolete
   fun getExtensions(areaInstance: AreaInstance?): Array<T> = getPointImpl(areaInstance).extensions
 
   @Deprecated("Use app-level app extension point.", level = DeprecationLevel.ERROR)

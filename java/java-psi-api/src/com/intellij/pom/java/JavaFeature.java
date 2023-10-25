@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.java;
 
 import com.intellij.psi.PsiFile;
@@ -35,8 +35,7 @@ public enum JavaFeature {
   public boolean isFeatureSupported(@NotNull PsiFile context) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(context);
     if (!languageLevel.isAtLeast(myMinLevel)) return false;
-    LanguageFeatureProvider[] extensions = LanguageFeatureProvider.EXTENSION_POINT_NAME.getExtensions();
-    for (LanguageFeatureProvider extension : extensions) {
+    for (LanguageFeatureProvider extension : LanguageFeatureProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       ThreeState threeState = extension.isFeatureSupported(this, context);
       if (threeState != ThreeState.UNSURE)
         return threeState.toBoolean();
