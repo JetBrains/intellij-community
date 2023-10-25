@@ -64,7 +64,7 @@ private fun VcsLogModifiableIndex.resumeIndexing(roots: Collection<VirtualFile>)
  * @see [VcsLogModifiableIndex.toggleIndexing]
  */
 internal fun VcsLogData.toggleIndexing() {
-  enableIndexing(VcsLogPersistentIndex.getAvailableIndexers(logProviders).keys)
+  if (enableIndexing(VcsLogPersistentIndex.getAvailableIndexers(logProviders).keys)) return
 
   val index = index as? VcsLogModifiableIndex ?: return
   if (index.indexingRoots.isEmpty()) return
@@ -76,15 +76,19 @@ internal fun VcsLogData.toggleIndexing() {
  * Enables indexing in the registry if it is disabled. Resumes indexing for the provided repositories if it was paused.
  */
 internal fun VcsLogData.enableAndResumeIndexing(roots: Collection<VirtualFile>) {
-  enableIndexing(roots)
+  if (enableIndexing(roots)) return
 
   val index = index as? VcsLogModifiableIndex ?: return
   index.resumeIndexing(roots)
 }
 
-private fun enableIndexing(roots: Collection<VirtualFile>) {
-  if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
-    roots.forEach { VcsLogBigRepositoriesList.getInstance().removeRepository(it) }
-    VcsLogData.getIndexingRegistryValue().setValue(true)
-  }
+/**
+ * Enables indexing in the registry if it is disabled. Returns true if indexing state changed.
+ */
+private fun enableIndexing(roots: Collection<VirtualFile>): Boolean {
+  if (VcsLogData.isIndexSwitchedOnInRegistry()) return false
+
+  roots.forEach { VcsLogBigRepositoriesList.getInstance().removeRepository(it) }
+  VcsLogData.getIndexingRegistryValue().setValue(true)
+  return true
 }
