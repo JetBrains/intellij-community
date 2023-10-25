@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pass
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflic
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsKotlinAware
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 
 class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
@@ -296,6 +298,7 @@ internal fun PsiElement.renameFileIfSingleDeclaration(
     allRenames: MutableMap<PsiElement, String>
 ) {
     val file = containingFile as? KtFile ?: return
+    if (!isUnitTestMode() && !Registry.`is`("kotlin.rename.file.if.the.only.declaration")) return
 
     if (file.declarations.singleOrNull() == this) {
         file.virtualFile?.let { virtualFile ->
