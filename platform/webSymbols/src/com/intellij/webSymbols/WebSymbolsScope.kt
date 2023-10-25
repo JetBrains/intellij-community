@@ -77,7 +77,7 @@ interface WebSymbolsScope : ModificationTracker {
   /**
    * When scope is exclusive for a particular namespace and kind, resolve will not continue down the stack during pattern matching.
    */
-  fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
+  fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
     false
 
 }

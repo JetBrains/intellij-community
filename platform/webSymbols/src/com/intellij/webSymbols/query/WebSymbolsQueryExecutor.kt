@@ -90,6 +90,6 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
 
   fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): WebSymbolsQueryExecutor
 
-  fun hasExclusiveScopeFor(namespace: SymbolNamespace, kind: SymbolKind, scope: List<WebSymbolsScope> = emptyList()): Boolean
+  fun hasExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind, scope: List<WebSymbolsScope> = emptyList()): Boolean
 
 }

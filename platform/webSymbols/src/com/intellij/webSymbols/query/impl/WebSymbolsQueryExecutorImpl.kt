@@ -88,7 +88,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
     else
       WebSymbolsQueryExecutorImpl(rootScope, namesProvider.withRules(rules), resultsCustomizer, context, allowResolve)
 
-  override fun hasExclusiveScopeFor(namespace: SymbolNamespace, kind: SymbolKind, scope: List<WebSymbolsScope>): Boolean {
+  override fun hasExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind, scope: List<WebSymbolsScope>): Boolean {
     val finalScope = rootScope.toMutableSet()
     scope.flatMapTo(finalScope) {
       if (it is WebSymbol)
@@ -96,7 +96,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
       else
         listOf(it)
     }
-    return finalScope.any { it.isExclusiveFor(namespace, kind) }
+    return finalScope.any { it.isExclusiveFor(qualifiedKind) }
   }
 
   private fun runNameMatchQuery(path: List<WebSymbolQualifiedName>,
@@ -256,7 +256,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
   private fun Collection<WebSymbolsScope>.takeLastUntilExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind): List<WebSymbolsScope> =
     toList()
       .let { list ->
-        list.subList(max(0, list.indexOfLast { it.isExclusiveFor(qualifiedKind.namespace, qualifiedKind.kind) }), list.size)
+        list.subList(max(0, list.indexOfLast { it.isExclusiveFor(qualifiedKind) }), list.size)
       }
 
   private fun List<WebSymbolCodeCompletionItem>.sortAndDeduplicate(): List<WebSymbolCodeCompletionItem> =
