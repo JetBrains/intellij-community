@@ -20,6 +20,8 @@
 
     <applicationService serviceImplementation="com.intellij.vcs.log.impl.VcsLogApplicationSettings"/>
 
+    <generalVcsSettingsExtension instance="com.intellij.vcs.log.ui.VcsLogSharedSettingsConfigurable"/>
+
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"

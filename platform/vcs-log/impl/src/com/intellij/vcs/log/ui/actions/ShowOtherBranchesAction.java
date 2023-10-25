@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Set;
 
+import static com.intellij.vcs.log.data.index.VcsLogIndexUtils.isIndexingEnabled;
 import static com.intellij.vcs.log.data.index.VcsLogIndexUtils.isIndexingPausedFor;
 
 public class ShowOtherBranchesAction extends BooleanPropertyToggleAction {

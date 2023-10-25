@@ -282,6 +282,10 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return indexers;
   }
 
+  public static @NotNull Collection<VcsLogIndexer> getAvailableIndexers(@NotNull Project project) {
+    return getAvailableIndexers(VcsProjectLog.getLogProviders(project)).values();
+  }
+
   private final class MyHeavyAwareListener extends HeavyAwareListener {
 
     private MyHeavyAwareListener(int delay) {
