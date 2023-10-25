@@ -130,7 +130,7 @@ public final class DynamicExtensionPointsTester {
       }
 
       List<WeakReference<Object>> list = new ArrayList<>();
-      ep.processWithPluginDescriptor(false, (object, pluginDescriptor) -> {
+      ep.processUnsortedWithPluginDescriptor((object, pluginDescriptor) -> {
         if (!PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId())) {
           list.add(new WeakReference<>(object));
         }

@@ -230,7 +230,15 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
    */
   fun asSequence(): Sequence<T> = cachedExtensions?.asSequence() ?: createSequence()
 
-  fun processWithPluginDescriptor(shouldBeSorted: Boolean, consumer: (T, PluginDescriptor) -> Unit) {
+  fun processWithPluginDescriptor(consumer: (T, PluginDescriptor) -> Unit) {
+    processWithPluginDescriptor(shouldBeSorted = true, consumer)
+  }
+
+  fun processUnsortedWithPluginDescriptor(consumer: (T, PluginDescriptor) -> Unit) {
+    processWithPluginDescriptor(shouldBeSorted = false, consumer)
+  }
+
+  private fun processWithPluginDescriptor(shouldBeSorted: Boolean, consumer: (T, PluginDescriptor) -> Unit) {
     if (isInReadOnlyMode) {
       for (extension in cachedExtensions!!) {
         consumer(extension, extensionPointPluginDescriptor /* doesn't matter for tests */)

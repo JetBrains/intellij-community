@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.util.registry
@@ -37,7 +37,7 @@ class RegistryKeyBean private constructor() {
       val point = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
         .getExtensionPoint<RegistryKeyBean>("com.intellij.registryKey")
       val contributedKeys = HashMap<String, RegistryKeyDescriptor>(point.size())
-      point.processWithPluginDescriptor(false) { bean, pluginDescriptor ->
+      point.processUnsortedWithPluginDescriptor { bean, pluginDescriptor ->
         val descriptor = createRegistryKeyDescriptor(bean, pluginDescriptor)
         contributedKeys.put(descriptor.name, descriptor)
       }

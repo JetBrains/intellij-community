@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.computeSaf
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.findFirstSafe
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.util.function.Function
 import java.util.function.Predicate
@@ -49,11 +48,6 @@ class ProjectExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPo
 
   fun addChangeListener(areaInstance: AreaInstance, listener: Runnable, parentDisposable: Disposable?) {
     getPointImpl(areaInstance).addChangeListener(listener, parentDisposable)
-  }
-
-  @Internal
-  fun processWithPluginDescriptor(areaInstance: AreaInstance, consumer:  (T, PluginDescriptor) -> Unit) {
-    getPointImpl(areaInstance).processWithPluginDescriptor(shouldBeSorted = true, consumer = consumer)
   }
 
   @ApiStatus.Experimental

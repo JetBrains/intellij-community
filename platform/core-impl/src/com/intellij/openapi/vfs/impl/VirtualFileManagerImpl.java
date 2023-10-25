@@ -228,7 +228,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
           LOG.error(e);
         }
       }
-      MANAGER_LISTENER_EP.processWithPluginDescriptor(true, (listener, pluginDescriptor) -> {
+      MANAGER_LISTENER_EP.processWithPluginDescriptor((listener, pluginDescriptor) -> {
         listener.beforeRefreshStart(asynchronous);
         return Unit.INSTANCE;
       });
@@ -249,7 +249,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
           LOG.error(e);
         }
       }
-      MANAGER_LISTENER_EP.processWithPluginDescriptor(true, (listener, pluginDescriptor) -> {
+      MANAGER_LISTENER_EP.processWithPluginDescriptor((listener, pluginDescriptor) -> {
         listener.afterRefreshFinish(asynchronous);
         return Unit.INSTANCE;
       });

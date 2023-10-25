@@ -105,11 +105,6 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     return getPointImpl(null).findExtension(instanceOf, false, ThreeState.UNSURE)
   }
 
-  @ApiStatus.Internal
-  fun <V> findExtensions(instanceOf: Class<V>): List<T> {
-    return getPointImpl(null).findExtensions(instanceOf)
-  }
-
   fun <V : T> findExtensionOrFail(exactClass: Class<V>): V {
     return getPointImpl(null).findExtension(exactClass, true, ThreeState.UNSURE)!!
   }
@@ -119,7 +114,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   }
 
   /**
-   * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
+   * Do not use it if there is any extension point listener, because in this case behavior is not predictable -
    * events will be fired during iteration, and probably it will be not expected.
    *
    * Use only for interface extension points, not for bean.
@@ -141,19 +136,21 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
 
   @ApiStatus.Internal
   fun processWithPluginDescriptor(consumer: (T, PluginDescriptor) -> Unit) {
-    getPointImpl(null).processWithPluginDescriptor(shouldBeSorted = true, consumer = consumer)
+    getPointImpl(null).processWithPluginDescriptor(consumer = consumer)
   }
 
   fun addExtensionPointListener(listener: ExtensionPointListener<T>, parentDisposable: Disposable?) {
-    getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable)
+    getPointImpl(null).addExtensionPointListener(listener = listener,
+                                                 invokeForLoadedExtensions = false,
+                                                 parentDisposable = parentDisposable)
   }
 
   fun addExtensionPointListener(listener: ExtensionPointListener<T>) {
-    getPointImpl(null).addExtensionPointListener(listener, false, null)
+    getPointImpl(null).addExtensionPointListener(listener = listener, invokeForLoadedExtensions = false, parentDisposable = null)
   }
 
   fun addExtensionPointListener(areaInstance: AreaInstance, listener: ExtensionPointListener<T>) {
-    getPointImpl(areaInstance).addExtensionPointListener(listener, false, null)
+    getPointImpl(areaInstance).addExtensionPointListener(listener = listener, invokeForLoadedExtensions = false, parentDisposable = null)
   }
 
   fun removeExtensionPointListener(listener: ExtensionPointListener<T>) {
@@ -161,13 +158,13 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   }
 
   fun addChangeListener(listener: Runnable, parentDisposable: Disposable?) {
-    getPointImpl(null).addChangeListener(listener, parentDisposable)
+    getPointImpl(null).addChangeListener(listener = listener, parentDisposable = parentDisposable)
   }
 
   /**
-   * Build cache by arbitrary key using provided key to value mapper. Values with the same key merge into list. Return values by key.
+   * Build cache by arbitrary key using provided key to value mapper. Values with the same key merge into a list. Return values by key.
    *
-   * To exclude extension from cache, return null key.
+   * To exclude an extension from cache, return a null key.
    *
    * `cacheId` is required because it's dangerous to rely on identity of functional expressions.
    * JLS doesn't specify whether a new instance is produced or some common instance is reused for lambda expressions (see 15.27.4).
@@ -180,7 +177,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   /**
    * Build cache by arbitrary key using provided key to value mapper. Return value by key.
    *
-   * To exclude extension from cache, return null key.
+   * To exclude an extension from cache, return a null key.
    */
   @ApiStatus.Experimental
   fun <K : Any> getByKey(key: K, cacheId: Class<*>, keyMapper: Function<T, K?>): T? {
