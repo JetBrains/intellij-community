@@ -61,6 +61,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doMultiImplementDirectoryTest()
     }
 
+    open fun testJavaInterfaceMethodWithTypeParameters() {
+        doMultiImplementDirectoryTest()
+    }
+
    open fun testJavaParameters() {
         doImplementDirectoryTest()
     }

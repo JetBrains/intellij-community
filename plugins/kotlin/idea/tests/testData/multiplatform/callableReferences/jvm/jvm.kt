@@ -2,14 +2,14 @@
 
 package sample
 
-<!ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER_WARNING!>actual interface <!LINE_MARKER("descr='Has expects in common-2 module'")!>C<!><!> {
+actual interface <!LINE_MARKER("descr='Has expects in common-2 module'")!>C<!> {
     actual fun <!LINE_MARKER("descr='Has expects in common-2 module'")!>common_2_C<!>()
-    fun <!NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING!>jvm_C<!>()
+    fun jvm_C()
 }
 
-<!ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER_WARNING!>actual interface <!LINE_MARKER("descr='Has expects in common-1 module'")!>B<!><!> : A {
+actual interface <!LINE_MARKER("descr='Has expects in common-1 module'")!>B<!> : A {
     actual fun <!LINE_MARKER("descr='Has expects in common-1 module'")!>common_1_B<!>()
-    fun <!NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING!>jvm_B<!>()
+    fun jvm_B()
 }
 
 typealias A_jvm_Alias = A

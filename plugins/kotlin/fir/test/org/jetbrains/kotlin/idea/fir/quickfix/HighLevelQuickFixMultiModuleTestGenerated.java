@@ -184,6 +184,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualTypeParameter/");
         }
 
+        @TestMetadata("copyToActualTypeUsage")
+        public void testCopyToActualTypeUsage() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualTypeUsage/");
+        }
+
         @TestMetadata("copyToActualValueParameter")
         public void testCopyToActualValueParameter() throws Exception {
             runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualValueParameter/");

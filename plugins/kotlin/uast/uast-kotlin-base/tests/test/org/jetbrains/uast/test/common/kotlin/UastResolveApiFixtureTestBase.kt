@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.uast.testFramework.env.findElementByText
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
+import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
@@ -23,9 +26,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.KotlinUFile
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
-import com.intellij.platform.uast.testFramework.env.findElementByText
-import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
-import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 interface UastResolveApiFixtureTestBase : UastPluginSelection {
@@ -1510,7 +1510,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         })
     }
 
-    fun checkCompanionConstantAsVarargAnnotationValue(myFixture: JavaCodeInsightTestFixture, isK2: Boolean = false) {
+    fun checkCompanionConstantAsVarargAnnotationValue(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
                 package test.pkg
@@ -1550,12 +1550,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         for (value in varargs.valueArguments) {
             TestCase.assertTrue(value is USimpleNameReferenceExpression)
             val resolved = (value as USimpleNameReferenceExpression).resolve()
-            // TODO(KT-61497): should be resolved
-            TestCase.assertEquals(isK2, resolved == null)
-            if (!isK2) {
-                // TODO(KT-61497): and resolution should point to const properties
-                TestCase.assertEquals(remote.javaPsi, (resolved as PsiField).containingClass)
-            }
+            TestCase.assertEquals(remote.javaPsi, (resolved as PsiField).containingClass)
         }
     }
 
