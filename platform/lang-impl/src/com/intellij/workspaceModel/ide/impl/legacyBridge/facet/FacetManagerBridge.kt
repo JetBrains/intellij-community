@@ -161,7 +161,7 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     }
     val facetEntities: MutableList<WorkspaceEntity> = mutableListOf()
     facetEntities.addAll(moduleEntity.facets)
-    WorkspaceFacetContributor.EP_NAME.extensions.forEach {
+    for (it in WorkspaceFacetContributor.EP_NAME.extensionList) {
       if (it.rootEntityType != FacetEntity::class.java) {
         facetEntities.addAll(it.getRootEntitiesByModuleEntity(moduleEntity))
       }
