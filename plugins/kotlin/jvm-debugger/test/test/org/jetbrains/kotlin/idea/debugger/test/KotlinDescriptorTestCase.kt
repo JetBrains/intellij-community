@@ -189,7 +189,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
             FragmentCompilerBackend.JVM ->
                 if (useIrBackend()) TargetBackend.JVM_IR_WITH_OLD_EVALUATOR else error("Target backend `JVM_WITH_OLD_EVALUATOR` is not supported")
             FragmentCompilerBackend.JVM_IR ->
-                if (useIrBackend()) TargetBackend.JVM_IR_WITH_IR_EVALUATOR else TargetBackend.JVM_WITH_IR_EVALUATOR
+                if (useIrBackend()) TargetBackend.JVM_IR_WITH_IR_EVALUATOR else error("Target backend `JVM_WITH_IR_EVALUATOR` is not supported")
         }
 
     protected open fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>, testAppDirectory: File) {
