@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -47,7 +48,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Transparent
-import androidx.compose.ui.graphics.Color.Companion.Unspecified
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -61,7 +61,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.NewUI
@@ -86,12 +85,14 @@ import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.HorizontalSplitLayout
 import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.PopupMenu
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.VerticalScrollbar
 import org.jetbrains.jewel.ui.component.items
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
+import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.util.thenIf
 import org.jetbrains.skiko.DependsOnJBR
 import java.awt.Font
@@ -127,7 +128,7 @@ fun ReleasesSampleCompose(project: Project) {
 }
 
 @Composable
-fun LeftColumn(
+private fun LeftColumn(
     project: Project,
     modifier: Modifier = Modifier,
     onSelectedItemChange: (ContentItem?) -> Unit,
@@ -352,26 +353,29 @@ private fun OverflowMenu(
         }
     }
 
-    val backgroundColor = remember(hovered, pressed) {
-        when {
-            pressed -> JBUI.CurrentTheme.ActionButton.pressedBackground().toComposeColor()
-            hovered -> JBUI.CurrentTheme.ActionButton.hoverBackground().toComposeColor()
-            else -> Unspecified
-        }
-    }
-
     var menuVisible by remember { mutableStateOf(false) }
 
-    // TODO use IconButton when it exists
-    Icon(
-        resource = "actions/more.svg",
-        iconClass = AllIcons::class.java,
-        contentDescription = "Select data source",
-        modifier = Modifier
-            .fillMaxHeight()
-            .clickable(interactionSource, null) { menuVisible = !menuVisible }
-            .background(backgroundColor, RoundedCornerShape((DarculaUIUtil.BUTTON_ARC.unscaled / 2).dp)),
-    )
+    // Emulates Swing actions that pop up menus — they stay pressed while the menu is open
+    IconButton(
+        modifier = Modifier.fillMaxHeight()
+            .thenIf(menuVisible) {
+                background(
+                    color = JewelTheme.iconButtonStyle.colors.backgroundPressed,
+                    shape = RoundedCornerShape(JewelTheme.iconButtonStyle.metrics.cornerSize),
+                ).border(
+                    width = JewelTheme.iconButtonStyle.metrics.borderWidth,
+                    color = JewelTheme.iconButtonStyle.colors.backgroundPressed,
+                    shape = RoundedCornerShape(JewelTheme.iconButtonStyle.metrics.cornerSize),
+                )
+            },
+        onClick = { menuVisible = !menuVisible },
+    ) {
+        Icon(
+            resource = "actions/more.svg",
+            iconClass = AllIcons::class.java,
+            contentDescription = "Select data source",
+        )
+    }
 
     val contentSources = remember {
         listOf(AndroidStudioReleases, AndroidReleases)
@@ -419,7 +423,7 @@ private fun OverflowMenu(
 
 @DependsOnJBR
 @Composable
-fun RightColumn(
+private fun RightColumn(
     selectedItem: ContentItem?,
     modifier: Modifier,
 ) {
