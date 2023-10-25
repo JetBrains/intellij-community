@@ -36,7 +36,7 @@ internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    createMergeRequestAction(e)
+    openCreationTab(e)
   }
 }
 
@@ -45,12 +45,12 @@ internal class GitLabMergeRequestOpenCreateTabNotificationAction : NotificationA
   GitLabBundle.message("merge.request.create.notification.action.text")
 ) {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-    createMergeRequestAction(e)
+    openCreationTab(e)
   }
 }
 
-private fun createMergeRequestAction(event: AnActionEvent) {
+private fun openCreationTab(event: AnActionEvent) {
   event.project!!.service<GitLabToolWindowViewModel>().activateAndAwaitProject {
-    createMergeRequest()
+    showCreationTab()
   }
 }

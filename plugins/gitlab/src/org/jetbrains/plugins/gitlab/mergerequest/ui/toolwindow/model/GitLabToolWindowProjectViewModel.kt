@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.childScope
 import git4idea.remote.hosting.changesSignalFlow
+import git4idea.repo.GitRemote
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -128,7 +130,8 @@ private constructor(parentCs: CoroutineScope,
       openReviewTabAction = { mrIid ->
         closeTabAsync(GitLabReviewTab.NewMergeRequest)
         showTab(GitLabReviewTab.ReviewSelected(mrIid))
-      }
+      },
+      onReviewCreated = { mergeRequestCreatedSignal.emit(Unit) }
     )
   }
 
@@ -159,28 +162,27 @@ private constructor(parentCs: CoroutineScope,
     }
   }
 
-  fun createMergeRequest() {
+  fun showCreationTab() {
     cs.launch {
       showTab(GitLabReviewTab.NewMergeRequest)
     }
   }
+
+  private val mergeRequestCreatedSignal: MutableSharedFlow<Unit> = MutableSharedFlow()
 
   val mergeRequestOnCurrentBranch: Flow<String?> = run {
     val projectMapping = connection.repo
     val remote = projectMapping.remote.remote
     val gitRepo = projectMapping.remote.repository
     val targetProjectPath = projectMapping.repository.projectPath.fullPath()
-    gitRepo.changesSignalFlow().withInitial(Unit).map {
-      val currentBranch = gitRepo.currentBranch ?: return@map null
-      gitRepo.branchTrackInfos.find { it.localBranch == currentBranch && it.remote == remote }
-        ?.remoteBranch?.nameForRemoteOperations
-    }.distinctUntilChanged().mapNullableLatest { currentRemoteBranch ->
-      connection.projectData.mergeRequests.findByBranches(currentRemoteBranch).find {
-        it.targetProject.fullPath == targetProjectPath && it.sourceProject?.fullPath == targetProjectPath
-      }?.iid
-    }.catch {
-      LOG.warn("Could not lookup a merge request for current branch", it)
-    }
+
+    val currentRemoteBranchFlow = gitRepo.changesSignalFlow().withInitial(Unit)
+      .map { findCurrentRemoteBranch(gitRepo, remote) }
+      .distinctUntilChanged()
+
+    combineFirst(currentRemoteBranchFlow, mergeRequestCreatedSignal.withInitial(Unit))
+      .mapNullableLatest { currentRemoteBranch -> findReviewIdByBranch(connection, currentRemoteBranch, targetProjectPath) }
+      .catch { LOG.warn("Could not lookup a merge request for current branch", it) }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -213,4 +215,24 @@ private constructor(parentCs: CoroutineScope,
                                                                  twVm: GitLabToolWindowViewModel) =
       GitLabToolWindowProjectViewModel(this, project, accountManager, projectsManager, connection, twVm)
   }
+}
+
+private fun findCurrentRemoteBranch(gitRepo: GitRepository, remote: GitRemote): String? {
+  val currentBranch = gitRepo.currentBranch ?: return null
+  return gitRepo.branchTrackInfos.find { it.localBranch == currentBranch && it.remote == remote }
+    ?.remoteBranch?.nameForRemoteOperations
+}
+
+private suspend fun findReviewIdByBranch(
+  connection: GitLabProjectConnection,
+  currentRemoteBranch: String,
+  targetProjectPath: String
+): String? {
+  return connection.projectData.mergeRequests.findByBranches(currentRemoteBranch).find {
+    it.targetProject.fullPath == targetProjectPath && it.sourceProject?.fullPath == targetProjectPath
+  }?.iid
+}
+
+private fun <T1, T2> combineFirst(flow1: Flow<T1>, flow2: Flow<T2>): Flow<T1> {
+  return combine(flow1, flow2) { value1, _ -> value1 }
 }
