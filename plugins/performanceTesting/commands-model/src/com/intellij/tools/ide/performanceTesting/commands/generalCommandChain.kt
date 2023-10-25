@@ -575,6 +575,10 @@ fun <T : CommandChain> T.showFileHistory(): T = apply {
   addCommand("${CMD_PREFIX}showFileHistory")
 }
 
+fun <T : CommandChain> T.filterVcsLogTab(userName: String): T = apply {
+  addCommand("${CMD_PREFIX}filterVcsLogTab $userName")
+}
+
 fun <T : CommandChain> T.chooseCompletionCommand(completionName: String): T = apply {
   addCommand("${CMD_PREFIX}chooseCompletionCommand ${completionName}")
 }
