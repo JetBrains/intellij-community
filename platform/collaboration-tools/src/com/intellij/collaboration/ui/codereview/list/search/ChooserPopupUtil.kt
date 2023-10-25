@@ -34,12 +34,14 @@ private val LOG: Logger
 
 object ChooserPopupUtil {
 
+  @JvmOverloads
   suspend fun <T> showChooserPopup(point: RelativePoint,
                                    items: List<T>,
                                    presenter: (T) -> PopupItemPresentation,
                                    popupConfig: PopupConfig = PopupConfig.DEFAULT): T? =
     showChooserPopup(point, items, { presenter(it).shortText }, createSimpleItemRenderer(presenter), popupConfig)
 
+  @JvmOverloads
   suspend fun <T> showChooserPopup(point: RelativePoint,
                                    items: List<T>,
                                    filteringMapper: (T) -> String,
@@ -62,12 +64,14 @@ object ChooserPopupUtil {
     return popup.showAndAwaitSubmission(list, point)
   }
 
+  @JvmOverloads
   suspend fun <T : Any> showAsyncChooserPopup(point: RelativePoint,
                                               itemsLoader: Flow<List<T>>,
                                               presenter: (T) -> PopupItemPresentation,
                                               popupConfig: PopupConfig = PopupConfig.DEFAULT): T? =
     showAsyncChooserPopup(point, itemsLoader, { presenter(it).shortText }, createSimpleItemRenderer(presenter), popupConfig)
 
+  @JvmOverloads
   suspend fun <T : Any> showAsyncChooserPopup(point: RelativePoint,
                                               itemsLoader: Flow<List<T>>,
                                               filteringMapper: (T) -> String,

@@ -31,6 +31,7 @@ class TokenLoginInputPanelFactory(
   private val model: TokenLoginPanelModel
 ) {
 
+  @JvmOverloads
   fun create(
     serverFieldDisabled: Boolean,
     tokenNote: @NlsContexts.DetailedDescription String?,
