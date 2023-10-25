@@ -81,10 +81,9 @@ public final class CodeStyle {
    */
   @NotNull
   public static CodeStyleSettings getSettings(@NotNull Project project, @NotNull VirtualFile file) {
-    @SuppressWarnings("TestOnlyProblems")
-    CodeStyleSettings tempSettings = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
-    if (tempSettings != null) {
-      return tempSettings;
+    CodeStyleSettings localOrTempSettings = getLocalOrTemporarySettings(project);
+    if (localOrTempSettings != null) {
+      return localOrTempSettings;
     }
     CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
     return cachedSettings != null ? cachedSettings : getSettings(project);
@@ -92,18 +91,11 @@ public final class CodeStyle {
 
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
     final Project project = file.getProject();
-    CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-    CodeStyleSettings localSettings = settingsManager.getLocalSettings();
-    if (localSettings != null) {
-      return localSettings;
-    }
 
-    @SuppressWarnings("TestOnlyProblems")
-    CodeStyleSettings tempSettings = settingsManager.getTemporarySettings();
-    if (tempSettings != null) {
-      return tempSettings;
+    CodeStyleSettings localOrTempSettings = getLocalOrTemporarySettings(project);
+    if (localOrTempSettings != null) {
+      return localOrTempSettings;
     }
-    
     PsiFile settingsFile = getSettingsPsi(file);
     if (settingsFile == null) {
       return getSettings(project);
@@ -116,6 +108,22 @@ public final class CodeStyle {
     return cachedSettings != null ? cachedSettings : getSettings(project);
   }
 
+  @Nullable
+  private static CodeStyleSettings getLocalOrTemporarySettings(@NotNull Project project) {
+    CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
+    CodeStyleSettings localSettings = settingsManager.getLocalSettings();
+    if (localSettings != null) {
+      return localSettings;
+    }
+
+    @SuppressWarnings("TestOnlyProblems")
+    CodeStyleSettings tempSettings = settingsManager.getTemporarySettings();
+    if (tempSettings != null) {
+      return tempSettings;
+    }
+
+    return null;
+  }
 
   /**
    * Finds a PSI file to be used to retrieve code style settings. May use {@link PsiFileFactory#ORIGINAL_FILE} if the
