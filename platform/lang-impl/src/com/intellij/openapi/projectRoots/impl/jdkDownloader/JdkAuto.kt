@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslPath
@@ -94,7 +94,8 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
   }
 
   fun createResolverImpl(project: Project?, indicator: ProgressIndicator): UnknownSdkLookup? {
-    val sdkType = SdkType.getAllTypes()
+    val sdkType = SdkType.getAllTypeList()
+                    .asSequence()
                     .filter(notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType()::value)
                     .also { sdkTypes ->
                       if (sdkTypes.count() > 1) {
@@ -122,17 +123,20 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           }
 
           JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator, jdkPredicate)
-        } catch(e: ProcessCanceledException) {
+        }
+        catch (e: ProcessCanceledException) {
           throw e
-        } catch (t: Throwable) {
+        }
+        catch (t: Throwable) {
           LOG.warn("JdkAuto has failed to download the list of available JDKs. " + t.message, t)
           listOf()
-        } finally {
+        }
+        finally {
           indicator.popState()
         }
       }
 
-      private fun resolveHint(sdk: UnknownSdk) : JdkAutoHint? {
+      private fun resolveHint(sdk: UnknownSdk): JdkAutoHint? {
         if (sdk.sdkType != sdkType) return null
 
         project ?: return null
@@ -141,14 +145,16 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         return JdkAutoHintService
           .getInstance(project)
           .state
-          .jdks.singleOrNull { it.name.equals(sdkName, ignoreCase = true) &&
-                               it.path?.let { path -> projectInWsl == WslPath.isWslUncPath(path) } ?: false }
+          .jdks.singleOrNull {
+            it.name.equals(sdkName, ignoreCase = true) &&
+            it.path?.let { path -> projectInWsl == WslPath.isWslUncPath(path) } ?: false
+          }
       }
 
       private fun parseSdkRequirement(sdk: UnknownSdk): JdkRequirement? {
         val hint = resolveHint(sdk)
 
-        val namePredicate = hint?.version?.trim()?.toLowerCase()?.nullize(true)
+        val namePredicate = hint?.version?.trim()?.lowercase()?.nullize(true)
                             ?: JavaVersion.tryParse(sdk.expectedVersionString)?.toFeatureMinorUpdateString()
                             ?: sdk.sdkName
 
@@ -159,7 +165,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         )
       }
 
-      private fun resolveHintPath(sdk: UnknownSdk, indicator: ProgressIndicator) :UnknownSdkLocalSdkFix? {
+      private fun resolveHintPath(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkLocalSdkFix? {
         val hint = resolveHint(sdk)
         val path = hint?.path ?: return null
         indicator.text = ProjectBundle.message("progress.text.resolving.hint.path", path)
@@ -176,6 +182,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
             val hintPath = hint.path ?: return ""
             return sdkType.suggestSdkName(null, hintPath)
           }
+
           override fun toString() = "UnknownSdkLocalSdkFix{hint $version, $path}"
         }
       }
@@ -202,7 +209,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
         val jarConfigurator = JarSdkConfigurator(resolveHint(sdk)?.includeJars ?: listOf())
 
-        return object: UnknownSdkDownloadableSdkFix, UnknownSdkFixConfigurator by jarConfigurator {
+        return object : UnknownSdkDownloadableSdkFix, UnknownSdkFixConfigurator by jarConfigurator {
           override fun getVersionString() = jdkToDownload.versionString
           override fun getPresentableVersionString() = jdkToDownload.presentableVersionString
 
@@ -276,7 +283,8 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
           if (it !is MockSdk && runCatching {
               val homePath = it.homePath
-              homePath != null && sdkType.isValidSdkHome(homePath) }.getOrNull() != true) continue
+              homePath != null && sdkType.isValidSdkHome(homePath)
+            }.getOrNull() != true) continue
           if (runCatching { req.matches(it) }.getOrNull() != true) continue
 
           result += JavaLocalSdkFix(homeDir, version, suggestedName, prototype = it)

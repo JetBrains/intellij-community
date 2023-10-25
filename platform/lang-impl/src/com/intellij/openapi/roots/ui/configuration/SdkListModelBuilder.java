@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.google.common.collect.ImmutableList;
@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.EventListener;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public final class SdkListModelBuilder {
   @Nullable private final Project myProject;
@@ -80,12 +81,12 @@ public final class SdkListModelBuilder {
     mySdkTypeFilter = type -> type != null
                               && (sdkTypeFilter == null || sdkTypeFilter.value(type));
 
-    Condition<SdkTypeId> simpleJavaTypeFix = SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExists();
+    Predicate<SdkTypeId> simpleJavaTypeFix = SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExists();
     mySdkTypeCreationFilter = type -> type != null
                                       && (!(type instanceof SdkType) || ((SdkType)type).allowCreationByUser())
                                       && mySdkTypeFilter.value(type)
                                       && (sdkTypeCreationFilter == null || sdkTypeCreationFilter.value(type))
-                                      && simpleJavaTypeFix.value(type);
+                                      && simpleJavaTypeFix.test(type);
 
     mySdkFilter = sdk -> sdk != null
                          && mySdkTypeFilter.value(sdk.getSdkType())
@@ -317,8 +318,7 @@ public final class SdkListModelBuilder {
   /**
    * Executes an action that is associated with the given {@param item}.
    * <br/>
-   * If there are no actions associated, the {@param onSelectableItem} callback
-   * is executed directly and the method returns,
+   * If there are no actions associated, the {@param onSelectableItem} callback is executed directly, and the method returns,
    * the {@param afterExecution} is NOT executed
    * <br/>
    * If there is action associated, it is scheduled for execution. The

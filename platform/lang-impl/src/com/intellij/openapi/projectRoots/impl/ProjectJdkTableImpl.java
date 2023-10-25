@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -286,8 +286,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
   @NotNull
   private static SdkTypeId findSdkTypeByName(@NotNull String sdkTypeName) {
-    final SdkType[] allSdkTypes = SdkType.getAllTypes();
-    for (final SdkType type : allSdkTypes) {
+    for (final SdkType type : SdkType.getAllTypeList()) {
       if (type.getName().equals(sdkTypeName)) {
         return type;
       }

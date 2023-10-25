@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.execution.wsl.WslPath;
@@ -25,7 +25,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -266,11 +265,14 @@ public class ProjectSdksModel implements SdkModel {
     createAddActions(group, parent, null, updateTree, filter);
   }
 
-  @NotNull
-  private static List<SdkType> getAddableSdkTypes(@Nullable Condition<? super SdkTypeId> filter) {
-    return ContainerUtil.filter(SdkType.getAllTypes(), type ->
-      type.allowCreationByUser() && (filter == null || filter.value(type))
-    );
+  private static @NotNull List<SdkType> getAddableSdkTypes(@Nullable Condition<? super SdkTypeId> filter) {
+    List<SdkType> result = new ArrayList<>();
+    for (SdkType t : SdkType.getAllTypeList()) {
+      if (t.allowCreationByUser() && (filter == null || filter.value(t))) {
+        result.add(t);
+      }
+    }
+    return result;
   }
 
   public void createAddActions(@NotNull DefaultActionGroup group,
