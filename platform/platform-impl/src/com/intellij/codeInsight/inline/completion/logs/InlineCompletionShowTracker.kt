@@ -3,9 +3,10 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.lang.Language
 import com.intellij.util.application
 
@@ -66,14 +67,14 @@ internal class InlineCompletionShowTracker(
   }
 
   fun selected() {
-    finish(InlineCompletionFinishType.SELECTED)
+    finish(FinishType.SELECTED)
   }
 
-  fun canceled(finishType: InlineCompletionFinishType) {
+  fun canceled(finishType: FinishType) {
     finish(finishType)
   }
 
-  private fun finish(finishType: InlineCompletionFinishType) {
+  private fun finish(finishType: FinishType) {
     if (shownLogSent) {
       return
     }
@@ -83,33 +84,6 @@ internal class InlineCompletionShowTracker(
     data.add(ShownEvents.TYPING_DURING_SHOW.with(typingDuringShow))
     data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
     data.add(ShownEvents.FINISH_TYPE.with(finishType))
-    shownEvent.log(data)
+    InlineCompletionUsageTracker.SHOWN_EVENT.log(data)
   }
-
-  private object ShownEvents {
-    val REQUEST_ID = EventFields.Long("request_id")
-    val PROVIDER = EventFields.Class("provider")
-    val LINES = EventFields.Int("lines")
-    val LENGTH = EventFields.Int("length")
-    val TYPING_DURING_SHOW = EventFields.Int("typing_during_show")
-
-    val TIME_TO_SHOW = EventFields.Long("time_to_show")
-    val SHOWING_TIME = EventFields.Long("showing_time")
-    val FINISH_TYPE = EventFields.Enum<InlineCompletionFinishType>("finish_type")
-  }
-
-  private val shownEvent: VarargEventId = InlineCompletionUsageTracker.GROUP.registerVarargEvent(
-    "shown",
-    ShownEvents.REQUEST_ID,
-    EventFields.Language,
-    EventFields.CurrentFile,
-    ShownEvents.PROVIDER,
-    ShownEvents.LINES,
-    ShownEvents.LENGTH,
-    ShownEvents.TYPING_DURING_SHOW,
-    ShownEvents.TIME_TO_SHOW,
-    ShownEvents.SHOWING_TIME,
-    ShownEvents.FINISH_TYPE,
-    InlineContextFeatures.CONTEXT_FEATURES
-  )
 }

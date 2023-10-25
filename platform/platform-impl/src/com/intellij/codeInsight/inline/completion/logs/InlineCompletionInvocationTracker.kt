@@ -4,9 +4,9 @@ package com.intellij.codeInsight.inline.completion.logs
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.InvokedEvents
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
@@ -83,7 +83,7 @@ internal class InlineCompletionInvocationTracker(
       error("Already finished")
     }
     finished = true
-    invokedEvent.log(listOf(
+    InlineCompletionUsageTracker.INVOKED_EVENT.log(listOf(
       InvokedEvents.REQUEST_ID.with(requestId),
       *data.toTypedArray(),
       InvokedEvents.EVENT.with(request.event::class.java),
@@ -101,32 +101,6 @@ internal class InlineCompletionInvocationTracker(
       )
     ))
   }
-
-  private object InvokedEvents {
-    val REQUEST_ID = EventFields.Long("request_id")
-    val EVENT = EventFields.Class("event")
-    val PROVIDER = EventFields.Class("provider")
-    val TIME_TO_COMPUTE = EventFields.Long("time_to_compute")
-    val OUTCOME = EventFields.NullableEnum<Outcome>("outcome")
-
-    enum class Outcome {
-      EXCEPTION,
-      CANCELED,
-      SHOW,
-      NO_SUGGESTIONS
-    }
-  }
-
-  private val invokedEvent: VarargEventId = InlineCompletionUsageTracker.GROUP.registerVarargEvent(
-    "invoked",
-    InvokedEvents.REQUEST_ID,
-    EventFields.Language,
-    EventFields.CurrentFile,
-    InvokedEvents.EVENT,
-    InvokedEvents.PROVIDER,
-    InvokedEvents.TIME_TO_COMPUTE,
-    InvokedEvents.OUTCOME,
-  )
 
   companion object {
     val LOG = thisLogger()

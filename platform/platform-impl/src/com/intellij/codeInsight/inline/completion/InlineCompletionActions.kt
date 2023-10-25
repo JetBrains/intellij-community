@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.hint.HintManagerImpl
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionFinishType
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
@@ -24,7 +24,7 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
 }
 
 abstract class CancellationKeyInlineCompletionHandler(val originalHandler: EditorActionHandler,
-                                                      val finishType: InlineCompletionFinishType) : EditorActionHandler() {
+                                                      val finishType: FinishType) : EditorActionHandler() {
   public override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val context = InlineCompletionContext.getOrNull(editor) ?: run {
       if (originalHandler.isEnabled(editor, caret, dataContext)) {
@@ -49,10 +49,10 @@ abstract class CancellationKeyInlineCompletionHandler(val originalHandler: Edito
 }
 
 class EscapeInlineCompletionHandler(originalHandler: EditorActionHandler) :
-  CancellationKeyInlineCompletionHandler(originalHandler, InlineCompletionFinishType.ESCAPE_PRESSED)
+  CancellationKeyInlineCompletionHandler(originalHandler, FinishType.ESCAPE_PRESSED)
 
 class BackSpaceInlineCompletionHandler(originalHandler: EditorActionHandler) :
-  CancellationKeyInlineCompletionHandler(originalHandler, InlineCompletionFinishType.KEY_PRESSED)
+  CancellationKeyInlineCompletionHandler(originalHandler, FinishType.KEY_PRESSED)
 
 class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class CallInlineCompletionHandler : EditorWriteActionHandler() {

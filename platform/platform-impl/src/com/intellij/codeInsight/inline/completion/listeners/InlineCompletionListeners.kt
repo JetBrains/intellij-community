@@ -5,7 +5,7 @@ import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.TypingEvent
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionFinishType
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeWithMe.ClientId
@@ -30,7 +30,7 @@ import java.awt.event.KeyEvent
 internal class InlineCompletionDocumentListener(private val editor: Editor) : BulkAwareDocumentListener {
   override fun documentChangedNonBulk(event: DocumentEvent) {
     if (!(ClientEditorManager.getClientId(editor) ?: ClientId.localId).isCurrent()) {
-      hideInlineCompletion(editor, InlineCompletionFinishType.DOCUMENT_CHANGED)
+      hideInlineCompletion(editor, FinishType.DOCUMENT_CHANGED)
       return
     }
 
@@ -74,7 +74,7 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
     return true
   }
 
-  protected open fun hideInlineCompletion() = hideInlineCompletion(editor, InlineCompletionFinishType.KEY_PRESSED)
+  protected open fun hideInlineCompletion() = hideInlineCompletion(editor, FinishType.KEY_PRESSED)
 
   companion object {
     private val LOG = thisLogger()
@@ -96,7 +96,7 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
 internal class InlineEditorMouseListener : EditorMouseListener {
   override fun mousePressed(event: EditorMouseEvent) {
     LOG.trace("Valuable mouse pressed event $event")
-    hideInlineCompletion(event.editor, InlineCompletionFinishType.MOUSE_PRESSED)
+    hideInlineCompletion(event.editor, FinishType.MOUSE_PRESSED)
   }
 
   companion object {
@@ -108,7 +108,7 @@ internal class InlineCompletionFocusListener : FocusChangeListener {
   override fun focusLost(editor: Editor, event: FocusEvent) {
     return // To not hide popup on tooltip change shortcut (and other provider buttons), click
     LOG.trace("Losing focus with ${event}, ${event.cause}")
-    hideInlineCompletion(editor, InlineCompletionFinishType.FOCUS_LOST)
+    hideInlineCompletion(editor, FinishType.FOCUS_LOST)
   }
 
   companion object {
@@ -174,7 +174,7 @@ internal class InlineCompletionAnActionListener : AnActionListener {
   }
 }
 
-private fun hideInlineCompletion(editor: Editor, finishType: InlineCompletionFinishType) {
+private fun hideInlineCompletion(editor: Editor, finishType: FinishType) {
   val context = InlineCompletionContext.getOrNull(editor) ?: return
   InlineCompletion.getHandlerOrNull(editor)?.hide(context, finishType)
 }

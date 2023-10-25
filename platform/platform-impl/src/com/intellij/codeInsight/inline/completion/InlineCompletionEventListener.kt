@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionFinishType
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import java.util.*
 
 sealed class InlineCompletionEventType {
@@ -15,7 +15,7 @@ sealed class InlineCompletionEventType {
   data object Empty : InlineCompletionEventType()
   data class Completion(val cause: Throwable?, val isActive: Boolean) : InlineCompletionEventType()
   data object Insert : InlineCompletionEventType()
-  open class Hide(val finishType: InlineCompletionFinishType) : InlineCompletionEventType()
+  open class Hide(val finishType: FinishType) : InlineCompletionEventType()
 }
 
 interface InlineCompletionEventListener : EventListener {
