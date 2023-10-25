@@ -832,7 +832,7 @@ abstract class ComponentManagerImpl(
   }
 
   private fun registerServices2(pluginDescriptor: IdeaPluginDescriptor, services: List<ServiceDescriptor>) {
-    LOG.debug("${pluginDescriptor.pluginId} - registering services")
+    LOG.debug { "${pluginDescriptor.pluginId} - registering services" }
     try {
       registerServices2Inner(services, pluginDescriptor)
     }
@@ -844,7 +844,7 @@ abstract class ComponentManagerImpl(
       throw PluginException(t, pluginDescriptor.pluginId)
     }
     finally {
-      LOG.debug("${pluginDescriptor.pluginId} - end registering services")
+      LOG.debug { "${pluginDescriptor.pluginId} - end registering services" }
     }
   }
 
