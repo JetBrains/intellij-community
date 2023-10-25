@@ -10,6 +10,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.withoutContext
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.Change
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +71,8 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   override suspend fun getOriginalContent(): String = withContext(Dispatchers.IO) {
     coroutineToIndicator {
       change.afterRevision?.content ?: ""
+    }.let {
+      StringUtil.convertLineSeparators(it)
     }
   }
 
