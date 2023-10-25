@@ -8,7 +8,10 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.util.applyIf
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.impl.filterByQueryParams
@@ -65,14 +68,13 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
     runNameMatchQuery(path, WebSymbolsNameMatchQueryParams(this, virtualSymbols, abstractSymbols, strictScope), scope)
 
   override fun runListSymbolsQuery(path: List<WebSymbolQualifiedName>,
-                                   namespace: SymbolNamespace,
-                                   kind: SymbolKind,
+                                   qualifiedKind: WebSymbolQualifiedKind,
                                    expandPatterns: Boolean,
                                    virtualSymbols: Boolean,
                                    abstractSymbols: Boolean,
                                    strictScope: Boolean,
                                    scope: List<WebSymbolsScope>): List<WebSymbol> =
-    runListSymbolsQuery(path + WebSymbolQualifiedName(namespace, kind, ""),
+    runListSymbolsQuery(path + qualifiedKind.withName(""),
                         WebSymbolsListSymbolsQueryParams(this, expandPatterns = expandPatterns, virtualSymbols = virtualSymbols,
                                                          abstractSymbols = abstractSymbols, strictScope = strictScope), scope)
 

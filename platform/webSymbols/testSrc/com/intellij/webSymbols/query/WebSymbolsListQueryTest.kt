@@ -213,7 +213,7 @@ class WebSymbolsListQueryTest : WebSymbolsMockQueryExecutorTestBase() {
             .asSingleSymbol()
         }
       val results = queryExecutor
-        .runListSymbolsQuery(parsedPath.subList(0, parsedPath.size - 1), last.namespace, last.kind,
+        .runListSymbolsQuery(parsedPath.subList(0, parsedPath.size - 1), last.qualifiedKind,
                              true, includeVirtual, false)
         .filter { !it.extension }
       assertEquals(printMatches(codeCompletionResults), printMatches(results))
@@ -221,7 +221,7 @@ class WebSymbolsListQueryTest : WebSymbolsMockQueryExecutorTestBase() {
 
     doTest(testPath) {
       queryExecutor
-        .runListSymbolsQuery(parsedPath.subList(0, parsedPath.size - 1), last.namespace, last.kind,
+        .runListSymbolsQuery(parsedPath.subList(0, parsedPath.size - 1), last.qualifiedKind,
                              expandPatterns, includeVirtual, false)
         .let { printMatches(it) }
     }
