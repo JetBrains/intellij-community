@@ -35,7 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.backend.observation.api.TrackingUtil;
+import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;

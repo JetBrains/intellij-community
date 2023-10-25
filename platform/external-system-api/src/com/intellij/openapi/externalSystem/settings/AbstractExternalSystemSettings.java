@@ -9,7 +9,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressWitness;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.platform.backend.observation.api.TrackingUtil;
+import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
