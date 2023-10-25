@@ -290,15 +290,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  public enum ExecutorActionStatus {
-    NORMAL,
-    LOADING,
-    RUNNING
-  }
-
-  public static final Key<ExecutorActionStatus> EXECUTOR_ACTION_STATUS = Key.create("EXECUTOR_ACTION_STATUS");
-
-  public static class ExecutorAction extends AnAction implements DumbAware, RunWidgetExecutionActionMarker,
+  public static class ExecutorAction extends AnAction implements DumbAware,
                                                                  ActionRemotePermissionRequirements.RunAccess {
     private static final Key<RunCurrentFileInfo> CURRENT_FILE_RUN_CONFIGS_KEY = Key.create("CURRENT_FILE_RUN_CONFIGS");
 
@@ -343,7 +335,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             (it.getExecutorId().equals(myExecutor.getId()) && it.getState() == RunState.SCHEDULED)
           ) != null;
           if (isLoading) {
-            presentation.putClientProperty(EXECUTOR_ACTION_STATUS, ExecutorActionStatus.LOADING);
+            presentation.putClientProperty(ExecutorActionStatus.KEY, ExecutorActionStatus.LOADING);
             SpinningProgressIcon spinningIcon = presentation.getClientProperty(spinningIconKey);
             if (spinningIcon == null) {
               spinningIcon = new SpinningProgressIcon();
@@ -353,10 +345,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             presentation.setDisabledIcon(spinningIcon);
           } else {
             if (!getRunningDescriptors(project, selectedSettings).isEmpty()) {
-              presentation.putClientProperty(EXECUTOR_ACTION_STATUS, ExecutorActionStatus.RUNNING);
+              presentation.putClientProperty(ExecutorActionStatus.KEY, ExecutorActionStatus.RUNNING);
             }
             else {
-              presentation.putClientProperty(EXECUTOR_ACTION_STATUS, ExecutorActionStatus.NORMAL);
+              presentation.putClientProperty(ExecutorActionStatus.KEY, ExecutorActionStatus.NORMAL);
             }
             presentation.putClientProperty(spinningIconKey, null);
             presentation.setDisabledIcon(null);

@@ -300,7 +300,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       return
     }
     else if (resultIcon !is PreparedIcon) {
-      val executionAction = (actionButton as? ActionButton)?.action is RunWidgetExecutionActionMarker
+      val executionAction = isRunWidgetExecutionAction(actionButton)
       val iconWithBackground = executionAction && buttonIsRunning(actionButton) || isStopButton(actionButton)
       resultIcon = toStrokeIcon(icon = resultIcon, resultColor = when {
         iconWithBackground -> JBUI.CurrentTheme.RunWidget.RUNNING_ICON_COLOR
@@ -529,9 +529,19 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
   }
 }
 
-private fun buttonIsRunning(component: Any): Boolean {
-  return (component as? ActionButton)?.presentation?.getClientProperty(ExecutorRegistryImpl.EXECUTOR_ACTION_STATUS) ==
-    ExecutorRegistryImpl.ExecutorActionStatus.RUNNING
+private fun isRunWidgetExecutionAction(component: Any): Boolean {
+  return getExecutionActionStatus(component) != null
 }
 
-private fun isStopButton(component: Any): Boolean = (component as? ActionButton)?.action is StopAction
+private fun buttonIsRunning(component: Any): Boolean {
+  return getExecutionActionStatus(component) == ExecutorActionStatus.RUNNING
+}
+
+private fun getExecutionActionStatus(component: Any): ExecutorActionStatus? {
+  return (component as? ActionButton)?.presentation?.getClientProperty(ExecutorActionStatus.KEY)
+}
+
+private fun isStopButton(component: Any): Boolean {
+  val action = (component as? ActionButton)?.action ?: return false
+  return action is StopAction || ActionManager.getInstance().getId(action) == IdeActions.ACTION_STOP_PROGRAM
+}

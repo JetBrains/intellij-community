@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.runToolbar
 
+import com.intellij.execution.ExecutorActionStatus
 import com.intellij.execution.InlineResumeCreator
-import com.intellij.execution.RunWidgetExecutionActionMarker
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.runToolbar.RTBarAction
 import com.intellij.execution.runToolbar.RunToolbarMainSlotState
@@ -104,7 +104,7 @@ open class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction() {
 }
 
 
-abstract class XDebuggerResumeAction : XDebuggerActionBase(false), RunWidgetExecutionActionMarker,
+abstract class XDebuggerResumeAction : XDebuggerActionBase(false),
                                        ActionRemotePermissionRequirements.RunAccess {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
@@ -122,6 +122,8 @@ abstract class XDebuggerResumeAction : XDebuggerActionBase(false), RunWidgetExec
     val state = getResumeHandler().getState(event)
     updatePresentation(event.presentation, state)
     event.presentation.isEnabled = state != null
+
+    event.presentation.putClientProperty(ExecutorActionStatus.KEY, ExecutorActionStatus.NORMAL)
   }
 
   init {
