@@ -542,12 +542,18 @@ public final class JBUI {
     }
 
     public static final class DefaultTabs {
+      public static final JBValue.UIInteger UNDERLINE_HEIGHT = new JBValue.UIInteger("DefaultTabs.underlineHeight", 3);
+
       public static @NotNull Color underlineColor() {
         return JBColor.namedColor("DefaultTabs.underlineColor", new JBColor(0x4083C9, 0x4A88C7));
       }
 
+      /**
+       * @deprecated use {@link DefaultTabs#UNDERLINE_HEIGHT}
+       */
+      @Deprecated(forRemoval = true)
       public static int underlineHeight() {
-        return getInt("DefaultTabs.underlineHeight", 3);
+        return UNDERLINE_HEIGHT.get();
       }
 
       public static @NotNull Color inactiveUnderlineColor() {
@@ -584,7 +590,7 @@ public final class JBUI {
 
     public static final class DebuggerTabs {
       public static int underlineHeight() {
-        return getInt("DebuggerTabs.underlineHeight", 2);
+        return uiIntValue("DebuggerTabs.underlineHeight", 2).get();
       }
 
       public static Color underlinedTabBackground() {
@@ -614,7 +620,7 @@ public final class JBUI {
       }
 
       public static int underlineHeight() {
-        return getInt(underlineHeightKey(), DefaultTabs.underlineHeight());
+        return uiIntValue(underlineHeightKey(), Math.round(DefaultTabs.UNDERLINE_HEIGHT.getUnscaled())).get();
       }
 
       public static String underlineHeightKey() {
@@ -1040,7 +1046,7 @@ public final class JBUI {
       }
 
       public static int underlineHeight() {
-        return getInt("ToolWindow.HeaderTab.underlineHeight", DefaultTabs.underlineHeight());
+        return uiIntValue("ToolWindow.HeaderTab.underlineHeight", Math.round(DefaultTabs.UNDERLINE_HEIGHT.getUnscaled())).get();
       }
 
 
