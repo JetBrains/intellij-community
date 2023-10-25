@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.ApplicationVFileEventsTrac
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
@@ -71,8 +72,10 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
 
-  private static final boolean LOG_NON_CACHED_ROOTS_LIST =
-    SystemProperties.getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
+  private static final boolean LOG_NON_CACHED_ROOTS_LIST = getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
+
+  /** Show notification about successful VFS recovery if VFS init takes longer than [nanoseconds] */
+  private static final long NOTIFY_OF_RECOVERY_IF_LONGER_NS = SECONDS.toNanos(getLongProperty("vfs.notify-user-if-recovery-longer-sec", 10));
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
