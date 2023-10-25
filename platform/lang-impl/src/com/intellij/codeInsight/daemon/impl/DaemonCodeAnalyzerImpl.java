@@ -1203,6 +1203,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       }), progress);
     }
     catch (ProcessCanceledException e) {
+      LOG.debug(e);
       stopProcess(true, "PCE in queuePassesCreation");
     }
     catch (Throwable e) {
