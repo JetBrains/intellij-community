@@ -253,8 +253,9 @@ private class PreparedIcon(private val width: Int, private val height: Int, priv
 
 private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color? {
+    val isDisabled = (component as? ActionButton)?.presentation?.isEnabled == false
     val isStopButton = isStopButton(component)
-    if (!isStopButton && (!buttonIsRunning(component) || !isCurrentConfigurationRunning())) {
+    if (isDisabled || (!isStopButton && (!buttonIsRunning(component) || !isCurrentConfigurationRunning()))) {
       return getHeaderBackgroundColor(component, state)
     }
 
