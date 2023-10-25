@@ -11,7 +11,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListen
 import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressWitness
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.backend.observation.api.trackActivityBlocking
+import com.intellij.platform.backend.observation.trackActivityBlocking
 
 internal class ExternalProjectsSettingsWatcher : ExternalSystemSettingsListenerEx {
   override fun onProjectsLoaded(

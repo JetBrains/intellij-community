@@ -2,10 +2,10 @@
 package com.intellij.util
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.observation.api.ActivityInProgressWitness
-import com.intellij.platform.backend.observation.api.MarkupBasedActivityInProgressWitness
-import com.intellij.platform.backend.observation.api.trackActivity
+import com.intellij.platform.backend.observation.ActivityInProgressWitness
+import com.intellij.platform.backend.observation.MarkupBasedActivityInProgressWitness
 import com.intellij.platform.backend.observation.impl.Observation
+import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.ProjectRule

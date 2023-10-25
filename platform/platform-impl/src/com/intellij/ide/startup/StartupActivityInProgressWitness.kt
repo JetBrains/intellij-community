@@ -3,7 +3,7 @@ package com.intellij.ide.startup
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.platform.backend.observation.api.ActivityInProgressWitness
+import com.intellij.platform.backend.observation.ActivityInProgressWitness
 
 class StartupActivityInProgressWitness : ActivityInProgressWitness {
   override val presentableName: String = "startup-activities"

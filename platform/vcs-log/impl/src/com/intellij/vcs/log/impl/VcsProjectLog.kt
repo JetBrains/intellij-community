@@ -28,7 +28,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.observation.api.trackActivity
+import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.childScope

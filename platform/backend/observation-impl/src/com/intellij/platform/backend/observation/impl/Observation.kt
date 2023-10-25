@@ -2,7 +2,7 @@
 package com.intellij.platform.backend.observation.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.observation.api.ActivityInProgressWitness
+import com.intellij.platform.backend.observation.ActivityInProgressWitness
 
 object Observation {
 

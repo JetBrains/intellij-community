@@ -18,7 +18,7 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.platform.backend.observation.api.trackActivity
+import com.intellij.platform.backend.observation.trackActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

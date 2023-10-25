@@ -7,7 +7,7 @@ import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSyste
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.observation.api.trackActivity
+import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.projectImport.ProjectImportBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

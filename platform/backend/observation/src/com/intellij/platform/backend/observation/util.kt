@@ -2,7 +2,7 @@
 @file:JvmName("TrackingUtil")
 @file:Suppress("RedundantUnitReturnType")
 
-package com.intellij.platform.backend.observation.api
+package com.intellij.platform.backend.observation
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext

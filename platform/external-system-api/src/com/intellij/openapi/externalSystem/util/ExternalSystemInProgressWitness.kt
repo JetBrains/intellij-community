@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.observation.api.MarkupBasedActivityInProgressWitness
+import com.intellij.platform.backend.observation.MarkupBasedActivityInProgressWitness
 import kotlinx.coroutines.delay
 
 

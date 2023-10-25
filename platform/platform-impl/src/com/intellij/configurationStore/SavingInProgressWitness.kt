@@ -3,7 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.observation.api.ActivityInProgressWitness
+import com.intellij.platform.backend.observation.ActivityInProgressWitness
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
