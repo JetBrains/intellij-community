@@ -117,23 +117,31 @@ public final class Utils {
   }
 
   public Set<JvmNodeReferenceID> collectSubclassesWithoutMethod(JvmNodeReferenceID classId, JvmMethod method) {
-    return collectSubclassesWithoutMember(classId, m -> method.equals(m), cls -> cls.getMethods());
+    return collectSubclassesWithoutMember(classId, m -> method.isSame(m), cls -> cls.getMethods());
   }
 
   // propagateMemberAccess
   private <T extends ProtoMember> Set<JvmNodeReferenceID> collectSubclassesWithoutMember(JvmNodeReferenceID classId, Predicate<? super T> isSame, Function<JvmClass, Iterable<T>> membersGetter) {
     Predicate<ReferenceID> containsMember = id -> Iterators.isEmpty(Iterators.filter(getNodes(id, JvmClass.class), cls -> Iterators.isEmpty(Iterators.filter(membersGetter.apply(cls), isSame::test))));
     //stop further traversal, if nodes corresponding to the subclassName contain matching member
-    Set<JvmNodeReferenceID> result = collectNodeData(
+    Iterable<JvmNodeReferenceID> result = getNodesData(
       (ReferenceID)classId,
       id -> myDirectSubclasses.getDependencies(id),
       id -> id instanceof JvmNodeReferenceID && !containsMember.test(id)? (JvmNodeReferenceID)id : null,
       Objects::nonNull,
-      false,
-      new HashSet<>()
+      false
     );
-    result.remove(null);
-    return result;
+    return Iterators.collect(Iterators.filter(result, Iterators.notNullFilter()), new HashSet<>());
+  }
+
+  public Iterable<Pair<JvmClass, JvmField>> getOverriddenFields(JvmClass fromCls, JvmField field) {
+    Function<JvmClass, Iterable<Pair<JvmClass, JvmField>>> dataGetter = cl -> Iterators.collect(
+      Iterators.map(Iterators.filter(cl.getFields(), f -> Objects.equals(f.getName(), field.getName()) && isVisibleIn(cl, f, fromCls)), ff -> Pair.create(cl, ff)),
+      new SmartList<>()
+    );
+    return Iterators.flat(
+      getNodesData(fromCls, cl -> Iterators.flat(Iterators.map(cl.getSuperTypes(), st -> getClassesByName(st))), dataGetter, result -> Iterators.isEmpty(result), false)
+    );
   }
 
   public Iterable<Pair<JvmClass, JvmMethod>> getOverriddenMethods(JvmClass fromCls, Predicate<JvmMethod> searchCond) {
@@ -142,7 +150,7 @@ public final class Utils {
       new SmartList<>()
     );
     return Iterators.flat(
-      collectNodeData(fromCls, cl -> Iterators.flat(Iterators.map(cl.getSuperTypes(), st -> getClassesByName(st))), dataGetter, result -> Iterators.isEmpty(result), false, new SmartList<>())
+      getNodesData(fromCls, cl -> Iterators.flat(Iterators.map(cl.getSuperTypes(), st -> getClassesByName(st))), dataGetter, result -> Iterators.isEmpty(result), false)
     );
   }
 
@@ -152,7 +160,7 @@ public final class Utils {
       new SmartList<>()
     ) : Collections.emptyList();
     return Iterators.flat(
-      collectNodeData(fromCls, cl -> Iterators.flat(Iterators.map(myDirectSubclasses.getDependencies(cl.getReferenceID()), st -> getNodes(st, JvmClass.class))), dataGetter, result -> Iterators.isEmpty(result), false, new SmartList<>())
+      getNodesData(fromCls, cl -> Iterators.flat(Iterators.map(myDirectSubclasses.getDependencies(cl.getReferenceID()), st -> getNodes(st, JvmClass.class))), dataGetter, result -> Iterators.isEmpty(result), false)
     );
   }
 
@@ -161,20 +169,21 @@ public final class Utils {
    Further traversal for the current "subtree" stops, if the continuationCon predicate is 'false' for the dataGetter's result obtained on the subtree's root.
    Collected data is stored to the specified container
    */
-  private static <N, V, C extends Collection<? super V>> C collectNodeData(
-    N fromNode, Function<? super N, ? extends Iterable<? extends N>> step, Function<N, V> dataGetter, Predicate<V> continuationCond, boolean includeHead, C acc
+  private static <N, V> Iterable<V> getNodesData(
+    N fromNode, Function<? super N, ? extends Iterable<? extends N>> step, Function<N, V> dataGetter, Predicate<V> continuationCond, boolean includeHead
   ) {
     Function<N, V> mapper = cachingFunction(dataGetter);
-    return Iterators.collect(
-      Iterators.map(Iterators.recurseDepth(fromNode, node -> fromNode.equals(node) || continuationCond.test(mapper.apply(node))? step.apply(node): Collections.emptyList(), includeHead), mapper::apply),
-      acc
-    );
+    return Iterators.map(Iterators.recurseDepth(fromNode, node -> fromNode.equals(node) || continuationCond.test(mapper.apply(node))? step.apply(node): Collections.emptyList(), includeHead), mapper::apply);
   }
 
   public boolean hasOverriddenMethods(JvmClass cls, JvmMethod method) {
     return !Iterators.isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules)) || inheritsFromLibraryClass(cls) /*assume the method can override some method from the library*/;
   }
 
+  boolean isFieldVisible(final JvmClass cls, final JvmField field) {
+    return !Iterators.isEmpty(Iterators.filter(cls.getFields(), field::isSame)) || !Iterators.isEmpty(getOverriddenFields(cls, field));
+  }
+  
   boolean isMethodVisible(final JvmClass cls, final JvmMethod method) {
     return !Iterators.isEmpty(Iterators.filter(cls.getMethods(), method::isSameByJavaRules)) || !Iterators.isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules));
   }

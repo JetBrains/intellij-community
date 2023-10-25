@@ -1663,10 +1663,10 @@ public final class Mappings {
         });
       }
       
-      for (final FieldRepr f : added) {
-        debug("Field: ", f.name);
+      for (final FieldRepr addedField : added) {
+        debug("Field: ", addedField.name);
 
-        if (!f.isPrivate()) {
+        if (!addedField.isPrivate()) {
           getAllSubclasses(classRepr.name).forEach(subClass -> {
             final Iterable<ClassRepr> reprs = Iterators.collect(myFuture.reprsByName(subClass, ClassRepr.class), new SmartList<>());
             if (!Iterators.isEmpty(reprs)) {
@@ -1682,7 +1682,7 @@ public final class Mappings {
                   }
                   else {
                     final int outerClass = r.getOuterClassName();
-                    if (!isEmpty(outerClass) && myFuture.isFieldVisible(outerClass, f)) {
+                    if (!isEmpty(outerClass) && myFuture.isFieldVisible(outerClass, addedField)) {
                       for (File sourceFileName : sourceFileNames) {
                         debug("Affecting inner subclass (introduced field can potentially hide surrounding class fields): ", sourceFileName);
                         myAffectedFiles.add(sourceFileName);
@@ -1695,9 +1695,9 @@ public final class Mappings {
             }
 
             debug("Affecting field usages referenced from subclass ", subClass);
-            final IntSet propagated = myFuture.propagateFieldAccess(f.name, subClass);
-            myFuture.affectFieldUsages(f, propagated, f.createUsage(myContext, subClass), state.myAffectedUsages, state.myDependants);
-            if (f.isStatic()) {
+            final IntSet propagated = myFuture.propagateFieldAccess(addedField.name, subClass);
+            myFuture.affectFieldUsages(addedField, propagated, addedField.createUsage(myContext, subClass), state.myAffectedUsages, state.myDependants);
+            if (addedField.isStatic()) {
               myFuture.affectStaticMemberOnDemandUsages(subClass, propagated, state.myAffectedUsages, state.myDependants);
             }
             myFuture.appendDependents(subClass, state.myDependants);
@@ -1705,30 +1705,30 @@ public final class Mappings {
         }
 
         final Collection<Pair<FieldRepr, ClassRepr>> overriddenFields = new HashSet<>();
-        myFuture.addOverriddenFields(f, classRepr, overriddenFields, null, classRepr);
+        myFuture.addOverriddenFields(addedField, classRepr, overriddenFields, null, classRepr);
 
         for (final Pair<FieldRepr, ClassRepr> p : overriddenFields) {
-          final FieldRepr ff = p.first;
+          final FieldRepr overridden = p.first;
           final ClassRepr cc = p.second;
-          if (ff.isPrivate()) {
+          if (overridden.isPrivate()) {
             continue;
           }
-          final boolean sameKind = f.myType.equals(ff.myType) && f.isStatic() == ff.isStatic() && f.isSynthetic() == ff.isSynthetic() && f.isFinal() == ff.isFinal();
-          if (!sameKind || Difference.weakerAccess(f.access, ff.access)) {
-            final IntSet propagated = myPresent.propagateFieldAccess(ff.name, cc.name);
+          final boolean sameKind = addedField.myType.equals(overridden.myType) && addedField.isStatic() == overridden.isStatic() && addedField.isSynthetic() == overridden.isSynthetic() && addedField.isFinal() == overridden.isFinal();
+          if (!sameKind || Difference.weakerAccess(addedField.access, overridden.access)) {
+            final IntSet propagated = myPresent.propagateFieldAccess(overridden.name, cc.name);
 
             final Set<UsageRepr.Usage> affectedUsages = new HashSet<>();
             debug("Affecting usages of overridden field in class ", cc.name);
-            myFuture.affectFieldUsages(ff, propagated, ff.createUsage(myContext, cc.name), affectedUsages, state.myDependants);
+            myFuture.affectFieldUsages(overridden, propagated, overridden.createUsage(myContext, cc.name), affectedUsages, state.myDependants);
 
             if (sameKind) {
               // check if we can reduce the number of usages going to be recompiled
               UsageConstraint constraint = null;
-              if (f.isProtected()) {
+              if (addedField.isProtected()) {
                 // no need to recompile usages in field class' package and hierarchy, since newly added field is accessible in this scope
                 constraint = myFuture.new InheritanceConstraint(cc);
               }
-              else if (f.isPackageLocal()) {
+              else if (addedField.isPackageLocal()) {
                 // no need to recompile usages in field class' package, since newly added field is accessible in this scope
                 constraint = myFuture.new PackageConstraint(cc.getPackageName());
               }
@@ -1760,12 +1760,12 @@ public final class Mappings {
         debug("Field: ", f.name);
 
         if (!myProcessConstantsIncrementally && !f.isPrivate() && (f.access & INLINABLE_FIELD_MODIFIERS_MASK) == INLINABLE_FIELD_MODIFIERS_MASK && f.hasValue()) {
-            debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
-            if (!incrementalDecision(it.name, f, myAffectedFiles, myFilesToCompile, myFilter)) {
-              debug("End of Differentiate, returning false");
-              return false;
-            }
+          debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
+          if (!incrementalDecision(it.name, f, myAffectedFiles, myFilesToCompile, myFilter)) {
+            debug("End of Differentiate, returning false");
+            return false;
           }
+        }
 
         final IntSet propagated = myPresent.propagateFieldAccess(f.name, it.name);
         myPresent.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);

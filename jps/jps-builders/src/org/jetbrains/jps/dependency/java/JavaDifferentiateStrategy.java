@@ -14,6 +14,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
+  public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
+  private boolean myProcessConstantsIncrementally = !Boolean.parseBoolean(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
 
   @Override
   public boolean isIncremental(DifferentiateContext context, Node<?, ?> affectedNode) {
@@ -79,10 +81,12 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
   }
 
   public boolean processRemovedClass(DifferentiateContext context, JvmClass removedClass, Utils future, Utils present) {
+    // todo
     return true;
   }
 
   public boolean processAddedClass(DifferentiateContext context, JvmClass addedClass, Utils future, Utils present) {
+    // todo
     return true;
   }
 
@@ -247,7 +251,9 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     for (Difference.Change<JvmMethod, JvmMethod.Diff> change : changed) {
       JvmMethod changedMethod = change.getPast();
       JvmMethod.Diff diff = change.getDiff();
-
+      if (diff.unchanged()) {
+        continue;
+      }
       debug("Method: " + changedMethod.getName());
 
       if (changedClass.isAnnotation()) {
@@ -271,12 +277,12 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
 
       if (diff.becamePackageLocal()) {
         debug("Method became package-private, affecting method usages outside the package");
-        affectMethodUsages(context, changedClass.getReferenceID(), changedMethod, propagated, new PackageConstraint(changedClass.getPackageName()));
+        affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, propagated, new PackageConstraint(changedClass.getPackageName()));
       }
 
       if (diff.typeChanged() || diff.signatureChanged() || !diff.exceptions().unchanged()) {
         debug("Return type, throws list or signature changed --- affecting method usages");
-        affectMethodUsages(context, changedClass.getReferenceID(), changedMethod, propagated);
+        affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, propagated);
 
         for (JvmNodeReferenceID subClass : Iterators.unique(Iterators.map(future.getOverridingMethods(changedClass, changedMethod, changedMethod::isSameByJavaRules), p -> p.getFirst().getReferenceID()))) {
           for (NodeSource source : context.getGraph().getSources(subClass)) {
@@ -298,7 +304,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
           // we should recompile all places where the method was used
 
           debug("Added {static | private | synthetic | bridge} specifier or removed static specifier --- affecting method usages");
-          affectMethodUsages(context, changedClass.getReferenceID(), changedMethod, propagated);
+          affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, propagated);
 
           if (addedFlags.isStatic()) {
             debug("Added static specifier --- affecting subclasses");
@@ -326,7 +332,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
 
           if (addedFlags.isProtected() && !removedFlags.isPrivate()) {
             debug("Added public or package-private method became protected --- affect method usages with protected constraint");
-            affectMethodUsages(context, changedClass.getReferenceID(), changedMethod, propagated, new InheritanceConstraint(future, changedClass));
+            affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, propagated, new InheritanceConstraint(future, changedClass));
           }
         }
       }
@@ -357,7 +363,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
           descr.accessScope.isPackageLocal()? new PackageConstraint(changedClass.getPackageName()).negate() :
           descr.accessScope.isProtected()? new InheritanceConstraint(future, changedClass).negate() : null;
 
-        affectMethodUsages(context, descr.owner, descr.overloadMethod, future.collectSubclassesWithoutMethod(descr.owner, descr.overloadMethod), constr);
+        affectMemberUsages(context, descr.owner, descr.overloadMethod, future.collectSubclassesWithoutMethod(descr.owner, descr.overloadMethod), constr);
       }
     }
 
@@ -400,13 +406,23 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         affectStaticMemberImportUsages(context, changedClass.getReferenceID(), removedMethod.getName(), propagated);
       }
 
-      Iterable<Pair<JvmClass, JvmMethod>> overridden = Iterators.lazy(() -> removedMethod.isConstructor()? Collections.emptyList() : future.getOverriddenMethods(changedClass, removedMethod::isSameByJavaRules));
-      boolean isClearlyOverridden = removedMethod.getSignature().isEmpty() && !extendsLibraryClass && !Iterators.isEmpty(overridden) && Iterators.isEmpty(
-        Iterators.filter(overridden, p -> !p.getSecond().getType().equals(removedMethod.getType()) || !p.getSecond().getSignature().isEmpty() || removedMethod.isMoreAccessibleThan(p.getSecond()))
-      );
-      if (!isClearlyOverridden) {
-        debug("No overridden methods found, affecting method usages");
-        affectMethodUsages(context, changedClass.getReferenceID(), removedMethod, propagated);
+      if (removedMethod.isPackageLocal()) {
+        // Sometimes javac cannot find an overridden package local method in superclasses, when superclasses are defined in different packages.
+        // This results in compilation error when the code is compiled from the very beginning.
+        // So even if we correctly find a corresponding overridden method and the bytecode compatibility remains,
+        // we still need to affect package local method usages to behave similar to javac.
+        debug("Removed method is package-local, affecting method usages");
+        affectMemberUsages(context, changedClass.getReferenceID(), removedMethod, propagated);
+      }
+      else {
+        Iterable<Pair<JvmClass, JvmMethod>> overridden = Iterators.lazy(() -> removedMethod.isConstructor()? Collections.emptyList() : future.getOverriddenMethods(changedClass, removedMethod::isSameByJavaRules));
+        boolean isClearlyOverridden = removedMethod.getSignature().isEmpty() && !extendsLibraryClass && !Iterators.isEmpty(overridden) && Iterators.isEmpty(
+          Iterators.filter(overridden, p -> !p.getSecond().getType().equals(removedMethod.getType()) || !p.getSecond().getSignature().isEmpty() || removedMethod.isMoreAccessibleThan(p.getSecond()))
+        );
+        if (!isClearlyOverridden) {
+          debug("No overridden methods found, affecting method usages");
+          affectMemberUsages(context, changedClass.getReferenceID(), removedMethod, propagated);
+        }
       }
 
       for (Pair<JvmClass, JvmMethod> overriding : future.getOverridingMethods(changedClass, removedMethod, removedMethod::isSameByJavaRules)) {
@@ -488,7 +504,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
       Predicate<JvmMethod> lessSpecificCond = future.lessSpecific(addedMethod);
       for (JvmMethod lessSpecific : Iterators.filter(changedClass.getMethods(), lessSpecificCond::test)) {
         debug("Found less specific method, affecting method usages; " + lessSpecific.getName() + lessSpecific.getDescriptor());
-        affectMethodUsages(context, changedClass.getReferenceID(), lessSpecific, present.collectSubclassesWithoutMethod(changedClass.getReferenceID(), lessSpecific));
+        affectMemberUsages(context, changedClass.getReferenceID(), lessSpecific, present.collectSubclassesWithoutMethod(changedClass.getReferenceID(), lessSpecific));
       }
 
       debug("Processing affected by specificity methods");
@@ -501,7 +517,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         debug("Method: " + overriddenMethod.getName());
         debug("Class : " + cls.getName());
         debug("Affecting method usages for that found");
-        affectMethodUsages(context, changedClass.getReferenceID(), overriddenMethod, present.collectSubclassesWithoutMethod(changedClass.getReferenceID(), overriddenMethod));
+        affectMemberUsages(context, changedClass.getReferenceID(), overriddenMethod, present.collectSubclassesWithoutMethod(changedClass.getReferenceID(), overriddenMethod));
       }
 
       for (Pair<JvmClass, JvmMethod> pair : future.getOverridingMethods(changedClass, addedMethod, lessSpecificCond)) {
@@ -524,7 +540,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         else {
           debug("Current method does not override the added method");
           debug("Affecting method usages for the method");
-          affectMethodUsages(context, cls.getReferenceID(), overridingMethod, present.collectSubclassesWithoutMethod(cls.getReferenceID(), overridingMethod));
+          affectMemberUsages(context, cls.getReferenceID(), overridingMethod, present.collectSubclassesWithoutMethod(cls.getReferenceID(), overridingMethod));
         }
       }
 
@@ -546,6 +562,225 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     debug("End of added methods processing");
   }
 
+  private boolean processFieldChanges(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> classChange, Utils future, Utils present) {
+    JvmClass changedClass = classChange.getPast();
+    Difference.Specifier<JvmField, JvmField.Diff> fieldsDiff = classChange.getDiff().fields();
+    if (!processAddedFields(context, changedClass, fieldsDiff.added(), future, present)) {
+      return false;
+    }
+    if (!processRemovedFields(context, changedClass, fieldsDiff.removed(), future, present)) {
+      return false;
+    }
+    if (!processChangedFields(context, changedClass, fieldsDiff.changed(), future, present)) {
+      return false;
+    }
+    return true;
+  }
+
+  private <T> boolean processAddedFields(DifferentiateContext context, JvmClass changedClass, Iterable<JvmField> added, Utils future, Utils present) {
+    if (Iterators.isEmpty(added)) {
+      return true;
+    }
+    debug("Processing added fields");
+
+    if (changedClass.getFlags().isEnum())  {
+      debug("Constants added to enum, affecting class usages " + changedClass.getName());
+      // only mark synthetic classes used to implement switch statements: this will limit the number of recompiled classes to those where switch statements on changed enum are used
+      context.affectUsage(new ClassUsage(changedClass.getName()), n -> n instanceof JVMClassNode<?, ?> && ((JVMClassNode<?, ?>)n).isSynthetic());
+    }
+
+    for (JvmField addedField : added) {
+      debug("Field: " + addedField.getName());
+      if (!addedField.isPrivate()) {
+
+        for (ReferenceID id : future.withAllSubclasses(changedClass.getReferenceID())) {
+          if (!(id instanceof JvmNodeReferenceID)) {
+            continue;
+          }
+          JvmNodeReferenceID clsId = (JvmNodeReferenceID)id;
+
+          String affectReason = null;
+          for (JvmClass cl : future.getNodes(clsId, JvmClass.class)) {
+            if (cl.isLocal()) {
+              affectReason = "Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ";
+              break;
+            }
+            else {
+              String outerClassName = cl.getOuterFqName();
+              if (!outerClassName.isEmpty()) {
+                Iterable<JvmClass> outerClasses = Iterators.collect(future.getClassesByName(outerClassName), new SmartList<>());
+                if (Iterators.isEmpty(outerClasses) || !Iterators.isEmpty(Iterators.filter(outerClasses, ocl -> future.isFieldVisible(ocl, addedField)))) {
+                  affectReason = "Affecting inner subclass (introduced field can potentially hide surrounding class fields): ";
+                  break;
+                }
+              }
+            }
+          }
+
+          if (affectReason != null) {
+            for (NodeSource source : context.getGraph().getSources(clsId)) {
+              if (!context.isCompiled(source)) {
+                context.affectNodeSource(source);
+                debug(affectReason + source.getPath());
+              }
+            }
+          }
+
+          debug("Affecting field usages referenced from subclass " + id);
+          Set<JvmNodeReferenceID> propagated = future.collectSubclassesWithoutField(clsId, addedField.getName());
+          affectMemberUsages(context, clsId, addedField, propagated);
+          if (addedField.isStatic()) {
+            affectStaticMemberOnDemandUsages(context, clsId, propagated);
+          }
+        }
+      }
+
+      for (Pair<JvmClass, JvmField> p : future.getOverriddenFields(changedClass, addedField)) {
+        JvmClass overriddenCls = p.getFirst();
+        JvmField overriddenField = p.getSecond();
+        if (!addedField.isSameKind(overriddenField) || addedField.isWeakerAccessThan(overriddenField)) {
+          debug("Affecting usages of overridden field in class " + overriddenCls.getName());
+
+          Predicate<Node<?, ?>> constraint = null;
+          if (addedField.isSameKind(overriddenField)) {
+            if (addedField.isProtected()) {
+              // no need to recompile usages in field class' package and hierarchy, since newly added field is accessible in this scope
+              constraint = new InheritanceConstraint(future, overriddenCls);
+            }
+            else if (addedField.isPackageLocal()) {
+              // no need to recompile usages in field class' package, since newly added field is accessible in this scope
+              constraint = new PackageConstraint(overriddenCls.getPackageName());
+            }
+          }
+          affectMemberUsages(context, overriddenCls.getReferenceID(), overriddenField, present.collectSubclassesWithoutField(overriddenCls.getReferenceID(), overriddenField.getName()), constraint);
+        }
+      }
+      
+    }
+    
+    debug("End of added fields processing");
+    return true;
+  }
+
+  private boolean processRemovedFields(DifferentiateContext context, JvmClass changedClass, Iterable<JvmField> removed, Utils future, Utils present) {
+    if (Iterators.isEmpty(removed)) {
+      return true;
+    }
+    debug("Processing removed fields:");
+
+    for (JvmField removedField : removed) {
+      debug("Field: " + removedField.getName());
+
+      if (!myProcessConstantsIncrementally && !removedField.isPrivate() && removedField.isInlinable() && removedField.getValue() != null) {
+        debug("Field had value and was (non-private) final => a switch to non-incremental mode requested");
+        // todo: need support incremental decision?
+        //if (!incrementalDecision(it.name, f, myAffectedFiles, myFilesToCompile, myFilter)) {
+          debug("End of Differentiate, returning false");
+          return false;
+        //}
+      }
+
+      Set<JvmNodeReferenceID> propagated = present.collectSubclassesWithoutField(changedClass.getReferenceID(), removedField.getName());
+      affectMemberUsages(context, changedClass.getReferenceID(), removedField, propagated);
+      if (!removedField.isPrivate() && removedField.isStatic()) {
+        debug("The field was static --- affecting static field import usages");
+        affectStaticMemberImportUsages(context, changedClass.getReferenceID(), removedField.getName(), propagated);
+      }
+
+    }
+
+    debug("End of removed fields processing");
+    return true;
+  }
+
+  private boolean processChangedFields(DifferentiateContext context, JvmClass changedClass, Iterable<Difference.Change<JvmField, JvmField.Diff>> changed, Utils future, Utils present) {
+    if (Iterators.isEmpty(changed)) {
+      return true;
+    }
+    debug("Processing changed fields:");
+
+    for (Difference.Change<JvmField, JvmField.Diff> change : changed) {
+      JvmField changedField = change.getPast();
+      JvmField.Diff diff = change.getDiff();
+      if (diff.unchanged()) {
+        continue;
+      }
+
+      debug("Field: " + changedField.getName());
+
+      Iterable<JvmNodeReferenceID> propagated = Iterators.lazy(() -> future.collectSubclassesWithoutField(changedClass.getReferenceID(), changedField.getName()));
+      JVMFlags addedFlags = diff.getAddedFlags();
+      JVMFlags removedFlags = diff.getRemovedFlags();
+      
+      if (!changedField.isPrivate() && changedField.isInlinable() && changedField.getValue() != null) { // if the field was a compile-time constant
+        boolean harmful = !Iterators.isEmpty(Iterators.filter(List.of(addedFlags, removedFlags), f -> f.isStatic() || f.isFinal()));
+        if (harmful || diff.valueChanged() || diff.accessRestricted()) {
+          if (myProcessConstantsIncrementally) {
+            debug("Potentially inlined field changed its access or value => affecting field usages and static member import usages");
+            affectMemberUsages(context, changedClass.getReferenceID(), changedField, propagated);
+            affectStaticMemberImportUsages(context, changedClass.getReferenceID(), changedField.getName(), propagated);
+          }
+          else {
+            debug("Potentially inlined field changed its access or value => a switch to non-incremental mode requested");
+            // todo
+            //if (!incrementalDecision(it.name, field, myAffectedFiles, myFilesToCompile, myFilter)) {
+              debug("End of Differentiate, returning false");
+              return false;
+            //}
+          }
+        }
+      }
+
+      if (diff.typeChanged() || diff.signatureChanged()) {
+        debug("Type or signature changed --- affecting field usages");
+        affectMemberUsages(context, changedClass.getReferenceID(), changedField, propagated);
+      }
+      else if (diff.flagsChanged()) {
+        if (addedFlags.isStatic() || removedFlags.isStatic() || addedFlags.isPrivate() || addedFlags.isVolatile()) {
+          debug("Added/removed static modifier or added private/volatile modifier --- affecting field usages");
+          affectMemberUsages(context, changedClass.getReferenceID(), changedField, propagated);
+          if (!changedField.isPrivate()) {
+            if (addedFlags.isStatic()) {
+              debug("Added static modifier --- affecting static member on-demand import usages");
+              affectStaticMemberOnDemandUsages(context, changedClass.getReferenceID(), propagated);
+            }
+            else if (removedFlags.isStatic()) {
+              debug("Removed static modifier --- affecting static field import usages");
+              affectStaticMemberImportUsages(context, changedClass.getReferenceID(), changedClass.getName(), propagated);
+            }
+          }
+        }
+        else {
+          Predicate<Node<?, ?>> constraint = null;
+
+          if (removedFlags.isPublic()) {
+            debug("Removed public modifier, affecting field usages with appropriate constraint");
+            constraint = addedFlags.isProtected()? new InheritanceConstraint(future, changedClass) : new PackageConstraint(changedClass.getPackageName());
+            affectMemberUsages(context, changedClass.getReferenceID(), changedField, propagated, constraint);
+          }
+          else if (removedFlags.isProtected() && diff.accessRestricted()){
+            debug("Removed protected modifier and the field became less accessible, affecting field usages with package constraint");
+            constraint = new PackageConstraint(changedClass.getPackageName());
+            affectMemberUsages(context, changedClass.getReferenceID(), changedField, propagated, constraint);
+          }
+
+          if (addedFlags.isFinal()) {
+            debug("Added final modifier --- affecting field assign usages");
+            affectUsages(context, "field assign", Iterators.flat(Iterators.asIterable(changedClass.getReferenceID()), propagated), id -> changedField.createAssignUsage(id.getNodeName()), constraint);
+          }
+          
+        }
+      }
+
+      if (!diff.annotations().unchanged()) {
+        // todo: AnnotationsTracker handling
+      }
+    }
+
+    debug("End of changed fields processing");
+    return true;
+  }
+
   private static boolean processRemovedModule(DifferentiateContext context, JvmModule removedModule, Utils future, Utils present) {
     return true;
   }
@@ -559,40 +794,50 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     return true;
   }
 
-  private void affectMethodUsages(DifferentiateContext context, JvmNodeReferenceID clsId, JvmMethod method, Iterable<JvmNodeReferenceID> propagated) {
-    affectMethodUsages(context, clsId, method, propagated, null);
+  private void affectMemberUsages(DifferentiateContext context, JvmNodeReferenceID clsId, ProtoMember member, Iterable<JvmNodeReferenceID> propagated) {
+    affectMemberUsages(context, clsId, member, propagated, null);
   }
 
-  private void affectMethodUsages(DifferentiateContext context, JvmNodeReferenceID clsId, JvmMethod method, Iterable<JvmNodeReferenceID> propagated, @Nullable Predicate<Node<?, ?>> constraint) {
-    for (JvmNodeReferenceID id : Iterators.flat(Iterators.asIterable(clsId), propagated)) {
-      if (constraint != null) {
-        context.affectUsage(method.createUsage(id.getNodeName()), constraint);
-      }
-      else {
-        context.affectUsage(method.createUsage(id.getNodeName()));
-      }
-      debug("Affect method usage referenced of class " + id.getNodeName());
-    }
+  private void affectMemberUsages(DifferentiateContext context, JvmNodeReferenceID clsId, ProtoMember member, Iterable<JvmNodeReferenceID> propagated, @Nullable Predicate<Node<?, ?>> constraint) {
+    affectUsages(
+      context,
+      member instanceof JvmMethod? "method" : member instanceof JvmField? "field" : "member",
+      Iterators.flat(Iterators.asIterable(clsId), propagated),
+      id -> member.createUsage(id.getNodeName()),
+      constraint
+    );
   }
 
   private void affectStaticMemberOnDemandUsages(DifferentiateContext context, JvmNodeReferenceID clsId, Iterable<JvmNodeReferenceID> propagated) {
-    for (JvmNodeReferenceID id : Iterators.flat(Iterators.asIterable(clsId), propagated)) {
-      debug("Affect static member on-demand import usage referenced of class " + id.getNodeName());
-      context.affectUsage(new ImportStaticOnDemandUsage(id.getNodeName()));
-    }
+    affectUsages(
+      context,
+      "static member on-demand import usage",
+      Iterators.flat(Iterators.asIterable(clsId), propagated),
+      id -> new ImportStaticOnDemandUsage(id.getNodeName()),
+      null
+    );
   }
 
   private void affectStaticMemberImportUsages(DifferentiateContext context, JvmNodeReferenceID clsId, String memberName, Iterable<JvmNodeReferenceID> propagated) {
-    for (JvmNodeReferenceID id : Iterators.flat(Iterators.asIterable(clsId), propagated)) {
-      debug("Affect static member import usage referenced of class " + id.getNodeName());
-      context.affectUsage(new ImportStaticMemberUsage(id.getNodeName(), memberName));
-    }
+    affectUsages(
+      context,
+      "static member import usage",
+      Iterators.flat(Iterators.asIterable(clsId), propagated),
+      id -> new ImportStaticMemberUsage(id.getNodeName(), memberName),
+      null
+    );
   }
 
-  private boolean processFieldChanges(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> classChange, Utils future, Utils present) {
-    JvmClass changedClass = classChange.getPast();
-    Difference.Specifier<JvmField, JvmField.Diff> fields = classChange.getDiff().fields();
-    return true;
+  private void affectUsages(DifferentiateContext context, String usageKind, Iterable<JvmNodeReferenceID> usageOwners, Function<? super JvmNodeReferenceID, ? extends Usage> usageFactory, @Nullable Predicate<Node<?, ?>> constraint) {
+    for (JvmNodeReferenceID id : usageOwners) {
+      if (constraint != null) {
+        context.affectUsage(usageFactory.apply(id), constraint);
+      }
+      else {
+        context.affectUsage(usageFactory.apply(id));
+      }
+      debug("Affect " + usageKind + " usage referenced of class " + id.getNodeName());
+    }
   }
 
   private void affectSubclasses(DifferentiateContext context, Utils utils, ReferenceID fromClass, boolean affectUsages) {

@@ -59,6 +59,10 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return getFlags().isAnonymous();
   }
 
+  public boolean isLocal() {
+    return getFlags().isLocal();
+  }
+
   public String getSuperFqName() {
     return mySuperFqName;
   }
