@@ -8,10 +8,9 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.index.isIndexingEnabled
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
-import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
@@ -25,7 +24,7 @@ class GitWarmupConfigurator : WarmupConfigurator {
 
   override suspend fun runWarmup(project: Project): Boolean {
     val logger = coroutineContext[CommandLineProgressReporterElement.Key]?.reporter
-    if (!VcsLogData.isIndexSwitchedOnInRegistry() || !VcsLogSharedSettings.isIndexSwitchedOn(project)) {
+    if (!project.isIndexingEnabled) {
       logger?.reportMessage(1, "Indexing of git log is disabled")
       return false
     }

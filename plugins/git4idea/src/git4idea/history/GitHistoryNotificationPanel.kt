@@ -9,10 +9,8 @@ import com.intellij.openapi.vcs.history.VcsHistorySession
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.LightColors
-import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.*
 import com.intellij.vcs.log.history.isNewHistoryEnabled
-import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.i18n.GitBundle
@@ -26,17 +24,14 @@ internal object GitHistoryNotificationPanel {
     val filePath = (session as? GitHistoryProvider.GitHistorySession)?.filePath ?: return null
     if (PropertiesComponent.getInstance(project).getBoolean(INDEXING_NOTIFICATION_DISMISSED_KEY)) return null
     if (!isNewHistoryEnabled()) return null
-    if (!VcsLogSharedSettings.isIndexSwitchedOn(project)) return null
 
     val root = VcsLogUtil.getActualRoot(project, filePath) ?: return null
-    if (!isIndexingPausedFor(root)&& VcsLogData.isIndexSwitchedOnInRegistry()) {
-      return null
-    }
+    if (project.isIndexingEnabled && !isIndexingPausedFor(root)) return null
 
     return EditorNotificationPanel(LightColors.YELLOW, EditorNotificationPanel.Status.Warning).apply {
       text = GitBundle.message("history.indexing.disabled.notification.text")
       createActionLabel(GitBundle.message("history.indexing.disabled.notification.resume.link")) {
-        enableAndResumeIndexing(VcsProjectLog.getInstance(project).dataManager, listOf(root))
+        enableAndResumeIndexing(project, VcsProjectLog.getInstance(project).dataManager, listOf(root))
         this.parent?.remove(this)
       }
       add(InplaceButton(IconButton(GitBundle.message("history.indexing.disabled.notification.dismiss.link"),
