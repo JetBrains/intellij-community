@@ -61,7 +61,6 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
         private const val IGNORE_OLD_BACKEND_DIRECTIVE = "// IGNORE_OLD_BACKEND"
     }
 
-    override fun useIrBackend(): Boolean = false
     override val debuggerContext: DebuggerContextImpl
         get() = super.debuggerContext
 
