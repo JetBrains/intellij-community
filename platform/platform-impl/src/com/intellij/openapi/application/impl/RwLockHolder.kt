@@ -138,70 +138,70 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   }
 
   override fun runReadAction(action: Runnable) {
-    fireBeforeReadActionStart(action.javaClass)
+    fireBeforeReadActionStart(action)
     val permit = lock.startRead()
     try {
-      fireReadActionStarted(action.javaClass)
+      fireReadActionStarted(action)
       action.run()
-      fireReadActionFinished(action.javaClass)
+      fireReadActionFinished(action)
     }
     finally {
       if (permit != null) {
         lock.endRead(permit)
-        fireAfterReadActionFinished(action.javaClass)
+        fireAfterReadActionFinished(action)
       }
     }
   }
 
   override fun <T> runReadAction(computation: Computable<T>): T {
-    fireBeforeReadActionStart(computation.javaClass)
+    fireBeforeReadActionStart(computation)
     val permit = lock.startRead()
     try {
-      fireReadActionStarted(computation.javaClass)
+      fireReadActionStarted(computation)
       val rv = computation.compute()
-      fireReadActionFinished(computation.javaClass)
+      fireReadActionFinished(computation)
       return rv;
     }
     finally {
       if (permit != null) {
         lock.endRead(permit)
-        fireAfterReadActionFinished(computation.javaClass)
+        fireAfterReadActionFinished(computation)
       }
     }
   }
 
   override fun <T, E : Throwable?> runReadAction(computation: ThrowableComputable<T, E>): T {
-    fireBeforeReadActionStart(computation.javaClass)
+    fireBeforeReadActionStart(computation)
     val permit = lock.startRead()
     try {
-      fireReadActionStarted(computation.javaClass)
+      fireReadActionStarted(computation)
       val rv = computation.compute()
-      fireReadActionFinished(computation.javaClass)
+      fireReadActionFinished(computation)
       return rv;
     }
     finally {
       if (permit != null) {
         lock.endRead(permit)
-        fireAfterReadActionFinished(computation.javaClass)
+        fireAfterReadActionFinished(computation)
       }
     }
   }
 
   override fun tryRunReadAction(action: Runnable): Boolean {
-    fireBeforeReadActionStart(action.javaClass)
+    fireBeforeReadActionStart(action)
     val permit = lock.startTryRead()
     if (permit != null && !permit.readRequested) {
       return false
     }
     try {
-      fireReadActionStarted(action.javaClass)
+      fireReadActionStarted(action)
       action.run()
-      fireReadActionFinished(action.javaClass)
+      fireReadActionFinished(action)
     }
     finally {
       if (permit != null) {
         lock.endRead(permit)
-        fireAfterReadActionFinished(action.javaClass)
+        fireAfterReadActionFinished(action)
       }
     }
     return true
@@ -226,9 +226,12 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   }
 
   override fun runWriteAction(action: Runnable) {
+    fireBeforeWriteActionStart(action)
     startWrite(action.javaClass)
     try {
+      fireWriteActionStarted(action)
       action.run()
+      fireWriteActionFinished(action)
     }
     finally {
       endWrite(action.javaClass)
@@ -236,9 +239,13 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   }
 
   override fun <T> runWriteAction(computation: Computable<T>): T {
+    fireBeforeWriteActionStart(computation)
     startWrite(computation.javaClass)
     try {
-      return computation.compute()
+      fireWriteActionStarted(computation)
+      val rv = computation.compute()
+      fireWriteActionFinished(computation)
+      return rv;
     }
     finally {
       endWrite(computation.javaClass)
@@ -246,9 +253,13 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   }
 
   override fun <T, E : Throwable?> runWriteAction(computation: ThrowableComputable<T, E>): T {
+    fireBeforeWriteActionStart(computation)
     startWrite(computation.javaClass)
     try {
-      return computation.compute()
+      fireWriteActionStarted(computation)
+      val rv = computation.compute()
+      fireWriteActionFinished(computation)
+      return rv;
     }
     finally {
       endWrite(computation.javaClass)
@@ -325,6 +336,42 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
     }
   }
 
+  private fun startWrite(clazz: Class<*>) {
+    assertNotInsideListener()
+    myWriteActionPending = true
+    try {
+      fireBeforeWriteActionStart(clazz)
+
+      // otherwise (when myLock is locked) there's a nesting write action:
+      // - allow it,
+      // - fire listeners for it (somebody can rely on having listeners fired for each write action)
+      // - but do not re-acquire any locks because it could be deadlock-level dangerous
+      if (!lock.isWriteAcquired) {
+        val delay = ApplicationImpl.Holder.ourDumpThreadsOnLongWriteActionWaiting
+        val reportSlowWrite: Future<*>? = if (delay <= 0) null
+        else AppExecutorUtil.getAppScheduledExecutorService()
+          .scheduleWithFixedDelay({ getInstance().dumpThreads("waiting", true, true) },
+                                  delay.toLong(), delay.toLong(), TimeUnit.MILLISECONDS)
+        val t = if (logger.isDebugEnabled) System.currentTimeMillis() else 0
+        lock.writeLock()
+        if (logger.isDebugEnabled) {
+          val elapsed = System.currentTimeMillis() - t
+          if (elapsed != 0L) {
+            logger.debug("Write action wait time: $elapsed")
+          }
+        }
+        reportSlowWrite?.cancel(false)
+      }
+    }
+    finally {
+      myWriteActionPending = false
+    }
+
+    myWriteActionsStack.push(clazz)
+    fireWriteActionStarted(clazz)
+
+  }
+
   override fun hasWriteAction(actionClass: Class<*>): Boolean {
     ThreadingAssertions.softAssertReadAccess()
 
@@ -362,41 +409,6 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
     return lock.isInImpatientReader
   }
 
-  private fun startWrite(clazz: Class<*>) {
-    assertNotInsideListener()
-    myWriteActionPending = true
-    try {
-      fireBeforeWriteActionStart(clazz)
-
-      // otherwise (when myLock is locked) there's a nesting write action:
-      // - allow it,
-      // - fire listeners for it (somebody can rely on having listeners fired for each write action)
-      // - but do not re-acquire any locks because it could be deadlock-level dangerous
-      if (!lock.isWriteAcquired) {
-        val delay = ApplicationImpl.Holder.ourDumpThreadsOnLongWriteActionWaiting
-        val reportSlowWrite: Future<*>? = if (delay <= 0) null
-        else AppExecutorUtil.getAppScheduledExecutorService()
-          .scheduleWithFixedDelay({ getInstance().dumpThreads("waiting", true, true) },
-                                  delay.toLong(), delay.toLong(), TimeUnit.MILLISECONDS)
-        val t = if (logger.isDebugEnabled) System.currentTimeMillis() else 0
-        lock.writeLock()
-        if (logger.isDebugEnabled) {
-          val elapsed = System.currentTimeMillis() - t
-          if (elapsed != 0L) {
-            logger.debug("Write action wait time: $elapsed")
-          }
-        }
-        reportSlowWrite?.cancel(false)
-      }
-    }
-    finally {
-      myWriteActionPending = false
-    }
-
-    myWriteActionsStack.push(clazz)
-    fireWriteActionStarted(clazz)
-  }
-
   private fun endWrite(clazz: Class<*>) {
     fireWriteActionFinished(clazz)
     myWriteActionsStack.pop()
@@ -414,65 +426,65 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
     }
   }
 
-  private fun fireBeforeReadActionStart(clazz: Class<*>) {
+  private fun fireBeforeReadActionStart(action: Any) {
     try {
-      myReadActionDispatcher.multicaster.beforeReadActionStart(clazz)
+      myReadActionDispatcher.multicaster.beforeReadActionStart(action.javaClass)
     }
     catch (_: Throwable) {
     }
   }
 
-  private fun fireReadActionStarted(clazz: Class<*>) {
+  private fun fireReadActionStarted(action: Any) {
     try {
-      myReadActionDispatcher.multicaster.readActionStarted(clazz)
+      myReadActionDispatcher.multicaster.readActionStarted(action.javaClass)
     }
     catch (_: Throwable) {
     }
   }
 
-  private fun fireReadActionFinished(clazz: Class<*>) {
+  private fun fireReadActionFinished(action: Any) {
     try {
-      myReadActionDispatcher.multicaster.readActionFinished(clazz)
+      myReadActionDispatcher.multicaster.readActionFinished(action.javaClass)
     }
     catch (_: Throwable) {
     }
   }
 
-  private fun fireAfterReadActionFinished(clazz: Class<*>) {
+  private fun fireAfterReadActionFinished(action: Any) {
     try {
-      myReadActionDispatcher.multicaster.afterReadActionFinished(clazz)
+      myReadActionDispatcher.multicaster.afterReadActionFinished(action.javaClass)
     }
     catch (_: Throwable) {
     }
   }
 
-  private fun fireBeforeWriteActionStart(clazz: Class<*>) {
+  private fun fireBeforeWriteActionStart(action: Any) {
     try {
-      myWriteActionDispatcher.multicaster.beforeWriteActionStart(clazz)
+      myWriteActionDispatcher.multicaster.beforeWriteActionStart(action.javaClass)
     }
     catch (_: Throwable) {
     }
   }
 
-  private fun fireWriteActionStarted(clazz: Class<*>) {
+  private fun fireWriteActionStarted(action: Any) {
     try {
-      myWriteActionDispatcher.multicaster.writeActionStarted(clazz)
+      myWriteActionDispatcher.multicaster.writeActionStarted(action.javaClass)
     }
     catch (_: Throwable) {
     }
   }
 
-  private fun fireWriteActionFinished(clazz: Class<*>) {
+  private fun fireWriteActionFinished(action: Any) {
     try {
-      myWriteActionDispatcher.multicaster.writeActionFinished(clazz)
+      myWriteActionDispatcher.multicaster.writeActionFinished(action.javaClass)
     }
     catch (_: Throwable) {
     }
   }
 
-  private fun fireAfterWriteActionFinished(clazz: Class<*>) {
+  private fun fireAfterWriteActionFinished(action: Any) {
     try {
-      myWriteActionDispatcher.multicaster.afterWriteActionFinished(clazz)
+      myWriteActionDispatcher.multicaster.afterWriteActionFinished(action.javaClass)
     }
     catch (_: Throwable) {
     }
