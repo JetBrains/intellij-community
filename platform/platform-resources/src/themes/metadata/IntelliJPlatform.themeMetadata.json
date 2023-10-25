@@ -212,6 +212,11 @@
       "since": "2023.3"
     },
     {
+      "key": "PresentationAssistant.Bright.Popup.border",
+      "description": "Presentation Assistant popup bright border (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
       "key": "PresentationAssistant.Bright.keymapLabel",
       "description": "Presentation Assistant keymap label bright text color (experimental UI only)",
       "since": "2023.3"
@@ -224,6 +229,11 @@
     {
       "key": "PresentationAssistant.Pale.Popup.background",
       "description": "Presentation Assistant popup pale background (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.Popup.border",
+      "description": "Presentation Assistant popup pale border (experimental UI only)",
       "since": "2023.3"
     },
     {

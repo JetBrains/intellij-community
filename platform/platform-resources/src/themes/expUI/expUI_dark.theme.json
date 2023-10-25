@@ -902,14 +902,16 @@
       "Bright": {
         "Popup": {
           "background": "Blue4",
-          "foreground": "Grey14"
+          "foreground": "Grey14",
+          "border": "Blue4"
         },
         "keymapLabel": "Blue11"
       },
       "Pale": {
         "Popup": {
           "background": "Grey3",
-          "foreground": "Grey14"
+          "foreground": "Grey14",
+          "border": "Grey3"
         },
         "keymapLabel": "Grey8"
       }

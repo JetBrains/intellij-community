@@ -7,13 +7,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.observable.util.addMouseHoverListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.awt.RelativePoint
@@ -121,7 +120,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
   private fun createPopup(panel: ActionInfoPanel, hiddenInitially: Boolean): JBPopup {
     val popup = with(JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel)) {
       if (hiddenInitially) setAlpha(1.0.toFloat())
-      setShowBorder(false)
+      setBorderColorIfNeeded(PresentationAssistantTheme.fromValueOrDefault(configuration.theme))
       setFocusable(false)
       setBelongsToGlobalPopupStack(false)
       setCancelKeyEnabled(false)
@@ -427,6 +426,18 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
                                                          -2,
                                                          34,
                                                          theme)
+    }
+
+    /**
+     * Do not set the border color in New UI Light themes on macOS.
+     * Because otherwise the border will be painted by [com.intellij.ui.PopupBorder] and will be cut by the corners.
+     * In other cases the border is painted correctly using [com.intellij.ui.WindowRoundedCornersManager]
+     * or there are no rounded corners, and it is painted properly by [com.intellij.ui.PopupBorder].
+     */
+    fun ComponentPopupBuilder.setBorderColorIfNeeded(theme: PresentationAssistantTheme) {
+      if (!ExperimentalUI.isNewUI() || !SystemInfo.isMac || !JBColor.isBright()) {
+        setBorderColor(theme.border)
+      }
     }
   }
 }
