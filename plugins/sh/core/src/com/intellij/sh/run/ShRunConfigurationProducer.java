@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.sh.run.ShRunFileAction.parseInterpreterAndOptions;
@@ -33,7 +34,7 @@ final class ShRunConfigurationProducer extends LazyRunConfigurationProducer<ShRu
     FileViewProvider viewProvider = psiFile.getViewProvider();
     if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) return false;
     VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) return false;
+    if (virtualFile == null || virtualFile instanceof LightVirtualFile) return false;
 
     String defaultShell = ShConfigurationType.getDefaultShell();
     if (defaultShell != null) {
