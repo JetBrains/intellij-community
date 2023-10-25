@@ -34,6 +34,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FList
 import com.intellij.util.ui.EDT
@@ -229,16 +230,28 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
+  @RequiresBackgroundThread
+  suspend fun <R: Any?> runGenericUpdateBlock(block: suspend CoroutineScope.() -> R): R = withContext(CoroutineName("runGenericUpdateBlock")) {
+    bgtScope = this
+    try {
+      block()
+    }
+    finally {
+      bgtScope = null
+    }
+  }
+
   /**
-   * @return actions from the given and nested non-popup groups that are visible after updating
+   * Returns actions from the given and nested non-popup groups that are visible after updating
    */
-  suspend fun expandActionGroup(group: ActionGroup, hideDisabled: Boolean): List<AnAction> = withContext(CoroutineName("doExpandActionGroup")) {
+  @RequiresBackgroundThread
+  suspend fun expandActionGroup(group: ActionGroup, hideDisabled: Boolean): List<AnAction> = withContext(CoroutineName("expandActionGroup")) {
     bgtScope = this
     edtCallsCount = 0
     edtWaitNanos = 0
     val job = coroutineContext.job
-    val targetPromises = if (toolbarAction) ourToolbarJobs else ourOtherJobs
-    targetPromises.add(job)
+    val targetJobs = if (toolbarAction) ourToolbarJobs else ourOtherJobs
+    targetJobs.add(job)
     try {
       if (testDelayMillis > 0) {
         delay(testDelayMillis.toLong())
@@ -250,7 +263,8 @@ internal class ActionUpdater @JvmOverloads constructor(
       result
     }
     finally {
-      targetPromises.remove(job)
+      bgtScope = null
+      targetJobs.remove(job)
       val edtWaitMillis = TimeUnit.NANOSECONDS.toMillis(edtWaitNanos)
       if (edtCallsCount > 500 || edtWaitMillis > 3000) {
         LOG.warn(edtWaitMillis.toString() + " ms total to grab EDT " + edtCallsCount + " times to expand " +
