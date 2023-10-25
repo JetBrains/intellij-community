@@ -10,14 +10,10 @@ data class WebSymbolQualifiedName(
 ) {
   val qualifiedKind = WebSymbolQualifiedKind(namespace, kind)
 
-  fun matches(expectedNamespace: SymbolNamespace, expectedKind: SymbolKind): Boolean {
-    return namespace == expectedNamespace && kind == expectedKind
-  }
-
-  fun matches(expectedNamespace: SymbolNamespace, expectedKinds: List<SymbolKind>): Boolean {
-    return namespace == expectedNamespace && expectedKinds.any { kind == it }
-  }
-
   fun matches(qualifiedKind: WebSymbolQualifiedKind): Boolean =
     qualifiedKind.kind == kind && qualifiedKind.namespace == namespace
+
+  fun matches(qualifiedKind: WebSymbolQualifiedKind, vararg qualifiedKinds: WebSymbolQualifiedKind): Boolean =
+    sequenceOf(qualifiedKind).plus(qualifiedKinds).any(::matches)
+
 }
