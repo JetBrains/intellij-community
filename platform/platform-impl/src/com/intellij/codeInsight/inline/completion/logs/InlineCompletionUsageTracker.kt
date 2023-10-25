@@ -5,6 +5,8 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.application
@@ -14,7 +16,75 @@ import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  internal val GROUP = EventLogGroup("inline.completion", 12)
+  private val GROUP = EventLogGroup("inline.completion", 12)
+
+  internal object InvokedEvents {
+    val REQUEST_ID = EventFields.Long("request_id")
+    val EVENT = EventFields.Class("event")
+    val PROVIDER = EventFields.Class("provider")
+    val TIME_TO_COMPUTE = EventFields.Long("time_to_compute")
+    val OUTCOME = EventFields.NullableEnum<Outcome>("outcome")
+
+    enum class Outcome {
+      EXCEPTION,
+      CANCELED,
+      SHOW,
+      NO_SUGGESTIONS
+    }
+  }
+
+  internal val INVOKED_EVENT: VarargEventId = GROUP.registerVarargEvent(
+    "invoked",
+    InvokedEvents.REQUEST_ID,
+    EventFields.Language,
+    EventFields.CurrentFile,
+    InvokedEvents.EVENT,
+    InvokedEvents.PROVIDER,
+    InvokedEvents.TIME_TO_COMPUTE,
+    InvokedEvents.OUTCOME,
+  )
+
+  object ShownEvents {
+    val REQUEST_ID = EventFields.Long("request_id")
+    val PROVIDER = EventFields.Class("provider")
+    val LINES = EventFields.Int("lines")
+    val LENGTH = EventFields.Int("length")
+    val TYPING_DURING_SHOW = EventFields.Int("typing_during_show")
+
+    val TIME_TO_SHOW = EventFields.Long("time_to_show")
+    val SHOWING_TIME = EventFields.Long("showing_time")
+    val FINISH_TYPE = EventFields.Enum<FinishType>("finish_type")
+
+    enum class FinishType {
+      SELECTED,
+      ESCAPE_PRESSED,
+      KEY_PRESSED,
+      INVALIDATED,
+      MOUSE_PRESSED,
+      CARET_CHANGED,
+      DOCUMENT_CHANGED,
+      EDITOR_REMOVED,
+      FOCUS_LOST,
+      EMPTY,
+      ERROR,
+      OTHER
+    }
+  }
+
+  internal val SHOWN_EVENT: VarargEventId = GROUP.registerVarargEvent(
+    "shown",
+    ShownEvents.REQUEST_ID,
+    EventFields.Language,
+    EventFields.CurrentFile,
+    ShownEvents.PROVIDER,
+    ShownEvents.LINES,
+    ShownEvents.LENGTH,
+    ShownEvents.TYPING_DURING_SHOW,
+    ShownEvents.TIME_TO_SHOW,
+    ShownEvents.SHOWING_TIME,
+    ShownEvents.FINISH_TYPE,
+    InlineContextFeatures.CONTEXT_FEATURES
+  )
 
   override fun getGroup() = GROUP
 
