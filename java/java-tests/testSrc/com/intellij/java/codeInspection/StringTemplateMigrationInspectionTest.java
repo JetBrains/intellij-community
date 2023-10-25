@@ -93,10 +93,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
                StringTemplateMigration get(String data) {
                  return this;
                }
-             }""", """
+             }""",
+           """
              class StringTemplateMigration {
                void test() {
-                 String test = STR."fun() = \\{get("foo")}\\nfun() = \\{this.get("bar")}";
+                 String test = STR.""\"
+             fun() = \\{get("foo")}
+             fun() = \\{this.get("bar")}""\";
                }
                StringTemplateMigration get(String data) {
                  return this;
@@ -114,10 +117,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
                static int sum(int a, int b) {
                  return a + b;
                }
-             }""", """
+             }""",
+           """
              class StringTemplateMigration {
                void test() {
-                 String test = STR."fun() = \\{StringTemplateMigration.sum(7, 8)}\\nfun() = \\{sum(9, 10)}";
+                 String test = STR.""\"
+             fun() = \\{StringTemplateMigration.sum(7, 8)}
+             fun() = \\{sum(9, 10)}""\";
                }
                static int sum(int a, int b) {
                  return a + b;
@@ -259,11 +265,14 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
                  int quote = "\\"";
                  System.out.println(quote <caret> + "\\n \\\\ \\" \\t \\b \\r \\f \\' \\u00A9" + "\\u00A9" + quote);
                }
-             }""", """
+             }""",
+           """
              class StringTemplateMigration {
                void test() {
                  int quote = "\\"";
-                 System.out.println(STR."\\{quote}\\n \\\\ \\" \\t \\b \\r \\f \\' \\u00A9\\u00A9\\{quote}");
+                 System.out.println(STR.""\"
+             \\{quote}
+              \\\\ " \\t \\b \\r \\f ' ©©\\{quote}""\");
                }
              }""");
   }
@@ -291,6 +300,83 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              class StringTemplateMigration {
                void test() {
                  System.out.println(STR."text is \\{(String) null}null");
+               }
+             }""");
+  }
+
+  public void testTextBlocks() {
+    doTest("""
+             class TextBlock {
+               String name = "Java21";
+               
+               String message = ""\"
+                   Hello ""\" + <caret>name + ""\"
+                   ! Text block "example".
+                   ""\";
+             }
+             """,
+           """
+             class TextBlock {
+               String name = "Java21";
+                        
+               String message = STR.""\"
+             Hello\\{name}! Text block "example".
+             ""\";
+             }
+             """);
+  }
+
+  public void testFormatting() {
+    doTest("""
+             class StringTemplateMigration {
+               void test() {
+                 int requestCode = 200;
+                 
+                 String helloJSON =
+                 "{\\n" +
+                 "  \\"cod\\": \\"" + <caret>requestCode + "\\",\\n" +
+                 "  \\"message\\": 0,\\n" +
+                 "  \\"cnt\\": 40,\\n" +
+                 "  \\"city\\": {\\n" +
+                 "    \\"id\\": 524901,\\n" +
+                 "    \\"name\\": \\"ABC\\",\\n" +
+                 "    \\"coord\\": {\\n" +
+                 "      \\"lat\\": 55.7522,\\n" +
+                 "      \\"lon\\": 37.6156\\n" +
+                 "    },\\n" +
+                 "    \\"country\\": \\"XY\\",\\n" +
+                 "    \\"population\\": 0,\\n" +
+                 "    \\"timezone\\": 10800,\\n" +
+                 "    \\"sunrise\\": 1688431913,\\n" +
+                 "    \\"sunset\\": 1688494529\\n" +
+                 "  }\\n" +
+                 "}";
+               }
+             }""", """
+             class StringTemplateMigration {
+               void test() {
+                 int requestCode = 200;
+             
+                 String helloJSON =
+                         STR.""\"
+             {
+               "cod": \\"\\{requestCode}",
+               "message": 0,
+               "cnt": 40,
+               "city": {
+                 "id": 524901,
+                 "name": "ABC",
+                 "coord": {
+                   "lat": 55.7522,
+                   "lon": 37.6156
+                 },
+                 "country": "XY",
+                 "population": 0,
+                 "timezone": 10800,
+                 "sunrise": 1688431913,
+                 "sunset": 1688494529
+               }
+             }""\";
                }
              }""");
   }

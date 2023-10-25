@@ -6,6 +6,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -48,7 +49,7 @@ public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInsp
           if (operand instanceof PsiTemplateExpression) {
             return null;
           }
-          if (operand instanceof PsiLiteralExpression literal && literal.getValue() instanceof String) {
+          if (operand instanceof PsiLiteralExpression && ExpressionUtils.hasStringType(operand)) {
             hasString = true;
           }
           // (1 + 2) * 3 + "str"
@@ -65,9 +66,7 @@ public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInsp
         }
 
         // (str + str) || "str" + 1 + 2)
-        if (hasNotLiteralExpression ||
-            (hasString && hasLiteralExpression)
-        ) {
+        if (hasNotLiteralExpression || (hasString && hasLiteralExpression)) {
           return ProblemHighlightType.INFORMATION;
         }
         else {
@@ -112,24 +111,36 @@ public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInsp
       if (expression == null) return;
       PsiPolyadicExpression polyadicExpression = tryCast(expression, PsiPolyadicExpression.class);
       if (polyadicExpression == null || !ExpressionUtils.hasStringType(polyadicExpression)) return;
-      replaceWithStringTemplate(polyadicExpression, polyadicExpression);
+      String stringTemplate = buildReplacementStringTemplate(polyadicExpression);
+      if (stringTemplate == null) return;
+      CommentTracker tracker = new CommentTracker();
+      PsiElement result = tracker.replaceAndRestoreComments(polyadicExpression, stringTemplate);
+      if (result instanceof PsiTemplateExpression template) {
+        replaceRedundantEmbeddedExpression(template);
+      }
     }
 
-    private static void replaceWithStringTemplate(@NotNull PsiPolyadicExpression expression, @NotNull PsiExpression toReplace) {
+    private static String buildReplacementStringTemplate(@NotNull PsiPolyadicExpression expression) {
       StringBuilder content = new StringBuilder();
       boolean isStringFound = false;
+      boolean textBlock = useTextBlockTemplate(expression);
       for (PsiExpression operand : expression.getOperands()) {
         if (!isStringFound && ExpressionUtils.hasStringType(operand)) {
           isStringFound = true;
-          toTemplateExpression(content);
+          if (!content.isEmpty()) {
+            content.insert(0, "\\{").append("}");
+          }
         }
 
         if (operand instanceof PsiParenthesizedExpression parenthesized) {
-          operand = skipParenthesizedExprDown(parenthesized);
+          operand = PsiUtil.skipParenthesizedExprDown(parenthesized);
         }
         if (operand instanceof PsiLiteralExpression literal) {
           if (ExpressionUtils.hasStringType(literal)) {
-            content.append(getLiteralText(literal));
+            String value = (String)literal.getValue();
+            if (value == null) return null; // error in string literal
+            String escaped = StringUtil.escapeStringCharacters(value);
+            content.append(textBlock ? PsiLiteralUtil.escapeTextBlockCharacters(escaped, false, true, false) : escaped);
           }
           else {
             toTemplateExpression(content, isStringFound, literal);
@@ -139,11 +150,22 @@ public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInsp
           toTemplateExpression(content, isStringFound, operand);
         }
       }
-      CommentTracker tracker = new CommentTracker();
-      PsiElement result = tracker.replaceAndRestoreComments(toReplace, "STR.\"" + content + "\"");
-      if (result instanceof PsiTemplateExpression template) {
-        replaceRedundantEmbeddedExpression(template);
+      return textBlock ? "STR.\"\"\"\n" + content + "\"\"\"" : "STR.\"" + content + "\"";
+    }
+
+    private static boolean useTextBlockTemplate(PsiPolyadicExpression expression) {
+      for (PsiExpression operand : expression.getOperands()) {
+        if (operand instanceof PsiLiteralExpression literal && ExpressionUtils.hasStringType(operand)) {
+          if (literal.isTextBlock()) {
+            return true;
+          }
+          String value = (String)literal.getValue();
+          if (value != null && value.contains("\n")) {
+            return true;
+          }
+        }
       }
+      return false;
     }
 
     private static void replaceRedundantEmbeddedExpression(PsiTemplateExpression template) {
@@ -159,55 +181,18 @@ public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInsp
       }
     }
 
-    private static void toTemplateExpression(@NotNull StringBuilder result, boolean isParenthesize, @Nullable PsiElement element) {
-      if (element != null) {
-        if (isParenthesize || result.isEmpty()) {
-          toTemplateExpression(result, isParenthesize, element.getText());
+    private static void toTemplateExpression(@NotNull StringBuilder result, boolean isEmbeddedExpression, @NotNull PsiElement element) {
+      if (isEmbeddedExpression || result.isEmpty()) {
+        if (isEmbeddedExpression) {
+          result.append("\\{").append(element.getText()).append("}");
         }
         else {
-          toTemplateExpression(result, isParenthesize, "+", element.getText());
+          result.append(element.getText());
         }
       }
-    }
-
-    private static void toTemplateExpression(@NotNull StringBuilder result, boolean isParenthesize, String... expressions) {
-      if (isParenthesize) {
-        result.append("\\{");
-        for (String expr : expressions) result.append(expr);
-        result.append("}");
-      }
       else {
-        for (String expr : expressions) result.append(expr);
+        result.append("+").append(element.getText());
       }
-    }
-
-    private static void toTemplateExpression(@NotNull StringBuilder result) {
-      if (!result.isEmpty()) {
-        result.insert(0, "\\{").append("}");
-      }
-    }
-
-
-    @NotNull
-    private static String getLiteralText(@NotNull PsiLiteralExpression literal) {
-      Object value;
-      if (!literal.isTextBlock() && ExpressionUtils.hasStringType(literal)) {
-        value = PsiLiteralUtil.getStringLiteralContent(literal);
-      }
-      else {
-        value = literal.getValue();
-      }
-      return String.valueOf(value);
-    }
-
-    @Nullable
-    private static PsiExpression skipParenthesizedExprDown(@NotNull PsiParenthesizedExpression parenthesized) {
-      PsiExpression expression;
-      while ((expression = parenthesized.getExpression()) != null &&
-             expression instanceof PsiParenthesizedExpression expr) {
-        parenthesized = expr;
-      }
-      return expression;
     }
   }
 }
