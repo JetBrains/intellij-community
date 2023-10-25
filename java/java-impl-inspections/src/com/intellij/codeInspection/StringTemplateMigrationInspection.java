@@ -29,7 +29,7 @@ public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInsp
       @Override
       public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         if (expression.getOperationTokenType() != JavaTokenType.PLUS) return;
-        if (!ExpressionUtils.hasStringType(expression)) return;
+        if (!ExpressionUtils.hasStringType(expression) || PsiUtil.isConstantExpression(expression)) return;
         final ProblemHighlightType type = getAvailableType(expression.getOperands());
         if (type == null || (type == ProblemHighlightType.INFORMATION && !isOnTheFly)) return;
         holder.registerProblem(expression,

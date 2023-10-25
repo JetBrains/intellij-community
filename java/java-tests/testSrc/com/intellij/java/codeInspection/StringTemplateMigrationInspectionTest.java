@@ -30,13 +30,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testNumberPlusString() {
     doTest("""
              class StringTemplateMigration {
-               void test() {
-                 String test = 1 + <caret>" = number";
+               void test(String s) {
+                 String test = 1 + <caret>" = " + s;
                }
              }""", """
              class StringTemplateMigration {
-               void test() {
-                 String test = STR."1 = number";
+               void test(String s) {
+                 String test = STR."1 = \\{s}";
                }
              }""");
   }
@@ -44,13 +44,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testNumbersPlusString() {
     doTest("""
              class StringTemplateMigration {
-               void test() {
-                 String test = 1 + 2 + <caret>" = number = " + 1 + 2;
+               void test(int i) {
+                 String test = 1 + i + <caret>" = number = " + 1 + 2;
                }
              }""", """
              class StringTemplateMigration {
-               void test() {
-                 String test = STR."\\{1 + 2} = number = 12";
+               void test(int i) {
+                 String test = STR."\\{1 + i} = number = 12";
                }
              }""");
   }
@@ -58,13 +58,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testParenthesizedPlusString() {
     doTest("""
              class StringTemplateMigration {
-               void test() {
-                 String test = (((1 + 2) - (3*4))) + <caret>" = number = "+(1+2);
+               void test(int i) {
+                 String test = (((1 + 2) - (3*i))) + <caret>" = number = "+(1+2);
                }
              }""", """
              class StringTemplateMigration {
-               void test() {
-                 String test = STR."\\{(1 + 2) - (3 * 4)} = number = \\{1 + 2}";
+               void test(int i) {
+                 String test = STR."\\{(1 + 2) - (3 * i)} = number = \\{1 + 2}";
                }
              }""");
   }
@@ -72,13 +72,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testDivide() {
     doTest("""
              class StringTemplateMigration {
-               void test() {
-                 String test = 7/3 + <caret>" = number";
+               void test(int i) {
+                 String test = i/3 + <caret>" = number";
                }
              }""", """
              class StringTemplateMigration {
-               void test() {
-                 String test = STR."\\{7 / 3} = number";
+               void test(int i) {
+                 String test = STR."\\{i / 3} = number";
                }
              }""");
   }
@@ -166,13 +166,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testTernaryOperator() {
     doTest("""
              class StringTemplateMigration {
-               void test() {
-                 System.out.println((true ? "a" : "b") + <caret>"c");
+               void test(String b) {
+                 System.out.println((true ? "a" : b) + <caret>"c");
                }
              }""", """
              class StringTemplateMigration {
-               void test() {
-                 System.out.println(STR."\\{true ? "a" : "b"}c");
+               void test(String b) {
+                 System.out.println(STR."\\{true ? "a" : b}c");
                }
              }""");
   }
@@ -180,13 +180,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testNumberTypesBeforeString() {
     doTest("""
              class StringTemplateMigration {
-               void test() {
-                 System.out.println(1+0.2f+1.1+1_000_000+7l+0x0f+012+0b11 + <caret>" = number");
+               void test(int i) {
+                 System.out.println(i+0.2f+1.1+1_000_000+7l+0x0f+012+0b11 + <caret>" = number");
                }
              }""", """
              class StringTemplateMigration {
-               void test() {
-                 System.out.println(STR."\\{1 + 0.2f + 1.1 + 1_000_000 + 7l + 0x0f + 012 + 0b11} = number");
+               void test(int i) {
+                 System.out.println(STR."\\{i + 0.2f + 1.1 + 1_000_000 + 7l + 0x0f + 012 + 0b11} = number");
                }
              }""");
   }
@@ -194,13 +194,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testNumberTypesAfterString() {
     doTest("""
              class StringTemplateMigration {
-               void test() {
-                 System.out.println("number = "<caret> + 1+1.1+2+7+0.2f+1_000_000+7l+0x0f+012+0b11+1.2+1.3+1.4+1.5);
+               void test(String s) {
+                 System.out.println(s + " = "<caret> + 1+1.1+2+7+0.2f+1_000_000+7l+0x0f+012+0b11+1.2+1.3+1.4+1.5);
                }
              }""", """
              class StringTemplateMigration {
-               void test() {
-                 System.out.println(STR."number = 11.127\\{0.2f}\\{1_000_000}\\{7l}\\{0x0f}\\{012}\\{0b11}1.21.31.41.5");
+               void test(String s) {
+                 System.out.println(STR."\\{s} = 11.127\\{0.2f}\\{1_000_000}\\{7l}\\{0x0f}\\{012}\\{0b11}1.21.31.41.5");
                }
              }""");
   }
@@ -266,6 +266,19 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
                  System.out.println(STR."\\{quote}\\n \\\\ \\" \\t \\b \\r \\f \\' \\u00A9\\u00A9\\{quote}");
                }
              }""");
+  }
+
+  public void testAnnotationParameterIgnored() {
+    myFixture.configureByText("Template.java", """
+      interface X {
+        String s = "one";
+        
+        @SuppressWarnings("x" + s + "y") void x();
+      }
+      """);
+
+    myFixture.enableInspections(new StringTemplateMigrationInspection());
+    myFixture.testHighlighting(true, true, true);
   }
 
   public void testNullValue() {
