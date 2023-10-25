@@ -55,7 +55,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AppContext
 import sun.awt.PeerEvent
-import sun.awt.SunToolkit
 import java.awt.*
 import java.awt.event.*
 import java.lang.invoke.MethodHandle
@@ -904,10 +903,6 @@ class IdeEventQueue private constructor() : EventQueue() {
   fun getReturnedEventCount() = eventsReturned.get()
 
   fun getPostedSystemEventCount() = (AppContext.getAppContext()?.get("jb.postedSystemEventCount") as? AtomicLong)?.get() ?: -1
-
-  fun flushNativeEventQueue() {
-    SunToolkit.flushPendingEvents()
-  }
 }
 
 // IdeEventQueue is created before log configuration - cannot be initialized as a part of IdeEventQueue
