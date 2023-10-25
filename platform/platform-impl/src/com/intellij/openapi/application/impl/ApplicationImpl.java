@@ -1169,6 +1169,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @NotNull
   private static ThreadingSupport getThreadingSupport() {
-    return IdeEventQueue.getInstance().getRwLockHolder();
+    return RwLockHolder.INSTANCE;
   }
 }

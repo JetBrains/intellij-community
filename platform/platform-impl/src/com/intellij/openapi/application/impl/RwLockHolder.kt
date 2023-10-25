@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.codeWithMe.ClientId.Companion.decorateCallable
 import com.intellij.codeWithMe.ClientId.Companion.decorateRunnable
+import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.PerformanceWatcher.Companion.getInstance
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
@@ -41,11 +42,11 @@ import javax.swing.JComponent
 import kotlin.concurrent.Volatile
 
 @ApiStatus.Internal
-class RwLockHolder(writeThread: Thread) : ThreadingSupport {
+object RwLockHolder: ThreadingSupport {
   private val logger = Logger.getInstance(RwLockHolder::class.java)
 
   @JvmField
-  internal val lock: ReadMostlyRWLock = ReadMostlyRWLock(writeThread)
+  internal var lock: ReadMostlyRWLock? = null
 
   private val myReadActionDispatcher = EventDispatcher.create(ReadActionListener::class.java)
   private val myWriteActionDispatcher = EventDispatcher.create(WriteActionListener::class.java)
@@ -55,37 +56,50 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   @Volatile
   private var myWriteActionPending = false
 
+  internal fun postInit(writeThread: Thread) {
+    lock = ReadMostlyRWLock(writeThread)
+  }
+
+  private fun notReady(): Nothing {
+    error("Lock and IDE Queue are not ready yet");
+  }
+
   // @Throws(E::class)
   override fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
+    val l = lock ?: notReady()
     val writeIntentLock = acquireWriteIntentLock(computation.javaClass.getName())
     try {
       return computation.compute()
     }
     finally {
       if (writeIntentLock) {
-        lock.writeIntentUnlock()
+        l.writeIntentUnlock()
       }
     }
   }
 
   override fun acquireWriteIntentLock(invokedClassFqn: String?): Boolean {
-    if (lock.isWriteThread && (lock.isWriteIntentLocked || lock.isWriteAcquired)) {
+    val l = lock ?: notReady()
+    if (l.isWriteThread && (l.isWriteIntentLocked || l.isWriteAcquired)) {
       return false
     }
-    lock.writeIntentLock()
+    l.writeIntentLock()
     return true
   }
 
   override fun releaseWriteIntentLock() {
-    lock.writeIntentUnlock()
+    val l = lock ?: notReady()
+    l.writeIntentUnlock()
   }
 
   override fun isWriteIntentLocked(): Boolean {
-    return lock.isWriteThread && (lock.isWriteIntentLocked || lock.isWriteAcquired)
+    val l = lock
+    return l == null || l.isWriteThread && (l.isWriteIntentLocked || l.isWriteAcquired)
   }
 
   override fun isReadAccessAllowed(): Boolean {
-    return lock.isReadAllowed
+    val l = lock
+    return l == null || l.isReadAllowed
   }
 
   override fun runWithoutImplicitRead(runnable: Runnable) {
@@ -98,13 +112,14 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
 
   private fun runWithDisabledImplicitRead(runnable: Runnable) {
     // This method is used to allow easily finding stack traces which violate disabled ImplicitRead
-    val oldVal = lock.isImplicitReadAllowed
+    val l = lock ?: notReady()
+    val oldVal = l.isImplicitReadAllowed
     try {
-      lock.setAllowImplicitRead(false)
+      l.setAllowImplicitRead(false)
       runnable.run()
     }
     finally {
-      lock.setAllowImplicitRead(oldVal)
+      l.setAllowImplicitRead(oldVal)
     }
   }
 
@@ -118,13 +133,14 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
 
   private fun runWithEnabledImplicitRead(runnable: Runnable) {
     // This method is used to allow easily find stack traces which violate disabled ImplicitRead
-    val oldVal = lock.isImplicitReadAllowed
+    val l = lock ?: notReady()
+    val oldVal = l.isImplicitReadAllowed
     try {
-      lock.setAllowImplicitRead(true)
+      l.setAllowImplicitRead(true)
       runnable.run()
     }
     finally {
-      lock.setAllowImplicitRead(oldVal)
+      l.setAllowImplicitRead(oldVal)
     }
   }
 
@@ -233,8 +249,9 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   }
 
   override fun runReadAction(action: Runnable) {
+    val l = lock ?: notReady()
     fireBeforeReadActionStart(action.javaClass)
-    val permit = lock.startRead()
+    val permit = l.startRead()
     try {
       fireReadActionStarted(action.javaClass)
       action.run()
@@ -242,15 +259,16 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
     }
     finally {
       if (permit != null) {
-        lock.endRead(permit)
+        l.endRead(permit)
         fireAfterReadActionFinished(action.javaClass)
       }
     }
   }
 
   override fun <T> runReadAction(computation: Computable<T>): T {
+    val l = lock ?: notReady()
     fireBeforeReadActionStart(computation.javaClass)
-    val permit = lock.startRead()
+    val permit = l.startRead()
     try {
       fireReadActionStarted(computation.javaClass)
       val rv = computation.compute()
@@ -259,15 +277,16 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
     }
     finally {
       if (permit != null) {
-        lock.endRead(permit)
+        l.endRead(permit)
         fireAfterReadActionFinished(computation.javaClass)
       }
     }
   }
 
   override fun <T, E : Throwable?> runReadAction(computation: ThrowableComputable<T, E>): T {
+    val l = lock ?: notReady()
     fireBeforeReadActionStart(computation.javaClass)
-    val permit = lock.startRead()
+    val permit = l.startRead()
     try {
       fireReadActionStarted(computation.javaClass)
       val rv = computation.compute()
@@ -276,15 +295,16 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
     }
     finally {
       if (permit != null) {
-        lock.endRead(permit)
+        l.endRead(permit)
         fireAfterReadActionFinished(computation.javaClass)
       }
     }
   }
 
   override fun tryRunReadAction(action: Runnable): Boolean {
+    val l = lock ?: notReady()
     fireBeforeReadActionStart(action.javaClass)
-    val permit = lock.startTryRead()
+    val permit = l.startTryRead()
     if (permit != null && !permit.readRequested) {
       return false
     }
@@ -295,7 +315,7 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
     }
     finally {
       if (permit != null) {
-        lock.endRead(permit)
+        l.endRead(permit)
         fireAfterReadActionFinished(action.javaClass)
       }
     }
@@ -303,7 +323,8 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   }
 
   override fun isReadLockedByThisThread(): Boolean {
-    return lock.isReadLockedByThisThread
+    val l = lock ?: notReady()
+    return l.isReadLockedByThisThread
   }
 
   @Deprecated
@@ -353,8 +374,9 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   override fun executeSuspendingWriteAction(project: Project?,
                                             title: @NlsContexts.DialogTitle String,
                                             runnable: Runnable) {
+    val l = lock ?: notReady()
     ThreadingAssertions.assertWriteIntentReadAccess()
-    if (!lock.isWriteAcquired) {
+    if (!l.isWriteAcquired) {
       runModalProgress(project, title, runnable)
       return
     }
@@ -362,7 +384,7 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
     val prevBase = myWriteStackBase
     myWriteStackBase = myWriteActionsStack.size
     try {
-      lock.writeSuspendWhilePumpingIdeEventQueueHopingForTheBest { runModalProgress(project, title, runnable) }
+      l.writeSuspendWhilePumpingIdeEventQueueHopingForTheBest { runModalProgress(project, title, runnable) }
     }
     finally {
       myWriteStackBase = prevBase
@@ -370,7 +392,8 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   }
 
   override fun isWriteActionInProgress(): Boolean {
-    return lock.isWriteAcquired
+    val l = lock ?: notReady()
+    return l.isWriteAcquired
   }
 
   override fun isWriteActionPending(): Boolean {
@@ -378,7 +401,8 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   }
 
   override fun isWriteAccessAllowed(): Boolean {
-    return lock.isWriteThread && lock.isWriteAcquired
+    val l = lock
+    return l == null || l.isWriteThread && l.isWriteAcquired
   }
 
   @ApiStatus.Experimental
@@ -435,7 +459,8 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   @Deprecated
   override fun acquireReadActionLock(): AccessToken {
     PluginException.reportDeprecatedUsage("ThreadingSupport.acquireReadActionLock", "Use `runReadAction()` instead")
-    return if (lock.isWriteIntentLocked || lock.isReadLockedByThisThread) AccessToken.EMPTY_ACCESS_TOKEN else ReadAccessToken()
+    val l = lock ?: notReady()
+    return if (l.isWriteIntentLocked || l.isReadLockedByThisThread) AccessToken.EMPTY_ACCESS_TOKEN else ReadAccessToken()
   }
 
   @Deprecated
@@ -449,16 +474,19 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
       runnable.run()
     }
     else {
-      lock.executeByImpatientReader(runnable)
+      val l = lock ?: notReady()
+      l.executeByImpatientReader(runnable)
     }
   }
 
   override fun isInImpatientReader(): Boolean {
-    return lock.isInImpatientReader
+    val l = lock ?: notReady()
+    return l.isInImpatientReader
   }
 
   private fun startWrite(clazz: Class<*>) {
     assertNotInsideListener()
+    val l = lock ?: notReady()
     myWriteActionPending = true
     try {
       fireBeforeWriteActionStart(clazz)
@@ -467,14 +495,14 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
       // - allow it,
       // - fire listeners for it (somebody can rely on having listeners fired for each write action)
       // - but do not re-acquire any locks because it could be deadlock-level dangerous
-      if (!lock.isWriteAcquired) {
+      if (!l.isWriteAcquired) {
         val delay = ApplicationImpl.Holder.ourDumpThreadsOnLongWriteActionWaiting
         val reportSlowWrite: Future<*>? = if (delay <= 0) null
         else AppExecutorUtil.getAppScheduledExecutorService()
-          .scheduleWithFixedDelay({ getInstance().dumpThreads("waiting", true, true) },
+          .scheduleWithFixedDelay({ PerformanceWatcher.getInstance().dumpThreads("waiting", true, true) },
                                   delay.toLong(), delay.toLong(), TimeUnit.MILLISECONDS)
         val t = if (logger.isDebugEnabled) System.currentTimeMillis() else 0
-        lock.writeLock()
+        l.writeLock()
         if (logger.isDebugEnabled) {
           val elapsed = System.currentTimeMillis() - t
           if (elapsed != 0L) {
@@ -493,10 +521,11 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
   }
 
   private fun endWrite(clazz: Class<*>) {
+    val l = lock ?: notReady()
     fireWriteActionFinished(clazz)
     myWriteActionsStack.pop()
     if (myWriteActionsStack.size == myWriteStackBase) {
-      lock.writeUnlock()
+      l.writeUnlock()
     }
     if (myWriteActionsStack.isEmpty()) {
       fireAfterWriteActionFinished(clazz)
@@ -583,18 +612,18 @@ class RwLockHolder(writeThread: Thread) : ThreadingSupport {
 
 
   @Deprecated
-  private inner class ReadAccessToken : AccessToken() {
-    private val myReader: ReadMostlyRWLock.Reader = lock.startRead()
+  private class ReadAccessToken : AccessToken() {
+    private val myReader: ReadMostlyRWLock.Reader? = lock?.startRead()
 
     override fun finish() {
       fireReadActionFinished(javaClass)
-      lock.endRead(myReader)
+      lock?.endRead(myReader)
       fireAfterReadActionFinished(javaClass)
     }
   }
 
   @Deprecated
-  private inner class WriteAccessToken(private val clazz: Class<*>) : AccessToken() {
+  private class WriteAccessToken(private val clazz: Class<*>) : AccessToken() {
     init {
       startWrite(clazz)
       markThreadNameInStackTrace()

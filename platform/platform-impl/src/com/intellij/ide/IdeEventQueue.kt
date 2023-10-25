@@ -80,7 +80,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private val activityListeners = ContainerUtil.createLockFreeCopyOnWriteList<Runnable>()
 
   @Internal
-  val rwLockHolder: RwLockHolder = RwLockHolder(Thread.currentThread())
+  val rwLockHolder: RwLockHolder = RwLockHolder
   val keyEventDispatcher: IdeKeyEventDispatcher = IdeKeyEventDispatcher(this)
   val mouseEventDispatcher: IdeMouseEventDispatcher = IdeMouseEventDispatcher()
   val popupManager: IdePopupManager = IdePopupManager()
@@ -143,6 +143,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
     assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
     systemEventQueue.push(this)
+    rwLockHolder.postInit(Thread.currentThread())
     EDT.updateEdt()
     replaceDefaultKeyboardFocusManager()
     addDispatcher(WindowsAltSuppressor(), null)
