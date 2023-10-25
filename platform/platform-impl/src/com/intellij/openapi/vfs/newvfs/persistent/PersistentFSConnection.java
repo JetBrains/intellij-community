@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.hash.ContentHashEnumerator;
@@ -46,6 +47,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -510,9 +512,12 @@ public final class PersistentFSConnection {
           try {
             connection.doForce();
           }
-          catch (IOException e) {
-            connection.markAsCorruptedAndScheduleRebuild(e);
-            ExceptionUtil.rethrow(e);
+          catch (AlreadyDisposedException | RejectedExecutionException e){
+            LOG.warn("Stop flushing: pool is shutting down or whole application is closing", e);
+            scheduledFuture.cancel(false);
+          }
+          catch (Throwable t) {
+            LOG.error("Unhandled exception during flush (reschedule regularly)", t);
           }
         }
       }
