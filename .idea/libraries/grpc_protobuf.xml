@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="grpc-protobuf" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.grpc:grpc-protobuf:1.59.0">
+    <properties maven-id="io.grpc:grpc-protobuf:1.59.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.59.0/grpc-protobuf-1.59.0.jar">
           <sha256sum>1f47b27d79addc2831445867c26cee175b2fc8c52f989d926f0de68a7b32fae7</sha256sum>

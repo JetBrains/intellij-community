@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="ktor-client-logging" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.ktor:ktor-client-logging-jvm:2.3.5">
+    <properties maven-id="io.ktor:ktor-client-logging-jvm:2.3.5">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/2.3.5/ktor-client-logging-jvm-2.3.5.jar">
           <sha256sum>14f742bde9f502cabeaff4897c47945ba2c3da49c3077d3555c80c3a04c067d6</sha256sum>

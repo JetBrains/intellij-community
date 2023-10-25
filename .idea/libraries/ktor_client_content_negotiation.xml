@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="ktor-client-content-negotiation" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.ktor:ktor-client-content-negotiation-jvm:2.3.5">
+    <properties maven-id="io.ktor:ktor-client-content-negotiation-jvm:2.3.5">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/2.3.5/ktor-client-content-negotiation-jvm-2.3.5.jar">
           <sha256sum>87398fc8cee7e83e81f60cdea2a6b816440b968a64c636e6ef0d214b2f379760</sha256sum>

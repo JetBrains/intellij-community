@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="jackson-datatype-joda" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="com.fasterxml.jackson.datatype:jackson-datatype-joda:2.15.2">
+    <properties maven-id="com.fasterxml.jackson.datatype:jackson-datatype-joda:2.15.2">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.15.2/jackson-datatype-joda-2.15.2.jar">
           <sha256sum>0fb215333a22075bc344f0fa63ae0bc76b9c2123587b1ede3732a0d36ab54583</sha256sum>

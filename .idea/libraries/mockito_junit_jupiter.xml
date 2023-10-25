@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="mockito-junit-jupiter" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.mockito:mockito-junit-jupiter:5.5.0">
+    <properties maven-id="org.mockito:mockito-junit-jupiter:5.5.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/mockito/mockito-junit-jupiter/5.5.0/mockito-junit-jupiter-5.5.0.jar">
           <sha256sum>9e77065ec6e70b84905bb49136f210877db7fa3ff80e90d91c07879148175efc</sha256sum>

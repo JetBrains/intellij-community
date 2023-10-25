@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="grpc-netty-shaded" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="io.grpc:grpc-netty-shaded:1.59.0">
+    <properties include-transitive-deps="false" maven-id="io.grpc:grpc-netty-shaded:1.59.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.59.0/grpc-netty-shaded-1.59.0.jar">
           <sha256sum>0eb6f53b3f7461367eb0cafb40398209b26de685916369af977b11395799c3a5</sha256sum>

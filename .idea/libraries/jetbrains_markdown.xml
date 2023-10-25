@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="jetbrains.markdown" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.jetbrains:markdown-jvm:0.5.1">
+    <properties maven-id="org.jetbrains:markdown-jvm:0.5.1">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.5.1/markdown-jvm-0.5.1.jar">
           <sha256sum>92ea503c90b5f37559bd87793d1114a4a08fa7f57a20f883718b295ca4eb94f5</sha256sum>

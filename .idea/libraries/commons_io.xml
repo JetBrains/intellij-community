@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="commons-io" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="commons-io:commons-io:2.14.0">
+    <properties maven-id="commons-io:commons-io:2.14.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/commons-io/commons-io/2.14.0/commons-io-2.14.0.jar">
           <sha256sum>e35d1df7232568ed4b81d9a9ed94a0159b3ff6cf1915cc21eef5cb55d7b157a2</sha256sum>

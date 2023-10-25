@@ -25,7 +25,7 @@
     <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
     <orderEntry type="module-library">
       <library name="grpc-inprocess" type="repository">
-        <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="io.grpc:grpc-inprocess:1.59.0">
+        <properties include-transitive-deps="false" maven-id="io.grpc:grpc-inprocess:1.59.0">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.59.0/grpc-inprocess-1.59.0.jar">
               <sha256sum>07309340c43ac0cc404421aea2bba6c51cfe7e2b43b52f6928620676f70fa1e7</sha256sum>

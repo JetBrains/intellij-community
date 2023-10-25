@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="classgraph" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.github.classgraph:classgraph:4.8.162">
+    <properties maven-id="io.github.classgraph:classgraph:4.8.162">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.162/classgraph-4.8.162.jar">
           <sha256sum>ea30b2d5e29e89d52706bcecf7a6ae3b44682d4a1566a5f22b9453f9be2a970c</sha256sum>

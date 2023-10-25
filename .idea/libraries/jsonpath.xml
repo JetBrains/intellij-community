@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="jsonpath" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="com.jayway.jsonpath:json-path:2.8.0">
+    <properties maven-id="com.jayway.jsonpath:json-path:2.8.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/2.8.0/json-path-2.8.0.jar">
           <sha256sum>9601707e95cd79fb98570a01ea8cfb857b5cde948744d6e0edf733c11002c95b</sha256sum>

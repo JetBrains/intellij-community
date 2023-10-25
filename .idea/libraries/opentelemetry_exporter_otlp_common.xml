@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="opentelemetry-exporter-otlp-common" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.opentelemetry:opentelemetry-exporter-otlp-common:1.31.0">
+    <properties maven-id="io.opentelemetry:opentelemetry-exporter-otlp-common:1.31.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.31.0/opentelemetry-exporter-otlp-common-1.31.0.jar">
           <sha256sum>b13800f949159d7180a88cd19493c0a904f9e4142b1631c27255fecd5f194a01</sha256sum>

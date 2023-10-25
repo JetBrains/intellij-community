@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="ktor-network-tls" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.ktor:ktor-network-tls-jvm:2.3.5">
+    <properties maven-id="io.ktor:ktor-network-tls-jvm:2.3.5">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.3.5/ktor-network-tls-jvm-2.3.5.jar">
           <sha256sum>b5b2657de271a969e19293421dbb6068dab35c3c4f1c27ea58f9f82ad19bc08b</sha256sum>

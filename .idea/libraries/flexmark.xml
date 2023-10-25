@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="flexmark" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="com.vladsch.flexmark:flexmark-all:0.64.8">
+    <properties maven-id="com.vladsch.flexmark:flexmark-all:0.64.8">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-all/0.64.8/flexmark-all-0.64.8.jar">
           <sha256sum>4b89d89af1251cb404e5f025714b3d52f60fb090fe546057e4640c7f30c05726</sha256sum>

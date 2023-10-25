@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="decentxml" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="de.pdark:decentxml:1.4">
+    <properties maven-id="de.pdark:decentxml:1.4">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/de/pdark/decentxml/1.4/decentxml-1.4.jar">
           <sha256sum>fe671ff552a8d724710e37fdb224b19c9aaf16ed3ce8dc8bbc694788f79edd41</sha256sum>

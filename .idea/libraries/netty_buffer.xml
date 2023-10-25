@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="netty-buffer" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.netty:netty-buffer:4.1.99.Final">
+    <properties maven-id="io.netty:netty-buffer:4.1.99.Final">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.99.Final/netty-buffer-4.1.99.Final.jar">
           <sha256sum>a144d6807e51ab451f6c9b2acd5b729f1a10bb6c192890403f5df73c9b10ee3e</sha256sum>

@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="jackson-databind" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="com.fasterxml.jackson.core:jackson-databind:2.15.2">
+    <properties maven-id="com.fasterxml.jackson.core:jackson-databind:2.15.2">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.15.2/jackson-databind-2.15.2.jar">
           <sha256sum>0eb2fdad6e40ab8832a78c9b22f58196dd970594e8d3d5a26ead87847c4f3a96</sha256sum>

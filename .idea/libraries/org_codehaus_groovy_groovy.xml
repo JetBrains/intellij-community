@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="org.codehaus.groovy:groovy" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.codehaus.groovy:groovy:3.0.19">
+    <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy:3.0.19">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy/3.0.19/groovy-3.0.19.jar">
           <sha256sum>7ad326b0a7e49791f552313e35df7406c1a46bb6faf7908c2ecbb74daeff23fb</sha256sum>

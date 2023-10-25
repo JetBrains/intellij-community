@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="Guava" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="com.google.guava:guava:32.1.3-jre">
+    <properties maven-id="com.google.guava:guava:32.1.3-jre">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/guava/32.1.3-jre/guava-32.1.3-jre.jar">
           <sha256sum>6d4e2b5a118aab62e6e5e29d185a0224eed82c85c40ac3d33cf04a270c3b3744</sha256sum>

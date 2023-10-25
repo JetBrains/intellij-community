@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="ktor-client-auth" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="io.ktor:ktor-client-auth-jvm:2.3.5">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-auth-jvm:2.3.5">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/2.3.5/ktor-client-auth-jvm-2.3.5.jar">
           <sha256sum>67085c9f344ae9ac73f75585acf0d1d44c5eff3810da8d0112124cd050db4c34</sha256sum>

@@ -17,7 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module-library">
       <library name="ai.grazie.spell.gec.engine.local" type="repository">
-        <properties include-transitive-deps="false" jar-repository-id="GraziePlatform" maven-id="ai.grazie.spell:gec-spell-engine-local-jvm:0.2.199">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local-jvm:0.2.199">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local-jvm/0.2.199/gec-spell-engine-local-jvm-0.2.199.jar">
               <sha256sum>8729c3feeeeee65b1dd28656b54121d134126b92c09c5c52b2d9cb013a2de6d9</sha256sum>

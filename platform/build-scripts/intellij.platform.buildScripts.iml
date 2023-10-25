@@ -267,7 +267,7 @@
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module-library">
       <library name="spdx.tools.java" type="repository">
-        <properties jar-repository-id="central-proxy" maven-id="org.spdx:tools-java:1.1.7">
+        <properties maven-id="org.spdx:tools-java:1.1.7">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/spdx/tools-java/1.1.7/tools-java-1.1.7.jar">
               <sha256sum>4cf3ef5db8c8466224b436a1242e7d13c469a2582dd7a055ec65130c89a82ae8</sha256sum>

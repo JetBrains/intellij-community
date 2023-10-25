@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="TestNG" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.testng:testng:7.8.0">
+    <properties maven-id="org.testng:testng:7.8.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/testng/testng/7.8.0/testng-7.8.0.jar">
           <sha256sum>dbbc43e2c64623661c3537f9d74061eb6c8fc3e5b4376f31fadb16de2b200f88</sha256sum>

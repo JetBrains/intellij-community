@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="libthrift" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.apache.thrift:libthrift:0.13.0">
+    <properties include-transitive-deps="false" maven-id="org.apache.thrift:libthrift:0.13.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0.13.0/libthrift-0.13.0.jar">
           <sha256sum>f261ec1cfb7452e25c584cb4440389dffce59a6d38dfe91d12ec790594629b6e</sha256sum>

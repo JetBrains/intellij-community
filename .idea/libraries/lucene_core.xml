@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="lucene-core" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.apache.lucene:lucene-core:9.8.0">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-core:9.8.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/9.8.0/lucene-core-9.8.0.jar">
           <sha256sum>50b9f845b75dcfe287e2162b02b117740922cc7ccfdfba7298d020cae43299d3</sha256sum>
