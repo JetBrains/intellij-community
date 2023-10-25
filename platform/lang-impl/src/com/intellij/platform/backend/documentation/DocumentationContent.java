@@ -25,6 +25,6 @@ public interface DocumentationContent {
     @Nls @NotNull String html,
     @NotNull Map<@NotNull String, ? extends @NotNull Image> images
   ) {
-    return new DocumentationContentData(html, imageResolver(images));
+    return new DocumentationContentData(html, imageResolver(images), null);
   }
 }

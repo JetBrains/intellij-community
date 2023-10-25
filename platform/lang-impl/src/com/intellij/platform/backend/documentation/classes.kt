@@ -21,6 +21,7 @@ import java.util.function.Supplier
 internal data class DocumentationContentData internal constructor(
   val html: @Nls String,
   val imageResolver: DocumentationImageResolver?,
+  val definitionDetails: String? = null
 ) : DocumentationContent
 
 @Internal

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.HtmlChunk;
  */
 public interface DocumentationMarkup {
   @NlsSafe String DEFINITION_START = "<div class='definition'><pre>";
-  @NlsSafe String EXPANDABLE_DEFINITION_START = "<div class='definition expandable'><pre>";
   @NlsSafe String DEFINITION_END = "</pre></div>";
   @NlsSafe String CONTENT_START = "<div class='content'>";
   @NlsSafe String CONTENT_END = "</div>";

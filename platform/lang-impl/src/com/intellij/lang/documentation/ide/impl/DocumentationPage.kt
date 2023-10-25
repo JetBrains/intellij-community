@@ -6,7 +6,7 @@ package com.intellij.lang.documentation.ide.impl
 import com.intellij.lang.documentation.ide.ui.ExpandableDefinition
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.lang.documentation.ide.ui.UIState
-import com.intellij.lang.documentation.ide.ui.parseExpandableDefinition
+import com.intellij.lang.documentation.ide.ui.createExpandableDefinition
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.platform.backend.documentation.ContentUpdater
 import com.intellij.platform.backend.documentation.DocumentationContentData
@@ -43,9 +43,8 @@ internal class DocumentationPage(val requests: List<DocumentationRequest>) {
       return
     }
     val uiState = data.anchor?.let(UIState::ScrollToAnchor) ?: UIState.Reset
-    val original = data.content.html
-    expandableDefinition = parseExpandableDefinition(original, 4)
-    myContentFlow.value = prepareContent(data.content.copy(html = expandableDefinition?.getDecorated() ?: original), data.links, uiState)
+    expandableDefinition = createExpandableDefinition(data.content)
+    myContentFlow.value = prepareContent(data.content.copy(html = expandableDefinition?.getDecorated() ?: data.content.html), data.links, uiState)
     update(data.updates, data.links)
   }
 
