@@ -7,7 +7,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="com.intellij" />
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
-    <orderEntry type="library" scope="PROVIDED" name="Mac" level="project" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Guava" level="project" />
