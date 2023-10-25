@@ -198,7 +198,7 @@ internal fun Reference.resolve(scope: List<WebSymbolsScope>,
     if (path.isEmpty()) return@processWebSymbols emptyList()
     val lastSegment = path.last()
     if (lastSegment.name.isEmpty())
-      runListSymbolsQuery(path.subList(0, path.size - 1), lastSegment.namespace, lastSegment.kind,
+      runListSymbolsQuery(path.subList(0, path.size - 1), lastSegment.qualifiedKind,
                           false, virtualSymbols2, abstractSymbols2, false, scope)
     else
       runNameMatchQuery(path, virtualSymbols2, abstractSymbols2, false, scope)
@@ -212,7 +212,7 @@ internal fun Reference.list(scope: List<WebSymbolsScope>,
   processWebSymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     if (path.isEmpty()) return@processWebSymbols emptyList()
     val lastSegment = path.last()
-    runListSymbolsQuery(path.subList(0, path.size - 1), lastSegment.namespace, lastSegment.kind,
+    runListSymbolsQuery(path.subList(0, path.size - 1), lastSegment.qualifiedKind,
                         expandPatterns, virtualSymbols2, abstractSymbols2, false, scope)
   }
 
