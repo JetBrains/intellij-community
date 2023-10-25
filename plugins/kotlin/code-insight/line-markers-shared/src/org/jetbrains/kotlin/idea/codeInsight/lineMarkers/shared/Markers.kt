@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoVariantsService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
@@ -146,8 +147,8 @@ fun ModuleInfo.nameForTooltip(): String {
         is ModuleSourceInfo -> takeIf { module.isHMPPEnabled }?.module?.name?.let { return it }
 
         /* For libraries, we're trying to show artifact variant name */
-        is LibrarySourceInfo ->  library.extractVariantName()?.let { return it }
-        is LibraryInfo -> library.extractVariantName()?.let { return it }
+        is LibrarySourceInfo -> library.extractVariantName(binariesModuleInfo as? LibraryInfo)?.let { return it }
+        is LibraryInfo -> library.extractVariantName(this)?.let { return it }
     }
 
     stableName?.asStringStripSpecialMarkers()?.let { return it }
@@ -162,7 +163,9 @@ fun ModuleInfo.nameForTooltip(): String {
     <groupId>:<artifactId>:<variant>:<version>
     <groupId>:<artifactId>-<variant>:<version>
  */
-private fun Library.extractVariantName(): String? {
+private fun Library.extractVariantName(binariesModuleInfo: LibraryInfo?): String? {
+    binariesModuleInfo?.let(LibraryInfoVariantsService::bundledLibraryVariant)?.displayName?.let { return it }
+
     val split = name.orEmpty().split(":")
     if (split.size != 3 && split.size != 4) {
         return null

@@ -91,20 +91,26 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
                 val split = it.split(' ')
 
                 LibrarySourceRoot(
-                    libraryName = split.getOrNull(0) ?: error(),
+                    libraryName = (split.getOrNull(0) ?: error())
+                        .replace("{{kotlin_version}}", kgpVersion.toString())
+                        .replace("{{space}}", " "),
                     sourcesJar = split.getOrNull(1) ?: error(),
                     testDataPath = split.getOrNull(2) ?: error(),
                 )
             }.associateBy { it.libraryName }
     }
 
-    // workaround for IDEA-227215
+    // workaround for IDEA-227215 and stdlib / kotlin-test
     private fun KotlinMppTestsContext.addSourcesJarToWorkspace(librarySources: Map<String, LibrarySourceRoot>) {
-        LibraryTablesRegistrar.getInstance().getLibraryTable(testProject).libraries.forEach { library ->
-            val sourceRoot = librarySources[library.name] ?: return@forEach
+        val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(testProject)
+        librarySources.forEach { (libraryName, sourceRoot) ->
+            val library = libraryTable.getLibraryByName(libraryName) ?: error("Can't find library '${libraryName} in the project'")
 
             runWriteActionAndWait {
                 library.modifiableModel.apply {
+                    library.rootProvider.getUrls(OrderRootType.SOURCES).forEach {
+                        removeRoot(it, OrderRootType.SOURCES)
+                    }
                     addRoot(VfsUtil.getUrlForLibraryRoot(testProjectRoot.resolve(sourceRoot.sourcesJar)), OrderRootType.SOURCES)
                     commit()
                 }
