@@ -3,8 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.naming.AutomaticRenamer
-import com.intellij.refactoring.rename.naming.AutomaticTestMethodRenamer
-import com.intellij.refactoring.rename.naming.BaseAutomaticTestMethodRenamerFactory
+import com.intellij.refactoring.rename.naming.AutomaticTestMethodRenamerFactory
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
@@ -12,11 +11,10 @@ import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFra
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
-class KotlinAutomaticTestMethodRenamerFactory : BaseAutomaticTestMethodRenamerFactory() {
+class KotlinAutomaticTestMethodRenamerFactory : AutomaticTestMethodRenamerFactory() {
     override fun isApplicable(element: PsiElement): Boolean {
         if (element !is KtNamedFunction) return false
-        val ktClass = element.containingClassOrObject ?: return false
-        return KotlinPsiBasedTestFramework.findTestFramework(ktClass) == null
+        return KotlinPsiBasedTestFramework.findTestFramework(element) == null
     }
 
     override fun createRenamer(element: PsiElement, newName: String, usages: MutableCollection<UsageInfo>): AutomaticRenamer {

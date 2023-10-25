@@ -8,11 +8,10 @@ import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.usageView.UsageInfo
 
-class JavaAutomaticTestMethodRenamerFactory : BaseAutomaticTestMethodRenamerFactory() {
+class JavaAutomaticTestMethodRenamerFactory : AutomaticTestMethodRenamerFactory() {
   override fun isApplicable(element: PsiElement): Boolean {
     if (element !is PsiMethod) return false
-    val psiClass = element.containingClass ?: return false
-    return TestFrameworks.detectFramework(psiClass) == null
+    return !TestFrameworks.getInstance().isTestMethod(element)
   }
 
   override fun isEnabled(): Boolean = JavaRefactoringSettings.getInstance().isRenameTestMethods
