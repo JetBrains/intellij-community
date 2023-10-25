@@ -67,7 +67,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   public static final @NonNls Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
   private static final @NonNls String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
-  @ApiStatus.Internal public static final Key<Boolean> SHOW_BETA_LABEL = Key.create("ShowBetaLabel");
+  @ApiStatus.Internal public static final String HEADER_ICON = "HeaderIcon";
 
   @ApiStatus.Internal public static final Key<Boolean> NOT_SELECTED_TAB_ICON_TRANSPARENT = Key.create("NotSelectedIconTransparent");
 
