@@ -6,4 +6,3 @@ actual object <!LINE_MARKER("descr='Has expects in commonMain module'")!>Lib<!> 
 }
 
 expect val <!LINE_MARKER("descr='Has actuals in [iosarm64, linuxx64] modules'; targets=[(text=iosarm64; icon=nodes/ppLibFolder.svg); (text=linuxx64; icon=nodes/ppLibFolder.svg)]")!>topLevelVal<!>: String
-M
