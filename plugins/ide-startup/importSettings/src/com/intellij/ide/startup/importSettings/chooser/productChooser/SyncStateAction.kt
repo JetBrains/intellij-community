@@ -30,7 +30,7 @@ class SyncStateAction : ChooseProductActionButton() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isVisible = !settingsService.isSyncEnabled.value
+    e.presentation.isVisible = settingsService.isSyncEnabled.value
     if(!e.presentation.isVisible) {
       return
     }
