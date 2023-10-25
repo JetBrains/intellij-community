@@ -26,7 +26,6 @@ public final class TextIcon implements Icon {
   private Color myBackground;
   private Color myForeground;
   private Color myBoarderColor;
-  private int myFillingAlpha;
   private Font myFont;
   private String myText;
   private Rectangle myTextBounds;
@@ -57,22 +56,20 @@ public final class TextIcon implements Icon {
   }
 
   public TextIcon(String text, Color foreground, Color background, int margin, boolean withBoarders) {
-    this(text, foreground, background, margin, withBoarders, withBoarders ? Math.min(20, background.getAlpha()) : background.getAlpha(),
-         withBoarders ? 255 : 0);
+    this(text, foreground, background, margin, withBoarders, withBoarders ? 255 : 0);
   }
 
-  public TextIcon(String text, Color foreground, Color background, int margin, boolean withBoarders, int fillingAlpha, int boarderAlpha) {
-    this(text, foreground, background, ColorUtil.toAlpha(background, boarderAlpha), margin, withBoarders, fillingAlpha);
+  public TextIcon(String text, Color foreground, Color background, int margin, boolean withBoarders, int boarderAlpha) {
+    this(text, foreground, background, ColorUtil.toAlpha(background, boarderAlpha), margin, withBoarders);
   }
 
-  public TextIcon(String text, Color foreground, Color background, Color boarderColor, int margin, boolean withBoarders, int fillingAlpha) {
+  public TextIcon(String text, Color foreground, Color background, Color boarderColor, int margin, boolean withBoarders) {
     setWithBoarders(withBoarders);
-    setFillingAlpha(fillingAlpha);
+    setBackground(background);
+    setForeground(foreground);
     setBoarderColor(boarderColor);
     setInsets(margin, margin, margin, margin);
     setRound(margin * 4);
-    setBackground(background);
-    setForeground(foreground);
     setText(text);
   }
 
@@ -102,10 +99,6 @@ public final class TextIcon implements Icon {
 
   public void setForeground(Color foreground) {
     myForeground = foreground;
-  }
-
-  public void setFillingAlpha(int fillingAlpha) {
-    myFillingAlpha = fillingAlpha;
   }
 
   public void setBoarderColor(Color boarderColor) {
@@ -138,7 +131,7 @@ public final class TextIcon implements Icon {
   public void paintIcon(Component c, Graphics g, int x, int y) {
     if (g instanceof Graphics2D) {
       if (myBackground != null) {
-        g.setColor(ColorUtil.toAlpha(myBackground, myFillingAlpha));
+        g.setColor(myBackground);
         FILL.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), myRound);
       }
       if (withBoarders && myBoarderColor != null) {
@@ -178,14 +171,12 @@ public final class TextIcon implements Icon {
            Objects.equals(myText, icon.myText) &&
            Objects.equals(myTextBounds, icon.myTextBounds) &&
            Objects.equals(withBoarders, icon.withBoarders) &&
-           Objects.equals(myBoarderColor, icon.myBoarderColor) &&
-           Objects.equals(myFillingAlpha, icon.myFillingAlpha);
+           Objects.equals(myBoarderColor, icon.myBoarderColor);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds, withBoarders, myBoarderColor,
-                        myFillingAlpha);
+    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds, withBoarders, myBoarderColor);
   }
 
   private static Rectangle applyTransform(Rectangle srcRect, AffineTransform at) {
