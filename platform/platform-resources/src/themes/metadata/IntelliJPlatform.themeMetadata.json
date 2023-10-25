@@ -207,8 +207,8 @@
       "since": "2023.3"
     },
     {
-      "key": "PresentationAssistant.Bright.Popup.background",
-      "description": "Presentation Assistant popup bright background (experimental UI only)",
+      "key": "PresentationAssistant.Bright.PopupBackground",
+      "description": "Presentation Assistant popup bright background (experimental UI only). PopupBackground name is used to not apply the '*.background' pattern default color",
       "since": "2023.3"
     },
     {
@@ -227,7 +227,7 @@
       "since": "2023.3"
     },
     {
-      "key": "PresentationAssistant.Pale.Popup.background",
+      "key": "PresentationAssistant.Pale.PopupBackground",
       "description": "Presentation Assistant popup pale background (experimental UI only)",
       "since": "2023.3"
     },
