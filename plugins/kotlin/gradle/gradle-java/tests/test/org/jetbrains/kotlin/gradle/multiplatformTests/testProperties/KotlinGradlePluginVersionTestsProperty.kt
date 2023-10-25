@@ -13,7 +13,7 @@ object KotlinGradlePluginVersionTestsProperty : KotlinTestsResolvableProperty {
     enum class Value(val acronym: String, val version: String) {
         MinSupported("MIN", "1.7.21"),
         PreviousMajorRelease("PREV_RELEASE", "1.8.22"),
-        LatestStable("STABLE", "1.9.20-RC"),
+        LatestStable("STABLE", "1.9.20-RC2"),
         Latest("LATEST", KotlinGradlePluginVersions.latest.toString()),
         SNAPSHOT("SNAPSHOT", KotlinGradlePluginVersions.latest.run { "$major.$minor.255-SNAPSHOT" })
     }
