@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
-import org.jetbrains.plugins.gitlab.api.getMetadata
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.nio.charset.StandardCharsets
