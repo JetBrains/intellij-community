@@ -20,7 +20,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.PythonProjectGenerator
@@ -36,20 +39,20 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
                                            callback: AbstractNewProjectStep.AbstractCallback<T>)
   : ProjectSpecificSettingsStep<T>(projectGenerator, callback), DumbAware {
 
-    private val propertyGraph = PropertyGraph()
-    private val projectName = propertyGraph.property("")
-    private val projectLocation = propertyGraph.property("")
-    private val locationHint = propertyGraph.property("").apply {
-      dependsOn(projectName, ::updateHint)
-      dependsOn(projectLocation, ::updateHint)
-    }
-    private val createRepository = propertyGraph.property(false)
-      .bindBooleanStorage("PyCharm.NewProject.Git")
-    private val createScript = propertyGraph.property(false)
-      .bindBooleanStorage("PyCharm.NewProject.Welcome")
+  private val propertyGraph = PropertyGraph()
+  private val projectName = propertyGraph.property("")
+  private val projectLocation = propertyGraph.property("")
+  private val locationHint = propertyGraph.property("").apply {
+    dependsOn(projectName, ::updateHint)
+    dependsOn(projectLocation, ::updateHint)
+  }
+  private val createRepository = propertyGraph.property(false)
+    .bindBooleanStorage("PyCharm.NewProject.Git")
+  private val createScript = propertyGraph.property(false)
+    .bindBooleanStorage("PyCharm.NewProject.Welcome")
 
-    private lateinit var projectNameFiled: JBTextField
-    lateinit var mainPanel: DialogPanel
+  private lateinit var projectNameFiled: JBTextField
+  lateinit var mainPanel: DialogPanel
   override fun createAndFillContentPanel(): JPanel {
     return createContentPanelWithAdvancedSettingsPanel()
   }
@@ -73,7 +76,7 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
     projectName.set(nextProjectName.nameWithoutExtension)
     projectLocation.set(nextProjectName.parent)
 
-    mainPanel =  panel {
+    mainPanel = panel {
       row(message("new.project.name")) {
         projectNameFiled = textField()
           .bindText(projectName)
@@ -101,8 +104,6 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
     myCreateButton.addActionListener { mainPanel.apply() }
     return mainPanel
   }
-
-
 
 
   override fun findSequentNonExistingUntitled(): File {
@@ -146,7 +147,7 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
     @JvmStatic
     fun initializeGit(project: Project, root: VirtualFile) {
       runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
-            GitRepositoryInitializer.getInstance()?.initRepository(project, root, true)
+        GitRepositoryInitializer.getInstance()?.initRepository(project, root, true)
       }
     }
   }
