@@ -8,6 +8,7 @@ import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHLabel
+import org.jetbrains.plugins.github.api.data.GHRefUpdateRule
 import org.jetbrains.plugins.github.api.data.GHUser
 import java.util.*
 
@@ -33,6 +34,7 @@ class GHPullRequest(id: String,
                     val baseRefName: String,
                     val baseRefOid: String,
                     val baseRepository: Repository?,
+                    baseRef: BaseRef?,
                     val headRefName: String,
                     val headRefOid: String,
                     val headRepository: HeadRepository?)
@@ -42,6 +44,9 @@ class GHPullRequest(id: String,
   @JsonIgnore
   val reviews: List<GHPullRequestReview> = reviews.nodes
 
+  @JsonIgnore
+  val baseRefUpdateRule: GHRefUpdateRule? = baseRef?.refUpdateRule
+
   open class Repository(val owner: Owner, val isFork: Boolean)
 
   class HeadRepository(owner: Owner, isFork: Boolean,
@@ -49,6 +54,8 @@ class GHPullRequest(id: String,
                        val url: @NlsSafe String,
                        val sshUrl: @NlsSafe String)
     : Repository(owner, isFork)
+
+  data class BaseRef(val refUpdateRule: GHRefUpdateRule?)
 
   class Owner(val login: String)
 

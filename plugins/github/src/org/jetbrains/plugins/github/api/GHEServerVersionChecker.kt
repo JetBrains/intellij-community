@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.api
 
 object GHEServerVersionChecker {
 
-  private const val REQUIRED_VERSION_MAJOR = 2
-  private const val REQUIRED_VERSION_MINOR = 21
+  private const val REQUIRED_VERSION_MAJOR = 3
+  private const val REQUIRED_VERSION_MINOR = 0
 
   const val ENTERPRISE_VERSION_HEADER = "x-github-enterprise-version"
 

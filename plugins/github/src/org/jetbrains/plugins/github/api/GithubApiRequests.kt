@@ -5,7 +5,6 @@ import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.data.request.*
-import org.jetbrains.plugins.github.api.util.GHSchemaPreview
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
@@ -142,10 +141,6 @@ object GithubApiRequests {
 
       @JvmStatic
       fun get(url: String) = Get.jsonPage<GithubBranch>(url).withOperationName("get branches")
-
-      @JvmStatic
-      fun getProtection(repository: GHRepositoryCoordinates, branchName: String): GithubApiRequest<GHBranchProtectionRules> =
-        Get.json(getUrl(repository, urlSuffix, "/$branchName", "/protection"), GHSchemaPreview.BRANCH_PROTECTION.mimeType)
     }
 
     object Commits : Entity("/commits") {
