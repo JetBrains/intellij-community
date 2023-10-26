@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -110,9 +111,10 @@ public class EnsureInstruction extends Instruction {
 
   @Override
   public int @NotNull [] getSuccessorIndexes() {
-    return myTransferValue == null
-           ? new int[]{getIndex() + 1}
-           : IntStreamEx.of(myTransferValue.getPossibleTargetIndices()).append(getIndex() + 1).toArray();
+    if (myTransferValue == null) {
+      return new int[]{getIndex() + 1};
+    }
+    return ArrayUtil.append(myTransferValue.getPossibleTargetIndices(), getIndex() + 1);
   }
 
   public @NotNull DfaCondition createCondition(@NotNull DfaValue tosValue) {
