@@ -195,7 +195,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
         .withContainingClass(psiFieldContainingClass)
         .withNavigationElement(psiField)
         .withModifier(methodModifier)
-        .withContract("pure = true");
+        .withPureContract();
 
       if (accessorsInfo.isMakeFinal()) {
         methodBuilder.withModifier(PsiModifier.FINAL);
