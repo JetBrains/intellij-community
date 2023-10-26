@@ -64,6 +64,8 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
     // So, updating of listeners is a lock-free as a solution.
     private val listenerUpdater =
       AtomicReferenceFieldUpdater.newUpdater(ExtensionPointImpl::class.java, PersistentList::class.java, "listeners")
+    private val keyMapperToCacheUpdater =
+      AtomicReferenceFieldUpdater.newUpdater(ExtensionPointImpl::class.java, ConcurrentMap::class.java, "keyMapperToCache")
 
     fun setCheckCanceledAction(checkCanceled: Runnable) {
       CHECK_CANCELED = {
@@ -81,15 +83,13 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
   }
 
   fun <CACHE_KEY : Any?, V : Any?> getCacheMap(): ConcurrentMap<CACHE_KEY, V> {
-    var keyMapperToCache = keyMapperToCache
+    val keyMapperToCache = keyMapperToCache
+    @Suppress("FoldInitializerAndIfToElvis")
     if (keyMapperToCache == null) {
-      synchronized(this) {
-        keyMapperToCache = this.keyMapperToCache
-        if (keyMapperToCache == null) {
-          keyMapperToCache = ConcurrentHashMap<Any?, Map<*, *>>()
-          this.keyMapperToCache = keyMapperToCache
-        }
-      }
+      @Suppress("UNCHECKED_CAST")
+      return keyMapperToCacheUpdater.updateAndGet(this) {
+        ConcurrentHashMap<Any?, Map<*, *>>()
+      } as ConcurrentMap<CACHE_KEY, V>
     }
     @Suppress("UNCHECKED_CAST")
     return keyMapperToCache as ConcurrentMap<CACHE_KEY, V>
