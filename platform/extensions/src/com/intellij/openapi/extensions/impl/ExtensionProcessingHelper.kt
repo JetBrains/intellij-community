@@ -9,11 +9,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NotNull
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentMap
-import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -26,23 +24,6 @@ import java.util.function.Supplier
 // but also supporting the ability to mock an extension list in tests (a custom list is set).
 @ApiStatus.Internal
 object ExtensionProcessingHelper {
-  fun <T : Any> forEachExtensionSafe(iterable: Sequence<T>, extensionConsumer: Consumer<@NotNull T>) {
-    for (t in iterable) {
-      try {
-        extensionConsumer.accept(t)
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        logger<ExtensionPointImpl<*>>().error(e)
-      }
-    }
-  }
-
   internal fun <T : Any> findFirstSafe(predicate: Predicate<in T>, sequence: Sequence<T>): T? {
     return computeSafeIfAny(processor = { if (predicate.test(it)) it else null }, sequence = sequence)
   }
@@ -106,12 +87,16 @@ object ExtensionProcessingHelper {
   /**
    * See [com.intellij.openapi.extensions.ExtensionPointName.getByKey].
    */
-  @ApiStatus.Internal
-  fun <K : Any, T : Any> getByKey(point: ExtensionPointImpl<T>,
-                                  key: K,
-                                  cacheId: Class<*>,
-                                  keyMapper: Function<T, K?>): T? {
-    return doGetByKey(point, cacheId, key, keyMapper, Function.identity(), point.getCacheMap())
+  internal fun <K : Any, T : Any> getByKey(point: ExtensionPointImpl<T>,
+                                           key: K,
+                                           cacheId: Class<*>,
+                                           keyMapper: Function<T, K?>): T? {
+    return doGetByKey(point = point,
+                      cacheId = cacheId,
+                      key = key,
+                      keyMapper = keyMapper,
+                      valueMapper = Function.identity(),
+                      keyMapperToCache = point.getCacheMap())
   }
 
   /**

@@ -31,7 +31,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
@@ -259,12 +258,8 @@ suspend fun initConfigurationStore(app: ApplicationImpl) {
   val configDir = PathManager.getConfigDir()
 
   span("beforeApplicationLoaded") {
-    for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
-      launch {
-        runCatching {
-          listener.beforeApplicationLoaded(app, configDir)
-        }.getOrLogException(logger<AppStarter>())
-      }
+    ApplicationLoadListener.EP_NAME.forEachExtensionSafe { listener ->
+      listener.beforeApplicationLoaded(app, configDir)
     }
   }
 

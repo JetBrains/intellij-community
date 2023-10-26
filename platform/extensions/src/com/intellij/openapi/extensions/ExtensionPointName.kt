@@ -11,7 +11,6 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.computeIfAbsent
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.computeSafeIfAny
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.findFirstSafe
-import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.forEachExtensionSafe
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByGroupingKey
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByKey
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -53,7 +52,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * Invokes the given consumer for each extension registered in this extension point. Logs exceptions thrown by the consumer.
    */
   fun forEachExtensionSafe(consumer: Consumer<in T>) {
-    forEachExtensionSafe(iterable = getPointImpl(areaInstance = null).asSequence(), extensionConsumer = consumer)
+    getPointImpl(areaInstance = null).forEachExtensionSafe(consumer)
   }
 
   fun findFirstSafe(predicate: Predicate<in T>): T? {
@@ -91,7 +90,6 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
 
   @Deprecated("Use app-level app extension point.", level = DeprecationLevel.ERROR)
   fun extensions(areaInstance: AreaInstance?): Stream<T> {
-    @Suppress("SSBasedInspection")
     return getPointImpl(areaInstance).extensionList.stream()
   }
 
@@ -183,7 +181,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    */
   @ApiStatus.Experimental
   fun <K : Any> getByKey(key: K, cacheId: Class<*>, keyMapper: Function<T, K?>): T? {
-    return getByKey(getPointImpl(null), key, cacheId, keyMapper)
+    return getByKey(point = getPointImpl(null), key = key, cacheId = cacheId, keyMapper = keyMapper)
   }
 
   /**
@@ -243,6 +241,8 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
       return object : Iterator<LazyExtension<T>> {
         private var currentIndex = 0
 
+        override fun hasNext(): Boolean = currentIndex < adapters.size
+
         override fun next(): LazyExtension<T> {
           val adapter = adapters.get(currentIndex++)
           return object : LazyExtension<T> {
@@ -278,8 +278,6 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
               get() = adapter.pluginDescriptor
           }
         }
-
-        override fun hasNext(): Boolean = currentIndex < adapters.size
       }
     }
   }

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 
 /**
  * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
@@ -81,6 +82,9 @@ public interface ExtensionPoint<T> {
   boolean isDynamic();
 
   @NotNull PluginDescriptor getPluginDescriptor();
+
+  @ApiStatus.Experimental
+  <K> @Nullable T getByKey(@NotNull K key, @NotNull Class<?> cacheId, @NotNull Function<T, @Nullable K> keyMapper);
 
   enum Kind {INTERFACE, BEAN_CLASS}
 }

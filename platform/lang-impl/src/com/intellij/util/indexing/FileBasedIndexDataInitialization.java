@@ -72,9 +72,6 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     // todo: init contentless indices first ?
     while (extensions.hasNext()) {
       FileBasedIndexExtension<?, ?> extension = extensions.next();
-      if (extension == null) {
-        break;
-      }
       RebuildStatus.registerIndex(extension.getName());
 
       tasks.add(() -> {
