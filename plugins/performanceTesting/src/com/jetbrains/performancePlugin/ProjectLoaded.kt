@@ -159,11 +159,11 @@ private fun runScriptWhenInitializedAndIndexed(project: Project) {
           secondTaskAlarm.cancelAllRequests()
           runScriptFromFile(project)
         }
-      }), 5000)
+      }), 2000)
     }
   }
 
-  executor.scheduleAtFixedRate(firstTask, 0, 300, TimeUnit.MILLISECONDS)
+  executor.scheduleAtFixedRate(firstTask, 500, 300, TimeUnit.MILLISECONDS)
 }
 
 private fun runScriptDuringIndexing(project: Project, alarm: Alarm) {
