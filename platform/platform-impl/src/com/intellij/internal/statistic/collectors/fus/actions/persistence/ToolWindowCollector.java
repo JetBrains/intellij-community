@@ -26,8 +26,8 @@ import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.*;
@@ -43,7 +43,7 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
  *
  * <p>
  *   If toolwindow is registered dynamically is <b>should</b> be explicitly whitelisted
- *   in plugin.xml {@link #EP_NAME} or here in {@link ToolWindowCollector#ourToolwindowAllowList}
+ *   in plugin.xml {@link #EP_NAME} or here in {@link ToolWindowCollector#toolwindowAllowList}
  * </p>
  */
 public final class ToolWindowCollector {
@@ -63,12 +63,15 @@ public final class ToolWindowCollector {
    * If toolwindow is registered in plugin.xml, it's whitelisted automatically. <br/>
    * To whitelist dynamically registered plugin toolwindow use {@link #EP_NAME}
    */
-  private static final Map<String, PluginInfo> ourToolwindowAllowList = new HashMap<>();
+  private static final Map<String, PluginInfo> toolwindowAllowList = new HashMap<>();
 
   static {
-    Arrays.asList(MESSAGES_WINDOW, DEBUG, RUN, FIND, HIERARCHY, ANALYZE_DEPENDENCIES, MODULES_DEPENDENCIES, DUPLICATES, EXTRACT_METHOD,
-                  DOCUMENTATION, PREVIEW, SERVICES, ENDPOINTS, BuildContentManager.TOOL_WINDOW_ID, "CVS", BUILD_DEPENDENCIES)
-      .forEach(id -> ourToolwindowAllowList.put(id, getPlatformPlugin()));
+    for (String id : List.of(MESSAGES_WINDOW, DEBUG, RUN, FIND, HIERARCHY, ANALYZE_DEPENDENCIES, MODULES_DEPENDENCIES, DUPLICATES,
+                             EXTRACT_METHOD,
+                             DOCUMENTATION, PREVIEW, SERVICES, ENDPOINTS, BuildContentManager.TOOL_WINDOW_ID, "CVS",
+                             BUILD_DEPENDENCIES)) {
+      toolwindowAllowList.put(id, getPlatformPlugin());
+    }
   }
 
   private ToolWindowCollector() {
@@ -87,7 +90,7 @@ public final class ToolWindowCollector {
   private static void addToolwindowToWhitelist(@NotNull ToolWindowAllowlistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
     PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor);
     if (info.isDevelopedByJetBrains()) {
-      ourToolwindowAllowList.put(extension.id, info);
+      toolwindowAllowList.put(extension.id, info);
     }
   }
 
@@ -132,21 +135,21 @@ public final class ToolWindowCollector {
   }
 
   private static @NotNull PluginInfo getToolWindowInfo(@NotNull String toolWindowId) {
-    if (ourToolwindowAllowList.containsKey(toolWindowId)) {
-      return ourToolwindowAllowList.get(toolWindowId);
+    if (toolwindowAllowList.containsKey(toolWindowId)) {
+      return toolwindowAllowList.get(toolWindowId);
     }
 
-    PluginInfo info = getToolWindowInfo(toolWindowId, ToolWindowEP.EP_NAME.getExtensions());
+    PluginInfo info = getToolWindowInfo(toolWindowId, ToolWindowEP.EP_NAME.getExtensionList());
     if (info == null) {
-      info = getToolWindowInfo(toolWindowId, LibraryDependentToolWindow.EXTENSION_POINT_NAME.getExtensions());
+      info = getToolWindowInfo(toolWindowId, LibraryDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList());
     }
     if (info == null) {
-      info = getToolWindowInfo(toolWindowId, FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensions());
+      info = getToolWindowInfo(toolWindowId, FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList());
     }
     return info != null ? info : getUnknownPlugin();
   }
 
-  private static @Nullable PluginInfo getToolWindowInfo(@NotNull String toolWindowId, ToolWindowEP @NotNull [] toolWindows) {
+  private static @Nullable PluginInfo getToolWindowInfo(@NotNull String toolWindowId, @NotNull List<? extends ToolWindowEP> toolWindows) {
     for (ToolWindowEP ep : toolWindows) {
       if (StringUtil.equals(toolWindowId, ep.id)) {
         PluginDescriptor pluginDescriptor = ep.getPluginDescriptor();

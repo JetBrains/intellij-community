@@ -694,7 +694,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       throw new ReadOnlyModificationException(this, CoreBundle.message("attempt.to.modify.read.only.document.error.message"));
     }
 
-    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensions()) {
+    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensionList()) {
       DocumentWriteAccessGuard.Result result = guard.isWritable(this);
       if (!result.isSuccess()) {
         throw new ReadOnlyModificationException(

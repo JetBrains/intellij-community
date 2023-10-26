@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff;
 
 import com.intellij.diff.chains.DiffRequestChain;
@@ -102,7 +102,7 @@ public class DiffManagerImpl extends DiffManagerEx {
   @Override
   public List<DiffTool> getDiffTools() {
     List<DiffTool> result = new ArrayList<>();
-    Collections.addAll(result, DiffTool.EP_NAME.getExtensions());
+    result.addAll(DiffTool.EP_NAME.getExtensionList());
     result.add(SimpleDiffTool.INSTANCE);
     result.add(UnifiedDiffTool.INSTANCE);
     result.add(BinaryDiffTool.INSTANCE);
