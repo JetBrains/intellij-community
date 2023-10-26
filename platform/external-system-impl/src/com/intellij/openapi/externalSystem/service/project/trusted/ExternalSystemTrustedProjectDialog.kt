@@ -34,7 +34,7 @@ object ExternalSystemTrustedProjectDialog {
     return confirmLoadingUntrustedProjectAsync(project, listOf(systemId))
   }
 
-  suspend fun confirmLoadingUntrustedProjectAsync(
+  private suspend fun confirmLoadingUntrustedProjectAsync(
     project: Project,
     systemIds: Collection<ProjectSystemId>
   ): Boolean {
