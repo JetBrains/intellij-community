@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
 import java.io.File
+import java.nio.file.InvalidPathException
 import java.nio.file.Paths
 import java.util.*
 import javax.swing.JPanel
@@ -122,9 +123,14 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
     return File(ProjectUtil.getBaseDir())
   }
 
-  private fun updateHint(): String {
-    return message("new.project.location.hint", Paths.get(projectLocation.get(), projectName.get()))
-  }
+  private fun updateHint(): String =
+    try {
+      val projectPath = Paths.get(projectLocation.get(), projectName.get())
+      message("new.project.location.hint", projectPath)
+    }
+    catch (e: InvalidPathException) {
+      ""
+    }
 
   override fun checkValid(): Boolean {
     // todo add proper validation with custom component
