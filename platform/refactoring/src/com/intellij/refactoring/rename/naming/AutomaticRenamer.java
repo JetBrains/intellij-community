@@ -160,7 +160,7 @@ public abstract class AutomaticRenamer {
   @NlsContexts.DialogTitle
   public abstract String getDialogTitle();
 
-  @NlsContexts.Button
+  @NlsContexts.Label
   public abstract String getDialogDescription();
 
   @NlsContexts.ColumnName
