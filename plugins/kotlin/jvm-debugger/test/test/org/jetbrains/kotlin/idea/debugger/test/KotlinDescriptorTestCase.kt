@@ -500,7 +500,6 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
         val extensions = sequenceOf(
             ".k2.out".takeIf { compileWithK2 },
             ".indy.out".takeIf { lambdasGenerationScheme() == JvmClosureGenerationScheme.INDY },
-            ".ir.out",
             ".out",
         )
         return extensions.filterNotNull()
