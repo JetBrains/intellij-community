@@ -1303,16 +1303,6 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/syntheticPropertyUsages3/renameSetMethod.test");
     }
 
-    @TestMetadata("testMethodRenamerJava/renameTestMethod.test")
-    public void testTestMethodRenamerJava_RenameTestMethod() throws Exception {
-        runTest("testData/refactoring/rename/testMethodRenamerJava/renameTestMethod.test");
-    }
-
-    @TestMetadata("testMethodRenamerKotlin/renameTestMethod.test")
-    public void testTestMethodRenamerKotlin_RenameTestMethod() throws Exception {
-        runTest("testData/refactoring/rename/testMethodRenamerKotlin/renameTestMethod.test");
-    }
-
     @TestMetadata("topLevelClassRedeclaration/topLevelClassRedeclaration.test")
     public void testTopLevelClassRedeclaration_TopLevelClassRedeclaration() throws Exception {
         runTest("testData/refactoring/rename/topLevelClassRedeclaration/topLevelClassRedeclaration.test");

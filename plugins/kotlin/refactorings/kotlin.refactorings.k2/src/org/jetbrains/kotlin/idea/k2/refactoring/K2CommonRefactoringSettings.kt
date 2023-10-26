@@ -61,7 +61,4 @@ internal class K2CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
 
     override var renameOverloads: Boolean
             by delegateTo { it::renameOverloads }
-
-    override var renameTestMethods: Boolean
-            by delegateTo { it::renameTestMethods }
 }
