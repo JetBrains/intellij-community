@@ -476,128 +476,126 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
    * @return false if update was re-scheduled due to new 'markEverythingDirty' event, true otherwise.
    */
   private boolean updateImmediately() {
-    return BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
-      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      if (!vcsManager.hasActiveVcss()) return true;
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    if (!vcsManager.hasActiveVcss()) return true;
 
-      VcsDirtyScopeManagerImpl dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(myProject);
-      final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
-      if (checkScopeIsEmpty(invalidated)) {
-        LOG.debug("[update] - dirty scope is empty");
-        dirtyScopeManager.changesProcessed();
-        return true;
-      }
-
-      final boolean wasEverythingDirty = invalidated.isEverythingDirty();
-      final List<VcsModifiableDirtyScope> scopes = invalidated.getScopes();
-
-      boolean isInitialUpdate;
-      ChangesViewEx changesView = ChangesViewManager.getInstanceEx(myProject);
-      try {
-        if (myUpdater.isStopped()) return true;
-
-        // copy existing data to objects that would be updated.
-        // mark for "modifier" that update started (it would create duplicates of modification commands done by user during update;
-        // after update of copies of objects is complete, it would apply the same modifications to copies.)
-        final DataHolder dataHolder;
-        synchronized (myDataLock) {
-          dataHolder = new DataHolder(myComposite.copy(), new ChangeListUpdater(myWorker), wasEverythingDirty);
-          myModifier.enterUpdate();
-          if (wasEverythingDirty) {
-            myUpdateException = null;
-            myAdditionalInfo = Collections.emptyList();
-          }
-
-          if (LOG.isDebugEnabled()) {
-            String scopeInString = StringUtil.join(scopes, Object::toString, "->\n");
-            LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
-                      "\nignored: " + myComposite.getIgnoredFileHolder().getFiles().size() +
-                      "\nunversioned: " + myComposite.getUnversionedFileHolder().getFiles().size() +
-                      "\ncurrent changes: " + myWorker);
-          }
-
-          isInitialUpdate = myInitialUpdate;
-          myInitialUpdate = false;
-        }
-        changesView.setBusy(true);
-        changesView.scheduleRefresh();
-
-        SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
-        if (!isInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
-
-        try {
-          ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-            iterateScopes(dataHolder, scopes, vcsIndicator);
-          }, vcsIndicator);
-        }
-        catch (ProcessCanceledException ignore) {
-        }
-        boolean wasCancelled = vcsIndicator.isCanceled();
-
-        // for the case of project being closed we need a read action here -> to be more consistent
-        ApplicationManager.getApplication().runReadAction(() -> {
-          if (myProject.isDisposed()) return;
-
-          synchronized (myDataLock) {
-            ChangeListWorker updatedWorker = dataHolder.getUpdatedWorker();
-            boolean takeChanges = myUpdateException == null && !wasCancelled &&
-                                  updatedWorker.areChangeListsEnabled() == myWorker.areChangeListsEnabled();
-
-            // update member from copy
-            if (takeChanges) {
-              dataHolder.finish();
-              // do same modifications to change lists as was done during update + do delayed notifications
-              myModifier.finishUpdate(updatedWorker);
-
-              myWorker.applyChangesFromUpdate(updatedWorker, new MyChangesDeltaForwarder(myProject, myScheduler));
-
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("refresh procedure finished, unversioned size: " +
-                          dataHolder.getComposite().getUnversionedFileHolder().getFiles().size() +
-                          "\nchanges: " + myWorker);
-              }
-              final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
-              myComposite = dataHolder.getComposite();
-              if (statusChanged) {
-                boolean isUnchangedUpdating = isInUpdate() || isUnversionedInUpdateMode() || isIgnoredInUpdateMode();
-                myDelayedNotificator.unchangedFileStatusChanged(!isUnchangedUpdating);
-              }
-              LOG.debug("[update] - success");
-            }
-            else {
-              myModifier.finishUpdate(null);
-              LOG.debug(String.format("[update] - aborted, wasCancelled: %s", wasCancelled));
-            }
-            myShowLocalChangesInvalidated = false;
-          }
-        });
-
-        for (VcsDirtyScope scope : scopes) {
-          if (scope.getVcs().isTrackingUnchangedContent()) {
-            VcsRootIterator.iterateExistingInsideScope(scope, file -> {
-              LastUnchangedContentTracker.markUntouched(file); //todo what if it has become dirty again during update?
-              return true;
-            });
-          }
-        }
-
-        return !wasCancelled;
-      }
-      catch (ProcessCanceledException e) {
-        // OK, we're finishing all the stuff now.
-      }
-      catch (Exception | AssertionError ex) {
-        LOG.error(ex);
-      }
-      finally {
-        dirtyScopeManager.changesProcessed();
-
-        myDelayedNotificator.changedFileStatusChanged(!isInUpdate());
-        myDelayedNotificator.changeListUpdateDone();
-        changesView.scheduleRefresh();
-      }
+    VcsDirtyScopeManagerImpl dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(myProject);
+    final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
+    if (checkScopeIsEmpty(invalidated)) {
+      LOG.debug("[update] - dirty scope is empty");
+      dirtyScopeManager.changesProcessed();
       return true;
-    });
+    }
+
+    final boolean wasEverythingDirty = invalidated.isEverythingDirty();
+    final List<VcsModifiableDirtyScope> scopes = invalidated.getScopes();
+
+    boolean isInitialUpdate;
+    ChangesViewEx changesView = ChangesViewManager.getInstanceEx(myProject);
+    try {
+      if (myUpdater.isStopped()) return true;
+
+      // copy existing data to objects that would be updated.
+      // mark for "modifier" that update started (it would create duplicates of modification commands done by user during update;
+      // after update of copies of objects is complete, it would apply the same modifications to copies.)
+      final DataHolder dataHolder;
+      synchronized (myDataLock) {
+        dataHolder = new DataHolder(myComposite.copy(), new ChangeListUpdater(myWorker), wasEverythingDirty);
+        myModifier.enterUpdate();
+        if (wasEverythingDirty) {
+          myUpdateException = null;
+          myAdditionalInfo = Collections.emptyList();
+        }
+
+        if (LOG.isDebugEnabled()) {
+          String scopeInString = StringUtil.join(scopes, Object::toString, "->\n");
+          LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
+                    "\nignored: " + myComposite.getIgnoredFileHolder().getFiles().size() +
+                    "\nunversioned: " + myComposite.getUnversionedFileHolder().getFiles().size() +
+                    "\ncurrent changes: " + myWorker);
+        }
+
+        isInitialUpdate = myInitialUpdate;
+        myInitialUpdate = false;
+      }
+      changesView.setBusy(true);
+      changesView.scheduleRefresh();
+
+      SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
+      if (!isInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
+
+      try {
+        ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+          iterateScopes(dataHolder, scopes, vcsIndicator);
+        }, vcsIndicator);
+      }
+      catch (ProcessCanceledException ignore) {
+      }
+      boolean wasCancelled = vcsIndicator.isCanceled();
+
+      // for the case of project being closed we need a read action here -> to be more consistent
+      ApplicationManager.getApplication().runReadAction(() -> {
+        if (myProject.isDisposed()) return;
+
+        synchronized (myDataLock) {
+          ChangeListWorker updatedWorker = dataHolder.getUpdatedWorker();
+          boolean takeChanges = myUpdateException == null && !wasCancelled &&
+                                updatedWorker.areChangeListsEnabled() == myWorker.areChangeListsEnabled();
+
+          // update member from copy
+          if (takeChanges) {
+            dataHolder.finish();
+            // do same modifications to change lists as was done during update + do delayed notifications
+            myModifier.finishUpdate(updatedWorker);
+
+            myWorker.applyChangesFromUpdate(updatedWorker, new MyChangesDeltaForwarder(myProject, myScheduler));
+
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("refresh procedure finished, unversioned size: " +
+                        dataHolder.getComposite().getUnversionedFileHolder().getFiles().size() +
+                        "\nchanges: " + myWorker);
+            }
+            final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
+            myComposite = dataHolder.getComposite();
+            if (statusChanged) {
+              boolean isUnchangedUpdating = isInUpdate() || isUnversionedInUpdateMode() || isIgnoredInUpdateMode();
+              myDelayedNotificator.unchangedFileStatusChanged(!isUnchangedUpdating);
+            }
+            LOG.debug("[update] - success");
+          }
+          else {
+            myModifier.finishUpdate(null);
+            LOG.debug(String.format("[update] - aborted, wasCancelled: %s", wasCancelled));
+          }
+          myShowLocalChangesInvalidated = false;
+        }
+      });
+
+      for (VcsDirtyScope scope : scopes) {
+        if (scope.getVcs().isTrackingUnchangedContent()) {
+          VcsRootIterator.iterateExistingInsideScope(scope, file -> {
+            LastUnchangedContentTracker.markUntouched(file); //todo what if it has become dirty again during update?
+            return true;
+          });
+        }
+      }
+
+      return !wasCancelled;
+    }
+    catch (ProcessCanceledException e) {
+      // OK, we're finishing all the stuff now.
+    }
+    catch (Exception | AssertionError ex) {
+      LOG.error(ex);
+    }
+    finally {
+      dirtyScopeManager.changesProcessed();
+
+      myDelayedNotificator.changedFileStatusChanged(!isInUpdate());
+      myDelayedNotificator.changeListUpdateDone();
+      changesView.scheduleRefresh();
+    }
+    return true;
   }
 
   private static boolean checkScopeIsEmpty(VcsInvalidated invalidated) {
