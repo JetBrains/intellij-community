@@ -59,7 +59,7 @@
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
                         serviceImplementation="com.intellij.completion.ml.sorting.MLSorterFactory"/>
 
-    <codeCompletionConfigurable provider="com.intellij.completion.ml.settings.MLRankingConfigurableProvider"/>
+    <mlCodeCompletionConfigurable provider="com.intellij.completion.ml.settings.MLRankingConfigurableProvider"/>
 
     <applicationService serviceImplementation="com.intellij.completion.ml.personalization.impl.ApplicationUserFactorStorage"/>
 
