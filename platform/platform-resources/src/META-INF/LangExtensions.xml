@@ -1731,6 +1731,7 @@
     <inspectionResultsExportActionProvider implementation="com.intellij.codeInspection.ui.actions.ExportToXMLAction"/>
     <projectService serviceInterface="com.intellij.codeInsight.daemon.HighlightingPassesCache"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.HighlightingPassesCacheImpl"/>
+    <codeCompletionConfigurable provider="com.intellij.application.options.MLCodeCompletionConfigurableProvider"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.platform.backend">
     <documentation.targetProvider
