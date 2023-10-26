@@ -24,7 +24,7 @@
 
 package com.intellij.openapi.vcs.changes.ignore.reference;
 
-import com.intellij.openapi.vcs.changes.ignore.codeInsight.FileExtensionCompletionContributor;
+import com.intellij.openapi.vcs.changes.ignore.codeInsight.FileExtensionCompletionContributorKt;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntry;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreFile;
 import com.intellij.psi.*;
@@ -74,7 +74,7 @@ public class IgnoreReferenceContributor extends PsiReferenceContributor {
     }
 
     private static boolean shouldSkipCompletion(@NotNull String text) {
-      return FileExtensionCompletionContributor.Companion.completionSupported(text);
+      return FileExtensionCompletionContributorKt.fileExtensionCompletionSupported(text);
     }
   }
 }

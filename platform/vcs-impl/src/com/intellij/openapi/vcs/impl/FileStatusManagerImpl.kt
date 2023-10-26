@@ -99,17 +99,15 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
       refreshFileStatus(document)
     }
 
-    companion object {
-      private fun refreshFileStatus(document: Document) {
-        val file = FileDocumentManager.getInstance().getFile(document) ?: return
-        if (!file.isInLocalFileSystem) return // no VCS
-        if (!isSupported(file)) return
+    private fun refreshFileStatus(document: Document) {
+      val file = FileDocumentManager.getInstance().getFile(document) ?: return
+      if (!file.isInLocalFileSystem) return // no VCS
+      if (!isSupported(file)) return
 
-        val projectManager = ProjectManager.getInstanceIfCreated() ?: return
-        for (project in projectManager.openProjects) {
-          val manager = project.getServiceIfCreated(FileStatusManager::class.java) as FileStatusManagerImpl?
-          manager?.refreshFileStatusFromDocument(file)
-        }
+      val projectManager = ProjectManager.getInstanceIfCreated() ?: return
+      for (project in projectManager.openProjects) {
+        val manager = project.getServiceIfCreated(FileStatusManager::class.java) as FileStatusManagerImpl?
+        manager?.refreshFileStatusFromDocument(file)
       }
     }
   }
