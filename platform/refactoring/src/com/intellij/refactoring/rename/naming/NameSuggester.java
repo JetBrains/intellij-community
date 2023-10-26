@@ -99,24 +99,24 @@ public final class NameSuggester {
                                          String propertyName) {
     StringBuffer resultingWords = new StringBuffer();
     int currentWord = 0;
-    final Pair<int[], int[]> wordIndicies = calculateWordPositions(propertyName, propertyWords);
+    final Pair<int[], int[]> wordIndices = calculateWordPositions(propertyName, propertyWords);
     for (final Map.Entry<Pair<Integer, Integer>, String> entry : replacements.entrySet()) {
       final int first = entry.getKey().getFirst().intValue();
       final int last = entry.getKey().getSecond().intValue();
       for (int i = currentWord; i < first; i++) {
-        resultingWords.append(calculateBetween(wordIndicies, i, propertyName));
+        resultingWords.append(calculateBetween(wordIndices, i, propertyName));
         final String propertyWord = propertyWords[i];
         appendWord(resultingWords, propertyWord);
       }
-      resultingWords.append(calculateBetween(wordIndicies, first, propertyName));
+      resultingWords.append(calculateBetween(wordIndices, first, propertyName));
       appendWord(resultingWords, entry.getValue());
       currentWord = last + 1;
     }
     for (; currentWord < propertyWords.length; currentWord++) {
-      resultingWords.append(calculateBetween(wordIndicies, currentWord, propertyName));
+      resultingWords.append(calculateBetween(wordIndices, currentWord, propertyName));
       appendWord(resultingWords, propertyWords[currentWord]);
     }
-    resultingWords.append(calculateBetween(wordIndicies, propertyWords.length, propertyName));
+    resultingWords.append(calculateBetween(wordIndices, propertyWords.length, propertyName));
     if (resultingWords.isEmpty()) return propertyName;
     return decapitalizeProbably(resultingWords.toString(), propertyName);
   }
@@ -131,9 +131,9 @@ public final class NameSuggester {
     resultingWords.append(propertyWord);
   }
 
-  private static String calculateBetween(final Pair<int[], int[]> wordIndicies, int i, String propertyName) {
-    final int thisWordStart = wordIndicies.getFirst()[i];
-    final int prevWordEnd = wordIndicies.getSecond()[i];
+  private static String calculateBetween(final Pair<int[], int[]> wordIndices, int i, String propertyName) {
+    final int thisWordStart = wordIndices.getFirst()[i];
+    final int prevWordEnd = wordIndices.getSecond()[i];
     return propertyName.substring(prevWordEnd + 1, thisWordStart);
   }
 
