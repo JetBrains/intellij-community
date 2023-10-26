@@ -299,7 +299,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
             if (editor == null) {
               return;
             }
-            myNewRunToCursorListener.reshowInlayRunToCursor(editor);
+            reshowInlayToolbar(editor);
           });
         }
       });
