@@ -1336,6 +1336,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/idea335243.kt");
         }
 
+        @TestMetadata("idea335263.kt")
+        public void testIdea335263() throws Exception {
+            runTest("testData/stepping/custom/idea335263.kt");
+        }
+
         @TestMetadata("initBlocks.kt")
         public void testInitBlocks() throws Exception {
             runTest("testData/stepping/custom/initBlocks.kt");

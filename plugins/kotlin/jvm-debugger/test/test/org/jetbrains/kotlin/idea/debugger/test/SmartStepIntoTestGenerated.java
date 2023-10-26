@@ -98,6 +98,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/idea335207.kt");
     }
 
+    @TestMetadata("idea335263.kt")
+    public void testIdea335263() throws Exception {
+        runTest("testData/smartStepInto/idea335263.kt");
+    }
+
     @TestMetadata("if.kt")
     public void testIf() throws Exception {
         runTest("testData/smartStepInto/if.kt");
