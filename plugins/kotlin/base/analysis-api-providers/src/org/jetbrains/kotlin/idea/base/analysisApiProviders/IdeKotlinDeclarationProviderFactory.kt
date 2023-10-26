@@ -15,6 +15,7 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndex.ValueProcessor
 import org.jetbrains.kotlin.analysis.project.structure.KtBuiltinsModule
+import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
@@ -129,14 +130,16 @@ private class IdeKotlinDeclarationProvider(
         return KotlinFileFacadeClassByPackageIndex[packageFqName.asString(), project, scope]
     }
 
-    override fun computePackageSetWithTopLevelCallableDeclarations(): Set<String>? =
-        when (contextualModule) {
-            is KtSourceModuleByModuleInfo -> computeSourceModulePackageSet(contextualModule)
-            is SdkKtModuleByModuleInfo -> computeSdkModulePackageSet(contextualModule)
-            is KtLibraryModuleByModuleInfo -> computeLibraryModulePackageSet(contextualModule)
-            is KtBuiltinsModule -> StandardClassIds.builtInsPackages.mapTo(mutableSetOf()) { it.asString() }
-            else -> null
-        }
+    override fun computePackageSetWithTopLevelCallableDeclarations(): Set<String>? = computePackageNames(contextualModule)
+
+    private fun computePackageNames(module: KtModule?): Set<String>? = when (module) {
+        is KtSourceModuleByModuleInfo -> computeSourceModulePackageSet(module)
+        is SdkKtModuleByModuleInfo -> computeSdkModulePackageSet(module)
+        is KtLibraryModuleByModuleInfo -> computeLibraryModulePackageSet(module)
+        is KtLibrarySourceModule -> computePackageNames(module.binaryLibrary)
+        is KtBuiltinsModule -> StandardClassIds.builtInsPackages.mapTo(mutableSetOf()) { it.asString() }
+        else -> null
+    }
 
     private fun computeSourceModulePackageSet(module: KtSourceModuleByModuleInfo): Set<String>? = null // KTIJ-27450
 
