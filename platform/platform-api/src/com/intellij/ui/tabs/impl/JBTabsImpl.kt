@@ -3233,7 +3233,15 @@ private class AccessibleTabPage(private val parent: JBTabsImpl,
     return states
   }
 
-  override fun getAccessibleIndexInParent(): Int = tabIndex
+  override fun getAccessibleIndexInParent(): Int {
+    for (i in 0 until parent.accessibleContext.accessibleChildrenCount) {
+      if (parent.accessibleContext.getAccessibleChild(i) == this) {
+        return i
+      }
+    }
+
+    return tabIndex
+  }
 
   override fun getAccessibleChildrenCount(): Int {
     // Expose the tab content only if it is active, as the content for
