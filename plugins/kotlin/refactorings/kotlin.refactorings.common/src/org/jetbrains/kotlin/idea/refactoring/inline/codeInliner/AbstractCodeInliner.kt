@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
@@ -131,7 +132,9 @@ abstract class AbstractCodeInliner<TCallElement : KtElement>(
         })
 
         callExpressions.forEach {
-            moveLambdaOutsideParentheses(it)
+            if (canMoveLambdaOutsideParentheses(it)) {
+                it.moveFunctionLiteralOutsideParentheses()
+            }
         }
     }
 
@@ -141,7 +144,7 @@ abstract class AbstractCodeInliner<TCallElement : KtElement>(
         }
     }
 
-    protected abstract fun moveLambdaOutsideParentheses(it: KtCallExpression)
+    protected abstract fun canMoveLambdaOutsideParentheses(expr: KtCallExpression): Boolean
     protected abstract fun removeRedundantUnitExpressions(pointer: SmartPsiElementPointer<KtElement>)
     protected abstract fun removeRedundantLambdasAndAnonymousFunctions(pointer: SmartPsiElementPointer<KtElement>)
     protected abstract fun introduceNamedArguments(pointer: SmartPsiElementPointer<KtElement>)

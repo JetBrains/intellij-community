@@ -5,6 +5,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
+import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeInliner
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.ExpressionReplacementPerformer
@@ -99,8 +100,8 @@ class CodeInliner<TCallElement : KtElement>(
         }
     }
 
-    override fun moveLambdaOutsideParentheses(it: KtCallExpression) {
-        //TODO https://youtrack.jetbrains.com/issue/KTIJ-26914
+    override fun canMoveLambdaOutsideParentheses(expr: KtCallExpression): Boolean {
+        return expr.canMoveLambdaOutsideParentheses(skipComplexCalls = false)
     }
 
     override fun removeRedundantUnitExpressions(pointer: SmartPsiElementPointer<KtElement>) {

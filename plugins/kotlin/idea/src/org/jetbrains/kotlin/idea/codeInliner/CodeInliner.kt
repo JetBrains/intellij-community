@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineAnonymousFunctionProcessor
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.*
-import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -650,10 +649,8 @@ class CodeInliner<TCallElement : KtElement>(
         }
     }
 
-    override fun moveLambdaOutsideParentheses(it: KtCallExpression) {
-        if (it.canMoveLambdaOutsideParentheses(skipComplexCalls = false)) {
-            it.moveFunctionLiteralOutsideParentheses()
-        }
+    override fun canMoveLambdaOutsideParentheses(expr: KtCallExpression): Boolean {
+        return expr.canMoveLambdaOutsideParentheses(skipComplexCalls = false)
     }
 
     companion object {
