@@ -261,7 +261,8 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     isHeadless = true;
   }
 
-  void setDataContext(@NotNull DataContext dataContext) {
+  @ApiStatus.Internal
+  public void setDataContext(@NotNull DataContext dataContext) {
     myDataContext = CustomizedDataContext.create(IdeUiService.getInstance().createAsyncDataContext(dataContext), dataId -> {
       if (PlatformCoreDataKeys.MODULE.is(dataId)) {
         Module module = null;
