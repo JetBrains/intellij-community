@@ -67,8 +67,9 @@ public final class CodeFormatterFacade {
     assert psiElement != null;
     final PsiFile file = psiElement.getContainingFile();
     final Document document = file.getViewProvider().getDocument();
+    final boolean delegateToTopLevel = shouldDelegateToTopLevel(document, file);
 
-    PsiElement elementToFormat = document instanceof DocumentWindow ? InjectedLanguageManager
+    PsiElement elementToFormat = delegateToTopLevel ? InjectedLanguageManager
           .getInstance(file.getProject()).getTopLevelFile(file) : psiElement;
     final PsiFile fileToFormat = elementToFormat.getContainingFile();
 
@@ -102,8 +103,8 @@ public final class CodeFormatterFacade {
         }
 
         TextRange range = preprocess(codeFormattingData, element, TextRange.create(startOffset, endOffset));
-        if (document instanceof DocumentWindow documentWindow) {
-          range = documentWindow.injectedToHost(range);
+        if (delegateToTopLevel) {
+          range = ((DocumentWindow)document).injectedToHost(range);
         }
 
         final FormattingModel model = CoreFormatterUtil.buildModel(builder, elementToFormat, range, mySettings, FormattingMode.REFORMAT);
@@ -148,7 +149,8 @@ public final class CodeFormatterFacade {
     final Project project = file.getProject();
     Document document = file.getViewProvider().getDocument();
     final List<FormatTextRange> textRanges = ranges.getRanges();
-    if (document instanceof DocumentWindow documentWindow && shouldDelegateToTopLevel(file)) {
+    if (shouldDelegateToTopLevel(document, file)) {
+      DocumentWindow documentWindow = (DocumentWindow) document;
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       for (FormatTextRange range : textRanges) {
         range.setTextRange(documentWindow.injectedToHost(range.getTextRange()));
@@ -368,13 +370,17 @@ public final class CodeFormatterFacade {
   }
 
 
-  static boolean shouldDelegateToTopLevel(@NotNull PsiFile file) {
+  private static boolean shouldDelegateToTopLevel(@NotNull PsiFile file) {
     for (var provider: InjectedFormattingOptionsProvider.EP_NAME.getExtensions()) {
       var result = provider.shouldDelegateToTopLevel(file);
       if (result == null) continue;
       return result;
     }
     return true;
+  }
+
+  static boolean shouldDelegateToTopLevel(Document document, @NotNull PsiFile file) {
+    return document instanceof DocumentWindow && shouldDelegateToTopLevel(file);
   }
 }
 
