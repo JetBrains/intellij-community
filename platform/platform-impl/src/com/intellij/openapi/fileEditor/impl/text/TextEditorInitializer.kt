@@ -15,5 +15,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * Extension maybe implemented only by a core plugin.
  */
 interface TextEditorInitializer {
-  suspend fun initializeEditor(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx)
+  suspend fun initializeEditor(
+    project: Project,
+    file: VirtualFile,
+    document: Document,
+    editorSupplier: suspend () -> EditorEx,
+    highlighterReady: suspend () -> Unit,
+  )
 }

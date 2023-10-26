@@ -61,7 +61,11 @@ private fun getCurrentModificationStamp(file: PsiFile): Long {
 }
 
 private class CodeVisionTextEditorInitializer : TextEditorInitializer {
-  override suspend fun initializeEditor(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
+  override suspend fun initializeEditor(project: Project,
+                                        file: VirtualFile,
+                                        document: Document,
+                                        editorSupplier: suspend () -> EditorEx,
+                                        highlighterReady: suspend () -> Unit) {
     if (!isCodeVisionEnabled) {
       return
     }
