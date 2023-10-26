@@ -50,7 +50,6 @@ import static com.intellij.java.JavaBundle.message;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance(ConstantValueInspection.class);
   public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS;
   public boolean IGNORE_ASSERT_STATEMENTS;
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;
@@ -102,8 +101,11 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
       public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (condition != null && condition.textMatches(PsiKeyword.FALSE)) {
-          holder.registerProblem(condition, JavaAnalysisBundle.message("dataflow.message.constant.no.ref", 0),
-                                 LocalQuickFix.notNullElements(createSimplifyBooleanExpressionFix(condition, false)));
+          LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, false);
+          if (fix != null) {
+            holder.registerProblem(condition, JavaAnalysisBundle.message("dataflow.message.constant.no.ref", 0),
+                                   LocalQuickFix.notNullElements(fix));
+          }
         }
       }
     };
