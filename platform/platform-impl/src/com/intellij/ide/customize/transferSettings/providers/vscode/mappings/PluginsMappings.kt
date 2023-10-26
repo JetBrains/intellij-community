@@ -1,25 +1,31 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vscode.mappings
 
-import com.intellij.ide.customize.transferSettings.TransferableIdeId
 import com.intellij.ide.customize.transferSettings.db.KnownPlugins
 import com.intellij.ide.customize.transferSettings.models.FeatureInfo
 import com.intellij.openapi.extensions.ExtensionPointName
 
 /**
- * Allows to register plugins of third-party products for importing.
+ * Allows to register plugins of third-party products for importing from VSCode.
  */
-interface ThirdPartyPluginMapping {
+interface VSCodePluginMapping {
 
   companion object {
-    val EP_NAME: ExtensionPointName<ThirdPartyPluginMapping> = ExtensionPointName("com.intellij.transferSettings.pluginMapping")
+    val EP_NAME: ExtensionPointName<VSCodePluginMapping> = ExtensionPointName("com.intellij.transferSettings.vscode.pluginMapping")
   }
 
-  fun mapPlugin(externalProduct: TransferableIdeId, pluginId: String): FeatureInfo?
+  fun mapPlugin(pluginId: String): FeatureInfo?
+}
+
+open class VSCodePluginMappingBase(private val map: Map<String, FeatureInfo>) : VSCodePluginMapping {
+
+  override fun mapPlugin(pluginId: String): FeatureInfo? {
+    return map[pluginId]
+  }
 }
 
 @Suppress("SpellCheckingInspection")
-private val mainPluginMap = mapOf(
+private val commonPluginMap = mapOf(
   // Plugins
   "emilast.logfilehighlighter" to KnownPlugins.Ideolog,
   "xinyayang0506.log-analysis" to KnownPlugins.Ideolog,
@@ -33,14 +39,6 @@ private val mainPluginMap = mapOf(
   "mhutchie.git-graph" to KnownPlugins.Git,
   "ritwickdey.liveserver" to KnownPlugins.WebSupport,
   "ms-azuretools.vscode-docker" to KnownPlugins.Docker,
-  "vscjava.vscode-java-pack" to KnownPlugins.Java,
-  "redhat.java" to KnownPlugins.Java,
-  "vscjava.vscode-maven" to KnownPlugins.Maven,
-  "vscjava.vscode-gradle" to KnownPlugins.Gradle,
-  "vscjava.vscode-java-debug" to KnownPlugins.Debugger,
-  "donjayamanne.javadebugger" to KnownPlugins.Debugger,
-  "mathiasfrohlich.Kotlin" to KnownPlugins.Kotlin,
-  "fwcd.kotlin" to KnownPlugins.Kotlin,
   "ms-vscode-remote.remote-wsl" to KnownPlugins.WindowsSubsystemLinux,
   "bungcip.better-toml" to KnownPlugins.Toml,
   "Vue.volar" to KnownPlugins.Vue,
@@ -52,6 +50,35 @@ private val mainPluginMap = mapOf(
   "ms-ceintl.vscode-language-pack-ko" to KnownPlugins.JapaneseLanguage,
 
   // New mappings
+  "streetsidesoftware.code-spell-checker" to KnownPlugins.SpellChecker,
+  "formulahendry.code-runner" to KnownPlugins.RunConfigurations,
+  "wayou.vscode-todo-highlight" to KnownPlugins.LanguageSupport,
+  "editorconfig.editorconfig" to KnownPlugins.editorconfig,
+  "ms-vscode.vscode-typescript-tslint-plugin" to KnownPlugins.TSLint,
+  "github.vscode-pull-request-github" to KnownPlugins.Git,
+  "mtxr.sqltools" to KnownPlugins.DatabaseSupport,
+  "Dart-Code.dart-code" to KnownPlugins.Dart,
+  "Dart-Code.flutter" to KnownPlugins.Flutter,
+  "esbenp.prettier-vscode" to KnownPlugins.Prettier,
+  "ms-kubernetes-tools.vscode-kubernetes-tools" to KnownPlugins.Kubernetes,
+)
+
+@Suppress("SpellCheckingInspection")
+val JvmFeatures = mapOf(
+  "vscjava.vscode-java-pack" to KnownPlugins.Java,
+  "redhat.java" to KnownPlugins.Java,
+  "vscjava.vscode-maven" to KnownPlugins.Maven,
+  "vscjava.vscode-gradle" to KnownPlugins.Gradle,
+  "vscjava.vscode-java-debug" to KnownPlugins.Debugger,
+  "donjayamanne.javadebugger" to KnownPlugins.Debugger,
+  "mathiasfrohlich.Kotlin" to KnownPlugins.Kotlin,
+  "fwcd.kotlin" to KnownPlugins.Kotlin,
+  "scala-lang.scala" to KnownPlugins.Scala,
+  "vscjava.vscode-lombok" to KnownPlugins.Lombok,
+)
+
+@Suppress("SpellCheckingInspection", "unused") // used in Rider
+val DotNetFeatures = mapOf(
   "ms-dotnettools.csharp" to KnownPlugins.CSharp,
   "jchannon.csharpextensions" to KnownPlugins.CSharp,
   "ms-dotnettools.csdevkit" to KnownPlugins.CSharp,
@@ -64,40 +91,18 @@ private val mainPluginMap = mapOf(
   "kleber-swf.unity-code-snippets" to KnownPlugins.Unity,
   "jorgeserrano.vscode-csharp-snippets" to KnownPlugins.LiveTemplates,
   "fudge.auto-using" to KnownPlugins.CSharp,
-  "streetsidesoftware.code-spell-checker" to KnownPlugins.SpellChecker,
   "k--kato.docomment" to KnownPlugins.CSharp,
-  "formulahendry.code-runner" to KnownPlugins.RunConfigurations,
-  "wayou.vscode-todo-highlight" to KnownPlugins.LanguageSupport,
   "icsharpcode.ilspy-vscode" to KnownPlugins.DotNetDecompiler,
-  "editorconfig.editorconfig" to KnownPlugins.editorconfig,
-  "ms-vscode.vscode-typescript-tslint-plugin" to KnownPlugins.TSLint,
-  "github.vscode-pull-request-github" to KnownPlugins.Git,
-  "mtxr.sqltools" to KnownPlugins.DatabaseSupport,
-  "scala-lang.scala" to KnownPlugins.Scala,
-  "Dart-Code.dart-code" to KnownPlugins.Dart,
-  "Dart-Code.flutter" to KnownPlugins.Flutter,
-  "vscjava.vscode-lombok" to KnownPlugins.Lombok,
-  "esbenp.prettier-vscode" to KnownPlugins.Prettier,
-  "ms-kubernetes-tools.vscode-kubernetes-tools" to KnownPlugins.Kubernetes,
 )
 
-class MainPluginMapping : ThirdPartyPluginMapping {
-
-  override fun mapPlugin(externalProduct: TransferableIdeId, pluginId: String): FeatureInfo? {
-    if (externalProduct != TransferableIdeId.VSCode) {
-      return null
-    }
-
-    return mainPluginMap[pluginId]
-  }
-}
+class CommonPluginMapping : VSCodePluginMappingBase(commonPluginMap)
 
 object PluginsMappings {
 
   fun pluginIdMap(pluginId: String): FeatureInfo? {
 
-    for (mapping in ThirdPartyPluginMapping.EP_NAME.extensionList) {
-      val feature = mapping.mapPlugin(TransferableIdeId.VSCode, pluginId)
+    for (mapping in VSCodePluginMapping.EP_NAME.extensionList) {
+      val feature = mapping.mapPlugin(pluginId)
       if (feature != null) return feature
     }
 

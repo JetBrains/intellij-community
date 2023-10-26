@@ -538,8 +538,8 @@
     <extensionPoint name="notificationRouter" interface="com.intellij.notification.NotificationRouter" dynamic="true"/>
 
     <!-- Settings Transfer -->
-    <extensionPoint name="transferSettings.pluginMapping"
-                    interface="com.intellij.ide.customize.transferSettings.providers.vscode.mappings.ThirdPartyPluginMapping"
+    <extensionPoint name="transferSettings.vscode.pluginMapping"
+                    interface="com.intellij.ide.customize.transferSettings.providers.vscode.mappings.VSCodePluginMapping"
                     dynamic="true" />
   </extensionPoints>
 </idea-plugin>

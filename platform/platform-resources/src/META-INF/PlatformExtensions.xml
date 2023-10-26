@@ -1725,8 +1725,8 @@
     <registryKey key="code.toolbar.debugger.actions" defaultValue="true" description="Add debugger actions into floating toolbar."/>
 
     <!-- Settings Transfer -->
-    <transferSettings.pluginMapping id="MainPluginMapping"
-                                    implementation="com.intellij.ide.customize.transferSettings.providers.vscode.mappings.MainPluginMapping" />
+    <transferSettings.vscode.pluginMapping id="CommonPluginMapping"
+                                           implementation="com.intellij.ide.customize.transferSettings.providers.vscode.mappings.CommonPluginMapping"/>
   </extensions>
 
   <applicationListeners>
