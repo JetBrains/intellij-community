@@ -1,35 +1,20 @@
 package com.intellij.execution.multilaunch.design.actions
 
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.ui.awt.RelativePoint
-import com.intellij.execution.multilaunch.execution.executables.Executable
-import com.intellij.execution.multilaunch.design.ExecutableRow
-import com.intellij.execution.multilaunch.design.popups.ExecutableSelectionPopupFactory
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 
 class EditExecutableAction : ManageExecutableAction(ActionsBundle.message("action.multilaunch.EditExecutableAction.text")) {
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    val configuration = e.configuration ?: return
-    val viewModel = e.executablesViewModel ?: return
-    val popupBounds = e.popupBounds ?: return
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
     val editableRow = e.editableRow ?: return
+    e.presentation.isEnabledAndVisible = editableRow.executable?.supportsEditing ?: false
+  }
 
-    fun handleChosen(executables: List<Executable?>) {
-      executables.filterNotNull().forEach { executable ->
-        val newRow = ExecutableRow(executable, editableRow.condition, editableRow.disableDebugging)
-        viewModel.replaceRow(editableRow, newRow)
-      }
-    }
-
-    val existingExecutables = viewModel.rows.mapNotNull { it?.executable }
-    ExecutableSelectionPopupFactory
-      .getInstance(project)
-      .createPopup(configuration, existingExecutables, false, ::handleChosen)
-      .apply {
-        setMinimumSize(popupBounds.size)
-        show(RelativePoint(popupBounds.location))
-      }
+  override fun actionPerformed(e: AnActionEvent) {
+    val editableRow = e.editableRow ?: return
+    editableRow.executable?.performEdit()
   }
 }
 
