@@ -16,7 +16,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectGenerator
@@ -72,8 +71,6 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
   override fun createBasePanel(): JPanel {
     if (myProjectGenerator !is PythonProjectGenerator<*>) return super.createBasePanel()
 
-    myLocationField = TextFieldWithBrowseButton()
-
     val nextProjectName = myProjectDirectory.get()
     projectName.set(nextProjectName.nameWithoutExtension)
     projectLocation.set(nextProjectName.parent)
@@ -85,9 +82,10 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
           .component
       }
       row(message("new.project.location")) {
-        textFieldWithBrowseButton(fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
+        myLocationField = textFieldWithBrowseButton(fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
           .bindText(projectLocation)
           .align(Align.FILL)
+          .component
       }
       row("") {
         comment("", maxLineLength = 60).bindText(locationHint)
