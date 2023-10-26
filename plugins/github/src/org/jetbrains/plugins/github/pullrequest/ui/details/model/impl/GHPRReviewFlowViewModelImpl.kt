@@ -99,15 +99,15 @@ class GHPRReviewFlowViewModelImpl internal constructor(
                                              !securityService.isMergeForbiddenForProject()
 
   override val isMergeAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
-    mergeabilityState?.canBeMerged == true && securityService.isMergeAllowed()
+    mergeabilityState?.isRestricted == false && mergeabilityState.canBeMerged && securityService.isMergeAllowed()
   }
 
   override val isRebaseAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
-    mergeabilityState?.canBeRebased == true && securityService.isRebaseMergeAllowed()
+    mergeabilityState?.isRestricted == false && mergeabilityState.canBeRebased && securityService.isRebaseMergeAllowed()
   }
 
   override val isSquashMergeAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
-    mergeabilityState?.canBeMerged == true && securityService.isSquashMergeAllowed()
+    mergeabilityState?.isRestricted == false && mergeabilityState.canBeMerged && securityService.isSquashMergeAllowed()
   }
 
   override fun mergeReview() = runAction {
