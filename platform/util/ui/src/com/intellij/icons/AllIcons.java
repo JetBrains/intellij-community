@@ -546,7 +546,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Tree = load("general/tree.svg", 699730744, 0);
     /** 16x16 */ public static final @NotNull Icon TreeHovered = load("general/treeHovered.svg", -805484505, 0);
     /** 16x16 */ public static final @NotNull Icon TreeSelected = load("general/treeSelected.svg", -1128936978, 0);
-    /** 32x16 */ public static final @NotNull Icon TrialBadge = load("general/trialBadge.svg", -754123725, 0);
+    /** 32x16 */ public static final @NotNull Icon TrialBadge = load("general/trialBadge.svg", 1116872237, 0);
     /** 16x16 */ public static final @NotNull Icon User = load("general/user.svg", 100112941, 0);
     /** 16x16 */ public static final @NotNull Icon Warning = load("general/warning.svg", 748587837, 2);
     /** 16x16 */ public static final @NotNull Icon WarningDecorator = load("general/warningDecorator.svg", 382605295, 2);
