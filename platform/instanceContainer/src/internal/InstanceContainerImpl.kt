@@ -98,6 +98,8 @@ class InstanceContainerImpl(
       holder = DynamicInstanceHolder(scopeHolder.containerScope, initializer) // TODO intersect
       state.put(keyClass.name, holder)
     }
+    // the following can only execute in case `holder` was initialized and committed into `state`
+    dynamicInstanceSupport!!.dynamicInstanceRegistered(holder)
     return holder
   }
 
@@ -239,11 +241,11 @@ class InstanceContainerImpl(
     return existingHolder
   }
 
-  override fun unregister(keyClassName: String): InstanceHolder? {
+  override fun unregister(keyClassName: String, unregisterDynamic: Boolean): InstanceHolder? {
     lateinit var existingHolder: InstanceHolder
     updateState { state: InstanceHolders ->
       existingHolder = state[keyClassName]?.takeUnless {
-        it is DynamicInstanceHolder
+        it is DynamicInstanceHolder && !unregisterDynamic
       } ?: return null
       state.remove(keyClassName)
     }

@@ -48,5 +48,5 @@ sealed interface MutableInstanceContainer {
    * @return holder of registered instance (for cleaning it up),
    * or `null` if no instance was registered
    */
-  fun unregister(keyClassName: String): InstanceHolder?
+  fun unregister(keyClassName: String, unregisterDynamic: Boolean = true): InstanceHolder?
 }

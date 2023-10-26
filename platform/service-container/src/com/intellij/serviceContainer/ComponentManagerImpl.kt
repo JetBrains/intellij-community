@@ -35,6 +35,8 @@ import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.namedChildScope
 import com.intellij.util.runSuppressing
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -202,6 +204,7 @@ abstract class ComponentManagerImpl(
     dynamicInstanceSupport = if (isLightServiceSupported) LightServiceInstanceSupport(
       componentManager = this,
       supportedSignatures = supportedSignaturesOfLightServiceConstructors(),
+      onDynamicInstanceRegistration = ::registerDynamicInstanceForUnloading
     )
     else null,
     ordered = false,
@@ -216,7 +219,14 @@ abstract class ComponentManagerImpl(
     ordered = true,
   )
 
-  private val pluginServices = ConcurrentHashMap<IdeaPluginDescriptor, UnregisterHandle>()
+  private val pluginServicesStore = PluginServicesStore()
+
+  private fun registerDynamicInstanceForUnloading(instanceHolder: InstanceHolder) {
+    val pluginDescriptor = (instanceHolder.instanceClass().classLoader as? PluginAwareClassLoader)?.pluginDescriptor
+    if (pluginDescriptor is IdeaPluginDescriptor) {
+      pluginServicesStore.addDynamicService(pluginDescriptor, instanceHolder)
+    }
+  }
 
   @Suppress("LeakingThis")
   internal val dependencyResolver = ComponentManagerResolver(this)
@@ -911,7 +921,7 @@ abstract class ComponentManagerImpl(
     }
     val handle: UnregisterHandle? = registrar.complete()
     if (handle != null) {
-      pluginServices.put(pluginDescriptor, handle)
+      pluginServicesStore.putServicesUnregisterHandle(pluginDescriptor, handle)
     }
   }
 
@@ -1508,19 +1518,23 @@ abstract class ComponentManagerImpl(
 
   private fun unloadServices2(module: IdeaPluginDescriptor) {
     val debugString = debugString(true)
-    val handle = pluginServices.get(module)
-    if (handle == null) {
+    val handle = pluginServicesStore.removeServicesUnregisterHandle(module)
+    val dynamicInstances = pluginServicesStore.removeDynamicServices(module)
+    if (handle == null && dynamicInstances.isEmpty()) {
       LOG.debug { "$debugString : nothing to unload ${module.pluginId}:${module.descriptorPath}" }
       return
     }
-    val holders = handle.unregister()
-    if (holders.isEmpty()) {
+    val holders = handle?.unregister() ?: emptyMap()
+    if (holders.isEmpty() && dynamicInstances.isEmpty()) {
       // warn because the handle should not be in the map in the first place
       LOG.warn("$debugString : nothing unloaded for ${module.pluginId}:${module.descriptorPath}")
       return
     }
+    for (holder in dynamicInstances) {
+      serviceContainer.unregister(holder.instanceClassName(), unregisterDynamic = true)
+    }
     val store = componentStore
-    for (holder in holders.values) {
+    for (holder in holders.values + dynamicInstances) {
       val instance = holder.tryGetInstance()
                      ?: continue // TODO race! this will skip instances which were requested, but not yet completed initialization
       if (instance is Disposable) {
@@ -2109,6 +2123,30 @@ abstract class ComponentManagerImpl(
 
   private fun intersectionCoroutineScope(pluginScope: CoroutineScope): CoroutineScope {
     return scopeHolder.intersectScope(pluginScope)
+  }
+}
+
+private class PluginServicesStore {
+  private val regularServices = ConcurrentHashMap<IdeaPluginDescriptor, UnregisterHandle>()
+  private val dynamicServices = ConcurrentHashMap<IdeaPluginDescriptor, PersistentList<InstanceHolder>>()
+
+  fun putServicesUnregisterHandle(descriptor: IdeaPluginDescriptor, handle: UnregisterHandle) {
+    val prev = regularServices.put(descriptor, handle)
+    assert(prev == null) {
+      "plugin ${descriptor.name}:${descriptor.descriptorPath} was not unloaded before subsequent loading"
+    }
+  }
+
+  fun removeServicesUnregisterHandle(descriptor: IdeaPluginDescriptor): UnregisterHandle? = regularServices.remove(descriptor)
+
+  fun addDynamicService(descriptor: IdeaPluginDescriptor, holder: InstanceHolder) {
+    dynamicServices.compute(descriptor) { _, instances ->
+      (instances ?: persistentListOf()).add(holder)
+    }
+  }
+
+  fun removeDynamicServices(descriptor: IdeaPluginDescriptor): List<InstanceHolder> {
+    return dynamicServices.remove(descriptor) ?: emptyList()
   }
 }
 
