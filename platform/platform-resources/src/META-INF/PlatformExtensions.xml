@@ -1710,10 +1710,6 @@
                  defaultValue="false"
                  description="Import only projects that contain cargo.toml file"
     />
-    <registryKey key="transferSettings.vscode.showRust"
-                 defaultValue="false"
-                 description="Suggest rust"
-    />
 
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.BuildQuickAction"
                         listGroupID="MainToolbarQuickActions.Run"/>
@@ -1727,6 +1723,10 @@
     <ideEventQueueDispatcher implementation="com.intellij.ide.ui.laf.LaFMnemonicDispatcher"/>
 
     <registryKey key="code.toolbar.debugger.actions" defaultValue="true" description="Add debugger actions into floating toolbar."/>
+
+    <!-- Settings Transfer -->
+    <transferSettings.pluginMapping id="MainPluginMapping"
+                                    implementation="com.intellij.ide.customize.transferSettings.providers.vscode.mappings.MainPluginMapping" />
   </extensions>
 
   <applicationListeners>

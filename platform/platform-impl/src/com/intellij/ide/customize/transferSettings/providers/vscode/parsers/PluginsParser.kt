@@ -76,7 +76,7 @@ class PluginsParser(private val settings: Settings) {
       settings.keymap = keymapPluginId
     }
     val pluginId = PluginsMappings.pluginIdMap(foreignPluginId) ?: return
-    val originalPluginName = root["displayName"]?.textValue() ?: PluginsMappings.originalPluginNameOverride(foreignPluginId)
+    val originalPluginName = root["displayName"]?.textValue()
 
     if (originalPluginName == null && (pluginId == KnownPlugins.DummyPlugin || pluginId == KnownPlugins.DummyBuiltInFeature)) {
       return
