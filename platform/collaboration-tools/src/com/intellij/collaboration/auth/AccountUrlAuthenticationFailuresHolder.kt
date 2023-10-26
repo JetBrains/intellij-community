@@ -2,8 +2,9 @@
 package com.intellij.collaboration.auth
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.util.awaitCancellationAndInvoke
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
@@ -15,14 +16,14 @@ class AccountUrlAuthenticationFailuresHolder<A : Account>(
   private val storeMap = ConcurrentHashMap<A, MutableSet<String>>()
 
   init {
-    cs.awaitCancellationAndInvoke {
+    cs.coroutineContext[Job]?.invokeOnCompletion {
       storeMap.clear()
     }
   }
 
   fun markFailed(account: A, url: String) {
     storeMap.computeIfAbsent(account) {
-      cs.launch {
+      cs.launch(CoroutineName("AccountUrlAuthenticationFailuresHolder token change listener")) {
         accountManager().getCredentialsFlow(account).first()
         storeMap.remove(account)
       }
