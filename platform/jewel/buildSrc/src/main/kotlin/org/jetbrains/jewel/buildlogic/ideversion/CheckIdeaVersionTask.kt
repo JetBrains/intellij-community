@@ -21,7 +21,16 @@ open class CheckIdeaVersionTask : DefaultTask() {
 
     init {
         group = "jewel"
+
+        val currentPlatformVersion = project.supportedIJVersion()
+        enabled = project.name.endsWith(getPlatformSuffix(currentPlatformVersion))
     }
+
+    private fun getPlatformSuffix(currentPlatformVersion: SupportedIJVersion) =
+        when (currentPlatformVersion) {
+            SupportedIJVersion.IJ_232 -> "232"
+            SupportedIJVersion.IJ_233 -> "233"
+        }
 
     @TaskAction
     fun generate() {
