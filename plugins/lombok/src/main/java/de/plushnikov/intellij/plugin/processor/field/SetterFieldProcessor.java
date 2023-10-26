@@ -124,7 +124,7 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
       .withContainingClass(psiClass)
       .withParameter(fieldName, psiFieldType)
       .withNavigationElement(psiField)
-      .withContract("mutates=\"this\"");
+      .withMutatesThisContract();
     if (StringUtil.isNotEmpty(methodModifier)) {
       methodBuilder.withModifier(methodModifier);
     }

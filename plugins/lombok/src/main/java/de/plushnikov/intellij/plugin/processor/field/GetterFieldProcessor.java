@@ -117,7 +117,7 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
       .withMethodReturnType(psiField.getType())
       .withContainingClass(psiClass)
       .withNavigationElement(psiField)
-      .withContract("pure = true");
+      .withPureContract();
     if (StringUtil.isNotEmpty(methodModifier)) {
       methodBuilder.withModifier(methodModifier);
     }
