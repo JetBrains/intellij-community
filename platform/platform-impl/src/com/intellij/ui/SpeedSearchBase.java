@@ -124,13 +124,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myComponent.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        if (!keepEvenWhenFocusLost() && !isGotItShown()) {
+        if (!keepEvenWhenFocusLost()) {
           manageSearchPopup(null);
         }
-      }
-
-      private boolean isGotItShown() {
-        return mySearchPopup != null && GotItTooltip.isCurrentlyShownFor(mySearchPopup.mySearchField);
       }
 
       @Override
