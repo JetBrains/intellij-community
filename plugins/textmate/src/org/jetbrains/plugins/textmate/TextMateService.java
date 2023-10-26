@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader;
+import org.jetbrains.plugins.textmate.bundles.TextMateFileNameMatcher;
 import org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings;
 import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
@@ -56,6 +57,9 @@ public abstract class TextMateService {
 
   @Nullable
   public abstract TextMateLanguageDescriptor getLanguageDescriptorByFileName(@NotNull CharSequence fileName);
+
+  @NotNull
+  public abstract Map<TextMateFileNameMatcher, CharSequence> getFileNameMatcherToScopeNameMapping();
 
   /**
    * @return custom highlighting colors defined inside bundles (not in themes).

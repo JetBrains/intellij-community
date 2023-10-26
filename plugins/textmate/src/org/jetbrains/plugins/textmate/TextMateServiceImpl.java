@@ -231,6 +231,12 @@ public final class TextMateServiceImpl extends TextMateService {
   }
 
   @Override
+  public @NotNull Map<TextMateFileNameMatcher, CharSequence> getFileNameMatcherToScopeNameMapping() {
+    ensureInitialized();
+    return Collections.unmodifiableMap(myExtensionMapping);
+  }
+
+  @Override
   public @Nullable TextMateBundleReader readBundle(@Nullable Path directory) {
     if (directory != null) {
       BundleType bundleType = BundleType.detectBundleType(directory);
