@@ -288,10 +288,10 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         }
 
         override fun setupProject(project: Project) {
-            super.setupProject(project)
             if (shouldAddOnboardingTips()) {
-                prepareTipsInEditor(project)
+                prepareOnboardingTips(project)
             }
+            super.setupProject(project)
         }
     }
 }

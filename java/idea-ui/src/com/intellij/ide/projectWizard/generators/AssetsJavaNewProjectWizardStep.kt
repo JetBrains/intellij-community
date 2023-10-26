@@ -10,6 +10,7 @@ import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.util.*
 
 @ApiStatus.Experimental
@@ -61,8 +62,12 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
     addFilesToOpen(sourcePath)
   }
 
-  fun prepareTipsInEditor(project: Project) {
-    prepareTipsInEditor(project, "SampleCode") { charSequence ->
+  @ScheduledForRemoval
+  @Deprecated("Use prepareOnboardingTips and it should be called before wizard project setup")
+  fun prepareTipsInEditor(project: Project) { }
+
+  fun prepareOnboardingTips(project: Project) {
+    prepareOnboardingTips(project, "SampleCode") { charSequence ->
       charSequence.indexOf("System.out.println").takeIf { it >= 0 }
     }
   }
