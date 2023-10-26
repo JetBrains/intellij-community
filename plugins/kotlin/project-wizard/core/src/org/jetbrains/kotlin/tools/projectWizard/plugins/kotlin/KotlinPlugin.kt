@@ -148,17 +148,16 @@ class KotlinPlugin(context: Context) : Plugin(context) {
             }
         }
 
-        val createResourceDirectories by booleanSetting("Generate Resource Folders", GenerationPhase.PROJECT_GENERATION) {
-            defaultValue = value(true)
-        }
-
         val createSourcesetDirectories by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             runAfter(createModules)
             withAction {
                 forEachModule { moduleIR ->
-                    moduleIR.sourcesets.mapSequenceIgnore { sourcesetIR ->
+                    // We do not create test or resource folders when creating a compact project
+                    moduleIR.sourcesets
+                        .filter { it.sourcesetType != SourcesetType.test || !StructurePlugin.useCompactProjectStructure.settingValue }
+                        .mapSequenceIgnore { sourcesetIR ->
                         sourcesetIR.sourcePaths.filter {
-                          it.key != SourcesetSourceType.RESOURCES || createResourceDirectories.settingValue
+                          it.key != SourcesetSourceType.RESOURCES || !StructurePlugin.useCompactProjectStructure.settingValue
                         }.values.mapSequence {
                             with(service<FileSystemWizardService>()) {
                                 createDirectory(it)
@@ -187,8 +186,7 @@ class KotlinPlugin(context: Context) : Plugin(context) {
     override val settings: List<PluginSetting<*, *>> =
         listOf(
             projectKind,
-            modules,
-            createResourceDirectories,
+            modules
         )
 
     override val pipelineTasks: List<PipelineTask> =

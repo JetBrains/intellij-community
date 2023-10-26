@@ -69,9 +69,7 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 sdk = sdk,
                 buildSystemType = BuildSystemType.Jps,
                 addSampleCode = false,
-                useCompactProjectStructure = useCompactProject,
-                createResourceDirectories = !useCompactProject,
-                filterTestSourcesets = useCompactProject
+                useCompactProjectStructure = useCompactProject
             )
         }
     }
