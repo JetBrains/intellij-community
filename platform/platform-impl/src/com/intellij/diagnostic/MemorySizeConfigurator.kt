@@ -11,7 +11,13 @@ import com.sun.management.OperatingSystemMXBean
 import java.lang.management.ManagementFactory
 import kotlin.math.max
 
+private const val DEFAULT_XMX = 2048  // must be the same as `VmOptionsGenerator.DEFAULT_XMX`
+private const val MAXIMUM_SUGGESTED_XMX = 2 * DEFAULT_XMX
+
 private class MemorySizeConfigurator : ProjectActivity {
+  @Suppress("SSBasedInspection")
+  private val LOG = Logger.getInstance(MemorySizeConfigurator::class.java)
+
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
@@ -28,7 +34,7 @@ private class MemorySizeConfigurator : ProjectActivity {
       return
     }
     if (currentXmx > DEFAULT_XMX) {
-      // Memory has already been adjusted by the user manually
+      // The user has already manually adjusted memory settings
       return
     }
 
@@ -54,19 +60,6 @@ private class MemorySizeConfigurator : ProjectActivity {
     }
     PropertiesComponent.getInstance().setValue("ide.memory.adjusted", true)
   }
-
-  @Suppress("CompanionObjectInExtension")
-  companion object {
-    val LOG = Logger.getInstance(MemorySizeConfigurator::class.java)
-
-    /** Must be the same as [org.jetbrains.intellij.build.impl.VmOptionsGenerator.DEFAULT_XMX]. */
-    const val DEFAULT_XMX = 2048
-    const val MAXIMUM_SUGGESTED_XMX = 4096
-
-    init {
-      require(MAXIMUM_SUGGESTED_XMX >= DEFAULT_XMX * 2)
-    }
-  }
 }
 
 // Allow overriding in other IDEs
@@ -76,6 +69,6 @@ open class MemorySizeConfiguratorService {
   }
 
   open fun getSuggestedMemorySize(totalPhysicalMemory: Int): Int =
-    if (MemorySizeConfigurator.DEFAULT_XMX > totalPhysicalMemory) 750.coerceAtMost(totalPhysicalMemory) // 750 is the old default
-    else (totalPhysicalMemory / 8).coerceIn(MemorySizeConfigurator.DEFAULT_XMX, MemorySizeConfigurator.MAXIMUM_SUGGESTED_XMX)
+    if (DEFAULT_XMX > totalPhysicalMemory) 750.coerceAtMost(totalPhysicalMemory) // 750 is the old default
+    else (totalPhysicalMemory / 8).coerceIn(DEFAULT_XMX, MAXIMUM_SUGGESTED_XMX)
 }
