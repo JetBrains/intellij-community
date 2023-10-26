@@ -15,21 +15,17 @@ import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.protocol.HttpContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -235,12 +231,8 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @Nullable
   @Override
   protected HttpRequestInterceptor createRequestInterceptor() {
-    return new HttpRequestInterceptor() {
-      @Override
-      public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
-        request.addHeader(TOKEN_HEADER, myPassword);
-        //request.addHeader("Accept", "application/json");
-      }
+    return (request, context) -> {
+      request.addHeader(TOKEN_HEADER, myPassword);
     };
   }
 
