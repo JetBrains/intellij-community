@@ -1,6 +1,5 @@
 package com.intellij.mermaid.preview
 
-import com.intellij.application.subscribe
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.mermaid.MermaidPlugin
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.application
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -49,8 +49,8 @@ internal class MermaidPreviewEditor(
         component.update(it)
       }
     }
-
-    LafManagerListener.TOPIC.subscribe(this, object : LafManagerListener {
+    val connection = application.messageBus.connect(this)
+    connection.subscribe(LafManagerListener.TOPIC, object: LafManagerListener {
       private var previousLaf: UIManager.LookAndFeelInfo? = LafManager.getInstance().currentLookAndFeel
 
       override fun lookAndFeelChanged(source: LafManager) {
