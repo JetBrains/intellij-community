@@ -19,8 +19,10 @@ abstract class Executable(
   open suspend fun cancel() {}
 
   open val beforeExecuteTasks: List<BeforeExecuteTask> = emptyList()
-
   open val supportsDebugging: Boolean = false
+  open val supportsEditing: Boolean = false
+
+  open fun performEdit() {}
 
   /**
    * May return null if executable is without configurable parameters.
