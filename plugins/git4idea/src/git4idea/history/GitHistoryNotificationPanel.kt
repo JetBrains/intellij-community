@@ -10,8 +10,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.LightColors
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
-import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
+import com.intellij.vcs.log.data.index.*
 import com.intellij.vcs.log.history.isNewHistoryEnabled
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -30,20 +29,14 @@ internal object GitHistoryNotificationPanel {
     if (!VcsLogSharedSettings.isIndexSwitchedOn(project)) return null
 
     val root = VcsLogUtil.getActualRoot(project, filePath) ?: return null
-    if (!VcsLogBigRepositoriesList.getInstance().isBig(root) && VcsLogData.isIndexSwitchedOnInRegistry()) {
+    if (!isIndexingPausedFor(root)&& VcsLogData.isIndexSwitchedOnInRegistry()) {
       return null
     }
 
     return EditorNotificationPanel(LightColors.YELLOW, EditorNotificationPanel.Status.Warning).apply {
       text = GitBundle.message("history.indexing.disabled.notification.text")
       createActionLabel(GitBundle.message("history.indexing.disabled.notification.resume.link")) {
-        VcsLogBigRepositoriesList.getInstance().removeRepository(root)
-        if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
-          VcsLogData.getIndexingRegistryValue().setValue(true)
-        }
-        else {
-          (VcsProjectLog.getInstance(project).dataManager?.index as? VcsLogModifiableIndex)?.scheduleIndex(false)
-        }
+        enableAndResumeIndexing(VcsProjectLog.getInstance(project).dataManager, listOf(root))
         this.parent?.remove(this)
       }
       add(InplaceButton(IconButton(GitBundle.message("history.indexing.disabled.notification.dismiss.link"),

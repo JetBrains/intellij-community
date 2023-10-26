@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.data.VcsLogData
 
-internal fun isIndexingPausedFor(root: VirtualFile): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(root)
+fun isIndexingPausedFor(root: VirtualFile): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(root)
 internal fun VcsLogIndex.isScheduledForIndexing(root: VirtualFile): Boolean = isIndexingEnabled(root) && !isIndexed(root)
 
 /**
@@ -75,10 +75,10 @@ internal fun VcsLogData.toggleIndexing() {
 /**
  * Enables indexing in the registry if it is disabled. Resumes indexing for the provided repositories if it was paused.
  */
-internal fun VcsLogData.enableAndResumeIndexing(roots: Collection<VirtualFile>) {
+fun enableAndResumeIndexing(data: VcsLogData?, roots: Collection<VirtualFile>) {
   if (enableIndexing(roots)) return
 
-  val index = index as? VcsLogModifiableIndex ?: return
+  val index = data?.index as? VcsLogModifiableIndex ?: return
   index.resumeIndexing(roots)
 }
 
