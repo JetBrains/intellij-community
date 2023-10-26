@@ -117,12 +117,12 @@ public final class NameSuggester {
       appendWord(resultingWords, propertyWords[currentWord]);
     }
     resultingWords.append(calculateBetween(wordIndicies, propertyWords.length, propertyName));
-    if (resultingWords.length() == 0) return propertyName;
+    if (resultingWords.isEmpty()) return propertyName;
     return decapitalizeProbably(resultingWords.toString(), propertyName);
   }
 
   private static void appendWord(StringBuffer resultingWords, String propertyWord) {
-    if (resultingWords.length() > 0) {
+    if (!resultingWords.isEmpty()) {
       final char lastChar = resultingWords.charAt(resultingWords.length() - 1);
       if (Character.isLetterOrDigit(lastChar)) {
         propertyWord = StringUtil.capitalize(propertyWord);
@@ -190,7 +190,7 @@ public final class NameSuggester {
 
   @NotNull
   private static String decapitalizeProbably(@NotNull String word, String originalWord) {
-    if (originalWord.length() == 0) return word;
+    if (originalWord.isEmpty()) return word;
     if (Character.isLowerCase(originalWord.charAt(0))) {
       return StringUtil.decapitalize(word);
     }
