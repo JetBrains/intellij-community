@@ -14,14 +14,8 @@ import git4idea.repo.GitRepository
 import org.jetbrains.concurrency.isPending
 
 internal class GitTemplateCommitMessageProvider : DelayedCommitMessageProvider {
-  companion object {
-    internal fun getCommitMessage(project: Project): String? {
-      return GitCommitTemplateTracker.getInstance(project).getTemplateContent()
-    }
-  }
-
   override fun getCommitMessage(forChangelist: LocalChangeList, project: Project): String? {
-    return getCommitMessage(project)
+    return getTemplateCommitMessage(project)
   }
 
   override fun init(project: Project, commitUi: CommitMessageUi, disposable: Disposable) {
@@ -40,7 +34,7 @@ private class GitCommitTemplateMessageUpdater(private val project: Project,
   private val vcsConfiguration get() = VcsConfiguration.getInstance(project)
 
   init {
-    previousTemplate = GitTemplateCommitMessageProvider.getCommitMessage(project)
+    previousTemplate = getTemplateCommitMessage(project)
   }
 
   override fun notifyCommitTemplateChanged(repository: GitRepository) {
@@ -61,7 +55,7 @@ private class GitCommitTemplateMessageUpdater(private val project: Project,
     if (project.isDisposed) return
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
 
-    val templateContent = GitTemplateCommitMessageProvider.getCommitMessage(project)
+    val templateContent = getTemplateCommitMessage(project)
     if (templateContent != null && previousTemplate != templateContent) {
       vcsConfiguration.saveCommitMessage(commitUi.text)
       commitUi.text = templateContent
@@ -70,3 +64,6 @@ private class GitCommitTemplateMessageUpdater(private val project: Project,
   }
 }
 
+internal fun getTemplateCommitMessage(project: Project): String? {
+  return GitCommitTemplateTracker.getInstance(project).getTemplateContent()
+}

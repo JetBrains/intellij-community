@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.wm.IdeFocusManager
-import git4idea.index.actions.GitStageDiffAction
+import git4idea.index.actions.updateStageDiffAvailability
 
 class GitStageEditorDiffPreview(
   private val changeViewProcessor: GitStageDiffPreview,
@@ -19,7 +19,7 @@ class GitStageEditorDiffPreview(
   }
 
   override fun updateDiffAction(event: AnActionEvent) {
-    GitStageDiffAction.updateAvailability(event)
+    updateStageDiffAvailability(event)
   }
 
   override fun getCurrentName(): String {

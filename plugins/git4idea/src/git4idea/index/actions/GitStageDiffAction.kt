@@ -27,7 +27,7 @@ class GitStageDiffAction : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null
 
   override fun update(e: AnActionEvent) {
-    updateAvailability(e)
+    updateStageDiffAvailability(e)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -41,19 +41,6 @@ class GitStageDiffAction : AnActionExtensionProvider {
         }
       }
     DiffManager.getInstance().showDiff(project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
-  }
-
-  companion object {
-    @JvmStatic
-    fun updateAvailability(e: AnActionEvent) {
-      val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
-      val changes = e.getData(VcsDataKeys.CHANGES)
-      e.presentation.isEnabled = e.project != null &&
-                                 (nodes.filter { it.kind != NodeKind.IGNORED }.isNotEmpty || !changes.isNullOrEmpty())
-      e.presentation.isVisible =
-        if (e.isFromActionToolbar && ExperimentalUI.isNewUI()) false
-        else e.presentation.isEnabled || e.isFromActionToolbar
-    }
   }
 }
 
@@ -75,4 +62,14 @@ class GitStageThreeSideDiffAction : DumbAwareAction() {
       .map { createThreeSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false) }
     DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
   }
+}
+
+fun updateStageDiffAvailability(e: AnActionEvent) {
+  val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
+  val changes = e.getData(VcsDataKeys.CHANGES)
+  e.presentation.isEnabled = e.project != null &&
+                             (nodes.filter { it.kind != NodeKind.IGNORED }.isNotEmpty || !changes.isNullOrEmpty())
+  e.presentation.isVisible =
+    if (e.isFromActionToolbar && ExperimentalUI.isNewUI()) false
+    else e.presentation.isEnabled || e.isFromActionToolbar
 }

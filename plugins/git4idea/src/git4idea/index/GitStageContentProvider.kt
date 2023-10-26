@@ -52,7 +52,7 @@ internal class GitStageContentProvider(private val project: Project) : ChangesVi
 
   companion object {
     @NonNls
-    val STAGING_AREA_TAB_NAME = "Staging Area"
+    const val STAGING_AREA_TAB_NAME = "Staging Area"
   }
 }
 
