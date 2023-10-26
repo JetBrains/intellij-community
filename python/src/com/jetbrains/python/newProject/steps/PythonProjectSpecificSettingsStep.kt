@@ -7,6 +7,7 @@ import com.intellij.ide.impl.ProjectUtil.getUserHomeProjectDir
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.joinSystemDependentPath
@@ -83,7 +84,7 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
           .component
       }
       row(message("new.project.location")) {
-        textFieldWithBrowseButton()
+        textFieldWithBrowseButton(fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
           .bindText(projectLocation)
           .align(Align.FILL)
       }
