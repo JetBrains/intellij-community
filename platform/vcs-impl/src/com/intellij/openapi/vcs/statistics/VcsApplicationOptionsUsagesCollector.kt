@@ -7,16 +7,15 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.vcs.commit.NonModalCommitUsagesCollector
 
-class VcsApplicationOptionsUsagesCollector : ApplicationUsagesCollector() {
+private val GROUP = EventLogGroup("vcs.application.configuration", 4)
+internal val NON_MODAL_COMMIT = GROUP.registerVarargEvent("non.modal.commit", EventFields.Enabled)
+
+internal class VcsApplicationOptionsUsagesCollector : ApplicationUsagesCollector() {
+
   override fun getGroup(): EventLogGroup {
     return GROUP
   }
 
   override fun getMetrics(): Set<MetricEvent> = NonModalCommitUsagesCollector.getMetrics()
 
-
-  companion object {
-    internal val GROUP = EventLogGroup("vcs.application.configuration", 4)
-    internal val NON_MODAL_COMMIT = GROUP.registerVarargEvent("non.modal.commit", EventFields.Enabled)
-  }
 }
