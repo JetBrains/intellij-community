@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
+import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy.Companion.defaultCallableShortenStrategy
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy.Companion.defaultClassShortenStrategy
@@ -30,11 +31,13 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
  */
 fun shortenReferences(
     element: KtElement,
+    shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
     classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
     callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? = shortenReferencesInRange(
     element,
     element.textRange,
+    shortenOptions,
     classShortenStrategy,
     callableShortenStrategy
 )
@@ -52,6 +55,7 @@ fun shortenReferences(
 fun shortenReferencesInRange(
     file: KtFile,
     range: TextRange = file.textRange,
+    shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
     classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
     callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? {
@@ -59,7 +63,7 @@ fun shortenReferencesInRange(
         @OptIn(KtAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             analyze(file) {
-                collectPossibleReferenceShortenings(file, range, classShortenStrategy, callableShortenStrategy)
+                collectPossibleReferenceShortenings(file, range, shortenOptions, classShortenStrategy, callableShortenStrategy)
             }
         }
     }
@@ -71,6 +75,7 @@ fun shortenReferencesInRange(
 fun shortenReferencesInRange(
     elementToReanalyze: KtElement,
     range: TextRange = elementToReanalyze.containingFile.originalFile.textRange,
+    shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
     classShortenStrategy: (KtClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
     callableShortenStrategy: (KtCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
 ): PsiElement? {
@@ -79,14 +84,14 @@ fun shortenReferencesInRange(
     val shortenCommand =
         if (!elementToReanalyze.isPhysical && originalFile.isPhysical) {
             analyzeInDependedAnalysisSession(originalFile, elementToReanalyze) {
-                collectPossibleReferenceShortenings(elementToReanalyze.containingKtFile, range, classShortenStrategy, callableShortenStrategy)
+                collectPossibleReferenceShortenings(elementToReanalyze.containingKtFile, range, shortenOptions, classShortenStrategy, callableShortenStrategy)
             }
         } else {
             allowAnalysisOnEdt {
                 @OptIn(KtAllowAnalysisFromWriteAction::class)
                 allowAnalysisFromWriteAction {
                     analyze(ktFile) {
-                        collectPossibleReferenceShortenings(ktFile, range, classShortenStrategy, callableShortenStrategy)
+                        collectPossibleReferenceShortenings(ktFile, range, shortenOptions, classShortenStrategy, callableShortenStrategy)
                     }
                 }
             }

@@ -31,13 +31,13 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
                 if (file.text.contains("// SHORTEN_AND_STAR_IMPORT")) {
                     collectPossibleReferenceShortenings(file,
                                                         selection,
-                                                        { ShortenStrategy.SHORTEN_AND_STAR_IMPORT },
-                                                        { ShortenStrategy.SHORTEN_AND_STAR_IMPORT })
+                                                        classShortenStrategy = { ShortenStrategy.SHORTEN_AND_STAR_IMPORT },
+                                                        callableShortenStrategy = { ShortenStrategy.SHORTEN_AND_STAR_IMPORT })
                 } else if (file.text.contains("// SHORTEN_AND_IMPORT")) {
                     collectPossibleReferenceShortenings(file,
                                                         selection,
-                                                        { ShortenStrategy.SHORTEN_AND_IMPORT },
-                                                        { ShortenStrategy.SHORTEN_AND_IMPORT })
+                                                        classShortenStrategy = { ShortenStrategy.SHORTEN_AND_IMPORT },
+                                                        callableShortenStrategy = { ShortenStrategy.SHORTEN_AND_IMPORT })
                 } else {
                     collectPossibleReferenceShortenings(file, selection)
                 }
