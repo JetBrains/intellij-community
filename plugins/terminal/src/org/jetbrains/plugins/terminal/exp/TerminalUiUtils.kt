@@ -14,6 +14,8 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -24,9 +26,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
-import java.awt.Component
-import java.awt.Cursor
-import java.awt.Dimension
+import com.jediterm.terminal.TerminalColor
+import com.jediterm.terminal.TextStyle
+import com.jediterm.terminal.emulator.ColorPalette
+import com.jediterm.terminal.ui.AwtTransformers
+import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.util.concurrent.CompletableFuture
@@ -121,6 +125,45 @@ object TerminalUiUtils {
   }
 
   fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
+
+  internal fun TextStyle.toTextAttributes(palette: ColorPalette,
+                                          terminalModel: TerminalModel,
+                                          applyDefaultBackground: Boolean): TextAttributes {
+    return TextAttributes().also { attr ->
+      val background: TerminalColor? = if (applyDefaultBackground) {
+        terminalModel.styleState.getBackground(backgroundForRun)
+      }
+      else {
+        backgroundForRun
+      }
+      if (background != null) {
+        attr.backgroundColor = AwtTransformers.toAwtColor(palette.getBackground(background))
+      }
+      attr.foregroundColor = getForegroundColor(this, palette, terminalModel)
+      if (hasOption(TextStyle.Option.BOLD)) {
+        attr.fontType = attr.fontType or Font.BOLD
+      }
+      if (hasOption(TextStyle.Option.ITALIC)) {
+        attr.fontType = attr.fontType or Font.ITALIC
+      }
+      if (hasOption(TextStyle.Option.UNDERLINED)) {
+        attr.withAdditionalEffect(EffectType.LINE_UNDERSCORE, attr.foregroundColor)
+      }
+    }
+  }
+
+  private fun getForegroundColor(style: TextStyle, palette: ColorPalette, terminalModel: TerminalModel): Color {
+    val foreground = palette.getForeground(terminalModel.styleState.getForeground(style.foregroundForRun))
+    return if (style.hasOption(TextStyle.Option.DIM)) {
+      val background = palette.getBackground(terminalModel.styleState.getBackground(style.backgroundForRun))
+      @Suppress("UseJBColor")
+      Color((foreground.red + background.red) / 2,
+            (foreground.green + background.green) / 2,
+            (foreground.blue + background.blue) / 2,
+            foreground.alpha)
+    }
+    else AwtTransformers.toAwtColor(foreground)!!
+  }
 
   private val LOG = logger<TerminalUiUtils>()
   private const val TIMEOUT = 2000
