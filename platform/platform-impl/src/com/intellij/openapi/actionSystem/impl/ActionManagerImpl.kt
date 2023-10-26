@@ -942,9 +942,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return chameleonAction.addAction(action, projectType)
     }
     else if (existing != null) {
+      // we need to create ChameleonAction even if 'projectType==null', in case 'ActionStub.getProjectType() != null'
       val chameleonAction = ChameleonAction(existing, null)
+      if (!chameleonAction.addAction(action, projectType)) return false
       idToAction = idToAction.put(actionId, chameleonAction)
-      return chameleonAction.addAction(action, projectType)
+      return true
     }
     else if (projectType != null) {
       val chameleonAction = ChameleonAction(action, projectType)
@@ -966,12 +968,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       .joinToString(separator = ",")
     val oldAction = idToAction.get(actionId)
     val message = "ID '$actionId' is already taken by action ${actionToString(oldAction)} $oldPluginInfo. " +
-                  "Action ${actionToString(action)} cannot use the same ID $pluginId"
+                  "Action ${actionToString(action)} cannot use the same ID"
     if (pluginId == null) {
       LOG.error(message)
     }
     else {
-      LOG.error(PluginException(message, null, pluginId))
+      LOG.error(PluginException("$message (plugin $pluginId)", null, pluginId))
     }
   }
 
@@ -979,6 +981,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     if (action == null) return "null"
     if (action is ChameleonAction) {
       return "ChameleonAction(" + action.actions.values.joinToString { actionToString(it) } + ")";
+    }
+    else if (action is ActionStub) {
+      return "'$action' (${action.className})"
     }
     else {
       return "'$action' (${action.javaClass})"
