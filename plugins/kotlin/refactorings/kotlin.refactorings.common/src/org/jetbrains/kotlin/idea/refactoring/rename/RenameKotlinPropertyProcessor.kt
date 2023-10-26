@@ -251,10 +251,6 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         }
 
         renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
-
-        originalName?.let {
-            element.renameFileIfSingleDeclaration(it, newName, allRenames)
-        }
     }
 
   protected enum class UsageKind {

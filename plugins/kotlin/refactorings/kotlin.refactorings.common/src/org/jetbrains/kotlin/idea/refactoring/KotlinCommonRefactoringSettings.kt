@@ -28,6 +28,11 @@ interface KotlinCommonRefactoringSettings {
     var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean
 
     /**
+     * Indicates whether automatic file rename based on changed type name is suggested
+     */
+    var renameFileNames: Boolean
+
+    /**
      * Indicates whether automatic variable rename based on changed type name is suggested
      */
     var renameVariables: Boolean
