@@ -5,19 +5,55 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.ProjectManager
 import java.awt.*
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
 
 class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout()) {
+  internal inner class ColoursChangeListenerAdapter(var isCodeCell: Boolean = false) {
+    private lateinit var currentColorsPalette: Pair<Color, Color?>
+
+    private fun recreatePalette() {
+      val newBackgroundColor = editor.colorsScheme.defaultBackground
+      val newCellRoofTopColor = if (isCodeCell)
+        editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
+      else newBackgroundColor
+
+      currentColorsPalette = newBackgroundColor to newCellRoofTopColor
+    }
+
+    private fun updateColorsForCellBorderPanels(cellBordersPanels: Iterable<JPanel>) {
+      for (panel in cellBordersPanels) {
+        val (left, right) = panel.components
+        left.background = currentColorsPalette.first
+        right.background = currentColorsPalette.second
+      }
+    }
+
+    fun propertyChanged(
+      backgroundColor: Color,
+      delimiterPanel: JPanel,
+      codeRoofPanel: JPanel,
+      cellBordersPanels: Iterable<JPanel>,
+      ) {
+      if (::currentColorsPalette.isInitialized && backgroundColor == currentColorsPalette.first) return
+
+      recreatePalette()
+      delimiterPanel.background = currentColorsPalette.first
+      codeRoofPanel.background = currentColorsPalette.second
+
+      updateColorsForCellBorderPanels(cellBordersPanels)
+    }
+  }
+
+  private val colorsChangeListenerAdapter = ColoursChangeListenerAdapter()
   val actions = ArrayList<AnAction>()
   var isCodeCell = false
 
   fun initialize(actions: Array<AnAction>, isCodeCell: Boolean) {
     this.actions.addAll(actions)
     this.isCodeCell = isCodeCell
+    colorsChangeListenerAdapter.isCodeCell = isCodeCell
 
     val backgroundColor = editor.colorsScheme.defaultBackground
     val cellRoofColor = if (isCodeCell) editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme) else backgroundColor
@@ -38,7 +74,7 @@ class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout
     for (action in actions) {
       val button = JupyterCellBorderButton(editor as EditorEx, action)
       button.initialize()
-      val width =  button.preferredSize.width
+      val width = button.preferredSize.width
       button.setBounds(xOffset, 0, width, editor.notebookAppearance.CELL_BORDER_HEIGHT)
       xOffset += width
       centerPanel.add(button, JLayeredPane.DEFAULT_LAYER)
@@ -70,6 +106,13 @@ class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout
       for (button in buttons) {
         button.addMouseListener(it)
       }
+    }
+
+    addPropertyChangeListener("border") {
+      val newBackgroundColor = editor.colorsScheme.defaultBackground
+      colorsChangeListenerAdapter.propertyChanged(
+        newBackgroundColor,
+        delimiterPanel, codeRoofPanel, listOf(leftPanel, rightPanel))
     }
   }
 
