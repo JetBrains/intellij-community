@@ -35,11 +35,16 @@ class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<Declarative
   private fun getSerializedId(providerId: String, optionId: String) = "$providerId#$optionId"
 
   @RequiresWriteLock
-  fun setOptionEnabled(optionId: String, providerId: String, value: Boolean) {
-    if (!value) {
-      state.disabledOptions.add(getSerializedId(providerId, optionId))
+  fun setOptionEnabled(optionId: String, providerId: String, isEnabled: Boolean) {
+    val serializedId = getSerializedId(providerId, optionId)
+    val areSame = state.disabledOptions.contains(serializedId) != isEnabled
+    if (!isEnabled) {
+      state.disabledOptions.add(serializedId)
     } else {
-      state.disabledOptions.remove(getSerializedId(providerId, optionId))
+      state.disabledOptions.remove(serializedId)
+    }
+    if (!areSame) {
+      state.intIncrementModificationCount()
     }
   }
 
