@@ -433,7 +433,7 @@ class DynamicPluginsTest {
       assertThat(ep).isNotNull()
 
       loadPluginWithText(barBuilder).use {
-        assertThat(ep.extensionList).hasSize(1)
+        assertThat(ep!!.extensionList).hasSize(1)
 
         val extension = ep.extensionList.single()
         assertThat(extension.key).isEqualTo("foo")
@@ -443,7 +443,7 @@ class DynamicPluginsTest {
           .isEqualTo(findEnabledModuleByName("intellij.foo.bar"))
       }
 
-      assertThat(ep.extensionList).isEmpty()
+      assertThat(ep!!.extensionList).isEmpty()
     }
   }
 

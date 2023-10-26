@@ -75,7 +75,10 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   @Deprecated("Use {@code getExtensionList().stream()}", ReplaceWith("getExtensionList().stream()"), DeprecationLevel.ERROR)
   fun extensions(): Stream<T> = getPointImpl(null).asSequence().asStream()
 
-  fun hasAnyExtensions(): Boolean = getPointImpl(null).size() != 0
+  fun hasAnyExtensions(): Boolean {
+    @Suppress("DEPRECATION")
+    return (Extensions.getRootArea().getExtensionPointIfRegistered<T>(name) ?: return false).size() != 0
+  }
 
   /**
    * Consider using [ProjectExtensionPointName.getExtensions]
@@ -90,6 +93,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
 
   @Deprecated("Use app-level app extension point.", level = DeprecationLevel.ERROR)
   fun extensions(areaInstance: AreaInstance?): Stream<T> {
+    @Suppress("SSBasedInspection")
     return getPointImpl(areaInstance).extensionList.stream()
   }
 
