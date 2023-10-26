@@ -140,7 +140,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAn
     if (sessionFor != null && historyCacheSupported) {
       final VcsCacheableHistorySessionFactory cacheableHistorySessionFactory = (VcsCacheableHistorySessionFactory)historyProvider;
       final FilePath correctedPath = cacheableHistorySessionFactory.getUsedFilePath(sessionFor);
-      myCache.put(filePath, correctedPath, myVcs.getKeyInstanceMethod(), sessionFor, cacheableHistorySessionFactory, firstRevision == null);
+      myCache.putSession(filePath, correctedPath, myVcs.getKeyInstanceMethod(), sessionFor, cacheableHistorySessionFactory, firstRevision == null);
     }
     return sessionFor;
   }

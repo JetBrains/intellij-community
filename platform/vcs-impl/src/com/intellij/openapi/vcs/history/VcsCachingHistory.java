@@ -128,7 +128,7 @@ public final class VcsCachingHistory {
       return new HistoryPartnerProxy(partner, session -> {
         if (session == null) return;
         FilePath correctedPath = cacheableFactory.getUsedFilePath(session);
-        myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), cacheableFactory, true);
+        myVcsHistoryCache.putSession(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), cacheableFactory, true);
       });
     }
     return partner;

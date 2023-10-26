@@ -23,8 +23,8 @@ class VcsHistoryCache {
     lastRevisionCache = Caffeine.newBuilder().maximumSize(50).build()
   }
 
-  fun <C : Serializable, T : VcsAbstractHistorySession> put(filePath: FilePath, correctedPath: FilePath?, vcsKey: VcsKey, session: T,
-                                                            factory: VcsCacheableHistorySessionFactory<C, T>, isFull: Boolean) {
+  fun <C : Serializable, T : VcsAbstractHistorySession> putSession(filePath: FilePath, correctedPath: FilePath?, vcsKey: VcsKey, session: T,
+                                                                   factory: VcsCacheableHistorySessionFactory<C, T>, isFull: Boolean) {
     val cachedHistory = CachedHistory(correctedPath ?: filePath, session.revisionList, session.currentRevisionNumber,
                                       factory.getAdditionallyCachedData(session), isFull)
     historyCache.put(HistoryCacheBaseKey(filePath, vcsKey), cachedHistory)

@@ -323,7 +323,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     else {
       VcsAbstractHistorySession session = historyProvider.createSessionFor(filePath);
 
-      myCache.put(filePath, null, vcs.getKeyInstanceMethod(), session, historyProvider, true);
+      myCache.putSession(filePath, null, vcs.getKeyInstanceMethod(), session, historyProvider, true);
 
       return session.getRevisionList();
     }
