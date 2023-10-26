@@ -59,8 +59,8 @@ abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : 
         addFilesToOpen(sourcePath)
     }
 
-    fun prepareTipsInEditor(project: Project) {
-        prepareTipsInEditor(project, "KotlinSampleCode") { charsSequence ->
+    fun prepareOnboardingTips(project: Project) {
+        prepareOnboardingTips(project, "KotlinSampleCode") { charsSequence ->
             charsSequence.indexOf("println(\"i").takeIf { it >= 0 }
         }
     }

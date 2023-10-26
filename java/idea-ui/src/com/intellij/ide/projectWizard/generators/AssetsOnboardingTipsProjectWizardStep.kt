@@ -18,7 +18,7 @@ abstract class AssetsOnboardingTipsProjectWizardStep(parent: NewProjectWizardSte
 
   protected fun shouldRenderOnboardingTips(): Boolean = Registry.`is`("doc.onboarding.tips.render")
 
-  protected fun prepareTipsInEditor(project: Project, templateWithoutTips: String, breakpointSelector: (CharSequence) -> Int?) = whenProjectCreated(project) {
+  protected fun prepareOnboardingTips(project: Project, templateWithoutTips: String, breakpointSelector: (CharSequence) -> Int?) = whenProjectCreated(project) {
     val templateManager = FileTemplateManager.getDefaultInstance()
     val properties = getTemplateProperties()
     val defaultProperties = templateManager.defaultProperties
