@@ -17,6 +17,8 @@ import kotlin.math.max
 
 class NotebookBelowCellDelimiterPanel : JPanel(GridLayout(1, 1)) {
   private val steadyUI = JupyterProgressBarUI()
+  private lateinit var editor: EditorImpl
+  private var shouldUseCustomBackground = false
   private val progress = object : JProgressBar(0, 100) {
     init {
       setStopped()
@@ -34,6 +36,7 @@ class NotebookBelowCellDelimiterPanel : JPanel(GridLayout(1, 1)) {
     val customHeight = if (executionTimeDetails != null) notebookAppearance.EXECUTION_TIME_HEIGHT else notebookAppearance.SPACER_HEIGHT
     preferredSize = Dimension(preferredSize.width, customHeight)
     background = editor.colorsScheme.defaultBackground
+    this.editor = editor
 
     if (executionTimeDetails != null) {
       val label = JLabel(executionTimeDetails)
@@ -43,6 +46,7 @@ class NotebookBelowCellDelimiterPanel : JPanel(GridLayout(1, 1)) {
       label.foreground = UIUtil.getLabelInfoForeground()
       background = notebookAppearance.getCodeCellBackground(editor.colorsScheme)
       add(label, BorderLayout.WEST)
+      shouldUseCustomBackground = true
     } else if (hasProgressBar) {
       background = notebookAppearance.getCodeCellBackground(editor.colorsScheme)
       border = BorderFactory.createEmptyBorder(notebookAppearance.SPACER_HEIGHT - notebookAppearance.PROGRESS_STATUS_HEIGHT, 0, 0, 7)
@@ -50,7 +54,17 @@ class NotebookBelowCellDelimiterPanel : JPanel(GridLayout(1, 1)) {
         setUI(steadyUI)
       })
       setProgressVisibility(false)
+      shouldUseCustomBackground = true
     }
+  }
+
+  override fun updateUI() {
+    if (::editor.isInitialized) {
+      background = if (shouldUseCustomBackground)
+        editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
+      else editor.colorsScheme.defaultBackground
+    }
+    super.updateUI()
   }
 
   fun setProgressVisibility(showProgressBar: Boolean) {
