@@ -49,7 +49,10 @@ private class ChildScope(ctx: CoroutineContext, private val supervisor: Boolean)
   override val coroutineContext: CoroutineContext = ctx + this
 
   override fun toString(): String {
-    return (if (supervisor) "supervisor:" else "") + super.toString()
+    val coroutineName = coroutineContext[CoroutineName]?.name
+    return (if (coroutineName != null) "\"$coroutineName\":" else "") +
+           (if (supervisor) "supervisor:" else "") +
+           super.toString()
   }
 }
 
