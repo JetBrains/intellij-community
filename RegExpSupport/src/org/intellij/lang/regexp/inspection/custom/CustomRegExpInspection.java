@@ -8,6 +8,8 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
@@ -203,7 +205,7 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
                                         configuration.getProblemDescriptor(), configuration.getSuppressId());
   }
 
-  private static class CustomRegExpQuickFix implements LocalQuickFix {
+  private static class CustomRegExpQuickFix extends PsiUpdateModCommandQuickFix {
     private final int myStartOffset;
     private final int myEndOffset;
     private final String myReplacement;
@@ -232,8 +234,8 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiFile file = descriptor.getPsiElement().getContainingFile();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiFile file = element.getContainingFile();
       final Document document = file.getViewProvider().getDocument();
       if (myOriginal.equals(document.getText(TextRange.create(myStartOffset, myEndOffset)))) {
         document.replaceString(myStartOffset, myEndOffset, myReplacement);

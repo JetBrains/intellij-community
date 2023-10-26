@@ -2,6 +2,8 @@
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -58,8 +60,7 @@ public class EmptyAlternationBranchInspection extends LocalInspectionTool {
     }
   }
 
-  private static class EmptyAlternationBranchFix implements LocalQuickFix {
-
+  private static class EmptyAlternationBranchFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -68,8 +69,7 @@ public class EmptyAlternationBranchInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element.getParent() instanceof RegExpPattern)) return;
       element.getNextSibling().delete();
       element.delete();

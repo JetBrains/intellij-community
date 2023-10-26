@@ -2,10 +2,12 @@
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -65,7 +67,7 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
     }
   }
 
-  private static final class DuplicateCharacterInClassFix implements LocalQuickFix {
+  private static final class DuplicateCharacterInClassFix extends PsiUpdateModCommandQuickFix {
 
     private final String myText;
 
@@ -84,8 +86,8 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      descriptor.getPsiElement().delete();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      element.delete();
     }
   }
 }

@@ -2,10 +2,10 @@
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -60,7 +60,7 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
       }
     }
 
-    private static class RedundantNestedCharacterClassFix implements LocalQuickFix {
+    private static class RedundantNestedCharacterClassFix extends PsiUpdateModCommandQuickFix {
 
       @Override
       public @IntentionFamilyName @NotNull String getFamilyName() {
@@ -68,8 +68,8 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
       }
 
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement element = descriptor.getPsiElement().getParent();
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+        element = element.getParent();
         if (element instanceof RegExpClass regExpClass) {
           final RegExpClassElement[] elements = regExpClass.getElements();
           final PsiElement parent = regExpClass.getParent();
