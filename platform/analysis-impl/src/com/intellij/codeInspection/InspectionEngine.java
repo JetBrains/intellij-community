@@ -288,6 +288,9 @@ public final class InspectionEngine {
 
       Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorsOptimizer.getTargetPsiClasses(elements);
 
+      final @Nullable var inspectionListener =
+        isOnTheFly ? null : psiFile.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
+
       Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {
         ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(psiFile.getProject()), psiFile, isOnTheFly){
           @Override
@@ -313,7 +316,17 @@ public final class InspectionEngine {
         boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, targetPsiClasses);
         long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
 
-        reportToQodana(psiFile, isOnTheFly, toolWrapper, inspectionWasRun, inspectionDuration, holder.getResultCount());
+        if (inspectionListener != null && inspectionWasRun) {
+          inspectionListener.inspectionFinished(
+            inspectionDuration,
+            Thread.currentThread().getId(),
+            holder.getResultCount(),
+            toolWrapper,
+            InspectListener.InspectionKind.LOCAL,
+            psiFile,
+            psiFile.getProject()
+          );
+        }
 
         if (holder.hasResults()) {
           List<ProblemDescriptor> descriptors = ContainerUtil.filter(holder.getResults(), descriptor -> {
@@ -329,19 +342,6 @@ public final class InspectionEngine {
     });
 
     return resultDescriptors;
-  }
-
-  private static void reportToQodana(@NotNull PsiFile psiFile,
-                                     boolean isOnTheFly,
-                                     @NotNull LocalInspectionToolWrapper toolWrapper,
-                                     boolean inspectionWasRun,
-                                     long inspectionDuration, int resultCount) {
-    boolean needToReportStatsToQodana = inspectionWasRun && !isOnTheFly;
-    if (needToReportStatsToQodana) {
-      InspectListener publisher = psiFile.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
-      publisher.inspectionFinished(inspectionDuration, Thread.currentThread().getId(), resultCount, toolWrapper,
-                                   InspectListener.InspectionKind.LOCAL, psiFile, psiFile.getProject());
-    }
   }
 
   public static @NotNull @Unmodifiable List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile psiFile,
