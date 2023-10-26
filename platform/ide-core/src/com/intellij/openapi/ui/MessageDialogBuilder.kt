@@ -200,6 +200,6 @@ class OkCancelDialogBuilder internal constructor(title: String, message: String)
     val noText = noText ?: CommonBundle.getCancelButtonText()
     return MessagesService.getInstance().showMessageDialog(
       project = project, parentComponent = parentComponent, message = message, title = title, options = arrayOf(yesText, noText),
-      icon = icon, doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true) == 0
+      icon = icon, doNotAskOption = doNotAskOption, helpId = helpId, alwaysUseIdeaUI = true) == 0
   }
 }
