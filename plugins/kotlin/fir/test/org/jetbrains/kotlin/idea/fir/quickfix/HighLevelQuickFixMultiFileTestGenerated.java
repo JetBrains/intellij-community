@@ -286,6 +286,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/annotationOuterClass.test");
         }
 
+        @TestMetadata("annotationTypeAlias.test")
+        public void testAnnotationTypeAlias() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/annotationTypeAlias.test");
+        }
+
+        @TestMetadata("annotationTypeAlias2.test")
+        public void testAnnotationTypeAlias2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/annotationTypeAlias2.test");
+        }
+
         @TestMetadata("callWithTrailingComma.before.Main.kt")
         public void testCallWithTrailingComma() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/callWithTrailingComma.before.Main.kt");

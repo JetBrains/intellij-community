@@ -50,11 +50,22 @@ internal class AnnotationImportCandidatesProvider(
     override val positionContext: KotlinAnnotationTypeNameReferencePositionContext,
     indexProvider: KtSymbolFromIndexProvider,
 ) : ClassifierImportCandidatesProvider(positionContext, indexProvider) {
-    override fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean =
-        kotlinClass is KtClassOrObject && kotlinClass.isAnnotation() && super.acceptsKotlinClass(kotlinClass)
+    override fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean {
+        val isPossiblyAnnotation = when (kotlinClass) {
+            is KtTypeAlias -> true
+            is KtClassOrObject -> kotlinClass.isAnnotation()
+            else -> false
+        }
+
+        return isPossiblyAnnotation && super.acceptsKotlinClass(kotlinClass)
+    }
 
     override fun acceptsJavaClass(javaClass: PsiClass): Boolean =
         javaClass.isAnnotationType && super.acceptsJavaClass(javaClass)
+
+    context(KtAnalysisSession)
+    override fun acceptsClassLikeSymbol(symbol: KtClassLikeSymbol): Boolean =
+        symbol.getExpandedClassSymbol()?.classKind == KtClassKind.ANNOTATION_CLASS
 }
 
 internal class ConstructorReferenceImportCandidatesProvider(
