@@ -257,7 +257,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
       val permanentGraph = dataPack.permanentGraph
       if (permanentGraph !is PermanentGraphImpl) {
         val visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, data.getCommits())
-        val fileHistory = FileHistory(data.buildPathsMap())
+        val fileHistory = FileHistory(data.buildFileStatesMap())
         return VisiblePack(dataPack, visibleGraph, false, filters).withFileHistory(fileHistory)
       }
 
@@ -361,7 +361,7 @@ private fun <K : Any, V : Any?> MultiMap<K, V>.union(map: MultiMap<K, V>): Multi
   return result
 }
 
-private data class CommitMetadataWithPath(@JvmField val commit: Int, @JvmField val metadata: VcsCommitMetadata, @JvmField val path: MaybeDeletedFilePath)
+private data class CommitMetadataWithPath(@JvmField val commit: Int, @JvmField val metadata: VcsCommitMetadata, @JvmField val path: CommitFileState)
 
 private class FileHistoryTask(project: Project, val handler: VcsLogFileHistoryHandler, val storage: VcsLogStorage,
                               val factory: VcsLogObjectsFactory, val root: VirtualFile, val filePath: FilePath, val hash: Hash?,
@@ -396,5 +396,5 @@ private fun VcsLogObjectsFactory.createCommitMetadataWithPath(storage: VcsLogSto
                                       revision.commitMessage!!,
                                       revision.committerName!!, revision.committerEmail!!, revision.authorDate!!.time)
   return CommitMetadataWithPath(storage.getCommitIndex(commitHash, root), metadata,
-                                MaybeDeletedFilePath(revision.path, revision.isDeleted))
+                                CommitFileState(revision.path, revision.isDeleted))
 }
