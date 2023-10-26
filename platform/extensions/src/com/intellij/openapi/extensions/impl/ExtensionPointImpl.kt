@@ -19,6 +19,7 @@ import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -118,7 +119,6 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
     doRegisterExtension(extension = extension, order = order, pluginDescriptor = getPluginDescriptor(), parentDisposable = parentDisposable)
   }
 
-  @Synchronized
   private fun doRegisterExtension(extension: T,
                                   order: LoadingOrder,
                                   pluginDescriptor: PluginDescriptor,
@@ -126,15 +126,19 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
     assertNotReadOnlyMode()
     checkExtensionType(extension = extension, extensionClass = getExtensionClass(), adapter = null)
 
-    for (adapter in adapters) {
-      if (adapter is ObjectComponentAdapter<*> && adapter.instance === extension) {
-        LOG.error("Extension was already added: $extension")
-        return
+    val adapter = ObjectComponentAdapter(instance = extension, pluginDescriptor = pluginDescriptor, loadingOrder = order)
+    synchronized(this) {
+      assertNotReadOnlyMode()
+      for (a in adapters) {
+        if (a is ObjectComponentAdapter<*> && a.instance === extension) {
+          LOG.error("Extension was already added: $extension")
+          return
+        }
       }
+
+      addExtensionAdapter(adapter)
     }
 
-    val adapter = ObjectComponentAdapter(instance = extension, pluginDescriptor = pluginDescriptor, loadingOrder = order)
-    addExtensionAdapter(adapter)
     notifyListeners(isRemoved = false, adapters = persistentListOf(adapter), listeners = listeners)
 
     if (parentDisposable != null) {
@@ -148,8 +152,8 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
 
           adapters = adapters.removeAt(index)
           clearCache()
-          notifyListeners(isRemoved = true, adapters = persistentListOf(adapter), listeners = listeners)
         }
+        notifyListeners(isRemoved = true, adapters = persistentListOf(adapter), listeners = listeners)
       }
     }
   }
@@ -788,6 +792,7 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
 
   // private, internal only for tests
   @Synchronized
+  @VisibleForTesting
   fun addExtensionAdapter(adapter: ExtensionComponentAdapter) {
     adapters = adapters.add(adapter)
     clearCache()
