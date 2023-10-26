@@ -635,6 +635,20 @@ public class DebugProcessEvents extends DebugProcessImpl {
           return;
         }
 
+        // Skip breakpoints in other threads during suspend-all stepping.
+        //
+        // Don't try to check breakpoint's condition or evaluate its log expression,
+        // because these evaluations may lead to skipping of more important stepping events,
+        // see IDEA-336282.
+        if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
+          ThreadReference filteredThread = getRequestsManager().getFilterThread();
+          if (filteredThread != null && !Comparing.equal(filteredThread, thread)) {
+            notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
+            suspendManager.voteResume(suspendContext);
+            return;
+          }
+        }
+
         boolean resumePreferred = requestor != null && DebuggerSettings.SUSPEND_NONE.equals(requestor.getSuspendPolicy());
         boolean requestHit = false;
         long startTimeMs = System.currentTimeMillis();
@@ -681,15 +695,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
               }
             }
           });
-        }
-
-        // Skip breakpoints in other threads during suspend-all stepping:
-        if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
-          ThreadReference filteredThread = getRequestsManager().getFilterThread();
-          if (filteredThread != null && !Comparing.equal(filteredThread, thread)) {
-            notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
-            resumePreferred = true;
-          }
         }
 
         // special check for smart step into with this breakpoint inside the expressions
