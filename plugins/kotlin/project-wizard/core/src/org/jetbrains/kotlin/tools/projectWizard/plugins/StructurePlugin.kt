@@ -26,7 +26,7 @@ class StructurePlugin(context: Context) : Plugin(context) {
     companion object : PluginSettingsOwner() {
         override val pluginPath = "structure"
 
-        private val ALLOWED_SPECIAL_CHARS_IN_GROUP_ID = Module.ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES + '.'
+        private val ALLOWED_SPECIAL_CHARS_IN_GROUP_ID = Module.ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES
         private val ALLOWED_SPECIAL_CHARS_IN_ARTIFACT_ID = Module.ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES
         private val ALLOWED_SPECIAL_CHARS_IN_VERSION = setOf('_', '-', '.')
 
