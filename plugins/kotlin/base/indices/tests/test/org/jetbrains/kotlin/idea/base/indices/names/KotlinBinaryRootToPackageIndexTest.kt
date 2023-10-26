@@ -19,7 +19,7 @@ import kotlin.io.path.name
 class KotlinBinaryRootToPackageIndexTest : AbstractMultiModuleTest() {
     override fun isFirPlugin(): Boolean = false
 
-    override fun getTestDataDirectory(): File = KotlinRoot.DIR.resolve("base/indices-tests/testData/kotlinBinaryRootToPackageIndex")
+    override fun getTestDataDirectory(): File = KotlinRoot.DIR.resolve("base/indices/tests/testData/kotlinBinaryRootToPackageIndex")
 
     private val fooBarJarPath = Path.of("jars", "fooBar.jar")
     private val fooBarKlibPath = Path.of("klibs", "fooBar.klib")
