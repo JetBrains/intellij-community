@@ -2143,32 +2143,31 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     internalDecorator: InternalDecoratorImpl,
     parentFrame: JFrame,
   ) {
-    val bounds = info.floatingBounds
+    val storedBounds = info.floatingBounds
     val screen = ScreenUtil.getScreenRectangle(parentFrame)
     val needToCenter: Boolean
-    if (bounds != null && isValidBounds(bounds)) {
+    val bounds: Rectangle
+    if (storedBounds != null && isValidBounds(storedBounds)) {
       if (LOG.isDebugEnabled) {
-        LOG.debug("Keeping the tool window ${info.id} valid bounds: $bounds")
+        LOG.debug("Keeping the tool window ${info.id} valid bounds: $storedBounds")
       }
-      externalDecorator.bounds = Rectangle(bounds)
+      bounds = Rectangle(storedBounds)
       needToCenter = false
     }
-    else if (bounds != null && bounds.width > 0 && bounds.height > 0) {
+    else if (storedBounds != null && storedBounds.width > 0 && storedBounds.height > 0) {
       if (LOG.isDebugEnabled) {
-        LOG.debug("Adjusting the stored bounds for the tool window ${info.id} ($bounds) because they are invalid")
+        LOG.debug("Adjusting the stored bounds for the tool window ${info.id} to fit the screen $screen")
       }
-      val adjustedBounds = Rectangle(bounds)
-      ScreenUtil.moveToFit(adjustedBounds, screen, null, true)
+      bounds = Rectangle(storedBounds)
+      ScreenUtil.moveToFit(bounds, screen, null, true)
       if (LOG.isDebugEnabled) {
-        LOG.debug("Adjusted the stored bounds to fit the screen $screen: $adjustedBounds")
+        LOG.debug("Adjusted the stored bounds to fit the screen: $bounds")
       }
-      externalDecorator.bounds = adjustedBounds
       needToCenter = true
     }
     else {
       if (LOG.isDebugEnabled) {
-        LOG.debug("Computing default bounds for the tool window ${info.id} " +
-                  "because the stored bounds ($bounds) are ${if (bounds == null) "null" else "invalid"}")
+        LOG.debug("Computing default bounds for the tool window ${info.id}")
       }
       // place a new frame at the center of the current frame if there are no floating bounds
       var size = internalDecorator.size
@@ -2179,13 +2178,17 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
         size = preferredSize
       }
-      externalDecorator.bounds = Rectangle(externalDecorator.bounds.location, size)
+      bounds = Rectangle(externalDecorator.bounds.location, size)
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Computed the bounds using the default location: $bounds")
+      }
       needToCenter = true
     }
+    externalDecorator.bounds = bounds
     if (needToCenter) {
       externalDecorator.setLocationRelativeTo(parentFrame)
       if (LOG.isDebugEnabled) {
-        LOG.debug("Set the bounds to ${externalDecorator.bounds} (centered to the frame)")
+        LOG.debug("Centered the bounds relative to the IDE frame: ${externalDecorator.bounds}")
       }
     }
   }
