@@ -401,7 +401,7 @@ abstract class ComponentManagerImpl(
       executeRegisterTask(rootModule) { module ->
         val containerDescriptor = getContainerDescriptor(module)
         registerServices(containerDescriptor.services, module)
-        registerComponents(module, containerDescriptor, isHeadless)
+        registerComponents(pluginDescriptor = module, containerDescriptor = containerDescriptor, headless = isHeadless)
 
         containerDescriptor.listeners?.let { listeners ->
           var m = map
@@ -437,12 +437,14 @@ abstract class ComponentManagerImpl(
     }
 
     if (precomputedExtensionModel == null) {
-      val immutableExtensionPoints = if (extensionPoints!!.isEmpty()) Collections.emptyMap() else java.util.Map.copyOf(extensionPoints)
+      val immutableExtensionPoints = if (extensionPoints!!.isEmpty()) persistentHashMapOf() else extensionPoints.toPersistentHashMap()
       extensionArea.extensionPoints = immutableExtensionPoints
 
       for (rootModule in modules) {
         executeRegisterTask(rootModule) { module ->
-          module.registerExtensions(immutableExtensionPoints, getContainerDescriptor(module), listenerCallbacks)
+          module.registerExtensions(nameToPoint = immutableExtensionPoints,
+                                    containerDescriptor = getContainerDescriptor(module),
+                                    listenerCallbacks = listenerCallbacks)
         }
       }
     }
@@ -474,19 +476,19 @@ abstract class ComponentManagerImpl(
       return
     }
 
-    val result = HashMap<String, ExtensionPointImpl<*>>(precomputedExtensionModel.extensionPointTotalCount)
-    for (i in 0 until n) {
-      createExtensionPoints(points = precomputedExtensionModel.extensionPoints[i],
-                            componentManager = this,
-                            result = result,
-                            pluginDescriptor = precomputedExtensionModel.pluginDescriptors[i])
+    val result = persistentHashMapOf<String, ExtensionPointImpl<*>>().mutate { map ->
+      for (i in 0 until n) {
+        createExtensionPoints(points = precomputedExtensionModel.extensionPoints[i],
+                              componentManager = this,
+                              result = map,
+                              pluginDescriptor = precomputedExtensionModel.pluginDescriptors[i])
+      }
     }
 
-    val immutableExtensionPoints = java.util.Map.copyOf(result)
-    extensionArea.extensionPoints = immutableExtensionPoints
+    extensionArea.extensionPoints = result
 
     for ((name, pairs) in precomputedExtensionModel.nameToExtensions) {
-      val point = immutableExtensionPoints.get(name) ?: continue
+      val point = result.get(name) ?: continue
       for ((pluginDescriptor, list) in pairs) {
         if (!list.isEmpty()) {
           point.registerExtensions(list, pluginDescriptor, listenerCallbacks)
@@ -500,6 +502,7 @@ abstract class ComponentManagerImpl(
       registerComponents2(pluginDescriptor, containerDescriptor, headless)
       return
     }
+
     for (descriptor in (containerDescriptor.components)) {
       var implementationClassName = descriptor.implementationClass
       if (headless && descriptor.headlessImplementationClass != null) {
@@ -792,7 +795,12 @@ abstract class ComponentManagerImpl(
       LOG.error("workspace option is deprecated (implementationClass=$implementationClassName)")
     }
 
-    val adapter = MyComponentAdapter(interfaceClass, implementationClassName, pluginDescriptor, this, CompletableDeferred(), null)
+    val adapter = MyComponentAdapter(componentKey = interfaceClass,
+                                     implementationClassName = implementationClassName,
+                                     pluginDescriptor = pluginDescriptor,
+                                     componentManager = this,
+                                     deferred = CompletableDeferred(),
+                                     implementationClass = null)
     registerAdapter(adapter, adapter.pluginDescriptor)
     componentAdapters.add(adapter)
   }

@@ -10,11 +10,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ThreeState
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.persistentHashMapOf
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Modifier
-import java.util.*
 import java.util.function.Consumer
 
 private val LOG: Logger
@@ -59,7 +61,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   @Volatile
   @Internal
   @JvmField
-  var extensionPoints: Map<String, ExtensionPointImpl<*>> = emptyMap()
+  var extensionPoints: PersistentMap<String, ExtensionPointImpl<*>> = persistentHashMapOf()
 
   private val epTraces = if (DEBUG_REGISTRATION) HashMap<String, Throwable>() else null
 
@@ -122,7 +124,10 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
                            priorityListenerCallbacks: MutableList<in Runnable>,
                            listenerCallbacks: MutableList<in Runnable>): Boolean {
     val point = extensionPoints.get(extensionPointName) ?: return false
-    point.unregisterExtensions(componentManager, pluginDescriptor, priorityListenerCallbacks, listenerCallbacks)
+    point.unregisterExtensions(componentManager = componentManager,
+                               pluginDescriptor = pluginDescriptor,
+                               priorityListenerCallbacks = priorityListenerCallbacks,
+                               listenerCallbacks = listenerCallbacks)
     return true
   }
 
@@ -133,7 +138,9 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   }
 
   fun clearUserCache() {
-    extensionPoints.values.forEach(ExtensionPointImpl<*>::clearUserCache)
+    for (point in extensionPoints.values) {
+      point.clearUserCache()
+    }
   }
 
   /**
@@ -144,12 +151,11 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
       return
     }
 
-    val map = HashMap(extensionPoints)
-    for (descriptor in descriptors) {
-      map.remove(descriptor.getQualifiedName(pluginDescriptor))
+    extensionPoints = extensionPoints.mutate { map ->
+      for (descriptor in descriptors) {
+        map.remove(descriptor.getQualifiedName(pluginDescriptor))
+      }
     }
-    // Map.copyOf is not available in extension module
-    extensionPoints = Collections.unmodifiableMap(map)
   }
 
   @TestOnly
@@ -213,10 +219,9 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
                          dynamic = dynamic)
     }
     checkThatPointNotDuplicated(name, point.getPluginDescriptor())
-    val newMap = HashMap<String, ExtensionPointImpl<*>>(extensionPoints.size + 1)
-    newMap.putAll(extensionPoints)
-    newMap.put(name, point)
-    extensionPoints = Collections.unmodifiableMap(newMap)
+    extensionPoints = extensionPoints.mutate {
+      it.put(name, point)
+    }
     if (DEBUG_REGISTRATION) {
       epTraces!!.put(name, Throwable("Original registration for $name"))
     }
@@ -254,9 +259,9 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   // _only_ for CoreApplicationEnvironment
   fun registerExtensionPoints(points: List<ExtensionPointDescriptor>, pluginDescriptor: PluginDescriptor) {
-    val map = HashMap(extensionPoints)
-    createExtensionPoints(points, componentManager, map, pluginDescriptor)
-    extensionPoints = Collections.unmodifiableMap(map)
+    extensionPoints = persistentHashMapOf<String, ExtensionPointImpl<*>>().mutate {
+      createExtensionPoints(points = points, componentManager = componentManager, result = it, pluginDescriptor = pluginDescriptor)
+    }
   }
 
   override fun <T : Any> getExtensionPoint(extensionPointName: String): ExtensionPointImpl<T> {
@@ -309,9 +314,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   override fun unregisterExtensionPoint(extensionPointName: String) {
     val extensionPoint = getExtensionPointIfRegistered<Any>(extensionPointName) ?: return
     extensionPoint.reset()
-    val map = HashMap(extensionPoints)
-    map.remove(extensionPointName)
-    extensionPoints = Collections.unmodifiableMap(map)
+    extensionPoints = extensionPoints.remove(extensionPointName)
   }
 
   override fun hasExtensionPoint(extensionPointName: String): Boolean = extensionPoints.containsKey(extensionPointName)
