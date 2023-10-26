@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
@@ -66,24 +66,24 @@ internal class ImportAllMembersIntention :
 
         val shortenCommand = collectPossibleReferenceShortenings(
             element.containingKtFile,
-            classShortenOption = {
+            classShortenStrategy = {
                 if (it.classIdIfNonLocal?.isNestedClassIn(classId) == true) {
-                    ShortenOption.SHORTEN_AND_STAR_IMPORT
+                    ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
-                    ShortenOption.DO_NOT_SHORTEN
+                    ShortenStrategy.DO_NOT_SHORTEN
                 }
             },
-            callableShortenOption = {
-                if (it.isEnumSyntheticMethodCall(target)) return@collectPossibleReferenceShortenings ShortenOption.DO_NOT_SHORTEN
+            callableShortenStrategy = {
+                if (it.isEnumSyntheticMethodCall(target)) return@collectPossibleReferenceShortenings ShortenStrategy.DO_NOT_SHORTEN
                 val containingClassId = if (it is KtConstructorSymbol) {
                     it.containingClassIdIfNonLocal?.outerClassId
                 } else {
                     it.callableIdIfNonLocal?.classId
                 }
                 if (containingClassId == classId) {
-                    ShortenOption.SHORTEN_AND_STAR_IMPORT
+                    ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
-                    ShortenOption.DO_NOT_SHORTEN
+                    ShortenStrategy.DO_NOT_SHORTEN
                 }
             }
         )

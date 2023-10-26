@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
@@ -65,16 +65,16 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
             } ?: return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
-                classShortenOption = {
+                classShortenStrategy = {
                     if (it.classIdIfNonLocal == classId)
-                        ShortenOption.SHORTEN_AND_IMPORT
+                        ShortenStrategy.SHORTEN_AND_IMPORT
                     else
-                        ShortenOption.DO_NOT_SHORTEN
-                }, callableShortenOption = {
+                        ShortenStrategy.DO_NOT_SHORTEN
+                }, callableShortenStrategy = {
                     if (it is KtConstructorSymbol && it.containingClassIdIfNonLocal == classId)
-                        ShortenOption.SHORTEN_AND_IMPORT
+                        ShortenStrategy.SHORTEN_AND_IMPORT
                     else
-                        ShortenOption.DO_NOT_SHORTEN
+                        ShortenStrategy.DO_NOT_SHORTEN
                 })
             if (shortenCommand.isEmpty) return null
             ImportMemberIntention.Context(classId.asSingleFqName(), shortenCommand)
@@ -86,12 +86,12 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
             if (!canBeImported(symbol)) return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
-                classShortenOption = { ShortenOption.DO_NOT_SHORTEN },
-                callableShortenOption = {
+                classShortenStrategy = { ShortenStrategy.DO_NOT_SHORTEN },
+                callableShortenStrategy = {
                     if (it.callableIdIfNonLocal == callableId)
-                        ShortenOption.SHORTEN_AND_IMPORT
+                        ShortenStrategy.SHORTEN_AND_IMPORT
                     else
-                        ShortenOption.DO_NOT_SHORTEN
+                        ShortenStrategy.DO_NOT_SHORTEN
                 }
             )
             if (shortenCommand.isEmpty) return null
