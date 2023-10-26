@@ -291,7 +291,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @Override
   public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
     getPassword();
-    final Pattern issueURLPattern = Pattern.compile("https?://.*/([^/]*/[^/]*)/issues/\\d+"); // Captures project namespace from URL
+    final Pattern issueURLPattern = Pattern.compile("https?://[^/]*/(.*)/issues/\\d+"); // Captures project namespace from URL
     final String issueURL = task.getIssueUrl();
     if (issueURL == null) {
       throw new IllegalArgumentException("A GitLab-bound LocalTask should not have a null issue url.");
