@@ -425,7 +425,15 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
 
   @Override
   public int hashCode() {
-    return Objects.hash(myConstraint, myNullability, myMutability, mySpecialField, mySpecialFieldType, myLocal, myNotValues);
+    int result = 1;
+    result = 31 * result + myConstraint.hashCode();
+    result = 31 * result + myNullability.hashCode();
+    result = 31 * result + myMutability.hashCode();
+    result = 31 * result + (mySpecialField == null ? 0 : mySpecialField.hashCode());
+    result = 31 * result + mySpecialFieldType.hashCode();
+    result = 31 * result + Boolean.hashCode(myLocal);
+    result = 31 * result + myNotValues.hashCode();
+    return result;
   }
 
   @Override
