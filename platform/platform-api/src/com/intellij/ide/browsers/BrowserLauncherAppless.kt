@@ -153,7 +153,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       // if a browser is not specified, `UrlOpener` should not be used for non-HTTP(S) URLs
       val effectiveBrowser = browser ?: getDefaultBrowser()
       if (effectiveBrowser != null) {
-        val handled = UrlOpener.EP_NAME.extensions.any {
+        val handled = UrlOpener.EP_NAME.extensionList.any {
           LOG.debug { "trying ${it.javaClass}" }
           it.openUrl(effectiveBrowser, url, project)
         }

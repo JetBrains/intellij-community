@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
@@ -58,7 +58,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     List<Configurable> configurables = new SmartList<>();
     configurables.add(new DataViewsConfigurable());
 
-    DebuggerConfigurableProvider[] providers = DebuggerConfigurableProvider.EXTENSION_POINT.getExtensions();
+    List<DebuggerConfigurableProvider> providers = DebuggerConfigurableProvider.EXTENSION_POINT.getExtensionList();
     computeMergedConfigurables(providers, configurables);
 
     for (DebuggerConfigurableProvider provider : providers) {
@@ -88,7 +88,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     }
   }
 
-  private static void computeMergedConfigurables(DebuggerConfigurableProvider @NotNull [] providers, @NotNull List<? super Configurable> result) {
+  private static void computeMergedConfigurables(List<DebuggerConfigurableProvider> providers, @NotNull List<? super Configurable> result) {
     for (DebuggerSettingsCategory category : MERGED_CATEGORIES) {
       List<Configurable> configurables = getConfigurables(category, providers);
       if (!configurables.isEmpty()) {
@@ -99,8 +99,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     }
   }
 
-  @Nullable
-  private MergedCompositeConfigurable computeGeneralConfigurables(DebuggerConfigurableProvider @NotNull [] providers) {
+  private @Nullable MergedCompositeConfigurable computeGeneralConfigurables(List<DebuggerConfigurableProvider> providers) {
     List<Configurable> rootConfigurables = getConfigurables(DebuggerSettingsCategory.GENERAL, providers);
     if (rootConfigurables.isEmpty()) {
       return null;
@@ -154,19 +153,16 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getId() {
+  public @NotNull @NonNls String getId() {
     return "project.propDebugger";
   }
 
-  @NotNull
-  static List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
-    return getConfigurables(category, DebuggerConfigurableProvider.EXTENSION_POINT.getExtensions());
+  static @NotNull List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
+    return getConfigurables(category, DebuggerConfigurableProvider.EXTENSION_POINT.getExtensionList());
   }
 
-  @NotNull
-  private static List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category, DebuggerConfigurableProvider @NotNull [] providers) {
+  private static @NotNull List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category,
+                                                              List<DebuggerConfigurableProvider> providers) {
     List<Configurable> configurables = null;
     for (DebuggerConfigurableProvider provider : providers) {
       Collection<? extends Configurable> providerConfigurables = provider.getConfigurables(category);
@@ -188,8 +184,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     };
   }
 
-  @Nls
-  public static String getDisplayNameText() {
+  public static @Nls String getDisplayNameText() {
     return XDebuggerBundle.message("debugger.configurable.display.name");
   }
 }

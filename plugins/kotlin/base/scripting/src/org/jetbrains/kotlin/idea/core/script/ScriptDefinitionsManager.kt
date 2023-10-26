@@ -457,9 +457,9 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
 
     private fun getSources(): List<ScriptDefinitionsSource> {
         @Suppress("DEPRECATION")
-        val fromDeprecatedEP = project.extensionArea.getExtensionPoint(ScriptTemplatesProvider.EP_NAME).extensions.toList()
+        val fromDeprecatedEP = project.extensionArea.getExtensionPoint(ScriptTemplatesProvider.EP_NAME).extensionList
             .map { ScriptTemplatesProviderAdapter(it).asSource() }
-        val fromNewEp = ScriptDefinitionContributor.EP_NAME.getPoint(project).extensions.toList()
+        val fromNewEp = ScriptDefinitionContributor.EP_NAME.getPoint(project).extensionList
             .map { it.asSource() }
         return fromNewEp.dropLast(1) + fromDeprecatedEP + fromNewEp.last()
     }

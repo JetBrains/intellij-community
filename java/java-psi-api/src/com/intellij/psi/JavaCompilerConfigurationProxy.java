@@ -43,9 +43,11 @@ public abstract class JavaCompilerConfigurationProxy {
   }
 
   public static void setAdditionalOptions(@NotNull Project project, @NotNull Module module, @NotNull List<String> options) {
-    JavaCompilerConfigurationProxy[] extensions = EP_NAME.getExtensions();
-    if (extensions.length == 0) return;
-    extensions[0].setAdditionalOptionsImpl(project, module, options);
+    List<JavaCompilerConfigurationProxy> extensions = EP_NAME.getExtensionList();
+    if (extensions.isEmpty()) {
+      return;
+    }
+    extensions.get(0).setAdditionalOptionsImpl(project, module, options);
   }
 
   /**

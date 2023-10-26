@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.documentation.DockablePopupManager;
@@ -254,7 +254,7 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
 
   @Nullable
   public static PsiClass getContainingClass(@NotNull PsiElement psiElement) {
-    for (ClassSearcher searcher : CLASS_SEARCHER_EP.getExtensions()) {
+    for (ClassSearcher searcher : CLASS_SEARCHER_EP.getExtensionList()) {
       PsiClass aClass = searcher.findClass(psiElement);
       if (aClass != null) {
         return aClass;

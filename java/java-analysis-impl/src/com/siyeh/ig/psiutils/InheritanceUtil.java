@@ -122,7 +122,7 @@ public final class InheritanceUtil {
   }
 
   public static boolean hasImplementation(@NotNull PsiClass aClass) {
-    for (ImplicitSubclassProvider provider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
+    for (ImplicitSubclassProvider provider : ImplicitSubclassProvider.EP_NAME.getExtensionList()) {
       if (!provider.isApplicableTo(aClass)) {
         continue;
       }

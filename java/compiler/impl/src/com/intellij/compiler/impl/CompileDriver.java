@@ -207,7 +207,7 @@ public final class CompileDriver {
   private List<TargetTypeBuildScope> mergeScopesFromProviders(CompileScope scope,
                                                               List<TargetTypeBuildScope> scopes,
                                                               boolean forceBuild) {
-    for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
+    for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensionList()) {
       List<TargetTypeBuildScope> providerScopes = ReadAction.compute(
         () -> myProject.isDisposed() ? Collections.emptyList()
                                      : provider.getBuildTargetScopes(scope, myProject, forceBuild));

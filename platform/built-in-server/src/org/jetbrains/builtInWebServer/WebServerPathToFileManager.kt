@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
 import com.github.benmanes.caffeine.cache.CacheLoader
@@ -73,7 +73,7 @@ class WebServerPathToFileManager(private val project: Project) {
         for (event in events) {
           if (event is VFileContentChangeEvent) {
             val file = event.file
-            for (rootsProvider in WebServerRootsProvider.EP_NAME.extensions) {
+            for (rootsProvider in WebServerRootsProvider.EP_NAME.extensionList) {
               if (rootsProvider.isClearCacheOnFileContentChanged(file)) {
                 clearCache()
                 break

@@ -276,7 +276,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
     List<StripTrailingSpacesFilter> filters = new ArrayList<>();
     StripTrailingSpacesFilter specialFilter = null;
-    for (StripTrailingSpacesFilterFactory filterFactory : StripTrailingSpacesFilterFactory.EXTENSION_POINT.getExtensions()) {
+    for (StripTrailingSpacesFilterFactory filterFactory : StripTrailingSpacesFilterFactory.EXTENSION_POINT.getExtensionList()) {
       StripTrailingSpacesFilter filter = filterFactory.createFilter(project, this);
       if (specialFilter == null &&
           (filter == StripTrailingSpacesFilter.NOT_ALLOWED || filter == StripTrailingSpacesFilter.POSTPONED)) {

@@ -158,7 +158,7 @@ final class PortUnificationServerHandler extends Decoder {
       }
 
       UUID uuid = new UUID(buffer.readLong(), buffer.readLong());
-      for (BinaryRequestHandler customHandler : BinaryRequestHandler.EP_NAME.getExtensions()) {
+      for (BinaryRequestHandler customHandler : BinaryRequestHandler.EP_NAME.getExtensionList()) {
         if (uuid.equals(customHandler.getId())) {
           ChannelPipeline pipeline = context.pipeline();
           pipeline.addLast(customHandler.getInboundHandler(context));

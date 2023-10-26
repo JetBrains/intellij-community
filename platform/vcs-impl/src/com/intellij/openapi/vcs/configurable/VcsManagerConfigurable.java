@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.application.options.colors.fileStatus.FileStatusColorsConfigurable;
@@ -86,7 +86,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     result.add(new ChangelistConflictConfigurable(myProject));
     result.add(new CommitDialogConfigurable(myProject));
     result.add(new ShelfProjectConfigurable(myProject));
-    for (VcsConfigurableProvider provider : VcsConfigurableProvider.EP_NAME.getExtensions()) {
+    for (VcsConfigurableProvider provider : VcsConfigurableProvider.EP_NAME.getExtensionList()) {
       addIfNotNull(result, provider.getConfigurable(myProject));
     }
 

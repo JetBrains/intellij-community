@@ -2206,7 +2206,7 @@ public final class HighlightUtil {
                                                   @Nullable String symbolName,
                                                   @Nullable String containerName) {
     ErrorWithFixes error = null;
-    for (JavaModuleSystem moduleSystem : JavaModuleSystem.EP_NAME.getExtensions()) {
+    for (JavaModuleSystem moduleSystem : JavaModuleSystem.EP_NAME.getExtensionList()) {
       if (moduleSystem instanceof JavaModuleSystemEx) {
         error = checkAccess((JavaModuleSystemEx)moduleSystem, target, place);
       }
@@ -2235,7 +2235,7 @@ public final class HighlightUtil {
   }
 
   private static PsiElement getContainer(@NotNull PsiModifierListOwner refElement) {
-    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensions()) {
+    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensionList()) {
       PsiElement container = provider.getContainer(refElement);
       if (container != null) return container;
     }
@@ -3780,7 +3780,7 @@ public final class HighlightUtil {
     if (module != null) {
       LanguageLevel moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
       if (moduleLanguageLevel.isAtLeast(feature.level) && !feature.isLimited()) {
-        for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensions()) {
+        for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensionList()) {
           if (pusher instanceof JavaLanguageLevelPusher) {
             String newMessage = ((JavaLanguageLevelPusher)pusher).getInconsistencyLanguageLevelMessage(message, level, file);
             if (newMessage != null) {

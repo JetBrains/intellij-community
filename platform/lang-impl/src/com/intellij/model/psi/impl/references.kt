@@ -78,7 +78,7 @@ private fun referencesInElement(element: PsiElement, offsetInElement: Int): Coll
 }
 
 private fun implicitReference(element: PsiElement, offsetInElement: Int): PsiSymbolReference? {
-  for (handler in ImplicitReferenceProvider.EP_NAME.extensions) {
+  for (handler in ImplicitReferenceProvider.EP_NAME.extensionList) {
     return handler.getImplicitReference(element, offsetInElement) ?: continue
   }
   return null

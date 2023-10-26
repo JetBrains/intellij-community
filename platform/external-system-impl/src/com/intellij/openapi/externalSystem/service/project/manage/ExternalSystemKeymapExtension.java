@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -144,7 +144,7 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
       }
     }
 
-    for (ActionsProvider extension : ActionsProvider.EP_NAME.getExtensions()) {
+    for (ActionsProvider extension : ActionsProvider.EP_NAME.getExtensionList()) {
       KeymapGroup keymapGroup = extension.createGroup(condition, project);
       if (isGroupFiltered(condition, keymapGroup)) {
         result.addGroup(keymapGroup);

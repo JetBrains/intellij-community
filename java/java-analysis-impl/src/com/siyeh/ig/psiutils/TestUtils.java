@@ -184,7 +184,7 @@ public final class TestUtils {
     Module classModule = containingClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(containingClass) : null;
     if (classModule == null) return false;
     final GlobalSearchScope globalSearchScope = GlobalSearchScope.moduleRuntimeScope(classModule, true);
-    for (PropertiesProvider provider : PropertiesProvider.EP_NAME.getExtensions()) {
+    for (PropertiesProvider provider : PropertiesProvider.EP_NAME.getExtensionList()) {
       if ("PER_CLASS".equalsIgnoreCase(provider.getPropertyValue(PER_CLASS_PROPERTY_KEY, globalSearchScope))) return true;
     }
     return false;

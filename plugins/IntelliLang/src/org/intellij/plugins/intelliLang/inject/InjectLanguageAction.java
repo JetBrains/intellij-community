@@ -60,7 +60,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -87,7 +86,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     for (Language language : languages) {
       list.add(Injectable.fromLanguage(language));
     }
-    list.addAll(Arrays.asList(ReferenceInjector.EXTENSION_POINT_NAME.getExtensions()));
+    list.addAll(ReferenceInjector.EXTENSION_POINT_NAME.getExtensionList());
     Collections.sort(list);
     return list;
   }

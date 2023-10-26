@@ -64,7 +64,7 @@ public final class ErrorFixExtensionPoint implements PluginAware {
   private static Map<String, List<ErrorFixExtensionPoint>> getCodeToFixMap() {
     Map<String, List<ErrorFixExtensionPoint>> map = ourCodeToFix;
     if (map == null) {
-      ourCodeToFix = map = StreamEx.of(ERROR_FIX_EXTENSION_POINT.getExtensions()).groupingBy(fix -> fix.errorCode);
+      ourCodeToFix = map = StreamEx.of(ERROR_FIX_EXTENSION_POINT.getExtensionList()).groupingBy(fix -> fix.errorCode);
     }
     return map;
   }
