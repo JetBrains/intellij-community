@@ -12,4 +12,6 @@ interface DynamicInstanceSupport {
    * or `null` if [instanceClass] cannot be initialized dynamically, e.g. it's an interface or an abstract class.
    */
   fun dynamicInstanceInitializer(instanceClass: Class<*>): InstanceInitializer?
+
+  fun dynamicInstanceRegistered(dynamicInstanceHolder: InstanceHolder)
 }
