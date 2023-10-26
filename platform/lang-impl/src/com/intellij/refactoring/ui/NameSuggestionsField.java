@@ -43,7 +43,7 @@ public class NameSuggestionsField extends JPanel {
     super(new BorderLayout());
     myProject = project;
     myComboBoxModel = new MyComboBoxModel();
-    final ComboBox comboBox = new ComboBox(myComboBoxModel,-1);
+    final ComboBox<String> comboBox = new ComboBox<>(myComboBoxModel,-1);
     myComponent = comboBox;
     add(myComponent, BorderLayout.CENTER);
     setupComboBox(comboBox, StdFileTypes.JAVA);
@@ -60,7 +60,7 @@ public class NameSuggestionsField extends JPanel {
       myComponent = createTextFieldForName(nameSuggestions, fileType);
     }
     else {
-      final ComboBox combobox = new ComboBox(nameSuggestions);
+      final ComboBox<String> combobox = new ComboBox<>(nameSuggestions);
       combobox.setSelectedIndex(0);
       setupComboBox(combobox, fileType);
       myComponent = combobox;
@@ -130,11 +130,10 @@ public class NameSuggestionsField extends JPanel {
 
   public void setSuggestions(final String[] suggestions) {
     if(myComboBoxModel == null) return;
-    JComboBox comboBox = (JComboBox) myComponent;
+    JComboBox<String> comboBox = (JComboBox<String>) myComponent;
     final String oldSelectedItem = (String)comboBox.getSelectedItem();
     final String oldItemFromTextField = (String) comboBox.getEditor().getItem();
-    final boolean shouldUpdateTextField =
-      oldItemFromTextField.equals(oldSelectedItem) || oldItemFromTextField.trim().length() == 0;
+    final boolean shouldUpdateTextField = oldItemFromTextField.equals(oldSelectedItem) || oldItemFromTextField.isBlank();
     myComboBoxModel.setSuggestions(suggestions);
     if(suggestions.length > 0 && shouldUpdateTextField) {
       if (oldSelectedItem != null) {
