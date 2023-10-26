@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.notebooks.ui.visualization
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.keymap.KeymapUtil
@@ -28,8 +30,8 @@ class JupyterCellBorderButton(
     setUI(sausageUi)
     defineButtonAppearance(editor, this, action)
     addActionListener {
-      val anActionEvent = AnActionEvent.createFromAnAction(action, null, "JupyterCellPanel", editor.dataContext)
-      action.actionPerformed(anActionEvent)
+      val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.EDITOR_INLAY, editor.dataContext)
+      ActionManagerEx.getInstanceEx().tryToExecute(action, anActionEvent.inputEvent, this, ActionPlaces.EDITOR_INLAY, true)
     }
   }
 
