@@ -5,9 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Pass
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
@@ -16,7 +14,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -29,7 +26,6 @@ import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflic
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsKotlinAware
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 
 class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
@@ -235,8 +231,6 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             }
         }
         renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
-
-        element.renameFileIfSingleDeclaration(originalName, newName, allRenames)
     }
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {
@@ -289,35 +283,4 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         return processFoundReferences(element, references)
     }
 
-}
-
-@ApiStatus.Internal
-internal fun PsiElement.renameFileIfSingleDeclaration(
-    originalName: String,
-    newName: String,
-    allRenames: MutableMap<PsiElement, String>
-) {
-    val file = containingFile as? KtFile ?: return
-
-    if (file.declarations.singleOrNull() == this) {
-        file.virtualFile?.let { virtualFile ->
-            val nameWithoutExtensions = virtualFile.nameWithoutExtension
-            if (nameWithoutExtensions == originalName) {
-                if (!isUnitTestMode() && newName.isNotEmpty() && Messages.showYesNoDialog(
-                        project,
-                        KotlinBundle.message("rename.file.name.0", newName),
-                        KotlinBundle.message("rename.file.name"),
-                        Messages.getYesButton(),
-                        Messages.getCancelButton(),
-                        Messages.getQuestionIcon()
-                    ) == Messages.NO
-                ) {
-                    return
-                }
-                val newFileName = newName + "." + virtualFile.extension
-                allRenames[file] = newFileName
-                RenamePsiElementProcessor.forElement(file).prepareRenaming(file, newFileName, allRenames)
-            }
-        }
-    }
 }

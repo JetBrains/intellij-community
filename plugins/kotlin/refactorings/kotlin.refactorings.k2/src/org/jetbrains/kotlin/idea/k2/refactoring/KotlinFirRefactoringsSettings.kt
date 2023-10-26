@@ -17,6 +17,7 @@ class KotlinFirRefactoringsSettings : PersistentStateComponent<KotlinFirRefactor
     var RENAME_SEARCH_IN_COMMENTS_FOR_CLASS: Boolean = false
     var RENAME_SEARCH_IN_COMMENTS_FOR_PARAMETER: Boolean = false
 
+    var renameFileNames: Boolean = true
     var renameVariables: Boolean = true
     var renameParameterInHierarchy: Boolean = true
     var renameInheritors: Boolean = true
