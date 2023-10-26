@@ -70,9 +70,11 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       }
 
       val editorDeferred = CompletableDeferred<EditorEx>()
-      val editorSupplier = suspend { editorDeferred.await() }
 
       val task = asyncLoader.coroutineScope.async(CoroutineName("TextEditorInitializer")) {
+        val editorSupplier = suspend { editorDeferred.await() }
+        val highlighterReady = suspend { highlighterDeferred.join() }
+
         coroutineScope {
           for (item in EDITOR_LOADER_EP.filterableLazySequence()) {
             if (item.pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
@@ -83,7 +85,11 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
             val initializer = item.instance ?: continue
             launch(CoroutineName(item.implementationClassName)) {
               catchingExceptionsAsync {
-                initializer.initializeEditor(project = project, file = file, document = effectiveDocument, editorSupplier = editorSupplier)
+                initializer.initializeEditor(project = project,
+                                             file = file,
+                                             document = effectiveDocument,
+                                             editorSupplier = editorSupplier,
+                                             highlighterReady = highlighterReady)
               }
             }
           }
