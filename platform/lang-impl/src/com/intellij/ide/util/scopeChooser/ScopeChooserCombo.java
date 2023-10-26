@@ -117,7 +117,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
   @NotNull
   private ListCellRenderer<ScopeDescriptor> createRenderer() {
-    return new GroupedComboBoxRenderer<>() {
+    return new GroupedComboBoxRenderer<>(this) {
       @NotNull
       @Override
       public @NlsContexts.ListItem String getText(ScopeDescriptor item) {
