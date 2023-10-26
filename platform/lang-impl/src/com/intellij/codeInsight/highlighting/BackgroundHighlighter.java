@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
@@ -159,7 +160,7 @@ final class BackgroundHighlighter {
   }
 
   private static void highlightSelection(@NotNull Project project, @NotNull Editor editor) {
-    if (!Registry.is("editor.highlight.selected.text.occurrences")) {
+    if (!Registry.is("editor.highlight.selected.text.occurrences") || !CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
       return;
     }
     ThreadingAssertions.assertEventDispatchThread();
@@ -194,13 +195,15 @@ final class BackgroundHighlighter {
     if (toFind.trim().isEmpty()) {
       return;
     }
+    FindManager findManager = FindManager.getInstance(project);
+    FindModel findModel = new FindModel();
+    EditorSearchSession editorSearchSession = EditorSearchSession.get(editor);
+    if (editorSearchSession != null) {
+      findModel.copyFrom(findManager.getFindInFileModel());
+    }
+    findModel.setRegularExpressions(false);
+    findModel.setStringToFind(toFind);
     ReadAction.nonBlocking(() -> {
-        FindManager findManager = FindManager.getInstance(project);
-        FindModel findInFileModel = findManager.getFindInFileModel();
-        FindModel findModel = new FindModel();
-        findModel.copyFrom(findInFileModel);
-        findModel.setRegularExpressions(false);
-        findModel.setStringToFind(toFind);
         int offset = 0;
         FindResult result = findManager.findString(sequence, offset, findModel, null);
         List<FindResult> results = new ArrayList<>();
