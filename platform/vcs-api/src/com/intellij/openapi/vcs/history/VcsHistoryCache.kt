@@ -8,7 +8,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsKey
 import java.io.Serializable
-import java.util.function.Consumer
 
 class VcsHistoryCache {
   private val historyCache: Cache<HistoryCacheBaseKey, CachedHistory>
@@ -39,11 +38,10 @@ class VcsHistoryCache {
     return factory.createFromCachedData(customData, cachedHistory.revisions, cachedHistory.path, cachedHistory.currentRevision)
   }
 
-  fun editCached(filePath: FilePath, vcsKey: VcsKey, consumer: Consumer<in List<VcsFileRevision>>) {
+  fun getRevisions(filePath: FilePath, vcsKey: VcsKey): List<VcsFileRevision> {
     val cachedHistory = historyCache.getIfPresent(HistoryCacheBaseKey(filePath, vcsKey))
-    if (cachedHistory != null) {
-      consumer.accept(cachedHistory.revisions)
-    }
+    if (cachedHistory == null) return emptyList()
+    return cachedHistory.revisions
   }
 
   fun clearHistory() {

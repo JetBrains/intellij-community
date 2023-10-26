@@ -17,6 +17,8 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
+import java.util.List;
+
 import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class SvnEditCommitMessageFromFileHistoryAction extends DumbAwareAction {
@@ -51,17 +53,17 @@ public class SvnEditCommitMessageFromFileHistoryAction extends DumbAwareAction {
                                                     if (listener != null) {
                                                       listener.consume(newMessage);
                                                     }
-                                                    ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache()
-                                                      .editCached(VcsUtil.getFilePath(revisionVirtualFile), vcsKey, revisions -> {
-                                                        for (VcsFileRevision fileRevision : revisions) {
-                                                          if (!(fileRevision instanceof SvnFileRevision)) continue;
-                                                          if (((SvnFileRevision)fileRevision).getRevision().getNumber() ==
-                                                              svnFileRevision.getRevision().getNumber()) {
-                                                            ((SvnFileRevision)fileRevision).setCommitMessage(newMessage);
-                                                            break;
-                                                          }
-                                                        }
-                                                      });
+                                                    List<VcsFileRevision> revisions =
+                                                      ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache()
+                                                        .getRevisions(VcsUtil.getFilePath(revisionVirtualFile), vcsKey);
+                                                    for (VcsFileRevision fileRevision : revisions) {
+                                                      if (!(fileRevision instanceof SvnFileRevision)) continue;
+                                                      if (((SvnFileRevision)fileRevision).getRevision().getNumber() ==
+                                                          svnFileRevision.getRevision().getNumber()) {
+                                                        ((SvnFileRevision)fileRevision).setCommitMessage(newMessage);
+                                                        break;
+                                                      }
+                                                    }
                                                   }, true);
   }
 
