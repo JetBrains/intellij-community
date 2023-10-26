@@ -14,6 +14,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Url;
+import com.intellij.util.UrlImpl;
 import com.intellij.util.Urls;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,7 @@ import org.jetbrains.builtInWebServer.BuiltInServerOptions;
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,6 +54,25 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
         if (reference == null) {
           if (href.startsWith("#")) {
             return root + href;
+          }
+          else if (href.startsWith("//")) {
+            Url rootUrl = Urls.parse(root, false);
+            if (rootUrl == null) return null;
+            String scheme = rootUrl.getScheme();
+            if (scheme == null) return null;
+            String[] parts = href.substring(2).split("/", 2);
+            if (parts.length != 2) return null;
+            Url relativeUrl = Urls.newUrl(scheme, parts[0], parts[1]);
+            return relativeUrl.toString();
+          }
+          else if (href.startsWith("/")) {
+            Url rootUrl = Urls.parse(root, false);
+            if (rootUrl == null) return null;
+            String scheme = rootUrl.getScheme();
+            String authority = rootUrl.getAuthority();
+            if (scheme == null || authority == null) return null;
+            Url relativeUrl = Urls.newUrl(scheme, authority, href);
+            return relativeUrl.toString();
           }
           else {
             String nakedRoot = ourHtmlFileSuffix.matcher(root).replaceAll("/");
