@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.util.AbstractMap.SimpleImmutableEntry
@@ -82,7 +83,7 @@ object ExtensionProcessingHelper {
         cache = prev
       }
     }
-    return cache.get(key) ?: emptyList()
+    return cache.get(key) ?: persistentListOf()
   }
 
   /**

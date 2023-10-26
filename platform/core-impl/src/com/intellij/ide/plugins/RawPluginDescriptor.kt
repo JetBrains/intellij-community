@@ -5,6 +5,10 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.xml.dom.XmlElement
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentHashMapOf
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 import java.time.LocalDate
 
@@ -39,20 +43,20 @@ class RawPluginDescriptor {
   @JvmField internal var releaseDate: LocalDate? = null
   @JvmField internal var releaseVersion: Int = 0
 
-  @JvmField internal var modules: MutableList<PluginId>? = null
+  @JvmField internal var modules: PersistentList<PluginId> = persistentListOf()
 
   @JvmField internal var depends: MutableList<PluginDependency>? = null
   @JvmField internal var actions: MutableList<ActionDescriptor>? = null
 
-  @JvmField var incompatibilities: MutableList<PluginId>? = null
+  @JvmField var incompatibilities: PersistentList<PluginId> = persistentListOf()
 
   @JvmField val appContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
   @JvmField val projectContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
   @JvmField val moduleContainerDescriptor: ContainerDescriptor = ContainerDescriptor()
 
-  @JvmField var epNameToExtensions: MutableMap<String, MutableList<ExtensionDescriptor>>? = null
+  @JvmField var epNameToExtensions: PersistentMap<String, PersistentList<ExtensionDescriptor>> = persistentHashMapOf()
 
-  @JvmField internal var contentModules: MutableList<PluginContentDescriptor.ModuleItem>? = null
+  @JvmField internal var contentModules: PersistentList<PluginContentDescriptor.ModuleItem> = persistentListOf()
   @JvmField internal var dependencies: ModuleDependenciesDescriptor = ModuleDependenciesDescriptor.EMPTY
 
   sealed class ActionDescriptor(

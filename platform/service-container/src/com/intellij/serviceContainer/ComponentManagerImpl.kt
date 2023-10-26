@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment", "LeakingThis")
 
 package com.intellij.serviceContainer
 
@@ -424,9 +424,10 @@ abstract class ComponentManagerImpl(
         }
 
         if (extensionPoints != null) {
-          containerDescriptor.extensionPoints?.let {
-            createExtensionPoints(points = it, componentManager = this, result = extensionPoints, pluginDescriptor = module)
-          }
+          createExtensionPoints(points = containerDescriptor.extensionPoints,
+                                componentManager = this,
+                                result = extensionPoints,
+                                pluginDescriptor = module)
         }
       }
     }
@@ -499,7 +500,7 @@ abstract class ComponentManagerImpl(
       registerComponents2(pluginDescriptor, containerDescriptor, headless)
       return
     }
-    for (descriptor in (containerDescriptor.components ?: return)) {
+    for (descriptor in (containerDescriptor.components)) {
       var implementationClassName = descriptor.implementationClass
       if (headless && descriptor.headlessImplementationClass != null) {
         if (descriptor.headlessImplementationClass.isEmpty()) {
@@ -560,16 +561,15 @@ abstract class ComponentManagerImpl(
   private fun registerComponents2Inner(pluginDescriptor: IdeaPluginDescriptor,
                                        containerDescriptor: ContainerDescriptor,
                                        headless: Boolean) {
-    val configs = containerDescriptor.components ?: return
+    val components = containerDescriptor.components
+    if (components.isEmpty()) {
+      return
+    }
+
     val pluginClassLoader = pluginDescriptor.pluginClassLoader
-    val registrationScope = if (pluginClassLoader is PluginAwareClassLoader) {
-      pluginClassLoader.pluginCoroutineScope
-    }
-    else {
-      null
-    }
+    val registrationScope = if (pluginClassLoader is PluginAwareClassLoader) pluginClassLoader.pluginCoroutineScope else null
     val registrar = componentContainer.startRegistration(registrationScope)
-    for (descriptor in configs) {
+    for (descriptor in components) {
       if (descriptor.os != null && !isSuitableForOs(descriptor.os)) {
         continue
       }
@@ -960,26 +960,28 @@ abstract class ComponentManagerImpl(
       LOG.error("$key it is a service, use getService instead of getComponent")
     }
 
-    if (adapter is BaseComponentAdapter) {
-      check(!useInstanceContainer)
-      if (parent != null && adapter.componentManager !== this) {
-        LOG.error("getComponent must be called on appropriate container (current: $this, expected: ${adapter.componentManager})")
-      }
+    when (adapter) {
+      is BaseComponentAdapter -> {
+        check(!useInstanceContainer)
+        if (parent != null && adapter.componentManager !== this) {
+          LOG.error("getComponent must be called on appropriate container (current: $this, expected: ${adapter.componentManager})")
+        }
 
-      if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        adapter.throwAlreadyDisposedError(this)
+        if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+          adapter.throwAlreadyDisposedError(this)
+        }
+        return adapter.getInstance(adapter.componentManager, key)
       }
-      return adapter.getInstance(adapter.componentManager, key)
-    }
-    else if (adapter is HolderAdapter) {
-      check(useInstanceContainer)
-      // TODO asserts
-      val holder = adapter.holder
-      @Suppress("UNCHECKED_CAST")
-      return holder.getOrCreateInstanceBlocking(key.name, key) as T
-    }
-    else {
-      return null
+      is HolderAdapter -> {
+        check(useInstanceContainer)
+        // TODO asserts
+        val holder = adapter.holder
+        @Suppress("UNCHECKED_CAST")
+        return holder.getOrCreateInstanceBlocking(key.name, key) as T
+      }
+      else -> {
+        return null
+      }
     }
   }
 
@@ -1131,7 +1133,7 @@ abstract class ComponentManagerImpl(
       return messageBus
     }
 
-    @Suppress("RetrievingService")
+    @Suppress("RetrievingService", "SimplifiableServiceRetrieving")
     messageBus = getApplication()!!.getService(MessageBusFactory::class.java).createMessageBus(this, parent?.messageBus) as MessageBusImpl
     if (StartUpMeasurer.isMeasuringPluginStartupCosts()) {
       messageBus.setMessageDeliveryListener { topic, messageName, handler, duration ->

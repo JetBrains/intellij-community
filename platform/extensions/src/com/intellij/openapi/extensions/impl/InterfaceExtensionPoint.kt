@@ -14,9 +14,9 @@ internal class InterfaceExtensionPoint<T : Any>(
   dynamic: Boolean,
   private val hasAttributes: Boolean,
 ) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager, clazz, dynamic) {
-  public override fun createAdapter(descriptor: ExtensionDescriptor,
-                                    pluginDescriptor: PluginDescriptor,
-                                    componentManager: ComponentManager): ExtensionComponentAdapter {
+  override fun createAdapter(descriptor: ExtensionDescriptor,
+                             pluginDescriptor: PluginDescriptor,
+                             componentManager: ComponentManager): ExtensionComponentAdapter {
     val implementationClassName = descriptor.implementation
                                   ?: throw componentManager.createError(
                                     "Attribute \"implementation\" is not specified for \"$name\" extension",

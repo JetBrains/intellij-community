@@ -46,10 +46,9 @@ internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
   override fun gotoActionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
-    val projectCollectors = UsageCollectors.PROJECT_EP_NAME.extensionList
-    val applicationCollectors = UsageCollectors.APPLICATION_EP_NAME.extensionList
-
-    val collectors = (projectCollectors + applicationCollectors).map(UsageCollectorBean::getCollector)
+    val collectors = (UsageCollectors.PROJECT_EP_NAME.lazySequence() + UsageCollectors.APPLICATION_EP_NAME.lazySequence())
+      .map(UsageCollectorBean::getCollector)
+      .toList()
 
     val ids = collectors.mapTo(HashMultiset.create()) { it.group.id }
     val items = collectors

@@ -249,7 +249,7 @@ object DynamicPlugins {
     }
 
     val epNameToExtensions = module.epNameToExtensions
-    if (epNameToExtensions != null) {
+    if (!epNameToExtensions.isEmpty()) {
       doCheckExtensionsCanUnloadWithoutRestart(
         extensions = epNameToExtensions,
         descriptor = module,
@@ -352,11 +352,8 @@ object DynamicPlugins {
    */
   @JvmStatic
   fun allowLoadUnloadSynchronously(module: IdeaPluginDescriptorImpl): Boolean {
-    val extensions = (module.unsortedEpNameToExtensionElements.takeIf { it.isNotEmpty() } ?: module.appContainerDescriptor.extensions)
-    if (extensions != null && !extensions.all {
-        it.key == UIThemeProvider.EP_NAME.name ||
-        it.key == BundledKeymapBean.EP_NAME.name
-      }) {
+    val extensions = (module.epNameToExtensions.takeIf { it.isNotEmpty() } ?: module.appContainerDescriptor.extensions)
+    if (!extensions.all { it.key == UIThemeProvider.EP_NAME.name || it.key == BundledKeymapBean.EP_NAME.name }) {
       return false
     }
     return checkNoComponentsOrServiceOverrides(module) == null && module.actions.isEmpty()
@@ -709,15 +706,20 @@ object DynamicPlugins {
     val appExtensionArea = app.extensionArea
     val priorityUnloadListeners = mutableListOf<Runnable>()
     val unloadListeners = mutableListOf<Runnable>()
-    unregisterUnknownLevelExtensions(module.unsortedEpNameToExtensionElements, module, appExtensionArea, openedProjects,
+    unregisterUnknownLevelExtensions(module.epNameToExtensions, module, appExtensionArea, openedProjects,
                                      priorityUnloadListeners, unloadListeners)
-    for (epName in (module.appContainerDescriptor.extensions?.keys ?: emptySet())) {
-      appExtensionArea.unregisterExtensions(epName, module, priorityUnloadListeners, unloadListeners)
+    for (epName in module.appContainerDescriptor.extensions.keys) {
+      appExtensionArea.unregisterExtensions(extensionPointName = epName,
+                                            pluginDescriptor = module,
+                                            priorityListenerCallbacks = priorityUnloadListeners,
+                                            listenerCallbacks = unloadListeners)
     }
-    for (epName in (module.projectContainerDescriptor.extensions?.keys ?: emptySet())) {
+    for (epName in module.projectContainerDescriptor.extensions.keys) {
       for (project in openedProjects) {
-        (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(epName, module, priorityUnloadListeners,
-                                                                           unloadListeners)
+        (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(extensionPointName = epName,
+                                                                           pluginDescriptor = module,
+                                                                           priorityListenerCallbacks = priorityUnloadListeners,
+                                                                           listenerCallbacks = unloadListeners)
       }
     }
 
@@ -796,15 +798,15 @@ object DynamicPlugins {
   private inline fun processExtensionPoints(pluginDescriptor: IdeaPluginDescriptorImpl,
                                             projects: List<Project>,
                                             processor: (points: List<ExtensionPointDescriptor>, area: ExtensionsAreaImpl) -> Unit) {
-    pluginDescriptor.appContainerDescriptor.extensionPoints?.let {
+    pluginDescriptor.appContainerDescriptor.extensionPoints.let {
       processor(it, ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
     }
-    pluginDescriptor.projectContainerDescriptor.extensionPoints?.let { extensionPoints ->
+    pluginDescriptor.projectContainerDescriptor.extensionPoints.let { extensionPoints ->
       for (project in projects) {
         processor(extensionPoints, project.extensionArea as ExtensionsAreaImpl)
       }
     }
-    pluginDescriptor.moduleContainerDescriptor.extensionPoints?.let { extensionPoints ->
+    pluginDescriptor.moduleContainerDescriptor.extensionPoints.let { extensionPoints ->
       for (project in projects) {
         for (module in ModuleManager.getInstance(project).modules) {
           processor(extensionPoints, module.extensionArea as ExtensionsAreaImpl)
@@ -1300,7 +1302,7 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(
 
 private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl, epName: String): ExtensionPointDescriptor? {
   fun findContainerExtensionPoint(containerDescriptor: ContainerDescriptor): ExtensionPointDescriptor? {
-    return containerDescriptor.extensionPoints?.find { it.nameEquals(epName, pluginDescriptor) }
+    return containerDescriptor.extensionPoints.find { it.nameEquals(epName, pluginDescriptor) }
   }
 
   return findContainerExtensionPoint(pluginDescriptor.appContainerDescriptor)

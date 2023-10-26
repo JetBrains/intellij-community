@@ -22,7 +22,6 @@ import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiPredicate
 import java.util.function.Predicate
 import kotlin.concurrent.Volatile
@@ -36,24 +35,22 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
                                          val componentManager: ComponentManager,
                                          private var extensionClass: Class<T>?,
                                          private val isDynamic: Boolean) : ExtensionPoint<T> {
-  // immutable list, never modified in-place, only swapped atomically
   @Volatile
   private var cachedExtensions: PersistentList<T>? = null
 
   @Volatile
   private var cachedExtensionsAsArray: Array<T>? = null
 
-  // guarded by this
   @Volatile
   private var adapters = persistentListOf<ExtensionComponentAdapter>()
 
   @Volatile
   private var adaptersAreSorted = true
 
-  // guarded by this
   private var listeners = persistentListOf<ExtensionPointListener<T>>()
 
-  private val keyMapperToCacheRef = AtomicReference<ConcurrentMap<*, Map<*, *>>>()
+  @Volatile
+  private var keyMapperToCache: ConcurrentMap<*, Map<*, *>>? = null
 
   companion object {
     fun setCheckCanceledAction(checkCanceled: Runnable) {
@@ -72,9 +69,15 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
   }
 
   fun <CACHE_KEY : Any?, V : Any?> getCacheMap(): ConcurrentMap<CACHE_KEY, V> {
-    var keyMapperToCache = keyMapperToCacheRef.get()
+    var keyMapperToCache = keyMapperToCache
     if (keyMapperToCache == null) {
-      keyMapperToCache = keyMapperToCacheRef.updateAndGet { prev -> prev ?: ConcurrentHashMap<Any?, Map<*, *>>() }
+      synchronized(this) {
+        keyMapperToCache = this.keyMapperToCache
+        if (keyMapperToCache == null) {
+          keyMapperToCache = ConcurrentHashMap<Any?, Map<*, *>>()
+          this.keyMapperToCache = keyMapperToCache
+        }
+      }
     }
     @Suppress("UNCHECKED_CAST")
     return keyMapperToCache as ConcurrentMap<CACHE_KEY, V>
@@ -216,7 +219,7 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
         }
       }
     }
-    return array!!
+    return array!!.clone()
   }
 
   /**
@@ -279,20 +282,11 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
   }
 
   private fun createSequence(): Sequence<T> {
-    val size: Int
     val adapters = sortedAdapters
-    size = adapters.size
-    if (size == 0) {
-      return emptySequence()
-    }
-    else {
-      return adapters.asSequence().mapNotNull(::processAdapter)
-    }
+    return if (adapters.isEmpty()) emptySequence() else adapters.asSequence().mapNotNull(::processAdapter)
   }
 
-  override fun size(): Int {
-    return cachedExtensions?.size ?: adapters.size
-  }
+  override fun size(): Int = adapters.size
 
   val sortedAdapters: List<ExtensionComponentAdapter>
     get() {
@@ -454,15 +448,16 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
 
     cachedExtensions = newList.toPersistentList()
     cachedExtensionsAsArray = null
-    val result = if (newList.isEmpty()) {
-      persistentListOf<ExtensionComponentAdapter>()
+    adapters = if (newList.isEmpty()) {
+      persistentListOf()
     }
     else {
-      newList.map {
-        ObjectComponentAdapter(instance = it, pluginDescriptor = extensionPointPluginDescriptor, loadingOrder = LoadingOrder.ANY)
-      }.toPersistentList()
+      adapters.mutate { list ->
+        newList.mapTo(list) {
+          ObjectComponentAdapter(instance = it, pluginDescriptor = extensionPointPluginDescriptor, loadingOrder = LoadingOrder.ANY)
+        }
+      }
     }
-    adapters = result
     adaptersAreSorted = true
 
     POINTS_IN_READONLY_MODE!!.add(this)
@@ -761,8 +756,7 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
   }
 
   fun clearUserCache() {
-    val map = keyMapperToCacheRef.get()
-    map?.clear()
+    keyMapperToCache?.clear()
   }
 
   private fun clearCache() {
@@ -790,19 +784,20 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
    * `adapters` is modified directly without copying - method must be called only during start-up.
    */
   @Synchronized
-  fun registerExtensions(descriptors: List<ExtensionDescriptor>,
+  fun registerExtensions(descriptors: PersistentList<ExtensionDescriptor>,
                          pluginDescriptor: PluginDescriptor,
                          listenerCallbacks: MutableList<in Runnable>?) {
     adaptersAreSorted = false
 
     val oldSize = adapters.size
-    for (extensionElement in descriptors) {
-      if (extensionElement.os == null || componentManager.isSuitableForOs(extensionElement.os)) {
-        adapters = adapters.add(createAdapter(descriptor = extensionElement,
+    for (descriptor in descriptors) {
+      if (descriptor.os == null || componentManager.isSuitableForOs(descriptor.os)) {
+        adapters = adapters.add(createAdapter(descriptor = descriptor,
                                               pluginDescriptor = pluginDescriptor,
                                               componentManager = componentManager))
       }
     }
+
     val newSize = adapters.size
 
     clearCache()

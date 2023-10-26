@@ -41,9 +41,11 @@ object UsageCollectors {
   }
 
   internal fun getProjectCollectors(invoker: UsagesCollectorConsumer): Collection<ProjectUsagesCollector> {
-    if (isCalledFromPlugin(invoker)) return emptyList()
+    if (isCalledFromPlugin(invoker)) {
+      return emptyList()
+    }
 
-    return PROJECT_EP_NAME.extensions.asSequence()
+    return PROJECT_EP_NAME.extensionList.asSequence()
       .map { it.collector as ProjectUsagesCollector }
       .filter { isValidCollector(it) }
       .toList()

@@ -24,19 +24,19 @@ internal class BeanExtensionPoint<T : Any>(
   override fun createAdapter(descriptor: ExtensionDescriptor,
                              pluginDescriptor: PluginDescriptor,
                              componentManager: ComponentManager): ExtensionComponentAdapter {
-    return if (componentManager.isInjectionForExtensionSupported) {
-      SimpleConstructorInjectionAdapter(implementationClassName = className,
-                                        pluginDescriptor = pluginDescriptor,
-                                        descriptor = descriptor,
-                                        implementationClassResolver = this)
+    if (componentManager.isInjectionForExtensionSupported) {
+      return SimpleConstructorInjectionAdapter(implementationClassName = className,
+                                               pluginDescriptor = pluginDescriptor,
+                                               descriptor = descriptor,
+                                               implementationClassResolver = this)
     }
     else {
-      XmlExtensionAdapter(implementationClassName = className,
-                          pluginDescriptor = pluginDescriptor,
-                          orderId = descriptor.orderId,
-                          order = descriptor.order,
-                          extensionElement = descriptor.element,
-                          implementationClassResolver = this)
+      return XmlExtensionAdapter(implementationClassName = className,
+                                 pluginDescriptor = pluginDescriptor,
+                                 orderId = descriptor.orderId,
+                                 order = descriptor.order,
+                                 extensionElement = descriptor.element,
+                                 implementationClassResolver = this)
     }
   }
 
