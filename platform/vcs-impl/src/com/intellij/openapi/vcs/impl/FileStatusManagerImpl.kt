@@ -40,9 +40,11 @@ import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.concurrent.TimeUnit
 
+@VisibleForTesting
 class FileStatusManagerImpl(private val project: Project) : FileStatusManager(), Disposable {
   private val queue = MergingUpdateQueue("FileStatusManagerImpl", 100, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
