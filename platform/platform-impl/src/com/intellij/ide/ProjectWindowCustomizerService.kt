@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -19,6 +20,9 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
@@ -27,6 +31,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
@@ -37,6 +42,7 @@ import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 @Service(Service.Level.PROJECT)
 private class ProjectWindowCustomizerIconCache(private val project: Project) {
@@ -347,7 +353,13 @@ class ProjectWindowCustomizerService : Disposable {
     val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 600)
     val x = parent.x.toFloat()
     val y = parent.y.toFloat()
-    val offset = 150f
+    val projectComboBtn = UIUtil.findComponentsOfType(parent, ToolbarComboButton::class.java).find {
+      ClientProperty.get(it, CustomComponentAction.ACTION_KEY) is ProjectToolbarWidgetAction
+    }
+    val projectIconWidth = projectComboBtn?.leftIcons?.firstOrNull()?.iconWidth?.toFloat() ?: 0f
+    val offset = projectComboBtn?.let {
+      SwingUtilities.convertPoint(it.parent, it.x, it.y, parent).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
+    } ?: 150f
     g.paint = RadialGradientPaint(x + offset, y + height / 2, length - offset, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
     g.fillRect(0, 0, length, height)
 
