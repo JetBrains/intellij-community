@@ -352,7 +352,7 @@ class ActionsCollectorImpl : ActionsCollector() {
      * Returns language by file type from [CommonDataKeys.VIRTUAL_FILE]
      */
     private fun getFileTypeLanguage(dataContext: DataContext): Language? {
-      val virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext) ?: return null
+      val virtualFile = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext)?.file ?: return null
       val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.nameSequence)
       if (fileType is LanguageFileType) {
         return fileType.language
