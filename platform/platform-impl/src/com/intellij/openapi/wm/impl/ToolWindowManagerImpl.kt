@@ -2144,15 +2144,31 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     parentFrame: JFrame,
   ) {
     val bounds = info.floatingBounds
+    val screen = ScreenUtil.getScreenRectangle(parentFrame)
+    val needToCenter: Boolean
     if (bounds != null && isValidBounds(bounds)) {
       if (LOG.isDebugEnabled) {
         LOG.debug("Keeping the tool window ${info.id} valid bounds: $bounds")
       }
       externalDecorator.bounds = Rectangle(bounds)
+      needToCenter = false
+    }
+    else if (bounds != null && bounds.width > 0 && bounds.height > 0) {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Adjusting the stored bounds for the tool window ${info.id} ($bounds) because they are invalid")
+      }
+      val adjustedBounds = Rectangle(bounds)
+      ScreenUtil.moveToFit(adjustedBounds, screen, null, true)
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Adjusted the stored bounds to fit the screen $screen: $adjustedBounds")
+      }
+      externalDecorator.bounds = adjustedBounds
+      needToCenter = true
     }
     else {
       if (LOG.isDebugEnabled) {
-        LOG.debug("Adjusting the tool window ${info.id} bounds because the stored bounds are ${if (bounds == null) "null" else "invalid"}")
+        LOG.debug("Computing default bounds for the tool window ${info.id} " +
+                  "because the stored bounds ($bounds) are ${if (bounds == null) "null" else "invalid"}")
       }
       // place a new frame at the center of the current frame if there are no floating bounds
       var size = internalDecorator.size
@@ -2164,9 +2180,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         size = preferredSize
       }
       externalDecorator.bounds = Rectangle(externalDecorator.bounds.location, size)
+      needToCenter = true
+    }
+    if (needToCenter) {
       externalDecorator.setLocationRelativeTo(parentFrame)
       if (LOG.isDebugEnabled) {
-        LOG.debug("Set size to $size and location to ${externalDecorator.bounds.location} (centered to the frame)")
+        LOG.debug("Set the bounds to ${externalDecorator.bounds} (centered to the frame)")
       }
     }
   }
