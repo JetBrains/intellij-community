@@ -1025,7 +1025,8 @@ abstract class ComponentManagerImpl(
       }
       catch (cde: ContainerDisposedException) {
         if (createIfNeeded) {
-          throwContainerDisposed(cde)
+          throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = cde)
+          throw ProcessCanceledException(cde)
         }
         else {
           return null
@@ -2333,8 +2334,14 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
       }
     }
   }
-  return runBlockingInitialization {
-    getInstanceInCallerContext(keyClass)
+  try {
+    return runBlockingInitialization {
+      getInstanceInCallerContext(keyClass)
+    }
+  }
+  catch (pce: ProcessCanceledException) {
+    throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = pce)
+    throw pce
   }
 }
 
@@ -2375,21 +2382,20 @@ private fun <X> ignoreDisposal(x: () -> X): X? {
   }
 }
 
-private fun throwContainerDisposed(cde: ContainerDisposedException): Nothing {
-  if (isUnderIndicatorOrJob()) {
-    throw ProcessCanceledException(cde)
-  }
-  else {
-    throw cde
-  }
-}
-
 private inline fun <X> rethrowCEasPCE(action: () -> X): X {
   try {
     return action()
   }
   catch (ce: CancellationException) {
+    throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = ce)
     throw CeProcessCanceledException(ce)
+  }
+}
+
+private fun throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause: Throwable) {
+  if (!isUnderIndicatorOrJob()) {
+    // in useInstanceContainer=false AlreadyDisposedException was thrown instead
+    throw AlreadyDisposedException("Container is already disposed").initCause(cause)
   }
 }
 
