@@ -20,10 +20,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.PositionTracker
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
+import java.awt.Insets
 import java.awt.Point
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -373,16 +375,32 @@ class GotItTooltip internal constructor(@NonNls val id: String,
 
   fun createAndShow(component: JComponent, pointProvider: (Component, Balloon) -> Point): Balloon {
     val tracker = object : PositionTracker<Balloon>(component) {
-      override fun recalculateLocation(balloon: Balloon): RelativePoint? =
-        if (getComponent().isShowing)
-          RelativePoint(component, pointProvider(component, balloon))
+      override fun recalculateLocation(balloon: Balloon): RelativePoint? {
+        if (!component.isShowing) {
+          hideBalloon(balloon)
+          return null
+        }
+        val point = pointProvider(component, balloon)
+
+        @Suppress("UseDPIAwareInsets")
+        // need to include the corners, because Rectangle#contains() check that point is really inside the rectangle
+        val visibleRect = (component as? JComponent)?.visibleRect?.also { JBInsets.addTo(it, Insets(1, 1, 1, 1)) }
+        // hide the balloon if the target point is not inside the visible rect (except the heavyweight components)
+        return if (visibleRect == null || visibleRect.contains(point)) {
+          RelativePoint(component, point)
+        }
         else {
-          SwingUtilities.invokeLater {
-            balloon.hide(true)
-            GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
-          }
+          hideBalloon(balloon)
           null
         }
+      }
+
+      private fun hideBalloon(balloon: Balloon) {
+        SwingUtilities.invokeLater {
+          balloon.hide(true)
+          GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+        }
+      }
     }
     val balloon = createBalloon().also {
       val dispatcherDisposable = Disposer.newDisposable()
