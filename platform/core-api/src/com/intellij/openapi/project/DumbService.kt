@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.*
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.messages.Topic
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -170,7 +171,7 @@ abstract class DumbService {
    * @see isDumbAware
    */
   fun <T> filterByDumbAwareness(array: Array<T>): List<T> {
-    return filterByDumbAwareness(listOf(*array))
+    return filterByDumbAwareness(array.toList())
   }
 
   /**
@@ -408,11 +409,13 @@ abstract class DumbService {
       val point = extensionPoint.point
       val size = point.size()
       if (size == 0) {
-        return emptyList()
+        return persistentListOf()
       }
+
       if (!getInstance(project).isDumb) {
         return point.extensionList
       }
+
       val result = ArrayList<T>(size)
       for (item in extensionPoint.filterableLazySequence()) {
         val aClass = item.implementationClass ?: continue

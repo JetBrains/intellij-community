@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.findFirstS
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.forEachExtensionSafe
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByGroupingKey
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByKey
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -289,6 +290,9 @@ private fun <T : Any> createOrError(adapter: ExtensionComponentAdapter, point: E
     return adapter.createInstance(point.componentManager)
   }
   catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: ProcessCanceledException) {
     throw e
   }
   catch (e: Throwable) {
