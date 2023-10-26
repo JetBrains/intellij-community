@@ -89,10 +89,8 @@ internal class CommittedChangesViewManager(private val project: Project) : Chang
   internal class DisplayNameSupplier : Supplier<String> {
     override fun get(): String = VcsBundle.message("committed.changes.tab")
   }
+}
 
-  companion object {
-    fun isCommittedChangesAvailable(vcs: AbstractVcs): Boolean {
-      return vcs.committedChangesProvider != null && vcs.type == VcsType.centralized
-    }
-  }
+fun isCommittedChangesAvailable(vcs: AbstractVcs): Boolean {
+  return vcs.committedChangesProvider != null && vcs.type == VcsType.centralized
 }

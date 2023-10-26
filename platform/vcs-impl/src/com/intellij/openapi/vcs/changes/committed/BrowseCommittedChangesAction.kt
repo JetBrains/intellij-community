@@ -17,7 +17,7 @@ import com.intellij.openapi.vcs.AbstractVcs.fileInVcsByFileStatus
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangesUtil.getVcsForFile
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager.Companion.isCommittedChangesAvailable
+import com.intellij.openapi.vcs.changes.committed.isCommittedChangesAvailable
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverVersionControlView
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings
 import com.intellij.openapi.vfs.VirtualFile
