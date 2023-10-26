@@ -3,6 +3,7 @@ package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.java.ClassShortNameIndex;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.javac.Iterators;
 
@@ -28,6 +29,7 @@ public final class DeltaImpl extends GraphImpl implements Delta {
   public DeltaImpl(Set<NodeSource> baseSources, Iterable<NodeSource> deletedSources) {
     super(Containers.MEMORY_CONTAINER_FACTORY);
     addIndex(new SubclassesIndex(Containers.MEMORY_CONTAINER_FACTORY));
+    addIndex(new ClassShortNameIndex(Containers.MEMORY_CONTAINER_FACTORY));
     myBaseSources = Collections.unmodifiableSet(baseSources);
     myDeletedSources = Collections.unmodifiableSet(Iterators.collect(deletedSources, new HashSet<>()));
   }

@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
+import org.jetbrains.jps.dependency.java.ClassShortNameIndex;
 import org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.javac.Iterators;
@@ -21,6 +21,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   public DependencyGraphImpl(MapletFactory containerFactory) {
     super(containerFactory);
     addIndex(new SubclassesIndex(containerFactory));
+    addIndex(new ClassShortNameIndex(containerFactory));
   }
 
   @Override
@@ -207,15 +208,14 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       }
     }
 
-    Set<ReferenceID> deltaNodes = Iterators.collect(Iterators.map(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), node -> node.getReferenceID()), new HashSet<>());
-    
     var updatedNodes = Iterators.collect(Iterators.flat(Iterators.map(delta.getSources(), s -> getNodes(s))), new HashSet<>());
     for (BackDependencyIndex index : getIndices()) {
       BackDependencyIndex deltaIndex = delta.getIndex(index.getName());
       assert deltaIndex != null;
-      index.integrate(diffResult.getDeletedNodes(), updatedNodes, Iterators.map(deltaNodes, id -> Pair.create(id, deltaIndex.getDependencies(id))));
+      index.integrate(diffResult.getDeletedNodes(), updatedNodes, deltaIndex);
     }
 
+    var deltaNodes = Iterators.map(Iterators.flat(Iterators.map(delta.getSources(), s -> delta.getNodes(s))), node -> node.getReferenceID());
     for (ReferenceID nodeID : deltaNodes) {
       Set<NodeSource> sources = Iterators.collect(myNodeToSourcesMap.get(nodeID), new HashSet<>());
       sources.removeAll(delta.getBaseSources());

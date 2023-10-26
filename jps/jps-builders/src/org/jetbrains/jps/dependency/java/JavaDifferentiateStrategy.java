@@ -37,22 +37,35 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
       Graph.getNodesOfType(nodesBefore, JvmClass.class), Graph.getNodesOfType(nodesAfter, JvmClass.class)
     );
     
+    debug("Processing removed classes:");
     for (JvmClass removed : classesDiff.removed()) {
-      if (!processRemovedClass(context, removed, future, present)) {
-        return false;
+      debug("Adding usages of class " + removed.getName());
+      context.affectUsage(new ClassUsage(removed.getName()));
+    }
+    debug("End of removed classes processing.");
+
+    debug("Processing added classes:");
+    try {
+      for (JvmClass added : classesDiff.added()) {
+        if (!processAddedClass(context, added, future, present)) {
+          return false;
+        }
       }
     }
-
-    for (JvmClass added : classesDiff.added()) {
-      if (!processAddedClass(context, added, future, present)) {
-        return false;
-      }
+    finally {
+      debug("End of added classes processing.");
     }
 
-    for (Difference.Change<JvmClass, JvmClass.Diff> change : classesDiff.changed()) {
-      if (!processChangedClass(context, change, future, present)) {
-        return false;
+    debug("Processing changed classes:");
+    try {
+      for (Difference.Change<JvmClass, JvmClass.Diff> change : classesDiff.changed()) {
+        if (!processChangedClass(context, change, future, present)) {
+          return false;
+        }
       }
+    }
+    finally {
+      debug("End of changed classes processing");
     }
 
     Difference.Specifier<JvmModule, JvmModule.Diff> modulesDiff = Difference.deepDiff(
@@ -80,13 +93,21 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     return true;
   }
 
-  public boolean processRemovedClass(DifferentiateContext context, JvmClass removedClass, Utils future, Utils present) {
-    // todo
-    return true;
-  }
-
   public boolean processAddedClass(DifferentiateContext context, JvmClass addedClass, Utils future, Utils present) {
-    // todo
+    // todo: consider if we need to perform a duplucate-class check, when the newly added class is of the same name with the existing one in the same module chunk
+    if (!addedClass.isAnonymous() && !addedClass.isLocal()) {
+      BackDependencyIndex index = context.getGraph().getIndex(ClassShortNameIndex.NAME);
+      if (index != null) {
+        // affecting dependencies on all other classes with the same short name
+        Set<ReferenceID> affectedNodes = Iterators.collect(index.getDependencies(new JvmNodeReferenceID(addedClass.getShortName())), new HashSet<>());
+        affectedNodes.add(addedClass.getReferenceID());
+        for (ReferenceID id : affectedNodes) {
+          debug("Adding usages of class with the same short name: " + id);
+          context.affectUsage(new AffectionScopeMetaUsage(id));
+        }
+        context.affectUsage((n, u) -> affectedNodes.contains(u.getElementOwner()));
+      }
+    }
     return true;
   }
 
@@ -116,7 +137,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         parents.removeAll(Iterators.collect(future.allSupertypes(changedClass.getReferenceID()), new HashSet<>()));
         for (JvmNodeReferenceID parent : parents) {
           debug("Affecting usages in generic type parameter bounds of class: " + parent);
-          context.affectUsage(new ClassAsGenericBoundUsage(parent.getNodeName())); // todo: need support of usage constraint?
+          context.affectUsage(new ClassAsGenericBoundUsage(parent.getNodeName())); // todo: need support of file-filter usage constraint?
         }
       }
     }
@@ -222,7 +243,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     return true;
   }
 
-  private <T> boolean processMethodChanges(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> classChange, Utils future, Utils present) {
+  private boolean processMethodChanges(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> classChange, Utils future, Utils present) {
     JvmClass changedClass = classChange.getPast();
     if (changedClass.isAnnotation()) {
       debug("Class is annotation, skipping method analysis");

@@ -45,6 +45,12 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return getPackageName(getName());
   }
 
+  public @NotNull String getShortName() {
+    String jvmClassName = getName();
+    int index = jvmClassName.lastIndexOf('/');
+    return index >= 0? jvmClassName.substring(index + 1) : jvmClassName;
+  }
+
   @NotNull
   public static String getPackageName(@NotNull String jvmClassName) {
     int index = jvmClassName.lastIndexOf('/');
