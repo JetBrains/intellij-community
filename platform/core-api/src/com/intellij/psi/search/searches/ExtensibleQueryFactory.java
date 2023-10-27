@@ -2,9 +2,8 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.SmartExtensionPoint;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryFactory;
@@ -23,7 +22,7 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
   }
 
   protected ExtensibleQueryFactory(@NotNull ExtensionPointName<QueryExecutor<Result, Parameters>> epName) {
-    point = SmartExtensionPoint.create(epName);
+    point = new SmartExtensionPoint<>(() -> ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(epName));
   }
 
   /**
@@ -39,7 +38,7 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
         epName = epName.substring(pos+1);
       }
       epName = epNamespace + "." + Introspector.decapitalize(epName);
-      return Extensions.getRootArea().getExtensionPoint(epName);
+      return ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(epName);
     });
   }
 
@@ -54,12 +53,12 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
   }
 
   @Override
-  public void registerExecutor(final @NotNull QueryExecutor<Result, Parameters> queryExecutor) {
+  public void registerExecutor(@NotNull QueryExecutor<Result, Parameters> queryExecutor) {
     point.addExplicitExtension(queryExecutor);
   }
 
   @Override
-  public void unregisterExecutor(final @NotNull QueryExecutor<Result, Parameters> queryExecutor) {
+  public void unregisterExecutor(@NotNull QueryExecutor<Result, Parameters> queryExecutor) {
     point.removeExplicitExtension(queryExecutor);
   }
 
