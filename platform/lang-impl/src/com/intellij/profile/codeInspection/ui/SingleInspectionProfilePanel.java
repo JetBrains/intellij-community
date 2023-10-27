@@ -92,6 +92,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
   private static final int SECTION_GAP = 20;
+  public static final String ADD_CUSTOM_INSPECTION_ACTION_ID = "sipp.add.custom.inspection";
 
   private final Map<String, ToolDescriptors> myInitialToolDescriptors = new HashMap<>();
   private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group(InspectionsBundle.message("inspection.root.node.title"));
@@ -1123,6 +1124,25 @@ public class SingleInspectionProfilePanel extends JPanel {
                 });
               } else {
                 ShowSettingsUtilImpl.showSettingsDialog(project, configId, search);
+              }
+            }
+          }
+          else if (url.getScheme().equals("action")) {
+            AnAction action = ActionManager.getInstance().getAction(url.getAuthority());
+            if (action != null) {
+              if (action instanceof ActionGroup group) {
+                final ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.POPUP, group);
+                final Point point = new Point();
+                if (e.getInputEvent() instanceof MouseEvent mouseEvent) {
+                  point.x = mouseEvent.getX();
+                  point.y = mouseEvent.getY();
+                }
+                menu.getComponent().show((Component)e.getSource(), point.x, point.y);
+              } else {
+                final AnActionEvent event = AnActionEvent.createFromInputEvent(
+                  e.getInputEvent(), ActionPlaces.UNKNOWN, null, DataContext.EMPTY_CONTEXT
+                );
+                action.actionPerformed(event);
               }
             }
           }
