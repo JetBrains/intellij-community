@@ -1976,7 +1976,7 @@ abstract class ComponentManagerImpl(
   // project level extension requires Project as constructor argument, so, for now, constructor injection is disabled only for app level
   final override fun isInjectionForExtensionSupported() = parent != null
 
-  internal fun getHolderOfType(componentType: Class<*>): InstanceHolder? {
+  private fun getHolderOfType(componentType: Class<*>): InstanceHolder? {
     for (holder in componentContainer.instanceHolders()) {
       val instanceClass = holder.instanceClass()
       if (componentType === instanceClass || componentType.isAssignableFrom(instanceClass)) {
