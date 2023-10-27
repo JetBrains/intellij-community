@@ -30,7 +30,15 @@ object GradleTaskClassifier {
     "scala",
     "test",
     "war",
-    "wrapper"
+    "wrapper",
+
+    /*dokka related tasks:*/
+    "dokka",
+    "html",
+    "gfm",
+    "jekyll",
+    "multi",
+    "module"
   )
 
   @JvmStatic

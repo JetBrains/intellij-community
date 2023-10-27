@@ -40,7 +40,8 @@ class GradleTaskClassifierTest {
       Arguments.of("compileTestKotlin", "compileMyIntegrationTestKotlin"),
       Arguments.of("other", null),
       Arguments.of("other", ""),
-      Arguments.of("compileJava", "userCompileJava")
+      Arguments.of("compileJava", "userCompileJava"),
+      Arguments.of("dokkaJavadoc", "dokkaJavadoc")
     )
   }
 }
