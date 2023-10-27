@@ -7,8 +7,8 @@ import com.intellij.execution.process.mediator.common.DaemonClientCredentials
 import com.intellij.execution.process.mediator.common.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.common.rpc.Handshake
 import com.intellij.execution.process.mediator.common.util.rsaEncrypt
-import com.intellij.execution.process.mediator.util.MachUtil
-import com.intellij.execution.process.mediator.util.UnixUtil
+import com.intellij.execution.process.mediator.daemon.util.MachUtil
+import com.intellij.execution.process.mediator.daemon.util.UnixUtil
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import kotlinx.coroutines.CoroutineScope
 import java.io.File

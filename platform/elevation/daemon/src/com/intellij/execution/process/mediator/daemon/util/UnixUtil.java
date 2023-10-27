@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.process.mediator.util;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.process.mediator.daemon.util;
 
+import com.intellij.execution.process.mediator.daemon.util.NativeCall.NativeCallException;
 import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.execution.process.mediator.util.NativeCall.NativeCallException;
-import static com.intellij.execution.process.mediator.util.NativeCall.tryRun;
 
 @SuppressWarnings({"SpellCheckingInspection", "UseOfSystemOutOrSystemErr"})
 public final class UnixUtil {
@@ -30,9 +28,9 @@ public final class UnixUtil {
 
   public static void setup(boolean daemonize) {
     checkLibc();
-    tryRun(UnixUtil::setupSignals, "Failed to setup signals");
+    NativeCall.tryRun(UnixUtil::setupSignals, "Failed to setup signals");
     if (daemonize) {
-      tryRun(UnixUtil::leadSession, "Failed to make session leader");
+      NativeCall.tryRun(UnixUtil::leadSession, "Failed to make session leader");
     }
   }
 
@@ -79,7 +77,7 @@ public final class UnixUtil {
   }
 
   private static void tryResetSignal(int signo, @NotNull String signalName) {
-    tryRun(() -> resetSignal(signo), "Failed to reset " + signalName);
+    NativeCall.tryRun(() -> resetSignal(signo), "Failed to reset " + signalName);
   }
 
   private static void resetSignal(int signo) throws NativeCallException {

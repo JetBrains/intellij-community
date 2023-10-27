@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // Based on the original work of Chris Johnsen: https://github.com/ChrisJohnsen/tmux-MacOSX-pasteboard
 // Copyright (c) 2011-2013, Chris Johnsen <chris_johnsen@pobox.com>.
 // Available under the terms of the BSD 2-Clause License (https://github.com/ChrisJohnsen/tmux-MacOSX-pasteboard/blob/12b77138a3/LICENSE).
 
-package com.intellij.execution.process.mediator.util;
+package com.intellij.execution.process.mediator.daemon.util;
 
-import com.intellij.execution.process.mediator.util.NativeCall.NativeCallException;
+import com.intellij.execution.process.mediator.daemon.util.NativeCall.NativeCallException;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Proxy;
 import java.util.Objects;
 
-import static com.intellij.execution.process.mediator.util.NativeCall.tryRun;
+import static com.intellij.execution.process.mediator.daemon.util.NativeCall.tryRun;
 
 public final class MachUtil {
   private MachUtil() {}

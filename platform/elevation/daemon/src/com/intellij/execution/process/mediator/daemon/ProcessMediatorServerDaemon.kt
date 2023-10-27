@@ -7,7 +7,7 @@ import com.intellij.execution.process.mediator.common.grpc.ExceptionAsStatus
 import com.intellij.execution.process.mediator.common.rpc.DaemonGrpcKt
 import com.intellij.execution.process.mediator.common.rpc.buildFrom
 import com.intellij.execution.process.mediator.common.rpc.toQuotaOptions
-import com.intellij.execution.process.mediator.grpc.CredentialsAuthServerInterceptor
+import com.intellij.execution.process.mediator.daemon.grpc.CredentialsAuthServerInterceptor
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import kotlinx.coroutines.CoroutineScope
