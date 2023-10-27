@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.deobfuscator;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
@@ -14,9 +15,12 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.GenericDominatorEngine;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
+import org.jetbrains.java.decompiler.struct.StructClass;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class ExceptionDeobfuscator {
 
@@ -65,7 +69,7 @@ public final class ExceptionDeobfuscator {
         InstructionSequence seq = handler.getSeq();
 
         Instruction firstinstr;
-        if (seq.length() > 0) {
+        if (!seq.isEmpty()) {
           firstinstr = seq.getInstr(0);
 
           if (firstinstr.opcode == CodeConstants.opc_pop ||
@@ -389,6 +393,84 @@ public final class ExceptionDeobfuscator {
     return false;
   }
 
+  /**
+   * Duplicates merged catch blocks; it needs to process files with record pattern matching,
+   * because the javac compiler collapses all catch blocks for same exception into one block.
+   * It breaks logic to find a possible way. It must be called before other optimizations; otherwise
+   * this decompiler will add a lot of empty blocks, which cannot be processed correctly.
+   *
+   * @param graph The control flow graph containing the merged catch blocks.
+   * @param cl    The class containing the control flow graph.
+   */
+  public static void duplicateMergedCatchBlocks(@NotNull ControlFlowGraph graph, @NotNull StructClass cl) {
+    if (!cl.hasRecordPatternSupport()) {
+      return;
+    }
+    Map<BasicBlock, Set<ExceptionRangeCFG>> mapRanges = new HashMap<>();
+    for (ExceptionRangeCFG range : graph.getExceptions()) {
+      mapRanges.computeIfAbsent(range.getHandler(), k -> new HashSet<>()).add(range);
+    }
+
+    for (Entry<BasicBlock, Set<ExceptionRangeCFG>> ent : mapRanges.entrySet()) {
+      BasicBlock handler = ent.getKey();
+      Set<ExceptionRangeCFG> ranges = ent.getValue();
+
+      if (ranges.size() == 1) {
+        continue;
+      }
+      if (handler.getLastInstruction().opcode != CodeConstants.opc_athrow) {
+        continue;
+      }
+      Set<String> exceptions = ranges.stream()
+        .map(t -> t.getExceptionTypes())
+        .flatMap(t -> t != null ? t.stream() : Stream.empty())
+        .collect(Collectors.toSet());
+      List<BasicBlock> successors = handler.getSuccessors();
+      if (successors != null && successors.size() == 1 && successors.get(0).getSuccessors().isEmpty() &&
+          successors.get(0).getSuccessorExceptions().isEmpty() &&
+          //exceptions contain only one type of exceptions, and it is not null, because null defines `finally` blocks
+          handler.getSuccessorExceptions().isEmpty() && exceptions.size() == 1 && !exceptions.contains(null)) {
+        for (ExceptionRangeCFG range : ranges) {
+          BasicBlock newHandler = handler.clone(++graph.last_id);
+          graph.getBlocks().addWithKey(newHandler, newHandler.id);
+          // only exception predecessors from this range considered
+          List<BasicBlock> lstPredExceptions = new ArrayList<>(handler.getPredecessorExceptions());
+          lstPredExceptions.retainAll(range.getProtectedRange());
+          // replace predecessors
+          for (BasicBlock pred : lstPredExceptions) {
+            ExceptionRangeCFG previousEdge = graph.getExceptionRange(handler, pred);
+            pred.replaceSuccessor(handler, newHandler);
+            if (previousEdge != null) {
+              previousEdge.setHandler(newHandler);
+            }
+          }
+          //add fast exit
+          newHandler.addSuccessor(successors.get(0));
+          for (BasicBlock successorException : handler.getSuccessorExceptions()) {
+            newHandler.addSuccessorException(successorException);
+            ExceptionRangeCFG previousEdge = graph.getExceptionRange(successorException, handler);
+            if (previousEdge != null) {
+              ArrayList<BasicBlock> newRanges = new ArrayList<>();
+              newRanges.add(newHandler);
+              ExceptionRangeCFG subRange = new ExceptionRangeCFG(newRanges, successorException, previousEdge.getExceptionTypes());
+              graph.getExceptions().add(subRange);
+              successorException.addPredecessorException(newHandler);
+            }
+          }
+          range.setHandler(newHandler);
+        }
+
+        for (BasicBlock successorException : handler.getSuccessorExceptions()) {
+          successorException.removePredecessorException(handler);
+          if (successorException.getPredecessorExceptions().isEmpty()) {
+            graph.removeBlock(successorException);
+          }
+        }
+        graph.removeBlock(handler);
+      }
+    }
+  }
+
   public static void insertDummyExceptionHandlerBlocks(ControlFlowGraph graph, int bytecode_version) {
     Map<BasicBlock, Set<ExceptionRangeCFG>> mapRanges = new HashMap<>();
     for (ExceptionRangeCFG range : graph.getExceptions()) {
@@ -419,7 +501,11 @@ public final class ExceptionDeobfuscator {
 
         // replace predecessors
         for (BasicBlock pred : lstPredExceptions) {
+          ExceptionRangeCFG previousEdge = graph.getExceptionRange(handler, pred);
           pred.replaceSuccessor(handler, dummyBlock);
+          if (previousEdge != null) {
+            previousEdge.setHandler(dummyBlock);
+          }
         }
 
         // replace handler
