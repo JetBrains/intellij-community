@@ -25,11 +25,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile
-import com.intellij.openapi.vfs.newvfs.RefreshQueue
-import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
-import com.intellij.openapi.vfs.newvfs.RefreshSession
+import com.intellij.openapi.vfs.newvfs.*
+import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -41,6 +38,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import java.util.*
+import java.util.concurrent.TimeUnit.NANOSECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -315,6 +313,9 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   private fun startBackgroundSync(): Job {
     LOG.debug("starting background VFS sync")
     val bgRefreshSession = AtomicReference<RefreshSession?>()
+    val t = System.nanoTime()
+    val sessions = AtomicInteger()
+    val events = AtomicInteger()
     val job = coroutineScope.launch(CoroutineName("background sync")) {
       val roots = listOf(*ManagingFS.getInstance().localRoots)
       val queue = RefreshQueue.getInstance() as RefreshQueueImpl
@@ -326,10 +327,17 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
           bgRefreshSession.set(session)
           session.launch()
           bgRefreshSession.set(null)
+          sessions.incrementAndGet()
+          events.addAndGet(session.metric("events") as Int)
         }
       }
     }
-    job.invokeOnCompletion { if (it is CancellationException) bgRefreshSession.getAndSet(null)?.cancel() }
+    job.invokeOnCompletion {
+      if (it is CancellationException) bgRefreshSession.getAndSet(null)?.cancel()
+      if (coroutineScope.isActive) {
+        VfsUsageCollector.logBackgroundRefresh(NANOSECONDS.toMillis(System.nanoTime() - t), sessions.get(), events.get())
+      }
+    }
     return job
   }
 

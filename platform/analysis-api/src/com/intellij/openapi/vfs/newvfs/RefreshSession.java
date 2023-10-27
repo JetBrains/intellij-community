@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -19,4 +20,7 @@ public abstract class RefreshSession {
   public abstract void launch();
 
   public abstract void cancel();
+
+  @ApiStatus.Internal
+  public abstract Object metric(@NotNull String key);
 }
