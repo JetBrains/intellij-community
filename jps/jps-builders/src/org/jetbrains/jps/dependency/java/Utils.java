@@ -13,7 +13,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public final class Utils {
-  public static final String OBJECT_CLASS_NAME = "java/lang/Object";
 
   private final @NotNull Graph myGraph;
   

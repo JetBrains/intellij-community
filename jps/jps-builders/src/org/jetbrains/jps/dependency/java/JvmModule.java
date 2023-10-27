@@ -21,6 +21,14 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
     myExports = exports;
   }
 
+  //@Override
+  //public Iterable<Usage> getUsages() {
+  //  return Iterators.unique(Iterators.flat(
+  //    super.getUsages(),
+  //    Iterators.map(Iterators.filter(getRequires(), r -> !Objects.equals(getName(), r.getName())), r -> new ModuleUsage(r.getName()))
+  //  ));
+  //}
+
   public String getVersion() {
     return myVersion;
   }

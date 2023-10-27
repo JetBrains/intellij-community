@@ -23,6 +23,6 @@ public final class SubclassesIndex extends BackDependencyIndexImpl {
       return Collections.emptyList();
     }
     JvmClass classNode = (JvmClass)node;
-    return Iterators.map(Iterators.flat(Iterators.asIterable(classNode.getSuperFqName()), classNode.getInterfaces()), name -> new JvmNodeReferenceID(name));
+    return Iterators.map(classNode.getSuperTypes(), name -> new JvmNodeReferenceID(name));
   }
 }
