@@ -2,9 +2,9 @@
 package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.Empty
-import com.intellij.execution.process.mediator.grpc.ExceptionAsStatus
+import com.intellij.execution.process.mediator.common.grpc.ExceptionAsStatus
+import com.intellij.execution.process.mediator.common.rpc.*
 import com.intellij.execution.process.mediator.grpc.ExceptionStatusDescriptionAugmenterServerInterceptor
-import com.intellij.execution.process.mediator.rpc.*
 import io.grpc.ServerInterceptors
 import io.grpc.ServerServiceDefinition
 import kotlinx.coroutines.channels.consume

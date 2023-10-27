@@ -5,7 +5,7 @@ package com.intellij.execution.process.mediator.client
 
 import com.google.protobuf.ByteString
 import com.intellij.execution.process.SelfKiller
-import com.intellij.execution.process.mediator.daemon.QuotaExceededException
+import com.intellij.execution.process.mediator.common.daemon.QuotaExceededException
 import com.intellij.execution.process.mediator.util.ChannelInputStream
 import com.intellij.execution.process.mediator.util.ChannelOutputStream
 import com.intellij.execution.process.mediator.util.blockingGet

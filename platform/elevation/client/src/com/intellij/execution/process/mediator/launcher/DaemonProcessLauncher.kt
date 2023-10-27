@@ -4,10 +4,10 @@ package com.intellij.execution.process.mediator.launcher
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.BaseOSProcessHandler
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
-import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
-import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
+import com.intellij.execution.process.mediator.common.daemon.DaemonClientCredentials
+import com.intellij.execution.process.mediator.common.daemon.DaemonLaunchOptions
+import com.intellij.execution.process.mediator.common.rpc.Handshake
 import com.intellij.execution.process.mediator.daemon.DaemonProcessRuntimeClasspath
-import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil

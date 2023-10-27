@@ -3,6 +3,9 @@
 
 package com.intellij.execution.process.mediator.daemon
 
+import com.intellij.execution.process.mediator.common.daemon.QuotaExceededException
+import com.intellij.execution.process.mediator.common.daemon.QuotaOptions
+import com.intellij.execution.process.mediator.common.daemon.QuotaState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

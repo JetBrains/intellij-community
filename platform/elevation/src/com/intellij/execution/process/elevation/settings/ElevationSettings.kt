@@ -2,7 +2,7 @@
 package com.intellij.execution.process.elevation.settings
 
 import com.intellij.execution.process.elevation.ElevationBundle
-import com.intellij.execution.process.mediator.daemon.QuotaOptions
+import com.intellij.execution.process.mediator.common.daemon.QuotaOptions
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded

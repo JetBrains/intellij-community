@@ -2,11 +2,12 @@
 package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.Empty
+import com.intellij.execution.process.mediator.common.daemon.DaemonClientCredentials
+import com.intellij.execution.process.mediator.common.grpc.ExceptionAsStatus
+import com.intellij.execution.process.mediator.common.rpc.DaemonGrpcKt
+import com.intellij.execution.process.mediator.common.rpc.buildFrom
+import com.intellij.execution.process.mediator.common.rpc.toQuotaOptions
 import com.intellij.execution.process.mediator.grpc.CredentialsAuthServerInterceptor
-import com.intellij.execution.process.mediator.grpc.ExceptionAsStatus
-import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
-import com.intellij.execution.process.mediator.rpc.buildFrom
-import com.intellij.execution.process.mediator.rpc.toQuotaOptions
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import kotlinx.coroutines.CoroutineScope
@@ -14,8 +15,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.Closeable
-import com.intellij.execution.process.mediator.rpc.QuotaOptions as QuotaOptionsMessage
-import com.intellij.execution.process.mediator.rpc.QuotaState as QuotaStateMessage
+import com.intellij.execution.process.mediator.common.rpc.QuotaOptions as QuotaOptionsMessage
+import com.intellij.execution.process.mediator.common.rpc.QuotaState as QuotaStateMessage
 
 class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
                                   builder: ServerBuilder<*>,

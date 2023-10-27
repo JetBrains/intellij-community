@@ -5,7 +5,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.BaseOSProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
-import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
+import com.intellij.execution.process.mediator.common.daemon.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.launcher.*
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.ApplicationNamesInfo

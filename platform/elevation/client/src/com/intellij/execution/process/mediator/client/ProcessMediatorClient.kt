@@ -3,12 +3,12 @@ package com.intellij.execution.process.mediator.client
 
 import com.google.protobuf.ByteString
 import com.google.protobuf.Empty
-import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
-import com.intellij.execution.process.mediator.daemon.QuotaOptions
-import com.intellij.execution.process.mediator.daemon.QuotaState
-import com.intellij.execution.process.mediator.grpc.ExceptionAsStatus
+import com.intellij.execution.process.mediator.common.daemon.DaemonClientCredentials
+import com.intellij.execution.process.mediator.common.daemon.QuotaOptions
+import com.intellij.execution.process.mediator.common.daemon.QuotaState
+import com.intellij.execution.process.mediator.common.grpc.ExceptionAsStatus
+import com.intellij.execution.process.mediator.common.rpc.*
 import com.intellij.execution.process.mediator.grpc.LoggingClientInterceptor
-import com.intellij.execution.process.mediator.rpc.*
 import io.grpc.Channel
 import io.grpc.ClientInterceptors
 import io.grpc.stub.MetadataUtils
@@ -16,7 +16,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.Closeable
 import java.io.File
-import com.intellij.execution.process.mediator.rpc.QuotaOptions as QuotaOptionsMessage
+import com.intellij.execution.process.mediator.common.rpc.QuotaOptions as QuotaOptionsMessage
 
 class ProcessMediatorClient private constructor(
   parentScope: CoroutineScope,
