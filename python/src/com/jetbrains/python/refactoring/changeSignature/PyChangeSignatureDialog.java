@@ -6,6 +6,7 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -269,6 +270,9 @@ public class PyChangeSignatureDialog extends
       @Override
       protected JBTableRowRenderer getRowRenderer(int row) {
         return new EditorTextFieldJBTableRowRenderer(getProject(), PythonLanguage.getInstance(), getDisposable()) {
+          {
+            useEditorFont();
+          }
           @Override
           protected String getText(JTable table, int row) {
             final PyParameterTableModelItem pyItem = getRowItem(row);
@@ -341,6 +345,7 @@ public class PyChangeSignatureDialog extends
             defaultValuePanel.add(defaultValueLabel);
             defaultValuePanel.add(myDefaultValueEditor);
             myDefaultValueEditor.setPreferredWidth(getTable().getWidth() / 2);
+            myDefaultValueEditor.setFont(EditorUtil.getEditorFont());
             // The corresponding PyParameterInfo field can't be updated by just RowEditorChangeListener(1) 
             // because the corresponding column value is not String but Pair<PsiCodeFragment, Boolean>.
             myDefaultValueEditor.addDocumentListener(new DocumentListener() {
@@ -361,6 +366,7 @@ public class PyChangeSignatureDialog extends
             namePanel.add(nameLabel);
             namePanel.add(myNameEditor);
             myNameEditor.setPreferredWidth(getTable().getWidth() / 2);
+            myNameEditor.setFont(EditorUtil.getEditorFont());
             myNameEditor.addDocumentListener(new RowEditorChangeListener(0));
             myNameEditor.addDocumentListener(new DocumentListener() {
               @Override
