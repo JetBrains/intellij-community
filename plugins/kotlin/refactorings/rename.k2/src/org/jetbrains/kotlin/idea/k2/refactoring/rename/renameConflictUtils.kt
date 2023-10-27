@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
@@ -33,7 +32,6 @@ import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
@@ -58,7 +56,7 @@ fun checkClassNameShadowing(
         return this == null || this is KtErrorType
     }
 
-    val foreignReferences = mutableMapOf<Pair<PsiNamedElement, ClassId>, MutableSet<KtFile>>()
+    val foreignReferences = mutableSetOf<Pair<PsiNamedElement, ClassId>>()
     val usageIterator = originalUsages.listIterator()
     while (usageIterator.hasNext()) {
         val usage = usageIterator.next()
@@ -92,9 +90,7 @@ fun checkClassNameShadowing(
 
         val (conflictingClass, conflictingClassId) = conflictingClassToClassIdPair
         if (conflictingClass != null && conflictingClassId != null) {
-            foreignReferences.getOrPut(conflictingClass to conflictingClassId) {
-                mutableSetOf()
-            }.add(refElement.containingKtFile)
+            foreignReferences.add(conflictingClass to conflictingClassId)
         }
 
         val newFqName = referencedClassFqName.asSingleFqName().parent().child(Name.identifier(newName))
@@ -110,10 +106,10 @@ fun checkClassNameShadowing(
         }
     }
 
-    foreignReferences.forEach { pair, files ->
-        val newFqName = pair.second.asSingleFqName()
-        for (ref in ReferencesSearch.search(pair.first, GlobalSearchScope.filesScope(declaration.project, files.map { it.virtualFile }))) {
-            val refElement = ref.element as? KtSimpleNameExpression ?: continue
+    foreignReferences.forEach { (klass, classId) ->
+        val newFqName = classId.asSingleFqName()
+        for (ref in ReferencesSearch.search(klass, declaration.useScope)) {
+            val refElement = ref.element as? KtSimpleNameExpression ?: continue //todo cross language conflicts
             newUsages.add(UsageInfoWithFqNameReplacement(refElement, declaration, newFqName))
         }
     }
