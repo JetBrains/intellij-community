@@ -46,14 +46,14 @@
     },
     {
       "number": 15,
-      "description": "Full Line local model",
+      "description": "Full Line - Inline independent DROP UNKNOWN RED CODE",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
     },
     {
       "number": 16,
-      "description": "Full Line trigger model",
+      "description": "Full Line - Inline independent DEBOUNCE",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
