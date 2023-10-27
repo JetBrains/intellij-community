@@ -2,7 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
+import com.intellij.openapi.extensions.SmartExtensionPoint;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
@@ -17,7 +17,7 @@ import java.util.Objects;
 @Service(Service.Level.PROJECT)
 public final class SelectInManager  {
   private final Project myProject;
-  private final SimpleSmartExtensionPoint<SelectInTarget> myTargets;
+  private final SmartExtensionPoint<SelectInTarget> myTargets;
   /**
    * @deprecated Use {@link #getProject()} instead
    */
@@ -25,7 +25,7 @@ public final class SelectInManager  {
 
   public SelectInManager(@NotNull Project project) {
     myProject = project;
-    myTargets = SimpleSmartExtensionPoint.create(myProject.getExtensionArea(), SelectInTarget.EP_NAME);
+    myTargets = SmartExtensionPoint.create(myProject.getExtensionArea(), SelectInTarget.EP_NAME);
   }
 
   public void removeTarget(SelectInTarget target) {

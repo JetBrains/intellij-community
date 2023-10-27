@@ -4,36 +4,36 @@ package com.intellij.openapi.extensions;
 import kotlin.Unit;
 import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
-import static kotlinx.collections.immutable.ExtensionsKt.*;
+import static kotlinx.collections.immutable.ExtensionsKt.mutate;
+import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
 
-public abstract class SmartExtensionPoint<Extension, V> {
-  private final PersistentList<V> explicitExtensions;
+public abstract class SmartExtensionPoint<T> {
+  private volatile PersistentList<T> explicitExtensions = persistentListOf();
+
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private volatile ExtensionPoint<@NotNull Extension> extensionPoint;
-  private volatile PersistentList<V> cache;
-  private final ExtensionPointAndAreaListener<Extension> extensionPointAndAreaListener;
+  private volatile ExtensionPoint<@NotNull T> extensionPoint;
+  private volatile PersistentList<T> cache;
+  private final ExtensionPointAndAreaListener<T> extensionPointAndAreaListener;
 
-  protected SmartExtensionPoint(@NotNull Collection<V> explicitExtensions) {
-    this.explicitExtensions = toPersistentList(explicitExtensions);
+  private final Object lock = new Object();
 
-    extensionPointAndAreaListener = new ExtensionPointAndAreaListener<Extension>() {
+  protected SmartExtensionPoint() {
+    extensionPointAndAreaListener = new ExtensionPointAndAreaListener<T>() {
       @Override
       public void areaReplaced(@NotNull ExtensionsArea oldArea) {
         dropCache();
       }
 
       @Override
-      public void extensionAdded(@NotNull Extension extension, @NotNull PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
         dropCache();
       }
 
       @Override
-      public void extensionRemoved(@NotNull Extension extension, @NotNull PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
         dropCache();
       }
 
@@ -42,10 +42,10 @@ public abstract class SmartExtensionPoint<Extension, V> {
           return;
         }
 
-        synchronized (SmartExtensionPoint.this.explicitExtensions) {
+        synchronized (lock) {
           if (cache != null) {
             cache = null;
-            ExtensionPoint<@NotNull Extension> extensionPoint = SmartExtensionPoint.this.extensionPoint;
+            ExtensionPoint<@NotNull T> extensionPoint = SmartExtensionPoint.this.extensionPoint;
             if (extensionPoint != null) {
               extensionPoint.removeExtensionPointListener(this);
               SmartExtensionPoint.this.extensionPoint = null;
@@ -56,55 +56,66 @@ public abstract class SmartExtensionPoint<Extension, V> {
     };
   }
 
-  protected abstract @NotNull ExtensionPoint<@NotNull Extension> getExtensionPoint();
+  public static <T> SmartExtensionPoint<T> create(ExtensionPointName<T> epName) {
+    return new SmartExtensionPoint<T>() {
+      @Override
+      protected @NotNull ExtensionPoint<@NotNull T> getExtensionPoint() {
+        return Extensions.getRootArea().getExtensionPoint(epName);
+      }
+    };
+  }
 
-  public final void addExplicitExtension(@NotNull V extension) {
-    synchronized (explicitExtensions) {
+  public static <T> SmartExtensionPoint<T> create(ExtensionsArea area, ExtensionPointName<T> epName) {
+    return new SmartExtensionPoint<T>() {
+      @Override
+      protected @NotNull ExtensionPoint<@NotNull T> getExtensionPoint() {
+        return area.getExtensionPoint(epName);
+      }
+    };
+  }
+
+  protected abstract @NotNull ExtensionPoint<@NotNull T> getExtensionPoint();
+
+  public final void addExplicitExtension(@NotNull T extension) {
+    synchronized (lock) {
       explicitExtensions.add(extension);
       cache = null;
     }
   }
 
-  public final void removeExplicitExtension(@NotNull V extension) {
-    synchronized (explicitExtensions) {
-      explicitExtensions.remove(extension);
+  public final void removeExplicitExtension(@NotNull T extension) {
+    synchronized (lock) {
+      explicitExtensions = explicitExtensions.remove(extension);
       cache = null;
     }
   }
 
-  protected abstract @Nullable V getExtension(final @NotNull Extension extension);
-
-  public final @NotNull List<V> getExtensions() {
-    PersistentList<V> result = cache;
+  public final @NotNull List<T> getExtensions() {
+    PersistentList<T> result = cache;
     if (result != null) {
       return result;
     }
 
     // it is ok to call getExtensionPoint several times - call is cheap, and implementation is thread-safe
-    ExtensionPoint<Extension> extensionPoint = this.extensionPoint;
+    ExtensionPoint<T> extensionPoint = this.extensionPoint;
     if (extensionPoint == null) {
       extensionPoint = getExtensionPoint();
       this.extensionPoint = extensionPoint;
     }
 
-    PersistentList<V> registeredExtensions;
-    List<? extends Extension> collection = extensionPoint.getExtensionList();
+    PersistentList<T> registeredExtensions;
+    List<T> collection = extensionPoint.getExtensionList();
     if (collection.isEmpty()) {
       registeredExtensions = persistentListOf();
     }
     else {
       registeredExtensions = mutate(persistentListOf(), mutator -> {
-        for (Extension t : collection) {
-          V o = getExtension(t);
-          if (o != null) {
-            mutator.add(o);
-          }
-        }
+        mutator.addAll(collection);
         return Unit.INSTANCE;
       });
     }
 
-    synchronized (explicitExtensions) {
+    synchronized (lock) {
       result = cache;
       if (result != null) {
         return result;

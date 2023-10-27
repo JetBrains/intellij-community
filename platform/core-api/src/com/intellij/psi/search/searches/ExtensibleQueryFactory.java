@@ -2,7 +2,11 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.SmartExtensionPoint;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryFactory;
@@ -14,17 +18,17 @@ import java.beans.Introspector;
 import java.util.List;
 
 public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Result, Parameters> {
-  private final SmartExtensionPoint<QueryExecutor<Result, Parameters>, QueryExecutor<Result, Parameters>> myPoint;
+  private final SmartExtensionPoint<QueryExecutor<Result, Parameters>> point;
 
   protected ExtensibleQueryFactory() {
     this("com.intellij");
   }
 
   protected ExtensibleQueryFactory(@NotNull ExtensionPointName<QueryExecutor<Result, Parameters>> epName) {
-    myPoint = new SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>() {
+    point = new SmartExtensionPoint<QueryExecutor<Result, Parameters>>() {
       @Override
       protected @NotNull ExtensionPoint<QueryExecutor<Result, Parameters>> getExtensionPoint() {
-        return Extensions.getRootArea().getExtensionPoint(epName);
+        return ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(epName);
       }
     };
   }
@@ -34,8 +38,8 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  protected ExtensibleQueryFactory(final @NonNls String epNamespace) {
-    myPoint = new SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>() {
+  protected ExtensibleQueryFactory(@NonNls String epNamespace) {
+    point = new SmartExtensionPoint<QueryExecutor<Result, Parameters>>() {
       @Override
       protected @NotNull ExtensionPoint<QueryExecutor<Result, Parameters>> getExtensionPoint() {
         @NonNls String epName = ExtensibleQueryFactory.this.getClass().getName();
@@ -49,7 +53,7 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
     };
   }
 
-  public void registerExecutor(final QueryExecutor<Result, Parameters> queryExecutor, Disposable parentDisposable) {
+  public void registerExecutor(QueryExecutor<Result, Parameters> queryExecutor, Disposable parentDisposable) {
     registerExecutor(queryExecutor);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -61,16 +65,16 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
 
   @Override
   public void registerExecutor(final @NotNull QueryExecutor<Result, Parameters> queryExecutor) {
-    myPoint.addExplicitExtension(queryExecutor);
+    point.addExplicitExtension(queryExecutor);
   }
 
   @Override
   public void unregisterExecutor(final @NotNull QueryExecutor<Result, Parameters> queryExecutor) {
-    myPoint.removeExplicitExtension(queryExecutor);
+    point.removeExplicitExtension(queryExecutor);
   }
 
   @Override
   protected @NotNull List<QueryExecutor<Result, Parameters>> getExecutors() {
-    return myPoint.getExtensions();
+    return point.getExtensions();
   }
 }
