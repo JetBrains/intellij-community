@@ -80,6 +80,7 @@ fun KtCallExpression.moveFunctionLiteralOutsideParentheses() {
     assert(expression.unpackFunctionLiteral() != null)
 
     fun isWhiteSpaceOrComment(e: PsiElement) = e is PsiWhiteSpace || e is PsiComment
+
     val prevComma = argument.siblings(forward = false, withItself = false).firstOrNull { it.elementType == KtTokens.COMMA }
     val prevComments = (prevComma ?: argumentList.leftParenthesis)
         ?.siblings(forward = true, withItself = false)
