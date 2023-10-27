@@ -1,11 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.process.mediator
+package com.intellij.execution.process.mediator.client
 
-import com.intellij.execution.process.mediator.client.MediatedProcess
-import com.intellij.execution.process.mediator.client.ProcessMediatorClient
-import com.intellij.execution.process.mediator.launcher.ProcessMediatorConnection
-import com.intellij.execution.process.mediator.launcher.startInProcessServer
-import com.intellij.execution.process.mediator.rt.MediatedProcessTestMain
+import com.intellij.execution.process.mediator.client.launcher.ProcessMediatorConnection
+import com.intellij.execution.process.mediator.client.launcher.startInProcessServer
+import com.intellij.execution.process.mediator.client.rt.MediatedProcessTestMain
 import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.AfterEach

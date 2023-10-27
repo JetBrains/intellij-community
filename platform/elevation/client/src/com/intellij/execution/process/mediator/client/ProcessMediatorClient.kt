@@ -3,12 +3,12 @@ package com.intellij.execution.process.mediator.client
 
 import com.google.protobuf.ByteString
 import com.google.protobuf.Empty
+import com.intellij.execution.process.mediator.client.grpc.LoggingClientInterceptor
 import com.intellij.execution.process.mediator.common.DaemonClientCredentials
 import com.intellij.execution.process.mediator.common.QuotaOptions
 import com.intellij.execution.process.mediator.common.QuotaState
 import com.intellij.execution.process.mediator.common.grpc.ExceptionAsStatus
 import com.intellij.execution.process.mediator.common.rpc.*
-import com.intellij.execution.process.mediator.grpc.LoggingClientInterceptor
 import io.grpc.Channel
 import io.grpc.ClientInterceptors
 import io.grpc.stub.MetadataUtils

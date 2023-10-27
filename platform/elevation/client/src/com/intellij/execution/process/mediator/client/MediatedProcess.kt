@@ -5,10 +5,10 @@ package com.intellij.execution.process.mediator.client
 
 import com.google.protobuf.ByteString
 import com.intellij.execution.process.SelfKiller
+import com.intellij.execution.process.mediator.client.util.ChannelInputStream
+import com.intellij.execution.process.mediator.client.util.ChannelOutputStream
+import com.intellij.execution.process.mediator.client.util.blockingGet
 import com.intellij.execution.process.mediator.common.QuotaExceededException
-import com.intellij.execution.process.mediator.util.ChannelInputStream
-import com.intellij.execution.process.mediator.util.ChannelOutputStream
-import com.intellij.execution.process.mediator.util.blockingGet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*

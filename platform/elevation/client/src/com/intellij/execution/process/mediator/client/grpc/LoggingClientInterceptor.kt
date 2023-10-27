@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.process.mediator.grpc
+package com.intellij.execution.process.mediator.client.grpc
 
-import com.intellij.execution.process.mediator.ProcessMediatorLogger
+import com.intellij.execution.process.mediator.client.ProcessMediatorLogger
 import io.grpc.*
 import java.util.logging.Level
 
