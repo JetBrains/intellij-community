@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -51,7 +51,7 @@ final class DumpExtensionsAction extends DumbAwareAction {
     }
     System.out.println(points.size() + " extension points: ");
     for (ExtensionPoint<?> point : points) {
-      System.out.println(" " + ((ExtensionPointImpl<?>)point).getName());
+      System.out.println(" " + ((ExtensionPointImpl<?>)point).name);
     }
 
     List<Object> extensions = new ArrayList<>();

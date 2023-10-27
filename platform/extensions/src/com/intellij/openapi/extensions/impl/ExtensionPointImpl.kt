@@ -33,10 +33,10 @@ import kotlin.concurrent.Volatile
 private val LOG: Logger = logger<ExtensionPointImpl<*>>()
 
 @ApiStatus.Internal
-sealed class ExtensionPointImpl<T : Any>(val name: String,
-                                         val className: String,
+sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
+                                         @JvmField val className: String,
                                          private val extensionPointPluginDescriptor: PluginDescriptor,
-                                         val componentManager: ComponentManager,
+                                         @JvmField val componentManager: ComponentManager,
                                          private var extensionClass: Class<T>?,
                                          private val isDynamic: Boolean) : ExtensionPoint<T>, Sequence<T> {
   @Volatile
@@ -84,22 +84,18 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
   }
 
   fun <CACHE_KEY : Any?, V : Any?> getCacheMap(): ConcurrentMap<CACHE_KEY, V> {
-    val keyMapperToCache = keyMapperToCache
-    @Suppress("FoldInitializerAndIfToElvis")
-    if (keyMapperToCache == null) {
-      @Suppress("UNCHECKED_CAST")
-      return keyMapperToCacheUpdater.updateAndGet(this) {
-        ConcurrentHashMap<Any?, Map<*, *>>()
-      } as ConcurrentMap<CACHE_KEY, V>
-    }
     @Suppress("UNCHECKED_CAST")
-    return keyMapperToCache as ConcurrentMap<CACHE_KEY, V>
+    return (keyMapperToCache ?: keyMapperToCacheUpdater.updateAndGet(this) { ConcurrentHashMap<Any?, Map<*, *>>() })
+      as ConcurrentMap<CACHE_KEY, V>
   }
 
   final override fun isDynamic(): Boolean = isDynamic
 
   final override fun registerExtension(extension: T) {
-    doRegisterExtension(extension = extension, order = LoadingOrder.ANY, pluginDescriptor = extensionPointPluginDescriptor, parentDisposable = null)
+    doRegisterExtension(extension = extension,
+                        order = LoadingOrder.ANY,
+                        pluginDescriptor = extensionPointPluginDescriptor,
+                        parentDisposable = null)
   }
 
   final override fun registerExtension(extension: T, parentDisposable: Disposable) {
@@ -123,12 +119,10 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
                                   order: LoadingOrder,
                                   pluginDescriptor: PluginDescriptor,
                                   parentDisposable: Disposable?) {
-    assertNotReadOnlyMode()
     checkExtensionType(extension = extension, extensionClass = getExtensionClass(), adapter = null)
 
     val adapter = ObjectComponentAdapter(instance = extension, pluginDescriptor = pluginDescriptor, loadingOrder = order)
     synchronized(this) {
-      assertNotReadOnlyMode()
       for (a in adapters) {
         if (a is ObjectComponentAdapter<*> && a.instance === extension) {
           LOG.error("Extension was already added: $extension")
@@ -136,6 +130,7 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
         }
       }
 
+      assertNotReadOnlyMode()
       addExtensionAdapter(adapter)
     }
 
@@ -309,13 +304,6 @@ sealed class ExtensionPointImpl<T : Any>(val name: String,
   internal fun forEachExtensionSafe(consumer: Consumer<in T>) {
     processWithPluginDescriptor(shouldBeSorted = true) { adapter, _ ->
       consumer.accept(adapter)
-    }
-  }
-
-  fun processImplementations(shouldBeSorted: Boolean, consumer: (() -> T?, PluginDescriptor) -> Unit) {
-    // no need to check that no listeners, because processImplementations is not a generic-purpose method
-    for (adapter in if (shouldBeSorted) sortedAdapters else adapters) {
-      consumer({ adapter.createInstance(componentManager) }, adapter.pluginDescriptor)
     }
   }
 

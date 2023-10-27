@@ -38,8 +38,8 @@ public class ExtensionPointImplTest {
   @Test
   public void testCreate() {
     ExtensionPointImpl<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
-    assertThat(extensionPoint.getName()).isEqualTo("ext.point.one");
-    assertThat(extensionPoint.getClassName()).isEqualTo(Integer.class.getName());
+    assertThat(extensionPoint.name).isEqualTo("ext.point.one");
+    assertThat(extensionPoint.className).isEqualTo(Integer.class.getName());
   }
 
   @Test
@@ -324,7 +324,7 @@ public class ExtensionPointImplTest {
     Disposable disposable = ExtensionPointUtil.createKeyedExtensionDisposable(extension.getInstance(), extensionPoint);
     extensionPoint.unregisterExtension(extension);
     assertThat(Disposer.isDisposed(disposable)).isTrue();
-    Disposer.dispose(extensionPoint.getComponentManager());
+    Disposer.dispose(extensionPoint.componentManager);
   }
 
   private static @NotNull <T> ExtensionPointImpl<@NotNull T> buildExtensionPoint(@NotNull Class<T> aClass) {

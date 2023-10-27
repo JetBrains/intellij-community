@@ -71,7 +71,7 @@ public final class DynamicExtensionPointsTester {
 
     AtomicBoolean failed = new AtomicBoolean(false);
     extensionPointToNonPlatformExtensions.forEach((ep, references) -> {
-      String testName = escape(namer.fun("Dynamic EP unloading " + ep.getName()));
+      String testName = escape(namer.fun("Dynamic EP unloading " + ep.name));
       System.out.printf("##teamcity[testStarted name='%s' nodeId='%s' parentNodeId='%s']%n", testName, testName, 
                         MapSerializerUtil.escapeStr("[engine:junit-vintage]/[runner:_LastInSuiteTest]/[test:testDynamicExtensions(_LastInSuiteTest)]", MapSerializerUtil.STD_ESCAPER));
       System.out.flush();
@@ -125,7 +125,7 @@ public final class DynamicExtensionPointsTester {
                                      boolean useWhiteList,
                                      @NotNull Map<ExtensionPointImpl<?>, Collection<WeakReference<Object>>> extensions) {
     area.processExtensionPoints(ep -> {
-      if (!ep.isDynamic() || (useWhiteList && !EXTENSION_POINTS_WHITE_LIST.contains(ep.getName()))) {
+      if (!ep.isDynamic() || (useWhiteList && !EXTENSION_POINTS_WHITE_LIST.contains(ep.name))) {
         return;
       }
 
