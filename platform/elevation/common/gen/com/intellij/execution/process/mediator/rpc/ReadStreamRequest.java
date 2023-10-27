@@ -25,61 +25,6 @@ private static final long serialVersionUID = 0L;
     return new ReadStreamRequest();
   }
 
-  @java.lang.Override
-  public final com.google.protobuf.UnknownFieldSet
-  getUnknownFields() {
-    return this.unknownFields;
-  }
-  private ReadStreamRequest(
-      com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
-    this();
-    if (extensionRegistry == null) {
-      throw new java.lang.NullPointerException();
-    }
-    com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-        com.google.protobuf.UnknownFieldSet.newBuilder();
-    try {
-      boolean done = false;
-      while (!done) {
-        int tag = input.readTag();
-        switch (tag) {
-          case 0:
-            done = true;
-            break;
-          case 10: {
-            com.intellij.execution.process.mediator.rpc.FileHandle.Builder subBuilder = null;
-            if (handle_ != null) {
-              subBuilder = handle_.toBuilder();
-            }
-            handle_ = input.readMessage(com.intellij.execution.process.mediator.rpc.FileHandle.parser(), extensionRegistry);
-            if (subBuilder != null) {
-              subBuilder.mergeFrom(handle_);
-              handle_ = subBuilder.buildPartial();
-            }
-
-            break;
-          }
-          default: {
-            if (!parseUnknownField(
-                input, unknownFields, extensionRegistry, tag)) {
-              done = true;
-            }
-            break;
-          }
-        }
-      }
-    } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
-    } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
-    } finally {
-      this.unknownFields = unknownFields.build();
-      makeExtensionsImmutable();
-    }
-  }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
     return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_ReadStreamRequest_descriptor;
@@ -93,6 +38,7 @@ private static final long serialVersionUID = 0L;
             com.intellij.execution.process.mediator.rpc.ReadStreamRequest.class, com.intellij.execution.process.mediator.rpc.ReadStreamRequest.Builder.class);
   }
 
+  private int bitField0_;
   public static final int HANDLE_FIELD_NUMBER = 1;
   private com.intellij.execution.process.mediator.rpc.FileHandle handle_;
   /**
@@ -101,7 +47,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public boolean hasHandle() {
-    return handle_ != null;
+    return ((bitField0_ & 0x00000001) != 0);
   }
   /**
    * <code>.intellij.process.mediator.rpc.FileHandle handle = 1;</code>
@@ -116,7 +62,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public com.intellij.execution.process.mediator.rpc.FileHandleOrBuilder getHandleOrBuilder() {
-    return getHandle();
+    return handle_ == null ? com.intellij.execution.process.mediator.rpc.FileHandle.getDefaultInstance() : handle_;
   }
 
   private byte memoizedIsInitialized = -1;
@@ -133,10 +79,10 @@ private static final long serialVersionUID = 0L;
   @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (handle_ != null) {
+    if (((bitField0_ & 0x00000001) != 0)) {
       output.writeMessage(1, getHandle());
     }
-    unknownFields.writeTo(output);
+    getUnknownFields().writeTo(output);
   }
 
   @java.lang.Override
@@ -145,11 +91,11 @@ private static final long serialVersionUID = 0L;
     if (size != -1) return size;
 
     size = 0;
-    if (handle_ != null) {
+    if (((bitField0_ & 0x00000001) != 0)) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(1, getHandle());
     }
-    size += unknownFields.getSerializedSize();
+    size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
   }
@@ -169,7 +115,7 @@ private static final long serialVersionUID = 0L;
       if (!getHandle()
           .equals(other.getHandle())) return false;
     }
-    if (!unknownFields.equals(other.unknownFields)) return false;
+    if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
 
@@ -184,7 +130,7 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + HANDLE_FIELD_NUMBER;
       hash = (53 * hash) + getHandle().hashCode();
     }
-    hash = (29 * hash) + unknownFields.hashCode();
+    hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
   }
@@ -233,11 +179,13 @@ private static final long serialVersionUID = 0L;
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
+
   public static com.intellij.execution.process.mediator.rpc.ReadStreamRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
+
   public static com.intellij.execution.process.mediator.rpc.ReadStreamRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -312,15 +260,16 @@ private static final long serialVersionUID = 0L;
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
+        getHandleFieldBuilder();
       }
     }
     @java.lang.Override
     public Builder clear() {
       super.clear();
-      if (handleBuilder_ == null) {
-        handle_ = null;
-      } else {
-        handle_ = null;
+      bitField0_ = 0;
+      handle_ = null;
+      if (handleBuilder_ != null) {
+        handleBuilder_.dispose();
         handleBuilder_ = null;
       }
       return this;
@@ -349,13 +298,21 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.intellij.execution.process.mediator.rpc.ReadStreamRequest buildPartial() {
       com.intellij.execution.process.mediator.rpc.ReadStreamRequest result = new com.intellij.execution.process.mediator.rpc.ReadStreamRequest(this);
-      if (handleBuilder_ == null) {
-        result.handle_ = handle_;
-      } else {
-        result.handle_ = handleBuilder_.build();
-      }
+      if (bitField0_ != 0) { buildPartial0(result); }
       onBuilt();
       return result;
+    }
+
+    private void buildPartial0(com.intellij.execution.process.mediator.rpc.ReadStreamRequest result) {
+      int from_bitField0_ = bitField0_;
+      int to_bitField0_ = 0;
+      if (((from_bitField0_ & 0x00000001) != 0)) {
+        result.handle_ = handleBuilder_ == null
+            ? handle_
+            : handleBuilder_.build();
+        to_bitField0_ |= 0x00000001;
+      }
+      result.bitField0_ |= to_bitField0_;
     }
 
     @java.lang.Override
@@ -405,7 +362,7 @@ private static final long serialVersionUID = 0L;
       if (other.hasHandle()) {
         mergeHandle(other.getHandle());
       }
-      this.mergeUnknownFields(other.unknownFields);
+      this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
     }
@@ -420,19 +377,40 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.intellij.execution.process.mediator.rpc.ReadStreamRequest parsedMessage = null;
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       try {
-        parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              input.readMessage(
+                  getHandleFieldBuilder().getBuilder(),
+                  extensionRegistry);
+              bitField0_ |= 0x00000001;
+              break;
+            } // case 10
+            default: {
+              if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                done = true; // was an endgroup tag
+              }
+              break;
+            } // default:
+          } // switch (tag)
+        } // while (!done)
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.intellij.execution.process.mediator.rpc.ReadStreamRequest) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
-        if (parsedMessage != null) {
-          mergeFrom(parsedMessage);
-        }
-      }
+        onChanged();
+      } // finally
       return this;
     }
+    private int bitField0_;
 
     private com.intellij.execution.process.mediator.rpc.FileHandle handle_;
     private com.google.protobuf.SingleFieldBuilderV3<
@@ -442,7 +420,7 @@ private static final long serialVersionUID = 0L;
      * @return Whether the handle field is set.
      */
     public boolean hasHandle() {
-      return handleBuilder_ != null || handle_ != null;
+      return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>.intellij.process.mediator.rpc.FileHandle handle = 1;</code>
@@ -464,11 +442,11 @@ private static final long serialVersionUID = 0L;
           throw new NullPointerException();
         }
         handle_ = value;
-        onChanged();
       } else {
         handleBuilder_.setMessage(value);
       }
-
+      bitField0_ |= 0x00000001;
+      onChanged();
       return this;
     }
     /**
@@ -478,11 +456,11 @@ private static final long serialVersionUID = 0L;
         com.intellij.execution.process.mediator.rpc.FileHandle.Builder builderForValue) {
       if (handleBuilder_ == null) {
         handle_ = builderForValue.build();
-        onChanged();
       } else {
         handleBuilder_.setMessage(builderForValue.build());
       }
-
+      bitField0_ |= 0x00000001;
+      onChanged();
       return this;
     }
     /**
@@ -490,38 +468,40 @@ private static final long serialVersionUID = 0L;
      */
     public Builder mergeHandle(com.intellij.execution.process.mediator.rpc.FileHandle value) {
       if (handleBuilder_ == null) {
-        if (handle_ != null) {
-          handle_ =
-            com.intellij.execution.process.mediator.rpc.FileHandle.newBuilder(handle_).mergeFrom(value).buildPartial();
+        if (((bitField0_ & 0x00000001) != 0) &&
+          handle_ != null &&
+          handle_ != com.intellij.execution.process.mediator.rpc.FileHandle.getDefaultInstance()) {
+          getHandleBuilder().mergeFrom(value);
         } else {
           handle_ = value;
         }
-        onChanged();
       } else {
         handleBuilder_.mergeFrom(value);
       }
-
+      if (handle_ != null) {
+        bitField0_ |= 0x00000001;
+        onChanged();
+      }
       return this;
     }
     /**
      * <code>.intellij.process.mediator.rpc.FileHandle handle = 1;</code>
      */
     public Builder clearHandle() {
-      if (handleBuilder_ == null) {
-        handle_ = null;
-        onChanged();
-      } else {
-        handle_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
+      handle_ = null;
+      if (handleBuilder_ != null) {
+        handleBuilder_.dispose();
         handleBuilder_ = null;
       }
-
+      onChanged();
       return this;
     }
     /**
      * <code>.intellij.process.mediator.rpc.FileHandle handle = 1;</code>
      */
     public com.intellij.execution.process.mediator.rpc.FileHandle.Builder getHandleBuilder() {
-      
+      bitField0_ |= 0x00000001;
       onChanged();
       return getHandleFieldBuilder().getBuilder();
     }
@@ -585,7 +565,18 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new ReadStreamRequest(input, extensionRegistry);
+      Builder builder = newBuilder();
+      try {
+        builder.mergeFrom(input, extensionRegistry);
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(builder.buildPartial());
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(e)
+            .setUnfinishedMessage(builder.buildPartial());
+      }
+      return builder.buildPartial();
     }
   };
 

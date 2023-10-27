@@ -25,66 +25,6 @@ private static final long serialVersionUID = 0L;
     return new CreateProcessRequest();
   }
 
-  @java.lang.Override
-  public final com.google.protobuf.UnknownFieldSet
-  getUnknownFields() {
-    return this.unknownFields;
-  }
-  private CreateProcessRequest(
-      com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
-    this();
-    if (extensionRegistry == null) {
-      throw new java.lang.NullPointerException();
-    }
-    com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-        com.google.protobuf.UnknownFieldSet.newBuilder();
-    try {
-      boolean done = false;
-      while (!done) {
-        int tag = input.readTag();
-        switch (tag) {
-          case 0:
-            done = true;
-            break;
-          case 8: {
-
-            handleId_ = input.readUInt64();
-            break;
-          }
-          case 18: {
-            com.intellij.execution.process.mediator.rpc.CommandLine.Builder subBuilder = null;
-            if (commandLine_ != null) {
-              subBuilder = commandLine_.toBuilder();
-            }
-            commandLine_ = input.readMessage(com.intellij.execution.process.mediator.rpc.CommandLine.parser(), extensionRegistry);
-            if (subBuilder != null) {
-              subBuilder.mergeFrom(commandLine_);
-              commandLine_ = subBuilder.buildPartial();
-            }
-
-            break;
-          }
-          default: {
-            if (!parseUnknownField(
-                input, unknownFields, extensionRegistry, tag)) {
-              done = true;
-            }
-            break;
-          }
-        }
-      }
-    } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
-    } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
-    } finally {
-      this.unknownFields = unknownFields.build();
-      makeExtensionsImmutable();
-    }
-  }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
     return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_CreateProcessRequest_descriptor;
@@ -98,8 +38,9 @@ private static final long serialVersionUID = 0L;
             com.intellij.execution.process.mediator.rpc.CreateProcessRequest.class, com.intellij.execution.process.mediator.rpc.CreateProcessRequest.Builder.class);
   }
 
+  private int bitField0_;
   public static final int HANDLE_ID_FIELD_NUMBER = 1;
-  private long handleId_;
+  private long handleId_ = 0L;
   /**
    * <code>uint64 handle_id = 1;</code>
    * @return The handleId.
@@ -117,7 +58,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public boolean hasCommandLine() {
-    return commandLine_ != null;
+    return ((bitField0_ & 0x00000001) != 0);
   }
   /**
    * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
@@ -132,7 +73,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public com.intellij.execution.process.mediator.rpc.CommandLineOrBuilder getCommandLineOrBuilder() {
-    return getCommandLine();
+    return commandLine_ == null ? com.intellij.execution.process.mediator.rpc.CommandLine.getDefaultInstance() : commandLine_;
   }
 
   private byte memoizedIsInitialized = -1;
@@ -152,10 +93,10 @@ private static final long serialVersionUID = 0L;
     if (handleId_ != 0L) {
       output.writeUInt64(1, handleId_);
     }
-    if (commandLine_ != null) {
+    if (((bitField0_ & 0x00000001) != 0)) {
       output.writeMessage(2, getCommandLine());
     }
-    unknownFields.writeTo(output);
+    getUnknownFields().writeTo(output);
   }
 
   @java.lang.Override
@@ -168,11 +109,11 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeUInt64Size(1, handleId_);
     }
-    if (commandLine_ != null) {
+    if (((bitField0_ & 0x00000001) != 0)) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(2, getCommandLine());
     }
-    size += unknownFields.getSerializedSize();
+    size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
   }
@@ -194,7 +135,7 @@ private static final long serialVersionUID = 0L;
       if (!getCommandLine()
           .equals(other.getCommandLine())) return false;
     }
-    if (!unknownFields.equals(other.unknownFields)) return false;
+    if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
 
@@ -212,7 +153,7 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + COMMAND_LINE_FIELD_NUMBER;
       hash = (53 * hash) + getCommandLine().hashCode();
     }
-    hash = (29 * hash) + unknownFields.hashCode();
+    hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
   }
@@ -261,11 +202,13 @@ private static final long serialVersionUID = 0L;
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
+
   public static com.intellij.execution.process.mediator.rpc.CreateProcessRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
+
   public static com.intellij.execution.process.mediator.rpc.CreateProcessRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -340,17 +283,17 @@ private static final long serialVersionUID = 0L;
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
+        getCommandLineFieldBuilder();
       }
     }
     @java.lang.Override
     public Builder clear() {
       super.clear();
+      bitField0_ = 0;
       handleId_ = 0L;
-
-      if (commandLineBuilder_ == null) {
-        commandLine_ = null;
-      } else {
-        commandLine_ = null;
+      commandLine_ = null;
+      if (commandLineBuilder_ != null) {
+        commandLineBuilder_.dispose();
         commandLineBuilder_ = null;
       }
       return this;
@@ -379,14 +322,24 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.intellij.execution.process.mediator.rpc.CreateProcessRequest buildPartial() {
       com.intellij.execution.process.mediator.rpc.CreateProcessRequest result = new com.intellij.execution.process.mediator.rpc.CreateProcessRequest(this);
-      result.handleId_ = handleId_;
-      if (commandLineBuilder_ == null) {
-        result.commandLine_ = commandLine_;
-      } else {
-        result.commandLine_ = commandLineBuilder_.build();
-      }
+      if (bitField0_ != 0) { buildPartial0(result); }
       onBuilt();
       return result;
+    }
+
+    private void buildPartial0(com.intellij.execution.process.mediator.rpc.CreateProcessRequest result) {
+      int from_bitField0_ = bitField0_;
+      if (((from_bitField0_ & 0x00000001) != 0)) {
+        result.handleId_ = handleId_;
+      }
+      int to_bitField0_ = 0;
+      if (((from_bitField0_ & 0x00000002) != 0)) {
+        result.commandLine_ = commandLineBuilder_ == null
+            ? commandLine_
+            : commandLineBuilder_.build();
+        to_bitField0_ |= 0x00000001;
+      }
+      result.bitField0_ |= to_bitField0_;
     }
 
     @java.lang.Override
@@ -439,7 +392,7 @@ private static final long serialVersionUID = 0L;
       if (other.hasCommandLine()) {
         mergeCommandLine(other.getCommandLine());
       }
-      this.mergeUnknownFields(other.unknownFields);
+      this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
     }
@@ -454,19 +407,45 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.intellij.execution.process.mediator.rpc.CreateProcessRequest parsedMessage = null;
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       try {
-        parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+              handleId_ = input.readUInt64();
+              bitField0_ |= 0x00000001;
+              break;
+            } // case 8
+            case 18: {
+              input.readMessage(
+                  getCommandLineFieldBuilder().getBuilder(),
+                  extensionRegistry);
+              bitField0_ |= 0x00000002;
+              break;
+            } // case 18
+            default: {
+              if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                done = true; // was an endgroup tag
+              }
+              break;
+            } // default:
+          } // switch (tag)
+        } // while (!done)
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.intellij.execution.process.mediator.rpc.CreateProcessRequest) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
-        if (parsedMessage != null) {
-          mergeFrom(parsedMessage);
-        }
-      }
+        onChanged();
+      } // finally
       return this;
     }
+    private int bitField0_;
 
     private long handleId_ ;
     /**
@@ -483,8 +462,9 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setHandleId(long value) {
-      
+
       handleId_ = value;
+      bitField0_ |= 0x00000001;
       onChanged();
       return this;
     }
@@ -493,7 +473,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearHandleId() {
-      
+      bitField0_ = (bitField0_ & ~0x00000001);
       handleId_ = 0L;
       onChanged();
       return this;
@@ -507,7 +487,7 @@ private static final long serialVersionUID = 0L;
      * @return Whether the commandLine field is set.
      */
     public boolean hasCommandLine() {
-      return commandLineBuilder_ != null || commandLine_ != null;
+      return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
@@ -529,11 +509,11 @@ private static final long serialVersionUID = 0L;
           throw new NullPointerException();
         }
         commandLine_ = value;
-        onChanged();
       } else {
         commandLineBuilder_.setMessage(value);
       }
-
+      bitField0_ |= 0x00000002;
+      onChanged();
       return this;
     }
     /**
@@ -543,11 +523,11 @@ private static final long serialVersionUID = 0L;
         com.intellij.execution.process.mediator.rpc.CommandLine.Builder builderForValue) {
       if (commandLineBuilder_ == null) {
         commandLine_ = builderForValue.build();
-        onChanged();
       } else {
         commandLineBuilder_.setMessage(builderForValue.build());
       }
-
+      bitField0_ |= 0x00000002;
+      onChanged();
       return this;
     }
     /**
@@ -555,38 +535,40 @@ private static final long serialVersionUID = 0L;
      */
     public Builder mergeCommandLine(com.intellij.execution.process.mediator.rpc.CommandLine value) {
       if (commandLineBuilder_ == null) {
-        if (commandLine_ != null) {
-          commandLine_ =
-            com.intellij.execution.process.mediator.rpc.CommandLine.newBuilder(commandLine_).mergeFrom(value).buildPartial();
+        if (((bitField0_ & 0x00000002) != 0) &&
+          commandLine_ != null &&
+          commandLine_ != com.intellij.execution.process.mediator.rpc.CommandLine.getDefaultInstance()) {
+          getCommandLineBuilder().mergeFrom(value);
         } else {
           commandLine_ = value;
         }
-        onChanged();
       } else {
         commandLineBuilder_.mergeFrom(value);
       }
-
+      if (commandLine_ != null) {
+        bitField0_ |= 0x00000002;
+        onChanged();
+      }
       return this;
     }
     /**
      * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
      */
     public Builder clearCommandLine() {
-      if (commandLineBuilder_ == null) {
-        commandLine_ = null;
-        onChanged();
-      } else {
-        commandLine_ = null;
+      bitField0_ = (bitField0_ & ~0x00000002);
+      commandLine_ = null;
+      if (commandLineBuilder_ != null) {
+        commandLineBuilder_.dispose();
         commandLineBuilder_ = null;
       }
-
+      onChanged();
       return this;
     }
     /**
      * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
      */
     public com.intellij.execution.process.mediator.rpc.CommandLine.Builder getCommandLineBuilder() {
-      
+      bitField0_ |= 0x00000002;
       onChanged();
       return getCommandLineFieldBuilder().getBuilder();
     }
@@ -650,7 +632,18 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new CreateProcessRequest(input, extensionRegistry);
+      Builder builder = newBuilder();
+      try {
+        builder.mergeFrom(input, extensionRegistry);
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(builder.buildPartial());
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(e)
+            .setUnfinishedMessage(builder.buildPartial());
+      }
+      return builder.buildPartial();
     }
   };
 

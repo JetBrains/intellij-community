@@ -16,7 +16,8 @@ private static final long serialVersionUID = 0L;
     super(builder);
   }
   private CommandLine() {
-    command_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    command_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
     workingDir_ = "";
     inFile_ = "";
     outFile_ = "";
@@ -30,103 +31,6 @@ private static final long serialVersionUID = 0L;
     return new CommandLine();
   }
 
-  @java.lang.Override
-  public final com.google.protobuf.UnknownFieldSet
-  getUnknownFields() {
-    return this.unknownFields;
-  }
-  private CommandLine(
-      com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
-    this();
-    if (extensionRegistry == null) {
-      throw new java.lang.NullPointerException();
-    }
-    int mutable_bitField0_ = 0;
-    com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-        com.google.protobuf.UnknownFieldSet.newBuilder();
-    try {
-      boolean done = false;
-      while (!done) {
-        int tag = input.readTag();
-        switch (tag) {
-          case 0:
-            done = true;
-            break;
-          case 10: {
-            java.lang.String s = input.readStringRequireUtf8();
-            if (!((mutable_bitField0_ & 0x00000001) != 0)) {
-              command_ = new com.google.protobuf.LazyStringArrayList();
-              mutable_bitField0_ |= 0x00000001;
-            }
-            command_.add(s);
-            break;
-          }
-          case 18: {
-            java.lang.String s = input.readStringRequireUtf8();
-
-            workingDir_ = s;
-            break;
-          }
-          case 26: {
-            java.lang.String s = input.readStringRequireUtf8();
-
-            inFile_ = s;
-            break;
-          }
-          case 34: {
-            java.lang.String s = input.readStringRequireUtf8();
-
-            outFile_ = s;
-            break;
-          }
-          case 42: {
-            java.lang.String s = input.readStringRequireUtf8();
-
-            errFile_ = s;
-            break;
-          }
-          case 48: {
-
-            redirectErrorStream_ = input.readBool();
-            break;
-          }
-          case 58: {
-            if (!((mutable_bitField0_ & 0x00000002) != 0)) {
-              environ_ = com.google.protobuf.MapField.newMapField(
-                  EnvironDefaultEntryHolder.defaultEntry);
-              mutable_bitField0_ |= 0x00000002;
-            }
-            com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
-            environ__ = input.readMessage(
-                EnvironDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
-            environ_.getMutableMap().put(
-                environ__.getKey(), environ__.getValue());
-            break;
-          }
-          default: {
-            if (!parseUnknownField(
-                input, unknownFields, extensionRegistry, tag)) {
-              done = true;
-            }
-            break;
-          }
-        }
-      }
-    } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
-    } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
-    } finally {
-      if (((mutable_bitField0_ & 0x00000001) != 0)) {
-        command_ = command_.getUnmodifiableView();
-      }
-      this.unknownFields = unknownFields.build();
-      makeExtensionsImmutable();
-    }
-  }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
     return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_CommandLine_descriptor;
@@ -153,7 +57,9 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int COMMAND_FIELD_NUMBER = 1;
-  private com.google.protobuf.LazyStringList command_;
+  @SuppressWarnings("serial")
+  private com.google.protobuf.LazyStringArrayList command_ =
+      com.google.protobuf.LazyStringArrayList.emptyList();
   /**
    * <code>repeated string command = 1;</code>
    * @return A list containing the command.
@@ -188,7 +94,8 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int WORKING_DIR_FIELD_NUMBER = 2;
-  private volatile java.lang.Object workingDir_;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object workingDir_ = "";
   /**
    * <code>string working_dir = 2;</code>
    * @return The workingDir.
@@ -226,7 +133,8 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int IN_FILE_FIELD_NUMBER = 3;
-  private volatile java.lang.Object inFile_;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object inFile_ = "";
   /**
    * <code>string in_file = 3;</code>
    * @return The inFile.
@@ -264,7 +172,8 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int OUT_FILE_FIELD_NUMBER = 4;
-  private volatile java.lang.Object outFile_;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object outFile_ = "";
   /**
    * <code>string out_file = 4;</code>
    * @return The outFile.
@@ -302,7 +211,8 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int ERR_FILE_FIELD_NUMBER = 5;
-  private volatile java.lang.Object errFile_;
+  @SuppressWarnings("serial")
+  private volatile java.lang.Object errFile_ = "";
   /**
    * <code>string err_file = 5;</code>
    * @return The errFile.
@@ -340,7 +250,7 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int REDIRECT_ERROR_STREAM_FIELD_NUMBER = 6;
-  private boolean redirectErrorStream_;
+  private boolean redirectErrorStream_ = false;
   /**
    * <code>bool redirect_error_stream = 6;</code>
    * @return The redirectErrorStream.
@@ -362,6 +272,7 @@ private static final long serialVersionUID = 0L;
                 com.google.protobuf.WireFormat.FieldType.STRING,
                 "");
   }
+  @SuppressWarnings("serial")
   private com.google.protobuf.MapField<
       java.lang.String, java.lang.String> environ_;
   private com.google.protobuf.MapField<java.lang.String, java.lang.String>
@@ -372,18 +283,16 @@ private static final long serialVersionUID = 0L;
     }
     return environ_;
   }
-
   public int getEnvironCount() {
     return internalGetEnviron().getMap().size();
   }
   /**
    * <code>map&lt;string, string&gt; environ = 7;</code>
    */
-
   @java.lang.Override
   public boolean containsEnviron(
       java.lang.String key) {
-    if (key == null) { throw new java.lang.NullPointerException(); }
+    if (key == null) { throw new NullPointerException("map key"); }
     return internalGetEnviron().getMap().containsKey(key);
   }
   /**
@@ -398,7 +307,6 @@ private static final long serialVersionUID = 0L;
    * <code>map&lt;string, string&gt; environ = 7;</code>
    */
   @java.lang.Override
-
   public java.util.Map<java.lang.String, java.lang.String> getEnvironMap() {
     return internalGetEnviron().getMap();
   }
@@ -406,11 +314,12 @@ private static final long serialVersionUID = 0L;
    * <code>map&lt;string, string&gt; environ = 7;</code>
    */
   @java.lang.Override
-
-  public java.lang.String getEnvironOrDefault(
+  public /* nullable */
+java.lang.String getEnvironOrDefault(
       java.lang.String key,
-      java.lang.String defaultValue) {
-    if (key == null) { throw new java.lang.NullPointerException(); }
+      /* nullable */
+java.lang.String defaultValue) {
+    if (key == null) { throw new NullPointerException("map key"); }
     java.util.Map<java.lang.String, java.lang.String> map =
         internalGetEnviron().getMap();
     return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -419,10 +328,9 @@ private static final long serialVersionUID = 0L;
    * <code>map&lt;string, string&gt; environ = 7;</code>
    */
   @java.lang.Override
-
   public java.lang.String getEnvironOrThrow(
       java.lang.String key) {
-    if (key == null) { throw new java.lang.NullPointerException(); }
+    if (key == null) { throw new NullPointerException("map key"); }
     java.util.Map<java.lang.String, java.lang.String> map =
         internalGetEnviron().getMap();
     if (!map.containsKey(key)) {
@@ -448,16 +356,16 @@ private static final long serialVersionUID = 0L;
     for (int i = 0; i < command_.size(); i++) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 1, command_.getRaw(i));
     }
-    if (!getWorkingDirBytes().isEmpty()) {
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workingDir_)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 2, workingDir_);
     }
-    if (!getInFileBytes().isEmpty()) {
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(inFile_)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 3, inFile_);
     }
-    if (!getOutFileBytes().isEmpty()) {
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(outFile_)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 4, outFile_);
     }
-    if (!getErrFileBytes().isEmpty()) {
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(errFile_)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 5, errFile_);
     }
     if (redirectErrorStream_ != false) {
@@ -469,7 +377,7 @@ private static final long serialVersionUID = 0L;
         internalGetEnviron(),
         EnvironDefaultEntryHolder.defaultEntry,
         7);
-    unknownFields.writeTo(output);
+    getUnknownFields().writeTo(output);
   }
 
   @java.lang.Override
@@ -486,16 +394,16 @@ private static final long serialVersionUID = 0L;
       size += dataSize;
       size += 1 * getCommandList().size();
     }
-    if (!getWorkingDirBytes().isEmpty()) {
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workingDir_)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, workingDir_);
     }
-    if (!getInFileBytes().isEmpty()) {
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(inFile_)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, inFile_);
     }
-    if (!getOutFileBytes().isEmpty()) {
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(outFile_)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, outFile_);
     }
-    if (!getErrFileBytes().isEmpty()) {
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(errFile_)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, errFile_);
     }
     if (redirectErrorStream_ != false) {
@@ -512,7 +420,7 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(7, environ__);
     }
-    size += unknownFields.getSerializedSize();
+    size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
   }
@@ -541,7 +449,7 @@ private static final long serialVersionUID = 0L;
         != other.getRedirectErrorStream()) return false;
     if (!internalGetEnviron().equals(
         other.internalGetEnviron())) return false;
-    if (!unknownFields.equals(other.unknownFields)) return false;
+    if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
 
@@ -571,7 +479,7 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + ENVIRON_FIELD_NUMBER;
       hash = (53 * hash) + internalGetEnviron().hashCode();
     }
-    hash = (29 * hash) + unknownFields.hashCode();
+    hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
   }
@@ -620,11 +528,13 @@ private static final long serialVersionUID = 0L;
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
+
   public static com.intellij.execution.process.mediator.rpc.CommandLine parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
+
   public static com.intellij.execution.process.mediator.rpc.CommandLine parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -710,34 +620,25 @@ private static final long serialVersionUID = 0L;
 
     // Construct using com.intellij.execution.process.mediator.rpc.CommandLine.newBuilder()
     private Builder() {
-      maybeForceBuilderInitialization();
+
     }
 
     private Builder(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
-      maybeForceBuilderInitialization();
-    }
-    private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
-      }
+
     }
     @java.lang.Override
     public Builder clear() {
       super.clear();
-      command_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      bitField0_ = (bitField0_ & ~0x00000001);
+      bitField0_ = 0;
+      command_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
       workingDir_ = "";
-
       inFile_ = "";
-
       outFile_ = "";
-
       errFile_ = "";
-
       redirectErrorStream_ = false;
-
       internalGetMutableEnviron().clear();
       return this;
     }
@@ -765,21 +666,36 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.intellij.execution.process.mediator.rpc.CommandLine buildPartial() {
       com.intellij.execution.process.mediator.rpc.CommandLine result = new com.intellij.execution.process.mediator.rpc.CommandLine(this);
-      int from_bitField0_ = bitField0_;
-      if (((bitField0_ & 0x00000001) != 0)) {
-        command_ = command_.getUnmodifiableView();
-        bitField0_ = (bitField0_ & ~0x00000001);
-      }
-      result.command_ = command_;
-      result.workingDir_ = workingDir_;
-      result.inFile_ = inFile_;
-      result.outFile_ = outFile_;
-      result.errFile_ = errFile_;
-      result.redirectErrorStream_ = redirectErrorStream_;
-      result.environ_ = internalGetEnviron();
-      result.environ_.makeImmutable();
+      if (bitField0_ != 0) { buildPartial0(result); }
       onBuilt();
       return result;
+    }
+
+    private void buildPartial0(com.intellij.execution.process.mediator.rpc.CommandLine result) {
+      int from_bitField0_ = bitField0_;
+      if (((from_bitField0_ & 0x00000001) != 0)) {
+        command_.makeImmutable();
+        result.command_ = command_;
+      }
+      if (((from_bitField0_ & 0x00000002) != 0)) {
+        result.workingDir_ = workingDir_;
+      }
+      if (((from_bitField0_ & 0x00000004) != 0)) {
+        result.inFile_ = inFile_;
+      }
+      if (((from_bitField0_ & 0x00000008) != 0)) {
+        result.outFile_ = outFile_;
+      }
+      if (((from_bitField0_ & 0x00000010) != 0)) {
+        result.errFile_ = errFile_;
+      }
+      if (((from_bitField0_ & 0x00000020) != 0)) {
+        result.redirectErrorStream_ = redirectErrorStream_;
+      }
+      if (((from_bitField0_ & 0x00000040) != 0)) {
+        result.environ_ = internalGetEnviron();
+        result.environ_.makeImmutable();
+      }
     }
 
     @java.lang.Override
@@ -829,7 +745,7 @@ private static final long serialVersionUID = 0L;
       if (!other.command_.isEmpty()) {
         if (command_.isEmpty()) {
           command_ = other.command_;
-          bitField0_ = (bitField0_ & ~0x00000001);
+          bitField0_ |= 0x00000001;
         } else {
           ensureCommandIsMutable();
           command_.addAll(other.command_);
@@ -838,18 +754,22 @@ private static final long serialVersionUID = 0L;
       }
       if (!other.getWorkingDir().isEmpty()) {
         workingDir_ = other.workingDir_;
+        bitField0_ |= 0x00000002;
         onChanged();
       }
       if (!other.getInFile().isEmpty()) {
         inFile_ = other.inFile_;
+        bitField0_ |= 0x00000004;
         onChanged();
       }
       if (!other.getOutFile().isEmpty()) {
         outFile_ = other.outFile_;
+        bitField0_ |= 0x00000008;
         onChanged();
       }
       if (!other.getErrFile().isEmpty()) {
         errFile_ = other.errFile_;
+        bitField0_ |= 0x00000010;
         onChanged();
       }
       if (other.getRedirectErrorStream() != false) {
@@ -857,7 +777,8 @@ private static final long serialVersionUID = 0L;
       }
       internalGetMutableEnviron().mergeFrom(
           other.internalGetEnviron());
-      this.mergeUnknownFields(other.unknownFields);
+      bitField0_ |= 0x00000040;
+      this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
     }
@@ -872,27 +793,81 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.intellij.execution.process.mediator.rpc.CommandLine parsedMessage = null;
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       try {
-        parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+              ensureCommandIsMutable();
+              command_.add(s);
+              break;
+            } // case 10
+            case 18: {
+              workingDir_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00000002;
+              break;
+            } // case 18
+            case 26: {
+              inFile_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00000004;
+              break;
+            } // case 26
+            case 34: {
+              outFile_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00000008;
+              break;
+            } // case 34
+            case 42: {
+              errFile_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00000010;
+              break;
+            } // case 42
+            case 48: {
+              redirectErrorStream_ = input.readBool();
+              bitField0_ |= 0x00000020;
+              break;
+            } // case 48
+            case 58: {
+              com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
+              environ__ = input.readMessage(
+                  EnvironDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
+              internalGetMutableEnviron().getMutableMap().put(
+                  environ__.getKey(), environ__.getValue());
+              bitField0_ |= 0x00000040;
+              break;
+            } // case 58
+            default: {
+              if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                done = true; // was an endgroup tag
+              }
+              break;
+            } // default:
+          } // switch (tag)
+        } // while (!done)
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.intellij.execution.process.mediator.rpc.CommandLine) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
-        if (parsedMessage != null) {
-          mergeFrom(parsedMessage);
-        }
-      }
+        onChanged();
+      } // finally
       return this;
     }
     private int bitField0_;
 
-    private com.google.protobuf.LazyStringList command_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    private com.google.protobuf.LazyStringArrayList command_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
     private void ensureCommandIsMutable() {
-      if (!((bitField0_ & 0x00000001) != 0)) {
+      if (!command_.isModifiable()) {
         command_ = new com.google.protobuf.LazyStringArrayList(command_);
-        bitField0_ |= 0x00000001;
-       }
+      }
+      bitField0_ |= 0x00000001;
     }
     /**
      * <code>repeated string command = 1;</code>
@@ -900,7 +875,8 @@ private static final long serialVersionUID = 0L;
      */
     public com.google.protobuf.ProtocolStringList
         getCommandList() {
-      return command_.getUnmodifiableView();
+      command_.makeImmutable();
+      return command_;
     }
     /**
      * <code>repeated string command = 1;</code>
@@ -934,11 +910,10 @@ private static final long serialVersionUID = 0L;
      */
     public Builder setCommand(
         int index, java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureCommandIsMutable();
+      if (value == null) { throw new NullPointerException(); }
+      ensureCommandIsMutable();
       command_.set(index, value);
+      bitField0_ |= 0x00000001;
       onChanged();
       return this;
     }
@@ -949,11 +924,10 @@ private static final long serialVersionUID = 0L;
      */
     public Builder addCommand(
         java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureCommandIsMutable();
+      if (value == null) { throw new NullPointerException(); }
+      ensureCommandIsMutable();
       command_.add(value);
+      bitField0_ |= 0x00000001;
       onChanged();
       return this;
     }
@@ -967,6 +941,7 @@ private static final long serialVersionUID = 0L;
       ensureCommandIsMutable();
       com.google.protobuf.AbstractMessageLite.Builder.addAll(
           values, command_);
+      bitField0_ |= 0x00000001;
       onChanged();
       return this;
     }
@@ -975,8 +950,9 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearCommand() {
-      command_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      bitField0_ = (bitField0_ & ~0x00000001);
+      command_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+      bitField0_ = (bitField0_ & ~0x00000001);;
       onChanged();
       return this;
     }
@@ -987,12 +963,11 @@ private static final long serialVersionUID = 0L;
      */
     public Builder addCommandBytes(
         com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
       ensureCommandIsMutable();
       command_.add(value);
+      bitField0_ |= 0x00000001;
       onChanged();
       return this;
     }
@@ -1038,11 +1013,9 @@ private static final long serialVersionUID = 0L;
      */
     public Builder setWorkingDir(
         java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
+      if (value == null) { throw new NullPointerException(); }
       workingDir_ = value;
+      bitField0_ |= 0x00000002;
       onChanged();
       return this;
     }
@@ -1051,8 +1024,8 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearWorkingDir() {
-      
       workingDir_ = getDefaultInstance().getWorkingDir();
+      bitField0_ = (bitField0_ & ~0x00000002);
       onChanged();
       return this;
     }
@@ -1063,12 +1036,10 @@ private static final long serialVersionUID = 0L;
      */
     public Builder setWorkingDirBytes(
         com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
       workingDir_ = value;
+      bitField0_ |= 0x00000002;
       onChanged();
       return this;
     }
@@ -1114,11 +1085,9 @@ private static final long serialVersionUID = 0L;
      */
     public Builder setInFile(
         java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
+      if (value == null) { throw new NullPointerException(); }
       inFile_ = value;
+      bitField0_ |= 0x00000004;
       onChanged();
       return this;
     }
@@ -1127,8 +1096,8 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearInFile() {
-      
       inFile_ = getDefaultInstance().getInFile();
+      bitField0_ = (bitField0_ & ~0x00000004);
       onChanged();
       return this;
     }
@@ -1139,12 +1108,10 @@ private static final long serialVersionUID = 0L;
      */
     public Builder setInFileBytes(
         com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
       inFile_ = value;
+      bitField0_ |= 0x00000004;
       onChanged();
       return this;
     }
@@ -1190,11 +1157,9 @@ private static final long serialVersionUID = 0L;
      */
     public Builder setOutFile(
         java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
+      if (value == null) { throw new NullPointerException(); }
       outFile_ = value;
+      bitField0_ |= 0x00000008;
       onChanged();
       return this;
     }
@@ -1203,8 +1168,8 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearOutFile() {
-      
       outFile_ = getDefaultInstance().getOutFile();
+      bitField0_ = (bitField0_ & ~0x00000008);
       onChanged();
       return this;
     }
@@ -1215,12 +1180,10 @@ private static final long serialVersionUID = 0L;
      */
     public Builder setOutFileBytes(
         com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
       outFile_ = value;
+      bitField0_ |= 0x00000008;
       onChanged();
       return this;
     }
@@ -1266,11 +1229,9 @@ private static final long serialVersionUID = 0L;
      */
     public Builder setErrFile(
         java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
+      if (value == null) { throw new NullPointerException(); }
       errFile_ = value;
+      bitField0_ |= 0x00000010;
       onChanged();
       return this;
     }
@@ -1279,8 +1240,8 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearErrFile() {
-      
       errFile_ = getDefaultInstance().getErrFile();
+      bitField0_ = (bitField0_ & ~0x00000010);
       onChanged();
       return this;
     }
@@ -1291,12 +1252,10 @@ private static final long serialVersionUID = 0L;
      */
     public Builder setErrFileBytes(
         com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
       errFile_ = value;
+      bitField0_ |= 0x00000010;
       onChanged();
       return this;
     }
@@ -1316,8 +1275,9 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setRedirectErrorStream(boolean value) {
-      
+
       redirectErrorStream_ = value;
+      bitField0_ |= 0x00000020;
       onChanged();
       return this;
     }
@@ -1326,7 +1286,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearRedirectErrorStream() {
-      
+      bitField0_ = (bitField0_ & ~0x00000020);
       redirectErrorStream_ = false;
       onChanged();
       return this;
@@ -1335,7 +1295,7 @@ private static final long serialVersionUID = 0L;
     private com.google.protobuf.MapField<
         java.lang.String, java.lang.String> environ_;
     private com.google.protobuf.MapField<java.lang.String, java.lang.String>
-    internalGetEnviron() {
+        internalGetEnviron() {
       if (environ_ == null) {
         return com.google.protobuf.MapField.emptyMapField(
             EnvironDefaultEntryHolder.defaultEntry);
@@ -1343,8 +1303,7 @@ private static final long serialVersionUID = 0L;
       return environ_;
     }
     private com.google.protobuf.MapField<java.lang.String, java.lang.String>
-    internalGetMutableEnviron() {
-      onChanged();;
+        internalGetMutableEnviron() {
       if (environ_ == null) {
         environ_ = com.google.protobuf.MapField.newMapField(
             EnvironDefaultEntryHolder.defaultEntry);
@@ -1352,20 +1311,20 @@ private static final long serialVersionUID = 0L;
       if (!environ_.isMutable()) {
         environ_ = environ_.copy();
       }
+      bitField0_ |= 0x00000040;
+      onChanged();
       return environ_;
     }
-
     public int getEnvironCount() {
       return internalGetEnviron().getMap().size();
     }
     /**
      * <code>map&lt;string, string&gt; environ = 7;</code>
      */
-
     @java.lang.Override
     public boolean containsEnviron(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       return internalGetEnviron().getMap().containsKey(key);
     }
     /**
@@ -1380,7 +1339,6 @@ private static final long serialVersionUID = 0L;
      * <code>map&lt;string, string&gt; environ = 7;</code>
      */
     @java.lang.Override
-
     public java.util.Map<java.lang.String, java.lang.String> getEnvironMap() {
       return internalGetEnviron().getMap();
     }
@@ -1388,11 +1346,12 @@ private static final long serialVersionUID = 0L;
      * <code>map&lt;string, string&gt; environ = 7;</code>
      */
     @java.lang.Override
-
-    public java.lang.String getEnvironOrDefault(
+    public /* nullable */
+java.lang.String getEnvironOrDefault(
         java.lang.String key,
-        java.lang.String defaultValue) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+        /* nullable */
+java.lang.String defaultValue) {
+      if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, java.lang.String> map =
           internalGetEnviron().getMap();
       return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -1401,10 +1360,9 @@ private static final long serialVersionUID = 0L;
      * <code>map&lt;string, string&gt; environ = 7;</code>
      */
     @java.lang.Override
-
     public java.lang.String getEnvironOrThrow(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, java.lang.String> map =
           internalGetEnviron().getMap();
       if (!map.containsKey(key)) {
@@ -1412,8 +1370,8 @@ private static final long serialVersionUID = 0L;
       }
       return map.get(key);
     }
-
     public Builder clearEnviron() {
+      bitField0_ = (bitField0_ & ~0x00000040);
       internalGetMutableEnviron().getMutableMap()
           .clear();
       return this;
@@ -1421,10 +1379,9 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>map&lt;string, string&gt; environ = 7;</code>
      */
-
     public Builder removeEnviron(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       internalGetMutableEnviron().getMutableMap()
           .remove(key);
       return this;
@@ -1434,7 +1391,8 @@ private static final long serialVersionUID = 0L;
      */
     @java.lang.Deprecated
     public java.util.Map<java.lang.String, java.lang.String>
-    getMutableEnviron() {
+        getMutableEnviron() {
+      bitField0_ |= 0x00000040;
       return internalGetMutableEnviron().getMutableMap();
     }
     /**
@@ -1443,20 +1401,21 @@ private static final long serialVersionUID = 0L;
     public Builder putEnviron(
         java.lang.String key,
         java.lang.String value) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
-      if (value == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
+      if (value == null) { throw new NullPointerException("map value"); }
       internalGetMutableEnviron().getMutableMap()
           .put(key, value);
+      bitField0_ |= 0x00000040;
       return this;
     }
     /**
      * <code>map&lt;string, string&gt; environ = 7;</code>
      */
-
     public Builder putAllEnviron(
         java.util.Map<java.lang.String, java.lang.String> values) {
       internalGetMutableEnviron().getMutableMap()
           .putAll(values);
+      bitField0_ |= 0x00000040;
       return this;
     }
     @java.lang.Override
@@ -1492,7 +1451,18 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new CommandLine(input, extensionRegistry);
+      Builder builder = newBuilder();
+      try {
+        builder.mergeFrom(input, extensionRegistry);
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(builder.buildPartial());
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(e)
+            .setUnfinishedMessage(builder.buildPartial());
+      }
+      return builder.buildPartial();
     }
   };
 

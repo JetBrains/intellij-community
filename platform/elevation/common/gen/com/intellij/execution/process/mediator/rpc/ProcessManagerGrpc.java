@@ -1,30 +1,18 @@
 package com.intellij.execution.process.mediator.rpc;
 
 import static io.grpc.MethodDescriptor.generateFullMethodName;
-import static io.grpc.stub.ClientCalls.asyncBidiStreamingCall;
-import static io.grpc.stub.ClientCalls.asyncClientStreamingCall;
-import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
-import static io.grpc.stub.ClientCalls.asyncUnaryCall;
-import static io.grpc.stub.ClientCalls.blockingServerStreamingCall;
-import static io.grpc.stub.ClientCalls.blockingUnaryCall;
-import static io.grpc.stub.ClientCalls.futureUnaryCall;
-import static io.grpc.stub.ServerCalls.asyncBidiStreamingCall;
-import static io.grpc.stub.ServerCalls.asyncClientStreamingCall;
-import static io.grpc.stub.ServerCalls.asyncServerStreamingCall;
-import static io.grpc.stub.ServerCalls.asyncUnaryCall;
-import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
-import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
 
 /**
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.31.1)",
+    value = "by gRPC proto compiler (version 1.57.2)",
     comments = "Source: processMediator.proto")
+@io.grpc.stub.annotations.GrpcGenerated
 public final class ProcessManagerGrpc {
 
   private ProcessManagerGrpc() {}
 
-  public static final String SERVICE_NAME = "intellij.process.mediator.rpc.ProcessManager";
+  public static final java.lang.String SERVICE_NAME = "intellij.process.mediator.rpc.ProcessManager";
 
   // Static method descriptors that strictly reflect the proto.
   private static volatile io.grpc.MethodDescriptor<com.google.protobuf.Empty,
@@ -259,7 +247,7 @@ public final class ProcessManagerGrpc {
 
   /**
    */
-  public static abstract class ProcessManagerImplBase implements io.grpc.BindableService {
+  public interface AsyncService {
 
     /**
      * <pre>
@@ -267,97 +255,63 @@ public final class ProcessManagerGrpc {
      * which defines the lifetime of the handle.
      * </pre>
      */
-    public void openHandle(com.google.protobuf.Empty request,
+    default void openHandle(com.google.protobuf.Empty request,
         io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.OpenHandleReply> responseObserver) {
-      asyncUnimplementedUnaryCall(getOpenHandleMethod(), responseObserver);
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getOpenHandleMethod(), responseObserver);
     }
 
     /**
      */
-    public void createProcess(com.intellij.execution.process.mediator.rpc.CreateProcessRequest request,
+    default void createProcess(com.intellij.execution.process.mediator.rpc.CreateProcessRequest request,
         io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.CreateProcessReply> responseObserver) {
-      asyncUnimplementedUnaryCall(getCreateProcessMethod(), responseObserver);
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getCreateProcessMethod(), responseObserver);
     }
 
     /**
      */
-    public void destroyProcess(com.intellij.execution.process.mediator.rpc.DestroyProcessRequest request,
+    default void destroyProcess(com.intellij.execution.process.mediator.rpc.DestroyProcessRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-      asyncUnimplementedUnaryCall(getDestroyProcessMethod(), responseObserver);
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getDestroyProcessMethod(), responseObserver);
     }
 
     /**
      */
-    public void awaitTermination(com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest request,
+    default void awaitTermination(com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest request,
         io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.AwaitTerminationReply> responseObserver) {
-      asyncUnimplementedUnaryCall(getAwaitTerminationMethod(), responseObserver);
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getAwaitTerminationMethod(), responseObserver);
     }
 
     /**
      */
-    public io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.WriteStreamRequest> writeStream(
+    default io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.WriteStreamRequest> writeStream(
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-      return asyncUnimplementedStreamingCall(getWriteStreamMethod(), responseObserver);
+      return io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall(getWriteStreamMethod(), responseObserver);
     }
 
     /**
      */
-    public void readStream(com.intellij.execution.process.mediator.rpc.ReadStreamRequest request,
+    default void readStream(com.intellij.execution.process.mediator.rpc.ReadStreamRequest request,
         io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.DataChunk> responseObserver) {
-      asyncUnimplementedUnaryCall(getReadStreamMethod(), responseObserver);
-    }
-
-    @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
-      return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
-          .addMethod(
-            getOpenHandleMethod(),
-            asyncServerStreamingCall(
-              new MethodHandlers<
-                com.google.protobuf.Empty,
-                com.intellij.execution.process.mediator.rpc.OpenHandleReply>(
-                  this, METHODID_OPEN_HANDLE)))
-          .addMethod(
-            getCreateProcessMethod(),
-            asyncUnaryCall(
-              new MethodHandlers<
-                com.intellij.execution.process.mediator.rpc.CreateProcessRequest,
-                com.intellij.execution.process.mediator.rpc.CreateProcessReply>(
-                  this, METHODID_CREATE_PROCESS)))
-          .addMethod(
-            getDestroyProcessMethod(),
-            asyncUnaryCall(
-              new MethodHandlers<
-                com.intellij.execution.process.mediator.rpc.DestroyProcessRequest,
-                com.google.protobuf.Empty>(
-                  this, METHODID_DESTROY_PROCESS)))
-          .addMethod(
-            getAwaitTerminationMethod(),
-            asyncUnaryCall(
-              new MethodHandlers<
-                com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest,
-                com.intellij.execution.process.mediator.rpc.AwaitTerminationReply>(
-                  this, METHODID_AWAIT_TERMINATION)))
-          .addMethod(
-            getWriteStreamMethod(),
-            asyncBidiStreamingCall(
-              new MethodHandlers<
-                com.intellij.execution.process.mediator.rpc.WriteStreamRequest,
-                com.google.protobuf.Empty>(
-                  this, METHODID_WRITE_STREAM)))
-          .addMethod(
-            getReadStreamMethod(),
-            asyncServerStreamingCall(
-              new MethodHandlers<
-                com.intellij.execution.process.mediator.rpc.ReadStreamRequest,
-                com.intellij.execution.process.mediator.rpc.DataChunk>(
-                  this, METHODID_READ_STREAM)))
-          .build();
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getReadStreamMethod(), responseObserver);
     }
   }
 
   /**
+   * Base class for the server implementation of the service ProcessManager.
    */
-  public static final class ProcessManagerStub extends io.grpc.stub.AbstractAsyncStub<ProcessManagerStub> {
+  public static abstract class ProcessManagerImplBase
+      implements io.grpc.BindableService, AsyncService {
+
+    @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
+      return ProcessManagerGrpc.bindService(this);
+    }
+  }
+
+  /**
+   * A stub to allow clients to do asynchronous rpc calls to service ProcessManager.
+   */
+  public static final class ProcessManagerStub
+      extends io.grpc.stub.AbstractAsyncStub<ProcessManagerStub> {
     private ProcessManagerStub(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       super(channel, callOptions);
@@ -377,7 +331,7 @@ public final class ProcessManagerGrpc {
      */
     public void openHandle(com.google.protobuf.Empty request,
         io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.OpenHandleReply> responseObserver) {
-      asyncServerStreamingCall(
+      io.grpc.stub.ClientCalls.asyncServerStreamingCall(
           getChannel().newCall(getOpenHandleMethod(), getCallOptions()), request, responseObserver);
     }
 
@@ -385,7 +339,7 @@ public final class ProcessManagerGrpc {
      */
     public void createProcess(com.intellij.execution.process.mediator.rpc.CreateProcessRequest request,
         io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.CreateProcessReply> responseObserver) {
-      asyncUnaryCall(
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
           getChannel().newCall(getCreateProcessMethod(), getCallOptions()), request, responseObserver);
     }
 
@@ -393,7 +347,7 @@ public final class ProcessManagerGrpc {
      */
     public void destroyProcess(com.intellij.execution.process.mediator.rpc.DestroyProcessRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-      asyncUnaryCall(
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
           getChannel().newCall(getDestroyProcessMethod(), getCallOptions()), request, responseObserver);
     }
 
@@ -401,7 +355,7 @@ public final class ProcessManagerGrpc {
      */
     public void awaitTermination(com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest request,
         io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.AwaitTerminationReply> responseObserver) {
-      asyncUnaryCall(
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
           getChannel().newCall(getAwaitTerminationMethod(), getCallOptions()), request, responseObserver);
     }
 
@@ -409,7 +363,7 @@ public final class ProcessManagerGrpc {
      */
     public io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.WriteStreamRequest> writeStream(
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-      return asyncBidiStreamingCall(
+      return io.grpc.stub.ClientCalls.asyncBidiStreamingCall(
           getChannel().newCall(getWriteStreamMethod(), getCallOptions()), responseObserver);
     }
 
@@ -417,14 +371,16 @@ public final class ProcessManagerGrpc {
      */
     public void readStream(com.intellij.execution.process.mediator.rpc.ReadStreamRequest request,
         io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.DataChunk> responseObserver) {
-      asyncServerStreamingCall(
+      io.grpc.stub.ClientCalls.asyncServerStreamingCall(
           getChannel().newCall(getReadStreamMethod(), getCallOptions()), request, responseObserver);
     }
   }
 
   /**
+   * A stub to allow clients to do synchronous rpc calls to service ProcessManager.
    */
-  public static final class ProcessManagerBlockingStub extends io.grpc.stub.AbstractBlockingStub<ProcessManagerBlockingStub> {
+  public static final class ProcessManagerBlockingStub
+      extends io.grpc.stub.AbstractBlockingStub<ProcessManagerBlockingStub> {
     private ProcessManagerBlockingStub(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       super(channel, callOptions);
@@ -444,28 +400,28 @@ public final class ProcessManagerGrpc {
      */
     public java.util.Iterator<com.intellij.execution.process.mediator.rpc.OpenHandleReply> openHandle(
         com.google.protobuf.Empty request) {
-      return blockingServerStreamingCall(
+      return io.grpc.stub.ClientCalls.blockingServerStreamingCall(
           getChannel(), getOpenHandleMethod(), getCallOptions(), request);
     }
 
     /**
      */
     public com.intellij.execution.process.mediator.rpc.CreateProcessReply createProcess(com.intellij.execution.process.mediator.rpc.CreateProcessRequest request) {
-      return blockingUnaryCall(
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getCreateProcessMethod(), getCallOptions(), request);
     }
 
     /**
      */
     public com.google.protobuf.Empty destroyProcess(com.intellij.execution.process.mediator.rpc.DestroyProcessRequest request) {
-      return blockingUnaryCall(
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getDestroyProcessMethod(), getCallOptions(), request);
     }
 
     /**
      */
     public com.intellij.execution.process.mediator.rpc.AwaitTerminationReply awaitTermination(com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest request) {
-      return blockingUnaryCall(
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getAwaitTerminationMethod(), getCallOptions(), request);
     }
 
@@ -473,14 +429,16 @@ public final class ProcessManagerGrpc {
      */
     public java.util.Iterator<com.intellij.execution.process.mediator.rpc.DataChunk> readStream(
         com.intellij.execution.process.mediator.rpc.ReadStreamRequest request) {
-      return blockingServerStreamingCall(
+      return io.grpc.stub.ClientCalls.blockingServerStreamingCall(
           getChannel(), getReadStreamMethod(), getCallOptions(), request);
     }
   }
 
   /**
+   * A stub to allow clients to do ListenableFuture-style rpc calls to service ProcessManager.
    */
-  public static final class ProcessManagerFutureStub extends io.grpc.stub.AbstractFutureStub<ProcessManagerFutureStub> {
+  public static final class ProcessManagerFutureStub
+      extends io.grpc.stub.AbstractFutureStub<ProcessManagerFutureStub> {
     private ProcessManagerFutureStub(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       super(channel, callOptions);
@@ -496,7 +454,7 @@ public final class ProcessManagerGrpc {
      */
     public com.google.common.util.concurrent.ListenableFuture<com.intellij.execution.process.mediator.rpc.CreateProcessReply> createProcess(
         com.intellij.execution.process.mediator.rpc.CreateProcessRequest request) {
-      return futureUnaryCall(
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
           getChannel().newCall(getCreateProcessMethod(), getCallOptions()), request);
     }
 
@@ -504,7 +462,7 @@ public final class ProcessManagerGrpc {
      */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> destroyProcess(
         com.intellij.execution.process.mediator.rpc.DestroyProcessRequest request) {
-      return futureUnaryCall(
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
           getChannel().newCall(getDestroyProcessMethod(), getCallOptions()), request);
     }
 
@@ -512,7 +470,7 @@ public final class ProcessManagerGrpc {
      */
     public com.google.common.util.concurrent.ListenableFuture<com.intellij.execution.process.mediator.rpc.AwaitTerminationReply> awaitTermination(
         com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest request) {
-      return futureUnaryCall(
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
           getChannel().newCall(getAwaitTerminationMethod(), getCallOptions()), request);
     }
   }
@@ -529,10 +487,10 @@ public final class ProcessManagerGrpc {
       io.grpc.stub.ServerCalls.ServerStreamingMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.ClientStreamingMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.BidiStreamingMethod<Req, Resp> {
-    private final ProcessManagerImplBase serviceImpl;
+    private final AsyncService serviceImpl;
     private final int methodId;
 
-    MethodHandlers(ProcessManagerImplBase serviceImpl, int methodId) {
+    MethodHandlers(AsyncService serviceImpl, int methodId) {
       this.serviceImpl = serviceImpl;
       this.methodId = methodId;
     }
@@ -580,6 +538,53 @@ public final class ProcessManagerGrpc {
     }
   }
 
+  public static final io.grpc.ServerServiceDefinition bindService(AsyncService service) {
+    return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
+        .addMethod(
+          getOpenHandleMethod(),
+          io.grpc.stub.ServerCalls.asyncServerStreamingCall(
+            new MethodHandlers<
+              com.google.protobuf.Empty,
+              com.intellij.execution.process.mediator.rpc.OpenHandleReply>(
+                service, METHODID_OPEN_HANDLE)))
+        .addMethod(
+          getCreateProcessMethod(),
+          io.grpc.stub.ServerCalls.asyncUnaryCall(
+            new MethodHandlers<
+              com.intellij.execution.process.mediator.rpc.CreateProcessRequest,
+              com.intellij.execution.process.mediator.rpc.CreateProcessReply>(
+                service, METHODID_CREATE_PROCESS)))
+        .addMethod(
+          getDestroyProcessMethod(),
+          io.grpc.stub.ServerCalls.asyncUnaryCall(
+            new MethodHandlers<
+              com.intellij.execution.process.mediator.rpc.DestroyProcessRequest,
+              com.google.protobuf.Empty>(
+                service, METHODID_DESTROY_PROCESS)))
+        .addMethod(
+          getAwaitTerminationMethod(),
+          io.grpc.stub.ServerCalls.asyncUnaryCall(
+            new MethodHandlers<
+              com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest,
+              com.intellij.execution.process.mediator.rpc.AwaitTerminationReply>(
+                service, METHODID_AWAIT_TERMINATION)))
+        .addMethod(
+          getWriteStreamMethod(),
+          io.grpc.stub.ServerCalls.asyncBidiStreamingCall(
+            new MethodHandlers<
+              com.intellij.execution.process.mediator.rpc.WriteStreamRequest,
+              com.google.protobuf.Empty>(
+                service, METHODID_WRITE_STREAM)))
+        .addMethod(
+          getReadStreamMethod(),
+          io.grpc.stub.ServerCalls.asyncServerStreamingCall(
+            new MethodHandlers<
+              com.intellij.execution.process.mediator.rpc.ReadStreamRequest,
+              com.intellij.execution.process.mediator.rpc.DataChunk>(
+                service, METHODID_READ_STREAM)))
+        .build();
+  }
+
   private static abstract class ProcessManagerBaseDescriptorSupplier
       implements io.grpc.protobuf.ProtoFileDescriptorSupplier, io.grpc.protobuf.ProtoServiceDescriptorSupplier {
     ProcessManagerBaseDescriptorSupplier() {}
@@ -603,9 +608,9 @@ public final class ProcessManagerGrpc {
   private static final class ProcessManagerMethodDescriptorSupplier
       extends ProcessManagerBaseDescriptorSupplier
       implements io.grpc.protobuf.ProtoMethodDescriptorSupplier {
-    private final String methodName;
+    private final java.lang.String methodName;
 
-    ProcessManagerMethodDescriptorSupplier(String methodName) {
+    ProcessManagerMethodDescriptorSupplier(java.lang.String methodName) {
       this.methodName = methodName;
     }
 

@@ -1,7 +1,6 @@
 package com.intellij.execution.process.mediator.rpc
 
 import com.google.protobuf.Empty
-import com.intellij.execution.process.mediator.rpc.DaemonGrpc.getServiceDescriptor
 import io.grpc.CallOptions
 import io.grpc.CallOptions.DEFAULT
 import io.grpc.Channel
@@ -10,44 +9,46 @@ import io.grpc.MethodDescriptor
 import io.grpc.ServerServiceDefinition
 import io.grpc.ServerServiceDefinition.builder
 import io.grpc.ServiceDescriptor
-import io.grpc.Status
 import io.grpc.Status.UNIMPLEMENTED
 import io.grpc.StatusException
 import io.grpc.kotlin.AbstractCoroutineServerImpl
 import io.grpc.kotlin.AbstractCoroutineStub
-import io.grpc.kotlin.ClientCalls
 import io.grpc.kotlin.ClientCalls.bidiStreamingRpc
 import io.grpc.kotlin.ClientCalls.serverStreamingRpc
 import io.grpc.kotlin.ClientCalls.unaryRpc
-import io.grpc.kotlin.ServerCalls
 import io.grpc.kotlin.ServerCalls.bidiStreamingServerMethodDefinition
 import io.grpc.kotlin.ServerCalls.serverStreamingServerMethodDefinition
 import io.grpc.kotlin.ServerCalls.unaryServerMethodDefinition
 import io.grpc.kotlin.StubFor
+import kotlin.String
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 import kotlinx.coroutines.flow.Flow
+import com.intellij.execution.process.mediator.rpc.DaemonGrpc.getServiceDescriptor as daemonGrpcGetServiceDescriptor
+import com.intellij.execution.process.mediator.rpc.ProcessManagerGrpc.getServiceDescriptor as processManagerGrpcGetServiceDescriptor
 
 /**
  * Holder for Kotlin coroutine-based client and server APIs for
  * intellij.process.mediator.rpc.Daemon.
  */
-object DaemonGrpcKt {
-  @JvmStatic
-  val serviceDescriptor: ServiceDescriptor
-    get() = DaemonGrpc.getServiceDescriptor()
+public object DaemonGrpcKt {
+  public const val SERVICE_NAME: String = DaemonGrpc.SERVICE_NAME
 
-  val adjustQuotaMethod: MethodDescriptor<QuotaOptions, Empty>
+  @JvmStatic
+  public val serviceDescriptor: ServiceDescriptor
+    get() = daemonGrpcGetServiceDescriptor()
+
+  public val adjustQuotaMethod: MethodDescriptor<QuotaOptions, Empty>
     @JvmStatic
     get() = DaemonGrpc.getAdjustQuotaMethod()
 
-  val listenQuotaStateUpdatesMethod: MethodDescriptor<Empty, QuotaState>
+  public val listenQuotaStateUpdatesMethod: MethodDescriptor<Empty, QuotaState>
     @JvmStatic
     get() = DaemonGrpc.getListenQuotaStateUpdatesMethod()
 
-  val shutdownMethod: MethodDescriptor<Empty, Empty>
+  public val shutdownMethod: MethodDescriptor<Empty, Empty>
     @JvmStatic
     get() = DaemonGrpc.getShutdownMethod()
 
@@ -56,85 +57,98 @@ object DaemonGrpcKt {
    * coroutines.
    */
   @StubFor(DaemonGrpc::class)
-  class DaemonCoroutineStub @JvmOverloads constructor(
+  public class DaemonCoroutineStub @JvmOverloads constructor(
     channel: Channel,
-    callOptions: CallOptions = DEFAULT
+    callOptions: CallOptions = DEFAULT,
   ) : AbstractCoroutineStub<DaemonCoroutineStub>(channel, callOptions) {
     override fun build(channel: Channel, callOptions: CallOptions): DaemonCoroutineStub =
         DaemonCoroutineStub(channel, callOptions)
 
     /**
      * Executes this RPC and returns the response message, suspending until the RPC completes
-     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * with [`Status.OK`][io.grpc.Status].  If the RPC completes with another status, a
+     * corresponding
      * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
      * with the corresponding exception as a cause.
      *
      * @param request The request message to send to the server.
      *
+     * @param headers Metadata to attach to the request.  Most users will not need this.
+     *
      * @return The single response from the server.
      */
-    suspend fun adjustQuota(request: QuotaOptions): Empty = unaryRpc(
+    public suspend fun adjustQuota(request: QuotaOptions, headers: Metadata = Metadata()): Empty =
+        unaryRpc(
       channel,
       DaemonGrpc.getAdjustQuotaMethod(),
       request,
       callOptions,
-      Metadata()
+      headers
     )
+
     /**
      * Returns a [Flow] that, when collected, executes this RPC and emits responses from the
      * server as they arrive.  That flow finishes normally if the server closes its response with
-     * [`Status.OK`][Status], and fails by throwing a [StatusException] otherwise.  If
+     * [`Status.OK`][io.grpc.Status], and fails by throwing a [StatusException] otherwise.  If
      * collecting the flow downstream fails exceptionally (including via cancellation), the RPC
      * is cancelled with that exception as a cause.
      *
      * @param request The request message to send to the server.
      *
+     * @param headers Metadata to attach to the request.  Most users will not need this.
+     *
      * @return A flow that, when collected, emits the responses from the server.
      */
-    fun listenQuotaStateUpdates(request: Empty): Flow<QuotaState> = serverStreamingRpc(
+    public fun listenQuotaStateUpdates(request: Empty, headers: Metadata = Metadata()):
+        Flow<QuotaState> = serverStreamingRpc(
       channel,
       DaemonGrpc.getListenQuotaStateUpdatesMethod(),
       request,
       callOptions,
-      Metadata()
+      headers
     )
+
     /**
      * Executes this RPC and returns the response message, suspending until the RPC completes
-     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * with [`Status.OK`][io.grpc.Status].  If the RPC completes with another status, a
+     * corresponding
      * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
      * with the corresponding exception as a cause.
      *
      * @param request The request message to send to the server.
      *
+     * @param headers Metadata to attach to the request.  Most users will not need this.
+     *
      * @return The single response from the server.
      */
-    suspend fun shutdown(request: Empty): Empty = unaryRpc(
+    public suspend fun shutdown(request: Empty, headers: Metadata = Metadata()): Empty = unaryRpc(
       channel,
       DaemonGrpc.getShutdownMethod(),
       request,
       callOptions,
-      Metadata()
-    )}
+      headers
+    )
+  }
 
   /**
    * Skeletal implementation of the intellij.process.mediator.rpc.Daemon service based on Kotlin
    * coroutines.
    */
-  abstract class DaemonCoroutineImplBase(
-    coroutineContext: CoroutineContext = EmptyCoroutineContext
+  public abstract class DaemonCoroutineImplBase(
+    coroutineContext: CoroutineContext = EmptyCoroutineContext,
   ) : AbstractCoroutineServerImpl(coroutineContext) {
     /**
      * Returns the response to an RPC for intellij.process.mediator.rpc.Daemon.AdjustQuota.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
-     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
-     * will fail
+     * [io.grpc.Status].  If this method fails with a [java.util.concurrent.CancellationException],
+     * the RPC will fail
      * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
      * fail with `Status.UNKNOWN` with the exception as a cause.
      *
      * @param request The request from the client.
      */
-    open suspend fun adjustQuota(request: QuotaOptions): Empty = throw
+    public open suspend fun adjustQuota(request: QuotaOptions): Empty = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.Daemon.AdjustQuota is unimplemented"))
 
     /**
@@ -142,7 +156,7 @@ object DaemonGrpcKt {
      * intellij.process.mediator.rpc.Daemon.ListenQuotaStateUpdates.
      *
      * If creating or collecting the returned flow fails with a [StatusException], the RPC
-     * will fail with the corresponding [Status].  If it fails with a
+     * will fail with the corresponding [io.grpc.Status].  If it fails with a
      * [java.util.concurrent.CancellationException], the RPC will fail with status
      * `Status.CANCELLED`.  If creating
      * or collecting the returned flow fails for any other reason, the RPC will fail with
@@ -150,24 +164,25 @@ object DaemonGrpcKt {
      *
      * @param request The request from the client.
      */
-    open fun listenQuotaStateUpdates(request: Empty): Flow<QuotaState> = throw
+    public open fun listenQuotaStateUpdates(request: Empty): Flow<QuotaState> = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.Daemon.ListenQuotaStateUpdates is unimplemented"))
 
     /**
      * Returns the response to an RPC for intellij.process.mediator.rpc.Daemon.Shutdown.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
-     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
-     * will fail
+     * [io.grpc.Status].  If this method fails with a [java.util.concurrent.CancellationException],
+     * the RPC will fail
      * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
      * fail with `Status.UNKNOWN` with the exception as a cause.
      *
      * @param request The request from the client.
      */
-    open suspend fun shutdown(request: Empty): Empty = throw
+    public open suspend fun shutdown(request: Empty): Empty = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.Daemon.Shutdown is unimplemented"))
 
-    final override fun bindService(): ServerServiceDefinition = builder(getServiceDescriptor())
+    final override fun bindService(): ServerServiceDefinition =
+        builder(daemonGrpcGetServiceDescriptor())
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
       descriptor = DaemonGrpc.getAdjustQuotaMethod(),
@@ -190,32 +205,35 @@ object DaemonGrpcKt {
  * Holder for Kotlin coroutine-based client and server APIs for
  * intellij.process.mediator.rpc.ProcessManager.
  */
-object ProcessManagerGrpcKt {
-  @JvmStatic
-  val serviceDescriptor: ServiceDescriptor
-    get() = ProcessManagerGrpc.getServiceDescriptor()
+public object ProcessManagerGrpcKt {
+  public const val SERVICE_NAME: String = ProcessManagerGrpc.SERVICE_NAME
 
-  val openHandleMethod: MethodDescriptor<Empty, OpenHandleReply>
+  @JvmStatic
+  public val serviceDescriptor: ServiceDescriptor
+    get() = processManagerGrpcGetServiceDescriptor()
+
+  public val openHandleMethod: MethodDescriptor<Empty, OpenHandleReply>
     @JvmStatic
     get() = ProcessManagerGrpc.getOpenHandleMethod()
 
-  val createProcessMethod: MethodDescriptor<CreateProcessRequest, CreateProcessReply>
+  public val createProcessMethod: MethodDescriptor<CreateProcessRequest, CreateProcessReply>
     @JvmStatic
     get() = ProcessManagerGrpc.getCreateProcessMethod()
 
-  val destroyProcessMethod: MethodDescriptor<DestroyProcessRequest, Empty>
+  public val destroyProcessMethod: MethodDescriptor<DestroyProcessRequest, Empty>
     @JvmStatic
     get() = ProcessManagerGrpc.getDestroyProcessMethod()
 
-  val awaitTerminationMethod: MethodDescriptor<AwaitTerminationRequest, AwaitTerminationReply>
+  public val awaitTerminationMethod:
+      MethodDescriptor<AwaitTerminationRequest, AwaitTerminationReply>
     @JvmStatic
     get() = ProcessManagerGrpc.getAwaitTerminationMethod()
 
-  val writeStreamMethod: MethodDescriptor<WriteStreamRequest, Empty>
+  public val writeStreamMethod: MethodDescriptor<WriteStreamRequest, Empty>
     @JvmStatic
     get() = ProcessManagerGrpc.getWriteStreamMethod()
 
-  val readStreamMethod: MethodDescriptor<ReadStreamRequest, DataChunk>
+  public val readStreamMethod: MethodDescriptor<ReadStreamRequest, DataChunk>
     @JvmStatic
     get() = ProcessManagerGrpc.getReadStreamMethod()
 
@@ -224,9 +242,9 @@ object ProcessManagerGrpcKt {
    * suspending coroutines.
    */
   @StubFor(ProcessManagerGrpc::class)
-  class ProcessManagerCoroutineStub @JvmOverloads constructor(
+  public class ProcessManagerCoroutineStub @JvmOverloads constructor(
     channel: Channel,
-    callOptions: CallOptions = DEFAULT
+    callOptions: CallOptions = DEFAULT,
   ) : AbstractCoroutineStub<ProcessManagerCoroutineStub>(channel, callOptions) {
     override fun build(channel: Channel, callOptions: CallOptions): ProcessManagerCoroutineStub =
         ProcessManagerCoroutineStub(channel, callOptions)
@@ -234,77 +252,95 @@ object ProcessManagerGrpcKt {
     /**
      * Returns a [Flow] that, when collected, executes this RPC and emits responses from the
      * server as they arrive.  That flow finishes normally if the server closes its response with
-     * [`Status.OK`][Status], and fails by throwing a [StatusException] otherwise.  If
+     * [`Status.OK`][io.grpc.Status], and fails by throwing a [StatusException] otherwise.  If
      * collecting the flow downstream fails exceptionally (including via cancellation), the RPC
      * is cancelled with that exception as a cause.
      *
      * @param request The request message to send to the server.
      *
+     * @param headers Metadata to attach to the request.  Most users will not need this.
+     *
      * @return A flow that, when collected, emits the responses from the server.
      */
-    fun openHandle(request: Empty): Flow<OpenHandleReply> = serverStreamingRpc(
+    public fun openHandle(request: Empty, headers: Metadata = Metadata()): Flow<OpenHandleReply> =
+        serverStreamingRpc(
       channel,
       ProcessManagerGrpc.getOpenHandleMethod(),
       request,
       callOptions,
-      Metadata()
+      headers
     )
+
     /**
      * Executes this RPC and returns the response message, suspending until the RPC completes
-     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * with [`Status.OK`][io.grpc.Status].  If the RPC completes with another status, a
+     * corresponding
      * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
      * with the corresponding exception as a cause.
      *
      * @param request The request message to send to the server.
      *
+     * @param headers Metadata to attach to the request.  Most users will not need this.
+     *
      * @return The single response from the server.
      */
-    suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply = unaryRpc(
+    public suspend fun createProcess(request: CreateProcessRequest, headers: Metadata = Metadata()):
+        CreateProcessReply = unaryRpc(
       channel,
       ProcessManagerGrpc.getCreateProcessMethod(),
       request,
       callOptions,
-      Metadata()
+      headers
     )
+
     /**
      * Executes this RPC and returns the response message, suspending until the RPC completes
-     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * with [`Status.OK`][io.grpc.Status].  If the RPC completes with another status, a
+     * corresponding
      * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
      * with the corresponding exception as a cause.
      *
      * @param request The request message to send to the server.
      *
+     * @param headers Metadata to attach to the request.  Most users will not need this.
+     *
      * @return The single response from the server.
      */
-    suspend fun destroyProcess(request: DestroyProcessRequest): Empty = unaryRpc(
+    public suspend fun destroyProcess(request: DestroyProcessRequest, headers: Metadata =
+        Metadata()): Empty = unaryRpc(
       channel,
       ProcessManagerGrpc.getDestroyProcessMethod(),
       request,
       callOptions,
-      Metadata()
+      headers
     )
+
     /**
      * Executes this RPC and returns the response message, suspending until the RPC completes
-     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * with [`Status.OK`][io.grpc.Status].  If the RPC completes with another status, a
+     * corresponding
      * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
      * with the corresponding exception as a cause.
      *
      * @param request The request message to send to the server.
      *
+     * @param headers Metadata to attach to the request.  Most users will not need this.
+     *
      * @return The single response from the server.
      */
-    suspend fun awaitTermination(request: AwaitTerminationRequest): AwaitTerminationReply =
-        unaryRpc(
+    public suspend fun awaitTermination(request: AwaitTerminationRequest, headers: Metadata =
+        Metadata()): AwaitTerminationReply = unaryRpc(
       channel,
       ProcessManagerGrpc.getAwaitTerminationMethod(),
       request,
       callOptions,
-      Metadata()
+      headers
     )
+
     /**
      * Returns a [Flow] that, when collected, executes this RPC and emits responses from the
      * server as they arrive.  That flow finishes normally if the server closes its response with
-     * [`Status.OK`][Status], and fails by throwing a [StatusException] otherwise.  If
+     * [`Status.OK`][io.grpc.Status], and fails by throwing a [StatusException] otherwise.  If
      * collecting the flow downstream fails exceptionally (including via cancellation), the RPC
      * is cancelled with that exception as a cause.
      *
@@ -317,47 +353,55 @@ object ProcessManagerGrpcKt {
      *
      * @param requests A [Flow] of request messages.
      *
+     * @param headers Metadata to attach to the request.  Most users will not need this.
+     *
      * @return A flow that, when collected, emits the responses from the server.
      */
-    fun writeStream(requests: Flow<WriteStreamRequest>): Flow<Empty> = bidiStreamingRpc(
+    public fun writeStream(requests: Flow<WriteStreamRequest>, headers: Metadata = Metadata()):
+        Flow<Empty> = bidiStreamingRpc(
       channel,
       ProcessManagerGrpc.getWriteStreamMethod(),
       requests,
       callOptions,
-      Metadata()
+      headers
     )
+
     /**
      * Returns a [Flow] that, when collected, executes this RPC and emits responses from the
      * server as they arrive.  That flow finishes normally if the server closes its response with
-     * [`Status.OK`][Status], and fails by throwing a [StatusException] otherwise.  If
+     * [`Status.OK`][io.grpc.Status], and fails by throwing a [StatusException] otherwise.  If
      * collecting the flow downstream fails exceptionally (including via cancellation), the RPC
      * is cancelled with that exception as a cause.
      *
      * @param request The request message to send to the server.
      *
+     * @param headers Metadata to attach to the request.  Most users will not need this.
+     *
      * @return A flow that, when collected, emits the responses from the server.
      */
-    fun readStream(request: ReadStreamRequest): Flow<DataChunk> = serverStreamingRpc(
+    public fun readStream(request: ReadStreamRequest, headers: Metadata = Metadata()):
+        Flow<DataChunk> = serverStreamingRpc(
       channel,
       ProcessManagerGrpc.getReadStreamMethod(),
       request,
       callOptions,
-      Metadata()
-    )}
+      headers
+    )
+  }
 
   /**
    * Skeletal implementation of the intellij.process.mediator.rpc.ProcessManager service based on
    * Kotlin coroutines.
    */
-  abstract class ProcessManagerCoroutineImplBase(
-    coroutineContext: CoroutineContext = EmptyCoroutineContext
+  public abstract class ProcessManagerCoroutineImplBase(
+    coroutineContext: CoroutineContext = EmptyCoroutineContext,
   ) : AbstractCoroutineServerImpl(coroutineContext) {
     /**
      * Returns a [Flow] of responses to an RPC for
      * intellij.process.mediator.rpc.ProcessManager.OpenHandle.
      *
      * If creating or collecting the returned flow fails with a [StatusException], the RPC
-     * will fail with the corresponding [Status].  If it fails with a
+     * will fail with the corresponding [io.grpc.Status].  If it fails with a
      * [java.util.concurrent.CancellationException], the RPC will fail with status
      * `Status.CANCELLED`.  If creating
      * or collecting the returned flow fails for any other reason, the RPC will fail with
@@ -365,7 +409,7 @@ object ProcessManagerGrpcKt {
      *
      * @param request The request from the client.
      */
-    open fun openHandle(request: Empty): Flow<OpenHandleReply> = throw
+    public open fun openHandle(request: Empty): Flow<OpenHandleReply> = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.OpenHandle is unimplemented"))
 
     /**
@@ -373,14 +417,14 @@ object ProcessManagerGrpcKt {
      * intellij.process.mediator.rpc.ProcessManager.CreateProcess.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
-     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
-     * will fail
+     * [io.grpc.Status].  If this method fails with a [java.util.concurrent.CancellationException],
+     * the RPC will fail
      * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
      * fail with `Status.UNKNOWN` with the exception as a cause.
      *
      * @param request The request from the client.
      */
-    open suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply = throw
+    public open suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.CreateProcess is unimplemented"))
 
     /**
@@ -388,14 +432,14 @@ object ProcessManagerGrpcKt {
      * intellij.process.mediator.rpc.ProcessManager.DestroyProcess.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
-     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
-     * will fail
+     * [io.grpc.Status].  If this method fails with a [java.util.concurrent.CancellationException],
+     * the RPC will fail
      * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
      * fail with `Status.UNKNOWN` with the exception as a cause.
      *
      * @param request The request from the client.
      */
-    open suspend fun destroyProcess(request: DestroyProcessRequest): Empty = throw
+    public open suspend fun destroyProcess(request: DestroyProcessRequest): Empty = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.DestroyProcess is unimplemented"))
 
     /**
@@ -403,15 +447,15 @@ object ProcessManagerGrpcKt {
      * intellij.process.mediator.rpc.ProcessManager.AwaitTermination.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
-     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
-     * will fail
+     * [io.grpc.Status].  If this method fails with a [java.util.concurrent.CancellationException],
+     * the RPC will fail
      * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
      * fail with `Status.UNKNOWN` with the exception as a cause.
      *
      * @param request The request from the client.
      */
-    open suspend fun awaitTermination(request: AwaitTerminationRequest): AwaitTerminationReply =
-        throw
+    public open suspend fun awaitTermination(request: AwaitTerminationRequest):
+        AwaitTerminationReply = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.AwaitTermination is unimplemented"))
 
     /**
@@ -419,7 +463,7 @@ object ProcessManagerGrpcKt {
      * intellij.process.mediator.rpc.ProcessManager.WriteStream.
      *
      * If creating or collecting the returned flow fails with a [StatusException], the RPC
-     * will fail with the corresponding [Status].  If it fails with a
+     * will fail with the corresponding [io.grpc.Status].  If it fails with a
      * [java.util.concurrent.CancellationException], the RPC will fail with status
      * `Status.CANCELLED`.  If creating
      * or collecting the returned flow fails for any other reason, the RPC will fail with
@@ -430,7 +474,7 @@ object ProcessManagerGrpcKt {
      * collect
      *        it more than once.
      */
-    open fun writeStream(requests: Flow<WriteStreamRequest>): Flow<Empty> = throw
+    public open fun writeStream(requests: Flow<WriteStreamRequest>): Flow<Empty> = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.WriteStream is unimplemented"))
 
     /**
@@ -438,7 +482,7 @@ object ProcessManagerGrpcKt {
      * intellij.process.mediator.rpc.ProcessManager.ReadStream.
      *
      * If creating or collecting the returned flow fails with a [StatusException], the RPC
-     * will fail with the corresponding [Status].  If it fails with a
+     * will fail with the corresponding [io.grpc.Status].  If it fails with a
      * [java.util.concurrent.CancellationException], the RPC will fail with status
      * `Status.CANCELLED`.  If creating
      * or collecting the returned flow fails for any other reason, the RPC will fail with
@@ -446,11 +490,11 @@ object ProcessManagerGrpcKt {
      *
      * @param request The request from the client.
      */
-    open fun readStream(request: ReadStreamRequest): Flow<DataChunk> = throw
+    public open fun readStream(request: ReadStreamRequest): Flow<DataChunk> = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.ReadStream is unimplemented"))
 
     final override fun bindService(): ServerServiceDefinition =
-        builder(ProcessManagerGrpc.getServiceDescriptor())
+        builder(processManagerGrpcGetServiceDescriptor())
       .addMethod(serverStreamingServerMethodDefinition(
       context = this.context,
       descriptor = ProcessManagerGrpc.getOpenHandleMethod(),

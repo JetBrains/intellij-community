@@ -67,5 +67,5 @@ public interface QuotaStateOrBuilder extends
    */
   com.google.protobuf.EmptyOrBuilder getStateExpiredOrBuilder();
 
-  public com.intellij.execution.process.mediator.rpc.QuotaState.StateOneofCase getStateOneofCase();
+  com.intellij.execution.process.mediator.rpc.QuotaState.StateOneofCase getStateOneofCase();
 }

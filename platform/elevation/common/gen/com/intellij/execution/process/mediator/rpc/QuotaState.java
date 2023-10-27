@@ -25,103 +25,6 @@ private static final long serialVersionUID = 0L;
     return new QuotaState();
   }
 
-  @java.lang.Override
-  public final com.google.protobuf.UnknownFieldSet
-  getUnknownFields() {
-    return this.unknownFields;
-  }
-  private QuotaState(
-      com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
-    this();
-    if (extensionRegistry == null) {
-      throw new java.lang.NullPointerException();
-    }
-    com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-        com.google.protobuf.UnknownFieldSet.newBuilder();
-    try {
-      boolean done = false;
-      while (!done) {
-        int tag = input.readTag();
-        switch (tag) {
-          case 0:
-            done = true;
-            break;
-          case 10: {
-            com.intellij.execution.process.mediator.rpc.QuotaOptions.Builder subBuilder = null;
-            if (quotaOptions_ != null) {
-              subBuilder = quotaOptions_.toBuilder();
-            }
-            quotaOptions_ = input.readMessage(com.intellij.execution.process.mediator.rpc.QuotaOptions.parser(), extensionRegistry);
-            if (subBuilder != null) {
-              subBuilder.mergeFrom(quotaOptions_);
-              quotaOptions_ = subBuilder.buildPartial();
-            }
-
-            break;
-          }
-          case 18: {
-            com.google.protobuf.Empty.Builder subBuilder = null;
-            if (stateOneofCase_ == 2) {
-              subBuilder = ((com.google.protobuf.Empty) stateOneof_).toBuilder();
-            }
-            stateOneof_ =
-                input.readMessage(com.google.protobuf.Empty.parser(), extensionRegistry);
-            if (subBuilder != null) {
-              subBuilder.mergeFrom((com.google.protobuf.Empty) stateOneof_);
-              stateOneof_ = subBuilder.buildPartial();
-            }
-            stateOneofCase_ = 2;
-            break;
-          }
-          case 26: {
-            com.intellij.execution.process.mediator.rpc.QuotaStateActive.Builder subBuilder = null;
-            if (stateOneofCase_ == 3) {
-              subBuilder = ((com.intellij.execution.process.mediator.rpc.QuotaStateActive) stateOneof_).toBuilder();
-            }
-            stateOneof_ =
-                input.readMessage(com.intellij.execution.process.mediator.rpc.QuotaStateActive.parser(), extensionRegistry);
-            if (subBuilder != null) {
-              subBuilder.mergeFrom((com.intellij.execution.process.mediator.rpc.QuotaStateActive) stateOneof_);
-              stateOneof_ = subBuilder.buildPartial();
-            }
-            stateOneofCase_ = 3;
-            break;
-          }
-          case 34: {
-            com.google.protobuf.Empty.Builder subBuilder = null;
-            if (stateOneofCase_ == 4) {
-              subBuilder = ((com.google.protobuf.Empty) stateOneof_).toBuilder();
-            }
-            stateOneof_ =
-                input.readMessage(com.google.protobuf.Empty.parser(), extensionRegistry);
-            if (subBuilder != null) {
-              subBuilder.mergeFrom((com.google.protobuf.Empty) stateOneof_);
-              stateOneof_ = subBuilder.buildPartial();
-            }
-            stateOneofCase_ = 4;
-            break;
-          }
-          default: {
-            if (!parseUnknownField(
-                input, unknownFields, extensionRegistry, tag)) {
-              done = true;
-            }
-            break;
-          }
-        }
-      }
-    } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
-    } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
-    } finally {
-      this.unknownFields = unknownFields.build();
-      makeExtensionsImmutable();
-    }
-  }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
     return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_QuotaState_descriptor;
@@ -135,7 +38,9 @@ private static final long serialVersionUID = 0L;
             com.intellij.execution.process.mediator.rpc.QuotaState.class, com.intellij.execution.process.mediator.rpc.QuotaState.Builder.class);
   }
 
+  private int bitField0_;
   private int stateOneofCase_ = 0;
+  @SuppressWarnings("serial")
   private java.lang.Object stateOneof_;
   public enum StateOneofCase
       implements com.google.protobuf.Internal.EnumLite,
@@ -186,7 +91,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public boolean hasQuotaOptions() {
-    return quotaOptions_ != null;
+    return ((bitField0_ & 0x00000001) != 0);
   }
   /**
    * <code>.intellij.process.mediator.rpc.QuotaOptions quota_options = 1;</code>
@@ -201,7 +106,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public com.intellij.execution.process.mediator.rpc.QuotaOptionsOrBuilder getQuotaOptionsOrBuilder() {
-    return getQuotaOptions();
+    return quotaOptions_ == null ? com.intellij.execution.process.mediator.rpc.QuotaOptions.getDefaultInstance() : quotaOptions_;
   }
 
   public static final int STATE_NEW_FIELD_NUMBER = 2;
@@ -311,7 +216,7 @@ private static final long serialVersionUID = 0L;
   @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (quotaOptions_ != null) {
+    if (((bitField0_ & 0x00000001) != 0)) {
       output.writeMessage(1, getQuotaOptions());
     }
     if (stateOneofCase_ == 2) {
@@ -323,7 +228,7 @@ private static final long serialVersionUID = 0L;
     if (stateOneofCase_ == 4) {
       output.writeMessage(4, (com.google.protobuf.Empty) stateOneof_);
     }
-    unknownFields.writeTo(output);
+    getUnknownFields().writeTo(output);
   }
 
   @java.lang.Override
@@ -332,7 +237,7 @@ private static final long serialVersionUID = 0L;
     if (size != -1) return size;
 
     size = 0;
-    if (quotaOptions_ != null) {
+    if (((bitField0_ & 0x00000001) != 0)) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(1, getQuotaOptions());
     }
@@ -348,7 +253,7 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(4, (com.google.protobuf.Empty) stateOneof_);
     }
-    size += unknownFields.getSerializedSize();
+    size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
   }
@@ -385,7 +290,7 @@ private static final long serialVersionUID = 0L;
       case 0:
       default:
     }
-    if (!unknownFields.equals(other.unknownFields)) return false;
+    if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
 
@@ -416,7 +321,7 @@ private static final long serialVersionUID = 0L;
       case 0:
       default:
     }
-    hash = (29 * hash) + unknownFields.hashCode();
+    hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
   }
@@ -465,11 +370,13 @@ private static final long serialVersionUID = 0L;
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
+
   public static com.intellij.execution.process.mediator.rpc.QuotaState parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
+
   public static com.intellij.execution.process.mediator.rpc.QuotaState parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -544,16 +451,26 @@ private static final long serialVersionUID = 0L;
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
+        getQuotaOptionsFieldBuilder();
       }
     }
     @java.lang.Override
     public Builder clear() {
       super.clear();
-      if (quotaOptionsBuilder_ == null) {
-        quotaOptions_ = null;
-      } else {
-        quotaOptions_ = null;
+      bitField0_ = 0;
+      quotaOptions_ = null;
+      if (quotaOptionsBuilder_ != null) {
+        quotaOptionsBuilder_.dispose();
         quotaOptionsBuilder_ = null;
+      }
+      if (stateNewBuilder_ != null) {
+        stateNewBuilder_.clear();
+      }
+      if (stateActiveBuilder_ != null) {
+        stateActiveBuilder_.clear();
+      }
+      if (stateExpiredBuilder_ != null) {
+        stateExpiredBuilder_.clear();
       }
       stateOneofCase_ = 0;
       stateOneof_ = null;
@@ -583,35 +500,39 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.intellij.execution.process.mediator.rpc.QuotaState buildPartial() {
       com.intellij.execution.process.mediator.rpc.QuotaState result = new com.intellij.execution.process.mediator.rpc.QuotaState(this);
-      if (quotaOptionsBuilder_ == null) {
-        result.quotaOptions_ = quotaOptions_;
-      } else {
-        result.quotaOptions_ = quotaOptionsBuilder_.build();
-      }
-      if (stateOneofCase_ == 2) {
-        if (stateNewBuilder_ == null) {
-          result.stateOneof_ = stateOneof_;
-        } else {
-          result.stateOneof_ = stateNewBuilder_.build();
-        }
-      }
-      if (stateOneofCase_ == 3) {
-        if (stateActiveBuilder_ == null) {
-          result.stateOneof_ = stateOneof_;
-        } else {
-          result.stateOneof_ = stateActiveBuilder_.build();
-        }
-      }
-      if (stateOneofCase_ == 4) {
-        if (stateExpiredBuilder_ == null) {
-          result.stateOneof_ = stateOneof_;
-        } else {
-          result.stateOneof_ = stateExpiredBuilder_.build();
-        }
-      }
-      result.stateOneofCase_ = stateOneofCase_;
+      if (bitField0_ != 0) { buildPartial0(result); }
+      buildPartialOneofs(result);
       onBuilt();
       return result;
+    }
+
+    private void buildPartial0(com.intellij.execution.process.mediator.rpc.QuotaState result) {
+      int from_bitField0_ = bitField0_;
+      int to_bitField0_ = 0;
+      if (((from_bitField0_ & 0x00000001) != 0)) {
+        result.quotaOptions_ = quotaOptionsBuilder_ == null
+            ? quotaOptions_
+            : quotaOptionsBuilder_.build();
+        to_bitField0_ |= 0x00000001;
+      }
+      result.bitField0_ |= to_bitField0_;
+    }
+
+    private void buildPartialOneofs(com.intellij.execution.process.mediator.rpc.QuotaState result) {
+      result.stateOneofCase_ = stateOneofCase_;
+      result.stateOneof_ = this.stateOneof_;
+      if (stateOneofCase_ == 2 &&
+          stateNewBuilder_ != null) {
+        result.stateOneof_ = stateNewBuilder_.build();
+      }
+      if (stateOneofCase_ == 3 &&
+          stateActiveBuilder_ != null) {
+        result.stateOneof_ = stateActiveBuilder_.build();
+      }
+      if (stateOneofCase_ == 4 &&
+          stateExpiredBuilder_ != null) {
+        result.stateOneof_ = stateExpiredBuilder_.build();
+      }
     }
 
     @java.lang.Override
@@ -678,7 +599,7 @@ private static final long serialVersionUID = 0L;
           break;
         }
       }
-      this.mergeUnknownFields(other.unknownFields);
+      this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
     }
@@ -693,17 +614,58 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.intellij.execution.process.mediator.rpc.QuotaState parsedMessage = null;
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       try {
-        parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              input.readMessage(
+                  getQuotaOptionsFieldBuilder().getBuilder(),
+                  extensionRegistry);
+              bitField0_ |= 0x00000001;
+              break;
+            } // case 10
+            case 18: {
+              input.readMessage(
+                  getStateNewFieldBuilder().getBuilder(),
+                  extensionRegistry);
+              stateOneofCase_ = 2;
+              break;
+            } // case 18
+            case 26: {
+              input.readMessage(
+                  getStateActiveFieldBuilder().getBuilder(),
+                  extensionRegistry);
+              stateOneofCase_ = 3;
+              break;
+            } // case 26
+            case 34: {
+              input.readMessage(
+                  getStateExpiredFieldBuilder().getBuilder(),
+                  extensionRegistry);
+              stateOneofCase_ = 4;
+              break;
+            } // case 34
+            default: {
+              if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                done = true; // was an endgroup tag
+              }
+              break;
+            } // default:
+          } // switch (tag)
+        } // while (!done)
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.intellij.execution.process.mediator.rpc.QuotaState) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
-        if (parsedMessage != null) {
-          mergeFrom(parsedMessage);
-        }
-      }
+        onChanged();
+      } // finally
       return this;
     }
     private int stateOneofCase_ = 0;
@@ -721,6 +683,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    private int bitField0_;
 
     private com.intellij.execution.process.mediator.rpc.QuotaOptions quotaOptions_;
     private com.google.protobuf.SingleFieldBuilderV3<
@@ -730,7 +693,7 @@ private static final long serialVersionUID = 0L;
      * @return Whether the quotaOptions field is set.
      */
     public boolean hasQuotaOptions() {
-      return quotaOptionsBuilder_ != null || quotaOptions_ != null;
+      return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>.intellij.process.mediator.rpc.QuotaOptions quota_options = 1;</code>
@@ -752,11 +715,11 @@ private static final long serialVersionUID = 0L;
           throw new NullPointerException();
         }
         quotaOptions_ = value;
-        onChanged();
       } else {
         quotaOptionsBuilder_.setMessage(value);
       }
-
+      bitField0_ |= 0x00000001;
+      onChanged();
       return this;
     }
     /**
@@ -766,11 +729,11 @@ private static final long serialVersionUID = 0L;
         com.intellij.execution.process.mediator.rpc.QuotaOptions.Builder builderForValue) {
       if (quotaOptionsBuilder_ == null) {
         quotaOptions_ = builderForValue.build();
-        onChanged();
       } else {
         quotaOptionsBuilder_.setMessage(builderForValue.build());
       }
-
+      bitField0_ |= 0x00000001;
+      onChanged();
       return this;
     }
     /**
@@ -778,38 +741,40 @@ private static final long serialVersionUID = 0L;
      */
     public Builder mergeQuotaOptions(com.intellij.execution.process.mediator.rpc.QuotaOptions value) {
       if (quotaOptionsBuilder_ == null) {
-        if (quotaOptions_ != null) {
-          quotaOptions_ =
-            com.intellij.execution.process.mediator.rpc.QuotaOptions.newBuilder(quotaOptions_).mergeFrom(value).buildPartial();
+        if (((bitField0_ & 0x00000001) != 0) &&
+          quotaOptions_ != null &&
+          quotaOptions_ != com.intellij.execution.process.mediator.rpc.QuotaOptions.getDefaultInstance()) {
+          getQuotaOptionsBuilder().mergeFrom(value);
         } else {
           quotaOptions_ = value;
         }
-        onChanged();
       } else {
         quotaOptionsBuilder_.mergeFrom(value);
       }
-
+      if (quotaOptions_ != null) {
+        bitField0_ |= 0x00000001;
+        onChanged();
+      }
       return this;
     }
     /**
      * <code>.intellij.process.mediator.rpc.QuotaOptions quota_options = 1;</code>
      */
     public Builder clearQuotaOptions() {
-      if (quotaOptionsBuilder_ == null) {
-        quotaOptions_ = null;
-        onChanged();
-      } else {
-        quotaOptions_ = null;
+      bitField0_ = (bitField0_ & ~0x00000001);
+      quotaOptions_ = null;
+      if (quotaOptionsBuilder_ != null) {
+        quotaOptionsBuilder_.dispose();
         quotaOptionsBuilder_ = null;
       }
-
+      onChanged();
       return this;
     }
     /**
      * <code>.intellij.process.mediator.rpc.QuotaOptions quota_options = 1;</code>
      */
     public com.intellij.execution.process.mediator.rpc.QuotaOptions.Builder getQuotaOptionsBuilder() {
-      
+      bitField0_ |= 0x00000001;
       onChanged();
       return getQuotaOptionsFieldBuilder().getBuilder();
     }
@@ -915,8 +880,9 @@ private static final long serialVersionUID = 0L;
       } else {
         if (stateOneofCase_ == 2) {
           stateNewBuilder_.mergeFrom(value);
+        } else {
+          stateNewBuilder_.setMessage(value);
         }
-        stateNewBuilder_.setMessage(value);
       }
       stateOneofCase_ = 2;
       return this;
@@ -978,7 +944,7 @@ private static final long serialVersionUID = 0L;
         stateOneof_ = null;
       }
       stateOneofCase_ = 2;
-      onChanged();;
+      onChanged();
       return stateNewBuilder_;
     }
 
@@ -1056,8 +1022,9 @@ private static final long serialVersionUID = 0L;
       } else {
         if (stateOneofCase_ == 3) {
           stateActiveBuilder_.mergeFrom(value);
+        } else {
+          stateActiveBuilder_.setMessage(value);
         }
-        stateActiveBuilder_.setMessage(value);
       }
       stateOneofCase_ = 3;
       return this;
@@ -1119,7 +1086,7 @@ private static final long serialVersionUID = 0L;
         stateOneof_ = null;
       }
       stateOneofCase_ = 3;
-      onChanged();;
+      onChanged();
       return stateActiveBuilder_;
     }
 
@@ -1197,8 +1164,9 @@ private static final long serialVersionUID = 0L;
       } else {
         if (stateOneofCase_ == 4) {
           stateExpiredBuilder_.mergeFrom(value);
+        } else {
+          stateExpiredBuilder_.setMessage(value);
         }
-        stateExpiredBuilder_.setMessage(value);
       }
       stateOneofCase_ = 4;
       return this;
@@ -1260,7 +1228,7 @@ private static final long serialVersionUID = 0L;
         stateOneof_ = null;
       }
       stateOneofCase_ = 4;
-      onChanged();;
+      onChanged();
       return stateExpiredBuilder_;
     }
     @java.lang.Override
@@ -1296,7 +1264,18 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new QuotaState(input, extensionRegistry);
+      Builder builder = newBuilder();
+      try {
+        builder.mergeFrom(input, extensionRegistry);
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(builder.buildPartial());
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(e)
+            .setUnfinishedMessage(builder.buildPartial());
+      }
+      return builder.buildPartial();
     }
   };
 

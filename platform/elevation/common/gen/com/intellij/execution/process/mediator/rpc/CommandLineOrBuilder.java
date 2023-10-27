@@ -109,14 +109,14 @@ public interface CommandLineOrBuilder extends
   /**
    * <code>map&lt;string, string&gt; environ = 7;</code>
    */
-
-  java.lang.String getEnvironOrDefault(
+  /* nullable */
+java.lang.String getEnvironOrDefault(
       java.lang.String key,
-      java.lang.String defaultValue);
+      /* nullable */
+java.lang.String defaultValue);
   /**
    * <code>map&lt;string, string&gt; environ = 7;</code>
    */
-
   java.lang.String getEnvironOrThrow(
       java.lang.String key);
 }

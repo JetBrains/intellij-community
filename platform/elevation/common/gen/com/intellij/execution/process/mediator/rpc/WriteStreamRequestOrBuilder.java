@@ -37,5 +37,5 @@ public interface WriteStreamRequestOrBuilder extends
    */
   com.intellij.execution.process.mediator.rpc.DataChunkOrBuilder getChunkOrBuilder();
 
-  public com.intellij.execution.process.mediator.rpc.WriteStreamRequest.FileHandleOrBufferCase getFileHandleOrBufferCase();
+  com.intellij.execution.process.mediator.rpc.WriteStreamRequest.FileHandleOrBufferCase getFileHandleOrBufferCase();
 }

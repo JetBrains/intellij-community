@@ -25,63 +25,6 @@ private static final long serialVersionUID = 0L;
     return new DestroyProcessRequest();
   }
 
-  @java.lang.Override
-  public final com.google.protobuf.UnknownFieldSet
-  getUnknownFields() {
-    return this.unknownFields;
-  }
-  private DestroyProcessRequest(
-      com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
-    this();
-    if (extensionRegistry == null) {
-      throw new java.lang.NullPointerException();
-    }
-    com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-        com.google.protobuf.UnknownFieldSet.newBuilder();
-    try {
-      boolean done = false;
-      while (!done) {
-        int tag = input.readTag();
-        switch (tag) {
-          case 0:
-            done = true;
-            break;
-          case 8: {
-
-            handleId_ = input.readUInt64();
-            break;
-          }
-          case 16: {
-
-            force_ = input.readBool();
-            break;
-          }
-          case 24: {
-
-            destroyGroup_ = input.readBool();
-            break;
-          }
-          default: {
-            if (!parseUnknownField(
-                input, unknownFields, extensionRegistry, tag)) {
-              done = true;
-            }
-            break;
-          }
-        }
-      }
-    } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
-    } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
-    } finally {
-      this.unknownFields = unknownFields.build();
-      makeExtensionsImmutable();
-    }
-  }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
     return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_DestroyProcessRequest_descriptor;
@@ -96,7 +39,7 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int HANDLE_ID_FIELD_NUMBER = 1;
-  private long handleId_;
+  private long handleId_ = 0L;
   /**
    * <code>uint64 handle_id = 1;</code>
    * @return The handleId.
@@ -107,7 +50,7 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int FORCE_FIELD_NUMBER = 2;
-  private boolean force_;
+  private boolean force_ = false;
   /**
    * <code>bool force = 2;</code>
    * @return The force.
@@ -118,7 +61,7 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int DESTROY_GROUP_FIELD_NUMBER = 3;
-  private boolean destroyGroup_;
+  private boolean destroyGroup_ = false;
   /**
    * <code>bool destroy_group = 3;</code>
    * @return The destroyGroup.
@@ -151,7 +94,7 @@ private static final long serialVersionUID = 0L;
     if (destroyGroup_ != false) {
       output.writeBool(3, destroyGroup_);
     }
-    unknownFields.writeTo(output);
+    getUnknownFields().writeTo(output);
   }
 
   @java.lang.Override
@@ -172,7 +115,7 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(3, destroyGroup_);
     }
-    size += unknownFields.getSerializedSize();
+    size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
   }
@@ -193,7 +136,7 @@ private static final long serialVersionUID = 0L;
         != other.getForce()) return false;
     if (getDestroyGroup()
         != other.getDestroyGroup()) return false;
-    if (!unknownFields.equals(other.unknownFields)) return false;
+    if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
 
@@ -213,7 +156,7 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + DESTROY_GROUP_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getDestroyGroup());
-    hash = (29 * hash) + unknownFields.hashCode();
+    hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
   }
@@ -262,11 +205,13 @@ private static final long serialVersionUID = 0L;
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
+
   public static com.intellij.execution.process.mediator.rpc.DestroyProcessRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
+
   public static com.intellij.execution.process.mediator.rpc.DestroyProcessRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -330,28 +275,21 @@ private static final long serialVersionUID = 0L;
 
     // Construct using com.intellij.execution.process.mediator.rpc.DestroyProcessRequest.newBuilder()
     private Builder() {
-      maybeForceBuilderInitialization();
+
     }
 
     private Builder(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
-      maybeForceBuilderInitialization();
-    }
-    private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
-      }
+
     }
     @java.lang.Override
     public Builder clear() {
       super.clear();
+      bitField0_ = 0;
       handleId_ = 0L;
-
       force_ = false;
-
       destroyGroup_ = false;
-
       return this;
     }
 
@@ -378,11 +316,22 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.intellij.execution.process.mediator.rpc.DestroyProcessRequest buildPartial() {
       com.intellij.execution.process.mediator.rpc.DestroyProcessRequest result = new com.intellij.execution.process.mediator.rpc.DestroyProcessRequest(this);
-      result.handleId_ = handleId_;
-      result.force_ = force_;
-      result.destroyGroup_ = destroyGroup_;
+      if (bitField0_ != 0) { buildPartial0(result); }
       onBuilt();
       return result;
+    }
+
+    private void buildPartial0(com.intellij.execution.process.mediator.rpc.DestroyProcessRequest result) {
+      int from_bitField0_ = bitField0_;
+      if (((from_bitField0_ & 0x00000001) != 0)) {
+        result.handleId_ = handleId_;
+      }
+      if (((from_bitField0_ & 0x00000002) != 0)) {
+        result.force_ = force_;
+      }
+      if (((from_bitField0_ & 0x00000004) != 0)) {
+        result.destroyGroup_ = destroyGroup_;
+      }
     }
 
     @java.lang.Override
@@ -438,7 +387,7 @@ private static final long serialVersionUID = 0L;
       if (other.getDestroyGroup() != false) {
         setDestroyGroup(other.getDestroyGroup());
       }
-      this.mergeUnknownFields(other.unknownFields);
+      this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
     }
@@ -453,19 +402,48 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.intellij.execution.process.mediator.rpc.DestroyProcessRequest parsedMessage = null;
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       try {
-        parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+              handleId_ = input.readUInt64();
+              bitField0_ |= 0x00000001;
+              break;
+            } // case 8
+            case 16: {
+              force_ = input.readBool();
+              bitField0_ |= 0x00000002;
+              break;
+            } // case 16
+            case 24: {
+              destroyGroup_ = input.readBool();
+              bitField0_ |= 0x00000004;
+              break;
+            } // case 24
+            default: {
+              if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                done = true; // was an endgroup tag
+              }
+              break;
+            } // default:
+          } // switch (tag)
+        } // while (!done)
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.intellij.execution.process.mediator.rpc.DestroyProcessRequest) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
-        if (parsedMessage != null) {
-          mergeFrom(parsedMessage);
-        }
-      }
+        onChanged();
+      } // finally
       return this;
     }
+    private int bitField0_;
 
     private long handleId_ ;
     /**
@@ -482,8 +460,9 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setHandleId(long value) {
-      
+
       handleId_ = value;
+      bitField0_ |= 0x00000001;
       onChanged();
       return this;
     }
@@ -492,7 +471,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearHandleId() {
-      
+      bitField0_ = (bitField0_ & ~0x00000001);
       handleId_ = 0L;
       onChanged();
       return this;
@@ -513,8 +492,9 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setForce(boolean value) {
-      
+
       force_ = value;
+      bitField0_ |= 0x00000002;
       onChanged();
       return this;
     }
@@ -523,7 +503,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearForce() {
-      
+      bitField0_ = (bitField0_ & ~0x00000002);
       force_ = false;
       onChanged();
       return this;
@@ -544,8 +524,9 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setDestroyGroup(boolean value) {
-      
+
       destroyGroup_ = value;
+      bitField0_ |= 0x00000004;
       onChanged();
       return this;
     }
@@ -554,7 +535,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearDestroyGroup() {
-      
+      bitField0_ = (bitField0_ & ~0x00000004);
       destroyGroup_ = false;
       onChanged();
       return this;
@@ -592,7 +573,18 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new DestroyProcessRequest(input, extensionRegistry);
+      Builder builder = newBuilder();
+      try {
+        builder.mergeFrom(input, extensionRegistry);
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(builder.buildPartial());
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(e)
+            .setUnfinishedMessage(builder.buildPartial());
+      }
+      return builder.buildPartial();
     }
   };
 
