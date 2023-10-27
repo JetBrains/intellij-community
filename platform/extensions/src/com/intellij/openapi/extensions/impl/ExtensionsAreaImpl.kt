@@ -46,12 +46,7 @@ fun createExtensionPoints(points: List<ExtensionPointDescriptor>,
                               hasAttributes = descriptor.hasAttributes,
                               dynamic = descriptor.isDynamic)
     }
-    result.putIfAbsent(name, point)?.let { old ->
-      val oldPluginDescriptor = old.getPluginDescriptor()
-      throw componentManager.createError(
-        "Duplicate registration for EP $name first in $oldPluginDescriptor, second in $pluginDescriptor", pluginDescriptor.pluginId
-      )
-    }
+    addPointOrLogErrorIfDuplicated(result = result, point = point, componentManager = componentManager)
   }
 }
 
@@ -64,9 +59,16 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   override fun getNameToPointMap(): Map<String, ExtensionPointImpl<*>> = extensionPoints
 
-  fun init(nameToPointMap: PersistentMap<String, ExtensionPointImpl<*>>) {
-    assert(extensionPoints.isEmpty())
+  fun reset(nameToPointMap: PersistentMap<String, ExtensionPointImpl<*>>) {
     extensionPoints = nameToPointMap
+  }
+
+  fun putAll(nameToPointMap: PersistentMap<String, ExtensionPointImpl<*>>) {
+    extensionPoints = extensionPoints.mutate {
+      for (point in nameToPointMap.values) {
+        addPointOrLogErrorIfDuplicated(it, point = point, componentManager)
+      }
+    }
   }
 
   @TestOnly
@@ -293,4 +295,16 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   override fun hasExtensionPoint(extensionPointName: ExtensionPointName<*>): Boolean = hasExtensionPoint(extensionPointName.name)
 
   override fun toString(): String = componentManager.toString()
+}
+
+private fun addPointOrLogErrorIfDuplicated(result: MutableMap<String, ExtensionPointImpl<*>>,
+                                           point: ExtensionPointImpl<*>,
+                                           componentManager: ComponentManager) {
+  result.putIfAbsent(point.name, point)?.let { old ->
+    val oldPluginDescriptor = old.getPluginDescriptor()
+    val pluginDescriptor = point.pluginDescriptor
+    throw componentManager.createError(
+      "Duplicate registration for EP ${point.name} first in $oldPluginDescriptor, second in $pluginDescriptor", pluginDescriptor.pluginId
+    )
+  }
 }

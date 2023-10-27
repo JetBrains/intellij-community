@@ -4,7 +4,6 @@ package com.intellij.serviceContainer
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import kotlinx.collections.immutable.PersistentList
@@ -18,17 +17,19 @@ class PrecomputedExtensionModel(
   @JvmField val extensionPoints: PersistentList<PersistentList<ExtensionPointDescriptor>>,
   @JvmField val pluginDescriptors: PersistentList<IdeaPluginDescriptor>,
 
-  @JvmField val nameToExtensions: PersistentMap<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>
+  @JvmField val nameToExtensions: PersistentMap<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>,
+
+  @JvmField val isInitial: Boolean,
 )
 
-fun precomputeExtensionModel(): PrecomputedExtensionModel {
+@ApiStatus.Internal
+fun precomputeModuleLevelExtensionModel(modules: List<IdeaPluginDescriptorImpl>, isInitial: Boolean): PrecomputedExtensionModel {
   var extensionPointDescriptors = persistentListOf<PersistentList<ExtensionPointDescriptor>>()
   var pluginDescriptors = persistentListOf<IdeaPluginDescriptor>()
   var extensionPointTotalCount = 0
   var nameToExtensions = persistentHashMapOf<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>()
 
   // step 1 - collect container level extension points
-  val modules = PluginManagerCore.getPluginSet().getEnabledModules()
   executeRegisterTask(modules) { pluginDescriptor ->
     val list = pluginDescriptor.moduleContainerDescriptor.extensionPoints
     if (list.isEmpty()) {
@@ -59,6 +60,7 @@ fun precomputeExtensionModel(): PrecomputedExtensionModel {
     pluginDescriptors = pluginDescriptors,
 
     nameToExtensions = nameToExtensions,
+    isInitial = isInitial,
   )
 }
 

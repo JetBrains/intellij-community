@@ -40,7 +40,7 @@ import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.map
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
-import com.intellij.serviceContainer.precomputeExtensionModel
+import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.util.graph.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
@@ -141,7 +141,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     val result = coroutineScope {
       LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
 
-      val precomputedExtensionModel = precomputeExtensionModel()
+      val precomputedExtensionModel = precomputeModuleLevelExtensionModel(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                                                                          isInitial = true)
       val result = loadedEntities.map { moduleEntity ->
         async {
           runCatching {

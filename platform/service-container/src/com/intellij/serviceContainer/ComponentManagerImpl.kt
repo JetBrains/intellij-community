@@ -420,7 +420,7 @@ abstract class ComponentManagerImpl(
 
     if (precomputedExtensionModel == null) {
       val immutableExtensionPoints = if (extensionPoints!!.isEmpty()) persistentHashMapOf() else extensionPoints.toPersistentHashMap()
-      extensionArea.init(immutableExtensionPoints)
+      extensionArea.reset(immutableExtensionPoints)
 
       for (rootModule in modules) {
         executeRegisterTask(rootModule) { module ->
@@ -466,7 +466,13 @@ abstract class ComponentManagerImpl(
       }
     }
 
-    extensionArea.init(result)
+    if (precomputedExtensionModel.isInitial) {
+      assert(extensionArea.nameToPointMap.isEmpty())
+      extensionArea.reset(result)
+    }
+    else {
+      extensionArea.putAll(result)
+    }
 
     for ((name, pairs) in precomputedExtensionModel.nameToExtensions) {
       val point = result.get(name) ?: continue

@@ -39,7 +39,6 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
@@ -55,6 +54,7 @@ import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.Disposer
@@ -71,6 +71,7 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.CachedValuesManagerImpl
@@ -367,7 +368,7 @@ object DynamicPlugins {
   }
 
   private fun checkNoComponentsOrServiceOverrides(pluginId: PluginId?, containerDescriptor: ContainerDescriptor): String? {
-    if (!containerDescriptor.components.isNullOrEmpty()) {
+    if (!containerDescriptor.components.isEmpty()) {
       return "Plugin $pluginId is not unload-safe because it declares components"
     }
     if (containerDescriptor.services.any { it.overrides }) {
@@ -1064,28 +1065,27 @@ private fun optionalDependenciesOnPlugin(
     .topologicalComparator
   dependentPluginsAndItsModule.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.first, o2.first) })
 
-  return dependentPluginsAndItsModule.distinct()
+  return dependentPluginsAndItsModule
+    .distinct()
     .filter { (mainDescriptor, moduleDescriptor) ->
       // 3. setup classloaders
       classLoaderConfigurator.configureDependency(mainDescriptor, moduleDescriptor)
-    }.map { it.second }.toSet()
+    }
+    .map { it.second }
+    .toSet()
 }
 
-private fun loadModules(
-  modules: List<IdeaPluginDescriptorImpl>,
-  app: ApplicationImpl,
-  listenerCallbacks: MutableList<in Runnable>,
-) {
-  fun registerComponents(componentManager: ComponentManager) {
-    (componentManager as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
-  }
+private fun loadModules(modules: List<IdeaPluginDescriptorImpl>, app: ApplicationImpl, listenerCallbacks: MutableList<in Runnable>) {
+  app.registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
+  for (openProject in getOpenedProjects()) {
+    (openProject as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
 
-  registerComponents(app)
-  for (openProject in ProjectUtil.getOpenProjects()) {
-    registerComponents(openProject)
-
+    val moduleLevelExtensionModel = precomputeModuleLevelExtensionModel(modules = modules, isInitial = false)
     for (module in ModuleManager.getInstance(openProject).modules) {
-      registerComponents(module)
+      (module as ComponentManagerImpl).registerComponents(modules = modules,
+                                                          app = app,
+                                                          precomputedExtensionModel = moduleLevelExtensionModel,
+                                                          listenerCallbacks = listenerCallbacks)
     }
   }
 

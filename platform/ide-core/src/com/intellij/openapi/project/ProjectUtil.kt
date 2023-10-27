@@ -296,12 +296,13 @@ fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, ha
   return baseDir.resolve(getProjectCacheFileName(forceNameUse, hashSeparator))
 }
 
-fun getOpenedProjects(): Sequence<Project> = sequence {
-  for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: emptyArray())) {
-    if (project.isDisposed || !project.isInitialized) {
-      continue
+fun getOpenedProjects(): Sequence<Project> {
+  return sequence {
+    for (project in ((ProjectManager.getInstanceIfCreated() ?: return@sequence).openProjects)) {
+      if (!project.isDisposed && project.isInitialized) {
+        yield(project)
+      }
     }
-    yield(project)
   }
 }
 
