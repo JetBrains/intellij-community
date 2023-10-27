@@ -16,13 +16,14 @@ import com.intellij.util.EventDispatcher
 class TransferSettingsControllerImpl : TransferSettingsController {
   private val eventDispatcher = EventDispatcher.create(TransferSettingsListener::class.java)
   private var previouslySelected: BaseIdeVersion? = null
+  private var timesSwitchedBetweenInstances = -1 // The field will be changed to 0 on the first IDE showing
 
   override fun updateCheckboxes(ideVersion: IdeVersion) {
     eventDispatcher.multicaster.checkboxesUpdated(ideVersion)
   }
 
   override fun performImport(project: Project?, ideVersion: IdeVersion, pi: ProgressIndicator) {
-    TransferSettingsCollector.logImportStarted(ideVersion.settingsCache)
+    TransferSettingsCollector.logImportStarted(ideVersion.settingsCache, timesSwitchedBetweenInstances)
     eventDispatcher.multicaster.importStarted(ideVersion, ideVersion.settingsCache)
     val performer = getImportPerformer()
 
@@ -58,6 +59,7 @@ class TransferSettingsControllerImpl : TransferSettingsController {
   override fun itemSelected(ideVersion: BaseIdeVersion) {
     eventDispatcher.multicaster.itemSelected(ideVersion)
     previouslySelected = ideVersion
+    timesSwitchedBetweenInstances++
   }
 
   override fun getImportPerformer() = DefaultImportPerformer()
