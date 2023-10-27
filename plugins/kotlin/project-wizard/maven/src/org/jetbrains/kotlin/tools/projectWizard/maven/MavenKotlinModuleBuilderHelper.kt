@@ -15,8 +15,6 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.Companion.trigger
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenModuleBuilderHelper
 import org.jetbrains.kotlin.tools.projectWizard.Versions
@@ -33,7 +31,6 @@ class MavenKotlinModuleBuilderHelper(
     archetype: MavenArchetype?,
     propertiesToCreateByArtifact: Map<String, String>?,
     commandName: @NlsContexts.Command String,
-    private val selectedJdkJvmTarget: String,
     private val kotlinPluginWizardVersion: String
 ) : MavenModuleBuilderHelper(
     projectId,
@@ -99,7 +96,6 @@ class MavenKotlinModuleBuilderHelper(
 
     private fun getConditions(project: Project): Properties {
         val conditions = Properties()
-        conditions.setProperty("KOTLIN_COMPILER_JVM_TARGET", selectedJdkJvmTarget)
         conditions.setProperty("KOTLIN_PLUGIN_WIZARD_VERSION", kotlinPluginWizardVersion)
         conditions.setProperty("MAVEN_SUREFIRE_PLUGIN_VERSION", Versions.MAVEN_PLUGINS.SUREFIRE.text)
         conditions.setProperty("MAVEN_FAILSAFE_PLUGIN_VERSION", Versions.MAVEN_PLUGINS.FAILSAFE.text)
