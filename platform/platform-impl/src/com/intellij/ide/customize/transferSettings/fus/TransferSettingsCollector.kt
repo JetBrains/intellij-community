@@ -89,11 +89,21 @@ object TransferSettingsCollector : CounterUsagesCollector() {
     val selectedSections = mutableListOf<String>()
     val unselectedSections = mutableListOf<String>()
 
-    if (settings.preferences.laf) selectedSections.add(TransferableSections.laf) else unselectedSections.add(TransferableSections.laf)
-    if (settings.preferences.keymap) selectedSections.add(TransferableSections.keymap) else unselectedSections.add(TransferableSections.keymap)
-    if (settings.preferences.plugins) selectedSections.add(TransferableSections.plugins) else unselectedSections.add(TransferableSections.plugins)
-    if (settings.preferences.recentProjects) selectedSections.add(TransferableSections.recentProjects) else unselectedSections.add(TransferableSections.recentProjects)
-    if (settings.preferences.syntaxScheme) selectedSections.add(TransferableSections.syntaxScheme) else unselectedSections.add(TransferableSections.syntaxScheme)
+    if (settings.laf != null) {
+      if (settings.preferences.laf) selectedSections.add(TransferableSections.laf) else unselectedSections.add(TransferableSections.laf)
+    }
+    if (settings.keymap != null) {
+      if (settings.preferences.keymap) selectedSections.add(TransferableSections.keymap) else unselectedSections.add(TransferableSections.keymap)
+    }
+    if (settings.plugins.isNotEmpty()) {
+      if (settings.preferences.plugins) selectedSections.add(TransferableSections.plugins) else unselectedSections.add(TransferableSections.plugins)
+    }
+    if (settings.recentProjects.isNotEmpty()) {
+      if (settings.preferences.recentProjects) selectedSections.add(TransferableSections.recentProjects) else unselectedSections.add(TransferableSections.recentProjects)
+    }
+    if (settings.syntaxScheme != null) {
+      if (settings.preferences.syntaxScheme) selectedSections.add(TransferableSections.syntaxScheme) else unselectedSections.add(TransferableSections.syntaxScheme)
+    }
 
     importStarted.log(selectedSections, unselectedSections, timesSwitchedBetweenInstances)
   }
