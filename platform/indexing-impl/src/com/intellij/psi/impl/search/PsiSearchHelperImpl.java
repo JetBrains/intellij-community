@@ -456,7 +456,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           LOG.error("Error during processing of: " + vfile.getName(), e);
           throw e;
         }
-        if (progress.isRunning()) {
+        if (progress.isRunning() && !progress.isIndeterminate()) {
           double fraction = (double)counter.incrementAndGet() / totalSize;
           progress.setFraction(fraction);
         }
