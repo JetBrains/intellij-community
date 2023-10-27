@@ -11,7 +11,6 @@ import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
@@ -21,6 +20,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.events.VfsEventsMerger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -283,6 +283,12 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   void saveIndexingStampInfo(@Nullable IndexingStampInfo indexingStampInfo, int fileId) {
+    VfsEventsMerger.tryLog(() -> {
+      return "event=SAVE_INDEXING_STAMP_INFO" +
+             ",id=" + fileId +
+             "," + indexingStampInfo;
+    });
+
     if (indexingStampInfo != null) {
       indexingStampInfoStorage.writeStampInfo(fileId, indexingStampInfo);
     }
