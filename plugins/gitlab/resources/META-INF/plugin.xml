@@ -71,13 +71,6 @@
       implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
     <iconMapper mappingFile="GitlabIconMappings.json"/>
 
-    <statistics.applicationUsagesCollector
-      implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
-    <statistics.counterUsagesCollector
-      implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
-    <statistics.notificationIdsHolder
-      implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
-
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.gitlab.ui.action.GitLabAnnotationGutterActionProvider"/>
 
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
@@ -94,6 +87,17 @@
                  description="Connect to GitLab repository without an explicit user action"
                  defaultValue="true"/>
     <registryKey defaultValue="true" description="Enable all-in-one diff for GitLab merge requests" key="gitlab.enable.combined.diff"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.statistics">
+    <applicationUsagesCollector
+      implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
+    <counterUsagesCollector
+      implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
+    <notificationIdsHolder
+      implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
+    <actionCustomPlaceAllowlist id="AIAssistantActionCustomPlaceAllowlist"
+                                places="GitLabMergeRequestListPopup;GitLabMergeRequestChangesTreePopup;GitLabMergeRequestDetailsPopup"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
