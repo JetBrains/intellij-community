@@ -383,6 +383,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
             }
           }
           ourToBeRefreshed.merge(sdk, requestData, PyUpdateSdkRequestData::merge);
+          return;
         }
         else {
           ourUnderRefresh.add(sdk);
