@@ -12,7 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.Nls
 
-internal class KeymapKind(val value: String, @Nls val displayName: String, @Nls val defaultLabel: String) {
+class KeymapKind(val value: String, @Nls val displayName: String, @Nls val defaultLabel: String) {
   val keymap = KeymapManager.getInstance().getKeymap(value)
   val isMac = value.containsMacOS
 

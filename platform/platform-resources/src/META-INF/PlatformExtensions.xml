@@ -1610,6 +1610,7 @@
 
     <!-- Presentation Assistant -->
     <applicationService serviceImplementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistant"/>
+    <applicationService serviceImplementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantOld"/>
     <applicationConfigurable groupId="appearance"
                              key="presentation.assistant.settings"
                              bundle="messages.IdeBundle"
