@@ -43,6 +43,11 @@ fun <T : CommandChain> T.waitForAsyncRefresh(): T {
   return this
 }
 
+fun <T : CommandChain> T.waitForInitialRefresh(): T {
+  addCommand("${CMD_PREFIX}waitForInitialRefresh")
+  return this
+}
+
 const val RECOVERY_ACTION_CMD_PREFIX = "${CMD_PREFIX}recovery"
 
 fun <T : CommandChain> T.recoveryAction(action: RecoveryActionType): T {
