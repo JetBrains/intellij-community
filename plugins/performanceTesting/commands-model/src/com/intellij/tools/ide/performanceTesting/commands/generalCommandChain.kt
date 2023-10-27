@@ -36,13 +36,6 @@ fun <T : CommandChain> T.waitForGitLogIndexing(): T {
   return this
 }
 
-const val WAIT_FOR_ASYNC_REFRESH = "${CMD_PREFIX}waitForAsyncRefresh"
-
-fun <T : CommandChain> T.waitForAsyncRefresh(): T {
-  addCommand(WAIT_FOR_ASYNC_REFRESH)
-  return this
-}
-
 fun <T : CommandChain> T.waitForInitialRefresh(): T {
   addCommand("${CMD_PREFIX}waitForInitialRefresh")
   return this
