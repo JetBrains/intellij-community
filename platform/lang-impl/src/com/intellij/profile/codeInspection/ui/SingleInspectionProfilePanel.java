@@ -1378,7 +1378,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           e -> JBPopupFactory
             .getInstance()
             .createActionGroupPopup(
-              AnalysisBundle.message("inspections.settings.popup.title.create.inspection"),
+              null,
               myCreateInspectionActions,
               DataManager.getInstance().getDataContext(myInspectionProfilePanel),
               null,
