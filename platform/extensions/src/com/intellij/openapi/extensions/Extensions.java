@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -33,6 +34,7 @@ public final class Extensions {
    * @deprecated Use {@link ComponentManager#getExtensionArea()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static ExtensionsArea getRootArea() {
     return ourRootArea;
   }
@@ -41,6 +43,7 @@ public final class Extensions {
    * @deprecated Use {@link AreaInstance#getExtensionArea()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull ExtensionsArea getArea(@Nullable("null means root") AreaInstance areaInstance) {
     return areaInstance == null ? ourRootArea : areaInstance.getExtensionArea();
   }
@@ -49,6 +52,7 @@ public final class Extensions {
    * @deprecated Use {@link ExtensionPointName#getExtensionList()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static <T> T @NotNull [] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
     return extensionPointName.getExtensions();
   }
@@ -57,6 +61,7 @@ public final class Extensions {
    * @deprecated Use {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static <T> T @NotNull [] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, @Nullable AreaInstance areaInstance) {
     return extensionPointName.getExtensions(areaInstance);
   }
@@ -65,6 +70,7 @@ public final class Extensions {
    * @deprecated Use {@link ExtensionPointName#findExtensionOrFail(Class)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<U> extClass) {
     return extensionPointName.findExtensionOrFail(extClass);
   }
