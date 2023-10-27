@@ -136,7 +136,9 @@ abstract class JvmInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   }
 
   private fun JavaCodeInsightTestFixture.getIntention(hint: String): IntentionAction {
-    return getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available")
+    return getAvailableIntention(hint) ?: throw AssertionError(
+      "Quick-fix '$hint' not in list of available intentions:\n${availableIntentions.joinToString(separator = "\n") { it.text }}"
+    )
   }
 
   protected fun JavaCodeInsightTestFixture.testQuickFixUnavailable(
