@@ -33,7 +33,7 @@ private class KotlinCodeFragmentPatcher(val codeFragment: KtCodeFragment) {
                 }
             }
             newExpressionText
-        }
+        }.getOrThrow()
 
         if (newExpressionText != expressionText) {
             replaceExpression(expression, newExpressionText)
