@@ -20,12 +20,14 @@ public final class CustomInspectionActions {
   @Nullable
   public static ActionGroup getAddActionGroup(SingleInspectionProfilePanel panel) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    var addActions = ContainerUtil.flatMap(
-      InspectionProfileActionProvider.EP_NAME.getExtensionList(),
-      provider -> provider.getAddActions(panel)
-    );
-    if (addActions.isEmpty()) return null;
-    actionGroup.addAll(addActions);
+    InspectionProfileActionProvider.EP_NAME.getExtensionList().forEach(provider -> {
+      final var groupInfo = provider.getAddActions(panel);
+      if (groupInfo != null) {
+        panel.registerAction(groupInfo.second, groupInfo.first);
+        actionGroup.add(groupInfo.first);
+      }
+    });
+    if (actionGroup.getChildrenCount() == 0) return null;
     actionGroup.setPopup(true);
     actionGroup.registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
     final Presentation presentation = actionGroup.getTemplatePresentation();

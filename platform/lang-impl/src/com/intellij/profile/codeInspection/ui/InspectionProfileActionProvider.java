@@ -2,9 +2,12 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -31,9 +34,9 @@ public abstract class InspectionProfileActionProvider {
   /**
    * @return actions to add custom inspections in the given inspection profile panel.
    */
-  @NotNull
-  public List<AnAction> getAddActions(@NotNull SingleInspectionProfilePanel panel) {
-    return List.of();
+  @Nullable
+  public Pair<@NotNull ActionGroup, @NotNull String> getAddActions(@NotNull SingleInspectionProfilePanel panel) {
+    return null;
   }
 
   /**

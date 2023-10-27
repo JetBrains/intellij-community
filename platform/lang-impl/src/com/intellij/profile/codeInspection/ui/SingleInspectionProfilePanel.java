@@ -81,6 +81,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -92,7 +93,6 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
   private static final int SECTION_GAP = 20;
-  public static final String ADD_CUSTOM_INSPECTION_ACTION_ID = "sipp.add.custom.inspection";
 
   private final Map<String, ToolDescriptors> myInitialToolDescriptors = new HashMap<>();
   private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group(InspectionsBundle.message("inspection.root.node.title"));
@@ -157,6 +157,13 @@ public class SingleInspectionProfilePanel extends JPanel {
   @NotNull
   public Project getProject() {
     return myProjectProfileManager.getProject();
+  }
+
+  public void registerAction(@NotNull String id, @NotNull AnAction action) {
+    ActionManager.getInstance().registerAction(id, action);
+    Disposer.register(myDisposable, new Disposable() {
+      @Override public void dispose() { ActionManager.getInstance().unregisterAction(id); }
+    });
   }
 
   private static VisibleTreeState getExpandedNodes(InspectionProfileImpl profile) {
