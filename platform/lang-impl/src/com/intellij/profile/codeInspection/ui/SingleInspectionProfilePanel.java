@@ -254,6 +254,22 @@ public class SingleInspectionProfilePanel extends JPanel {
     return forceInclude;
   }
 
+  private static boolean isCustomGroupAccepted(InspectionTreeAdvertiser.CustomGroup customGroup,
+                                               @NonNls String filter,
+                                               final Set<String> quoted) {
+    filter = StringUtil.toLowerCase(filter);
+    final String[] path = customGroup.path();
+    if (StringUtil.containsIgnoreCase(path[path.length - 1], filter)) { return true; }
+
+    final String description = customGroup.description();
+    for (String stripped : quoted) {
+      if (StringUtil.containsIgnoreCase(path[path.length - 1], stripped)) { return true; }
+      if (StringUtil.containsIgnoreCase(description, stripped)) { return true; }
+    }
+
+    return false;
+  }
+
   private void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state) {
     configPanelAnchor.removeAll();
     final JComponent additionalConfigPanel = state.getAdditionalConfigPanel(myDisposable, getProject());
@@ -728,6 +744,11 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
       getGroupNode(myRoot, toolDescriptors.getDefaultDescriptor().getGroup()).add(node);
     }
+    for (InspectionTreeAdvertiser.CustomGroup customGroup : myCustomGroups) {
+      if (filter != null && isCustomGroupAccepted(customGroup, filter, quoted)) {
+        getGroupNode(myRoot, customGroup.path());
+      }
+    }
     if (filter != null && forceInclude && myRoot.getChildCount() == 0) {
       final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
       if (filters.size() > 1 || !quoted.isEmpty()) {
@@ -1025,7 +1046,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       );
     }
     if (customGroup != null) {
-      DescriptionEditorPaneKt.readHTML(myDescription, customGroup.description());
+      DescriptionEditorPaneKt.readHTML(myDescription, SearchUtil.markup(customGroup.description(), myProfileFilter.getFilter()));
     } else {
       DescriptionEditorPaneKt.readHTML(myDescription, AnalysisBundle.message("inspections.settings.multiple.inspections.warning"));
     }
