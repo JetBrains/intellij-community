@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
@@ -213,7 +212,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   protected @NotNull DocumentEx createDocument(@NotNull CharSequence text, @NotNull VirtualFile file) {
     boolean acceptSlashR = file instanceof LightVirtualFile && StringUtil.indexOf(text, '\r') >= 0;
     boolean freeThreaded = Boolean.TRUE.equals(file.getUserData(AbstractFileViewProvider.FREE_THREADED));
-    DocumentImpl document = (DocumentImpl)((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, freeThreaded);
+    DocumentImpl document = (DocumentImpl)EditorFactory.getInstance().createDocument(text, acceptSlashR, freeThreaded);
     Project project = ProjectUtil.guessProjectForFile(file);
     int tabSize = project == null ? CodeStyle.getDefaultSettings().getTabSize(file.getFileType())  : CodeStyle.getFacade(project, document, file.getFileType()).getTabSize();
     // calculate and pass tab size here since it's the ony place we have access to CodeStyle.

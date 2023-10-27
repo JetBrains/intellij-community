@@ -122,12 +122,14 @@ public final class EditorFactoryImpl extends EditorFactory {
     return document;
   }
 
+  @Override
   public @NotNull Document createDocument(boolean allowUpdatesWithoutWriteAction) {
     DocumentEx document = new DocumentImpl("", allowUpdatesWithoutWriteAction);
     myEditorEventMulticaster.registerDocument(document);
     return document;
   }
 
+  @Override
   public @NotNull Document createDocument(@NotNull CharSequence text, boolean acceptsSlashR, boolean allowUpdatesWithoutWriteAction) {
     DocumentEx document = new DocumentImpl(text, acceptsSlashR, allowUpdatesWithoutWriteAction);
     myEditorEventMulticaster.registerDocument(document);

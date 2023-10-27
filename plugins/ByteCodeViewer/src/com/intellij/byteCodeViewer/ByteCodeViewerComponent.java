@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -46,7 +45,7 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
   public ByteCodeViewerComponent(Project project) {
     super(new BorderLayout());
     final EditorFactory factory = EditorFactory.getInstance();
-    final Document doc = ((EditorFactoryImpl)factory).createDocument("", true, false);
+    final Document doc = factory.createDocument("", true, false);
     doc.setReadOnly(true);
     myEditor = factory.createEditor(doc, project);
     EditorHighlighterFactory editorHighlighterFactory = EditorHighlighterFactory.getInstance();

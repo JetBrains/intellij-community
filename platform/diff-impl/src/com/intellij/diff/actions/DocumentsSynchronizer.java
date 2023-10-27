@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
@@ -75,10 +74,9 @@ public abstract class DocumentsSynchronizer {
   }
 
   public static @NotNull Document createFakeDocument(@NotNull Document original) {
-    EditorFactoryImpl editorFactory = (EditorFactoryImpl)EditorFactory.getInstance();
     boolean acceptsSlashR = original instanceof DocumentImpl && ((DocumentImpl)original).acceptsSlashR();
     boolean writeThreadOnly = original instanceof DocumentImpl && ((DocumentImpl)original).isWriteThreadOnly();
-    Document document = editorFactory.createDocument("", acceptsSlashR, !writeThreadOnly);
+    Document document = EditorFactory.getInstance().createDocument("", acceptsSlashR, !writeThreadOnly);
     document.putUserData(UndoManager.ORIGINAL_DOCUMENT, original);
     return document;
   }
