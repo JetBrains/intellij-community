@@ -18,6 +18,8 @@
 
     <renameHandler implementation="com.intellij.platform.renameProject.RenameProjectHandler"/>
     <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
+    <transferSettings.vscode.pluginMapping order="before CommonPluginMapping"
+                                           implementation="com.intellij.pycharm.community.customization.PythonPluginMapping"/>
   </extensions>
 
   <actions>

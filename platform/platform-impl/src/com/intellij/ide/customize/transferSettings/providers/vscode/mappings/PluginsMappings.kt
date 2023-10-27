@@ -28,6 +28,7 @@ open class VSCodePluginMappingBase(private val map: Map<String, FeatureInfo>) : 
 private val commonPluginMap = mapOf(
   // Plugins
   "emilast.logfilehighlighter" to KnownPlugins.Ideolog,
+  "ms-python.python" to KnownPlugins.Python,
   "xinyayang0506.log-analysis" to KnownPlugins.Ideolog,
   "vscodevim.vim" to KnownPlugins.IdeaVim,
   "msveden.teamcity-checker" to KnownPlugins.TeamCity,
