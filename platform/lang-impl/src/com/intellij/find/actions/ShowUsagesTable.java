@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public final class ShowUsagesTable extends JBTable implements DataProvider {
@@ -293,8 +294,11 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
 
   static final class MyModel extends ListTableModel<UsageNode> implements ModelDiff.Model<UsageNode> {
 
+    private final CellSizesCache cellSizesCache;
+
     private MyModel(@NotNull List<UsageNode> data, int cols) {
       super(cols(cols), data, 0);
+      cellSizesCache = new CellSizesCache(data.size(), cols);
     }
 
     private static ColumnInfo<UsageNode, UsageNode> @NotNull [] cols(int cols) {
@@ -313,9 +317,11 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
     public void addToModel(int idx, UsageNode element) {
       if (idx < getRowCount()) {
         insertRow(idx, element);
+        cellSizesCache.addLine(idx);
       }
       else {
         addRow(element);
+        cellSizesCache.addLine();
       }
     }
 
@@ -323,7 +329,47 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
     public void removeRangeFromModel(int start, int end) {
       for (int i = end; i >= start; i--) {
         removeRow(i);
+        cellSizesCache.removeLine(i);
       }
+    }
+
+    public int getOrCalcCellWidth(int row, int col, Supplier<Integer> supplier) {
+      return cellSizesCache.getOrCalculate(row, col, supplier);
+    }
+  }
+
+  static class CellSizesCache {
+
+    private final List<Integer[]> table;
+    private final int colsNumber;
+
+    private CellSizesCache(int rows, int cols) {
+      colsNumber = cols;
+      table = new ArrayList<>(rows);
+      for (int i = 0; i < rows; i++) {
+        table.add(new Integer[cols]);
+      }
+    }
+
+    void addLine() {
+      table.add(new Integer[colsNumber]);
+    }
+
+    void addLine(int row) {
+      table.add(row, new Integer[colsNumber]);
+    }
+
+    void removeLine(int row) {
+      table.remove(row);
+    }
+
+    int getOrCalculate(int row, int col, Supplier<Integer> supplier) {
+      Integer cached = table.get(row)[col];
+      if (cached != null) return cached;
+
+      Integer newVal = supplier.get();
+      table.get(row)[col] = newVal;
+      return newVal;
     }
   }
 }

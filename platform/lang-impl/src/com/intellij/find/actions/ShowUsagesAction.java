@@ -1270,10 +1270,14 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   private static int columnMaxWidth(@NotNull JTable table, int col) {
     TableColumn column = table.getColumnModel().getColumn(col);
     int width = 0;
-    for (int row = 0; row < table.getRowCount(); row++) {
-      Component component = table.prepareRenderer(column.getCellRenderer(), row, col);
+    for (int i = 0; i < table.getRowCount(); i++) {
+      int row = i;
+      ShowUsagesTable.MyModel model = (ShowUsagesTable.MyModel)table.getModel();
+      int rendererWidth = model.getOrCalcCellWidth(i, col, () -> {
+        Component component = table.prepareRenderer(column.getCellRenderer(), row, col);
+        return component.getPreferredSize().width;
+      });
 
-      int rendererWidth = component.getPreferredSize().width;
       width = Math.max(width, rendererWidth + table.getIntercellSpacing().width);
     }
     return width;
