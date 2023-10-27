@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.ui.*
 import com.intellij.ui.paint.LinePainter2D
@@ -73,6 +74,21 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
         else if (w is Frame) {
           it.setCustomTitleBar(w, bar)
         }
+      }
+    }
+
+    fun ensureClickTransparent(originalComponent: Component) {
+      var cmp = originalComponent.parent
+      while (cmp != null) {
+        if (cmp is CustomHeader) {
+          cmp.customTitleBar?.let { bar ->
+            val listener = HeaderClickTransparentListener(bar)
+            originalComponent.addMouseListener(listener)
+            originalComponent.addMouseMotionListener(listener)
+          }
+          return
+        }
+        cmp = cmp.parent
       }
     }
   }
