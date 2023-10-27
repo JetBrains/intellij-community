@@ -540,27 +540,26 @@ class DynamicPluginsTest {
     }
 
 
-    val ep = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME
-      .getPoint(projectRule.project) as ExtensionPointImpl<MultiHostInjector>
-    val coreInjectorsCount = ep.sortedAdapters.size
+    val ep = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(projectRule.project) as ExtensionPointImpl<MultiHostInjector>
+    val coreInjectorsCount = ep.size()
 
     loadPluginWithText(
       pluginBuilder = baz,
       disabledPlugins = setOf(foo.id, bar.id),
     ).use {
       assertForModules(::assertModuleIsNotLoaded)
-      assertThat(ep.sortedAdapters).hasSize(coreInjectorsCount)
+      assertThat(ep.size()).isEqualTo(coreInjectorsCount)
 
       loadPluginWithText(
         pluginBuilder = foo,
         disabledPlugins = setOf(bar.id),
       ).use {
         assertForModules(::assertModuleIsNotLoaded)
-        assertThat(ep.sortedAdapters).hasSize(coreInjectorsCount)
+        assertThat(ep.size()).isEqualTo(coreInjectorsCount)
 
         loadPluginWithText(pluginBuilder = bar).use {
           assertForModules(::assertModuleIsLoaded)
-          assertThat(ep.sortedAdapters).hasSize(coreInjectorsCount + 2)
+          assertThat(ep.size()).isEqualTo(coreInjectorsCount + 2)
         }
       }
     }

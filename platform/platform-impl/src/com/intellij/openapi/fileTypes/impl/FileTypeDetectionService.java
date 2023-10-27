@@ -98,12 +98,12 @@ final class FileTypeDetectionService implements Disposable {
 
     FileTypeRegistry.FileTypeDetector.EP_NAME.addChangeListener(() -> {
       cachedDetectFileBufferSize = -1;
-      onDetectorsChange();
+      onDetectorListChange();
     }, this);
 
     List<String> prevDetectors = PropertiesComponent.getInstance().getList(FILE_TYPE_DETECTORS_PROPERTY);
-    if (!Objects.equals(prevDetectors, getDetectorsString())) {
-      onDetectorsChange();
+    if (!Objects.equals(prevDetectors, getDetectorListString())) {
+      onDetectorListChange();
     }
     reDetectExecutor = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("FileTypeManager Redetect", coroutineScope);
   }
@@ -292,12 +292,12 @@ final class FileTypeDetectionService implements Disposable {
     }
   }
 
-  private void onDetectorsChange() {
+  private void onDetectorListChange() {
     clearCaches();
-    PropertiesComponent.getInstance().setList(FILE_TYPE_DETECTORS_PROPERTY, getDetectorsString());
+    PropertiesComponent.getInstance().setList(FILE_TYPE_DETECTORS_PROPERTY, getDetectorListString());
   }
 
-  private static @NotNull List<String> getDetectorsString() {
+  private static @NotNull List<String> getDetectorListString() {
     ExtensionPointImpl<FileTypeRegistry.@NotNull FileTypeDetector> ep =
       (ExtensionPointImpl<FileTypeRegistry.@NotNull FileTypeDetector>)FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint();
     int size = ep.size();
