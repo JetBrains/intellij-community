@@ -33,6 +33,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -219,7 +220,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction
                   return label.getAccessibleContext();
                 }
               };
-              panel.setBorder(JBUI.Borders.empty(12, 14));
+
+              int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
+              Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+              int topBottomInset = JBUI.scale(12);
+              panel.setBorder(
+                new JBEmptyBorder(new Insets(topBottomInset, leftRightInset + innerInsets.left, topBottomInset, JBUI.scale(14))));
 
               JPanel iconPanel = new NonOpaquePanel(new BorderLayout());
               iconPanel.add(label, BorderLayout.NORTH);
@@ -583,6 +589,19 @@ public final class SettingsEntryPointAction extends DumbAwareAction
   }
 
   public abstract static class LastAction extends DumbAwareAction {
+    protected LastAction() {
+    }
+
+    protected LastAction(@Nullable @NlsActions.ActionText String text) {
+      super(text);
+    }
+
+    protected LastAction(@Nullable @NlsActions.ActionText String text,
+                         @Nullable @NlsActions.ActionDescription String description,
+                         @Nullable Icon icon) {
+      super(text, description, icon);
+    }
+
     public abstract @NotNull @NlsActions.ActionText String getSecondText();
   }
 }
