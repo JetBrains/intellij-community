@@ -251,7 +251,7 @@ abstract class AbstractDiagnosticCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
 
 abstract class AbstractLineMarkerCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
     override fun getConfigurations() = listOf(
-        LineMarkerConfiguration()
+        LineMarkerConfiguration(renderTargetIcons = true)
     )
 }
 

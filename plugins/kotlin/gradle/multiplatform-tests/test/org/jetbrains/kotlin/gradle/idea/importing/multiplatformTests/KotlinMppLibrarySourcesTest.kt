@@ -13,6 +13,7 @@ import kotlin.test.Test
 class KotlinMppLibrarySourcesTest : AbstractKotlinMppGradleImportingTest() {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         checkLibrarySources = true
+        renderLineMarkersTargetIcons = true
         onlyCheckers(HighlightingChecker)
     }
 

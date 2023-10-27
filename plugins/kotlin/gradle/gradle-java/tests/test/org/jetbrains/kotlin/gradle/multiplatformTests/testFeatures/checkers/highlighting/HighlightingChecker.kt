@@ -42,6 +42,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
             projectPath = testProjectRoot.path,
             testDataDirectory = testDataDirectory,
             testLineMarkers = !highlightingConfig.hideLineMarkers,
+            testLineMarkerTargetIcons = highlightingConfig.renderLineMarkersTargetIcons,
             severityLevel = highlightingConfig.hideHighlightsBelow,
             postprocessActualTestData = { actualTestData -> renderedConfig + "\n" + actualTestData }
         )

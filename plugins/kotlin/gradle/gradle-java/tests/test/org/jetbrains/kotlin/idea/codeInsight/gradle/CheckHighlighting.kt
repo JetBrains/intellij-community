@@ -26,6 +26,7 @@ data class HighlightingCheck(
     private val projectPath: String,
     private val testDataDirectory: File,
     private val testLineMarkers: Boolean = true,
+    private val testLineMarkerTargetIcons: Boolean = false,
     private val severityLevel: HighlightSeverity = HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
     private val correspondingFilePostfix: String = "",
     private val postprocessActualTestData: (String) -> String = { it }
@@ -38,7 +39,7 @@ data class HighlightingCheck(
                 severityLevel = severityLevel,
                 checkNoError = false
             ),
-            if (testLineMarkers) LineMarkerConfiguration() else null
+            if (testLineMarkers) LineMarkerConfiguration(renderTargetIcons = testLineMarkerTargetIcons) else null
         ),
         checkNoDiagnosticError = false
     )
