@@ -8,10 +8,12 @@ import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComp
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
 import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestActionPlaces
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -42,8 +44,9 @@ internal object GitLabMergeRequestDetailsChangesComponentFactory {
                                                vm: GitLabMergeRequestChangeListViewModel): JComponent {
     val progressModel = GitLabMergeRequestProgressTreeModel(this, changesVm)
     return CodeReviewChangeListComponentFactory.createIn(this, vm, progressModel,
-                                                         GitLabBundle.message("merge.request.details.changes.empty")).apply {
-      installPopupHandler(ActionManager.getInstance().getAction("GitLab.Merge.Request.Changes.Popup") as ActionGroup)
+                                                         GitLabBundle.message("merge.request.details.changes.empty")).also {
+      val popupGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Changes.Popup") as ActionGroup
+      PopupHandler.installPopupMenu(it, popupGroup, GitLabMergeRequestActionPlaces.CHANGES_TREE_POPUP)
     }
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestActionPlaces
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabFiltersPanelFactory
@@ -42,8 +43,9 @@ internal class GitLabMergeRequestsPanelFactory {
     ScrollableContentBorder.setup(listLoaderPanel, Side.TOP, progressStripe)
 
     val popupActionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.List.Actions") as ActionGroup
-    PopupHandler.installPopupMenu(progressStripe, popupActionGroup, ActionPlaces.POPUP)
-    PopupHandler.installPopupMenu(list, popupActionGroup, ActionPlaces.POPUP)
+    val place = GitLabMergeRequestActionPlaces.LIST_POPUP
+    PopupHandler.installPopupMenu(progressStripe, popupActionGroup, place)
+    PopupHandler.installPopupMenu(list, popupActionGroup, place)
 
     val searchPanel = createSearchPanel(scope, listVm)
 
