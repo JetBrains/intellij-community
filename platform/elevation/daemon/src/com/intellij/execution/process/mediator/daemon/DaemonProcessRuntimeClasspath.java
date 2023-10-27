@@ -4,7 +4,7 @@ package com.intellij.execution.process.mediator.daemon;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.internal.InternalFutureFailureAccess;
 import com.google.protobuf.Message;
-import com.intellij.execution.process.mediator.common.daemon.DaemonLaunchOptions;
+import com.intellij.execution.process.mediator.common.DaemonLaunchOptions;
 import com.intellij.execution.process.mediator.common.rpc.ProcessMediatorProto;
 import com.sun.jna.Native;
 import io.grpc.Context;

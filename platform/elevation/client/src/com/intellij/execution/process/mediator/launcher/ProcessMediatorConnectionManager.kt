@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.mediator.launcher
 
-import com.intellij.execution.process.mediator.common.daemon.QuotaOptions
-import com.intellij.execution.process.mediator.common.daemon.QuotaState
+import com.intellij.execution.process.mediator.common.QuotaOptions
+import com.intellij.execution.process.mediator.common.QuotaState
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.MultiCloseable

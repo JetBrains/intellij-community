@@ -2,8 +2,8 @@
 package com.intellij.execution.process.mediator.common.rpc
 
 import com.google.protobuf.Empty
-import com.intellij.execution.process.mediator.common.daemon.QuotaOptions
-import com.intellij.execution.process.mediator.common.daemon.QuotaState
+import com.intellij.execution.process.mediator.common.QuotaOptions
+import com.intellij.execution.process.mediator.common.QuotaState
 import com.intellij.execution.process.mediator.common.rpc.QuotaOptions as QuotaOptionsMessage
 import com.intellij.execution.process.mediator.common.rpc.QuotaState as QuotaStateMessage
 

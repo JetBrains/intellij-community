@@ -4,7 +4,7 @@ package com.intellij.execution.process.mediator.launcher
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.BaseOSProcessHandler
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.mediator.common.daemon.DaemonLaunchOptions
+import com.intellij.execution.process.mediator.common.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.common.rpc.Handshake
 import com.intellij.execution.process.mediator.common.util.rsaDecrypt
 import com.intellij.util.io.*

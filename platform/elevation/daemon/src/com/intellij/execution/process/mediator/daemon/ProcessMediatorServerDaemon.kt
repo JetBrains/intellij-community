@@ -2,7 +2,7 @@
 package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.Empty
-import com.intellij.execution.process.mediator.common.daemon.DaemonClientCredentials
+import com.intellij.execution.process.mediator.common.DaemonClientCredentials
 import com.intellij.execution.process.mediator.common.grpc.ExceptionAsStatus
 import com.intellij.execution.process.mediator.common.rpc.DaemonGrpcKt
 import com.intellij.execution.process.mediator.common.rpc.buildFrom

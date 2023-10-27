@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.mediator.common.grpc
 
-import com.intellij.execution.process.mediator.common.daemon.QuotaExceededException
+import com.intellij.execution.process.mediator.common.QuotaExceededException
 import io.grpc.Status
 import io.grpc.StatusException
 import io.grpc.StatusRuntimeException

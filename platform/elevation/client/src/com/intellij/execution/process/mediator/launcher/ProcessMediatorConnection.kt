@@ -2,7 +2,7 @@
 package com.intellij.execution.process.mediator.launcher
 
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
-import com.intellij.execution.process.mediator.common.daemon.DaemonClientCredentials
+import com.intellij.execution.process.mediator.common.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorServerDaemon
 import com.intellij.util.io.MultiCloseable
 import com.intellij.util.io.runClosingOnFailure

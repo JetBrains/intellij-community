@@ -3,8 +3,8 @@
 
 package com.intellij.execution.process.mediator.daemon
 
-import com.intellij.execution.process.mediator.common.daemon.DaemonClientCredentials
-import com.intellij.execution.process.mediator.common.daemon.DaemonLaunchOptions
+import com.intellij.execution.process.mediator.common.DaemonClientCredentials
+import com.intellij.execution.process.mediator.common.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.common.rpc.Handshake
 import com.intellij.execution.process.mediator.common.util.rsaEncrypt
 import com.intellij.execution.process.mediator.util.MachUtil
