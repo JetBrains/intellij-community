@@ -310,6 +310,11 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
   }
 
   @Contract(pure = true)
+  fun withCursorOnHoverWhenControlDown (base: InlayPresentation, cursor: Cursor): InlayPresentation {
+    return WithCursorOnHoverPresentation(base, cursor, editor) { isControlDown(it) }
+  }
+
+  @Contract(pure = true)
   fun withReferenceAttributes(noHighlightReference: InlayPresentation): WithAttributesPresentation {
     return attributes(noHighlightReference, REFERENCE_HYPERLINK_COLOR,
                       WithAttributesPresentation.AttributesFlags().withSkipEffects(true))
