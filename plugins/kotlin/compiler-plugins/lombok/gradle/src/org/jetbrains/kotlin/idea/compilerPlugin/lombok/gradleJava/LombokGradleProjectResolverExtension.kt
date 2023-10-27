@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.lombok.gradleJava
 
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradleTooling.model.lombok.LombokModel
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
@@ -24,14 +24,14 @@ class LombokGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         val model = resolverCtx.getExtraProject(gradleModule, modelClass)
 
         if (model != null) {
-            ideModule.putCopyableUserData(userDataKey, model)
+            ideModule.createChild(userDataKey, model)
         }
 
         super.populateModuleExtraModels(gradleModule, ideModule)
     }
 
     companion object {
-        val KEY = Key<LombokModel>("LombokModel")
+        val KEY = Key.create(LombokModel::class.java, 1)
     }
 
 }
