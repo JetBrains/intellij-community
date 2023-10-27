@@ -22,7 +22,7 @@ internal class DeferredScriptDefinition(
 
     private val definition : ScriptDefinition by lazy {
         val sleepMs = 100L
-        var attemptsLeft = Registry.intValue(ATTEMPTS_REGISTRY_KEY, 20)
+        var attemptsLeft = Registry.intValue(ATTEMPTS_REGISTRY_KEY, 30)
         var deferredDefinition: ScriptDefinition? = tryGetDefinition()
 
         val ms = measureTimeMillis {

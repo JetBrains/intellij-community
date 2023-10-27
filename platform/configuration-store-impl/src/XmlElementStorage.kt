@@ -92,6 +92,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
   protected abstract fun createSaveSession(states: StateMap): SaveSessionProducer
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
+    LOG.debug("Running analyzeExternalChangesAndUpdateIfNeeded")
     val oldData = storageDataRef.get()
     val newData = getStorageData(true)
     if (oldData == null) {
@@ -100,6 +101,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     }
     else {
       val changedComponentNames = getChangedComponentNames(oldData, newData)
+      LOG.debug { "Changed components: $changedComponentNames" }
       if (changedComponentNames.isNotEmpty()) {
         LOG.debug { "analyzeExternalChangesAndUpdateIfNeeded: changedComponentNames $changedComponentNames for ${toString()}" }
         componentNames.addAll(changedComponentNames)

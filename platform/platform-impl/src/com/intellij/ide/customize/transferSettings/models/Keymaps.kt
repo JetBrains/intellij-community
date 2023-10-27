@@ -1,34 +1,53 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.models
 
+import com.intellij.ide.customize.transferSettings.TransferableKeymapId
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 
 interface Keymap {
+  val transferableId: TransferableKeymapId
   val displayName: @Nls String
   val demoShortcuts: List<SimpleActionDescriptor>
 }
 
-class BundledKeymap(override val displayName: @Nls String, val keymap: Keymap, override val demoShortcuts: List<SimpleActionDescriptor>): com.intellij.ide.customize.transferSettings.models.Keymap {
+class BundledKeymap(
+  override val transferableId: TransferableKeymapId,
+  override val displayName: @Nls String,
+  val keymap: Keymap,
+  override val demoShortcuts: List<SimpleActionDescriptor>
+): com.intellij.ide.customize.transferSettings.models.Keymap {
   companion object {
-    fun fromManager(keymapName: String, demoShortcuts: List<SimpleActionDescriptor>): BundledKeymap {
+    fun fromManager(transferableId: TransferableKeymapId, keymapName: String, demoShortcuts: List<SimpleActionDescriptor>): BundledKeymap {
       val keymap = KeymapManagerEx.getInstanceEx().getKeymap(keymapName) ?: error("Keymap $keymapName was not found")
 
-      return BundledKeymap(keymap.displayName, keymap, demoShortcuts)
+      return BundledKeymap(transferableId, keymap.displayName, keymap, demoShortcuts)
     }
 
-    fun fromManager(keymapName: String): BundledKeymap = fromManager(keymapName, emptyList())
+    fun fromManager(transferableId: TransferableKeymapId, keymapName: String): BundledKeymap =
+      fromManager(transferableId, keymapName, emptyList())
   }
 }
 
-class PluginKeymap(override val displayName: @Nls String, val pluginId: String, val installedName: String, val fallback: BundledKeymap, override val demoShortcuts: List<SimpleActionDescriptor>) : com.intellij.ide.customize.transferSettings.models.Keymap
+class PluginKeymap(
+  override val transferableId: TransferableKeymapId,
+  override val displayName: @Nls String,
+  val pluginId: String,
+  val installedName: String,
+  val fallback: BundledKeymap,
+  override val demoShortcuts: List<SimpleActionDescriptor>
+) : com.intellij.ide.customize.transferSettings.models.Keymap
 
-class PatchedKeymap(var parent: com.intellij.ide.customize.transferSettings.models.Keymap, val overrides: List<KeyBinding>, val removal: List<KeyBinding>) : com.intellij.ide.customize.transferSettings.models.Keymap {
+class PatchedKeymap(
+  override val transferableId: TransferableKeymapId,
+  var parent: com.intellij.ide.customize.transferSettings.models.Keymap,
+  val overrides: List<KeyBinding>,
+  val removal: List<KeyBinding>
+) : com.intellij.ide.customize.transferSettings.models.Keymap {
   override val displayName: String get() = parent.displayName
   override val demoShortcuts: List<SimpleActionDescriptor> by lazy { mergeShortcutsForDemo() }
 

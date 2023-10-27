@@ -520,6 +520,16 @@ public class PythonLexerTest extends PyLexerTestCase {
            "BAD_CHARACTER", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:STATEMENT_BREAK");
   }
 
+  // PY-63393
+  public void testFStringFragmentContainingStatementOnlyRecoveryKeyword() {
+    doTest("""
+             s = f'{
+             raise:foo}'""",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:LINE_BREAK",
+           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:RAISE_KEYWORD", "Py:COLON", "Py:IDENTIFIER", "Py:RBRACE", "Py:SINGLE_QUOTED_STRING",
+           "Py:STATEMENT_BREAK");
+  }
+
   private static void doTest(String text, String... expectedTokens) {
     PyLexerTestCase.doLexerTest(text, new PythonIndentingLexer(), expectedTokens);
   }

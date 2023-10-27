@@ -78,6 +78,7 @@ public class PythonTokenSetContributor extends PythonDialectsTokenSetContributor
   @NotNull
   @Override
   public TokenSet getUnbalancedBracesRecoveryTokens() {
+    // Sync these tokens with Python.flex under the <FSTRING_FRAGMENT> state
     return TokenSet.create(DEF_KEYWORD, CLASS_KEYWORD, RETURN_KEYWORD, WITH_KEYWORD, WHILE_KEYWORD, BREAK_KEYWORD, CONTINUE_KEYWORD,
                            RAISE_KEYWORD, TRY_KEYWORD, EXCEPT_KEYWORD, FINALLY_KEYWORD);
   }

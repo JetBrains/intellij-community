@@ -155,7 +155,9 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
   fun reset() {
     // There is no need to be smarter about it, since LexerEditorHighlighter always resets 
     // the lexer state to YYINITIAL where there can't be any f-strings.
-    myFStringStates.clear()
+    if (myFStringStates.isNotEmpty()) {
+      dropFStringStateWithAllNested(0)
+    }
   }
 
   fun getTextTokenType(): IElementType {

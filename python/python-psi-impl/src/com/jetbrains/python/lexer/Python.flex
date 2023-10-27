@@ -106,12 +106,11 @@ FSTRING_FRAGMENT_TYPE_CONVERSION = "!" [^=:'\"} \t\r\n]*
 private final PyLexerFStringHelper fStringHelper = new PyLexerFStringHelper(this);
 
 private int getSpaceLength(CharSequence string) {
-String string1 = string.toString();
-string1 = StringUtil.trimEnd(string1, "\\");
-string1 = StringUtil.trimEnd(string1, ";");
-final String s = StringUtil.trimTrailing(string1);
-return yylength()-s.length();
-
+  String string1 = string.toString();
+  string1 = StringUtil.trimEnd(string1, "\\");
+  string1 = StringUtil.trimEnd(string1, ";");
+  final String s = StringUtil.trimTrailing(string1);
+  return yylength() - s.length();
 }
 %}
 
@@ -150,6 +149,19 @@ return yylength()-s.length();
 
   // Should be impossible inside expression fragments: any openingQuotes should be matched as a string literal there
   // {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString()) ? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
+  
+  // Sync these tokens with PythonTokenSetContributor.getUnbalancedBracesRecoveryTokens
+  "def"           { fStringHelper.reset(); return PyTokenTypes.DEF_KEYWORD; }
+  "class"         { fStringHelper.reset(); return PyTokenTypes.CLASS_KEYWORD; } 
+  "return"        { fStringHelper.reset(); return PyTokenTypes.RETURN_KEYWORD; }
+  "with"          { fStringHelper.reset(); return PyTokenTypes.WITH_KEYWORD; } 
+  "while"         { fStringHelper.reset(); return PyTokenTypes.WHILE_KEYWORD; } 
+  "break"         { fStringHelper.reset(); return PyTokenTypes.BREAK_KEYWORD; } 
+  "continue"      { fStringHelper.reset(); return PyTokenTypes.CONTINUE_KEYWORD; } 
+  "raise"         { fStringHelper.reset(); return PyTokenTypes.RAISE_KEYWORD; } 
+  "try"           { fStringHelper.reset(); return PyTokenTypes.TRY_KEYWORD; } 
+  "except"        { fStringHelper.reset(); return PyTokenTypes.EXCEPT_KEYWORD; }
+  "finally"       { fStringHelper.reset(); return PyTokenTypes.FINALLY_KEYWORD; } 
 }
 
 <FSTRING_FRAGMENT_FORMAT> {

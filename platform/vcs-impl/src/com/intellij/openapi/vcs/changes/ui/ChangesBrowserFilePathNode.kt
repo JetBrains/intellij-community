@@ -80,17 +80,19 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     else SimpleTextAttributes.REGULAR_ATTRIBUTES
 
   protected open fun getRelativePath(renderer: ChangesBrowserNodeRenderer?, path: FilePath): @NlsSafe String {
-    val parent = getParent()
     val isLocal = !path.isNonLocal
-    if (parent is ChangesBrowserRootNode && isLocal) {
+    val parentPath = safeCastToFilePath(getParent())
+    if (parentPath != null) {
+      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
+      val relativePath = FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive)
+      val prettyPath = relativePath ?: path.path
+      return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
+    }
+    else if (isLocal) {
       return VcsUtil.getPresentablePath(renderer?.project, path, true, false)
     }
     else {
-      val parentPath = safeCastToFilePath(parent)
-      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
-      val relativePath = if (parentPath != null) FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive) else null
-      val prettyPath = relativePath ?: path.path
-      return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
+      return path.path
     }
   }
 

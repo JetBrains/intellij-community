@@ -347,19 +347,29 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public void loadState(@NotNull Element element) {
+    LOG.debug("Loading state into element");
+    boolean changed = false;
     for (ProjectExtension extension : EP_NAME.getExtensions(myProject)) {
-      extension.readExternal(element);
+      changed |= extension.readExternalElement(element);
     }
+    String oldName = myProjectSdkName;
+    String oldType = myProjectSdkType;
     myProjectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
     myProjectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
+    if (!Objects.equals(oldName, myProjectSdkName)) changed = true;
+    if (!Objects.equals(oldType, myProjectSdkType)) changed = true;
 
+    LOG.debug("State of ProjectRootManagerImpl was changed: ", changed);
     Application app = ApplicationManager.getApplication();
-    if (app != null) {
+    if (app != null && changed) {
       Runnable runnable = myStateLoaded ?
                           () -> projectJdkChanged() :
                           // Prevent root changed event during startup to improve startup performance
                           () -> fireJdkChanged();
-      app.invokeLater(() -> app.runWriteAction(runnable), ModalityState.nonModal());
+      app.invokeLater(() -> {
+        LOG.debug("Run write action because ProjectRootManagerImpl state was changed. myStateLoaded: ", myStateLoaded);
+        app.runWriteAction(runnable);
+      }, ModalityState.nonModal());
     }
     myStateLoaded = true;
   }

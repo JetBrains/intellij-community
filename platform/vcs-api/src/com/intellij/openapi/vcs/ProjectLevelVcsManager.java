@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
@@ -61,6 +62,8 @@ public abstract class ProjectLevelVcsManager {
    * Checks if all given files are managed by the specified VCS.
    */
   public abstract boolean checkAllFilesAreUnder(AbstractVcs abstractVcs, VirtualFile[] files);
+
+  public abstract @NotNull @NlsSafe String getShortNameForVcsRoot(@NotNull VirtualFile file);
 
   /**
    * Returns the VCS managing the specified file.

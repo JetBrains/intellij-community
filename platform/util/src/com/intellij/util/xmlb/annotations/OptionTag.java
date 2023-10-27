@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb.annotations;
 
 import com.intellij.util.xmlb.Constants;
@@ -11,10 +11,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * <p>Store value in tag like {@code <option name="optionName" value="optionValue"/>}</p>
- * <p>nameAttribute can be empty, in which case it is skipped: {@code <option value="optionValue" />}</p>
+ * <p>
+ * Store value in tag like {@code <option name="optionName" value="optionValue"/>}.
+ * <p>
+ * {@code nameAttribute} can be empty, in which case it is skipped: {@code <option value="optionValue"/>}
  *
- * @see <a href="https://github.com/JetBrains/intellij-community/tree/master/platform/util/src/com/intellij/util/xmlb/annotations#readme">docs</a>
+ * @see XCollection
+ * @see XMap
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})

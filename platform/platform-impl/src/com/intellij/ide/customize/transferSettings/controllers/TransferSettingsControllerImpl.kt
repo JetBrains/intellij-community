@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.controllers
 
+import com.intellij.ide.customize.transferSettings.fus.TransferSettingsCollector
 import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
 import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
@@ -20,15 +21,18 @@ class TransferSettingsControllerImpl : TransferSettingsController {
   }
 
   override fun performImport(project: Project?, ideVersion: IdeVersion, withPlugins: Boolean, pi: ProgressIndicator) {
+    TransferSettingsCollector.logImportStarted()
     eventDispatcher.multicaster.importStarted(ideVersion, ideVersion.settingsCache)
     val performer = getImportPerformer()
 
     val task = object : TransferSettingsPerformImportTask(project, performer, ideVersion.settingsCache, true) {
       override fun onSuccess() {
+        TransferSettingsCollector.logImportSucceeded(ideVersion, ideVersion.settingsCache)
         eventDispatcher.multicaster.importPerformed(ideVersion, ideVersion.settingsCache)
       }
 
       override fun onThrowable(error: Throwable) {
+        TransferSettingsCollector.logImportFailed(ideVersion)
         eventDispatcher.multicaster.importFailed(ideVersion, ideVersion.settingsCache, error)
       }
     }

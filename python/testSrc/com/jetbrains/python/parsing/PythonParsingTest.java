@@ -865,6 +865,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  // PY-63393
+  public void testCompleteFStringFragmentTerminatedAtStatementOnlyKeyword() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   public void testNestedIncompleteFStringFragmentRecoveryStoppedAtStatementOnlyKeyword() {
     doTest(LanguageLevel.PYTHON36);
   }
@@ -1315,7 +1320,7 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testTypeKeywordAsIdentifier() {
     doTest(LanguageLevel.PYTHON312);
   }
-
+  
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }

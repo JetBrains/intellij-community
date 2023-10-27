@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vscode.parsers
 
 import com.fasterxml.jackson.core.JsonParser
@@ -54,7 +55,7 @@ class KeyBindingsParser(private val settings: Settings) {
     if (t1.isNotEmpty() || t2.isNotEmpty()) {
       val km = settings.keymap
       requireNotNull(km)
-      settings.keymap = PatchedKeymap(km, t1, t2)
+      settings.keymap = PatchedKeymap(km.transferableId, km, t1, t2)
     }
   }
 

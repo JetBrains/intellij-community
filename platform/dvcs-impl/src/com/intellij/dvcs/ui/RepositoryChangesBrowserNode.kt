@@ -4,6 +4,7 @@ package com.intellij.dvcs.ui
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
@@ -23,6 +24,7 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.RootIcon
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
+import com.intellij.vcsUtil.VcsUtil
 import java.awt.Color
 
 private val BRANCH_BACKGROUND_INSETS = insets(1, 0)
@@ -32,7 +34,7 @@ private fun getBranchLabelAttributes(background: Color) =
 
 open class RepositoryChangesBrowserNode(repository: Repository,
                                         private val colorManager: VcsLogColorManager = getColorManager(repository.project))
-  : ChangesBrowserNode<Repository>(repository) {
+  : ChangesBrowserNode<Repository>(repository), ChangesBrowserNode.NodeWithFilePath {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     renderer.icon = getRepositoryIcon(getUserObject(), colorManager)
@@ -62,6 +64,8 @@ open class RepositoryChangesBrowserNode(repository: Repository,
     compareFileNames(getShortRepositoryName(getUserObject()), getShortRepositoryName(o2))
 
   override fun getTextPresentation(): String = getShortRepositoryName(getUserObject())
+
+  override fun getNodeFilePath(): FilePath = VcsUtil.getFilePath(getUserObject().root)
 
   companion object {
     fun getColorManager(project: Project): VcsLogColorManager {

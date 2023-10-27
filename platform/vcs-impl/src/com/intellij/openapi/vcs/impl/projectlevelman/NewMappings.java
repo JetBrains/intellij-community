@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
+import com.intellij.filename.UniqueNameBuilder;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,8 +12,10 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -40,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.File;
 import java.util.*;
 
 public final class NewMappings implements Disposable {
@@ -54,10 +58,13 @@ public final class NewMappings implements Disposable {
   private final ProjectLevelVcsManager myVcsManager;
   private final Project myProject;
 
-  private @NotNull Disposable myFilePointerDisposable = Disposer.newDisposable();
   private volatile List<VcsDirectoryMapping> myMappings = Collections.emptyList(); // sorted by MAPPINGS_COMPARATOR
+
+  private @NotNull Disposable myFilePointerDisposable = Disposer.newDisposable();
   private volatile List<MappedRoot> myMappedRoots = Collections.emptyList(); // sorted by ROOT_COMPARATOR
   private volatile RootMapping myMappedRootsMapping = new RootMapping(Collections.emptyList());
+  private volatile Map<VirtualFile, @NlsSafe String> myMappedRootShortNames = Collections.emptyMap();
+
   private volatile List<AbstractVcs> myActiveVcses = Collections.emptyList();
   private volatile boolean myActivated = false;
 
@@ -169,6 +176,7 @@ public final class NewMappings implements Disposable {
 
       myMappedRoots = Collections.emptyList();
       myMappedRootsMapping = new RootMapping(Collections.emptyList());
+      myMappedRootShortNames = Collections.emptyMap();
 
       dumpMappedRootsToLog();
     }
@@ -243,6 +251,8 @@ public final class NewMappings implements Disposable {
   private void setNewMappedRoots(@NotNull List<VcsDirectoryMapping> mappings,
                                  @NotNull Mappings newMappedRoots,
                                  boolean fireMappingsChangedEvent) {
+    Map<VirtualFile, @NlsSafe String> newMappedRootNames = buildMappingShortNameMap(myProject, newMappedRoots.mappedRoots);
+
     boolean mappedRootsChanged;
     synchronized (myUpdateLock) {
       if (myMappings != mappings) {
@@ -257,12 +267,46 @@ public final class NewMappings implements Disposable {
       if (mappedRootsChanged) {
         myMappedRoots = newMappedRoots.mappedRoots;
         myMappedRootsMapping = new RootMapping(newMappedRoots.mappedRoots);
+        myMappedRootShortNames = newMappedRootNames;
 
         dumpMappedRootsToLog();
       }
     }
 
     if (fireMappingsChangedEvent && mappedRootsChanged) notifyMappingsChanged();
+  }
+
+  private static @NotNull Map<VirtualFile, @NlsSafe String> buildMappingShortNameMap(@NotNull Project project,
+                                                                                     @NotNull List<MappedRoot> roots) {
+    String basePath = project.getBasePath();
+    String builderRoot = basePath != null ? FileUtil.toSystemIndependentName(basePath) : "";
+
+    MultiMap<String, VirtualFile> nameCollisionMap = new MultiMap<>();
+    for (MappedRoot mappedRoot : roots) {
+      VirtualFile root = mappedRoot.root;
+      nameCollisionMap.putValue(root.getName(), root);
+    }
+
+    Map<VirtualFile, @NlsSafe String> result = new HashMap<>();
+    for (Map.Entry<String, Collection<VirtualFile>> entry : nameCollisionMap.entrySet()) {
+      Collection<VirtualFile> collisionRoots = entry.getValue();
+      if (collisionRoots.size() == 1) {
+        // UniqueNameBuilder doesn't support unique names
+        for (VirtualFile root : collisionRoots) {
+          result.put(root, root.getName());
+        }
+      }
+      else {
+        UniqueNameBuilder<VirtualFile> builder = new UniqueNameBuilder<>(builderRoot, File.separator);
+        for (VirtualFile root : collisionRoots) {
+          builder.addPath(root, root.getPath());
+        }
+        for (VirtualFile root : collisionRoots) {
+          result.put(root, StringUtil.nullize(builder.getShortPath(root)));
+        }
+      }
+    }
+    return result;
   }
 
   private void refreshMainMenu() {
@@ -509,6 +553,10 @@ public final class NewMappings implements Disposable {
     return myMappedRootsMapping.getRootFor(file);
   }
 
+  public @Nullable @NlsSafe String getShortNameFor(@Nullable VirtualFile file) {
+    return myMappedRootShortNames.get(file);
+  }
+
   public @NotNull List<VirtualFile> getMappingsAsFilesUnderVcs(@NotNull AbstractVcs vcs) {
     return ContainerUtil.mapNotNull(myMappedRoots, root -> {
       return vcs.equals(root.vcs) ? root.root : null;
@@ -524,6 +572,8 @@ public final class NewMappings implements Disposable {
       Disposer.dispose(myFilePointerDisposable);
       myMappings = Collections.emptyList();
       myMappedRoots = Collections.emptyList();
+      myMappedRootsMapping = new RootMapping(Collections.emptyList());
+      myMappedRootShortNames = Collections.emptyMap();
       myFilePointerDisposable = Disposer.newDisposable();
       activator = createVcsActivator();
     }
