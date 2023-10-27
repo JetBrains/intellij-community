@@ -31,7 +31,7 @@ class JbSettingsImporter(private val configDirPath: Path,
                          ) {
   private val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
 
-  fun importOptions(categories: Set<SettingsCategory>) {
+  suspend fun importOptions(categories: Set<SettingsCategory>) {
     val allFiles = mutableSetOf<String>()
     val optionsPath = configDirPath / PathManager.OPTIONS_DIRECTORY
     optionsPath.listDirectoryEntries("*.xml").map { it.name }.forEach { allFiles.add(it) }
@@ -64,6 +64,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     storageManager.addStreamProvider(provider)
     componentStore.reloadComponents(files2process, emptyList())
     storageManager.removeStreamProvider(provider::class.java)
+    saveSettings(ApplicationManager.getApplication(), true)
   }
 
   private fun filesFromFolder(dir: Path, prefix: String = dir.name): Collection<String> {
@@ -159,10 +160,16 @@ class JbSettingsImporter(private val configDirPath: Path,
   }
 
   internal class ImportStreamProvider(private val configDirPath: Path) : StreamProvider {
-    override val isExclusive = true
+    override val isExclusive = false
+
+    override val saveStorageDataOnReload: Boolean
+      get() = false
+
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
+      return false
+    }
 
     override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
-      LOG.warn("Writing to $fileSpec (Will do nothing)")
     }
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
@@ -185,7 +192,7 @@ class JbSettingsImporter(private val configDirPath: Path,
                                  roamingType: RoamingType,
                                  filter: (name: String) -> Boolean,
                                  processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
-      LOG.warn("Process Children $path")
+      LOG.debug("Process Children $path")
       val folder = configDirPath.resolve(path)
       if (!folder.exists()) return true
 
@@ -208,7 +215,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-      LOG.warn("Deleting $fileSpec")
+      LOG.debug("Deleting $fileSpec")
       return false
     }
 
