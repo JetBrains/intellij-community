@@ -6,8 +6,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor
+import java.io.Closeable
 
-sealed interface IntFileAttribute {
+sealed interface IntFileAttribute : Closeable {
   companion object {
     @JvmStatic
     fun shouldUseFastAttributes(): Boolean {
@@ -53,5 +54,9 @@ class IntFileAttributeImpl(private val attribute: FileAttribute, fast: Boolean) 
 
   override fun writeInt(fileId: Int, value: Int) {
     attributeAccessor().write(fileId, value)
+  }
+
+  override fun close() {
+    attributeAccessor.close()
   }
 }

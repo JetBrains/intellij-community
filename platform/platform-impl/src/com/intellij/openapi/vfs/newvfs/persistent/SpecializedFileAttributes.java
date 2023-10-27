@@ -95,6 +95,11 @@ public final class SpecializedFileAttributes {
                                                          @NotNull FileAttribute attribute) {
     return new IntFileAttributeAccessor() {
       @Override
+      public void close() {
+        // noop
+      }
+
+      @Override
       public int read(int fileId, int defaultValue) {
         Integer value = vfs.readAttributeRaw(fileId, attribute, buffer -> {
           //stream.writeInt() writes in BIG_ENDIAN (default byte order for JVM)
@@ -276,7 +281,7 @@ public final class SpecializedFileAttributes {
                 @NotNull LongUnaryOperator updater) throws IOException;
   }
 
-  public interface IntFileAttributeAccessor {
+  public interface IntFileAttributeAccessor extends Closeable {
     default int read(@NotNull VirtualFile vFile) throws IOException {
       return read(vFile, 0);
     }
