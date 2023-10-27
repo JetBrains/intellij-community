@@ -376,16 +376,13 @@ abstract class ComponentManagerImpl(
   }
 
   fun registerComponents() {
-    registerComponents(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                       app = getApplication(),
-                       precomputedExtensionModel = null,
-                       listenerCallbacks = null)
+    registerComponents(modules = PluginManagerCore.getPluginSet().getEnabledModules(), app = getApplication())
   }
 
   open fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                               app: Application?,
-                              precomputedExtensionModel: PrecomputedExtensionModel?,
-                              listenerCallbacks: MutableList<in Runnable>?) {
+                              precomputedExtensionModel: PrecomputedExtensionModel? = null,
+                              listenerCallbacks: MutableList<in Runnable>? = null) {
     val activityNamePrefix = activityNamePrefix()
 
     var map: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
@@ -491,7 +488,7 @@ abstract class ComponentManagerImpl(
       val point = result.get(name) ?: continue
       for ((pluginDescriptor, list) in pairs) {
         if (!list.isEmpty()) {
-          point.registerExtensions(list, pluginDescriptor, listenerCallbacks)
+          point.registerExtensions(descriptors = list, pluginDescriptor = pluginDescriptor, listenerCallbacks = listenerCallbacks)
         }
       }
     }

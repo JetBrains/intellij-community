@@ -858,11 +858,13 @@ object DynamicPlugins {
         val listenerCallbacks = mutableListOf<Runnable>()
 
         // 4. load into service container
-        loadModules(pluginWithContentModules, app, listenerCallbacks)
+        loadModules(modules = pluginWithContentModules, app = app, listenerCallbacks = listenerCallbacks)
         loadModules(
-          optionalDependenciesOnPlugin(pluginDescriptor, classLoaderConfigurator, pluginSet),
-          app,
-          listenerCallbacks,
+          modules = optionalDependenciesOnPlugin(dependencyPlugin = pluginDescriptor,
+                                                 classLoaderConfigurator = classLoaderConfigurator,
+                                                 pluginSet = pluginSet).toList(),
+          app = app,
+          listenerCallbacks = listenerCallbacks,
         )
 
         clearPluginClassLoaderParentListCache(pluginSet)
@@ -1070,12 +1072,12 @@ private fun optionalDependenciesOnPlugin(
 }
 
 private fun loadModules(
-  modules: Collection<IdeaPluginDescriptorImpl>,
+  modules: List<IdeaPluginDescriptorImpl>,
   app: ApplicationImpl,
   listenerCallbacks: MutableList<in Runnable>,
 ) {
   fun registerComponents(componentManager: ComponentManager) {
-    (componentManager as ComponentManagerImpl).registerComponents(modules.toList(), app, null, listenerCallbacks)
+    (componentManager as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
   }
 
   registerComponents(app)

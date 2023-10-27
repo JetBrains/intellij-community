@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
@@ -48,6 +47,7 @@ import com.intellij.platform.ide.bootstrap.getAppInitializedListeners
 import com.intellij.platform.ide.bootstrap.initConfigurationStore
 import com.intellij.platform.ide.bootstrap.preloadCriticalServices
 import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread
@@ -159,7 +159,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   try {
     // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
     val pluginSet = loadedModuleFuture.asCompletableFuture().get(40, TimeUnit.SECONDS)
-    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
+    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
 
     val task = suspend {
       initConfigurationStore(app)
@@ -303,10 +303,8 @@ fun Application.cleanupApplicationCaches() {
   (serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl)?.cleanupForNextTest()
   if (serviceIfCreated<VirtualFileManager>() != null) {
     val localFileSystem = LocalFileSystem.getInstance()
-    if (localFileSystem != null) {
-      runInEdtAndWait {
-        (localFileSystem as LocalFileSystemBase).cleanupForNextTest()
-      }
+    runInEdtAndWait {
+      (localFileSystem as LocalFileSystemBase).cleanupForNextTest()
     }
   }
 }

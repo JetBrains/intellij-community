@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus
 class PrecomputedExtensionModel(
   @JvmField val extensionPoints: PersistentList<PersistentList<ExtensionPointDescriptor>>,
   @JvmField val pluginDescriptors: PersistentList<IdeaPluginDescriptor>,
-  @JvmField val extensionPointTotalCount: Int,
 
   @JvmField val nameToExtensions: PersistentMap<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>
 )
@@ -58,7 +57,6 @@ fun precomputeExtensionModel(): PrecomputedExtensionModel {
   return PrecomputedExtensionModel(
     extensionPoints = extensionPointDescriptors,
     pluginDescriptors = pluginDescriptors,
-    extensionPointTotalCount = extensionPointTotalCount,
 
     nameToExtensions = nameToExtensions,
   )

@@ -193,7 +193,7 @@ private suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred
   }
 
   span("app component registration") {
-    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
+    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
   }
 }
 
