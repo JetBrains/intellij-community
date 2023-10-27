@@ -18,6 +18,6 @@
     <orderEntry type="library" name="grpc-netty-shaded" level="project" />
     <orderEntry type="library" name="grpc-kotlin-stub" level="project" />
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.elevation.common" />
+    <orderEntry type="module" module-name="intellij.execution.process.mediator.common" />
   </component>
 </module>

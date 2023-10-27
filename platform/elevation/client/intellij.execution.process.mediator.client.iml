@@ -16,8 +16,8 @@
     <orderEntry type="library" name="grpc-stub" level="project" />
     <orderEntry type="library" name="grpc-protobuf" level="project" />
     <orderEntry type="library" name="grpc-kotlin-stub" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.elevation.daemon" />
-    <orderEntry type="module" module-name="intellij.platform.elevation.common" />
+    <orderEntry type="module" module-name="intellij.execution.process.mediator.daemon" />
+    <orderEntry type="module" module-name="intellij.execution.process.mediator.common" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />

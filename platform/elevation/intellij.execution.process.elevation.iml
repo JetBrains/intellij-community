@@ -11,9 +11,9 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="grpc-core" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.elevation.client" />
-    <orderEntry type="module" module-name="intellij.platform.elevation.daemon" />
-    <orderEntry type="module" module-name="intellij.platform.elevation.common" />
+    <orderEntry type="module" module-name="intellij.execution.process.mediator.client" />
+    <orderEntry type="module" module-name="intellij.execution.process.mediator.daemon" />
+    <orderEntry type="module" module-name="intellij.execution.process.mediator.common" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" name="jna" level="project" />
