@@ -18,7 +18,7 @@ import com.intellij.platform.ml.embeddings.utils.splitIdentifierIntoTokens
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
-import com.intellij.searchEverywhereMl.semantics.utils.SEMANTIC_SEARCH_TRACER
+import com.intellij.platform.ml.embeddings.search.utils.SEMANTIC_SEARCH_TRACER
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.channelFlow

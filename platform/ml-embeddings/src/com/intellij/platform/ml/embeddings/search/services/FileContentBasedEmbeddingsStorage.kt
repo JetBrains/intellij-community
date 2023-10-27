@@ -10,9 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.ml.embeddings.search.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.searchEverywhereMl.semantics.utils.SEMANTIC_SEARCH_TRACER
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow

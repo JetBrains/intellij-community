@@ -10,9 +10,9 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticClassSearchEverywhereContributor
 import com.intellij.platform.ml.embeddings.search.services.IndexableClass
-import com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileContentListener
 import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
-import com.intellij.searchEverywhereMl.semantics.utils.ScoredText
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileChangeListener
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.editor.commitToPsi
 import com.intellij.testFramework.utils.editor.saveToDisk

@@ -1,4 +1,5 @@
-package com.intellij.searchEverywhereMl.semantics.services
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ml.embeddings.search.services
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.components.Service
@@ -9,7 +10,7 @@ import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow

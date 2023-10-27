@@ -13,7 +13,8 @@ import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbedd
 import com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import java.io.File
