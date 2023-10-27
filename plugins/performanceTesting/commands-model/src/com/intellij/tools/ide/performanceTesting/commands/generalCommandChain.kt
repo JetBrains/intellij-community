@@ -187,10 +187,11 @@ fun <T : CommandChain> T.navigateAndFindUsages(expectedElementName: String,
   val command = mutableListOf("${CMD_PREFIX}findUsages")
   if (expectedElementName.isNotEmpty()) {
     command.add("-expectedName $expectedElementName")
+    if (position.isNotEmpty()) {
+      command.add("-position $position")
+    }
   }
-  if (position.isNotEmpty()) {
-    command.add("-position $position")
-  }
+
   if (scope.isNotEmpty()) {
     command.add("-scope $scope")
   }
