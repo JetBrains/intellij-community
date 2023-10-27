@@ -71,7 +71,7 @@ public final class JavaLanguageLevelPusher extends FilePropertyPusherBase<Langua
     // Uncomment it and remove older code once the problem is fixed
     //PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, f -> isJavaLike(f.getFileType()));
 
-    VirtualFileJavaLevelChangeListener publisher = project.getMessageBus().syncPublisher(VirtualFileJavaLevelChangeListener.getTOPIC());
+    VirtualFileJavaLanguageLevelListener publisher = project.getMessageBus().syncPublisher(VirtualFileJavaLanguageLevelListener.TOPIC);
 
     for (VirtualFile child : fileOrDir.getChildren()) {
       if (!child.isDirectory() && isJavaLike(child.getFileType())) {
