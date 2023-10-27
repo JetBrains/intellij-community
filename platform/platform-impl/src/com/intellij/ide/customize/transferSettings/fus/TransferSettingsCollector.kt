@@ -90,18 +90,30 @@ object TransferSettingsCollector : CounterUsagesCollector() {
     logger.runAndLogException {
       val ide = ideVersion.transferableId
       importSucceeded.log(ide)
-      settings.laf?.transferableId?.let { lafImported.log(it) }
-      settings.keymap?.let { keymap ->
-        val patchedKeymap = keymap as? PatchedKeymap
-        shortcutsTransferred.log(
-          keymap.transferableId,
-          patchedKeymap?.overrides?.size ?: 0,
-          patchedKeymap?.removal?.size ?: 0
-        )
+
+      if (settings.preferences.laf) {
+        settings.laf?.transferableId?.let { lafImported.log(it) }
       }
-      recentProjectsTransferred.log(ide, settings.recentProjects.size)
-      for (plugin in settings.plugins) {
-        featureImported.log(plugin.transferableId, ide)
+
+      if (settings.preferences.keymap) {
+        settings.keymap?.let { keymap ->
+          val patchedKeymap = keymap as? PatchedKeymap
+          shortcutsTransferred.log(
+            keymap.transferableId,
+            patchedKeymap?.overrides?.size ?: 0,
+            patchedKeymap?.removal?.size ?: 0
+          )
+        }
+      }
+
+      if (settings.preferences.recentProjects) {
+        recentProjectsTransferred.log(ide, settings.recentProjects.size)
+      }
+
+      if (settings.preferences.plugins) {
+        for (plugin in settings.plugins) {
+          featureImported.log(plugin.transferableId, ide)
+        }
       }
     }
   }
