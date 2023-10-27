@@ -1,16 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
-import kotlin.Unit;
+import com.intellij.openapi.application.ApplicationManager;
 import kotlinx.collections.immutable.PersistentList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Supplier;
 
-import static kotlinx.collections.immutable.ExtensionsKt.mutate;
 import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
+import static kotlinx.collections.immutable.ExtensionsKt.toPersistentList;
 
-public abstract class SmartExtensionPoint<T> {
+@ApiStatus.Internal
+public final class SmartExtensionPoint<T> {
+  private final @NotNull Supplier<? extends ExtensionPoint<@NotNull T>> extensionPointSupplier;
   private volatile PersistentList<T> explicitExtensions = persistentListOf();
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -20,7 +24,8 @@ public abstract class SmartExtensionPoint<T> {
 
   private final Object lock = new Object();
 
-  protected SmartExtensionPoint() {
+  public SmartExtensionPoint(@NotNull Supplier<? extends ExtensionPoint<@NotNull T>> extensionPointSupplier) {
+    this.extensionPointSupplier = extensionPointSupplier;
     extensionPointAndAreaListener = new ExtensionPointAndAreaListener<T>() {
       @Override
       public void areaReplaced(@NotNull ExtensionsArea oldArea) {
@@ -57,33 +62,21 @@ public abstract class SmartExtensionPoint<T> {
   }
 
   public static <T> SmartExtensionPoint<T> create(ExtensionPointName<T> epName) {
-    return new SmartExtensionPoint<T>() {
-      @Override
-      protected @NotNull ExtensionPoint<@NotNull T> getExtensionPoint() {
-        return Extensions.getRootArea().getExtensionPoint(epName);
-      }
-    };
+    return new SmartExtensionPoint<>(() -> ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(epName));
   }
 
-  public static <T> SmartExtensionPoint<T> create(ExtensionsArea area, ExtensionPointName<T> epName) {
-    return new SmartExtensionPoint<T>() {
-      @Override
-      protected @NotNull ExtensionPoint<@NotNull T> getExtensionPoint() {
-        return area.getExtensionPoint(epName);
-      }
-    };
+  public static <T> SmartExtensionPoint<T> create(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> epName) {
+    return new SmartExtensionPoint<>(() -> area.getExtensionPoint(epName));
   }
 
-  protected abstract @NotNull ExtensionPoint<@NotNull T> getExtensionPoint();
-
-  public final void addExplicitExtension(@NotNull T extension) {
+  public void addExplicitExtension(@NotNull T extension) {
     synchronized (lock) {
       explicitExtensions.add(extension);
       cache = null;
     }
   }
 
-  public final void removeExplicitExtension(@NotNull T extension) {
+  public void removeExplicitExtension(@NotNull T extension) {
     synchronized (lock) {
       explicitExtensions = explicitExtensions.remove(extension);
       cache = null;
@@ -99,22 +92,11 @@ public abstract class SmartExtensionPoint<T> {
     // it is ok to call getExtensionPoint several times - call is cheap, and implementation is thread-safe
     ExtensionPoint<T> extensionPoint = this.extensionPoint;
     if (extensionPoint == null) {
-      extensionPoint = getExtensionPoint();
+      extensionPoint = extensionPointSupplier.get();
       this.extensionPoint = extensionPoint;
     }
 
-    PersistentList<T> registeredExtensions;
-    List<T> collection = extensionPoint.getExtensionList();
-    if (collection.isEmpty()) {
-      registeredExtensions = persistentListOf();
-    }
-    else {
-      registeredExtensions = mutate(persistentListOf(), mutator -> {
-        mutator.addAll(collection);
-        return Unit.INSTANCE;
-      });
-    }
-
+    PersistentList<T> extensions = toPersistentList(extensionPoint.getExtensionList());
     synchronized (lock) {
       result = cache;
       if (result != null) {
@@ -123,7 +105,7 @@ public abstract class SmartExtensionPoint<T> {
 
       // EP will not add duplicated listener, so, it is safe to not care about is already added
       extensionPoint.addExtensionPointListener(extensionPointAndAreaListener, false, null);
-      result = explicitExtensions.addAll(registeredExtensions);
+      result = explicitExtensions.addAll(extensions);
       cache = result;
       return result;
     }
