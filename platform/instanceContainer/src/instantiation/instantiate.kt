@@ -59,7 +59,7 @@ private fun findConstructor(instanceClass: Class<*>, signatures: List<MethodType
 
 /**
  * Instantiates [instanceClass] using [resolver] to find instances for constructor parameter types.
- * This function searches for the greediest constructor, i.e. a constructor with most parameters which is satisfiable.
+ * This function searches for the greediest constructor, i.e., a constructor with most parameters, which is satisfiable.
  *
  * @param parentScope a scope which is used as a parent for instance scope
  * if [instanceClass] defines a constructor with a parameter of [CoroutineScope] type
@@ -172,7 +172,7 @@ private fun <T> doFindConstructorAndArguments(
 
     val parameterTypes = constructor.parameterTypes
     if (greediest != null && parameterTypes.size < greediest.arguments.size) {
-      // next constructor has strictly fewer parameters than previous
+      // the next constructor has strictly fewer parameters than previous
       return greediest
     }
 
@@ -223,17 +223,12 @@ private sealed interface ResolutionResult {
 private fun resolveArguments(resolver: DependencyResolver, parameterTypes: List<Class<*>>, round: Int): ResolutionResult {
   val arguments = ArrayList<Argument>(parameterTypes.size)
   for (parameterType in parameterTypes) {
-    arguments += if (parameterType === CoroutineScope::class.java) {
-      Argument.CoroutineScopeMarker
+    if (parameterType === CoroutineScope::class.java) {
+      arguments.add(Argument.CoroutineScopeMarker)
     }
     else {
-      val dependency = resolver.resolveDependency(parameterType, round)
-      if (dependency != null) {
-        Argument.LazyArgument(dependency)
-      }
-      else {
-        return ResolutionResult.UnresolvedParameter(parameterType)
-      }
+      val dependency = resolver.resolveDependency(parameterType, round) ?: return ResolutionResult.UnresolvedParameter(parameterType)
+      arguments.add(Argument.LazyArgument(dependency))
     }
   }
   return ResolutionResult.Resolved(arguments)
@@ -267,7 +262,7 @@ private suspend fun <T> instantiate(
   // so it leaks to newInstance call, where it might cause ReadMostlyRWLock.throwIfImpatient() to throw,
   // for example, if a service obtains a read action in the constructor.
   // Non-cancellable section is required to silence throwIfImpatient().
-  // In general, we want initialization to be cancellable, and it must be cancelled only on parent scope cancellation,
+  // In general, we want initialization to be cancellable, and it must be canceled only on parent scope cancellation,
   // which happens only on project/application shutdown, or on plugin unload.
   Cancellation.withNonCancelableSection().use {
     // A separate thread-local is required to track cyclic service initialization, because

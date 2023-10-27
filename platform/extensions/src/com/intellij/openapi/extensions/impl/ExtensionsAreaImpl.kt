@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.ThreeState
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentHashMapOf
@@ -280,33 +279,6 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   @TestOnly
   fun processExtensionPoints(consumer: Consumer<ExtensionPointImpl<*>>) {
     extensionPoints.values.forEach(consumer)
-  }
-
-  @Internal
-  fun <T : Any> findExtensionByClass(aClass: Class<T>): T? {
-    // TeamCity plugin wants DefaultDebugExecutor in constructor
-    if (aClass.name == "com.intellij.execution.executors.DefaultDebugExecutor") {
-      return getExtensionPointIfRegistered<Any>("com.intellij.executor")?.findExtension(aClass, false, ThreeState.YES)
-    }
-
-    for (point in extensionPoints.values) {
-      if (point !is InterfaceExtensionPoint<*>) {
-        continue
-      }
-
-      try {
-        if (!point.getExtensionClass().isAssignableFrom(aClass)) {
-          continue
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        return (point as ExtensionPointImpl<T>).findExtension(aClass, false, ThreeState.YES) ?: continue
-      }
-      catch (e: Throwable) {
-        LOG.warn("error during findExtensionPointByClass", e)
-      }
-    }
-    return null
   }
 
   @TestOnly
