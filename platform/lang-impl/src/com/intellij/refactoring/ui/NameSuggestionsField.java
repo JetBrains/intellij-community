@@ -120,11 +120,10 @@ public class NameSuggestionsField extends JPanel {
 
   public void select(final int start, final int end) {
     SwingUtilities.invokeLater(() -> {
-      Editor editor = getEditor();
-      if (editor == null) return;
-      editor.getSelectionModel().setSelection(start, end);
-      editor.getCaretModel().moveToOffset(end);
-
+      EditorTextField textField = getEditorTextField();
+      if (textField == null) return;
+      textField.select(TextRange.create(start, end));
+      textField.setCaretPosition(end);
     });
   }
 
