@@ -6,7 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-fun <T> Deferred<T>.blockingGet(): T =
+internal fun <T> Deferred<T>.blockingGet(): T =
   if (isCompleted) {  // fast path
     getCompleted()
   }
