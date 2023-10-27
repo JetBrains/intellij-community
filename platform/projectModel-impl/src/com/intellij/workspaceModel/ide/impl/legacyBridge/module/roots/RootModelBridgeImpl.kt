@@ -132,7 +132,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
         Comparing.compare(o1.javaClass.name, o2.javaClass.name)
       }
 
-      MODULE_EXTENSION_BRIDGE_FACTORY_EP.lazySequence().mapTo(result) {
+      MODULE_EXTENSION_BRIDGE_FACTORY_EP.extensionList.mapTo(result) {
         it.createExtension(module = module, entityStorage = storage, diff = diff)
       }
 
