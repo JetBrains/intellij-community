@@ -47,13 +47,8 @@ class KotlinCommonCompilerArgumentsHolder(project: Project) : BaseKotlinCompiler
         val languageVersion = languageVersions.singleOrNull()
         val apiVersion = apiVersions.singleOrNull()
         update {
-            if (languageVersion != null) {
-                this.languageVersion = languageVersion.versionString
-            }
-
-            if (apiVersion != null) {
-                this.apiVersion = apiVersion.versionString
-            }
+            this.languageVersion = languageVersion?.versionString
+            this.apiVersion = apiVersion?.versionString
         }
     }
 
