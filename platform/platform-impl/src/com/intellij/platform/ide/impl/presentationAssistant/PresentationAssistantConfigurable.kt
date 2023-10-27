@@ -97,11 +97,22 @@ class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
                 configuration.showAlternativeKeymap = it
               }
 
-            val comboBox = comboBox(CollectionComboBoxModel(KeymapManagerEx.getInstanceEx().allKeymaps.toList(),
-                                                            configuration.alternativeKeymapName.toKeymap()),
-                                    textListCellRenderer { it?.presentableName })
-              .bindItem({ configuration.alternativeKeymapName.toKeymap() }) {
-                configuration.alternativeKeymapName = it?.name ?: KeymapKind.defaultForOS().getAlternativeKind().value
+            val keymapKinds = mutableListOf<KeymapKind>()
+            keymapKinds.addAll(KeymapManagerEx.getInstanceEx().allKeymaps.map { KeymapKind.from(it.name) })
+
+            val defaultAlternativeKeymapKind = KeymapKind.defaultForOS().getAlternativeKind()
+            if (!keymapKinds.contains(defaultAlternativeKeymapKind)) {
+              keymapKinds.add(0, defaultAlternativeKeymapKind)
+            }
+
+            val alternativeKeymapKind = KeymapKind.from(configuration.alternativeKeymapName)
+            if (!keymapKinds.contains(alternativeKeymapKind)) {
+              keymapKinds.add(0, alternativeKeymapKind)
+            }
+
+            val comboBox = comboBox(CollectionComboBoxModel(keymapKinds, alternativeKeymapKind), textListCellRenderer { it?.displayName })
+              .bindItem({ KeymapKind.from(configuration.alternativeKeymapName) }) {
+                configuration.alternativeKeymapName = it?.value ?: KeymapKind.defaultForOS().getAlternativeKind().value
               }.enabledIf(showAlternativeProperty)
 
             val label = textField()
@@ -110,8 +121,8 @@ class PresentationAssistantConfigurable: DslConfigurableBase(), Configurable {
               .enabledIf(showAlternativeProperty)
 
             comboBox.onChanged {
-              (it.selectedItem as? Keymap)?.let { keymap ->
-                label.component.text = KeymapKind.from(keymap.name).defaultLabel
+              (it.selectedItem as? KeymapKind)?.let { kind ->
+                label.component.text = kind.defaultLabel
               }
             }
           }
