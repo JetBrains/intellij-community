@@ -55,20 +55,20 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
           }
           else if (href.startsWith("//")) {
             Url rootUrl = Urls.parse(root, false);
-            if (rootUrl == null) return null;
+            if (rootUrl == null) return href;
             String scheme = rootUrl.getScheme();
-            if (scheme == null) return null;
+            if (scheme == null) return href;
             String[] parts = href.substring(2).split("/", 2);
-            if (parts.length != 2) return null;
+            if (parts.length != 2) return href;
             Url relativeUrl = Urls.newUrl(scheme, parts[0], parts[1]);
             return relativeUrl.toString();
           }
           else if (href.startsWith("/")) {
             Url rootUrl = Urls.parse(root, false);
-            if (rootUrl == null) return null;
+            if (rootUrl == null) return href;
             String scheme = rootUrl.getScheme();
             String authority = rootUrl.getAuthority();
-            if (scheme == null || authority == null) return null;
+            if (scheme == null || authority == null) return href;
             Url relativeUrl = Urls.newUrl(scheme, authority, href);
             return relativeUrl.toString();
           }
