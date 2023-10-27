@@ -1,53 +1,42 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.codeInsight.completion
+package com.intellij.java.codeInsight.completion;
 
-import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.util.indexing.DumbModeAccessType
-import com.intellij.util.indexing.FileBasedIndex
-import groovy.transform.CompileStatic
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 
-@CompileStatic
-abstract class NormalCompletionTestCase extends LightFixtureCompletionTestCase {
+public abstract class NormalCompletionTestCase extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/"
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/";
   }
 
-  def configure() {
-    configureByTestName()
+  public void configure() {
+    configureByTestName();
   }
 
-  def checkResult() {
-    checkResultByFile(getTestName(false) + "_after.java")
+  public void checkResult() {
+    checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  void doTest(String finishChar) {
-    configure()
-    type finishChar
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    checkResult()
+  public void doTest(String finishChar) {
+    configure();
+    type(finishChar);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    checkResult();
   }
 
-  void doTest() {
-    configure()
-    checkResult()
+  public void doTest() {
+    configure();
+    checkResult();
   }
 
-  static LookupElementPresentation renderElement(LookupElement e) {
-    return ReadAction.compute {
-      FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY,
-                                             new ThrowableComputable<LookupElementPresentation, RuntimeException>() {
-                                               @Override
-                                               LookupElementPresentation compute() throws RuntimeException {
-                                                 return LookupElementPresentation.renderElement(e)
-                                               }
-                                             })
-    }
+  public static LookupElementPresentation renderElement(final LookupElement e) {
+    return ReadAction.compute(() -> FileBasedIndex.getInstance()
+      .ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> LookupElementPresentation.renderElement(e)));
   }
 }
