@@ -4,10 +4,8 @@ package com.intellij.util.indexing.impl.perFileVersion
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.FileAttribute
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor
-import com.intellij.util.io.DataInputOutputUtil
 
 sealed interface IntFileAttribute {
   companion object {
@@ -26,12 +24,12 @@ sealed interface IntFileAttribute {
     }
 
     fun overRegularAttribute(attribute: FileAttribute): IntFileAttribute {
-      return IntFileAttributeOverFSAttribute(attribute)
+      return IntFileAttributeImpl(attribute, false)
     }
 
     fun overFastAttribute(attribute: FileAttribute): IntFileAttribute {
       thisLogger().assertTrue(attribute.isFixedSize, "Should be fixed size: $attribute")
-      return IntFileAttributeOverFastMappedStorage(attribute)
+      return IntFileAttributeImpl(attribute, true)
     }
   }
 
@@ -39,9 +37,14 @@ sealed interface IntFileAttribute {
   fun writeInt(fileId: Int, value: Int)
 }
 
-class IntFileAttributeOverFastMappedStorage(private val attribute: FileAttribute) : IntFileAttribute {
+class IntFileAttributeImpl(private val attribute: FileAttribute, fast: Boolean) : IntFileAttribute {
   private val attributeAccessor = AutoRefreshingOnVfsCloseRef<IntFileAttributeAccessor> { fsRecords ->
-    SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute)
+    if (fast) {
+      SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute)
+    }
+    else {
+      SpecializedFileAttributes.specializeAsInt(fsRecords, attribute)
+    }
   }
 
   override fun readInt(fileId: Int): Int {
@@ -50,23 +53,5 @@ class IntFileAttributeOverFastMappedStorage(private val attribute: FileAttribute
 
   override fun writeInt(fileId: Int, value: Int) {
     attributeAccessor().write(fileId, value)
-  }
-}
-
-class IntFileAttributeOverFSAttribute(private val attribute: FileAttribute) : IntFileAttribute {
-  override fun readInt(fileId: Int): Int {
-    var indexedVersion = 0
-    FSRecords.readAttributeWithLock(fileId, attribute).use { stream ->
-      if (stream != null) {
-        indexedVersion = DataInputOutputUtil.readINT(stream)
-      }
-    }
-    return indexedVersion
-  }
-
-  override fun writeInt(fileId: Int, value: Int) {
-    FSRecords.writeAttribute(fileId, attribute).use { stream ->
-      DataInputOutputUtil.writeINT(stream, value)
-    }
   }
 }
