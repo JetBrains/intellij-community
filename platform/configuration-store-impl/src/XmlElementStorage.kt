@@ -33,6 +33,11 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
                                                        val roamingType: RoamingType,
                                                        private val provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
+  override val saveStorageDataOnReload: Boolean
+    get() {
+      return provider == null || provider.saveStorageDataOnReload
+    }
+
   protected abstract fun loadLocalData(): Element?
 
   final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? {

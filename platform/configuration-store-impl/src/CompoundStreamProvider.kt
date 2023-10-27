@@ -12,6 +12,9 @@ class CompoundStreamProvider : StreamProvider {
   private val providers = ContainerUtil.createConcurrentList<StreamProvider>()
   private val providerListModificationCount = AtomicInteger()
 
+  override val saveStorageDataOnReload: Boolean // true by default
+    get() = !providers.any { !it.saveStorageDataOnReload }
+
   override val enabled: Boolean
     get() = providers.any { it.enabled }
 

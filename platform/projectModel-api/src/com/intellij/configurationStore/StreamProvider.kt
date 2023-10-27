@@ -20,6 +20,9 @@ interface StreamProvider {
    */
   val isExclusive: Boolean
 
+  val saveStorageDataOnReload: Boolean
+    get() = true
+
   /**
    * Called only on `write`
    */
