@@ -7,7 +7,10 @@ import com.intellij.execution.process.mediator.daemon.FdConstants.STDIN
 import com.intellij.execution.process.mediator.daemon.FdConstants.STDOUT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.future.await
 import java.io.Closeable
 import java.io.File
