@@ -13,7 +13,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
@@ -29,7 +28,6 @@ import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizar
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_RESOURCES_PATH
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard.Companion.getKotlinWizardVersion
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
 import java.nio.file.Path
@@ -99,22 +97,10 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
         }
 
         private fun initializeProjectValues() {
-            findSelectedJvmTarget()
             findKotlinVersionToUse(NewProjectWizardModuleBuilder())
         }
 
-        private var selectedJdkJvmTarget: String = TargetJvmVersion.JVM_1_8.value
         private var kotlinPluginWizardVersion: String = DEFAULT_KOTLIN_VERSION
-
-        private fun findSelectedJvmTarget() {
-            val sdkNumber = sdk?.let { JavaSdk.getInstance().getVersion(it) }?.ordinal
-            // Fix 8 to a smaller value if we inherit (from parent pom.xml) Kotlin versions that support earlier JVM targets KTIJ-27487
-            if (sdkNumber == null || sdkNumber <= 8) { // For 1.8 we need a special form – 1.8 unlike, for example, just 9 and higher
-                selectedJdkJvmTarget = TargetJvmVersion.JVM_1_8.value
-            } else {
-                selectedJdkJvmTarget = sdkNumber.toString()
-            }
-        }
 
         override fun setupProject(project: Project) {
             initializeProjectValues()
@@ -128,7 +114,6 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
                 project,
                 moduleBuilder
             ) { builder ->
-                builder.jvmTargetVersion = selectedJdkJvmTarget
                 builder.kotlinPluginWizardVersion = kotlinPluginWizardVersion
             }
         }
