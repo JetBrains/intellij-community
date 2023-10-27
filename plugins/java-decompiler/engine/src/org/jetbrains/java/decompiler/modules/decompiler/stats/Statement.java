@@ -2,6 +2,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.main.CancellationManager;
@@ -350,7 +351,7 @@ public abstract class Statement implements IMatchable {
         BasicBlockStatement bblock = (BasicBlockStatement)this;
         InstructionSequence seq = bblock.getBlock().getSeq();
 
-        if (seq != null && seq.length() > 0) {
+        if (seq != null && !seq.isEmpty()) {
           for (int i = 0; i < seq.length(); i++) {
             if (seq.getInstr(i).opcode == CodeConstants.opc_monitorexit) {
               containsMonitorExit = true;
@@ -785,6 +786,7 @@ public abstract class Statement implements IMatchable {
     return varDefinitions;
   }
 
+  @Nullable
   public List<Exprent> getExprents() {
     cancellationManager.checkCanceled();
     return exprents;
