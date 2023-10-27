@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.search
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.openapi.diagnostic.Logger
@@ -22,6 +23,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.Icon
@@ -146,7 +148,7 @@ object ChooserPopupUtil {
   private class ListLoadingListener<T : Any>(private val parentScope: CoroutineScope,
                                              private val listModel: CollectionListModel<T>,
                                              private val items: Flow<List<T>>,
-                                             private val list: JList<T>) : JBPopupListener {
+                                             private val list: JBList<T>) : JBPopupListener {
     private var cs: CoroutineScope? = null
 
     override fun beforeShown(event: LightweightWindowEvent) {
@@ -154,7 +156,11 @@ object ChooserPopupUtil {
       this.cs = cs
 
       cs.launch {
-        items.collect {
+        items.catch { e ->
+          val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("popup.data.loading.error")
+          list.emptyText.setText(errorMessage, SimpleTextAttributes.ERROR_ATTRIBUTES)
+        }.collect {
+          list.emptyText.clear()
           try {
             val selected = list.selectedIndex
             if (it.size > listModel.size) {
