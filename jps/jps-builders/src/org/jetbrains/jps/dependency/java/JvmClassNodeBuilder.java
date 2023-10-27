@@ -374,8 +374,18 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     if (myIsGenerated) {
       flags = flags.deriveIsGenerated();
     }
+    
     if (myIsModule) {
+      Iterators.collect(Iterators.map(Iterators.filter(myModuleRequires, r -> !Objects.equals(myName, r.getName())), r -> new ModuleUsage(r.getName())), myUsages);
       return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myUsages);
+    }
+
+    Iterators.collect(Iterators.flat(new TypeRepr.ClassType(mySuperClass).getUsages(), Iterators.flat(Iterators.map(myInterfaces, s -> new TypeRepr.ClassType(s).getUsages()))), myUsages);
+    Iterators.collect(Iterators.flat(Iterators.map(myFields, f -> f.getType().getUsages())), myUsages);
+    for (JvmMethod jvmMethod : myMethods) {
+      Iterators.collect(jvmMethod.getType().getUsages(), myUsages);
+      Iterators.collect(Iterators.flat(Iterators.map(jvmMethod.getArgTypes(), t -> t.getUsages())), myUsages);
+      Iterators.collect(Iterators.flat(Iterators.map(jvmMethod.getExceptions(), t -> t.getUsages())), myUsages);
     }
     return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myUsages);
   }

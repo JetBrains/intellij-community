@@ -70,22 +70,8 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
       Graph.getNodesOfType(nodesBefore, JvmModule.class), Graph.getNodesOfType(nodesAfter, JvmModule.class)
     );
 
-    for (JvmModule removed : modulesDiff.removed()) {
-      if (!processRemovedModule(context, removed, future, present)) {
-        return false;
-      }
-    }
-
-    for (JvmModule added : modulesDiff.added()) {
-      if (!processAddedModule(context, added, future, present)) {
-        return false;
-      }
-    }
-
-    for (Difference.Change<JvmModule, JvmModule.Diff> change : modulesDiff.changed()) {
-      if (!processChangedModule(context, change, future, present)) {
-        return false;
-      }
+    if (!processModules(context, modulesDiff, future, present)) {
+      return false;
     }
 
     return true;
@@ -787,16 +773,20 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
     return true;
   }
 
-  private static boolean processRemovedModule(DifferentiateContext context, JvmModule removedModule, Utils future, Utils present) {
-    return true;
-  }
+  private boolean processModules(DifferentiateContext context, Difference.Specifier<JvmModule, JvmModule.Diff> modulesDiff, Utils future, Utils present) {
+    if (modulesDiff.unchanged())  {
+      return true;
+    }
+    for (JvmModule addedModule : modulesDiff.added()) {
+      // after module has been added, the whole target should be rebuilt
+      // because necessary 'require' directives may be missing from the newly added module-info file
+      affectModule(context, future, addedModule);
+    }
 
-  private static boolean processAddedModule(DifferentiateContext context, JvmModule addedModule, Utils future, Utils present) {
-    return true;
-  }
-
-  private boolean processChangedModule(DifferentiateContext context, Difference.Change<JvmModule, JvmModule.Diff> change, Utils future, Utils present) {
-    JvmModule.Diff moduleDiff = change.getDiff();
+    for (JvmModule removedModule : modulesDiff.removed()) {
+      // todo
+    }
+    
     return true;
   }
 
@@ -882,6 +872,14 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
         context.affectNodeSource(source);
         debug(affectReason, source.getPath());
       }
+    }
+  }
+
+  private static void affectModule(DifferentiateContext context, Utils utils, JvmModule mod) {
+    debug("Affecting module ", mod.getName());
+    for (NodeSource source : utils.getNodeSources(mod.getReferenceID())) {
+      context.affectNodeSource(source);
+      debug("Affected source ", source.getPath());
     }
   }
 

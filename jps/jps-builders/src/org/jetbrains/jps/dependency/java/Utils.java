@@ -27,6 +27,11 @@ public final class Utils {
     myDirectSubclasses = Objects.requireNonNull(graph.getIndex(SubclassesIndex.NAME));
   }
 
+  public Iterable<NodeSource> getNodeSources(ReferenceID nodeId) {
+    Iterable<NodeSource> sources = myDelta != null? myDelta.getSources(nodeId) : null;
+    return !Iterators.isEmpty(sources)? sources : myGraph.getSources(nodeId);
+  }
+
   public Iterable<JvmClass> getClassesByName(@NotNull String name) {
     return getNodes(new JvmNodeReferenceID(name), JvmClass.class);
   }

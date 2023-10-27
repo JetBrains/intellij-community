@@ -6,6 +6,7 @@ import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
 
 import java.util.Collections;
+import java.util.Objects;
 
 public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
@@ -30,6 +31,15 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
   public Iterable<ModulePackage> getExports() {
     return myExports;
+  }
+
+  public boolean requiresTransitively(String requirementName) {
+    for (ModuleRequires require : getRequires()) {
+      if (Objects.equals(require.getName(), requirementName)) {
+        return require.getFlags().isTransitive();
+      }
+    }
+    return false;
   }
 
   @Override
