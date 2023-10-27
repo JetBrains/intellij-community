@@ -219,7 +219,8 @@ public final class ThreadLeakTracker {
            || isIdleDefaultCoroutineExecutorThread(thread, stackTrace)
            || isCoroutineSchedulerPoolThread(thread, stackTrace)
            || isKotlinCIOSelector(stackTrace)
-           || isStarterTestFramework(stackTrace);
+           || isStarterTestFramework(stackTrace)
+           || isJMXRemoteCall(stackTrace);
   }
 
   private static boolean isWellKnownOffender(@NotNull String threadName) {
@@ -338,6 +339,19 @@ public final class ThreadLeakTracker {
       stackTrace,
       element -> element.getClassName().contains("com.intellij.ide.starter")
     );
+  }
+
+  /**
+   * com.intellij.driver.client.* is using JMX. That might lead to long-living tasks.
+   */
+  private static boolean isJMXRemoteCall(StackTraceElement @NotNull [] stackTrace) {
+    // Thread leaked: Thread[JMX client heartbeat 3,5,main] (alive) TIMED_WAITING
+    // --- its stacktrace:
+    // at java.base@17.0.9/java.lang.Thread.sleep(Native Method)
+    // at java.management@17.0.9/com.sun.jmx.remote.internal.ClientCommunicatorAdmin$Checker.run(ClientCommunicatorAdmin.java:180)
+    // at java.base@17.0.9/java.lang.Thread.run(Thread.java:840)
+
+    return ContainerUtil.exists(stackTrace, element -> element.getClassName().contains("com.sun.jmx.remote"));
   }
 
   private static @NotNull CharSequence dumpThreadsToString(
