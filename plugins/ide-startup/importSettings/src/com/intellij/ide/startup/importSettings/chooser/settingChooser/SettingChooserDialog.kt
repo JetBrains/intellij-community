@@ -58,19 +58,19 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
         }.align(AlignY.TOP).customize(UnscaledGaps(0, 0, 17, 0))
       }
       panel {
-        provider.getProductIcon(product.id, IconProductSize.MIDDLE)?.let { icn ->
-          row {
+        row {
+          provider.getProductIcon(product.id, IconProductSize.MIDDLE)?.let { icn ->
             icon(icn).align(AlignY.TOP).customize(UnscaledGaps(0, 0, 0, 8))
-            panel {
-              row {
-                text(provider.getText(product)).customize(UnscaledGaps(0, 0, 2, 0))
-              }
+          }
+          panel {
+            row {
+              text(provider.getText(product)).customize(UnscaledGaps(0, 0, 0, 0))
+            }
 
-              provider.getComment(product)?.let { addTxt ->
-                row {
-                  comment(addTxt).customize(
-                    UnscaledGaps(0))
-                }
+            provider.getComment(product)?.let { addTxt ->
+              row {
+                comment(addTxt).customize(
+                  UnscaledGaps(top = 3))
               }
             }
           }
