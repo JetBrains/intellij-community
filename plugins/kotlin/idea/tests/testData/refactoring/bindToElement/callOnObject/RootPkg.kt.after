@@ -1,0 +1,12 @@
+// BIND_TO B
+object A {
+    fun foo() { }
+}
+
+object B {
+    fun foo() { }
+}
+
+fun foo() {
+    <caret>B.foo()
+}
