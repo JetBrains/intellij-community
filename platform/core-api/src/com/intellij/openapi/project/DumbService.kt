@@ -15,10 +15,12 @@ import com.intellij.openapi.util.*
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.messages.Topic
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.Unmodifiable
 import javax.swing.JComponent
 
 /**
@@ -179,7 +181,7 @@ abstract class DumbService {
    * @see isDumbAware
    */
   @Contract(pure = true)
-  fun <T> filterByDumbAwareness(collection: Collection<T>): List<T> {
+  fun <T> filterByDumbAwareness(collection: Collection<T>): @Unmodifiable List<T> {
     if (isDumb) {
       val result = ArrayList<T>(collection.size)
       for (element in collection) {
@@ -189,7 +191,7 @@ abstract class DumbService {
       }
       return result
     }
-    return if (collection is List<*>) collection as List<T> else ArrayList(collection)
+    return if (collection is List<*>) collection as List<T> else collection.toImmutableList()
   }
 
   /**
