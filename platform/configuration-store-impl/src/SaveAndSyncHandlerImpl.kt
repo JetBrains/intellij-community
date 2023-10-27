@@ -57,6 +57,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   private val refreshSession = AtomicReference<RefreshSession?>()
   private var bgRefreshJob: Job? = null
+  private val bgRefreshSession = AtomicReference<RefreshSession?>()
 
   private val saveAppAndProjectsSettingsTask = SaveTask()
   private val saveQueue = ArrayDeque<SaveTask>()
@@ -119,6 +120,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
     coroutineScope.awaitCancellationAndInvoke {
       bgRefreshJob?.cancel()
+      bgRefreshSession.get()?.cancel()
       refreshSession.get()?.cancel()
     }
   }
@@ -312,7 +314,6 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   private fun startBackgroundSync(): Job {
     LOG.debug("starting background VFS sync")
-    val bgRefreshSession = AtomicReference<RefreshSession?>()
     val t = System.nanoTime()
     val sessions = AtomicInteger()
     val events = AtomicInteger()
@@ -333,7 +334,6 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       }
     }
     job.invokeOnCompletion {
-      if (it is CancellationException) bgRefreshSession.getAndSet(null)?.cancel()
       if (coroutineScope.isActive) {
         VfsUsageCollector.logBackgroundRefresh(NANOSECONDS.toMillis(System.nanoTime() - t), sessions.get(), events.get())
       }
