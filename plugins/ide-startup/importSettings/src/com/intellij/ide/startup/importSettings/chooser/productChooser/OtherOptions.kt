@@ -46,7 +46,7 @@ class OtherOptions(private val callback: (PageProvider) -> Unit) : ProductChoose
       jb = addActionList(jbProducts, jbDataProvider, ImportSettingsBundle.message("other.options.sub.title.installed"))
     }
 
-    if (sync == null && syncProducts != null) {
+    if (sync == null && syncProducts != null && syncDataProvider.settingsService.isSyncEnabled.value) {
       sync = addActionList(syncProducts, syncDataProvider, ImportSettingsBundle.message("other.options.sub.title.setting.sync"))
     }
 
@@ -90,6 +90,10 @@ class OtherOptions(private val callback: (PageProvider) -> Unit) : ProductChoose
 
     val ch = getChildren(e)
 
+    if(ch.size == 1) {
+      return
+    }
+
     if (ch.isEmpty()) {
       e.presentation.isVisible = false
       return
@@ -106,9 +110,11 @@ class OtherOptions(private val callback: (PageProvider) -> Unit) : ProductChoose
     super.updateButtonFromPresentation(button, presentation)
     if (presentation.getClientProperty(UiUtils.POPUP) == true) {
       button.setHorizontalTextPosition(SwingConstants.LEFT)
+      button.setForeground(JBUI.CurrentTheme.Link.Foreground.ENABLED)
       button.iconTextGap = 0
     } else {
       button.setHorizontalTextPosition(SwingConstants.RIGHT)
+      button.setForeground(JBUI.CurrentTheme.Label.foreground())
       button.iconTextGap = JBUI.scale(4)
     }
   }
