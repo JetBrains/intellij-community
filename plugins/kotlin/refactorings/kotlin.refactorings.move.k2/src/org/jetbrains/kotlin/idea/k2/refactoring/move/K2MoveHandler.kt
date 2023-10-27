@@ -61,8 +61,4 @@ class K2MoveHandler : MoveHandlerDelegate() {
         val type = K2MoveModel.create(elements, targetContainer)
         K2MoveDialog(project, type).show()
     }
-
-
-
-
 }

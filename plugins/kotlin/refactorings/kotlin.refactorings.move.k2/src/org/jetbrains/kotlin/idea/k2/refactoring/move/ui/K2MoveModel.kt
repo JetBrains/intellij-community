@@ -90,13 +90,7 @@ sealed class K2MoveModel {
             }
 
             val correctedTarget = if (targetContainer is KtElement) targetContainer.correctForProjectView() else targetContainer
-            val elementsToMove = elements.flatMap {
-                when (it) {
-                    is KtNamedDeclaration -> listOf(it.correctForProjectView())
-                    is KtFile -> it.declarations.filterIsInstance<KtNamedDeclaration>()
-                    else -> emptyList()
-                }
-            }.toSet()
+            val elementsToMove = elements.map { (it as? KtElement)?.correctForProjectView() }.toSet()
             return when {
                 elementsToMove.all { it is KtFile } -> {
                     val source = K2MoveSourceModel.FileSource(elementsToMove.filterIsInstance<KtFile>().toSet())
