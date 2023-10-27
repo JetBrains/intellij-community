@@ -18,7 +18,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
 
   private val logger = logger<TransferSettingsCollector>()
 
-  private val GROUP = EventLogGroup("wizard.transfer.settings", 3)
+  private val GROUP = EventLogGroup("wizard.transfer.settings", 5)
   override fun getGroup(): EventLogGroup = GROUP
 
   private val ideField = EventFields.Enum<TransferableIdeId>("ide")
@@ -31,8 +31,8 @@ object TransferSettingsCollector : CounterUsagesCollector() {
   private val transferSettingsShown = GROUP.registerEvent("transfer.settings.shown")
   private val transferSettingsSkipped = GROUP.registerEvent("transfer.settings.skipped")
   private val importStarted = GROUP.registerEvent("import.started")
-  private val importSucceeded = GROUP.registerEvent("import.succeeded", ideField)
-  private val importFailed = GROUP.registerEvent("import.failed", ideField)
+  private val importSucceeded = GROUP.registerEvent("import.succeeded", ideField, ideVersionField)
+  private val importFailed = GROUP.registerEvent("import.failed", ideField, ideVersionField)
 
   // Discovery events
   private val instancesOfIdeFound = GROUP.registerEvent(
@@ -89,7 +89,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
   fun logImportSucceeded(ideVersion: IdeVersion, settings: Settings) {
     logger.runAndLogException {
       val ide = ideVersion.transferableId
-      importSucceeded.log(ide)
+      importSucceeded.log(ide, ideVersion.transferableVersion)
 
       if (settings.preferences.laf) {
         settings.laf?.transferableId?.let { lafImported.log(it) }
@@ -120,7 +120,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
 
   fun logImportFailed(ideVersion: IdeVersion) {
     logger.runAndLogException {
-      importFailed.log(ideVersion.transferableId)
+      importFailed.log(ideVersion.transferableId, ideVersion.transferableVersion)
     }
   }
 
