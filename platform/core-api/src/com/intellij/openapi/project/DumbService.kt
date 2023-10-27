@@ -435,9 +435,8 @@ abstract class DumbService {
     }
 
     @JvmStatic
-    fun <T: Any> getDumbAwareExtensions(project: Project, extensionPoint: ProjectExtensionPointName<T>): List<T> {
-      val dumbService = getInstance(project)
-      return dumbService.filterByDumbAwareness(extensionPoint.getExtensions(project))
+    fun <T: Any> getDumbAwareExtensions(project: Project, extensionPoint: ProjectExtensionPointName<T>): @Unmodifiable List<T> {
+      return getInstance(project).filterByDumbAwareness(extensionPoint.getExtensions(project))
     }
 
     @JvmStatic
