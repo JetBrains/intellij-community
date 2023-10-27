@@ -43,7 +43,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   @Override
   public int getBraceTokenGroupId(@NotNull IElementType tokenType) {
     final Language l = tokenType.getLanguage();
-    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(l);
+    PairedBraceMatcher matcher = getPairedBraceMatcher(tokenType);
 
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
@@ -66,7 +66,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   @Override
   public boolean isLBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
-    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
+    PairedBraceMatcher matcher = getPairedBraceMatcher(tokenType);
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
       for (BracePair pair : pairs) {
@@ -81,7 +81,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   @Override
   public boolean isRBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
-    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
+    PairedBraceMatcher matcher = getPairedBraceMatcher(tokenType);
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
       for (BracePair pair : pairs) {
@@ -117,9 +117,13 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
     return fileType == HtmlFileType.INSTANCE;
   }
 
+  protected @Nullable PairedBraceMatcher getPairedBraceMatcher(IElementType tokenType) {
+    return LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
+  }
+
   @Override
   public boolean isPairBraces(@NotNull IElementType tokenType1, @NotNull IElementType tokenType2) {
-    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType1.getLanguage());
+    PairedBraceMatcher matcher = getPairedBraceMatcher(tokenType1);
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
       for (BracePair pair : pairs) {
@@ -136,7 +140,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   public boolean isStructuralBrace(@NotNull HighlighterIterator iterator, @NotNull CharSequence text, @NotNull FileType fileType) {
     IElementType tokenType = iterator.getTokenType();
 
-    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
+    PairedBraceMatcher matcher = getPairedBraceMatcher(tokenType);
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
       for (BracePair pair : pairs) {
@@ -253,7 +257,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
 
   @Override
   public IElementType getOppositeBraceTokenType(final @NotNull IElementType type) {
-    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(type.getLanguage());
+    PairedBraceMatcher matcher = getPairedBraceMatcher(type);
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
       for (BracePair pair : pairs) {
