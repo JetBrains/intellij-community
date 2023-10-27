@@ -33,14 +33,15 @@ public final class SelectInManager  {
   }
 
   public @NotNull List<SelectInTarget> getTargetList() {
-    List<SelectInTarget> targets = new ArrayList<>(myTargets.getExtensions());
-    if (DumbService.getInstance(myProject).isDumb()) {
-      targets.removeIf(target -> !DumbService.isDumbAware(target));
-    }
+    List<SelectInTarget> targets = new ArrayList<>(DumbService.getInstance(myProject).filterByDumbAwareness(myTargets.getExtensions()));
     targets.sort(SelectInTargetComparator.INSTANCE);
     return targets;
   }
 
+  /**
+   * @deprecated Use {@link #getTargetList()}
+   */
+  @Deprecated
   public SelectInTarget @NotNull [] getTargets() {
     return getTargetList().toArray(new SelectInTarget[0]);
   }
@@ -62,7 +63,7 @@ public final class SelectInManager  {
     return null;
   }
 
-  public static class SelectInTargetComparator implements Comparator<SelectInTarget> {
+  public static final class SelectInTargetComparator implements Comparator<SelectInTarget> {
     public static final Comparator<SelectInTarget> INSTANCE = new SelectInTargetComparator();
 
     @Override
