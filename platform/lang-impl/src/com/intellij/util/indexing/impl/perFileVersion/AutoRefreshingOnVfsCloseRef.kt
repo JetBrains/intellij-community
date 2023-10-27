@@ -3,13 +3,14 @@ package com.intellij.util.indexing.impl.perFileVersion
 
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl
+import java.io.Closeable
 
 /**
  * Reference to FastFileAttribute (e.g. [com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor]
  * or [com.intellij.openapi.vfs.newvfs.persistent.dev.FastFileAttributes.Int4FileAttribute]) will be invalidated on VFS close.
  * [AutoRefreshingOnVfsCloseRef] tracks VFS close events and recreates references automatically after VFS re-mounted.
  */
-class AutoRefreshingOnVfsCloseRef<T>(private val factory: (FSRecordsImpl) -> T) {
+class AutoRefreshingOnVfsCloseRef<T : Closeable>(private val factory: (FSRecordsImpl) -> T) : Closeable {
 
   @Volatile
   private var attributeAccessor: T? = null
@@ -26,11 +27,18 @@ class AutoRefreshingOnVfsCloseRef<T>(private val factory: (FSRecordsImpl) -> T) 
       val newAccessor = factory(fsRecordsImpl)
 
       attributeAccessor = newAccessor
-      fsRecordsImpl.addCloseable {
-        attributeAccessor = null
-      }
+      fsRecordsImpl.addCloseable(this)
 
       return@synchronized newAccessor
+    }
+  }
+
+  override fun close() {
+    try {
+      attributeAccessor?.close()
+    }
+    finally {
+      attributeAccessor = null
     }
   }
 }

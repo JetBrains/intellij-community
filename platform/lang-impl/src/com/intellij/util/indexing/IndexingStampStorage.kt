@@ -11,10 +11,11 @@ import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute
 import com.intellij.util.io.CachingEnumerator
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.Closeable
 import java.io.IOException
 
 
-sealed interface IndexingStampStorage {
+sealed interface IndexingStampStorage : Closeable {
 
   @Throws(IOException::class)
   fun writeTimestamps(fileId: Int, timestamps: TimestampsImmutable)
@@ -52,6 +53,10 @@ class IndexingStampStorageOverRegularAttributes : IndexingStampStorage {
     catch (e: IOException) {
       throw FSRecords.handleError(e)
     }
+  }
+
+  override fun close() {
+    // noop
   }
 }
 
@@ -104,7 +109,8 @@ internal class IndexingStampStorageOverFastAttributes : IndexingStampStorage {
     }
   }
 
-  fun isClosed(): Boolean {
-    return enumerator.isClosed
+  override fun close() {
+    persistence.close()
+    enumerator.close()
   }
 }
