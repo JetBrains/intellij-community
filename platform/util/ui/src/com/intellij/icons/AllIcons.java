@@ -493,7 +493,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon InspectionsEye = load("general/inspectionsEye.svg", 1945529681, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsMixed = load("general/inspectionsMixed.svg", -1563908295, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsOK = load("general/inspectionsOK.svg", 2050720021, 2);
-    /** 16x17 */ public static final @NotNull Icon InspectionsOKEmpty = load("general/inspectionsOKEmpty.svg", 1651856, 2);
+    /** 16x16 */ public static final @NotNull Icon InspectionsOKEmpty = load("general/inspectionsOKEmpty.svg", -147695886, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsPause = load("general/inspectionsPause.svg", 1426069888, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsPowerSaveMode = load("general/inspectionsPowerSaveMode.svg", -1738215750, 0);
     /** 16x16 */ public static final @NotNull Icon InspectionsTrafficOff = load("general/inspectionsTrafficOff.svg", -1141682828, 2);
