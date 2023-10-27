@@ -115,13 +115,13 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     return document
   }
 
-  fun createDocument(allowUpdatesWithoutWriteAction: Boolean): Document {
+  override fun createDocument(allowUpdatesWithoutWriteAction: Boolean): Document {
     val document = DocumentImpl("", allowUpdatesWithoutWriteAction)
     editorEventMulticaster.registerDocument(document)
     return document
   }
 
-  fun createDocument(text: CharSequence, acceptsSlashR: Boolean, allowUpdatesWithoutWriteAction: Boolean): Document {
+  override fun createDocument(text: CharSequence, acceptsSlashR: Boolean, allowUpdatesWithoutWriteAction: Boolean): Document {
     val document = DocumentImpl(text, acceptsSlashR, allowUpdatesWithoutWriteAction)
     editorEventMulticaster.registerDocument(document)
     return document

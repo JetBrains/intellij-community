@@ -14,7 +14,6 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
@@ -38,7 +37,7 @@ class TestDiffContent(
 
   override fun getContentType(): FileType = FileTypes.PLAIN_TEXT
 
-  private val fakeDocument = (EditorFactory.getInstance() as EditorFactoryImpl).createDocument("", true, false).apply {
+  private val fakeDocument = EditorFactory.getInstance().createDocument("", true, false).apply {
     putUserData(UndoManager.ORIGINAL_DOCUMENT, original.document)
   }
 

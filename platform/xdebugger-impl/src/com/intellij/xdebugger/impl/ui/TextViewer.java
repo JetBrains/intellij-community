@@ -53,7 +53,7 @@ public final class TextViewer extends EditorTextField {
 
   private static Document createDocument(@NotNull String initialText, boolean viewer) {
     if (needSlashRSupport(initialText, viewer)){
-      return ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(initialText, true, false);
+      return EditorFactory.getInstance().createDocument(initialText, true, false);
     }
     else {
       return EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(initialText));

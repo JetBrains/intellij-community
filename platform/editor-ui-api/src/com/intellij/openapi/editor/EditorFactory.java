@@ -43,6 +43,25 @@ public abstract class EditorFactory {
   public abstract @NotNull Document createDocument(char @NotNull [] text);
 
   /**
+   * Creates an empty document.
+   *
+   * @param allowUpdatesWithoutWriteAction true if the document should allow updates without write action.
+   */
+  public abstract @NotNull Document createDocument(boolean allowUpdatesWithoutWriteAction);
+
+  /**
+   * Creates a document from the specified text specified as a char sequence.
+   *
+   * @param text                           the text to create the document for.
+   * @param acceptsSlashR                  true if the document should accept '\r' as a line separator.
+   * @param allowUpdatesWithoutWriteAction true if the document should allow updates without write action.
+   * @return the document instance.
+   */
+  public abstract @NotNull Document createDocument(@NotNull CharSequence text,
+                                                   boolean acceptsSlashR,
+                                                   boolean allowUpdatesWithoutWriteAction);
+
+  /**
    * Creates an editor for the specified document. Must be invoked in EDT.
    * <p>
    * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}.
