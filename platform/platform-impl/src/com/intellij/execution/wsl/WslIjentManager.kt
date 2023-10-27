@@ -2,8 +2,6 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.ChannelInputStream
-import com.intellij.execution.process.ChannelOutputStream
 import com.intellij.execution.process.UnixSignal
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
@@ -16,6 +14,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.*
 import com.intellij.util.SuspendingLazy
+import com.intellij.util.channel.ChannelInputStream
+import com.intellij.util.channel.ChannelOutputStream
 import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.CoroutineScope
