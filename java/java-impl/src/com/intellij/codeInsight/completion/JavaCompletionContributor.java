@@ -20,6 +20,7 @@ import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -39,6 +40,7 @@ import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
@@ -1014,7 +1016,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   private static LookupElementBuilder createAnnotationAttributeElement(@NotNull PsiMethod annoMethod,
                                                                        @Nullable String value,
                                                                        @NotNull PsiElement position) {
-    String space = ReferenceExpressionCompletionContributor.getSpace(CodeStyle.getLanguageSettings(annoMethod.getContainingFile()).SPACE_AROUND_ASSIGNMENT_OPERATORS);
+    CommonCodeStyleSettings styleSettings = CodeStyle.getLanguageSettings(annoMethod.getContainingFile());
+    String space = ReferenceExpressionCompletionContributor.getSpace(styleSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
     String lookupString = annoMethod.getName() + (value == null ? "" : space + "=" + space + value);
     return LookupElementBuilder.create(annoMethod, lookupString).withIcon(annoMethod.getIcon(0))
       .withStrikeoutness(JavaDeprecationUtils.isDeprecated(annoMethod, position))
@@ -1028,12 +1031,32 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         context.commitDocument();
         PsiAnnotationParameterList paramList =
           PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiAnnotationParameterList.class, false);
+        Document document = context.getDocument();
         if (paramList != null && paramList.getAttributes().length > 0 && paramList.getAttributes()[0].getName() == null) {
           int valueOffset = paramList.getAttributes()[0].getTextRange().getStartOffset();
-          context.getDocument().insertString(valueOffset, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+          document.insertString(valueOffset, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
           EqTailType.INSTANCE.processTail(editor, valueOffset + PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.length());
         }
+        int offset = editor.getCaretModel().getOffset();
+        CharSequence sequence = document.getCharsSequence();
+        if (hasAttributeNameAt(sequence, offset)) {
+          document.insertString(offset, styleSettings.SPACE_AFTER_COMMA ? ", " : ",");
+        }
       });
+  }
+
+  private static boolean hasAttributeNameAt(@NotNull CharSequence sequence, int offset) {
+    int length = sequence.length();
+    if (length <= offset) return false;
+    char nextChar = sequence.charAt(offset);
+    if (!StringUtil.isJavaIdentifierStart(nextChar)) return false;
+    while (offset < length - 1 && StringUtil.isJavaIdentifierPart(sequence.charAt(offset + 1))) {
+      offset++;
+    }
+    while (offset < length - 1 && StringUtil.isWhiteSpace(sequence.charAt(offset + 1))) {
+      offset++;
+    }
+    return offset < length - 1 && sequence.charAt(offset + 1) == '=';
   }
 
   @Override
