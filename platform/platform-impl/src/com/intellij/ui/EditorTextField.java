@@ -368,7 +368,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     void execute(@NotNull Editor editor);
 
     final class All implements DeferredSelection {
-      private static @Nullable All instance;
+      private static final @NotNull All INSTANCE = new DeferredSelection.All();
 
       private All() {
       }
@@ -379,15 +379,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       }
 
       public static @NotNull All getInstance() {
-        if (instance == null) {
-          instance = new DeferredSelection.All();
-        }
-        return instance;
+        return INSTANCE;
       }
     }
 
     final class None implements DeferredSelection {
-      private static @Nullable None instance;
+      private static final @NotNull None INSTANCE = new DeferredSelection.None();
 
       private None() {
       }
@@ -398,10 +395,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       }
 
       public static @NotNull None getInstance() {
-        if (instance == null) {
-          instance = new DeferredSelection.None();
-        }
-        return instance;
+        return INSTANCE;
       }
     }
 
