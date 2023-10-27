@@ -36,7 +36,8 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
         allFiles.add(optionsEntry.name)
       }
       else if (optionsEntry.isDirectory() && optionsEntry.name.lowercase() == getPerOsSettingsStorageFolderName()) {
-        allFiles.addAll(filesFromFolder(optionsEntry, ""))
+        // i.e. mac/keymap.xml
+        allFiles.addAll(filesFromFolder(optionsEntry, optionsEntry.name))
       }
     }
     // ensure CodeStyleSchemes manager is created
@@ -47,7 +48,7 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
     schemeManagerFactory.process {
       val dirPath = configDirPath / it.fileSpec
       if (dirPath.isDirectory()) {
-        allFiles.addAll(filesFromFolder(dirPath))
+        allFiles.addAll(filesFromFolder(dirPath, it.fileSpec))
       }
     }
     LOG.info("Detected ${allFiles.size} files to import: ${allFiles.joinToString()}")
@@ -65,7 +66,11 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
     val retval = ArrayList<String>()
     for (entry in dir.listDirectoryEntries()) {
       if (entry.isRegularFile()) {
-        retval.add("$prefix/${entry.name}")
+        if (prefix.isNullOrEmpty()) {
+          retval.add(entry.name)
+        } else {
+          retval.add("$prefix/${entry.name}")
+        }
       }
     }
     return retval
@@ -75,14 +80,18 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
   private fun filterFiles(allFiles: Set<String>, categories: Set<SettingsCategory>): List<String> {
     val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
     val retval = hashSetOf<String>()
+    val osFolderName = getPerOsSettingsStorageFolderName()
     componentManager.processAllImplementationClasses { aClass, _ ->
       if (PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
         val state = aClass.getAnnotation(State::class.java) ?: return@processAllImplementationClasses
         if (!categories.contains(state.category))
           return@processAllImplementationClasses
         state.storages.forEach { storage ->
-          if (!storage.deprecated && allFiles.contains(storage.value)) {
-            @Suppress("UNCHECKED_CAST")
+          if (storage.deprecated)
+            return@forEach
+          if (storage.roamingType == RoamingType.PER_OS && allFiles.contains("$osFolderName/${storage.value}")) {
+            retval.add("$osFolderName/${storage.value}")
+          } else if (storage.roamingType != RoamingType.DISABLED && allFiles.contains(storage.value)) {
             retval.add(storage.value)
           }
         }
