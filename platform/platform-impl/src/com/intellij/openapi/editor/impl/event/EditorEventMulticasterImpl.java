@@ -121,8 +121,9 @@ public final class EditorEventMulticasterImpl implements EditorEventMulticasterE
   }
 
   /**
-   * Dangerous method. When high priority listener fires the underlying subsystems (e.g. folding,caret, etc) may not be ready yet.
-   * So all requests to the e.g. caret offset might generate exceptions.
+   * Dangerous method.
+   * When high-priority listener fires, the underlying subsystems (e.g., folding, caret, etc.) may not be ready yet.
+   * So all requests to the e.g., caret offset might generate exceptions.
    * Use for internal purposes only.
    * @see EditorDocumentPriorities
    */
