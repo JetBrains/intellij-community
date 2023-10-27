@@ -28,11 +28,12 @@ object TransferSettingsCollector : CounterUsagesCollector() {
   private val perfEventValueField = EventFields.Long("value")
   private val selectedSectionsField = EventFields.StringList("selectedSections", TransferableSections.types)
   private val unselectedSectionsField = EventFields.StringList("unselectedSections", TransferableSections.types)
+  private val timesSwitchedBetweenInstancesField = EventFields.Int("timesSwitchedBetweenInstances")
 
   // Common events
   private val transferSettingsShown = GROUP.registerEvent("transfer.settings.shown")
   private val transferSettingsSkipped = GROUP.registerEvent("transfer.settings.skipped")
-  private val importStarted = GROUP.registerEvent("import.started", selectedSectionsField, unselectedSectionsField)
+  private val importStarted = GROUP.registerEvent("import.started", selectedSectionsField, unselectedSectionsField, timesSwitchedBetweenInstancesField)
   private val importSucceeded = GROUP.registerEvent("import.succeeded", ideField, ideVersionField)
   private val importFailed = GROUP.registerEvent("import.failed", ideField, ideVersionField)
 
@@ -84,7 +85,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
     transferSettingsSkipped.log()
   }
 
-  fun logImportStarted(settings: Settings) {
+  fun logImportStarted(settings: Settings, timesSwitchedBetweenInstances: Int) {
     val selectedSections = mutableListOf<String>()
     val unselectedSections = mutableListOf<String>()
 
@@ -94,7 +95,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
     if (settings.preferences.recentProjects) selectedSections.add(TransferableSections.recentProjects) else unselectedSections.add(TransferableSections.recentProjects)
     if (settings.preferences.syntaxScheme) selectedSections.add(TransferableSections.syntaxScheme) else unselectedSections.add(TransferableSections.syntaxScheme)
 
-    importStarted.log(selectedSections, unselectedSections)
+    importStarted.log(selectedSections, unselectedSections, timesSwitchedBetweenInstances)
   }
 
   fun logImportSucceeded(ideVersion: IdeVersion, settings: Settings) {
