@@ -154,9 +154,6 @@ public final class MainPassesRunner {
         }
         //retry if one of the daemonIndicators was canceled by started write action
       }
-      catch (Throwable t) {
-        throw t;
-      }
       finally {
         Disposer.dispose(disposable);
       }
