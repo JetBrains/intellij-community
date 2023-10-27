@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder
 import com.intellij.openapi.wm.impl.TitleInfoProvider.Companion.getProviders
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.ui.JBUI
@@ -393,6 +394,7 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
     }
     else null)?.let {
       HelpTooltip().setTitle(it).installOn(label)
+      CustomHeader.ensureClickTransparent(label)
     }
 
     coroutineContext.ensureActive()
