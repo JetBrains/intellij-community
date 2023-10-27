@@ -19,6 +19,8 @@ interface SemanticSearchSettings {
     get() = false
 
   fun isEnabled(): Boolean
+  fun isEnabledFileRelated(): Boolean = enabledInClassesTab || enabledInFilesTab || enabledInSymbolsTab
+
   fun getUseRemoteActionsServer(): Boolean
   fun getActionsAPIToken(): String
 

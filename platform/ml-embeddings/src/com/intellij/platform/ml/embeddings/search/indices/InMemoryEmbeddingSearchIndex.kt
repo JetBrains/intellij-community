@@ -3,6 +3,7 @@ package com.intellij.platform.ml.embeddings.search.indices
 
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.util.containers.CollectionFactory
 import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -16,6 +17,7 @@ import kotlin.concurrent.write
  */
 class InMemoryEmbeddingSearchIndex(root: Path, limit: Int? = null) : EmbeddingSearchIndex {
   private var idToEmbedding: MutableMap<String, FloatTextEmbedding> = CollectionFactory.createSmallMemoryFootprintMap()
+  private val uncheckedIds: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
   private val lock = ReentrantReadWriteLock()
 
   private val fileManager = LocalEmbeddingIndexFileManager(root)
@@ -31,9 +33,23 @@ class InMemoryEmbeddingSearchIndex(root: Path, limit: Int? = null) : EmbeddingSe
 
   override val size: Int get() = lock.read { idToEmbedding.size }
 
-  override operator fun contains(id: String): Boolean = lock.read { id in idToEmbedding }
+  override operator fun contains(id: String): Boolean = lock.read {
+    uncheckedIds.remove(id)
+    id in idToEmbedding
+  }
 
-  override fun addEntries(values: Iterable<Pair<String, FloatTextEmbedding>>) = lock.write {
+  override fun onIndexingStart() {
+    uncheckedIds.clear()
+    uncheckedIds.addAll(idToEmbedding.keys)
+  }
+
+  override fun onIndexingFinish() = lock.write {
+    uncheckedIds.forEach { idToEmbedding.remove(it) }
+    uncheckedIds.clear()
+  }
+
+  override suspend fun addEntries(values: Iterable<Pair<String, FloatTextEmbedding>>,
+                                  shouldCount: Boolean) = lock.write {
     if (limit != null) {
       val list = values.toList()
       idToEmbedding.putAll(list.take(minOf(limit!! - idToEmbedding.size, list.size)))
@@ -43,9 +59,9 @@ class InMemoryEmbeddingSearchIndex(root: Path, limit: Int? = null) : EmbeddingSe
     }
   }
 
-  override fun saveToDisk() = lock.read { save() }
+  override suspend fun saveToDisk() = lock.read { save() }
 
-  override fun loadFromDisk() = lock.write {
+  override suspend fun loadFromDisk() = lock.write {
     val (ids, embeddings) = fileManager.loadIndex() ?: return
     idToEmbedding = (ids zip embeddings).toMap().toMutableMap()
   }
@@ -58,17 +74,6 @@ class InMemoryEmbeddingSearchIndex(root: Path, limit: Int? = null) : EmbeddingSe
     return idToEmbedding.asSequence().map { it.key to it.value }.streamFindClose(searchEmbedding, similarityThreshold)
   }
 
-  override fun filterIdsTo(idToCount: Map<String, Int>) = lock.write {
-    val oldSize = idToEmbedding.size
-    val uniqueIds = idToCount.keys
-    idToEmbedding = idToEmbedding.filterKeys { it in uniqueIds }.toMutableMap()
-    if (idToEmbedding.size != oldSize) save()
-  }
-
-  override fun checkAllIdsPresent(ids: Set<String>): Boolean = lock.read {
-    return ids.all { it in idToEmbedding } || !checkCanAddEntry()
-  }
-
   override fun estimateMemoryUsage() = fileManager.embeddingSizeInBytes.toLong() * size
 
   override fun estimateLimitByMemory(memory: Long): Int {
@@ -79,7 +84,7 @@ class InMemoryEmbeddingSearchIndex(root: Path, limit: Int? = null) : EmbeddingSe
     return limit == null || idToEmbedding.size < limit!!
   }
 
-  private fun save() {
+  private suspend fun save() {
     val (ids, embeddings) = idToEmbedding.toList().unzip()
     fileManager.saveIndex(ids, embeddings)
   }
