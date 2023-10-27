@@ -77,3 +77,13 @@ enum class TransferableIdeFeatureId {
   Wsl,
   XamlStyler
 }
+
+object TransferableSections {
+  val laf = "LAF"
+  val keymap = "Keymap"
+  val plugins = "Plugins"
+  val recentProjects = "RecentProjects"
+  val syntaxScheme = "SyntaxScheme"
+
+  val types = listOf(laf, keymap, plugins, recentProjects, syntaxScheme)
+}

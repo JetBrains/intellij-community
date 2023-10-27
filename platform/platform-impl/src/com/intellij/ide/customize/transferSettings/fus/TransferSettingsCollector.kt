@@ -26,11 +26,13 @@ object TransferSettingsCollector : CounterUsagesCollector() {
   private val featureField = EventFields.Enum<TransferableIdeFeatureId>("feature")
   private val performanceMetricTypeTypeField = EventFields.Enum<PerformanceMetricType>("type")
   private val perfEventValueField = EventFields.Long("value")
+  private val selectedSectionsField = EventFields.StringList("selectedSections", TransferableSections.types)
+  private val unselectedSectionsField = EventFields.StringList("unselectedSections", TransferableSections.types)
 
   // Common events
   private val transferSettingsShown = GROUP.registerEvent("transfer.settings.shown")
   private val transferSettingsSkipped = GROUP.registerEvent("transfer.settings.skipped")
-  private val importStarted = GROUP.registerEvent("import.started")
+  private val importStarted = GROUP.registerEvent("import.started", selectedSectionsField, unselectedSectionsField)
   private val importSucceeded = GROUP.registerEvent("import.succeeded", ideField, ideVersionField)
   private val importFailed = GROUP.registerEvent("import.failed", ideField, ideVersionField)
 
@@ -82,8 +84,17 @@ object TransferSettingsCollector : CounterUsagesCollector() {
     transferSettingsSkipped.log()
   }
 
-  fun logImportStarted() {
-    importStarted.log()
+  fun logImportStarted(settings: Settings) {
+    val selectedSections = mutableListOf<String>()
+    val unselectedSections = mutableListOf<String>()
+
+    if (settings.preferences.laf) selectedSections.add(TransferableSections.laf) else unselectedSections.add(TransferableSections.laf)
+    if (settings.preferences.keymap) selectedSections.add(TransferableSections.keymap) else unselectedSections.add(TransferableSections.keymap)
+    if (settings.preferences.plugins) selectedSections.add(TransferableSections.plugins) else unselectedSections.add(TransferableSections.plugins)
+    if (settings.preferences.recentProjects) selectedSections.add(TransferableSections.recentProjects) else unselectedSections.add(TransferableSections.recentProjects)
+    if (settings.preferences.syntaxScheme) selectedSections.add(TransferableSections.syntaxScheme) else unselectedSections.add(TransferableSections.syntaxScheme)
+
+    importStarted.log(selectedSections, unselectedSections)
   }
 
   fun logImportSucceeded(ideVersion: IdeVersion, settings: Settings) {

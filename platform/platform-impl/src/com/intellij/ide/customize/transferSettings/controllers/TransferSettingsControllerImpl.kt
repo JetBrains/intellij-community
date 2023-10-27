@@ -22,7 +22,7 @@ class TransferSettingsControllerImpl : TransferSettingsController {
   }
 
   override fun performImport(project: Project?, ideVersion: IdeVersion, pi: ProgressIndicator) {
-    TransferSettingsCollector.logImportStarted()
+    TransferSettingsCollector.logImportStarted(ideVersion.settingsCache)
     eventDispatcher.multicaster.importStarted(ideVersion, ideVersion.settingsCache)
     val performer = getImportPerformer()
 
