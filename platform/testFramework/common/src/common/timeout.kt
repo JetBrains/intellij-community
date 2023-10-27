@@ -3,8 +3,11 @@ package com.intellij.testFramework.common
 
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.util.io.blockingDispatcher
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
+import java.awt.Toolkit
+import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -30,6 +33,29 @@ fun timeoutRunBlocking(timeout: Duration = DEFAULT_TEST_TIMEOUT, action: suspend
         error = e
       }
     }
+    if (EDT.isCurrentThreadEdt()) { // then we have to respect other EDT consumers
+      val edtPoller = launch { pollEdtIncrementally() }
+      job.invokeOnCompletion { edtPoller.cancel() }
+    }
   }
   error?.let { throw AssertionError(it) }
+}
+
+@TestOnly
+private suspend fun pollEdtIncrementally() {
+  EDT.assertIsEdt()
+  var consequentDelays = 0
+  while (coroutineContext.isActive) {
+    val event = Toolkit.getDefaultToolkit().systemEventQueue.peekEvent()
+    if (event == null) {
+      // then we don't want to spam the EDT too much, so we are sleeping incrementally
+      consequentDelays++
+      delay((consequentDelays * 50).toLong().coerceAtMost(1000))
+    }
+    else {
+      EDT.dispatchAllInvocationEvents()
+      consequentDelays = 0
+      yield()
+    }
+  }
 }
