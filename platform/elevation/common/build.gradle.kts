@@ -35,16 +35,12 @@ sourceSets {
             include("**/*.proto")
         }
         java {
-            srcDir("$projectDir/gen")
+            setSrcDirs(listOf("$projectDir/gen", "$projectDir/src"))
         }
     }
 }
 
 protobuf {
-    // Together with the 'outputSubDir' overridden below in order to skip the intermediate "main/" sourceSet dir,
-    // this makes sources files generated using the layout more common for the IntelliJ project.
-    generatedFilesBaseDir = "$projectDir/gen"
-
     protoc {
         artifact = "com.google.protobuf:protoc:$protobufVersion"
     }
@@ -58,18 +54,28 @@ protobuf {
     }
     generateProtoTasks {
         ofSourceSet("main").forEach {
+          // Skip the intermediate "main/plugin" dirs for generated sources,
+          // and place them using the layout more common for the IntelliJ project.
+          fun GenerateProtoTask.PluginOptions.copyGeneratedFiles() {
+              it.doLast {
+                copy {
+                  from("${it.outputBaseDir}/${outputSubDir}")
+                  into("$projectDir/gen")
+                }
+              }
+            }
             it.builtins {
                 remove("java")
                 id("java") {
-                    outputSubDir = ".."
+                    copyGeneratedFiles()
                 }
             }
             it.plugins {
                 id("grpc") {
-                    outputSubDir = ".."
+                    copyGeneratedFiles()
                 }
                 id("grpckt") {
-                    outputSubDir = ".."
+                    copyGeneratedFiles()
                 }
             }
         }
