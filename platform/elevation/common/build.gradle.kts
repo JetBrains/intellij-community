@@ -2,20 +2,20 @@
 import com.google.protobuf.gradle.*
 
 val grpcVersion = "1.57.2"
-val grpcKotlinVersion = "0.2.0" // CURRENT_GRPC_KOTLIN_VERSION
+val grpcKotlinVersion = "1.4.0" // CURRENT_GRPC_KOTLIN_VERSION
 val protobufVersion = "3.24.4"
-val coroutinesVersion = "1.3.8"
+val coroutinesVersion = "1.7.3"
 
 plugins {
     application
-    kotlin("jvm") version "1.4.0"
-    id("com.google.protobuf") version "0.8.13"
+    kotlin("jvm") version "1.9.10"
+    id("com.google.protobuf") version "0.9.4"
 }
 
 repositories {
     mavenLocal()
-    jcenter()
     mavenCentral()
+    google()
 }
 
 dependencies {
@@ -49,7 +49,7 @@ protobuf {
             artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion"
         }
         id("grpckt") {
-            artifact = "io.grpc:protoc-gen-grpc-kotlin:$grpcKotlinVersion:jdk7@jar"
+            artifact = "io.grpc:protoc-gen-grpc-kotlin:$grpcKotlinVersion:jdk8@jar"
         }
     }
     generateProtoTasks {
@@ -83,5 +83,5 @@ protobuf {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
 }
