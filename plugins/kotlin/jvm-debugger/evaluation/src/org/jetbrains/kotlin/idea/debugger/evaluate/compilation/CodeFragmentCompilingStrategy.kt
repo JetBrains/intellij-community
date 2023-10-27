@@ -25,7 +25,7 @@ abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
     abstract fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile>
 
     abstract fun onSuccess()
-    abstract fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext)
+    abstract fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext)
     abstract fun getFallbackStrategy(): CodeFragmentCompilingStrategy?
     abstract fun beforeRunningFallback()
     abstract fun beforeAnalyzingCodeFragment()
@@ -52,7 +52,7 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
         )
     }
 
-    override fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+    override fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
         KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
             codeFragment.project,
             StatisticsEvaluator.OLD,
@@ -120,7 +120,7 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         )
     }
 
-    override fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+    override fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
         KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
             codeFragment.project,
             StatisticsEvaluator.IR,

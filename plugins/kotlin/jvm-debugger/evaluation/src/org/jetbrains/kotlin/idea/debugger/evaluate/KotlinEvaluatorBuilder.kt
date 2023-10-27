@@ -211,7 +211,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
             val result = stats.startAndMeasureAnalysisUnderReadAction {
                 compiledCodeFragmentDataK2Impl(context)
-            }
+            }.getOrThrow()
             onFinish(StatisticsEvaluationResult.SUCCESS)
             return result
         } catch(e: ProcessCanceledException) {
@@ -264,7 +264,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             } catch (e: EvaluateException) {
                 throw e
             } catch (e: Throwable) {
-                reportErrorWithAttachments(context, codeFragment, CodeFragmentCodegenException(e))
+                reportErrorWithAttachments(context, codeFragment, e)
                 throw EvaluateExceptionUtil.createEvaluateException(e)
             }
         }
