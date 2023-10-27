@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.notifications.showMigrationNotification
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
@@ -20,15 +19,9 @@ class KotlinMigrationProjectService(val project: Project) : Disposable {
     private var currentState: MigrationState? = null
 
     private fun updateState(languageVersion: LanguageVersion?, apiVersion: ApiVersion?) {
-        val newState = if (languageVersion == null || apiVersion == null) {
-            val bundledKotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
-            MigrationState(
-                languageVersion = languageVersion ?: bundledKotlinVersion.languageVersion,
-                apiVersion = apiVersion ?: bundledKotlinVersion.apiVersion,
-            )
-        } else {
+        val newState = if (languageVersion != null && apiVersion != null) {
             MigrationState(languageVersion, apiVersion)
-        }
+        } else null
 
         val oldState = synchronized(this) { currentState.also { currentState = newState } }
         val migrationInfo = prepareMigrationInfo(old = oldState, new = newState) ?: return
