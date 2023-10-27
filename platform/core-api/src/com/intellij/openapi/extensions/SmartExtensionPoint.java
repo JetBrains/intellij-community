@@ -1,25 +1,27 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
-import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
+import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static kotlinx.collections.immutable.ExtensionsKt.*;
+
 public abstract class SmartExtensionPoint<Extension, V> {
-  private final Collection<V> myExplicitExtensions;
+  private final PersistentList<V> explicitExtensions;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private volatile ExtensionPoint<@NotNull Extension> myExtensionPoint;
-  private volatile List<V> myCache;
-  private final ExtensionPointAndAreaListener<Extension> myExtensionPointAndAreaListener;
+  private volatile ExtensionPoint<@NotNull Extension> extensionPoint;
+  private volatile PersistentList<V> cache;
+  private final ExtensionPointAndAreaListener<Extension> extensionPointAndAreaListener;
 
   protected SmartExtensionPoint(@NotNull Collection<V> explicitExtensions) {
-    myExplicitExtensions = explicitExtensions;
+    this.explicitExtensions = toPersistentList(explicitExtensions);
 
-    myExtensionPointAndAreaListener = new ExtensionPointAndAreaListener<Extension>() {
+    extensionPointAndAreaListener = new ExtensionPointAndAreaListener<Extension>() {
       @Override
       public void areaReplaced(@NotNull ExtensionsArea oldArea) {
         dropCache();
@@ -36,17 +38,17 @@ public abstract class SmartExtensionPoint<Extension, V> {
       }
 
       private void dropCache() {
-        if (myCache == null) {
+        if (cache == null) {
           return;
         }
 
-        synchronized (myExplicitExtensions) {
-          if (myCache != null) {
-            myCache = null;
-            ExtensionPoint<@NotNull Extension> extensionPoint = myExtensionPoint;
+        synchronized (SmartExtensionPoint.this.explicitExtensions) {
+          if (cache != null) {
+            cache = null;
+            ExtensionPoint<@NotNull Extension> extensionPoint = SmartExtensionPoint.this.extensionPoint;
             if (extensionPoint != null) {
               extensionPoint.removeExtensionPointListener(this);
-              myExtensionPoint = null;
+              SmartExtensionPoint.this.extensionPoint = null;
             }
           }
         }
@@ -57,47 +59,61 @@ public abstract class SmartExtensionPoint<Extension, V> {
   protected abstract @NotNull ExtensionPoint<@NotNull Extension> getExtensionPoint();
 
   public final void addExplicitExtension(@NotNull V extension) {
-    synchronized (myExplicitExtensions) {
-      myExplicitExtensions.add(extension);
-      myCache = null;
+    synchronized (explicitExtensions) {
+      explicitExtensions.add(extension);
+      cache = null;
     }
   }
 
   public final void removeExplicitExtension(@NotNull V extension) {
-    synchronized (myExplicitExtensions) {
-      myExplicitExtensions.remove(extension);
-      myCache = null;
+    synchronized (explicitExtensions) {
+      explicitExtensions.remove(extension);
+      cache = null;
     }
   }
 
   protected abstract @Nullable V getExtension(final @NotNull Extension extension);
 
   public final @NotNull List<V> getExtensions() {
-    List<V> result = myCache;
+    PersistentList<V> result = cache;
     if (result != null) {
       return result;
     }
 
-    // it is ok to call getExtensionPoint several times - call is cheap and implementation is thread-safe
-    ExtensionPoint<@NotNull Extension> extensionPoint = myExtensionPoint;
+    // it is ok to call getExtensionPoint several times - call is cheap, and implementation is thread-safe
+    ExtensionPoint<Extension> extensionPoint = this.extensionPoint;
     if (extensionPoint == null) {
       extensionPoint = getExtensionPoint();
-      myExtensionPoint = extensionPoint;
+      this.extensionPoint = extensionPoint;
     }
 
-    List<V> registeredExtensions = ContainerUtil.mapNotNull(extensionPoint.getExtensionList(), this::getExtension);
-    synchronized (myExplicitExtensions) {
-      result = myCache;
+    PersistentList<V> registeredExtensions;
+    List<? extends Extension> collection = extensionPoint.getExtensionList();
+    if (collection.isEmpty()) {
+      registeredExtensions = persistentListOf();
+    }
+    else {
+      registeredExtensions = mutate(persistentListOf(), mutator -> {
+        for (Extension t : collection) {
+          V o = getExtension(t);
+          if (o != null) {
+            mutator.add(o);
+          }
+        }
+        return Unit.INSTANCE;
+      });
+    }
+
+    synchronized (explicitExtensions) {
+      result = cache;
       if (result != null) {
         return result;
       }
 
       // EP will not add duplicated listener, so, it is safe to not care about is already added
-      extensionPoint.addExtensionPointListener(myExtensionPointAndAreaListener, false, null);
-      result = new ArrayList<>(myExplicitExtensions.size() + registeredExtensions.size());
-      result.addAll(myExplicitExtensions);
-      result.addAll(registeredExtensions);
-      myCache = result;
+      extensionPoint.addExtensionPointListener(extensionPointAndAreaListener, false, null);
+      result = explicitExtensions.addAll(registeredExtensions);
+      cache = result;
       return result;
     }
   }

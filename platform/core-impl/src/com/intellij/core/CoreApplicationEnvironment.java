@@ -239,7 +239,7 @@ public class CoreApplicationEnvironment {
 
     List<ExtensionPointDescriptor> extensionPoints = descriptor.appContainerDescriptor.extensionPoints;
     ExtensionsAreaImpl areaImpl = (ExtensionsAreaImpl)area;
-    if (extensionPoints != null) {
+    if (!extensionPoints.isEmpty()) {
       areaImpl.registerExtensionPoints(extensionPoints, descriptor);
     }
     descriptor.registerExtensions(areaImpl.extensionPoints, descriptor.appContainerDescriptor, null);
