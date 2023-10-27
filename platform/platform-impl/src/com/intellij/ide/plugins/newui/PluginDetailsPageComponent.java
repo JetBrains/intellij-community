@@ -39,6 +39,7 @@ import com.intellij.ui.dsl.builder.HyperlinkEventAction;
 import com.intellij.ui.dsl.builder.components.DslLabel;
 import com.intellij.ui.dsl.builder.components.DslLabelType;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -65,6 +66,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.util.SlowOperations.IDEA_PLUGIN_SANDBOX_MODE;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
@@ -1658,11 +1660,13 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private @Nullable @Nls String getDescription() {
-    PluginNode node = getInstalledPluginMarketplaceNode();
-    if (node != null) {
-      String description = node.getDescription();
-      if (!Strings.isEmptyOrSpaces(description)) {
-        return description;
+    if (!SystemProperties.getBooleanProperty(IDEA_PLUGIN_SANDBOX_MODE, false)) {
+      PluginNode node = getInstalledPluginMarketplaceNode();
+      if (node != null) {
+        String description = node.getDescription();
+        if (!Strings.isEmptyOrSpaces(description)) {
+          return description;
+        }
       }
     }
     String description = myPlugin.getDescription();
@@ -1670,17 +1674,19 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private @Nullable @NlsSafe String getChangeNotes() {
-    if (myUpdateDescriptor != null) {
-      String notes = myUpdateDescriptor.getChangeNotes();
-      if (!Strings.isEmptyOrSpaces(notes)) {
-        return notes;
+    if (!SystemProperties.getBooleanProperty(IDEA_PLUGIN_SANDBOX_MODE, false)) {
+      if (myUpdateDescriptor != null) {
+        String notes = myUpdateDescriptor.getChangeNotes();
+        if (!Strings.isEmptyOrSpaces(notes)) {
+          return notes;
+        }
       }
-    }
-    PluginNode node = getInstalledPluginMarketplaceNode();
-    if (node != null) {
-      String changeNotes = node.getChangeNotes();
-      if (!Strings.isEmptyOrSpaces(changeNotes)) {
-        return changeNotes;
+      PluginNode node = getInstalledPluginMarketplaceNode();
+      if (node != null) {
+        String changeNotes = node.getChangeNotes();
+        if (!Strings.isEmptyOrSpaces(changeNotes)) {
+          return changeNotes;
+        }
       }
     }
     String notes = myPlugin.getChangeNotes();
