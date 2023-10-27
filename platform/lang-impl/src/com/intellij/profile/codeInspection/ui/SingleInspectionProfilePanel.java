@@ -132,6 +132,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     for (InspectionTreeAdvertiser advertiser : InspectionTreeAdvertiser.EP_NAME.getExtensionList()) {
       myCustomGroups.addAll(advertiser.getCustomGroups());
     }
+    myCreateInspectionActions = CustomInspectionActions.getAddActionGroup(this);
   }
 
   public boolean differsFromDefault() {
@@ -157,13 +158,6 @@ public class SingleInspectionProfilePanel extends JPanel {
   @NotNull
   public Project getProject() {
     return myProjectProfileManager.getProject();
-  }
-
-  public void registerAction(@NotNull String id, @NotNull AnAction action) {
-    ActionManager.getInstance().registerAction(id, action);
-    Disposer.register(myDisposable, new Disposable() {
-      @Override public void dispose() { ActionManager.getInstance().unregisterAction(id); }
-    });
   }
 
   private static VisibleTreeState getExpandedNodes(InspectionProfileImpl profile) {
@@ -519,9 +513,8 @@ public class SingleInspectionProfilePanel extends JPanel {
         postProcessModification();
       }
     });
-    final var customAdd = CustomInspectionActions.getAddActionGroup(this);
-    if (customAdd != null) {
-      actions.add(customAdd);
+    if (myCreateInspectionActions != null) {
+      actions.add(myCreateInspectionActions);
       actions.add(new CustomInspectionActions.RemoveInspectionAction(this));
     }
     for (InspectionProfileActionProvider provider : InspectionProfileActionProvider.EP_NAME.getExtensionList()) {
@@ -604,10 +597,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     myTreeTable.setTreeCellRenderer(renderer);
     myTreeTable.setRootVisible(false);
 
-    myCreateInspectionActions = new DefaultActionGroup();
-    for (InspectionTreeAdvertiser provider : InspectionTreeAdvertiser.EP_NAME.getExtensionList()) {
-      myCreateInspectionActions.addAll(provider.getActions(this));
-    }
     updateEmptyText();
 
     final TreeTableTree tree = myTreeTable.getTree();

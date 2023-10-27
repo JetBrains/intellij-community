@@ -18,12 +18,12 @@ import org.jetbrains.annotations.Nullable;
 
 public final class CustomInspectionActions {
   @Nullable
-  public static ActionGroup getAddActionGroup(SingleInspectionProfilePanel panel) {
+  public static DefaultActionGroup getAddActionGroup(SingleInspectionProfilePanel panel) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     InspectionProfileActionProvider.EP_NAME.getExtensionList().forEach(provider -> {
       final var groupInfo = provider.getAddActions(panel);
       if (groupInfo != null) {
-        panel.registerAction(groupInfo.second, groupInfo.first);
+        ActionManager.getInstance().replaceAction(groupInfo.second, groupInfo.first);
         actionGroup.add(groupInfo.first);
       }
     });
