@@ -268,6 +268,29 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/bindToElement/callOnObject")
+    public static class ReceiverInstanceMethodCall extends AbstractK2BindToElementTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("FullyQualified.kt")
+        public void testFullyQualified() throws Exception {
+            runTest("testData/refactoring/bindToElement/callOnObject/FullyQualified.kt");
+        }
+
+        @TestMetadata("RootPkg.kt")
+        public void testRootPkg() throws Exception {
+            runTest("testData/refactoring/bindToElement/callOnObject/RootPkg.kt");
+        }
+
+        @TestMetadata("UnQualified.kt")
+        public void testUnQualified() throws Exception {
+            runTest("testData/refactoring/bindToElement/callOnObject/UnQualified.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/returnTypeReference")
     public static class ReturnTypeReference extends AbstractK2BindToElementTest {
         private void runTest(String testDataFilePath) throws Exception {
