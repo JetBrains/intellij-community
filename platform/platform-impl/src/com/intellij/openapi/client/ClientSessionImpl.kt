@@ -13,6 +13,7 @@ import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -28,7 +29,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 
-private val LOG = logger<ClientSessionImpl>()
+private val LOG: Logger
+  get() = logger<ClientSessionImpl>()
 
 @OptIn(DelicateCoroutinesApi::class)
 @ApiStatus.Experimental
@@ -39,7 +41,6 @@ abstract class ClientSessionImpl(
   private val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(
   parent = null,
-  setExtensionsRootArea = false,
   parentScope = GlobalScope,
   additionalContext = clientId.asContextElement2(),
 ), ClientSession {

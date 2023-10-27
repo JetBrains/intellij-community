@@ -25,7 +25,7 @@ fun precomputeExtensionModel(): PrecomputedExtensionModel {
   var extensionPointDescriptors = persistentListOf<PersistentList<ExtensionPointDescriptor>>()
   var pluginDescriptors = persistentListOf<IdeaPluginDescriptor>()
   var extensionPointTotalCount = 0
-  val nameToExtensions = persistentHashMapOf<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>()
+  var nameToExtensions = persistentHashMapOf<String, PersistentList<Pair<IdeaPluginDescriptor, PersistentList<ExtensionDescriptor>>>>()
 
   // step 1 - collect container level extension points
   val modules = PluginManagerCore.getPluginSet().getEnabledModules()
@@ -40,7 +40,7 @@ fun precomputeExtensionModel(): PrecomputedExtensionModel {
     extensionPointTotalCount += list.size
 
     for (descriptor in list) {
-      nameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), persistentListOf())
+      nameToExtensions = nameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), persistentListOf())
     }
   }
 

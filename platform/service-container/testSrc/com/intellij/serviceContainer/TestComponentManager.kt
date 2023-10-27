@@ -23,7 +23,6 @@ val testPluginDescriptor: DefaultPluginDescriptor = DefaultPluginDescriptor("tes
 class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) :
   ComponentManagerImpl(
     parent = null,
-    setExtensionsRootArea = false, /* must work without */
     parentScope = GlobalScope,
     additionalContext = EmptyCoroutineContext,
   ) {

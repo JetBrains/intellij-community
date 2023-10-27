@@ -92,25 +92,21 @@ fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: MethodType
 @Internal
 abstract class ComponentManagerImpl(
   internal val parent: ComponentManagerImpl?,
-  setExtensionsRootArea: Boolean,
   parentScope: CoroutineScope,
   additionalContext: CoroutineContext,
 ) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner {
-
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
 
   protected constructor(parentScope: CoroutineScope) : this(
     parent = null,
-    setExtensionsRootArea = true,
     parentScope,
     additionalContext = EmptyCoroutineContext,
   )
 
   protected constructor(parent: ComponentManagerImpl) : this(
     parent,
-    setExtensionsRootArea = false,
     parentScope = parent.getCoroutineScope(),
     additionalContext = EmptyCoroutineContext,
   )
@@ -251,7 +247,7 @@ abstract class ComponentManagerImpl(
   protected val containerStateName: String
     get() = containerState.get().name
 
-  private val _extensionArea by lazy { ExtensionsAreaImpl(this) }
+  private val extensionArea = ExtensionsAreaImpl(this)
 
   private var messageBus: MessageBusImpl? = null
 
@@ -264,10 +260,11 @@ abstract class ComponentManagerImpl(
 
   internal val serviceParentDisposable: Disposable = Disposer.newDisposable("services of ${debugString()}")
 
-  protected open val isLightServiceSupported get() = parent?.parent == null
-  protected open val isMessageBusSupported = parent?.parent == null
-  protected open val isComponentSupported = true
-  protected open val isExtensionSupported = true
+  protected open val isLightServiceSupported: Boolean
+    get() = parent?.parent == null
+
+  protected open val isMessageBusSupported: Boolean = parent?.parent == null
+  protected open val isComponentSupported: Boolean = true
 
   @Volatile
   @JvmField
@@ -275,8 +272,8 @@ abstract class ComponentManagerImpl(
 
   @Suppress("MemberVisibilityCanBePrivate")
   fun getCoroutineScope(): CoroutineScope {
-    return if (parent?.parent == null) {
-      scopeHolder.containerScope
+    if (parent?.parent == null) {
+      return scopeHolder.containerScope
     }
     else {
       throw RuntimeException("Module doesn't have coroutineScope")
@@ -285,12 +282,6 @@ abstract class ComponentManagerImpl(
 
   override val componentStore: IComponentStore
     get() = getService(IComponentStore::class.java)!!
-
-  init {
-    if (setExtensionsRootArea) {
-      Extensions.setRootArea(_extensionArea)
-    }
-  }
 
   internal fun getComponentInstance(componentKey: Any): Any? {
     assertComponentsSupported()
@@ -367,12 +358,7 @@ abstract class ComponentManagerImpl(
     return messageBus ?: getOrCreateMessageBusUnderLock()
   }
 
-  final override fun getExtensionArea(): ExtensionsAreaImpl {
-    if (!isExtensionSupported) {
-      error("Extensions aren't supported")
-    }
-    return _extensionArea
-  }
+  final override fun getExtensionArea(): ExtensionsAreaImpl = extensionArea
 
   fun registerComponents() {
     registerComponents(modules = PluginManagerCore.getPluginSet().getEnabledModules(), app = getApplication())
@@ -392,7 +378,7 @@ abstract class ComponentManagerImpl(
 
     // register services before registering extensions because plugins can access services in their extensions,
     // which can be invoked right away if the plugin is loaded dynamically
-    val extensionPoints = if (precomputedExtensionModel == null) HashMap(extensionArea.extensionPoints) else null
+    val extensionPoints = if (precomputedExtensionModel == null) HashMap(extensionArea.getNameToPointMap()) else null
     for (rootModule in modules) {
       executeRegisterTask(rootModule) { module ->
         val containerDescriptor = getContainerDescriptor(module)
@@ -434,7 +420,7 @@ abstract class ComponentManagerImpl(
 
     if (precomputedExtensionModel == null) {
       val immutableExtensionPoints = if (extensionPoints!!.isEmpty()) persistentHashMapOf() else extensionPoints.toPersistentHashMap()
-      extensionArea.extensionPoints = immutableExtensionPoints
+      extensionArea.init(immutableExtensionPoints)
 
       for (rootModule in modules) {
         executeRegisterTask(rootModule) { module ->
@@ -466,22 +452,21 @@ abstract class ComponentManagerImpl(
 
   private fun registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel: PrecomputedExtensionModel,
                                                                     listenerCallbacks: MutableList<in Runnable>?) {
-    assert(extensionArea.extensionPoints.isEmpty())
     val n = precomputedExtensionModel.pluginDescriptors.size
-    if (n == 0) {
+    if (precomputedExtensionModel.extensionPoints.isEmpty()) {
       return
     }
 
     val result = persistentHashMapOf<String, ExtensionPointImpl<*>>().mutate { map ->
       for (i in 0 until n) {
-        createExtensionPoints(points = precomputedExtensionModel.extensionPoints[i],
+        createExtensionPoints(points = precomputedExtensionModel.extensionPoints.get(i),
                               componentManager = this,
                               result = map,
-                              pluginDescriptor = precomputedExtensionModel.pluginDescriptors[i])
+                              pluginDescriptor = precomputedExtensionModel.pluginDescriptors.get(i))
       }
     }
 
-    extensionArea.extensionPoints = result
+    extensionArea.init(result)
 
     for ((name, pairs) in precomputedExtensionModel.nameToExtensions) {
       val point = result.get(name) ?: continue

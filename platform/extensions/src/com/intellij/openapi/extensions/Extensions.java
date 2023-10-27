@@ -11,22 +11,22 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public final class Extensions {
-  private static ExtensionsAreaImpl ourRootArea;
+  private static ExtensionsAreaImpl rootArea;
 
   private Extensions() {
   }
 
   public static void setRootArea(@NotNull ExtensionsAreaImpl area) {
-    ourRootArea = area;
+    rootArea = area;
   }
 
   @TestOnly
   public static void setRootArea(@NotNull ExtensionsAreaImpl area, @NotNull Disposable parentDisposable) {
-    ExtensionsAreaImpl oldRootArea = ourRootArea;
-    ourRootArea = area;
+    ExtensionsAreaImpl oldRootArea = rootArea;
+    rootArea = area;
     Disposer.register(parentDisposable, () -> {
-      ourRootArea.notifyAreaReplaced(oldRootArea);
-      ourRootArea = oldRootArea;
+      rootArea.notifyAreaReplaced(oldRootArea);
+      rootArea = oldRootArea;
     });
   }
 
@@ -36,7 +36,7 @@ public final class Extensions {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static ExtensionsArea getRootArea() {
-    return ourRootArea;
+    return rootArea;
   }
 
   /**
@@ -45,7 +45,7 @@ public final class Extensions {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static @NotNull ExtensionsArea getArea(@Nullable("null means root") AreaInstance areaInstance) {
-    return areaInstance == null ? ourRootArea : areaInstance.getExtensionArea();
+    return areaInstance == null ? rootArea : areaInstance.getExtensionArea();
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
@@ -20,12 +20,12 @@ import java.nio.file.Path
 @CompileStatic
 class LanguageExtensionOrderTest extends LightPlatformTestCase {
   private PluginDescriptor myDescriptor = new DefaultPluginDescriptor(PluginId.getId(""), getClass().classLoader)
-  private ExtensionsAreaImpl myArea
+  private ExtensionsAreaImpl area
   private LanguageExtension myLanguageExtension
 
   void setUp() {
     super.setUp()
-    myArea = ApplicationManager.getApplication().getExtensionArea() as ExtensionsAreaImpl
+    area = ApplicationManager.getApplication().getExtensionArea() as ExtensionsAreaImpl
     myLanguageExtension = new LanguageExtension<TestLangExtension>("langExt")
     registerMetaLanguage()
     registerLanguageEP()
@@ -36,13 +36,13 @@ class LanguageExtensionOrderTest extends LightPlatformTestCase {
   }
 
   private void registerLanguageEP() {
-    myArea.registerExtensionPoints(myDescriptor, Collections.singletonList(JDOMUtil.load('''\
+    area.registerExtensionPoints(myDescriptor, Collections.singletonList(JDOMUtil.load('''\
     <extensionPoint qualifiedName="langExt" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.TestLangExtension"/>
     </extensionPoint>    
     ''')))
     Disposer.register(testRootDisposable) {
-      myArea.unregisterExtensionPoint("langExt")
+      area.unregisterExtensionPoint("langExt")
     }
   }
 
@@ -52,7 +52,7 @@ class LanguageExtensionOrderTest extends LightPlatformTestCase {
 
       IdeaPluginDescriptorImpl pluginDescriptor =
         PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), myDescriptor.pluginId)
-      pluginDescriptor.registerExtensions(myArea.extensionPoints, pluginDescriptor.appContainerDescriptor, null)
+      pluginDescriptor.registerExtensions(area.getNameToPointMap(), pluginDescriptor.appContainerDescriptor, null)
     }
   }
 

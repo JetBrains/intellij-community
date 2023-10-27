@@ -1,11 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import org.jetbrains.annotations.*;
 
+import java.util.Map;
+
+@ApiStatus.Internal
 public interface ExtensionsArea {
   @TestOnly
   void registerExtensionPoint(@NonNls @NotNull String extensionPointName,
@@ -36,4 +37,6 @@ public interface ExtensionsArea {
   <T> @Nullable ExtensionPoint<@NotNull T> getExtensionPointIfRegistered(@NotNull String extensionPointName);
 
   @NotNull <T> ExtensionPoint<@NotNull T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName);
+
+  @NotNull @Unmodifiable Map<String, ExtensionPointImpl<?>> getNameToPointMap();
 }

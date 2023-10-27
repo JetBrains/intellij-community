@@ -59,11 +59,16 @@ fun createExtensionPoints(points: List<ExtensionPointDescriptor>,
 @Internal
 class ExtensionsAreaImpl(private val componentManager: ComponentManager) : ExtensionsArea {
   @Volatile
-  @Internal
-  @JvmField
-  var extensionPoints: PersistentMap<String, ExtensionPointImpl<*>> = persistentHashMapOf()
+  private var extensionPoints: PersistentMap<String, ExtensionPointImpl<*>> = persistentHashMapOf()
 
   private val epTraces = if (DEBUG_REGISTRATION) HashMap<String, Throwable>() else null
+
+  override fun getNameToPointMap(): Map<String, ExtensionPointImpl<*>> = extensionPoints
+
+  fun init(nameToPointMap: PersistentMap<String, ExtensionPointImpl<*>>) {
+    assert(extensionPoints.isEmpty())
+    extensionPoints = nameToPointMap
+  }
 
   @TestOnly
   fun notifyAreaReplaced(newArea: ExtensionsAreaImpl?) {
@@ -219,9 +224,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
                          dynamic = dynamic)
     }
     checkThatPointNotDuplicated(name, point.getPluginDescriptor())
-    extensionPoints = extensionPoints.mutate {
-      it.put(name, point)
-    }
+    extensionPoints = extensionPoints.put(name, point)
     if (DEBUG_REGISTRATION) {
       epTraces!!.put(name, Throwable("Original registration for $name"))
     }
@@ -244,11 +247,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   }
 
   private fun checkThatPointNotDuplicated(pointName: String, pluginDescriptor: PluginDescriptor) {
-    if (!hasExtensionPoint(pointName)) {
-      return
-    }
-
-    val id1 = getExtensionPoint<Any>(pointName).getPluginDescriptor().pluginId
+    val id1 = (extensionPoints.get(pointName) ?: return).getPluginDescriptor().pluginId
     val id2 = pluginDescriptor.pluginId
     val message = "Duplicate registration for EP '$pointName': first in $id1, second in $id2"
     if (DEBUG_REGISTRATION) {
@@ -259,7 +258,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   // _only_ for CoreApplicationEnvironment
   fun registerExtensionPoints(points: List<ExtensionPointDescriptor>, pluginDescriptor: PluginDescriptor) {
-    extensionPoints = persistentHashMapOf<String, ExtensionPointImpl<*>>().mutate {
+    extensionPoints = extensionPoints.mutate {
       createExtensionPoints(points = points, componentManager = componentManager, result = it, pluginDescriptor = pluginDescriptor)
     }
   }

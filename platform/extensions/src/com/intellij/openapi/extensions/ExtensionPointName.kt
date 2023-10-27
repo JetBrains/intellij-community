@@ -56,7 +56,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   }
 
   fun findFirstSafe(predicate: Predicate<in T>): T? {
-    return findFirstSafe(predicate, getPointImpl(null).asSequence())
+    return findFirstSafe(predicate = predicate, sequence = getPointImpl(null).asSequence())
   }
 
   fun <R> computeSafeIfAny(processor: Function<T, out R>): R? {

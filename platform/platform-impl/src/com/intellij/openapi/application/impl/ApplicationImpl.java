@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.client.ClientAwareComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressResult;
@@ -126,6 +127,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public ApplicationImpl(boolean isHeadless) {
     super(GlobalScope.INSTANCE);
 
+    Extensions.setRootArea(getExtensionArea());
     myLock = IdeEventQueue.getInstance().getRwLockHolder().lock;
 
     registerFakeServices(this);
@@ -146,6 +148,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   public ApplicationImpl(@NotNull CoroutineScope parentScope, boolean isInternal) {
     super(parentScope);
+
+    Extensions.setRootArea(getExtensionArea());
 
     registerFakeServices(this);
 

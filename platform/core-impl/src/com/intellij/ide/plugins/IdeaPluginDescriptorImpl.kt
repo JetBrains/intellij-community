@@ -377,6 +377,9 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
 
     val map = epNameToExtensions
+    if (map.isEmpty()) {
+      return
+    }
 
     // app container: in most cases will be only app-level extensions - to reduce map copying, assume that all extensions are app-level and then filter out
     // project container: rest of extensions wil be mostly project level
