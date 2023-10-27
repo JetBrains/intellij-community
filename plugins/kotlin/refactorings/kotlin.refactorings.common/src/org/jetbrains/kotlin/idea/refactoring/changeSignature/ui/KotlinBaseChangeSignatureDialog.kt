@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.observable.util.addItemListener
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
@@ -84,6 +85,10 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
 
     override fun createParametersListTable(): ParametersListTable = object : ParametersListTable() {
         private val rowRenderer = object : EditorTextFieldJBTableRowRenderer(project, KotlinLanguage.INSTANCE, disposable) {
+            init {
+                useEditorFont()
+            }
+
             override fun getText(table: JTable?, row: Int): String {
                 val item = getRowItem(row)
                 val valOrVar = if (myMethod.kind === Kind.PRIMARY_CONSTRUCTOR) {
@@ -112,7 +117,6 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
 
                 return text
             }
-
         }
 
         override fun getRowRenderer(row: Int): JBTableRowRenderer = rowRenderer
@@ -207,6 +211,7 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
                             editor.removeDocumentListener(listener)
                         }
 
+                        editor.font = EditorUtil.getEditorFont()
                         editor.setPreferredWidth(table.width / parametersTableModel.columnCount)
                     }
 
