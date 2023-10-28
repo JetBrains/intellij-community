@@ -298,6 +298,14 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
       }""");
   }
 
+  public void testAnnotationMethodIgnored() {
+    assertNoHighlightNoQuickFix("""
+      @interface X {
+        String x() default "number " <caret>+ 1;
+      }
+      """);
+  }
+
   public void testNullValue() {
     doTest("""
              class StringTemplateMigration {

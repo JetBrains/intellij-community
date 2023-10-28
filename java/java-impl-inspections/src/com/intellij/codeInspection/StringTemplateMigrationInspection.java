@@ -42,7 +42,7 @@ public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInsp
       @Nullable
       private static ProblemHighlightType getProblemHighlightType(@NotNull PsiPolyadicExpression expression) {
         PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiExpression.class);
-        if (parent instanceof PsiNameValuePair || parent instanceof PsiCaseLabelElementList) {
+        if (parent instanceof PsiNameValuePair || parent instanceof PsiCaseLabelElementList || parent instanceof PsiAnnotationMethod) {
           return null;
         }
 
