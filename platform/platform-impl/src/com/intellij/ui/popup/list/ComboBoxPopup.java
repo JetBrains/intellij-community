@@ -6,16 +6,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxPopupState;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
-import com.intellij.openapi.ui.NewUIComboBoxRenderer;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.GroupedComboBoxRenderer;
-import com.intellij.ui.GroupedElementsRenderer;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -143,8 +139,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
   }
 
   public static boolean isRendererWithInsets(ListCellRenderer<?> comboRenderer) {
-    return comboRenderer instanceof NewUIComboBoxRenderer
-           || comboRenderer instanceof ComboBoxWithWidePopup<?>.AdjustingListCellRenderer r && r.delegate instanceof NewUIComboBoxRenderer;
+    return comboRenderer instanceof ExperimentalUI.NewUIComboBoxRenderer
+           || comboRenderer instanceof ComboBoxWithWidePopup<?>.AdjustingListCellRenderer r && r.delegate instanceof ExperimentalUI.NewUIComboBoxRenderer;
   }
 
   private void configurePopup() {

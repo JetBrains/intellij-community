@@ -73,4 +73,9 @@ abstract class ExperimentalUI {
 
   open fun installIconPatcher() {
   }
+
+  /**
+   * Interface to mark renderers compliant with the new UI design guidelines.
+   */
+  interface NewUIComboBoxRenderer
 }
