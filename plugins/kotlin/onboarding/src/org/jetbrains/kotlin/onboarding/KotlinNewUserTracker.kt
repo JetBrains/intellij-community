@@ -18,8 +18,6 @@ class KotlinNewUserTrackerState : BaseState() {
     var firstKtFileOpened by property(0L)
     var lastKtFileOpened by property(0L)
     var newKtUserSince by property(0L)
-    // When the user either dismissed the dialog or chose to fill out the survey
-    var newKtUserDialogProcessed by property(false)
 }
 
 @State(name = "KotlinNewUserTracker", storages = [Storage("kotlin-onboarding.xml")])
@@ -78,12 +76,6 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
         currentState = state
     }
 
-    private var newUserDialogShownThisSession = false
-    internal fun onNewUserDialogShown() {
-        LOG.debug("New user dialog was shown, disabling showing it again for this session")
-        newUserDialogShownThisSession = true
-    }
-
     private fun isNewKtUser(): Boolean {
         if (state.newKtUserSince == 0L) return false
         val newUserStart = Instant.ofEpochSecond(state.newKtUserSince)
@@ -95,14 +87,6 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
         if (app.isUnitTestMode || app.isHeadlessEnvironment) return false
 
         if (currentState.firstKtFileOpened == 0L) return false
-        if (currentState.newKtUserDialogProcessed) {
-            LOG.debug("Not showing new user dialog because it has already been processed")
-            return false
-        }
-        if (newUserDialogShownThisSession) {
-            LOG.debug("Not showing new user dialog because it has already been shown this session")
-            return false
-        }
         if (!isNewKtUser()) {
             LOG.debug("Not showing new user dialog because the user is not a new Kotlin user")
             return false
@@ -113,11 +97,6 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
 
         LOG.debug("Duration since user became a new Kotlin user: ${durationSinceNewKtUser.toDays()} day(s)")
         return durationSinceNewKtUser > NEW_USER_SURVEY_DELAY
-    }
-
-    internal fun markNewKtUserDialogProcessed() {
-        LOG.debug("Marked new user dialog as processed")
-        currentState.newKtUserDialogProcessed = true
     }
 
     private fun checkForNewKtUser() {
