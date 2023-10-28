@@ -32,8 +32,7 @@ internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
   notification.addAction(NotificationAction.createSimple(
     GitBundle.messagePointer("action.NotificationAction.GitRewordOperation.text.undo"),
     Runnable {
-      notification.expire()
-      undoInBackground(project, undoProgressTitle, undoImpossibleTitle, undoErrorTitle, this@notifySuccess)
+      undoInBackground(project, undoProgressTitle, undoImpossibleTitle, undoErrorTitle, this@notifySuccess) { notification.expire() }
     }
   ))
 
@@ -77,18 +76,20 @@ private fun undoInBackground(
   @NlsContexts.ProgressTitle undoProgressTitle: String,
   @NlsContexts.ProgressTitle undoImpossibleTitle: String,
   @NlsContexts.ProgressTitle undoErrorTitle: String,
-  result: GitCommitEditingOperationResult.Complete
+  result: GitCommitEditingOperationResult.Complete,
+  expireUndoAction: () -> Unit
 ) {
   ProgressManager.getInstance().run(object : Task.Backgroundable(project, undoProgressTitle) {
     override fun run(indicator: ProgressIndicator) {
       val possibility = result.checkUndoPossibility()
       if (possibility is UndoPossibility.Impossible) {
         possibility.notifyUndoImpossible(project, undoImpossibleTitle)
+        expireUndoAction()
         return
       }
-      val undoResult = result.undo()
-      if (undoResult is UndoResult.Error) {
-        undoResult.notifyUndoError(project, undoErrorTitle)
+      when (val undoResult = result.undo()) {
+        is UndoResult.Error -> undoResult.notifyUndoError(project, undoErrorTitle)
+        is UndoResult.Success -> expireUndoAction()
       }
     }
   })
