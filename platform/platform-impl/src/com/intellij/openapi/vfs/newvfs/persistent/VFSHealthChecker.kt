@@ -325,14 +325,6 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
               "file[#$fileId]{$fileName}: !directory (flags: ${Integer.toBinaryString(flags)}) but has children(${children.size})"
             )
           }
-
-          //TODO RC: try read _all_ attributes, check all them are readable
-          //TODO RC: check attribute storage _has_ such a record (not deleted)
-          //if(attributeRecordId!=AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID) {
-          //  connection.attributes.forEachAttribute(connection, fileId){
-          //  }
-          //}
-
         }
         catch (t: Throwable) {
           generalErrors++.alsoLogThrottled("file[#$fileId]: unhandled exception while checking", t)
