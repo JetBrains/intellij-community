@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.*;
 import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +24,12 @@ final class SmartExtensionPoint<T> {
 
   SmartExtensionPoint(@NotNull Supplier<? extends ExtensionPoint<@NotNull T>> extensionPointSupplier) {
     this.extensionPointSupplier = extensionPointSupplier;
-    extensionPointAndAreaListener = new ExtensionPointListener<T>() {
+    extensionPointAndAreaListener = new ExtensionPointAndAreaListener<T>() {
+      @Override
+      public void areaReplaced(@NotNull ExtensionsArea oldArea) {
+        dropCache();
+      }
+
       @Override
       public void extensionAdded(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
         dropCache();
@@ -58,7 +61,7 @@ final class SmartExtensionPoint<T> {
 
   public void addExplicitExtension(@NotNull T extension) {
     synchronized (lock) {
-      explicitExtensions.add(extension);
+      explicitExtensions = explicitExtensions.add(extension);
       cache = null;
     }
   }
