@@ -8,6 +8,10 @@ import com.intellij.codeInsight.inline.completion.TypingEvent
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateEditingListener
+import com.intellij.codeInsight.template.TemplateManagerListener
+import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.isCurrent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -19,7 +23,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.removeUserData
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -165,12 +171,48 @@ internal class InlineCompletionTypedHandlerDelegate : TypedHandlerDelegate() {
   }
 }
 
-internal class InlineCompletionAnActionListener : AnActionListener {
+private class InlineCompletionTypingListener : AnActionListener {
+
   override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
     val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return
     val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
+
+    if (editor.getUserData(InlineCompletionTemplateListener.TEMPLATE_IN_PROGRESS_KEY) != null) {
+      return // ML-1684 Do now show inline completion while refactoring
+    }
+
     val offset = editor.caretModel.offset
     handler.allowTyping(TypingEvent.OneSymbol(c, offset))
+  }
+}
+
+private class InlineCompletionTemplateListener : TemplateManagerListener {
+  override fun templateStarted(state: TemplateState) {
+    state.editor?.let { editor ->
+      start(editor)
+      state.addTemplateStateListener(TemplateStateListener { finish(editor) })
+    }
+  }
+
+  private fun start(editor: Editor) {
+    editor.putUserData(TEMPLATE_IN_PROGRESS_KEY, Unit)
+  }
+
+  private fun finish(editor: Editor) {
+    editor.removeUserData(TEMPLATE_IN_PROGRESS_KEY)
+  }
+
+  private class TemplateStateListener(private val finish: () -> Unit) : TemplateEditingListener {
+    override fun templateFinished(template: Template, brokenOff: Boolean) = finish()
+    override fun templateCancelled(template: Template?) = finish()
+
+    override fun currentVariableChanged(templateState: TemplateState, template: Template?, oldIndex: Int, newIndex: Int) = Unit
+    override fun waitingForInput(template: Template?) = Unit
+    override fun beforeTemplateFinished(state: TemplateState, template: Template?) = Unit
+  }
+
+  companion object {
+    val TEMPLATE_IN_PROGRESS_KEY = Key.create<Unit>("inline.completion.template.in.progress")
   }
 }
 
