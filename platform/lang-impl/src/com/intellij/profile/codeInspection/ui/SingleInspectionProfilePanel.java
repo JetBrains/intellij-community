@@ -251,14 +251,15 @@ public class SingleInspectionProfilePanel extends JPanel {
   private static boolean isCustomGroupAccepted(InspectionTreeAdvertiser.CustomGroup customGroup,
                                                @NonNls String filter,
                                                final Set<String> quoted) {
-    filter = StringUtil.toLowerCase(filter);
     final String[] path = customGroup.path();
-    if (StringUtil.containsIgnoreCase(path[path.length - 1], filter)) { return true; }
+    if (StringUtil.containsIgnoreCase(path[path.length - 1], filter)) return true;
 
     final String description = customGroup.description();
+    if (ContainerUtil.all(filter.split(" "), part -> StringUtil.containsIgnoreCase(description, part))) return true;
+
     for (String stripped : quoted) {
-      if (StringUtil.containsIgnoreCase(path[path.length - 1], stripped)) { return true; }
-      if (StringUtil.containsIgnoreCase(description, stripped)) { return true; }
+      if (StringUtil.containsIgnoreCase(path[path.length - 1], stripped)) return true;
+      if (StringUtil.containsIgnoreCase(description, stripped)) return true;
     }
 
     return false;
