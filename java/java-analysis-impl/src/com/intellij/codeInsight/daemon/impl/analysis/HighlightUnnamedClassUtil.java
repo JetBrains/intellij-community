@@ -39,7 +39,7 @@ public final class HighlightUnnamedClassUtil {
     PsiUnnamedClass unnamedClass = JavaUnnamedClassUtil.getUnnamedClassFor(file);
     if (unnamedClass == null) return null;
     String name = ClassUtil.getJVMClassName(unnamedClass);
-    if (name == null) {
+    if (!PsiNameHelper.getInstance(file.getProject()).isQualifiedName(name)) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(file)
         .fileLevelAnnotation()
