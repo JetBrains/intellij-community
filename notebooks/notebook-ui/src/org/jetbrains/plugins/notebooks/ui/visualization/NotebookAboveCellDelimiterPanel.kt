@@ -4,14 +4,18 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.uiDesigner.UIFormXmlConstants
 import java.awt.*
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
 
+internal typealias BackgroundColorToCellRoofColor = Pair<Color, Color?>
+
 class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout()) {
-  internal inner class ColoursChangeListenerAdapter(var isCodeCell: Boolean = false) {
-    private lateinit var currentColorsPalette: Pair<Color, Color?>
+
+  internal inner class ColorsChangeListenerAdapter {
+    private lateinit var currentColorsPalette: BackgroundColorToCellRoofColor
 
     private fun recreatePalette() {
       val newBackgroundColor = editor.colorsScheme.defaultBackground
@@ -35,7 +39,7 @@ class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout
       delimiterPanel: JPanel,
       codeRoofPanel: JPanel,
       cellBordersPanels: Iterable<JPanel>,
-      ) {
+    ) {
       if (::currentColorsPalette.isInitialized && backgroundColor == currentColorsPalette.first) return
 
       recreatePalette()
@@ -46,14 +50,13 @@ class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout
     }
   }
 
-  private val colorsChangeListenerAdapter = ColoursChangeListenerAdapter()
+  private val colorsChangeListenerAdapter = ColorsChangeListenerAdapter()
   val actions = ArrayList<AnAction>()
   var isCodeCell = false
 
   fun initialize(actions: Array<AnAction>, isCodeCell: Boolean) {
     this.actions.addAll(actions)
     this.isCodeCell = isCodeCell
-    colorsChangeListenerAdapter.isCodeCell = isCodeCell
 
     val backgroundColor = editor.colorsScheme.defaultBackground
     val cellRoofColor = if (isCodeCell) editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme) else backgroundColor
@@ -108,11 +111,12 @@ class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout
       }
     }
 
-    addPropertyChangeListener("border") {
+    addPropertyChangeListener(UIFormXmlConstants.ELEMENT_FONT) {
       val newBackgroundColor = editor.colorsScheme.defaultBackground
       colorsChangeListenerAdapter.propertyChanged(
         newBackgroundColor,
-        delimiterPanel, codeRoofPanel, listOf(leftPanel, rightPanel))
+        delimiterPanel, codeRoofPanel, listOf(leftPanel, rightPanel)
+      )
     }
   }
 
