@@ -59,14 +59,18 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   override fun getNameToPointMap(): Map<String, ExtensionPointImpl<*>> = extensionPoints
 
+  private val lock = Any()
+
   fun reset(nameToPointMap: PersistentMap<String, ExtensionPointImpl<*>>) {
     extensionPoints = nameToPointMap
   }
 
   fun putAll(nameToPointMap: PersistentMap<String, ExtensionPointImpl<*>>) {
-    extensionPoints = extensionPoints.mutate {
-      for (point in nameToPointMap.values) {
-        addPointOrLogErrorIfDuplicated(it, point = point, componentManager)
+    synchronized(lock) {
+      extensionPoints = extensionPoints.mutate {
+        for (point in nameToPointMap.values) {
+          addPointOrLogErrorIfDuplicated(it, point = point, componentManager)
+        }
       }
     }
   }
@@ -157,9 +161,11 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
       return
     }
 
-    extensionPoints = extensionPoints.mutate { map ->
-      for (descriptor in descriptors) {
-        map.remove(descriptor.getQualifiedName(pluginDescriptor))
+    synchronized(lock) {
+      extensionPoints = extensionPoints.mutate { map ->
+        for (descriptor in descriptors) {
+          map.remove(descriptor.getQualifiedName(pluginDescriptor))
+        }
       }
     }
   }
@@ -225,7 +231,9 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
                          dynamic = dynamic)
     }
     checkThatPointNotDuplicated(name, point.getPluginDescriptor())
-    extensionPoints = extensionPoints.put(name, point)
+    synchronized(lock) {
+      extensionPoints = extensionPoints.put(name, point)
+    }
     if (DEBUG_REGISTRATION) {
       epTraces!!.put(name, Throwable("Original registration for $name"))
     }
@@ -259,8 +267,10 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   // _only_ for CoreApplicationEnvironment
   fun registerExtensionPoints(points: List<ExtensionPointDescriptor>, pluginDescriptor: PluginDescriptor) {
-    extensionPoints = extensionPoints.mutate {
-      createExtensionPoints(points = points, componentManager = componentManager, result = it, pluginDescriptor = pluginDescriptor)
+    synchronized(lock) {
+      extensionPoints = extensionPoints.mutate {
+        createExtensionPoints(points = points, componentManager = componentManager, result = it, pluginDescriptor = pluginDescriptor)
+      }
     }
   }
 
@@ -287,7 +297,9 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   override fun unregisterExtensionPoint(extensionPointName: String) {
     val extensionPoint = getExtensionPointIfRegistered<Any>(extensionPointName) ?: return
     extensionPoint.reset()
+    synchronized(lock) {
     extensionPoints = extensionPoints.remove(extensionPointName)
+      }
   }
 
   override fun hasExtensionPoint(extensionPointName: String): Boolean = extensionPoints.containsKey(extensionPointName)
