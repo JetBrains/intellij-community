@@ -3,7 +3,7 @@ public final class org/jetbrains/jewel/intui/window/IntUiDecoratedWindowResource
 }
 
 public final class org/jetbrains/jewel/intui/window/IntUiThemeKt {
-	public static final fun decoratedWindowComponentStyling (Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;Lorg/jetbrains/jewel/window/styling/DecoratedWindowStyle;Lorg/jetbrains/jewel/window/styling/TitleBarStyle;Landroidx/compose/runtime/Composer;II)[Landroidx/compose/runtime/ProvidedValue;
+	public static final fun provideDecoratedWindowComponentStyling (Lorg/jetbrains/jewel/ui/theme/ComponentStyleProviderScope;Lorg/jetbrains/jewel/window/styling/DecoratedWindowStyle;Lorg/jetbrains/jewel/window/styling/TitleBarStyle;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/intui/window/styling/IntUiDecoratedWindowStylingKt {

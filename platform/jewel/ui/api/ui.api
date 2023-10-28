@@ -2227,9 +2227,14 @@ public final class org/jetbrains/jewel/ui/painter/hints/StrokeKt {
 	public static synthetic fun Stroke$default (ZILjava/lang/Object;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 }
 
+public abstract interface class org/jetbrains/jewel/ui/theme/ComponentStyleProviderScope {
+	public abstract fun getTheme ()Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;
+	public abstract fun provide ([Landroidx/compose/runtime/ProvidedValue;)V
+}
+
 public final class org/jetbrains/jewel/ui/theme/JewelThemeKt {
-	public static final fun BaseJewelTheme (Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
-	public static final fun BaseJewelTheme (Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;Lkotlin/jvm/functions/Function2;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun BaseJewelTheme (Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+	public static final fun BaseJewelTheme (Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;Lkotlin/jvm/functions/Function3;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun getCheckboxStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;
 	public static final fun getChipStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;
 	public static final fun getCircularProgressStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;

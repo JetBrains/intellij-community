@@ -35,7 +35,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.intui.standalone.theme.darkThemeDefinition
 import org.jetbrains.jewel.intui.standalone.theme.lightThemeDefinition
-import org.jetbrains.jewel.intui.window.decoratedWindowComponentStyling
+import org.jetbrains.jewel.intui.window.provideDecoratedWindowComponentStyling
 import org.jetbrains.jewel.intui.window.styling.dark
 import org.jetbrains.jewel.intui.window.styling.light
 import org.jetbrains.jewel.intui.window.styling.lightWithLightHeader
@@ -95,7 +95,7 @@ fun main() {
         IntUiTheme(
             themeDefinition,
             componentStyling = {
-                themeDefinition.decoratedWindowComponentStyling(
+                provideDecoratedWindowComponentStyling(
                     titleBarStyle = when (theme) {
                         IntUiThemes.Light -> TitleBarStyle.light()
                         IntUiThemes.LightWithLightHeader -> TitleBarStyle.lightWithLightHeader()
