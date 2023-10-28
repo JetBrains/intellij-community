@@ -22,16 +22,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.ColorHexUtil
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
+import com.intellij.ui.*
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
@@ -353,7 +349,7 @@ class ProjectWindowCustomizerService : Disposable {
     val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 600)
     val x = parent.x.toFloat()
     val y = parent.y.toFloat()
-    val projectComboBtn = UIUtil.findComponentsOfType(parent, ToolbarComboButton::class.java).find {
+    val projectComboBtn = ComponentUtil.findComponentsOfType(parent, ToolbarComboButton::class.java).find {
       ClientProperty.get(it, CustomComponentAction.ACTION_KEY) is ProjectToolbarWidgetAction
     }
     val projectIconWidth = projectComboBtn?.leftIcons?.firstOrNull()?.iconWidth?.toFloat() ?: 0f
