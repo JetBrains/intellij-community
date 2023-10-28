@@ -22,12 +22,14 @@ import git4idea.repo.GitRepositoryChangeListener
 
 internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
   @NlsContexts.NotificationTitle title: String,
+  @NlsContexts.NotificationContent content: String?,
   @NlsContexts.ProgressTitle undoProgressTitle: String,
   @NlsContexts.ProgressTitle undoImpossibleTitle: String,
   @NlsContexts.ProgressTitle undoErrorTitle: String
 ) {
   val project = repository.project
-  val notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, NotificationType.INFORMATION)
+  val notification = if (content.isNullOrEmpty()) VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, NotificationType.INFORMATION)
+  else VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, NotificationType.INFORMATION)
   notification.setDisplayId(GitNotificationIdsHolder.COMMIT_EDIT_SUCCESS)
   notification.addAction(NotificationAction.createSimple(
     GitBundle.messagePointer("action.NotificationAction.GitRewordOperation.text.undo"),
