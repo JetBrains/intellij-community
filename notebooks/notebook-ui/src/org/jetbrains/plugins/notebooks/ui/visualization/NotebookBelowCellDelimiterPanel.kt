@@ -15,9 +15,8 @@ import javax.swing.JPanel
 import javax.swing.JProgressBar
 import kotlin.math.max
 
-class NotebookBelowCellDelimiterPanel : JPanel(GridLayout(1, 1)) {
+class NotebookBelowCellDelimiterPanel(val editor: EditorImpl) : JPanel(GridLayout(1, 1)) {
   private val steadyUI = JupyterProgressBarUI()
-  private lateinit var editor: EditorImpl
   private var shouldUseCustomBackground = false
   private val progress = object : JProgressBar(0, 100) {
     init {
@@ -31,12 +30,11 @@ class NotebookBelowCellDelimiterPanel : JPanel(GridLayout(1, 1)) {
     }
   }
 
-  fun initialize(editor: EditorImpl, @Nls executionTimeDetails: String?, hasProgressBar: Boolean) {
+  fun initialize(@Nls executionTimeDetails: String?, hasProgressBar: Boolean) {
     val notebookAppearance = editor.notebookAppearance
     val customHeight = if (executionTimeDetails != null) notebookAppearance.EXECUTION_TIME_HEIGHT else notebookAppearance.SPACER_HEIGHT
     preferredSize = Dimension(preferredSize.width, customHeight)
     background = editor.colorsScheme.defaultBackground
-    this.editor = editor
 
     if (executionTimeDetails != null) {
       val label = JLabel(executionTimeDetails)
@@ -59,10 +57,12 @@ class NotebookBelowCellDelimiterPanel : JPanel(GridLayout(1, 1)) {
   }
 
   override fun updateUI() {
-    if (::editor.isInitialized) {
-      background = if (shouldUseCustomBackground)
-        editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
-      else editor.colorsScheme.defaultBackground
+    // This method is called within constructor of JPanel, at this time state is not yet initialised, reference is null.
+    if (editor != null) {
+      background =
+        if (shouldUseCustomBackground)
+          editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
+        else editor.colorsScheme.defaultBackground
     }
     super.updateUI()
   }
