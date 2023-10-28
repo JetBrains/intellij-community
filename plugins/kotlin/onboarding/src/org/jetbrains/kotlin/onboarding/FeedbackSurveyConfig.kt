@@ -23,8 +23,8 @@ class FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
     }
 
     override fun checkExtraConditionSatisfied(project: Project): Boolean {
-        //TODO: Add conditions to show feedback notification
-        return suitableIdeVersion == ApplicationInfo.getInstance().shortVersion
+        return suitableIdeVersion == ApplicationInfo.getInstance().shortVersion &&
+                KotlinNewUserTracker.getInstance().shouldShowNewUserDialog()
     }
 
     override fun updateStateAfterDialogClosedOk(project: Project) {
