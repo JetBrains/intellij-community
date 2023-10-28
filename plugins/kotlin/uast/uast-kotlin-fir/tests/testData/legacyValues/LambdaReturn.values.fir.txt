@@ -60,15 +60,18 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                         USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
                                         ULiteralExpression (value = 5) [5] = 5
                                     UReturnExpression [return "5"] = Nothing
-                                        ULiteralExpression (value = "5") ["5"] = "5"
+                                        UPolyadicExpression (operator = +) ["5"] = "5"
+                                            ULiteralExpression (value = "5") ["5"] = "5"
                                 UIfExpression [if (a > 0) return "1" else return "2"] = Nothing
                                     UBinaryExpression (operator = >) [a > 0] = Undetermined
                                         USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
                                         ULiteralExpression (value = 0) [0] = 0
                                     UReturnExpression [return "1"] = Nothing
-                                        ULiteralExpression (value = "1") ["1"] = "1"
+                                        UPolyadicExpression (operator = +) ["1"] = "1"
+                                            ULiteralExpression (value = "1") ["1"] = "1"
                                     UReturnExpression [return "2"] = Nothing
-                                        ULiteralExpression (value = "2") ["2"] = "2"
+                                        UPolyadicExpression (operator = +) ["2"] = "2"
+                                            ULiteralExpression (value = "2") ["2"] = "2"
                 UDeclarationsExpression [var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}] = Undetermined
                     ULocalVariable (name = lam5) [var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
                         ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}] = Undetermined
@@ -77,7 +80,8 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                             UBlockExpression [{...}] = Nothing
                                 UReturnExpression [return "a" + a] = Nothing
                                     UBinaryExpression (operator = +) ["a" + a] = Undetermined
-                                        ULiteralExpression (value = "a") ["a"] = "a"
+                                        UPolyadicExpression (operator = +) ["a"] = "a"
+                                            ULiteralExpression (value = "a") ["a"] = "a"
                                         USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: int ->...})] = external bar({ var it: int ->
 

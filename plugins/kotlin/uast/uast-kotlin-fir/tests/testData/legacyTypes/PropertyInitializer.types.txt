@@ -2,7 +2,8 @@ UFile (package = ) [public final class TestPropertyInitializer {...]
     UClass (name = TestPropertyInitializer) [public final class TestPropertyInitializer {...}]
         UField (name = withSetter) [@org.jetbrains.annotations.NotNull private var withSetter: java.lang.String = "/sdcard"]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            ULiteralExpression (value = "/sdcard") ["/sdcard"] : PsiType:String
+            UPolyadicExpression (operator = +) ["/sdcard"] : PsiType:String
+                ULiteralExpression (value = "/sdcard") ["/sdcard"] : PsiType:String
         UMethod (name = getWithSetter) [public final fun getWithSetter() : java.lang.String {...}]
             UBlockExpression [{...}]
                 UReturnExpression [return field]

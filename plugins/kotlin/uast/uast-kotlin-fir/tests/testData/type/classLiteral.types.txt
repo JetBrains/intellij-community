@@ -8,7 +8,8 @@ UFile (package = ) [public final class ClassLiteralKt {...]
             UBlockExpression [{...}] : PsiType:Void
                 UDeclarationsExpression [var x: java.lang.CharSequence = ""]
                     ULocalVariable (name = x) [var x: java.lang.CharSequence = ""]
-                        ULiteralExpression (value = "") [""] : PsiType:String
+                        UPolyadicExpression (operator = +) [""] : PsiType:String
+                            ULiteralExpression (value = "") [""] : PsiType:String
                 UDeclarationsExpression [var xClass: kotlin.reflect.KClass<? extends java.lang.CharSequence> = java.lang.CharSequence]
                     ULocalVariable (name = xClass) [var xClass: kotlin.reflect.KClass<? extends java.lang.CharSequence> = java.lang.CharSequence]
                         UClassLiteralExpression [java.lang.CharSequence] : PsiType:KClass<? extends CharSequence>
@@ -17,8 +18,10 @@ UFile (package = ) [public final class ClassLiteralKt {...]
                         UBinaryExpression (operator = ==) [xClass == stringClass] : PsiType:boolean
                             USimpleNameReferenceExpression (identifier = xClass) [xClass] : PsiType:KClass<? extends CharSequence>
                             USimpleNameReferenceExpression (identifier = stringClass) [stringClass] : PsiType:KClass<String>
-                        ULiteralExpression (value = "OK") ["OK"] : PsiType:String
-                        USimpleNameReferenceExpression (identifier = xClass) [xClass] : PsiType:KClass<? extends CharSequence>
+                        UPolyadicExpression (operator = +) ["OK"] : PsiType:String
+                            ULiteralExpression (value = "OK") ["OK"] : PsiType:String
+                        UPolyadicExpression (operator = +) [xClass] : PsiType:String
+                            USimpleNameReferenceExpression (identifier = xClass) [xClass] : PsiType:KClass<? extends CharSequence>
     UClass (name = Foo) [public final class Foo {...}]
         UField (name = s) [@org.jetbrains.annotations.NotNull private final var s: java.lang.String]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

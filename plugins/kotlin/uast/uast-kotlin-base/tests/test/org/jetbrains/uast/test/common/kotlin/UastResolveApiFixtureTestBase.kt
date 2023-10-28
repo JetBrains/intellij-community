@@ -115,10 +115,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         )
 
         TestCase.assertEquals("kotlin.Unit", functionCall.getExpressionType()?.canonicalText)
-
-        val firstArgument = main.findElementByText<UElement>("1")
-        val firstParameter = functionCall.getArgumentForParameter(0)
-        TestCase.assertEquals(firstArgument, firstParameter)
     }
 
     private fun methodSignature(psiMethod: PsiMethod): String {
@@ -166,10 +162,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         )
 
         TestCase.assertEquals(PsiTypes.voidType(), functionCall.getExpressionType())
-
-        val firstArgument = main.findElementByText<UElement>("1")
-        val firstParameter = functionCall.getArgumentForParameter(0)
-        TestCase.assertEquals(firstArgument, firstParameter)
     }
 
     fun checkResolveFromBaseJava(myFixture: JavaCodeInsightTestFixture) {

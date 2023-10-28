@@ -17,7 +17,8 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
             UAnnotation (fqName = WithDefaultValue) [@WithDefaultValue]
             UAnnotation (fqName = SuppressLint) [@SuppressLint(value = "Lorem")]
                 UNamedExpression (name = value) [value = "Lorem"] = Undetermined
-                    ULiteralExpression (value = "Lorem") ["Lorem"] = "Lorem"
+                    UPolyadicExpression (operator = +) ["Lorem"] = "Lorem"
+                        ULiteralExpression (value = "Lorem") ["Lorem"] = "Lorem"
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return 5] = Nothing
                     ULiteralExpression (value = 5) [5] = 5
@@ -30,9 +31,12 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
             UAnnotation (fqName = SuppressLint) [@SuppressLint(value = <noref>("Lorem", "Ipsum", "Dolor"))]
                 UNamedExpression (name = value) [value = <noref>("Lorem", "Ipsum", "Dolor")] = Undetermined
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [<noref>("Lorem", "Ipsum", "Dolor")] = external <noref>("Lorem", "Ipsum", "Dolor")("Lorem", "Ipsum", "Dolor")
-                        ULiteralExpression (value = "Lorem") ["Lorem"] = "Lorem"
-                        ULiteralExpression (value = "Ipsum") ["Ipsum"] = "Ipsum"
-                        ULiteralExpression (value = "Dolor") ["Dolor"] = "Dolor"
+                        UPolyadicExpression (operator = +) ["Lorem"] = "Lorem"
+                            ULiteralExpression (value = "Lorem") ["Lorem"] = "Lorem"
+                        UPolyadicExpression (operator = +) ["Ipsum"] = "Ipsum"
+                            ULiteralExpression (value = "Ipsum") ["Ipsum"] = "Ipsum"
+                        UPolyadicExpression (operator = +) ["Dolor"] = "Dolor"
+                            ULiteralExpression (value = "Dolor") ["Dolor"] = "Dolor"
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return Unit] = Nothing
                     USimpleNameReferenceExpression (identifier = Unit) [Unit] = external Unit()
@@ -52,9 +56,12 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                 UNamedExpression (name = strs) [strs = collectionLiteral["a", "b", "c"]] = Undetermined
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral["a", "b", "c"]] = external collectionLiteral["a", "b", "c"]("a", "b", "c")
                         UIdentifier (Identifier ([)) [UIdentifier (Identifier ([))]
-                        ULiteralExpression (value = "a") ["a"] = "a"
-                        ULiteralExpression (value = "b") ["b"] = "b"
-                        ULiteralExpression (value = "c") ["c"] = "c"
+                        UPolyadicExpression (operator = +) ["a"] = "a"
+                            ULiteralExpression (value = "a") ["a"] = "a"
+                        UPolyadicExpression (operator = +) ["b"] = "b"
+                            ULiteralExpression (value = "b") ["b"] = "b"
+                        UPolyadicExpression (operator = +) ["c"] = "c"
+                            ULiteralExpression (value = "c") ["c"] = "c"
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return 3] = Nothing
                     ULiteralExpression (value = 3) [3] = 3

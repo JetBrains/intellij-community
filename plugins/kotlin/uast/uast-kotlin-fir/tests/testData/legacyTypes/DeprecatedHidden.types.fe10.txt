@@ -10,5 +10,6 @@ UFile (package = test.pkg) [package test.pkg...]
                         USimpleNameReferenceExpression (identifier = DeprecationLevel) [DeprecationLevel]
                         USimpleNameReferenceExpression (identifier = HIDDEN) [HIDDEN] : PsiType:DeprecationLevel
                 UNamedExpression (name = message) [message = "nothing"]
-                    ULiteralExpression (value = "nothing") ["nothing"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["nothing"] : PsiType:String
+                        ULiteralExpression (value = "nothing") ["nothing"] : PsiType:String
             UBlockExpression [{...}] : PsiType:void

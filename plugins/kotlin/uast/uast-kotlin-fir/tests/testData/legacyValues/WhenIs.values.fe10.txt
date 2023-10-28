@@ -21,4 +21,5 @@ UFile (package = ) [public final class WhenIsKt {...]
                                     UTypeReferenceExpression (name = java.lang.String) [java.lang.String] = Undetermined
                                 UExpressionList (when_entry) [{...] = Undetermined
                                     UYieldExpression [yield "<error>"] = UYieldResult("<error>")
-                                        ULiteralExpression (value = "<error>") ["<error>"] = "<error>"
+                                        UPolyadicExpression (operator = +) ["<error>"] = "<error>"
+                                            ULiteralExpression (value = "<error>") ["<error>"] = "<error>"

@@ -38,7 +38,8 @@ UFile (package = ) [public final class ResolveKt {...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] : PsiType:List<? extends String>
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                         USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends String>
-                        ULiteralExpression (value = "") [""] : PsiType:String
+                        UPolyadicExpression (operator = +) [""] : PsiType:String
+                            ULiteralExpression (value = "") [""] : PsiType:String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [joinToString()] : PsiType:String
                         UIdentifier (Identifier (joinToString)) [UIdentifier (Identifier (joinToString))]
                         USimpleNameReferenceExpression (identifier = joinToString, resolvesTo = null) [joinToString] : PsiType:String
@@ -46,13 +47,15 @@ UFile (package = ) [public final class ResolveKt {...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] : PsiType:List<? extends String>
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                         USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends String>
-                        ULiteralExpression (value = "") [""] : PsiType:String
+                        UPolyadicExpression (operator = +) [""] : PsiType:String
+                            ULiteralExpression (value = "") [""] : PsiType:String
                     USimpleNameReferenceExpression (identifier = size) [size] : PsiType:int
                 UQualifiedReferenceExpression [listOf("").indices] : PsiType:IntRange
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] : PsiType:List<? extends String>
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                         USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends String>
-                        ULiteralExpression (value = "") [""] : PsiType:String
+                        UPolyadicExpression (operator = +) [""] : PsiType:String
+                            ULiteralExpression (value = "") [""] : PsiType:String
                     USimpleNameReferenceExpression (identifier = indices) [indices] : PsiType:IntRange
                 UDeclarationsExpression [var date: java.util.Date = java.util.<init>()]
                     ULocalVariable (name = date) [var date: java.util.Date = java.util.<init>()]
@@ -75,7 +78,8 @@ UFile (package = ) [public final class ResolveKt {...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] : PsiType:List<? extends String>
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                         USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends String>
-                        ULiteralExpression (value = "") [""] : PsiType:String
+                        UPolyadicExpression (operator = +) [""] : PsiType:String
+                            ULiteralExpression (value = "") [""] : PsiType:String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [last()] : PsiType:String
                         UIdentifier (Identifier (last)) [UIdentifier (Identifier (last))]
                         USimpleNameReferenceExpression (identifier = last, resolvesTo = null) [last] : PsiType:String
@@ -87,7 +91,8 @@ UFile (package = ) [public final class ResolveKt {...]
                                 USimpleNameReferenceExpression (identifier = mutableMapOf, resolvesTo = null) [mutableMapOf] : PsiType:Map<Integer, String>
                                 UBinaryExpression (operator = <other>) [1 <other> "1"] : PsiType:Pair<? extends Integer, ? extends String>
                                     ULiteralExpression (value = 1) [1] : PsiType:int
-                                    ULiteralExpression (value = "1") ["1"] : PsiType:String
+                                    UPolyadicExpression (operator = +) ["1"] : PsiType:String
+                                        ULiteralExpression (value = "1") ["1"] : PsiType:String
                             USimpleNameReferenceExpression (identifier = entries) [entries] : PsiType:Set<Entry<Integer, String>>
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [first()] : PsiType:Entry<Integer, String>
                             UIdentifier (Identifier (first)) [UIdentifier (Identifier (first))]
@@ -95,7 +100,8 @@ UFile (package = ) [public final class ResolveKt {...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [setValue("123")] : PsiType:String
                         UIdentifier (Identifier (setValue)) [UIdentifier (Identifier (setValue))]
                         USimpleNameReferenceExpression (identifier = setValue, resolvesTo = null) [setValue] : PsiType:String
-                        ULiteralExpression (value = "123") ["123"] : PsiType:String
+                        UPolyadicExpression (operator = +) ["123"] : PsiType:String
+                            ULiteralExpression (value = "123") ["123"] : PsiType:String
                 UDeclarationsExpression [var intRange: kotlin.ranges.ClosedRange<java.lang.Long> = 0 .. 3]
                     ULocalVariable (name = intRange) [var intRange: kotlin.ranges.ClosedRange<java.lang.Long> = 0 .. 3]
                         UBinaryExpression (operator = ..) [0 .. 3] : PsiType:LongRange

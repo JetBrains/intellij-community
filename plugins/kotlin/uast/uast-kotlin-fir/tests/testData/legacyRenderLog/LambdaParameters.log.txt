@@ -11,7 +11,8 @@ UFile (package = )
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                                     UIdentifier (Identifier (append))
                                     USimpleNameReferenceExpression (identifier = append, resolvesTo = null)
-                                    ULiteralExpression (value = "a")
+                                    UPolyadicExpression (operator = +)
+                                        ULiteralExpression (value = "a")
         UMethod (name = itParameter)
             UBlockExpression
                 UQualifiedReferenceExpression

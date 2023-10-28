@@ -4,7 +4,11 @@ package org.jetbrains.uast.test.kotlin
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
@@ -21,9 +25,7 @@ import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.refreshed
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.kotlin.generate.KotlinUastElementFactory
-import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import org.jetbrains.uast.visitor.UastVisitor
-import java.lang.RuntimeException
 import kotlin.test.fail as kfail
 
 abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -208,7 +210,8 @@ abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureT
         TestCase.assertEquals(""""10".substring(1,2)""", methodCall.uastParent?.sourcePsi?.text)
         TestCase.assertEquals("""
             UQualifiedReferenceExpression
-                ULiteralExpression (value = "10")
+                UPolyadicExpression (operator = +)
+                    ULiteralExpression (value = "10")
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
                     UIdentifier (Identifier (substring))
                     USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
@@ -327,7 +330,8 @@ abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureT
                     USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                     ULiteralExpression (value = 2)
                 UReturnExpression
-                    ULiteralExpression (value = "def")
+                    UPolyadicExpression (operator = +)
+                        ULiteralExpression (value = "def")
         """.trimIndent(), uLambdaExpression2.asRecursiveLogString().trim()
         )
 
@@ -430,7 +434,8 @@ abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureT
                         USimpleNameReferenceExpression (identifier = it)
                         ULiteralExpression (value = 3)
                     UReturnExpression
-                        ULiteralExpression (value = "exit")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "exit")
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (println))
                     USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
@@ -440,7 +445,8 @@ abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureT
                     USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                     ULiteralExpression (value = 2)
                 UReturnExpression
-                    ULiteralExpression (value = "abc")
+                    UPolyadicExpression (operator = +)
+                        ULiteralExpression (value = "abc")
         """.trimIndent(), uLambdaExpression2.asRecursiveLogString().trim()
         )
 

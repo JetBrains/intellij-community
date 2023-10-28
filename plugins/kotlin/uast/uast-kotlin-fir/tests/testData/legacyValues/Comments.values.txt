@@ -32,7 +32,8 @@ UFile (package = ) [public abstract interface Pizza {...]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("Margherita")] = external <init>("Margherita")("Margherita")
                             UIdentifier (Identifier (String)) [UIdentifier (Identifier (String))]
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: String) [<init>] = external <init>("Margherita")("Margherita")
-                            ULiteralExpression (value = "Margherita") ["Margherita"] = "Margherita"
+                            UPolyadicExpression (operator = +) ["Margherita"] = "Margherita"
+                                ULiteralExpression (value = "Margherita") ["Margherita"] = "Margherita"
         UMethod (name = contains) [public fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean {...}]
             UParameter (name = ingredient) [@org.jetbrains.annotations.NotNull var ingredient: Pizza.Ingredient]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

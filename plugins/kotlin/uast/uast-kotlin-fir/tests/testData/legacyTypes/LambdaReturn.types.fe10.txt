@@ -60,15 +60,18 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
                                         ULiteralExpression (value = 5) [5] : PsiType:int
                                     UReturnExpression [return "5"] : PsiType:Void
-                                        ULiteralExpression (value = "5") ["5"] : PsiType:String
+                                        UPolyadicExpression (operator = +) ["5"] : PsiType:String
+                                            ULiteralExpression (value = "5") ["5"] : PsiType:String
                                 UIfExpression [if (a > 0) return "1" else return "2"] : PsiType:Void
                                     UBinaryExpression (operator = >) [a > 0] : PsiType:boolean
                                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
                                         ULiteralExpression (value = 0) [0] : PsiType:int
                                     UReturnExpression [return "1"] : PsiType:Void
-                                        ULiteralExpression (value = "1") ["1"] : PsiType:String
+                                        UPolyadicExpression (operator = +) ["1"] : PsiType:String
+                                            ULiteralExpression (value = "1") ["1"] : PsiType:String
                                     UReturnExpression [return "2"] : PsiType:Void
-                                        ULiteralExpression (value = "2") ["2"] : PsiType:String
+                                        UPolyadicExpression (operator = +) ["2"] : PsiType:String
+                                            ULiteralExpression (value = "2") ["2"] : PsiType:String
                 UDeclarationsExpression [var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
                     ULocalVariable (name = lam5) [var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
                         ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}] : PsiType:Function1<? super Integer, ? extends String>
@@ -77,7 +80,8 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                             UBlockExpression [{...}]
                                 UReturnExpression [return "a" + a]
                                     UBinaryExpression (operator = +) ["a" + a] : PsiType:String
-                                        ULiteralExpression (value = "a") ["a"] : PsiType:String
+                                        UPolyadicExpression (operator = +) ["a"] : PsiType:String
+                                            ULiteralExpression (value = "a") ["a"] : PsiType:String
                                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: int ->...})] : PsiType:Unit
                     UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]

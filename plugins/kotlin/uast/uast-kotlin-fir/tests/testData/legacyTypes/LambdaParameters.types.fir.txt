@@ -11,7 +11,8 @@ UFile (package = ) [public final class LambdaParametersKt {...]
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [append("a")] : PsiType:StringBuilder
                                     UIdentifier (Identifier (append)) [UIdentifier (Identifier (append))]
                                     USimpleNameReferenceExpression (identifier = append, resolvesTo = null) [append] : PsiType:StringBuilder
-                                    ULiteralExpression (value = "a") ["a"] : PsiType:String
+                                    UPolyadicExpression (operator = +) ["a"] : PsiType:String
+                                        ULiteralExpression (value = "a") ["a"] : PsiType:String
         UMethod (name = itParameter) [public static final fun itParameter() : void {...}]
             UBlockExpression [{...}] : PsiType:int
                 UQualifiedReferenceExpression [10.let({ var it: int ->...})] : PsiType:int

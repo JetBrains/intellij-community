@@ -7,24 +7,28 @@ UFile (package = ) [public final class A {...]
     UClass (name = B) [public final class B {...}]
         UAnnotation (fqName = MyAnnotation) [@MyAnnotation(text = "class")]
             UNamedExpression (name = text) [text = "class"]
-                ULiteralExpression (value = "class") ["class"] : PsiType:String
+                UPolyadicExpression (operator = +) ["class"] : PsiType:String
+                    ULiteralExpression (value = "class") ["class"] : PsiType:String
         UField (name = Companion) [@null public static final var Companion: B.Companion]
             UAnnotation (fqName = null) [@null]
         UMethod (name = B) [public fun B() = UastEmptyExpression]
         UClass (name = InB) [public static final class InB {...}]
             UAnnotation (fqName = MyAnnotation) [@MyAnnotation(text = "inB class")]
                 UNamedExpression (name = text) [text = "inB class"]
-                    ULiteralExpression (value = "inB class") ["inB class"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["inB class"] : PsiType:String
+                        ULiteralExpression (value = "inB class") ["inB class"] : PsiType:String
             UMethod (name = InB) [public fun InB() = UastEmptyExpression]
         UClass (name = Companion) [public static final class Companion {...}]
             UAnnotation (fqName = MyAnnotation) [@MyAnnotation(text = "companion")]
                 UNamedExpression (name = text) [text = "companion"]
-                    ULiteralExpression (value = "companion") ["companion"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["companion"] : PsiType:String
+                        ULiteralExpression (value = "companion") ["companion"] : PsiType:String
             UMethod (name = Companion) [private fun Companion() = UastEmptyExpression]
     UClass (name = Obj) [public final class Obj {...}]
         UAnnotation (fqName = MyAnnotation) [@MyAnnotation(text = "object")]
             UNamedExpression (name = text) [text = "object"]
-                ULiteralExpression (value = "object") ["object"] : PsiType:String
+                UPolyadicExpression (operator = +) ["object"] : PsiType:String
+                    ULiteralExpression (value = "object") ["object"] : PsiType:String
         UField (name = INSTANCE) [@null public static final var INSTANCE: Obj]
             UAnnotation (fqName = null) [@null]
         UMethod (name = Obj) [private fun Obj() = UastEmptyExpression]

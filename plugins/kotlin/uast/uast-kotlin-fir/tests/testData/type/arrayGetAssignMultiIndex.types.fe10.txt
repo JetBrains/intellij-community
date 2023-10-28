@@ -43,21 +43,24 @@ UFile (package = ) [public final class ArrayGetAssignMultiIndexKt {...]
                                 UParameter (name = it) [var it: int]
                                 UBlockExpression [{...}]
                                     UReturnExpression [return ""]
-                                        ULiteralExpression (value = "") [""] : PsiType:String
+                                        UPolyadicExpression (operator = +) [""] : PsiType:String
+                                            ULiteralExpression (value = "") [""] : PsiType:String
                 UBinaryExpression (operator = =) [s[1, -1] = "O"] : PsiType:Unit
                     UArrayAccessExpression [s[1, -1]] : PsiType:String
                         USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String[]
                         ULiteralExpression (value = 1) [1] : PsiType:int
                         UPrefixExpression (operator = -) [-1] : PsiType:int
                             ULiteralExpression (value = 1) [1] : PsiType:int
-                    ULiteralExpression (value = "O") ["O"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["O"] : PsiType:String
+                        ULiteralExpression (value = "O") ["O"] : PsiType:String
                 UBinaryExpression (operator = +=) [s[2, -2] += "K"] : PsiType:Unit
                     UArrayAccessExpression [s[2, -2]] : PsiType:String
                         USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String[]
                         ULiteralExpression (value = 2) [2] : PsiType:int
                         UPrefixExpression (operator = -) [-2] : PsiType:int
                             ULiteralExpression (value = 2) [2] : PsiType:int
-                    ULiteralExpression (value = "K") ["K"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["K"] : PsiType:String
+                        ULiteralExpression (value = "K") ["K"] : PsiType:String
                 UReturnExpression [return s[-3, 3]] : PsiType:Void
                     UArrayAccessExpression [s[-3, 3]] : PsiType:String
                         USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String[]

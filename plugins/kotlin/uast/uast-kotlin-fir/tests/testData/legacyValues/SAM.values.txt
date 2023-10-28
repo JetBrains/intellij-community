@@ -111,7 +111,8 @@ UFile (package = ) [import java.lang.Thread...]
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello1")] = external println("hello1")("hello1")
                                             UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
                                             USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println("hello1")("hello1")
-                                            ULiteralExpression (value = "hello1") ["hello1"] = "hello1"
+                                            UPolyadicExpression (operator = +) ["hello1"] = "hello1"
+                                                ULiteralExpression (value = "hello1") ["hello1"] = "hello1"
         UMethod (name = test2) [public static final fun test2() : void {...}]
             UBlockExpression [{...}] = Undetermined
                 UDeclarationsExpression [var thread2: java.lang.Thread = <init>(Runnable({ ...}))] = Undetermined
@@ -140,7 +141,8 @@ UFile (package = ) [import java.lang.Thread...]
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello2")] = external println("hello2")("hello2")
                                                 UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
                                                 USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println("hello2")("hello2")
-                                                ULiteralExpression (value = "hello2") ["hello2"] = "hello2"
+                                                UPolyadicExpression (operator = +) ["hello2"] = "hello2"
+                                                    ULiteralExpression (value = "hello2") ["hello2"] = "hello2"
         UMethod (name = test3) [public static final fun test3() : void {...}]
             UBlockExpression [{...}] = external ambiguousSamAcceptor(Callable({
     return "Callable"
@@ -168,7 +170,8 @@ UFile (package = ) [import java.lang.Thread...]
                         ULambdaExpression [{ ...}] = Undetermined
                             UBlockExpression [{...}] = Nothing
                                 UReturnExpression [return "Supplier"] = Nothing
-                                    ULiteralExpression (value = "Supplier") ["Supplier"] = "Supplier"
+                                    UPolyadicExpression (operator = +) ["Supplier"] = "Supplier"
+                                        ULiteralExpression (value = "Supplier") ["Supplier"] = "Supplier"
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [ambiguousSamAcceptor(Callable({ ...}))] = external ambiguousSamAcceptor(Callable({
     return "Callable"
 }))(external Callable({
@@ -190,7 +193,8 @@ UFile (package = ) [import java.lang.Thread...]
                         ULambdaExpression [{ ...}] = Undetermined
                             UBlockExpression [{...}] = Nothing
                                 UReturnExpression [return "Callable"] = Nothing
-                                    ULiteralExpression (value = "Callable") ["Callable"] = "Callable"
+                                    UPolyadicExpression (operator = +) ["Callable"] = "Callable"
+                                        ULiteralExpression (value = "Callable") ["Callable"] = "Callable"
         UMethod (name = ambiguousSamAcceptor) [public static final fun ambiguousSamAcceptor(@org.jetbrains.annotations.NotNull s: java.util.function.Supplier<java.lang.String>) : java.lang.String {...}]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.util.function.Supplier<java.lang.String>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

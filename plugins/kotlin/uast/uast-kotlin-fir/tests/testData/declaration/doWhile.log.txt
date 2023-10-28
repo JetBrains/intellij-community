@@ -12,7 +12,8 @@ UFile (package = )
                     UBlockExpression
                         UBinaryExpression (operator = =)
                             USimpleNameReferenceExpression (identifier = x)
-                            ULiteralExpression (value = "non-null")
+                            UPolyadicExpression (operator = +)
+                                ULiteralExpression (value = "non-null")
         UMethod (name = kt44412)
             UBlockExpression
                 UDeclarationsExpression

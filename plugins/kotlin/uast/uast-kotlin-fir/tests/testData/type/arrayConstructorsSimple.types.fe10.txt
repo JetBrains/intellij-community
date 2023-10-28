@@ -109,23 +109,27 @@ UFile (package = ) [import kotlin.test.assertEquals...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [assertEquals("0", sa[0])] : PsiType:Unit
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
                     USimpleNameReferenceExpression (identifier = assertEquals, resolvesTo = null) [assertEquals] : PsiType:Unit
-                    ULiteralExpression (value = "0") ["0"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["0"] : PsiType:String
+                        ULiteralExpression (value = "0") ["0"] : PsiType:String
                     UArrayAccessExpression [sa[0]] : PsiType:String
                         USimpleNameReferenceExpression (identifier = sa) [sa] : PsiType:String[]
                         ULiteralExpression (value = 0) [0] : PsiType:int
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [assertEquals("1", sa[1])] : PsiType:Unit
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
                     USimpleNameReferenceExpression (identifier = assertEquals, resolvesTo = null) [assertEquals] : PsiType:Unit
-                    ULiteralExpression (value = "1") ["1"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["1"] : PsiType:String
+                        ULiteralExpression (value = "1") ["1"] : PsiType:String
                     UArrayAccessExpression [sa[1]] : PsiType:String
                         USimpleNameReferenceExpression (identifier = sa) [sa] : PsiType:String[]
                         ULiteralExpression (value = 1) [1] : PsiType:int
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [assertEquals("2", sa[2])] : PsiType:Unit
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
                     USimpleNameReferenceExpression (identifier = assertEquals, resolvesTo = null) [assertEquals] : PsiType:Unit
-                    ULiteralExpression (value = "2") ["2"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["2"] : PsiType:String
+                        ULiteralExpression (value = "2") ["2"] : PsiType:String
                     UArrayAccessExpression [sa[2]] : PsiType:String
                         USimpleNameReferenceExpression (identifier = sa) [sa] : PsiType:String[]
                         ULiteralExpression (value = 2) [2] : PsiType:int
                 UReturnExpression [return "OK"] : PsiType:Void
-                    ULiteralExpression (value = "OK") ["OK"] : PsiType:String
+                    UPolyadicExpression (operator = +) ["OK"] : PsiType:String
+                        ULiteralExpression (value = "OK") ["OK"] : PsiType:String

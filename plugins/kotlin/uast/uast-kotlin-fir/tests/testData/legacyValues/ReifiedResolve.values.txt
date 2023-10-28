@@ -9,7 +9,8 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] = external TODO("message")("message")
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
                     USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] = external TODO("message")("message")
-                    ULiteralExpression (value = "message") ["message"] = "message"
+                    UPolyadicExpression (operator = +) ["message"] = "message"
+                        ULiteralExpression (value = "message") ["message"] = "message"
         UMethod (name = resolve) [public static final fun resolve() : void {...}]
             UBlockExpression [{...}] = Undetermined
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] = external foo()()
@@ -34,7 +35,8 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("foo")] = external listOf("foo")("foo")
                                 UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                                 USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf("foo")("foo")
-                                ULiteralExpression (value = "foo") ["foo"] = "foo"
+                                UPolyadicExpression (operator = +) ["foo"] = "foo"
+                                    ULiteralExpression (value = "foo") ["foo"] = "foo"
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [filterIsInstance()] = external filterIsInstance()()
                                 UIdentifier (Identifier (filterIsInstance)) [UIdentifier (Identifier (filterIsInstance))]
                                 USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null) [filterIsInstance] = external filterIsInstance()()
@@ -47,4 +49,5 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] = external TODO("message")("message")
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
                     USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] = external TODO("message")("message")
-                    ULiteralExpression (value = "message") ["message"] = "message"
+                    UPolyadicExpression (operator = +) ["message"] = "message"
+                        ULiteralExpression (value = "message") ["message"] = "message"

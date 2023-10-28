@@ -3,7 +3,8 @@ UFile (package = ) [public final class SuperCallsKt {...]
         UField (name = anon) [@org.jetbrains.annotations.NotNull private static final var anon: A = anonymous object : A("textForAnon") {...}]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UObjectLiteralExpression [anonymous object : A("textForAnon") {...}] = Undetermined
-                ULiteralExpression (value = "textForAnon") ["textForAnon"] = "textForAnon"
+                UPolyadicExpression (operator = +) ["textForAnon"] = "textForAnon"
+                    ULiteralExpression (value = "textForAnon") ["textForAnon"] = "textForAnon"
                 UClass (name = null) [final class null : A {...}]
                     UMethod (name = bar) [public final fun bar() : void {...}]
                         UBlockExpression [{...}] = external cons(anonymous object : A("inner literal") { })(Undetermined)
@@ -11,27 +12,31 @@ UFile (package = ) [public final class SuperCallsKt {...]
                                 UIdentifier (Identifier (cons)) [UIdentifier (Identifier (cons))]
                                 USimpleNameReferenceExpression (identifier = cons, resolvesTo = null) [cons] = external cons(anonymous object : A("inner literal") { })(Undetermined)
                                 UObjectLiteralExpression [anonymous object : A("inner literal") { }] = Undetermined
-                                    ULiteralExpression (value = "inner literal") ["inner literal"] = "inner literal"
+                                    UPolyadicExpression (operator = +) ["inner literal"] = "inner literal"
+                                        ULiteralExpression (value = "inner literal") ["inner literal"] = "inner literal"
                                     UClass (name = null) [final class null : A {...}]
                                         UMethod (name = ) [private fun () {...}]
                                             UBlockExpression [{...}] = external <init>("inner literal")("inner literal")
                                                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("inner literal")] = external <init>("inner literal")("inner literal")
                                                     UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
                                                     USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>("inner literal")("inner literal")
-                                                    ULiteralExpression (value = "inner literal") ["inner literal"] = "inner literal"
+                                                    UPolyadicExpression (operator = +) ["inner literal"] = "inner literal"
+                                                        ULiteralExpression (value = "inner literal") ["inner literal"] = "inner literal"
                     UMethod (name = ) [private fun () {...}]
                         UBlockExpression [{...}] = external <init>("textForAnon")("textForAnon")
                             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("textForAnon")] = external <init>("textForAnon")("textForAnon")
                                 UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
                                 USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>("textForAnon")("textForAnon")
-                                ULiteralExpression (value = "textForAnon") ["textForAnon"] = "textForAnon"
+                                UPolyadicExpression (operator = +) ["textForAnon"] = "textForAnon"
+                                    ULiteralExpression (value = "textForAnon") ["textForAnon"] = "textForAnon"
                     UClass (name = InnerClass) [public final class InnerClass : A {...}]
                         UMethod (name = InnerClass) [public fun InnerClass() {...}]
                             UBlockExpression [{...}] = external <init>("inner class")("inner class")
                                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("inner class")] = external <init>("inner class")("inner class")
                                     UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
                                     USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>("inner class")("inner class")
-                                    ULiteralExpression (value = "inner class") ["inner class"] = "inner class"
+                                    UPolyadicExpression (operator = +) ["inner class"] = "inner class"
+                                        ULiteralExpression (value = "inner class") ["inner class"] = "inner class"
         UMethod (name = getAnon) [public static final fun getAnon() : A = UastEmptyExpression]
         UMethod (name = cons) [public static final fun cons(@org.jetbrains.annotations.NotNull a: A) : void {...}]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: A]
@@ -107,4 +112,5 @@ UFile (package = ) [public final class SuperCallsKt {...]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("text")] = external <init>("text")("text")
                     UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
                     USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>("text")("text")
-                    ULiteralExpression (value = "text") ["text"] = "text"
+                    UPolyadicExpression (operator = +) ["text"] = "text"
+                        ULiteralExpression (value = "text") ["text"] = "text"

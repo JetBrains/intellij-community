@@ -29,7 +29,8 @@ UFile (package = ) [public final class TryCatch {...]
         UMethod (name = catches) [@java.lang.SuppressWarnings(value = "Something")...}]
             UAnnotation (fqName = java.lang.SuppressWarnings) [@java.lang.SuppressWarnings(value = "Something")]
                 UNamedExpression (name = value) [value = "Something"] = Undetermined
-                    ULiteralExpression (value = "Something") ["Something"] = "Something"
+                    UPolyadicExpression (operator = +) ["Something"] = "Something"
+                        ULiteralExpression (value = "Something") ["Something"] = "Something"
             UBlockExpression [{...}] = external finalizer()()
                 UTryExpression [try {...}] = external finalizer()()
                     UBlockExpression [{...}] = external body()()
@@ -41,7 +42,8 @@ UFile (package = ) [public final class TryCatch {...]
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UAnnotation (fqName = java.lang.SuppressWarnings) [@java.lang.SuppressWarnings(value = "Something")]
                                 UNamedExpression (name = value) [value = "Something"] = Undetermined
-                                    ULiteralExpression (value = "Something") ["Something"] = "Something"
+                                    UPolyadicExpression (operator = +) ["Something"] = "Something"
+                                        ULiteralExpression (value = "Something") ["Something"] = "Something"
                         UBlockExpression [{...}] = external catcher()()
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [catcher()] = external catcher()()
                                 UIdentifier (Identifier (catcher)) [UIdentifier (Identifier (catcher))]

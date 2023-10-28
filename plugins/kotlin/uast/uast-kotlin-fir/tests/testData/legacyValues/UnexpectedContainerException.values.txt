@@ -60,5 +60,6 @@ UFile (package = ) [public abstract interface Callback {...]
                                                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("")] = external <init>("")("")
                                                             UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
                                                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException) [<init>] = external <init>("")("")
-                                                            ULiteralExpression (value = "") [""] = ""
+                                                            UPolyadicExpression (operator = +) [""] = ""
+                                                                ULiteralExpression (value = "") [""] = ""
                                             UMethod (name = ) [private fun () = UastEmptyExpression]
