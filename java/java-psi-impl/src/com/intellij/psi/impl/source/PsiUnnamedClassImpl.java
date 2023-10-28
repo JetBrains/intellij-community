@@ -17,6 +17,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.JavaUnnamedClassUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,10 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
 
   @Override
   public @Nullable String getQualifiedName() {
+    PsiElement parent = getParent();
+    if (parent instanceof PsiJavaFile) {
+      return JavaUnnamedClassUtil.getJvmName(((PsiJavaFile)parent).getName());
+    }
     return null;
   }
 

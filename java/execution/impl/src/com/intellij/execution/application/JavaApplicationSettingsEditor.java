@@ -12,11 +12,9 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.psi.util.JavaUnnamedClassUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -102,10 +100,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
         public @NotNull Collection<String> getItems(String prefix, boolean cached, CompletionParameters parameters) {
             return DumbService.isDumb(getProject())
                    ? List.of()
-                   : ContainerUtil.map(
-                     StubIndex.getInstance().getAllKeys(JavaStubIndexKeys.UNNAMED_CLASSES, getProject()),
-                     JavaUnnamedClassUtil::getJvmName
-                   );
+                   : StubIndex.getInstance().getAllKeys(JavaStubIndexKeys.UNNAMED_CLASSES, getProject());
         }
       }, true, null);
       CommonParameterFragments.setMonospaced(myUnnamedClassField);
