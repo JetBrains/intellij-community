@@ -19,6 +19,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlDynamicPlugin -->
     <ideStartupWizard implementation="com.intellij.ide.startup.importSettings.IdeStartupWizardImpl"/>
+    <applicationInitializedListener implementation="com.intellij.ide.startup.importSettings.jb.JbAfterRestartSettingsApplier"/>
 
     <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.SettingsService"
                         serviceImplementation="com.intellij.ide.startup.importSettings.data.SettingsServiceImpl"/>

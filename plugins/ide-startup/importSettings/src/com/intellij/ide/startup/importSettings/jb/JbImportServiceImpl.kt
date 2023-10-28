@@ -21,7 +21,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.*
@@ -233,18 +232,11 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
 
     val startTime = System.currentTimeMillis()
     coroutineScope.async(modalityState.asContextElement()) {
-      progressIndicator.text2 = "Migrating options"
-      LOG.info("Starting migration...")
-      importer.importOptions(filteredCategories)
-      LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
-      progressIndicator.fraction = 0.1
-      ApplicationManager.getApplication().saveSettings()
       if (plugins2import != null) {
         LOG.info("Started importing plugins...")
-        val pluginsImportStart = System.currentTimeMillis()
         importer.installPlugins(progressIndicator, plugins2import)
-        LOG.info("Plugins imported in ${System.currentTimeMillis() - pluginsImportStart} ms. " +
-                 "Migration completed in ${System.currentTimeMillis() - startTime} ms.")
+        storeImportConfig(productInfo.configDirPath, filteredCategories)
+        LOG.info("Plugins imported in ${System.currentTimeMillis() - startTime} ms. ")
         LOG.info("Calling restart...")
         // restart if we install plugins
         withContext(Dispatchers.EDT) {
@@ -254,7 +246,11 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         }
       }
       else {
-        //close the dialog and start IDE
+        progressIndicator.text2 = "Migrating options"
+        LOG.info("Starting migration...")
+        importer.importOptions(filteredCategories)
+        LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
+        progressIndicator.fraction = 0.1
         LOG.info("Migration complete. Showing welcome screen")
         withContext(Dispatchers.EDT) {
           SettingsService.getInstance().doClose.fire(Unit)
