@@ -125,6 +125,16 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
   }
 
   @Override
+  protected @NotNull JComponent createPopupComponent(JComponent content) {
+    final var component = super.createPopupComponent(content);
+    final var renderer = ((MyBasePopupState<?>)myStep).myGetRenderer.get();
+    if (component instanceof JScrollPane scrollPane && isRendererWithInsets(renderer)) {
+      scrollPane.getVerticalScrollBar().setBackground(UIManager.getColor("ComboBox.background"));
+    }
+    return component;
+  }
+
+  @Override
   public JList<T> getList() {
     //noinspection unchecked
     return super.getList();
