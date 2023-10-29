@@ -30,7 +30,7 @@ suspend fun <T> instantiate(
 ): T {
   val (signature, constructor) = findConstructor(instanceClass, supportedSignatures)
   when (val result = resolveArguments(resolver = resolver,
-                                      parameterTypes = signature.parameterList(),
+                                      parameterTypes = signature.parameterArray(),
                                       instanceClass = instanceClass,
                                       round = 0)) {
     is ResolutionResult.UnresolvedParameter -> {
@@ -192,7 +192,7 @@ private fun <T> doFindConstructorAndArguments(
     }
 
     val arguments = when (val result = resolveArguments(resolver = resolver,
-                                                        parameterTypes = parameterTypes.asList(),
+                                                        parameterTypes = parameterTypes,
                                                         instanceClass = instanceClass,
                                                         round = round)) {
       is ResolutionResult.UnresolvedParameter -> {
@@ -234,9 +234,13 @@ private sealed interface ResolutionResult {
 }
 
 private fun resolveArguments(resolver: DependencyResolver,
-                             parameterTypes: List<Class<*>>,
+                             parameterTypes: Array<Class<*>>,
                              instanceClass: Class<*>,
                              round: Int): ResolutionResult {
+  if (parameterTypes.isEmpty()) {
+    return ResolutionResult.Resolved(emptyList())
+  }
+
   val arguments = ArrayList<Argument>(parameterTypes.size)
   for (parameterType in parameterTypes) {
     if (parameterType === CoroutineScope::class.java) {
