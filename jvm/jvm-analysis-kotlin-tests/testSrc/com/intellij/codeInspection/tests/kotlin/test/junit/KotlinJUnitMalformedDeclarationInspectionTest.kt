@@ -497,7 +497,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest {
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.MethodSource("<error descr="Method source 'a' must be static">a</error>")
+        @org.junit.jupiter.params.provider.MethodSource(<error descr="Method source 'a' must be static">"a"</error>)
         fun foo(param: String) { }
         
         fun a(): Array<String> { return arrayOf("a", "b") }
@@ -508,7 +508,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest {
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.MethodSource("<error descr="Method source 'a' should have no parameters">a</error>")
+        @org.junit.jupiter.params.provider.MethodSource(<error descr="Method source 'a' should have no parameters">"a"</error>)
         fun foo(param: String) { }
         
         companion object {
@@ -524,7 +524,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest {
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource(
-          "<error descr="Method source 'a' must have one of the following return types: 'Stream<?>', 'Iterator<?>', 'Iterable<?>' or 'Object[]'">a</error>"
+          <error descr="Method source 'a' must have one of the following return types: 'Stream<?>', 'Iterator<?>', 'Iterable<?>' or 'Object[]'">"a"</error>
         )
         fun foo(param: String) { }
         
@@ -539,7 +539,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest {
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.MethodSource("<error descr="Cannot resolve target method source: 'a'">a</error>")
+        @org.junit.jupiter.params.provider.MethodSource(<error descr="Cannot resolve target method source: 'a'">"a"</error>)
         fun foo(param: String) { }
       }        
     """.trimIndent())
@@ -552,7 +552,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EnumSource(
           value = Foo::class, 
-          names = ["<error descr="Can't resolve 'enum' constant reference.">invalid-value</error>"], 
+          names = [<error descr="Can't resolve 'enum' constant reference.">"invalid-value"</error>], 
           mode = org.junit.jupiter.params.provider.EnumSource.Mode.INCLUDE
         )
         fun invalid() { }
@@ -560,7 +560,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EnumSource(
           value = Foo::class, 
-          names = ["<error descr="Can't resolve 'enum' constant reference.">invalid-value</error>"]
+          names = [<error descr="Can't resolve 'enum' constant reference.">"invalid-value"</error>]
        )
         fun invalidDefault() { }
       }
