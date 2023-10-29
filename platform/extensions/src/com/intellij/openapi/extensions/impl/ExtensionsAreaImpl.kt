@@ -16,7 +16,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Modifier
-import java.util.function.Consumer
 
 private val LOG: Logger
   get() = logger<ExtensionsAreaImpl>()
@@ -57,7 +56,8 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   private val epTraces = if (DEBUG_REGISTRATION) HashMap<String, Throwable>() else null
 
-  override fun getNameToPointMap(): Map<String, ExtensionPointImpl<*>> = extensionPoints
+  override val nameToPointMap: Map<String, ExtensionPointImpl<*>>
+    get() = extensionPoints
 
   private val lock = Any()
 
@@ -179,7 +179,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
     registerExtensionPoint(extensionPointName = extensionPointName,
                            extensionPointBeanClass = extensionPointBeanClass,
                            kind = kind,
-                           dynamic = false)
+                           isDynamic = false)
     Disposer.register(parentDisposable) { unregisterExtensionPoint(extensionPointName) }
   }
 
@@ -187,13 +187,13 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   override fun registerExtensionPoint(extensionPointName: String,
                                       extensionPointBeanClass: String,
                                       kind: ExtensionPoint.Kind,
-                                      dynamic: Boolean) {
+                                      isDynamic: Boolean) {
     val pluginDescriptor = DefaultPluginDescriptor(PluginId.getId("fakeIdForTests"))
     doRegisterExtensionPoint<Any>(name = extensionPointName,
                                   extensionClass = extensionPointBeanClass,
                                   pluginDescriptor = pluginDescriptor,
                                   isInterface = kind == ExtensionPoint.Kind.INTERFACE,
-                                  dynamic = dynamic)
+                                  dynamic = isDynamic)
   }
 
   @TestOnly
@@ -289,7 +289,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   }
 
   @TestOnly
-  fun processExtensionPoints(consumer: Consumer<ExtensionPointImpl<*>>) {
+  override fun processExtensionPoints(consumer: (ExtensionPointImpl<*>) -> Unit) {
     extensionPoints.values.forEach(consumer)
   }
 

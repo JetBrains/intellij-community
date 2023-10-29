@@ -81,8 +81,9 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   }
 
   /**
-   * Consider using [ProjectExtensionPointName.getExtensions]
+   * Do not use project-level or module-level extensions.
    */
+  @Obsolete
   fun getExtensionList(areaInstance: AreaInstance?): List<T> = getPointImpl(areaInstance).extensionList
 
   /**
@@ -97,9 +98,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     return getPointImpl(areaInstance).extensionList.stream()
   }
 
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("""use {@link #getPoint()} to access application-level extensions and {@link ProjectExtensionPointName#getPoint(AreaInstance)}
-    to access project-level and module-level extensions""")
+  @Deprecated("Do not use project-level or module-level extensions.")
   fun getPoint(areaInstance: AreaInstance?): ExtensionPoint<T> = getPointImpl(areaInstance)
 
   val point: ExtensionPoint<T>

@@ -126,7 +126,7 @@ public final class DynamicExtensionPointsTester {
                                      @NotNull Map<ExtensionPointImpl<?>, Collection<WeakReference<Object>>> extensions) {
     area.processExtensionPoints(ep -> {
       if (!ep.isDynamic() || (useWhiteList && !EXTENSION_POINTS_WHITE_LIST.contains(ep.name))) {
-        return;
+        return Unit.INSTANCE;
       }
 
       List<WeakReference<Object>> list = new ArrayList<>();
@@ -137,6 +137,7 @@ public final class DynamicExtensionPointsTester {
         return Unit.INSTANCE;
       });
       extensions.put(ep, list);
+      return Unit.INSTANCE;
     });
   }
 }

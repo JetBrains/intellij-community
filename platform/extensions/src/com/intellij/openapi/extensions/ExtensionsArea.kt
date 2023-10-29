@@ -1,42 +1,47 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.extensions;
+package com.intellij.openapi.extensions
 
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import org.jetbrains.annotations.*;
-
-import java.util.Map;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.Unmodifiable
 
 @ApiStatus.Internal
-public interface ExtensionsArea {
+interface ExtensionsArea {
   @TestOnly
-  void registerExtensionPoint(@NonNls @NotNull String extensionPointName,
-                              @NotNull String extensionPointBeanClass,
-                              @NotNull ExtensionPoint.Kind kind,
-                              boolean isDynamic);
+  fun registerExtensionPoint(extensionPointName: @NonNls String,
+                             extensionPointBeanClass: String,
+                             kind: ExtensionPoint.Kind,
+                             isDynamic: Boolean)
 
-  /**
-   * @deprecated Use {@link #registerExtensionPoint(String, String, ExtensionPoint.Kind, boolean)}
-   */
+
   @TestOnly
-  @Deprecated
-  default void registerExtensionPoint(@NonNls @NotNull String extensionPointName,
-                                      @NotNull String extensionPointBeanClass,
-                                      @NotNull ExtensionPoint.Kind kind) {
-    registerExtensionPoint(extensionPointName, extensionPointBeanClass, kind, false);
+  @Deprecated(message = "Do not use", replaceWith = ReplaceWith("registerExtensionPoint(String, String, ExtensionPoint.Kind, boolean)"))
+  fun registerExtensionPoint(extensionPointName: @NonNls String,
+                             extensionPointBeanClass: String,
+                             kind: ExtensionPoint.Kind) {
+    registerExtensionPoint(extensionPointName = extensionPointName,
+                           extensionPointBeanClass = extensionPointBeanClass,
+                           kind = kind,
+                           isDynamic = false)
   }
 
   @TestOnly
-  void unregisterExtensionPoint(@NonNls @NotNull String extensionPointName);
+  fun unregisterExtensionPoint(extensionPointName: @NonNls String)
 
-  boolean hasExtensionPoint(@NonNls @NotNull String extensionPointName);
+  fun hasExtensionPoint(extensionPointName: @NonNls String): Boolean
 
-  boolean hasExtensionPoint(@NotNull ExtensionPointName<?> extensionPointName);
+  fun hasExtensionPoint(extensionPointName: ExtensionPointName<*>): Boolean
 
-  @NotNull <T> ExtensionPoint<@NotNull T> getExtensionPoint(@NonNls @NotNull String extensionPointName);
+  fun <T : Any> getExtensionPoint(extensionPointName: @NonNls String): ExtensionPoint<T>
 
-  <T> @Nullable ExtensionPoint<@NotNull T> getExtensionPointIfRegistered(@NotNull String extensionPointName);
+  fun <T : Any> getExtensionPointIfRegistered(extensionPointName: String): ExtensionPoint<T>?
 
-  @NotNull <T> ExtensionPoint<@NotNull T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName);
+  fun <T : Any> getExtensionPoint(extensionPointName: ExtensionPointName<T>): ExtensionPoint<T>
 
-  @NotNull @Unmodifiable Map<String, ExtensionPointImpl<?>> getNameToPointMap();
+  val nameToPointMap: @Unmodifiable Map<String, ExtensionPointImpl<*>>
+
+  @TestOnly
+  fun processExtensionPoints(consumer: (ExtensionPointImpl<*>) -> Unit)
 }

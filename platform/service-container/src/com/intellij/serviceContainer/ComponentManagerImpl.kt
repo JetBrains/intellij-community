@@ -378,7 +378,7 @@ abstract class ComponentManagerImpl(
 
     // register services before registering extensions because plugins can access services in their extensions,
     // which can be invoked right away if the plugin is loaded dynamically
-    val extensionPoints = if (precomputedExtensionModel == null) HashMap(extensionArea.getNameToPointMap()) else null
+    val extensionPoints = if (precomputedExtensionModel == null) HashMap(extensionArea.nameToPointMap) else null
     for (rootModule in modules) {
       executeRegisterTask(rootModule) { module ->
         val containerDescriptor = getContainerDescriptor(module)

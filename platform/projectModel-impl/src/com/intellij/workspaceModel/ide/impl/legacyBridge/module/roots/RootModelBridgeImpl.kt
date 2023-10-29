@@ -142,7 +142,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
       if (parentDisposable is RootModelBridgeImpl && parentDisposable.isDisposed.get()) {
         parentDisposable.throwDisposed()
       }
-      for (extension in ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensions(module)) {
+      for (extension in ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensionList(module)) {
         val readOnlyExtension = loadExtension(extension, parentDisposable, rootManagerElement)
 
         if (writable) {
