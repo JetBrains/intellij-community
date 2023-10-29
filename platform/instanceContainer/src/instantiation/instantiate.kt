@@ -3,7 +3,7 @@ package com.intellij.platform.instanceContainer.instantiation
 
 import com.intellij.concurrency.installTemporaryThreadContext
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.util.ArrayUtil
+import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
 import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
@@ -39,9 +39,15 @@ suspend fun <T> instantiate(
       )
     }
     is ResolutionResult.Resolved -> {
-      return instantiate(parentScope, instanceClass, result.arguments) {
-        @Suppress("UNCHECKED_CAST")
-        constructor.invokeWithArguments(*it) as T
+      return instantiate(parentScope, instanceClass, result.arguments) { args ->
+        if (args.isEmpty()) {
+          @Suppress("UNCHECKED_CAST")
+          constructor.invoke() as T
+        }
+        else {
+          @Suppress("UNCHECKED_CAST")
+          constructor.invokeWithArguments(*args) as T
+        }
       }
     }
   }
@@ -261,21 +267,29 @@ private suspend fun <T> instantiate(
   lazyArgs: List<Argument>,
   instantiate: (Array<out Any>) -> T,
 ): T {
-  val args: Array<Any> = coroutineScope {
-    lazyArgs.map { argument: Argument ->
-      if (argument === Argument.CoroutineScopeMarker) {
-        CompletableDeferred(argument)
-      }
-      else {
-        val supplier = (argument as Argument.LazyArgument).argumentSupplier
-        async(start = CoroutineStart.UNDISPATCHED) { // don't pay for dispatch
-          supplier()
+  val args: Array<Any> = if (lazyArgs.isEmpty()) {
+    ArrayUtilRt.EMPTY_OBJECT_ARRAY
+  }
+  else {
+    coroutineScope {
+      lazyArgs.map { argument: Argument ->
+        if (argument === Argument.CoroutineScopeMarker) {
+          CompletableDeferred(argument)
+        }
+        else {
+          val supplier = (argument as Argument.LazyArgument).argumentSupplier
+          async(start = CoroutineStart.UNDISPATCHED) { // don't pay for dispatch
+            supplier()
+          }
+        }
+      }.awaitAll()
+    }
+      .toArray(ArrayUtilRt.EMPTY_OBJECT_ARRAY)
+      .also { args ->
+        replaceScopeMarkerWithScope(args) {
+          parentScope.namedChildScope(instanceClass.name)
         }
       }
-    }.awaitAll()
-  }.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY)
-  replaceScopeMarkerWithScope(args) {
-    parentScope.namedChildScope(instanceClass.name)
   }
   // If a service is requested during highlighting (under impatient=true),
   // then it's initialization might be broken forever.
