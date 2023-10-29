@@ -452,34 +452,24 @@ abstract class ComponentManagerImpl(
 
   private fun registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel: PrecomputedExtensionModel,
                                                                     listenerCallbacks: MutableList<in Runnable>?) {
-    val n = precomputedExtensionModel.pluginDescriptors.size
+    val extensionArea = extensionArea
     if (precomputedExtensionModel.extensionPoints.isEmpty()) {
       return
     }
 
     val result = persistentHashMapOf<String, ExtensionPointImpl<*>>().mutate { map ->
-      for (i in 0 until n) {
-        createExtensionPoints(points = precomputedExtensionModel.extensionPoints.get(i),
-                              componentManager = this,
-                              result = map,
-                              pluginDescriptor = precomputedExtensionModel.pluginDescriptors.get(i))
+      for ((pluginDescriptor, points) in precomputedExtensionModel.extensionPoints) {
+        createExtensionPoints(points = points, componentManager = this, result = map, pluginDescriptor = pluginDescriptor)
       }
     }
 
-    if (precomputedExtensionModel.isInitial) {
-      assert(extensionArea.nameToPointMap.isEmpty())
-      extensionArea.reset(result)
-    }
-    else {
-      extensionArea.putAll(result)
-    }
+    assert(extensionArea.nameToPointMap.isEmpty())
+    extensionArea.reset(result)
 
-    for ((name, pairs) in precomputedExtensionModel.nameToExtensions) {
+    for ((name, item) in precomputedExtensionModel.nameToExtensions) {
       val point = result.get(name) ?: continue
-      for ((pluginDescriptor, list) in pairs) {
-        if (!list.isEmpty()) {
-          point.registerExtensions(descriptors = list, pluginDescriptor = pluginDescriptor, listenerCallbacks = listenerCallbacks)
-        }
+      for ((pluginDescriptor, extensions) in item) {
+        point.registerExtensions(descriptors = extensions, pluginDescriptor = pluginDescriptor, listenerCallbacks = listenerCallbacks)
       }
     }
   }

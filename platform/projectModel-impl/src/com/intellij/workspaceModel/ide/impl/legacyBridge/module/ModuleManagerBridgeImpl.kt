@@ -141,8 +141,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     val result = coroutineScope {
       LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
 
-      val precomputedExtensionModel = precomputeModuleLevelExtensionModel(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                                                                          isInitial = true)
+      val precomputedExtensionModel = precomputeModuleLevelExtensionModel()
       val result = loadedEntities.map { moduleEntity ->
         async {
           runCatching {

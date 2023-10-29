@@ -45,7 +45,12 @@ fun createExtensionPoints(points: List<ExtensionPointDescriptor>,
                               hasAttributes = descriptor.hasAttributes,
                               dynamic = descriptor.isDynamic)
     }
-    addPointOrLogErrorIfDuplicated(result = result, point = point, componentManager = componentManager)
+    result.putIfAbsent(point.name, point)?.let { old ->
+      val oldPluginDescriptor = old.getPluginDescriptor()
+      throw componentManager.createError(
+        "Duplicate registration for EP ${point.name} first in $oldPluginDescriptor, second in $pluginDescriptor", pluginDescriptor.pluginId
+      )
+    }
   }
 }
 
@@ -63,16 +68,6 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   fun reset(nameToPointMap: PersistentMap<String, ExtensionPointImpl<*>>) {
     extensionPoints = nameToPointMap
-  }
-
-  fun putAll(nameToPointMap: PersistentMap<String, ExtensionPointImpl<*>>) {
-    synchronized(lock) {
-      extensionPoints = extensionPoints.mutate {
-        for (point in nameToPointMap.values) {
-          addPointOrLogErrorIfDuplicated(it, point = point, componentManager)
-        }
-      }
-    }
   }
 
   @TestOnly
@@ -309,14 +304,3 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   override fun toString(): String = componentManager.toString()
 }
 
-private fun addPointOrLogErrorIfDuplicated(result: MutableMap<String, ExtensionPointImpl<*>>,
-                                           point: ExtensionPointImpl<*>,
-                                           componentManager: ComponentManager) {
-  result.putIfAbsent(point.name, point)?.let { old ->
-    val oldPluginDescriptor = old.getPluginDescriptor()
-    val pluginDescriptor = point.pluginDescriptor
-    throw componentManager.createError(
-      "Duplicate registration for EP ${point.name} first in $oldPluginDescriptor, second in $pluginDescriptor", pluginDescriptor.pluginId
-    )
-  }
-}

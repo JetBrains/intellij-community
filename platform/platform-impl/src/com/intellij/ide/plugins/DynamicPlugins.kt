@@ -71,7 +71,6 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.CachedValuesManagerImpl
@@ -1080,12 +1079,8 @@ private fun loadModules(modules: List<IdeaPluginDescriptorImpl>, app: Applicatio
   for (openProject in getOpenedProjects()) {
     (openProject as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
 
-    val moduleLevelExtensionModel = precomputeModuleLevelExtensionModel(modules = modules, isInitial = false)
     for (module in ModuleManager.getInstance(openProject).modules) {
-      (module as ComponentManagerImpl).registerComponents(modules = modules,
-                                                          app = app,
-                                                          precomputedExtensionModel = moduleLevelExtensionModel,
-                                                          listenerCallbacks = listenerCallbacks)
+      (module as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
     }
   }
 
