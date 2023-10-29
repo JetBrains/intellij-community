@@ -345,6 +345,8 @@ public final class AnnotationContext {
     arg = normalize(arg);
     for (int i = 0; i < params.length; i++) {
       UExpression argument = call.getArgumentForParameter(i);
+      if (argument == null) continue;
+      argument = normalize(argument);
       if (arg.equals(argument) ||
           (argument instanceof UExpressionList &&
            ((UExpressionList)argument).getKind() == UastSpecialExpressionKind.VARARGS &&
