@@ -464,6 +464,12 @@ fun <T : CommandChain> T.doLocalInspection(): T {
   return this
 }
 
+const val RUN_SINGLE_INSPECTION_CMD_PREFIX = "${CMD_PREFIX}runSingleInspection"
+fun <T : CommandChain> T.runSingleInspection(inspectionName: String, scope: String): T {
+  addCommand(RUN_SINGLE_INSPECTION_CMD_PREFIX, inspectionName, scope)
+  return this
+}
+
 fun <T : CommandChain> T.doLocalInspectionWarmup(): T {
   addCommand(DO_LOCAL_INSPECTION_CMD_PREFIX, WARMUP)
   return this
