@@ -390,7 +390,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     }
     for (Usage usage : Iterators.flat(Iterators.map(myFields, f -> f.getType().getUsages()))) {
       addUsage(usage);
-    };
+    }
     for (JvmMethod jvmMethod : myMethods) {
       for (Usage usage : jvmMethod.getType().getUsages()) {
         addUsage(usage);
