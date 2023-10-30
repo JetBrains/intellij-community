@@ -2,19 +2,18 @@
 package git4idea.rebase.log.drop
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.applyIf
-import com.intellij.util.ui.UIUtil
+import git4idea.config.GitVcsApplicationSettings
 import git4idea.i18n.GitBundle
-import git4idea.rebase.log.GitCommitEditingOperationResult
-import git4idea.rebase.log.GitMultipleCommitEditingAction
-import git4idea.rebase.log.getOrLoadDetails
-import git4idea.rebase.log.notifySuccess
+import git4idea.rebase.log.*
 
 internal class GitDropLogAction : GitMultipleCommitEditingAction() {
   override fun update(e: AnActionEvent, commitEditingData: MultipleCommitEditingData) {
@@ -23,15 +22,9 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
 
   override fun actionPerformedAfterChecks(commitEditingData: MultipleCommitEditingData) {
     val project = commitEditingData.project
-
     val selectionSize = commitEditingData.selection.size
-    val canDrop = MessageDialogBuilder
-      .okCancel(GitBundle.message("rebase.log.drop.action.confirmation.title", selectionSize),
-                GitBundle.message("rebase.log.drop.action.confirmation.message", selectionSize))
-      .icon(UIUtil.getWarningIcon())
-      .yesText(GitBundle.message("rebase.log.drop.action.confirmation.yes"))
-      .help(DROP_COMMIT_HELP_ID)
-      .ask(project)
+
+    val canDrop = !service<GitVcsApplicationSettings>().isShowDropCommitDialog || askForConfirmation(project, selectionSize)
     if (!canDrop) return
 
     val commitDetails = getOrLoadDetails(project, commitEditingData.logData, commitEditingData.selection)
@@ -55,6 +48,21 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
       }
     }.queue()
   }
+
+  private fun askForConfirmation(project: Project, selectionSize: Int): Boolean =
+    MessageDialogBuilder
+      .okCancel(
+        GitBundle.message("rebase.log.drop.action.confirmation.title", selectionSize),
+        GitBundle.message("rebase.log.drop.action.confirmation.message", selectionSize)
+      )
+      .asWarning()
+      .doNotAsk(object : com.intellij.openapi.ui.DoNotAskOption.Adapter() {
+        override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+          service<GitVcsApplicationSettings>().isShowDropCommitDialog = !isSelected
+        }
+      })
+      .help(DROP_COMMIT_HELP_ID)
+      .ask(project)
 
   override fun getFailureTitle(): String = GitBundle.message("rebase.log.drop.action.failure.title")
 
