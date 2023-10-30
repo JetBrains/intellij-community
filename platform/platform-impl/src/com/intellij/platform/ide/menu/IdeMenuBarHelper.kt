@@ -127,7 +127,10 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
   private fun canUpdate(): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
-    if (!menuBar.frame.isShowing || !menuBar.frame.isActive) {
+
+    val focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
+    val frame = focusedWindow ?: menuBar.frame
+    if (!frame.isShowing || !frame.isActive) {
       return false
     }
 
@@ -138,8 +141,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     }
 
     // don't update the toolbar if there is currently active modal dialog
-    val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
-    return window !is Dialog || !window.isModal
+    return focusedWindow !is Dialog || !focusedWindow.isModal
   }
 
   @RequiresEdt
