@@ -47,7 +47,7 @@ import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 
 @OptIn(ExperimentalCoroutinesApi::class)
-object GitLabMergeRequestTimelineDiscussionComponentFactory {
+internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
   fun create(project: Project,
              cs: CoroutineScope,
@@ -113,7 +113,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
                             avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                             vm: GitLabMergeRequestTimelineDiscussionViewModel): JPanel {
     val mainNoteVm = vm.mainNote
-    val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, vm).apply {
+    val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, vm, project).apply {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
       bindVisibilityIn(cs, vm.repliesFolded)
     }
@@ -241,7 +241,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
   private fun createRepliesActionsPanel(cs: CoroutineScope,
                                         avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                        vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
+                                        vm: GitLabMergeRequestTimelineDiscussionViewModel,
+                                        project: Project): JComponent {
     val authorsLabel = JLabel().apply {
       bindVisibilityIn(cs, vm.replies.map { it.isNotEmpty() })
 
@@ -297,7 +298,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       add(repliesActions)
 
       vm.resolveVm?.takeIf { it.canResolve }?.let {
-        GitLabDiscussionComponentFactory.createUnResolveLink(cs, it).also(::add)
+        GitLabDiscussionComponentFactory.createUnResolveLink(cs, it, project, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
+          .also(::add)
       }
     }
   }
