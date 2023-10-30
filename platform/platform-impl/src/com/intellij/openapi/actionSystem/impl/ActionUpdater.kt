@@ -231,25 +231,25 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   @RequiresBackgroundThread
-  suspend fun <R: Any?> runGenericUpdateBlock(block: suspend CoroutineScope.() -> R): R = withContext(CoroutineName("runGenericUpdateBlock")) {
-    bgtScope = this
-    try {
-      block()
+  suspend fun <R : Any?> runUpdateSession(coroutineContext: CoroutineContext, block: suspend CoroutineScope.() -> R): R =
+    withContext(coroutineContext) {
+      bgtScope = this
+      try {
+        block()
+      }
+      finally {
+        bgtScope = null
+      }
     }
-    finally {
-      bgtScope = null
-    }
-  }
 
   /**
    * Returns actions from the given and nested non-popup groups that are visible after updating
    */
   @RequiresBackgroundThread
-  suspend fun expandActionGroup(group: ActionGroup, hideDisabled: Boolean): List<AnAction> = withContext(CoroutineName("expandActionGroup")) {
-    bgtScope = this
+  suspend fun expandActionGroup(group: ActionGroup, hideDisabled: Boolean): List<AnAction> {
     edtCallsCount = 0
     edtWaitNanos = 0
-    val job = coroutineContext.job
+    val job = currentCoroutineContext().job
     val targetJobs = if (toolbarAction) ourToolbarJobs else ourOtherJobs
     targetJobs.add(job)
     try {
@@ -260,10 +260,9 @@ internal class ActionUpdater @JvmOverloads constructor(
       computeOnEdt {
         applyPresentationChanges()
       }
-      result
+      return result
     }
     finally {
-      bgtScope = null
       targetJobs.remove(job)
       val edtWaitMillis = TimeUnit.NANOSECONDS.toMillis(edtWaitNanos)
       if (edtCallsCount > 500 || edtWaitMillis > 3000) {
@@ -405,14 +404,13 @@ internal class ActionUpdater @JvmOverloads constructor(
     var hasVisible = false
     if (checkChildren) {
       val childrenFlow = iterateGroupChildren(child)
-      childrenFlow.take(100).takeWhile { action ->
-        if (action is Separator) return@takeWhile true
+      childrenFlow.take(100).filter { it !is Separator }.takeWhile { action ->
         val p = update(action)
-        if (p == null) return@takeWhile true
-        hasVisible = hasVisible or p.isVisible
-        hasEnabled = hasEnabled or p.isEnabled
+        hasVisible = hasVisible or (p?.isVisible == true)
+        hasEnabled = hasEnabled or (p?.isEnabled == true)
         // stop early if all the required flags are collected
-        return@takeWhile !(hasVisible && (hasEnabled || !hideDisabled))
+        val result = !(hasVisible && (hasEnabled || !hideDisabled))
+        result
       }
         .collect()
       performOnly = canBePerformed && !hasVisible
@@ -485,18 +483,17 @@ internal class ActionUpdater @JvmOverloads constructor(
       }
     }
     val roots = getGroupChildren(group)
-    return channelFlow {
+    return flow {
       val set = HashSet<AnAction>()
       val queue = ArrayDeque(roots)
       while (!queue.isEmpty()) {
         val first = queue.removeFirst()
         if (!set.add(first)) continue
         val children = tree(first)
-        if (children.isNullOrEmpty()) send(first)
+        if (children.isNullOrEmpty()) emit(first)
         else children.reversed().forEach(queue::addFirst)
       }
     }
-      .buffer(1)
       .filter { !isDumb || it.isDumbAware()  }
   }
 
