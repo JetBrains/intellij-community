@@ -32,7 +32,7 @@ class StringTemplateAsArgument {
     val variable1 = 1
     loggerSlf4J.info("variable1: {}", variable1)
     loggerSlf4J.<warning descr="String template as argument to 'info()' logging call">info</warning>("${variable1}")
-    loggerSlf4J.info("${getString()}")
+    loggerSlf4J.<warning descr="String template as argument to 'info()' logging call">info</warning>("${getString()}")
     loggerSlf4J.<warning descr="String template as argument to 'info()' logging call">info</warning>("${getInt()}")
     loggerSlf4J.<warning descr="String template as argument to 'info()' logging call">info</warning>("variable1: ${variable1}")
     loggerSlf4J.<warning descr="String template as argument to 'info()' logging call">info</warning>("variable1: $variable1")

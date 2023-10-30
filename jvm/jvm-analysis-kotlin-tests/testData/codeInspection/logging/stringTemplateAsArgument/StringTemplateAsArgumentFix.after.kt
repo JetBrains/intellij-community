@@ -7,7 +7,7 @@ class StringTemplateAsArgumentFix {
   fun testLoggerSlf4J() {
       val variable1 = "test"
       val variable2 = 1
-      loggerSlf4J.info("${variable1}")
+      loggerSlf4J.info("{}", variable1)
       loggerSlf4J.info("{}", variable2)
       loggerSlf4J.info("{}", getMethod())
       loggerSlf4J.info("variable1: {}", variable1)
