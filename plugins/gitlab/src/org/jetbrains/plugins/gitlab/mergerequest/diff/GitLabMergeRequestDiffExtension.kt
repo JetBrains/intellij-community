@@ -65,15 +65,18 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 
           coroutineScope {
             viewer.controlInlaysIn(this, changeVm.discussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
-              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider)
+              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider,
+                                                        GitLabStatistics.MergeRequestNoteActionPlace.DIFF)
             }
 
             viewer.controlInlaysIn(this, changeVm.draftDiscussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
-              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider)
+              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider,
+                                                        GitLabStatistics.MergeRequestNoteActionPlace.DIFF)
             }
 
             viewer.controlInlaysIn(this, changeVm.newDiscussions, { "NEW_${it.originalLocation}" }) {
-              GitLabMergeRequestNewDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider) {
+              GitLabMergeRequestNewDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider,
+                                                           GitLabStatistics.MergeRequestNoteActionPlace.DIFF) {
                 changeVm.cancelNewDiscussion(it.originalLocation)
               }
             }
