@@ -177,7 +177,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
           RebuildStatus.clearIndexIfNecessary(indexId, () -> myFileBasedIndex.clearIndex(indexId));
         }
         catch (StorageException e) {
-          myFileBasedIndex.requestRebuild(indexId);
+          myFileBasedIndex.requestRebuild(indexId, e);
           FileBasedIndexImpl.LOG.error(e);
         }
       }
