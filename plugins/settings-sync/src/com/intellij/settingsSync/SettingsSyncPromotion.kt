@@ -10,6 +10,7 @@ import com.intellij.openapi.options.newEditor.SettingsTreeView
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.settingsSync.SettingsSyncEventsStatistics.PromotionInSettingsEvent
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.treeStructure.SimpleNode
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure
@@ -46,17 +47,31 @@ class SettingsSyncPromotion : SettingsDialogListener {
     gotItTooltip
       .withHeader(SettingsSyncBundle.message("promotion.in.settings.header"))
       .withButtonLabel(SettingsSyncBundle.message("promotion.in.settings.open"))
-      .withSecondaryButton(SettingsSyncBundle.message("promotion.in.settings.skip"))
+      .withSecondaryButton(SettingsSyncBundle.message("promotion.in.settings.skip")) {
+        SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.SKIP)
+      }
       .withGotItButtonAction {
         invokeLater(ModalityState.stateForComponent(settingsEditor)) {
           settingsEditor.select(settingsSyncConfigurable)
         }
+        SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.GO_TO_SETTINGS_SYNC)
       }
       .withPosition(Balloon.Position.atRight)
       .show(settingsTree) { _, _ ->
         val pathBounds = settingsTree.getPathBounds(settingsSyncPath) ?: error("Failed to get bounds for path: $settingsSyncPath")
         Point(pathBounds.x + pathBounds.width, pathBounds.y + pathBounds.height / 2)
       }
+
+    SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.SHOWN)
+
+    SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
+      override fun enabledStateChanged(syncEnabled: Boolean) {
+        if (syncEnabled) {
+          SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.ENABLED)
+          SettingsSyncEvents.getInstance().removeListener(this)
+        }
+      }
+    }, parentDisposable = settingsEditor)
   }
 
   private fun getConfigurable(path: TreePath): Configurable? {
