@@ -16,20 +16,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_STRING_LITERALS;
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_LITERAL_EXPRESSION;
 
 public class LiteralSelectioner extends AbstractBasicBackBasicSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
-    PsiElement parent = e.getParent();
-    return isStringLiteral(e) || isStringLiteral(parent);
-  }
-
-  private static boolean isStringLiteral(PsiElement element) {
-    return BasicJavaAstTreeUtil.is(BasicJavaAstTreeUtil.toNode(element), BASIC_STRING_LITERALS)
-           && element.getText().startsWith("\"")
-           && element.getText().endsWith("\"");
+    return BasicJavaAstTreeUtil.is(BasicJavaAstTreeUtil.toNode(e), BASIC_STRING_LITERALS);
   }
 
   @Override
@@ -42,26 +34,19 @@ public class LiteralSelectioner extends AbstractBasicBackBasicSelectioner {
     if (node == null) {
       return null;
     }
+    boolean textBlock = BasicJavaAstTreeUtil.isTextBlock(node);
+    StringLiteralLexer lexer = textBlock
+                               ? new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, JavaTokenType.TEXT_BLOCK_LITERAL, true, "s{")
+                               : new StringLiteralLexer('"', JavaTokenType.STRING_LITERAL);
     TextRange range = node.getTextRange();
-    SelectWordUtil.addWordHonoringEscapeSequences(editorText, range, cursorOffset,
-                                                  new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL),
-                                                  result);
-    ASTNode literalExpression = null;
-    if (BasicJavaAstTreeUtil.is(node, BASIC_LITERAL_EXPRESSION)) {
-      literalExpression = node;
-    }
-    if (literalExpression == null) {
-      ASTNode parent = node.getTreeParent();
-      if (BasicJavaAstTreeUtil.is(parent, BASIC_LITERAL_EXPRESSION)) {
-        literalExpression = parent;
-      }
-    }
-    PsiElement literalPsiExpression = BasicJavaAstTreeUtil.toPsi(literalExpression);
-    if (literalExpression != null && literalPsiExpression != null && BasicJavaAstTreeUtil.isTextBlock(literalExpression)) {
+    SelectWordUtil.addWordHonoringEscapeSequences(editorText, range, cursorOffset, lexer, result);
+    if (textBlock) {
       int contentStart = StringUtil.indexOf(editorText, '\n', range.getStartOffset());
       if (contentStart == -1) return result;
       contentStart += 1;
-      int indent = BasicLiteralUtil.getTextBlockIndent(literalPsiExpression);
+      String[] lines = BasicLiteralUtil.getTextBlockLines(node.getText());
+      if (lines == null) return result;
+      int indent = BasicLiteralUtil.getTextBlockIndent(lines);
       if (indent == -1) return result;
       for (int i = 0; i < indent; i++) {
         if (editorText.charAt(contentStart + i) == '\n') return result;
