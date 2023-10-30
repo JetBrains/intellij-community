@@ -101,8 +101,8 @@ abstract class AbstractGitLabNoteEditingViewModel(parentCs: CoroutineScope, init
 }
 
 private class GitLabNoteEditingViewModelImpl(parentCs: CoroutineScope,
-                                     initialText: String,
-                                     private val submitter: suspend (String) -> Unit)
+                                             initialText: String,
+                                             private val submitter: suspend (String) -> Unit)
   : AbstractGitLabNoteEditingViewModel(parentCs, initialText) {
   override fun submit() {
     submit(submitter)
