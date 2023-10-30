@@ -27,11 +27,16 @@ import kotlin.system.measureTimeMillis
 @VisibleForTesting
 class DelayedProjectSynchronizer : ProjectActivity {
   override suspend fun execute(project: Project) {
-    doSync(project)
+    Util.doSync(project)
   }
 
-  companion object {
-    private suspend fun doSync(project: Project) {
+  object Util {
+    init {
+      setupOpenTelemetryReporting(JpsMetrics.getInstance().meter)
+    }
+
+    // This function is effectively "private". It's internal because otherwise it's not available for DelayedProjectSynchronizer
+    internal suspend fun doSync(project: Project) {
       val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
       if (!(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
         return
@@ -62,10 +67,6 @@ class DelayedProjectSynchronizer : ProjectActivity {
         .ofLongs().buildObserver()
 
       meter.batchCallback({ syncTimeGauge.record(syncTimeMs.get()) }, syncTimeGauge)
-    }
-
-    init {
-      setupOpenTelemetryReporting(JpsMetrics.getInstance().meter)
     }
   }
 }
