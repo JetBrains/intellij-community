@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.popup.JBPopup
@@ -213,16 +212,11 @@ class CodeFloatingToolbar(
   }
 
   override fun onHintShown() {
-    CodeFloatingToolbarCollector.toolbarShown()
-  }
-
-  override fun onSelectionChanged(model: SelectionModel) {
+    val model = editor.selectionModel
     val start = model.leadSelectionOffset
     val end = if (model.selectionStart == start) model.selectionEnd else model.selectionStart
-    CodeFloatingToolbarCollector.codeSelected(
-      start, end,
-      model.editor.document.run { getLineNumber(model.selectionEnd) - getLineNumber(model.selectionStart) + 1 }
-    )
+    val linesCount = model.editor.document.run { getLineNumber(model.selectionEnd) - getLineNumber(model.selectionStart) + 1 }
+    CodeFloatingToolbarCollector.toolbarShown(start, end, linesCount)
   }
 
   private fun toggleButton(button: ActionButton, toggled: Boolean) {

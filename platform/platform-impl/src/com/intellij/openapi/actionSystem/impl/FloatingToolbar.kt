@@ -12,7 +12,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.util.Disposer
@@ -185,8 +184,6 @@ abstract class FloatingToolbar(
 
   open fun onHintShown() {}
 
-  open fun onSelectionChanged(model: SelectionModel) {}
-
   private fun showHint(hint: LightweightHint) {
     val hideByOtherHintsMask = when {
       hideByOtherHints() -> HintManager.HIDE_BY_OTHER_HINT
@@ -264,7 +261,6 @@ abstract class FloatingToolbar(
   private inner class MouseListener : EditorMouseListener {
     override fun mouseReleased(event: EditorMouseEvent) {
       updateOnProbablyChangedSelection {
-        onSelectionChanged(editor.selectionModel)
         if (isShown()) {
           updateLocationIfShown()
         } else {
