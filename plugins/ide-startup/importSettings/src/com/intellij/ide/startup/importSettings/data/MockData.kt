@@ -65,16 +65,46 @@ class TestJbService : JbService {
       listOf(TestChildrenSettings("Go to Everything"),
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+             TestChildrenSettings("Go to Everything Go to Everything", "built-in", "⇧F12")),
       listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
              TestChildrenSettings("Find Usages", null, "⇧F12"),
              TestChildrenSettings("Build Solution", null, "⇧F12"),
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
     )
 
+    val children1 = listOf(
+      listOf(TestChildrenSettings("Go to Everything"),
+             TestChildrenSettings("Find Usages"),
+             TestChildrenSettings("Build Solution"),
+             TestChildrenSettings("Go to Everything Go to Everything Go to Everything")),
+      listOf(TestChildrenSettings("Go to Everything"),
+             TestChildrenSettings("Go to Everything Go to Everything"),
+             TestChildrenSettings("Go to Everything"),
+             TestChildrenSettings("Go to Everything")),
+      listOf(TestChildrenSettings("Go to Everything"),
+             TestChildrenSettings("Find Usages"),
+             TestChildrenSettings("Build Solution"),
+             TestChildrenSettings("Go to Everything")),
+    )
+
+    val children2 = listOf(
+      listOf(TestChildrenSettings("Go to Everything"),
+             TestChildrenSettings("Find Usages"),
+             TestChildrenSettings("Build Solution"),
+             TestChildrenSettings("Go to Everything")),
+      listOf(TestChildrenSettings("Go to Everything"),
+             TestChildrenSettings("Go to Everything"),
+             TestChildrenSettings("Go to Everything"),
+             TestChildrenSettings("Go to Everything")),
+      listOf(TestChildrenSettings("Go to Everything"),
+             TestChildrenSettings("Find Usages"),
+             TestChildrenSettings("Build Solution"),
+             TestChildrenSettings("Go to Everything")),
+    )
+
     val settings1 = listOf(
       TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
-      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children1),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = emptyList()),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = emptyList()),
 
@@ -83,23 +113,23 @@ class TestJbService : JbService {
 
     val settings = listOf(
       TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
-      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children1),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = children),
       TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
 
       TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
-      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children2),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
                               "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
       TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
                               "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children1),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children2),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
-      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
-      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
-      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children1),
       TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Plugins",
                           "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),

@@ -7,13 +7,14 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.util.minimumWidth
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 
-class ChildSettingsList(val settings: List<ChildItem>, configurable: Boolean) : JBList<ChildItem>(createDefaultListModel(settings)) {
+class ChildSettingsList(val settings: List<ChildItem>, configurable: Boolean, changeHandler: () -> Unit) : JBList<ChildItem>(createDefaultListModel(settings)) {
   companion object {
     const val SCROLL_PANE_INSETS = 7
   }
@@ -30,6 +31,7 @@ class ChildSettingsList(val settings: List<ChildItem>, configurable: Boolean) : 
             val settingItem = settings[index]
             settingItem.selected = !settingItem.selected
             repaint()
+            changeHandler()
           }
         }
       })
@@ -54,10 +56,18 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
   val line = panel {
     row {
       ch = checkBox("").customize(gaps).component
-      txt = text("").customize(gaps).component
-      addTxt = comment("").resizableColumn().customize(gaps).component
+      panel {
+        row {
+          txt = text("").customize(gaps).component.apply {
+            minimumWidth = JBUI.scale(30)
+          }
+          addTxt = comment("").resizableColumn().customize(gaps).component
+        }
+      }.resizableColumn()
       rightTxt = comment("").customize(UnscaledGaps(hg, wg, hg, wg + ChildSettingsList.SCROLL_PANE_INSETS)).component
     }
+  }.apply {
+    minimumWidth = JBUI.scale(300)
   }
 
   val pane = JPanel().apply {
