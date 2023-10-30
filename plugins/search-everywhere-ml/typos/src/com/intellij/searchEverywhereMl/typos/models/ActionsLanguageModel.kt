@@ -25,7 +25,6 @@ import com.intellij.serviceContainer.NonInjectable
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
 import com.intellij.util.alsoIfNull
-import com.intellij.util.asSafely
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -82,12 +81,14 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
   }
 
   private fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName CharSequence> {
-    return SearchableOptionsRegistrar.getInstance()
-             .asSafely<SearchableOptionsRegistrarImpl>()
-             .alsoIfNull { thisLogger().warn("Failed to cast SearchableOptionsRegistrar") }
-             ?.also { it.initialize() }
-             ?.allOptionNames?.asSequence()
-           ?: emptySequence()
+    val registrar = SearchableOptionsRegistrar.getInstance() as? SearchableOptionsRegistrarImpl
+    if (registrar == null) {
+      thisLogger().warn("Failed to cast SearchableOptionsRegistrar")
+      return emptySequence()
+    }
+
+    registrar.initialize()
+    return registrar.allOptionNames.asSequence()
   }
 
   internal interface ActionDictionary : Dictionary, FrequencyMetadata {
@@ -125,7 +126,7 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
     }
   }
 
-  private fun init() {
+  private suspend fun init() {
     (getWordsFromActions() + getWordsFromSettings())
       .flatMap {
         splitText(it)
