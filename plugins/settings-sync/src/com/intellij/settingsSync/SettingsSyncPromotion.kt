@@ -8,6 +8,7 @@ import com.intellij.openapi.options.newEditor.SettingsDialogListener
 import com.intellij.openapi.options.newEditor.SettingsEditor
 import com.intellij.openapi.options.newEditor.SettingsTreeView
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.treeStructure.SimpleNode
@@ -25,6 +26,14 @@ class SettingsSyncPromotion : SettingsDialogListener {
       return
     }
 
+    val gotItTooltip = GotItTooltip("settings.sync.in.settings",
+                                    SettingsSyncBundle.message("promotion.in.settings.text"),
+                                    parentDisposable = settingsEditor)
+    if (!gotItTooltip.canShow()) {
+      Disposer.dispose(gotItTooltip)
+      return  // It was already shown once
+    }
+
     val settingsTree = settingsEditor.treeView.tree
     val settingsSyncPath = TreeUtil.treePathTraverser(settingsTree).find { path ->
       val configurable = getConfigurable(path)
@@ -34,9 +43,7 @@ class SettingsSyncPromotion : SettingsDialogListener {
 
     settingsTree.scrollPathToVisible(settingsSyncPath)
 
-    GotItTooltip("settings.sync.in.settings",
-                 SettingsSyncBundle.message("promotion.in.settings.text"),
-                 parentDisposable = settingsEditor)
+    gotItTooltip
       .withHeader(SettingsSyncBundle.message("promotion.in.settings.header"))
       .withButtonLabel(SettingsSyncBundle.message("promotion.in.settings.open"))
       .withSecondaryButton(SettingsSyncBundle.message("promotion.in.settings.skip"))
