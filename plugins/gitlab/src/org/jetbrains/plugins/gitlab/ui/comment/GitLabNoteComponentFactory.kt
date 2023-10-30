@@ -126,9 +126,9 @@ object GitLabNoteComponentFactory {
     }
 
   fun CoroutineScope.createEditActionsConfig(actionsVm: GitLabNoteAdminActionsViewModel,
-                                             editVm: GitLabNoteEditingViewModel): CommentInputActionsComponentFactory.Config =
+                                             editVm: ExistingGitLabNoteEditingViewModel): CommentInputActionsComponentFactory.Config =
     CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(editVm.submitActionIn(this, CollaborationToolsBundle.message("review.comment.save"))),
+      primaryAction = MutableStateFlow(editVm.saveActionIn(this, CollaborationToolsBundle.message("review.comment.save"))),
       cancelAction = MutableStateFlow(swingAction(CommonBundle.getCancelButtonText()) {
         actionsVm.stopEditing()
       }),
