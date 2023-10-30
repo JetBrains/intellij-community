@@ -39,12 +39,6 @@ public class ConsoleUpdaterUI implements UpdaterUI {
   }
 
   @Override
-  public void askUser(String message) throws OperationCancelledException {
-    System.out.println("Warning: " + message);
-    throw new OperationCancelledException();
-  }
-
-  @Override
   public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
     boolean hasErrors = false, hasConflicts = false;
 

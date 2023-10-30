@@ -138,7 +138,6 @@ public final class Runner {
       List<String> criticalFiles = extractArguments(args, "critical");
       List<String> optionalFiles = extractArguments(args, "optional");
       List<String> deleteFiles = extractArguments(args, "delete");
-      Map<String, String> warnings = buildWarningMap(extractArguments(args, "warning"));
 
       String timeoutStr = getArgument(args, "timeout");
       int timeout = timeoutStr != null ? Integer.parseInt(timeoutStr) : 0;
@@ -159,7 +158,6 @@ public final class Runner {
         .setStrictFiles(strictFiles)
         .setOptionalFiles(optionalFiles)
         .setDeleteFiles(deleteFiles)
-        .setWarnings(warnings)
         .setTimeout(timeout);
 
       boolean success = create(spec, cacheDir != null ? Paths.get(cacheDir) : null);
@@ -233,19 +231,6 @@ public final class Runner {
     boolean orig = new File(path).exists();
     ourCaseSensitiveFs = orig != new File(path.toUpperCase(Locale.ENGLISH)).exists() ||
                          orig != new File(path.toLowerCase(Locale.ENGLISH)).exists();
-  }
-
-  private static Map<String, String> buildWarningMap(List<String> warnings) {
-    Map<String, String> map = new HashMap<>();
-    for (String warning : warnings) {
-      int ix = warning.indexOf(":");
-      if (ix != -1) {
-        String path = warning.substring(0, ix);
-        String message = warning.substring(ix + 1).replace("\\n","\n");
-        map.put(path, message);
-      }
-    }
-    return map;
   }
 
   public static List<String> extractArguments(String[] args, String paramName) {

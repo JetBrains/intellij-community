@@ -26,8 +26,6 @@ public class SwingUpdaterUI implements UpdaterUI {
 
   private static final String TITLE = "Update";
   private static final String CANCEL_BUTTON_TITLE = "Cancel";
-  private static final String EXIT_BUTTON_TITLE = "Exit";
-  private static final String RETRY_BUTTON_TITLE = "Retry";
   private static final String PROCEED_BUTTON_TITLE = "Proceed";
 
   private final JLabel myProcessTitle;
@@ -138,24 +136,6 @@ public class SwingUpdaterUI implements UpdaterUI {
   public void showError(String message) {
     String html = "<html>" + message.replace("\n", "<br>") + "</html>";
     invokeAndWait(() -> JOptionPane.showMessageDialog(myFrame, html, "Update Error", JOptionPane.ERROR_MESSAGE));
-  }
-
-  @Override
-  public void askUser(String message) throws OperationCancelledException {
-    invokeAndWait(() -> {
-      if (myCancelled) return;
-
-      Object[] choices = {RETRY_BUTTON_TITLE, EXIT_BUTTON_TITLE};
-      int choice = JOptionPane.showOptionDialog(
-        myFrame, message, TITLE, JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
-
-      if (choice != 0) {
-        myCancelled = true;
-        myCancelButton.setEnabled(false);
-      }
-    });
-
-    checkCancelled();
   }
 
   @Override
