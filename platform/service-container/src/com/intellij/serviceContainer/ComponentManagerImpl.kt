@@ -842,7 +842,7 @@ abstract class ComponentManagerImpl(
   }
 
   private fun registerServices2(pluginDescriptor: IdeaPluginDescriptor, services: List<ServiceDescriptor>) {
-    LOG.debug { "${pluginDescriptor.pluginId} - registering services" }
+    LOG.trace { "${pluginDescriptor.pluginId} - registering services" }
     try {
       registerServices2Inner(services, pluginDescriptor)
     }
@@ -854,7 +854,7 @@ abstract class ComponentManagerImpl(
       throw PluginException(t, pluginDescriptor.pluginId)
     }
     finally {
-      LOG.debug { "${pluginDescriptor.pluginId} - end registering services" }
+      LOG.trace { "${pluginDescriptor.pluginId} - end registering services" }
     }
   }
 
@@ -1521,7 +1521,7 @@ abstract class ComponentManagerImpl(
     val handle = pluginServicesStore.removeServicesUnregisterHandle(module)
     val dynamicInstances = pluginServicesStore.removeDynamicServices(module)
     if (handle == null && dynamicInstances.isEmpty()) {
-      LOG.debug { "$debugString : nothing to unload ${module.pluginId}:${module.descriptorPath}" }
+      LOG.trace { "$debugString : nothing to unload ${module.pluginId}:${module.descriptorPath}" }
       return
     }
     val holders = handle?.unregister() ?: emptyMap()
