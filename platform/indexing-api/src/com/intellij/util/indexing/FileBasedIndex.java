@@ -2,8 +2,10 @@
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -95,7 +97,7 @@ public abstract class FileBasedIndex {
   public abstract VirtualFile findFileById(Project project, int id);
 
   public void requestRebuild(@NotNull ID<?, ?> indexId) {
-    requestRebuild(indexId, new RebuildRequestedByUserAction());
+    requestRebuild(indexId, new RebuildRequestedByUserAction(PluginUtil.getInstance().findPluginId(new Throwable())));
   }
 
   @NotNull
@@ -387,6 +389,14 @@ public abstract class FileBasedIndex {
   public void loadIndexes() {
   }
 
-  private static class RebuildRequestedByUserAction extends Throwable {
+  @ApiStatus.Internal
+  public static class RebuildRequestedByUserAction extends Throwable {
+    private final @Nullable PluginId myRequestorPluginId;
+
+    private RebuildRequestedByUserAction(@Nullable PluginId requestorPluginId) { myRequestorPluginId = requestorPluginId; }
+
+    public @Nullable PluginId getRequestorPluginId() {
+      return myRequestorPluginId;
+    }
   }
 }
