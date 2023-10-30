@@ -179,7 +179,8 @@ internal object GitLabStatistics {
     DELETE_NOTE,
     POST_DRAFT_NOTE,
     SUBMIT_DRAFT_NOTES,
-    POST_REVIEW
+    POST_REVIEW,
+    BRANCH_CHECKOUT
   }
 
   enum class MergeRequestNoteActionPlace {
