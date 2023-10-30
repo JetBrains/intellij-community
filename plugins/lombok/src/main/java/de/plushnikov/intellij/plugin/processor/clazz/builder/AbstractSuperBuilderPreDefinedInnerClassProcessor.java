@@ -49,12 +49,12 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
     List<? super PsiElement> result = new ArrayList<>();
     // apply only to inner BuilderClass
     final String psiClassName = psiClass.getName();
-    if (builderBaseClassName.equals(psiClassName) && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)) {
+    if (builderBaseClassName.equals(psiClassName) && noHintOrPossibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)) {
       result.addAll(generatePsiElementsOfBaseBuilderClass(psiParentClass, psiAnnotation, psiClass));
     } else {
       // use parent class as source!
       final String builderImplClassName = builderHandler.getBuilderImplClassName(psiParentClass);
-      if (builderImplClassName.equals(psiClassName) && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)) {
+      if (builderImplClassName.equals(psiClassName) && noHintOrPossibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)) {
         result.addAll(generatePsiElementsOfImplBuilderClass(psiParentClass, psiAnnotation, psiClass));
       }
     }

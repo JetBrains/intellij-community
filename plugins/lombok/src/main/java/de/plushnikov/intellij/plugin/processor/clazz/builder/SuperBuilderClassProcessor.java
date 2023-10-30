@@ -33,6 +33,16 @@ public final class SuperBuilderClassProcessor extends AbstractClassProcessor {
   }
 
   @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    final SuperBuilderHandler builderHandler = getBuilderHandler();
+    final String builderClassName = builderHandler.getBuilderClassName(psiClass);
+    return nameHint.equals(builderClassName) ||
+           !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) && nameHint.equals(builderHandler.getBuilderImplClassName(psiClass));
+  }
+
+  @Override
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final SuperBuilderHandler builderHandler = getBuilderHandler();
 
