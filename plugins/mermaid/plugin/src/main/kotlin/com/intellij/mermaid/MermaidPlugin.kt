@@ -13,7 +13,17 @@ internal class MermaidPlugin(private val coroutineScope: CoroutineScope): Dispos
     coroutineScope.cancel()
   }
 
+  fun coroutineScope(): CoroutineScope {
+    return coroutineScope
+  }
+
   companion object {
+    /**
+     * Be aware, that you should not try to obtain the scope
+     * when the plugin is unloading or the service is already disposed.
+     *
+     * Use `serviceOrNull<MermaidPlugin>()` in sensitive places.
+     */
     fun coroutineScope(project: Project): CoroutineScope {
       return project.service<MermaidPlugin>().coroutineScope
     }

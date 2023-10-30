@@ -6,6 +6,7 @@ import com.intellij.mermaid.lang.MermaidFileType
 import com.intellij.mermaid.lang.psi.MermaidFile
 import com.intellij.mermaid.lang.psi.traverse
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
@@ -38,7 +39,8 @@ internal class DiagramReportingFactoryListener: EditorFactoryListener {
   }
 
   private fun report(project: Project, document: Document) {
-    MermaidPlugin.coroutineScope(project).launch {
+    val service = project.serviceOrNull<MermaidPlugin>() ?: return
+    service.coroutineScope().launch {
       withContext(NonUrgentExecutor.getInstance().asCoroutineDispatcher()) {
         readAction {
           val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@readAction
