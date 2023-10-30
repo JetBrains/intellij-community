@@ -30,8 +30,6 @@ import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryConfigurator
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.ide.bootstrap.*
-import com.intellij.ui.*
 import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.scale.JBUIScale
@@ -63,7 +61,6 @@ import java.util.function.BiConsumer
 import java.util.function.BiFunction
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
-import javax.swing.*
 import kotlin.concurrent.Volatile
 import kotlin.system.exitProcess
 
@@ -304,6 +301,7 @@ fun CoroutineScope.startApplication(args: List<String>,
       val isInitialStart = configImportDeferred.await()
       // appLoaded not only provides starter, but also loads app, that's why it is here
       if (isInitialStart != null) {
+        LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_READY)
         val log = logDeferred.await()
         runCatching {
           span("startup wizard run") {

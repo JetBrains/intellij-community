@@ -3,11 +3,16 @@ package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.time.Duration.Companion.seconds
 
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
   val log = logger<IdeStartupWizard>()
@@ -27,8 +32,15 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
     try {
       val wizard = adapter.createInstance<IdeStartupWizard>(app) ?: continue
 
-      span("app manager initial state waiting") {
-        isInitialStart.join()
+      span("app manager initial state waiting", Dispatchers.EDT) {
+        try {
+          withTimeout(2.seconds) {
+            isInitialStart.join()
+          }
+        } catch (_: TimeoutCancellationException) {
+          log.warn("Timeout on waiting for initial start, proceeding without waiting, disabling the startup flow")
+          com.intellij.platform.ide.bootstrap.isInitialStart = null
+        }
       }
 
       log.info("Passing execution control to $adapter.")
