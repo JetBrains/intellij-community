@@ -42,7 +42,7 @@ class GitLabMergeRequestsPreferences(private val project: Project)
     set(value) {
       updateStateAndEmit {
         val saved = value?.let { (repo, account) -> repo.remote.url to account.id }
-        SettingsState(saved)
+        it.copy(selectedUrlAndAccountId = saved)
       }
     }
 
