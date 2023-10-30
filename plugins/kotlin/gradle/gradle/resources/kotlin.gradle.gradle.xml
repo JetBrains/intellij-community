@@ -57,6 +57,7 @@
 
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLoggingActivity"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.gradle.statistics.v2.flow.KotlinBuildToolFusFlowCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.gradle.statistics.ComposeLibraryUsagesCollector"/>
   </extensions>
   <resource-bundle>messages.KotlinBundle</resource-bundle>
