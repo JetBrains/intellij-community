@@ -121,18 +121,19 @@ private class InstallOnboardingTooltip : ProjectActivity {
 
 private class InstallOnboardingTipsEditorListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
-    val project = event.editor.project ?: return
+    val editor = event.editor
+    val project = editor.project ?: return
 
     val info = onboardingTipsInstallationInfoKey.get(project)
 
     if (info != null) {
       project.putUserData(onboardingTipsInstallationInfoKey, null)
-      installTipsInFirstEditor(event.editor, project, info)
+      installTipsInFirstEditor(editor, project, info)
     } else {
       val pathToRunningFile = project.filePathWithOnboardingTips ?: return
-      if (event.editor.virtualFile?.path != pathToRunningFile) return
+      if (editor.virtualFile?.path != pathToRunningFile) return
     }
-    DocRenderManager.setDocRenderingEnabled(event.editor, true)
+    DocRenderManager.setDocRenderingEnabled(editor, true)
   }
 }
 
