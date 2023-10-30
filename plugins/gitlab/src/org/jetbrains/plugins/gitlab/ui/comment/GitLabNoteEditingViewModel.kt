@@ -20,6 +20,10 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 import javax.swing.AbstractAction
 
 interface GitLabNoteEditingViewModel {
@@ -39,21 +43,36 @@ interface GitLabNoteEditingViewModel {
   }
 
   companion object {
-    fun forExistingNote(
+    internal fun forExistingNote(
       parentCs: CoroutineScope,
-      initialText: String,
-      submitter: suspend (String) -> Unit
+      note: MutableGitLabNote
     ): ExistingGitLabNoteEditingViewModel =
-      GitLabNoteEditingViewModelImpl(parentCs, initialText, submitter)
+      GitLabNoteEditingViewModelImpl(parentCs, note)
 
-    fun forNewNote(
+    internal fun forNewNote(
       parentCs: CoroutineScope,
       project: Project,
-      currentUser: GitLabUserDTO,
-      submitter: suspend (String) -> Unit,
-      submitterAsDraft: (suspend (String) -> Unit)? = null
+      mergeRequest: GitLabMergeRequest,
+      currentUser: GitLabUserDTO
     ): NewGitLabNoteViewModel =
-      NewGitLabNoteViewModelImpl(parentCs, "", project, currentUser, submitter, submitterAsDraft)
+      NewStandaloneGitLabNoteViewModel(parentCs, "", project, mergeRequest, currentUser)
+
+    internal fun forNewDiffNote(
+      parentCs: CoroutineScope,
+      project: Project,
+      mergeRequest: GitLabMergeRequest,
+      currentUser: GitLabUserDTO,
+      position: GitLabMergeRequestNewDiscussionPosition
+    ): NewGitLabNoteViewModel =
+      NewDiffGitLabNoteViewModel(parentCs, "", project, mergeRequest, currentUser, position)
+
+    internal fun forReplyNote(
+      parentCs: CoroutineScope,
+      project: Project,
+      discussion: GitLabDiscussion,
+      currentUser: GitLabUserDTO
+    ): NewGitLabNoteViewModel =
+      NewReplyGitLabNoteViewModel(parentCs, "", project, discussion, currentUser)
   }
 }
 
@@ -102,12 +121,10 @@ interface ExistingGitLabNoteEditingViewModel : GitLabNoteEditingViewModel {
   fun save()
 }
 
-private class GitLabNoteEditingViewModelImpl(parentCs: CoroutineScope,
-                                             initialText: String,
-                                             private val submitter: suspend (String) -> Unit)
-  : AbstractGitLabNoteEditingViewModel(parentCs, initialText), ExistingGitLabNoteEditingViewModel {
+private class GitLabNoteEditingViewModelImpl(parentCs: CoroutineScope, private val note: MutableGitLabNote)
+  : AbstractGitLabNoteEditingViewModel(parentCs, note.body.value), ExistingGitLabNoteEditingViewModel {
   override fun save() {
-    submit(submitter)
+    submit(note::setBody)
   }
 }
 
@@ -121,17 +138,14 @@ interface NewGitLabNoteViewModel : GitLabNoteEditingViewModel {
   fun submitAsDraft()
 }
 
-private class NewGitLabNoteViewModelImpl(
+private abstract class NewGitLabNoteViewModelBase(
   parentCs: CoroutineScope,
   initialText: String,
   project: Project,
-  override val currentUser: GitLabUserDTO,
-  private val submitter: suspend (String) -> Unit,
-  private val submitterAsDraft: (suspend (String) -> Unit)? = null
+  override val currentUser: GitLabUserDTO
 ) : AbstractGitLabNoteEditingViewModel(parentCs, initialText), NewGitLabNoteViewModel {
   private val preferences = project.service<GitLabMergeRequestsPreferences>()
 
-  override val canSubmitAsDraft: Boolean = submitterAsDraft != null
   override val usedAsDraftSubmitActionLast: StateFlow<Boolean> = channelFlow {
     val disposable = Disposer.newDisposable()
     preferences.addListener(disposable) {
@@ -142,18 +156,56 @@ private class NewGitLabNoteViewModelImpl(
 
   override fun submit() {
     submit {
-      submitter(it)
+      doSubmit(it)
       preferences.usedAsDraftSubmitActionLast = false
     }
   }
 
+  protected abstract suspend fun doSubmit(text: String)
+
   override fun submitAsDraft() {
-    if (submitterAsDraft == null) error("Cannot be submitted as draft")
+    require(canSubmitAsDraft) { "Cannot be submitted as draft" }
     submit {
-      submitterAsDraft.invoke(it)
+      doSubmitAsDraft(it)
       preferences.usedAsDraftSubmitActionLast = true
     }
   }
+
+  protected abstract suspend fun doSubmitAsDraft(text: String)
+}
+
+private class NewStandaloneGitLabNoteViewModel(parentCs: CoroutineScope,
+                                               initialText: String,
+                                               project: Project,
+                                               private val mergeRequest: GitLabMergeRequest,
+                                               currentUser: GitLabUserDTO)
+  : NewGitLabNoteViewModelBase(parentCs, initialText, project, currentUser) {
+  override val canSubmitAsDraft: Boolean = mergeRequest.canAddDraftNotes
+  override suspend fun doSubmit(text: String) = mergeRequest.addNote(text)
+  override suspend fun doSubmitAsDraft(text: String) = mergeRequest.addDraftNote(text)
+}
+
+private class NewDiffGitLabNoteViewModel(parentCs: CoroutineScope,
+                                         initialText: String,
+                                         project: Project,
+                                         private val mergeRequest: GitLabMergeRequest,
+                                         currentUser: GitLabUserDTO,
+                                         private val position: GitLabMergeRequestNewDiscussionPosition)
+  : NewGitLabNoteViewModelBase(parentCs, initialText, project, currentUser) {
+  override val canSubmitAsDraft: Boolean = mergeRequest.canAddPositionalDraftNotes
+  override suspend fun doSubmit(text: String) = mergeRequest.addNote(position, text)
+  override suspend fun doSubmitAsDraft(text: String) = mergeRequest.addDraftNote(position, text)
+}
+
+private class NewReplyGitLabNoteViewModel(parentCs: CoroutineScope,
+                                          initialText: String,
+                                          project: Project,
+                                          private val discussion: GitLabDiscussion,
+                                          currentUser: GitLabUserDTO)
+  : NewGitLabNoteViewModelBase(parentCs, initialText, project, currentUser) {
+  override val canSubmitAsDraft: Boolean = discussion.canAddDraftNotes
+  override suspend fun doSubmit(text: String) = discussion.addNote(text)
+  override suspend fun doSubmitAsDraft(text: String) = discussion.addDraftNote(text)
 }
 
 fun GitLabNoteEditingViewModel.onDoneIn(cs: CoroutineScope, callback: suspend () -> Unit) {

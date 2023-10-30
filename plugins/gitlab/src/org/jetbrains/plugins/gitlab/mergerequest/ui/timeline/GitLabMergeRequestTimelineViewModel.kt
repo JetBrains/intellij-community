@@ -75,18 +75,11 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 
   override val newNoteVm: NewGitLabNoteViewModel? =
     if (mergeRequest.canAddNotes) {
-      GitLabNoteEditingViewModel
-        .forNewNote(cs, project, currentUser,
-                    { mergeRequest.addNote(it) },
-                    if (mergeRequest.canAddDraftNotes) {
-                      { mergeRequest.addDraftNote(it) }
-                    }
-                    else null)
-        .apply {
-          onDoneIn(cs) {
-            text.value = ""
-          }
+      GitLabNoteEditingViewModel.forNewNote(cs, project, mergeRequest, currentUser).apply {
+        onDoneIn(cs) {
+          text.value = ""
         }
+      }
     }
     else {
       null
