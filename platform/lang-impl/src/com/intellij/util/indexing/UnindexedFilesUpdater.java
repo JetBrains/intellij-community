@@ -43,7 +43,7 @@ public final class UnindexedFilesUpdater {
       return threadCount;
     }
 
-    return Math.max(1, getAvailablePhysicalCoresNumber() - 1);
+    return Math.max(1, getAvailablePhysicalCoresNumber() - getCoresToLeaveForOtherActivitiesCount());
   }
 
   public static int getAvailablePhysicalCoresNumber() {
@@ -62,8 +62,11 @@ public final class UnindexedFilesUpdater {
 
   private static int getMaxBackgroundThreadCount() {
     // note that getMaxBackgroundThreadCount is used to calculate threads count is FilesScanExecutor, which is also used for "FindInFiles"
-    int coresToLeaveForOtherActivity = ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
-    return Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity;
+    return Runtime.getRuntime().availableProcessors() - getCoresToLeaveForOtherActivitiesCount();
+  }
+
+  private static int getCoresToLeaveForOtherActivitiesCount() {
+    return ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
   }
 
   public static boolean isIndexUpdateInProgress(@NotNull Project project) {
