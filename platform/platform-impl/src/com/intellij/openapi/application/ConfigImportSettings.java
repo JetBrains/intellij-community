@@ -59,4 +59,12 @@ public interface ConfigImportSettings {
   default boolean shouldSkipPath(@NotNull Path path) {
     return false;
   }
+
+  /**
+   * Whether a file should be copied to the destination directory even if it's already exists (overwrite)
+   * This is true, for instance, for importing early-access-registry.txt, which is created early during app init
+   */
+  default boolean shouldForceCopy(@NotNull Path path) {
+    return false;
+  }
 }

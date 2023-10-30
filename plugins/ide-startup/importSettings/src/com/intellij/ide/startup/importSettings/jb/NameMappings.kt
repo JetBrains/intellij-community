@@ -1,9 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.jb
 
+import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.*
+import com.intellij.ide.startup.importSettings.data.DialogImportItem
 import com.intellij.ide.startup.importSettings.data.IconProductSize
 import com.intellij.ide.startup.importSettings.jb.IDEData.Companion.IDE_MAP
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.PlatformUtils
 import javax.swing.Icon
 
 object NameMappings {
@@ -29,6 +33,19 @@ object NameMappings {
     return IDE_MAP[ideName]?.fullName ?: ideName
   }
 
+  fun canImportDirectly(prevIdeName: String): Boolean {
+    val prevIdeData = IDE_MAP[prevIdeName] ?: return false
+    val currentIdeData = IDEData.getSelf() ?: return false
+    return prevIdeData == currentIdeData || supportedDirectImports.contains(Pair(prevIdeData, currentIdeData))
+  }
+
+  private val supportedDirectImports = listOf(
+    Pair(IDEData.CLION, IDEData.CLION_NOVA),
+    Pair(IDEData.CLION_NOVA, IDEData.CLION),
+    Pair(IDEData.CLION, IDEData.RUSTROVER),
+    Pair(IDEData.IDEA_COMMUNITY, IDEData.IDEA_ULTIMATE),
+    Pair(IDEData.PYCHARM_CE, IDEData.PYCHARM)
+  )
 }
 
 private enum class IDEData(val code: String,
@@ -59,5 +76,27 @@ private enum class IDEData(val code: String,
 
   companion object {
     val IDE_MAP = entries.associateBy { it.folderName }
+
+    @Suppress("DEPRECATION")
+    fun getSelf(): IDEData? = when {
+      PlatformUtils.isAppCode() -> APPCODE
+      PlatformUtils.isAqua() -> AQUA
+      PlatformUtils.isCLion() -> CLION
+      PlatformUtils.isDataGrip() -> DATAGRIP
+      PlatformUtils.isDataSpell() -> DATASPELL
+      PlatformUtils.isGoIde() -> GOLAND
+      PlatformUtils.isIdeaCommunity() -> IDEA_COMMUNITY
+      PlatformUtils.isIdeaUltimate() -> IDEA_ULTIMATE
+      PlatformUtils.isPhpStorm() -> PHPSTORM
+      PlatformUtils.isPyCharmCommunity() -> PYCHARM_CE
+      PlatformUtils.isPyCharmPro() -> PYCHARM
+      PlatformUtils.isRider() -> RIDER
+      PlatformUtils.isRubyMine() -> RUBYMINE
+      PlatformUtils.isRustRover() -> RUSTROVER
+      PlatformUtils.isWebStorm() -> WEBSTORM
+      else -> {
+        null
+      }
+    }
   }
 }

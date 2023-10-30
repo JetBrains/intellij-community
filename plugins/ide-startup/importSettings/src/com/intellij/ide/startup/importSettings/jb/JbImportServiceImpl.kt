@@ -15,6 +15,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.jetbrains.rd.util.remove
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -164,7 +165,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         }
       }
 
-      LOG.info("${confDir.name}/options' newest file is dated $lastModified")
+      LOG.info("${optionsDir}' newest file is dated $lastModified")
       val ideName = matcher.group(1)
       val ideVersion = matcher.group(2)
       val fullName = "${NameMappings.getFullName(ideName)} $ideVersion"
@@ -225,14 +226,28 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     }
     LOG.info("Will import the following categories: ${filteredCategories.joinToString()}")
 
+    val allRoamableCategories = DEFAULT_SETTINGS_CATEGORIES.values.map { it.settingsCategory }
+    val importEverything = filteredCategories.containsAll(allRoamableCategories)
+
     val importData = TransferSettingsProgress(productInfo)
-    val importer = JbSettingsImporter(productInfo.configDirPath, productInfo.pluginsDirPath)
+    val importer = JbSettingsImporter(productInfo.configDirPath, productInfo.pluginsDirPath, null)
     val progressIndicator = importData.createProgressIndicatorAdapter()
     val modalityState = ModalityState.current()
 
     val startTime = System.currentTimeMillis()
     coroutineScope.async(modalityState.asContextElement()) {
-      if (plugins2import != null) {
+      if (importEverything && NameMappings.canImportDirectly(productInfo.codeName)) {
+        LOG.info("Started importing all...")
+        progressIndicator.text2 = "Migrating options"
+        importer.importRaw(progressIndicator, plugins2import ?: emptyList())
+        LOG.info("Imported all completed in ${System.currentTimeMillis() - startTime} ms. ")
+        LOG.info("Calling restart...")
+        withContext(Dispatchers.EDT) {
+          ApplicationManager.getApplication().invokeLater({
+                                                            ApplicationManagerEx.getApplicationEx().restart(true)
+                                                          }, modalityState)
+        }
+      } else if (!plugins2import.isNullOrEmpty()) {
         LOG.info("Started importing plugins...")
         importer.installPlugins(progressIndicator, plugins2import)
         storeImportConfig(productInfo.configDirPath, filteredCategories)

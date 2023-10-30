@@ -12,6 +12,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.io.systemIndependentPath
@@ -24,7 +25,10 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.*
 
-class JbSettingsImporter(private val configDirPath: Path, private val pluginsPath: Path) {
+class JbSettingsImporter(private val configDirPath: Path,
+                         private val pluginsPath: Path,
+                         private val prevIdeHome: Path?
+                         ) {
   private val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
 
   fun importOptions(categories: Set<SettingsCategory>) {
@@ -118,17 +122,7 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
   }
 
   fun installPlugins(progressIndicator: ProgressIndicator, pluginIds: List<String>) {
-    val importOptions = ConfigImportHelper.ConfigImportOptions(LOG)
-    importOptions.isHeadless = true
-    importOptions.headlessProgressIndicator = progressIndicator
-    importOptions.importSettings = object : ConfigImportSettings {
-      override fun processPluginsToMigrate(newConfigDir: Path,
-                                           oldConfigDir: Path,
-                                           bundledPlugins: MutableList<IdeaPluginDescriptor>,
-                                           nonBundledPlugins: MutableList<IdeaPluginDescriptor>) {
-        nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId.idString) }
-      }
-    }
+    val importOptions = configImportOptions(progressIndicator, pluginIds)
     ConfigImportHelper.migratePlugins(
       pluginsPath,
       configDirPath,
@@ -136,6 +130,32 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
       PathManager.getConfigDir(),
       importOptions
     ) { false }
+  }
+
+  private fun configImportOptions(progressIndicator: ProgressIndicator,
+                                  pluginIds: List<String>): ConfigImportHelper.ConfigImportOptions {
+    val importOptions = ConfigImportHelper.ConfigImportOptions(LOG)
+    importOptions.isHeadless = true
+    importOptions.headlessProgressIndicator = progressIndicator
+    importOptions.importSettings = object : ConfigImportSettings {
+      private val oldEarlyAccessRegistryTxt = configDirPath.resolve(EarlyAccessRegistryManager.fileName)
+      override fun processPluginsToMigrate(newConfigDir: Path,
+                                           oldConfigDir: Path,
+                                           bundledPlugins: MutableList<IdeaPluginDescriptor>,
+                                           nonBundledPlugins: MutableList<IdeaPluginDescriptor>) {
+        nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId.idString) }
+      }
+
+      override fun shouldForceCopy(path: Path): Boolean {
+        return path == oldEarlyAccessRegistryTxt
+      }
+    }
+    return importOptions
+  }
+
+  fun importRaw(progressIndicator: ProgressIndicator, pluginIds: List<String>) {
+    val importOptions = configImportOptions(progressIndicator, pluginIds)
+    ConfigImportHelper.doImport(configDirPath, PathManager.getConfigDir(), prevIdeHome, LOG, importOptions)
   }
 
   internal class ImportStreamProvider(private val configDirPath: Path) : StreamProvider {

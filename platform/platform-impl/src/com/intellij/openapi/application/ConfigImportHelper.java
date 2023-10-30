@@ -724,7 +724,7 @@ public final class ConfigImportHelper {
     return FileUtil.expandUserHome(StringUtilRt.unquoteString(dir, '"'));
   }
 
-  private static void doImport(Path oldConfigDir, Path newConfigDir, @Nullable Path oldIdeHome, Logger log, ConfigImportOptions importOptions) {
+  public static void doImport(Path oldConfigDir, Path newConfigDir, @Nullable Path oldIdeHome, Logger log, ConfigImportOptions importOptions) {
     if (oldConfigDir.equals(newConfigDir)) {
       log.info("New config directory is the same as the old one, no import needed.");
       return;
@@ -829,6 +829,9 @@ public final class ConfigImportHelper {
         else if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings)) {
           NioFiles.createDirectories(target.getParent());
           Files.copy(file, target, LinkOption.NOFOLLOW_LINKS);
+        } else if (options.importSettings != null && options.importSettings.shouldForceCopy(file)) {
+          NioFiles.createDirectories(target.getParent());
+          Files.copy(file, target, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.REPLACE_EXISTING);
         }
         return FileVisitResult.CONTINUE;
       }
