@@ -406,7 +406,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private def actionMatches(String pattern, AnAction action) {
-    def matcher = GotoActionItemProvider.buildMatcher(pattern)
+    def matcher = ActionSearchUtilKt.buildMatcher(pattern)
     def model = new GotoActionModel(project, null, null)
     model.buildGroupMappings()
     return model.actionMatches(pattern, matcher, action)
