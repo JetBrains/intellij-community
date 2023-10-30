@@ -109,7 +109,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
   }
 
   private fun openEditorLogTab(tabId: String, focus: Boolean, filters: VcsLogFilterCollection?): Array<FileEditor> {
-    val file = VcsLogVirtualFileSystem.getInstance().createVcsLogFile(project, tabId, filters)
+    val file = VcsLogVirtualFileSystem.Holder.getInstance().createVcsLogFile(project, tabId, filters)
     return FileEditorManager.getInstance(project).openFile(file, focus, true)
   }
 
