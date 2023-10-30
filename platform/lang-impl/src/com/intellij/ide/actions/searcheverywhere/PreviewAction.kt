@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.isPreviewEnabled
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,6 +15,11 @@ class PreviewAction(val callback: () -> Unit) :
                         Supplier { IdeBundle.message("search.everywhere.preview.action.description") },
                         ExpUiIcons.General.PreviewHorizontally) {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = isPreviewEnabled()
+    super.update(e)
+  }
 
   override fun isSelected(e: AnActionEvent) =
     PropertiesComponent.getInstance(e.project!!).isTrueValue(SearchEverywhereUI.PREVIEW_PROPERTY_KEY)
