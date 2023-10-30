@@ -7,6 +7,7 @@ import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -39,7 +40,8 @@ public final class AllArgsConstructorProcessor extends AbstractConstructorClassP
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     if (null != methodVisibility) {
       final String staticConstructorName = getStaticConstructorName(psiAnnotation);

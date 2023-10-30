@@ -86,7 +86,8 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     //do nothing
   }
 }

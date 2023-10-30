@@ -14,6 +14,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -101,10 +102,10 @@ public final class ValueProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
 
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.GETTER)) {
-      target.addAll(getGetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(getGetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC, nameHint));
     }
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.EQUALS_AND_HASHCODE)) {
       target.addAll(getEqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));

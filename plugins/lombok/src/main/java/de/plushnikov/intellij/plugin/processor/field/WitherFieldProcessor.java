@@ -68,7 +68,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiField psiField,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     String methodModifier = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodModifier != null) {
       AccessorsInfo accessorsInfo = buildAccessorsInfo(psiField);

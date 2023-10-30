@@ -10,6 +10,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -63,7 +64,7 @@ public final class SuperBuilderClassProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     SuperBuilderHandler builderHandler = getBuilderHandler();
     final String builderClassName = builderHandler.getBuilderClassName(psiClass);
 

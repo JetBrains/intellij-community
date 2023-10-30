@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
@@ -13,6 +14,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -81,20 +83,21 @@ public final class SetterProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
-      target.addAll(createFieldSetters(psiClass, methodVisibility));
+      target.addAll(createFieldSetters(psiClass, methodVisibility, nameHint));
     }
   }
 
-  public Collection<PsiMethod> createFieldSetters(@NotNull PsiClass psiClass, @NotNull String methodModifier) {
+  public Collection<PsiMethod> createFieldSetters(@NotNull PsiClass psiClass, @NotNull String methodModifier, @Nullable String nameHint) {
     Collection<PsiMethod> result = new ArrayList<>();
 
     final Collection<PsiField> setterFields = filterSetterFields(psiClass);
 
     for (PsiField setterField : setterFields) {
-      result.add(SetterFieldProcessor.createSetterMethod(setterField, psiClass, methodModifier));
+      ContainerUtil.addIfNotNull(result, SetterFieldProcessor.createSetterMethod(setterField, psiClass, methodModifier, nameHint));
     }
     return result;
   }

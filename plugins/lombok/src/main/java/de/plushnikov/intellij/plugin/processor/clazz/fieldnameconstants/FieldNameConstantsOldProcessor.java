@@ -14,6 +14,7 @@ import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,7 +65,8 @@ public final class FieldNameConstantsOldProcessor extends AbstractClassProcessor
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     final Collection<PsiField> psiFields = filterFields(psiClass);
     for (PsiField psiField : psiFields) {
       if (FieldNameConstantsFieldProcessor.checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, new ProblemProcessingSink())) {

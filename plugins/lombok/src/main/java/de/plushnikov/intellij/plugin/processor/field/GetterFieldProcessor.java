@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -13,7 +14,9 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,11 +45,12 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiField psiField,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != methodVisibility && null != psiClass) {
-      target.add(createGetterMethod(psiField, psiClass, methodVisibility));
+      ContainerUtil.addIfNotNull(target, createGetterMethod(psiField, psiClass, methodVisibility, nameHint));
     }
   }
 
@@ -101,10 +105,13 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  @NotNull
-  public PsiMethod createGetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier) {
+  @Nullable
+  @Contract("_,_,_,null -> !null")
+  public PsiMethod createGetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier,
+                                      @Nullable String nameHint) {
     final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     final String methodName = LombokUtils.getGetterName(psiField, accessorsInfo);
+    if (nameHint != null && !nameHint.equals(methodName)) return null;
 
     LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), methodName)
       .withMethodReturnType(psiField.getType())

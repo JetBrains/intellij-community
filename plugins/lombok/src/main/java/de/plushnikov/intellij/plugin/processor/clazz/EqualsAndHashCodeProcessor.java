@@ -19,6 +19,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -141,7 +142,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     target.addAll(createEqualAndHashCode(psiClass, psiAnnotation));
   }
 

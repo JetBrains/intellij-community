@@ -12,6 +12,7 @@ import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,7 +94,7 @@ public final class WitherProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
       final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiClass).withFluent(false);
