@@ -50,7 +50,7 @@ internal object GitLabNoteComponentFactory {
       textPanel
     }
 
-    val actionsPanel = createActions(cs, flowOf(vm))
+    val actionsPanel = createActions(cs, flowOf(vm), project, place)
     return CodeReviewChatItemUIUtil.build(componentType,
                                           { avatarIconsProvider.getIcon(vm.author, it) },
                                           contentPanel) {
@@ -97,7 +97,8 @@ internal object GitLabNoteComponentFactory {
     }
   }
 
-  fun createActions(cs: CoroutineScope, note: Flow<GitLabNoteViewModel>): JComponent {
+  fun createActions(cs: CoroutineScope, note: Flow<GitLabNoteViewModel>,
+                    project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
     val panel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       cs.launch {
         note.mapNotNull { it.actionsVm }.collectLatest {
@@ -109,7 +110,10 @@ internal object GitLabNoteComponentFactory {
                 bindDisabledIn(this@coroutineScope, it.busy)
               }
             }.also(::add)
-            CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ -> it.delete() }.apply {
+            CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ ->
+              it.delete()
+              GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.DELETE_NOTE, place)
+            }.apply {
               bindDisabledIn(this@coroutineScope, it.busy)
             }.also(::add)
             repaint()

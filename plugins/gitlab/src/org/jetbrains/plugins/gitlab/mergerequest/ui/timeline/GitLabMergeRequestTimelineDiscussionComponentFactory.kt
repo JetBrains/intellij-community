@@ -54,7 +54,8 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
              vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
     val contentPanel = createContent(project, cs, avatarIconsProvider, vm)
-    val actionsPanel = GitLabNoteComponentFactory.createActions(cs, vm.mainNote)
+    val actionsPanel = GitLabNoteComponentFactory.createActions(cs, vm.mainNote,
+                                                                project, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
 
     val repliesPanel = ComponentListPanelFactory.createVertical(cs, vm.replies, GitLabNoteViewModel::id) { noteCs, noteVm ->
       GitLabNoteComponentFactory.create(ComponentType.FULL_SECONDARY, project, noteCs, avatarIconsProvider, noteVm,
