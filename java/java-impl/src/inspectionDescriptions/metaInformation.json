@@ -1,158 +1,94 @@
 {
   "inspections": [
     {
-      "id": "AccessStaticViaInstance",
+      "id": "ArrayHashCode",
       "cweIds": [
-        398
+        328
       ]
     },
     {
-      "id": "AssertWithSideEffects",
+      "id": "ArrayObjectsEquals",
       "cweIds": [
-        480,
-        571
+        480
       ]
     },
     {
-      "id": "AssignmentUsedAsCondition",
+      "id": "CastConflictsWithInstanceof",
       "cweIds": [
-        480,
-        481,
-        783
+        704
       ]
     },
     {
-      "id": "AtomicFieldUpdaterIssues",
+      "id": "CastToIncompatibleInterface",
       "cweIds": [
-        489,
-        662
+        704
       ]
     },
     {
-      "id": "AutoCloseableResource",
+      "id": "CloneableClassInSecureContext",
       "cweIds": [
-        404,
-        772,
-        775
+        498
       ]
     },
     {
-      "id": "BigDecimalMethodWithoutRoundingCalled",
+      "id": "CollectionAddedToSelf",
       "cweIds": [
-        369
+        664,
+        688
       ]
     },
     {
-      "id": "BooleanConstructor",
+      "id": "ComparableImplementedButEqualsNotOverridden",
       "cweIds": [
-        597
-      ]
-    },
-    {
-      "id": "BoxingBoxedValue",
-      "cweIds": [
-        597
-      ]
-    },
-    {
-      "id": "BusyWait",
-      "cweIds": [
-        400,
-        835
-      ]
-    },
-    {
-      "id": "CatchMayIgnoreException",
-      "cweIds": [
-        390,
-        391,
-        705,
-        710
-      ]
-    },
-    {
-      "id": "CaughtExceptionImmediatelyRethrown",
-      "cweIds": [
-        703,
-        706
-      ]
-    },
-    {
-      "id": "CloneDeclaresCloneNotSupported",
-      "cweIds": [
-        489,
-        496
-      ]
-    },
-    {
-      "id": "CloneableImplementsClone",
-      "cweIds": [
-        489
-      ]
-    },
-    {
-      "id": "CommentedOutCode",
-      "cweIds": [
-        546
+        697
       ]
     },
     {
       "id": "ComparatorMethodParameterNotUsed",
       "cweIds": [
-        252,
-        253,
-        670,
-        688
+        628
       ]
     },
     {
-      "id": "ComparisonToNaN",
+      "id": "ComparatorNotSerializable",
       "cweIds": [
-        369,
-        682
+        502
       ]
     },
     {
-      "id": "ConditionCoveredByFurtherCondition",
+      "id": "ComparatorResultComparison",
       "cweIds": [
-        571,
-        1048
+        253
       ]
     },
     {
-      "id": "ConditionalExpressionWithIdenticalBranches",
+      "id": "ConstantAssertCondition",
       "cweIds": [
-        691
+        570,
+        571
       ]
     },
     {
       "id": "ConstantValue",
       "cweIds": [
-        398,
-        476,
-        480,
-        489,
-        561,
         570,
         571
       ]
     },
     {
-      "id": "ContinueOrBreakFromFinallyBlock",
+      "id": "CopyConstructorMissesField",
       "cweIds": [
-        398
-      ]
-    },
-    {
-      "id": "Contract",
-      "cweIds": [
-        570,
-        571
+        665
       ]
     },
     {
       "id": "DataFlowIssue",
       "cweIds": [
+        129,
+        252,
+        253,
+        394,
+        395,
         476,
         570,
         571,
@@ -160,226 +96,94 @@
       ]
     },
     {
-      "id": "DeprecatedIsStillUsed",
+      "id": "DesignForExtension",
       "cweIds": [
-        477
-      ]
-    },
-    {
-      "id": "Deprecation",
-      "cweIds": [
-        477
-      ]
-    },
-    {
-      "id": "DivideByZero",
-      "cweIds": [
-        369,
-        369,
-        369
-      ]
-    },
-    {
-      "id": "DoubleCheckedLocking",
-      "cweIds": [
-        662
-      ]
-    },
-    {
-      "id": "DuplicateCondition",
-      "cweIds": [
-        571,
-        691
-      ]
-    },
-    {
-      "id": "DuplicateExpressions",
-      "cweIds": [
-        398,
-        710
-      ]
-    },
-    {
-      "id": "EmptyFinallyBlock",
-      "cweIds": [
-        398,
-        710
+        668
       ]
     },
     {
       "id": "EmptyStatementBody",
       "cweIds": [
-        563,
-        670
+        561
       ]
     },
     {
-      "id": "EmptyTryBlock",
+      "id": "EndlessStream",
       "cweIds": [
-        563,
-        570,
-        571
+        835
       ]
     },
     {
-      "id": "EqualsOnSuspiciousObject",
+      "id": "EqualsUsesNonFinalVariable",
       "cweIds": [
-        597
+        697
+      ]
+    },
+    {
+      "id": "EqualsWhichDoesntCheckParameterClass",
+      "cweIds": [
+        697
       ]
     },
     {
       "id": "EqualsWithItself",
       "cweIds": [
-        570,
-        571,
-        597
-      ]
-    },
-    {
-      "id": "ExcessiveRangeCheck",
-      "cweIds": [
-        570,
         571
-      ]
-    },
-    {
-      "id": "FinalizeNotProtected",
-      "cweIds": [
-        489
-      ]
-    },
-    {
-      "id": "FinallyBlockCannotCompleteNormally",
-      "cweIds": [
-        691,
-        693,
-        705,
-        710
-      ]
-    },
-    {
-      "id": "ForwardCompatibility",
-      "cweIds": [
-        561,
-        563,
-        835
-      ]
-    },
-    {
-      "id": "IdempotentLoopBody",
-      "cweIds": [
-        571,
-        691,
-        834,
-        835
-      ]
-    },
-    {
-      "id": "IfStatementWithIdenticalBranches",
-      "cweIds": [
-        398
       ]
     },
     {
       "id": "IgnoreResultOfCall",
       "cweIds": [
-        561,
-        563,
-        628
+        252,
+        563
       ]
     },
     {
-      "id": "ImplicitArrayToString",
+      "id": "IncorrectMessageFormat",
       "cweIds": [
-        200
-      ]
-    },
-    {
-      "id": "IncompatibleMask",
-      "cweIds": [
-        456,
-        561,
-        563,
-        570,
-        571,
-        670,
-        758,
-        785,
-        840
-      ]
-    },
-    {
-      "id": "IncorrectDateTimeFormat",
-      "cweIds": [
-        682,
-        691,
-        707,
-        710
+        628,
+        707
       ]
     },
     {
       "id": "InfiniteRecursion",
       "cweIds": [
+        674,
         835
       ]
     },
     {
-      "id": "IntegerDivisionInFloatingPointContext",
+      "id": "IterableUsedAsVararg",
       "cweIds": [
-        681,
-        682
+        628
       ]
     },
     {
-      "id": "IntegerMultiplicationImplicitCastToLong",
+      "id": "JDBCExecuteWithNonConstantString",
       "cweIds": [
-        190,
-        681
+        89,
+        564
       ]
     },
     {
-      "id": "JavaReflectionMemberAccess",
+      "id": "JDBCPrepareStatementWithNonConstantString",
       "cweIds": [
-        470,
-        489
+        89
       ]
     },
     {
-      "id": "LoopConditionNotUpdatedInsideLoop",
+      "id": "LoadLibraryWithNonConstantString",
       "cweIds": [
-        835
-      ]
-    },
-    {
-      "id": "LoopStatementsThatDontLoop",
-      "cweIds": [
-        835
+        114,
+        494,
+        676,
+        829
       ]
     },
     {
       "id": "MagicConstant",
       "cweIds": [
-        398
-      ]
-    },
-    {
-      "id": "MalformedFormatString",
-      "cweIds": [
-        134,
-        687,
-        688
-      ]
-    },
-    {
-      "id": "ManualArrayToCollectionCopy",
-      "cweIds": [
-        707
-      ]
-    },
-    {
-      "id": "MaskedAssertion",
-      "cweIds": [
-        480
+        489
       ]
     },
     {
@@ -396,139 +200,101 @@
       ]
     },
     {
-      "id": "MethodNameSameAsClassName",
-      "cweIds": [
-        398,
-        561
-      ]
-    },
-    {
       "id": "MismatchedArrayReadWrite",
       "cweIds": [
         561,
-        563,
-        570,
-        571,
-        628
+        563
       ]
     },
     {
       "id": "MismatchedCollectionQueryUpdate",
       "cweIds": [
         561,
-        563,
-        582
+        563
       ]
     },
     {
       "id": "MismatchedStringBuilderQueryUpdate",
       "cweIds": [
-        563,
-        628
+        561,
+        563
+      ]
+    },
+    {
+      "id": "MisspelledEquals",
+      "cweIds": [
+        697
       ]
     },
     {
       "id": "NewObjectEquality",
       "cweIds": [
-        597
+        480
       ]
     },
     {
-      "id": "NoExplicitFinalizeCalls",
+      "id": "NewStringBufferWithCharArgument",
       "cweIds": [
-        665
+        628,
+        704
       ]
     },
     {
-      "id": "NonAtomicOperationOnVolatileField",
+      "id": "NonShortCircuitBoolean",
       "cweIds": [
-        823
-      ]
-    },
-    {
-      "id": "NonSerializableWithSerialVersionUIDField",
-      "cweIds": [
-        502
+        480,
+        691
       ]
     },
     {
       "id": "NotNullFieldNotInitialized",
       "cweIds": [
-        252,
         476
+      ]
+    },
+    {
+      "id": "NullArgumentToVariableArgMethod",
+      "cweIds": [
+        628
       ]
     },
     {
       "id": "NullableProblems",
       "cweIds": [
-        395,
         476,
-        754,
-        755
+        754
       ]
     },
     {
       "id": "NumberEquality",
       "cweIds": [
-        597
+        480
       ]
     },
     {
-      "id": "NumericOverflow",
+      "id": "ObjectEquality",
       "cweIds": [
-        190,
-        682
+        480
       ]
     },
     {
-      "id": "ObviousNullCheck",
-      "cweIds": [
-        476
-      ]
-    },
-    {
-      "id": "OptionalAssignedToNull",
+      "id": "OptionalGetWithoutIsPresent",
       "cweIds": [
         252,
-        253,
         476
       ]
     },
     {
       "id": "OverflowingLoopIndex",
       "cweIds": [
-        835,
+        691,
         835
       ]
     },
     {
-      "id": "PatternVariableHidesField",
+      "id": "PublicStaticCollectionField",
       "cweIds": [
-        563
-      ]
-    },
-    {
-      "id": "PointlessArithmeticExpression",
-      "cweIds": [
-        398
-      ]
-    },
-    {
-      "id": "PointlessBitwiseExpression",
-      "cweIds": [
-        398,
-        480,
-        561,
-        563,
-        570,
-        571,
-        690
-      ]
-    },
-    {
-      "id": "PointlessBooleanExpression",
-      "cweIds": [
-        398
+        732
       ]
     },
     {
@@ -538,75 +304,52 @@
       ]
     },
     {
-      "id": "RefusedBequest",
-      "cweIds": [
-        489,
-        561
-      ]
-    },
-    {
       "id": "ReplaceAllDot",
       "cweIds": [
         20,
         185,
-        628,
-        687
+        628
       ]
     },
     {
-      "id": "ReplaceInefficientStreamCount",
+      "id": "ReturnNull",
       "cweIds": [
-        835
+        252,
+        476
       ]
     },
     {
-      "id": "ShiftOutOfRange",
+      "id": "RuntimeExecWithNonConstantString",
       "cweIds": [
-        681,
-        682
+        20,
+        77,
+        78,
+        88,
+        94
       ]
     },
     {
-      "id": "SillyAssignment",
+      "id": "SerializableDeserializableClassInSecureContext",
       "cweIds": [
-        480,
-        561
+        502
       ]
     },
     {
-      "id": "SimplifiableAssertion",
+      "id": "SerializableInnerClassHasSerialVersionUIDField",
       "cweIds": [
-        398,
-        546
+        502
       ]
     },
     {
-      "id": "SimplifiableBooleanExpression",
+      "id": "SerializableStoresNonSerializable",
       "cweIds": [
-        480,
-        561,
-        570,
-        571
+        502
       ]
     },
     {
-      "id": "SimplifiableConditionalExpression",
+      "id": "SerializableWithUnconstructableAncestor",
       "cweIds": [
-        398,
-        480,
-        561,
-        563,
-        570,
-        571,
-        690
-      ]
-    },
-    {
-      "id": "SimplifyStreamApiCallChains",
-      "cweIds": [
-        398,
-        400,
-        597
+        502
       ]
     },
     {
@@ -617,9 +360,21 @@
       ]
     },
     {
-      "id": "StringConcatenationInsideStringBufferAppend",
+      "id": "StringConcatenationInFormatCall",
       "cweIds": [
-        597
+        20,
+        117,
+        134,
+        707
+      ]
+    },
+    {
+      "id": "StringConcatenationInMessageFormatCall",
+      "cweIds": [
+        20,
+        117,
+        134,
+        707
       ]
     },
     {
@@ -635,10 +390,21 @@
       ]
     },
     {
+      "id": "SubtractionInCompareTo",
+      "cweIds": [
+        682
+      ]
+    },
+    {
+      "id": "SuspiciousArrayCast",
+      "cweIds": [
+        704
+      ]
+    },
+    {
       "id": "SuspiciousIndentAfterControlStatement",
       "cweIds": [
-        483,
-        691
+        483
       ]
     },
     {
@@ -648,132 +414,60 @@
       ]
     },
     {
-      "id": "SuspiciousInvocationHandlerImplementation",
-      "cweIds": [
-        480,
-        706
-      ]
-    },
-    {
       "id": "SuspiciousListRemoveInLoop",
       "cweIds": [
-        834,
-        1299
+        129
       ]
     },
     {
-      "id": "SuspiciousSystemArraycopy",
+      "id": "SuspiciousMethodCalls",
       "cweIds": [
-        129,
-        680,
-        805
+        628
+      ]
+    },
+    {
+      "id": "SuspiciousNameCombination",
+      "cweIds": [
+        628
       ]
     },
     {
       "id": "SuspiciousToArrayCall",
       "cweIds": [
-        843
+        704
       ]
     },
     {
-      "id": "SynchronizeOnNonFinalField",
+      "id": "SystemProperties",
       "cweIds": [
-        662
+        250,
+        668
       ]
     },
     {
-      "id": "SystemRunFinalizersOnExit",
+      "id": "SystemSetSecurityManager",
       "cweIds": [
-        662,
-        664,
-        706
-      ]
-    },
-    {
-      "id": "ThreadLocalSetWithNull",
-      "cweIds": [
-        400
+        250
       ]
     },
     {
       "id": "ThrowableNotThrown",
       "cweIds": [
         390,
-        489,
-        561,
-        563,
-        570,
-        571,
-        703,
-        710
-      ]
-    },
-    {
-      "id": "ThrowablePrintedToSystemOut",
-      "cweIds": [
-        215,
-        389,
-        532,
-        778
-      ]
-    },
-    {
-      "id": "ToArrayCallWithZeroLengthArrayArgument",
-      "cweIds": [
-        362,
-        470
-      ]
-    },
-    {
-      "id": "TrivialIf",
-      "cweIds": [
-        398,
-        710
-      ]
-    },
-    {
-      "id": "UNCHECKED_WARNING",
-      "cweIds": [
-        843
-      ]
-    },
-    {
-      "id": "UNUSED_IMPORT",
-      "cweIds": [
-        116,
-        398
-      ]
-    },
-    {
-      "id": "UnaryPlus",
-      "cweIds": [
-        480,
-        670
-      ]
-    },
-    {
-      "id": "UnnecessarySemicolon",
-      "cweIds": [
-        398
-      ]
-    },
-    {
-      "id": "UnnecessaryUnaryMinus",
-      "cweIds": [
-        398,
-        561,
-        563,
-        570,
-        571,
-        670
+        703
       ]
     },
     {
       "id": "UnsatisfiedRange",
       "cweIds": [
         129,
-        190,
         682
+      ]
+    },
+    {
+      "id": "UnsecureRandomNumberGeneration",
+      "cweIds": [
+        330
       ]
     },
     {
@@ -784,16 +478,15 @@
       ]
     },
     {
-      "id": "WaitWhileHoldingTwoLocks",
+      "id": "VariableNotUsedInsideIf",
       "cweIds": [
-        662,
-        833
+        563
       ]
     },
     {
-      "id": "WhileLoopSpinsOnField",
+      "id": "WriteOnlyObject",
       "cweIds": [
-        835
+        563
       ]
     }
   ]

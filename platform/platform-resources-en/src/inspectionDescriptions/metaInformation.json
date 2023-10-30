@@ -1,9 +1,9 @@
 {
   "inspections": [
     {
-      "id": "KotlinInvalidBundleOrProperty",
+      "id": "MismatchedStringCase",
       "cweIds": [
-        200
+        597
       ]
     }
   ]
