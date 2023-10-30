@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
-private const val BASE_FUS_VERSION = 10
+private const val BASE_FUS_VERSION = 11
 
 object KotlinGradleFUSCollector : CounterUsagesCollector() {
 
@@ -91,7 +91,9 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
             NumericalMetrics.CONFIGURATION_API_COUNT,
             NumericalMetrics.CONFIGURATION_IMPLEMENTATION_COUNT,
             NumericalMetrics.CONFIGURATION_COMPILE_COUNT,
+            NumericalMetrics.CONFIGURATION_COMPILE_ONLY_COUNT,
             NumericalMetrics.CONFIGURATION_RUNTIME_COUNT,
+            NumericalMetrics.CONFIGURATION_RUNTIME_ONLY_COUNT,
             NumericalMetrics.GRADLE_NUMBER_OF_TASKS,
             NumericalMetrics.GRADLE_NUMBER_OF_UNCONFIGURED_TASKS,
             NumericalMetrics.GRADLE_NUMBER_OF_INCREMENTAL_TASKS
@@ -134,6 +136,14 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
             BooleanMetrics.TESTS_EXECUTED,
             BooleanMetrics.MAVEN_PUBLISH_EXECUTED,
             BooleanMetrics.BUILD_FAILED
+        ),
+
+        KotlinGradleEvent(
+            GROUP, GradleStatisticsEventGroups.BuildReports,
+            BooleanMetrics.SINGLE_FILE_BUILD_REPORT,
+            BooleanMetrics.FILE_BUILD_REPORT,
+            BooleanMetrics.HTTP_BUILD_REPORT,
+            BooleanMetrics.BUILD_SCAN_BUILD_REPORT
         )
     )
 
@@ -162,6 +172,7 @@ enum class GradleStatisticsEventGroups {
     ComponentVersions,
     KotlinFeatures,
     GradlePerformance,
-    UseScenarios
+    UseScenarios,
+    BuildReports
 }
 
