@@ -5,7 +5,7 @@ import kotlinx.coroutines.CancellationException
 
 /**
  * Key class:
- * - for instances registered in XML: interface class or implementation class if no interface is specified;
+ * - for instances registered in plugin module descriptor: interface class or implementation class if no interface is specified;
  * - for dynamic instances: implementation class.
  */
 interface InstanceContainer {
