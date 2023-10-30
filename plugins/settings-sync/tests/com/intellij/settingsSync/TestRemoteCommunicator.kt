@@ -10,6 +10,7 @@ internal open class TestRemoteCommunicator(customServerUrl: String = "http://loc
   : CloudConfigServerCommunicator(customServerUrl) {
 
   override val _userId = resettableLazy { "it's set to avoid UninitializedPropertyAccessException" }
+  override val _idToken = resettableLazy { "it's set to avoid UninitializedPropertyAccessException" }
 
   private lateinit var pushedLatch: CountDownLatch
   private lateinit var pushedSnapshot: SettingsSnapshot

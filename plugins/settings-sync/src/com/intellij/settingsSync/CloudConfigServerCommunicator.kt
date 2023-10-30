@@ -10,7 +10,7 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete
 import com.intellij.util.resettableLazy
 import com.jetbrains.cloudconfig.*
-import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
+import com.jetbrains.cloudconfig.auth.JbaJwtTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
 import com.jetbrains.cloudconfig.exception.UnauthorizedException
 import org.jdom.JDOMException
@@ -33,7 +33,9 @@ private const val READ_TIMEOUT_MS = 50000
 internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : SettingsSyncRemoteCommunicator {
 
   protected open val _userId = resettableLazy { SettingsSyncAuthService.getInstance().getUserData()?.id }
+  protected open val _idToken = resettableLazy { SettingsSyncAuthService.getInstance().getAccountInfoService()?.idToken }
   internal val userId get() = _userId.value
+  private val idToken get() = _idToken.value
   protected val clientVersionContext = CloudConfigVersionContext()
   internal var _client = resettableLazy { createCloudConfigClient(serverUrl ?: defaultUrl, clientVersionContext) }
     @TestOnly set
@@ -46,6 +48,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
       object : SettingsSyncEventListener {
         override fun loginStateChanged() {
           _userId.reset()
+          _idToken.reset()
           _client.reset()
         }
       }
@@ -310,7 +313,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
 
   private fun createConfiguration(): Configuration {
     return Configuration().connectTimeout(CONNECTION_TIMEOUT_MS).readTimeout(READ_TIMEOUT_MS)
-      .auth(JbaTokenAuthProvider(userId ?: throw SettingsSyncAuthException("Authentication required")))
+      .auth(JbaJwtTokenAuthProvider(idToken ?: throw SettingsSyncAuthException("Authentication required")))
   }
 
   companion object {

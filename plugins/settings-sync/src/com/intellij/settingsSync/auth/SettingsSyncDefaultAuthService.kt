@@ -49,7 +49,7 @@ internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
   }
 
   // Extracted to simplify testing
-  internal fun getAccountInfoService(): JBAccountInfoService? {
+  override fun getAccountInfoService(): JBAccountInfoService? {
     return JBAccountInfoService.getInstance()
   }
 }
