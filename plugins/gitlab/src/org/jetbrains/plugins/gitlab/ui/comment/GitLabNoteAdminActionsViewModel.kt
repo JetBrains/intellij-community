@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 interface GitLabNoteAdminActionsViewModel {
   val busy: Flow<Boolean>
 
-  val editVm: Flow<GitLabNoteEditingViewModel?>
+  val editVm: Flow<ExistingGitLabNoteEditingViewModel?>
 
   /**
    * Whether the note can be edited.
@@ -49,7 +49,7 @@ class GitLabNoteAdminActionsViewModelImpl(
   override val busy: Flow<Boolean> = taskLauncher.busy
 
   private val isEditing = MutableStateFlow(false)
-  override val editVm: Flow<GitLabNoteEditingViewModel?> = isEditing.transformLatest { editing ->
+  override val editVm: Flow<ExistingGitLabNoteEditingViewModel?> = isEditing.transformLatest { editing ->
     if (editing) {
       coroutineScope {
         val cs = this@coroutineScope

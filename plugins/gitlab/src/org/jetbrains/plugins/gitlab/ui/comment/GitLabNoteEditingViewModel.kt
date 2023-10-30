@@ -30,8 +30,6 @@ interface GitLabNoteEditingViewModel {
 
   fun requestFocus()
 
-  fun submit()
-
   suspend fun destroy()
 
   sealed interface SubmissionState {
@@ -45,7 +43,7 @@ interface GitLabNoteEditingViewModel {
       parentCs: CoroutineScope,
       initialText: String,
       submitter: suspend (String) -> Unit
-    ): GitLabNoteEditingViewModel =
+    ): ExistingGitLabNoteEditingViewModel =
       GitLabNoteEditingViewModelImpl(parentCs, initialText, submitter)
 
     fun forNewNote(
@@ -100,11 +98,15 @@ abstract class AbstractGitLabNoteEditingViewModel(parentCs: CoroutineScope, init
   override suspend fun destroy() = cs.cancelAndJoinSilently()
 }
 
+interface ExistingGitLabNoteEditingViewModel : GitLabNoteEditingViewModel {
+  fun save()
+}
+
 private class GitLabNoteEditingViewModelImpl(parentCs: CoroutineScope,
                                              initialText: String,
                                              private val submitter: suspend (String) -> Unit)
-  : AbstractGitLabNoteEditingViewModel(parentCs, initialText) {
-  override fun submit() {
+  : AbstractGitLabNoteEditingViewModel(parentCs, initialText), ExistingGitLabNoteEditingViewModel {
+  override fun save() {
     submit(submitter)
   }
 }
@@ -115,6 +117,7 @@ interface NewGitLabNoteViewModel : GitLabNoteEditingViewModel {
 
   val currentUser: GitLabUserDTO
 
+  fun submit()
   fun submitAsDraft()
 }
 
@@ -163,7 +166,14 @@ fun GitLabNoteEditingViewModel.onDoneIn(cs: CoroutineScope, callback: suspend ()
   }
 }
 
-fun GitLabNoteEditingViewModel.submitActionIn(cs: CoroutineScope, actionName: @Nls String): AbstractAction {
+fun ExistingGitLabNoteEditingViewModel.saveActionIn(cs: CoroutineScope, actionName: @Nls String): AbstractAction {
+  val enabledFlow = text.combine(state) { text, state -> text.isNotBlank() && state != GitLabNoteEditingViewModel.SubmissionState.Loading }
+  return swingAction(actionName) {
+    save()
+  }.apply { bindEnabledIn(cs, enabledFlow) }
+}
+
+fun NewGitLabNoteViewModel.submitActionIn(cs: CoroutineScope, actionName: @Nls String): AbstractAction {
   val enabledFlow = text.combine(state) { text, state -> text.isNotBlank() && state != GitLabNoteEditingViewModel.SubmissionState.Loading }
   return swingAction(actionName) {
     submit()

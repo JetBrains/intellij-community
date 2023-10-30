@@ -11,7 +11,6 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.Compone
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.editor.EditorFactory
@@ -19,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.HyperlinkAdapter
+import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.Wrapper
@@ -118,7 +118,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val textPanel = createDiscussionTextPane(cs, vm)
 
     // oh well... probably better to make a suitable API in EditableComponentFactory, but that would look ugly
-    val actionAndEditVmsFlow: Flow<Pair<GitLabNoteAdminActionsViewModel, GitLabNoteEditingViewModel>?> =
+    val actionAndEditVmsFlow: Flow<Pair<GitLabNoteAdminActionsViewModel, ExistingGitLabNoteEditingViewModel>?> =
       mainNoteVm.flatMapLatest { note ->
         val actionsVm = note.actionsVm
         actionsVm?.editVm?.map { it?.let { actionsVm to it } } ?: flowOf(null)
