@@ -9,6 +9,8 @@ import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 
+private const val generatedFileName = "Main.kt"
+
 abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : AssetsOnboardingTipsProjectWizardStep(parent) {
     fun withKotlinSampleCode(sourceRootPath: String, packageName: String?, generateOnboardingTips: Boolean) {
         val renderedOnboardingTips = shouldRenderOnboardingTips()
@@ -18,7 +20,7 @@ abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : 
             else -> "KotlinSampleCodeWithOnboardingTips"
         }
 
-        val sourcePath = "$sourceRootPath/Main.kt"
+        val sourcePath = "$sourceRootPath/$generatedFileName"
         addTemplateAsset(sourcePath, templateName, buildMap {
             packageName?.let {
                 put("PACKAGE_NAME", it)
@@ -60,7 +62,7 @@ abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : 
     }
 
     fun prepareOnboardingTips(project: Project) {
-        prepareOnboardingTips(project, "KotlinSampleCode") { charsSequence ->
+        prepareOnboardingTips(project, "KotlinSampleCode", generatedFileName) { charsSequence ->
             charsSequence.indexOf("println(\"i").takeIf { it >= 0 }
         }
     }

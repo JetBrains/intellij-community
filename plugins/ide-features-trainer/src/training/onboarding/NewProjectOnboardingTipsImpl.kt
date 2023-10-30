@@ -127,6 +127,7 @@ private class InstallOnboardingTipsEditorListener : EditorFactoryListener {
     val info = onboardingTipsInstallationInfoKey.get(project)
 
     if (info != null) {
+      if (editor.virtualFile?.name != info.fileName) return
       project.putUserData(onboardingTipsInstallationInfoKey, null)
       installTipsInFirstEditor(editor, project, info)
     } else {

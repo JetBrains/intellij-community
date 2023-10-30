@@ -17,13 +17,13 @@ abstract class AssetsOnboardingTipsProjectWizardStep(parent: NewProjectWizardSte
 
   protected fun shouldRenderOnboardingTips(): Boolean = Registry.`is`("doc.onboarding.tips.render")
 
-  protected fun prepareOnboardingTips(project: Project, templateWithoutTips: String, breakpointSelector: (CharSequence) -> Int?) {
+  protected fun prepareOnboardingTips(project: Project, templateWithoutTips: String, fileName: String, breakpointSelector: (CharSequence) -> Int?) {
     val templateManager = FileTemplateManager.getDefaultInstance()
     val properties = getTemplateProperties()
     val defaultProperties = templateManager.defaultProperties
     val template = templateManager.getInternalTemplate(templateWithoutTips)
     val simpleSampleText = template.getText(defaultProperties + properties)
-    val onboardingInfo = OnboardingTipsInstallationInfo(simpleSampleText, breakpointSelector)
+    val onboardingInfo = OnboardingTipsInstallationInfo(simpleSampleText, fileName, breakpointSelector)
     for (extension in NewProjectOnboardingTips.EP_NAME.extensions) {
       extension.installTips(project, onboardingInfo)
     }
