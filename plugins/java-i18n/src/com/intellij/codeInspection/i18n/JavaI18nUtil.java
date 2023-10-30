@@ -3,6 +3,8 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.template.macro.MacroUtil;
+import com.intellij.codeInspection.restriction.AnnotationContext;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -19,12 +21,11 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.codeInspection.restriction.AnnotationContext;
-import com.intellij.codeInspection.restriction.StringFlowUtil;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 import org.jetbrains.uast.util.UastExpressionUtils;
@@ -370,10 +371,10 @@ public final class JavaI18nUtil {
 
     UExpression thenExpression = ((UIfExpression)expression).getThenExpression();
     UExpression elseExpression = ((UIfExpression)expression).getElseExpression();
-    if (!(thenExpression instanceof ULiteralExpression) &&
-        !(elseExpression instanceof ULiteralExpression)) return false;
+    if (!(thenExpression instanceof UInjectionHost) &&
+        !(elseExpression instanceof UInjectionHost)) return false;
 
-    boolean nested = !(thenExpression instanceof ULiteralExpression && elseExpression instanceof ULiteralExpression);
+    boolean nested = !(thenExpression instanceof UInjectionHost && elseExpression instanceof UInjectionHost);
 
     String thenStr = getSideText(formatParameters, project, thenExpression, nested);
     String elseStr = getSideText(formatParameters, project, elseExpression, nested);
