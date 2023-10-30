@@ -277,26 +277,26 @@ public final class JavaI18nUtil {
   @NotNull
   private static SortedSet<Integer> getPropertyValueParamsCount(@NotNull final UExpression expression,
                                                                 @Nullable final String resourceBundleName) {
-    final ULiteralExpression literalExpression;
-    if (expression instanceof ULiteralExpression) {
-      literalExpression = (ULiteralExpression)expression;
+    final UInjectionHost injectionHost;
+    if (expression instanceof UInjectionHost) {
+      injectionHost = (UInjectionHost)expression;
     }
     else if (expression instanceof UReferenceExpression) {
       final PsiElement resolved = ((UReferenceExpression)expression).resolve();
       final PsiField field = resolved == null ? null : (PsiField)resolved;
-      literalExpression =
+      injectionHost =
         field != null && field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() instanceof PsiLiteralExpression
-        ? UastContextKt.toUElement(field.getInitializer(), ULiteralExpression.class)
+        ? UastContextKt.toUElement(field.getInitializer(), UInjectionHost.class)
         : null;
     }
     else {
-      literalExpression = null;
+      injectionHost = null;
     }
     final TreeSet<Integer> paramsCount = new TreeSet<>();
-    if (literalExpression == null) {
+    if (injectionHost == null) {
       return paramsCount;
     }
-    for (PsiReference reference : UastLiteralUtils.getInjectedReferences(literalExpression)) {
+    for (PsiReference reference : UastLiteralUtils.getInjectedReferences(injectionHost)) {
       if (reference instanceof PsiPolyVariantReference) {
         for (ResolveResult result : ((PsiPolyVariantReference)reference).multiResolve(false)) {
           if (result.isValidResult() && result.getElement() instanceof IProperty) {
