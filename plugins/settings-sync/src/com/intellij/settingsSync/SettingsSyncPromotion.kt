@@ -14,10 +14,12 @@ import com.intellij.settingsSync.SettingsSyncEventsStatistics.PromotionInSetting
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.treeStructure.SimpleNode
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Point
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
+import kotlin.math.min
 
 class SettingsSyncPromotion : SettingsDialogListener {
   override fun afterApply(settingsEditor: AbstractEditor) {
@@ -59,7 +61,8 @@ class SettingsSyncPromotion : SettingsDialogListener {
       .withPosition(Balloon.Position.atRight)
       .show(settingsTree) { _, _ ->
         val pathBounds = settingsTree.getPathBounds(settingsSyncPath) ?: error("Failed to get bounds for path: $settingsSyncPath")
-        Point(pathBounds.x + pathBounds.width, pathBounds.y + pathBounds.height / 2)
+        val x = pathBounds.x + min(pathBounds.width, JBUI.scale(150))
+        Point(x, pathBounds.y + pathBounds.height / 2)
       }
 
     SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.SHOWN)
