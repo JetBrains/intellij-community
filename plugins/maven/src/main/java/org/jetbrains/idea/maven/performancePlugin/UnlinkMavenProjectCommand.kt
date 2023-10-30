@@ -31,7 +31,7 @@ class UnlinkMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
     }
     val projectsManager = MavenProjectsManager.getInstance(project)
     withContext(Dispatchers.EDT) {
-      projectsManager.unlinkProject(listOf(projectPomFile), project, null, null)
+      projectsManager.removeManagedFiles(listOf(projectPomFile), null, null)
     }
   }
 

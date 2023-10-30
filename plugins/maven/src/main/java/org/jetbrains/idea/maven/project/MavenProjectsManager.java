@@ -36,6 +36,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
@@ -972,10 +973,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return forceUpdateSnapshots;
   }
 
-  public void unlinkProject(List<VirtualFile> selectedFiles,
-                            Project project,
-                            @Nullable Consumer<MavenProject> removeNotification,
-                            @Nullable Predicate<List<String>> removeConfirmation) {
+  @ApiStatus.Internal
+  @RequiresEdt
+  public void removeManagedFiles(List<VirtualFile> selectedFiles,
+                                 @Nullable Consumer<MavenProject> removeNotification,
+                                 @Nullable Predicate<List<String>> removeConfirmation) {
     List<VirtualFile> removableFiles = new ArrayList<>();
     List<String> filesToUnIgnore = new ArrayList<>();
 
@@ -1004,7 +1006,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     if (removeConfirmation != null && !removeConfirmation.test(ContainerUtil.map(modulesToRemove, m -> m.getName()))) {
       return;
     }
-    removeModules(ModuleManager.getInstance(project), modulesToRemove);
+    removeModules(ModuleManager.getInstance(getProject()), modulesToRemove);
     removeManagedFiles(removableFiles);
     removeIgnoredFilesPaths(filesToUnIgnore);
   }

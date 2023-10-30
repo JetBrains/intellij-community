@@ -80,7 +80,7 @@ public class RemoveManagedFilesAction extends MavenAction {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
 
     List<VirtualFile> selectedFiles = MavenActionUtil.getMavenProjectsFiles(context);
-    projectsManager.unlinkProject(selectedFiles, project, (mavenProject) -> {
+    projectsManager.removeManagedFiles(selectedFiles, (mavenProject) -> {
       assert mavenProject != null;
 
       MavenProject aggregator = projectsManager.findAggregator(mavenProject);
