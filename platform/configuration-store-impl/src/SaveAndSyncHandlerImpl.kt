@@ -57,7 +57,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   private val refreshSession = AtomicReference<RefreshSession?>()
   private var bgRefreshJob: Job? = null
-  private val bgRefreshSession = AtomicReference<RefreshSession?>()
+  @Volatile private var bgRefreshSession: RefreshSession? = null
 
   private val saveAppAndProjectsSettingsTask = SaveTask()
   private val saveQueue = ArrayDeque<SaveTask>()
@@ -119,8 +119,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     }
 
     coroutineScope.awaitCancellationAndInvoke {
-      bgRefreshJob?.cancel()
-      bgRefreshSession.get()?.cancel()
+      bgRefreshSession?.cancel()
       refreshSession.get()?.cancel()
     }
   }
@@ -325,9 +324,9 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         delay(interval)
         if (roots.any { it is NewVirtualFile && it.isDirty }) {
           val session = queue.createBackgroundRefreshSession(roots)
-          bgRefreshSession.set(session)
+          bgRefreshSession = session
           session.launch()
-          bgRefreshSession.set(null)
+          bgRefreshSession = null
           sessions.incrementAndGet()
           events.addAndGet(session.metric("events") as Int)
         }
