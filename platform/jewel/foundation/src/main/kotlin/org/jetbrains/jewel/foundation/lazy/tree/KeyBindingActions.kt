@@ -6,6 +6,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.isCtrlPressed
+import androidx.compose.ui.input.pointer.isMetaPressed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -53,7 +54,7 @@ interface PointerEventActions {
                     onExtendSelectionToKey(key, allKeys, selectableLazyListState, selectionMode)
                 }
 
-                pointerEvent.keyboardModifiers.isCtrlPressed -> {
+                pointerEvent.keyboardModifiers.isCtrlPressed || pointerEvent.keyboardModifiers.isMetaPressed -> {
                     Log.i("ctrl pressed on click")
                     toggleKeySelection(key, allKeys, selectableLazyListState)
                 }
