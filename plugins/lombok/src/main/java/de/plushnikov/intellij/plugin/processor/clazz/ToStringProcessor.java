@@ -31,6 +31,7 @@ import static de.plushnikov.intellij.plugin.LombokClassNames.TO_STRING_INCLUDE;
  */
 public final class ToStringProcessor extends AbstractClassProcessor {
   public static final String TO_STRING_METHOD_NAME = "toString";
+  private static final List<String> METHOD_LIST = List.of(TO_STRING_METHOD_NAME);
 
   private static final String INCLUDE_ANNOTATION_METHOD = "name";
   private static final String INCLUDE_ANNOTATION_RANK = "rank";
@@ -42,7 +43,7 @@ public final class ToStringProcessor extends AbstractClassProcessor {
 
   @Override
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    return List.of(TO_STRING_METHOD_NAME);
+    return METHOD_LIST;
   }
 
   @Override

@@ -39,6 +39,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String EQUALS_METHOD_NAME = "equals";
   private static final String HASH_CODE_METHOD_NAME = "hashCode";
   private static final String CAN_EQUAL_METHOD_NAME = "canEqual";
+  private static final List<String> ALL_NAMES = List.of(EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME, CAN_EQUAL_METHOD_NAME);
 
   private static final String INCLUDE_ANNOTATION_METHOD = "replaces";
 
@@ -48,7 +49,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   @Override
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    return List.of(EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME, CAN_EQUAL_METHOD_NAME);
+    return ALL_NAMES;
   }
 
   @Override

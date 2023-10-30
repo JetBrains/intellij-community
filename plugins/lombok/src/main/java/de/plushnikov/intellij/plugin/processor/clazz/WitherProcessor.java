@@ -29,6 +29,20 @@ public final class WitherProcessor extends AbstractClassProcessor {
   }
 
   @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    if (!nameHint.startsWith("with")) return false;
+    final Collection<? extends PsiVariable> possibleWithElements = getPossibleWithElements(psiClass);
+    if (possibleWithElements.isEmpty()) return false;
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiClass).withFluent(false);
+    for (PsiVariable possibleWithElement : possibleWithElements) {
+      if (nameHint.equals(LombokUtils.getWitherName(possibleWithElement, accessorsInfo))) return true;
+    }
+    return false;
+  }
+
+  @Override
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     Collection<String> result = new ArrayList<>();
 
