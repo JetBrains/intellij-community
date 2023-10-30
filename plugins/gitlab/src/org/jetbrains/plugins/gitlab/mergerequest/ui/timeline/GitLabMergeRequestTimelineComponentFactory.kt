@@ -102,10 +102,6 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground
       }
-    }.also {
-      UiNotifyConnector.doWhenFirstShown(it) {
-        timelineVm.requestLoad()
-      }
     }
   }
 
