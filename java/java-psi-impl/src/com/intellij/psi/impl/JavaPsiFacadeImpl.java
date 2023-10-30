@@ -158,11 +158,11 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     List<PsiElementFinder> finders = filteredFinders();
     Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
-    List<PsiClass> result = null;
+    Set<PsiClass> result = null;
     for (PsiElementFinder finder : finders) {
       PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);
       if (finderClasses.length != 0) {
-        if (result == null) result = new ArrayList<>(finderClasses.length);
+        if (result == null) result = new LinkedHashSet<>(finderClasses.length);
         filterClassesAndAppend(finder, classesFilter, finderClasses, result);
       }
     }
@@ -269,11 +269,11 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     List<PsiElementFinder> finders = filteredFinders();
     Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
-    List<PsiClass> result = null;
+    Set<PsiClass> result = null;
     for (PsiElementFinder finder : finders) {
       PsiClass[] classes = finder.getClasses(psiPackage, scope);
       if (classes.length == 0) continue;
-      if (result == null) result = new ArrayList<>(classes.length);
+      if (result == null) result = new LinkedHashSet<>(classes.length);
       filterClassesAndAppend(finder, classesFilter, classes, result);
     }
 
@@ -283,7 +283,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private static void filterClassesAndAppend(PsiElementFinder finder,
                                              @Nullable Predicate<? super PsiClass> classesFilter,
                                              PsiClass @NotNull [] classes,
-                                             @NotNull List<? super PsiClass> result) {
+                                             @NotNull Collection<? super PsiClass> result) {
     for (PsiClass psiClass : classes) {
       if (psiClass == null) {
         LOG.error("Finder " + finder + " returned null PsiClass");
