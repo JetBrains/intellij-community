@@ -2,7 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -14,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.previousStatement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.quickFixes.RemoveRedundantUnitFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -101,5 +103,15 @@ private fun KtExpression.canBeUsedAsValue(): Boolean {
             entries.lastOrNull()?.elseKeyword != null || getMissingCases().isEmpty()
         else ->
             true
+    }
+}
+
+private class RemoveRedundantUnitFix : LocalQuickFix {
+    override fun getName() = KotlinBundle.message("remove.redundant.unit.fix.text")
+
+    override fun getFamilyName() = name
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        (descriptor.psiElement as? KtReferenceExpression)?.delete()
     }
 }
