@@ -7,6 +7,8 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.InvokedEvents
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
@@ -83,6 +85,18 @@ internal class InlineCompletionInvocationTracker(
       error("Already finished")
     }
     finished = true
+
+    buildList {
+      val descriptor = InlineCompletionProviderSpecificUsageData.InvocationDescriptor(request.editor, request.file)
+      InlineCompletionProviderSpecificUsageData.EP_NAME.forEachExtensionSafe {
+        if (getPluginInfo(it.javaClass).isSafeToReport()) {
+          addAll(it.getAdditionalInvocationUsageData(descriptor))
+        }
+      }
+    }.takeIf { it.isNotEmpty() }?.let {
+      data.add(InvokedEvents.ADDITIONAL.with(ObjectEventData(it)))
+    }
+
     InlineCompletionUsageTracker.INVOKED_EVENT.log(listOf(
       InvokedEvents.REQUEST_ID.with(requestId),
       *data.toTypedArray(),
