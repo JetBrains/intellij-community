@@ -1,7 +1,7 @@
 class Test {
   String textBlock = """
-                        <selection>Info: \
+<selection>                        Info: \
                         textInSameLin<caret>eButEscapedInSourCode \
-                        textInSameLineButEscapedInSourCode2 \</selection>
-                        """;
+                        textInSameLineButEscapedInSourCode2 \
+</selection>                        """;
 }

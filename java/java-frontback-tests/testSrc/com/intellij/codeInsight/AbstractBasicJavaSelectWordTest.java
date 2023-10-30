@@ -198,6 +198,12 @@ public abstract class AbstractBasicJavaSelectWordTest extends SelectWordTestBase
 
   public void testTextBlockEscapedLineEndings() { doTest("java"); }
 
+  public void testTextBlockLeadingWhitespace() { doTest("java"); }
+
+  public void testUnclosedTextBlock() { doTest("java"); }
+
+  public void testUnclosedLiteral() { doTest("java"); }
+
   public void testLineComments() { doTest("java"); }
 
   public void testLineCommentsAtStart() { doTest("java"); }

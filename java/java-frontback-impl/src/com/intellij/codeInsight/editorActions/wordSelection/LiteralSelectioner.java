@@ -7,7 +7,6 @@ import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.BasicLiteralUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
@@ -43,20 +42,12 @@ public class LiteralSelectioner extends AbstractBasicBackBasicSelectioner {
     if (textBlock) {
       int contentStart = StringUtil.indexOf(editorText, '\n', range.getStartOffset());
       if (contentStart == -1) return result;
-      contentStart += 1;
-      String[] lines = BasicLiteralUtil.getTextBlockLines(node.getText());
-      if (lines == null) return result;
-      int indent = BasicLiteralUtil.getTextBlockIndent(lines);
-      if (indent == -1) return result;
-      for (int i = 0; i < indent; i++) {
-        if (editorText.charAt(contentStart + i) == '\n') return result;
-      }
-      int start = contentStart + indent;
-      int end = range.getEndOffset() - 4;
+      int start = contentStart + 1;
+      int end = range.getEndOffset();
+      end -= StringUtil.endsWith(editorText, start, end, "\"\"\"") ? 4 : 1;
       for (; end >= start; end--) {
         char c = editorText.charAt(end);
-        if (c == '\n') break;
-        if (!Character.isWhitespace(c)) {
+        if (c == '\n' || !Character.isWhitespace(c)) {
           end += 1;
           break;
         }
@@ -64,7 +55,10 @@ public class LiteralSelectioner extends AbstractBasicBackBasicSelectioner {
       if (start < end) result.add(new TextRange(start, end));
     }
     else {
-      result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
+      int endOffset = editorText.charAt(range.getEndOffset() - 1) == '"'
+                      ? range.getEndOffset() - 1
+                      : range.getEndOffset();
+      result.add(new TextRange(range.getStartOffset() + 1, endOffset));
     }
 
     return result;
