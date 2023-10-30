@@ -280,4 +280,7 @@ public final class EditorGutterLayout {
     return getOffset(LINE_NUMBERS_AREA);
   }
   public int getVerticalLineX() {return getOffset(VERTICAL_LINE_AREA);}
+  public static int getInitialGutterWidth() {
+    return EditorGutterComponentImpl.START_ICON_AREA_WIDTH.get();
+  }
 }
