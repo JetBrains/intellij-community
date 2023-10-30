@@ -108,10 +108,9 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
         else
           concatenationOperands
       }
-
-      uContext is ULiteralExpression && !isConcatenation(uContext.uastParent) -> {
-        val host = uContext.sourceInjectionHost
-        if (host == null || !host.isValidHost) emptySequence() else sequenceOf(uContext)
+      uContext is UInjectionHost && !isConcatenation(uContext.uastParent) -> {
+        val host = uContext.psiLanguageInjectionHost
+        if (!host.isValidHost) emptySequence() else sequenceOf(uContext)
       }
       else -> null
     }

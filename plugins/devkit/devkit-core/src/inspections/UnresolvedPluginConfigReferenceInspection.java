@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +12,8 @@ import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.references.PluginConfigReference;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.ULiteralExpression;
-import org.jetbrains.uast.UastLiteralUtils;
+import org.jetbrains.uast.UPolyadicExpression;
+import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 /**
@@ -23,7 +23,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 public final class UnresolvedPluginConfigReferenceInspection extends LocalInspectionTool {
 
   @SuppressWarnings("unchecked")
-  private final Class<? extends UElement>[] HINTS = new Class[]{ULiteralExpression.class};
+  private final Class<? extends UElement>[] HINTS = new Class[]{UInjectionHost.class};
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -32,20 +32,24 @@ public final class UnresolvedPluginConfigReferenceInspection extends LocalInspec
     }
 
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
+      @Override
+      public boolean visitPolyadicExpression(@NotNull UPolyadicExpression node) {
+        if (!(node instanceof UInjectionHost uInjectionHost)) return true;
+        processInjectionHost(uInjectionHost);
+        return super.visitPolyadicExpression(node);
+      }
 
       @Override
       public boolean visitLiteralExpression(@NotNull ULiteralExpression uLiteralExpression) {
-        visit(uLiteralExpression);
-
+        if (!(uLiteralExpression instanceof UInjectionHost uInjectionHost)) return true;
+        processInjectionHost(uInjectionHost);
         return super.visitExpression(uLiteralExpression);
       }
 
-      private void visit(ULiteralExpression uLiteralExpression) {
-        PsiElement element = uLiteralExpression.getSourcePsi();
-        PsiLanguageInjectionHost expression = UastLiteralUtils.getSourceInjectionHost(uLiteralExpression);
-        if (element == null || expression == null) return;
-
-        for (PsiReference reference : expression.getReferences()) {
+      private void processInjectionHost(@NotNull UInjectionHost node) {
+        PsiElement element = node.getSourcePsi();
+        if (element == null) return;
+        for (PsiReference reference : element.getReferences()) {
           if (reference instanceof PluginConfigReference &&
               !reference.isSoft() &&
               reference.resolve() == null) {
