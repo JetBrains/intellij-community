@@ -33,19 +33,12 @@ class GitLabDiscussionReplyViewModelImpl(
   override val newNoteVm: Flow<NewGitLabNoteViewModel?> = isWriting.mapScoped {
     if (!it) return@mapScoped null
     val cs = this
-    GitLabNoteEditingViewModel
-      .forNewNote(cs, project, currentUser,
-                  { discussion.addNote(it) },
-                  if (discussion.canAddDraftNotes) {
-                    { discussion.addDraftNote(it) }
-                  }
-                  else null)
-      .apply {
-        onDoneIn(cs) {
-          text.value = ""
-        }
-        requestFocus()
+    GitLabNoteEditingViewModel.forReplyNote(cs, project, discussion, currentUser).apply {
+      onDoneIn(cs) {
+        text.value = ""
       }
+      requestFocus()
+    }
   }.modelFlow(cs, thisLogger())
 
   override fun startWriting() {

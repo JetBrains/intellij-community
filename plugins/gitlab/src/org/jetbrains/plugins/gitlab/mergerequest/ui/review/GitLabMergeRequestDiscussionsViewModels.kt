@@ -83,15 +83,11 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   override fun requestNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, focus: Boolean) {
     _newDiscussions.updateAndGet { currentNewDiscussions ->
       if (!currentNewDiscussions.containsKey(position) && mergeRequest.canAddNotes) {
-        val vm = GitLabNoteEditingViewModel
-          .forNewNote(cs, project, currentUser,
-                      { createDiscussion(position, it) },
-                      if (mergeRequest.canAddDraftNotes) {{ createDraftDiscussion(position, it) }} else null)
-          .apply {
-            onDoneIn(cs) {
-              cancelNewDiscussion(position)
-            }
+        val vm = GitLabNoteEditingViewModel.forNewDiffNote(cs, project, mergeRequest, currentUser, position.position).apply {
+          onDoneIn(cs) {
+            cancelNewDiscussion(position)
           }
+        }
         currentNewDiscussions + (position to vm)
       }
       else {
@@ -102,20 +98,6 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
         get(position)?.requestFocus()
       }
     }
-  }
-
-  private suspend fun createDiscussion(
-    position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition,
-    body: String
-  ) {
-    mergeRequest.addNote(position.position, body)
-  }
-
-  private suspend fun createDraftDiscussion(
-    position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition,
-    body: String
-  ) {
-    mergeRequest.addDraftNote(position.position, body)
   }
 
   override fun cancelNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition) {
