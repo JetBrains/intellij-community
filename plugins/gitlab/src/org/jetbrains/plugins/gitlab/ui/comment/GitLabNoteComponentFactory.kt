@@ -54,12 +54,13 @@ internal object GitLabNoteComponentFactory {
     return CodeReviewChatItemUIUtil.build(componentType,
                                           { avatarIconsProvider.getIcon(vm.author, it) },
                                           contentPanel) {
-      withHeader(createTitle(cs, vm), actionsPanel)
+      withHeader(createTitle(cs, vm, project, place), actionsPanel)
     }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun createTitle(cs: CoroutineScope, vm: GitLabNoteViewModel): JComponent {
+  fun createTitle(cs: CoroutineScope, vm: GitLabNoteViewModel,
+                  project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
     return HorizontalListPanel(CodeReviewCommentUIUtil.Title.HORIZONTAL_GAP).apply {
       add(GitLabMergeRequestTimelineUIUtil.createTitleTextPane(vm.author, vm.createdAt))
 
@@ -84,7 +85,10 @@ internal object GitLabNoteComponentFactory {
 
       val actionsVm = vm.actionsVm
       if (vm.isDraft && actionsVm != null) {
-        add(CodeReviewCommentUIUtil.createPostNowButton { _ -> actionsVm.submitDraft() }.apply {
+        add(CodeReviewCommentUIUtil.createPostNowButton { _ ->
+          actionsVm.submitDraft()
+          GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.POST_DRAFT_NOTE, place)
+        }.apply {
           isVisible = actionsVm.canSubmit()
           if (actionsVm.canSubmit()) {
             bindDisabledIn(cs, actionsVm.busy)

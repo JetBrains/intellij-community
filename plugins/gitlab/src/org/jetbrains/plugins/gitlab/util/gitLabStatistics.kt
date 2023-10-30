@@ -177,6 +177,7 @@ internal object GitLabStatistics {
     CHANGE_DISCUSSION_RESOLVE,
     UPDATE_NOTE,
     DELETE_NOTE,
+    POST_DRAFT_NOTE,
     SUBMIT_DRAFT_NOTES,
     POST_REVIEW
   }
