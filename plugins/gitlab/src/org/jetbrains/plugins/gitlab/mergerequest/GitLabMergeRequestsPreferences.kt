@@ -26,6 +26,7 @@ class GitLabMergeRequestsPreferences(private val project: Project)
     val showEventsInTimeline: Boolean = true,
     val highlightDiffLinesInEditor: Boolean = true,
     val usedAsDraftSubmitActionLast: Boolean = true,
+    val editorReviewEnabled: Boolean = true
   )
 
   var selectedRepoAndAccount: Pair<GitLabProjectMapping, GitLabAccount>?
@@ -67,6 +68,14 @@ class GitLabMergeRequestsPreferences(private val project: Project)
     set(value) {
       updateStateAndEmit {
         it.copy(usedAsDraftSubmitActionLast = value)
+      }
+    }
+
+  var editorReviewEnabled: Boolean
+    get() = state.editorReviewEnabled
+    set(value) {
+      updateStateAndEmit {
+        it.copy(editorReviewEnabled = value)
       }
     }
 
