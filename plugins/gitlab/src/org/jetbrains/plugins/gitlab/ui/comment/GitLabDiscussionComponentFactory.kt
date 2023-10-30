@@ -26,15 +26,17 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.Action
 import javax.swing.JComponent
 
-object GitLabDiscussionComponentFactory {
+internal object GitLabDiscussionComponentFactory {
 
   fun create(project: Project,
              cs: CoroutineScope,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-             vm: GitLabMergeRequestDiscussionViewModel): JComponent {
+             vm: GitLabMergeRequestDiscussionViewModel,
+             place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
     val notesPanel = ComponentListPanelFactory.createVertical(cs, vm.notes, NoteItem::id) { itemCs, item ->
       when (item) {
         is NoteItem.Expander -> TimelineThreadCommentsPanel.createUnfoldComponent(item.collapsedCount) {
@@ -45,7 +47,7 @@ object GitLabDiscussionComponentFactory {
                                       TimelineThreadCommentsPanel.UNFOLD_BUTTON_VERTICAL_GAP,
                                       0)
         }
-        is NoteItem.Note -> GitLabNoteComponentFactory.create(ComponentType.COMPACT, project, itemCs, avatarIconsProvider, item.vm)
+        is NoteItem.Note -> GitLabNoteComponentFactory.create(ComponentType.COMPACT, project, itemCs, avatarIconsProvider, item.vm, place)
       }
     }
 
@@ -60,9 +62,8 @@ object GitLabDiscussionComponentFactory {
           coroutineScope {
             bindChildIn(this, replyVm.newNoteVm) { newNoteVm ->
               newNoteVm?.let {
-                createReplyField(ComponentType.COMPACT, project, this, newNoteVm, vm.resolveVm, avatarIconsProvider, swingAction("") {
-                  replyVm.stopWriting()
-                })
+                createReplyField(ComponentType.COMPACT, project, this, newNoteVm, vm.resolveVm, avatarIconsProvider, place,
+                                 swingAction("") { replyVm.stopWriting() })
               } ?: createReplyActionsPanel(replyVm, vm.resolveVm).apply {
                 border = JBUI.Borders.empty(8, ComponentType.COMPACT.fullLeftShift)
               }
@@ -79,6 +80,7 @@ object GitLabDiscussionComponentFactory {
                        vm: NewGitLabNoteViewModel,
                        resolveVm: GitLabDiscussionResolveViewModel?,
                        iconsProvider: IconsProvider<GitLabUserDTO>,
+                       place: GitLabStatistics.MergeRequestNoteActionPlace,
                        cancelAction: Action? = null): JComponent {
     val resolveAction = resolveVm?.takeIf { it.canResolve }?.let {
       swingAction(CollaborationToolsBundle.message("review.comments.resolve.action")) {
@@ -89,8 +91,10 @@ object GitLabDiscussionComponentFactory {
       bindTextIn(cs, resolveVm.actionTextFlow)
     }
 
-    val addAction = vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comment.submit"))
-    val addAsDraftAction = vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"))
+    val addAction = vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comment.submit"),
+                                      project, NewGitLabNoteType.REPLY, place)
+    val addAsDraftAction = vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"),
+                                                    project, NewGitLabNoteType.REPLY, place)
 
     val actions = CommentInputActionsComponentFactory.Config(
       primaryAction = vm.primarySubmitActionIn(cs, addAction, addAsDraftAction),

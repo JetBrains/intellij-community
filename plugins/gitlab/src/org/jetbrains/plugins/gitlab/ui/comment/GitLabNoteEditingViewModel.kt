@@ -24,6 +24,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.AbstractAction
 
 interface GitLabNoteEditingViewModel {
@@ -218,30 +219,49 @@ fun GitLabNoteEditingViewModel.onDoneIn(cs: CoroutineScope, callback: suspend ()
   }
 }
 
-fun ExistingGitLabNoteEditingViewModel.saveActionIn(cs: CoroutineScope, actionName: @Nls String): AbstractAction {
+internal fun ExistingGitLabNoteEditingViewModel.saveActionIn(cs: CoroutineScope, actionName: @Nls String,
+                                                             project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace)
+  : AbstractAction {
   val enabledFlow = text.combine(state) { text, state -> text.isNotBlank() && state != GitLabNoteEditingViewModel.SubmissionState.Loading }
   return swingAction(actionName) {
     save()
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE, place)
   }.apply { bindEnabledIn(cs, enabledFlow) }
 }
 
-fun NewGitLabNoteViewModel.submitActionIn(cs: CoroutineScope, actionName: @Nls String): AbstractAction {
+internal enum class NewGitLabNoteType {
+  STANDALONE, DIFF, REPLY
+}
+
+private fun NewGitLabNoteType.toStatAction(isDraft: Boolean): GitLabStatistics.MergeRequestAction = when (this) {
+  NewGitLabNoteType.STANDALONE -> if (isDraft) GitLabStatistics.MergeRequestAction.ADD_NOTE else GitLabStatistics.MergeRequestAction.ADD_DRAFT_NOTE
+  NewGitLabNoteType.DIFF -> if (isDraft) GitLabStatistics.MergeRequestAction.ADD_DIFF_NOTE else GitLabStatistics.MergeRequestAction.ADD_DRAFT_DIFF_NOTE
+  NewGitLabNoteType.REPLY -> if (isDraft) GitLabStatistics.MergeRequestAction.ADD_DISCUSSION_NOTE else GitLabStatistics.MergeRequestAction.ADD_DRAFT_DISCUSSION_NOTE
+}
+
+internal fun NewGitLabNoteViewModel.submitActionIn(cs: CoroutineScope, actionName: @Nls String,
+                                                   project: Project, type: NewGitLabNoteType,
+                                                   place: GitLabStatistics.MergeRequestNoteActionPlace): AbstractAction {
   val enabledFlow = text.combine(state) { text, state -> text.isNotBlank() && state != GitLabNoteEditingViewModel.SubmissionState.Loading }
   return swingAction(actionName) {
     submit()
+    GitLabStatistics.logMrActionExecuted(project, type.toStatAction(false), place)
   }.apply { bindEnabledIn(cs, enabledFlow) }
 }
 
-fun NewGitLabNoteViewModel.submitAsDraftActionIn(cs: CoroutineScope, actionName: @Nls String): AbstractAction? {
+internal fun NewGitLabNoteViewModel.submitAsDraftActionIn(cs: CoroutineScope, actionName: @Nls String,
+                                                          project: Project, type: NewGitLabNoteType,
+                                                          place: GitLabStatistics.MergeRequestNoteActionPlace): AbstractAction? {
   if (!canSubmitAsDraft) return null
 
   val enabledFlow = text.combine(state) { text, state -> text.isNotBlank() && state != GitLabNoteEditingViewModel.SubmissionState.Loading }
   return swingAction(actionName) {
     submitAsDraft()
+    GitLabStatistics.logMrActionExecuted(project, type.toStatAction(true), place)
   }.apply { bindEnabledIn(cs, enabledFlow) }
 }
 
-fun NewGitLabNoteViewModel.primarySubmitActionIn(
+internal fun NewGitLabNoteViewModel.primarySubmitActionIn(
   cs: CoroutineScope,
   submit: AbstractAction,
   submitAsDraft: AbstractAction?
@@ -251,7 +271,7 @@ fun NewGitLabNoteViewModel.primarySubmitActionIn(
     else submit
   }
 
-fun NewGitLabNoteViewModel.secondarySubmitActionIn(
+internal fun NewGitLabNoteViewModel.secondarySubmitActionIn(
   cs: CoroutineScope,
   submit: AbstractAction,
   submitAsDraft: AbstractAction?

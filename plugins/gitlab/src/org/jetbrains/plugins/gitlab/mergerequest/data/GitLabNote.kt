@@ -101,7 +101,6 @@ class MutableGitLabMergeRequestNote(
       }
       data.update { it.copy(body = newText) }
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE)
   }
 
   override suspend fun delete() {
