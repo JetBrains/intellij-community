@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.search.GlobalSearchScope
 import org.apache.commons.io.input.UnixLineEndingInputStream
 import java.io.FileNotFoundException
 import java.nio.file.Paths
@@ -25,16 +24,15 @@ object FilesHelper {
     val language2files = mutableMapOf<String, MutableSet<VirtualFile>>()
     val index = ProjectRootManager.getInstance(project).fileIndex
     for (file in evaluationRoots) {
-      val filter = if (file.extension == "java") GlobalSearchScope.projectScope(project) else GlobalSearchScope.everythingScope(project)
+      //val filter = if (file.extension == "java") GlobalSearchScope.projectScope(project) else GlobalSearchScope.everythingScope(project)
+      val filter = null
       VfsUtilCore.iterateChildrenRecursively(file, filter, object : ContentIterator {
         override fun processFile(fileOrDir: VirtualFile): Boolean {
           val extension = fileOrDir.extension
           if (fileOrDir.isDirectory || extension == null) return true
 
           val language = Language.resolveByExtension(extension)
-          if (shouldEvaluateOnFile(language, fileOrDir)) {
-            language2files.computeIfAbsent(language.displayName) { mutableSetOf() }.add(fileOrDir)
-          }
+          language2files.computeIfAbsent(language.displayName) { mutableSetOf() }.add(fileOrDir)
           return true
         }
 

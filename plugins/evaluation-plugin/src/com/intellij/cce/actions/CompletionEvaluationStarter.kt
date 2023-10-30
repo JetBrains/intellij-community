@@ -19,20 +19,26 @@ import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationStarter
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.util.progress.sleepCancellable
+import com.intellij.openapi.util.Disposer
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.system.exitProcess
 
 internal class CompletionEvaluationStarter : ApplicationStarter {
+  override val requiredModality: Int
+    get() = ApplicationStarter.NOT_IN_EDT
+
   override val commandName: String
     get() = "ml-evaluate"
 
@@ -57,15 +63,78 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       fatalError("Error for loading config: $configPath, $e. StackTrace: ${stackTraceToString(e)}")
     }
 
-    protected fun loadProject(projectPath: String): Project = try {
-      println("Open and load project $projectPath. Operation may take a few minutes.")
-      val project = OpenProjectMethodProvider.find()?.openProjectInHeadlessMode(projectPath) ?: openProjectHeadless(projectPath)
-      waitForInvokeLaterActivities()
-      println("Project loaded!")
-      project
+    protected fun loadAndApply(projectPath: String, action: (Project) -> Unit): Unit {
+      val parentDisposable = Disposer.newDisposable()
+      val project: Project?
+
+      try {
+        println("Open and load project $projectPath. Operation may take a few minutes.")
+        project = runBlockingCancellable {
+          ProjectApplicationUtils.openProject(
+            File(projectPath).toPath(),
+            parentDisposable,
+          )
+        }
+        JvmProjectResolver().resolveProject(project)
+        println("Project loaded!")
+
+        try {
+          action(project)
+        }
+        catch (exception: Exception) {
+          throw RuntimeException("Failed to run actions on the project: $exception")
+        }
+      }
+      catch (exception: Exception) {
+        fatalError("Project could not be loaded or processed: $exception")
+      }
+      finally {
+        // Closes the project even if it is not fully opened, but started to
+        Disposer.dispose(parentDisposable)
+      }
     }
-    catch (e: Throwable) {
-      fatalError("Project could not be loaded: $e")
+
+    private fun getIdeaLogFile(): File {
+      val logPath = PathManager.getLogPath()
+      return File(Path.of(logPath).resolve("idea.log").toUri())
+    }
+
+    private fun File.hasEdtErrorMessage(startTime: LocalDateTime, endTime: LocalDateTime): Boolean {
+      // Consistent with com.intellij.openapi.application.impl.ApplicationImpl
+      val possibleErrors = listOf(
+        "Must not execute inside read action",
+        "Read access is allowed from inside read-action or Event Dispatch Thread (EDT) only (see Application.runReadAction())",
+        "Read access is allowed from inside read-action (or EDT) only (see com.intellij.openapi.application.Application.runReadAction())",
+        "Write access is allowed inside write-action only (see Application.runWriteAction())",
+        "Access is allowed from Event Dispatch Thread (EDT) only",
+        "Access from Event Dispatch Thread (EDT) is not allowed",
+        "Read access is allowed from inside read-action (or EDT) only",
+        "Read access is not allowed",
+        "EventQueue.isDispatchThread()=false"
+      ).map { it.lowercase() }
+
+      return bufferedReader().use { br ->
+        br.lineSequence()
+          .map { Pair(it.getDataFromIdeaLogRow(), it) }
+          .filter { (d, _) ->
+            d?.let { d.isAfter(startTime) && d.isBefore(endTime) } ?: false
+          }
+          .any { (_, l) ->
+            if (possibleErrors.any { it in l.lowercase() }) {
+              return@use true
+            }
+            false
+          }
+      }
+    }
+
+    private fun String.getDataFromIdeaLogRow() = try {
+      val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss,SSS")
+      val dateTime = LocalDateTime.parse(substringBefore("[").trim(), formatter)
+      dateTime
+    }
+    catch (e: DateTimeParseException) {
+      null
     }
 
     private fun fatalError(msg: String): Nothing {
@@ -83,7 +152,6 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         println(".idea directory is missing. Project will be imported")
         val importedProject = ProjectUtil.openOrImport(project.toPath(), null, false)
         assert(importedProject != null) { ".idea directory is missing and project can't be imported" }
-        waitForInvokeLaterActivities()
         return importedProject!!
       }
       val existing = ProjectManager.getInstance().openProjects.firstOrNull { proj ->
@@ -92,13 +160,6 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       if (existing != null) return existing
 
       return ProjectManager.getInstance().loadAndOpenProject(projectPath)!!
-    }
-
-    private fun waitForInvokeLaterActivities() {
-      println("Waiting all invoked later activities...")
-      repeat(10) {
-        ApplicationManager.getApplication().invokeAndWait({ sleepCancellable(1000) }, ModalityState.any())
-      }
     }
   }
 
@@ -113,13 +174,14 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     override fun run() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the $featureName")
       val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
-      val project = loadProject(config.projectPath)
-      val workspace = EvaluationWorkspace.create(config)
-      val stepFactory = BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true))
-      EvaluationProcess.build({
-                                customize()
-                                shouldReorderElements = config.reorder.useReordering
-                              }, stepFactory).startAsync(workspace)
+      loadAndApply(config.projectPath) { project ->
+        val workspace = EvaluationWorkspace.create(config)
+        val stepFactory = BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true))
+        EvaluationProcess.build({
+                                  customize()
+                                  shouldReorderElements = config.reorder.useReordering
+                                }, stepFactory).startAsync(workspace).get()
+      }
     }
 
     protected abstract fun EvaluationProcess.Builder.customize()
@@ -152,14 +214,15 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
       val workspace = EvaluationWorkspace.open(workspacePath)
       val config = workspace.readConfig(feature.getStrategySerializer())
-      val project = loadProject(config.projectPath)
-      val process = EvaluationProcess.build({
-                                              shouldGenerateActions = false
-                                              shouldInterpretActions = interpretActions
-                                              shouldReorderElements = reorderElements
-                                              shouldGenerateReports = generateReport
-                                            }, BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true)))
-      process.startAsync(workspace)
+      loadAndApply(config.projectPath) { project ->
+        val process = EvaluationProcess.build({
+                                                shouldGenerateActions = false
+                                                shouldInterpretActions = interpretActions
+                                                shouldReorderElements = reorderElements
+                                                shouldGenerateReports = generateReport
+                                              }, BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true)))
+        process.startAsync(workspace)
+      }
     }
   }
 
@@ -175,12 +238,13 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         "COMPARING",
       )
       val outputWorkspace = EvaluationWorkspace.create(config)
-      val project = loadProject(config.projectPath)
-      val process = EvaluationProcess.build({
-                                              shouldGenerateReports = true
-                                            },
-                                            BackgroundStepFactory(feature, config, project, workspacesToCompare, EvaluationRootInfo(true)))
-      process.startAsync(outputWorkspace)
+      loadAndApply(config.projectPath) { project ->
+        val process = EvaluationProcess.build({
+                                                shouldGenerateReports = true
+                                              },
+                                              BackgroundStepFactory(feature, config, project, workspacesToCompare, EvaluationRootInfo(true)))
+        process.startAsync(outputWorkspace)
+      }
     }
   }
 
@@ -216,12 +280,13 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         }
       }
       outputWorkspace.saveMetadata()
-      val project = loadProject(config.projectPath)
-      val process = EvaluationProcess.build({
-                                              shouldGenerateReports = true
-                                            },
-                                            BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true)))
-      process.startAsync(outputWorkspace)
+      loadAndApply(config.projectPath) { project ->
+        val process = EvaluationProcess.build({
+                                                shouldGenerateReports = true
+                                              },
+                                              BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true)))
+        process.startAsync(outputWorkspace)
+      }
     }
   }
 }
