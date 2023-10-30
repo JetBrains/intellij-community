@@ -2,8 +2,17 @@
 package com.intellij.ide.customize.transferSettings.providers.vscode.mappings
 
 import com.intellij.ide.customize.transferSettings.db.KnownPlugins
+import com.intellij.ide.customize.transferSettings.models.BuiltInFeature
 import com.intellij.ide.customize.transferSettings.models.FeatureInfo
+import com.intellij.ide.customize.transferSettings.models.PluginFeature
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.util.PlatformUtils
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 
 /**
  * Allows to register plugins of third-party products for importing from VSCode.
@@ -28,7 +37,6 @@ open class VSCodePluginMappingBase(private val map: Map<String, FeatureInfo>) : 
 private val commonPluginMap = mapOf(
   // Plugins
   "emilast.logfilehighlighter" to KnownPlugins.Ideolog,
-  "ms-python.python" to KnownPlugins.Python,
   "xinyayang0506.log-analysis" to KnownPlugins.Ideolog,
   "vscodevim.vim" to KnownPlugins.IdeaVim,
   "msveden.teamcity-checker" to KnownPlugins.TeamCity,
@@ -96,7 +104,57 @@ val DotNetFeatures = mapOf(
   "icsharpcode.ilspy-vscode" to KnownPlugins.DotNetDecompiler,
 )
 
-class CommonPluginMapping : VSCodePluginMappingBase(commonPluginMap)
+@Serializable
+private data class FeatureData(
+  val vsCodeId: String,
+  val vsCodeName: String,
+  val ideaId: String?,
+  val ideaName: String,
+  val builtIn: Boolean,
+  val bundled: Boolean,
+  val disabled: Boolean
+)
+
+private val logger = logger<CommonPluginMapping>()
+
+internal class CommonPluginMapping : VSCodePluginMapping {
+
+  private fun getResourceMappings(): List<String> = when {
+    PlatformUtils.isPyCharm() -> listOf("pc.json", "general.json")
+    PlatformUtils.isRubyMine() -> listOf("rm.json", "general.json")
+    else -> listOf("general.json")
+  }
+
+  val allPlugins by lazy {
+    val resourceNames = getResourceMappings()
+    val result = mutableMapOf<String, FeatureInfo>()
+    for (resourceName in resourceNames) {
+      logger.runAndLogException {
+        @OptIn(ExperimentalSerializationApi::class)
+        val features = this.javaClass.classLoader.getResourceAsStream("pluginData/$resourceName").use { file ->
+          Json.decodeFromStream<List<FeatureData>>(file)
+        }
+        for (data in features) {
+          val isBundled = data.bundled || data.builtIn
+          val feature =
+            if (isBundled) BuiltInFeature(null, data.ideaName)
+            else {
+              if (data.ideaId == null) {
+                logger.error("Cannot determine IntelliJ plugin id for feature $data.")
+                continue
+              }
+              PluginFeature(null, data.ideaId, data.ideaName)
+            }
+          result[data.vsCodeId.lowercase()] = feature
+        }
+      }
+    }
+
+    result
+  }
+
+  override fun mapPlugin(pluginId: String) = allPlugins[pluginId.lowercase()]
+}
 
 object PluginsMappings {
 

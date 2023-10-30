@@ -134,7 +134,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
 
       if (settings.preferences.plugins) {
         for (plugin in settings.plugins) {
-          featureImported.log(plugin.transferableId, ide)
+          featureImported.log(plugin.transferableId ?: TransferableIdeFeatureId.DummyBuiltInFeature, ide)
         }
       }
     }
@@ -170,7 +170,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
     logger.runAndLogException {
       val ide = ideVersion.transferableId
       for (plugin in settings.plugins) {
-        featureDetected.log(ide, plugin.transferableId)
+        featureDetected.log(ide, plugin.transferableId ?: TransferableIdeFeatureId.DummyBuiltInFeature)
       }
       recentProjectsDetected.log(ide, settings.recentProjects.size)
     }

@@ -1,0 +1,146 @@
+[
+  {
+    "bundled": false,
+    "ideaName": "Ruby support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Ruby LSP",
+    "builtIn": true,
+    "vsCodeId": "Shopify.ruby-lsp"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Ruby support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Ruby Solargraph",
+    "builtIn": true,
+    "vsCodeId": "castwide.solargraph"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Ruby Debugger",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "VSCode rdbg Ruby Debugger",
+    "builtIn": true,
+    "vsCodeId": "KoichiSasada.vscode-rdbg"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Rubocop support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "ruby-rubocop",
+    "builtIn": true,
+    "vsCodeId": "misogi.ruby-rubocop"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Ruby Sorbet support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Ruby Sorbet",
+    "builtIn": true,
+    "vsCodeId": "sorbet.sorbet-vscode-extension"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Ruby Test Runner",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Ruby Test Explorer",
+    "builtIn": true,
+    "vsCodeId": "connorshea.vscode-ruby-test-adapter"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Ruby support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Endwise",
+    "builtIn": true,
+    "vsCodeId": "kaiwood.endwise"
+  },
+  {
+    "bundled": false,
+    "ideaName": "ERB support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "erb",
+    "builtIn": true,
+    "vsCodeId": "CraigMaslowski.erb"
+  },
+  {
+    "bundled": false,
+    "ideaName": "RSpec support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Rails Run Specs",
+    "builtIn": true,
+    "vsCodeId": "noku.rails-run-spec-vscode"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Rails support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Rails",
+    "builtIn": true,
+    "vsCodeId": "bung87.rails"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Rails Routes",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Rails Routes",
+    "builtIn": true,
+    "vsCodeId": "aki77.rails-routes"
+  },
+  {
+    "bundled": false,
+    "ideaName": "ERB support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "ERB Foramtter/Beautify",
+    "builtIn": true,
+    "vsCodeId": "aliariff.vscode-erb-beautify"
+  },
+  {
+    "bundled": true,
+    "ideaName": "HAML support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Better HAML",
+    "builtIn": false,
+    "vsCodeId": "karunamurti.haml"
+  },
+  {
+    "bundled": true,
+    "ideaName": "Slim support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Slim",
+    "builtIn": false,
+    "vsCodeId": "sianglim.slim"
+  },
+  {
+    "bundled": true,
+    "ideaName": "Liquid support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Shopify Liquid",
+    "builtIn": false,
+    "vsCodeId": "Shopify.theme-check-vscode"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Gemfile support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "vscode-gemfile",
+    "builtIn": true,
+    "vsCodeId": "bung87.vscode-gemfile"
+  }
+]

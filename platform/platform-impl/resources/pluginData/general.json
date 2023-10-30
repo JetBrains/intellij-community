@@ -1,0 +1,83 @@
+[
+  {
+    "bundled": false,
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog",
+    "disabled": false,
+    "vsCodeName": "Log File Highlighter",
+    "builtIn": false,
+    "vsCodeId": "emilast.LogFileHighlighter"
+  },
+  {
+    "bundled": false,
+    "ideaName": "IdeaVIM",
+    "ideaId": "IdeaVIM",
+    "disabled": false,
+    "vsCodeName": "Vim",
+    "builtIn": false,
+    "vsCodeId": "vscodevim.vim"
+  },
+  {
+    "bundled": false,
+    "ideaName": "NodeJS support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "[Deprecated] Node Debug",
+    "builtIn": true,
+    "vsCodeId": "ms-vscode.node-debug2"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Git",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Git History",
+    "builtIn": true,
+    "vsCodeId": "donjayamanne.githistory"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Git",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "GitLens — Git supercharged",
+    "builtIn": true,
+    "vsCodeId": "eamodio.gitlens"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Git",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Git Blame",
+    "builtIn": true,
+    "vsCodeId": "waderyan.gitblame"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Git",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Git Graph",
+    "builtIn": true,
+    "vsCodeId": "mhutchie.git-graph"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Web support",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Live Server",
+    "builtIn": true,
+    "vsCodeId": "ritwickdey.LiveServer"
+  },
+  {
+    "bundled": false,
+    "ideaName": "Docker",
+    "ideaId": null,
+    "disabled": false,
+    "vsCodeName": "Docker",
+    "builtIn": true,
+    "vsCodeId": "ms-azuretools.vscode-docker"
+  }
+]

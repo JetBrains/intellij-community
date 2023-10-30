@@ -50,7 +50,6 @@ object KnownPlugins {
 
   // Plugins
 
-  val Python = PluginFeature(TransferableIdeFeatureId.Python, "com.intellij.python", "Pythonid")
   val XAMLStyler: PluginFeature = PluginFeature(TransferableIdeFeatureId.XamlStyler, "xamlstyler.rider", "XAML Styler")
   val Ideolog: PluginFeature = PluginFeature(TransferableIdeFeatureId.Ideolog, "com.intellij.ideolog", "Ideolog (logging)")
   val IdeaVim: PluginFeature = PluginFeature(TransferableIdeFeatureId.IdeaVim, "IdeaVIM", "IdeaVIM")
@@ -68,8 +67,4 @@ object KnownPlugins {
 
   val DummyBuiltInFeature: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.DummyBuiltInFeature, "")
   val DummyPlugin: PluginFeature = PluginFeature(TransferableIdeFeatureId.DummyPlugin, "", "")
-}
-
-object KnownBuiltInFeatures {
-  val Python = BuiltInFeature(TransferableIdeFeatureId.Python, "Python")
 }

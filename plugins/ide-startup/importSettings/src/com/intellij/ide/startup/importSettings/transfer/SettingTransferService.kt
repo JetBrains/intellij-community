@@ -4,15 +4,12 @@ package com.intellij.ide.startup.importSettings.transfer
 import com.intellij.ide.customize.transferSettings.DefaultTransferSettingsConfiguration
 import com.intellij.ide.customize.transferSettings.TransferSettingsDataProvider
 import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsListener
-import com.intellij.ide.customize.transferSettings.models.FeatureInfo
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
-import com.intellij.ide.customize.transferSettings.models.PluginFeature
 import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.customize.transferSettings.models.SettingsPreferencesKind
 import com.intellij.ide.customize.transferSettings.providers.PluginInstallationState
 import com.intellij.ide.customize.transferSettings.providers.TransferSettingsPerformContext
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransferSettingsProvider
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import com.intellij.ide.startup.importSettings.data.DataForSave
@@ -29,7 +26,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.rd.util.withSyncIOBackgroundContext
 import com.intellij.util.containers.nullize
@@ -64,36 +60,11 @@ class SettingTransferService : ExternalService {
     shouldDisplayFailedVersions = false
   )
 
-  data class ThirdPartyProductSettings(
-    val originalSettings: Settings,
-    val compatibleFeatures: Deferred<List<FeatureInfo>>
-  ) {
-    val laf
-      get() = originalSettings.laf
-    val keymap
-      get() = originalSettings.keymap
-    val recentProjects
-      get() = originalSettings.recentProjects
-
-    /**
-     * If this is unable to get the compatible plugins "quickly", then it just returns all the plugins.
-     */
-    fun getCompatiblePluginsQuickly(): List<FeatureInfo> =
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking {
-        logger.runAndLogException {
-          withTimeout(1.seconds) {
-            compatibleFeatures.await()
-          }
-        } ?: originalSettings.plugins
-    }
-  }
-
   data class ThirdPartyProductInfo(
     val product: IdeVersion,
-    val settings: Deferred<ThirdPartyProductSettings>
+    val settings: Deferred<Settings>
   ) {
-    fun getSettingsQuickly(): ThirdPartyProductSettings? =
+    fun getSettingsQuickly(): Settings? =
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking {
         logger.runAndLogException {
@@ -123,27 +94,10 @@ class SettingTransferService : ExternalService {
     return versions
   }
 
-  private suspend fun CoroutineScope.loadIdeVersionSettingsAsync(version: IdeVersion): ThirdPartyProductSettings {
-    val settings = version.settingsCache
-    val pluginById = settings.plugins.filterIsInstance<PluginFeature>().map { it.pluginId to it }.toMap()
-    val pluginIds = pluginById.keys.map { PluginId.getId(it) }.toSet()
-    val actualFeatures = async {
-      val compatiblePluginIds =
-        logger.runAndLogException {
-          withSyncIOBackgroundContext {
-            val compatiblePlugins = MarketplaceRequests.getLastCompatiblePluginUpdate(pluginIds)
-            compatiblePlugins.mapNotNull { it.pluginId.toString() }
-          }
-        } ?: pluginIds
-      settings.plugins.filter {
-        when (it) {
-          is PluginFeature -> compatiblePluginIds.contains(it.pluginId)
-          else -> true
-        }
-      }
+  private suspend fun CoroutineScope.loadIdeVersionSettingsAsync(version: IdeVersion): Settings =
+    withSyncIOBackgroundContext {
+      version.settingsCache
     }
-    return ThirdPartyProductSettings(settings, actualFeatures)
-  }
 
   override suspend fun warmUp() {
     coroutineScope {
@@ -186,7 +140,7 @@ class SettingTransferService : ExternalService {
       buildList {
         settings.laf?.let(TransferableSetting::uiTheme)?.let(::add)
         settings.keymap?.let(TransferableSetting::keymap)?.let(::add)
-        settings.getCompatiblePluginsQuickly().nullize()?.let(TransferableSetting::plugins)?.let(::add)
+        settings.plugins.nullize()?.let(TransferableSetting::plugins)?.let(::add)
         settings.recentProjects.nullize()?.let { TransferableSetting.recentProjects() }?.let(::add)
       }
     } ?: emptyList()

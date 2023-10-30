@@ -6,7 +6,8 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 
 abstract class FeatureInfo(
-  val transferableId: TransferableIdeFeatureId,
+  @Deprecated("Not used anymore")
+  val transferableId: TransferableIdeFeatureId?,
   @NlsSafe val name: String,
   @Nls val hint: String? = null,
   val isHidden: Boolean = false
@@ -16,14 +17,14 @@ abstract class FeatureInfo(
 }
 
 class BuiltInFeature(
-  transferableId: TransferableIdeFeatureId,
+  transferableId: TransferableIdeFeatureId?,
   @NlsSafe name: String,
   @Nls hint: String? = null,
   isHidden: Boolean = false
 ) : FeatureInfo(transferableId, name, hint, isHidden)
 
 class PluginFeature(
-  transferableId: TransferableIdeFeatureId,
+  transferableId: TransferableIdeFeatureId?,
   val pluginId: String,
   @NlsSafe name: String,
   @Nls hint: String? = null,
