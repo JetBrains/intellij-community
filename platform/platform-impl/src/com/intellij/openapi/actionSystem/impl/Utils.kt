@@ -18,16 +18,13 @@ import com.intellij.openapi.actionSystem.util.ActionSystem
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.keymap.impl.ActionProcessor
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
-import com.intellij.openapi.progress.CeProcessCanceledException
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
-import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.PotemkinOverlayProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -262,7 +259,7 @@ object Utils {
     val isContextMenu = ActionPlaces.isPopupPlace(place)
     val fastTrackTime = getFastTrackMaxTime(fastTrack, group, place, asyncDataContext, isToolbarAction, true)
     val deferred = async(if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() } else EmptyCoroutineContext) {
-      service<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, asyncDataContext, place, group, isToolbarAction) {
+      serviceAsync<ActionUpdaterInterceptor>().expandActionGroup(presentationFactory, asyncDataContext, place, group, isToolbarAction) {
         val updater = ActionUpdater(presentationFactory, asyncDataContext, place, isContextMenu, isToolbarAction, this)
         withContext(updaterContext(place, fastTrackTime, isContextMenu, isToolbarAction)) {
           updater.expandActionGroup(group, group is CompactActionGroup)
