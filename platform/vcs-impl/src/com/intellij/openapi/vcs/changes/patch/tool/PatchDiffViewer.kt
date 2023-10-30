@@ -51,9 +51,15 @@ internal class PatchDiffViewer(private val diffContext: DiffContext,
 
     editorHolder = TextEditorHolder(project, editor)
 
-    val panelTitle = diffRequest.panelTitle
+    val titles = DiffUtil.createPatchTextTitles(this,
+                                                diffRequest,
+                                                listOf(diffRequest.contentTitle1, diffRequest.contentTitle2))
+      .filterNotNull()
+    val titlePanel = if (titles.isNotEmpty()) DiffUtil.createStackedComponents(titles, DiffUtil.TITLE_GAP) else null
+
     val contentPanel = OnesideContentPanel.createFromHolder(editorHolder)
-    contentPanel.setTitle(DiffUtil.createTitle(panelTitle))
+    contentPanel.setTitle(titlePanel)
+
     panel = SimpleDiffPanel(contentPanel, this, diffContext)
 
     prevNextDifferenceIterable = MyPrevNextDifferenceIterable()

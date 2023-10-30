@@ -12,11 +12,11 @@ public abstract class FilePatch {
   // store file mode in 6 digit format a.e. 100655, -1 means file mode was not changed in the patch
   private int myNewFileMode = -1;
 
-  public String getBeforeName() {
+  public @NlsSafe String getBeforeName() {
     return myBeforeName;
   }
 
-  public String getAfterName() {
+  public @NlsSafe String getAfterName() {
     return myAfterName;
   }
 

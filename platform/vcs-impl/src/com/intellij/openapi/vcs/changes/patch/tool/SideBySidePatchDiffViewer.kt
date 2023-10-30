@@ -85,8 +85,12 @@ internal class SideBySidePatchDiffViewer(
     prevNextDifferenceIterable = MyPrevNextDifferenceIterable()
     focusTrackerSupport = Twoside(editorHolders)
 
+    val titles = DiffUtil.createPatchTextTitles(this,
+                                                diffRequest,
+                                                listOf(diffRequest.contentTitle1, diffRequest.contentTitle2))
+
     contentPanel = TwosideContentPanel.createFromHolders(editorHolders)
-    contentPanel.setTitles(listOf(null, DiffUtil.createTitle(diffRequest.panelTitle)))
+    contentPanel.setTitles(titles)
     contentPanel.setPainter(MyDividerPainter())
 
     panel = SimpleDiffPanel(contentPanel, this, diffContext)
