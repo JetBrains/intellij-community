@@ -15,6 +15,10 @@ public enum LoadingState {
   COMPONENTS_REGISTERED("app component registered"),
   CONFIGURATION_STORE_INITIALIZED("app store initialized"),
   COMPONENTS_LOADED("app component loaded"),
+  /**
+   * Application and LaF are ready, but it's too early for the post-startup activities, yet.
+   */
+  APP_READY("app ready"),
   APP_STARTED("app started"),
   PROJECT_OPENED("project opened");
 
