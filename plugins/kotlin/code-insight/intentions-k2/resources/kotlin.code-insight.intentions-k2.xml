@@ -1,7 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.intentions">
   <extensions defaultExtensionNs="com.intellij">
 
-    <testDiffProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.KotlinTestDiffProvider"/>
+    <testDiffProvider language="kotlin" implementationClass="com.intellij.execution.testframework.JvmTestDiffProvider"/>
     <testFinder implementation="org.jetbrains.kotlin.idea.k2.codeinsight.intentions.testIntegration.K2TestFinder"/>
     <testCreator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.intentions.testIntegration.K2TestCreator"/>
 

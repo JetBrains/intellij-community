@@ -103,7 +103,7 @@
                           implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinExpressionTypeProviderDescriptorsImpl"/>
 
     <testCreator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.testIntegration.KotlinTestCreator"/>
-    <testDiffProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.KotlinTestDiffProvider"/>
+    <testDiffProvider language="kotlin" implementationClass="com.intellij.execution.testframework.JvmTestDiffProvider"/>
     <testFinder implementation="org.jetbrains.kotlin.idea.testIntegration.KotlinTestFinder"/>
 
     <lang.jvm.actions.jvmElementActionsFactory
