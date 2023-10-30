@@ -35,7 +35,6 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="library" scope="PROVIDED" name="jetbrains.compose.compiler.hosted" level="project" />
     <orderEntry type="library" exported="" name="jetbrains.compose.desktop.foundation" level="project" />
     <orderEntry type="module" module-name="intellij.platform.compose.skikoRuntime" />
     <orderEntry type="module-library" exported="">
