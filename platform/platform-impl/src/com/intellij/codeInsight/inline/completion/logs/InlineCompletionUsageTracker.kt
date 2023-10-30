@@ -6,6 +6,8 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventFields.createAdditionalDataField
+import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -16,8 +18,9 @@ import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 12)
+  private val GROUP = EventLogGroup("inline.completion", 13)
 
+  private const val INVOKED_EVENT_ID = "invoked"
   internal object InvokedEvents {
     val REQUEST_ID = EventFields.Long("request_id")
     val EVENT = EventFields.Class("event")
@@ -31,10 +34,12 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       SHOW,
       NO_SUGGESTIONS
     }
+
+    val ADDITIONAL: ObjectEventField = createAdditionalDataField(GROUP.id, INVOKED_EVENT_ID)
   }
 
   internal val INVOKED_EVENT: VarargEventId = GROUP.registerVarargEvent(
-    "invoked",
+    INVOKED_EVENT_ID,
     InvokedEvents.REQUEST_ID,
     EventFields.Language,
     EventFields.CurrentFile,
@@ -42,6 +47,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     InvokedEvents.PROVIDER,
     InvokedEvents.TIME_TO_COMPUTE,
     InvokedEvents.OUTCOME,
+    InvokedEvents.ADDITIONAL,
   )
 
   object ShownEvents {
