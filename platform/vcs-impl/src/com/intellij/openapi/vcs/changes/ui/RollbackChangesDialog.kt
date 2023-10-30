@@ -32,6 +32,8 @@ class RollbackChangesDialog private constructor(private val project: Project,
   private lateinit var deleteLocallyAddedFilesCheckBox: JCheckBox
   private val operationName: @Nls String
 
+  private val isInvokedFromModalContext = LaterInvocator.isInModalContext()
+
   init {
     Disposer.register(disposable, browser)
     browser.setInclusionChangedListener { inclusionListener() }
@@ -86,7 +88,7 @@ class RollbackChangesDialog private constructor(private val project: Project,
   override fun doOKAction() {
     super.doOKAction()
 
-    RollbackWorker(project, operationName, LaterInvocator.isInModalContext())
+    RollbackWorker(project, operationName, isInvokedFromModalContext)
       .doRollback(browser.includedChanges, deleteLocallyAddedFilesCheckBox.isSelected)
   }
 
