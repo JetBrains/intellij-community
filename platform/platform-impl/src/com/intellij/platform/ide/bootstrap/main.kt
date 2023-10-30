@@ -207,7 +207,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
   val configImportDeferred: Deferred<Job?> = async {
-    if (isHeadless || !configImportNeededDeferred.await()) {
+    if (isHeadless || AppMode.isRemoteDevHost() || !configImportNeededDeferred.await()) {
       return@async null
     }
 
