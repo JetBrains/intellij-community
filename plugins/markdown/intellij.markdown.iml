@@ -8,13 +8,5 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.markdown.core" exported="" />
-    <orderEntry type="module" module-name="intellij.markdown.fenceInjection" />
-    <orderEntry type="module" module-name="intellij.markdown.frontmatter" />
-    <orderEntry type="module" module-name="intellij.markdown.frontmatter.toml" />
-    <orderEntry type="module" module-name="intellij.markdown.frontmatter.yaml" />
-    <orderEntry type="module" module-name="intellij.markdown.images" />
-    <orderEntry type="module" module-name="intellij.markdown.model" />
-    <orderEntry type="module" module-name="intellij.markdown.spellchecker" />
-    <orderEntry type="module" module-name="intellij.markdown.xml" />
   </component>
 </module>
