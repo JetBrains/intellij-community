@@ -5,6 +5,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
   storages = @Storage(FileTemplateSettings.EXPORTABLE_SETTINGS_FILE)
 )
 class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(FileTemplateSettings.class);
   static final String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 
   private static final String ELEMENT_TEMPLATE = "template";
@@ -105,7 +107,10 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
     final String qName = element.getAttributeValue(ATTRIBUTE_NAME);
     if (qName == null) return;
     final FileTemplateBase template = manager.getTemplate(qName);
-    if (template == null) return;
+    if (template == null) {
+      LOG.error("Template is missing: " + qName);
+      return;
+    }
     template.setFileName(StringUtil.notNullize(element.getAttributeValue(ATTRIBUTE_FILE_NAME)));
     template.setReformatCode(Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_REFORMAT)));
     template.setLiveTemplateEnabled(Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_LIVE_TEMPLATE)));
