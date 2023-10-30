@@ -511,12 +511,6 @@
       </action>
       <separator/>
       <group id="InlineCompletion.Settings" popup="true" internal="true"/>
-      <action id="ResetICOnboardingAtFirstShowAction" internal="true"
-              class="com.intellij.codeInsight.inline.completion.onboarding.ResetICOnboardingAtFirstShowAction"/>
-      <action id="ResetICOnboardingAtFirstAcceptAction" internal="true"
-              class="com.intellij.codeInsight.inline.completion.onboarding.ResetICOnboardingAtFirstAcceptAction"/>
-      <action id="ResetICOnboardingShowSettingsAction" internal="true"
-              class="com.intellij.codeInsight.inline.completion.onboarding.ResetICOnboardingShowSettingsAction"/>
     </group>
 
     <group id="CodeMenu" popup="true">
