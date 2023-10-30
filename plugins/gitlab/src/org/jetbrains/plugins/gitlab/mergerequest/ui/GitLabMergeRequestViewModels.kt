@@ -65,7 +65,7 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
   }
 
   val editorReviewVm: GitLabMergeRequestEditorReviewViewModel by lazy {
-    GitLabMergeRequestEditorReviewViewModel(cs, projectData.projectMapping, currentUser, mergeRequest, diffBridge,
+    GitLabMergeRequestEditorReviewViewModel(cs, project, projectData.projectMapping, currentUser, mergeRequest, diffBridge,
                                             projectVm, discussionsVms, projectVm.avatarIconProvider)
   }
 
