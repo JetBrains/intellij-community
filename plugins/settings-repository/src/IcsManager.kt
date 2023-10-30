@@ -106,7 +106,7 @@ class IcsManager @JvmOverloads constructor(
   }
 
   suspend fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): Boolean {
-    return syncManager.sync(syncType, project, localRepositoryInitializer)
+    return syncManager.sync(syncType, localRepositoryInitializer)
   }
 
   private fun cancelAndDisableAutoCommit() {

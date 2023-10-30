@@ -7,7 +7,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -115,7 +114,8 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     }
   }
 
-  abstract class XmlElementStorageSaveSessionProducer<T : XmlElementStorage>(private val originalStates: StateMap, protected val storage: T) : SaveSessionProducerBase() {
+  abstract class XmlElementStorageSaveSessionProducer<T : XmlElementStorage>(private val originalStates: StateMap,
+                                                                             protected val storage: T) : SaveSessionProducerBase() {
     private var copiedStates: MutableMap<String, Any>? = null
 
     private var newLiveStates: MutableMap<String, Element>? = HashMap()
@@ -197,25 +197,19 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
   }
 
   fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
-    updatedFrom(changedComponentNames, deleted, true)
-  }
-
-  fun updatedFrom(changedComponentNames: MutableSet<String>, deleted: Boolean, useStreamProvider: Boolean) {
-    LOG.runAndLogException {
-      val newElement = if (deleted) null else loadElement(useStreamProvider)
-      val states = storageDataRef.get()
-      if (newElement == null) {
-        // if data was loaded, mark as changed all loaded components
-        if (states != null) {
-          changedComponentNames.addAll(states.keys())
-          setStates(states, null)
-        }
+    val newElement = if (deleted) null else loadElement(useStreamProvider = true)
+    val states = storageDataRef.get()
+    if (newElement == null) {
+      // if data was loaded, mark as changed all loaded components
+      if (states != null) {
+        changedComponentNames.addAll(states.keys())
+        setStates(oldStorageData = states, newStorageData = null)
       }
-      else if (states != null) {
-        val newStates = loadState(newElement)
-        changedComponentNames.addAll(getChangedComponentNames(states, newStates))
-        setStates(states, newStates)
-      }
+    }
+    else if (states != null) {
+      val newStates = loadState(newElement)
+      changedComponentNames.addAll(getChangedComponentNames(states, newStates))
+      setStates(oldStorageData = states, newStorageData = newStates)
     }
   }
 }
