@@ -101,4 +101,45 @@
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
   </actions>
+  <actions resource-bundle="messages.PyCharmCommunityCustomizationBundle">
+    <action class="com.jetbrains.python.promotion.PromoAiCodeCompletion"
+            id="PromoAiCodeCompletion"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoDatabaseAction"
+            id="PromoDatabaseAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoDataFrameAction"
+            id="PromoDataFrameAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoDjangoAction"
+            id="PromoDjangoAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoDockerAction"
+            id="PromoDockerAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoEndpointsAction"
+            id="PromoEndpointsAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoJavaScriptAction"
+            id="PromoJavaScriptAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoSshRemoteToolsAction"
+            id="PromoSshRemoteToolsAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoPlotsAction"
+            id="PromoPlotsAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoJupyterAction"
+            id="PromoJupyterAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+  </actions>
 </idea-plugin>
