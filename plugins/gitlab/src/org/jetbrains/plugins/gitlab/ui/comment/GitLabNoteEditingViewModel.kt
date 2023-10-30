@@ -35,9 +35,9 @@ interface GitLabNoteEditingViewModel {
   suspend fun destroy()
 
   sealed interface SubmissionState {
-    object Loading : SubmissionState
+    data object Loading : SubmissionState
     class Error(val error: Throwable) : SubmissionState
-    object Done : SubmissionState
+    data object Done : SubmissionState
   }
 
   companion object {
