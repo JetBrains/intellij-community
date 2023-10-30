@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
+import com.intellij.codeInsight.documentation.render.DocRenderer
 import com.intellij.collaboration.async.launchNow
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.LogicalPosition
@@ -152,8 +154,17 @@ private constructor(cs: CoroutineScope,
   }
 
   private fun FoldRegion.unfold() {
-    editor.foldingModel.runBatchFoldingOperation {
-      isExpanded = true
+    if (this is CustomFoldRegion) {
+      val renderer = renderer
+      if (renderer is DocRenderer) {
+        renderer.item.toggle()
+        return
+      }
+    }
+    else {
+      editor.foldingModel.runBatchFoldingOperation {
+        isExpanded = true
+      }
     }
   }
 
