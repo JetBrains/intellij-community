@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
@@ -32,26 +33,24 @@ import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerfor
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.Alarm
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand.Companion.shouldOpenInSmartMode
 import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindows
 import com.jetbrains.performancePlugin.profilers.ProfilersController
 import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan
 import io.opentelemetry.context.Context
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.IOException
-import java.lang.Runnable
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.sql.Timestamp
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 import kotlin.time.Duration.Companion.minutes
 
@@ -116,7 +115,7 @@ private fun runOnProjectInit(project: Project) {
     }
   }
   if (shouldOpenInSmartMode(project)) {
-    runScriptWhenInitializedAndIndexed(project)
+    runScriptWhenInitializedAndIndexed(project, ProjectLoadedService.alarm)
   }
   else if (SystemProperties.getBooleanProperty("performance.execute.script.after.scanning", false)) {
     runScriptDuringIndexing(project, ProjectLoadedService.alarm)
@@ -136,34 +135,22 @@ private class PerformancePluginInitProjectActivity : InitProjectActivity {
 
 private const val TIMEOUT = 500
 
-private fun isProjectInitializing(project: Project): Boolean {
-  val statusBar = WindowManager.getInstance().getIdeFrame(project)?.statusBar as? StatusBarEx
-  val hasUserVisibleIndicators = statusBar != null && statusBar.backgroundProcesses.isNotEmpty()
-  return isDumb(project) || hasUserVisibleIndicators ||
-         !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished
-}
-
-private fun runScriptWhenInitializedAndIndexed(project: Project) {
-  val isScriptStarted = AtomicBoolean(false)
-  val secondTaskAlarm = Alarm()
-  val executor: ScheduledExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("waiter till project is initialized")
-
-  val firstTask = Runnable {
-    if (isProjectInitializing(project)) {
-      secondTaskAlarm.cancelAllRequests()
-    }
-    else {
-      secondTaskAlarm.addRequest(Context.current().wrap(Runnable {
-        if (isScriptStarted.compareAndSet(false, true)) {
-          executor.shutdown()
-          secondTaskAlarm.cancelAllRequests()
-          runScriptFromFile(project)
-        }
-      }), 5000)
-    }
-  }
-
-  executor.scheduleAtFixedRate(firstTask, 0, 300, TimeUnit.MILLISECONDS)
+private fun runScriptWhenInitializedAndIndexed(project: Project, alarm: Alarm) {
+  DumbService.getInstance(project).smartInvokeLater(Context.current().wrap(
+    Runnable {
+      alarm.addRequest(Context.current().wrap(
+        Runnable {
+          val statusBar = WindowManager.getInstance().getIdeFrame(project)?.statusBar as? StatusBarEx
+          val hasUserVisibleIndicators = statusBar != null && statusBar.backgroundProcesses.isNotEmpty()
+          if (isDumb(project) || hasUserVisibleIndicators ||
+              !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished) {
+            runScriptWhenInitializedAndIndexed(project, ProjectLoadedService.alarm)
+          }
+          else {
+            runScriptFromFile(project)
+          }
+        }), TIMEOUT)
+    }))
 }
 
 private fun runScriptDuringIndexing(project: Project, alarm: Alarm) {
