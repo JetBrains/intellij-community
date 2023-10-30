@@ -15,6 +15,10 @@ public final class ModuleRequires extends Proto implements DiffCapable<ModuleReq
     myVersion = version == null? "" : version;
   }
 
+  public boolean isTransitive() {
+    return getFlags().isTransitive();
+  }
+
   public String getVersion() {
     return myVersion;
   }

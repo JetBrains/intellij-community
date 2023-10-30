@@ -10,6 +10,11 @@ public class FieldUsage extends MemberUsage{
     myDescriptor = descriptor;
   }
 
+  public FieldUsage(JvmNodeReferenceID clsId, String name, String descriptor) {
+    super(clsId, name);
+    myDescriptor = descriptor;
+  }
+
   public String getDescriptor() {
     return myDescriptor;
   }

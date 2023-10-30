@@ -23,7 +23,7 @@ public final class JvmField extends ProtoMember implements DiffCapable<JvmField,
   }
 
   @Override
-  public FieldUsage createUsage(String owner) {
+  public FieldUsage createUsage(JvmNodeReferenceID owner) {
     return new FieldUsage(owner, getName(), getType().getDescriptor());
   }
 

@@ -7,6 +7,10 @@ public final class ImportStaticMemberUsage extends MemberUsage{
     super(className, name);
   }
 
+  public ImportStaticMemberUsage(JvmNodeReferenceID clsId, String name) {
+    super(clsId, name);
+  }
+
   @Override
   public int hashCode() {
     return super.hashCode() + 1;

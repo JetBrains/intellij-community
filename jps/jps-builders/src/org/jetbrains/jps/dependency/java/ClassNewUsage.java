@@ -9,6 +9,10 @@ public final class ClassNewUsage extends ClassUsage {
     super(className);
   }
 
+  public ClassNewUsage(@NotNull JvmNodeReferenceID clsId) {
+    super(clsId);
+  }
+
   @Override
   public int hashCode() {
     return super.hashCode() + 2;

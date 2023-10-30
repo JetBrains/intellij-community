@@ -63,7 +63,7 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
     @Override
     public boolean unchanged() {
-      return super.unchanged() && requires().unchanged() && exports().unchanged();
+      return super.unchanged() && !versionChanged() && requires().unchanged() && exports().unchanged();
     }
 
     public Specifier<ModuleRequires, ModuleRequires.Diff> requires() {
@@ -72,6 +72,10 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
     public Specifier<ModulePackage, ModulePackage.Diff> exports() {
       return Difference.deepDiff(myPast.getExports(), getExports());
+    }
+
+    public boolean versionChanged() {
+      return !Objects.equals(myPast.getVersion(), getVersion());
     }
   }
 

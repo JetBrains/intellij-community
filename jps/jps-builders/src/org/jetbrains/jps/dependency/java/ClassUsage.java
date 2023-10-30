@@ -6,7 +6,11 @@ import org.jetbrains.annotations.NotNull;
 public class ClassUsage extends JvmElementUsage {
 
   public ClassUsage(@NotNull String className) {
-    super(new JvmNodeReferenceID(className));
+    this(new JvmNodeReferenceID(className));
+  }
+  
+  public ClassUsage(@NotNull JvmNodeReferenceID id) {
+    super(id);
   }
 
   public String getClassName() {

@@ -641,7 +641,7 @@ public final class SerializerUtil {
     Object value = readValueObject(in);
     return new ProtoMember(proto.getFlags(), proto.getSignature(), proto.getName(), typeRepr, proto.getAnnotations(), value) {
       @Override
-      public MemberUsage createUsage(String owner) {
+      public MemberUsage createUsage(JvmNodeReferenceID owner) {
         return null;
       }
     };

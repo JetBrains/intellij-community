@@ -6,7 +6,11 @@ public abstract class MemberUsage extends JvmElementUsage {
   private final String myName;
 
   protected MemberUsage(String className, String name) {
-    super(new JvmNodeReferenceID(className));
+    this(new JvmNodeReferenceID(className), name);
+  }
+
+  protected MemberUsage(JvmNodeReferenceID clsId, String name) {
+    super(clsId);
     myName = name;
   }
 

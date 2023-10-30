@@ -6,9 +6,13 @@ import org.jetbrains.annotations.NotNull;
 public final class ModuleUsage extends JvmElementUsage {
 
   public ModuleUsage(@NotNull String moduleName) {
-    super(new JvmNodeReferenceID(moduleName));
+    this(new JvmNodeReferenceID(moduleName));
   }
-  
+
+  public ModuleUsage(@NotNull JvmNodeReferenceID modId) {
+    super(modId);
+  }
+
   public String getModuleName() {
     return ((JvmNodeReferenceID)getElementOwner()).getNodeName();
   }
