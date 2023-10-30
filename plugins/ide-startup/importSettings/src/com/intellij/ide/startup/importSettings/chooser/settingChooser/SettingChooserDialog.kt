@@ -43,6 +43,13 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
     }
   }
 
+  override fun show() {
+    super.show()
+    changeHandler()
+  }
+
+  open fun changeHandler() {}
+
   override fun showExit(): MessageDialogBuilder.YesNo? = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"),
                                                                                     ApplicationBundle.message("exit.confirm.prompt"))
     .yesText(ApplicationBundle.message("command.exit"))
@@ -85,7 +92,7 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
     val listPane = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
       productService.getSettings(product.id).forEach {
-        val st = createSettingPane(it, configurable)
+        val st = createSettingPane(it, configurable) { changeHandler() }
         settingPanes.add(st)
         add(st.component())
       }
