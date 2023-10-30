@@ -41,7 +41,8 @@ import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplK
  * @author Konstantin Bulenkov
  * @author Mikhail Sokolov
  */
-public class FileSearchEverywhereContributor extends AbstractGotoSEContributor implements EssentialContributor {
+public class FileSearchEverywhereContributor extends AbstractGotoSEContributor implements EssentialContributor,
+                                                                                          SearchEverywherePreviewProvider {
   private static final Logger LOG = Logger.getInstance(FileSearchEverywhereContributor.class);
   private final GotoFileModel myModelForRenderer;
   private final PersistentSearchEverywhereContributorFilter<FileTypeRef> myFilter;

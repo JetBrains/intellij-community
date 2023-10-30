@@ -20,7 +20,8 @@ import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplK
 /**
  * @author Konstantin Bulenkov
  */
-public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor implements PossibleSlowContributor {
+public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor implements PossibleSlowContributor,
+                                                                                            SearchEverywherePreviewProvider {
 
   private final PersistentSearchEverywhereContributorFilter<LanguageRef> myFilter;
 

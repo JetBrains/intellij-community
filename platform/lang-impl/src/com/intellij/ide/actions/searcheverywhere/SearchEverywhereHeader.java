@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.scale.JBUIScale;
@@ -56,13 +55,14 @@ public final class SearchEverywhereHeader {
                                 @NotNull Runnable scopeChangedCallback,
                                 Function<? super String, String> shortcutSupplier,
                                 @Nullable AnAction showInFindToolWindowAction,
+                                @Nullable AnAction previewAction,
                                 SearchEverywhereUI ui) {
     myScopeChangedCallback = scopeChangedCallback;
     myProject = project;
     myShortcutSupplier = shortcutSupplier;
     myTabs = createTabs(contributors);
     mySelectedTab = myTabs.get(0);
-    myToolbar = createToolbar(showInFindToolWindowAction);
+    myToolbar = createToolbar(previewAction, showInFindToolWindowAction);
     header = ExperimentalUI.isNewUI() ? createNewUITabs() : createHeader();
 
     ApplicationManager.getApplication().getMessageBus().connect(ui).subscribe(AnActionListener.TOPIC, new AnActionListener() {
@@ -91,7 +91,7 @@ public final class SearchEverywhereHeader {
     myToolbar.updateActionsImmediately();
   }
 
-  private @NotNull ActionToolbar createToolbar(@Nullable AnAction showInFindToolWindowAction) {
+  private @NotNull ActionToolbar createToolbar(@Nullable AnAction previewAction, @Nullable AnAction showInFindToolWindowAction) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(new ActionGroup() {
       @Override
@@ -100,6 +100,10 @@ public final class SearchEverywhereHeader {
         return mySelectedTab.actions.toArray(EMPTY_ARRAY);
       }
     });
+
+    if (previewAction != null) {
+      actionGroup.addAction(previewAction);
+    }
 
     if (showInFindToolWindowAction != null) {
       actionGroup.addAction(showInFindToolWindowAction);
