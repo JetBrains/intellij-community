@@ -5,12 +5,12 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.settingsSync.auth.SettingsSyncAuthService
+import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete
 import com.intellij.util.io.inputStream
 import com.jetbrains.cloudconfig.*
-import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
+import com.jetbrains.cloudconfig.auth.JbaJwtTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
 import org.jdom.JDOMException
 import org.jetbrains.annotations.VisibleForTesting
@@ -18,7 +18,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
-import java.util.function.Supplier
 
 internal const val SETTINGS_SYNC_SNAPSHOT = "settings.sync.snapshot"
 internal const val SETTINGS_SYNC_SNAPSHOT_ZIP = "$SETTINGS_SYNC_SNAPSHOT.zip"
@@ -273,11 +272,11 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
 
     private fun createConfiguration(): Configuration {
-      val userId = SettingsSyncAuthService.getInstance().getUserData()?.id
-      if (userId == null) {
+      val idToken = JBAccountInfoService.getInstance()?.idToken
+      if (idToken == null) {
         throw SettingsSyncAuthException("Authentication required")
       }
-      return Configuration().connectTimeout(CONNECTION_TIMEOUT_MS).readTimeout(READ_TIMEOUT_MS).auth(JbaTokenAuthProvider(userId))
+      return Configuration().connectTimeout(CONNECTION_TIMEOUT_MS).readTimeout(READ_TIMEOUT_MS).auth(JbaJwtTokenAuthProvider(idToken))
     }
 
     private val LOG = logger<CloudConfigServerCommunicator>()
