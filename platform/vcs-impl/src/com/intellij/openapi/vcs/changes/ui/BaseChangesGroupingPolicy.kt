@@ -12,7 +12,7 @@ abstract class BaseChangesGroupingPolicy : ChangesGroupingPolicy {
   }
 
   @Deprecated("Prefer using [VcsImplUtil.findValidParentAccurately]",
-              ReplaceWith("nodePath.vf ?: VcsImplUtil.findValidParentAccurately(nodePath.filePath)",
+              ReplaceWith("VcsImplUtil.findValidParentAccurately(nodePath.filePath)",
                           "com.intellij.vcsUtil.VcsImplUtil"))
   protected fun resolveVirtualFile(nodePath: StaticFilePath): VirtualFile? =
     generateSequence(nodePath) { it.parent }.mapNotNull { it.resolve() }.firstOrNull()

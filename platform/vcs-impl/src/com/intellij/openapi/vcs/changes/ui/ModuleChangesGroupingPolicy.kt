@@ -17,7 +17,7 @@ class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeMo
   override fun getParentNodeFor(nodePath: StaticFilePath,
                                 node: ChangesBrowserNode<*>,
                                 subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
-    val file = nodePath.vf ?: VcsImplUtil.findValidParentAccurately(nodePath.filePath)
+    val file = VcsImplUtil.findValidParentAccurately(nodePath.filePath)
     val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, node, subtreeRoot)
 
     file?.let { myIndex.getModuleForFile(file, HIDE_EXCLUDED_FILES) }?.let { module ->

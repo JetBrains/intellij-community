@@ -546,12 +546,12 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   public static StaticFilePath staticFrom(@NotNull FilePath fp) {
-    return new StaticFilePath(fp.isDirectory(), fp.getPath(), fp.getVirtualFile());
+    return new StaticFilePath(fp.isDirectory(), fp.getPath());
   }
 
   @NotNull
   public static StaticFilePath staticFrom(@NotNull VirtualFile vf) {
-    return new StaticFilePath(vf.isDirectory(), vf.getPath(), vf);
+    return new StaticFilePath(vf.isDirectory(), vf.getPath());
   }
 
   @NotNull
