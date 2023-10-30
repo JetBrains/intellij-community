@@ -76,11 +76,11 @@ class GitBranchComparisonResultImpl(private val project: Project,
 
           val historyBefore = beforePath?.let { fileHistoriesByLastKnownFilePath.remove(it) }
           val fileHistory = (historyBefore ?: MutableLinearGitFileHistory(commitsHashes)).apply {
+            append(previousCommitSha, beforePath)
             append(commitSha, patch)
           }
-          if (afterPath != null) {
-            fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
-          }
+          val path = (afterPath ?: beforePath)!!
+          fileHistoriesByLastKnownFilePath[path] = fileHistory
 
           patch.beforeVersionId = previousCommitSha
           patch.afterVersionId = commitSha
@@ -103,7 +103,7 @@ class GitBranchComparisonResultImpl(private val project: Project,
         val filePath = patch.filePath
         val fileHistory = fileHistoriesBySummaryFilePath[filePath]
         if (fileHistory == null) {
-          LOG.debug("Unable to find file history for cumulative patch for $filePath")
+          LOG.warn("Unable to find file history for cumulative patch for $filePath")
           continue
         }
         patch.beforeVersionId = baseSha
