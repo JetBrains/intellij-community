@@ -26,7 +26,7 @@ public final class FrameBoundsConverter {
    * @return the bounds in the user space
    */
   public static @Nullable Pair<@NotNull Rectangle, @Nullable GraphicsDevice> convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
-    int tolerance = Registry.intValue("ide.project.frame.screen.bounds.tolerance");
+    int tolerance = Registry.intValue("ide.project.frame.screen.bounds.tolerance", 10);
     Rectangle b = bounds.getBounds();
     int centerX = b.x + b.width / 2;
     int centerY = b.y + b.height / 2;
