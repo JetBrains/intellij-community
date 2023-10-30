@@ -5,7 +5,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
@@ -15,6 +18,8 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 /**
  * java "decorative" highlighting:
  * - color names, like "reassigned variables"/fields/statics etc.
@@ -22,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * NO COMPILATION ERRORS
  * for other highlighting errors see {@link HighlightVisitorImpl}
  */
-class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightVisitor {
+class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightVisitor, DumbAware {
   private HighlightInfoHolder myHolder;
   private PsiFile myFile;
   private LanguageLevel myLanguageLevel;
@@ -69,9 +74,9 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
 
   @Override
   public void visitDocTagValue(@NotNull PsiDocTagValue value) {
-    PsiReference reference = value.getReference();
+    PsiReference reference = computeIfSmartMode(value.getProject(), () -> value.getReference());
     if (reference != null) {
-      PsiElement element = reference.resolve();
+      PsiElement element = computeIfSmartMode(value.getProject(), () -> reference.resolve());
       TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
       if (element instanceof PsiMethod) {
         PsiElement nameElement = ((PsiDocMethodOrFieldRef)value).getNameElement();
@@ -113,7 +118,10 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
 
   @Override
   public void visitImportStaticReferenceElement(@NotNull PsiImportStaticReferenceElement ref) {
-    JavaResolveResult[] results = ref.multiResolve(false);
+    JavaResolveResult[] results = computeIfSmartMode(ref.getProject(), () -> ref.multiResolve(false));
+    if (results == null) {
+      results = JavaResolveResult.EMPTY_ARRAY;
+    }
 
     PsiElement referenceNameElement = ref.getReferenceNameElement();
     if (!myHolder.hasErrorResults()) {
@@ -240,8 +248,8 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
     JavaResolveResult result;
     JavaResolveResult[] results;
     try {
-      results = expression.multiResolve(true);
-      result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+      results = computeIfSmartMode(expression.getProject(), () -> expression.multiResolve(true));
+      result = results != null && results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
     }
     catch (IndexNotReadyException e) {
       return;
@@ -256,5 +264,10 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
         }
       }
     }
+  }
+
+  private <T> T computeIfSmartMode(@NotNull Project project, Supplier<T> operation) {
+    if (DumbService.isDumb(project)) return null;
+    return operation.get();
   }
 }
