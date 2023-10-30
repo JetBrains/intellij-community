@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -692,6 +693,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static @Nullable String createReturnValueTemplate(UExpression expression, @NotNull Predicate<PsiField> predicate) {
     if (expression instanceof ULiteralExpression literalExpression) {
       return String.valueOf(literalExpression.getValue());
+    }
+    else if (expression instanceof UInjectionHost injectionHost) {
+      return injectionHost.evaluateToString();
     }
     else if (expression instanceof UResolvable resolvable) {
       UElement resolved = UResolvableKt.resolveToUElement(resolvable);
