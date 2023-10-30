@@ -354,22 +354,10 @@ public final class SwitchHelper {
         }
         List<CaseValueWithEdge> sorted =
           IntStream.range(0, edges.size()).mapToObj(ind -> new CaseValueWithEdge(caseValue.get(ind), edges.get(ind)))
-            .sorted((o1, o2) -> {
-              Exprent exprent1 = o1.exprent;
-              StatEdge edge1 = o1.edge;
-              Exprent exprent2 = o2.exprent;
-              StatEdge edge2 = o2.edge;
-              if (edge1 == statement.getDefaultEdge()) {
-                return 1;
-              }
-              if (edge2 == statement.getDefaultEdge()) {
-                return -1;
-              }
-              if (exprent1 instanceof ConstExprent constExprent1 && exprent2 instanceof ConstExprent constExprent2) {
-                return constExprent1.getIntValue() - constExprent2.getIntValue();
-              }
-              return 0;
-            }).collect(Collectors.toList());
+            .sorted(
+              Comparator.<CaseValueWithEdge, Boolean>comparing(o -> o.edge == statement.getDefaultEdge())
+                .thenComparingLong(o -> o.exprent instanceof ConstExprent c ? c.getIntValue() : Long.MIN_VALUE))
+            .collect(Collectors.toList());
         sortedEdges.add(sorted.stream().map(t -> t.edge).collect(Collectors.toList()));
         sortedCaseValue.add(sorted.stream().map(t -> t.exprent).collect(Collectors.toList()));
       }
@@ -378,28 +366,11 @@ public final class SwitchHelper {
         .mapToObj(ind -> new FullCase(statement.getCaseStatements().get(ind),
                                       sortedCaseValue.get(ind),
                                       sortedEdges.get(ind)))
-        .sorted((o1, o2) -> {
-          if (o1.exprents.isEmpty()) {
-            return -1;
-          }
-          if (o2.exprents.isEmpty()) {
-            return 1;
-          }
-          Exprent exprent1 = o1.exprents().get(o1.exprents().size() - 1);
-          StatEdge edge1 = o1.edges.get(o1.edges.size() - 1);
-          Exprent exprent2 = o2.exprents().get(o2.exprents().size() - 1);
-          StatEdge edge2 = o2.edges.get(o2.edges.size() - 1);
-          if (edge1 == statement.getDefaultEdge()) {
-            return 1;
-          }
-          if (edge2 == statement.getDefaultEdge()) {
-            return -1;
-          }
-          if (exprent1 instanceof ConstExprent constExprent1 && exprent2 instanceof ConstExprent constExprent2) {
-            return constExprent1.getIntValue() - constExprent2.getIntValue();
-          }
-          return 0;
-        })
+        .sorted(Comparator.<FullCase, Boolean>comparing(
+            fullCase -> !fullCase.edges().isEmpty() && fullCase.edges().get(fullCase.exprents.size() - 1) == statement.getDefaultEdge())
+                  .thenComparingLong(o -> !o.exprents.isEmpty() && o.exprents.get(o.exprents.size() - 1) instanceof ConstExprent c
+                                          ? c.getIntValue()
+                                          : Long.MIN_VALUE))
         .collect(Collectors.toList());
 
       for (int i = 0; i < sortedAll.size(); i++) {
@@ -645,7 +616,7 @@ public final class SwitchHelper {
                                                        @NotNull Exprent typeVar,
                                                        @NotNull Statement doParentStatement,
                                                        @NotNull Set<AssignmentExprent> usedAssignments,
-                                                       List<TempVarAssignmentItem> tempVarAssignments) {
+                                                       @NotNull List<TempVarAssignmentItem> tempVarAssignments) {
       GuardPatternContainer container = new GuardPatternContainer();
       @NotNull List<Statement> statements = statement.getCaseStatements();
       for (int i = 0; i < statements.size(); i++) {
