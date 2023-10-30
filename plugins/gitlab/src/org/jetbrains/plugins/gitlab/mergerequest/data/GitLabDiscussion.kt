@@ -147,7 +147,6 @@ class LoadedGitLabDiscussion(
       withContext(NonCancellable) {
         noteEvents.emit(GitLabNoteEvent.Added(newDiscussion))
       }
-      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_DISCUSSION_NOTE)
     }
   }
 
@@ -160,7 +159,6 @@ class LoadedGitLabDiscussion(
           draftNotesEventSink(GitLabNoteEvent.Added(it))
         }
       }
-      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_DRAFT_DISCUSSION_NOTE)
     }
   }
 

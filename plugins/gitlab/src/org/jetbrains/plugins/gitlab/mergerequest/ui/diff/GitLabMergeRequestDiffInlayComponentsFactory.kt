@@ -14,14 +14,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.ui.comment.*
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.JComponent
 
-object GitLabMergeRequestDiffInlayComponentsFactory {
+internal object GitLabMergeRequestDiffInlayComponentsFactory {
   fun createDiscussion(project: Project,
                        cs: CoroutineScope,
                        avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                       vm: GitLabMergeRequestDiscussionViewModel): JComponent =
-    GitLabDiscussionComponentFactory.create(project, cs, avatarIconsProvider, vm).apply {
+                       vm: GitLabMergeRequestDiscussionViewModel,
+                       place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent =
+    GitLabDiscussionComponentFactory.create(project, cs, avatarIconsProvider, vm, place).apply {
       border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
     }.let {
       CodeReviewCommentUIUtil.createEditorInlayPanel(it)
@@ -31,9 +33,12 @@ object GitLabMergeRequestDiffInlayComponentsFactory {
                           cs: CoroutineScope,
                           avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                           vm: NewGitLabNoteViewModel,
-                          onCancel: () -> Unit): JComponent {
-    val addAction = vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comment.submit"))
-    val addAsDraftAction = vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"))
+                          onCancel: () -> Unit,
+                          place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
+    val addAction = vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comment.submit"),
+                                      project, NewGitLabNoteType.DIFF, place)
+    val addAsDraftAction = vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"),
+                                                    project, NewGitLabNoteType.DIFF, place)
 
     val actions = CommentInputActionsComponentFactory.Config(
       primaryAction = vm.primarySubmitActionIn(cs, addAction, addAsDraftAction),

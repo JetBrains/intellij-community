@@ -272,7 +272,6 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         discussionEvents.emit(GitLabDiscussionEvent.Added(newDiscussion))
       }
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_NOTE)
   }
 
   override suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String) {
@@ -285,7 +284,6 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         discussionEvents.emit(GitLabDiscussionEvent.Added(newDiscussion))
       }
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_DIFF_NOTE)
   }
 
   override suspend fun addDraftNote(body: String) {
@@ -297,7 +295,6 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       withContext(NonCancellable) {
         draftNotesEvents.emit(GitLabNoteEvent.Added(newNote))
       }
-      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_DRAFT_NOTE)
     }
   }
 
@@ -311,7 +308,6 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         draftNotesEvents.emit(GitLabNoteEvent.Added(newNote))
       }
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_DRAFT_DIFF_NOTE)
   }
 
   override suspend fun submitDraftNotes() {

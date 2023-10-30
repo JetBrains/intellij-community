@@ -37,6 +37,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory.createEditActionsConfig
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.Icon
@@ -56,7 +57,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val actionsPanel = GitLabNoteComponentFactory.createActions(cs, vm.mainNote)
 
     val repliesPanel = ComponentListPanelFactory.createVertical(cs, vm.replies, GitLabNoteViewModel::id) { noteCs, noteVm ->
-      GitLabNoteComponentFactory.create(ComponentType.FULL_SECONDARY, project, noteCs, avatarIconsProvider, noteVm)
+      GitLabNoteComponentFactory.create(ComponentType.FULL_SECONDARY, project, noteCs, avatarIconsProvider, noteVm,
+                                        GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
     }.let {
       VerticalListPanel().apply {
         add(it)
@@ -69,7 +71,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
           newNoteVm?.let {
             GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, this, it, vm.resolveVm,
-                                                              avatarIconsProvider)
+                                                              avatarIconsProvider, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
           }
         }
 
@@ -125,7 +127,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       }
 
     val textContentPanel = EditableComponentFactory.create(cs, textPanel, actionAndEditVmsFlow) { (actionsVm, editVm) ->
-      val editor = GitLabNoteEditorComponentFactory.create(project, this, editVm, createEditActionsConfig(actionsVm, editVm))
+      val actions = createEditActionsConfig(actionsVm, editVm, project, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
+      val editor = GitLabNoteEditorComponentFactory.create(project, this, editVm, actions)
       editVm.requestFocus()
       editor
     }.let {

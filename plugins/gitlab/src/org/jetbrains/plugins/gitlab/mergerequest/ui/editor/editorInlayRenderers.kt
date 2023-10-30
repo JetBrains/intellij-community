@@ -10,22 +10,25 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffInlayComponentsFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 @ApiStatus.Internal
-class GitLabMergeRequestDiscussionInlayRenderer(cs: CoroutineScope,
-                                                project: Project,
-                                                vm: GitLabMergeRequestDiscussionViewModel,
-                                                avatarIconsProvider: IconsProvider<GitLabUserDTO>)
+class GitLabMergeRequestDiscussionInlayRenderer internal constructor(cs: CoroutineScope,
+                                                                     project: Project,
+                                                                     vm: GitLabMergeRequestDiscussionViewModel,
+                                                                     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+                                                                     place: GitLabStatistics.MergeRequestNoteActionPlace)
   : CodeReviewComponentInlayRenderer(
-  GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(project, cs, avatarIconsProvider, vm)
+  GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(project, cs, avatarIconsProvider, vm, place)
 )
 
 @ApiStatus.Internal
-class GitLabMergeRequestNewDiscussionInlayRenderer(cs: CoroutineScope,
-                                                   project: Project,
-                                                   vm: NewGitLabNoteViewModel,
-                                                   avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                                   onCancel: () -> Unit)
+class GitLabMergeRequestNewDiscussionInlayRenderer internal constructor(cs: CoroutineScope,
+                                                                        project: Project,
+                                                                        vm: NewGitLabNoteViewModel,
+                                                                        avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+                                                                        place: GitLabStatistics.MergeRequestNoteActionPlace,
+                                                                        onCancel: () -> Unit)
   : CodeReviewComponentInlayRenderer(
-  GitLabMergeRequestDiffInlayComponentsFactory.createNewDiscussion(project, cs, avatarIconsProvider, vm, onCancel)
+  GitLabMergeRequestDiffInlayComponentsFactory.createNewDiscussion(project, cs, avatarIconsProvider, vm, onCancel, place)
 )
