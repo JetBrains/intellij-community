@@ -77,6 +77,12 @@ interface CommitCheck : PossiblyDumbAware {
      */
     LATE,
 
+    /**
+     * Slow checks that can be performed in background after the actual commit.
+     * These can be handled as [LATE] checks in some situations (ex: [git4idea.checkin.GitCommitAndPushExecutor]).
+     *
+     * @see com.intellij.vcs.commit.isPostCommitCheck
+     */
     POST_COMMIT
   }
 }
@@ -151,10 +157,13 @@ interface CommitProblem {
   }
 }
 
+/**
+ * Allows to show a link near the error, that can be used to show more detailed explanation or propose a quick fix for the problem.
+ */
 @ApiStatus.Experimental
 interface CommitProblemWithDetails : CommitProblem {
   /**
-   * If null, [text] will be used instead.
+   * If null, the whole [CommitProblem.text] will become a link.
    */
   val showDetailsLink: @NlsContexts.LinkLabel String? get() = null
 
@@ -172,6 +181,10 @@ class TextCommitProblem(override val text: String) : CommitProblem
 
 interface CommitInfo {
   val commitContext: CommitContext
+
+  /**
+   * Whether commit will be performed using [com.intellij.openapi.vcs.changes.CommitSession.VCS_COMMIT] aka [CheckinEnvironment].
+   */
   val isVcsCommit: Boolean
   val executor: CommitExecutor?
 
