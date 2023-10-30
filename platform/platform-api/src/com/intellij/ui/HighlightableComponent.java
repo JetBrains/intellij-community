@@ -47,9 +47,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
   @Override public void updateUI() {
     GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
-    Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
-    if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
-    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
+    UISettings.setupFractionalMetrics(this);
   }
 
   public void setText(@Nullable @Nls String text) {

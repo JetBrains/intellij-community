@@ -592,6 +592,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, getPreferredFractionalMetricsValue())
     }
 
+    @JvmStatic
+    fun setupFractionalMetrics(component: JComponent) {
+      component.putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, getPreferredFractionalMetricsValue())
+    }
+
     /**
      * This method must not be used for set up antialiasing for editor components. To make sure antialiasing settings are taken into account
      * when preferred size of component is calculated, [.setupComponentAntialiasing] method should be called from
