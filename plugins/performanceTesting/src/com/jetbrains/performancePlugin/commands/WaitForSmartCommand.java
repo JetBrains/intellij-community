@@ -45,7 +45,7 @@ public final class WaitForSmartCommand extends AbstractCommand {
   }
 
   private void completeWhenSmartModeIsLongEnough(@NotNull Project project, @NotNull AsyncPromise<Object> completion) {
-    DumbService.getInstance(project).smartInvokeLater(() -> myAlarm.addRequest(() -> {
+    DumbService.getInstance(project).runWhenSmart(() -> myAlarm.addRequest(() -> {
       if (DumbService.isDumb(project)) {
         completeWhenSmartModeIsLongEnough(project, completion);
       }
