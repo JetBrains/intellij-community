@@ -6,7 +6,6 @@ import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -28,8 +27,6 @@ interface GitLabMergeRequestTimelineViewModel : GitLabMergeRequestViewModel {
 
   val serverUrl: URL
 
-  fun requestLoad()
-
   fun setShowEvents(show: Boolean)
 }
 
@@ -44,7 +41,6 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 ) : GitLabMergeRequestTimelineViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
-  private val loadingRequests = MutableSharedFlow<Unit>(1)
 
   override val number: String = "!${mergeRequest.iid}"
   override val author: GitLabUserDTO = mergeRequest.author
@@ -65,13 +61,6 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
       .mapModelsToViewModels { createItemVm(mergeRequest, it) }
       .asResultFlow()
       .modelFlow(cs, LOG)
-
-  @RequiresEdt
-  override fun requestLoad() {
-    cs.launch {
-      loadingRequests.emit(Unit)
-    }
-  }
 
   override val newNoteVm: NewGitLabNoteViewModel? =
     if (mergeRequest.canAddNotes) {
