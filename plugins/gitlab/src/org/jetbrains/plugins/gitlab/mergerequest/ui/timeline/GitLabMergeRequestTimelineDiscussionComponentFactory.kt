@@ -90,7 +90,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
     val titlePanel = Wrapper().apply {
       bindContentIn(cs, vm.mainNote) { mainNote ->
-        GitLabNoteComponentFactory.createTitle(this, mainNote)
+        GitLabNoteComponentFactory.createTitle(this, mainNote, project, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
       }
     }
 
