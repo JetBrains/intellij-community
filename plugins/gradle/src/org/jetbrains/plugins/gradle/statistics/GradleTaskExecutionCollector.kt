@@ -24,7 +24,7 @@ class GradleTaskExecutionCollector : CounterUsagesCollector() {
     val FROM_CACHE_DURATION_MS: EventField<Long> = EventFields.Long("sum_duration_from_cache_ms")
     val FAILED_COUNT: EventField<Int> = EventFields.Int("failed_count")
 
-    val GROUP: EventLogGroup = EventLogGroup("build.gradle.performance", 1)
+    val GROUP: EventLogGroup = EventLogGroup("build.gradle.performance", 2)
     val TASK_EXECUTED: VarargEventId = GROUP.registerVarargEvent(
       "task.executed", EXTERNAL_TASK_ID, SUM_DURATION_MS, NAME, GRADLE_PLUGIN, UP_TO_DATE_COUNT, FROM_CACHE_COUNT, EventFields.Count,
       UP_TO_DATE_DURATION_MS, FROM_CACHE_DURATION_MS, FAILED_COUNT
