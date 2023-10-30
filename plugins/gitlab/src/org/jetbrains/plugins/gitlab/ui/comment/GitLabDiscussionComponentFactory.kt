@@ -64,7 +64,7 @@ internal object GitLabDiscussionComponentFactory {
               newNoteVm?.let {
                 createReplyField(ComponentType.COMPACT, project, this, newNoteVm, vm.resolveVm, avatarIconsProvider, place,
                                  swingAction("") { replyVm.stopWriting() })
-              } ?: createReplyActionsPanel(replyVm, vm.resolveVm).apply {
+              } ?: createReplyActionsPanel(replyVm, vm.resolveVm, project, place).apply {
                 border = JBUI.Borders.empty(8, ComponentType.COMPACT.fullLeftShift)
               }
             }
@@ -85,6 +85,7 @@ internal object GitLabDiscussionComponentFactory {
     val resolveAction = resolveVm?.takeIf { it.canResolve }?.let {
       swingAction(CollaborationToolsBundle.message("review.comments.resolve.action")) {
         resolveVm.changeResolvedState()
+        GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CHANGE_DISCUSSION_RESOLVE, place)
       }
     }?.apply {
       bindEnabledIn(cs, resolveVm.busy.inverted())
@@ -115,7 +116,9 @@ internal object GitLabDiscussionComponentFactory {
   }
 
   private fun CoroutineScope.createReplyActionsPanel(replyVm: GitLabDiscussionReplyViewModel,
-                                                     resolveVm: GitLabDiscussionResolveViewModel?): JComponent {
+                                                     resolveVm: GitLabDiscussionResolveViewModel?,
+                                                     project: Project,
+                                                     place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
     val replyLink = ActionLink(CollaborationToolsBundle.message("review.comments.reply.action")) {
       replyVm.startWriting()
     }.apply {
@@ -127,14 +130,16 @@ internal object GitLabDiscussionComponentFactory {
       add(replyLink)
 
       if (resolveVm != null && resolveVm.canResolve) {
-        createUnResolveLink(cs, resolveVm).also(::add)
+        createUnResolveLink(cs, resolveVm, project, place).also(::add)
       }
     }
   }
 
-  fun createUnResolveLink(cs: CoroutineScope, vm: GitLabDiscussionResolveViewModel): JComponent =
+  fun createUnResolveLink(cs: CoroutineScope, vm: GitLabDiscussionResolveViewModel,
+                          project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent =
     ActionLink("") {
       vm.changeResolvedState()
+      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CHANGE_DISCUSSION_RESOLVE, place)
     }.apply {
       autoHideOnDisable = false
       isFocusPainted = false
