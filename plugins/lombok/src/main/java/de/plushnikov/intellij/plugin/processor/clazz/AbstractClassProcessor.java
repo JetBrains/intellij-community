@@ -52,7 +52,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
       && validate(psiAnnotation, psiClass, new ProblemProcessingSink())
     ) {
       result = new ArrayList<>();
-      generatePsiElements(psiClass, psiAnnotation, result);
+      generatePsiElements(psiClass, psiAnnotation, result, nameHint);
     }
     return result;
   }
@@ -131,7 +131,10 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder);
 
-  protected abstract void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
+  protected abstract void generatePsiElements(@NotNull PsiClass psiClass,
+                                              @NotNull PsiAnnotation psiAnnotation,
+                                              @NotNull List<? super PsiElement> target,
+                                              @Nullable String nameHint);
 
   static void validateOfParam(PsiClass psiClass, ProblemSink builder, PsiAnnotation psiAnnotation, Collection<String> ofProperty) {
     for (String fieldName : ofProperty) {
