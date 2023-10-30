@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.util.UastExpressionUtils;
 
+import java.util.List;
+
 public final class StringFlowUtil {
 
   /**
@@ -59,8 +61,9 @@ public final class StringFlowUtil {
       }
       UExpression next = ObjectUtils.tryCast(parentElement, UExpression.class);
       if (next == null || next instanceof UNamedExpression) return parent;
-      if (next instanceof USwitchClauseExpression) {
-        if (((USwitchClauseExpression)next).getCaseValues().contains(AnnotationContext.normalize(parent))) return parent;
+      if (next instanceof USwitchClauseExpression switchClause) {
+        List<UExpression> caseValues = ContainerUtil.map(switchClause.getCaseValues(), caseValue -> AnnotationContext.normalize(caseValue));
+        if (caseValues.contains(AnnotationContext.normalize(parent))) return parent;
         UExpressionList switchBody = ObjectUtils.tryCast(next.getUastParent(), UExpressionList.class);
         if (switchBody == null) return parent;
         USwitchExpression switchExpression = ObjectUtils.tryCast(switchBody.getUastParent(), USwitchExpression.class);

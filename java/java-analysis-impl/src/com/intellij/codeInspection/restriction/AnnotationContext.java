@@ -5,6 +5,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -293,8 +294,9 @@ public final class AnnotationContext {
         }
       }
     }
-    else if (parent instanceof USwitchClauseExpression) {
-      if (((USwitchClauseExpression)parent).getCaseValues().contains(normalize(expression))) {
+    else if (parent instanceof USwitchClauseExpression switchClause) {
+      List<UExpression> caseValues = ContainerUtil.map(switchClause.getCaseValues(), caseValue -> normalize(caseValue));
+      if (caseValues.contains(normalize(expression))) {
         USwitchExpression switchExpression = UastUtils.getParentOfType(parent, USwitchExpression.class);
         if (switchExpression != null) {
           UExpression selector = switchExpression.getExpression();
