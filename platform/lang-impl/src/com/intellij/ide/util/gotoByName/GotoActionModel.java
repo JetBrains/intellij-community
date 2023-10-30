@@ -225,7 +225,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @Nullable
     @VisibleForTesting
     public String getValueText() {
-      return GotoActionItemProvider.getActionText(value);
+      return ActionSearchUtilKt.getActionText(value);
     }
 
     @Nullable
@@ -680,7 +680,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
           return myModel.getUpdateSession().presentation(myAction);
         })
         .executeSynchronously();
-      myActionText = GotoActionItemProvider.getActionText(action);
+      myActionText = ActionSearchUtilKt.getActionText(action);
     }
 
     public ActionWrapper(@NotNull AnAction action,
@@ -693,7 +693,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       myGroupMapping = groupMapping;
       myModel = model;
       myPresentation = presentation;
-      myActionText = GotoActionItemProvider.getActionText(action);
+      myActionText = ActionSearchUtilKt.getActionText(action);
     }
 
     public String getActionText() {

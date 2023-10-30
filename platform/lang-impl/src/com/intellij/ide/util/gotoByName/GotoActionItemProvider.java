@@ -10,7 +10,10 @@ import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AbbreviationManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,19 +24,14 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.codeStyle.WordPrefixMatcher;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.DefaultBundleService;
 import com.intellij.util.Processor;
 import com.intellij.util.text.Matcher;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -42,9 +40,11 @@ import java.util.stream.Stream;
 
 import static com.intellij.ide.util.gotoByName.GotoActionModel.*;
 
+/**
+ * @deprecated This class is marked for removal and should not be used. Please use {@link ActionAsyncProvider} instead
+ */
+@Deprecated(forRemoval = true)
 public final class GotoActionItemProvider implements ChooseByNameWeightedItemProvider {
-  private static final int BONUS_FOR_SPACE_IN_PATTERN = 100;
-  private static final int SETTINGS_PENALTY = 100;
 
   private final ActionManager myActionManager = ActionManager.getInstance();
   private final GotoActionModel myModel;
@@ -173,7 +173,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
       }
     }
     if (!Strings.isEmptyOrSpaces(pattern)) {
-      Matcher matcher = buildMatcher(pattern);
+      Matcher matcher = ActionSearchUtilKt.buildMatcher(pattern);
       if (optionDescriptions == null) {
         optionDescriptions = new HashSet<>();
       }
@@ -211,7 +211,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
   public boolean processActions(String pattern, Predicate<? super MatchedValue> consumer, @NotNull Set<String> ids) {
     Stream<AnAction> actions = ids.stream().map(myActionManager::getAction).filter(Objects::nonNull);
-    Matcher matcher = buildMatcher(pattern);
+    Matcher matcher = ActionSearchUtilKt.buildMatcher(pattern);
 
     QuickActionProvider provider = myModel.getDataContext().getData(QuickActionProvider.KEY);
     if (provider != null) {
@@ -239,13 +239,8 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     myIntentions.drop();
   }
 
-  @NotNull
-  static Matcher buildMatcher(String pattern) {
-    return pattern.contains(" ") ? new WordPrefixMatcher(pattern) : NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
-  }
-
   private boolean processIntentions(String pattern, Predicate<? super MatchedValue> consumer) {
-    Matcher matcher = buildMatcher(pattern);
+    Matcher matcher = ActionSearchUtilKt.buildMatcher(pattern);
     Map<@ActionText String, ApplyIntentionAction> intentionMap = myIntentions.getValue();
     Stream<ActionWrapper> intentions = intentionMap.keySet().stream()
       .map(intentionText -> {
@@ -275,7 +270,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         return (MatchedValue)o;
       }
 
-      Integer weight = calcElementWeight(o, pattern, matcher);
+      Integer weight = ActionSearchUtilKt.calcElementWeight(o, pattern, matcher);
       return weight == null ? new MatchedValue(o, pattern, type) : new MatchedValue(o, pattern, weight, type);
     }).collect(Collectors.toList());
 
@@ -294,69 +289,10 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     return true;
   }
 
-  static @Nullable Integer calcElementWeight(Object element, String pattern, MinusculeMatcher matcher) {
-    Integer degree = calculateDegree(matcher, getActionText(element));
-    if (degree == null) return null;
-
-    if (degree == 0) {
-      degree = calculateDegree(matcher, DefaultBundleService.getInstance().compute(() -> getAnActionOriginalText(getAction(element))));
-      if (degree == null) return null;
-    }
-
-    if (pattern.trim().contains(" ")) degree += BONUS_FOR_SPACE_IN_PATTERN;
-    if (element instanceof OptionDescription && degree > 0) degree -= SETTINGS_PENALTY;
-
-    return Math.max(degree, 0);
-  }
-
-  @Nullable
-  static Integer calculateDegree(MinusculeMatcher matcher, @Nullable String text) {
-    if (text == null) return null;
-    return matcher.matchingDegree(text);
-  }
-
   private static MinusculeMatcher buildWeightMatcher(String pattern) {
     return NameUtil.buildMatcher("*" + pattern)
       .withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE)
       .preferringStartMatches()
       .build();
-  }
-
-  @Nullable
-  @Nls
-  public static String getActionText(Object value) {
-    if (value instanceof OptionDescription) return ((OptionDescription)value).getHit();
-    if (value instanceof AnAction) return getAnActionText((AnAction)value);
-    if (value instanceof ActionWrapper) return getAnActionText(((ActionWrapper)value).getAction());
-    return null;
-  }
-
-  @Nullable
-  private static AnAction getAction(Object value) {
-    if (value instanceof AnAction) {
-      return (AnAction)value;
-    }
-    else if (value instanceof ActionWrapper) {
-      return ((ActionWrapper)value).getAction();
-    }
-    return null;
-  }
-
-  @Nullable
-  @Nls
-  public static String getAnActionText(AnAction value) {
-    Presentation presentation = value.getTemplatePresentation().clone();
-    value.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
-    return presentation.getText();
-  }
-
-  private static @Nullable String getAnActionOriginalText(@Nullable AnAction value) {
-    if (value == null) return null;
-    Presentation presentation = value.getTemplatePresentation().clone();
-    value.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
-    TextWithMnemonic mnemonic = presentation.getTextWithPossibleMnemonic().get();
-    if (mnemonic == null) return null;
-
-    return mnemonic.getText();
   }
 }
