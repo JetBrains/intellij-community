@@ -139,8 +139,6 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
 
   fun getCachedFileStorages(): Set<StateStorage> = storageLock.read { storages.values.toSet() }
 
-  fun findCachedFileStorage(name: String): StateStorage? = storageLock.read { storages.get(name) }
-
   fun getCachedFileStorages(changed: Collection<String>,
                             deleted: Collection<String>,
                             pathNormalizer: ((String) -> String)? = null): Pair<Collection<FileBasedStorage>, Collection<FileBasedStorage>> {
