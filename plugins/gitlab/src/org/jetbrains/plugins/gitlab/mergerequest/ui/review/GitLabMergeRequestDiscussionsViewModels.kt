@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.ui.comment.*
 
 private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiscussionViewModel>>
@@ -43,15 +44,8 @@ interface GitLabMergeRequestDiscussionsViewModels {
   }
 }
 
-fun GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition.mapToLocation(diffData: GitTextFilePatchWithHistory): DiffLineLocation? {
-  val revision = side.select(position.startSha, position.headSha) ?: return null
-  val lineIndex = side.select(position.oldLineIndex, position.newLineIndex) ?: return null
-
-  if ((position.paths.oldPath != null && !diffData.contains(position.startSha, position.paths.oldPath)) &&
-      (position.paths.newPath != null && !diffData.contains(position.headSha, position.paths.newPath))) return null
-
-  return diffData.mapLine(revision, lineIndex, side)
-}
+fun GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition.mapToLocation(diffData: GitTextFilePatchWithHistory): DiffLineLocation? =
+  position.mapToLocation(diffData, side)
 
 private val LOG = logger<GitLabMergeRequestDiscussionsViewModelsImpl>()
 
