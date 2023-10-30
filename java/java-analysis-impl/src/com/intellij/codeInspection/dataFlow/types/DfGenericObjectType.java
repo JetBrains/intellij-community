@@ -182,7 +182,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
   @Override
   public boolean isMergeable(@NotNull DfType other) {
     if (!isSuperType(other)) return false;
-    if (getNullability() == DfaNullability.UNKNOWN) {
+    if (getNullability() == DfaNullability.UNKNOWN || getNullability() == DfaNullability.FLUSHED) {
       DfaNullability otherNullability = DfaNullability.fromDfType(other);
       return otherNullability != DfaNullability.NULL && otherNullability != DfaNullability.NULLABLE;
     }

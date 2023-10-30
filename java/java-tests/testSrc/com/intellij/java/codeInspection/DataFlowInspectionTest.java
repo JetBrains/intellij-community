@@ -735,4 +735,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testSystemOutNullSource() { doTest(); }
   public void testPrimitiveTypeFieldInWrapper() { doTest(); }
   public void testNullWarningAfterInstanceofCheck() { doTest(); }
+  public void testNullWarningAfterInstanceofAndNullCheck() { doTest(); }
 }
