@@ -223,8 +223,3 @@ fun MultiplePluginVersionGradleImportingTestCase.nativeDistLibraryDependency(
     return Regex("$namePart$platformPart")
 }
 
-fun setKgpImportInGradlePropertiesFile(projectRoot: VirtualFile, enableKgpDependencyResolution: Boolean) {
-    VfsUtil.virtualToIoFile(projectRoot).resolve("gradle.properties").apply {
-        appendText("\nkotlin.mpp.import.enableKgpDependencyResolution=$enableKgpDependencyResolution")
-    }
-}
