@@ -10,6 +10,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class PatternHelper {
 
@@ -23,10 +24,11 @@ public final class PatternHelper {
    */
   public static void replaceAssignmentsWithPatternVariables(@NotNull RootStatement statement, @NotNull StructClass structClass) {
     if (!structClass.hasPatternsInInstanceofSupport()) return;
-    // todo VarExprent overrides equals, but not hashCode, duplicates are possible
     Map<VarExprent, Statement> tempVarAssignments = new HashMap<>();
     replaceAssignmentsWithPatternVariables(statement, tempVarAssignments);
-    SwitchHelper.removeTempVariableDeclarations(tempVarAssignments);
+    SwitchHelper.removeTempVariableDeclarations(tempVarAssignments.entrySet().stream()
+                                                  .map(entry->new SwitchHelper.TempVarAssignmentItem(entry.getKey(), entry.getValue()))
+                                                  .collect(Collectors.toList()));
   }
 
   private static void replaceAssignmentsWithPatternVariables(@NotNull Statement statement,

@@ -15,7 +15,7 @@ public class TestSwitchClassReferencesJavac {
          case null -> System.out.println("null");// 18
          case String var3 -> System.out.println("s");// 15
          case Integer var4 -> System.out.println("i");// 16
-         case Object ignored -> System.out.println(o);// 17
+         case Object var6 -> System.out.println(o);// 17
       }
 
    }// 20

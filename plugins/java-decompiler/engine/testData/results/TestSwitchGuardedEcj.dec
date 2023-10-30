@@ -39,13 +39,16 @@ public class TestSwitchGuardedEcj {
             switch (o) {// 31
                case String var3 when var3.isEmpty() && var3.getBytes().length == 2:// 32
                   System.out.println("empty s");// 33
+                  break;// 34
                case String var4:
                   System.out.println("s");// 36
                   continue label33;// 37
                case Integer var5:
                   System.out.println("i");// 39
+                  break;// 40
                default:
                   System.out.println(o);// 42
+                  break;// 45
             }
          }
 
@@ -115,22 +118,25 @@ class 'pkg/TestSwitchGuardedEcj' {
       4a      40
       4d      40
       4f      40
-      5b      42
-      5e      42
-      60      42
-      63      43
-      6c      45
-      6f      45
-      71      45
-      7a      47
-      7e      47
+      52      41
+      5b      43
+      5e      43
+      60      43
+      63      44
+      6c      46
+      6f      46
+      71      46
+      74      47
+      7a      49
+      7e      49
+      81      50
       85      37
       88      37
       89      37
-      8c      51
-      8f      51
-      91      51
-      94      52
+      8c      54
+      8f      54
+      91      54
+      94      55
    }
 }
 
@@ -153,16 +159,16 @@ Lines mapping:
 31 <-> 39
 32 <-> 40
 33 <-> 41
-36 <-> 43
-37 <-> 44
-39 <-> 46
-42 <-> 48
-47 <-> 52
-48 <-> 53
+34 <-> 42
+36 <-> 44
+37 <-> 45
+39 <-> 47
+40 <-> 48
+42 <-> 50
+45 <-> 51
+47 <-> 55
+48 <-> 56
 Not mapped:
-34
 35
 38
-40
 41
-45

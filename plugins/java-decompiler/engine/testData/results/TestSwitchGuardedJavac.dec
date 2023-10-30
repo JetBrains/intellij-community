@@ -39,13 +39,16 @@ public class TestSwitchGuardedJavac {
             switch (o) {// 31
                case String var3 when var3.isEmpty() && var3.getBytes().length == 2:// 32
                   System.out.println("empty s");// 33
+                  break;// 34
                case String var4:
                   System.out.println("s");// 36
                   continue label33;// 37
                case Integer var5:
                   System.out.println("i");// 39
+                  break;// 40
                default:
                   System.out.println(o);// 42
+                  break;// 43
             }
          }
 
@@ -118,19 +121,22 @@ class 'pkg/TestSwitchGuardedJavac' {
       4e      40
       51      40
       53      40
-      5f      42
-      62      42
-      64      42
-      67      43
-      70      45
-      73      45
-      75      45
-      7e      47
-      82      47
-      8b      51
-      8e      51
-      90      51
-      93      52
+      56      41
+      5f      43
+      62      43
+      64      43
+      67      44
+      70      46
+      73      46
+      75      46
+      78      47
+      7e      49
+      82      49
+      85      50
+      8b      54
+      8e      54
+      90      54
+      93      55
    }
 }
 
@@ -153,17 +159,17 @@ Lines mapping:
 31 <-> 39
 32 <-> 40
 33 <-> 41
-36 <-> 43
-37 <-> 44
-39 <-> 46
-42 <-> 48
-47 <-> 52
-48 <-> 53
+34 <-> 42
+36 <-> 44
+37 <-> 45
+39 <-> 47
+40 <-> 48
+42 <-> 50
+43 <-> 51
+47 <-> 55
+48 <-> 56
 Not mapped:
-34
 35
 38
-40
 41
-43
 45
