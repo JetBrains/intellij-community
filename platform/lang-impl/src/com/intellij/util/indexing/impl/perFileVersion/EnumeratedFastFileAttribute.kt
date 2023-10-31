@@ -7,17 +7,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.util.io.*
-import com.intellij.util.io.outputStream
-import com.jetbrains.rd.util.parseLong
-import com.jetbrains.rd.util.putLong
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.Closeable
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.*
-import kotlin.io.path.exists
-import kotlin.io.path.inputStream
 
 /**
  * A class that allows associating enumerable objects and virtual files.
@@ -55,9 +50,13 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
     this(exclusiveDir, attribute, descriptorForCache, FSRecords.getCreationTimestamp(), createEnumerator)
 
   init {
+    val vfsChecker = VfsCreationStampChecker(getVfsCreationTimestampFile())
     assert(!exclusiveDir.isRegularFile()) { "$exclusiveDir should be a directory, or non-existing path" }
 
-    cleanupIfVfsCreationStampMismatch(expectedVfsCreationTimestamp)
+    vfsChecker.runIfVfsCreationStampMismatch(expectedVfsCreationTimestamp) { cleanupReason ->
+      thisLogger().info("Clear $exclusiveDir. Reason: $cleanupReason")
+      FileUtil.deleteWithRenamingIfExists(exclusiveDir)
+    }
 
     val persistentEnumerator = createEnumerator(getEnumeratorFile())
     closer.register(persistentEnumerator)
@@ -66,16 +65,7 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
     baseAttribute = IntFileAttribute.overFastAttribute(attribute, getAttributesFile())
     closer.register(baseAttribute)
 
-    createVfsTimestampMarkerFileIfAbsent(expectedVfsCreationTimestamp)
-  }
-
-  private fun createVfsTimestampMarkerFileIfAbsent(expectedVfsCreationTimestamp: Long) {
-    val vfsCreationTimestampFile = getVfsCreationTimestampFile()
-    if (!vfsCreationTimestampFile.isRegularFile()) {
-      val expectedVfsCreationTimestampBytes = ByteArray(Long.SIZE_BYTES)
-      expectedVfsCreationTimestampBytes.putLong(expectedVfsCreationTimestamp, 0)
-      vfsCreationTimestampFile.outputStream().use { out -> out.write(expectedVfsCreationTimestampBytes) }
-    }
+    vfsChecker.createVfsTimestampMarkerFileIfAbsent(expectedVfsCreationTimestamp)
   }
 
   private fun getAttributesFile(): Path = exclusiveDir.resolve("attributes")
@@ -83,34 +73,6 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
   private fun getEnumeratorFile(): Path = exclusiveDir.resolve("enumerator")
 
   private fun getVfsCreationTimestampFile(): Path = exclusiveDir.resolve("vfs.stamp")
-
-  private fun cleanupIfVfsCreationStampMismatch(expectedVfsCreationTimestamp: Long) {
-    if (exclusiveDir.exists()) {
-      // directory exists. Check VFS creation timestamp and drop the file if it is outdated
-      val vfsCreationTimestampPath = getVfsCreationTimestampFile()
-      var cleanupReason: String? = null
-      if (vfsCreationTimestampPath.isRegularFile()) {
-        val read = vfsCreationTimestampPath.inputStream().use { it.readNBytes(Long.SIZE_BYTES) }
-        if (read.size != Long.SIZE_BYTES) {
-          cleanupReason = "$vfsCreationTimestampPath has only ${read.size} bytes (${read.toList()})"
-        }
-        else {
-          val storedTimestamp = read.parseLong(0)
-          if (expectedVfsCreationTimestamp != storedTimestamp) {
-            cleanupReason = "expected VFS creation timestamp = $expectedVfsCreationTimestamp, stored VFS creation timestamp = $storedTimestamp"
-          }
-        }
-      }
-      else {
-        cleanupReason = "$vfsCreationTimestampPath is not a file"
-      }
-
-      if (cleanupReason != null) {
-        thisLogger().info("Clear $exclusiveDir. Reason: $cleanupReason")
-        FileUtil.deleteWithRenamingIfExists(exclusiveDir)
-      }
-    }
-  }
 
   @Throws(IOException::class)
   fun readEnumerated(fileId: Int): T? {
