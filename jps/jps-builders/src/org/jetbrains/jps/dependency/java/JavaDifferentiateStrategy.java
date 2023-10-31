@@ -595,10 +595,10 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
           if (!(id instanceof JvmNodeReferenceID)) {
             continue;
           }
-          JvmNodeReferenceID clsId = (JvmNodeReferenceID)id;
+          JvmNodeReferenceID subClass = (JvmNodeReferenceID)id;
 
           String affectReason = null;
-          for (JvmClass cl : future.getNodes(clsId, JvmClass.class)) {
+          for (JvmClass cl : future.getNodes(subClass, JvmClass.class)) {
             if (cl.isLocal()) {
               affectReason = "Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ";
               break;
@@ -616,14 +616,13 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
           }
 
           if (affectReason != null) {
-            affectNodeSources(context, clsId, affectReason);
+            affectNodeSources(context, subClass, affectReason);
           }
 
-          debug("Affecting field usages referenced from subclass ", id);
-          Set<JvmNodeReferenceID> propagated = future.collectSubclassesWithoutField(clsId, addedField.getName());
-          affectMemberUsages(context, clsId, addedField, propagated);
+          debug("Affecting field usages referenced from subclass ", subClass.getNodeName());
+          affectMemberUsages(context, subClass, addedField, Collections.emptyList());
           if (addedField.isStatic()) {
-            affectStaticMemberOnDemandUsages(context, clsId, propagated);
+            affectStaticMemberOnDemandUsages(context, subClass, Collections.emptyList());
           }
         }
       }
@@ -877,7 +876,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
       context,
       "static member on-demand import usage",
       Iterators.flat(Iterators.asIterable(clsId), propagated),
-      id -> new ImportStaticOnDemandUsage(id.getNodeName()),
+      id -> new ImportStaticOnDemandUsage(id),
       null
     );
   }

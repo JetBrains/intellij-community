@@ -1695,10 +1695,9 @@ public final class Mappings {
             }
 
             debug("Affecting field usages referenced from subclass ", subClass);
-            final IntSet propagated = myFuture.propagateFieldAccess(addedField.name, subClass);
-            myFuture.affectFieldUsages(addedField, propagated, addedField.createUsage(myContext, subClass), state.myAffectedUsages, state.myDependants);
+            myFuture.affectFieldUsages(addedField, IntSet.of(), addedField.createUsage(myContext, subClass), state.myAffectedUsages, state.myDependants);
             if (addedField.isStatic()) {
-              myFuture.affectStaticMemberOnDemandUsages(subClass, propagated, state.myAffectedUsages, state.myDependants);
+              myFuture.affectStaticMemberOnDemandUsages(subClass, IntSet.of(), state.myAffectedUsages, state.myDependants);
             }
             myFuture.appendDependents(subClass, state.myDependants);
           });
