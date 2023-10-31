@@ -47,7 +47,7 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
       }
 
       isOpaque = false
-      border = JBUI.Borders.emptyBottom(20)
+      border = JBUI.Borders.empty(30, 0, 20, 0)
     })
 
 
@@ -82,7 +82,7 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
         cn.gridy = 1
         add(HLabel(to.item.name).label, cn)
 
-        border = JBUI.Borders.emptyBottom(20)
+        border = JBUI.Borders.emptyBottom(18)
 
       })
     }
@@ -95,7 +95,7 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
         preferredWidth = JBUI.scale(280)
       })
 
-      val hLabel = HLabel("")
+      val hLabel = CommentLabel("")
       importFromProduct.progress.progressMessage.advise(Lifetime.Eternal) {
         hLabel.text = if (it != null) "<center>$it</center>" else "&nbsp"
       }
@@ -145,7 +145,7 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
     return arrayOf()
   }
 
-  private class HLabel(txt: String) {
+  private open class HLabel(txt: String) {
     var text: @NlsContexts.Label String = ""
       set(value) {
         if (field == value) return
@@ -156,8 +156,12 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
     private val lbl = object : JLabel() {
       override fun getPreferredSize(): Dimension {
         val preferredSize = super.getPreferredSize()
-        return Dimension(0, preferredSize.height)
+        return getPref(preferredSize.height)
       }
+    }
+
+    protected open fun getPref(prefH: Int): Dimension {
+      return Dimension(0, prefH)
     }
 
     val label: JComponent
@@ -169,7 +173,14 @@ class ImportProgressDialog(importFromProduct: DialogImportData): PageProvider(fa
       lbl.isOpaque = false
       lbl.minimumWidth = 10
       lbl.horizontalAlignment = SwingConstants.CENTER
+      lbl.verticalAlignment = SwingConstants.TOP
       text = txt
+    }
+  }
+
+  private class CommentLabel(txt: String) : HLabel(txt) {
+    override fun getPref(prefH: Int): Dimension {
+      return Dimension(0, Math.max(prefH, JBUI.scale(45)))
     }
   }
 }

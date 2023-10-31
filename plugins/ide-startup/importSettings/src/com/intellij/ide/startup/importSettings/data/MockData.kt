@@ -177,19 +177,18 @@ class TestJbService : JbService {
     )
 
     val icon
-      get()  = list.get(Random.nextInt(list.size - 1))[2]
+      get() = list.get(Random.nextInt(list.size - 1))[2]
     val importFromProduct = TestImportFromProduct(DialogImportItem(from, icon),
-                                                                   DialogImportItem(to, icon), progress)
+                                                  DialogImportItem(to, icon), progress)
 
 
     val simpleImport = TestSimpleImport("From Config or Installation Directory", progress)
 
 
-
     private val map = mutableMapOf<String, List<Icon>>()
 
     fun getProductIcon(itemId: String, size: IconProductSize): Icon {
-      val icons = map.getOrPut(itemId, {list.get(Random.nextInt(list.size - 1))})
+      val icons = map.getOrPut(itemId, { list.get(Random.nextInt(list.size - 1)) })
 
       return when (size) {
         IconProductSize.SMALL -> icons.get(0)
@@ -351,7 +350,8 @@ class TestImportProgress(lifetime: Lifetime) : ImportProgress {
   override val progress = OptProperty<Int>()
 
   private var value: Int = 0
-  private val list = listOf("Plugins: Docker", "Connect to WebApp", "Connect", "Show configuration on toolbar")
+  private val list = listOf("Plugins: Docker", "Show configuration on toolbar", "Connect to WebApp",
+                            "Show configuration on toolbar Show configuration on toolbar", "Connect", "Show configuration on toolbar")
   private var index = 0
 
   init {
