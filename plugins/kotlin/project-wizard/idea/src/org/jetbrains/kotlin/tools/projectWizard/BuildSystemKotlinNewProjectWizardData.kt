@@ -12,15 +12,10 @@ interface BuildSystemKotlinNewProjectWizardData: BuildSystemNewProjectWizardData
         /**
          * Note that these paths and file names are hardcoded in "Maven Kotlin Project.xml.ft"
          */
-        const val SRC_MAIN_KOTLIN_PATH = "/src/main/kotlin"
-        const val SRC_MAIN_RESOURCES_PATH = "/src/main/resources"
-        const val SRC_TEST_KOTLIN_PATH = "/src/test/kotlin"
-        const val SRC_TEST_RESOURCES_PATH = "/src/test/resources"
-        const val SOURCE_PATH = "src/main/kotlin/Main.kt"
-
-        const val KOTLIN_SAMPLE_FILE_TEMPLATE_NAME = "KotlinSampleCode"
-
-        const val PACKAGE_NAME_KEY = "PACKAGE_NAME"
+        const val SRC_MAIN_KOTLIN_PATH = "src/main/kotlin"
+        const val SRC_MAIN_RESOURCES_PATH = "src/main/resources"
+        const val SRC_TEST_KOTLIN_PATH = "src/test/kotlin"
+        const val SRC_TEST_RESOURCES_PATH = "src/test/resources"
 
         val KEY = Key.create<BuildSystemKotlinNewProjectWizardData>(BuildSystemKotlinNewProjectWizardData::class.java.name)
 

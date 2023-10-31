@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.tools.projectWizard.maven
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChangedEvent
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
-import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
+import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -22,9 +23,6 @@ import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard.Companion.DEFAULT_KOTLIN_VERSION
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData
-import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.KOTLIN_SAMPLE_FILE_TEMPLATE_NAME
-import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.PACKAGE_NAME_KEY
-import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SOURCE_PATH
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_MAIN_KOTLIN_PATH
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_MAIN_RESOURCES_PATH
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_KOTLIN_PATH
@@ -32,6 +30,7 @@ import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizar
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard.Companion.getKotlinWizardVersion
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion
+import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
 import java.nio.file.Path
 
@@ -47,13 +46,23 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
     class Step(parent: KotlinNewProjectWizard.Step) :
         MavenNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent),
-        BuildSystemKotlinNewProjectWizardData by parent
+        BuildSystemKotlinNewProjectWizardData by parent,
+        MavenKotlinNewProjectWizardData
     {
 
-        private val addSampleCodeProperty = propertyGraph.property(true)
+        init {
+            data.putUserData(MavenKotlinNewProjectWizardData.KEY, this)
+        }
+
+        override val addSampleCodeProperty = propertyGraph.property(true)
             .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
-        val addSampleCode by addSampleCodeProperty
+        override var addSampleCode by addSampleCodeProperty
+
+        override val generateOnboardingTipsProperty = propertyGraph.property(AssetsJavaNewProjectWizardStep.proposeToGenerateOnboardingTipsByDefault())
+            .bindBooleanStorage(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME)
+
+        override var generateOnboardingTips by generateOnboardingTipsProperty
 
         private fun setupSampleCodeUI(builder: Panel) {
             builder.row {
@@ -63,10 +72,21 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             }
         }
 
+        private fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) {
+            builder.indent {
+                row {
+                    checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
+                        .bindSelected(generateOnboardingTipsProperty)
+                        .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
+                }
+            }.enabledIf(addSampleCodeProperty)
+        }
+
         override fun setupSettingsUI(builder: Panel) {
             setupJavaSdkUI(builder)
             setupParentsUI(builder)
             setupSampleCodeUI(builder)
+            setupSampleCodeWithOnBoardingTipsUI(builder)
         }
 
         override fun setupAdvancedSettingsUI(builder: Panel) {
@@ -114,7 +134,9 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
         }
     }
 
-    private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
+    private class AssetsStep(private val parent: Step) : AssetsKotlinNewProjectWizardStep(parent) {
+
+        private fun shouldAddOnboardingTips(): Boolean = parent.addSampleCode && parent.generateOnboardingTips
 
         override fun setupAssets(project: Project) {
             if (context.isCreatingNewProject) {
@@ -122,27 +144,20 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             }
             createKotlinContentRoots()
             if (parent.addSampleCode) {
-                withKotlinSampleCode(parent.groupId)
+                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldAddOnboardingTips())
             }
         }
 
         private fun createKotlinContentRoots() {
             val directories = listOf(
-                "$outputDirectory$SRC_MAIN_KOTLIN_PATH",
-                "$outputDirectory$SRC_MAIN_RESOURCES_PATH",
-                "$outputDirectory$SRC_TEST_KOTLIN_PATH",
-                "$outputDirectory$SRC_TEST_RESOURCES_PATH",
+                "$outputDirectory/$SRC_MAIN_KOTLIN_PATH",
+                "$outputDirectory/$SRC_MAIN_RESOURCES_PATH",
+                "$outputDirectory/$SRC_TEST_KOTLIN_PATH",
+                "$outputDirectory/$SRC_TEST_RESOURCES_PATH",
             )
             directories.forEach {
                 Path.of(it).createDirectories()
             }
-        }
-
-        private fun withKotlinSampleCode(packageName: String) {
-            addTemplateAsset(SOURCE_PATH, KOTLIN_SAMPLE_FILE_TEMPLATE_NAME, buildMap {
-                put(PACKAGE_NAME_KEY, packageName)
-            })
-            addFilesToOpen(SOURCE_PATH)
         }
     }
 }

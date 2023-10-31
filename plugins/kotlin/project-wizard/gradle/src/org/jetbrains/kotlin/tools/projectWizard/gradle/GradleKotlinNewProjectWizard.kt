@@ -265,10 +265,10 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
     private class AssetsStep(private val parent: Step) : AssetsKotlinNewProjectWizardStep(parent) {
         private fun createKotlinContentRoots() {
             val directories = listOf(
-                "$outputDirectory$SRC_MAIN_KOTLIN_PATH",
-                "$outputDirectory$SRC_MAIN_RESOURCES_PATH",
-                "$outputDirectory$SRC_TEST_KOTLIN_PATH",
-                "$outputDirectory$SRC_TEST_RESOURCES_PATH",
+                "$outputDirectory/$SRC_MAIN_KOTLIN_PATH",
+                "$outputDirectory/$SRC_MAIN_RESOURCES_PATH",
+                "$outputDirectory/$SRC_TEST_KOTLIN_PATH",
+                "$outputDirectory/$SRC_TEST_RESOURCES_PATH",
             )
             directories.forEach {
                 Path.of(it).createDirectories()
@@ -283,7 +283,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }
             createKotlinContentRoots()
             if (parent.addSampleCode) {
-                withKotlinSampleCode("src/main/kotlin", parent.groupId, shouldAddOnboardingTips())
+                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldAddOnboardingTips())
             }
         }
 
