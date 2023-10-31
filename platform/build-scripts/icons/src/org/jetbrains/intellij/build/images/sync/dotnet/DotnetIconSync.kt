@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images.sync.dotnet
 
+import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import org.jetbrains.intellij.build.images.generateIconClasses
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
@@ -50,12 +51,35 @@ object DotnetIconSync {
 
   private fun step(msg: String) = println("\n** $msg")
 
+  private fun checkCaseConflicts() {
+    val riderIconRoot = context.devRepoRoot.resolve("Rider").resolve("Frontend").resolve("rider")
+      .resolve("icons").resolve("resources").resolve("rider")
+    val ideaIconRoot = context.devRepoRoot.resolve("Rider").resolve("ultimate").resolve("community")
+      .resolve("platform").resolve("icons").resolve("src")
+    val ideaIconIndex = mutableMapOf<String, String>()
+    for(file in ideaIconRoot.toFile().walkTopDown().filter { it.isFile }) {
+      val relPath = toSystemIndependentName(file.relativeTo(ideaIconRoot.toFile()).toString())
+      ideaIconIndex[relPath.lowercase()] = relPath
+    }
+    val errors = mutableListOf<String>()
+    for(file in riderIconRoot.toFile().walkTopDown().filter { it.isFile }) {
+      val relPath = toSystemIndependentName(file.relativeTo(riderIconRoot.toFile()).toString())
+      if (ideaIconIndex.containsKey(relPath.lowercase()) && relPath != ideaIconIndex[relPath.lowercase()]) {
+        errors.add("$file->${ideaIconIndex[relPath.lowercase()]}")
+      }
+    }
+    if (errors.isNotEmpty()) {
+      error("Found case conflicts in repository: \n\t${errors.joinToString(separator = "\n\t")}")
+    }
+  }
+
   fun sync() {
     try {
       transformIconsToIdeaFormat()
       syncPaths.forEach(this::sync)
       generateClasses()
       RiderIconsJsonGenerator.generate(context.devRepoRoot.resolve(RIDER_ICONS_RELATIVE_PATH))
+      checkCaseConflicts()
       if (stageChanges().isEmpty()) {
         println("Nothing to commit")
       }
