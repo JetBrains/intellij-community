@@ -260,6 +260,15 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                                                           }, modalityState)
         }
       }
+      else if (importer.isNewUIValueChanged()) {
+        withContext(Dispatchers.EDT) {
+          SettingsService.getInstance().doClose.fire(Unit)
+          LOG.info("Starting migration after windows is closed")
+          importer.importOptions(filteredCategories)
+          LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
+          LOG.info("Migration complete. Showing welcome screen")
+        }
+      }
       else {
         progressIndicator.text2 = "Migrating options"
         LOG.info("Starting migration...")

@@ -12,9 +12,11 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.io.systemIndependentPath
 import java.io.FileInputStream
 import java.io.InputStream
@@ -23,6 +25,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.io.path.*
 
 class JbSettingsImporter(private val configDirPath: Path,
@@ -30,6 +34,8 @@ class JbSettingsImporter(private val configDirPath: Path,
                          private val prevIdeHome: Path?
                          ) {
   private val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
+  private val defaultNewUIValue = true
+  private val IDE_GENERAL_XML = "ide.general.xml"
 
   suspend fun importOptions(categories: Set<SettingsCategory>) {
     val allFiles = mutableSetOf<String>()
@@ -65,6 +71,24 @@ class JbSettingsImporter(private val configDirPath: Path,
     componentStore.reloadComponents(files2process, emptyList())
     storageManager.removeStreamProvider(provider::class.java)
     saveSettings(ApplicationManager.getApplication(), true)
+  }
+
+  internal fun isNewUIValueChanged() : Boolean {
+    val ideGeneralXmlFile = configDirPath / PathManager.OPTIONS_DIRECTORY / IDE_GENERAL_XML
+    try {
+      val ideGeneral = JDOMUtil.load(ideGeneralXmlFile.toFile())
+      val registry = ideGeneral.getChildren("component").find {
+        it.getAttributeValue("name") == "Registry"
+      } ?: return false
+      val newUIValue = registry.getChildren("entry").find {
+        it.getAttributeValue("key") == ExperimentalUI.KEY
+      }?.value ?: return false
+
+      return newUIValue.toBoolean() != defaultNewUIValue
+    } catch (e: Exception) {
+      LOG.warn("An error occurred while checking new UI state", e)
+      return false
+    }
   }
 
   private fun filesFromFolder(dir: Path, prefix: String = dir.name): Collection<String> {

@@ -3,12 +3,15 @@ package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.*
 
@@ -37,7 +40,9 @@ private class JbAfterRestartSettingsApplier : ApplicationInitializedListener {
           options.add(SettingsCategory.valueOf(it.trim()))
         }
         val importer = JbSettingsImporter(oldConfDir, oldConfDir, null)
-        importer.importOptions(options)
+        withContext(Dispatchers.EDT) {
+          importer.importOptions(options)
+        }
       } catch (e: Throwable) {
         JbImportServiceImpl.LOG.warn("An exception occurred while importing $configPathFile", e)
       }
