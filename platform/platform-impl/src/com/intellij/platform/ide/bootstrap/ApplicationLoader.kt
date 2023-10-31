@@ -258,8 +258,8 @@ suspend fun initConfigurationStore(app: ApplicationImpl) {
   val configDir = PathManager.getConfigDir()
 
   span("beforeApplicationLoaded") {
-    ApplicationLoadListener.EP_NAME.forEachExtensionSafe { listener ->
-      listener.beforeApplicationLoaded(app, configDir)
+    for (extension in ApplicationLoadListener.EP_NAME.filterableLazySequence()) {
+      extension.instance?.beforeApplicationLoaded(app, configDir)
     }
   }
 

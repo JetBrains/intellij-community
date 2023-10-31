@@ -388,7 +388,7 @@ internal class SettingsRepositoryGitTest : SettingsRepositoryGitTestBase() {
     store.setPath(localConfigPath)
     store.storageManager.addStreamProvider(provider)
 
-    icsManager.sync(syncType, projectRule.project) { copyLocalConfig(store.storageManager) }
+    icsManager.sync(syncType) { copyLocalConfig(store.storageManager) }
 
     if (addLocalFiles) {
       assertThat(localConfigPath).isDirectory()

@@ -8,10 +8,7 @@ import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -20,7 +17,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -105,7 +101,7 @@ class IcsManager @JvmOverloads constructor(
     }
   }
 
-  suspend fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): Boolean {
+  suspend fun sync(syncType: SyncType, localRepositoryInitializer: (() -> Unit)? = null): Boolean {
     return syncManager.sync(syncType, localRepositoryInitializer)
   }
 
@@ -241,25 +237,24 @@ class IcsManager @JvmOverloads constructor(
 }
 
 @Service
-internal class IcsManagerService {
+private class IcsManagerService(private val coroutineScope: CoroutineScope) {
   lateinit var icsManager: IcsManager
 
   fun init(app: Application, configPath: Path) {
     val customPath = System.getProperty("ics.settingsRepository")
-    val pluginSystemDir = if (customPath == null) configPath.resolve("settingsRepository") else Path.of(FileUtil.expandUserHome(customPath))
-    @Suppress("DEPRECATION")
-    val icsManager = IcsManager(pluginSystemDir, app.coroutineScope.childScope())
+    val dir = if (customPath == null) configPath.resolve("settingsRepository") else Path.of(FileUtil.expandUserHome(customPath))
+    val icsManager = IcsManager(dir = dir, coroutineScope = coroutineScope)
     this.icsManager = icsManager
     icsManager.beforeApplicationLoaded(app)
   }
 }
 
 private class IcsApplicationLoadListener : ApplicationLoadListener {
-  override fun beforeApplicationLoaded(application: Application, configPath: Path) {
+  override suspend fun beforeApplicationLoaded(application: Application, configPath: Path) {
     if (application.isUnitTestMode) {
       return
     }
 
-    application.service<IcsManagerService>().init(application, configPath)
+    application.serviceAsync<IcsManagerService>().init(application, configPath)
   }
 }
