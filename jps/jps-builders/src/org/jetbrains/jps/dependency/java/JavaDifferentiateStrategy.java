@@ -743,7 +743,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
             }
             else if (removedFlags.isStatic()) {
               debug("Removed static modifier --- affecting static field import usages");
-              affectStaticMemberImportUsages(context, changedClass.getReferenceID(), changedClass.getName(), propagated);
+              affectStaticMemberImportUsages(context, changedClass.getReferenceID(), changedField.getName(), propagated);
             }
           }
         }
@@ -889,7 +889,7 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
   private static void affectStaticMemberImportUsages(DifferentiateContext context, JvmNodeReferenceID clsId, String memberName, Iterable<JvmNodeReferenceID> propagated) {
     affectUsages(
       context,
-      "static member import usage",
+      "static member import",
       Iterators.flat(Iterators.asIterable(clsId), propagated),
       id -> new ImportStaticMemberUsage(id.getNodeName(), memberName),
       null
