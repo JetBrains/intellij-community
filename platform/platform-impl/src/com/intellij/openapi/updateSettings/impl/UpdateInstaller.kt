@@ -157,7 +157,7 @@ internal object UpdateInstaller {
     if (SystemInfo.isWindows && !Files.isWritable(Path.of(PathManager.getHomePath()))) {
       val launcher = PathManager.findBinFile("launcher.exe")
       val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
-      if (launcher != null && elevator != null && Files.isExecutable(launcher) && Files.isExecutable(elevator)) {
+      if (launcher != null && elevator != null) {
         args.add(launcher.copy(tempDir.toPath().resolve(launcher.fileName)).toString())
         elevator.copy(tempDir.toPath().resolve(elevator.fileName))
       }
