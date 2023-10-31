@@ -24,6 +24,15 @@ open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<
     return array
   }
 
+  override fun actionPerformed(event: AnActionEvent) {
+    val children = getChildren(event)
+    if(children.size == 1) {
+      children.firstOrNull()?.actionPerformed(event)
+      return
+    }
+    super.actionPerformed(event)
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isVisible = false
