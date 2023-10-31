@@ -516,8 +516,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return myDataContext;
   }
 
-  @NotNull
-  private UpdateSession getUpdateSession() {
+  @ApiStatus.Internal
+  public @NotNull UpdateSession getUpdateSession() {
     return myUpdateSession;
   }
 

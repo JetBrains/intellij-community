@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(IntellijInternalApi::class)
-@file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.actionSystem.impl
 
@@ -59,7 +58,6 @@ import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.asCancellablePromise
@@ -241,12 +239,7 @@ object Utils {
                              fastTrack: Boolean): CancellablePromise<List<AnAction>> {
     return service<CoreUiCoroutineScopeHolder>().coroutineScope.async(Dispatchers.EDT + ModalityState.any().asContextElement(),
                                                                       CoroutineStart.UNDISPATCHED) {
-      expandActionGroupSuspend(group = group,
-                               presentationFactory = presentationFactory,
-                               dataContext = context,
-                               place = place,
-                               isToolbarAction = isToolbarAction,
-                               fastTrack = fastTrack)
+      expandActionGroupSuspend(group, presentationFactory, context, place, isToolbarAction, fastTrack)
     }.asCompletableFuture().asCancellablePromise()
   }
 
@@ -363,17 +356,8 @@ object Utils {
                     context: DataContext,
                     place: String,
                     progressPoint: RelativePoint?) {
-    fillMenu(group = group,
-             component = component,
-             nativePeer = null,
-             enableMnemonics = !UISettings.getInstance().disableMnemonics,
-             presentationFactory = presentationFactory,
-             context = context,
-             place = place,
-             isWindowMenu = false,
-             useDarkIcons = false,
-             progressPoint = progressPoint,
-             expire = null)
+    fillMenu(group, component, null, !UISettings.getInstance().disableMnemonics, presentationFactory, context, place,
+             false, false, progressPoint, null)
   }
 
   internal fun fillMenu(group: ActionGroup,
@@ -895,17 +879,15 @@ object Utils {
     checkAsyncDataContext(asyncDataContext, "rearrangeByPromotersNonAsync")
     rearrangeByPromoters(actions, asyncDataContext)
   }
-}
 
-@Internal
-fun <R> CoroutineScope.runUpdateSessionForActionSearch(dataContext: DataContext,
-                                                       place: String,
-                                                       block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R): Deferred<R> {
-  val updater = ActionUpdater(PresentationFactory(), dataContext, place, true, false, CoroutineScope(Dispatchers.EDT))
-  return async(contextMenuDispatcher + ModalityState.any().asContextElement()) {
-    updater.runUpdateSession(CoroutineName("runUpdateSessionForActionSearch ($place)")) {
-      block {
-        updater.presentation(it)
+  fun <R> CoroutineScope.runUpdateSessionForActionSearch(updateSession: UpdateSession,
+                                                         block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R): Deferred<R> {
+    val updater = ActionUpdater.getUpdater(updateSession) ?: throw AssertionError()
+    return async(contextMenuDispatcher + ModalityState.any().asContextElement()) {
+      updater.runUpdateSession(CoroutineName("runUpdateSessionForActionSearch (${updater.place})")) {
+        block {
+          updater.presentation(it)
+        }
       }
     }
   }
