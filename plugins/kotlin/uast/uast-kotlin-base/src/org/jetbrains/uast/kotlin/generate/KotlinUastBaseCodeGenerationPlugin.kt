@@ -225,12 +225,12 @@ open class KotlinUastElementFactory(project: Project) : UastElementFactory {
         ).getPossiblyQualifiedCallExpression() ?: return null
 
         if (receiver != null) {
-            methodCall.parentAs<KtDotQualifiedExpression>()?.receiverExpression?.replace(wrapULiteral(receiver).sourcePsi!!)
+            methodCall.parentAs<KtDotQualifiedExpression>()?.receiverExpression?.replace(receiver.sourcePsi!!)
         }
 
         val valueArgumentList = methodCall.valueArgumentList
         for (parameter in parameters) {
-            valueArgumentList?.addArgument(psiFactory.createArgument(wrapULiteral(parameter).sourcePsi as KtExpression))
+            valueArgumentList?.addArgument(psiFactory.createArgument(parameter.sourcePsi as KtExpression))
         }
 
         if (context !is KtElement) return KotlinUFunctionCallExpression(methodCall, null)

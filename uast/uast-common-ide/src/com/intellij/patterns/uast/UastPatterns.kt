@@ -93,7 +93,7 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
 
   fun withStringRoomExpression(parentPattern: ElementPattern<out UElement>): Self = filterWithContext { it, context ->
     if (it !is UExpression) return@filterWithContext false
-    val uHost = wrapULiteral(it) as? UInjectionHost ?: return@filterWithContext false
+    val uHost = it as? UInjectionHost ?: return@filterWithContext false
     val room = uHost.getStringRoomExpression()
 
     parentPattern.accepts(room, context)
@@ -111,7 +111,7 @@ private fun isCallExpressionParameter(argumentExpression: UExpression,
 
   return callPattern.accepts(call, context)
          && call.kind in constructorOrMethodCall
-         && call.getArgumentForParameter(parameterIndex)?.let(::wrapULiteral) == wrapULiteral(argumentExpression)
+         && call.getArgumentForParameter(parameterIndex) == argumentExpression
 }
 
 private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPattern<out PsiMethod>, context: ProcessingContext): Boolean {

@@ -544,8 +544,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
     private static boolean isSwitchCase(@NotNull UInjectionHost expression) {
       if (expression.getUastParent() instanceof USwitchClauseExpression parent) {
-        return ContainerUtil.exists(parent.getCaseValues(),
-                                    value -> expression.equals(UastLiteralUtils.wrapULiteral(value)));
+        return ContainerUtil.exists(parent.getCaseValues(), value -> expression.equals(value));
       }
       return false;
     }

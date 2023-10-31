@@ -226,7 +226,7 @@ fun UCallExpression.getParameterForArgument(arg: UExpression): PsiParameter? {
 
   return parameters.withIndex().find { (i, p) ->
     val argumentForParameter = getArgumentForParameter(i) ?: return@find false
-    if (wrapULiteral(argumentForParameter) == wrapULiteral(arg)) return@find true
+    if (argumentForParameter == arg) return@find true
     if (p.isVarArgs && argumentForParameter is UExpressionList) return@find argumentForParameter.expressions.contains(arg)
     return@find false
   }?.value
