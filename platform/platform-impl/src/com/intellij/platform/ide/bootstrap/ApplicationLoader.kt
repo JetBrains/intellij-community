@@ -34,6 +34,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
+import com.intellij.openapi.extensions.useOrLogError
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
@@ -259,7 +260,9 @@ suspend fun initConfigurationStore(app: ApplicationImpl) {
 
   span("beforeApplicationLoaded") {
     for (extension in ApplicationLoadListener.EP_NAME.filterableLazySequence()) {
-      extension.instance?.beforeApplicationLoaded(app, configDir)
+      extension.useOrLogError {
+        it.beforeApplicationLoaded(app, configDir)
+      }
     }
   }
 
@@ -295,6 +298,7 @@ internal suspend fun executeApplicationStarter(starter: ApplicationStarter, args
   ZipFilePool.POOL = null
 }
 
+@VisibleForTesting
 fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
   val point = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")

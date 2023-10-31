@@ -5,6 +5,7 @@ package com.intellij.openapi.extensions
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.impl.AdapterWithCustomAttributes
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -16,6 +17,7 @@ import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByKey
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
@@ -131,15 +133,15 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * 1. Conditional iteration (no need to create all extensions if iteration is stopped due to some condition).
    * 2. Iterated only once per application (no need to cache an extension list internally).
    */
-  @ApiStatus.Internal
+  @Internal
   fun getIterable(): Iterable<T?> = getPointImpl(null).asSequence().asIterable()
 
-  @ApiStatus.Internal
+  @Internal
   fun lazySequence(): Sequence<T> {
     return getPointImpl(null).asSequence()
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun processWithPluginDescriptor(consumer: (T, PluginDescriptor) -> Unit) {
     getPointImpl(null).processWithPluginDescriptor(consumer = consumer)
   }
@@ -215,7 +217,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     return computeIfAbsent(getPointImpl(null), cacheId, valueMapper)
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun filterableLazySequence(): Sequence<LazyExtension<T>> {
     val point = getPointImpl(null)
     val adapters = point.sortedAdapters
@@ -223,8 +225,8 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   }
 }
 
-@ApiStatus.Internal
-interface LazyExtension<T> {
+@Internal
+sealed interface LazyExtension<T> {
   val id: String?
   val instance: T?
 
@@ -233,10 +235,25 @@ interface LazyExtension<T> {
 
   val pluginDescriptor: PluginDescriptor
 
-  @get:ApiStatus.Internal
+  @get:Internal
   val order: LoadingOrder
 
   fun getCustomAttribute(name: String): String?
+}
+
+@Internal
+suspend fun <T: Any, R : Any> LazyExtension<T>.useOrLogError(task: suspend (instance: T) -> R): R? {
+  this as LazyExtensionImpl<T>
+  try {
+    return task(adapter.createInstance(point.componentManager) ?: return null)
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    thisLogger().error(point.componentManager.createError(e, pluginDescriptor.pluginId))
+    return null
+  }
 }
 
 private class LazyExtensionSequence<T : Any>(
@@ -249,51 +266,52 @@ private class LazyExtensionSequence<T : Any>(
 
       override fun hasNext(): Boolean = currentIndex < adapters.size
 
-      override fun next(): LazyExtension<T> {
-        val adapter = adapters.get(currentIndex++)
-        return object : LazyExtension<T> {
-          override val id: String?
-            get() = adapter.orderId
-
-          override val order: LoadingOrder
-            get() = adapter.order
-
-          override fun getCustomAttribute(name: String): String? {
-            return if (adapter is AdapterWithCustomAttributes) adapter.customAttributes.get(name) else null
-          }
-
-          override val instance: T?
-            get() = createOrError(adapter = adapter, point = point)
-          override val implementationClassName: String
-            get() = adapter.assignableToClassName
-          override val implementationClass: Class<T>?
-            get() {
-              try {
-                return adapter.getImplementationClass(point.componentManager)
-              }
-              catch (e: CancellationException) {
-                throw e
-              }
-              catch (e: Throwable) {
-                logger<ExtensionPointName<T>>().error(point.componentManager.createError(e, adapter.pluginDescriptor.pluginId))
-                return null
-              }
-            }
-
-          override val pluginDescriptor: PluginDescriptor
-            get() = adapter.pluginDescriptor
-        }
-      }
+      override fun next(): LazyExtension<T> = LazyExtensionImpl(adapter = adapters.get(currentIndex++), point = point)
     }
   }
+}
+
+private class LazyExtensionImpl<T : Any>(
+  @JvmField val adapter: ExtensionComponentAdapter,
+  @JvmField val point: ExtensionPointImpl<T>,
+) : LazyExtension<T> {
+  override val id: String?
+    get() = adapter.orderId
+
+  override val order: LoadingOrder
+    get() = adapter.order
+
+  override fun getCustomAttribute(name: String): String? {
+    return if (adapter is AdapterWithCustomAttributes) adapter.customAttributes.get(name) else null
+  }
+
+  override val instance: T?
+    get() = createOrError(adapter = adapter, point = point)
+
+  override val implementationClassName: String
+    get() = adapter.assignableToClassName
+
+  override val implementationClass: Class<T>?
+    get() {
+      try {
+        return adapter.getImplementationClass(point.componentManager)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        logger<ExtensionPointName<T>>().error(point.componentManager.createError(e, adapter.pluginDescriptor.pluginId))
+        return null
+      }
+    }
+
+  override val pluginDescriptor: PluginDescriptor
+    get() = adapter.pluginDescriptor
 }
 
 private fun <T : Any> createOrError(adapter: ExtensionComponentAdapter, point: ExtensionPointImpl<T>): T? {
   try {
     return adapter.createInstance(point.componentManager)
-  }
-  catch (e: CancellationException) {
-    throw e
   }
   catch (e: ProcessCanceledException) {
     throw e

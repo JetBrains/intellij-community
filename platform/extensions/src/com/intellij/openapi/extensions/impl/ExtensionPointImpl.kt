@@ -269,7 +269,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
         nextItem = null
 
         while (currentIndex < size && nextItem == null) {
-          nextItem = getOrCreateExtensionInstance(adapters.get(currentIndex++))
+          nextItem = getOrCreateExtensionInstance(adapters.get(currentIndex++), componentManager)
         }
       }
     }
@@ -288,7 +288,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   internal inline fun processWithPluginDescriptor(shouldBeSorted: Boolean, consumer: (T, PluginDescriptor) -> Unit) {
     for (adapter in if (shouldBeSorted) sortedAdapters else adapters) {
       try {
-        val extension = getOrCreateExtensionInstance(adapter) ?: continue
+        val extension = adapter.createInstance<T>(componentManager) ?: continue
         consumer(extension, adapter.pluginDescriptor)
       }
       catch (e: ProcessCanceledException) {
@@ -361,28 +361,6 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     val category = componentManager.getActivityCategory(true)
     StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category,  /* pluginId = */null, StartUpMeasurer.MEASURE_THRESHOLD)
     return result
-  }
-
-  // the instantiation of extension is done in a safe manner always — will be logged as error with a plugin id
-  private fun getOrCreateExtensionInstance(adapter: ExtensionComponentAdapter): T? {
-    if (!checkThatClassloaderIsActive(adapter)) {
-      return null
-    }
-
-    try {
-      val instance = adapter.createInstance<T>(componentManager)
-      if (instance == null) {
-        LOG.debug { "$adapter not loaded because it reported that not applicable" }
-      }
-      return instance
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(componentManager.createError(e, adapter.pluginDescriptor.pluginId))
-    }
-    return null
   }
 
   private fun processAdapter(adapter: ExtensionComponentAdapter,
@@ -880,8 +858,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
         // findExtension is called for a lot of extension points - do not fail if listeners were added (e.g., FacetTypeRegistryImpl)
         try {
           if (aClass.isAssignableFrom(adapter.getImplementationClass<Any>(componentManager))) {
-            @Suppress("UNCHECKED_CAST")
-            return getOrCreateExtensionInstance(adapter) as V?
+            return getOrCreateExtensionInstance(adapter, componentManager)
           }
         }
         catch (e: ClassNotFoundException) {
@@ -920,7 +897,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
         try {
           // this enables us to not trigger Class initialization for all extensions, but only for those instanceof V
           if (aClass.isAssignableFrom(adapter.getImplementationClass<Any>(componentManager))) {
-            val instance = getOrCreateExtensionInstance(adapter)
+            val instance = getOrCreateExtensionInstance<T>(adapter, componentManager)
             if (instance != null) {
               suitableInstances.add(instance)
             }
@@ -949,7 +926,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       for (adapter in sortedAdapters) {
         val classOrName = adapter.implementationClassOrName
         if (if (classOrName is String) classOrName == aClass.name else classOrName === aClass) {
-          return getOrCreateExtensionInstance(adapter)
+          return getOrCreateExtensionInstance(adapter, componentManager)
         }
       }
     }
@@ -1015,10 +992,31 @@ private fun checkThatClassloaderIsActive(adapter: ExtensionComponentAdapter): Bo
   return true
 }
 
-
 private fun isInsideClassInitializer(trace: Array<StackTraceElement>): Boolean {
   return trace.any {
     @Suppress("SpellCheckingInspection")
     "<clinit>" == it.methodName
   }
+}
+
+// the instantiation of extension is done in a safe manner always — will be logged as error with a plugin id
+private fun <T : Any> getOrCreateExtensionInstance(adapter: ExtensionComponentAdapter, componentManager: ComponentManager): T? {
+  if (!checkThatClassloaderIsActive(adapter)) {
+    return null
+  }
+
+  try {
+    val instance = adapter.createInstance<T>(componentManager)
+    if (instance == null) {
+      LOG.debug { "$adapter not loaded because it reported that not applicable" }
+    }
+    return instance
+  }
+  catch (e: ProcessCanceledException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.error(componentManager.createError(e, adapter.pluginDescriptor.pluginId))
+  }
+  return null
 }
