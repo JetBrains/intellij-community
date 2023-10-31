@@ -50,9 +50,9 @@ public final class WebpImageReaderSpi extends ImageReaderSpi {
   WebpImageReaderSpi() {
     vendorName = WebpMetadata.WEBP_VENDOR;
     version = WebpNativeLibHelper.getDecoderVersion();
-    suffixes = WebpMetadata.WEBP_SUFFIXES;
-    names = WebpMetadata.WEBP_FORMAT_NAMES;
-    MIMETypes = WebpMetadata.WEBP_MIME_TYPES;
+    suffixes = WebpMetadata.Companion.getWEBP_SUFFIXES();
+    names = WebpMetadata.Companion.getWEBP_FORMAT_NAMES();
+    MIMETypes = WebpMetadata.Companion.getWEBP_MIME_TYPES();
     pluginClassName = WebpReader.class.getName();
     inputTypes = new Class<?>[]{ImageInputStream.class};
   }
