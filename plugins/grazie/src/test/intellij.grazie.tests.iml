@@ -106,6 +106,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.markdown.plugin" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.grazie.markdown" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
