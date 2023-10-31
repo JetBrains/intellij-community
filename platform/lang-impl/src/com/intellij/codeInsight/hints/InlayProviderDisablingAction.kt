@@ -4,7 +4,7 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
@@ -69,5 +69,5 @@ private fun disableInlayHintsProvider(key: SettingsKey<*>, language: Language) =
   InlayHintsSettings.instance().changeHintTypeStatus(key, language, false)
 
 private fun refreshHints(project: Project) {
-  InlayHintsPassFactory.restartDaemonUpdatingHints(project)
+  InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
 }

@@ -13,7 +13,7 @@ import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class InlayHintsPassFactoryTest : BasePlatformTestCase() {
+class InlayHintsPassFactoryInternalTest : BasePlatformTestCase() {
 
   fun testDumbMode() {
     myFixture.configureByText("file.txt", "text")
