@@ -14,6 +14,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -159,6 +160,12 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
     }
     if (executor == null) {
       executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+      if (executor != null && selected != null && !canRun(selected, executor)) {
+        executor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+        if (executor != null && !canRun(selected, executor)) {
+          executor = null;
+        }
+      }
     }
     updateRunButton(executor, selected);
   }
