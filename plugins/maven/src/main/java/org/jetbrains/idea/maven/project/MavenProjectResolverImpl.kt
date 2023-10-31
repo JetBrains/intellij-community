@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.lang.reflect.InvocationTargetException
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 internal class MavenProjectResolverImpl(private val myProject: Project) : MavenProjectResolver {
@@ -38,8 +39,12 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
     for ((baseDir, mavenProjectsInBaseDir) in projectMultiMap.entrySet()) {
       val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir)
       try {
+        val userProperties = Properties()
         for (mavenProject in mavenProjectsInBaseDir) {
           mavenProject.configFileError = null
+          for (mavenImporter in MavenImporter.getSuitableImporters(mavenProject)) {
+            mavenImporter.customizeUserProperties(myProject, mavenProject, userProperties)
+          }
         }
         val projectsWithUnresolvedPluginsChunk = doResolve(
           mavenProjectsInBaseDir,
@@ -50,7 +55,8 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
           syncConsole,
           console,
           tree.workspaceMap,
-          updateSnapshots)
+          updateSnapshots,
+          userProperties)
         projectsWithUnresolvedPlugins[baseDir] = projectsWithUnresolvedPluginsChunk
       }
       catch (t: Throwable) {
@@ -86,7 +92,8 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
                                 syncConsole: MavenSyncConsole?,
                                 console: MavenConsole,
                                 workspaceMap: MavenWorkspaceMap?,
-                                updateSnapshots: Boolean): Collection<MavenProjectWithHolder> {
+                                updateSnapshots: Boolean,
+                                userProperties: Properties): Collection<MavenProjectWithHolder> {
     if (mavenProjects.isEmpty()) return listOf()
     checkCancelled()
     val names = mavenProjects.map { it.displayName }
@@ -105,7 +112,8 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
       syncConsole,
       console,
       workspaceMap,
-      updateSnapshots)
+      updateSnapshots,
+      userProperties)
     val problems = MavenResolveResultProblemProcessor.getProblems(results)
     MavenResolveResultProblemProcessor.notifySyncForProblem(myProject, problems)
     val artifactIdToMavenProjects = mavenProjects
