@@ -55,4 +55,8 @@ internal class GeneralFeedbackDialog(project: Project?,
     cancelAction.putValue(Action.NAME, GeneralFeedbackBundle.message("general.dialog.cancel.label"))
     return cancelAction
   }
+
+  override fun shouldAutoCloseZendeskTicket(): Boolean {
+    return false
+  }
 }
