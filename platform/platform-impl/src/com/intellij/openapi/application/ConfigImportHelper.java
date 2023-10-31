@@ -781,6 +781,14 @@ public final class ConfigImportHelper {
       this.headless = headless;
     }
 
+    public boolean isMergeVmOptions() {
+      return mergeVmOptions;
+    }
+
+    public void setMergeVmOptions(boolean mergeVmOptions) {
+      this.mergeVmOptions = mergeVmOptions;
+    }
+
     @Nullable
     public ProgressIndicator getHeadlessProgressIndicator() {
       return headlessProgressIndicator;

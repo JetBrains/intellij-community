@@ -155,8 +155,33 @@ class JbSettingsImporter(private val configDirPath: Path,
   }
 
   fun importRaw(progressIndicator: ProgressIndicator, pluginIds: List<String>) {
+    val storageManager = componentStore.storageManager as StateStorageManagerImpl
+    val dummyProvider = DummyStreamProvider()
+    // we add dummy provider to prevent IDE from saving files on shutdown
+    // we also need to take care of EarlyAccessManager
+    storageManager.addStreamProvider(dummyProvider)
     val importOptions = configImportOptions(progressIndicator, pluginIds)
+    System.setProperty(EarlyAccessRegistryManager.DISABLE_SAVE_PROPERTY, "true")
+    importOptions.isMergeVmOptions = true
     ConfigImportHelper.doImport(configDirPath, PathManager.getConfigDir(), prevIdeHome, LOG, importOptions)
+  }
+
+  internal class DummyStreamProvider : StreamProvider {
+    override val isExclusive = true
+
+    override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {}
+
+    override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
+      return false
+    }
+
+    override fun processChildren(path: String,
+                                 roamingType: RoamingType,
+                                 filter: (name: String) -> Boolean,
+                                 processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) = true
+
+    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean = true
+
   }
 
   internal class ImportStreamProvider(private val configDirPath: Path) : StreamProvider {
