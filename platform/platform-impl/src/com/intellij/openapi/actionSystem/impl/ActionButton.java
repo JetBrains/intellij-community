@@ -512,6 +512,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       case MouseEvent.MOUSE_PRESSED -> {
         if (skipPress || !isEnabled()) return;
         myMouseDown = true;
+        myRollover = true;
         onMousePressed(e);
         ourGlobalMouseDown = true;
         repaint();
