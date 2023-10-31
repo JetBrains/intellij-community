@@ -35,12 +35,6 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
   override fun actionPerformed(event: AnActionEvent) {
     val comp: JComponent = event.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) ?: return
 
-    val children = actionGroup.getChildren(event)
-    if(children.size == 1) {
-      children.firstOrNull()?.actionPerformed(event)
-      return
-    }
-
     val step = createStep(actionGroup, event.dataContext, comp)
     createPopup(step).show(RelativePoint(comp, Point(0, comp.height + JBUI.scale(4))))
   }
