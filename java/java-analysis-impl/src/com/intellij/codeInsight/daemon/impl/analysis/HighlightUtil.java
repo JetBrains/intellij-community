@@ -3720,12 +3720,12 @@ public final class HighlightUtil {
 
   @Nullable
   static HighlightInfo.Builder checkFeature(@NotNull PsiElement element,
-                                    @NotNull HighlightingFeature feature,
-                                    @NotNull LanguageLevel level,
-                                    @NotNull PsiFile file,
-                                    @Nullable @NlsContexts.DetailedDescription String message,
-                                    @NotNull HighlightInfoType highlightInfoType) {
-    if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
+                                            @NotNull HighlightingFeature feature,
+                                            @NotNull LanguageLevel level,
+                                            @NotNull PsiFile file,
+                                            @Nullable @NlsContexts.DetailedDescription String message,
+                                            @NotNull HighlightInfoType highlightInfoType) {
+    if (!feature.isSufficient(level)) {
       message = message == null ? getUnsupportedFeatureMessage(feature, level, file) : message;
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message);
       List<IntentionAction> registrar = new ArrayList<>();
@@ -3740,10 +3740,10 @@ public final class HighlightUtil {
   }
 
   static HighlightInfo.Builder checkFeature(@NotNull TextRange range,
-                                    @NotNull HighlightingFeature feature,
-                                    @NotNull LanguageLevel level,
-                                    @NotNull PsiFile file) {
-    if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
+                                            @NotNull HighlightingFeature feature,
+                                            @NotNull LanguageLevel level,
+                                            @NotNull PsiFile file) {
+    if (!feature.isSufficient(level)) {
       String message = getUnsupportedFeatureMessage(feature, level, file);
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
       List<IntentionAction> registrar = new ArrayList<>();
