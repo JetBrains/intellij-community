@@ -181,16 +181,7 @@ public final class Runner {
 
       LOG.info("destination: " + destPath + " (" + destDirectory + "), case-sensitive: " + ourCaseSensitiveFs);
 
-      UpdaterUI ui;
-      if ("install".equals(args[0]) || "batch-install".equals(args[0])) {
-        ui = new SwingUpdaterUI();
-      }
-      else if (hasArgument(args, "toolbox-ui")) {
-        ui = new ToolboxUpdaterUI();
-      }
-      else {
-        ui = new ConsoleUpdaterUI();
-      }
+      var ui = "apply".equals(args[0]) ? new ConsoleUpdaterUI(hasArgument(args, "force-replace")) : new SwingUpdaterUI();
 
       boolean backup = !hasArgument(args, "no-backup");
       boolean success;
