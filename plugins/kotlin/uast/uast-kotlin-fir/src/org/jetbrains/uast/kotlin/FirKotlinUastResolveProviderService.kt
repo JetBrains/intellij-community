@@ -396,8 +396,19 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
             val project = ktExpression.project
 
-            val resolvedTargetElement = psiForUast(resolvedTargetSymbol, project)
-
+            val resolvedTargetElement =
+                when (resolvedTargetSymbol) {
+                    is KtBackingFieldSymbol -> {
+                        // [KtBackingFieldSymbol] itself has `null` psi, and thus going to
+                        // the below default logic, [psiForUast], will return `null` too.
+                        // Use the owning property's psi and let [getMaybeLightElement] find
+                        // the corresponding [PsiField] for the backing field.
+                        resolvedTargetSymbol.owningProperty.psi
+                    }
+                    else -> {
+                        psiForUast(resolvedTargetSymbol, project)
+                    }
+                }
 
             // Shortcut: if the resolution target is compiled class/member, package info, or pure Java declarations,
             //   we can return it early here (to avoid expensive follow-up steps: module retrieval and light element conversion).
