@@ -28,7 +28,6 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
-import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.emulator.ColorPalette
 import com.jediterm.terminal.model.StyleState
@@ -132,17 +131,13 @@ object TerminalUiUtils {
   fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
 
   internal fun TextStyle.toTextAttributes(palette: ColorPalette,
-                                          styleState: StyleState,
-                                          applyDefaultBackground: Boolean): TextAttributes {
+                                          styleState: StyleState): TextAttributes {
     return TextAttributes().also { attr ->
-      val background: TerminalColor? = if (applyDefaultBackground) {
-        styleState.getBackground(backgroundForRun)
-      }
-      else {
-        backgroundForRun
-      }
-      if (background != null) {
-        attr.backgroundColor = AwtTransformers.toAwtColor(palette.getBackground(background))
+      backgroundForRun?.let {
+        // [TerminalColorPalette.getDefaultBackground] is not applied to [TextAttributes].
+        // It's passed to [EditorEx.setBackgroundColor] / [JComponent.setBackground] to
+        // paint the background uniformly.
+        attr.backgroundColor = AwtTransformers.toAwtColor(palette.getBackground(it))
       }
       attr.foregroundColor = getForegroundColor(this, palette, styleState)
       if (hasOption(TextStyle.Option.BOLD)) {

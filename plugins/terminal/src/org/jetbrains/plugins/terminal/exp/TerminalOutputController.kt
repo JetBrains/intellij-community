@@ -244,11 +244,7 @@ class TerminalOutputController(
     caretPainter.repaint()
   }
 
-  private fun TextStyle.toTextAttributes(): TextAttributes {
-    // Do not apply default background to [TextAttributes],
-    // because block background is painted by [TerminalBlockBackgroundRenderer] with gradient.
-    return this.toTextAttributes(palette, terminalModel.styleState, false)
-  }
+  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(palette, terminalModel.styleState)
 
   /** It is implied that the command is not null */
   private fun createCommandHighlighting(block: CommandBlock): HighlightingInfo {
