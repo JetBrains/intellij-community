@@ -56,7 +56,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                              syncConsole: MavenSyncConsole?,
                              console: MavenConsole?,
                              workspaceMap: MavenWorkspaceMap?,
-                             updateSnapshots: Boolean): Collection<MavenServerExecutionResult> {
+                             updateSnapshots: Boolean,
+                             userProperties: Properties): Collection<MavenServerExecutionResult> {
     val transformer = if (files.isEmpty()) RemotePathTransformerFactory.Transformer.ID
     else RemotePathTransformerFactory.createForProject(project)
     val ioFiles = files.map { file: VirtualFile -> transformer.toRemotePath(file.getPath())?.let { File(it) } }
@@ -66,7 +67,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       explicitProfiles.enabledProfiles,
       explicitProfiles.disabledProfiles,
       serverWorkspaceMap,
-      updateSnapshots
+      updateSnapshots,
+      userProperties
     )
     val results = runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolveProjects(taskId, request, ourToken) },

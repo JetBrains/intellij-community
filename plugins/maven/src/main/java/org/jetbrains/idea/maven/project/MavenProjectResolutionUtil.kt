@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenServerExecutionResult
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import java.util.*
 
 internal class MavenProjectResolutionUtil {
   companion object {
@@ -43,7 +44,8 @@ internal class MavenProjectResolutionUtil {
           syncConsole,
           console,
           workspaceMap,
-          updateSnapshots)
+          updateSnapshots,
+          Properties())
       }
     }
 
@@ -59,9 +61,11 @@ internal class MavenProjectResolutionUtil {
                                syncConsole: MavenSyncConsole?,
                                console: MavenConsole?,
                                workspaceMap: MavenWorkspaceMap?,
-                               updateSnapshots: Boolean): Collection<MavenProjectReaderResult> {
+                               updateSnapshots: Boolean,
+                               userProperties: Properties): Collection<MavenProjectReaderResult> {
       return try {
-        val executionResults = embedder.resolveProject(files, explicitProfiles, progressReporter, syncConsole, console, workspaceMap, updateSnapshots)
+        val executionResults = embedder.resolveProject(
+          files, explicitProfiles, progressReporter, syncConsole, console, workspaceMap, updateSnapshots, userProperties)
         val filesMap = CollectionFactory.createFilePathMap<VirtualFile>()
         filesMap.putAll(files.associateBy { it.path })
         val readerResults: MutableCollection<MavenProjectReaderResult> = ArrayList()

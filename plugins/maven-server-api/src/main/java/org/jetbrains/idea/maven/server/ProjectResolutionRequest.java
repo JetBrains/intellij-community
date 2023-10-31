@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
 public class ProjectResolutionRequest implements Serializable {
   private final @NotNull List<File> pomFiles;
@@ -17,17 +18,20 @@ public class ProjectResolutionRequest implements Serializable {
   private final @NotNull List<String> inactiveProfiles = new ArrayList<>();
   private final @Nullable MavenWorkspaceMap workspaceMap;
   private final boolean updateSnapshots;
+  private final Properties userProperties;
 
   public ProjectResolutionRequest(@NotNull List<File> pomFiles,
                                   @NotNull Collection<String> activeProfiles,
                                   @NotNull Collection<String> inactiveProfiles,
                                   @Nullable MavenWorkspaceMap workspaceMap,
-                                  boolean updateSnapshots) {
+                                  boolean updateSnapshots,
+                                  @NotNull Properties userProperties) {
     this.pomFiles = new ArrayList<>(pomFiles);
     this.activeProfiles.addAll(activeProfiles);
     this.inactiveProfiles.addAll(inactiveProfiles);
     this.workspaceMap = workspaceMap;
     this.updateSnapshots = updateSnapshots;
+    this.userProperties = userProperties;
   }
 
   @NotNull
@@ -52,5 +56,9 @@ public class ProjectResolutionRequest implements Serializable {
 
   public boolean updateSnapshots() {
     return updateSnapshots;
+  }
+
+  public Properties getUserProperties() {
+    return userProperties;
   }
 }
