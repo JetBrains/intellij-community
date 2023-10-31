@@ -35,7 +35,7 @@ public final class Runner {
       List<String> effectiveArgs = new ArrayList<>();
       for (String arg : args) {
         if (arg.startsWith("@")) {
-          effectiveArgs.addAll(Files.readAllLines(Paths.get(arg.substring(1))));
+          effectiveArgs.addAll(Files.readAllLines(Path.of(arg.substring(1))));
         }
         else {
           effectiveArgs.add(arg);
@@ -62,7 +62,7 @@ public final class Runner {
     System.setProperty("java.util.logging.config.class", Object.class.getName());
 
     String dirPath = System.getProperty("idea.updater.log", System.getProperty("java.io.tmpdir", System.getProperty("user.home", ".")));
-    Path logDir = Paths.get(dirPath).toAbsolutePath().normalize();
+    Path logDir = Path.of(dirPath).toAbsolutePath().normalize();
     logPath = logDir.resolve(LOG_FILE_NAME).toString();
     String errorLogPath = logDir.resolve(ERROR_LOG_FILE_NAME).toString();
 
@@ -160,7 +160,7 @@ public final class Runner {
         .setDeleteFiles(deleteFiles)
         .setTimeout(timeout);
 
-      boolean success = create(spec, cacheDir != null ? Paths.get(cacheDir) : null);
+      boolean success = create(spec, cacheDir != null ? Path.of(cacheDir) : null);
       System.exit(success ? 0 : 1);
     }
     else if (args.length >= 2 && ("install".equals(args[0]) || "apply".equals(args[0])) ||
@@ -169,7 +169,7 @@ public final class Runner {
 
       String destPath = args[1];
 
-      Path destDirectory = Paths.get(destPath);
+      Path destDirectory = Path.of(destPath);
       try {
         destDirectory = destDirectory.toRealPath();
       }
@@ -215,7 +215,7 @@ public final class Runner {
   }
 
   private static boolean hasArgument(String[] args, String name) {
-    return Arrays.asList(args).contains("--" + name);
+    return List.of(args).contains("--" + name);
   }
 
   public static void checkCaseSensitivity(String path) {
@@ -283,8 +283,8 @@ public final class Runner {
       LOG.info("Packing JAR file: " + spec.getPatchFile());
       System.out.println("Packing JAR file '" + spec.getPatchFile() + "'...");
 
-      try (ZipOutputWrapper out = new ZipOutputWrapper(Files.newOutputStream(Paths.get(spec.getPatchFile()), StandardOpenOption.CREATE_NEW));
-           ZipInputStream in = new ZipInputStream(Files.newInputStream(Paths.get(spec.getJarFile())))) {
+      try (ZipOutputWrapper out = new ZipOutputWrapper(Files.newOutputStream(Path.of(spec.getPatchFile()), StandardOpenOption.CREATE_NEW));
+           ZipInputStream in = new ZipInputStream(Files.newInputStream(Path.of(spec.getJarFile())))) {
         ZipEntry e;
         while ((e = in.getNextEntry()) != null) {
           out.zipEntry(e, in);
@@ -537,7 +537,7 @@ public final class Runner {
   }
 
   private static Map<String, ValidationResult.Option> askForResolutions(List<ValidationResult> problems, UpdaterUI ui) throws OperationCancelledException {
-    if (problems.isEmpty()) return Collections.emptyMap();
+    if (problems.isEmpty()) return Map.of();
     LOG.warning("conflicts:");
     for (ValidationResult problem : problems) {
       String record = "  " + problem.action.name() + ' ' + problem.path + ": " + problem.message;

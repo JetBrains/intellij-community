@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class ValidationResult implements Comparable<ValidationResult> {
@@ -34,12 +33,12 @@ public class ValidationResult implements Comparable<ValidationResult> {
     this.action = action;
     this.message = message;
     this.details = details;
-    this.options = Arrays.asList(options);
+    this.options = List.of(options);
   }
 
   @Override
   public String toString() {
-    String prefix = kind == Kind.CONFLICT ? "?" : kind == Kind.ERROR ? "!" : "";
+    var prefix = kind == Kind.CONFLICT ? "?" : kind == Kind.ERROR ? "!" : "";
     return prefix + action + " " + path + ": " + message + " (" + options + ")";
   }
 

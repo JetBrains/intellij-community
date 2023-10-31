@@ -271,7 +271,7 @@ public class Patch {
 
       if (actionsToApply.isEmpty()) {
         LOG.info("nothing to apply");
-        return new PatchFileCreator.ApplicationResult(false, Collections.emptyList());
+        return new PatchFileCreator.ApplicationResult(false, List.of());
       }
 
       if (backupDir != null) {
@@ -291,7 +291,7 @@ public class Patch {
     }
     catch (OperationCancelledException e) {
       LOG.log(Level.WARNING, "cancelled", e);
-      return new PatchFileCreator.ApplicationResult(false, Collections.emptyList());
+      return new PatchFileCreator.ApplicationResult(false, List.of());
     }
 
     List<PatchAction> appliedActions = new ArrayList<>(actionsToApply.size());

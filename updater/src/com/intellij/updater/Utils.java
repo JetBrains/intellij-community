@@ -32,7 +32,7 @@ public final class Utils {
       String path = System.getProperty("java.io.tmpdir");
       if (path == null) throw new IllegalArgumentException("System property `java.io.tmpdir` is not defined");
 
-      Path dir = Paths.get(path);
+      Path dir = Path.of(path);
       if (!Files.isDirectory(dir)) throw new IOException("Not a directory: " + dir);
 
       if (REQUIRED_FREE_SPACE > 0) {
@@ -65,7 +65,7 @@ public final class Utils {
   public static void delete(File file) throws IOException {
     Path start = file.toPath();
     if (Files.exists(start, LinkOption.NOFOLLOW_LINKS)) {
-      Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
+      Files.walkFileTree(start, new SimpleFileVisitor<>() {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
           tryDelete(file);
@@ -141,7 +141,7 @@ public final class Utils {
   public static void createLink(String target, File link) throws IOException {
     Path path = link.toPath();
     Files.deleteIfExists(path);
-    Files.createSymbolicLink(path, Paths.get(target));
+    Files.createSymbolicLink(path, Path.of(target));
   }
 
   public static void copy(File from, File to, boolean overwrite) throws IOException {
@@ -167,7 +167,7 @@ public final class Utils {
   public static void copyDirectory(Path from, Path to) throws IOException {
     LOG.info(from + " into " + to);
 
-    Files.walkFileTree(from, new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(from, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
         if (dir != from || !Files.exists(to)) {

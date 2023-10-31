@@ -3,17 +3,13 @@ package com.intellij.updater;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * @author Konstantin Bulenkov
- */
 public final class Bootstrap {
   /**
-   * This property allows applying patches without creating backups. In this case a callee is responsible for that.
+   * This property allows applying patches without creating backups (a callee is responsible for that).
    * Example: JetBrains Toolbox App copies a tool it wants to update and then applies the patch.
    */
   private static final String NO_BACKUP_PROPERTY = "no.backup";
@@ -32,7 +28,7 @@ public final class Bootstrap {
   private static void mainNoExceptionsCatch(String[] args) throws Exception {
     if (args.length != 1) throw new Exception("Expected one argument: path to application installation");
 
-    Path target = Paths.get(args[0]);
+    Path target = Path.of(args[0]);
     if (isMac() && target.getFileName().toString().endsWith(".app")) {
       Path inner = target.resolve("Contents");
       if (Files.isDirectory(inner)) {

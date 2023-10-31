@@ -15,7 +15,6 @@
  */
 package com.intellij.updater;
 
-import java.util.Collections;
 import java.util.List;
 
 public class PatchSpec {
@@ -26,12 +25,12 @@ public class PatchSpec {
   private String myPatchFile;
   private String myJarFile;
   private boolean myIsStrict;
-  private List<String> myIgnoredFiles = Collections.emptyList();
-  private List<String> myCriticalFiles = Collections.emptyList();
+  private List<String> myIgnoredFiles = List.of();
+  private List<String> myCriticalFiles = List.of();
   // A conflict in an essential file makes a patch update impossible; the IDE must be reinstalled from scratch.
-  private List<String> myStrictFiles = Collections.emptyList();
-  private List<String> myOptionalFiles = Collections.emptyList();
-  private List<String> myDeleteFiles = Collections.emptyList();
+  private List<String> myStrictFiles = List.of();
+  private List<String> myOptionalFiles = List.of();
+  private List<String> myDeleteFiles = List.of();
   private String myRoot = "";
   private int myTimeout = 0;
 

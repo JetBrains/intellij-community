@@ -3,7 +3,6 @@ package com.intellij.updater;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.*;
@@ -11,13 +10,10 @@ import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class PatchCreationTest extends PatchTestCase {
@@ -45,7 +41,7 @@ public class PatchCreationTest extends PatchTestCase {
     PatchSpec spec = new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath())
-      .setIgnoredFiles(asList("Readme.txt", "bin/idea.bat"));
+      .setIgnoredFiles(List.of("Readme.txt", "bin/idea.bat"));
     Patch patch = new Patch(spec);
 
     assertThat(sortActions(patch.getActions())).containsExactly(
@@ -155,7 +151,7 @@ public class PatchCreationTest extends PatchTestCase {
     PatchSpec spec = new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath())
-      .setOptionalFiles(singletonList("lib/annotations.jar"));
+      .setOptionalFiles(List.of("lib/annotations.jar"));
     Patch patch2 = new Patch(spec);
     FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
     assertThat(patch2.validate(myOlderDir, TEST_UI)).isEmpty();
@@ -227,7 +223,7 @@ public class PatchCreationTest extends PatchTestCase {
     FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.bin"));
     FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib64/redist/annotations.bin"));
 
-    Patch patch = createPatch(spec -> spec.setOptionalFiles(asList("lib/annotations.bin", "lib/redist/annotations.bin")));
+    Patch patch = createPatch(spec -> spec.setOptionalFiles(List.of("lib/annotations.bin", "lib/redist/annotations.bin")));
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR),
       new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR),
@@ -245,7 +241,7 @@ public class PatchCreationTest extends PatchTestCase {
     FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.bin"));
     FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib64/redist/annotations.bin"));
 
-    Patch patch = createPatch(spec -> spec.setOptionalFiles(asList("lib/annotations.bin", "lib/redist/annotations.bin")));
+    Patch patch = createPatch(spec -> spec.setOptionalFiles(List.of("lib/annotations.bin", "lib/redist/annotations.bin")));
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR),
       new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR),
@@ -274,7 +270,7 @@ public class PatchCreationTest extends PatchTestCase {
     assumeSymLinkCreationIsSupported();
 
     Files.write(new File(myOlderDir, "bin/_target").toPath(), "test".getBytes(StandardCharsets.UTF_8));
-    Files.createSymbolicLink(new File(myOlderDir, "bin/_link").toPath(), Paths.get("_target"));
+    Files.createSymbolicLink(new File(myOlderDir, "bin/_link").toPath(), Path.of("_target"));
     resetNewerDir();
 
     Patch patch = createPatch();
@@ -286,7 +282,7 @@ public class PatchCreationTest extends PatchTestCase {
     assumeSymLinkCreationIsSupported();
 
     long checksum = randomFile(myOlderDir.toPath().resolve("bin/mac_lib.jnilib"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("bin/mac_lib.dylib"), Paths.get("mac_lib.jnilib"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("bin/mac_lib.dylib"), Path.of("mac_lib.jnilib"));
     resetNewerDir();
     Utils.delete(new File(myNewerDir, "bin/mac_lib.dylib"));
     Files.createDirectories(new File(myNewerDir, "plugins/whatever/bin").toPath());
@@ -308,7 +304,7 @@ public class PatchCreationTest extends PatchTestCase {
 
     resetNewerDir();
     Files.createDirectories(myOlderDir.toPath().resolve("other_dir"));
-    @NotNull Path target = Paths.get("other_dir");
+    Path target = Path.of("other_dir");
     Files.createSymbolicLink(myOlderDir.toPath().resolve("dir"), target);
     Files.createDirectories(myNewerDir.toPath().resolve("dir"));
 
@@ -329,11 +325,11 @@ public class PatchCreationTest extends PatchTestCase {
 
     randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib.dylib"));
     randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r/res.bin"));
-    @NotNull Path target2 = Paths.get("A");
+    Path target2 = Path.of("A");
     Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), target2);
-    @NotNull Path target1 = Paths.get("Versions/Current/Libraries");
+    Path target1 = Path.of("Versions/Current/Libraries");
     Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), target1);
-    @NotNull Path target = Paths.get("Versions/Current/Resources");
+    Path target = Path.of("Versions/Current/Resources");
     Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), target);
 
     randomFile(myNewerDir.toPath().resolve("A.framework/Libraries/lib.dylib"));
