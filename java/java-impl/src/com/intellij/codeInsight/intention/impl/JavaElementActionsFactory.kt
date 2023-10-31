@@ -135,10 +135,12 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     val staticMethodRequested = JvmModifier.STATIC in requestedModifiers
 
     if (staticMethodRequested) {
-      // static method in interfaces are allowed starting with Java 8
+      // static methods in interfaces are allowed starting with Java 8
       if (javaClass.isInterface && !PsiUtil.isLanguageLevel8OrHigher(javaClass)) return emptyList()
-      // static methods in inner classes are disallowed: see JLS 8.1.3
-      if (javaClass.containingClass != null && !javaClass.hasModifierProperty(PsiModifier.STATIC)) return emptyList()
+      // static methods in inner classes are disallowed before Java 16: see JLS 8.1.3
+      if (javaClass.containingClass != null &&
+          !javaClass.hasModifierProperty(PsiModifier.STATIC) &&
+          !PsiUtil.isLanguageLevel16OrHigher(javaClass)) return emptyList()
     }
 
     val result = ArrayList<IntentionAction>()
