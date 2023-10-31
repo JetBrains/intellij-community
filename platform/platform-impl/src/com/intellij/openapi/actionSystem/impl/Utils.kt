@@ -715,7 +715,7 @@ object Utils {
       }
 
       override fun paintComponent(g: Graphics) {
-        if (isUnderDarcula || StartupUiUtil.isUnderWin10LookAndFeel()) {
+        if (StartupUiUtil.isDarkTheme) {
           g.color = parent.getBackground()
           g.fillRect(0, 0, width, height)
         }
@@ -879,12 +879,11 @@ object Utils {
     rearrangeByPromoters(actions, asyncDataContext)
   }
 
-  fun <R> CoroutineScope.runUpdateSessionForActionSearch(dataContext: DataContext,
-                                                         place: String,
+  fun <R> CoroutineScope.runUpdateSessionForActionSearch(updateSession: UpdateSession,
                                                          block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R): Deferred<R> {
-    val updater = ActionUpdater(PresentationFactory(), dataContext, place, true, false, CoroutineScope(Dispatchers.EDT))
+    val updater = ActionUpdater.getUpdater(updateSession) ?: throw AssertionError()
     return async(contextMenuDispatcher + ModalityState.any().asContextElement()) {
-      updater.runUpdateSession(CoroutineName("runUpdateSessionForActionSearch ($place)")) {
+      updater.runUpdateSession(CoroutineName("runUpdateSessionForActionSearch (${updater.place})")) {
         block {
           updater.presentation(it)
         }
