@@ -55,16 +55,19 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
       return false;
     }
 
-    debug("Processing changed classes:");
-    try {
-      for (Difference.Change<JvmClass, JvmClass.Diff> change : classesDiff.changed()) {
-        if (!processChangedClass(context, change, future, present)) {
-          return false;
+    Iterable<Difference.Change<JvmClass, JvmClass.Diff>> changed = classesDiff.changed();
+    if (!Iterators.isEmpty(changed)) {
+      debug("Processing changed classes:");
+      try {
+        for (Difference.Change<JvmClass, JvmClass.Diff> change : changed) {
+          if (!processChangedClass(context, change, future, present)) {
+            return false;
+          }
         }
       }
-    }
-    finally {
-      debug("End of changed classes processing");
+      finally {
+        debug("End of changed classes processing");
+      }
     }
 
     Difference.Specifier<JvmModule, JvmModule.Diff> modulesDiff = Difference.deepDiff(
@@ -94,6 +97,8 @@ public final class JavaDifferentiateStrategy implements DifferentiateStrategy {
 
     for (JvmClass addedClass : addedClasses){
       // todo: consider if we need to perform a duplicate-class check, when the newly added class is of the same name with the existing one in the same module chunk
+      debug("Class name: ", addedClass.getName());
+
       if (!addedClass.isAnonymous() && !addedClass.isLocal()) {
         Iterators.collect(index.getDependencies(new JvmNodeReferenceID(addedClass.getShortName())), affectedNodes);
         affectedNodes.add(addedClass.getReferenceID());

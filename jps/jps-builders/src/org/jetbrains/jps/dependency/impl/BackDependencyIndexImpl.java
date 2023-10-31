@@ -52,6 +52,10 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
 
     for (var node : deletedNodes) {
       cleanupDependencies(node, depsToRemove);
+      // corner case, relevant to situations when keys in this index are actually real node IDs
+      // if a node gets deleted, corresponding index key gets deleted to: this allows to ensure there is no outdated information in the index
+      // If later a new node with the same ID is added, the previous index data for this ID will not interfere with the new state.
+      myMap.remove(node.getReferenceID());
     }
 
     for (var node : updatedNodes) {
