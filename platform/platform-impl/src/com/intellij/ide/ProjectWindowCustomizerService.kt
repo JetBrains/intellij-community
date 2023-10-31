@@ -21,6 +21,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction
 import com.intellij.ui.*
 import com.intellij.util.IconUtil
@@ -356,9 +357,22 @@ class ProjectWindowCustomizerService : Disposable {
     val offset = projectComboBtn?.let {
       SwingUtilities.convertPoint(it.parent, it.x, it.y, parent).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
     } ?: 150f
-    g.paint = RadialGradientPaint(x + offset, y + height / 2, length - offset, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
-    g.fillRect(0, 0, length, height)
 
+    g.paint = RadialGradientPaint(x + offset, y + height / 2, length - offset, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
+    val mainToolbarWidth = ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull()?.width ?: 0
+    val trafficButtonsWidth = parent.width - mainToolbarWidth
+    var radius = offset - trafficButtonsWidth / 2
+    if (radius >= 200) {
+      g.fillRect(0, 0, length, height)
+    } else {
+      if (radius < 0) {
+        radius = 60f
+      }
+      g.fillRect(offset.toInt(), 0, length - offset.toInt(), height)
+      g.paint = RadialGradientPaint(x + offset, y + height / 2, radius, floatArrayOf(0.0f, 0.3f, 1f),
+                                    arrayOf(color, color, parent.background))
+      g.fillRect(0, 0, offset.toInt(), height)
+    }
     return true
   }
 
