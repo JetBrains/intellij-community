@@ -71,7 +71,7 @@ private var ourInEDTActionOperationStack: FList<String> = FList.emptyList()
 internal class ActionUpdater @JvmOverloads constructor(
   private val presentationFactory: PresentationFactory,
   private val dataContext: DataContext,
-  private val place: String,
+  val place: String,
   private val contextMenuAction: Boolean,
   private val toolbarAction: Boolean,
   private val edtScope: CoroutineScope,
@@ -93,6 +93,12 @@ internal class ActionUpdater @JvmOverloads constructor(
 
   private var edtCallsCount: Int = 0 // used only in EDT
   private var edtWaitNanos: Long = 0 // used only in EDT
+
+  init {
+    if (EDT.isCurrentThreadEdt() && SlowOperations.isInSection(SlowOperations.ACTION_UPDATE)) {
+      reportRecursiveUpdateSession()
+    }
+  }
 
   private suspend fun updateActionReal(action: AnAction): Presentation? {
     // clone the presentation to avoid partially changing the cached one if the update is interrupted
@@ -230,7 +236,6 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
   }
 
-  @RequiresBackgroundThread
   suspend fun <R : Any?> runUpdateSession(coroutineContext: CoroutineContext, block: suspend CoroutineScope.() -> R): R =
     withContext(coroutineContext) {
       bgtScope = this
@@ -560,6 +565,8 @@ internal class ActionUpdater @JvmOverloads constructor(
 
     fun currentInEDTOperationName(): String? = ourInEDTActionOperationStack.head
 
+    fun getUpdater(updateSession: UpdateSession) = (updateSession as? UpdateSessionImpl)?.updater
+
     init {
       IdeEventQueue.getInstance().addPreprocessor(IdeEventQueue.EventDispatcher { event: AWTEvent ->
         if (event is KeyEvent && event.keyCode != 0 ||
@@ -602,6 +609,10 @@ internal class ActionUpdater @JvmOverloads constructor(
       updater.callAction(action = action, operationName = operationNameFull, updateThreadOrig = updateThread) { supplier.get() }
     }
   }
+}
+
+private fun reportRecursiveUpdateSession() {
+  LOG.error("Recursive update sessions are forbidden. Reuse existing AnActionEvent#getUpdateSession instead.")
 }
 
 private enum class Op { Update, GetChildren }
