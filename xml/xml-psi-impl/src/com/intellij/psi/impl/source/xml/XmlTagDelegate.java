@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.*;
@@ -417,7 +418,9 @@ public abstract class XmlTagDelegate {
     return XmlNamespaceIndex.guessSchema(namespace, nsDecl ? null : tag.getLocalName(), version, fileLocation, file);
   }
 
-  private static @Nullable PsiMetaOwner retrieveOwner(final @Nullable XmlTag tag, final @Nullable XmlFile file, final @Nullable String namespace) {
+  private static @Nullable PsiMetaOwner retrieveOwner(final @Nullable XmlTag tag,
+                                                      final @Nullable XmlFile file,
+                                                      final @Nullable String namespace) {
     if (file == null) {
       return namespace != null && namespace.equals(XmlUtil.getTargetSchemaNsFromTag(tag)) ? tag : null;
     }
@@ -715,15 +718,15 @@ public abstract class XmlTagDelegate {
   }
 
   String @NotNull [] knownNamespaces() {
-    final PsiElement parentElement = myTag.getParent();
+    final XmlTag parentTag = myTag.getParentTag();
     BidirectionalMap<String, String> map = getNamespaceMap(myTag);
     Set<String> known = Collections.emptySet();
     if (map != null) {
       known = new HashSet<>(map.values());
     }
-    if (parentElement instanceof XmlTag) {
-      if (known.isEmpty()) return ((XmlTag)parentElement).knownNamespaces();
-      ContainerUtil.addAll(known, ((XmlTag)parentElement).knownNamespaces());
+    if (parentTag != null) {
+      if (known.isEmpty()) return parentTag.knownNamespaces();
+      ContainerUtil.addAll(known, parentTag.knownNamespaces());
     }
     else {
       XmlExtension xmlExtension = XmlExtension.getExtensionByElement(myTag);
@@ -748,7 +751,6 @@ public abstract class XmlTagDelegate {
 
   private static @Nullable BidirectionalMap<String, String> computeNamespaceMap(@NotNull XmlTag tag) {
     BidirectionalMap<String, String> map = null;
-    PsiElement parent = tag.getParent();
     boolean hasNamespaceDeclarations = tag.hasNamespaceDeclarations();
     if (hasNamespaceDeclarations) {
       map = new BidirectionalMap<>();
@@ -772,6 +774,9 @@ public abstract class XmlTagDelegate {
       }
     }
 
+    PsiElement parent = (tag instanceof HtmlTag)
+                        ? PsiTreeUtil.getParentOfType(tag, XmlTag.class, XmlDocument.class)
+                        : tag.getParent();
     if (parent instanceof XmlDocument) {
       final XmlExtension extension = XmlExtension.getExtensionByElement(parent);
       if (extension != null) {
