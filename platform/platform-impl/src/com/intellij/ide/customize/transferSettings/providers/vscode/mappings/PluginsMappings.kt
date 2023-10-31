@@ -46,13 +46,15 @@ private val logger = logger<CommonPluginMapping>()
 
 internal class CommonPluginMapping : VSCodePluginMapping {
 
+  // Note that the later files will override the data from the former.
   private fun getResourceMappings(): List<String> = when {
-    PlatformUtils.isDataGrip() -> listOf("dg.json", "general.json") // TODO: Where else should we include DG?
-    PlatformUtils.isIntelliJ() -> listOf("ic.json", "general.json")
-    PlatformUtils.isPyCharm() -> listOf("pc.json", "general.json")
-    PlatformUtils.isRubyMine() -> listOf("rm.json", "general.json")
-    PlatformUtils.isRider() -> listOf("rd.json", "general.json")
-    PlatformUtils.isWebStorm() -> listOf("ws.json", "general.json") // TODO: Where else should we include WS?
+    PlatformUtils.isDataGrip() -> listOf("general.json", "dg.json")
+    PlatformUtils.isIntelliJ() -> listOf("general.json", "ic.json")
+    PlatformUtils.isPyCharm() -> listOf("general.json", "pc.json")
+    PlatformUtils.isRubyMine() -> listOf("general.json", "rm.json")
+    PlatformUtils.isRustRover() -> listOf("general.json", "rr.json")
+    PlatformUtils.isRider() -> listOf("general.json", "rd.json")
+    PlatformUtils.isWebStorm() -> listOf("general.json", "ws.json")
     else -> listOf("general.json")
   }
 
