@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import java.awt.*
@@ -120,6 +121,7 @@ class ProductChooserDialog : PageProvider() {
     add(at.component, BorderLayout.EAST)
 
     border = JBUI.Borders.empty(0, 20, 10, 0)
+    preferredHeight = 47
   }
 
   override fun createSouthPanel(leftSideButtons: MutableList<out JButton>,

@@ -108,7 +108,7 @@ open class SettingChooserDialog(private val provider: ActionsDataProvider<*>, va
       }, BorderLayout.CENTER
     )
   }.apply {
-    preferredSize = JBDimension(640, 410)
+    preferredSize = JBDimension(640, 409)
     maximumSize = preferredSize
     minimumSize = Dimension(0, 0)
   }
