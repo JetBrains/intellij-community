@@ -1117,26 +1117,27 @@ open class JBTabsImpl(private var project: Project?,
       val info = selectedInfo
       LOG.debug { "selected info: $info" }
       if (info == null) return null
-      var toFocus: JComponent? = null
-      if (isRequestFocusOnLastFocusedComponent && info.lastFocusOwner != null && !isMyChildIsFocusedNow) {
-        toFocus = info.lastFocusOwner
-        LOG.debug { "last focus owner: $toFocus" }
-      }
-      if (toFocus == null) {
-        toFocus = info.preferredFocusableComponent
-        if (LOG.isDebugEnabled) {
-          LOG.debug("preferred focusable component: $toFocus")
-        }
-        if (toFocus == null || !toFocus.isShowing) {
-          return null
-        }
 
-        val policyToFocus = focusManager.getFocusTargetFor(toFocus)
-        LOG.debug { "focus target: $policyToFocus" }
-        if (policyToFocus != null) {
-          toFocus = policyToFocus
+      if (isRequestFocusOnLastFocusedComponent) {
+        val lastFocusOwner = info.lastFocusOwner
+        if (lastFocusOwner != null && !isMyChildIsFocusedNow) {
+          LOG.debug { "last focus owner: $lastFocusOwner" }
+          return lastFocusOwner
         }
       }
+
+      val toFocus: JComponent? = info.preferredFocusableComponent
+      LOG.debug { "preferred focusable component: $toFocus" }
+      if (toFocus == null || !toFocus.isShowing) {
+        return null
+      }
+
+      val policyToFocus = focusManager.getFocusTargetFor(toFocus)
+      LOG.debug { "focus target: $policyToFocus" }
+      if (policyToFocus != null) {
+        return policyToFocus
+      }
+
       return toFocus
     }
 
