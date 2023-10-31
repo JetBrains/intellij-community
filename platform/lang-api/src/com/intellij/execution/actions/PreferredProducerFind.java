@@ -13,6 +13,7 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -56,8 +57,10 @@ final class PreferredProducerFind {
   }
 
   private static List<RuntimeConfigurationProducer> findAllProducers(Location location, ConfigurationContext context) {
+    boolean isDumbMode = DumbService.isDumb(context.getProject());
     final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<>();
     for (final RuntimeConfigurationProducer prototype : RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER.getExtensionList()) {
+      if (isDumbMode && !DumbService.isDumbAware(prototype)) continue;
       final RuntimeConfigurationProducer producer;
       try {
         producer = prototype.createProducer(location, context);
