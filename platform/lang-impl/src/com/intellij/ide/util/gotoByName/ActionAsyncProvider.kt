@@ -13,9 +13,9 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 import com.intellij.ide.util.gotoByName.GotoActionModel.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
+import com.intellij.openapi.actionSystem.impl.runUpdateSessionForActionSearch
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 import java.util.function.Predicate
 
-private val LOG = Logger.getInstance(ActionAsyncProvider::class.java)
+private val LOG = logger<ActionAsyncProvider>()
 
 private const val DEFAULT_CHANNEL_CAPACITY = 30
 
