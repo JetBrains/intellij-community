@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.internal
 
-import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
 
 internal class InstanceRegistrarImpl(
@@ -50,7 +50,7 @@ internal class InstanceRegistrarImpl(
       }
       is RegistrationAction.Register -> {
         check(keyClassName !in existingKeys) // sanity check
-        LOG.debug {
+        LOG.trace {
           "$debugString : $keyClassName is registered and overridden in the same scope " +
           "(${existing.initializer.instanceClassName} -> ${initializer?.instanceClassName ?: "<removed>"})"
         }
@@ -64,7 +64,7 @@ internal class InstanceRegistrarImpl(
       }
       is RegistrationAction.Override -> {
         check(keyClassName in existingKeys) // sanity check
-        LOG.debug {
+        LOG.trace {
           "$debugString : $keyClassName is overridden again in the same scope " +
           "(${existing.initializer.instanceClassName} -> ${initializer?.instanceClassName ?: "<removed>"})"
         }
@@ -73,7 +73,7 @@ internal class InstanceRegistrarImpl(
       is RegistrationAction.Remove -> {
         check(keyClassName in existingKeys) // sanity check
         // TODO throw InstanceNotRegisteredException("$keyClassName -> ${initializer?.instanceClassName ?: "<removed>"}")
-        LOG.debug {
+        LOG.trace {
           "$debugString : $keyClassName is removed and overridden again in the same scope " +
           "(<removed> -> ${initializer?.instanceClassName})"
         }
