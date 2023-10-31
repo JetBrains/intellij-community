@@ -145,9 +145,6 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
                                  @NotNull DuplicateBranchesInSwitchInspection.LevelType state,
                                  @NotNull LocalQuickFix @NotNull ... fixes) {
       PsiElement[] elements = duplicate.myStatements;
-      if (elements.length == 0) {
-        return;
-      }
       if (state == LevelType.NO) {
         return;
       }
