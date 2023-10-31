@@ -386,7 +386,7 @@ public final class org/jetbrains/jewel/ui/component/LabelledTextFieldKt {
 }
 
 public final class org/jetbrains/jewel/ui/component/LazyTreeKt {
-	public static final fun LazyTree (Lorg/jetbrains/jewel/foundation/lazy/tree/Tree;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/foundation/lazy/tree/TreeState;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/foundation/lazy/tree/KeyBindingActions;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
+	public static final fun LazyTree (Lorg/jetbrains/jewel/foundation/lazy/tree/Tree;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/foundation/lazy/tree/TreeState;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/foundation/lazy/tree/KeyActions;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/LinearProgressBarKt {

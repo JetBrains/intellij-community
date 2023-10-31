@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListScopeContainer.Entry
 import org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnEventAction
 import org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyActions
-import org.jetbrains.jewel.foundation.lazy.tree.KeyBindingActions
+import org.jetbrains.jewel.foundation.lazy.tree.KeyActions
 import org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions
 
 /**
@@ -45,7 +45,7 @@ fun SelectableLazyColumn(
     verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
-    keyActions: KeyBindingActions = DefaultSelectableLazyColumnKeyActions(),
+    keyActions: KeyActions = DefaultSelectableLazyColumnKeyActions,
     pointerEventActions: PointerEventActions = DefaultSelectableLazyColumnEventAction(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: SelectableLazyListScope.() -> Unit,

@@ -9,7 +9,7 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.lazy.tree.BasicLazyTree
 import org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeyActions
-import org.jetbrains.jewel.foundation.lazy.tree.KeyBindingActions
+import org.jetbrains.jewel.foundation.lazy.tree.KeyActions
 import org.jetbrains.jewel.foundation.lazy.tree.Tree
 import org.jetbrains.jewel.foundation.lazy.tree.TreeElementState
 import org.jetbrains.jewel.foundation.lazy.tree.TreeState
@@ -28,7 +28,7 @@ fun <T> LazyTree(
     treeState: TreeState = rememberTreeState(),
     onElementDoubleClick: (Tree.Element<T>) -> Unit = {},
     onSelectionChange: (List<Tree.Element<T>>) -> Unit = {},
-    keyActions: KeyBindingActions = DefaultTreeViewKeyActions(treeState),
+    keyActions: KeyActions = DefaultTreeViewKeyActions(treeState),
     style: LazyTreeStyle = JewelTheme.treeStyle,
     nodeContent: @Composable (SelectableLazyItemScope.(Tree.Element<T>) -> Unit),
 ) {

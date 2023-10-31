@@ -128,27 +128,39 @@ public final class org/jetbrains/jewel/foundation/StrokeKt {
 	public static synthetic fun Stroke-nMwvq1g$default (FJLorg/jetbrains/jewel/foundation/Stroke$Alignment;FILjava/lang/Object;)Lorg/jetbrains/jewel/foundation/Stroke;
 }
 
+public class org/jetbrains/jewel/foundation/lazy/DefaultMacOsSelectableColumnKeybindings : org/jetbrains/jewel/foundation/lazy/DefaultSelectableColumnKeybindings {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/foundation/lazy/DefaultMacOsSelectableColumnKeybindings$Companion;
+	public fun <init> ()V
+	public fun isMultiSelectionKeyPressed-5xRPYO0 (I)Z
+	public fun isMultiSelectionKeyPressed-ZmokQxo (Ljava/lang/Object;)Z
+}
+
+public final class org/jetbrains/jewel/foundation/lazy/DefaultMacOsSelectableColumnKeybindings$Companion : org/jetbrains/jewel/foundation/lazy/DefaultMacOsSelectableColumnKeybindings {
+}
+
 public class org/jetbrains/jewel/foundation/lazy/DefaultSelectableColumnKeybindings : org/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/foundation/lazy/DefaultSelectableColumnKeybindings$Companion;
 	public fun <init> ()V
-	public fun edit-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun extendSelectionToFirstItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun extendSelectionToLastItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun extendSelectionWithNextItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun extendSelectionWithPreviousItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun isKeyboardCtrlMetaKeyPressed-ZmokQxo (Ljava/lang/Object;)Z
-	public fun isKeyboardMultiSelectionKeyPressed-5xRPYO0 (I)Z
-	public fun isKeyboardMultiSelectionKeyPressed-ZmokQxo (Ljava/lang/Object;)Z
-	public fun scrollPageDownAndExtendSelection-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun scrollPageDownAndSelectItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun scrollPageUpAndExtendSelection-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun scrollPageUpAndSelectItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun selectAll-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun selectFirstItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun selectLastItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun selectNextItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun selectPreviousItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
+	public fun isContiguousSelectionKeyPressed-5xRPYO0 (I)Z
+	public fun isContiguousSelectionKeyPressed-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isEdit-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isExtendSelectionToFirstItem-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isExtendSelectionToLastItem-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isExtendSelectionWithNextItem-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isExtendSelectionWithPreviousItem-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isMultiSelectionKeyPressed-5xRPYO0 (I)Z
+	public fun isMultiSelectionKeyPressed-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isScrollPageDownAndExtendSelection-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isScrollPageDownAndSelectItem-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isScrollPageUpAndExtendSelection-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isScrollPageUpAndSelectItem-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isSelectAll-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isSelectFirstItem-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isSelectLastItem-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isSelectNextItem-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isSelectPreviousItem-ZmokQxo (Ljava/lang/Object;)Z
 }
 
 public final class org/jetbrains/jewel/foundation/lazy/DefaultSelectableColumnKeybindings$Companion : org/jetbrains/jewel/foundation/lazy/DefaultSelectableColumnKeybindings {
@@ -179,29 +191,24 @@ public final class org/jetbrains/jewel/foundation/lazy/DefaultSelectableOnKeyEve
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings {
-	public abstract fun edit-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun extendSelectionToFirstItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun extendSelectionToLastItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun extendSelectionWithNextItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun extendSelectionWithPreviousItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun isKeyboardCtrlMetaKeyPressed-ZmokQxo (Ljava/lang/Object;)Z
-	public abstract fun isKeyboardMultiSelectionKeyPressed-5xRPYO0 (I)Z
-	public abstract fun isKeyboardMultiSelectionKeyPressed-ZmokQxo (Ljava/lang/Object;)Z
-	public abstract fun scrollPageDownAndExtendSelection-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun scrollPageDownAndSelectItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun scrollPageUpAndExtendSelection-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun scrollPageUpAndSelectItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun selectAll-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun selectFirstItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun selectLastItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun selectNextItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun selectPreviousItem-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-}
-
-public final class org/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings$DefaultImpls {
-	public static fun isKeyboardCtrlMetaKeyPressed-ZmokQxo (Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;Ljava/lang/Object;)Z
-	public static fun isKeyboardMultiSelectionKeyPressed-5xRPYO0 (Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;I)Z
-	public static fun isKeyboardMultiSelectionKeyPressed-ZmokQxo (Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;Ljava/lang/Object;)Z
+	public abstract fun isContiguousSelectionKeyPressed-5xRPYO0 (I)Z
+	public abstract fun isContiguousSelectionKeyPressed-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isEdit-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isExtendSelectionToFirstItem-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isExtendSelectionToLastItem-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isExtendSelectionWithNextItem-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isExtendSelectionWithPreviousItem-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isMultiSelectionKeyPressed-5xRPYO0 (I)Z
+	public abstract fun isMultiSelectionKeyPressed-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isScrollPageDownAndExtendSelection-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isScrollPageDownAndSelectItem-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isScrollPageUpAndExtendSelection-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isScrollPageUpAndSelectItem-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isSelectAll-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isSelectFirstItem-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isSelectLastItem-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isSelectNextItem-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isSelectPreviousItem-ZmokQxo (Ljava/lang/Object;)Z
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/lazy/SelectableColumnOnKeyEvent {
@@ -240,7 +247,7 @@ public final class org/jetbrains/jewel/foundation/lazy/SelectableColumnOnKeyEven
 }
 
 public final class org/jetbrains/jewel/foundation/lazy/SelectableLazyColumnKt {
-	public static final fun SelectableLazyColumn (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Landroidx/compose/foundation/layout/PaddingValues;ZLkotlin/jvm/functions/Function1;Landroidx/compose/foundation/layout/Arrangement$Vertical;Landroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/foundation/gestures/FlingBehavior;Lorg/jetbrains/jewel/foundation/lazy/tree/KeyBindingActions;Lorg/jetbrains/jewel/foundation/lazy/tree/PointerEventActions;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
+	public static final fun SelectableLazyColumn (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Landroidx/compose/foundation/layout/PaddingValues;ZLkotlin/jvm/functions/Function1;Landroidx/compose/foundation/layout/Arrangement$Vertical;Landroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/foundation/gestures/FlingBehavior;Lorg/jetbrains/jewel/foundation/lazy/tree/KeyActions;Lorg/jetbrains/jewel/foundation/lazy/tree/PointerEventActions;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/lazy/SelectableLazyItemScope : androidx/compose/foundation/lazy/LazyItemScope {
@@ -328,7 +335,7 @@ public final class org/jetbrains/jewel/foundation/lazy/SelectionMode : java/lang
 }
 
 public final class org/jetbrains/jewel/foundation/lazy/tree/BasicLazyTreeKt {
-	public static final fun BasicLazyTree-orM9XXQ (Lorg/jetbrains/jewel/foundation/lazy/tree/Tree;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Lkotlin/jvm/functions/Function1;JJJFLandroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;FFLorg/jetbrains/jewel/foundation/lazy/tree/TreeState;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;JLorg/jetbrains/jewel/foundation/lazy/tree/KeyBindingActions;Lorg/jetbrains/jewel/foundation/lazy/tree/PointerEventActions;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;IIII)V
+	public static final fun BasicLazyTree-orM9XXQ (Lorg/jetbrains/jewel/foundation/lazy/tree/Tree;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Lkotlin/jvm/functions/Function1;JJJFLandroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;FFLorg/jetbrains/jewel/foundation/lazy/tree/TreeState;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;JLorg/jetbrains/jewel/foundation/lazy/tree/KeyActions;Lorg/jetbrains/jewel/foundation/lazy/tree/PointerEventActions;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;IIII)V
 }
 
 public final class org/jetbrains/jewel/foundation/lazy/tree/BuildTreeKt {
@@ -363,14 +370,14 @@ public class org/jetbrains/jewel/foundation/lazy/tree/DefaultMacOsTreeColumnKeyb
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/foundation/lazy/tree/DefaultMacOsTreeColumnKeybindings$Companion;
 	public fun <init> ()V
-	public fun isKeyboardMultiSelectionKeyPressed-5xRPYO0 (I)Z
-	public fun isKeyboardMultiSelectionKeyPressed-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isMultiSelectionKeyPressed-5xRPYO0 (I)Z
+	public fun isMultiSelectionKeyPressed-ZmokQxo (Ljava/lang/Object;)Z
 }
 
 public final class org/jetbrains/jewel/foundation/lazy/tree/DefaultMacOsTreeColumnKeybindings$Companion : org/jetbrains/jewel/foundation/lazy/tree/DefaultMacOsTreeColumnKeybindings {
 }
 
-public final class org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColumnEventAction : org/jetbrains/jewel/foundation/lazy/tree/PointerEventActions {
+public class org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColumnEventAction : org/jetbrains/jewel/foundation/lazy/tree/PointerEventActions {
 	public static final field $stable I
 	public fun <init> ()V
 	public fun handlePointerEventPress (Landroidx/compose/ui/input/pointer/PointerEvent;Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Ljava/util/List;Ljava/lang/Object;)V
@@ -378,17 +385,22 @@ public final class org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLaz
 	public fun toggleKeySelection (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;)V
 }
 
-public class org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColumnKeyActions : org/jetbrains/jewel/foundation/lazy/tree/KeyBindingActions {
+public class org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColumnKeyActions : org/jetbrains/jewel/foundation/lazy/tree/KeyActions {
 	public static final field $stable I
-	public fun <init> ()V
+	public static final field Companion Lorg/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColumnKeyActions$Companion;
+	public fun <init> (Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnOnKeyEvent;)V
+	public synthetic fun <init> (Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnOnKeyEvent;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun getActions ()Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnOnKeyEvent;
 	public fun getKeybindings ()Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;
 	public fun handleOnKeyEvent-jhbQyNo (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;)Lkotlin/jvm/functions/Function1;
 }
 
+public final class org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColumnKeyActions$Companion : org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColumnKeyActions {
+}
+
 public final class org/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewKeyActions : org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColumnKeyActions {
 	public static final field $stable I
-	public fun <init> (Lorg/jetbrains/jewel/foundation/lazy/tree/TreeState;)V
+	public fun <init> (Lorg/jetbrains/jewel/foundation/lazy/tree/TreeViewKeybindings;Lorg/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewOnKeyEvent;)V
 	public synthetic fun getActions ()Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnOnKeyEvent;
 	public fun getActions ()Lorg/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewOnKeyEvent;
 	public synthetic fun getKeybindings ()Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;
@@ -400,15 +412,13 @@ public class org/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewKeybindings
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewKeybindings$Companion;
 	public fun <init> ()V
-	public fun edit-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun extendSelectionToChild-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun extendSelectionToParent-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun selectChild-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public synthetic fun selectNextSibling-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun selectNextSibling-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Void;
-	public fun selectParent-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public synthetic fun selectPreviousSibling-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public fun selectPreviousSibling-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Void;
+	public fun isEdit-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isExtendSelectionToChild-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isExtendSelectionToParent-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isSelectChild-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isSelectNextSibling-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isSelectParent-ZmokQxo (Ljava/lang/Object;)Z
+	public fun isSelectPreviousSibling-ZmokQxo (Ljava/lang/Object;)Z
 }
 
 public final class org/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewKeybindings$Companion : org/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewKeybindings {
@@ -441,30 +451,26 @@ public class org/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewOnKeyEvent 
 	public fun onSelectPreviousItem (Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;)V
 }
 
-public final class org/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewPointerEventAction : org/jetbrains/jewel/foundation/lazy/tree/PointerEventActions {
+public final class org/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewPointerEventAction : org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColumnEventAction {
 	public static final field $stable I
 	public fun <init> (Lorg/jetbrains/jewel/foundation/lazy/tree/TreeState;)V
 	public fun handlePointerEventPress (Landroidx/compose/ui/input/pointer/PointerEvent;Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Ljava/util/List;Ljava/lang/Object;)V
-	public fun onExtendSelectionToKey (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;)V
-	public fun toggleKeySelection (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;)V
 }
 
-public abstract interface class org/jetbrains/jewel/foundation/lazy/tree/KeyBindingActions {
+public abstract interface class org/jetbrains/jewel/foundation/lazy/tree/KeyActions {
 	public abstract fun getActions ()Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnOnKeyEvent;
 	public abstract fun getKeybindings ()Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;
 	public abstract fun handleOnKeyEvent-jhbQyNo (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;)Lkotlin/jvm/functions/Function1;
+}
+
+public final class org/jetbrains/jewel/foundation/lazy/tree/KeyActionsKt {
+	public static final fun DefaultTreeViewKeyActions (Lorg/jetbrains/jewel/foundation/lazy/tree/TreeState;)Lorg/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewKeyActions;
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/lazy/tree/PointerEventActions {
 	public abstract fun handlePointerEventPress (Landroidx/compose/ui/input/pointer/PointerEvent;Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Ljava/util/List;Ljava/lang/Object;)V
 	public abstract fun onExtendSelectionToKey (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;)V
 	public abstract fun toggleKeySelection (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;)V
-}
-
-public final class org/jetbrains/jewel/foundation/lazy/tree/PointerEventActions$DefaultImpls {
-	public static fun handlePointerEventPress (Lorg/jetbrains/jewel/foundation/lazy/tree/PointerEventActions;Landroidx/compose/ui/input/pointer/PointerEvent;Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Ljava/util/List;Ljava/lang/Object;)V
-	public static fun onExtendSelectionToKey (Lorg/jetbrains/jewel/foundation/lazy/tree/PointerEventActions;Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;)V
-	public static fun toggleKeySelection (Lorg/jetbrains/jewel/foundation/lazy/tree/PointerEventActions;Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;)V
 }
 
 public final class org/jetbrains/jewel/foundation/lazy/tree/Tree {
@@ -646,18 +652,12 @@ public final class org/jetbrains/jewel/foundation/lazy/tree/TreeStateKt {
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/lazy/tree/TreeViewKeybindings : org/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings {
-	public abstract fun extendSelectionToChild-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun extendSelectionToParent-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun selectChild-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun selectNextSibling-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun selectParent-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-	public abstract fun selectPreviousSibling-ZmokQxo (Ljava/lang/Object;)Ljava/lang/Boolean;
-}
-
-public final class org/jetbrains/jewel/foundation/lazy/tree/TreeViewKeybindings$DefaultImpls {
-	public static fun isKeyboardCtrlMetaKeyPressed-ZmokQxo (Lorg/jetbrains/jewel/foundation/lazy/tree/TreeViewKeybindings;Ljava/lang/Object;)Z
-	public static fun isKeyboardMultiSelectionKeyPressed-5xRPYO0 (Lorg/jetbrains/jewel/foundation/lazy/tree/TreeViewKeybindings;I)Z
-	public static fun isKeyboardMultiSelectionKeyPressed-ZmokQxo (Lorg/jetbrains/jewel/foundation/lazy/tree/TreeViewKeybindings;Ljava/lang/Object;)Z
+	public abstract fun isExtendSelectionToChild-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isExtendSelectionToParent-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isSelectChild-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isSelectNextSibling-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isSelectParent-ZmokQxo (Ljava/lang/Object;)Z
+	public abstract fun isSelectPreviousSibling-ZmokQxo (Ljava/lang/Object;)Z
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/lazy/tree/TreeViewOnKeyEvent : org/jetbrains/jewel/foundation/lazy/SelectableColumnOnKeyEvent {

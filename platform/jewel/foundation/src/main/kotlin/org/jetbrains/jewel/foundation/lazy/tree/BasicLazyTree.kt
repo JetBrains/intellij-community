@@ -89,7 +89,7 @@ fun <T> BasicLazyTree(
     onElementDoubleClick: (Tree.Element<T>) -> Unit,
     onSelectionChange: (List<Tree.Element<T>>) -> Unit,
     platformDoubleClickDelay: Duration = 500.milliseconds,
-    keyActions: KeyBindingActions = DefaultTreeViewKeyActions(treeState),
+    keyActions: KeyActions = DefaultTreeViewKeyActions(treeState),
     pointerEventScopedActions: PointerEventActions = remember {
         DefaultTreeViewPointerEventAction(treeState)
     },

@@ -15,24 +15,25 @@ open class DefaultTreeViewKeybindings : DefaultSelectableColumnKeybindings(), Tr
 
     companion object : DefaultTreeViewKeybindings()
 
-    override fun KeyEvent.selectParent() =
-        key == Key.DirectionLeft && !isKeyboardMultiSelectionKeyPressed
+    override val KeyEvent.isSelectParent
+        get() = key == Key.DirectionLeft && !isContiguousSelectionKeyPressed
 
-    override fun KeyEvent.extendSelectionToParent() =
-        key == Key.DirectionLeft && isKeyboardMultiSelectionKeyPressed
+    override val KeyEvent.isExtendSelectionToParent
+        get() = key == Key.DirectionLeft && isContiguousSelectionKeyPressed
 
-    override fun KeyEvent.selectChild() =
-        key == Key.DirectionRight && !isKeyboardMultiSelectionKeyPressed
+    override val KeyEvent.isSelectChild
+        get() = key == Key.DirectionRight && !isContiguousSelectionKeyPressed
 
-    override fun KeyEvent.extendSelectionToChild() =
-        key == Key.DirectionRight && isKeyboardMultiSelectionKeyPressed
+    override val KeyEvent.isExtendSelectionToChild
+        get() = key == Key.DirectionRight && isContiguousSelectionKeyPressed
 
-    override fun KeyEvent.selectNextSibling() = null
+    override val KeyEvent.isSelectNextSibling
+        get() = false
 
-    override fun KeyEvent.selectPreviousSibling() = null
+    override val KeyEvent.isSelectPreviousSibling
+        get() = false
 
-    override fun KeyEvent.edit() =
-        key == Key.F2 && !isKeyboardMultiSelectionKeyPressed
+    override val KeyEvent.isEdit get() = key == Key.F2 && !isContiguousSelectionKeyPressed
 }
 
 interface TreeViewKeybindings : SelectableColumnKeybindings {
@@ -40,32 +41,32 @@ interface TreeViewKeybindings : SelectableColumnKeybindings {
     /**
      * Select Parent Node
      */
-    fun KeyEvent.selectParent(): Boolean?
+    val KeyEvent.isSelectParent: Boolean
 
     /**
      * Extend Selection to Parent Node inherited from Left with Selection
      */
-    fun KeyEvent.extendSelectionToParent(): Boolean?
+    val KeyEvent.isExtendSelectionToParent: Boolean
 
     /**
      * Select Child Node inherited from Right
      */
-    fun KeyEvent.selectChild(): Boolean?
+    val KeyEvent.isSelectChild: Boolean
 
     /**
      * Extend Selection to Child Node inherited from Right with Selection
      */
-    fun KeyEvent.extendSelectionToChild(): Boolean?
+    val KeyEvent.isExtendSelectionToChild: Boolean
 
     /**
      * Select Next Sibling Node
      */
-    fun KeyEvent.selectNextSibling(): Boolean?
+    val KeyEvent.isSelectNextSibling: Boolean
 
     /**
      * Select Previous Sibling Node
      */
-    fun KeyEvent.selectPreviousSibling(): Boolean?
+    val KeyEvent.isSelectPreviousSibling: Boolean
 }
 
 @Suppress("unused")
@@ -83,9 +84,9 @@ typealias TreeViewClickModifierHandler = PointerKeyboardModifiers.() -> Boolean
 open class DefaultMacOsTreeColumnKeybindings : DefaultTreeViewKeybindings() {
     companion object : DefaultMacOsTreeColumnKeybindings()
 
-    override val KeyEvent.isKeyboardMultiSelectionKeyPressed: Boolean
+    override val KeyEvent.isMultiSelectionKeyPressed: Boolean
         get() = isMetaPressed
 
-    override val PointerKeyboardModifiers.isKeyboardMultiSelectionKeyPressed: Boolean
+    override val PointerKeyboardModifiers.isMultiSelectionKeyPressed: Boolean
         get() = isMetaPressed
 }
