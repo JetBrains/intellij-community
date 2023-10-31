@@ -191,7 +191,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  val scopeHolder = ScopeHolder(
+  private val scopeHolder = ScopeHolder(
     parentScope,
     additionalContext,
     containerName = debugString(true),

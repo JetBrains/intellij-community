@@ -71,7 +71,6 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.useInstanceContainer
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
@@ -382,13 +381,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       // somebody can start progress here, do not wrap in write action
       fireProjectClosing(project)
       if (project is ProjectImpl) {
-        if (useInstanceContainer) {
-          // must happen before startDispose()
-          cancelAndJoinExistingContainerCoroutines(project)
-        }
-        else {
-          cancelAndJoinBlocking(project)
-        }
+        cancelAndJoinBlocking(project)
       }
     }
 
@@ -407,28 +400,18 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         ZipHandler.clearFileAccessorCache()
       }
       LaterInvocator.purgeExpiredItems()
-    }
 
-    if (useInstanceContainer && project is ProjectImpl) {
-      cancelAndJoinBlocking(project)
-    }
-
-    val projectDisposeDurationMs = app.runWriteAction<Long> {
-      measureTimeMillis {
+      val projectDisposeDurationMs = measureTimeMillis {
         if (dispose) {
           Disposer.dispose(project)
         }
       }
+      LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(project,
+                                                                projectCloseStartedMs,
+                                                                projectSaveSettingsDurationMs,
+                                                                projectClosingDurationMs,
+                                                                projectDisposeDurationMs)
     }
-
-    LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(
-      project,
-      projectCloseStartedMs,
-      projectSaveSettingsDurationMs,
-      projectClosingDurationMs,
-      projectDisposeDurationMs,
-    )
-
     return true
   }
 

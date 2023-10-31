@@ -67,8 +67,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
-import static com.intellij.ide.ShutdownKt.cancelAndJoinExistingContainerCoroutines;
-import static com.intellij.serviceContainer.ComponentManagerImplKt.useInstanceContainer;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 @ApiStatus.Internal
@@ -194,24 +192,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @TestOnly
   public void disposeContainer() {
-    if (useInstanceContainer) {
-      disposeContainer2();
-    }
-    else {
-      cancelAndJoinBlocking(this);
-      runWriteAction(() -> {
-        startDispose();
-        Disposer.dispose(this);
-      });
-    }
-    Disposer.assertIsEmpty();
-  }
-
-  private void disposeContainer2() {
-    cancelAndJoinExistingContainerCoroutines(this);
-    runWriteAction(() -> startDispose());
     cancelAndJoinBlocking(this);
-    runWriteAction(() -> Disposer.dispose(this));
+    runWriteAction(() -> {
+      startDispose();
+      Disposer.dispose(this);
+    });
+    Disposer.assertIsEmpty();
   }
 
   @Override
