@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.*
  *
  * fun fooBar() { }
  * ```
- * Will return `A`, `B`, `A#foo` and `fooBar`
+ * Will return `A`, `B`, `A#bar` and `fooBar`
  *
  * @see topLevelDeclarationsToUpdate
  */
