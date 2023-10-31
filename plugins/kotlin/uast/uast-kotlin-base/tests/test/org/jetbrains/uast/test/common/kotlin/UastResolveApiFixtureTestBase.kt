@@ -1285,6 +1285,58 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         }
     }
 
+    fun checkResolveBackingField(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                  var prop: String = "42"
+                    get() {
+                      return field + "?"
+                    }
+                    set(value) {
+                      field = value + "!"
+                    }
+                }
+            """.trimIndent()
+        )
+
+        myFixture.file.toUElement()!!.accept(BackingFieldResolveVisitor)
+    }
+
+    fun checkResolveBackingFieldInCompanionObject(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                  companion object {
+                    var prop: String = "42"
+                      get() {
+                        return field + "?"
+                      }
+                      set(value) {
+                        field = value + "!"
+                      }
+                  }
+                }
+            """.trimIndent()
+        )
+
+        myFixture.file.toUElement()!!.accept(BackingFieldResolveVisitor)
+    }
+
+    private object BackingFieldResolveVisitor : AbstractUastVisitor() {
+        override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+            if (node.identifier != "field")
+                return super.visitSimpleNameReferenceExpression(node)
+
+            val resolved = node.resolve()
+            TestCase.assertNotNull(resolved)
+            TestCase.assertEquals("prop", (resolved as PsiField).name)
+            TestCase.assertEquals("Test", resolved.containingClass?.name)
+
+            return super.visitSimpleNameReferenceExpression(node)
+        }
+    }
+
     fun checkResolveStaticImportFromObject(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
