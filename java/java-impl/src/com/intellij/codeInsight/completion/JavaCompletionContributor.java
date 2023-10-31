@@ -20,7 +20,6 @@ import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -77,6 +76,8 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_COMPARABLE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
 public final class JavaCompletionContributor extends CompletionContributor implements DumbAware {
   private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT = or(
@@ -107,7 +108,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           return aClass != null && aClass.isEnum();
         }
       }))));
-  private static final PsiJavaElementPattern.Capture<PsiElement> IN_CASE_LABEL_ELEMENT_LIST =
+  static final PsiJavaElementPattern.Capture<PsiElement> IN_CASE_LABEL_ELEMENT_LIST =
     psiElement().withSuperParent(2, psiElement(PsiCaseLabelElementList.class));
 
   private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
@@ -255,15 +256,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
   @Contract(pure = true)
   private static @NotNull ElementFilter getCaseLabelElementListFilter(@NotNull PsiElement position) {
-    if (IN_ENUM_SWITCH_LABEL.accepts(position)) {
-      return new ClassFilter(PsiField.class) {
-        @Override
-        public boolean isAcceptable(Object element, PsiElement context) {
-          return element instanceof PsiEnumConstant;
-        }
-      };
-    }
-
     PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class);
     if (switchBlock == null) return TrueFilter.INSTANCE;
 
@@ -271,6 +263,32 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     if (selector == null || selector.getType() == null) return TrueFilter.INSTANCE;
 
     PsiType selectorType = selector.getType();
+
+    if (IN_ENUM_SWITCH_LABEL.accepts(position)) {
+      ClassFilter enumClassFilter = new ClassFilter(PsiField.class) {
+        @Override
+        public boolean isAcceptable(Object element, PsiElement context) {
+          return element instanceof PsiEnumConstant;
+        }
+      };
+      if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(position)) {
+        return enumClassFilter;
+      }
+
+      ClassFilter inheritorsEnumFilter = new ClassFilter(PsiClass.class) {
+        @Override
+        public boolean isAcceptable(Object element, PsiElement context) {
+          return element instanceof PsiClass psiClass &&
+                 (JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName()) || psiClass.isEnum() || psiClass.isInterface()) &&
+                 //it will be covered by enum class and it looks like a noise
+                 !JAVA_LANG_COMPARABLE.equals(psiClass.getQualifiedName()) &&
+                 TypeConversionUtil.areTypesConvertible(TypeUtils.getType(psiClass), selectorType);
+        }
+      };
+
+      return new OrFilter(enumClassFilter, inheritorsEnumFilter);
+    }
+
     ClassFilter constantVariablesFilter = new ClassFilter(PsiVariable.class) {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
@@ -332,7 +350,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     ClassFilter inheritorsFilter = new ClassFilter(PsiClass.class) {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
-        return element instanceof PsiClass psiClass && TypeConversionUtil.areTypesConvertible(TypeUtils.getType(psiClass), selectorType);
+        return element instanceof PsiClass psiClass &&
+               TypeConversionUtil.areTypesConvertible(TypeUtils.getType(psiClass), selectorType);
       }
     };
 
@@ -842,6 +861,9 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   @Nullable
   private static TailType getTailType(boolean smart, boolean inSwitchLabel, PsiElement position) {
     if (!smart && inSwitchLabel) {
+      if (position instanceof PsiClass) {
+        return TailTypes.insertSpaceType();
+      }
       return JavaTailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)));
     }
     if (!smart && shouldInsertSemicolon(position)) {

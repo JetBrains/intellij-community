@@ -96,6 +96,16 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   }
   public void testClassPatternInSwitch1() { doTest(); }
   public void testClassPatternInSwitch2() { doTest(); }
+  public void testClassEnumInSwitch() { doTest(); }
+  public void testDefaultAfterNull() { doTest(); }
+  public void testDefaultAfterNullInJava20() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
+  }
+  public void testDefaultAfterNotNull() { doTest(); }
+  public void testDefaultAfterDefault() { doTest(); }
+  public void testClassEnumInSwitchInJava20() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
+  }
   private void doTestPostfixCompletion() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
     configure();
