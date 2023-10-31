@@ -1407,7 +1407,7 @@ public final class HighlightUtil {
         }
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
       }
-      final HighlightInfo.Builder info = checkTextBlockEscapes(expression, text, level, file, description);
+      final HighlightInfo.Builder info = checkTextBlockEscapes(expression, rawText, level, file, description);
       if (info != null) return info;
     }
     else if (type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) {
@@ -1418,8 +1418,8 @@ public final class HighlightUtil {
           }
         }
 
-        if (!StringUtil.startsWithChar(text, '\"')) return null;
-        if (!StringUtil.endsWithChar(text, '\"') || text.length() == 1) {
+        if (!StringUtil.startsWithChar(text, '"')) return null;
+        if (!StringUtil.endsWithChar(text, '"') || text.length() == 1) {
           String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
           if (description != null) {
             description.set(message);
@@ -1439,7 +1439,7 @@ public final class HighlightUtil {
             .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
             .descriptionAndTooltip(message);
         }
-        final HighlightInfo.Builder info2 = checkTextBlockEscapes(expression, text, level, file, description);
+        final HighlightInfo.Builder info2 = checkTextBlockEscapes(expression, rawText, level, file, description);
         if (info2 != null) return info2;
       }
       else {
@@ -1563,8 +1563,10 @@ public final class HighlightUtil {
                                                                        @NotNull LanguageLevel level,
                                                                        @Nullable PsiFile file,
                                                                        @Nullable Ref<? super String> description) {
-    if (file == null || !containsUnescaped(text, "\\s")) return null;
-    HighlightInfo.Builder info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
+    if (file == null) return null;
+    TextRange errorRange = calculateUnescapedRange(text, "\\s", expression.getTextOffset());
+    if (errorRange == null) return null;
+    HighlightInfo.Builder info = checkFeature(errorRange, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
     if (info == null) return null;
     if (description != null) {
       description.set(getUnsupportedFeatureMessage(HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file));
@@ -1584,7 +1586,7 @@ public final class HighlightUtil {
     return new TextRange(start, end);
   }
 
-  private static boolean containsUnescaped(@NotNull String text, @NotNull String subText) {
+  private static TextRange calculateUnescapedRange(@NotNull String text, @NotNull String subText, int offset) {
     int start = 0;
     while ((start = StringUtil.indexOf(text, subText, start)) != -1) {
       int nSlashes = 0;
@@ -1592,10 +1594,12 @@ public final class HighlightUtil {
         if (text.charAt(pos) != '\\') break;
         nSlashes++;
       }
-      if (nSlashes % 2 == 0) return true;
+      if (nSlashes % 2 == 0) {
+        return TextRange.from(offset + start, subText.length());
+      }
       start += subText.length();
     }
-    return false;
+    return null;
   }
 
   private static final Pattern FP_LITERAL_PARTS =
@@ -2948,7 +2952,7 @@ public final class HighlightUtil {
           result.append(c);
         }
         else if (c != 'u') {
-          result.append('\'').append(c);
+          result.append('\\').append(c);
           escape = false;
         }
         else {
