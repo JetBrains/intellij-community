@@ -9,6 +9,12 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.assertj.core.api.Assertions.assertThat
@@ -20,6 +26,8 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import kotlin.io.path.deleteIfExists
 
@@ -152,18 +160,19 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
         output += text
       }
     }
-    try {
-      ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(listener)
-      val callback = GradleAttachSourcesProvider().getActions(mutableListOf(library), psiFile)
-        .single()
-        .perform(mutableListOf(library))
-        .apply { waitFor(5000) }
-      assertNull(callback.error)
+    waitUntilSourcesAttached {
+      try {
+        ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(listener)
+        val callback = GradleAttachSourcesProvider().getActions(mutableListOf(library), psiFile)
+          .single()
+          .perform(mutableListOf(library))
+          .apply { waitFor(5000) }
+        assertNull(callback.error)
+      }
+      finally {
+        ExternalSystemProgressNotificationManager.getInstance().removeNotificationListener(listener)
+      }
     }
-    finally {
-      ExternalSystemProgressNotificationManager.getInstance().removeNotificationListener(listener)
-    }
-
     assertThat(output)
       .filteredOn { it.startsWith("Sources were downloaded to") }
       .hasSize(1)
@@ -176,5 +185,26 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
 
   private fun removeCachedLibrary(cachePath: String = DEPENDENCY_SOURCES_JAR_CACHE_PATH) = gradleUserHome.resolve(cachePath).run {
     deleteIfExists()
+  }
+
+  private fun waitUntilSourcesAttached(libraryName: String = DEPENDENCY_NAME, action: () -> Unit) {
+    val latch = CountDownLatch(1)
+    myProject.messageBus.connect(testRootDisposable)
+      .subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+        override fun changed(event: VersionedStorageChange) {
+          for (change in event.getAllChanges()) {
+            if (change is EntityChange.Replaced && change.component2() is LibraryEntity) {
+              val modifiedComponent = change.component2() as LibraryEntity
+              if (modifiedComponent.name == libraryName && modifiedComponent.roots.any { it.type === LibraryRootTypeId.SOURCES }) {
+                latch.countDown()
+              }
+            }
+          }
+        }
+      })
+    action.invoke()
+    if (!latch.await(10, TimeUnit.SECONDS)) {
+      LOG.error("A timeout has been reached while waiting for the library sources")
+    }
   }
 }
