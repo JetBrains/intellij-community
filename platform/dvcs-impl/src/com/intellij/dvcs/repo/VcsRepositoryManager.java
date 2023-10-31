@@ -314,6 +314,11 @@ public final class VcsRepositoryManager implements Disposable {
 
   @RequiresBackgroundThread
   private void checkAndUpdateRepositoryCollection(@Nullable VirtualFile checkedRoot) {
+    if (MODIFY_LOCK.isHeldByCurrentThread()) {
+      LOG.error(new Throwable("Recursive Repository initialization"));
+      return;
+    }
+
     MODIFY_LOCK.lock();
     try {
       Map<VirtualFile, Repository> repositories;
