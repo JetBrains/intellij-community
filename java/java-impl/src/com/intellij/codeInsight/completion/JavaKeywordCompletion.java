@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.completion.JavaCompletionContributor.IN_CASE_LABEL_ELEMENT_LIST;
 import static com.intellij.openapi.util.Conditions.notInstanceOf;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.psi.SyntaxTraverser.psiApi;
@@ -319,6 +320,34 @@ public class JavaKeywordCompletion {
 
       addPatternMatchingInSwitchCases();
     }
+    if (IN_CASE_LABEL_ELEMENT_LIST.accepts(myPosition)) {
+      addCaseAfterNullDefault();
+    }
+  }
+
+  private void addCaseAfterNullDefault() {
+    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(myPosition)) return;
+    PsiCaseLabelElementList labels = PsiTreeUtil.getParentOfType(myPosition, PsiCaseLabelElementList.class);
+    if (labels == null || labels.getElementCount() != 2 ||
+        !(labels.getElements()[0] instanceof PsiLiteralExpression literalExpression &&
+          ExpressionUtils.isNullLiteral(literalExpression))) {
+      return;
+    }
+
+    PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(labels, PsiSwitchBlock.class);
+    if (switchBlock == null) return;
+    List<PsiSwitchLabelStatementBase> allBranches =
+      PsiTreeUtil.getChildrenOfTypeAsList(switchBlock.getBody(), PsiSwitchLabelStatementBase.class);
+    if (allBranches.isEmpty() || allBranches.get(allBranches.size() - 1).getCaseLabelElementList() != labels) {
+      return;
+    }
+    if (SwitchUtils.findDefaultElement(switchBlock) != null) {
+      return;
+    }
+
+    final OverridableSpace defaultCaseRule =
+      new OverridableSpace(createKeyword(PsiKeyword.DEFAULT), JavaTailTypes.forSwitchLabel(switchBlock));
+    addKeyword(prioritizeForRule(LookupElementDecorator.withInsertHandler(defaultCaseRule, ADJUST_LINE_OFFSET), switchBlock));
   }
 
   private boolean canAddKeywords() {
