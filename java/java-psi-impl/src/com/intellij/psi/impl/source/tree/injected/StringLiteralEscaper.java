@@ -46,4 +46,15 @@ public class StringLiteralEscaper<T extends PsiLanguageInjectionHost> extends Li
   public boolean isOneLine() {
     return true;
   }
+
+  @Override
+  public @NotNull TextRange getRelevantTextRange() {
+    int textLength = myHost.getTextLength();
+    if (textLength >= 2) {
+      return TextRange.from(1, textLength - 2);
+    }
+    else {
+      return super.getRelevantTextRange();
+    }
+  }
 }
