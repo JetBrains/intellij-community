@@ -8,6 +8,7 @@ import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 
-public final class PythonRunConfigurationProducer extends LazyRunConfigurationProducer<PythonRunConfiguration> {
+public final class PythonRunConfigurationProducer extends LazyRunConfigurationProducer<PythonRunConfiguration> implements DumbAware {
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {

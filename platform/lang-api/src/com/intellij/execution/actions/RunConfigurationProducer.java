@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -23,17 +24,20 @@ import java.util.List;
 /**
  * Supports creating run configurations from context (by right-clicking a code element in the source editor or the project view). Typically,
  * run configurations that can be created from context should extend the {@link com.intellij.execution.configurations.LocatableConfigurationBase} class.
+ * If RunConfigurationProducer doesn't require indexes, please, implement the {@link com.intellij.openapi.project.DumbAware} interface.
  */
 public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   public static final ExtensionPointName<RunConfigurationProducer> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationProducer");
   private static final Logger LOG = Logger.getInstance(RunConfigurationProducer.class);
 
   public static @NotNull List<RunConfigurationProducer<?>> getProducers(@NotNull Project project) {
+    boolean isDumbMode = DumbService.isDumb(project);
     RunConfigurationProducerService runConfigurationProducerService = RunConfigurationProducerService.getInstance(project);
     List<RunConfigurationProducer> allProducers = EP_NAME.getExtensionList();
     List<RunConfigurationProducer<?>> result = new ArrayList<>(allProducers.size());
     for (RunConfigurationProducer producer : allProducers) {
-      if (!runConfigurationProducerService.isIgnored(producer)) {
+      if ((!isDumbMode || DumbService.isDumbAware(producer))
+          && !runConfigurationProducerService.isIgnored(producer)) {
         result.add(producer);
       }
     }

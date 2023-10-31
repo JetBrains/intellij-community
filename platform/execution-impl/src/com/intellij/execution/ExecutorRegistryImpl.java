@@ -419,9 +419,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     private @NotNull RunCurrentFileActionStatus getRunCurrentFileActionStatus(@NotNull AnActionEvent e, boolean resetCache) {
       Project project = Objects.requireNonNull(e.getProject());
-      if (DumbService.isDumb(project)) {
-        return RunCurrentFileActionStatus.createDisabled(myExecutor.getStartActionText(), myExecutor.getIcon());
-      }
 
       VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
       if (files.length == 1) {
