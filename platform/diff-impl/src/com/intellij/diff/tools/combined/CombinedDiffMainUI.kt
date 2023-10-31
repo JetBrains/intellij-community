@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.CommonBundle
@@ -9,11 +9,13 @@ import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.impl.DiffRequestProcessor.getToolOrderFromSettings
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
 import com.intellij.diff.impl.ui.DiffToolChooser
+import com.intellij.diff.tools.combined.search.CombinedDiffSearchController
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
+import com.intellij.ide.DataManager
 import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -25,6 +27,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.ui.GuiUtils
 import com.intellij.ui.JBSplitter
@@ -62,6 +65,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   private val mainPanel = MyMainPanel()
   private val contentPanel = Wrapper()
   private val topPanel: JPanel
+  private val searchPanel: Wrapper
   private val leftToolbar: ActionToolbar
   private val rightToolbar: ActionToolbar
   private val leftToolbarWrapper: Centerizer
@@ -84,6 +88,9 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     }
   }
 
+  var searchController: CombinedDiffSearchController? = null
+    private set
+
   init {
     Touchbar.setActions(mainPanel, touchbarActionGroup)
 
@@ -103,7 +110,8 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     rightToolbarWrapper = Centerizer(rightToolbar.component, Centerizer.TYPE.VERTICAL)
 
     diffInfoWrapper = Wrapper()
-    topPanel = buildTopPanel()
+    searchPanel = Wrapper()
+    topPanel = JBUI.Panels.simplePanel(buildTopPanel()).addToBottom(searchPanel)
 
     val bottomContentSplitter = JBSplitter(true, "CombinedDiff.BottomComponentSplitter", 0.8f)
     bottomContentSplitter.firstComponent = contentPanel
@@ -139,6 +147,36 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     buildToolbar(blockState, toolbarComponents.toolbarActions)
     buildActionPopup(toolbarComponents.popupActions)
     toolbarStatusPanel.setContent(toolbarComponents.statusPanel)
+  }
+
+  fun getSearchDataProvider() = DataManager.getDataProvider(searchPanel)
+
+  @RequiresEdt
+  fun setSearchController(searchController: CombinedDiffSearchController) {
+    this.searchController = searchController
+    val searchComponent = searchController.searchComponent
+    if (searchComponent is DataProvider) {
+      DataManager.removeDataProvider(searchPanel)
+      DataManager.registerDataProvider(searchPanel, searchComponent)
+    }
+
+    searchPanel.setContent(searchComponent)
+
+    topPanel.revalidate()
+    topPanel.repaint()
+  }
+
+  @RequiresEdt
+  fun closeSearch() {
+    searchController = null
+    searchPanel.setContent(null)
+    topPanel.revalidate()
+    topPanel.repaint()
+
+    val project = model.context.project ?: return
+    combinedViewer?.preferredFocusedComponent?.let { preferedFocusedComponent ->
+      IdeFocusManager.getInstance(project).requestFocus(preferedFocusedComponent, false)
+    }
   }
 
   fun getPreferredFocusedComponent(): JComponent? {

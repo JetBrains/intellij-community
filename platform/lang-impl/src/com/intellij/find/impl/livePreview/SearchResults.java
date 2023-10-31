@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
 
@@ -469,7 +469,7 @@ public class SearchResults implements DocumentListener, CaretListener {
   }
 
   @Nullable
-  private FindResult getOccurrenceAtCaret() {
+  public FindResult getOccurrenceAtCaret() {
     int offset = getEditor().getCaretModel().getOffset();
     return ContainerUtil.find(myOccurrences, occurrence -> occurrence.containsOffset(offset));
   }
@@ -496,7 +496,7 @@ public class SearchResults implements DocumentListener, CaretListener {
   }
 
   @Nullable
-  private FindResult firstOccurrenceBeforeCaret() {
+  public FindResult firstOccurrenceBeforeCaret() {
     int offset = getEditor().getCaretModel().getOffset();
     return firstOccurrenceBeforeOffset(offset);
   }
@@ -512,7 +512,7 @@ public class SearchResults implements DocumentListener, CaretListener {
   }
 
   @Nullable
-  private FindResult firstOccurrenceAfterCaret() {
+  public FindResult firstOccurrenceAfterCaret() {
     int caret = myEditor.getCaretModel().getOffset();
     return firstOccurrenceAfterOffset(caret);
   }

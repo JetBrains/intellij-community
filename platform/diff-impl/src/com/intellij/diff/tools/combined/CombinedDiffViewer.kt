@@ -219,6 +219,8 @@ class CombinedDiffViewer(
     return null
   }
 
+  fun getMainUI() = context.getUserData(COMBINED_DIFF_MAIN_UI)!!
+
   private inner class ViewportChangeListener : ChangeListener {
 
     override fun stateChanged(e: ChangeEvent) {
@@ -378,7 +380,7 @@ class CombinedDiffViewer(
 
   fun getDiffBlocksCount(): Int = blockState.blocksCount
 
-  private fun getCurrentDiffViewer(): DiffViewer? = diffViewers[blockState.currentBlock]
+  fun getCurrentDiffViewer(): DiffViewer? = diffViewers[blockState.currentBlock]
 
   internal fun getDiffViewerForId(id: CombinedBlockId): DiffViewer? = diffViewers[id]
 
@@ -401,7 +403,8 @@ class CombinedDiffViewer(
                               scrollPolicy: ScrollPolicy? = null,
                               focusBlock: Boolean = true,
                               animated: Boolean = true,
-                              scrollType: ScrollType = ScrollType.CENTER) {
+                              scrollType: ScrollType = ScrollType.CENTER,
+                              editorToFocus: Editor? = null) {
     val doSelect = {
       blockState.currentBlock = blockId
       scrollSupport.scroll(scrollPolicy, blockId, animated = animated, scrollType = scrollType)
@@ -411,15 +414,16 @@ class CombinedDiffViewer(
       doSelect()
       return
     }
-    requestFocusInDiffViewer(blockId)
+    requestFocusInDiffViewer(blockId, editorToFocus)
     IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(doSelect)
   }
 
-  private fun requestFocusInDiffViewer(blockId: CombinedBlockId) {
+  private fun requestFocusInDiffViewer(blockId: CombinedBlockId, editor: Editor? = null) {
     val viewer = diffViewers[blockId] ?: return
     val componentToFocus =
       with(viewer) {
         when {
+          editor != null -> editor.contentComponent
           isEditorBased -> currentEditor?.contentComponent
           preferredFocusedComponent != null -> preferredFocusedComponent
           else -> component
@@ -437,6 +441,11 @@ class CombinedDiffViewer(
   internal fun contentChanged() {
     combinedEditorSettingsAction.installGutterPopup()
     combinedEditorSettingsAction.applyDefaults()
+    updateSearch() //as a possible optimization, this should be done after all requests were loaded
+  }
+
+  private fun updateSearch() {
+    getMainUI().searchController?.update(editorsOrdered)
   }
 
   private val foldingModels: List<FoldingModelSupport>
@@ -511,9 +520,20 @@ class CombinedDiffViewer(
     scrollSupport.combinedEditorsScrollingModel.scrollToCaret(ScrollType.RELATIVE)
   }
 
+  fun scrollToEditor(editor: Editor, focus: Boolean) {
+    val entry = diffViewers.entries.find { editor in it.value.editors } ?: return
+    val blockId = entry.key
+
+    if (blockId != getCurrentBlockId()) {
+      selectDiffBlock(blockId, ScrollPolicy.SCROLL_TO_BLOCK, focusBlock = focus, editorToFocus = editor)
+    }
+  }
 
   internal val editors: List<Editor>
     get() = diffViewers.values.flatMap { it.editors }
+
+  val editorsOrdered: List<List<Editor>>
+    get() = blockState.iterateBlocks().asSequence().mapNotNull { id -> diffViewers[id]?.editors}.toList()
 
   private inner class FocusListener(disposable: Disposable) : FocusAdapter(), FocusChangeListener {
     init {
@@ -706,7 +726,7 @@ private fun runPreservingViewportContent(scroll: JBScrollPane, blocksPanel: Comb
   scroll.viewport.viewPosition = Point(newViewRect.x, newViewRect.y)
 }
 
-private val DiffViewer.currentEditor: Editor?
+val DiffViewer.currentEditor: Editor?
   get() = when (this) {
     is EditorDiffViewer -> currentEditor
     else -> null

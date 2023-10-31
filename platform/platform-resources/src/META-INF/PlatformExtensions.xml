@@ -381,6 +381,14 @@
     <editorActionHandler action="EditorPageDown" id="combinedDiffPageDown" order="last"
                          implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorPageDownHandler"/>
 
+    <!-- combined diff editor: Find -->
+    <editorActionHandler action="Find" implementationClass="com.intellij.diff.tools.combined.search.CombinedDiffSearchEditorActionHandler"
+                         id="combinedDiffFind" order="first"/>
+    <editorActionHandler action="FindNext" implementationClass="com.intellij.diff.tools.combined.search.SearchNextHandler"
+                         id="combinedDiffFindNext" order="first"/>
+    <editorActionHandler action="FindPrevious" implementationClass="com.intellij.diff.tools.combined.search.SearchPreviousHandler"
+                         id="combinedDiffFindPrevious" order="first"/>
+
     <applicationService serviceInterface="com.intellij.openapi.editor.ScrollPositionCalculator"
                         serviceImplementation="com.intellij.openapi.editor.impl.ScrollPositionCalculatorImpl"/>
 
