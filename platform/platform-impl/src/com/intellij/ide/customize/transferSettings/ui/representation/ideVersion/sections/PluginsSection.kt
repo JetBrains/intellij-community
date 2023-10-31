@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.ui.representation.ideVersion.sections
 
 import com.intellij.icons.AllIcons
@@ -16,7 +16,7 @@ import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 
 class PluginsSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settingsCache.preferences, SettingsPreferencesKind.Plugins, AllIcons.TransferSettings.PluginsAndFeatures) {
-  private val plugins = ideVersion.settingsCache.plugins.filter { !it.isHidden }
+  private val plugins = ideVersion.settingsCache.plugins.values.filter { !it.isHidden }
   override val name: String = "Plugins and Features"
   override fun worthShowing(): Boolean = plugins.isNotEmpty()
 

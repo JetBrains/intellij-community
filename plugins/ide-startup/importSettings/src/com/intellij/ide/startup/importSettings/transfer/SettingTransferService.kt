@@ -140,7 +140,11 @@ class SettingTransferService : ExternalService {
       buildList {
         settings.laf?.let(TransferableSetting::uiTheme)?.let(::add)
         settings.keymap?.let(TransferableSetting::keymap)?.let(::add)
-        settings.plugins.nullize()?.let(TransferableSetting::plugins)?.let(::add)
+        settings.plugins.values.let {
+          if (it.isNotEmpty()) {
+            add(TransferableSetting.plugins(it))
+          }
+        }
         settings.recentProjects.nullize()?.let { TransferableSetting.recentProjects() }?.let(::add)
       }
     } ?: emptyList()

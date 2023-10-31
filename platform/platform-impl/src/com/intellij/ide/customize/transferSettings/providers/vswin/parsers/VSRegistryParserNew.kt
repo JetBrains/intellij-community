@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vswin.parsers
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -55,7 +56,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
   val settingsFile: File? by lazy { settingsFileInit() }
   val vsLocation: String? by lazy { vsLocationInit() }
   val recentProjects: MutableList<RecentPathInfo> by lazy { recentProjectsInit() ?: mutableListOf() }
-  val extensions: MutableList<FeatureInfo>? by lazy { extensionsListInit() }
+  val extensions: Map<String, FeatureInfo> by lazy { extensionsListInit() }
   val theme: ILookAndFeel? by lazy { themeInit() }
 
   private val registryRootKey = if (isRegistryDetourRequired()) {
@@ -86,7 +87,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     return FontsAndColorsMappings.VsTheme.fromString(regValue).toRiderTheme()
   }
 
-  private fun extensionsListInit(): MutableList<FeatureInfo>? {
+  private fun extensionsListInit(): Map<String, FeatureInfo> {
     val packagesKey = registryRootKeyConfig.inChild("Packages")
     val preParsed = try {
 
@@ -101,12 +102,21 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     catch (t: Throwable) {
       logger.warn("error in new method")
       logger.warn(t)
-      return null
+      return emptyMap()
     }
 
     logger.info("Installed plugins in ${hive.hiveString}: ${preParsed?.joinToString { "$it, " }}")
 
-    return preParsed?.mapNotNull { PluginsMapping.get(it) }?.toMutableList()
+    return buildMap {
+      if (preParsed != null) {
+        for (id in preParsed) {
+          val plugin = PluginsMapping.get(id)
+          if (plugin != null) {
+            put(id, plugin)
+          }
+        }
+      }
+    }
   }
 
   fun colorSchemesInit() {

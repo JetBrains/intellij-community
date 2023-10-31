@@ -69,8 +69,8 @@ open class TransferableSetting(
       )
     }
 
-    fun plugins(features: List<FeatureInfo>): Multiple {
-      val items = features.filter { !it.isHidden }.map(::FeatureSetting)
+    fun plugins(features: Collection<FeatureInfo>): Multiple {
+      val items = features.asSequence().filter { !it.isHidden }.map(::FeatureSetting).toList()
       val limitForPreview = 3
       val comment = NlsMessages.formatNarrowAndList(items.take(limitForPreview).map { it.nameForPreview })
       return TransferableSettingGroup(

@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.util.text.nullize
 import kotlin.time.Duration
 
 object TransferSettingsCollector : CounterUsagesCollector() {
@@ -23,7 +24,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
 
   private val ideField = EventFields.Enum<TransferableIdeId>("ide")
   private val ideVersionField = EventFields.NullableEnum<TransferableIdeVersionId>("version")
-  private val featureField = EventFields.Enum<TransferableIdeFeatureId>("feature")
+  private val featureField = EventFields.String("feature", loadKnownPluginListFromResources())
   private val performanceMetricTypeTypeField = EventFields.Enum<PerformanceMetricType>("type")
   private val perfEventValueField = EventFields.Long("value")
   private val selectedSectionsField = EventFields.StringList("selectedSections", TransferableSections.types)
@@ -133,8 +134,8 @@ object TransferSettingsCollector : CounterUsagesCollector() {
       }
 
       if (settings.preferences.plugins) {
-        for (plugin in settings.plugins) {
-          featureImported.log(plugin.transferableId ?: TransferableIdeFeatureId.DummyBuiltInFeature, ide)
+        for (pluginId in settings.plugins.keys) {
+          featureImported.log(pluginId, ide)
         }
       }
     }
@@ -169,8 +170,8 @@ object TransferSettingsCollector : CounterUsagesCollector() {
   fun logIdeSettingsDiscovered(ideVersion: IdeVersion, settings: Settings) {
     logger.runAndLogException {
       val ide = ideVersion.transferableId
-      for (plugin in settings.plugins) {
-        featureDetected.log(ide, plugin.transferableId ?: TransferableIdeFeatureId.DummyBuiltInFeature)
+      for (pluginId in settings.plugins.keys) {
+        featureDetected.log(ide, pluginId)
       }
       recentProjectsDetected.log(ide, settings.recentProjects.size)
     }
@@ -185,5 +186,15 @@ object TransferSettingsCollector : CounterUsagesCollector() {
         EventPair(perfEventValueField, duration.inWholeMilliseconds)
       )
     }
+  }
+
+  private fun loadKnownPluginListFromResources(): List<String> {
+    val classLoader = javaClass.classLoader
+    val resource = classLoader.getResourceAsStream("pluginData/known-plugins.txt") ?: run {
+      logger.error("Cannot load known-plugins.txt from the class loader $classLoader.")
+      return emptyList()
+    }
+
+    return resource.reader().readLines().mapNotNull { it.nullize(true)?.trim()?.lowercase() }
   }
 }

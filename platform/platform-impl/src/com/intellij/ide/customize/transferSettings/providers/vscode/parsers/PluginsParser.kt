@@ -71,20 +71,20 @@ class PluginsParser(private val settings: Settings) {
     val name = root[NAME]?.textValue() ?: return
 
     val foreignPluginId = "$publisher.$name".lowercase()
-    val keymapPluginId = KeymapPluginsMappings.map(foreignPluginId)
-    if (keymapPluginId != null) {
-      settings.keymap = keymapPluginId
+    val keymapPlugin = KeymapPluginsMappings.map(foreignPluginId)
+    if (keymapPlugin != null) {
+      settings.keymap = keymapPlugin
     }
-    val pluginId = PluginsMappings.pluginIdMap(foreignPluginId) ?: return
+    val featureInfo = PluginsMappings.pluginIdMap(foreignPluginId) ?: return
     val originalPluginName = root["displayName"]?.textValue()
 
-    if (originalPluginName == null && (pluginId == KnownPlugins.DummyPlugin || pluginId == KnownPlugins.DummyBuiltInFeature)) {
+    if (originalPluginName == null && (featureInfo == KnownPlugins.DummyPlugin || featureInfo == KnownPlugins.DummyBuiltInFeature)) {
       return
     }
 
-    if (!addedPluginIds.contains(pluginId)) {
-      settings.plugins.add(pluginId)
-      addedPluginIds.add(pluginId)
+    if (!addedPluginIds.contains(featureInfo)) {
+      settings.plugins[foreignPluginId] = featureInfo
+      addedPluginIds.add(featureInfo)
     }
   }
 }

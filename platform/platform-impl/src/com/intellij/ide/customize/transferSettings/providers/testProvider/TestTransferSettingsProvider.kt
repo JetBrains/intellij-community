@@ -24,8 +24,8 @@ class TestTransferSettingsProvider : TransferSettingsProvider {
 
       laf = KnownLafs.Light,
       //keymap = BundledKeymap("My cool keymap", "Sublime Text", emptyList(/* fill this with shortcuts samples or action ids */)),
-      plugins = mutableListOf(
-        PluginFeature(TransferableIdeFeatureId.DummyPlugin, "com.intellij.ideolog", "Ideolog")
+      plugins = mutableMapOf(
+        "dummy.plugin" to PluginFeature(TransferableIdeFeatureId.DummyPlugin, "com.intellij.ideolog", "Ideolog")
       )
     )
   }, Date(), this))
