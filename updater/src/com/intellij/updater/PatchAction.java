@@ -147,7 +147,7 @@ public abstract class PatchAction {
       String problem = isWritable(toFile.toPath());
       if (problem != null) {
         ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
-        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.ACCESS_DENIED_MESSAGE, problem, options);
+        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, UpdaterUI.message("access.denied"), problem, options);
       }
     }
     return null;
@@ -175,7 +175,7 @@ public abstract class PatchAction {
   private ValidationResult validateProcessLock(File toFile, ValidationResult.Action action) {
     List<NativeFileManager.Process> processes = NativeFileManager.getProcessesUsing(toFile);
     if (processes.isEmpty()) return null;
-    String message = "Locked by: " + processes.stream().map(p -> "[" + p.pid + "] " + p.name).collect(Collectors.joining(", "));
+    var message = UpdaterUI.message("file.locked", processes.stream().map(p -> "[" + p.pid + "] " + p.name).collect(Collectors.joining(", ")));
     return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, message, ValidationResult.Option.KILL_PROCESS);
   }
 
@@ -185,13 +185,13 @@ public abstract class PatchAction {
         ValidationResult.Option[] options = calculateOptions();
         String details = "expected 0x" + Long.toHexString(myChecksum) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile));
         ValidationResult.Kind kind = isCritical() ? ValidationResult.Kind.CONFLICT : ValidationResult.Kind.ERROR;
-        return new ValidationResult(kind, getReportPath(), action, ValidationResult.MODIFIED_MESSAGE, details, options);
+        return new ValidationResult(kind, getReportPath(), action, UpdaterUI.message("file.modified"), details, options);
       }
     }
     else if (!isOptional()) {
       ValidationResult.Option[] options = calculateOptions();
       ValidationResult.Kind kind = isCritical() ? ValidationResult.Kind.CONFLICT : ValidationResult.Kind.ERROR;
-      return new ValidationResult(kind, getReportPath(), action, ValidationResult.ABSENT_MESSAGE, options);
+      return new ValidationResult(kind, getReportPath(), action, UpdaterUI.message("file.absent"), options);
     }
 
     return null;

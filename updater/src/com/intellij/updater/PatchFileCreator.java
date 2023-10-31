@@ -139,7 +139,7 @@ public final class PatchFileCreator {
     }
 
     LOG.info(patch.getOldBuild() + " -> " + patch.getNewBuild());
-    ui.setDescription(patch.getOldBuild(), patch.getNewBuild());
+    ui.setDescription(UpdaterUI.message("updating.x.to.y", patch.getOldBuild(), patch.getNewBuild()));
 
     List<ValidationResult> validationResults = patch.validate(toDir, ui);
     return new PreparationResult(patch, patchFile, toDir, validationResults);

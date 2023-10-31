@@ -14,11 +14,6 @@ public class ConsoleUpdaterUI implements UpdaterUI {
   }
 
   @Override
-  public void setDescription(String oldBuildDesc, String newBuildDesc) {
-    setDescription("From " + oldBuildDesc + " to " + newBuildDesc);
-  }
-
-  @Override
   public void setDescription(String text) {
     if (!text.isEmpty()) {
       System.out.println(text);

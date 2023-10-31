@@ -3,7 +3,6 @@ package com.intellij.updater;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.sun.jna.platform.win32.Kernel32;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -76,42 +75,42 @@ public class PatchCreationTest extends PatchTestCase {
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "bin/focuskiller.dll",
                            ValidationResult.Action.DELETE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.DELETE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "bin/idea.bat",
                            ValidationResult.Action.DELETE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.DELETE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "newDir/",
                            ValidationResult.Action.CREATE,
-                           ValidationResult.ALREADY_EXISTS_MESSAGE,
+                           "Already exists",
                            ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "newDir/newFile.txt",
                            ValidationResult.Action.CREATE,
-                           ValidationResult.ALREADY_EXISTS_MESSAGE,
+                           "Already exists",
                            ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "Readme.txt",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "bin/focuskiller.dll",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/bootstrap.jar",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.ABSENT_MESSAGE,
+                           "Absent",
                            ValidationResult.Option.IGNORE));
   }
 
@@ -134,7 +133,7 @@ public class PatchCreationTest extends PatchTestCase {
         new ValidationResult(ValidationResult.Kind.CONFLICT,
                              "bin/IDEA.bat",
                              ValidationResult.Action.CREATE,
-                             ValidationResult.ALREADY_EXISTS_MESSAGE,
+                             "Already exists",
                              ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP));
     }
     else {
@@ -150,7 +149,7 @@ public class PatchCreationTest extends PatchTestCase {
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.IGNORE));
 
     PatchSpec spec = new PatchSpec()
@@ -167,8 +166,7 @@ public class PatchCreationTest extends PatchTestCase {
     Patch patch = createPatch();
     File f = new File(myOlderDir, "Readme.txt");
     try (FileOutputStream s = new FileOutputStream(f, true); FileLock ignored = s.getChannel().lock()) {
-      String message = Utils.IS_WINDOWS ? "Locked by: [" + Kernel32.INSTANCE.GetCurrentProcessId() + "] OpenJDK Platform binary"
-                                        : ValidationResult.ACCESS_DENIED_MESSAGE;
+      String message = Utils.IS_WINDOWS ? "Locked by: [" + ProcessHandle.current().pid() + "] OpenJDK Platform binary" : "Access denied";
       ValidationResult.Option option = Utils.IS_WINDOWS ? ValidationResult.Option.KILL_PROCESS : ValidationResult.Option.IGNORE;
       assertThat(patch.validate(myOlderDir, TEST_UI)).containsExactly(
         new ValidationResult(ValidationResult.Kind.ERROR,

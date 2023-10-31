@@ -209,7 +209,7 @@ public class Patch {
     List<ValidationResult> results = new ArrayList<>();
 
     Set<String> deletedPaths = new HashSet<>(), deletedLinks = new HashSet<>();
-    forEach(myActions, "Validating installation...", ui, action -> {
+    forEach(myActions, UpdaterUI.message("validating.installation"), ui, action -> {
       ValidationResult result = action.validate(toDir);
 
       if (action instanceof DeleteAction) {
@@ -221,7 +221,7 @@ public class Patch {
       }
       else if (result != null &&
                action instanceof CreateAction &&
-               ValidationResult.ALREADY_EXISTS_MESSAGE.equals(result.message) &&
+               result.message.equals(UpdaterUI.message("file.exists")) &&
                toBeDeleted(mapPath(action.getPath()), deletedPaths, deletedLinks)) {
         result = null;  // do not warn about files going to be deleted
       }
@@ -276,7 +276,7 @@ public class Patch {
 
       if (backupDir != null) {
         File _backupDir = backupDir;
-        forEach(actionsToApply, "Backing up files...", ui, action -> action.backup(toDir, _backupDir));
+        forEach(actionsToApply, UpdaterUI.message("backing.up.files"), ui, action -> action.backup(toDir, _backupDir));
       }
       else {
         //noinspection SSBasedInspection
@@ -285,7 +285,7 @@ public class Patch {
           backupDir = Utils.getTempFile("partial_backup");
           if (!backupDir.mkdir()) throw new IOException("Cannot create a backup directory: " + backupDir);
           File _backupDir = backupDir;
-          forEach(specialActions, "Preparing update...", ui, action -> action.backup(toDir, _backupDir));
+          forEach(specialActions, UpdaterUI.message("preparing.update"), ui, action -> action.backup(toDir, _backupDir));
         }
       }
     }
@@ -298,7 +298,7 @@ public class Patch {
 
     try {
       File _backupDir = backupDir;
-      forEach(actionsToApply, "Applying patch...", ui, action -> {
+      forEach(actionsToApply, UpdaterUI.message("applying.patch"), ui, action -> {
         if (action instanceof CreateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
           LOG.info("Create action: " + action.getPath() + " skipped. The parent directory is absent.");
         }
@@ -333,7 +333,7 @@ public class Patch {
 
   public void revert(List<PatchAction> actions, File backupDir, File rootDir, UpdaterUI ui) throws IOException {
     LOG.info("Reverting... [" + actions.size() + " actions]");
-    ui.startProcess("Reverting...");
+    ui.startProcess(UpdaterUI.message("reverting"));
 
     List<PatchAction> reverse = new ArrayList<>(actions);
     Collections.reverse(reverse);
@@ -345,7 +345,10 @@ public class Patch {
     }
   }
 
-  private static void forEach(List<PatchAction> actions, String title, UpdaterUI ui, ActionProcessor processor) throws OperationCancelledException, IOException {
+  private static void forEach(List<PatchAction> actions,
+                              @UpdaterUI.Title String title,
+                              UpdaterUI ui,
+                              ActionProcessor processor) throws OperationCancelledException, IOException {
     LOG.info(title + " [" + actions.size() + " actions]");
     ui.startProcess(title);
     ui.checkCancelled();

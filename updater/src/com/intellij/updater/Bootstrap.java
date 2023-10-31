@@ -49,6 +49,8 @@ public final class Bootstrap {
       runnerArgs.add("--no-backup");
     }
 
+    Locale.setDefault(Locale.ENGLISH);
+
     //noinspection SSBasedInspection
     Runner.main(runnerArgs.toArray(new String[0]));
   }

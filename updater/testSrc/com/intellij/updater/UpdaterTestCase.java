@@ -19,7 +19,6 @@ public abstract class UpdaterTestCase {
 
     protected TestUpdaterUI() { super(false); }
 
-    @Override public void setDescription(String oldBuildDesc, String newBuildDesc) { }
     @Override public void startProcess(String title) { }
     @Override public void checkCancelled() throws OperationCancelledException { if (cancelled) throw new OperationCancelledException(); }
     @Override public void showError(String message) { }

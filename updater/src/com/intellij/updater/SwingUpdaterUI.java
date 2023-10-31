@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
+import org.jetbrains.annotations.Nls;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.AbstractTableModel;
@@ -15,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("HardCodedStringLiteral")
 public class SwingUpdaterUI implements UpdaterUI {
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
   private static final EmptyBorder LABEL_BORDER = new EmptyBorder(0, 0, 5, 0);
@@ -23,10 +24,6 @@ public class SwingUpdaterUI implements UpdaterUI {
 
   private static final Color VALIDATION_ERROR_COLOR = new Color(255, 175, 175);
   private static final Color VALIDATION_CONFLICT_COLOR = new Color(255, 240, 240);
-
-  private static final String TITLE = "Update";
-  private static final String CANCEL_BUTTON_TITLE = "Cancel";
-  private static final String PROCEED_BUTTON_TITLE = "Proceed";
 
   private final JLabel myProcessTitle;
   private final JProgressBar myProcessProgress;
@@ -42,7 +39,7 @@ public class SwingUpdaterUI implements UpdaterUI {
     myProcessProgress = new JProgressBar(0, 100);
     myProcessStatus = new JLabel(" ");
 
-    myCancelButton = new JButton(CANCEL_BUTTON_TITLE);
+    myCancelButton = new JButton(UpdaterUI.message("button.cancel"));
     myCancelButton.addActionListener(e -> doCancel());
 
     JPanel processPanel = new JPanel();
@@ -61,7 +58,7 @@ public class SwingUpdaterUI implements UpdaterUI {
     buttonsPanel.add(myCancelButton);
 
     myFrame = new JFrame();
-    myFrame.setTitle(TITLE);
+    myFrame.setTitle(UpdaterUI.message("main.title"));
     myFrame.setLayout(new BorderLayout());
     myFrame.getRootPane().setBorder(FRAME_BORDER);
     myFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -84,19 +81,14 @@ public class SwingUpdaterUI implements UpdaterUI {
   private void doCancel() {
     if (!myCancelled) {
       myPaused = true;
-      String message = "The patch has not been applied yet.\nAre you sure you want to abort the operation?";
-      int result = JOptionPane.showConfirmDialog(myFrame, message, TITLE, JOptionPane.YES_NO_OPTION);
+      String message = UpdaterUI.message("confirm.abort");
+      int result = JOptionPane.showConfirmDialog(myFrame, message, UpdaterUI.message("main.title"), JOptionPane.YES_NO_OPTION);
       if (result == JOptionPane.YES_OPTION) {
         myCancelled = true;
         myCancelButton.setEnabled(false);
       }
       myPaused = false;
     }
-  }
-
-  @Override
-  public void setDescription(String oldBuildDesc, String newBuildDesc) {
-    setDescription("Updating " + oldBuildDesc + " to " + newBuildDesc + " ...");
   }
 
   @Override
@@ -135,11 +127,11 @@ public class SwingUpdaterUI implements UpdaterUI {
   @Override
   public void showError(String message) {
     String html = "<html>" + message.replace("\n", "<br>") + "</html>";
-    invokeAndWait(() -> JOptionPane.showMessageDialog(myFrame, html, "Update Error", JOptionPane.ERROR_MESSAGE));
+    invokeAndWait(() -> JOptionPane.showMessageDialog(myFrame, html, UpdaterUI.message("error.title"), JOptionPane.ERROR_MESSAGE));
   }
 
   @Override
-  @SuppressWarnings({"SSBasedInspection", "ExtractMethodRecommender"})
+  @SuppressWarnings("SSBasedInspection")
   public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
     boolean canProceed = validationResults.stream().noneMatch(r -> r.options.contains(ValidationResult.Option.NONE));
     Map<String, ValidationResult.Option> result = new HashMap<>();
@@ -147,7 +139,7 @@ public class SwingUpdaterUI implements UpdaterUI {
     invokeAndWait(() -> {
       if (myCancelled) return;
 
-      JDialog dialog = new JDialog(myFrame, TITLE, true);
+      JDialog dialog = new JDialog(myFrame, UpdaterUI.message("main.title"), true);
       dialog.setLayout(new BorderLayout());
       dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -156,7 +148,7 @@ public class SwingUpdaterUI implements UpdaterUI {
       buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
       buttonsPanel.add(Box.createHorizontalGlue());
 
-      JButton cancelButton = new JButton(CANCEL_BUTTON_TITLE);
+      JButton cancelButton = new JButton(UpdaterUI.message("button.cancel"));
       cancelButton.addActionListener(e -> {
         myCancelled = true;
         myCancelButton.setEnabled(false);
@@ -165,7 +157,7 @@ public class SwingUpdaterUI implements UpdaterUI {
       buttonsPanel.add(cancelButton);
 
       if (canProceed) {
-        JButton proceedButton = new JButton(PROCEED_BUTTON_TITLE);
+        JButton proceedButton = new JButton(UpdaterUI.message("button.proceed"));
         proceedButton.addActionListener(e -> dialog.setVisible(false));
         buttonsPanel.add(proceedButton);
         dialog.getRootPane().setDefaultButton(proceedButton);
@@ -181,24 +173,21 @@ public class SwingUpdaterUI implements UpdaterUI {
 
       MyTableModel model = new MyTableModel(validationResults);
       table.setModel(model);
-      table.setRowHeight(new JLabel("X").getPreferredSize().height);
+      table.setRowHeight(new JLabel("|").getPreferredSize().height);
 
       TableColumnModel columnModel = table.getColumnModel();
       for (int i = 0; i < columnModel.getColumnCount(); i++) {
         columnModel.getColumn(i).setPreferredWidth(MyTableModel.getColumnWidth(i, 1000));
       }
 
-      String message = "<html>Some conflicts were found in the installation area.<br><br>";
+      String message = "<html>" + UpdaterUI.message("conflicts.header") + "<br><br>";
       if (canProceed) {
-        message += "Please select desired solutions from the '" + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] + "' " +
-                   "column and press '" + PROCEED_BUTTON_TITLE + "'.<br>" +
-                   "If you do not want to proceed with the update, please press '" + CANCEL_BUTTON_TITLE + "'.</html>";
+        message += UpdaterUI.message("conflicts.text.1");
       }
       else {
-        message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
-                   "Please download this version from the developer Web site and reinstall it from scratch.<br>" +
-                   "Press '" + CANCEL_BUTTON_TITLE + "' to exit.</html>";
+        message += UpdaterUI.message("conflicts.text.2");
       }
+      message += "</html>";
       JLabel label = new JLabel(message);
       label.setBorder(LABEL_BORDER);
 
@@ -237,9 +226,11 @@ public class SwingUpdaterUI implements UpdaterUI {
   }
 
   private static class MyTableModel extends AbstractTableModel {
-    public static final String[] COLUMNS = {"File", "Action", "Problem", "Solution"};
-    public static final double[] WIDTHS = {0.65, 0.1, 0.15, 0.1};
-    public static final int OPTIONS_COLUMN_INDEX = 3;
+    private static final String[] COLUMNS = {
+      UpdaterUI.message("column.file"), UpdaterUI.message("column.action"), UpdaterUI.message("column.problem"), UpdaterUI.message("column.solution")
+    };
+    private static final double[] WIDTHS = {0.65, 0.1, 0.15, 0.1};
+    private static final int OPTIONS_COLUMN_INDEX = 3;
 
     private final List<Item> myItems = new ArrayList<>();
 
@@ -292,13 +283,26 @@ public class SwingUpdaterUI implements UpdaterUI {
         case 0:
           return item.validationResult.path;
         case 1:
-          return item.validationResult.action;
+          return getActionName(item.validationResult.action);
         case 2:
           return item.validationResult.message;
         case OPTIONS_COLUMN_INDEX:
           return item.option;
       }
       return null;
+    }
+
+    private static @Nls String getActionName(ValidationResult.Action action) {
+      switch (action) {
+        case CREATE: return UpdaterUI.message("action.create");
+        case UPDATE: return UpdaterUI.message("action.update");
+        case DELETE: return UpdaterUI.message("action.delete");
+        case VALIDATE: return UpdaterUI.message("action.validate");
+        default: {
+          @SuppressWarnings("HardCodedStringLiteral") var name = action.toString();
+          return name;
+        }
+      }
     }
 
     public ValidationResult.Kind getKind(int rowIndex) {

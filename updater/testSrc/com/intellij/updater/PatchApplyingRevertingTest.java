@@ -210,7 +210,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.ABSENT_MESSAGE,
+                           "Absent",
                            ValidationResult.Option.NONE));
   }
 
@@ -301,7 +301,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.ABSENT_MESSAGE,
+                           "Absent",
                            ValidationResult.Option.NONE));
   }
 
@@ -316,7 +316,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.ABSENT_MESSAGE,
+                           "Absent",
                            ValidationResult.Option.IGNORE));
   }
 
@@ -396,7 +396,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/boot.jar",
                            ValidationResult.Action.VALIDATE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.NONE));
   }
 
@@ -412,7 +412,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.NONE));
   }
 
@@ -487,7 +487,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "newDir/",
                            ValidationResult.Action.CREATE,
-                           ValidationResult.ALREADY_EXISTS_MESSAGE,
+                           "Already exists",
                            ValidationResult.Option.REPLACE));
     FileUtil.delete(new File(myOlderDir, "newDir"));
     assertAppliedAndReverted(preparationResult);
