@@ -204,6 +204,13 @@ public abstract class AbstractBasicJavaSelectWordTest extends SelectWordTestBase
 
   public void testUnclosedLiteral() { doTest("java"); }
 
+  public void testStringTemplate1() { doTest("java"); }
+  public void testStringTemplate2() { doTest("java"); }
+  public void testStringTemplate3() { doTest("java"); }
+  public void testStringTemplate4() { doTest("java"); }
+  public void testStringTemplate5() { doTest("java"); }
+  public void testStringTemplate6() { doTest("java"); }
+
   public void testLineComments() { doTest("java"); }
 
   public void testLineCommentsAtStart() { doTest("java"); }

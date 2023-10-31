@@ -335,10 +335,6 @@ public final class BasicJavaAstTreeUtil {
     return findParent(e, elementType);
   }
 
-  public static boolean isTextBlock(@NotNull ASTNode node) {
-    return node.getElementType() == JavaTokenType.TEXT_BLOCK_LITERAL;
-  }
-
   @Nullable
   public static ASTNode getMethodExpression(@Nullable ASTNode element) {
     if (!is(element, BASIC_METHOD_CALL_EXPRESSION)) {
