@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -26,6 +27,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.menu.GlobalMenuLinux
 import com.intellij.platform.ide.menu.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
 import com.intellij.ui.*
@@ -336,8 +338,7 @@ private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeF
     FrameState.setFrameStateListener(this)
     glassPane = IdeGlassPaneImpl(rootPane = getRootPane(), installPainters = true)
     if (SystemInfoRt.isMac && !Menu.isJbScreenMenuEnabled()) {
-      @Suppress("DEPRECATION")
-      jMenuBar = createMenuBar(coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope(),
+      jMenuBar = createMenuBar(coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope(),
                                frame = this,
                                customMenuGroup = null)
     }

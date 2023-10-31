@@ -9,13 +9,15 @@ import com.intellij.notification.NotificationAction.createSimple
 import com.intellij.notification.NotificationAction.createSimpleExpiring
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.launch
 import java.nio.file.Path
 
@@ -23,7 +25,7 @@ private val LOG = logger<WindowsDefenderCheckerActivity>()
 
 internal class WindowsDefenderCheckerActivity : ProjectActivity {
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode || !Registry.`is`("ide.check.windows.defender.rules")) {
+    if (ApplicationManager.getApplication().isUnitTestMode || !Registry.`is`("ide.check.windows.defender.rules", false)) {
       throw ExtensionNotApplicableException.create()
     }
   }
@@ -60,8 +62,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
   }
 
   private fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>) {
-    @Suppress("DEPRECATION")
-    ApplicationManager.getApplication().coroutineScope.launch {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       @Suppress("DialogTitleCapitalization")
       withBackgroundProgress(project, DiagnosticBundle.message("defender.config.progress"), false) {
         val success = checker.excludeProjectPaths(project, paths)

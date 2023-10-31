@@ -10,6 +10,7 @@ import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.progress.blockingContext
@@ -25,6 +26,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.bootstrap.hideSplashBeforeShow
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.ui.BalloonLayout
@@ -187,8 +189,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
       }
 
       val show = prepareToShow() ?: return
-      @Suppress("DEPRECATION")
-      app.coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         blockingContext {
           val windowManager = WindowManager.getInstance() as WindowManagerImpl
           windowManager.disposeRootFrame()
