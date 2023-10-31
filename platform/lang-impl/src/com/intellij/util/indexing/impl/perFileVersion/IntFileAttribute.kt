@@ -1,14 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.Closeable
 import java.nio.file.Path
+import kotlin.io.path.name
 
+@Internal
 sealed interface IntFileAttribute : Closeable {
   companion object {
     @JvmStatic
@@ -26,12 +31,20 @@ sealed interface IntFileAttribute : Closeable {
     }
 
     fun overRegularAttribute(attribute: FileAttribute): IntFileAttribute {
-      return IntFileAttributeImpl(attribute, false)
+      return IntFileAttributeImpl(attribute, null)
     }
 
-    fun overFastAttribute(attribute: FileAttribute, path: Path? = null): IntFileAttribute {
+    /**
+     * By default, file will be created in "PathManager.getIndexRoot()/fastAttributes/attribute.id"
+     */
+    fun overFastAttribute(attribute: FileAttribute): IntFileAttribute {
+      val attributesFilePath = PathManager.getIndexRoot().resolve("fastAttributes").resolve(attribute.id)
+      return overFastAttribute(attribute, attributesFilePath, true)
+    }
+
+    fun overFastAttribute(attribute: FileAttribute, path: Path, clearOnVfsRebuild: Boolean): IntFileAttribute {
       thisLogger().assertTrue(attribute.isFixedSize, "Should be fixed size: $attribute")
-      return IntFileAttributeImpl(attribute, true, path)
+      return IntFileAttributeImpl(attribute, path, clearOnVfsRebuild)
     }
   }
 
@@ -39,18 +52,24 @@ sealed interface IntFileAttribute : Closeable {
   fun writeInt(fileId: Int, value: Int)
 }
 
-class IntFileAttributeImpl(private val attribute: FileAttribute, fast: Boolean, path: Path? = null) : IntFileAttribute {
+private class IntFileAttributeImpl(private val attribute: FileAttribute,
+                                   fastAttributesPath: Path?,
+                                   clearOnVfsRebuild: Boolean = true) : IntFileAttribute {
   private val attributeAccessor = AutoRefreshingOnVfsCloseRef<IntFileAttributeAccessor> { fsRecords ->
-    if (fast) {
-      if (path != null) {
-        SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute, path)
+    if (fastAttributesPath != null) {
+      val vfsStampFile = fastAttributesPath.resolveSibling(fastAttributesPath.name + ".vfsstamp")
+      val vfsChecker = if (clearOnVfsRebuild) VfsCreationStampChecker(vfsStampFile) else null
+      val expectedVfsCreationTimestamp = fsRecords.creationTimestamp
+      vfsChecker?.runIfVfsCreationStampMismatch(expectedVfsCreationTimestamp) { cleanupReason ->
+        thisLogger().info("Delete $vfsStampFile and $fastAttributesPath. Reason: $cleanupReason")
+        FileUtil.deleteWithRenamingIfExists(vfsStampFile)
+        FileUtil.deleteWithRenamingIfExists(fastAttributesPath)
       }
-      else {
-        SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute)
+      SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute, fastAttributesPath).also {
+        vfsChecker?.createVfsTimestampMarkerFileIfAbsent(expectedVfsCreationTimestamp)
       }
     }
     else {
-      thisLogger().assertTrue(path == null, "Cannot use custom file path for regular attributes")
       SpecializedFileAttributes.specializeAsInt(fsRecords, attribute)
     }
   }
