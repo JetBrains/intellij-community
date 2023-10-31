@@ -94,6 +94,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     }
     myTreeStructure = createStructure();
     myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTreeStructure, createComparator());
+    configureAsyncSupport(myAsyncSupport);
     myAsyncSupport.setModelTo(myTree);
 
     initTree();
@@ -118,6 +119,10 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
       }
     }));
     return myComponent;
+  }
+
+  @ApiStatus.Internal
+  protected void configureAsyncSupport(@NotNull AsyncProjectViewSupport support) {
   }
 
   @Override
