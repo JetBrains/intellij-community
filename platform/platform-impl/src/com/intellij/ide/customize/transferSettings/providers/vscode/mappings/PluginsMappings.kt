@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vscode.mappings
 
-import com.intellij.ide.customize.transferSettings.db.KnownPlugins
 import com.intellij.ide.customize.transferSettings.models.BuiltInFeature
 import com.intellij.ide.customize.transferSettings.models.FeatureInfo
 import com.intellij.ide.customize.transferSettings.models.PluginFeature
@@ -33,24 +32,6 @@ open class VSCodePluginMappingBase(private val map: Map<String, FeatureInfo>) : 
   }
 }
 
-@Suppress("SpellCheckingInspection", "unused") // used in Rider
-val DotNetFeatures = mapOf(
-  "ms-dotnettools.csharp" to KnownPlugins.CSharp,
-  "jchannon.csharpextensions" to KnownPlugins.CSharp,
-  "ms-dotnettools.csdevkit" to KnownPlugins.CSharp,
-  "kreativ-software.csharpextensions" to KnownPlugins.CSharp,
-  "jmrog.vscode-nuget-package-manager" to KnownPlugins.NuGet,
-  "formulahendry.dotnet-test-explorer" to KnownPlugins.TestExplorer,
-  "formulahendry.dotnet" to KnownPlugins.RunConfigurations,
-  "unity.unity-debug" to KnownPlugins.Unity,
-  "tobiah.unity-tools" to KnownPlugins.Unity,
-  "kleber-swf.unity-code-snippets" to KnownPlugins.Unity,
-  "jorgeserrano.vscode-csharp-snippets" to KnownPlugins.LiveTemplates,
-  "fudge.auto-using" to KnownPlugins.CSharp,
-  "k--kato.docomment" to KnownPlugins.CSharp,
-  "icsharpcode.ilspy-vscode" to KnownPlugins.DotNetDecompiler,
-)
-
 @Serializable
 private data class FeatureData(
   val vsCodeId: String,
@@ -70,6 +51,7 @@ internal class CommonPluginMapping : VSCodePluginMapping {
     PlatformUtils.isIntelliJ() -> listOf("ic.json", "general.json")
     PlatformUtils.isPyCharm() -> listOf("pc.json", "general.json")
     PlatformUtils.isRubyMine() -> listOf("rm.json", "general.json")
+    PlatformUtils.isRider() -> listOf("rd.json", "general.json")
     PlatformUtils.isWebStorm() -> listOf("ws.json", "general.json") // TODO: Where else should we include WS?
     else -> listOf("general.json")
   }
