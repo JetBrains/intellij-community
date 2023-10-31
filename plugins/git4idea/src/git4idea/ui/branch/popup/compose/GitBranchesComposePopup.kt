@@ -346,7 +346,7 @@ private fun String.highlightRanges(
   val text = this
   return buildAnnotatedString {
     rangesToHighlight.sortedBy { it.startOffset }.forEach { range ->
-      append(text.substring(lastEndIndex, range.endOffset))
+      append(text.substring(lastEndIndex, range.startOffset))
 
       withStyle(SpanStyle(background = highlightColor)) {
         append(text.substring(range.startOffset, range.endOffset))
