@@ -29,6 +29,7 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.emulator.ColorPalette
+import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.ui.AwtTransformers
 import java.awt.*
 import java.awt.event.ComponentAdapter
@@ -127,11 +128,11 @@ object TerminalUiUtils {
   fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
 
   internal fun TextStyle.toTextAttributes(palette: ColorPalette,
-                                          terminalModel: TerminalModel,
+                                          styleState: StyleState,
                                           applyDefaultBackground: Boolean): TextAttributes {
     return TextAttributes().also { attr ->
       val background: TerminalColor? = if (applyDefaultBackground) {
-        terminalModel.styleState.getBackground(backgroundForRun)
+        styleState.getBackground(backgroundForRun)
       }
       else {
         backgroundForRun
@@ -139,7 +140,7 @@ object TerminalUiUtils {
       if (background != null) {
         attr.backgroundColor = AwtTransformers.toAwtColor(palette.getBackground(background))
       }
-      attr.foregroundColor = getForegroundColor(this, palette, terminalModel)
+      attr.foregroundColor = getForegroundColor(this, palette, styleState)
       if (hasOption(TextStyle.Option.BOLD)) {
         attr.fontType = attr.fontType or Font.BOLD
       }
@@ -152,10 +153,10 @@ object TerminalUiUtils {
     }
   }
 
-  private fun getForegroundColor(style: TextStyle, palette: ColorPalette, terminalModel: TerminalModel): Color {
-    val foreground = palette.getForeground(terminalModel.styleState.getForeground(style.foregroundForRun))
+  private fun getForegroundColor(style: TextStyle, palette: ColorPalette, styleState: StyleState): Color {
+    val foreground = palette.getForeground(styleState.getForeground(style.foregroundForRun))
     return if (style.hasOption(TextStyle.Option.DIM)) {
-      val background = palette.getBackground(terminalModel.styleState.getBackground(style.backgroundForRun))
+      val background = palette.getBackground(styleState.getBackground(style.backgroundForRun))
       @Suppress("UseJBColor")
       Color((foreground.red + background.red) / 2,
             (foreground.green + background.green) / 2,

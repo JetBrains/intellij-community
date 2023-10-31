@@ -247,7 +247,7 @@ class TerminalOutputController(
   private fun TextStyle.toTextAttributes(): TextAttributes {
     // Do not apply default background to [TextAttributes],
     // because block background is painted by [TerminalBlockBackgroundRenderer] with gradient.
-    return this.toTextAttributes(palette, terminalModel, false)
+    return this.toTextAttributes(palette, terminalModel.styleState, false)
   }
 
   /** It is implied that the command is not null */

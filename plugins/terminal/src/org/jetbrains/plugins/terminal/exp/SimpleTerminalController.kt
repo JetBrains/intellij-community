@@ -132,7 +132,7 @@ class SimpleTerminalController(
     caretPainter.repaint()
   }
 
-  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(palette, terminalModel, true)
+  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(palette, terminalModel.styleState, true)
 
   override fun dispose() {
     Disposer.dispose(caretModel)
