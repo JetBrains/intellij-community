@@ -225,7 +225,7 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
             notification.setBalloonNotification(true);
             ExternalSystemNotificationManager.getInstance(project).showNotification(GradleConstants.SYSTEM_ID, notification);
           }
-        }, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData);
+        }, ProgressExecutionMode.NO_PROGRESS_ASYNC, false, userData);
       return resultWrapper;
     }
 
