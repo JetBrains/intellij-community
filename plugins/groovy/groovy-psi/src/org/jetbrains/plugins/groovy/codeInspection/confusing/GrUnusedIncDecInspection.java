@@ -2,14 +2,16 @@
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -113,7 +115,7 @@ public class GrUnusedIncDecInspection extends BaseInspection {
       }
     }
 
-    private static class RemoveIncOrDecFix implements LocalQuickFix {
+    private static class RemoveIncOrDecFix extends PsiUpdateModCommandQuickFix {
       private final @IntentionFamilyName String myMessage;
 
       RemoveIncOrDecFix(GrUnaryExpression expression) {
@@ -127,15 +129,15 @@ public class GrUnusedIncDecInspection extends BaseInspection {
       }
 
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        GrUnaryExpression expr = findUnaryExpression(descriptor);
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+        GrUnaryExpression expr = findUnaryExpression(element);
         if (expr == null) return;
 
         expr.replaceWithExpression(expr.getOperand(), true);
       }
     }
 
-    private static class ReplacePostfixIncWithPrefixFix implements LocalQuickFix {
+    private static class ReplacePostfixIncWithPrefixFix extends PsiUpdateModCommandQuickFix {
       private final @IntentionFamilyName String myMessage;
 
       ReplacePostfixIncWithPrefixFix(GrUnaryExpression expression) {
@@ -149,8 +151,8 @@ public class GrUnusedIncDecInspection extends BaseInspection {
       }
 
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        GrUnaryExpression expr = findUnaryExpression(descriptor);
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+        GrUnaryExpression expr = findUnaryExpression(element);
         if (expr == null) return;
 
         GrExpression prefix = GroovyPsiElementFactory.getInstance(project)
@@ -162,16 +164,11 @@ public class GrUnusedIncDecInspection extends BaseInspection {
   }
 
   @Nullable
-  private static GrUnaryExpression findUnaryExpression(ProblemDescriptor descriptor) {
-    GrUnaryExpression expr;
-    PsiElement element = descriptor.getPsiElement();
-    if (element == null) return null;
+  private static GrUnaryExpression findUnaryExpression(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
     IElementType opType = element.getNode().getElementType();
     if (opType != GroovyTokenTypes.mINC && opType != GroovyTokenTypes.mDEC) return null;
-    if (!(parent instanceof GrUnaryExpression)) return null;
-    expr = (GrUnaryExpression)parent;
-    return expr;
+    return ObjectUtils.tryCast(parent, GrUnaryExpression.class);
   }
 }
 

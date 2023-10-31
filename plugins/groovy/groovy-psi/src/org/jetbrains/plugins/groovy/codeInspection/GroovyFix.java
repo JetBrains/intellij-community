@@ -68,11 +68,11 @@ public abstract class GroovyFix implements LocalQuickFix {
       throws IncorrectOperationException;
 
 
-  protected static void replaceExpression(GrExpression expression, @NonNls String newExpression) {
+  public static void replaceExpression(GrExpression expression, @NonNls String newExpression) {
     GrInspectionUtil.replaceExpression(expression, newExpression);
   }
 
-  protected static void replaceStatement(GrStatement statement, @NonNls String newStatement) {
+  public static void replaceStatement(GrStatement statement, @NonNls String newStatement) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());
     final GrStatement newCall = (GrStatement)factory.createTopElementFromText(newStatement);
     statement.replaceWithStatement(newCall);
@@ -81,7 +81,7 @@ public abstract class GroovyFix implements LocalQuickFix {
   /**
    * unwraps surrounding blocks from newStatement.
    */
-  protected static void replaceStatement(GrStatement oldStatement, GrStatement newStatement) throws IncorrectOperationException {
+  public static void replaceStatement(GrStatement oldStatement, GrStatement newStatement) throws IncorrectOperationException {
     if (newStatement instanceof GrBlockStatement blockStatement) {
       final GrOpenBlock openBlock = blockStatement.getBlock();
       final GrStatement[] statements = openBlock.getStatements();

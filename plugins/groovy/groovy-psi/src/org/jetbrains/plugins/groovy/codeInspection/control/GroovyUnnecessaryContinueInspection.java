@@ -15,7 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
@@ -49,11 +52,11 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
 
   @Override
   @Nullable
-  protected GroovyFix buildFix(@NotNull PsiElement location) {
+  protected LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new UnnecessaryContinueFix();
   }
 
-  private static class UnnecessaryContinueFix extends GroovyFix {
+  private static class UnnecessaryContinueFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -62,9 +65,7 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
-      final PsiElement continueKeywordElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement continueKeywordElement, @NotNull ModPsiUpdater updater) {
       final GrContinueStatement continueStatement = (GrContinueStatement) continueKeywordElement.getParent();
       assert continueStatement != null;
       continueStatement.removeStatement();

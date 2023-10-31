@@ -15,19 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.gpath;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -35,6 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceExpression;
 
 public class GroovyListGetCanBeKeyedAccessInspection extends BaseInspection {
 
@@ -51,11 +53,11 @@ public class GroovyListGetCanBeKeyedAccessInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new ReplaceWithPropertyAccessFix();
   }
 
-  private static class ReplaceWithPropertyAccessFix extends GroovyFix {
+  private static class ReplaceWithPropertyAccessFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -64,9 +66,7 @@ public class GroovyListGetCanBeKeyedAccessInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
-      final PsiElement referenceName = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement referenceName, @NotNull ModPsiUpdater updater) {
       final GrReferenceExpression invokedExpression = (GrReferenceExpression) referenceName.getParent();
       final GrMethodCallExpression callExpression = (GrMethodCallExpression) invokedExpression.getParent();
       final GrArgumentList args = callExpression.getArgumentList();

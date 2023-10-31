@@ -2,19 +2,20 @@
 package org.jetbrains.plugins.groovy.transformations.singleton
 
 import com.intellij.codeInsight.AnnotationUtil
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 
-internal class MakeNonStrictQuickFix : LocalQuickFix {
+internal class MakeNonStrictQuickFix : PsiUpdateModCommandQuickFix() {
   @Nls
   override fun getFamilyName() = GroovyBundle.message("singleton.constructor.makeNonStrict")
 
-  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val annotation = getAnnotation(descriptor.psiElement) ?: return
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    val annotation = getAnnotation(element) ?: return
     val existingValue = AnnotationUtil.findDeclaredAttribute(annotation, "strict")
     val newValue = GroovyPsiElementFactory.getInstance(project)
       .createAnnotationFromText("@A(strict=false)")

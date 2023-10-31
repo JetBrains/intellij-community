@@ -3,21 +3,21 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 /**
  * @author Max Medvedev
  */
-public class GrModifierFix extends GroovyFix {
+public class GrModifierFix extends ModCommandQuickFix {
   public static final Function<ProblemDescriptor, PsiModifierList> MODIFIER_LIST = descriptor -> {
     final PsiElement element = descriptor.getPsiElement();
     assert element instanceof PsiModifierList : element;
@@ -39,7 +39,6 @@ public class GrModifierFix extends GroovyFix {
   private final String myModifier;
   private final @IntentionName String myText;
   private final boolean myDoSet;
-  @SafeFieldForPreview
   private final Function<? super ProblemDescriptor, ? extends PsiModifierList> myModifierListProvider;
 
   /**
@@ -112,9 +111,9 @@ public class GrModifierFix extends GroovyFix {
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiModifierList modifierList = getModifierList(descriptor);
-    modifierList.setModifierProperty(myModifier, myDoSet);
+    return ModCommand.psiUpdate(modifierList, m -> m.setModifierProperty(myModifier, myDoSet));
   }
 
   private PsiModifierList getModifierList(ProblemDescriptor descriptor) {

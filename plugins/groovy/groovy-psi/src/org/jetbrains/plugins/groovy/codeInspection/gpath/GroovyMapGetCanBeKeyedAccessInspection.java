@@ -15,7 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.gpath;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -36,6 +39,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceExpression;
+
 public class GroovyMapGetCanBeKeyedAccessInspection extends BaseInspection {
 
   @Override
@@ -51,11 +56,11 @@ public class GroovyMapGetCanBeKeyedAccessInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new ReplaceWithPropertyAccessFix();
   }
 
-  private static class ReplaceWithPropertyAccessFix extends GroovyFix {
+  private static class ReplaceWithPropertyAccessFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -64,9 +69,7 @@ public class GroovyMapGetCanBeKeyedAccessInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
-      final PsiElement referenceName = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement referenceName, @NotNull ModPsiUpdater updater) {
       final GrReferenceExpression invokedExpression = (GrReferenceExpression) referenceName.getParent();
       final GrMethodCallExpression callExpression = (GrMethodCallExpression) invokedExpression.getParent();
       final GrArgumentList args = callExpression.getArgumentList();
