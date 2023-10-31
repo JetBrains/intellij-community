@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor
 import java.io.Closeable
+import java.nio.file.Path
 
 sealed interface IntFileAttribute : Closeable {
   companion object {
@@ -28,9 +29,9 @@ sealed interface IntFileAttribute : Closeable {
       return IntFileAttributeImpl(attribute, false)
     }
 
-    fun overFastAttribute(attribute: FileAttribute): IntFileAttribute {
+    fun overFastAttribute(attribute: FileAttribute, path: Path? = null): IntFileAttribute {
       thisLogger().assertTrue(attribute.isFixedSize, "Should be fixed size: $attribute")
-      return IntFileAttributeImpl(attribute, true)
+      return IntFileAttributeImpl(attribute, true, path)
     }
   }
 
@@ -38,12 +39,18 @@ sealed interface IntFileAttribute : Closeable {
   fun writeInt(fileId: Int, value: Int)
 }
 
-class IntFileAttributeImpl(private val attribute: FileAttribute, fast: Boolean) : IntFileAttribute {
+class IntFileAttributeImpl(private val attribute: FileAttribute, fast: Boolean, path: Path? = null) : IntFileAttribute {
   private val attributeAccessor = AutoRefreshingOnVfsCloseRef<IntFileAttributeAccessor> { fsRecords ->
     if (fast) {
-      SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute)
+      if (path != null) {
+        SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute, path)
+      }
+      else {
+        SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute)
+      }
     }
     else {
+      thisLogger().assertTrue(path == null, "Cannot use custom file path for regular attributes")
       SpecializedFileAttributes.specializeAsInt(fsRecords, attribute)
     }
   }
