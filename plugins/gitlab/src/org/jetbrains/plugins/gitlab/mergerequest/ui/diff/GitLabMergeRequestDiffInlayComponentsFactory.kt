@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFiel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,10 +41,19 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
     val addAsDraftAction = vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"),
                                                     project, NewGitLabNoteType.DIFF, place)
 
+    val cancelAction = swingAction("") {
+      if (vm.text.value.isBlank()) {
+        onCancel()
+      }
+      else if (yesNo(CollaborationToolsBundle.message("review.comments.discard.new.confirmation.title"),
+                     CollaborationToolsBundle.message("review.comments.discard.new.confirmation")).ask(project)) {
+        onCancel()
+      }
+    }
     val actions = CommentInputActionsComponentFactory.Config(
       primaryAction = vm.primarySubmitActionIn(cs, addAction, addAsDraftAction),
       secondaryActions = vm.secondarySubmitActionIn(cs, addAction, addAsDraftAction),
-      cancelAction = MutableStateFlow(swingAction("") { onCancel() }),
+      cancelAction = MutableStateFlow(cancelAction),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comment.hint",
                                                                      CommentInputActionsComponentFactory.submitShortcutText))
     )
