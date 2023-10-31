@@ -1,5 +1,5 @@
 [versions]
-composeDesktop = "1.5.2"
+composeDesktop = "1.5.10"
 coroutines = "1.7.3"
 detekt = "1.23.1"
 dokka = "1.8.20"
