@@ -9,13 +9,14 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.io.DigestUtil.sha256Hex
 import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
@@ -56,7 +57,7 @@ import kotlin.io.path.pathString
  *  1. `setConnectionManager` and initialize it with `Registry` that binds aforementioned `SSLConnectionSocketFactory` to HTTPS protocol
  */
 @State(name = "CertificateManager", storages = [Storage("certificates.xml")], reportStatistic = false)
-class CertificateManager : PersistentStateComponent<CertificateManager.Config?> {
+class CertificateManager(coroutineScope: CoroutineScope) : PersistentStateComponent<CertificateManager.Config?> {
   private var config = Config()
 
   val trustManager: ConfirmingTrustManager by lazy {
@@ -79,13 +80,13 @@ class CertificateManager : PersistentStateComponent<CertificateManager.Config?> 
    *
    * @return instance of SSLContext with described behavior or default SSL context in case of error
    */
-  val sslContext: SSLContext by lazy { calcSslContext() } // hot path, do not use method reference
+  val sslContext: SSLContext by lazy { computeSslContext() } // hot path, do not use method reference
 
   /**
    * Component initialization constructor
    */
   init {
-    ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.IO) {
+    coroutineScope.launch {
       // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
       // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
       SSLContext.setDefault(sslContext)
@@ -108,12 +109,12 @@ class CertificateManager : PersistentStateComponent<CertificateManager.Config?> 
     const val DIALOG_VISIBILITY_TIMEOUT: Long = 5000 // ms
 
     @JvmStatic
-    fun getInstance(): CertificateManager = ApplicationManager.getApplication().getService(CertificateManager::class.java)
+    fun getInstance(): CertificateManager = ApplicationManager.getApplication().service<CertificateManager>()
 
     private fun tryMigratingDefaultTruststore(): String {
       val legacySystemPath = Paths.get(PathManager.getSystemPath(), "tasks", "cacerts")
       val configPath = Paths.get(DEFAULT_PATH)
-      if (!Files.exists(configPath) && Files.exists(legacySystemPath)) {
+      if (Files.notExists(configPath) && Files.exists(legacySystemPath)) {
         LOG.info("Migrating the default truststore from $legacySystemPath to $configPath")
         try {
           Files.createDirectories(configPath.parent)
@@ -275,7 +276,7 @@ class CertificateManager : PersistentStateComponent<CertificateManager.Config?> 
     }
   }
 
-  private fun calcSslContext(): SSLContext {
+  private fun computeSslContext(): SSLContext {
     val context = getSystemSslContext()
     try {
       // SSLContext context = SSLContext.getDefault();
@@ -308,6 +309,7 @@ class CertificateManager : PersistentStateComponent<CertificateManager.Config?> 
     /**
      * Do not show the dialog and accept untrusted certificates automatically.
      */
+    @Suppress("PropertyName")
     @JvmField var ACCEPT_AUTOMATICALLY: Boolean = false
   )
 }
