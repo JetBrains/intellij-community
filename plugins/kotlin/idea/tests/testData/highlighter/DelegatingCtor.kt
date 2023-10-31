@@ -1,5 +1,5 @@
 // IGNORE_K2
-
+// EXPECTED_DUPLICATED_HIGHLIGHTING
 <symbolName descr="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">open</symbolName> class <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Foo</symbolName> {
     <symbolName descr="null" textAttributesKey="KOTLIN_KEYWORD">constructor</symbolName>(<warning descr="[UNUSED_PARAMETER] Parameter 'i' is never used" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES"><symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">i</symbolName></warning>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>)
 }
