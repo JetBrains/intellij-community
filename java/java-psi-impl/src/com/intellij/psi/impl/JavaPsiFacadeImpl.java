@@ -162,7 +162,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     for (PsiElementFinder finder : finders) {
       PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);
       if (finderClasses.length != 0) {
-        if (result == null) result = new LinkedHashSet<>(finderClasses.length);
+        if (result == null) result = new HashSet<>(finderClasses.length);
         filterClassesAndAppend(finder, classesFilter, finderClasses, result);
       }
     }
