@@ -13,8 +13,8 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -79,8 +79,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final boolean LOG_NON_CACHED_ROOTS_LIST = getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
 
   /** Show notification about successful VFS recovery if VFS init takes longer than [nanoseconds] */
-  private static final long NOTIFY_OF_RECOVERY_IF_LONGER_NS =
-    SECONDS.toNanos(getLongProperty("vfs.notify-user-if-recovery-longer-sec", 10));
+  private static final long NOTIFY_OF_RECOVERY_IF_LONGER_NS = SECONDS.toNanos(
+    getLongProperty("vfs.notify-user-if-recovery-longer-sec", ApplicationManager.getApplication().isEAP() ? 10 : Long.MAX_VALUE)
+  );
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
@@ -226,6 +227,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         IdeBundle.message("notification.vfs.vfs-recovered.notification.text", names.getProductName()),
         INFORMATION
       )
+      .setDisplayId("VFS.recovery.happened")
       .addAction(reportProblemAction)
       .setImportant(false)
       .notify(/*project: */ null);
