@@ -1330,7 +1330,7 @@
       <action id="XDebugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction" />
     </group>
 
-    <group id="XDebugger.Code.Toolbar" class="com.intellij.xdebugger.impl.actions.DebuggerCodeToolbarGroup" internal="true">
+    <group id="XDebugger.Code.Toolbar" class="com.intellij.xdebugger.impl.actions.DebuggerCodeToolbarGroup">
       <separator/>
       <reference ref="EvaluateExpression"/>
       <reference ref="Debugger.AddToWatch"/>
