@@ -249,4 +249,9 @@ public final class IndexingStamp {
   }
 
   private static final StripedLock ourLock = new StripedLock();
+
+  static void close() {
+    flushCaches();
+    storage.close();
+  }
 }
