@@ -15,8 +15,18 @@ version = when {
     else -> "1.0.0-SNAPSHOT"
 }
 
+java {
+    toolchain {
+        vendor = JvmVendorSpec.JETBRAINS
+        languageVersion = 17
+    }
+}
+
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain {
+        vendor = JvmVendorSpec.JETBRAINS
+        languageVersion = 17
+    }
     target {
         compilations.all {
             kotlinOptions {

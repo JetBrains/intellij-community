@@ -1,5 +1,7 @@
 import java.util.concurrent.atomic.AtomicBoolean
 import org.gradle.api.Project
+import org.gradle.api.provider.Property
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 
 enum class SupportedIJVersion {
     IJ_232,
@@ -35,3 +37,6 @@ fun Project.supportedIJVersion(): SupportedIJVersion {
         )
     }
 }
+
+fun Property<JavaLanguageVersion>.assign(version: Int) =
+    set(JavaLanguageVersion.of(version))

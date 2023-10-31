@@ -37,3 +37,17 @@ compose.desktop {
         }
     }
 }
+
+tasks {
+    withType<JavaExec> {
+        // afterEvaluate is needed because the Compose Gradle Plugin
+        // register the task in the afterEvaluate block
+        afterEvaluate {
+            javaLauncher = project.javaToolchains.launcherFor {
+                languageVersion = 17
+                vendor = JvmVendorSpec.JETBRAINS
+            }
+            setExecutable(javaLauncher.map { it.executablePath.asFile.absolutePath }.get())
+        }
+    }
+}
