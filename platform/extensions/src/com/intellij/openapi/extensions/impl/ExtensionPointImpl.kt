@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import java.util.function.BiPredicate
-import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
 import kotlin.concurrent.Volatile
@@ -286,7 +285,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     processWithPluginDescriptor(shouldBeSorted = false, consumer)
   }
 
-  private inline fun processWithPluginDescriptor(shouldBeSorted: Boolean, consumer: (T, PluginDescriptor) -> Unit) {
+  internal inline fun processWithPluginDescriptor(shouldBeSorted: Boolean, consumer: (T, PluginDescriptor) -> Unit) {
     for (adapter in if (shouldBeSorted) sortedAdapters else adapters) {
       try {
         val extension = getOrCreateExtensionInstance(adapter) ?: continue
@@ -298,12 +297,6 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       catch (e: Throwable) {
         LOG.error(componentManager.createError(e, adapter.pluginDescriptor.pluginId))
       }
-    }
-  }
-
-  internal fun forEachExtensionSafe(consumer: Consumer<in T>) {
-    processWithPluginDescriptor(shouldBeSorted = true) { adapter, _ ->
-      consumer.accept(adapter)
     }
   }
 

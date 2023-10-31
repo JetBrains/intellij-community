@@ -52,7 +52,9 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * Invokes the given consumer for each extension registered in this extension point. Logs exceptions thrown by the consumer.
    */
   fun forEachExtensionSafe(consumer: Consumer<in T>) {
-    getPointImpl(areaInstance = null).forEachExtensionSafe(consumer)
+    getPointImpl(areaInstance = null).processWithPluginDescriptor(shouldBeSorted = true) { adapter, _ ->
+      consumer.accept(adapter)
+    }
   }
 
   fun findFirstSafe(predicate: Predicate<in T>): T? {
@@ -214,72 +216,72 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   }
 
   @ApiStatus.Internal
-  interface LazyExtension<T> {
-    val id: String?
-    val instance: T?
-
-    val implementationClassName: String
-    val implementationClass: Class<T>?
-
-    val pluginDescriptor: PluginDescriptor
-
-    @get:ApiStatus.Internal
-    val order: LoadingOrder
-
-    fun getCustomAttribute(name: String): String?
-  }
-
-  @ApiStatus.Internal
   fun filterableLazySequence(): Sequence<LazyExtension<T>> {
     val point = getPointImpl(null)
     val adapters = point.sortedAdapters
     return LazyExtensionSequence(point = point, adapters = adapters)
   }
+}
 
-  private class LazyExtensionSequence<T : Any>(
-    private val point: ExtensionPointImpl<T>,
-    private val adapters: List<ExtensionComponentAdapter>,
-  ) : Sequence<LazyExtension<T>> {
-    override fun iterator(): Iterator<LazyExtension<T>> {
-      return object : Iterator<LazyExtension<T>> {
-        private var currentIndex = 0
+@ApiStatus.Internal
+interface LazyExtension<T> {
+  val id: String?
+  val instance: T?
 
-        override fun hasNext(): Boolean = currentIndex < adapters.size
+  val implementationClassName: String
+  val implementationClass: Class<T>?
 
-        override fun next(): LazyExtension<T> {
-          val adapter = adapters.get(currentIndex++)
-          return object : LazyExtension<T> {
-            override val id: String?
-              get() = adapter.orderId
+  val pluginDescriptor: PluginDescriptor
 
-            override val order: LoadingOrder
-              get() = adapter.order
+  @get:ApiStatus.Internal
+  val order: LoadingOrder
 
-            override fun getCustomAttribute(name: String): String? {
-              return if (adapter is AdapterWithCustomAttributes) adapter.customAttributes.get(name) else null
+  fun getCustomAttribute(name: String): String?
+}
+
+private class LazyExtensionSequence<T : Any>(
+  private val point: ExtensionPointImpl<T>,
+  private val adapters: List<ExtensionComponentAdapter>,
+) : Sequence<LazyExtension<T>> {
+  override fun iterator(): Iterator<LazyExtension<T>> {
+    return object : Iterator<LazyExtension<T>> {
+      private var currentIndex = 0
+
+      override fun hasNext(): Boolean = currentIndex < adapters.size
+
+      override fun next(): LazyExtension<T> {
+        val adapter = adapters.get(currentIndex++)
+        return object : LazyExtension<T> {
+          override val id: String?
+            get() = adapter.orderId
+
+          override val order: LoadingOrder
+            get() = adapter.order
+
+          override fun getCustomAttribute(name: String): String? {
+            return if (adapter is AdapterWithCustomAttributes) adapter.customAttributes.get(name) else null
+          }
+
+          override val instance: T?
+            get() = createOrError(adapter = adapter, point = point)
+          override val implementationClassName: String
+            get() = adapter.assignableToClassName
+          override val implementationClass: Class<T>?
+            get() {
+              try {
+                return adapter.getImplementationClass(point.componentManager)
+              }
+              catch (e: CancellationException) {
+                throw e
+              }
+              catch (e: Throwable) {
+                logger<ExtensionPointName<T>>().error(point.componentManager.createError(e, adapter.pluginDescriptor.pluginId))
+                return null
+              }
             }
 
-            override val instance: T?
-              get() = createOrError(adapter = adapter, point = point)
-            override val implementationClassName: String
-              get() = adapter.assignableToClassName
-            override val implementationClass: Class<T>?
-              get() {
-                try {
-                  return adapter.getImplementationClass(point.componentManager)
-                }
-                catch (e: CancellationException) {
-                  throw e
-                }
-                catch (e: Throwable) {
-                  logger<ExtensionPointName<T>>().error(point.componentManager.createError(e, adapter.pluginDescriptor.pluginId))
-                  return null
-                }
-              }
-
-            override val pluginDescriptor: PluginDescriptor
-              get() = adapter.pluginDescriptor
-          }
+          override val pluginDescriptor: PluginDescriptor
+            get() = adapter.pluginDescriptor
         }
       }
     }
