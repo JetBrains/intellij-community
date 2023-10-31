@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.platform.util.progress.progressStep
 import com.intellij.platform.util.progress.withRawProgressReporter
@@ -102,9 +103,11 @@ class PostCommitChecksHandler(val project: Project) {
 
     if (lastCommitInfos.isNotEmpty()) {
       val mergedCommitInfo = withContext(Dispatchers.IO) {
-        withRawProgressReporter {
-          coroutineToIndicator {
-            mergeCommitInfos(lastCommitInfos, commitInfo)
+        indeterminateStep {
+          withRawProgressReporter {
+            coroutineToIndicator {
+              mergeCommitInfos(lastCommitInfos, commitInfo)
+            }
           }
         }
       }
@@ -116,9 +119,11 @@ class PostCommitChecksHandler(val project: Project) {
     }
 
     return withContext(Dispatchers.IO) {
-      withRawProgressReporter {
-        coroutineToIndicator {
-          createPostCommitInfo(commitInfo)
+      indeterminateStep {
+        withRawProgressReporter {
+          coroutineToIndicator {
+            createPostCommitInfo(commitInfo)
+          }
         }
       }
     }
