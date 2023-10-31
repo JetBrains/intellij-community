@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Range;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.function.IntUnaryOperator;
 import java.util.function.LongUnaryOperator;
 
@@ -195,16 +196,33 @@ public final class SpecializedFileAttributes {
   }
 
   public static IntFileAttributeAccessor specializeAsFastInt(@NotNull FSRecordsImpl vfs,
-                                                             @NotNull FileAttribute attribute) throws IOException {
-    String attributeId = attribute.getId();
-
+                                                             @NotNull FileAttribute attribute,
+                                                             @NotNull Path absolutePath) throws IOException {
     MappedFileStorageHelper storageHelper = MappedFileStorageHelper.openHelperAndVerifyVersions(
       vfs,
-      attributeId,
+      absolutePath,
+      attribute.getVersion(),
+      Integer.BYTES,
+      true
+    );
+
+    return specializeAsFastInt(vfs, storageHelper);
+  }
+
+  public static IntFileAttributeAccessor specializeAsFastInt(@NotNull FSRecordsImpl vfs,
+                                                             @NotNull FileAttribute attribute) throws IOException {
+    MappedFileStorageHelper storageHelper = MappedFileStorageHelper.openHelperAndVerifyVersions(
+      vfs,
+      attribute.getId(),
       attribute.getVersion(),
       Integer.BYTES
     );
 
+    return specializeAsFastInt(vfs, storageHelper);
+  }
+
+  private static IntFileAttributeAccessor specializeAsFastInt(@NotNull FSRecordsImpl vfs,
+                                                              MappedFileStorageHelper storageHelper) throws IOException {
     FastIntFileAttributeAccessor accessor = new FastIntFileAttributeAccessor(storageHelper);
     vfs.addCloseable(accessor);
     vfs.addFileIdIndexedStorage(accessor);
