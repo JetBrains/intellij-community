@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SVGLoader;
 import org.intellij.images.fileTypes.impl.SvgFileType;
@@ -44,7 +45,9 @@ public class ConvertSvgToPngAction extends DumbAwareAction {
     try {
       Image image = SVGLoader.load(new File(svgFile.getPath()).toURI().toURL(), 1f);
       String path = svgFile.getPath();
-      ImageIO.write((BufferedImage)image, "png", new File(path + ".png"));
+      File outputFile = new File(path + ".png");
+      ImageIO.write((BufferedImage)image, "png", outputFile);
+      VfsUtil.markDirtyAndRefresh(true, false, false, outputFile);
     }
     catch (IOException ex) {
       LOG.error(ex);
