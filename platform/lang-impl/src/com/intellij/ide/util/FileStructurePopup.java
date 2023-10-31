@@ -284,7 +284,6 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setCancelCallback(() -> {
         FileStructurePopupListener listener = myProject.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC);
         listener.stateChanged(false);
-        listener.isLoading(false);
         return myCanClose;
       })
       .setAdvertiser(new SpeedSearchAdvertiser().addSpeedSearchAdvertisement())
@@ -292,7 +291,6 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     Disposer.register(myPopup, this);
     myTree.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
-    myProject.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC).isLoading(true);
     myPopup.showCenteredInCurrentWindow(myProject);
 
     ((AbstractPopup)myPopup).setShowHints(true);
