@@ -1583,7 +1583,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("enums.may.not.have.extends.clause")).create();
     }
     else {
-      checkReferenceList(myHolder, extendsClause, IS_NOT_INTERFACE, GroovyBundle.message("no.interface.expected.here"), new ChangeExtendsImplementsQuickFix(typeDefinition));
+      checkReferenceList(myHolder, extendsClause, IS_NOT_INTERFACE, GroovyBundle.message("no.interface.expected.here"), 
+                         new ChangeExtendsImplementsQuickFix(typeDefinition).asIntention());
       checkForWildCards(myHolder, extendsClause);
     }
 
@@ -1602,7 +1603,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
     else {
       checkReferenceList(myHolder, implementsClause, IS_INTERFACE, GroovyBundle.message("no.class.expected.here"),
-                         typeDefinition instanceof GrRecordDefinition ? null : new ChangeExtendsImplementsQuickFix(typeDefinition));
+                         typeDefinition instanceof GrRecordDefinition ? null : 
+                         new ChangeExtendsImplementsQuickFix(typeDefinition).asIntention());
       checkForWildCards(myHolder, implementsClause);
     }
   }

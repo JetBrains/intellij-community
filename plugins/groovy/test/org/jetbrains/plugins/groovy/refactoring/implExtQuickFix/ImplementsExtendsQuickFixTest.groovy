@@ -59,7 +59,7 @@ class ImplementsExtendsQuickFixTest extends LightJavaCodeInsightFixtureTestCase 
 
         WriteCommandAction.runWriteCommandAction project, {
           ChangeExtendsImplementsQuickFix fix = new ChangeExtendsImplementsQuickFix(typeDefinition)
-          fix.invoke(project, null, psiFile)
+          fix.asIntention().invoke(project, null, psiFile)
           doPostponedFormatting(project)
         } as Runnable
 
