@@ -5,10 +5,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.CustomHighlighterOrder
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalUi
-import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toFloatAndScale
 import java.awt.Color
-import java.awt.GradientPaint
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
@@ -16,25 +15,29 @@ import java.awt.geom.Rectangle2D
 /**
  * Paints the background of the block, but only in the area of the text (without top, left and bottom corners).
  * So the selection can be painted on top of it.
- * Paints the linear gradient from the left to right if [backgroundEnd] is specified.
  */
-class TerminalBlockBackgroundRenderer(private val backgroundStart: Color,
-                                      private val backgroundEnd: Color? = null) : CustomHighlighterRenderer {
+class TerminalBlockBackgroundRenderer private constructor(
+  private val background: Color?,
+  private val gradientCache: GradientTextureCache?
+) : CustomHighlighterRenderer {
+  /** Paints the solid background with provided color */
+  constructor(background: Color) : this(background = background, gradientCache = null)
+
+  /** Paints the linear gradient from left to right */
+  constructor(gradientCache: GradientTextureCache) : this(background = null, gradientCache = gradientCache)
+
   override fun getOrder(): CustomHighlighterOrder = CustomHighlighterOrder.BEFORE_BACKGROUND
 
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
     val visibleArea = editor.scrollingModel.visibleArea
-    val width = visibleArea.width - toFloatAndScale(TerminalUi.cornerToBlockInset)
+    val width = visibleArea.width - JBUI.scale(TerminalUi.cornerToBlockInset)
     val topY = editor.offsetToXY(highlighter.startOffset).y.toFloat()
     val bottomY = editor.offsetToXY(highlighter.endOffset).y.toFloat() + editor.lineHeight
-    val rect = Rectangle2D.Float(0f, topY, width, bottomY - topY)
+    val rect = Rectangle2D.Float(0f, topY, width.toFloat(), bottomY - topY)
 
     val g2d = g.create() as Graphics2D
     try {
-      val paint = if (backgroundEnd != null) {
-        GradientPaint(0f, topY, backgroundStart, width, topY, backgroundEnd)
-      }
-      else backgroundStart
+      val paint = gradientCache?.getTexture(g2d, width) ?: background
       g2d.paint = paint
       g2d.fill(rect)
     }
